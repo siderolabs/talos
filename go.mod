@@ -17,10 +17,10 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.24.2
-	k8s.io/apimachinery v0.24.2
+	k8s.io/api v0.24.3
+	k8s.io/apimachinery v0.24.3
 	k8s.io/apiserver v0.24.2
-	k8s.io/client-go v0.24.2
+	k8s.io/client-go v0.24.3
 	k8s.io/component-base v0.24.2
 	k8s.io/cri-api v0.24.2
 	k8s.io/kubectl v0.24.2
@@ -30,7 +30,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.7.0
 	github.com/BurntSushi/toml v1.1.0
-	github.com/aws/aws-sdk-go v1.44.51
+	github.com/aws/aws-sdk-go v1.44.56
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4
@@ -118,17 +118,17 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
-	google.golang.org/grpc v1.47.0
+	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.1
 	inet.af/netaddr v0.0.0-20220617031823-097006376321
 	k8s.io/klog/v2 v2.70.1
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.64
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.65
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -281,7 +281,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220407013110-ef5c587f782d // indirect
 	google.golang.org/api v0.84.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220711132622-b6f31b0ceb50 // indirect
+	google.golang.org/genproto v0.0.0-20220718134204-073382fd740c // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
@@ -291,7 +291,7 @@ require (
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.64 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.65 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/kustomize/api v0.11.4 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
