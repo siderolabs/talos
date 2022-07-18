@@ -128,7 +128,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	inet.af/netaddr v0.0.0-20220617031823-097006376321
 	k8s.io/klog/v2 v2.70.1
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.64
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.65
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -291,7 +291,7 @@ require (
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.64 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.65 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
 	sigs.k8s.io/kustomize/api v0.11.4 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
