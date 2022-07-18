@@ -42,6 +42,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/provision/providers/qemu"
@@ -340,7 +341,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	}
 
 	defaultInternalLB, _ := suite.provisioner.GetLoadBalancers(request.Network)
-	suite.controlPlaneEndpoint = fmt.Sprintf("https://%s:%d", defaultInternalLB, constants.DefaultControlPlanePort)
+	suite.controlPlaneEndpoint = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultInternalLB, constants.DefaultControlPlanePort))
 
 	genOptions := suite.provisioner.GenOptions(request.Network)
 

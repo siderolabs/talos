@@ -41,15 +41,7 @@ func (cliSuite *CLISuite) DiscoverNodes(ctx context.Context) cluster.Info {
 		return discoveredNodes
 	}
 
-	discoveredNodes = cliSuite.discoverKubectl()
-	if discoveredNodes != nil {
-		return discoveredNodes
-	}
-
-	// still no nodes, skip the test
-	cliSuite.T().Skip("no nodes were discovered")
-
-	return nil
+	return cliSuite.discoverKubectl()
 }
 
 // DiscoverNodeInternalIPs provides list of Talos node internal IPs in the cluster.

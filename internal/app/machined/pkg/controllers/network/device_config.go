@@ -26,6 +26,7 @@ type DeviceConfigController struct {
 	devices map[string]networkDevice
 }
 
+//nolint:unused
 type networkDevice struct {
 	hardwareAddress string
 	busPrefix       string
@@ -103,7 +104,7 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 				if device.Selector() != nil {
 					device = device.(*v1alpha1.Device).DeepCopy()
 
-					err = ctrl.getDeviceBySelector(ctx, device, links.Items)
+					err = ctrl.getDeviceBySelector(device, links.Items)
 					if err != nil {
 						logger.Warn("failed to select an interface for a device", zap.Error(err))
 
@@ -153,7 +154,7 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 	}
 }
 
-func (ctrl *DeviceConfigController) getDeviceBySelector(ctx context.Context, device talosconfig.Device, links []resource.Resource) error {
+func (ctrl *DeviceConfigController) getDeviceBySelector(device talosconfig.Device, links []resource.Resource) error {
 	selector := device.Selector()
 
 	for _, link := range links {

@@ -140,6 +140,7 @@ linters:
   enable-all: true
   disable:
     - errorlint
+    - exhaustruct
     - exhaustivestruct
     - forbidigo
     - forcetypeassert
@@ -156,7 +157,9 @@ linters:
     - maintidx
     - nestif
     - nilnil # we return "nil, nil"
+    - nonamedreturns
     - nolintlint
+    - nosnakecase
     - paralleltest
     - promlinter # https://github.com/golangci/golangci-lint/issues/2222
     - tagliatelle # we have many different conventions

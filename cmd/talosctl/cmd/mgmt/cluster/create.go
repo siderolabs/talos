@@ -40,6 +40,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"
 	"github.com/talos-systems/talos/pkg/provision/providers"
@@ -495,7 +496,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 			bundle.WithInputOptions(
 				&bundle.InputOptions{
 					ClusterName: clusterName,
-					Endpoint:    fmt.Sprintf("https://%s:%d", defaultInternalLB, controlPlanePort),
+					Endpoint:    fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultInternalLB, controlPlanePort)),
 					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
 				}),
@@ -737,7 +738,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 
 	if clusterAccess.ForceEndpoint != "" {
 		for name := range config.Clusters {
-			config.Clusters[name].Server = fmt.Sprintf("https://%s:%d", clusterAccess.ForceEndpoint, controlPlanePort)
+			config.Clusters[name].Server = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(clusterAccess.ForceEndpoint, controlPlanePort))
 		}
 	}
 

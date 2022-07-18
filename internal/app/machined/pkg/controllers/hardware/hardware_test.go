@@ -48,16 +48,6 @@ func (suite *HardwareSuite) SetupTest() {
 	suite.Require().NoError(err)
 }
 
-func (suite *HardwareSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
 func (suite *HardwareSuite) assertResource(md resource.Metadata, check func(res resource.Resource) error) func() error {
 	return func() error {
 		r, err := suite.state.Get(suite.ctx, md)

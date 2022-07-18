@@ -112,7 +112,7 @@ e.g. by excluding packets with the port 50000.
 			defer wg.Wait()
 
 			if pcapCmdFlags.output == "" {
-				return dumpPackets(ctx, r)
+				return dumpPackets(r)
 			}
 
 			var out io.Writer
@@ -137,7 +137,7 @@ e.g. by excluding packets with the port 50000.
 	},
 }
 
-func dumpPackets(ctx context.Context, r io.Reader) error {
+func dumpPackets(r io.Reader) error {
 	src, err := pcapgo.NewReader(r)
 	if err != nil {
 		return fmt.Errorf("error opening pcap reader: %w", err)

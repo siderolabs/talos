@@ -77,7 +77,7 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 
 	newHostname := "test-update-hostname"
 
-	err = suite.updateHostname(nodeCtx, nodeInternalIP, newHostname)
+	err = suite.updateHostname(nodeCtx, newHostname)
 	suite.Require().NoError(err)
 
 	nodeReady := func(status corev1.ConditionStatus) bool {
@@ -90,7 +90,7 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 
 	defer func() {
 		// revert the hostname back to the original one
-		err = suite.updateHostname(nodeCtx, nodeInternalIP, oldHostname)
+		err = suite.updateHostname(nodeCtx, oldHostname)
 		suite.Require().NoError(err)
 
 		// expect node status to be Ready again
@@ -119,7 +119,7 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 	suite.Require().NoError(err)
 }
 
-func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, nodeIP string, newHostname string) error {
+func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, newHostname string) error {
 	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
 	if err != nil {
 		return err

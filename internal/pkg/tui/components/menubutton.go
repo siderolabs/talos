@@ -60,9 +60,7 @@ func (b *MenuButton) SetActiveColors(colors ...tcell.Color) {
 // 1st value is bg color.
 // 2nd value is label color.
 func (b *MenuButton) SetInactiveColors(colors ...tcell.Color) {
-	for i, color := range colors {
-		b.colors[i] = color
-	}
+	copy(b.colors[:], colors)
 
 	b.updateColors()
 }

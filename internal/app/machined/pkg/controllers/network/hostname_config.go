@@ -134,13 +134,7 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 
 				nodeID := identity.(*cluster.Identity).TypedSpec().NodeID
 
-				var stableHostname *network.HostnameSpecSpec
-
-				stableHostname, err = ctrl.getStableDefault(nodeID)
-				if err != nil {
-					return err
-				}
-
+				stableHostname := ctrl.getStableDefault(nodeID)
 				specs = append(specs, *stableHostname)
 			} else {
 				specs = append(specs, ctrl.getDefault(defaultAddr))
@@ -205,7 +199,7 @@ func (ctrl *HostnameConfigController) apply(ctx context.Context, r controller.Ru
 	return ids, nil
 }
 
-func (ctrl *HostnameConfigController) getStableDefault(nodeID string) (*network.HostnameSpecSpec, error) {
+func (ctrl *HostnameConfigController) getStableDefault(nodeID string) *network.HostnameSpecSpec {
 	h := sha256.New()
 	h.Write([]byte(nodeID))
 
@@ -218,7 +212,7 @@ func (ctrl *HostnameConfigController) getStableDefault(nodeID string) (*network.
 	return &network.HostnameSpecSpec{
 		Hostname:    hostname,
 		ConfigLayer: network.ConfigDefault,
-	}, nil
+	}
 }
 
 func (ctrl *HostnameConfigController) getDefault(defaultAddr *network.NodeAddress) (spec network.HostnameSpecSpec) {

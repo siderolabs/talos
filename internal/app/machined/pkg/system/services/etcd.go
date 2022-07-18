@@ -45,6 +45,7 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	etcdresource "github.com/talos-systems/talos/pkg/machinery/resources/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -444,11 +445,15 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 	}
 
 	if !extraArgs.Contains("initial-advertise-peer-urls") {
-		denyListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", net.FormatAddress(primaryAddr)))
+		denyListArgs.Set("initial-advertise-peer-urls",
+			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), 2380)),
+		)
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
-		denyListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
+		denyListArgs.Set("advertise-client-urls",
+			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), 2379)),
+		)
 	}
 
 	if err := denyListArgs.Merge(extraArgs, denyList); err != nil {
@@ -537,12 +542,16 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 		}
 
 		if !extraArgs.Contains("initial-advertise-peer-urls") {
-			denyListArgs.Set("initial-advertise-peer-urls", fmt.Sprintf("https://%s:2380", net.FormatAddress(primaryAddr)))
+			denyListArgs.Set("initial-advertise-peer-urls",
+				fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), 2380)),
+			)
 		}
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
-		denyListArgs.Set("advertise-client-urls", fmt.Sprintf("https://%s:2379", net.FormatAddress(primaryAddr)))
+		denyListArgs.Set("advertise-client-urls",
+			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), 2379)),
+		)
 	}
 
 	if err = denyListArgs.Merge(extraArgs, denyList); err != nil {

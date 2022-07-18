@@ -165,7 +165,7 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 					return retry.ExpectedError(err)
 				}
 
-				deviceConfig = config.(*network.DeviceConfigSpec) //nolint:errcheck,forcedtypeassert
+				deviceConfig = config.(*network.DeviceConfigSpec) //nolint:errcheck,forcetypeassert
 
 				return nil
 			},

@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
 
 const canalCustomCNI = "canal"
@@ -54,9 +55,9 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 	}
 
 	if conn.ExpandingCluster() {
-		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s:%d", conn.bootstrapEndpoint, constants.DefaultControlPlanePort)
+		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(conn.bootstrapEndpoint, constants.DefaultControlPlanePort))
 	} else {
-		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s:%d", conn.nodeEndpoint, constants.DefaultControlPlanePort)
+		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(conn.nodeEndpoint, constants.DefaultControlPlanePort))
 	}
 
 	installDiskOptions := []interface{}{
