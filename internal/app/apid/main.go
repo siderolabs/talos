@@ -96,6 +96,7 @@ func Main() {
 		"/machine.MachineService/Kubeconfig",
 		"/machine.MachineService/List",
 		"/machine.MachineService/Logs",
+		"/machine.MachineService/PacketCapture",
 		"/machine.MachineService/Read",
 		"/resource.ResourceService/List",
 		"/resource.ResourceService/Watch",

@@ -32,6 +32,7 @@ description: Talos gRPC API reference.
     - [ApplyConfiguration](#machine.ApplyConfiguration)
     - [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest)
     - [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse)
+    - [BPFInstruction](#machine.BPFInstruction)
     - [Bootstrap](#machine.Bootstrap)
     - [BootstrapRequest](#machine.BootstrapRequest)
     - [BootstrapResponse](#machine.BootstrapResponse)
@@ -102,6 +103,7 @@ description: Talos gRPC API reference.
     - [NetworkDeviceConfig](#machine.NetworkDeviceConfig)
     - [NetworkDeviceStats](#machine.NetworkDeviceStats)
     - [NetworkDeviceStatsResponse](#machine.NetworkDeviceStatsResponse)
+    - [PacketCaptureRequest](#machine.PacketCaptureRequest)
     - [PhaseEvent](#machine.PhaseEvent)
     - [PlatformInfo](#machine.PlatformInfo)
     - [Process](#machine.Process)
@@ -525,6 +527,24 @@ node.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [ApplyConfiguration](#machine.ApplyConfiguration) | repeated |  |
+
+
+
+
+
+
+<a name="machine.BPFInstruction"></a>
+
+### BPFInstruction
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| op | [uint32](#uint32) |  |  |
+| jt | [uint32](#uint32) |  |  |
+| jf | [uint32](#uint32) |  |  |
+| k | [uint32](#uint32) |  |  |
 
 
 
@@ -1771,6 +1791,24 @@ The messages message containing the requested df stats.
 
 
 
+<a name="machine.PacketCaptureRequest"></a>
+
+### PacketCaptureRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| interface | [string](#string) |  | Interface name to perform packet capture on. |
+| promiscuous | [bool](#bool) |  | Enable promiscuous mode. |
+| snap_len | [uint32](#uint32) |  | Snap length in bytes. |
+| bpf_filter | [BPFInstruction](#machine.BPFInstruction) | repeated | BPF filter. |
+
+
+
+
+
+
 <a name="machine.PhaseEvent"></a>
 
 ### PhaseEvent
@@ -2839,6 +2877,7 @@ This method is available only on control plane nodes (which run etcd). |
 | Upgrade | [UpgradeRequest](#machine.UpgradeRequest) | [UpgradeResponse](#machine.UpgradeResponse) |  |
 | Version | [.google.protobuf.Empty](#google.protobuf.Empty) | [VersionResponse](#machine.VersionResponse) |  |
 | GenerateClientConfiguration | [GenerateClientConfigurationRequest](#machine.GenerateClientConfigurationRequest) | [GenerateClientConfigurationResponse](#machine.GenerateClientConfigurationResponse) | GenerateClientConfiguration generates talosctl client configuration (talosconfig). |
+| PacketCapture | [PacketCaptureRequest](#machine.PacketCaptureRequest) | [.common.Data](#common.Data) stream | PacketCapture performs packet capture and streams back pcap file. |
 
  <!-- end services -->
 

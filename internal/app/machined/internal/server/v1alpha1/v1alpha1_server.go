@@ -28,7 +28,12 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcapgo"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
@@ -38,6 +43,7 @@ import (
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
+	"golang.org/x/net/bpf"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -80,6 +86,8 @@ import (
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 	"github.com/talos-systems/talos/pkg/version"
@@ -2042,6 +2050,120 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	}
 
 	return reply, nil
+}
+
+// PacketCapture performs packet capture and streams the pcap file.
+//
+//nolint:gocyclo
+func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.MachineService_PacketCaptureServer) error {
+	linkInfo, err := safe.StateGetResource(srv.Context(), s.Controller.Runtime().State().V1Alpha2().Resources(), network.NewLinkStatus(network.NamespaceName, in.Interface))
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return status.Errorf(codes.NotFound, "interface %q not found", in.Interface)
+		}
+
+		return err
+	}
+
+	var linkType layers.LinkType
+
+	switch linkInfo.TypedSpec().Type { //nolint:exhaustive
+	case nethelpers.LinkEther, nethelpers.LinkLoopbck:
+		linkType = layers.LinkTypeEthernet
+	case nethelpers.LinkNone:
+		linkType = layers.LinkTypeRaw
+	default:
+		return status.Errorf(codes.InvalidArgument, "unsupported link type %s", linkInfo.TypedSpec().Type)
+	}
+
+	pr, pw := io.Pipe()
+
+	if in.SnapLen == 0 {
+		in.SnapLen = 65536
+	}
+
+	filter := make([]bpf.RawInstruction, 0, len(in.BpfFilter))
+
+	for _, f := range in.BpfFilter {
+		filter = append(filter, bpf.RawInstruction{
+			Op: uint16(f.Op),
+			Jt: uint8(f.Jt),
+			Jf: uint8(f.Jf),
+			K:  f.K,
+		})
+	}
+
+	handle, err := pcapgo.NewEthernetHandle(in.Interface)
+	if err != nil {
+		return fmt.Errorf("error setting up packet capture on %q: %w", in.Interface, err)
+	}
+
+	if err = handle.SetCaptureLength(int(in.SnapLen)); err != nil {
+		handle.Close() //nolint:errcheck
+
+		return fmt.Errorf("error setting capture length %q: %w", in.SnapLen, err)
+	}
+
+	if len(filter) > 0 {
+		if err = handle.SetBPF(filter); err != nil {
+			handle.Close() //nolint:errcheck
+
+			return fmt.Errorf("error setting BPF filter: %w", err)
+		}
+	}
+
+	if err = handle.SetPromiscuous(in.Promiscuous); err != nil {
+		handle.Close() //nolint:errcheck
+
+		return fmt.Errorf("error setting promiscuous mode %v: %w", in.Promiscuous, err)
+	}
+
+	go func() {
+		defer pw.Close() //nolint:errcheck
+
+		pcapw := pcapgo.NewWriterNanos(pw)
+
+		if errCapture := pcapw.WriteFileHeader(in.SnapLen, linkType); errCapture != nil {
+			pw.CloseWithError(errCapture) //nolint:errcheck
+
+			return
+		}
+
+		pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
+		pkgsrc.Lazy = true
+
+		for packet := range pkgsrc.Packets() {
+			if errCapture := pcapw.WritePacket(packet.Metadata().CaptureInfo, packet.Data()); errCapture != nil {
+				pw.CloseWithError(errCapture) //nolint:errcheck
+
+				return
+			}
+		}
+	}()
+
+	defer handle.Close()
+	defer pr.Close() //nolint:errcheck
+
+	ctx, cancel := context.WithCancel(srv.Context())
+	defer cancel()
+
+	chunker := stream.NewChunker(ctx, pr)
+	chunkCh := chunker.Read()
+
+	for data := range chunkCh {
+		if err = srv.SendMsg(&common.Data{Bytes: data}); err != nil {
+			cancel()
+
+			pr.CloseWithError(err) //nolint:errcheck
+		}
+	}
+
+	stats, err := handle.Stats()
+	if err == nil {
+		log.Printf("pcap: packets captured %d, dropped %d", stats.Packets, stats.Drops)
+	}
+
+	return nil
 }
 
 func upgradeMutex(c *etcd.Client) (*concurrency.Mutex, error) {

@@ -67,6 +67,8 @@ service MachineService {
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
   // GenerateClientConfiguration generates talosctl client configuration (talosconfig).
   rpc GenerateClientConfiguration(GenerateClientConfigurationRequest) returns (GenerateClientConfigurationResponse);
+  // PacketCapture performs packet capture and streams back pcap file.
+  rpc PacketCapture(PacketCaptureRequest) returns (stream common.Data);
 }
 
 // rpc applyConfiguration
@@ -1043,4 +1045,22 @@ message GenerateClientConfiguration {
 
 message GenerateClientConfigurationResponse {
   repeated GenerateClientConfiguration messages = 1;
+}
+
+message PacketCaptureRequest {
+  // Interface name to perform packet capture on.
+  string interface = 1;
+  // Enable promiscuous mode.
+  bool promiscuous = 2;
+  // Snap length in bytes.
+  uint32 snap_len = 3;
+  // BPF filter.
+  repeated BPFInstruction bpf_filter = 4;
+}
+
+message BPFInstruction {
+  uint32 op = 1;
+  uint32 jt = 2;
+  uint32 jf = 3;
+  uint32 k = 4;
 }

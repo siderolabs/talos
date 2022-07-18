@@ -53,6 +53,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.8
+	github.com/google/gopacket v1.1.19
 	github.com/google/nftables v0.0.0-20220611213346-a346d51f53b3
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1

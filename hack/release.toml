@@ -98,6 +98,14 @@ talosctl gen config --with-secrets secrets.yaml my-cluster https://172.20.0.1:64
 ```
 """
 
+    [notes.packet-capture]
+        title = "Packet Capture"
+        description="""\
+Talos now supports capturing packets on a network interface with `talosctl pcap` command:
+
+  talosctl pcap --interface eth0
+"""
+
 [make_deps]
 
     [make_deps.tools]

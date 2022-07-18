@@ -81,6 +81,8 @@ type MachineServiceClient interface {
 	Version(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*VersionResponse, error)
 	// GenerateClientConfiguration generates talosctl client configuration (talosconfig).
 	GenerateClientConfiguration(ctx context.Context, in *GenerateClientConfigurationRequest, opts ...grpc.CallOption) (*GenerateClientConfigurationResponse, error)
+	// PacketCapture performs packet capture and streams back pcap file.
+	PacketCapture(ctx context.Context, in *PacketCaptureRequest, opts ...grpc.CallOption) (MachineService_PacketCaptureClient, error)
 }
 
 type machineServiceClient struct {
@@ -683,6 +685,38 @@ func (c *machineServiceClient) GenerateClientConfiguration(ctx context.Context, 
 	return out, nil
 }
 
+func (c *machineServiceClient) PacketCapture(ctx context.Context, in *PacketCaptureRequest, opts ...grpc.CallOption) (MachineService_PacketCaptureClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[10], "/machine.MachineService/PacketCapture", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &machineServicePacketCaptureClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type MachineService_PacketCaptureClient interface {
+	Recv() (*common.Data, error)
+	grpc.ClientStream
+}
+
+type machineServicePacketCaptureClient struct {
+	grpc.ClientStream
+}
+
+func (x *machineServicePacketCaptureClient) Recv() (*common.Data, error) {
+	m := new(common.Data)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // MachineServiceServer is the server API for MachineService service.
 // All implementations must embed UnimplementedMachineServiceServer
 // for forward compatibility
@@ -742,6 +776,8 @@ type MachineServiceServer interface {
 	Version(context.Context, *emptypb.Empty) (*VersionResponse, error)
 	// GenerateClientConfiguration generates talosctl client configuration (talosconfig).
 	GenerateClientConfiguration(context.Context, *GenerateClientConfigurationRequest) (*GenerateClientConfigurationResponse, error)
+	// PacketCapture performs packet capture and streams back pcap file.
+	PacketCapture(*PacketCaptureRequest, MachineService_PacketCaptureServer) error
 	mustEmbedUnimplementedMachineServiceServer()
 }
 
@@ -868,6 +904,9 @@ func (UnimplementedMachineServiceServer) Version(context.Context, *emptypb.Empty
 }
 func (UnimplementedMachineServiceServer) GenerateClientConfiguration(context.Context, *GenerateClientConfigurationRequest) (*GenerateClientConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateClientConfiguration not implemented")
+}
+func (UnimplementedMachineServiceServer) PacketCapture(*PacketCaptureRequest, MachineService_PacketCaptureServer) error {
+	return status.Errorf(codes.Unimplemented, "method PacketCapture not implemented")
 }
 func (UnimplementedMachineServiceServer) mustEmbedUnimplementedMachineServiceServer() {}
 
@@ -1637,6 +1676,27 @@ func _MachineService_GenerateClientConfiguration_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MachineService_PacketCapture_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(PacketCaptureRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(MachineServiceServer).PacketCapture(m, &machineServicePacketCaptureServer{stream})
+}
+
+type MachineService_PacketCaptureServer interface {
+	Send(*common.Data) error
+	grpc.ServerStream
+}
+
+type machineServicePacketCaptureServer struct {
+	grpc.ServerStream
+}
+
+func (x *machineServicePacketCaptureServer) Send(m *common.Data) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // MachineService_ServiceDesc is the grpc.ServiceDesc for MachineService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1814,6 +1874,11 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "Read",
 			Handler:       _MachineService_Read_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "PacketCapture",
+			Handler:       _MachineService_PacketCapture_Handler,
 			ServerStreams: true,
 		},
 	},

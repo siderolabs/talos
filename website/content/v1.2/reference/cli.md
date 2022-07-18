@@ -1651,6 +1651,67 @@ talosctl patch <type> [<id>] [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl pcap
+
+Capture the network packets from the node.
+
+### Synopsis
+
+The command launches packet capture on the node and streams back the packets as raw pcap file.
+
+Default behavior is to decode the packets with internal decoder to stdout:
+
+  talosctl pcap -i eth0
+
+Raw pcap file can be saved with --output flag:
+
+  talosctl pcap -i eth0 --output eth0.pcap
+
+Output can be piped to tcpdump:
+
+  talosctl pcap -i eth0 -o - | tcpdump -vvv -r -
+
+ BPF filter can be applied, but it has to compiled to BPF instructions first using tcpdump.
+ Correct link type should be specified for the tcpdump: EN10MB for Ethernet links and RAW
+ for e.g. Wireguard tunnels:
+
+   talosctl pcap -i eth0 --bpf-filter "$(tcpdump -dd -y EN10MB 'tcp and dst port 80')"
+
+   talosctl pcap -i kubespan --bpf-filter "$(tcpdump -dd -y RAW 'port 50000')"
+
+As packet capture is transmitted over the network, it is recommended to filter out the Talos API traffic,
+e.g. by excluding packets with the port 50000.
+   
+
+```
+talosctl pcap [flags]
+```
+
+### Options
+
+```
+      --bpf-filter string   bpf filter to apply, tcpdump -dd format
+      --duration duration   duration of the capture
+  -h, --help                help for pcap
+  -i, --interface string    interface name to capture packets on (default "eth0")
+  -o, --output string       if not set, decode packets to stdout; if set write raw pcap data to a file, use '-' for stdout
+      --promiscuous         put interface into promiscuous mode
+  -s, --snaplen int         maximum packet size to capture (default 65536)
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl processes
 
 List running processes
@@ -2188,6 +2249,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl memory](#talosctl-memory)	 - Show memory usage
 * [talosctl mounts](#talosctl-mounts)	 - List mounts
 * [talosctl patch](#talosctl-patch)	 - Update field(s) of a resource using a JSON patch.
+* [talosctl pcap](#talosctl-pcap)	 - Capture the network packets from the node.
 * [talosctl processes](#talosctl-processes)	 - List running processes
 * [talosctl read](#talosctl-read)	 - Read a file on the machine
 * [talosctl reboot](#talosctl-reboot)	 - Reboot a node

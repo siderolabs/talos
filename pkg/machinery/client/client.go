@@ -951,6 +951,16 @@ func (c *Client) GenerateClientConfiguration(ctx context.Context, req *machineap
 	return
 }
 
+// PacketCapture implements the proto.MachineServiceClient interface.
+func (c *Client) PacketCapture(ctx context.Context, req *machineapi.PacketCaptureRequest) (io.ReadCloser, <-chan error, error) {
+	stream, err := c.MachineClient.PacketCapture(ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return ReadStream(stream)
+}
+
 // MachineStream is a common interface for streams returned by streaming APIs.
 type MachineStream interface {
 	Recv() (*common.Data, error)
@@ -970,7 +980,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 		for {
 			data, err := stream.Recv()
 			if err != nil {
-				if err == io.EOF || StatusCode(err) == codes.Canceled {
+				if err == io.EOF || StatusCode(err) == codes.Canceled || StatusCode(err) == codes.DeadlineExceeded {
 					return
 				}
 				//nolint:errcheck
