@@ -23,7 +23,7 @@ require (
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
 	google.golang.org/genproto v0.0.0-20220711132622-b6f31b0ceb50
-	google.golang.org/grpc v1.47.0
+	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.1
 	inet.af/netaddr v0.0.0-20220617031823-097006376321
