@@ -144,7 +144,9 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 		found := false
 
 		for _, hostIf := range hostInterfaces {
-			if hostIf.HardwareAddr.String() == iface.MAC {
+			// if the bond configuration has already been applied, bond0 inherits the MAC address of the first slave (e.g. eth0)
+			// we don't want to match on the bond, so we skip it explicitly
+			if hostIf.HardwareAddr.String() == iface.MAC && hostIf.Name != iface.Bond {
 				found = true
 
 				networkConfig.Links = append(networkConfig.Links,
