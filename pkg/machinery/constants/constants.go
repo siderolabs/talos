@@ -619,12 +619,17 @@ const (
 	// KubeSpanDefaultFirewallMark is the default firewall mark to use for Wireguard encrypted egress packets.
 	//
 	// Normal Wireguard configurations will NOT use this firewall mark.
-	KubeSpanDefaultFirewallMark = 0x51820
+	KubeSpanDefaultFirewallMark = 0x20
 
 	// KubeSpanDefaultForceFirewallMark is the default firewall mark to use for packets destined to IPs serviced by KubeSpan.
 	//
 	// It is used to signal that matching packets should be forced into the Wireguard interface.
-	KubeSpanDefaultForceFirewallMark = 0x51821
+	KubeSpanDefaultForceFirewallMark = 0x40
+
+	// KubeSpanDefaultFirewallMask is the mask applied to the packet mark when matching and setting the mark.
+	//
+	// This mask signals the bits of the firewall mark used by KubeSpan.
+	KubeSpanDefaultFirewallMask = KubeSpanDefaultFirewallMark | KubeSpanDefaultForceFirewallMark
 
 	// KubeSpanDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
 	KubeSpanDefaultPeerKeepalive = 25 * time.Second

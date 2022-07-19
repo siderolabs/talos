@@ -122,10 +122,10 @@ func (suite *ManagerSuite) TestReconcile() {
 				WireguardClientFactory: func() (kubespanctrl.WireguardClient, error) {
 					return mockWireguard, nil
 				},
-				RulesManagerFactory: func(_, _ int) kubespanctrl.RulesManager {
+				RulesManagerFactory: func(_, _, _ int) kubespanctrl.RulesManager {
 					return mockRulesManager{}
 				},
-				NfTablesManagerFactory: func(_, _ uint32) kubespanctrl.NfTablesManager {
+				NfTablesManagerFactory: func(_, _, _ uint32) kubespanctrl.NfTablesManager {
 					return mockNfTables
 				},
 				PeerReconcileInterval: time.Second,

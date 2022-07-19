@@ -14,7 +14,7 @@ import (
 
 func TestRoutingRules(t *testing.T) {
 	// use a different table/mark to avoid conflicts with running kubespan
-	mgr := kubespan.NewRulesManager(constants.KubeSpanDefaultRoutingTable+10, constants.KubeSpanDefaultForceFirewallMark+10)
+	mgr := kubespan.NewRulesManager(constants.KubeSpanDefaultRoutingTable+10, constants.KubeSpanDefaultForceFirewallMark<<1, constants.KubeSpanDefaultFirewallMask<<1)
 
 	// cleanup should be fine if nothing is installed
 	assert.NoError(t, mgr.Cleanup())
