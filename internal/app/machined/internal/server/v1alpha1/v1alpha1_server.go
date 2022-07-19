@@ -2120,6 +2120,7 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 
 	go func() {
 		defer pw.Close() //nolint:errcheck
+		defer handle.Close()
 
 		pcapw := pcapgo.NewWriterNanos(pw)
 
@@ -2141,7 +2142,6 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		}
 	}()
 
-	defer handle.Close()
 	defer pr.Close() //nolint:errcheck
 
 	ctx, cancel := context.WithCancel(srv.Context())

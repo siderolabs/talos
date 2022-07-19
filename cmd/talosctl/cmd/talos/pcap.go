@@ -101,6 +101,10 @@ e.g. by excluding packets with the port 50000.
 			go func() {
 				defer wg.Done()
 				for err := range errCh {
+					if client.StatusCode(err) == codes.DeadlineExceeded {
+						continue
+					}
+
 					fmt.Fprintln(os.Stderr, err.Error())
 				}
 			}()
