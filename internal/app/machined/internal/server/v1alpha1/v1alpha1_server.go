@@ -275,10 +275,6 @@ Config diff:
 				if !runtime.IsRebootError(err) {
 					log.Println("apply configuration failed:", err)
 				}
-
-				if err != runtime.ErrLocked {
-					s.server.GracefulStop()
-				}
 			}
 		}()
 	default:
@@ -315,15 +311,9 @@ func (s *Server) Reboot(ctx context.Context, in *machine.RebootRequest) (reply *
 	}
 
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithTakeover()); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reboot failed:", err)
-			}
-
-			if err != runtime.ErrLocked {
-				// NB: We stop the gRPC server since a failed sequence triggers a
-				// reboot.
-				s.server.GracefulStop()
 			}
 		}
 	}()
@@ -393,15 +383,9 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 	}
 
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithForce(), runtime.WithTakeover()); err != nil {
+		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithTakeover()); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reboot failed:", err)
-			}
-
-			if err != runtime.ErrLocked {
-				// NB: We stop the gRPC server since a failed sequence triggers a
-				// reboot.
-				s.server.GracefulStop()
 			}
 		}
 	}()
@@ -463,12 +447,6 @@ func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (rep
 		if err := s.Controller.Run(context.Background(), runtime.SequenceShutdown, in, runtime.WithTakeover()); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("shutdown failed:", err)
-			}
-
-			if err != runtime.ErrLocked {
-				// NB: We stop the gRPC server since a failed sequence triggers a
-				// reboot.
-				s.server.GracefulStop()
 			}
 		}
 	}()
@@ -563,12 +541,6 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 				if !runtime.IsRebootError(err) {
 					log.Println("reboot for staged upgrade failed:", err)
 				}
-
-				if err != runtime.ErrLocked {
-					// NB: We stop the gRPC server since a failed sequence triggers a
-					// reboot.
-					s.server.GracefulStop()
-				}
 			}
 		}()
 	} else {
@@ -580,12 +552,6 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 			if err := s.Controller.Run(runCtx, runtime.SequenceUpgrade, in); err != nil {
 				if !runtime.IsRebootError(err) {
 					log.Println("upgrade failed:", err)
-				}
-
-				if err != runtime.ErrLocked {
-					// NB: We stop the gRPC server since a failed sequence triggers a
-					// reboot.
-					s.server.GracefulStop()
 				}
 			}
 		}()
@@ -673,12 +639,6 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 		if err := s.Controller.Run(context.Background(), runtime.SequenceReset, &opts); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reset failed:", err)
-			}
-
-			if err != runtime.ErrLocked {
-				// NB: We stop the gRPC server since a failed sequence triggers a
-				// reboot.
-				s.server.GracefulStop()
 			}
 		}
 	}()

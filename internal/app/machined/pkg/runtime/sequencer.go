@@ -14,8 +14,10 @@ import (
 type Sequence int
 
 const (
+	// SequenceNoop is the noop sequence.
+	SequenceNoop Sequence = iota
 	// SequenceBoot is the boot sequence.
-	SequenceBoot Sequence = iota
+	SequenceBoot
 	// SequenceInitialize is the initialize sequence.
 	SequenceInitialize
 	// SequenceInstall is the install sequence.
@@ -30,8 +32,6 @@ const (
 	SequenceReset
 	// SequenceReboot is the reboot sequence.
 	SequenceReboot
-	// SequenceNoop is the noop sequence.
-	SequenceNoop
 )
 
 const (
@@ -46,9 +46,44 @@ const (
 	noop         = "noop"
 )
 
+var sequenceTakeOver = map[Sequence]map[Sequence]struct{}{
+	SequenceBoot: {
+		SequenceReboot:  {},
+		SequenceReset:   {},
+		SequenceUpgrade: {},
+	},
+	SequenceReboot: {
+		SequenceReboot: {},
+	},
+	SequenceReset: {
+		SequenceReboot: {},
+	},
+}
+
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{boot, initialize, install, shutdown, upgrade, stageUpgrade, reset, reboot, noop}[s]
+	return [...]string{noop, boot, initialize, install, shutdown, upgrade, stageUpgrade, reset, reboot}[s]
+}
+
+// CanTakeOver defines sequences priority.
+//
+// | what is running (columns) what is requested (rows) | boot | reboot | reset | upgrade |
+// |----------------------------------------------------|------|--------|-------|---------|
+// | reboot                                             | Y    | Y      | Y     | N       |
+// | reset                                              | Y    | N      | N     | N       |
+// | upgrade                                            | Y    | N      | N     | N       |.
+func (s Sequence) CanTakeOver(running Sequence) bool {
+	if running == SequenceNoop {
+		return true
+	}
+
+	if sequences, ok := sequenceTakeOver[running]; ok {
+		if _, ok = sequences[s]; ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ParseSequence returns a `Sequence` that matches the specified string.

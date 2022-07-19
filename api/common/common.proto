@@ -46,6 +46,7 @@ extend google.protobuf.ServiceOptions {
 enum Code {
   FATAL = 0;
   LOCKED = 1;
+  CANCELED = 2;
 }
 
 message Error {

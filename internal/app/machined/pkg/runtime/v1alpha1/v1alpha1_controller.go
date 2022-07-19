@@ -6,6 +6,7 @@ package v1alpha1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -13,12 +14,9 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
-	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
-	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -32,13 +30,11 @@ import (
 // Controller represents the controller responsible for managing the execution
 // of sequences.
 type Controller struct {
+	s  runtime.Sequencer
 	r  *Runtime
-	s  *Sequencer
 	v2 *v1alpha2.Controller
 
-	semaphore int32
-	cancelCtx context.CancelFunc
-	ctxMutex  sync.Mutex
+	priorityLock *PriorityLock[runtime.Sequence]
 }
 
 // NewController intializes and returns a controller.
@@ -62,8 +58,9 @@ func NewController() (*Controller, error) {
 	l := logging.NewCircularBufferLoggingManager(log.New(os.Stdout, "machined fallback logger: ", log.Flags()))
 
 	ctlr := &Controller{
-		r: NewRuntime(nil, s, e, l),
-		s: NewSequencer(),
+		r:            NewRuntime(nil, s, e, l),
+		s:            NewSequencer(),
+		priorityLock: NewPriorityLock[runtime.Sequence](),
 	}
 
 	ctlr.v2, err = v1alpha2.NewController(ctlr.r)
@@ -77,50 +74,16 @@ func NewController() (*Controller, error) {
 // Run executes all phases known to the controller in serial. `Controller`
 // aborts immediately if any phase fails.
 //nolint:gocyclo
-func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interface{}, setters ...runtime.ControllerOption) error {
+func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interface{}, setters ...runtime.LockOption) error {
 	// We must ensure that the runtime is configured since all sequences depend
 	// on the runtime.
 	if c.r == nil {
 		return runtime.ErrUndefinedRuntime
 	}
 
-	opts := runtime.DefaultControllerOptions()
-
-	for _, f := range setters {
-		if err := f(&opts); err != nil {
-			return err
-		}
-	}
-
-	// Allow only one sequence to run at a time with the exception of bootstrap
-	// and reset sequences.
-	switch seq { //nolint:exhaustive
-	case runtime.SequenceReset:
-		// Do not attempt to lock.
-	default:
-		if opts.Force {
-			break
-		}
-
-		if opts.Takeover {
-			c.ctxMutex.Lock()
-			if c.cancelCtx != nil {
-				c.cancelCtx()
-			}
-
-			c.ctxMutex.Unlock()
-
-			err := retry.Constant(time.Minute*1, retry.WithUnits(time.Millisecond*100)).RetryWithContext(ctx, func(ctx context.Context) error {
-				if c.TryLock() {
-					return retry.ExpectedError(fmt.Errorf("failed to acquire lock"))
-				}
-
-				return nil
-			})
-			if err != nil {
-				return err
-			}
-		} else if c.TryLock() {
+	ctx, err := c.priorityLock.Lock(ctx, time.Minute, seq, setters...)
+	if err != nil {
+		if errors.Is(err, runtime.ErrLocked) {
 			c.Runtime().Events().Publish(&machine.SequenceEvent{
 				Sequence: seq.String(),
 				Action:   machine.SequenceEvent_NOOP,
@@ -129,22 +92,12 @@ func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interfa
 					Message: fmt.Sprintf("sequence not started: %s", runtime.ErrLocked.Error()),
 				},
 			})
-
-			return runtime.ErrLocked
 		}
 
-		defer c.Unlock()
-
-		c.ctxMutex.Lock()
-		ctx, c.cancelCtx = context.WithCancel(ctx)
-		c.ctxMutex.Unlock()
-
-		defer func() {
-			c.ctxMutex.Lock()
-			c.cancelCtx = nil
-			c.ctxMutex.Unlock()
-		}()
+		return err
 	}
+
+	defer c.priorityLock.Unlock()
 
 	phases, err := c.phases(seq, data)
 	if err != nil {
@@ -153,11 +106,17 @@ func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interfa
 
 	err = c.run(ctx, seq, phases, data)
 	if err != nil {
+		code := common.Code_FATAL
+
+		if errors.Is(err, context.Canceled) {
+			code = common.Code_CANCELED
+		}
+
 		c.Runtime().Events().Publish(&machine.SequenceEvent{
 			Sequence: seq.String(),
 			Action:   machine.SequenceEvent_NOOP,
 			Error: &common.Error{
-				Code:    common.Code_FATAL,
+				Code:    code,
 				Message: fmt.Sprintf("sequence failed: %s", err.Error()),
 			},
 		})
@@ -228,18 +187,6 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 	err := <-errCh
 
 	return err
-}
-
-// TryLock attempts to set a lock that prevents multiple sequences from running
-// at once. If currently locked, a value of true will be returned. If not
-// currently locked, a value of false will be returned.
-func (c *Controller) TryLock() bool {
-	return !atomic.CompareAndSwapInt32(&c.semaphore, 0, 1)
-}
-
-// Unlock removes the lock set by `TryLock`.
-func (c *Controller) Unlock() bool {
-	return atomic.CompareAndSwapInt32(&c.semaphore, 1, 0)
 }
 
 func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []runtime.Phase, data interface{}) error {
@@ -314,7 +261,7 @@ func (c *Controller) runPhase(ctx context.Context, phase runtime.Phase, seq runt
 		Action: machine.PhaseEvent_START,
 	})
 
-	var eg errgroup.Group
+	eg, ctx := errgroup.WithContext(ctx)
 
 	for number, task := range phase.Tasks {
 		// Make the task number human friendly.

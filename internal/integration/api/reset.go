@@ -13,8 +13,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/talos-systems/go-retry/retry"
+
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
@@ -241,6 +244,65 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(preReset, postReset, "ephemeral partition was not reset")
+}
+
+// TestResetDuringBoot resets the node multiple times, second reset is done
+// before boot sequence is complete.
+//
+//nolint:dupl
+func (suite *ResetSuite) TestResetDuringBoot() {
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboot (and reset)")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNodes(suite.ctx, node)
+
+	suite.T().Log("Resetting node", node)
+
+	for i := 0; i < 2; i++ {
+		var (
+			bootID string
+			err    error
+		)
+
+		err = retry.Constant(5*time.Minute, retry.WithUnits(time.Millisecond*1000)).Retry(
+			func() error {
+				bootID, err = suite.ReadBootID(nodeCtx)
+				if err != nil {
+					return retry.ExpectedError(err)
+				}
+
+				return nil
+			},
+		)
+
+		err = retry.Constant(5*time.Minute, retry.WithUnits(time.Millisecond*1000)).Retry(
+			func() error {
+				// force reboot after reset, as this is the only mode we can test
+				return base.IgnoreGRPCUnavailable(
+					suite.Client.ResetGeneric(
+						client.WithNodes(suite.ctx, node), &machineapi.ResetRequest{
+							Reboot:   true,
+							Graceful: true,
+							SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
+								{
+									Label: constants.EphemeralPartitionLabel,
+									Wipe:  true,
+								},
+							},
+						},
+					),
+				)
+			},
+		)
+
+		suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*5)
+		suite.Require().NoError(err)
+		suite.ClearConnectionRefused(suite.ctx, node)
+	}
+
+	suite.WaitForBootDone(suite.ctx)
 }
 
 func init() {

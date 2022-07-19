@@ -18,6 +18,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // RebootSuite ...
@@ -68,6 +69,51 @@ func (suite *RebootSuite) TestRebootNodeByNode() {
 			}, 10*time.Minute,
 		)
 	}
+}
+
+// TestRebootMultiple reboots a node, issues consequent reboots
+// reboot should cancel boot sequence, and cancel another reboot.
+func (suite *RebootSuite) TestRebootMultiple() {
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboots")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNodes(suite.ctx, node)
+
+	bootID := suite.ReadBootIDWithRetry(nodeCtx, time.Minute*5)
+
+	// Issue reboot.
+	suite.Require().NoError(base.IgnoreGRPCUnavailable(
+		suite.Client.Reboot(nodeCtx),
+	))
+
+	// Issue reboot once again and wait for node to get a new boot id.
+	suite.Require().NoError(base.IgnoreGRPCUnavailable(
+		suite.Client.Reboot(nodeCtx),
+	))
+
+	suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*5)
+
+	bootID = suite.ReadBootIDWithRetry(nodeCtx, time.Minute*5)
+
+	suite.Require().NoError(retry.Constant(time.Second * 5).Retry(func() error {
+		// Issue reboot while the node is still booting.
+		err := suite.Client.Reboot(nodeCtx)
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		// Reboot again and wait for cluster to become healthy.
+		suite.Require().NoError(base.IgnoreGRPCUnavailable(
+			suite.Client.Reboot(nodeCtx),
+		))
+
+		return nil
+	}))
+
+	suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*5)
+	suite.WaitForBootDone(suite.ctx)
 }
 
 // TestRebootAllNodes reboots all cluster nodes at the same time.

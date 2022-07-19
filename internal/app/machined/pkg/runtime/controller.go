@@ -25,27 +25,17 @@ type Phase struct {
 	Tasks []TaskSetupFunc
 }
 
-// ControllerOptions represents the options for a controller.
-type ControllerOptions struct {
-	Force    bool
+// LockOptions represents the options for a controller.
+type LockOptions struct {
 	Takeover bool
 }
 
-// ControllerOption represents an option setter.
-type ControllerOption func(o *ControllerOptions) error
-
-// WithForce sets the force option to true.
-func WithForce() ControllerOption {
-	return func(o *ControllerOptions) error {
-		o.Force = true
-
-		return nil
-	}
-}
+// LockOption represents an option setter.
+type LockOption func(o *LockOptions) error
 
 // WithTakeover sets the take option to true.
-func WithTakeover() ControllerOption {
-	return func(o *ControllerOptions) error {
+func WithTakeover() LockOption {
+	return func(o *LockOptions) error {
 		o.Takeover = true
 
 		return nil
@@ -53,8 +43,8 @@ func WithTakeover() ControllerOption {
 }
 
 // DefaultControllerOptions returns the default controller options.
-func DefaultControllerOptions() ControllerOptions {
-	return ControllerOptions{}
+func DefaultControllerOptions() LockOptions {
+	return LockOptions{}
 }
 
 // Controller represents the controller responsible for managing the execution
@@ -62,7 +52,7 @@ func DefaultControllerOptions() ControllerOptions {
 type Controller interface {
 	Runtime() Runtime
 	Sequencer() Sequencer
-	Run(context.Context, Sequence, interface{}, ...ControllerOption) error
+	Run(context.Context, Sequence, interface{}, ...LockOption) error
 	V1Alpha2() V1Alpha2Controller
 }
 

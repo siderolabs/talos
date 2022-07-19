@@ -272,8 +272,9 @@ func run() error {
 					switch msg := event.Payload.(type) {
 					case *machine.SequenceEvent:
 						if msg.Error != nil {
-							if msg.Error.GetCode() == common.Code_LOCKED {
-								// ignore sequence lock errors, they're not fatal
+							if msg.Error.GetCode() == common.Code_LOCKED ||
+								msg.Error.GetCode() == common.Code_CANCELED {
+								// ignore sequence lock and canceled errors, they're not fatal
 								continue
 							}
 

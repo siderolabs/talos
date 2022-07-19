@@ -327,6 +327,7 @@ Common metadata message nested in all reply message types
 | ---- | ------ | ----------- |
 | FATAL | 0 |  |
 | LOCKED | 1 |  |
+| CANCELED | 2 |  |
 
 
 
