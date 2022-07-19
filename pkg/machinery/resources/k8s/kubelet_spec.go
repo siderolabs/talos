@@ -19,10 +19,11 @@ type KubeletSpec = typed.Resource[KubeletSpecSpec, KubeletSpecRD]
 
 // KubeletSpecSpec holds the source of kubelet configuration.
 type KubeletSpecSpec struct {
-	Image       string                 `yaml:"image"`
-	Args        []string               `yaml:"args,omitempty"`
-	ExtraMounts []specs.Mount          `yaml:"extraMounts,omitempty"`
-	Config      map[string]interface{} `yaml:"config"`
+	Image            string                 `yaml:"image"`
+	Args             []string               `yaml:"args,omitempty"`
+	ExtraMounts      []specs.Mount          `yaml:"extraMounts,omitempty"`
+	ExpectedNodename string                 `yaml:"expectedNodename,omitempty"`
+	Config           map[string]interface{} `yaml:"config"`
 }
 
 // NewKubeletSpec initializes an empty KubeletSpec resource.

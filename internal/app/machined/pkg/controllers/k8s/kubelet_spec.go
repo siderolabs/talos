@@ -106,6 +106,8 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 		nodenameSpec := nodename.(*k8s.Nodename).TypedSpec()
 
+		expectedNodename := nodenameSpec.Nodename
+
 		args := argsbuilder.Args{
 			"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
 			"kubeconfig":                 constants.KubeletKubeconfig,
@@ -115,7 +117,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 			"cert-dir": constants.KubeletPKIDir,
 
-			"hostname-override": nodenameSpec.Nodename,
+			"hostname-override": expectedNodename,
 		}
 
 		if cfgSpec.CloudProviderExternal {
@@ -123,6 +125,11 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		extraArgs := argsbuilder.Args(cfgSpec.ExtraArgs)
+
+		// if the user supplied a hostname override, we do not manage it anymore
+		if extraArgs.Contains("hostname-override") {
+			expectedNodename = ""
+		}
 
 		// if the user supplied node-ip via extra args, no need to pick automatically
 		if !extraArgs.Contains("node-ip") {
@@ -183,6 +190,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 				kubeletSpec.ExtraMounts = cfgSpec.ExtraMounts
 				kubeletSpec.Args = args.Args()
 				kubeletSpec.Config = unstructuredConfig
+				kubeletSpec.ExpectedNodename = expectedNodename
 
 				return nil
 			},

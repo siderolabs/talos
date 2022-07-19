@@ -9,14 +9,11 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"testing"
 	"time"
 
-	"github.com/talos-systems/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -61,6 +58,9 @@ func (suite *UpdateEndpointSuite) TestUpdateControlPlaneEndpoint() {
 
 	nodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
+	node, err := suite.GetK8sNodeByInternalIP(suite.ctx, nodeInternalIP)
+	suite.Require().NoError(err)
+
 	oldURL := suite.updateEndpointURL(nodeInternalIP, "https://127.0.0.1:40443")
 
 	nodeReady := func(status corev1.ConditionStatus) bool {
@@ -76,15 +76,11 @@ func (suite *UpdateEndpointSuite) TestUpdateControlPlaneEndpoint() {
 		suite.updateEndpointURL(nodeInternalIP, oldURL)
 
 		// expect node status to be Ready again
-		suite.Assert().NoError(
-			suite.waitForNodeReadinessStatus(nodeInternalIP, nodeReady),
-		)
+		suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, node.Name, nodeReady))
 	}()
 
 	// expect node status to become NotReady
-	suite.Assert().NoError(
-		suite.waitForNodeReadinessStatus(nodeInternalIP, nodeNotReady),
-	)
+	suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, node.Name, nodeNotReady))
 }
 
 func (suite *UpdateEndpointSuite) updateEndpointURL(nodeIP string, newURL string) (oldURL string) {
@@ -114,56 +110,6 @@ func (suite *UpdateEndpointSuite) updateEndpointURL(nodeIP string, newURL string
 	suite.Require().NoError(err)
 
 	return
-}
-
-func (suite *UpdateEndpointSuite) getNodeByInternalIP(internalIP string) (*corev1.Node, error) {
-	nodeList, err := suite.Clientset.CoreV1().Nodes().List(suite.ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, item := range nodeList.Items {
-		for _, address := range item.Status.Addresses {
-			if address.Type == corev1.NodeInternalIP {
-				if address.Address == internalIP {
-					return &item, nil
-				}
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("node with internal IP %s not found", internalIP)
-}
-
-// waitForNodeReadinessStatus waits for node to have the given status.
-func (suite *UpdateEndpointSuite) waitForNodeReadinessStatus(nodeInternalIP string, checkFn func(corev1.ConditionStatus) bool) error {
-	return retry.Constant(5 * time.Minute).Retry(func() error {
-		readinessStatus, err := suite.getNodeReadinessStatus(nodeInternalIP)
-		if err != nil {
-			return err
-		}
-
-		if !checkFn(readinessStatus) {
-			return retry.ExpectedError(fmt.Errorf("node readiness status is %s", readinessStatus))
-		}
-
-		return nil
-	})
-}
-
-func (suite *UpdateEndpointSuite) getNodeReadinessStatus(nodeInternalIP string) (corev1.ConditionStatus, error) {
-	node, err := suite.getNodeByInternalIP(nodeInternalIP)
-	if err != nil {
-		return "", err
-	}
-
-	for _, condition := range node.Status.Conditions {
-		if condition.Type == corev1.NodeReady {
-			return condition.Status, nil
-		}
-	}
-
-	return "", fmt.Errorf("node %s has no readiness condition", nodeInternalIP)
 }
 
 func init() {

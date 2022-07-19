@@ -7,7 +7,9 @@ package k8s
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -30,6 +32,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
@@ -187,11 +190,16 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
-		err = updateKubeconfig(secretSpec.Endpoint)
+		// refresh certs only if we are managing the node name (not overridden by the user)
+		if cfgSpec.ExpectedNodename != "" {
+			err = ctrl.refreshKubeletCerts(cfgSpec.ExpectedNodename)
+			if err != nil {
+				return err
+			}
+		}
 
-		// there is no problem if the file does not exist yet since
-		// it will be created by kubelet on start with correct endpoint
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
+		err = updateKubeconfig(secretSpec.Endpoint)
+		if err != nil {
 			return err
 		}
 
@@ -281,9 +289,13 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
 }
 
-// updateKubeconfig updates the kubeconfig of kubelet with the given endpoint.
+// updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.
 func updateKubeconfig(newEndpoint *url.URL) error {
 	config, err := clientcmd.LoadFromFile(constants.KubeletKubeconfig)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
 	if err != nil {
 		return err
 	}
@@ -296,4 +308,76 @@ func updateKubeconfig(newEndpoint *url.URL) error {
 	cluster.Server = newEndpoint.String()
 
 	return clientcmd.WriteToFile(*config, constants.KubeletKubeconfig)
+}
+
+// refreshKubeletCerts checks if the existing kubelet certificates match the node hostname.
+// If they don't match, it clears the certificate directory and the removes kubelet's kubeconfig so that
+// they can be regenerated next time kubelet is started.
+func (ctrl *KubeletServiceController) refreshKubeletCerts(hostname string) error {
+	cert, err := ctrl.readKubeletCertificate()
+	if err != nil {
+		return err
+	}
+
+	if cert == nil {
+		return nil
+	}
+
+	valid := slices.Contains(cert.DNSNames, func(name string) bool {
+		return name == hostname
+	})
+
+	if valid {
+		// certificate looks good, no need to refresh
+		return nil
+	}
+
+	// remove the pki directory
+	err = os.RemoveAll(constants.KubeletPKIDir)
+	if err != nil {
+		return err
+	}
+
+	// clear the kubelet kubeconfig
+	err = os.Remove(constants.KubeletKubeconfig)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
+	return err
+}
+
+func (ctrl *KubeletServiceController) readKubeletCertificate() (*x509.Certificate, error) {
+	raw, err := os.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet.crt"))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		block, rest := pem.Decode(raw)
+		if block == nil {
+			return nil, nil
+		}
+
+		raw = rest
+
+		if block.Type != "CERTIFICATE" {
+			continue
+		}
+
+		var cert *x509.Certificate
+
+		cert, err = x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+
+		if !cert.IsCA {
+			return cert, nil
+		}
+	}
 }
