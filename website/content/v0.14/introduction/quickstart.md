@@ -3,19 +3,9 @@ title: Quickstart
 weight: 2
 ---
 
-There are two easy ways to try out Talos Linux.
-Instructions for each are detailed below.
-
-## Katacoda Sandbox
-
-First, you can explore a sandbox environment hosted on Katacoda.
-This approach has the benefit of having no prerequisites and being a bit more guided, so you can quickly learn how to interact with a cluster.
-
-Please visit Katacoda [here](https://katacoda.com/siderolabs/scenarios/talos-intro) to try it out.
-
 ## Local Docker Cluster
 
-Another easy way to try Talos is by using the CLI (`talosctl`) to create a cluster on a machine with `docker` installed.
+The easiest way to try Talos is by using the CLI (`talosctl`) to create a cluster on a machine with `docker` installed.
 
 ### Prerequisites
 
