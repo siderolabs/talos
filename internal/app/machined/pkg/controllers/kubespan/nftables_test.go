@@ -16,7 +16,7 @@ import (
 
 func TestNfTables(t *testing.T) {
 	// use a different mark to avoid conflicts with running kubespan
-	mgr := kubespan.NewNfTablesManager(constants.KubeSpanDefaultFirewallMark+10, constants.KubeSpanDefaultForceFirewallMark+10)
+	mgr := kubespan.NewNfTablesManager(constants.KubeSpanDefaultFirewallMark+10, constants.KubeSpanDefaultForceFirewallMark<<1, constants.KubeSpanDefaultFirewallMask<<1)
 
 	// cleanup should be fine if nothing is installed
 	assert.NoError(t, mgr.Cleanup())

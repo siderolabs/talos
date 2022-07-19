@@ -23,16 +23,18 @@ type RulesManager interface {
 }
 
 // NewRulesManager initializes new RulesManager.
-func NewRulesManager(targetTable, internalMark int) RulesManager {
+func NewRulesManager(targetTable, internalMark, markMask int) RulesManager {
 	return &rulesManager{
 		TargetTable:  targetTable,
 		InternalMark: internalMark,
+		MarkMask:     markMask,
 	}
 }
 
 type rulesManager struct {
 	TargetTable  int
 	InternalMark int
+	MarkMask     int
 }
 
 // Install routing rules.
@@ -49,7 +51,7 @@ func (m *rulesManager) Install() error {
 		Family:            unix.AF_INET,
 		Table:             m.TargetTable,
 		Mark:              m.InternalMark,
-		Mask:              -1,
+		Mask:              m.MarkMask,
 		Goto:              -1,
 		Flow:              -1,
 		SuppressIfgroup:   -1,
@@ -65,7 +67,7 @@ func (m *rulesManager) Install() error {
 		Family:            unix.AF_INET6,
 		Table:             m.TargetTable,
 		Mark:              m.InternalMark,
-		Mask:              -1,
+		Mask:              m.MarkMask,
 		Goto:              -1,
 		Flow:              -1,
 		SuppressIfgroup:   -1,

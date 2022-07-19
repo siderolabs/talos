@@ -56,10 +56,10 @@ type WireguardClient interface {
 }
 
 // RulesManagerFactory allows mocking RulesManager.
-type RulesManagerFactory func(targetTable, internalMark int) RulesManager
+type RulesManagerFactory func(targetTable, internalMark, markMask int) RulesManager
 
 // NfTablesManagerFactory allows mocking NfTablesManager.
-type NfTablesManagerFactory func(externalMark, internalMark uint32) NfTablesManager
+type NfTablesManagerFactory func(externalMark, internalMark, markMask uint32) NfTablesManager
 
 // Inputs implements controller.Controller interface.
 func (ctrl *ManagerController) Inputs() []controller.Input {
@@ -221,7 +221,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		}
 
 		if rulesMgr == nil {
-			rulesMgr = ctrl.RulesManagerFactory(constants.KubeSpanDefaultRoutingTable, constants.KubeSpanDefaultForceFirewallMark)
+			rulesMgr = ctrl.RulesManagerFactory(constants.KubeSpanDefaultRoutingTable, constants.KubeSpanDefaultForceFirewallMark, constants.KubeSpanDefaultFirewallMask)
 
 			if err = rulesMgr.Install(); err != nil {
 				return fmt.Errorf("failed setting up routing rules: %w", err)
@@ -229,7 +229,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		}
 
 		if nfTablesMgr == nil {
-			nfTablesMgr = ctrl.NfTablesManagerFactory(constants.KubeSpanDefaultFirewallMark, constants.KubeSpanDefaultForceFirewallMark)
+			nfTablesMgr = ctrl.NfTablesManagerFactory(constants.KubeSpanDefaultFirewallMark, constants.KubeSpanDefaultForceFirewallMark, constants.KubeSpanDefaultFirewallMask)
 		}
 
 		cfgSpec := cfg.(*kubespan.Config).TypedSpec()
