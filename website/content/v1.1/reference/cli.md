@@ -1686,7 +1686,7 @@ talosctl reboot [flags]
 
 ```
   -h, --help          help for reboot
-  -m, --mode string   select the reboot mode: "default", "powercyle" (skips kexec) (default "default")
+  -m, --mode string   select the reboot mode: "default", "powercycle" (skips kexec) (default "default")
 ```
 
 ### Options inherited from parent commands
@@ -2171,4 +2171,3 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl usage](#talosctl-usage)	 - Retrieve a disk usage
 * [talosctl validate](#talosctl-validate)	 - Validate config
 * [talosctl version](#talosctl-version)	 - Prints the version
-
