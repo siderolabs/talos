@@ -46,6 +46,6 @@ var rebootCmd = &cobra.Command{
 }
 
 func init() {
-	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercyle\" (skips kexec)")
+	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercycle\" (skips kexec)")
 	addCommand(rebootCmd)
 }
