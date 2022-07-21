@@ -20,6 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
@@ -28,6 +29,7 @@ import (
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -118,10 +120,37 @@ func (suite *HostnameConfigSuite) assertNoHostname(id string) error {
 	return nil
 }
 
-func (suite *HostnameConfigSuite) TestDefaults() {
+func (suite *HostnameConfigSuite) TestNoDefaultWithoutMachineConfig() {
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.HostnameConfigController{}))
 
 	suite.startRuntime()
+
+	defaultAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
+	defaultAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("33.11.22.44/32")}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, defaultAddress))
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertHostnames(nil, func(r *network.HostnameSpec) error {
+					suite.Assert().NotEqual("default/hostname", r.Metadata().ID(), "default hostname is still there")
+
+					return nil
+				},
+				)
+			},
+		),
+	)
+}
+
+func (suite *HostnameConfigSuite) TestDefaultIPBasedHostname() {
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.HostnameConfigController{}))
+
+	suite.startRuntime()
+
+	cfg := config.NewMachineConfig(&v1alpha1.Config{ConfigVersion: "v1alpha1"})
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	defaultAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
 	defaultAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("33.11.22.44/32")}
@@ -138,6 +167,46 @@ func (suite *HostnameConfigSuite) TestDefaults() {
 						suite.Assert().Equal("talos-33-11-22-44", r.TypedSpec().Hostname)
 						suite.Assert().Equal("", r.TypedSpec().Domainname)
 						suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+}
+
+func (suite *HostnameConfigSuite) TestDefaultStableHostname() {
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.HostnameConfigController{}))
+
+	suite.startRuntime()
+
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineFeatures: &v1alpha1.FeaturesConfig{
+					StableHostname: pointer.To(true),
+				},
+			},
+		},
+	)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+
+	id := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
+	id.TypedSpec().NodeID = "fGdOI05hVrx3YMagLo0Bwxa2Nm9BAswWm8XLeEj0aS4"
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, id))
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertHostnames(
+					[]string{
+						"default/hostname",
+					}, func(r *network.HostnameSpec) error {
+						suite.Assert().Equal("talos-2gd-76y", r.TypedSpec().Hostname)
 
 						return nil
 					},

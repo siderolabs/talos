@@ -6,17 +6,20 @@ package network
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/martinlindhe/base36"
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -46,6 +49,12 @@ func (ctrl *HostnameConfigController) Inputs() []controller.Input {
 			ID:        pointer.To(network.NodeAddressDefaultID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: cluster.NamespaceName,
+			Type:      cluster.IdentityType,
+			ID:        pointer.To(cluster.LocalIdentity),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -61,7 +70,7 @@ func (ctrl *HostnameConfigController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -97,8 +106,6 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 			defaultAddr = addrs.(*network.NodeAddress) //nolint:errcheck,forcetypeassert
 		}
 
-		specs = append(specs, ctrl.getDefault(defaultAddr))
-
 		// parse kernel cmdline for the default gateway
 		cmdlineHostname := ctrl.parseCmdline(logger)
 		if cmdlineHostname.Hostname != "" {
@@ -111,6 +118,32 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 
 			if configHostname.Hostname != "" {
 				specs = append(specs, configHostname)
+			}
+
+			if cfgProvider.Machine().Features().StableHostnameEnabled() {
+				var identity resource.Resource
+
+				identity, err = r.Get(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
+				if err != nil {
+					if !state.IsNotFoundError(err) {
+						return fmt.Errorf("error getting local identity: %w", err)
+					}
+
+					continue
+				}
+
+				nodeID := identity.(*cluster.Identity).TypedSpec().NodeID
+
+				var stableHostname *network.HostnameSpecSpec
+
+				stableHostname, err = ctrl.getStableDefault(nodeID)
+				if err != nil {
+					return err
+				}
+
+				specs = append(specs, *stableHostname)
+			} else {
+				specs = append(specs, ctrl.getDefault(defaultAddr))
 			}
 		}
 
@@ -170,6 +203,22 @@ func (ctrl *HostnameConfigController) apply(ctx context.Context, r controller.Ru
 	}
 
 	return ids, nil
+}
+
+func (ctrl *HostnameConfigController) getStableDefault(nodeID string) (*network.HostnameSpecSpec, error) {
+	h := sha256.New()
+	h.Write([]byte(nodeID))
+
+	hashBytes := h.Sum(nil)
+
+	b36 := strings.ToLower(base36.EncodeBytes(hashBytes))
+
+	hostname := fmt.Sprintf("talos-%s-%s", b36[0:3], b36[3:6])
+
+	return &network.HostnameSpecSpec{
+		Hostname:    hostname,
+		ConfigLayer: network.ConfigDefault,
+	}, nil
 }
 
 func (ctrl *HostnameConfigController) getDefault(defaultAddr *network.NodeAddress) (spec network.HostnameSpecSpec) {

@@ -922,6 +922,11 @@ func (in *FeaturesConfig) DeepCopyInto(out *FeaturesConfig) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.StableHostname != nil {
+		in, out := &in.StableHostname, &out.StableHostname
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

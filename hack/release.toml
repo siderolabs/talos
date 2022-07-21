@@ -106,6 +106,15 @@ Talos now supports capturing packets on a network interface with `talosctl pcap`
   talosctl pcap --interface eth0
 """
 
+    [notes.stable-hostname]
+        title = "Stable Default Hostname"
+        description="""\
+Talos now generates the default hostname (when there is no explicitly specified hostname) for the nodes based on the
+node id (e.g. `talos-2gd-76y`) instead of using the DHCP assigned IP address (e.g. `talos-172-20-0-2`).
+
+This ensures that the node hostname is not changed when DHCP assigns a new IP to a node.
+"""
+
 [make_deps]
 
     [make_deps.tools]

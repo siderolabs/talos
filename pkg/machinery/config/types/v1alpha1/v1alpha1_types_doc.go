@@ -2250,12 +2250,17 @@ func init() {
 			FieldName: "features",
 		},
 	}
-	FeaturesConfigDoc.Fields = make([]encoder.Doc, 1)
+	FeaturesConfigDoc.Fields = make([]encoder.Doc, 2)
 	FeaturesConfigDoc.Fields[0].Name = "rbac"
 	FeaturesConfigDoc.Fields[0].Type = "bool"
 	FeaturesConfigDoc.Fields[0].Note = ""
 	FeaturesConfigDoc.Fields[0].Description = "Enable role-based access control (RBAC)."
 	FeaturesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Enable role-based access control (RBAC)."
+	FeaturesConfigDoc.Fields[1].Name = "stableHostname"
+	FeaturesConfigDoc.Fields[1].Type = "bool"
+	FeaturesConfigDoc.Fields[1].Note = ""
+	FeaturesConfigDoc.Fields[1].Description = "Enable stable default hostname."
+	FeaturesConfigDoc.Fields[1].Comments[encoder.LineComment] = "Enable stable default hostname."
 
 	VolumeMountConfigDoc.Type = "VolumeMountConfig"
 	VolumeMountConfigDoc.Comments[encoder.LineComment] = "VolumeMountConfig struct describes extra volume mount for the static pods."

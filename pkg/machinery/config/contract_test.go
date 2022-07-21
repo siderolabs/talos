@@ -56,6 +56,22 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.ClusterDiscoveryEnabled())
 	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
+	assert.True(t, contract.StableHostnameEnabled())
+}
+
+func TestContract1_2(t *testing.T) {
+	contract := config.TalosVersion1_2
+
+	assert.True(t, contract.SupportsAggregatorCA())
+	assert.True(t, contract.SupportsECDSAKeys())
+	assert.True(t, contract.SupportsServiceAccount())
+	assert.True(t, contract.SupportsRBACFeature())
+	assert.True(t, contract.SupportsDynamicCertSANs())
+	assert.True(t, contract.SupportsECDSASHA256())
+	assert.True(t, contract.ClusterDiscoveryEnabled())
+	assert.False(t, contract.PodSecurityPolicyEnabled())
+	assert.True(t, contract.PodSecurityAdmissionEnabled())
+	assert.True(t, contract.StableHostnameEnabled())
 }
 
 func TestContract1_1(t *testing.T) {
@@ -70,6 +86,7 @@ func TestContract1_1(t *testing.T) {
 	assert.True(t, contract.ClusterDiscoveryEnabled())
 	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }
 
 func TestContract1_0(t *testing.T) {
@@ -84,6 +101,7 @@ func TestContract1_0(t *testing.T) {
 	assert.True(t, contract.ClusterDiscoveryEnabled())
 	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }
 
 func TestContract0_14(t *testing.T) {
@@ -98,6 +116,7 @@ func TestContract0_14(t *testing.T) {
 	assert.True(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }
 
 func TestContract0_13(t *testing.T) {
@@ -112,6 +131,7 @@ func TestContract0_13(t *testing.T) {
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }
 
 func TestContract0_12(t *testing.T) {
@@ -126,6 +146,7 @@ func TestContract0_12(t *testing.T) {
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }
 
 func TestContract0_11(t *testing.T) {
@@ -140,6 +161,7 @@ func TestContract0_11(t *testing.T) {
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }
 
 func TestContract0_10(t *testing.T) {
@@ -154,6 +176,7 @@ func TestContract0_10(t *testing.T) {
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }
 
 func TestContract0_9(t *testing.T) {
@@ -168,6 +191,7 @@ func TestContract0_9(t *testing.T) {
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }
 
 func TestContract0_8(t *testing.T) {
@@ -182,4 +206,5 @@ func TestContract0_8(t *testing.T) {
 	assert.False(t, contract.ClusterDiscoveryEnabled())
 	assert.True(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
+	assert.False(t, contract.StableHostnameEnabled())
 }

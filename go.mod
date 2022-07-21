@@ -66,6 +66,7 @@ require (
 	github.com/insomniacslk/dhcp v0.0.0-20220504074936-1ca156eafb9f
 	github.com/jsimonetti/rtnetlink v1.2.0
 	github.com/jxskiss/base62 v1.1.0
+	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.14
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
 	github.com/mdlayher/ethtool v0.0.0-20220213132912-856bd6cb8a38

@@ -24,6 +24,7 @@ type VersionContract struct {
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
+	TalosVersion1_2     = &VersionContract{1, 2}
 	TalosVersion1_1     = &VersionContract{1, 1}
 	TalosVersion1_0     = &VersionContract{1, 0}
 	TalosVersion0_14    = &VersionContract{0, 14}
@@ -108,4 +109,9 @@ func (contract *VersionContract) PodSecurityPolicyEnabled() bool {
 // PodSecurityAdmissionEnabled returns true if pod security admission should be enabled by default.
 func (contract *VersionContract) PodSecurityAdmissionEnabled() bool {
 	return contract.Greater(TalosVersion1_0)
+}
+
+// StableHostnameEnabled returns true if stable hostname generation should be enabled by default.
+func (contract *VersionContract) StableHostnameEnabled() bool {
+	return contract.Greater(TalosVersion1_1)
 }

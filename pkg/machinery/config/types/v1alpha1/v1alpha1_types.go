@@ -2279,6 +2279,9 @@ type FeaturesConfig struct {
 	//   description: |
 	//     Enable role-based access control (RBAC).
 	RBAC *bool `yaml:"rbac,omitempty"`
+	//   description: |
+	//     Enable stable default hostname.
+	StableHostname *bool `yaml:"stableHostname,omitempty"`
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.

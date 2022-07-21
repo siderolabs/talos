@@ -2529,6 +2529,7 @@ rbac: true # Enable role-based access control (RBAC).
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`rbac` |bool |Enable role-based access control (RBAC).  | |
+|`stableHostname` |bool |Enable stable default hostname.  | |
 
 
 

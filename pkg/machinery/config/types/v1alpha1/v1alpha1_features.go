@@ -4,6 +4,8 @@
 
 package v1alpha1
 
+import "github.com/siderolabs/go-pointer"
+
 // RBACEnabled implements config.Features interface.
 func (f *FeaturesConfig) RBACEnabled() bool {
 	if f.RBAC == nil {
@@ -11,4 +13,9 @@ func (f *FeaturesConfig) RBACEnabled() bool {
 	}
 
 	return *f.RBAC
+}
+
+// StableHostnameEnabled implements config.Features interface.
+func (f *FeaturesConfig) StableHostnameEnabled() bool {
+	return pointer.SafeDeref(f.StableHostname)
 }
