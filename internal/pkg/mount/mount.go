@@ -463,7 +463,7 @@ func readonlyOverlay(p *Point) error {
 
 func ensureDirectory(target string) (err error) {
 	if _, err := os.Stat(target); os.IsNotExist(err) {
-		if err = os.MkdirAll(target, os.ModeDir); err != nil {
+		if err = os.MkdirAll(target, 0o755); err != nil {
 			return fmt.Errorf("error creating mount point directory %s: %w", target, err)
 		}
 	}
