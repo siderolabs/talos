@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	goruntime "runtime"
@@ -23,7 +22,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
 	"github.com/talos-systems/net"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -42,13 +40,14 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/argsbuilder"
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/filetree"
 	"github.com/talos-systems/talos/pkg/logging"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	etcdresource "github.com/talos-systems/talos/pkg/machinery/resources/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 )
 
@@ -87,7 +86,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	}
 
 	// Make sure etcd user can access files in the data directory.
-	if err = chownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID); err != nil {
+	if err = filetree.ChownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID); err != nil {
 		return err
 	}
 
@@ -126,7 +125,7 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 		panic(fmt.Sprintf("unexpected machine type %v", t))
 	}
 
-	if err = generatePKI(ctx, r); err != nil {
+	if err = waitPKI(ctx, r); err != nil {
 		return fmt.Errorf("failed to generate etcd PKI: %w", err)
 	}
 
@@ -243,102 +242,16 @@ func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 	}
 }
 
-//nolint:gocyclo
-func generatePKI(ctx context.Context, r runtime.Runtime) (err error) {
-	if err = os.MkdirAll(constants.EtcdPKIPath, 0o700); err != nil {
-		return err
-	}
+func waitPKI(ctx context.Context, r runtime.Runtime) error {
+	_, err := r.State().V1Alpha2().Resources().WatchFor(ctx,
+		resource.NewMetadata(etcdresource.NamespaceName, etcdresource.PKIStatusType, etcdresource.PKIID, resource.VersionUndefined),
+		state.WithEventTypes(state.Created, state.Updated),
+	)
 
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCACert, r.Config().Cluster().Etcd().CA().Crt, 0o400); err != nil {
-		return fmt.Errorf("failed to write CA certificate: %w", err)
-	}
-
-	if err = ioutil.WriteFile(constants.KubernetesEtcdCAKey, r.Config().Cluster().Etcd().CA().Key, 0o400); err != nil {
-		return fmt.Errorf("failed to write CA key: %w", err)
-	}
-
-	// wait for etcd certificates to be generated in the controller
-	watchCh := make(chan state.Event)
-
-	if err = r.State().V1Alpha2().Resources().Watch(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdType, secrets.EtcdID, resource.VersionUndefined), watchCh); err != nil {
-		return err
-	}
-
-	var event state.Event
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case event = <-watchCh:
-		}
-
-		if event.Type == state.Created || event.Type == state.Updated {
-			break
-		}
-	}
-
-	// wait for additional events with 500ms timeout and absorb new versions of the resource
-	const settleDownTimeout = 500 * time.Millisecond
-
-	timer := time.NewTimer(settleDownTimeout)
-	defer timer.Stop()
-
-waitLoop:
-	for {
-		select {
-		case event = <-watchCh:
-			if !timer.Stop() {
-				<-timer.C
-			}
-
-			timer.Reset(settleDownTimeout)
-		case <-timer.C:
-			break waitLoop
-		}
-	}
-
-	etcdCerts := event.Resource.(*secrets.Etcd).TypedSpec()
-
-	for _, keypair := range []struct {
-		getter   func() *x509.PEMEncodedCertificateAndKey
-		keyPath  string
-		certPath string
-	}{
-		{
-			getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.Etcd },
-			keyPath:  constants.KubernetesEtcdKey,
-			certPath: constants.KubernetesEtcdCert,
-		},
-		{
-			getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.EtcdPeer },
-			keyPath:  constants.KubernetesEtcdPeerKey,
-			certPath: constants.KubernetesEtcdPeerCert,
-		},
-		{
-			getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.EtcdAdmin },
-			keyPath:  constants.KubernetesEtcdAdminKey,
-			certPath: constants.KubernetesEtcdAdminCert,
-		},
-	} {
-		if err = ioutil.WriteFile(keypair.keyPath, keypair.getter().Key, 0o400); err != nil {
-			return err
-		}
-
-		if err = ioutil.WriteFile(keypair.certPath, keypair.getter().Crt, 0o400); err != nil {
-			return err
-		}
-	}
-
-	return chownRecursive(constants.EtcdPKIPath, constants.EtcdUserID, constants.EtcdUserID)
+	return err
 }
 
 func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
-	// update PKI on each join attempt
-	if err := generatePKI(ctx, r); err != nil {
-		return nil, 0, fmt.Errorf("failed to generate etcd PKI: %w", err)
-	}
-
 	client, err := etcd.NewClientFromControlPlaneIPsNoDiscovery(ctx, r.State().V1Alpha2().Resources())
 	if err != nil {
 		return nil, 0, err
@@ -672,7 +585,7 @@ func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
 		return fmt.Errorf("error deleting snapshot: %w", err)
 	}
 
-	return chownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID)
+	return filetree.ChownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID)
 }
 
 func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) error {

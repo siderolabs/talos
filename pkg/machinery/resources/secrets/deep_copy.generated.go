@@ -112,6 +112,14 @@ func (o KubernetesRootSpec) DeepCopy() KubernetesRootSpec {
 			*cp.Endpoint.User = *o.Endpoint.User
 		}
 	}
+	if o.LocalEndpoint != nil {
+		cp.LocalEndpoint = new(url.URL)
+		*cp.LocalEndpoint = *o.LocalEndpoint
+		if o.LocalEndpoint.User != nil {
+			cp.LocalEndpoint.User = new(url.Userinfo)
+			*cp.LocalEndpoint.User = *o.LocalEndpoint.User
+		}
+	}
 	if o.CertSANs != nil {
 		cp.CertSANs = make([]string, len(o.CertSANs))
 		copy(cp.CertSANs, o.CertSANs)

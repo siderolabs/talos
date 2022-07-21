@@ -21,6 +21,7 @@ import (
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/config"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/etcd"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/hardware"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
@@ -103,6 +104,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&config.MachineTypeController{},
 		&config.K8sAddressFilterController{},
 		&config.K8sControlPlaneController{},
+		&etcd.PKIController{},
 		&files.CRIConfigPartsController{},
 		&files.CRIRegistryConfigController{},
 		&files.EtcFileController{

@@ -16,6 +16,7 @@ import (
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
@@ -63,6 +64,7 @@ func NewState() (*State, error) {
 		{cluster.NamespaceName, "Cluster configuration and discovery resources."},
 		{cluster.RawNamespaceName, "Cluster unmerged raw resources."},
 		{config.NamespaceName, "Talos node configuration."},
+		{etcd.NamespaceName, "etcd resources."},
 		{files.NamespaceName, "Files and file-like resources."},
 		{hardware.NamespaceName, "Hardware resources."},
 		{k8s.NamespaceName, "Kubernetes all node types resources."},
@@ -87,6 +89,7 @@ func NewState() (*State, error) {
 		&cluster.Member{},
 		&config.MachineConfig{},
 		&config.MachineType{},
+		&etcd.PKIStatus{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
 		&hardware.Processor{},
