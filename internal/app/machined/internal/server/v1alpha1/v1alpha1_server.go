@@ -16,6 +16,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -2118,30 +2119,10 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		return fmt.Errorf("error setting promiscuous mode %v: %w", in.Promiscuous, err)
 	}
 
-	go func() {
-		defer pw.Close() //nolint:errcheck
-		defer handle.Close()
+	// start packet capture in a goroutine which writes to a pipe back
+	go capturePackets(pw, handle, in.SnapLen, linkType)
 
-		pcapw := pcapgo.NewWriterNanos(pw)
-
-		if errCapture := pcapw.WriteFileHeader(in.SnapLen, linkType); errCapture != nil {
-			pw.CloseWithError(errCapture) //nolint:errcheck
-
-			return
-		}
-
-		pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
-		pkgsrc.Lazy = true
-
-		for packet := range pkgsrc.Packets() {
-			if errCapture := pcapw.WritePacket(packet.Metadata().CaptureInfo, packet.Data()); errCapture != nil {
-				pw.CloseWithError(errCapture) //nolint:errcheck
-
-				return
-			}
-		}
-	}()
-
+	// main goroutine reads the .pcap from the file and delivers it to the client in chunks
 	defer pr.Close() //nolint:errcheck
 
 	ctx, cancel := context.WithCancel(srv.Context())
@@ -2158,12 +2139,66 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		}
 	}
 
-	stats, err := handle.Stats()
-	if err == nil {
-		log.Printf("pcap: packets captured %d, dropped %d", stats.Packets, stats.Drops)
+	return nil
+}
+
+//nolint:gocyclo
+func capturePackets(pw *io.PipeWriter, handle *pcapgo.EthernetHandle, snapLen uint32, linkType layers.LinkType) {
+	defer pw.Close() //nolint:errcheck
+	defer handle.Close()
+
+	pcapw := pcapgo.NewWriterNanos(pw)
+
+	if err := pcapw.WriteFileHeader(snapLen, linkType); err != nil {
+		pw.CloseWithError(err) //nolint:errcheck
+
+		return
 	}
 
-	return nil
+	defer func() {
+		stats, err := handle.Stats()
+		if err == nil {
+			log.Printf("pcap: packets captured %d, dropped %d", stats.Packets, stats.Drops)
+		}
+	}()
+
+	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
+	pkgsrc.Lazy = true
+
+	for {
+		packet, err := pkgsrc.NextPacket()
+		if err == nil {
+			if err = pcapw.WritePacket(packet.Metadata().CaptureInfo, packet.Data()); err != nil {
+				pw.CloseWithError(err) //nolint:errcheck
+
+				return
+			}
+
+			continue
+		}
+
+		// Immediately retry for temporary network errors
+		if nerr, ok := err.(net.Error); ok && nerr.Temporary() { //nolint:staticcheck
+			continue
+		}
+
+		// Immediately retry for EAGAIN
+		if errors.Is(err, syscall.EAGAIN) {
+			continue
+		}
+
+		// Immediately break for known unrecoverable errors
+		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) ||
+			errors.Is(err, io.ErrNoProgress) || errors.Is(err, io.ErrClosedPipe) || errors.Is(err, io.ErrShortBuffer) ||
+			errors.Is(err, syscall.EBADF) ||
+			strings.Contains(err.Error(), "use of closed file") {
+			pw.CloseWithError(err) //nolint:errcheck
+
+			return
+		}
+
+		time.Sleep(5 * time.Millisecond) // short sleep before retrying some errors
+	}
 }
 
 func upgradeMutex(c *etcd.Client) (*concurrency.Mutex, error) {
