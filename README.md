@@ -16,11 +16,11 @@
 ---
 
 **Talos** is a modern OS for running Kubernetes: secure, immutable, and minimal.
-Talos is fully open source, production ready, and supported by the people at [Sidero Labs](https://www.SideroLabs.com/)
+Talos is fully open source, production-ready, and supported by the people at [Sidero Labs](https://www.SideroLabs.com/)
 All system management is done via an API - there is no shell or interactive console.
 Benefits include:
 
-- **Security**: Talos reduces your attack surface: It's minimal, hardened and immutable.
+- **Security**: Talos reduces your attack surface: It's minimal, hardened, and immutable.
   All API access is secured with mutual TLS (mTLS) authentication.
 - **Predictability**: Talos eliminates configuration drift, reduces unknown factors by employing immutable infrastructure ideology, and delivers atomic updates.
 - **Evolvability**: Talos simplifies your architecture, increases your agility, and always delivers current stable Kubernetes and Linux versions.
@@ -37,7 +37,7 @@ For instructions on deploying and managing Talos, see the [Documentation](https:
 - Twitter: [@SideroLabs](https://twitter.com/SideroLabs)
 - Email: [info@SideroLabs.com](mailto:info@SideroLabs.com)
 
-If you're interested in this project and would like to help in engineering efforts, or have general usage questions, we are happy to have you!
+If you're interested in this project and would like to help in engineering efforts or have general usage questions, we are happy to have you!
 We hold a weekly meeting that all audiences are welcome to attend.
 
 We would appreciate your feedback so that we can make Talos even better!
@@ -67,4 +67,4 @@ Some software we distribute is under the General Public License family
 of licenses or other licenses that require we provide you with the
 source code.
 If you would like a copy of the source code for this
-software, please contact via email: info at SideroLabs.com.
+software, please contact us via email: info at SideroLabs.com.
