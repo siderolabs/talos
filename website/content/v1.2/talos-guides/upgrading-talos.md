@@ -22,7 +22,7 @@ Unless explicitly told to `preserve` data, an upgrade will cause the node to wip
 
 *Note* that the default since Talos version 1.0 is to specify the Kubernetes version in the machine config.
 This means an upgrade of the Talos Linux OS will not apply an upgrade of the Kubernetes version by default.
-Kubernetes upgrades should be managed separately per [upgrading kubernetes]({{ relref "../kubernetes-guides/upgrading-kubernetes" }}).
+Kubernetes upgrades should be managed separately per [upgrading kubernetes]({{< relref "../kubernetes-guides/upgrading-kubernetes" >}}).
 Each release of Talos Linux includes the latest stable Kubernetes version by default.
 
 ## Video Walkthrough
