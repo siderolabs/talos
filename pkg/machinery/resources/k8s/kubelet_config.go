@@ -24,13 +24,14 @@ type KubeletConfig = typed.Resource[KubeletConfigSpec, KubeletConfigRD]
 
 // KubeletConfigSpec holds the source of kubelet configuration.
 type KubeletConfigSpec struct {
-	Image                 string                 `yaml:"image"`
-	ClusterDNS            []string               `yaml:"clusterDNS"`
-	ClusterDomain         string                 `yaml:"clusterDomain"`
-	ExtraArgs             map[string]string      `yaml:"extraArgs,omitempty"`
-	ExtraMounts           []specs.Mount          `yaml:"extraMounts,omitempty"`
-	ExtraConfig           map[string]interface{} `yaml:"extraConfig,omitempty"`
-	CloudProviderExternal bool                   `yaml:"cloudProviderExternal"`
+	Image                        string                 `yaml:"image"`
+	ClusterDNS                   []string               `yaml:"clusterDNS"`
+	ClusterDomain                string                 `yaml:"clusterDomain"`
+	ExtraArgs                    map[string]string      `yaml:"extraArgs,omitempty"`
+	ExtraMounts                  []specs.Mount          `yaml:"extraMounts,omitempty"`
+	ExtraConfig                  map[string]interface{} `yaml:"extraConfig,omitempty"`
+	CloudProviderExternal        bool                   `yaml:"cloudProviderExternal"`
+	DefaultRuntimeSeccompEnabled bool                   `yaml:"defaultRuntimeSeccompEnabled"`
 }
 
 // DeepCopy implements typed.DeepCopyable interface.
@@ -45,13 +46,14 @@ func (spec KubeletConfigSpec) DeepCopy() KubeletConfigSpec {
 	extraConfig = extraConfig.DeepCopy()
 
 	return KubeletConfigSpec{
-		Image:                 spec.Image,
-		ClusterDNS:            append([]string(nil), spec.ClusterDNS...),
-		ClusterDomain:         spec.ClusterDomain,
-		ExtraArgs:             extraArgs,
-		ExtraMounts:           append([]specs.Mount(nil), spec.ExtraMounts...),
-		ExtraConfig:           extraConfig.Object,
-		CloudProviderExternal: spec.CloudProviderExternal,
+		Image:                        spec.Image,
+		ClusterDNS:                   append([]string(nil), spec.ClusterDNS...),
+		ClusterDomain:                spec.ClusterDomain,
+		ExtraArgs:                    extraArgs,
+		ExtraMounts:                  append([]specs.Mount(nil), spec.ExtraMounts...),
+		ExtraConfig:                  extraConfig.Object,
+		CloudProviderExternal:        spec.CloudProviderExternal,
+		DefaultRuntimeSeccompEnabled: spec.DefaultRuntimeSeccompEnabled,
 	}
 }
 

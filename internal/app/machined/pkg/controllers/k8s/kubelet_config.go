@@ -96,6 +96,7 @@ func (ctrl *KubeletConfigController) Run(ctx context.Context, r controller.Runti
 				kubeletConfig.ExtraMounts = cfgProvider.Machine().Kubelet().ExtraMounts()
 				kubeletConfig.ExtraConfig = cfgProvider.Machine().Kubelet().ExtraConfig()
 				kubeletConfig.CloudProviderExternal = cfgProvider.Cluster().ExternalCloudProvider().Enabled()
+				kubeletConfig.DefaultRuntimeSeccompEnabled = cfgProvider.Machine().Kubelet().DefaultRuntimeSeccompProfileEnabled()
 
 				return nil
 			},

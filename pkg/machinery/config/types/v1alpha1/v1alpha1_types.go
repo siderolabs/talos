@@ -368,6 +368,17 @@ var (
 		AdminKubeconfigCertLifetime: time.Hour,
 	}
 
+	machineSeccompExample = []*MachineSeccompProfile{
+		{
+			MachineSeccompProfileName: "audit.json",
+			MachineSeccompProfileValue: Unstructured{
+				Object: map[string]interface{}{
+					"defaultAction": "SCMP_ACT_LOG",
+				},
+			},
+		},
+	}
+
 	clusterEndpointExample1 = &Endpoint{
 		mustParseURL("https://1.2.3.4:6443"),
 	}
@@ -812,6 +823,21 @@ type MachineConfig struct {
 	//   examples:
 	//     - value: machineKernelExample
 	MachineKernel *KernelConfig `yaml:"kernel,omitempty"`
+	//  description: |
+	//    Configures the seccomp profiles for the machine.
+	//  examples:
+	//    - value: machineSeccompExample
+	MachineSeccompProfiles []*MachineSeccompProfile `yaml:"seccompProfiles,omitempty" talos:"omitonlyifnil"`
+}
+
+// MachineSeccompProfile defines seccomp profiles for the machine.
+type MachineSeccompProfile struct {
+	//  description: |
+	//    The `name` field is used to provide the file name of the seccomp profile.
+	MachineSeccompProfileName string `yaml:"name"`
+	// description: |
+	//   The `value` field is used to provide the seccomp profile.
+	MachineSeccompProfileValue Unstructured `yaml:"value"`
 }
 
 // ClusterConfig represents the cluster-wide config values.
@@ -1034,6 +1060,14 @@ type KubeletConfig struct {
 	//   examples:
 	//     - value: kubeletExtraConfigExample
 	KubeletExtraConfig Unstructured `yaml:"extraConfig,omitempty"`
+	//  description: |
+	//    Enable container runtime default Seccomp profile.
+	//  values:
+	//    - true
+	//    - yes
+	//    - false
+	//    - no
+	KubeletDefaultRuntimeSeccompProfileEnabled *bool `yaml:"defaultRuntimeSeccompProfileEnabled,omitempty"`
 	//   description: |
 	//     The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.
 	//     This is required in clouds like AWS.

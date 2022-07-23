@@ -279,9 +279,10 @@ func TestKubeletSpecSuite(t *testing.T) {
 
 func TestNewKubeletConfigurationFail(t *testing.T) {
 	for _, tt := range []struct {
-		name        string
-		extraConfig map[string]interface{}
-		expectedErr string
+		name                                string
+		extraConfig                         map[string]interface{}
+		defaultRuntimeSeccompProfileEnabled bool
+		expectedErr                         string
 	}{
 		{
 			name: "wrong fields",
@@ -313,7 +314,7 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 
 		t.Run(
 			tt.name, func(t *testing.T) {
-				_, err := k8sctrl.NewKubeletConfiguration([]string{"10.96.0.10"}, "cluster.svc", tt.extraConfig)
+				_, err := k8sctrl.NewKubeletConfiguration([]string{"10.96.0.10"}, "cluster.svc", tt.extraConfig, tt.defaultRuntimeSeccompProfileEnabled)
 				require.Error(t, err)
 
 				assert.EqualError(t, err, tt.expectedErr)
@@ -371,9 +372,10 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name              string
-		extraConfig       map[string]interface{}
-		expectedOverrides func(*kubeletconfig.KubeletConfiguration)
+		name                                string
+		extraConfig                         map[string]interface{}
+		defaultRuntimeSeccompProfileEnabled bool
+		expectedOverrides                   func(*kubeletconfig.KubeletConfiguration)
 	}{
 		{
 			name: "override some",
@@ -397,6 +399,46 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				kc.ShutdownGracePeriodCriticalPods = metav1.Duration{}
 			},
 		},
+		{
+			name:                                "enable seccomp default",
+			defaultRuntimeSeccompProfileEnabled: true,
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.SeccompDefault = pointer.To(true)
+				kc.FeatureGates = map[string]bool{
+					"SeccompDefault": true,
+				}
+			},
+		},
+		{
+			name:                                "enable seccomp default when featuregate already set",
+			defaultRuntimeSeccompProfileEnabled: true,
+			extraConfig: map[string]interface{}{
+				"featureGates": map[string]interface{}{
+					"SeccompDefault": true,
+				},
+			},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.SeccompDefault = pointer.To(true)
+				kc.FeatureGates = map[string]bool{
+					"SeccompDefault": true,
+				}
+			},
+		},
+		{
+			name:                                "enable seccomp default when featuregate already set to false",
+			defaultRuntimeSeccompProfileEnabled: true,
+			extraConfig: map[string]interface{}{
+				"featureGates": map[string]interface{}{
+					"SeccompDefault": false,
+				},
+			},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.SeccompDefault = pointer.To(true)
+				kc.FeatureGates = map[string]bool{
+					"SeccompDefault": true,
+				}
+			},
+		},
 	} {
 		tt := tt
 
@@ -404,7 +446,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			expected := defaultKubeletConfig
 			tt.expectedOverrides(&expected)
 
-			config, err := k8sctrl.NewKubeletConfiguration([]string{"10.0.0.5"}, "cluster.local", tt.extraConfig)
+			config, err := k8sctrl.NewKubeletConfiguration([]string{"10.0.0.5"}, "cluster.local", tt.extraConfig, tt.defaultRuntimeSeccompProfileEnabled)
 
 			require.NoError(t, err)
 

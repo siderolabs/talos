@@ -53,6 +53,21 @@ func (c *Config) Machine() config.MachineConfig {
 	return c.MachineConfig
 }
 
+// SeccompProfiles implements the config.Provider interface.
+func (m *MachineConfig) SeccompProfiles() []config.SeccompProfile {
+	return slices.Map(m.MachineSeccompProfiles, func(m *MachineSeccompProfile) config.SeccompProfile { return m })
+}
+
+// Name implements the config.Provider interface.
+func (m *MachineSeccompProfile) Name() string {
+	return m.MachineSeccompProfileName
+}
+
+// Value implements the config.Provider interface.
+func (m *MachineSeccompProfile) Value() map[string]interface{} {
+	return m.MachineSeccompProfileValue.Object
+}
+
 // Cluster implements the config.Provider interface.
 func (c *Config) Cluster() config.ClusterConfig {
 	if c.ClusterConfig == nil {
@@ -317,6 +332,11 @@ func (k *KubeletConfig) ExtraMounts() []specs.Mount {
 // ExtraConfig implements the config.Provider interface.
 func (k *KubeletConfig) ExtraConfig() map[string]interface{} {
 	return k.KubeletExtraConfig.Object
+}
+
+// DefaultRuntimeSeccompProfileEnabled implements the config.Provider interface.
+func (k *KubeletConfig) DefaultRuntimeSeccompProfileEnabled() bool {
+	return pointer.SafeDeref(k.KubeletDefaultRuntimeSeccompProfileEnabled)
 }
 
 // RegisterWithFQDN implements the config.Provider interface.

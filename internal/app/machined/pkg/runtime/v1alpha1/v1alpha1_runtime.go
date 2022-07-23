@@ -132,6 +132,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .machine.kernel
 	// * .machine.registries (note that auth is not applied immediately, containerd limitation)
 	// * .machine.pods
+	// * .machine.seccompProfiles
 	// * .machine.features.kubernetesTalosAPIAccess
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
@@ -149,6 +150,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineKernel = currentConfig.MachineConfig.MachineKernel
 		newConfig.MachineConfig.MachineRegistries = currentConfig.MachineConfig.MachineRegistries
 		newConfig.MachineConfig.MachinePods = currentConfig.MachineConfig.MachinePods
+		newConfig.MachineConfig.MachineSeccompProfiles = currentConfig.MachineConfig.MachineSeccompProfiles
 
 		if newConfig.MachineConfig.MachineFeatures != nil && currentConfig.MachineConfig.MachineFeatures != nil {
 			newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig

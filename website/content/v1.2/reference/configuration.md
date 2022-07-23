@@ -393,6 +393,38 @@ kernel:
     modules:
         - name: brtfs # Module name.
 {{< /highlight >}}</details> | |
+|`seccompProfiles` |[]<a href="#machineseccompprofile">MachineSeccompProfile</a> |Configures the seccomp profiles for the machine. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+seccompProfiles:
+    - name: audit.json # The `name` field is used to provide the file name of the seccomp profile.
+      # The `value` field is used to provide the seccomp profile.
+      value:
+        defaultAction: SCMP_ACT_LOG
+{{< /highlight >}}</details> | |
+
+
+
+---
+## MachineSeccompProfile
+MachineSeccompProfile defines seccomp profiles for the machine.
+
+Appears in:
+
+- <code><a href="#machineconfig">MachineConfig</a>.seccompProfiles</code>
+
+
+
+{{< highlight yaml >}}
+- name: audit.json # The `name` field is used to provide the file name of the seccomp profile.
+  # The `value` field is used to provide the seccomp profile.
+  value:
+    defaultAction: SCMP_ACT_LOG
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |The `name` field is used to provide the file name of the seccomp profile.  | |
+|`value` |Unstructured |The `value` field is used to provide the seccomp profile.  | |
 
 
 
@@ -748,6 +780,7 @@ extraMounts:
 extraConfig:
     serverTLSBootstrap: true
 {{< /highlight >}}</details> | |
+|`defaultRuntimeSeccompProfileEnabled` |bool |Enable container runtime default Seccomp profile.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`registerWithFQDN` |bool |<details><summary>The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.</summary>This is required in clouds like AWS.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`nodeIP` |<a href="#kubeletnodeipconfig">KubeletNodeIPConfig</a> |<details><summary>The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.</summary>This is used when a node has multiple addresses to choose from.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeIP:

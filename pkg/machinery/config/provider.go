@@ -63,6 +63,14 @@ type MachineConfig interface {
 	Udev() UdevConfig
 	Logging() Logging
 	Kernel() Kernel
+	SeccompProfiles() []SeccompProfile
+}
+
+// SeccompProfile defines the requirements for a config that pertains to seccomp
+// related options.
+type SeccompProfile interface {
+	Name() string
+	Value() map[string]interface{}
 }
 
 // Disk represents the options available for partitioning, formatting, and
@@ -300,6 +308,7 @@ type Kubelet interface {
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
 	ExtraConfig() map[string]interface{}
+	DefaultRuntimeSeccompProfileEnabled() bool
 	RegisterWithFQDN() bool
 	NodeIP() KubeletNodeIP
 }

@@ -96,6 +96,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 							"serverTLSBootstrap": true,
 						},
 					},
+					KubeletDefaultRuntimeSeccompProfileEnabled: pointer.To(true),
 				},
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
@@ -164,6 +165,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 					spec.ExtraConfig,
 				)
 				suite.Assert().True(spec.CloudProviderExternal)
+				suite.Assert().True(spec.DefaultRuntimeSeccompEnabled)
 
 				return nil
 			},

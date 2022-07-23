@@ -844,7 +844,7 @@ func SetupSharedFilesystems(seq runtime.Sequence, data interface{}) (runtime.Tas
 // SetupVarDirectory represents the SetupVarDirectory task.
 func SetupVarDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for _, p := range []string{"/var/log/audit", "/var/log/containers", "/var/log/pods", "/var/lib/kubelet", "/var/run/lock"} {
+		for _, p := range []string{"/var/log/audit", "/var/log/containers", "/var/log/pods", "/var/lib/kubelet", "/var/run/lock", constants.SeccompProfilesDirectory} {
 			if err = os.MkdirAll(p, 0o700); err != nil {
 				return err
 			}

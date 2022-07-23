@@ -15,6 +15,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
+//nolint:gocyclo
 func initUd(in *Input) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
@@ -62,6 +63,10 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 
 	if in.VersionContract.StableHostnameEnabled() {
 		machine.MachineFeatures.StableHostname = pointer.To(true)
+	}
+
+	if in.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
+		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
 	}
 
 	certSANs := in.GetAPIServerSANs()

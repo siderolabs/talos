@@ -163,7 +163,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error merging arguments: %w", err)
 		}
 
-		kubeletConfig, err := NewKubeletConfiguration(cfgSpec.ClusterDNS, cfgSpec.ClusterDomain, cfgSpec.ExtraConfig)
+		kubeletConfig, err := NewKubeletConfiguration(cfgSpec.ClusterDNS, cfgSpec.ClusterDomain, cfgSpec.ExtraConfig, cfgSpec.DefaultRuntimeSeccompEnabled)
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
 		}
@@ -228,7 +228,7 @@ func prepareExtraConfig(extraConfig map[string]interface{}) (*kubeletconfig.Kube
 // NewKubeletConfiguration builds kubelet configuration with defaults and overrides from extraConfig.
 //
 //nolint:gocyclo
-func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig map[string]interface{}) (*kubeletconfig.KubeletConfiguration, error) {
+func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig map[string]interface{}, defaultRuntimeSeccompProfileEnabled bool) (*kubeletconfig.KubeletConfiguration, error) {
 	config, err := prepareExtraConfig(extraConfig)
 	if err != nil {
 		return nil, err
@@ -260,6 +260,19 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 	config.KubeletCgroups = constants.CgroupKubelet
 	config.RotateCertificates = true
 	config.ProtectKernelDefaults = true
+
+	if defaultRuntimeSeccompProfileEnabled {
+		config.SeccompDefault = pointer.To(true)
+		if config.FeatureGates != nil {
+			if defaultRuntimeSeccompProfileEnabled, overridden := config.FeatureGates["SeccompDefault"]; overridden && !defaultRuntimeSeccompProfileEnabled {
+				config.FeatureGates["SeccompDefault"] = true
+			}
+		} else {
+			config.FeatureGates = map[string]bool{
+				"SeccompDefault": true,
+			}
+		}
+	}
 
 	// fields which can be overridden
 	if config.Address == "" {

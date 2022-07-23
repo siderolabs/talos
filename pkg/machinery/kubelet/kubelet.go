@@ -20,4 +20,5 @@ var ProtectedConfigurationFields = []string{
 	"rotateCertificates",
 	"systemCgroups",
 	"staticPodPath",
+	"seccompDefault",
 }

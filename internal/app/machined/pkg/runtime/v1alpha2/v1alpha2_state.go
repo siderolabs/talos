@@ -16,6 +16,7 @@ import (
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/cri"
 	"github.com/talos-systems/talos/pkg/machinery/resources/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
@@ -73,6 +74,7 @@ func NewState() (*State, error) {
 		{kubespan.NamespaceName, "KubeSpan resources."},
 		{network.NamespaceName, "Networking resources."},
 		{network.ConfigNamespaceName, "Networking configuration resources."},
+		{cri.NamespaceName, "CRI Seccomp resources."},
 		{secrets.NamespaceName, "Resources with secret material."},
 		{perf.NamespaceName, "Stats resources."},
 	} {
@@ -90,6 +92,7 @@ func NewState() (*State, error) {
 		&cluster.Member{},
 		&config.MachineConfig{},
 		&config.MachineType{},
+		&cri.SeccompProfile{},
 		&etcd.PKIStatus{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},

@@ -16,6 +16,7 @@ import (
 var (
 	ConfigDoc                         encoder.Doc
 	MachineConfigDoc                  encoder.Doc
+	MachineSeccompProfileDoc          encoder.Doc
 	ClusterConfigDoc                  encoder.Doc
 	ExtraMountDoc                     encoder.Doc
 	MachineControlPlaneConfigDoc      encoder.Doc
@@ -144,7 +145,7 @@ func init() {
 			FieldName: "machine",
 		},
 	}
-	MachineConfigDoc.Fields = make([]encoder.Doc, 21)
+	MachineConfigDoc.Fields = make([]encoder.Doc, 22)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
@@ -305,6 +306,36 @@ func init() {
 	MachineConfigDoc.Fields[20].Comments[encoder.LineComment] = "Configures the kernel."
 
 	MachineConfigDoc.Fields[20].AddExample("", machineKernelExample)
+	MachineConfigDoc.Fields[21].Name = "seccompProfiles"
+	MachineConfigDoc.Fields[21].Type = "[]MachineSeccompProfile"
+	MachineConfigDoc.Fields[21].Note = ""
+	MachineConfigDoc.Fields[21].Description = "Configures the seccomp profiles for the machine."
+	MachineConfigDoc.Fields[21].Comments[encoder.LineComment] = "Configures the seccomp profiles for the machine."
+
+	MachineConfigDoc.Fields[21].AddExample("", machineSeccompExample)
+
+	MachineSeccompProfileDoc.Type = "MachineSeccompProfile"
+	MachineSeccompProfileDoc.Comments[encoder.LineComment] = "MachineSeccompProfile defines seccomp profiles for the machine."
+	MachineSeccompProfileDoc.Description = "MachineSeccompProfile defines seccomp profiles for the machine."
+
+	MachineSeccompProfileDoc.AddExample("", machineSeccompExample)
+	MachineSeccompProfileDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "MachineConfig",
+			FieldName: "seccompProfiles",
+		},
+	}
+	MachineSeccompProfileDoc.Fields = make([]encoder.Doc, 2)
+	MachineSeccompProfileDoc.Fields[0].Name = "name"
+	MachineSeccompProfileDoc.Fields[0].Type = "string"
+	MachineSeccompProfileDoc.Fields[0].Note = ""
+	MachineSeccompProfileDoc.Fields[0].Description = "The `name` field is used to provide the file name of the seccomp profile."
+	MachineSeccompProfileDoc.Fields[0].Comments[encoder.LineComment] = "The `name` field is used to provide the file name of the seccomp profile."
+	MachineSeccompProfileDoc.Fields[1].Name = "value"
+	MachineSeccompProfileDoc.Fields[1].Type = "Unstructured"
+	MachineSeccompProfileDoc.Fields[1].Note = ""
+	MachineSeccompProfileDoc.Fields[1].Description = "The `value` field is used to provide the seccomp profile."
+	MachineSeccompProfileDoc.Fields[1].Comments[encoder.LineComment] = "The `value` field is used to provide the seccomp profile."
 
 	ClusterConfigDoc.Type = "ClusterConfig"
 	ClusterConfigDoc.Comments[encoder.LineComment] = "ClusterConfig represents the cluster-wide config values."
@@ -563,7 +594,7 @@ func init() {
 			FieldName: "kubelet",
 		},
 	}
-	KubeletConfigDoc.Fields = make([]encoder.Doc, 7)
+	KubeletConfigDoc.Fields = make([]encoder.Doc, 8)
 	KubeletConfigDoc.Fields[0].Name = "image"
 	KubeletConfigDoc.Fields[0].Type = "string"
 	KubeletConfigDoc.Fields[0].Note = ""
@@ -601,24 +632,35 @@ func init() {
 	KubeletConfigDoc.Fields[4].Comments[encoder.LineComment] = "The `extraConfig` field is used to provide kubelet configuration overrides."
 
 	KubeletConfigDoc.Fields[4].AddExample("", kubeletExtraConfigExample)
-	KubeletConfigDoc.Fields[5].Name = "registerWithFQDN"
+	KubeletConfigDoc.Fields[5].Name = "defaultRuntimeSeccompProfileEnabled"
 	KubeletConfigDoc.Fields[5].Type = "bool"
 	KubeletConfigDoc.Fields[5].Note = ""
-	KubeletConfigDoc.Fields[5].Description = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS."
-	KubeletConfigDoc.Fields[5].Comments[encoder.LineComment] = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration."
+	KubeletConfigDoc.Fields[5].Description = "Enable container runtime default Seccomp profile."
+	KubeletConfigDoc.Fields[5].Comments[encoder.LineComment] = "Enable container runtime default Seccomp profile."
 	KubeletConfigDoc.Fields[5].Values = []string{
 		"true",
 		"yes",
 		"false",
 		"no",
 	}
-	KubeletConfigDoc.Fields[6].Name = "nodeIP"
-	KubeletConfigDoc.Fields[6].Type = "KubeletNodeIPConfig"
+	KubeletConfigDoc.Fields[6].Name = "registerWithFQDN"
+	KubeletConfigDoc.Fields[6].Type = "bool"
 	KubeletConfigDoc.Fields[6].Note = ""
-	KubeletConfigDoc.Fields[6].Description = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from."
-	KubeletConfigDoc.Fields[6].Comments[encoder.LineComment] = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet."
+	KubeletConfigDoc.Fields[6].Description = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS."
+	KubeletConfigDoc.Fields[6].Comments[encoder.LineComment] = "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration."
+	KubeletConfigDoc.Fields[6].Values = []string{
+		"true",
+		"yes",
+		"false",
+		"no",
+	}
+	KubeletConfigDoc.Fields[7].Name = "nodeIP"
+	KubeletConfigDoc.Fields[7].Type = "KubeletNodeIPConfig"
+	KubeletConfigDoc.Fields[7].Note = ""
+	KubeletConfigDoc.Fields[7].Description = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from."
+	KubeletConfigDoc.Fields[7].Comments[encoder.LineComment] = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet."
 
-	KubeletConfigDoc.Fields[6].AddExample("", kubeletNodeIPExample)
+	KubeletConfigDoc.Fields[7].AddExample("", kubeletNodeIPExample)
 
 	KubeletNodeIPConfigDoc.Type = "KubeletNodeIPConfig"
 	KubeletNodeIPConfigDoc.Comments[encoder.LineComment] = "KubeletNodeIPConfig represents the kubelet node IP configuration."
@@ -2605,6 +2647,10 @@ func (_ MachineConfig) Doc() *encoder.Doc {
 	return &MachineConfigDoc
 }
 
+func (_ MachineSeccompProfile) Doc() *encoder.Doc {
+	return &MachineSeccompProfileDoc
+}
+
 func (_ ClusterConfig) Doc() *encoder.Doc {
 	return &ClusterConfigDoc
 }
@@ -2881,6 +2927,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			&ConfigDoc,
 			&MachineConfigDoc,
+			&MachineSeccompProfileDoc,
 			&ClusterConfigDoc,
 			&ExtraMountDoc,
 			&MachineControlPlaneConfigDoc,

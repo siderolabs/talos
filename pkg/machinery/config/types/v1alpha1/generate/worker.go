@@ -65,6 +65,10 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		machine.MachineFeatures.StableHostname = pointer.To(true)
 	}
 
+	if in.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
+		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
+	}
+
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
 	if err != nil {
 		return config, err

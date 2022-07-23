@@ -115,3 +115,8 @@ func (contract *VersionContract) PodSecurityAdmissionEnabled() bool {
 func (contract *VersionContract) StableHostnameEnabled() bool {
 	return contract.Greater(TalosVersion1_1)
 }
+
+// KubeletDefaultRuntimeSeccompProfileEnabled returns true if kubelet seccomp profile should be enabled by default.
+func (contract *VersionContract) KubeletDefaultRuntimeSeccompProfileEnabled() bool {
+	return contract.Greater(TalosVersion1_1)
+}
