@@ -61,6 +61,10 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		machine.MachineFeatures.RBAC = pointer.To(true)
 	}
 
+	if in.VersionContract.StableHostnameEnabled() {
+		machine.MachineFeatures.StableHostname = pointer.To(true)
+	}
+
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
 	if err != nil {
 		return config, err
