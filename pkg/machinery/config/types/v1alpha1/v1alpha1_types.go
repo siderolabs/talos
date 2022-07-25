@@ -1211,13 +1211,8 @@ type InstallConfig struct {
 // InstallDiskSizeMatcher disk size condition parser.
 // docgen:nodoc
 type InstallDiskSizeMatcher struct {
-	Matcher   disk.Matcher
+	MatchData InstallDiskSizeMatchData
 	condition string
-}
-
-// DeepCopyInto implements DeepCopy interface.
-func (m *InstallDiskSizeMatcher) DeepCopyInto(out *InstallDiskSizeMatcher) {
-	*out = *m
 }
 
 // MarshalYAML is a custom marshaller for `InstallDiskSizeMatcher`.
@@ -1240,31 +1235,11 @@ func (m *InstallDiskSizeMatcher) UnmarshalYAML(unmarshal func(interface{}) error
 		return fmt.Errorf("failed to parse the condition: expected [>=|<=|>|<|==]<size>[units], got %s", m.condition)
 	}
 
-	var compare func(*disk.Disk, uint64) bool
+	var op string
 
 	switch parts[1] {
-	case ">=":
-		compare = func(d *disk.Disk, size uint64) bool {
-			return d.Size >= size
-		}
-	case "<=":
-		compare = func(d *disk.Disk, size uint64) bool {
-			return d.Size <= size
-		}
-	case ">":
-		compare = func(d *disk.Disk, size uint64) bool {
-			return d.Size > size
-		}
-	case "<":
-		compare = func(d *disk.Disk, size uint64) bool {
-			return d.Size < size
-		}
-	case "":
-		fallthrough
-	case "==":
-		compare = func(d *disk.Disk, size uint64) bool {
-			return d.Size == size
-		}
+	case ">=", "<=", ">", "<", "", "==":
+		op = parts[1]
 	default:
 		return fmt.Errorf("unknown binary operator %s", parts[1])
 	}
@@ -1274,11 +1249,44 @@ func (m *InstallDiskSizeMatcher) UnmarshalYAML(unmarshal func(interface{}) error
 		return fmt.Errorf("failed to parse disk size %s: %s", parts[2], err)
 	}
 
-	m.Matcher = func(d *disk.Disk) bool {
-		return compare(d, size)
+	m.MatchData = InstallDiskSizeMatchData{
+		Op:   op,
+		Size: size,
 	}
 
 	return nil
+}
+
+// Matcher is a method that can handle some custom disk matching logic.
+func (m *InstallDiskSizeMatcher) Matcher(d *disk.Disk) bool {
+	return m.MatchData.Compare(d)
+}
+
+// InstallDiskSizeMatchData contains data for comparison - Op and Size.
+//docgen:nodoc
+type InstallDiskSizeMatchData struct {
+	Op   string
+	Size uint64
+}
+
+// Compare is the method to compare disk size.
+func (in *InstallDiskSizeMatchData) Compare(d *disk.Disk) bool {
+	switch in.Op {
+	case ">=":
+		return d.Size >= in.Size
+	case "<=":
+		return d.Size <= in.Size
+	case ">":
+		return d.Size > in.Size
+	case "<":
+		return d.Size < in.Size
+	case "":
+		fallthrough
+	case "==":
+		return d.Size == in.Size
+	default:
+		return false
+	}
 }
 
 // InstallDiskType custom type for disk type selector.
