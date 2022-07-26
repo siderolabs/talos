@@ -1,3 +1,58 @@
+## [Talos 1.1.2](https://github.com/siderolabs/talos/releases/tag/v1.1.2) (2022-07-26)
+
+Welcome to the v1.1.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.57
+* Kubernetes: 1.24.3
+
+Talos is built with Go 1.18.4.
+
+
+### Contributors
+
+* Noel Georgi
+* Andrey Smirnov
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`c5959d66f`](https://github.com/siderolabs/talos/commit/c5959d66f3732156d916dec475c7311e914a641f) chore: fix typo in `powercycle`
+* [`d8e893b25`](https://github.com/siderolabs/talos/commit/d8e893b25720dfe03a774cd9fa73850bf1f69828) fix: folder permissions of overlay mounted folders
+* [`2ae1455c8`](https://github.com/siderolabs/talos/commit/2ae1455c83c751290d756abb630b6a89d1008c99) fix: use masks and different firewall mark for KubeSpan
+* [`e88c1fba8`](https://github.com/siderolabs/talos/commit/e88c1fba8e9ba68d4e2784034a11003f64de26d4) fix: skip bond itself when matching interface (Equinix Metal)
+* [`2f419b5a8`](https://github.com/siderolabs/talos/commit/2f419b5a8bb56d4031295d9cb02c1790904d854e) feat: update Kubernetes to 1.24.3
+* [`a958d16e6`](https://github.com/siderolabs/talos/commit/a958d16e660e53014e934b103b9aad147b95efb2) chore: bump kernel to 5.15.57
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`9e269be`](https://github.com/siderolabs/pkgs/commit/9e269bebf04c7d8f9cef479c4172c58a14aa51b0) chore: bump kernel to 5.15.57
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.1.0-15-gf171197 -> v1.1.0-16-g9e269be
+* **k8s.io/api**                  v0.24.2 -> v0.24.3
+* **k8s.io/apiserver**            v0.24.2 -> v0.24.3
+* **k8s.io/client-go**            v0.24.2 -> v0.24.3
+* **k8s.io/component-base**       v0.24.2 -> v0.24.3
+* **k8s.io/kubectl**              v0.24.2 -> v0.24.3
+* **k8s.io/kubelet**              v0.24.2 -> v0.24.3
+
+Previous release can be found at [v1.1.1](https://github.com/siderolabs/talos/releases/tag/v1.1.1)
+
 ## [Talos 1.1.1](https://github.com/siderolabs/talos/releases/tag/v1.1.1) (2022-07-13)
 
 Welcome to the v1.1.1 release of Talos!
