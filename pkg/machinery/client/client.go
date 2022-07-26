@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -968,6 +969,8 @@ type MachineStream interface {
 }
 
 // ReadStream converts grpc stream into io.Reader.
+//
+//nolint:gocyclo
 func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 	errCh := make(chan error, 1)
 	pr, pw := io.Pipe()
@@ -997,7 +1000,11 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 			}
 
 			if data.Metadata != nil && data.Metadata.Error != "" {
-				errCh <- errors.New(data.Metadata.Error)
+				if data.Metadata.Status != nil {
+					errCh <- status.FromProto(data.Metadata.Status).Err()
+				} else {
+					errCh <- errors.New(data.Metadata.Error)
+				}
 			}
 		}
 	}()
