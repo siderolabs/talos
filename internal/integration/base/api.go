@@ -250,6 +250,8 @@ func (apiSuite *APISuite) ReadBootIDWithRetry(ctx context.Context, timeout time.
 func (apiSuite *APISuite) AssertRebooted(ctx context.Context, node string, rebootFunc func(nodeCtx context.Context) error, timeout time.Duration) {
 	apiSuite.AssertRebootedNoChecks(ctx, node, rebootFunc, timeout)
 
+	apiSuite.WaitForBootDone(ctx)
+
 	if apiSuite.Cluster != nil {
 		// without cluster state we can't do deep checks, but basic reboot test still works
 		// NB: using `ctx` here to have client talking to init node by default
