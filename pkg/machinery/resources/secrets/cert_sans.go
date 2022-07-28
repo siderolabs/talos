@@ -29,10 +29,11 @@ const CertSANKubernetesID = resource.ID("k8s")
 type CertSAN = typed.Resource[CertSANSpec, CertSANRD]
 
 // CertSANSpec describes fields of the cert SANs.
+//gotagsrewrite:gen
 type CertSANSpec struct {
-	IPs      []netaddr.IP `yaml:"ips"`
-	DNSNames []string     `yaml:"dnsNames"`
-	FQDN     string       `yaml:"fqdn"`
+	IPs      []netaddr.IP `yaml:"ips" protobuf:"1"`
+	DNSNames []string     `yaml:"dnsNames" protobuf:"2"`
+	FQDN     string       `yaml:"fqdn" protobuf:"3"`
 }
 
 // NewCertSAN initializes a Etc resource.

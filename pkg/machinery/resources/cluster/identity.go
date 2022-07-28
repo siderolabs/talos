@@ -23,10 +23,11 @@ type Identity = typed.Resource[IdentitySpec, IdentityRD]
 //
 // Note: IdentitySpec is persisted on disk in the STATE partition,
 // so YAML serialization should be kept backwards compatible.
+//gotagsrewrite:gen
 type IdentitySpec struct {
 	// NodeID is a random value which is persisted across reboots,
 	// but it gets reset on wipe.
-	NodeID string `yaml:"nodeId"`
+	NodeID string `yaml:"nodeId" protobuf:"1"`
 }
 
 // NewIdentity initializes a Identity resource.

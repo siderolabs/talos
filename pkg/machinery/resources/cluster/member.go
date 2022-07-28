@@ -22,12 +22,13 @@ const MemberType = resource.Type("Members.cluster.talos.dev")
 type Member = typed.Resource[MemberSpec, MemberRD]
 
 // MemberSpec describes Member state.
+//gotagsrewrite:gen
 type MemberSpec struct {
-	NodeID          string       `yaml:"nodeId"`
-	Addresses       []netaddr.IP `yaml:"addresses"`
-	Hostname        string       `yaml:"hostname"`
-	MachineType     machine.Type `yaml:"machineType"`
-	OperatingSystem string       `yaml:"operatingSystem"`
+	NodeID          string       `yaml:"nodeId" protobuf:"1"`
+	Addresses       []netaddr.IP `yaml:"addresses" protobuf:"2"`
+	Hostname        string       `yaml:"hostname" protobuf:"3"`
+	MachineType     machine.Type `yaml:"machineType" protobuf:"4"`
+	OperatingSystem string       `yaml:"operatingSystem" protobuf:"5"`
 }
 
 // NewMember initializes a Member resource.

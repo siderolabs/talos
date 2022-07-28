@@ -23,13 +23,14 @@ const KubeletID = resource.ID("kubelet")
 type Kubelet = typed.Resource[KubeletSpec, KubeletRD]
 
 // KubeletSpec describes root Kubernetes secrets.
+//gotagsrewrite:gen
 type KubeletSpec struct {
-	Endpoint *url.URL `yaml:"endpoint"`
+	Endpoint *url.URL `yaml:"endpoint" protobuf:"1"`
 
-	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
+	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"2"`
 
-	BootstrapTokenID     string `yaml:"bootstrapTokenID"`
-	BootstrapTokenSecret string `yaml:"bootstrapTokenSecret"`
+	BootstrapTokenID     string `yaml:"bootstrapTokenID" protobuf:"3"`
+	BootstrapTokenSecret string `yaml:"bootstrapTokenSecret" protobuf:"4"`
 }
 
 // NewKubelet initializes a Kubelet resource.

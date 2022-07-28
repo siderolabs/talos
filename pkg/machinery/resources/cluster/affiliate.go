@@ -66,14 +66,15 @@ func (r AffiliateRD) ResourceDefinition(resource.Metadata, AffiliateSpec) meta.R
 }
 
 // AffiliateSpec describes Affiliate state.
+//gotagsrewrite:gen
 type AffiliateSpec struct {
-	NodeID          string                `yaml:"nodeId"`
-	Addresses       []netaddr.IP          `yaml:"addresses"`
-	Hostname        string                `yaml:"hostname"`
-	Nodename        string                `yaml:"nodename,omitempty"`
-	OperatingSystem string                `yaml:"operatingSystem"`
-	MachineType     machine.Type          `yaml:"machineType"`
-	KubeSpan        KubeSpanAffiliateSpec `yaml:"kubespan,omitempty"`
+	NodeID          string                `yaml:"nodeId" protobuf:"1"`
+	Addresses       []netaddr.IP          `yaml:"addresses" protobuf:"2"`
+	Hostname        string                `yaml:"hostname" protobuf:"3"`
+	Nodename        string                `yaml:"nodename,omitempty" protobuf:"4"`
+	OperatingSystem string                `yaml:"operatingSystem" protobuf:"5"`
+	MachineType     machine.Type          `yaml:"machineType" protobuf:"6"`
+	KubeSpan        KubeSpanAffiliateSpec `yaml:"kubespan,omitempty" protobuf:"7"`
 }
 
 // Merge two AffiliateSpecs.

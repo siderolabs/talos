@@ -22,21 +22,22 @@ const PeerStatusType = resource.Type("KubeSpanPeerStatuses.kubespan.talos.dev")
 type PeerStatus = typed.Resource[PeerStatusSpec, PeerStatusRD]
 
 // PeerStatusSpec describes PeerStatus state.
+//gotagsrewrite:gen
 type PeerStatusSpec struct {
 	// Active endpoint as seen by the Wireguard.
-	Endpoint netaddr.IPPort `yaml:"endpoint"`
+	Endpoint netaddr.IPPort `yaml:"endpoint" protobuf:"1"`
 	// Label derived from the peer spec.
-	Label string `yaml:"label"`
+	Label string `yaml:"label" protobuf:"2"`
 	// Calculated state.
-	State PeerState `yaml:"state"`
+	State PeerState `yaml:"state" protobuf:"3"`
 	// Tx/Rx bytes.
-	ReceiveBytes  int64 `yaml:"receiveBytes"`
-	TransmitBytes int64 `yaml:"transmitBytes"`
+	ReceiveBytes  int64 `yaml:"receiveBytes" protobuf:"4"`
+	TransmitBytes int64 `yaml:"transmitBytes" protobuf:"5"`
 	// Handshake.
-	LastHandshakeTime time.Time `yaml:"lastHandshakeTime"`
+	LastHandshakeTime time.Time `yaml:"lastHandshakeTime" protobuf:"6"`
 	// Endpoint selection input.
-	LastUsedEndpoint   netaddr.IPPort `yaml:"lastUsedEndpoint"`
-	LastEndpointChange time.Time      `yaml:"lastEndpointChange"`
+	LastUsedEndpoint   netaddr.IPPort `yaml:"lastUsedEndpoint" protobuf:"7"`
+	LastEndpointChange time.Time      `yaml:"lastEndpointChange" protobuf:"8"`
 }
 
 // NewPeerStatus initializes a PeerStatus resource.

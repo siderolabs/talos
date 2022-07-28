@@ -24,22 +24,23 @@ const KubernetesRootID = resource.ID("k8s")
 type KubernetesRoot = typed.Resource[KubernetesRootSpec, KubernetesRootRD]
 
 // KubernetesRootSpec describes root Kubernetes secrets.
+//gotagsrewrite:gen
 type KubernetesRootSpec struct {
-	Name          string   `yaml:"name"`
-	Endpoint      *url.URL `yaml:"endpoint"`
-	LocalEndpoint *url.URL `yaml:"local_endpoint"`
-	CertSANs      []string `yaml:"certSANs"`
-	APIServerIPs  []net.IP `yaml:"apiServerIPs"`
-	DNSDomain     string   `yaml:"dnsDomain"`
+	Name          string   `yaml:"name" protobuf:"1"`
+	Endpoint      *url.URL `yaml:"endpoint" protobuf:"2"`
+	LocalEndpoint *url.URL `yaml:"local_endpoint" protobuf:"3"`
+	CertSANs      []string `yaml:"certSANs" protobuf:"4"`
+	APIServerIPs  []net.IP `yaml:"apiServerIPs" protobuf:"5"`
+	DNSDomain     string   `yaml:"dnsDomain" protobuf:"6"`
 
-	CA             *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
-	ServiceAccount *x509.PEMEncodedKey               `yaml:"serviceAccount"`
-	AggregatorCA   *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA"`
+	CA             *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"7"`
+	ServiceAccount *x509.PEMEncodedKey               `yaml:"serviceAccount" protobuf:"8"`
+	AggregatorCA   *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA" protobuf:"9"`
 
-	AESCBCEncryptionSecret string `yaml:"aesCBCEncryptionSecret"`
+	AESCBCEncryptionSecret string `yaml:"aesCBCEncryptionSecret" protobuf:"10"`
 
-	BootstrapTokenID     string `yaml:"bootstrapTokenID"`
-	BootstrapTokenSecret string `yaml:"bootstrapTokenSecret"`
+	BootstrapTokenID     string `yaml:"bootstrapTokenID" protobuf:"11"`
+	BootstrapTokenSecret string `yaml:"bootstrapTokenSecret" protobuf:"12"`
 }
 
 // NewKubernetesRoot initializes a KubernetesRoot resource.

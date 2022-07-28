@@ -17,14 +17,15 @@ const SystemInformationType = resource.Type("SystemInformations.hardware.talos.d
 type SystemInformation = typed.Resource[SystemInformationSpec, SystemInformationRD]
 
 // SystemInformationSpec represents the system information obtained from smbios.
+//gotagsrewrite:gen
 type SystemInformationSpec struct {
-	Manufacturer string `yaml:"manufacturer,omitempty"`
-	ProductName  string `yaml:"productName,omitempty"`
-	Version      string `yaml:"version,omitempty"`
-	SerialNumber string `yaml:"serialnumber,omitempty"`
-	UUID         string `yaml:"uuid,omitempty"`
-	WakeUpType   string `yaml:"wakeUpType,omitempty"`
-	SKUNumber    string `yaml:"skuNumber,omitempty"`
+	Manufacturer string `yaml:"manufacturer,omitempty" protobuf:"1"`
+	ProductName  string `yaml:"productName,omitempty" protobuf:"2"`
+	Version      string `yaml:"version,omitempty" protobuf:"3"`
+	SerialNumber string `yaml:"serialnumber,omitempty" protobuf:"4"`
+	UUID         string `yaml:"uuid,omitempty" protobuf:"5"`
+	WakeUpType   string `yaml:"wakeUpType,omitempty" protobuf:"6"`
+	SKUNumber    string `yaml:"skuNumber,omitempty" protobuf:"7"`
 }
 
 // NewSystemInformation initializes a SystemInformationInfo resource.

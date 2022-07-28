@@ -24,13 +24,14 @@ type Identity = typed.Resource[IdentitySpec, IdentityRD]
 //
 // Note: IdentitySpec is persisted on disk in the STATE partition,
 // so YAML serialization should be kept backwards compatible.
+//gotagsrewrite:gen
 type IdentitySpec struct {
 	// Address of the node on the Wireguard network.
-	Address netaddr.IPPrefix `yaml:"address"`
-	Subnet  netaddr.IPPrefix `yaml:"subnet"`
+	Address netaddr.IPPrefix `yaml:"address" protobuf:"1"`
+	Subnet  netaddr.IPPrefix `yaml:"subnet" protobuf:"2"`
 	// Public and private Wireguard keys.
-	PrivateKey string `yaml:"privateKey"`
-	PublicKey  string `yaml:"publicKey"`
+	PrivateKey string `yaml:"privateKey" protobuf:"3"`
+	PublicKey  string `yaml:"publicKey" protobuf:"4"`
 }
 
 // NewIdentity initializes a Identity resource.

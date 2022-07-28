@@ -17,8 +17,9 @@ const StaticPodType = resource.Type("StaticPods.kubernetes.talos.dev")
 type StaticPod = typed.Resource[StaticPodSpec, StaticPodRD]
 
 // StaticPodSpec describes static pod spec, it contains marshaled *v1.Pod spec.
+//gotagsrewrite:gen
 type StaticPodSpec struct {
-	Pod map[string]interface{}
+	Pod map[string]interface{} `protobuf:"1"`
 }
 
 // MarshalYAML implements yaml.Marshaler.

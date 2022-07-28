@@ -28,8 +28,9 @@ const ControlPlaneDiscoveredEndpointsID = resource.ID("discovery")
 type Endpoint = typed.Resource[EndpointSpec, EndpointRD]
 
 // EndpointSpec describes status of rendered secrets.
+//gotagsrewrite:gen
 type EndpointSpec struct {
-	Addresses []netaddr.IP `yaml:"addresses"`
+	Addresses []netaddr.IP `yaml:"addresses" protobuf:"1"`
 }
 
 // NewEndpoint initializes the Endpoint resource.

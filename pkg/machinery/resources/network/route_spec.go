@@ -20,19 +20,20 @@ const RouteSpecType = resource.Type("RouteSpecs.net.talos.dev")
 type RouteSpec = typed.Resource[RouteSpecSpec, RouteSpecRD]
 
 // RouteSpecSpec describes the route.
+//gotagsrewrite:gen
 type RouteSpecSpec struct {
-	Family      nethelpers.Family        `yaml:"family"`
-	Destination netaddr.IPPrefix         `yaml:"dst"`
-	Source      netaddr.IP               `yaml:"src"`
-	Gateway     netaddr.IP               `yaml:"gateway"`
-	OutLinkName string                   `yaml:"outLinkName,omitempty"`
-	Table       nethelpers.RoutingTable  `yaml:"table"`
-	Priority    uint32                   `yaml:"priority,omitempty"`
-	Scope       nethelpers.Scope         `yaml:"scope"`
-	Type        nethelpers.RouteType     `yaml:"type"`
-	Flags       nethelpers.RouteFlags    `yaml:"flags"`
-	Protocol    nethelpers.RouteProtocol `yaml:"protocol"`
-	ConfigLayer ConfigLayer              `yaml:"layer"`
+	Family      nethelpers.Family        `yaml:"family" protobuf:"1"`
+	Destination netaddr.IPPrefix         `yaml:"dst" protobuf:"2"`
+	Source      netaddr.IP               `yaml:"src" protobuf:"3"`
+	Gateway     netaddr.IP               `yaml:"gateway" protobuf:"4"`
+	OutLinkName string                   `yaml:"outLinkName,omitempty" protobuf:"5"`
+	Table       nethelpers.RoutingTable  `yaml:"table" protobuf:"6"`
+	Priority    uint32                   `yaml:"priority,omitempty" protobuf:"7"`
+	Scope       nethelpers.Scope         `yaml:"scope" protobuf:"8"`
+	Type        nethelpers.RouteType     `yaml:"type" protobuf:"9"`
+	Flags       nethelpers.RouteFlags    `yaml:"flags" protobuf:"10"`
+	Protocol    nethelpers.RouteProtocol `yaml:"protocol" protobuf:"11"`
+	ConfigLayer ConfigLayer              `yaml:"layer" protobuf:"12"`
 }
 
 var (

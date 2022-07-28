@@ -18,8 +18,9 @@ const ResolverStatusType = resource.Type("ResolverStatuses.net.talos.dev")
 type ResolverStatus = typed.Resource[ResolverStatusSpec, ResolverStatusRD]
 
 // ResolverStatusSpec describes DNS resolvers.
+//gotagsrewrite:gen
 type ResolverStatusSpec struct {
-	DNSServers []netaddr.IP `yaml:"dnsServers"`
+	DNSServers []netaddr.IP `yaml:"dnsServers" protobuf:"1"`
 }
 
 // NewResolverStatus initializes a ResolverStatus resource.

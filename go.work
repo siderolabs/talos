@@ -3,5 +3,6 @@ go 1.18
 use (
 	.
 	./hack/cloud-image-uploader
+	./hack/gotagsrewrite
 	./pkg/machinery
 )

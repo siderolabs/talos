@@ -21,11 +21,12 @@ const EtcdID = resource.ID("etcd")
 type Etcd = typed.Resource[EtcdCertsSpec, EtcdRD]
 
 // EtcdCertsSpec describes etcd certs secrets.
+//gotagsrewrite:gen
 type EtcdCertsSpec struct {
-	Etcd          *x509.PEMEncodedCertificateAndKey `yaml:"etcd"`
-	EtcdPeer      *x509.PEMEncodedCertificateAndKey `yaml:"etcdPeer"`
-	EtcdAdmin     *x509.PEMEncodedCertificateAndKey `yaml:"etcdAdmin"`
-	EtcdAPIServer *x509.PEMEncodedCertificateAndKey `yaml:"etcdAPIServer"`
+	Etcd          *x509.PEMEncodedCertificateAndKey `yaml:"etcd" protobuf:"1"`
+	EtcdPeer      *x509.PEMEncodedCertificateAndKey `yaml:"etcdPeer" protobuf:"2"`
+	EtcdAdmin     *x509.PEMEncodedCertificateAndKey `yaml:"etcdAdmin" protobuf:"3"`
+	EtcdAPIServer *x509.PEMEncodedCertificateAndKey `yaml:"etcdAPIServer" protobuf:"4"`
 }
 
 // NewEtcd initializes a Etc resource.

@@ -26,8 +26,9 @@ const AdmissionControlConfigID = resource.ID("admission-control")
 type AdmissionControlConfig = typed.Resource[AdmissionControlConfigSpec, AdmissionControlConfigRD]
 
 // AdmissionControlConfigSpec is configuration for kube-apiserver.
+//gotagsrewrite:gen
 type AdmissionControlConfigSpec struct {
-	Config []AdmissionPluginSpec `yaml:"config"`
+	Config []AdmissionPluginSpec `yaml:"config" protobuf:"1"`
 }
 
 // AdmissionPluginSpec is a single admission plugin configuration Admission Control plugins.

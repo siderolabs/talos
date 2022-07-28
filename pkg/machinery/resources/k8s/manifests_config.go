@@ -23,29 +23,30 @@ const BootstrapManifestsConfigID = resource.ID("manifests")
 type BootstrapManifestsConfig = typed.Resource[BootstrapManifestsConfigSpec, BootstrapManifestsConfigRD]
 
 // BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
+//gotagsrewrite:gen
 type BootstrapManifestsConfigSpec struct {
-	Server        string `yaml:"string"`
-	ClusterDomain string `yaml:"clusterDomain"`
+	Server        string `yaml:"string" protobuf:"1"`
+	ClusterDomain string `yaml:"clusterDomain" protobuf:"2"`
 
-	PodCIDRs []string `yaml:"podCIDRs"`
+	PodCIDRs []string `yaml:"podCIDRs" protobuf:"3"`
 
-	ProxyEnabled bool     `yaml:"proxyEnabled"`
-	ProxyImage   string   `yaml:"proxyImage"`
-	ProxyArgs    []string `yaml:"proxyArgs"`
+	ProxyEnabled bool     `yaml:"proxyEnabled" protobuf:"4"`
+	ProxyImage   string   `yaml:"proxyImage" protobuf:"5"`
+	ProxyArgs    []string `yaml:"proxyArgs" protobuf:"6"`
 
-	CoreDNSEnabled bool   `yaml:"coreDNSEnabled"`
-	CoreDNSImage   string `yaml:"coreDNSImage"`
+	CoreDNSEnabled bool   `yaml:"coreDNSEnabled" protobuf:"7"`
+	CoreDNSImage   string `yaml:"coreDNSImage" protobuf:"8"`
 
-	DNSServiceIP   string `yaml:"dnsServiceIP"`
-	DNSServiceIPv6 string `yaml:"dnsServiceIPv6"`
+	DNSServiceIP   string `yaml:"dnsServiceIP" protobuf:"9"`
+	DNSServiceIPv6 string `yaml:"dnsServiceIPv6" protobuf:"10"`
 
-	FlannelEnabled  bool   `yaml:"flannelEnabled"`
-	FlannelImage    string `yaml:"flannelImage"`
-	FlannelCNIImage string `yaml:"flannelCNIImage"`
+	FlannelEnabled  bool   `yaml:"flannelEnabled" protobuf:"11"`
+	FlannelImage    string `yaml:"flannelImage" protobuf:"12"`
+	FlannelCNIImage string `yaml:"flannelCNIImage" protobuf:"13"`
 
-	PodSecurityPolicyEnabled bool `yaml:"podSecurityPolicyEnabled"`
+	PodSecurityPolicyEnabled bool `yaml:"podSecurityPolicyEnabled" protobuf:"14"`
 
-	TalosAPIServiceEnabled bool `yaml:"talosAPIServiceEnabled"`
+	TalosAPIServiceEnabled bool `yaml:"talosAPIServiceEnabled" protobuf:"15"`
 }
 
 // NewBootstrapManifestsConfig returns new BootstrapManifestsConfig resource.

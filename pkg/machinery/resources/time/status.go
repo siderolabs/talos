@@ -25,15 +25,16 @@ const StatusID = resource.ID("node")
 type Status = typed.Resource[StatusSpec, StatusRD]
 
 // StatusSpec describes time sync state.
+//gotagsrewrite:gen
 type StatusSpec struct {
 	// Synced indicates whether time is in sync.
-	Synced bool `yaml:"synced"`
+	Synced bool `yaml:"synced" protobuf:"1"`
 
 	// Epoch is incremented every time clock jumps more than 15min.
-	Epoch int `yaml:"epoch"`
+	Epoch int `yaml:"epoch" protobuf:"2"`
 
 	// SyncDisabled indicates if time sync is disabled.
-	SyncDisabled bool `yaml:"syncDisabled"`
+	SyncDisabled bool `yaml:"syncDisabled" protobuf:"3"`
 }
 
 // NewStatus initializes a TimeSync resource.

@@ -20,9 +20,10 @@ const NodenameID = resource.ID("nodename")
 type Nodename = typed.Resource[NodenameSpec, NodenameRD]
 
 // NodenameSpec describes Kubernetes nodename.
+//gotagsrewrite:gen
 type NodenameSpec struct {
-	Nodename        string `yaml:"nodename"`
-	HostnameVersion string `yaml:"hostnameVersion"`
+	Nodename        string `yaml:"nodename" protobuf:"1"`
+	HostnameVersion string `yaml:"hostnameVersion" protobuf:"2"`
 }
 
 // NewNodename initializes a Nodename resource.

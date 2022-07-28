@@ -11,12 +11,13 @@ type Manifest struct {
 }
 
 // Metadata describes base extension metadata.
+//gotagsrewrite:gen
 type Metadata struct {
-	Name          string        `yaml:"name"`
-	Version       string        `yaml:"version"`
-	Author        string        `yaml:"author"`
-	Description   string        `yaml:"description"`
-	Compatibility Compatibility `yaml:"compatibility"`
+	Name          string        `yaml:"name" protobuf:"1"`
+	Version       string        `yaml:"version" protobuf:"2"`
+	Author        string        `yaml:"author" protobuf:"3"`
+	Description   string        `yaml:"description" protobuf:"4"`
+	Compatibility Compatibility `yaml:"compatibility" protobuf:"5"`
 }
 
 // Compatibility describes extension compatibility.

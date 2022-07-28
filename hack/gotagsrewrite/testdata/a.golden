@@ -1,0 +1,63 @@
+package testdata
+
+//gotagsrewrite:gen
+type MySpecSpec struct {
+	NewField     string `yaml:"new_field" protobuf:"4"`
+	FirstField   string `protobuf:"5"`
+	Name         string `yaml:"string" protobuf:"6"`
+	unexported   string
+	AnotherField string `yaml:"another_field" protobuf:"3"`
+	LastField    string `protobuf:"7"`
+}
+
+type MySpec struct{}
+
+type MySpecSpec2 struct {
+	unexported string
+	MySpec
+	unexported2 string
+}
+
+type MySpecSpec3 struct {
+	NewField string `yaml:"new_field"`
+}
+
+// MyCustomStruct is a custom struct
+//gotagsrewrite:gen
+type MyCustomStruct struct {
+	NewField string `yaml:"new_field" protobuf:"1"`
+}
+
+type (
+	//gotagsrewrite:gen
+	MyAnotherStruct struct {
+		NewField string `yaml:"new_field" protobuf:"1"`
+	}
+
+	//gotagsrewrite:gen
+	MyBasicStruct struct {
+		NewField string `yaml:"new_field" protobuf:"1"`
+	}
+
+	MyNoneStruct struct {
+		NewField string `yaml:"new_field"`
+	}
+)
+
+//gotagsrewrite:gen
+type (
+	MyOnlyStruct struct {
+		NewField string `yaml:"new_field" protobuf:"1"`
+	}
+)
+
+//gotagsrewrite:gen
+type (
+	MyOnlyStruct2 struct {
+		NewField string `yaml:"new_field"`
+	}
+
+	MyOnlyStruct3 struct {
+		NewField string `yaml:"new_field"`
+	}
+)

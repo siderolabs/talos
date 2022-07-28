@@ -22,12 +22,13 @@ const OSRootID = resource.ID("os")
 type OSRoot = typed.Resource[OSRootSpec, OSRootRD]
 
 // OSRootSpec describes operating system CA.
+//gotagsrewrite:gen
 type OSRootSpec struct {
-	CA              *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
-	CertSANIPs      []netaddr.IP                      `yaml:"certSANIPs"`
-	CertSANDNSNames []string                          `yaml:"certSANDNSNames"`
+	CA              *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"1"`
+	CertSANIPs      []netaddr.IP                      `yaml:"certSANIPs" protobuf:"2"`
+	CertSANDNSNames []string                          `yaml:"certSANDNSNames" protobuf:"3"`
 
-	Token string `yaml:"token"`
+	Token string `yaml:"token" protobuf:"4"`
 }
 
 // NewOSRoot initializes a OSRoot resource.

@@ -28,10 +28,11 @@ const APIID = resource.ID("api")
 type API = typed.Resource[APICertsSpec, APIRD]
 
 // APICertsSpec describes etcd certs secrets.
+//gotagsrewrite:gen
 type APICertsSpec struct {
-	CA     *x509.PEMEncodedCertificateAndKey `yaml:"ca"` // only cert is passed, without key
-	Client *x509.PEMEncodedCertificateAndKey `yaml:"client"`
-	Server *x509.PEMEncodedCertificateAndKey `yaml:"server"`
+	CA     *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"1"` // only cert is passed, without key
+	Client *x509.PEMEncodedCertificateAndKey `yaml:"client" protobuf:"2"`
+	Server *x509.PEMEncodedCertificateAndKey `yaml:"server" protobuf:"3"`
 }
 
 // NewAPI initializes a Etc resource.

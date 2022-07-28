@@ -23,12 +23,13 @@ const SchedulerConfigID = resource.ID(SchedulerID)
 type SchedulerConfig = typed.Resource[SchedulerConfigSpec, SchedulerConfigRD]
 
 // SchedulerConfigSpec is configuration for kube-scheduler.
+//gotagsrewrite:gen
 type SchedulerConfigSpec struct {
-	Enabled              bool              `yaml:"enabled"`
-	Image                string            `yaml:"image"`
-	ExtraArgs            map[string]string `yaml:"extraArgs"`
-	ExtraVolumes         []ExtraVolume     `yaml:"extraVolumes"`
-	EnvironmentVariables map[string]string `yaml:"environmentVariables"`
+	Enabled              bool              `yaml:"enabled" protobuf:"1"`
+	Image                string            `yaml:"image" protobuf:"2"`
+	ExtraArgs            map[string]string `yaml:"extraArgs" protobuf:"3"`
+	ExtraVolumes         []ExtraVolume     `yaml:"extraVolumes" protobuf:"4"`
+	EnvironmentVariables map[string]string `yaml:"environmentVariables" protobuf:"5"`
 }
 
 // NewSchedulerConfig returns new SchedulerConfig resource.

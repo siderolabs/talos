@@ -20,19 +20,20 @@ const RouteStatusType = resource.Type("RouteStatuses.net.talos.dev")
 type RouteStatus = typed.Resource[RouteStatusSpec, RouteStatusRD]
 
 // RouteStatusSpec describes status of rendered secrets.
+//gotagsrewrite:gen
 type RouteStatusSpec struct {
-	Family       nethelpers.Family        `yaml:"family"`
-	Destination  netaddr.IPPrefix         `yaml:"dst"`
-	Source       netaddr.IP               `yaml:"src"`
-	Gateway      netaddr.IP               `yaml:"gateway"`
-	OutLinkIndex uint32                   `yaml:"outLinkIndex,omitempty"`
-	OutLinkName  string                   `yaml:"outLinkName,omitempty"`
-	Table        nethelpers.RoutingTable  `yaml:"table"`
-	Priority     uint32                   `yaml:"priority"`
-	Scope        nethelpers.Scope         `yaml:"scope"`
-	Type         nethelpers.RouteType     `yaml:"type"`
-	Flags        nethelpers.RouteFlags    `yaml:"flags"`
-	Protocol     nethelpers.RouteProtocol `yaml:"protocol"`
+	Family       nethelpers.Family        `yaml:"family" protobuf:"1"`
+	Destination  netaddr.IPPrefix         `yaml:"dst" protobuf:"2"`
+	Source       netaddr.IP               `yaml:"src" protobuf:"3"`
+	Gateway      netaddr.IP               `yaml:"gateway" protobuf:"4"`
+	OutLinkIndex uint32                   `yaml:"outLinkIndex,omitempty" protobuf:"5"`
+	OutLinkName  string                   `yaml:"outLinkName,omitempty" protobuf:"6"`
+	Table        nethelpers.RoutingTable  `yaml:"table" protobuf:"7"`
+	Priority     uint32                   `yaml:"priority" protobuf:"8"`
+	Scope        nethelpers.Scope         `yaml:"scope" protobuf:"9"`
+	Type         nethelpers.RouteType     `yaml:"type" protobuf:"10"`
+	Flags        nethelpers.RouteFlags    `yaml:"flags" protobuf:"11"`
+	Protocol     nethelpers.RouteProtocol `yaml:"protocol" protobuf:"12"`
 }
 
 // NewRouteStatus initializes a RouteStatus resource.

@@ -21,9 +21,10 @@ const EtcFileSpecType = resource.Type("EtcFileSpecs.files.talos.dev")
 type EtcFileSpec = typed.Resource[EtcFileSpecSpec, EtcFileSpecMD]
 
 // EtcFileSpecSpec describes status of rendered secrets.
+//gotagsrewrite:gen
 type EtcFileSpecSpec struct {
-	Contents []byte      `yaml:"contents"`
-	Mode     fs.FileMode `yaml:"mode"`
+	Contents []byte      `yaml:"contents" protobuf:"1"`
+	Mode     fs.FileMode `yaml:"mode" protobuf:"2"`
 }
 
 // NewEtcFileSpec initializes a EtcFileSpec resource.

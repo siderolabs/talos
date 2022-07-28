@@ -21,17 +21,18 @@ const KubernetesID = resource.ID("k8s-certs")
 type Kubernetes = typed.Resource[KubernetesCertsSpec, KubernetesRD]
 
 // KubernetesCertsSpec describes generated Kubernetes certificates.
+//gotagsrewrite:gen
 type KubernetesCertsSpec struct {
-	APIServer              *x509.PEMEncodedCertificateAndKey `yaml:"apiServer"`
-	APIServerKubeletClient *x509.PEMEncodedCertificateAndKey `yaml:"apiServerKubeletClient"`
-	FrontProxy             *x509.PEMEncodedCertificateAndKey `yaml:"frontProxy"`
+	APIServer              *x509.PEMEncodedCertificateAndKey `yaml:"apiServer" protobuf:"1"`
+	APIServerKubeletClient *x509.PEMEncodedCertificateAndKey `yaml:"apiServerKubeletClient" protobuf:"2"`
+	FrontProxy             *x509.PEMEncodedCertificateAndKey `yaml:"frontProxy" protobuf:"3"`
 
-	SchedulerKubeconfig         string `yaml:"schedulerKubeconfig"`
-	ControllerManagerKubeconfig string `yaml:"controllerManagerKubeconfig"`
+	SchedulerKubeconfig         string `yaml:"schedulerKubeconfig" protobuf:"4"`
+	ControllerManagerKubeconfig string `yaml:"controllerManagerKubeconfig" protobuf:"5"`
 
 	// Admin-level kubeconfig with access through the localhost endpoint and cluster endpoints.
-	LocalhostAdminKubeconfig string `yaml:"localhostAdminKubeconfig"`
-	AdminKubeconfig          string `yaml:"adminKubeconfig"`
+	LocalhostAdminKubeconfig string `yaml:"localhostAdminKubeconfig" protobuf:"6"`
+	AdminKubeconfig          string `yaml:"adminKubeconfig" protobuf:"7"`
 }
 
 // NewKubernetes initializes a Kubernetes resource.

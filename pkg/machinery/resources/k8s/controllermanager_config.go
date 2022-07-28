@@ -23,15 +23,16 @@ const ControllerManagerConfigID = resource.ID(ControllerManagerID)
 type ControllerManagerConfig = typed.Resource[ControllerManagerConfigSpec, ControllerManagerConfigRD]
 
 // ControllerManagerConfigSpec is configuration for kube-controller-manager.
+//gotagsrewrite:gen
 type ControllerManagerConfigSpec struct {
-	Enabled              bool              `yaml:"enabled"`
-	Image                string            `yaml:"image"`
-	CloudProvider        string            `yaml:"cloudProvider"`
-	PodCIDRs             []string          `yaml:"podCIDRs"`
-	ServiceCIDRs         []string          `yaml:"serviceCIDRs"`
-	ExtraArgs            map[string]string `yaml:"extraArgs"`
-	ExtraVolumes         []ExtraVolume     `yaml:"extraVolumes"`
-	EnvironmentVariables map[string]string `yaml:"environmentVariables"`
+	Enabled              bool              `yaml:"enabled" protobuf:"1"`
+	Image                string            `yaml:"image" protobuf:"2"`
+	CloudProvider        string            `yaml:"cloudProvider" protobuf:"3"`
+	PodCIDRs             []string          `yaml:"podCIDRs" protobuf:"4"`
+	ServiceCIDRs         []string          `yaml:"serviceCIDRs" protobuf:"5"`
+	ExtraArgs            map[string]string `yaml:"extraArgs" protobuf:"6"`
+	ExtraVolumes         []ExtraVolume     `yaml:"extraVolumes" protobuf:"7"`
+	EnvironmentVariables map[string]string `yaml:"environmentVariables" protobuf:"8"`
 }
 
 // NewControllerManagerConfig returns new ControllerManagerConfig resource.

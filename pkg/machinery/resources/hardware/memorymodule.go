@@ -17,15 +17,16 @@ const MemoryModuleType = resource.Type("MemoryModules.hardware.talos.dev")
 type MemoryModule = typed.Resource[MemoryModuleSpec, MemoryModuleRD]
 
 // MemoryModuleSpec represents a single Memory.
+//gotagsrewrite:gen
 type MemoryModuleSpec struct {
-	Size          uint32 `yaml:"sizeMiB,omitempty"`
-	DeviceLocator string `yaml:"deviceLocator,omitempty"`
-	BankLocator   string `yaml:"bankLocator,omitempty"`
-	Speed         uint32 `yaml:"speed,omitempty"`
-	Manufacturer  string `yaml:"manufacturer,omitempty"`
-	SerialNumber  string `yaml:"serialNumber,omitempty"`
-	AssetTag      string `yaml:"assetTag,omitempty"`
-	ProductName   string `yaml:"productName,omitempty"`
+	Size          uint32 `yaml:"sizeMiB,omitempty" protobuf:"1"`
+	DeviceLocator string `yaml:"deviceLocator,omitempty" protobuf:"2"`
+	BankLocator   string `yaml:"bankLocator,omitempty" protobuf:"3"`
+	Speed         uint32 `yaml:"speed,omitempty" protobuf:"4"`
+	Manufacturer  string `yaml:"manufacturer,omitempty" protobuf:"5"`
+	SerialNumber  string `yaml:"serialNumber,omitempty" protobuf:"6"`
+	AssetTag      string `yaml:"assetTag,omitempty" protobuf:"7"`
+	ProductName   string `yaml:"productName,omitempty" protobuf:"8"`
 }
 
 // NewMemoryModuleInfo initializes a MemoryModuleInfo resource.

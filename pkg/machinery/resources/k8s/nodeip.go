@@ -18,8 +18,9 @@ const NodeIPType = resource.Type("NodeIPs.kubernetes.talos.dev")
 type NodeIP = typed.Resource[NodeIPSpec, NodeIPRD]
 
 // NodeIPSpec holds the Node IP specification.
+//gotagsrewrite:gen
 type NodeIPSpec struct {
-	Addresses []netaddr.IP `yaml:"addresses"`
+	Addresses []netaddr.IP `yaml:"addresses" protobuf:"1"`
 }
 
 // NewNodeIP initializes an empty NodeIP resource.

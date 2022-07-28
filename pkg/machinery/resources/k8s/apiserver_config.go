@@ -23,11 +23,12 @@ const APIServerConfigID = resource.ID(APIServerID)
 type APIServerConfig = typed.Resource[APIServerConfigSpec, APIServerConfigRD]
 
 // ExtraVolume is a configuration of extra volume.
+//gotagsrewrite:gen
 type ExtraVolume struct {
-	Name      string `yaml:"name"`
-	HostPath  string `yaml:"hostPath"`
-	MountPath string `yaml:"mountPath"`
-	ReadOnly  bool   `yaml:"readonly"`
+	Name      string `yaml:"name" protobuf:"1"`
+	HostPath  string `yaml:"hostPath" protobuf:"2"`
+	MountPath string `yaml:"mountPath" protobuf:"3"`
+	ReadOnly  bool   `yaml:"readonly" protobuf:"4"`
 }
 
 // APIServerConfigSpec is configuration for kube-apiserver.

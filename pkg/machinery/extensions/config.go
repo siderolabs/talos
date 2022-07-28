@@ -19,9 +19,10 @@ type Config struct {
 }
 
 // Layer defines overlay mount layer.
+//gotagsrewrite:gen
 type Layer struct {
-	Image    string   `yaml:"image"`
-	Metadata Metadata `yaml:"metadata"`
+	Image    string   `yaml:"image" protobuf:"1"`
+	Metadata Metadata `yaml:"metadata" protobuf:"2"`
 }
 
 // Read extensions config from a file.

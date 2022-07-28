@@ -17,11 +17,12 @@ const StatusType = resource.Type("NetworkStatuses.net.talos.dev")
 type Status = typed.Resource[StatusSpec, StatusRD]
 
 // StatusSpec describes network state.
+//gotagsrewrite:gen
 type StatusSpec struct {
-	AddressReady      bool `yaml:"addressReady"`
-	ConnectivityReady bool `yaml:"connectivityReady"`
-	HostnameReady     bool `yaml:"hostnameReady"`
-	EtcFilesReady     bool `yaml:"etcFilesReady"`
+	AddressReady      bool `yaml:"addressReady" protobuf:"1"`
+	ConnectivityReady bool `yaml:"connectivityReady" protobuf:"2"`
+	HostnameReady     bool `yaml:"hostnameReady" protobuf:"3"`
+	EtcFilesReady     bool `yaml:"etcFilesReady" protobuf:"4"`
 }
 
 // StatusID is the resource ID of the singleton instance.

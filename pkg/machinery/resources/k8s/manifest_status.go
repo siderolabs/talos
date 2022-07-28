@@ -20,8 +20,9 @@ const ManifestStatusID = resource.ID("manifests")
 type ManifestStatus = typed.Resource[ManifestStatusSpec, ManifestStatusRD]
 
 // ManifestStatusSpec describes manifest application status.
+//gotagsrewrite:gen
 type ManifestStatusSpec struct {
-	ManifestsApplied []string `yaml:"manifestsApplied"`
+	ManifestsApplied []string `yaml:"manifestsApplied" protobuf:"1"`
 }
 
 // NewManifestStatus initializes an empty ManifestStatus resource.

@@ -38,8 +38,9 @@ const (
 )
 
 // NodeAddressSpec describes a set of node addresses.
+//gotagsrewrite:gen
 type NodeAddressSpec struct {
-	Addresses []netaddr.IPPrefix `yaml:"addresses"`
+	Addresses []netaddr.IPPrefix `yaml:"addresses" protobuf:"1"`
 }
 
 // NewNodeAddress initializes a NodeAddress resource.

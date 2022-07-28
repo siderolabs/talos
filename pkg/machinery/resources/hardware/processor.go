@@ -17,21 +17,22 @@ const ProcessorType = resource.Type("Processors.hardware.talos.dev")
 type Processor = typed.Resource[ProcessorSpec, ProcessorRD]
 
 // ProcessorSpec represents a single processor.
+//gotagsrewrite:gen
 type ProcessorSpec struct {
-	Socket       string `yaml:"socket,omitempty"`
-	Manufacturer string `yaml:"manufacturer,omitempty"`
-	ProductName  string `yaml:"productName,omitempty"`
+	Socket       string `yaml:"socket,omitempty" protobuf:"1"`
+	Manufacturer string `yaml:"manufacturer,omitempty" protobuf:"2"`
+	ProductName  string `yaml:"productName,omitempty" protobuf:"3"`
 	// MaxSpeed is in megahertz (Mhz)
-	MaxSpeed uint32 `yaml:"maxSpeedMhz,omitempty"`
+	MaxSpeed uint32 `yaml:"maxSpeedMhz,omitempty" protobuf:"4"`
 	// Speed is in megahertz (Mhz)
-	BootSpeed    uint32 `yaml:"bootSpeedMhz,omitempty"`
-	Status       uint32 `yaml:"status,omitempty"`
-	SerialNumber string `yaml:"serialNumber,omitempty"`
-	AssetTag     string `yaml:"assetTag,omitempty"`
-	PartNumber   string `yaml:"partNumber,omitempty"`
-	CoreCount    uint32 `yaml:"coreCount,omitempty"`
-	CoreEnabled  uint32 `yaml:"coreEnabled,omitempty"`
-	ThreadCount  uint32 `yaml:"threadCount,omitempty"`
+	BootSpeed    uint32 `yaml:"bootSpeedMhz,omitempty" protobuf:"5"`
+	Status       uint32 `yaml:"status,omitempty" protobuf:"6"`
+	SerialNumber string `yaml:"serialNumber,omitempty" protobuf:"7"`
+	AssetTag     string `yaml:"assetTag,omitempty" protobuf:"8"`
+	PartNumber   string `yaml:"partNumber,omitempty" protobuf:"9"`
+	CoreCount    uint32 `yaml:"coreCount,omitempty" protobuf:"10"`
+	CoreEnabled  uint32 `yaml:"coreEnabled,omitempty" protobuf:"11"`
+	ThreadCount  uint32 `yaml:"threadCount,omitempty" protobuf:"12"`
 }
 
 // NewProcessorInfo initializes a ProcessorInfo resource.

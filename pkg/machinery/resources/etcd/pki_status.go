@@ -20,9 +20,10 @@ const PKIID = resource.ID("etcd")
 type PKIStatus = typed.Resource[PKIStatusSpec, PKIStatusRD]
 
 // PKIStatusSpec describes status of rendered secrets.
+//gotagsrewrite:gen
 type PKIStatusSpec struct {
-	Ready   bool   `yaml:"ready"`
-	Version string `yaml:"version"`
+	Ready   bool   `yaml:"ready" protobuf:"1"`
+	Version string `yaml:"version" protobuf:"2"`
 }
 
 // NewPKIStatus initializes a PKIStatus resource.

@@ -30,9 +30,10 @@ type KernelParam interface {
 type KernelParamSpec = typed.Resource[KernelParamSpecSpec, KernelParamSpecRD]
 
 // KernelParamSpecSpec describes status of the defined sysctls.
+//gotagsrewrite:gen
 type KernelParamSpecSpec struct {
-	Value        string `yaml:"value"`
-	IgnoreErrors bool   `yaml:"ignoreErrors"`
+	Value        string `yaml:"value" protobuf:"1"`
+	IgnoreErrors bool   `yaml:"ignoreErrors" protobuf:"2"`
 }
 
 // NewKernelParamSpec initializes a KernelParamSpec resource.

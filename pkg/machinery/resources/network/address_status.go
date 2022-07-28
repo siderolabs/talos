@@ -20,17 +20,18 @@ const AddressStatusType = resource.Type("AddressStatuses.net.talos.dev")
 type AddressStatus = typed.Resource[AddressStatusSpec, AddressStatusRD]
 
 // AddressStatusSpec describes status of rendered secrets.
+//gotagsrewrite:gen
 type AddressStatusSpec struct {
-	Address   netaddr.IPPrefix        `yaml:"address"`
-	Local     netaddr.IP              `yaml:"local,omitempty"`
-	Broadcast netaddr.IP              `yaml:"broadcast,omitempty"`
-	Anycast   netaddr.IP              `yaml:"anycast,omitempty"`
-	Multicast netaddr.IP              `yaml:"multicast,omitempty"`
-	LinkIndex uint32                  `yaml:"linkIndex"`
-	LinkName  string                  `yaml:"linkName"`
-	Family    nethelpers.Family       `yaml:"family"`
-	Scope     nethelpers.Scope        `yaml:"scope"`
-	Flags     nethelpers.AddressFlags `yaml:"flags"`
+	Address   netaddr.IPPrefix        `yaml:"address" protobuf:"1"`
+	Local     netaddr.IP              `yaml:"local,omitempty" protobuf:"2"`
+	Broadcast netaddr.IP              `yaml:"broadcast,omitempty" protobuf:"3"`
+	Anycast   netaddr.IP              `yaml:"anycast,omitempty" protobuf:"4"`
+	Multicast netaddr.IP              `yaml:"multicast,omitempty" protobuf:"5"`
+	LinkIndex uint32                  `yaml:"linkIndex" protobuf:"6"`
+	LinkName  string                  `yaml:"linkName" protobuf:"7"`
+	Family    nethelpers.Family       `yaml:"family" protobuf:"8"`
+	Scope     nethelpers.Scope        `yaml:"scope" protobuf:"9"`
+	Flags     nethelpers.AddressFlags `yaml:"flags" protobuf:"10"`
 }
 
 // NewAddressStatus initializes a AddressStatus resource.

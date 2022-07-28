@@ -17,11 +17,12 @@ const MountStatusType = resource.Type("MountStatuses.runtime.talos.dev")
 type MountStatus = typed.Resource[MountStatusSpec, MountStatusRD]
 
 // MountStatusSpec describes status of the defined sysctls.
+//gotagsrewrite:gen
 type MountStatusSpec struct {
-	Source         string   `yaml:"source"`
-	Target         string   `yaml:"target"`
-	FilesystemType string   `yaml:"filesystemType"`
-	Options        []string `yaml:"options"`
+	Source         string   `yaml:"source" protobuf:"1"`
+	Target         string   `yaml:"target" protobuf:"2"`
+	FilesystemType string   `yaml:"filesystemType" protobuf:"3"`
+	Options        []string `yaml:"options" protobuf:"4"`
 }
 
 // NewMountStatus initializes a MountStatus resource.

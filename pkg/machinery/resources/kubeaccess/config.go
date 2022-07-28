@@ -22,10 +22,11 @@ const ConfigID = resource.ID("config")
 type Config = typed.Resource[ConfigSpec, ConfigRD]
 
 // ConfigSpec describes KubeSpan configuration..
+//gotagsrewrite:gen
 type ConfigSpec struct {
-	Enabled                     bool     `yaml:"enabled"`
-	AllowedAPIRoles             []string `yaml:"allowedAPIRoles"`
-	AllowedKubernetesNamespaces []string `yaml:"allowedKubernetesNamespaces"`
+	Enabled                     bool     `yaml:"enabled" protobuf:"1"`
+	AllowedAPIRoles             []string `yaml:"allowedAPIRoles" protobuf:"2"`
+	AllowedKubernetesNamespaces []string `yaml:"allowedKubernetesNamespaces" protobuf:"3"`
 }
 
 // DeepCopy generates a deep copy of ConfigSpec.

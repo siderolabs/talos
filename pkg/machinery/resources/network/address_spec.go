@@ -23,14 +23,15 @@ const AddressSpecType = resource.Type("AddressSpecs.net.talos.dev")
 type AddressSpec = typed.Resource[AddressSpecSpec, AddressSpecRD]
 
 // AddressSpecSpec describes status of rendered secrets.
+//gotagsrewrite:gen
 type AddressSpecSpec struct {
-	Address         netaddr.IPPrefix        `yaml:"address"`
-	LinkName        string                  `yaml:"linkName"`
-	Family          nethelpers.Family       `yaml:"family"`
-	Scope           nethelpers.Scope        `yaml:"scope"`
-	Flags           nethelpers.AddressFlags `yaml:"flags"`
-	AnnounceWithARP bool                    `yaml:"announceWithARP,omitempty"`
-	ConfigLayer     ConfigLayer             `yaml:"layer"`
+	Address         netaddr.IPPrefix        `yaml:"address" protobuf:"1"`
+	LinkName        string                  `yaml:"linkName" protobuf:"2"`
+	Family          nethelpers.Family       `yaml:"family" protobuf:"3"`
+	Scope           nethelpers.Scope        `yaml:"scope" protobuf:"4"`
+	Flags           nethelpers.AddressFlags `yaml:"flags" protobuf:"5"`
+	AnnounceWithARP bool                    `yaml:"announceWithARP,omitempty" protobuf:"6"`
+	ConfigLayer     ConfigLayer             `yaml:"layer" protobuf:"7"`
 }
 
 // NewAddressSpec initializes a AddressSpec resource.

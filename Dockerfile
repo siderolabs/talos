@@ -122,6 +122,10 @@ COPY ./hack/docgen /go/src/github.com/talos-systems/talos-hack-docgen
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/talos-hack-docgen \
     && go build -o docgen . \
     && mv docgen /toolchain/go/bin/
+COPY ./hack/gotagsrewrite /go/src/github.com/talos-systems/gotagsrewrite
+RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/gotagsrewrite \
+    && go build -o gotagsrewrite . \
+    && mv gotagsrewrite /toolchain/go/bin/
 COPY --from=importvet /importvet /toolchain/go/bin/importvet
 
 # The build target creates a container that will be used to build Talos source
@@ -209,6 +213,7 @@ RUN goimports -w -local github.com/talos-systems/talos ./pkg/
 RUN gofumpt -w ./pkg/
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go generate ./...
+RUN gotagsrewrite .
 RUN goimports -w -local github.com/talos-systems/talos ./
 RUN gofumpt -w ./
 

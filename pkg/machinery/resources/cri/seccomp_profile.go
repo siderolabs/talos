@@ -20,9 +20,10 @@ const SeccompProfileType = resource.Type("SeccompProfiles.cri.talos.dev")
 type SeccompProfile = typed.Resource[SeccompProfileSpec, SeccompProfileRD]
 
 // SeccompProfileSpec represents the SeccompProfile.
+//gotagsrewrite:gen
 type SeccompProfileSpec struct {
-	Name  string                 `yaml:"name"`
-	Value map[string]interface{} `yaml:"value"`
+	Name  string                 `yaml:"name" protobuf:"1"`
+	Value map[string]interface{} `yaml:"value" protobuf:"2"`
 }
 
 // NewSeccompProfile creates new SeccompProfile object.

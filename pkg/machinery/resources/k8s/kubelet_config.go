@@ -23,15 +23,16 @@ const KubeletID = resource.ID("kubelet")
 type KubeletConfig = typed.Resource[KubeletConfigSpec, KubeletConfigRD]
 
 // KubeletConfigSpec holds the source of kubelet configuration.
+//gotagsrewrite:gen
 type KubeletConfigSpec struct {
-	Image                        string                 `yaml:"image"`
-	ClusterDNS                   []string               `yaml:"clusterDNS"`
-	ClusterDomain                string                 `yaml:"clusterDomain"`
-	ExtraArgs                    map[string]string      `yaml:"extraArgs,omitempty"`
-	ExtraMounts                  []specs.Mount          `yaml:"extraMounts,omitempty"`
-	ExtraConfig                  map[string]interface{} `yaml:"extraConfig,omitempty"`
-	CloudProviderExternal        bool                   `yaml:"cloudProviderExternal"`
-	DefaultRuntimeSeccompEnabled bool                   `yaml:"defaultRuntimeSeccompEnabled"`
+	Image                        string                 `yaml:"image" protobuf:"1"`
+	ClusterDNS                   []string               `yaml:"clusterDNS" protobuf:"2"`
+	ClusterDomain                string                 `yaml:"clusterDomain" protobuf:"3"`
+	ExtraArgs                    map[string]string      `yaml:"extraArgs,omitempty" protobuf:"4"`
+	ExtraMounts                  []specs.Mount          `yaml:"extraMounts,omitempty" protobuf:"5"`
+	ExtraConfig                  map[string]interface{} `yaml:"extraConfig,omitempty" protobuf:"6"`
+	CloudProviderExternal        bool                   `yaml:"cloudProviderExternal" protobuf:"7"`
+	DefaultRuntimeSeccompEnabled bool                   `yaml:"defaultRuntimeSeccompEnabled" protobuf:"8"`
 }
 
 // DeepCopy implements typed.DeepCopyable interface.

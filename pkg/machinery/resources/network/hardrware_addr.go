@@ -22,12 +22,13 @@ const FirstHardwareAddr = resource.ID("first")
 type HardwareAddr = typed.Resource[HardwareAddrSpec, HardwareAddrRD]
 
 // HardwareAddrSpec describes spec for the link.
+//gotagsrewrite:gen
 type HardwareAddrSpec struct {
 	// Name defines link name
-	Name string `yaml:"name"`
+	Name string `yaml:"name" protobuf:"1"`
 
 	// Hardware address
-	HardwareAddr nethelpers.HardwareAddr `yaml:"hardwareAddr"`
+	HardwareAddr nethelpers.HardwareAddr `yaml:"hardwareAddr" protobuf:"2"`
 }
 
 // NewHardwareAddr initializes a HardwareAddr resource.

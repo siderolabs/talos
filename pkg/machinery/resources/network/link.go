@@ -14,40 +14,42 @@ import (
 )
 
 // VLANSpec describes VLAN settings if Kind == "vlan".
+//gotagsrewrite:gen
 type VLANSpec struct {
 	// VID is the vlan ID.
-	VID uint16 `yaml:"vlanID"`
+	VID uint16 `yaml:"vlanID" protobuf:"1"`
 
 	// Protocol is the vlan protocol.
-	Protocol nethelpers.VLANProtocol `yaml:"vlanProtocol"`
+	Protocol nethelpers.VLANProtocol `yaml:"vlanProtocol" protobuf:"2"`
 }
 
 // BondMasterSpec describes bond settings if Kind == "bond".
+//gotagsrewrite:gen
 type BondMasterSpec struct {
-	Mode            nethelpers.BondMode           `yaml:"mode"`
-	HashPolicy      nethelpers.BondXmitHashPolicy `yaml:"xmitHashPolicy"`
-	LACPRate        nethelpers.LACPRate           `yaml:"lacpRate"`
-	ARPValidate     nethelpers.ARPValidate        `yaml:"arpValidate"`
-	ARPAllTargets   nethelpers.ARPAllTargets      `yaml:"arpAllTargets"`
-	PrimaryIndex    uint32                        `yaml:"primary,omitempty"`
-	PrimaryReselect nethelpers.PrimaryReselect    `yaml:"primaryReselect"`
-	FailOverMac     nethelpers.FailOverMAC        `yaml:"failOverMac"`
-	ADSelect        nethelpers.ADSelect           `yaml:"adSelect,omitempty"`
-	MIIMon          uint32                        `yaml:"miimon,omitempty"`
-	UpDelay         uint32                        `yaml:"updelay,omitempty"`
-	DownDelay       uint32                        `yaml:"downdelay,omitempty"`
-	ARPInterval     uint32                        `yaml:"arpInterval,omitempty"`
-	ResendIGMP      uint32                        `yaml:"resendIgmp,omitempty"`
-	MinLinks        uint32                        `yaml:"minLinks,omitempty"`
-	LPInterval      uint32                        `yaml:"lpInterval,omitempty"`
-	PacketsPerSlave uint32                        `yaml:"packetsPerSlave,omitempty"`
-	NumPeerNotif    uint8                         `yaml:"numPeerNotif,omitempty"`
-	TLBDynamicLB    uint8                         `yaml:"tlbLogicalLb,omitempty"`
-	AllSlavesActive uint8                         `yaml:"allSlavesActive,omitempty"`
-	UseCarrier      bool                          `yaml:"useCarrier,omitempty"`
-	ADActorSysPrio  uint16                        `yaml:"adActorSysPrio,omitempty"`
-	ADUserPortKey   uint16                        `yaml:"adUserPortKey,omitempty"`
-	PeerNotifyDelay uint32                        `yaml:"peerNotifyDelay,omitempty"`
+	Mode            nethelpers.BondMode           `yaml:"mode" protobuf:"1"`
+	HashPolicy      nethelpers.BondXmitHashPolicy `yaml:"xmitHashPolicy" protobuf:"2"`
+	LACPRate        nethelpers.LACPRate           `yaml:"lacpRate" protobuf:"3"`
+	ARPValidate     nethelpers.ARPValidate        `yaml:"arpValidate" protobuf:"4"`
+	ARPAllTargets   nethelpers.ARPAllTargets      `yaml:"arpAllTargets" protobuf:"5"`
+	PrimaryIndex    uint32                        `yaml:"primary,omitempty" protobuf:"6"`
+	PrimaryReselect nethelpers.PrimaryReselect    `yaml:"primaryReselect" protobuf:"7"`
+	FailOverMac     nethelpers.FailOverMAC        `yaml:"failOverMac" protobuf:"8"`
+	ADSelect        nethelpers.ADSelect           `yaml:"adSelect,omitempty" protobuf:"9"`
+	MIIMon          uint32                        `yaml:"miimon,omitempty" protobuf:"10"`
+	UpDelay         uint32                        `yaml:"updelay,omitempty" protobuf:"11"`
+	DownDelay       uint32                        `yaml:"downdelay,omitempty" protobuf:"12"`
+	ARPInterval     uint32                        `yaml:"arpInterval,omitempty" protobuf:"13"`
+	ResendIGMP      uint32                        `yaml:"resendIgmp,omitempty" protobuf:"14"`
+	MinLinks        uint32                        `yaml:"minLinks,omitempty" protobuf:"15"`
+	LPInterval      uint32                        `yaml:"lpInterval,omitempty" protobuf:"16"`
+	PacketsPerSlave uint32                        `yaml:"packetsPerSlave,omitempty" protobuf:"17"`
+	NumPeerNotif    uint8                         `yaml:"numPeerNotif,omitempty" protobuf:"18"`
+	TLBDynamicLB    uint8                         `yaml:"tlbLogicalLb,omitempty" protobuf:"19"`
+	AllSlavesActive uint8                         `yaml:"allSlavesActive,omitempty" protobuf:"20"`
+	UseCarrier      bool                          `yaml:"useCarrier,omitempty" protobuf:"21"`
+	ADActorSysPrio  uint16                        `yaml:"adActorSysPrio,omitempty" protobuf:"22"`
+	ADUserPortKey   uint16                        `yaml:"adUserPortKey,omitempty" protobuf:"23"`
+	PeerNotifyDelay uint32                        `yaml:"peerNotifyDelay,omitempty" protobuf:"24"`
 }
 
 // BridgeMasterSpec describes bridge settings if Kind == "bridge".

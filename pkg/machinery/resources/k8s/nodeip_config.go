@@ -17,9 +17,10 @@ const NodeIPConfigType = resource.Type("NodeIPConfigs.kubernetes.talos.dev")
 type NodeIPConfig = typed.Resource[NodeIPConfigSpec, NodeIPConfigRD]
 
 // NodeIPConfigSpec holds the Node IP specification.
+//gotagsrewrite:gen
 type NodeIPConfigSpec struct {
-	ValidSubnets   []string `yaml:"validSubnets,omitempty"`
-	ExcludeSubnets []string `yaml:"excludeSubnets"`
+	ValidSubnets   []string `yaml:"validSubnets,omitempty" protobuf:"1"`
+	ExcludeSubnets []string `yaml:"excludeSubnets" protobuf:"2"`
 }
 
 // NewNodeIPConfig initializes an empty NodeIPConfig resource.

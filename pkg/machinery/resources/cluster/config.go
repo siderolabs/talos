@@ -21,15 +21,16 @@ const ConfigID = resource.ID("cluster")
 // Config resource holds KubeSpan configuration.
 type Config = typed.Resource[ConfigSpec, ConfigRD]
 
-// ConfigSpec describes KubeSpan configuration..
+// ConfigSpec describes KubeSpan configuration.
+//gotagsrewrite:gen
 type ConfigSpec struct {
-	DiscoveryEnabled          bool   `yaml:"discoveryEnabled"`
-	RegistryKubernetesEnabled bool   `yaml:"registryKubernetesEnabled"`
-	RegistryServiceEnabled    bool   `yaml:"registryServiceEnabled"`
-	ServiceEndpoint           string `yaml:"serviceEndpoint"`
-	ServiceEndpointInsecure   bool   `yaml:"serviceEndpointInsecure,omitempty"`
-	ServiceEncryptionKey      []byte `yaml:"serviceEncryptionKey"`
-	ServiceClusterID          string `yaml:"serviceClusterID"`
+	DiscoveryEnabled          bool   `yaml:"discoveryEnabled" protobuf:"1"`
+	RegistryKubernetesEnabled bool   `yaml:"registryKubernetesEnabled" protobuf:"2"`
+	RegistryServiceEnabled    bool   `yaml:"registryServiceEnabled" protobuf:"3"`
+	ServiceEndpoint           string `yaml:"serviceEndpoint" protobuf:"4"`
+	ServiceEndpointInsecure   bool   `yaml:"serviceEndpointInsecure,omitempty" protobuf:"5"`
+	ServiceEncryptionKey      []byte `yaml:"serviceEncryptionKey" protobuf:"6"`
+	ServiceClusterID          string `yaml:"serviceClusterID" protobuf:"7"`
 }
 
 // NewConfig initializes a Config resource.

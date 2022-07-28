@@ -23,8 +23,9 @@ const ExtraManifestsConfigID = resource.ID("extra-manifests")
 type ExtraManifestsConfig = typed.Resource[ExtraManifestsConfigSpec, ExtraManifestsConfigRD]
 
 // ExtraManifestsConfigSpec is configuration for extra bootstrap manifests.
+//gotagsrewrite:gen
 type ExtraManifestsConfigSpec struct {
-	ExtraManifests []ExtraManifest `yaml:"extraManifests"`
+	ExtraManifests []ExtraManifest `yaml:"extraManifests" protobuf:"1"`
 }
 
 // ExtraManifest defines a single extra manifest to download.

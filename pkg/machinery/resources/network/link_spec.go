@@ -19,57 +19,60 @@ const LinkSpecType = resource.Type("LinkSpecs.net.talos.dev")
 type LinkSpec = typed.Resource[LinkSpecSpec, LinkSpecRD]
 
 // LinkSpecSpec describes spec for the link.
+//gotagsrewrite:gen
 type LinkSpecSpec struct {
 	// Name defines link name
-	Name string `yaml:"name"`
+	Name string `yaml:"name" protobuf:"1"`
 
 	// Logical describes if the interface should be created on the fly if it doesn't exist.
-	Logical bool `yaml:"logical"`
+	Logical bool `yaml:"logical" protobuf:"2"`
 
 	// If Up is true, bring interface up, otherwise bring interface down.
 	//
 	// TODO: make *bool ?
-	Up bool `yaml:"up"`
+	Up bool `yaml:"up" protobuf:"3"`
 
 	// Interface MTU (always applies).
-	MTU uint32 `yaml:"mtu"`
+	MTU uint32 `yaml:"mtu" protobuf:"4"`
 
 	// Kind and Type are only required for Logical interfaces.
-	Kind string              `yaml:"kind"`
-	Type nethelpers.LinkType `yaml:"type"`
+	Kind string              `yaml:"kind" protobuf:"5"`
+	Type nethelpers.LinkType `yaml:"type" protobuf:"6"`
 
 	// ParentName indicates link parent for VLAN interfaces.
-	ParentName string `yaml:"parentName,omitempty"`
+	ParentName string `yaml:"parentName,omitempty" protobuf:"7"`
 
 	// MasterName indicates master link for enslaved bonded interfaces.
-	BondSlave BondSlave `yaml:",omitempty,inline"`
+	BondSlave BondSlave `yaml:",omitempty,inline" protobuf:"8"`
 
 	// BridgeSlave indicates master link for bridged interfaces.
-	BridgeSlave BridgeSlave `yaml:"bridgeSlave,omitempty"`
+	BridgeSlave BridgeSlave `yaml:"bridgeSlave,omitempty" protobuf:"9"`
 
 	// These structures are present depending on "Kind" for Logical interfaces.
-	VLAN         VLANSpec         `yaml:"vlan,omitempty"`
-	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty"`
-	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty"`
-	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty"`
+	VLAN         VLANSpec         `yaml:"vlan,omitempty" protobuf:"10"`
+	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty" protobuf:"11"`
+	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty" protobuf:"12"`
+	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty" protobuf:"13"`
 
 	// Configuration layer.
-	ConfigLayer ConfigLayer `yaml:"layer"`
+	ConfigLayer ConfigLayer `yaml:"layer" protobuf:"14"`
 }
 
 // BondSlave contains a bond's master name and slave index.
+//gotagsrewrite:gen
 type BondSlave struct {
 	// MasterName indicates master link for enslaved bonded interfaces.
-	MasterName string `yaml:"masterName,omitempty"`
+	MasterName string `yaml:"masterName,omitempty" protobuf:"1"`
 
 	// SlaveIndex indicates a slave's position in bond.
-	SlaveIndex int `yaml:"slaveIndex,omitempty"`
+	SlaveIndex int `yaml:"slaveIndex,omitempty" protobuf:"2"`
 }
 
 // BridgeSlave contains a bond's master name and slave index.
+//gotagsrewrite:gen
 type BridgeSlave struct {
 	// MasterName indicates master link for enslaved bridged interfaces.
-	MasterName string `yaml:"masterName,omitempty"`
+	MasterName string `yaml:"masterName,omitempty" protobuf:"1"`
 }
 
 // Merge with other, overwriting fields from other if set.

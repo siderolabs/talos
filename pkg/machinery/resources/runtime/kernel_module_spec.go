@@ -17,8 +17,9 @@ const KernelModuleSpecType = resource.Type("KernelModuleSpecs.runtime.talos.dev"
 type KernelModuleSpec = typed.Resource[KernelModuleSpecSpec, KernelModuleSpecRD]
 
 // KernelModuleSpecSpec describes Linux kernel module to load.
+//gotagsrewrite:gen
 type KernelModuleSpecSpec struct {
-	Name string `yaml:"string"`
+	Name string `yaml:"string" protobuf:"1"`
 	// more options in the future: args, aliases, etc.
 }
 

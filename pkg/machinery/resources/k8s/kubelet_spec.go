@@ -18,12 +18,13 @@ const KubeletSpecType = resource.Type("KubeletSpecs.kubernetes.talos.dev")
 type KubeletSpec = typed.Resource[KubeletSpecSpec, KubeletSpecRD]
 
 // KubeletSpecSpec holds the source of kubelet configuration.
+//gotagsrewrite:gen
 type KubeletSpecSpec struct {
-	Image            string                 `yaml:"image"`
-	Args             []string               `yaml:"args,omitempty"`
-	ExtraMounts      []specs.Mount          `yaml:"extraMounts,omitempty"`
-	ExpectedNodename string                 `yaml:"expectedNodename,omitempty"`
-	Config           map[string]interface{} `yaml:"config"`
+	Image            string                 `yaml:"image" protobuf:"1"`
+	Args             []string               `yaml:"args,omitempty" protobuf:"2"`
+	ExtraMounts      []specs.Mount          `yaml:"extraMounts,omitempty" protobuf:"3"`
+	ExpectedNodename string                 `yaml:"expectedNodename,omitempty" protobuf:"4"`
+	Config           map[string]interface{} `yaml:"config" protobuf:"5"`
 }
 
 // NewKubeletSpec initializes an empty KubeletSpec resource.

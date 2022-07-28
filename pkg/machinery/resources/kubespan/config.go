@@ -25,12 +25,13 @@ const ConfigID = resource.ID("kubespan")
 type Config = typed.Resource[ConfigSpec, ConfigRD]
 
 // ConfigSpec describes KubeSpan configuration..
+//gotagsrewrite:gen
 type ConfigSpec struct {
-	Enabled      bool   `yaml:"enabled"`
-	ClusterID    string `yaml:"clusterId"`
-	SharedSecret string `yaml:"sharedSecret"`
+	Enabled      bool   `yaml:"enabled" protobuf:"1"`
+	ClusterID    string `yaml:"clusterId" protobuf:"2"`
+	SharedSecret string `yaml:"sharedSecret" protobuf:"3"`
 	// Force routing via KubeSpan even if the peer connection is not up.
-	ForceRouting bool `yaml:"forceRouting"`
+	ForceRouting bool `yaml:"forceRouting" protobuf:"4"`
 }
 
 // NewConfig initializes a Config resource.

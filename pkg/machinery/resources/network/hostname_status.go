@@ -17,9 +17,10 @@ const HostnameStatusType = resource.Type("HostnameStatuses.net.talos.dev")
 type HostnameStatus = typed.Resource[HostnameStatusSpec, HostnameStatusRD]
 
 // HostnameStatusSpec describes node nostname.
+//gotagsrewrite:gen
 type HostnameStatusSpec struct {
-	Hostname   string `yaml:"hostname"`
-	Domainname string `yaml:"domainname"`
+	Hostname   string `yaml:"hostname" protobuf:"1"`
+	Domainname string `yaml:"domainname" protobuf:"2"`
 }
 
 // FQDN returns the fully-qualified domain name.
