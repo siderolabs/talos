@@ -847,12 +847,16 @@ func trimVersion(version string) string {
 }
 
 func init() {
-	defaultTalosConfig, err := clientconfig.GetDefaultPath()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to find default Talos config path: %s", err)
-	}
-
-	createCmd.Flags().StringVar(&talosconfig, "talosconfig", defaultTalosConfig, "The path to the Talos configuration file")
+	createCmd.Flags().StringVar(
+		&talosconfig,
+		"talosconfig",
+		"",
+		fmt.Sprintf("The path to the Talos configuration file. Defaults to '%s' env variable if set, otherwise '%s' and '%s' in order.",
+			constants.TalosConfigEnvVar,
+			filepath.Join("$HOME", constants.TalosDir, constants.TalosconfigFilename),
+			filepath.Join(constants.ServiceAccountMountPath, constants.TalosconfigFilename),
+		),
+	)
 	createCmd.Flags().StringVar(&nodeImage, "image", helpers.DefaultImage(images.DefaultTalosImageRepository), "the image to use")
 	createCmd.Flags().StringVar(&nodeInstallImage, nodeInstallImageFlag, helpers.DefaultImage(images.DefaultInstallerImageRepository), "the installer image to use")
 	createCmd.Flags().StringVar(&nodeVmlinuzPath, "vmlinuz-path", helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")

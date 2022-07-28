@@ -39,57 +39,7 @@ func (ctrl *EndpointController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *EndpointController) Inputs() []controller.Input {
-	return nil
-}
-
-// Outputs implements controller.Controller interface.
-func (ctrl *EndpointController) Outputs() []controller.Output {
-	return nil
-}
-
-// Run implements controller.Controller interface.
-//
-//nolint:gocyclo
-func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	for {
-		if err := r.UpdateInputs([]controller.Input{
-			{
-				Namespace: config.NamespaceName,
-				Type:      kubeaccess.ConfigType,
-				ID:        pointer.To(kubeaccess.ConfigID),
-				Kind:      controller.InputWeak,
-			},
-		}); err != nil {
-			return err
-		}
-
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		}
-
-		kubeaccessConfig, err := r.Get(ctx, kubeaccess.NewConfig(config.NamespaceName, kubeaccess.ConfigID).Metadata())
-		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error fetching kubeaccess config: %w", err)
-			}
-		}
-
-		if kubeaccessConfig == nil || !kubeaccessConfig.(*kubeaccess.Config).TypedSpec().Enabled {
-			// disabled, nothing to do
-			continue
-		}
-
-		if err = ctrl.reconcile(ctx, r, logger); err != nil {
-			return err
-		}
-	}
-}
-
-//nolint:gocyclo
-func (ctrl *EndpointController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	if err := r.UpdateInputs([]controller.Input{
+	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubeaccess.ConfigType,
@@ -107,12 +57,18 @@ func (ctrl *EndpointController) reconcile(ctx context.Context, r controller.Runt
 			Type:      k8s.EndpointType,
 			Kind:      controller.InputWeak,
 		},
-	}); err != nil {
-		return err
 	}
+}
 
-	r.QueueReconcile()
+// Outputs implements controller.Controller interface.
+func (ctrl *EndpointController) Outputs() []controller.Output {
+	return nil
+}
 
+// Run implements controller.Controller interface.
+//
+//nolint:gocyclo
+func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-r.EventCh():
@@ -128,8 +84,8 @@ func (ctrl *EndpointController) reconcile(ctx context.Context, r controller.Runt
 		}
 
 		if kubeaccessConfig == nil || !kubeaccessConfig.(*kubeaccess.Config).TypedSpec().Enabled {
-			// disabled, bail out
-			return nil
+			// disabled, do not do anything
+			continue
 		}
 
 		endpointResources, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, "", resource.VersionUndefined))

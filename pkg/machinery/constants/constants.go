@@ -349,8 +349,11 @@ const (
 	// EtcdTalosEtcdUpgradeMutex is the etcd mutex prefix to be used to set an etcd upgrade lock.
 	EtcdTalosEtcdUpgradeMutex = EtcdRootTalosKey + ":etcdUpgradeMutex"
 
-	// EtcdTalosManifestApplyMutex is the etcd election .
+	// EtcdTalosManifestApplyMutex is the etcd mutex prefix used by manifest apply controller.
 	EtcdTalosManifestApplyMutex = EtcdRootTalosKey + ":manifestApplyMutex"
+
+	// EtcdTalosServiceAccountCRDControllerMutex is the etcd mutex prefix used by Talos ServiceAccount crd controller.
+	EtcdTalosServiceAccountCRDControllerMutex = EtcdRootTalosKey + ":serviceAccountCRDController"
 
 	// EtcdImage is the reposistory for the etcd image.
 	EtcdImage = "gcr.io/etcd-development/etcd"
@@ -708,14 +711,35 @@ const (
 	// KubernetesTalosAPIServiceNamespace is the namespace of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceNamespace = "default"
 
+	// TalosDir is the default name of the Talos directory under user home.
+	TalosDir = ".talos"
+
+	// TalosconfigFilename is the file name of Talosconfig under TalosDir or under ServiceAccountMountPath inside a pod.
+	TalosconfigFilename = "config"
+
 	// KubernetesTalosProvider is the name of the Talos provider as a Kubernetes label.
 	KubernetesTalosProvider = "talos.dev"
 
-	// ServiceAccountTalosconfigFilename is the file name of Talosconfig when it is injected into a pod.
-	ServiceAccountTalosconfigFilename = "config"
+	// ServiceAccountResourceGroup is the group name of the Talos service account CRD.
+	ServiceAccountResourceGroup = "talos.dev"
+
+	// ServiceAccountResourceVersion is the version of the Talos service account CRD.
+	ServiceAccountResourceVersion = "v1alpha1"
+
+	// ServiceAccountResourceKind is the kind name of the Talos service account CRD.
+	ServiceAccountResourceKind = "ServiceAccount"
+
+	// ServiceAccountResourceSingular is the singular name of the Talos service account CRD.
+	ServiceAccountResourceSingular = "serviceaccount"
+
+	// ServiceAccountResourceShortName is the short name of the service account CRD.
+	ServiceAccountResourceShortName = "tsa"
+
+	// ServiceAccountResourcePlural is the plural name of the service account CRD.
+	ServiceAccountResourcePlural = ServiceAccountResourceSingular + "s"
 
 	// ServiceAccountMountPath is the path of the directory in which the Talos service account secrets are mounted.
-	ServiceAccountMountPath = "/var/run/secrets/talos.dev/"
+	ServiceAccountMountPath = "/var/run/secrets/talos.dev"
 
 	// DefaultTrustedCAFile is the default path to the trusted CA file.
 	DefaultTrustedCAFile = "/etc/ssl/certs/ca-certificates"

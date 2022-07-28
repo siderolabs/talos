@@ -31,7 +31,7 @@ talosctl apply-config [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -71,7 +71,7 @@ talosctl bootstrap [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -162,7 +162,7 @@ talosctl cluster create [flags]
   -n, --nodes strings        target the specified nodes
       --provisioner string   Talos cluster provisioner to use (default "docker")
       --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -192,7 +192,7 @@ talosctl cluster destroy [flags]
   -n, --nodes strings        target the specified nodes
       --provisioner string   Talos cluster provisioner to use (default "docker")
       --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -222,7 +222,7 @@ talosctl cluster show [flags]
   -n, --nodes strings        target the specified nodes
       --provisioner string   Talos cluster provisioner to use (default "docker")
       --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -248,7 +248,7 @@ A collection of commands for managing local docker-based or QEMU-based clusters
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -321,7 +321,7 @@ talosctl completion SHELL [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -351,7 +351,7 @@ talosctl config add <context> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -378,7 +378,7 @@ talosctl config context <context> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -405,7 +405,7 @@ talosctl config contexts [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -432,7 +432,7 @@ talosctl config endpoint <endpoint>... [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -459,7 +459,7 @@ talosctl config info [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -490,7 +490,7 @@ talosctl config merge <from> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -519,7 +519,7 @@ talosctl config new [<path>] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -546,7 +546,7 @@ talosctl config node <endpoint>... [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -569,7 +569,7 @@ Manage the client configuration file (talosconfig)
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -605,7 +605,7 @@ talosctl conformance kubernetes [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -628,7 +628,7 @@ Run conformance tests
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -657,7 +657,7 @@ talosctl containers [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -695,7 +695,7 @@ talosctl copy <src-path> -|<local-path> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -739,7 +739,7 @@ talosctl dashboard [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -767,7 +767,7 @@ talosctl disks [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -796,7 +796,7 @@ talosctl dmesg [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -836,7 +836,7 @@ talosctl edit <type> [<id>] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -863,7 +863,7 @@ talosctl etcd forfeit-leadership [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -890,7 +890,7 @@ talosctl etcd leave [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -917,7 +917,7 @@ talosctl etcd members [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -950,7 +950,7 @@ talosctl etcd remove-member <hostname> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -977,7 +977,7 @@ talosctl etcd snapshot <path> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1000,7 +1000,7 @@ Manage etcd
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1035,7 +1035,7 @@ talosctl events [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1065,7 +1065,7 @@ talosctl gen ca [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1117,7 +1117,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1148,7 +1148,7 @@ talosctl gen crt [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1178,7 +1178,7 @@ talosctl gen csr [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1206,7 +1206,7 @@ talosctl gen key [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1235,7 +1235,7 @@ talosctl gen keypair [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1266,7 +1266,7 @@ talosctl gen secrets [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1289,7 +1289,7 @@ Generate CAs, certificates, and private keys
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1332,7 +1332,7 @@ talosctl get <type> [<id>] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1366,7 +1366,7 @@ talosctl health [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1393,12 +1393,75 @@ talosctl images [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
+## talosctl inject serviceaccount
+
+Inject Talos API ServiceAccount into Kubernetes manifests
+
+```
+talosctl inject serviceaccount [--roles='<ROLE_1>,<ROLE_2>'] -f <manifest.yaml> [flags]
+```
+
+### Examples
+
+```
+talosctl inject serviceaccount --roles="os:admin" -f deployment.yaml > deployment-injected.yaml
+
+Alternatively, stdin can be piped to the command:
+cat deployment.yaml | talosctl inject serviceaccount --roles="os:admin" -f - > deployment-injected.yaml
+
+```
+
+### Options
+
+```
+  -f, --file string     file with Kubernetes manifests to be injected with ServiceAccount
+  -h, --help            help for serviceaccount
+  -r, --roles strings   roles to add to the generated ServiceAccount manifests (default [os:reader])
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
+
+## talosctl inject
+
+Inject Talos API resources into Kubernetes manifests
+
+### Options
+
+```
+  -h, --help   help for inject
+```
+
+### Options inherited from parent commands
+
+```
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl inject serviceaccount](#talosctl-inject-serviceaccount)	 - Inject Talos API ServiceAccount into Kubernetes manifests
 
 ## talosctl inspect dependencies
 
@@ -1431,7 +1494,7 @@ talosctl inspect dependencies [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1454,7 +1517,7 @@ Inspect internals of Talos
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1491,7 +1554,7 @@ talosctl kubeconfig [local-path] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1526,7 +1589,7 @@ talosctl list [path] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1556,7 +1619,7 @@ talosctl logs <service name> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1584,7 +1647,7 @@ talosctl memory [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1611,7 +1674,7 @@ talosctl mounts [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1644,7 +1707,7 @@ talosctl patch <type> [<id>] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1705,7 +1768,7 @@ talosctl pcap [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1734,7 +1797,7 @@ talosctl processes [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1761,7 +1824,7 @@ talosctl read <path> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1789,7 +1852,7 @@ talosctl reboot [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1819,7 +1882,7 @@ talosctl reset [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1847,7 +1910,7 @@ talosctl restart <id> [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1874,7 +1937,7 @@ talosctl rollback [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1907,7 +1970,7 @@ talosctl service [<id> [start|stop|restart|status]] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1935,7 +1998,7 @@ talosctl shutdown [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -1963,7 +2026,7 @@ talosctl stats [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2015,7 +2078,7 @@ talosctl support [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2043,7 +2106,7 @@ talosctl time [--check server] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2074,7 +2137,7 @@ talosctl upgrade [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2110,7 +2173,7 @@ talosctl upgrade-k8s [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2141,7 +2204,7 @@ talosctl usage [path1] [path2] ... [pathN] [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2171,7 +2234,7 @@ talosctl validate [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2201,7 +2264,7 @@ talosctl version [flags]
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2219,7 +2282,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
   -e, --endpoints strings    override default endpoints in Talos configuration
   -h, --help                 help for talosctl
   -n, --nodes strings        target the specified nodes
-      --talosconfig string   The path to the Talos configuration file (default "/home/user/.talos/config")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO
@@ -2242,6 +2305,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources.
 * [talosctl health](#talosctl-health)	 - Check cluster health
 * [talosctl images](#talosctl-images)	 - List the default images used by Talos
+* [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
 * [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
 * [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node
 * [talosctl list](#talosctl-list)	 - Retrieve a directory listing

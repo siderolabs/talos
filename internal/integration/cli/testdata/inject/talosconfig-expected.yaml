@@ -1,0 +1,302 @@
+apiVersion: talos.dev/v1alpha1
+kind: ServiceAccount
+metadata:
+  name: donottouch
+spec:
+  roles:
+    - os:reader
+    - os:admin
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  name: test1
+spec:
+  containers:
+    - env:
+        - name: TEST
+          value: test
+      image: alpine:3
+      name: container1
+      resources: {}
+      volumeMounts:
+        - mountPath: /mnt/vol1
+          name: vol1
+        - mountPath: /var/run/secrets/talos.dev
+          name: talos-secrets
+    - image: alpine:3
+      name: container2
+      resources: {}
+      volumeMounts:
+        - mountPath: /var/run/secrets/talos.dev
+          name: talos-secrets
+  initContainers:
+    - image: busybox
+      name: init1
+      resources: {}
+      volumeMounts:
+        - mountPath: /tmp/hello
+          name: vol1
+        - mountPath: /var/run/secrets/talos.dev
+          name: talos-secrets
+    - image: busybox
+      name: init2
+      resources: {}
+      volumeMounts:
+        - mountPath: /tmp/hello
+          name: vol1
+        - mountPath: /var/run/secrets/talos.dev
+          name: talos-secrets
+  volumes:
+    - emptyDir: {}
+      name: vol1
+    - name: talos-secrets
+      secret:
+        secretName: test1-talos-secrets
+status: {}
+---
+apiVersion: talos.dev/v1alpha1
+kind: ServiceAccount
+metadata:
+  name: test1-talos-secrets
+spec:
+  roles:
+    - os:reader
+    - os:admin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  name: test1
+spec:
+  selector:
+    matchLabels:
+      app: test
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: test
+    spec:
+      containers:
+        - image: alpine:3
+          name: container1
+          resources: {}
+          volumeMounts:
+            - mountPath: /mnt/vol1
+              name: vol1
+            - mountPath: /var/run/secrets/talos.dev
+              name: talos-secrets
+        - image: alpine:3
+          name: container2
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/run/secrets/talos.dev
+              name: talos-secrets
+      volumes:
+        - emptyDir: {}
+          name: vol1
+        - name: talos-secrets
+          secret:
+            secretName: test1-talos-secrets
+status: {}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  creationTimestamp: null
+  name: test2
+spec:
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: test
+    spec:
+      containers:
+        - image: alpine:3
+          name: container1
+          resources: {}
+          volumeMounts:
+            - mountPath: /mnt/vol1
+              name: vol1
+            - mountPath: /var/run/secrets/talos.dev
+              name: talos-secrets
+        - image: alpine:3
+          name: container2
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/run/secrets/talos.dev
+              name: talos-secrets
+      volumes:
+        - emptyDir: {}
+          name: vol1
+        - name: talos-secrets
+          secret:
+            secretName: test2-talos-secrets
+  updateStrategy: {}
+status:
+  currentNumberScheduled: 0
+  desiredNumberScheduled: 0
+  numberMisscheduled: 0
+  numberReady: 0
+---
+apiVersion: talos.dev/v1alpha1
+kind: ServiceAccount
+metadata:
+  name: test2-talos-secrets
+spec:
+  roles:
+    - os:reader
+    - os:admin
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  creationTimestamp: null
+  name: test3
+spec:
+  selector:
+    matchLabels:
+      app: test
+  serviceName: test
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: test
+    spec:
+      containers:
+        - image: alpine:3
+          name: container1
+          resources: {}
+          volumeMounts:
+            - mountPath: /mnt/vol1
+              name: vol1
+            - mountPath: /var/run/secrets/talos.dev
+              name: talos-secrets
+        - image: alpine:3
+          name: container2
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/run/secrets/talos.dev
+              name: talos-secrets
+      volumes:
+        - emptyDir: {}
+          name: vol1
+        - name: talos-secrets
+          secret:
+            secretName: test3-talos-secrets
+  updateStrategy: {}
+status:
+  availableReplicas: 0
+  replicas: 0
+---
+apiVersion: talos.dev/v1alpha1
+kind: ServiceAccount
+metadata:
+  name: test3-talos-secrets
+spec:
+  roles:
+    - os:reader
+    - os:admin
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  creationTimestamp: null
+  name: test4
+  namespace: testns
+spec:
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: test
+    spec:
+      template:
+        metadata:
+          creationTimestamp: null
+          labels:
+            app: test
+        spec:
+          containers:
+            - image: alpine:3
+              name: container1
+              resources: {}
+              volumeMounts:
+                - mountPath: /mnt/vol1
+                  name: vol1
+                - mountPath: /var/run/secrets/talos.dev
+                  name: talos-secrets
+            - image: alpine:3
+              name: container2
+              resources: {}
+              volumeMounts:
+                - mountPath: /var/run/secrets/talos.dev
+                  name: talos-secrets
+          volumes:
+            - name: talos-secrets
+              secret:
+                secretName: test4-talos-secrets
+  schedule: '*/1 * * * *'
+status: {}
+---
+apiVersion: talos.dev/v1alpha1
+kind: ServiceAccount
+metadata:
+  name: test4-talos-secrets
+  namespace: testns
+spec:
+  roles:
+    - os:reader
+    - os:admin
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  creationTimestamp: null
+  name: test5
+  namespace: testns2
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      containers:
+        - image: alpine:3
+          name: container1
+          resources: {}
+          volumeMounts:
+            - mountPath: /mnt/vol1
+              name: vol1
+            - mountPath: /var/run/secrets/talos.dev
+              name: talos-secrets
+        - image: alpine:3
+          name: container2
+          resources: {}
+          volumeMounts:
+            - mountPath: /var/run/secrets/talos.dev
+              name: talos-secrets
+      volumes:
+        - name: talos-secrets
+          secret:
+            secretName: test5-talos-secrets
+status: {}
+---
+apiVersion: talos.dev/v1alpha1
+kind: ServiceAccount
+metadata:
+  name: test5-talos-secrets
+  namespace: testns2
+spec:
+  roles:
+    - os:reader
+    - os:admin
+---

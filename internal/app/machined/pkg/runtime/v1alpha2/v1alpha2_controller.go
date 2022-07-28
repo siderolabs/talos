@@ -145,6 +145,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.StaticPodConfigController{},
 		&kubeaccess.ConfigController{},
 		&kubeaccess.EndpointController{},
+		&kubeaccess.CRDController{},
 		&kubespan.ConfigController{},
 		&kubespan.EndpointController{},
 		&kubespan.IdentityController{},

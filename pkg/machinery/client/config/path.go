@@ -5,11 +5,20 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
+
+// Path represents a path to a configuration file.
+type Path struct {
+	// Path is the filesystem path of the config.
+	Path string
+	// WriteAllowed is true if the path is allowed to be written.
+	WriteAllowed bool
+}
 
 // GetTalosDirectory returns path to Talos directory (~/.talos).
 func GetTalosDirectory() (string, error) {
@@ -18,30 +27,70 @@ func GetTalosDirectory() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(home, ".talos"), nil
+	return filepath.Join(home, constants.TalosDir), nil
 }
 
-// GetDefaultPath returns default path to Talos config.
-func GetDefaultPath() (string, error) {
-	if path, ok := os.LookupEnv(constants.TalosConfigEnvVar); ok {
-		return path, nil
-	}
-
-	talosSAPath := filepath.Join(constants.ServiceAccountMountPath, constants.ServiceAccountTalosconfigFilename)
-
-	_, err := os.Stat(talosSAPath)
-	if err != nil && !os.IsNotExist(err) && !os.IsPermission(err) {
-		return "", err
-	}
-
-	if err == nil {
-		return talosSAPath, nil
-	}
-
+// GetDefaultPaths returns the list of config file paths in order of priority.
+func GetDefaultPaths() ([]Path, error) {
 	talosDir, err := GetTalosDirectory()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return filepath.Join(talosDir, "config"), nil
+	result := make([]Path, 0, 3)
+
+	if path, ok := os.LookupEnv(constants.TalosConfigEnvVar); ok {
+		result = append(result, Path{
+			Path:         path,
+			WriteAllowed: true,
+		})
+	}
+
+	result = append(
+		result,
+		Path{
+			Path:         filepath.Join(talosDir, constants.TalosconfigFilename),
+			WriteAllowed: true,
+		},
+		Path{
+			Path:         filepath.Join(constants.ServiceAccountMountPath, constants.TalosconfigFilename),
+			WriteAllowed: false,
+		},
+	)
+
+	return result, nil
+}
+
+// firstValidPath iterates over the default paths and returns the first one that exists and readable.
+// If no path is found, it will ensure that the first path that allows writes is created and returned.
+// If no path is found that is writable, an error is returned.
+func firstValidPath() (Path, error) {
+	paths, err := GetDefaultPaths()
+	if err != nil {
+		return Path{}, err
+	}
+
+	var firstWriteAllowed Path
+
+	for _, path := range paths {
+		_, err = os.Stat(path.Path)
+		if err == nil {
+			return path, nil
+		}
+
+		if firstWriteAllowed.Path == "" && path.WriteAllowed {
+			firstWriteAllowed = path
+		}
+	}
+
+	if firstWriteAllowed.Path == "" {
+		return Path{}, fmt.Errorf("no valid config paths found")
+	}
+
+	err = ensure(firstWriteAllowed.Path)
+	if err != nil {
+		return Path{}, err
+	}
+
+	return firstWriteAllowed, nil
 }

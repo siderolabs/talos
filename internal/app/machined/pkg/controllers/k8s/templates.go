@@ -718,3 +718,43 @@ spec:
     protocol: TCP
     targetPort: {{ .ApidPort }}
 `)
+
+// talosServiceAccountCRDTemplate is the template of the CRD which
+// allows injecting Talos with credentials into the Kubernetes cluster.
+var talosServiceAccountCRDTemplate = []byte(`apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: {{ .TalosServiceAccount.ResourcePlural }}.{{ .TalosServiceAccount.Group }}
+spec:
+  conversion:
+    strategy: None
+  group: {{ .TalosServiceAccount.Group }}
+  names:
+    kind: {{ .TalosServiceAccount.Kind }}
+    listKind: {{ .TalosServiceAccount.Kind }}List
+    plural: {{ .TalosServiceAccount.ResourcePlural }}
+    singular: {{ .TalosServiceAccount.ResourceSingular }}
+    shortNames:
+      - {{ .TalosServiceAccount.ShortName }}
+  scope: Namespaced
+  versions:
+    - name: {{ .TalosServiceAccount.Version }}
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+            status:
+              type: object
+              properties:
+                failureReason:
+                  type: string
+          type: object
+      served: true
+      storage: true
+`)

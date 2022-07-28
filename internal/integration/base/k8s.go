@@ -14,12 +14,17 @@ import (
 
 	"github.com/talos-systems/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
+	eventsv1 "k8s.io/api/events/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // K8sSuite is a base suite for K8s tests.
@@ -27,6 +32,7 @@ type K8sSuite struct {
 	APISuite
 
 	Clientset       *kubernetes.Clientset
+	DynamicClient   dynamic.Interface
 	DiscoveryClient *discovery.DiscoveryClient
 }
 
@@ -49,6 +55,9 @@ func (k8sSuite *K8sSuite) SetupSuite() {
 	}
 
 	k8sSuite.Clientset, err = kubernetes.NewForConfig(config)
+	k8sSuite.Require().NoError(err)
+
+	k8sSuite.DynamicClient, err = dynamic.NewForConfig(config)
 	k8sSuite.Require().NoError(err)
 
 	k8sSuite.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(config)
@@ -110,4 +119,50 @@ func (k8sSuite *K8sSuite) GetK8sNodeReadinessStatus(ctx context.Context, nodeNam
 	}
 
 	return "", fmt.Errorf("node %s has no readiness condition", nodeName)
+}
+
+// DeleteResource deletes the resource with the given GroupVersionResource, namespace and name.
+// Does not return an error if the resource is not found.
+func (k8sSuite *K8sSuite) DeleteResource(ctx context.Context, gvr schema.GroupVersionResource, ns, name string) error {
+	err := k8sSuite.DynamicClient.Resource(gvr).Namespace(ns).Delete(ctx, name, metav1.DeleteOptions{})
+	if errors.IsNotFound(err) {
+		return nil
+	}
+
+	return err
+}
+
+// EnsureResourceIsDeleted ensures that the resource with the given GroupVersionResource, namespace and name does not exist on Kubernetes.
+// It repeatedly checks the resource for the given duration.
+func (k8sSuite *K8sSuite) EnsureResourceIsDeleted(
+	ctx context.Context,
+	duration time.Duration,
+	gvr schema.GroupVersionResource,
+	ns, name string,
+) error {
+	return retry.Constant(duration).RetryWithContext(ctx, func(ctx context.Context) error {
+		_, err := k8sSuite.DynamicClient.Resource(gvr).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+		if errors.IsNotFound(err) {
+			return nil
+		}
+
+		return err
+	})
+}
+
+// WaitForEventExists waits for the event with the given namespace and check condition to exist on Kubernetes.
+func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, checkFn func(event eventsv1.Event) bool) error {
+	return retry.Constant(15*time.Second).RetryWithContext(ctx, func(ctx context.Context) error {
+		events, err := k8sSuite.Clientset.EventsV1().Events(ns).List(ctx, metav1.ListOptions{})
+
+		filteredEvents := slices.Filter(events.Items, func(item eventsv1.Event) bool {
+			return checkFn(item)
+		})
+
+		if len(filteredEvents) == 0 {
+			return retry.ExpectedError(err)
+		}
+
+		return nil
+	})
 }

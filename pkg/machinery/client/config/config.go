@@ -13,13 +13,16 @@ import (
 	"path/filepath"
 
 	"github.com/talos-systems/crypto/x509"
-	yaml "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 )
 
 // Config represents the client configuration file (talosconfig).
 type Config struct {
 	Context  string              `yaml:"context"`
 	Contexts map[string]*Context `yaml:"contexts"`
+
+	// path is the config Path config is read from.
+	path Path
 }
 
 // NewConfig returns the client configuration file with a single context.
@@ -61,21 +64,50 @@ func (c *Context) upgrade() {
 }
 
 // Open reads the config and initializes a Config struct.
-func Open(p string) (c *Config, err error) {
-	if err = ensure(p); err != nil {
+// If path is explicitly set, it will be used.
+// If not, the default path rules will be used.
+func Open(path string) (*Config, error) {
+	var (
+		confPath Path
+		err      error
+	)
+
+	if path != "" { // path is explicitly specified, ensure that is created and use it
+		confPath = Path{
+			Path:         path,
+			WriteAllowed: true,
+		}
+
+		err = ensure(confPath.Path)
+		if err != nil {
+			return nil, err
+		}
+	} else { // path is implicit, get the first already existing & readable path or ensure that it is created
+		confPath, err = firstValidPath()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	config, err := fromFile(confPath.Path)
+	if err != nil {
 		return nil, err
 	}
 
-	var f *os.File
+	config.path = confPath
 
-	f, err = os.Open(p)
+	return config, nil
+}
+
+func fromFile(path string) (*Config, error) {
+	file, err := os.Open(path)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	defer f.Close() //nolint:errcheck
+	defer file.Close() //nolint:errcheck
 
-	return ReadFrom(f)
+	return ReadFrom(file)
 }
 
 // FromString returns a config from a string.
@@ -102,18 +134,37 @@ func ReadFrom(r io.Reader) (c *Config, err error) {
 }
 
 // Save writes the config to disk.
-func (c *Config) Save(p string) (err error) {
-	configBytes, err := c.Bytes()
-	if err != nil {
-		return
+// If the path is not explicitly set, the default path rules will be used.
+func (c *Config) Save(path string) error {
+	var err error
+
+	if path != "" { // path is explicitly specified, use it
+		c.path = Path{
+			Path:         path,
+			WriteAllowed: true,
+		}
+	} else if c.path.Path == "" { // path is implicit and is not set on config, get the first already existing & writable path or create it
+		c.path, err = firstValidPath()
+		if err != nil {
+			return err
+		}
 	}
 
-	if err = os.MkdirAll(filepath.Dir(p), 0o700); err != nil {
+	if !c.path.WriteAllowed {
+		return fmt.Errorf("not allowed to write to config: %s", c.path.Path)
+	}
+
+	configBytes, err := c.Bytes()
+	if err != nil {
 		return err
 	}
 
-	if err = os.WriteFile(p, configBytes, 0o600); err != nil {
-		return
+	if err = os.MkdirAll(filepath.Dir(c.path.Path), 0o700); err != nil {
+		return err
+	}
+
+	if err = os.WriteFile(c.path.Path, configBytes, 0o600); err != nil {
+		return err
 	}
 
 	return nil
@@ -122,6 +173,11 @@ func (c *Config) Save(p string) (err error) {
 // Bytes gets yaml encoded config data.
 func (c *Config) Bytes() ([]byte, error) {
 	return yaml.Marshal(c)
+}
+
+// Path returns the filesystem path config was read from.
+func (c *Config) Path() Path {
+	return c.path
 }
 
 // Rename describes context rename during merge.
@@ -175,14 +231,14 @@ func (c *Config) Merge(cfg *Config) []Rename {
 	return renames
 }
 
-func ensure(filename string) (err error) {
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
+func ensure(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
 		config := &Config{
 			Context:  "",
 			Contexts: map[string]*Context{},
 		}
 
-		return config.Save(filename)
+		return config.Save(path)
 	}
 
 	return nil

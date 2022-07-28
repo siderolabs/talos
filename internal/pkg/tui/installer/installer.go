@@ -8,7 +8,6 @@ package installer
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 
@@ -427,24 +426,9 @@ func (installer *Installer) apply(conn *Connection) error {
 }
 
 func (installer *Installer) writeTalosconfig(list *tview.Flex, talosconfig *clientconfig.Config) error {
-	path, err := clientconfig.GetDefaultPath()
+	config, err := clientconfig.Open("")
 	if err != nil {
 		return err
-	}
-
-	f, err := os.Open(path)
-
-	var config *clientconfig.Config
-
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	if err == nil {
-		config, err = clientconfig.ReadFrom(f)
-		if err != nil {
-			return err
-		}
 	}
 
 	text := tview.NewTextView()
@@ -457,17 +441,12 @@ func (installer *Installer) writeTalosconfig(list *tview.Flex, talosconfig *clie
 
 	addLines(
 		"",
-		fmt.Sprintf("Merging talosconfig into %s...", path),
+		fmt.Sprintf("Merging talosconfig into %s...", config.Path().Path),
 	)
 	text.SetBackgroundColor(color)
 	list.AddItem(text, 0, 1, false)
 
-	renames := []clientconfig.Rename{}
-	if config != nil {
-		renames = config.Merge(talosconfig)
-	} else {
-		config = talosconfig
-	}
+	renames := config.Merge(talosconfig)
 
 	for _, rename := range renames {
 		addLines(fmt.Sprintf("Renamed %s.", rename.String()))
@@ -481,7 +460,7 @@ func (installer *Installer) writeTalosconfig(list *tview.Flex, talosconfig *clie
 	config.Context = context
 	addLines(fmt.Sprintf("Set current context to %q.", context))
 
-	err = config.Save(path)
+	err = config.Save("")
 	if err != nil {
 		return err
 	}

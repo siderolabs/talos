@@ -14,6 +14,32 @@ preface = """\
 """
 
 [notes]
+    [notes.api-access-from-kubernetes]
+        title = "Talos API access from Kubernetes"
+        description = """\
+Talos now supports access to its API from within Kubernetes. It can be configured in the machine config as below:
+```yaml
+machine:
+  features:
+    kubernetesTalosAPIAccess:
+      enabled: true
+      allowedRoles:
+        - os:reader
+      allowedKubernetesNamespaces:
+        - kube-system
+```
+
+This feature introduces a new custom resource definition, `serviceaccounts.talos.dev`.
+Creating custom resources of this type will provide credentials to access Talos API from within Kubernetes.
+
+The new CLI subcommand `talosctl inject serviceaccount` can be used to configure Kubernetes manifests with Talos service accounts as below:
+```
+talosctl inject serviceaccount -f manifests.yaml > manifests-injected.yaml
+kubectl apply -f manifests-injected.yaml
+```
+
+See [documentation](https://www.talos.dev/v1.2/advanced/configuration/talos-api-access-from-k8s/) for more details.
+"""
 
     [notes.seccomp]
         title = "Seccomp Profiles"

@@ -165,6 +165,8 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		KubernetesTalosAPIServiceNamespace string
 
 		ApidPort int
+
+		TalosServiceAccount TalosServiceAccount
 	}{
 		BootstrapManifestsConfigSpec: cfg,
 		Secrets:                      scrt,
@@ -173,6 +175,15 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		KubernetesTalosAPIServiceNamespace: constants.KubernetesTalosAPIServiceNamespace,
 
 		ApidPort: constants.ApidPort,
+
+		TalosServiceAccount: TalosServiceAccount{
+			Group:            constants.ServiceAccountResourceGroup,
+			Version:          constants.ServiceAccountResourceVersion,
+			Kind:             constants.ServiceAccountResourceKind,
+			ResourceSingular: constants.ServiceAccountResourceSingular,
+			ResourcePlural:   constants.ServiceAccountResourcePlural,
+			ShortName:        constants.ServiceAccountResourceShortName,
+		},
 	}
 
 	type manifestDesc struct {
@@ -226,6 +237,7 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		defaultManifests = append(defaultManifests,
 			[]manifestDesc{
 				{"12-talos-api-service", talosAPIService},
+				{"13-talos-service-account-crd", talosServiceAccountCRDTemplate},
 			}...,
 		)
 	}
@@ -275,4 +287,15 @@ func (ctrl *ManifestController) teardownAll(ctx context.Context, r controller.Ru
 	}
 
 	return nil
+}
+
+// TalosServiceAccount is a struct used by the template engine which contains the needed variables to
+// be able to construct the Talos Service Account CRD.
+type TalosServiceAccount struct {
+	Group            string
+	Version          string
+	Kind             string
+	ResourceSingular string
+	ResourcePlural   string
+	ShortName        string
 }

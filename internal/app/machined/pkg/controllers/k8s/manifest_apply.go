@@ -13,7 +13,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
-	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -155,7 +154,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error building dynamic client: %w", err)
 			}
 
-			if err = ctrl.etcdLock(ctx, logger, func() error {
+			if err = etcd.WithLock(ctx, constants.EtcdTalosManifestApplyMutex, logger, func() error {
 				return ctrl.apply(ctx, logger, mapper, dyn, manifests)
 			}); err != nil {
 				return err
@@ -174,36 +173,6 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error updating manifest status: %w", err)
 		}
 	}
-}
-
-func (ctrl *ManifestApplyController) etcdLock(ctx context.Context, logger *zap.Logger, f func() error) error {
-	etcdClient, err := etcd.NewLocalClient()
-	if err != nil {
-		return fmt.Errorf("error creating etcd client: %w", err)
-	}
-
-	defer etcdClient.Close() //nolint:errcheck
-
-	session, err := concurrency.NewSession(etcdClient.Client)
-	if err != nil {
-		return fmt.Errorf("error creating etcd session: %w", err)
-	}
-
-	defer session.Close() //nolint:errcheck
-
-	mutex := concurrency.NewMutex(session, constants.EtcdTalosManifestApplyMutex)
-
-	logger.Debug("waiting for mutex")
-
-	if err := mutex.Lock(ctx); err != nil {
-		return fmt.Errorf("error acquiring mutex: %w", err)
-	}
-
-	logger.Debug("mutex acquired")
-
-	defer mutex.Unlock(ctx) //nolint:errcheck
-
-	return f()
 }
 
 //nolint:gocyclo

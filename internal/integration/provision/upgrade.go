@@ -462,15 +462,12 @@ func (suite *UpgradeSuite) setupCluster() {
 	)
 	suite.Require().NoError(err)
 
-	defaultTalosConfig, err := clientconfig.GetDefaultPath()
-	suite.Require().NoError(err)
-
-	c, err := clientconfig.Open(defaultTalosConfig)
+	c, err := clientconfig.Open("")
 	suite.Require().NoError(err)
 
 	c.Merge(suite.configBundle.TalosConfig())
 
-	suite.Require().NoError(c.Save(defaultTalosConfig))
+	suite.Require().NoError(c.Save(""))
 
 	suite.clusterAccess = access.NewAdapter(suite.Cluster, provision.WithTalosConfig(suite.configBundle.TalosConfig()))
 

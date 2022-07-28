@@ -92,12 +92,7 @@ func WithEndpoints(endpoints ...string) OptionFunc {
 // Additionally use WithContextName to select a context other than the default.
 func WithDefaultConfig() OptionFunc {
 	return func(o *Options) (err error) {
-		defaultConfigPath, err := clientconfig.GetDefaultPath()
-		if err != nil {
-			return fmt.Errorf("no client configuration provided and no default path found: %w", err)
-		}
-
-		return WithConfigFromFile(defaultConfigPath)(o)
+		return WithConfigFromFile("")(o)
 	}
 }
 

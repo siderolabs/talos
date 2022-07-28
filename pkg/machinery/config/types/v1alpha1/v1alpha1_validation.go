@@ -438,7 +438,6 @@ func (c *ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 // ValidateNetworkDevices runs the specified validation checks specific to the
 // network devices.
 func ValidateNetworkDevices(d *Device, pairedInterfaces map[string]string, checks ...NetworkDeviceCheck) ([]string, error) {
-	// todo utku
 	var result *multierror.Error
 
 	if d == nil {

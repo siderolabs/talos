@@ -10,6 +10,7 @@ import (
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/debug"
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/gen"
+	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt/inject"
 )
 
 // Commands is a list of commands published by the package.
@@ -28,4 +29,5 @@ func init() {
 	addCommand(cluster.Cmd)
 	addCommand(gen.Cmd)
 	addCommand(debug.Cmd)
+	addCommand(inject.Cmd)
 }
