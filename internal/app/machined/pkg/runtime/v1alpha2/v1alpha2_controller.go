@@ -230,6 +230,12 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Cmdline: procfs.ProcCmdline(),
 			Drainer: drainer,
 		},
+		&runtimecontrollers.MachineStatusController{
+			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
+		},
+		&runtimecontrollers.MachineStatusPublisherController{
+			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
+		},
 		&secrets.APIController{},
 		&secrets.APICertSANsController{},
 		&secrets.EtcdController{},

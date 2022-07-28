@@ -150,6 +150,7 @@ func NewState() (*State, error) {
 		&runtime.KernelParamSpec{},
 		&runtime.KernelParamDefaultSpec{},
 		&runtime.KernelParamStatus{},
+		&runtime.MachineStatus{},
 		&runtime.MountStatus{},
 		&secrets.API{},
 		&secrets.CertSAN{},

@@ -16,6 +16,7 @@ import (
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 var eventsCmdFlags struct {
@@ -88,6 +89,18 @@ var eventsCmd = &cobra.Command{
 						args = []interface{}{"error", msg.GetError()}
 					case *machine.AddressEvent:
 						args = []interface{}{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
+					case *machine.MachineStatusEvent:
+						args = []interface{}{
+							msg.GetStage().String(),
+							fmt.Sprintf("ready: %v, unmet conditions: %v",
+								msg.GetStatus().Ready,
+								slices.Map(msg.GetStatus().GetUnmetConditions(),
+									func(c *machine.MachineStatusEvent_MachineStatus_UnmetCondition) string {
+										return c.Name
+									},
+								),
+							),
+						}
 					default:
 						// We haven't implemented the handling of this event yet.
 						continue

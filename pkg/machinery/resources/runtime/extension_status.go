@@ -12,9 +12,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/extensions"
 )
 
-//nolint:lll
-//go:generate deep-copy -type KernelModuleSpecSpec -type KernelParamSpecSpec -type KernelParamStatusSpec -type MountStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
-
 // ExtensionStatusType is type of Extension resource.
 const ExtensionStatusType = resource.Type("ExtensionStatuses.runtime.talos.dev")
 

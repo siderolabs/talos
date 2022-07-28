@@ -613,6 +613,17 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 }
 
 func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
+	// add "fake" events to signal when Talos enters and leaves maintenance mode
+	r.Events().Publish(&machineapi.TaskEvent{
+		Action: machineapi.TaskEvent_START,
+		Task:   "runningMaintenance",
+	})
+
+	defer r.Events().Publish(&machineapi.TaskEvent{
+		Action: machineapi.TaskEvent_STOP,
+		Task:   "runningMaintenance",
+	})
+
 	cfgBytes, err := maintenance.Run(ctx, logger, r)
 	if err != nil {
 		return nil, fmt.Errorf("maintenance service failed: %w", err)

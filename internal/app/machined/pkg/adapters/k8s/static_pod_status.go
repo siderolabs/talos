@@ -36,3 +36,17 @@ func (a staticPodStatus) SetStatus(status *v1.PodStatus) error {
 
 	return json.Unmarshal(jsonSerialized, &a.StaticPodStatus.TypedSpec().PodStatus)
 }
+
+// Status gets status from native Kubernetes resource.
+func (a staticPodStatus) Status() (*v1.PodStatus, error) {
+	var spec v1.PodStatus
+
+	jsonSerialized, err := json.Marshal(a.StaticPodStatus.TypedSpec().PodStatus)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(jsonSerialized, &spec)
+
+	return &spec, err
+}

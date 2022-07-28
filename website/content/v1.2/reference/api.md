@@ -92,6 +92,9 @@ description: Talos gRPC API reference.
     - [LoadAvgResponse](#machine.LoadAvgResponse)
     - [LogsRequest](#machine.LogsRequest)
     - [MachineConfig](#machine.MachineConfig)
+    - [MachineStatusEvent](#machine.MachineStatusEvent)
+    - [MachineStatusEvent.MachineStatus](#machine.MachineStatusEvent.MachineStatus)
+    - [MachineStatusEvent.MachineStatus.UnmetCondition](#machine.MachineStatusEvent.MachineStatus.UnmetCondition)
     - [MemInfo](#machine.MemInfo)
     - [Memory](#machine.Memory)
     - [MemoryResponse](#machine.MemoryResponse)
@@ -163,6 +166,7 @@ description: Talos gRPC API reference.
     - [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode)
     - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
+    - [MachineStatusEvent.MachineStage](#machine.MachineStatusEvent.MachineStage)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
     - [RebootRequest.Mode](#machine.RebootRequest.Mode)
     - [SequenceEvent.Action](#machine.SequenceEvent.Action)
@@ -1550,6 +1554,54 @@ The request message containing the process name.
 
 
 
+<a name="machine.MachineStatusEvent"></a>
+
+### MachineStatusEvent
+MachineStatusEvent reports changes to the MachineStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| stage | [MachineStatusEvent.MachineStage](#machine.MachineStatusEvent.MachineStage) |  |  |
+| status | [MachineStatusEvent.MachineStatus](#machine.MachineStatusEvent.MachineStatus) |  |  |
+
+
+
+
+
+
+<a name="machine.MachineStatusEvent.MachineStatus"></a>
+
+### MachineStatusEvent.MachineStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  |  |
+| unmet_conditions | [MachineStatusEvent.MachineStatus.UnmetCondition](#machine.MachineStatusEvent.MachineStatus.UnmetCondition) | repeated |  |
+
+
+
+
+
+
+<a name="machine.MachineStatusEvent.MachineStatus.UnmetCondition"></a>
+
+### MachineStatusEvent.MachineStatus.UnmetCondition
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| reason | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="machine.MemInfo"></a>
 
 ### MemInfo
@@ -2749,6 +2801,25 @@ File type.
 | TYPE_INIT | 1 |  |
 | TYPE_CONTROL_PLANE | 2 |  |
 | TYPE_WORKER | 3 |  |
+
+
+
+<a name="machine.MachineStatusEvent.MachineStage"></a>
+
+### MachineStatusEvent.MachineStage
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| UNKNOWN | 0 |  |
+| BOOTING | 1 |  |
+| INSTALLING | 2 |  |
+| MAINTENANCE | 3 |  |
+| RUNNING | 4 |  |
+| REBOOTING | 5 |  |
+| SHUTTING_DOWN | 6 |  |
+| RESETTING | 7 |  |
+| UPGRADING | 8 |  |
 
 
 
