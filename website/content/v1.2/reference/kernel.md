@@ -59,8 +59,8 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
   * `bond=bond0:`
   * `bond=bond0::`
   * `bond=bond0:::`
-  * `bond=bond0:eth0:eth1`
-  * `bond=bond0:eth0:eth1:balance-rr`
+  * `bond=bond0:eth0,eth1`
+  * `bond=bond0:eth0,eth1:balance-rr`
 
   An example of a bond configuration with all options specified:
 
