@@ -400,7 +400,7 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			LeaveEtcd,
 		).Append(
 			"stopServices",
-			StopServicesForUpgrade,
+			StopServicesEphemeral,
 		).Append(
 			"unmountUser",
 			UnmountUserDisks,
@@ -422,9 +422,6 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"upgrade",
 			Upgrade,
 		).Append(
-			"stopEverything",
-			StopAllServices,
-		).Append(
 			"mountBoot",
 			MountBootPartition,
 		).Append(
@@ -433,6 +430,9 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 		).Append(
 			"unmountBoot",
 			UnmountBootPartition,
+		).Append(
+			"stopEverything",
+			StopAllServices,
 		).Append(
 			"reboot",
 			Reboot,
@@ -453,8 +453,8 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 		)
 	default:
 		phases = phases.Append(
-			"stopEverything",
-			StopAllServices,
+			"stopServices",
+			StopServicesEphemeral,
 		).Append(
 			"unmountUser",
 			UnmountUserDisks,
@@ -481,6 +481,9 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 			enableKexec,
 			"unmountBoot",
 			UnmountBootPartition,
+		).Append(
+			"stopEverything",
+			StopAllServices,
 		)
 	}
 

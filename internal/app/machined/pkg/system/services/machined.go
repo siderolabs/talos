@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	v1alpha1server "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -134,14 +135,17 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 		return err
 	}
 
-	defer server.Stop()
-
 	go func() {
 		//nolint:errcheck
 		server.Serve(listener)
 	}()
 
 	<-ctx.Done()
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	factory.ServerGracefulStop(server, shutdownCtx)
 
 	return nil
 }

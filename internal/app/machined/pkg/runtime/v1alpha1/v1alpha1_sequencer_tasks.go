@@ -796,11 +796,11 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 	}, "startAllServices"
 }
 
-// StopServicesForUpgrade represents the StopServicesForUpgrade task.
-func StopServicesForUpgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+// StopServicesEphemeral represents the StopServicesEphemeral task.
+func StopServicesEphemeral(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// stopping 'cri' service stops everything which depends on it (kubelet, etcd, ...)
-		return system.Services(nil).StopWithRevDepenencies(ctx, "cri", "udevd")
+		return system.Services(nil).StopWithRevDepenencies(ctx, "cri", "udevd", "trustd")
 	}, "stopServicesForUpgrade"
 }
 

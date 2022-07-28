@@ -5,6 +5,7 @@
 package factory
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -256,4 +257,23 @@ func ListenAndServe(r Registrator, setters ...Option) (err error) {
 	}
 
 	return server.Serve(listener)
+}
+
+// ServerGracefulStop the server with a timeout.
+//
+// Core gRPC doesn't support timeouts.
+func ServerGracefulStop(server *grpc.Server, shutdownCtx context.Context) { //nolint:revive
+	stopped := make(chan struct{})
+
+	go func() {
+		server.GracefulStop()
+		close(stopped)
+	}()
+
+	select {
+	case <-shutdownCtx.Done():
+		server.Stop()
+	case <-stopped:
+		server.Stop()
+	}
 }
