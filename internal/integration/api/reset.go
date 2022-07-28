@@ -255,32 +255,22 @@ func (suite *ResetSuite) TestResetDuringBoot() {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")
 	}
 
+	if suite.Cluster == nil {
+		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNodes(suite.ctx, node)
 
 	suite.T().Log("Resetting node", node)
 
 	for i := 0; i < 2; i++ {
-		var (
-			bootID string
-			err    error
-		)
+		bootID := suite.ReadBootIDWithRetry(nodeCtx, time.Minute*5)
 
-		err = retry.Constant(5*time.Minute, retry.WithUnits(time.Millisecond*1000)).Retry(
-			func() error {
-				bootID, err = suite.ReadBootID(nodeCtx)
-				if err != nil {
-					return retry.ExpectedError(err)
-				}
-
-				return nil
-			},
-		)
-
-		err = retry.Constant(5*time.Minute, retry.WithUnits(time.Millisecond*1000)).Retry(
+		err := retry.Constant(5*time.Minute, retry.WithUnits(time.Millisecond*1000)).Retry(
 			func() error {
 				// force reboot after reset, as this is the only mode we can test
-				return base.IgnoreGRPCUnavailable(
+				return retry.ExpectedError(
 					suite.Client.ResetGeneric(
 						client.WithNodes(suite.ctx, node), &machineapi.ResetRequest{
 							Reboot:   true,
@@ -297,12 +287,13 @@ func (suite *ResetSuite) TestResetDuringBoot() {
 			},
 		)
 
-		suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*5)
 		suite.Require().NoError(err)
-		suite.ClearConnectionRefused(suite.ctx, node)
+
+		suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*5)
 	}
 
 	suite.WaitForBootDone(suite.ctx)
+	suite.AssertClusterHealthy(suite.ctx)
 }
 
 func init() {
