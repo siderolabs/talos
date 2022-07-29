@@ -92,11 +92,11 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, logger
 			return err
 		}
 
-		if err = os.WriteFile(constants.KubernetesEtcdCACert, rootScrts.TypedSpec().EtcdCA.Crt, 0o400); err != nil {
+		if err = os.WriteFile(constants.EtcdCACert, rootScrts.TypedSpec().EtcdCA.Crt, 0o400); err != nil {
 			return fmt.Errorf("failed to write CA certificate: %w", err)
 		}
 
-		if err = os.WriteFile(constants.KubernetesEtcdCAKey, rootScrts.TypedSpec().EtcdCA.Key, 0o400); err != nil {
+		if err = os.WriteFile(constants.EtcdCAKey, rootScrts.TypedSpec().EtcdCA.Key, 0o400); err != nil {
 			return fmt.Errorf("failed to write CA key: %w", err)
 		}
 
@@ -109,18 +109,18 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, logger
 		}{
 			{
 				getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.Etcd },
-				keyPath:  constants.KubernetesEtcdKey,
-				certPath: constants.KubernetesEtcdCert,
+				keyPath:  constants.EtcdKey,
+				certPath: constants.EtcdCert,
 			},
 			{
 				getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.EtcdPeer },
-				keyPath:  constants.KubernetesEtcdPeerKey,
-				certPath: constants.KubernetesEtcdPeerCert,
+				keyPath:  constants.EtcdPeerKey,
+				certPath: constants.EtcdPeerCert,
 			},
 			{
 				getter:   func() *x509.PEMEncodedCertificateAndKey { return etcdCerts.EtcdAdmin },
-				keyPath:  constants.KubernetesEtcdAdminKey,
-				certPath: constants.KubernetesEtcdAdminCert,
+				keyPath:  constants.EtcdAdminKey,
+				certPath: constants.EtcdAdminCert,
 			},
 		} {
 			if err = os.WriteFile(keypair.keyPath, keypair.getter().Key, 0o400); err != nil {

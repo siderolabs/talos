@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
@@ -164,7 +165,7 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 			Image:                    cfgProvider.Cluster().APIServer().Image(),
 			CloudProvider:            cloudProvider,
 			ControlPlaneEndpoint:     cfgProvider.Cluster().Endpoint().String(),
-			EtcdServers:              []string{"https://127.0.0.1:2379"},
+			EtcdServers:              []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("localhost", constants.EtcdClientPort))},
 			LocalPort:                cfgProvider.Cluster().LocalAPIServerPort(),
 			ServiceCIDRs:             cfgProvider.Cluster().Network().ServiceCIDRs(),
 			ExtraArgs:                cfgProvider.Cluster().APIServer().ExtraArgs(),

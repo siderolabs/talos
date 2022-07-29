@@ -305,7 +305,7 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 		retry.WithErrorLogging(true),
 	).RetryWithContext(ctx, func(ctx context.Context) error {
 		var (
-			peerAddrs = []string{"https://" + net.FormatAddress(ip) + ":2380"}
+			peerAddrs = []string{"https://" + nethelpers.JoinHostPort(ip, +constants.EtcdPeerPort)}
 			resp      *clientv3.MemberListResponse
 		)
 
@@ -397,16 +397,16 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		"auto-tls":                           "false",
 		"peer-auto-tls":                      "false",
 		"data-dir":                           constants.EtcdDataPath,
-		"listen-peer-urls":                   "https://" + net.FormatAddress(listenAddress) + ":2380",
-		"listen-client-urls":                 "https://" + net.FormatAddress(listenAddress) + ":2379",
+		"listen-peer-urls":                   "https://" + nethelpers.JoinHostPort(listenAddress, constants.EtcdPeerPort),
+		"listen-client-urls":                 "https://" + nethelpers.JoinHostPort(listenAddress, constants.EtcdClientPort),
 		"client-cert-auth":                   "true",
-		"cert-file":                          constants.KubernetesEtcdCert,
-		"key-file":                           constants.KubernetesEtcdKey,
-		"trusted-ca-file":                    constants.KubernetesEtcdCACert,
+		"cert-file":                          constants.EtcdCert,
+		"key-file":                           constants.EtcdKey,
+		"trusted-ca-file":                    constants.EtcdCACert,
 		"peer-client-cert-auth":              "true",
-		"peer-cert-file":                     constants.KubernetesEtcdPeerCert,
-		"peer-key-file":                      constants.KubernetesEtcdPeerKey,
-		"peer-trusted-ca-file":               constants.KubernetesEtcdCACert,
+		"peer-cert-file":                     constants.EtcdPeerCert,
+		"peer-key-file":                      constants.EtcdPeerKey,
+		"peer-trusted-ca-file":               constants.EtcdCACert,
 		"experimental-initial-corrupt-check": "true",
 	}
 
@@ -427,7 +427,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 		}
 
 		if ok {
-			initialCluster := fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr))
+			initialCluster := fmt.Sprintf("%s=https://%s", hostname, nethelpers.JoinHostPort(primaryAddr, constants.EtcdPeerPort))
 
 			if upgraded {
 				denyListArgs.Set("initial-cluster-state", "existing")
@@ -446,13 +446,13 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime) error {
 
 	if !extraArgs.Contains("initial-advertise-peer-urls") {
 		denyListArgs.Set("initial-advertise-peer-urls",
-			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), 2380)),
+			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(primaryAddr, constants.EtcdPeerPort)),
 		)
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
 		denyListArgs.Set("advertise-client-urls",
-			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), 2379)),
+			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(primaryAddr, constants.EtcdClientPort)),
 		)
 	}
 
@@ -487,16 +487,16 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 		"auto-tls":                           "false",
 		"peer-auto-tls":                      "false",
 		"data-dir":                           constants.EtcdDataPath,
-		"listen-peer-urls":                   "https://" + net.FormatAddress(listenAddress) + ":2380",
-		"listen-client-urls":                 "https://" + net.FormatAddress(listenAddress) + ":2379",
+		"listen-peer-urls":                   "https://" + nethelpers.JoinHostPort(listenAddress, constants.EtcdPeerPort),
+		"listen-client-urls":                 "https://" + nethelpers.JoinHostPort(listenAddress, constants.EtcdClientPort),
 		"client-cert-auth":                   "true",
-		"cert-file":                          constants.KubernetesEtcdCert,
-		"key-file":                           constants.KubernetesEtcdKey,
-		"trusted-ca-file":                    constants.KubernetesEtcdCACert,
+		"cert-file":                          constants.EtcdCert,
+		"key-file":                           constants.EtcdKey,
+		"trusted-ca-file":                    constants.EtcdCACert,
 		"peer-client-cert-auth":              "true",
-		"peer-cert-file":                     constants.KubernetesEtcdPeerCert,
-		"peer-key-file":                      constants.KubernetesEtcdPeerKey,
-		"peer-trusted-ca-file":               constants.KubernetesEtcdCACert,
+		"peer-cert-file":                     constants.EtcdPeerCert,
+		"peer-key-file":                      constants.EtcdPeerKey,
+		"peer-trusted-ca-file":               constants.EtcdCACert,
 		"experimental-initial-corrupt-check": "true",
 	}
 
@@ -530,7 +530,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 			var initialCluster string
 
 			if e.Bootstrap {
-				initialCluster = fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr))
+				initialCluster = fmt.Sprintf("%s=https://%s", hostname, nethelpers.JoinHostPort(primaryAddr, constants.EtcdPeerPort))
 			} else {
 				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, hostname, primaryAddr)
 				if err != nil {
@@ -543,14 +543,14 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime) error
 
 		if !extraArgs.Contains("initial-advertise-peer-urls") {
 			denyListArgs.Set("initial-advertise-peer-urls",
-				fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), 2380)),
+				fmt.Sprintf("https://%s", nethelpers.JoinHostPort(primaryAddr, constants.EtcdPeerPort)),
 			)
 		}
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
 		denyListArgs.Set("advertise-client-urls",
-			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), 2379)),
+			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(net.FormatAddress(primaryAddr), constants.EtcdClientPort)),
 		)
 	}
 
@@ -581,9 +581,9 @@ func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
 		Name:          hostname,
 		OutputDataDir: constants.EtcdDataPath,
 
-		PeerURLs: []string{"https://" + net.FormatAddress(primaryAddr) + ":2380"},
+		PeerURLs: []string{"https://" + nethelpers.JoinHostPort(primaryAddr, constants.EtcdPeerPort)},
 
-		InitialCluster: fmt.Sprintf("%s=https://%s:2380", hostname, net.FormatAddress(primaryAddr)),
+		InitialCluster: fmt.Sprintf("%s=https://%s", hostname, nethelpers.JoinHostPort(primaryAddr, constants.EtcdPeerPort)),
 
 		SkipHashCheck: e.RecoverSkipHashCheck,
 	}); err != nil {
@@ -600,22 +600,58 @@ func (e *Etcd) recoverFromSnapshot(hostname, primaryAddr string) error {
 func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) error {
 	// try to promote a member until it succeeds (call might fail until the member catches up with the leader)
 	// promote member call will fail until member catches up with the master
+	//
+	// iterate over all endpoints until we find the one which works
+	// if we stick with the default behavior, we might hit the member being promoted, and that will never
+	// promote itself.
+	idx := 0
+
 	return retry.Constant(10*time.Minute,
 		retry.WithUnits(15*time.Second),
 		retry.WithJitter(time.Second),
 		retry.WithErrorLogging(true),
 	).RetryWithContext(ctx, func(ctx context.Context) error {
-		client, err := etcd.NewClientFromControlPlaneIPsNoDiscovery(ctx, r.State().V1Alpha2().Resources())
+		endpoints, err := etcd.GetEndpoints(ctx, r.State().V1Alpha2().Resources())
 		if err != nil {
 			return retry.ExpectedError(err)
 		}
 
-		defer client.Close() //nolint:errcheck
+		if len(endpoints) == 0 {
+			return retry.ExpectedErrorf("no endpoints")
+		}
 
-		_, err = client.MemberPromote(ctx, memberID)
+		// try to iterate all available endpoints in the time available for an attempt
+		for i := 0; i < len(endpoints); i++ {
+			select {
+			case <-ctx.Done():
+				return retry.ExpectedError(ctx.Err())
+			default:
+			}
+
+			endpoint := endpoints[idx%len(endpoints)]
+			idx++
+
+			err = attemptPromote(ctx, endpoint, memberID)
+			if err == nil {
+				return nil
+			}
+		}
 
 		return retry.ExpectedError(err)
 	})
+}
+
+func attemptPromote(ctx context.Context, endpoint string, memberID uint64) error {
+	client, err := etcd.NewClient([]string{endpoint})
+	if err != nil {
+		return err
+	}
+
+	defer client.Close() //nolint:errcheck
+
+	_, err = client.MemberPromote(ctx, memberID)
+
+	return err
 }
 
 // IsDirEmpty checks if a directory is empty or not.

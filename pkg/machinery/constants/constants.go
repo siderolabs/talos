@@ -166,32 +166,35 @@ const (
 	// KubernetesCACert is the path to the root CA certificate.
 	KubernetesCACert = DefaultCertificatesDir + "/" + "ca.crt"
 
-	// KubernetesEtcdCACert is the path to the etcd CA certificate.
-	KubernetesEtcdCACert = EtcdPKIPath + "/" + "ca.crt"
+	// EtcdCACert is the path to the etcd CA certificate.
+	EtcdCACert = EtcdPKIPath + "/" + "ca.crt"
 
-	// KubernetesEtcdCAKey is the path to the etcd CA private key.
-	KubernetesEtcdCAKey = EtcdPKIPath + "/" + "ca.key"
+	// EtcdCAKey is the path to the etcd CA private key.
+	EtcdCAKey = EtcdPKIPath + "/" + "ca.key"
 
-	// KubernetesEtcdCert is the path to the etcd server certificate.
-	KubernetesEtcdCert = EtcdPKIPath + "/" + "server.crt"
+	// EtcdCert is the path to the etcd server certificate.
+	EtcdCert = EtcdPKIPath + "/" + "server.crt"
 
-	// KubernetesEtcdKey is the path to the etcd server private key.
-	KubernetesEtcdKey = EtcdPKIPath + "/" + "server.key"
+	// EtcdKey is the path to the etcd server private key.
+	EtcdKey = EtcdPKIPath + "/" + "server.key"
 
-	// KubernetesEtcdPeerCert is the path to the etcd peer certificate.
-	KubernetesEtcdPeerCert = EtcdPKIPath + "/" + "peer.crt"
+	// EtcdPeerCert is the path to the etcd peer certificate.
+	EtcdPeerCert = EtcdPKIPath + "/" + "peer.crt"
 
-	// KubernetesEtcdPeerKey is the path to the etcd peer private key.
-	KubernetesEtcdPeerKey = EtcdPKIPath + "/" + "peer.key"
+	// EtcdPeerKey is the path to the etcd peer private key.
+	EtcdPeerKey = EtcdPKIPath + "/" + "peer.key"
 
-	// KubernetesEtcdAdminCert is the path to the talos client certificate.
-	KubernetesEtcdAdminCert = EtcdPKIPath + "/" + "admin.crt"
+	// EtcdAdminCert is the path to the talos client certificate.
+	EtcdAdminCert = EtcdPKIPath + "/" + "admin.crt"
 
-	// KubernetesEtcdAdminKey is the path to the talos client private key.
-	KubernetesEtcdAdminKey = EtcdPKIPath + "/" + "admin.key"
+	// EtcdAdminKey is the path to the talos client private key.
+	EtcdAdminKey = EtcdPKIPath + "/" + "admin.key"
 
-	// KubernetesEtcdListenClientPort defines the port etcd listen on for client traffic.
-	KubernetesEtcdListenClientPort = "2379"
+	// EtcdClientPort defines the port etcd listen on for client traffic.
+	EtcdClientPort = 2379
+
+	// EtcdPeerPort defines the port etcd listens on for peer traffic.
+	EtcdPeerPort = 2380
 
 	// KubernetesAdminCertCommonName defines CN property of Kubernetes admin certificate.
 	KubernetesAdminCertCommonName = "admin"

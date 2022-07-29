@@ -13,9 +13,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/talos-systems/net"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -27,6 +25,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
@@ -42,9 +41,9 @@ type Client struct {
 // a list of endpoints.
 func NewClient(endpoints []string) (client *Client, err error) {
 	tlsInfo := transport.TLSInfo{
-		CertFile:      constants.KubernetesEtcdAdminCert,
-		KeyFile:       constants.KubernetesEtcdAdminKey,
-		TrustedCAFile: constants.KubernetesEtcdCACert,
+		CertFile:      constants.EtcdAdminCert,
+		KeyFile:       constants.EtcdAdminKey,
+		TrustedCAFile: constants.EtcdCACert,
 	}
 
 	tlsConfig, err := tlsInfo.ClientConfig()
@@ -68,7 +67,7 @@ func NewClient(endpoints []string) (client *Client, err error) {
 
 // NewLocalClient initializes and returns etcd client configured to talk to localhost endpoint.
 func NewLocalClient() (client *Client, err error) {
-	return NewClient([]string{"127.0.0.1:2379"})
+	return NewClient([]string{nethelpers.JoinHostPort("localhost", constants.EtcdClientPort)})
 }
 
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
@@ -86,31 +85,9 @@ func NewClientFromControlPlaneIPsNoDiscovery(ctx context.Context, resources stat
 }
 
 func newClientFromControlPlaneIPs(ctx context.Context, resources state.State, ignoreEndpointID string) (client *Client, err error) {
-	endpointResources, err := resources.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, "", resource.VersionUndefined))
+	endpoints, err := getEndpoints(ctx, resources, ignoreEndpointID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting endpoints resources: %w", err)
-	}
-
-	var endpointAddrs k8s.EndpointList
-
-	// merge all endpoints into a single list
-	for _, res := range endpointResources.Items {
-		if res.Metadata().ID() == ignoreEndpointID {
-			continue
-		}
-
-		endpointAddrs = endpointAddrs.Merge(res.(*k8s.Endpoint))
-	}
-
-	if len(endpointAddrs) == 0 {
-		return nil, fmt.Errorf("no controlplane endpoints discovered yet")
-	}
-
-	endpoints := endpointAddrs.Strings()
-
-	// Etcd expects host:port format.
-	for i := 0; i < len(endpoints); i++ {
-		endpoints[i] = net.FormatAddress(endpoints[i]) + ":2379"
+		return nil, err
 	}
 
 	// Shuffle endpoints to establish random order on each call to avoid patterns based on sorted IP list.
