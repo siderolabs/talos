@@ -518,7 +518,7 @@ func syncManifests(ctx context.Context, objects []*unstructured.Unstructured, cl
 
 		err = retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 			resp, diff, skipped, err = updateManifest(ctx, mapper, k8sClient, obj, options.DryRun)
-			if kubernetes.IsRetryableError(err) {
+			if kubernetes.IsRetryableError(err) || apierrors.IsConflict(err) {
 				return retry.ExpectedError(err)
 			}
 
