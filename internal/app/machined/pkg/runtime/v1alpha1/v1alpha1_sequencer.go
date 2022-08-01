@@ -284,15 +284,15 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 		phases = phases.AppendWhen(
 			in.GetGraceful(),
 			"drain",
-			CordonAndDrainNode,
+			taskErrorHandler(logError, CordonAndDrainNode),
 		).AppendWhen(
 			in.GetGraceful(),
 			"cleanup",
-			RemoveAllPods,
+			taskErrorHandler(logError, RemoveAllPods),
 		).AppendWhen(
 			!in.GetGraceful(),
 			"cleanup",
-			StopAllPods,
+			taskErrorHandler(logError, StopAllPods),
 		).Append(
 			"dbus",
 			StopDBus,
@@ -301,7 +301,10 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			"leave",
 			LeaveEtcd,
 		).AppendList(
-			stopAllPhaselist(r, withKexec),
+			phaseListErrorHandler(logError, stopAllPhaselist(r, withKexec)...),
+		).Append(
+			"forceCleanup",
+			ForceCleanup,
 		).AppendWhen(
 			len(in.GetSystemDiskTargets()) == 0,
 			"reset",
