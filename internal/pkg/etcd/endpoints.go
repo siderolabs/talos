@@ -21,10 +21,6 @@ import (
 //
 // It is not guaranteed that etcd is running on each listed endpoint.
 func GetEndpoints(ctx context.Context, resources state.State) ([]string, error) {
-	return getEndpoints(ctx, resources, "")
-}
-
-func getEndpoints(ctx context.Context, resources state.State, ignoreEndpointID string) ([]string, error) {
 	endpointResources, err := safe.StateList[*k8s.Endpoint](ctx, resources, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, fmt.Errorf("error getting endpoints resources: %w", err)
@@ -36,10 +32,6 @@ func getEndpoints(ctx context.Context, resources state.State, ignoreEndpointID s
 
 	// merge all endpoints into a single list
 	for iter.Next() {
-		if iter.Value().Metadata().ID() == ignoreEndpointID {
-			continue
-		}
-
 		endpointAddrs = endpointAddrs.Merge(iter.Value())
 	}
 

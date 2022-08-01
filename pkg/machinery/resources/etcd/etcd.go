@@ -7,7 +7,7 @@ package etcd
 
 import "github.com/cosi-project/runtime/pkg/resource"
 
-//go:generate deep-copy -type PKIStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type ConfigSpec -type PKIStatusSpec -type SpecSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // NamespaceName contains resources supporting etcd service.
 const NamespaceName resource.Namespace = "etcd"

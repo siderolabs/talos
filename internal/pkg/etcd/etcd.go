@@ -26,7 +26,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
 // QuorumCheckTimeout is the amount of time to allow for KV operations before quorum is declared invalid.
@@ -73,19 +72,7 @@ func NewLocalClient() (client *Client, err error) {
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
 // configured to talk to all members.
 func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State) (client *Client, err error) {
-	return newClientFromControlPlaneIPs(ctx, resources, "")
-}
-
-// NewClientFromControlPlaneIPsNoDiscovery initializes and returns an etcd client
-// configured to talk to all members, but ignores discovery service data.
-//
-// Note: this is a temporary workaround for etcd join issues which will be removed once backported to Talos 1.1.x.
-func NewClientFromControlPlaneIPsNoDiscovery(ctx context.Context, resources state.State) (client *Client, err error) {
-	return newClientFromControlPlaneIPs(ctx, resources, k8s.ControlPlaneDiscoveredEndpointsID)
-}
-
-func newClientFromControlPlaneIPs(ctx context.Context, resources state.State, ignoreEndpointID string) (client *Client, err error) {
-	endpoints, err := getEndpoints(ctx, resources, ignoreEndpointID)
+	endpoints, err := GetEndpoints(ctx, resources)
 	if err != nil {
 		return nil, err
 	}
