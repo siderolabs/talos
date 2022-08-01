@@ -313,14 +313,14 @@ func (suite *CmdlineSuite) TestParse() {
 		},
 		{
 			name:    "vlan configuration",
-			cmdline: "vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::",
+			cmdline: "vlan=eth1.169:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.169:::::",
 			expectedSettings: network.CmdlineNetworking{
 				Address:  netaddr.MustParseIPPrefix("172.20.0.2/24"),
 				Gateway:  netaddr.MustParseIP("172.20.0.1"),
-				LinkName: "eth1.5",
+				LinkName: "eth1.169",
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
-						Name:        "eth1.5",
+						Name:        "eth1.169",
 						Logical:     true,
 						Up:          true,
 						Kind:        netconfig.LinkKindVLAN,
@@ -328,7 +328,7 @@ func (suite *CmdlineSuite) TestParse() {
 						ParentName:  "eth1",
 						ConfigLayer: netconfig.ConfigCmdline,
 						VLAN: netconfig.VLANSpec{
-							VID:      5,
+							VID:      169,
 							Protocol: nethelpers.VLANProtocol8021Q,
 						},
 					},
