@@ -48,7 +48,7 @@ require (
 	github.com/emicklei/dot v1.0.0
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.5.4
-	github.com/gdamore/tcell/v2 v2.5.1
+	github.com/gdamore/tcell/v2 v2.5.2
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/golang/mock v1.6.0
