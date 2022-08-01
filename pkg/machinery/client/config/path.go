@@ -27,6 +27,17 @@ func GetDefaultPath() (string, error) {
 		return path, nil
 	}
 
+	talosSAPath := filepath.Join(constants.ServiceAccountMountPath, constants.ServiceAccountTalosconfigFilename)
+
+	_, err := os.Stat(talosSAPath)
+	if err != nil && !os.IsNotExist(err) && !os.IsPermission(err) {
+		return "", err
+	}
+
+	if err == nil {
+		return talosSAPath, nil
+	}
+
 	talosDir, err := GetTalosDirectory()
 	if err != nil {
 		return "", err

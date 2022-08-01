@@ -704,6 +704,12 @@ const (
 
 	// KubernetesTalosProvider is the name of the Talos provider as a Kubernetes label.
 	KubernetesTalosProvider = "talos.dev"
+
+	// ServiceAccountTalosconfigFilename is the file name of Talosconfig when it is injected into a pod.
+	ServiceAccountTalosconfigFilename = "config"
+
+	// ServiceAccountMountPath is the path of the directory in which the Talos service account secrets are mounted.
+	ServiceAccountMountPath = "/var/run/secrets/talos.dev/"
 )
 
 // See https://linux.die.net/man/3/klogctl
