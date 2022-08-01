@@ -13,7 +13,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink v1.2.0
+	github.com/jsimonetti/rtnetlink v1.2.1
 	github.com/mdlayher/ethtool v0.0.0-20220213132912-856bd6cb8a38
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/siderolabs/go-pointer v1.0.0
@@ -22,9 +22,9 @@ require (
 	github.com/talos-systems/go-blockdevice v0.3.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
-	google.golang.org/genproto v0.0.0-20220722212130-b98a9ff5e252
+	google.golang.org/genproto v0.0.0-20220728213248-dd149ef739b9
 	google.golang.org/grpc v1.48.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	inet.af/netaddr v0.0.0-20220617031823-097006376321
 )
