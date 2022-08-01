@@ -208,17 +208,17 @@ func (suite *GenSuite) TestSecrets() {
 	suite.RunCLI([]string{"gen", "secrets"}, base.StdoutEmpty())
 	suite.Assert().FileExists("secrets.yaml")
 
-	defer os.Remove("secrets.yaml") // nolint:errcheck
+	defer os.Remove("secrets.yaml") //nolint:errcheck
 
 	suite.RunCLI([]string{"gen", "secrets", "--output-file", "/tmp/secrets2.yaml"}, base.StdoutEmpty())
 	suite.Assert().FileExists("/tmp/secrets2.yaml")
 
-	defer os.Remove("/tmp/secrets2.yaml") // nolint:errcheck
+	defer os.Remove("/tmp/secrets2.yaml") //nolint:errcheck
 
 	suite.RunCLI([]string{"gen", "secrets", "-o", "secrets3.yaml", "--talos-version", "v0.8"}, base.StdoutEmpty())
 	suite.Assert().FileExists("secrets3.yaml")
 
-	defer os.Remove("secrets3.yaml") // nolint:errcheck
+	defer os.Remove("secrets3.yaml") //nolint:errcheck
 }
 
 // TestSecretsWithPKIDirAndToken ...

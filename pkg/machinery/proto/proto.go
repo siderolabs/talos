@@ -70,7 +70,7 @@ type Mount struct {
 	Options     []string `protobuf:"4"`
 }
 
-// nolint:gocyclo
+//nolint:gocyclo
 func registerDefaultTypes() {
 	protoenc.RegisterEncoderDecoder(
 		func(v *url.URL) ([]byte, error) {

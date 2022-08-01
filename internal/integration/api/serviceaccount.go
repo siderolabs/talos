@@ -84,7 +84,7 @@ func (suite *ServiceAccountSuite) TestValid() {
 	sa, err := suite.createServiceAccount("kube-system", name, []string{"os:reader"})
 	suite.Assert().NoError(err)
 
-	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "default", name) // nolint:errcheck
+	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "default", name) //nolint:errcheck
 
 	err = suite.WaitForEventExists(suite.ctx, "kube-system", func(event eventsv1.Event) bool {
 		return event.Regarding.UID == sa.GetUID() &&
@@ -127,7 +127,7 @@ func (suite *ServiceAccountSuite) TestNotAllowedNamespace() {
 	sa, err := suite.createServiceAccount("default", name, []string{"os:reader"})
 	suite.Assert().NoError(err)
 
-	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "default", name) // nolint:errcheck
+	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "default", name) //nolint:errcheck
 
 	err = suite.WaitForEventExists(suite.ctx, "default", func(event eventsv1.Event) bool {
 		return event.Regarding.UID == sa.GetUID() &&
@@ -149,7 +149,7 @@ func (suite *ServiceAccountSuite) TestNotAllowedRoles() {
 	sa, err := suite.createServiceAccount("kube-system", name, []string{"os:admin"})
 	suite.Assert().NoError(err)
 
-	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name) // nolint:errcheck
+	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name) //nolint:errcheck
 
 	err = suite.WaitForEventExists(suite.ctx, "kube-system", func(event eventsv1.Event) bool {
 		return event.Regarding.UID == sa.GetUID() &&
@@ -176,7 +176,7 @@ func (suite *ServiceAccountSuite) TestFeatureNotEnabled() {
 
 	suite.Assert().NoError(err)
 
-	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name) // nolint:errcheck
+	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name) //nolint:errcheck
 
 	err = suite.WaitForEventExists(suite.ctx, "kube-system", func(event eventsv1.Event) bool {
 		return event.Regarding.UID == sa.GetUID() &&

@@ -53,7 +53,7 @@ func (t tftpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	return &http.Response{
 		Status:        "200 OK",
-		StatusCode:    200,
+		StatusCode:    http.StatusOK,
 		Proto:         "TFTP/1.0",
 		ProtoMajor:    1,
 		ProtoMinor:    0,

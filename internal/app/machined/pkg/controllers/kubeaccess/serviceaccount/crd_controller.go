@@ -293,7 +293,7 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 
-		return nil
+		return nil //nolint:nilerr
 	}
 
 	talosSA, err := t.dynamicLister.Namespace(namespace).Get(name)

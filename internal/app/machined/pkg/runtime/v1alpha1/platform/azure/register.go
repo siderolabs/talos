@@ -88,7 +88,7 @@ func reportHealth(ctx context.Context, gsIncarnation, gsContainerID, gsInstanceI
 		resp *http.Response
 	)
 
-	req, err = http.NewRequestWithContext(ctx, "POST", u.String(), b)
+	req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), b)
 	if err != nil {
 		return err
 	}

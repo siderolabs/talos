@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -369,9 +370,18 @@ func (p *EquinixMetal) FireEvent(ctx context.Context, event Event) error {
 		retry.WithErrorLogging(true)).RetryWithContext(
 		ctx,
 		func(ctx context.Context) error {
-			_, err = http.Post(*eventURL, "application/json", bytes.NewBuffer(eventData))
+			req, reqErr := http.NewRequestWithContext(ctx, http.MethodPost, *eventURL, bytes.NewReader(eventData))
+			if reqErr != nil {
+				return reqErr
+			}
 
-			return retry.ExpectedError(err)
+			resp, reqErr := http.DefaultClient.Do(req)
+			if resp != nil {
+				io.Copy(io.Discard, io.LimitReader(resp.Body, 4*1024*1024)) //nolint:errcheck
+				resp.Body.Close()                                           //nolint:errcheck
+			}
+
+			return retry.ExpectedError(reqErr)
 		},
 	)
 

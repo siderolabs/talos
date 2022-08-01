@@ -133,7 +133,7 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, logger
 		}
 
 		if err = filetree.ChownRecursive(constants.EtcdPKIPath, constants.EtcdUserID, constants.EtcdUserID); err != nil {
-			return nil
+			return err
 		}
 
 		if err = safe.WriterModify(ctx, r, etcd.NewPKIStatus(etcd.NamespaceName, etcd.PKIID), func(status *etcd.PKIStatus) error {
