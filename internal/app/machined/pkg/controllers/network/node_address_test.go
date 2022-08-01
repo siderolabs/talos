@@ -286,6 +286,165 @@ func (suite *NodeAddressSuite) TestFilters() {
 	)
 }
 
+//nolint:gocyclo
+func (suite *NodeAddressSuite) TestDefaultAddressChange() {
+	var addressStatusController netctrl.AddressStatusController
+
+	linkUp := network.NewLinkStatus(network.NamespaceName, "eth0")
+	linkUp.TypedSpec().Type = nethelpers.LinkEther
+	linkUp.TypedSpec().LinkState = true
+	linkUp.TypedSpec().Index = 1
+	suite.Require().NoError(suite.state.Create(suite.ctx, linkUp))
+
+	newAddress := func(addr netaddr.IPPrefix, link *network.LinkStatus) {
+		addressStatus := network.NewAddressStatus(network.NamespaceName, network.AddressID(link.Metadata().ID(), addr))
+		addressStatus.TypedSpec().Address = addr
+		addressStatus.TypedSpec().LinkName = link.Metadata().ID()
+		addressStatus.TypedSpec().LinkIndex = link.TypedSpec().Index
+		suite.Require().NoError(
+			suite.state.Create(
+				suite.ctx,
+				addressStatus,
+				state.WithCreateOwner(addressStatusController.Name()),
+			),
+		)
+	}
+
+	for _, addr := range []string{
+		"10.0.0.5/8",
+		"25.3.7.9/32",
+		"127.0.0.1/8",
+	} {
+		newAddress(netaddr.MustParseIPPrefix(addr), linkUp)
+	}
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertAddresses(
+					[]string{
+						network.NodeAddressDefaultID,
+						network.NodeAddressCurrentID,
+						network.NodeAddressAccumulativeID,
+					}, func(r *network.NodeAddress) error {
+						addrs := r.TypedSpec().Addresses
+
+						switch r.Metadata().ID() {
+						case network.NodeAddressDefaultID:
+							if !reflect.DeepEqual(addrs, ipList("10.0.0.5/8")) {
+								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						case network.NodeAddressCurrentID:
+							if !reflect.DeepEqual(
+								addrs,
+								ipList("10.0.0.5/8 25.3.7.9/32"),
+							) {
+								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						case network.NodeAddressAccumulativeID:
+							if !reflect.DeepEqual(
+								addrs,
+								ipList("10.0.0.5/8 25.3.7.9/32"),
+							) {
+								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						}
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	// add another address which is "smaller", but default address shouldn't change
+	newAddress(netaddr.MustParseIPPrefix("1.1.1.1/32"), linkUp)
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertAddresses(
+					[]string{
+						network.NodeAddressDefaultID,
+						network.NodeAddressCurrentID,
+						network.NodeAddressAccumulativeID,
+					}, func(r *network.NodeAddress) error {
+						addrs := r.TypedSpec().Addresses
+
+						switch r.Metadata().ID() {
+						case network.NodeAddressDefaultID:
+							if !reflect.DeepEqual(addrs, ipList("10.0.0.5/8")) {
+								return retry.ExpectedErrorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						case network.NodeAddressCurrentID:
+							if !reflect.DeepEqual(
+								addrs,
+								ipList("1.1.1.1/32 10.0.0.5/8 25.3.7.9/32"),
+							) {
+								return retry.ExpectedErrorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						case network.NodeAddressAccumulativeID:
+							if !reflect.DeepEqual(
+								addrs,
+								ipList("1.1.1.1/32 10.0.0.5/8 25.3.7.9/32"),
+							) {
+								return retry.ExpectedErrorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						}
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	// remove the previous default address, now default address should change
+	suite.Require().NoError(suite.state.Destroy(suite.ctx,
+		network.NewAddressStatus(network.NamespaceName, network.AddressID(linkUp.Metadata().ID(), netaddr.MustParseIPPrefix("10.0.0.5/8"))).Metadata(),
+		state.WithDestroyOwner(addressStatusController.Name()),
+	))
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertAddresses(
+					[]string{
+						network.NodeAddressDefaultID,
+						network.NodeAddressCurrentID,
+						network.NodeAddressAccumulativeID,
+					}, func(r *network.NodeAddress) error {
+						addrs := r.TypedSpec().Addresses
+
+						switch r.Metadata().ID() {
+						case network.NodeAddressDefaultID:
+							if !reflect.DeepEqual(addrs, ipList("1.1.1.1/32")) {
+								return retry.ExpectedErrorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						case network.NodeAddressCurrentID:
+							if !reflect.DeepEqual(
+								addrs,
+								ipList("1.1.1.1/32 25.3.7.9/32"),
+							) {
+								return retry.ExpectedErrorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						case network.NodeAddressAccumulativeID:
+							if !reflect.DeepEqual(
+								addrs,
+								ipList("1.1.1.1/32 10.0.0.5/8 25.3.7.9/32"),
+							) {
+								return retry.ExpectedErrorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						}
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+}
+
 func (suite *NodeAddressSuite) TearDownTest() {
 	suite.T().Log("tear down")
 

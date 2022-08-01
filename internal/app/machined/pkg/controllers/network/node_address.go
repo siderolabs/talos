@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -124,7 +125,6 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			}
 
 			// set defaultAddress to the smallest IP from the alphabetically first link
-			// ignore address which are not assigned from the physical links
 			if addr.Metadata().Owner() == addressStatusControllerName {
 				if defaultAddress.IsZero() || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.IP().Compare(defaultAddress.IP()) < 0) {
 					defaultAddress = ip
@@ -155,7 +155,9 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 				// never overwrite default address if it's already set
 				// we should start handing default address updates, but for now we're not ready
-				if len(spec.Addresses) > 0 {
+				//
+				// at the same time check that recorded default address is still on the host, if it's not => replace it
+				if len(spec.Addresses) > 0 && slices.Contains(current, func(addr netaddr.IPPrefix) bool { return spec.Addresses[0] == addr }) {
 					return nil
 				}
 
