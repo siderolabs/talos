@@ -79,7 +79,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.0.0
-	github.com/prometheus/procfs v0.7.3
+	github.com/prometheus/procfs v0.8.0
 	github.com/rivo/tview v0.0.0-20220709181631-73bf2902b59a
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
