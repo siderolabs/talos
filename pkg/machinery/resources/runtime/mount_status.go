@@ -17,6 +17,7 @@ const MountStatusType = resource.Type("MountStatuses.runtime.talos.dev")
 type MountStatus = typed.Resource[MountStatusSpec, MountStatusRD]
 
 // MountStatusSpec describes status of the defined sysctls.
+//
 //gotagsrewrite:gen
 type MountStatusSpec struct {
 	Source         string   `yaml:"source" protobuf:"1"`

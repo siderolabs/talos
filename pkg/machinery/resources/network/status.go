@@ -17,6 +17,7 @@ const StatusType = resource.Type("NetworkStatuses.net.talos.dev")
 type Status = typed.Resource[StatusSpec, StatusRD]
 
 // StatusSpec describes network state.
+//
 //gotagsrewrite:gen
 type StatusSpec struct {
 	AddressReady      bool `yaml:"addressReady" protobuf:"1"`

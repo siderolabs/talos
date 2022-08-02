@@ -6,7 +6,7 @@ package nethelpers
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +20,7 @@ type DeviceInfo struct {
 }
 
 // GetDeviceInfo get additional device information by reading /sys/ directory.
+//
 //nolint:gocyclo
 func GetDeviceInfo(deviceName string) (*DeviceInfo, error) {
 	path := filepath.Join("/sys/class/net/", deviceName, "/device/")
@@ -30,7 +31,7 @@ func GetDeviceInfo(deviceName string) (*DeviceInfo, error) {
 			return "", err
 		}
 
-		res, err := ioutil.ReadAll(f)
+		res, err := io.ReadAll(f)
 		if err != nil {
 			return "", err
 		}

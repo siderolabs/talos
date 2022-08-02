@@ -7,7 +7,7 @@ package download
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/pin/tftp"
@@ -59,7 +59,7 @@ func (t *tftpRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 		Proto:         "TFTP/1.0",
 		ProtoMajor:    1,
 		ProtoMinor:    0,
-		Body:          ioutil.NopCloser(buf),
+		Body:          io.NopCloser(buf),
 		ContentLength: -1,
 		Request:       req,
 	}, nil

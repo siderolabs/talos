@@ -5,7 +5,6 @@
 package kernel
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/talos-systems/talos/pkg/machinery/kernel"
@@ -13,12 +12,12 @@ import (
 
 // WriteParam writes a value to a key under /proc/sys.
 func WriteParam(prop *kernel.Param) error {
-	return ioutil.WriteFile(prop.Path(), []byte(prop.Value), 0o644)
+	return os.WriteFile(prop.Path(), []byte(prop.Value), 0o644)
 }
 
 // ReadParam reads a value from a key under /proc/sys.
 func ReadParam(prop *kernel.Param) ([]byte, error) {
-	return ioutil.ReadFile(prop.Path())
+	return os.ReadFile(prop.Path())
 }
 
 // DeleteParam deletes a value from a key under /proc/sys.

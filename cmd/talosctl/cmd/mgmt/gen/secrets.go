@@ -6,7 +6,7 @@ package gen
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -69,7 +69,7 @@ func writeSecretsBundleToFile(bundle *generate.SecretsBundle) error {
 		return err
 	}
 
-	return ioutil.WriteFile(genSecretsCmdFlags.outputFile, bundleBytes, 0o600)
+	return os.WriteFile(genSecretsCmdFlags.outputFile, bundleBytes, 0o600)
 }
 
 func init() {

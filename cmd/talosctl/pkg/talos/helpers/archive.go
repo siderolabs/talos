@@ -9,7 +9,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -47,7 +46,7 @@ func ExtractFileFromTarGz(filename string, r io.ReadCloser) ([]byte, error) {
 				return nil, fmt.Errorf("%s is not a file", filename)
 			}
 
-			return ioutil.ReadAll(tr)
+			return io.ReadAll(tr)
 		}
 	}
 

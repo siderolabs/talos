@@ -6,7 +6,7 @@ package gen
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/crypto/x509"
@@ -30,7 +30,7 @@ var genKeyCmd = &cobra.Command{
 			return fmt.Errorf("error generating key: %w", err)
 		}
 
-		if err := ioutil.WriteFile(genKeyCmdFlags.name+".key", key.PrivateKeyPEM, 0o600); err != nil {
+		if err := os.WriteFile(genKeyCmdFlags.name+".key", key.PrivateKeyPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing key: %w", err)
 		}
 

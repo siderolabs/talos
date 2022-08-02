@@ -23,6 +23,7 @@ const CPUID = resource.ID("latest")
 type CPU = typed.Resource[CPUSpec, CPURD]
 
 // CPUSpec represents the last CPU stats snapshot.
+//
 //gotagsrewrite:gen
 type CPUSpec struct {
 	CPU             []CPUStat `yaml:"cpu" protobuf:"1"`
@@ -36,6 +37,7 @@ type CPUSpec struct {
 }
 
 // CPUStat represents a single cpu stat.
+//
 //gotagsrewrite:gen
 type CPUStat struct {
 	User      float64 `yaml:"user" protobuf:"1"`

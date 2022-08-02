@@ -22,6 +22,7 @@ const MemberType = resource.Type("Members.cluster.talos.dev")
 type Member = typed.Resource[MemberSpec, MemberRD]
 
 // MemberSpec describes Member state.
+//
 //gotagsrewrite:gen
 type MemberSpec struct {
 	NodeID          string       `yaml:"nodeId" protobuf:"1"`

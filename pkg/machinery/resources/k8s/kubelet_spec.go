@@ -18,6 +18,7 @@ const KubeletSpecType = resource.Type("KubeletSpecs.kubernetes.talos.dev")
 type KubeletSpec = typed.Resource[KubeletSpecSpec, KubeletSpecRD]
 
 // KubeletSpecSpec holds the source of kubelet configuration.
+//
 //gotagsrewrite:gen
 type KubeletSpecSpec struct {
 	Image            string                 `yaml:"image" protobuf:"1"`

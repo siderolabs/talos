@@ -23,6 +23,7 @@ const BootstrapManifestsConfigID = resource.ID("manifests")
 type BootstrapManifestsConfig = typed.Resource[BootstrapManifestsConfigSpec, BootstrapManifestsConfigRD]
 
 // BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
+//
 //gotagsrewrite:gen
 type BootstrapManifestsConfigSpec struct {
 	Server        string `yaml:"string" protobuf:"1"`

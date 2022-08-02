@@ -24,6 +24,7 @@ const KubernetesRootID = resource.ID("k8s")
 type KubernetesRoot = typed.Resource[KubernetesRootSpec, KubernetesRootRD]
 
 // KubernetesRootSpec describes root Kubernetes secrets.
+//
 //gotagsrewrite:gen
 type KubernetesRootSpec struct {
 	Name          string   `yaml:"name" protobuf:"1"`

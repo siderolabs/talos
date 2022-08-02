@@ -20,6 +20,7 @@ const ServiceType = resource.Type("Services.v1alpha1.talos.dev")
 type Service = typed.Resource[ServiceSpec, ServiceRD]
 
 // ServiceSpec describe service state.
+//
 //gotagsrewrite:gen
 type ServiceSpec struct {
 	Running bool `yaml:"running" protobuf:"1"`

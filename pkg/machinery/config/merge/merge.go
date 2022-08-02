@@ -18,15 +18,15 @@ import (
 // It is specifically fine-tuned to merge Talos machine configuration.
 //
 // Rules:
-//  - if it is a simple value (int, float, string, etc.), it's merged into the left unless it's zero value, but boolean false is always merged.
-//  - if it is a pointer, merged dereferencing the pointer unless the right is nil
-//  - if it is a slice, merged by concatenating the right to the left.
-//    - if the `merge:"replace"` struct tag is defined, a slice is replaced with the value of the right (unless it's zero value.)
-//    - slices of `[]byte` are always replaced
-//  - if it is a map, for each key value is merged recursively.
-//  - if it is a struct, merge is performed for each field of the struct.
-//  - if the type implements 'merger' interface, Merge function is called to handle the merge process.
-//    - merger interface should be implemented on the pointer to the type.
+//   - if it is a simple value (int, float, string, etc.), it's merged into the left unless it's zero value, but boolean false is always merged.
+//   - if it is a pointer, merged dereferencing the pointer unless the right is nil
+//   - if it is a slice, merged by concatenating the right to the left.
+//   - if the `merge:"replace"` struct tag is defined, a slice is replaced with the value of the right (unless it's zero value.)
+//   - slices of `[]byte` are always replaced
+//   - if it is a map, for each key value is merged recursively.
+//   - if it is a struct, merge is performed for each field of the struct.
+//   - if the type implements 'merger' interface, Merge function is called to handle the merge process.
+//   - merger interface should be implemented on the pointer to the type.
 func Merge(left, right interface{}) error {
 	return merge(reflect.ValueOf(left), reflect.ValueOf(right), false)
 }

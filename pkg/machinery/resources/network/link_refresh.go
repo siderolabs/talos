@@ -23,6 +23,7 @@ const LinkRefreshType = resource.Type("LinkRefreshes.net.talos.dev")
 type LinkRefresh = typed.Resource[LinkRefreshSpec, LinkRefreshRD]
 
 // LinkRefreshSpec describes status of rendered secrets.
+//
 //gotagsrewrite:gen
 type LinkRefreshSpec struct {
 	Generation int `yaml:"generation" protobuf:"1"`

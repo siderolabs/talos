@@ -9,7 +9,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -123,7 +122,7 @@ func runISOCmd() error {
 		return err
 	}
 
-	if err = ioutil.WriteFile(cfgPath, grubCfg.Bytes(), 0o666); err != nil {
+	if err = os.WriteFile(cfgPath, grubCfg.Bytes(), 0o666); err != nil {
 		return err
 	}
 

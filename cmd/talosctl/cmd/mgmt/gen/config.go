@@ -6,7 +6,6 @@ package gen
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -236,7 +235,7 @@ func writeV1Alpha1Config(args []string) error {
 
 	fullFilePath := filepath.Join(genConfigCmdFlags.outputDir, "talosconfig")
 
-	if err = ioutil.WriteFile(fullFilePath, data, 0o644); err != nil {
+	if err = os.WriteFile(fullFilePath, data, 0o644); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 

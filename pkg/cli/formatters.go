@@ -68,6 +68,7 @@ func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *pe
 }
 
 // RenderGraph renders inspect controller runtime graph.
+//
 //nolint:gocyclo,cyclop
 func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.ControllerRuntimeDependenciesResponse, output io.Writer, withResources bool) error {
 	graph := dot.NewGraph(dot.Directed)

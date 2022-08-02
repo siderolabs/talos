@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -59,7 +58,7 @@ func (c *Container) KernelArgs() procfs.Parameters {
 func (c *Container) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	hostname, err := ioutil.ReadFile("/etc/hostname")
+	hostname, err := os.ReadFile("/etc/hostname")
 	if err != nil {
 		return err
 	}

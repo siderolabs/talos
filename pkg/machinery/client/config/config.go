@@ -9,7 +9,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -113,7 +112,7 @@ func (c *Config) Save(p string) (err error) {
 		return err
 	}
 
-	if err = ioutil.WriteFile(p, configBytes, 0o600); err != nil {
+	if err = os.WriteFile(p, configBytes, 0o600); err != nil {
 		return
 	}
 

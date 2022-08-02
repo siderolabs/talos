@@ -8,8 +8,8 @@ import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net"
+	"os"
 	"path"
 	"strings"
 
@@ -33,7 +33,7 @@ var genCSRCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		keyBytes, err := ioutil.ReadFile(genCSRCmdFlags.key)
+		keyBytes, err := os.ReadFile(genCSRCmdFlags.key)
 		if err != nil {
 			return fmt.Errorf("error reading key: %s", err)
 		}
@@ -69,7 +69,7 @@ var genCSRCmd = &cobra.Command{
 			return fmt.Errorf("error generating CSR: %s", err)
 		}
 
-		if err := ioutil.WriteFile(strings.TrimSuffix(genCSRCmdFlags.key, path.Ext(genCSRCmdFlags.key))+".csr", csr.X509CertificateRequestPEM, 0o600); err != nil {
+		if err := os.WriteFile(strings.TrimSuffix(genCSRCmdFlags.key, path.Ext(genCSRCmdFlags.key))+".csr", csr.X509CertificateRequestPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing CSR: %s", err)
 		}
 

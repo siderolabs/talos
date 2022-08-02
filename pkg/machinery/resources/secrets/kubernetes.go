@@ -21,6 +21,7 @@ const KubernetesID = resource.ID("k8s-certs")
 type Kubernetes = typed.Resource[KubernetesCertsSpec, KubernetesRD]
 
 // KubernetesCertsSpec describes generated Kubernetes certificates.
+//
 //gotagsrewrite:gen
 type KubernetesCertsSpec struct {
 	APIServer              *x509.PEMEncodedCertificateAndKey `yaml:"apiServer" protobuf:"1"`

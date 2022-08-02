@@ -6,7 +6,6 @@ package bananapim64
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,9 +27,9 @@ var (
 // BananaPiM64 represents the Banana Pi M64.
 //
 // References:
-//	- http://www.banana-pi.org/m64.html
-//	- http://wiki.banana-pi.org/Banana_Pi_BPI-M64
-//	- https://linux-sunxi.org/Banana_Pi_M64
+//   - http://www.banana-pi.org/m64.html
+//   - http://wiki.banana-pi.org/Banana_Pi_BPI-M64
+//   - https://linux-sunxi.org/Banana_Pi_M64
 type BananaPiM64 struct{}
 
 // Name implements the runtime.Board.
@@ -50,7 +49,7 @@ func (b *BananaPiM64) Install(disk string) (err error) {
 
 	var uboot []byte
 
-	uboot, err = ioutil.ReadFile(bin)
+	uboot, err = os.ReadFile(bin)
 	if err != nil {
 		return err
 	}

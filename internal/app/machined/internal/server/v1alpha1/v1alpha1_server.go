@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -235,7 +234,7 @@ Config diff:
 	}
 
 	if in.Mode != machine.ApplyConfigurationRequest_TRY {
-		if err := ioutil.WriteFile(constants.ConfigPath, cfg, 0o600); err != nil {
+		if err := os.WriteFile(constants.ConfigPath, cfg, 0o600); err != nil {
 			return nil, err
 		}
 	}
@@ -849,6 +848,7 @@ func (s *Server) List(req *machine.ListRequest, obj machine.MachineService_ListS
 }
 
 // DiskUsage implements the machine.MachineServer interface.
+//
 //nolint:cyclop
 func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineService_DiskUsageServer) error { //nolint:gocyclo
 	if req == nil {
@@ -1902,6 +1902,7 @@ func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.Machi
 }
 
 // EtcdRecover implements the machine.MachineServer interface.
+//
 //nolint:gocyclo
 func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error {
 	if _, err := os.Stat(filepath.Dir(constants.EtcdRecoverySnapshotPath)); err != nil {

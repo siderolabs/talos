@@ -7,7 +7,6 @@ package runtime_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"testing"
@@ -116,7 +115,7 @@ func (suite *TimedSuite) TestTimeCheck() {
 }
 
 func fakeTimedRPC() (net.Listener, error) {
-	tmpfile, err := ioutil.TempFile("", "timed")
+	tmpfile, err := os.CreateTemp("", "timed")
 	if err != nil {
 		return nil, err
 	}

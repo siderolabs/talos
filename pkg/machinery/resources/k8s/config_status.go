@@ -23,6 +23,7 @@ const ConfigStatusStaticPodID = resource.ID("static-pods")
 type ConfigStatus = typed.Resource[ConfigStatusSpec, ConfigStatusRD]
 
 // ConfigStatusSpec describes status of rendered secrets.
+//
 //gotagsrewrite:gen
 type ConfigStatusSpec struct {
 	Ready   bool   `yaml:"ready" protobuf:"1"`

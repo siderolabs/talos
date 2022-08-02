@@ -20,6 +20,7 @@ const MachineStatusID = resource.ID("machine")
 type MachineStatus = typed.Resource[MachineStatusSpec, MachineStatusRD]
 
 // MachineStatusSpec describes status of the defined sysctls.
+//
 //gotagsrewrite:gen
 type MachineStatusSpec struct {
 	Stage  MachineStage        `yaml:"stage" protobuf:"1"`
@@ -27,6 +28,7 @@ type MachineStatusSpec struct {
 }
 
 // MachineStatusStatus describes machine current status at the stage.
+//
 //gotagsrewrite:gen
 type MachineStatusStatus struct {
 	Ready           bool             `yaml:"ready" protobuf:"1"`
@@ -34,6 +36,7 @@ type MachineStatusStatus struct {
 }
 
 // UnmetCondition is a failure which prevents machine from being ready at the stage.
+//
 //gotagsrewrite:gen
 type UnmetCondition struct {
 	Name   string `yaml:"name" protobuf:"1"`

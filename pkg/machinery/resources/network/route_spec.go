@@ -20,6 +20,7 @@ const RouteSpecType = resource.Type("RouteSpecs.net.talos.dev")
 type RouteSpec = typed.Resource[RouteSpecSpec, RouteSpecRD]
 
 // RouteSpecSpec describes the route.
+//
 //gotagsrewrite:gen
 type RouteSpecSpec struct {
 	Family      nethelpers.Family        `yaml:"family" protobuf:"1"`

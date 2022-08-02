@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"sync"
 	"testing"
@@ -221,7 +220,7 @@ func (suite *CircularSuite) TestStreamingLateAndIdleReaders() {
 		suite.Require().NoError(lateR.Close())
 	}()
 
-	actual, err := ioutil.ReadAll(lateR)
+	actual, err := io.ReadAll(lateR)
 	suite.Require().Equal(circular.ErrClosed, err)
 	suite.Require().Equal(65536-256, len(actual))
 
@@ -233,7 +232,7 @@ func (suite *CircularSuite) TestStreamingLateAndIdleReaders() {
 		suite.Require().NoError(idleR.Close())
 	}()
 
-	actual, err = ioutil.ReadAll(idleR)
+	actual, err = io.ReadAll(idleR)
 	suite.Require().Equal(circular.ErrClosed, err)
 	suite.Require().Equal(65536, len(actual))
 
@@ -319,7 +318,7 @@ func (suite *CircularSuite) TestRegularReader() {
 	_, err = buf.Write(bytes.Repeat([]byte{0xfe}, 512))
 	suite.Require().NoError(err)
 
-	actual, err := ioutil.ReadAll(r)
+	actual, err := io.ReadAll(r)
 	suite.Require().NoError(err)
 	suite.Require().Equal(bytes.Repeat([]byte{0xff}, 512), actual)
 }
@@ -352,7 +351,7 @@ func (suite *CircularSuite) TestRegularReaderFull() {
 	_, err = buf.Write(bytes.Repeat([]byte{0xfe}, 100))
 	suite.Require().NoError(err)
 
-	actual, err := ioutil.ReadAll(r)
+	actual, err := io.ReadAll(r)
 	suite.Require().NoError(err)
 	suite.Require().Equal(bytes.Repeat([]byte{0xff}, 4096-256), actual)
 

@@ -10,7 +10,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -77,7 +76,7 @@ func TestWrite(t *testing.T) {
 	version.Name = "Test"
 	version.Tag = "v0.0.1"
 
-	tempFile, _ := ioutil.TempFile("", "talos-test-grub-*.cfg")
+	tempFile, _ := os.CreateTemp("", "talos-test-grub-*.cfg")
 
 	defer os.Remove(tempFile.Name())
 
@@ -86,7 +85,7 @@ func TestWrite(t *testing.T) {
 	err := config.Write(tempFile.Name())
 	assert.NoError(t, err)
 
-	written, _ := ioutil.ReadFile(tempFile.Name())
+	written, _ := os.ReadFile(tempFile.Name())
 	assert.Equal(t, newConfig, string(written))
 }
 

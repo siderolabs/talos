@@ -22,6 +22,7 @@ const ConfigID = resource.ID("cluster")
 type Config = typed.Resource[ConfigSpec, ConfigRD]
 
 // ConfigSpec describes KubeSpan configuration.
+//
 //gotagsrewrite:gen
 type ConfigSpec struct {
 	DiscoveryEnabled          bool   `yaml:"discoveryEnabled" protobuf:"1"`

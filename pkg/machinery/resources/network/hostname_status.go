@@ -17,6 +17,7 @@ const HostnameStatusType = resource.Type("HostnameStatuses.net.talos.dev")
 type HostnameStatus = typed.Resource[HostnameStatusSpec, HostnameStatusRD]
 
 // HostnameStatusSpec describes node nostname.
+//
 //gotagsrewrite:gen
 type HostnameStatusSpec struct {
 	Hostname   string `yaml:"hostname" protobuf:"1"`

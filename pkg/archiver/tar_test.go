@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -48,7 +47,7 @@ func (suite *TarSuite) TestArchiveDir() {
 			continue
 		}
 
-		contents, err := ioutil.ReadAll(tr)
+		contents, err := io.ReadAll(tr)
 		suite.Require().NoError(err)
 
 		found := false
@@ -105,7 +104,7 @@ func (suite *TarSuite) TestArchiveFile() {
 		suite.Require().EqualValues(hdr.Name, "cp")
 		suite.Require().EqualValues(hdr.Size, len(expectedContents))
 
-		contents, err := ioutil.ReadAll(tr)
+		contents, err := io.ReadAll(tr)
 		suite.Require().NoError(err)
 
 		suite.Require().Equal(expectedContents, contents)

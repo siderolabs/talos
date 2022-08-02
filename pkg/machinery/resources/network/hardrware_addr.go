@@ -22,6 +22,7 @@ const FirstHardwareAddr = resource.ID("first")
 type HardwareAddr = typed.Resource[HardwareAddrSpec, HardwareAddrRD]
 
 // HardwareAddrSpec describes spec for the link.
+//
 //gotagsrewrite:gen
 type HardwareAddrSpec struct {
 	// Name defines link name

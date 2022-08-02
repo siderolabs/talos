@@ -9,7 +9,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -154,7 +154,7 @@ func (suite *ContainerdSuite) getLogContents(filename string) []byte {
 	//nolint:errcheck
 	defer logFile.Close()
 
-	logContents, err := ioutil.ReadAll(logFile)
+	logContents, err := io.ReadAll(logFile)
 	suite.Assert().NoError(err)
 
 	return logContents
@@ -268,7 +268,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 	//nolint:errcheck
 	defer logFile.Close()
 
-	logContents, err := ioutil.ReadAll(logFile)
+	logContents, err := io.ReadAll(logFile)
 	suite.Assert().NoError(err)
 
 	suite.Assert().Equal([]byte("Test 1\nTest 2\n"), logContents)
@@ -420,7 +420,7 @@ func (suite *ContainerdSuite) TestContainerStdin() {
 	//nolint:errcheck
 	defer logFile.Close()
 
-	logContents, err := ioutil.ReadAll(logFile)
+	logContents, err := io.ReadAll(logFile)
 	suite.Assert().NoError(err)
 
 	suite.Assert().Equal(stdin, logContents)

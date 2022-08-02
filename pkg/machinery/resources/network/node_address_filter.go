@@ -18,6 +18,7 @@ const NodeAddressFilterType = resource.Type("NodeAddressFilters.net.talos.dev")
 type NodeAddressFilter = typed.Resource[NodeAddressFilterSpec, NodeAddressFilterRD]
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.
+//
 //gotagsrewrite:gen
 type NodeAddressFilterSpec struct {
 	// Address is skipped if it doesn't match any of the includeSubnets (if includeSubnets is not empty).

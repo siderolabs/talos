@@ -20,6 +20,7 @@ const ManifestStatusID = resource.ID("manifests")
 type ManifestStatus = typed.Resource[ManifestStatusSpec, ManifestStatusRD]
 
 // ManifestStatusSpec describes manifest application status.
+//
 //gotagsrewrite:gen
 type ManifestStatusSpec struct {
 	ManifestsApplied []string `yaml:"manifestsApplied" protobuf:"1"`

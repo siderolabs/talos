@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
@@ -56,7 +55,7 @@ func (p *provisioner) ensureImageExists(ctx context.Context, image string, optio
 		//nolint:errcheck
 		defer reader.Close()
 
-		if _, err = io.Copy(ioutil.Discard, reader); err != nil {
+		if _, err = io.Copy(io.Discard, reader); err != nil {
 			return err
 		}
 	}

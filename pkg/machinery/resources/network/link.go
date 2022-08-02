@@ -14,6 +14,7 @@ import (
 )
 
 // VLANSpec describes VLAN settings if Kind == "vlan".
+//
 //gotagsrewrite:gen
 type VLANSpec struct {
 	// VID is the vlan ID.
@@ -24,6 +25,7 @@ type VLANSpec struct {
 }
 
 // BondMasterSpec describes bond settings if Kind == "bond".
+//
 //gotagsrewrite:gen
 type BondMasterSpec struct {
 	Mode            nethelpers.BondMode           `yaml:"mode" protobuf:"1"`

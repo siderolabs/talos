@@ -7,7 +7,7 @@ package talos
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -56,7 +56,7 @@ var applyConfigCmd = &cobra.Command{
 		}
 
 		if applyConfigCmdFlags.filename != "" {
-			cfgBytes, e = ioutil.ReadFile(applyConfigCmdFlags.filename)
+			cfgBytes, e = os.ReadFile(applyConfigCmdFlags.filename)
 			if e != nil {
 				return fmt.Errorf("failed to read configuration from %q: %w", applyConfigCmdFlags.filename, e)
 			}

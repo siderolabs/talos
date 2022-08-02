@@ -7,10 +7,10 @@ package nocloud
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -145,7 +145,7 @@ func (n *Nocloud) configFromCD() (metaConfig []byte, networkConfig []byte, machi
 
 	log.Printf("fetching meta config from: cidata/%s", configMetaDataPath)
 
-	metaConfig, err = ioutil.ReadFile(filepath.Join(mnt, configMetaDataPath))
+	metaConfig, err = os.ReadFile(filepath.Join(mnt, configMetaDataPath))
 	if err != nil {
 		log.Printf("failed to read %s", configMetaDataPath)
 
@@ -154,7 +154,7 @@ func (n *Nocloud) configFromCD() (metaConfig []byte, networkConfig []byte, machi
 
 	log.Printf("fetching network config from: cidata/%s", configNetworkConfigPath)
 
-	networkConfig, err = ioutil.ReadFile(filepath.Join(mnt, configNetworkConfigPath))
+	networkConfig, err = os.ReadFile(filepath.Join(mnt, configNetworkConfigPath))
 	if err != nil {
 		log.Printf("failed to read %s", configNetworkConfigPath)
 
@@ -163,7 +163,7 @@ func (n *Nocloud) configFromCD() (metaConfig []byte, networkConfig []byte, machi
 
 	log.Printf("fetching machine config from: cidata/%s", configUserDataPath)
 
-	machineConfig, err = ioutil.ReadFile(filepath.Join(mnt, configUserDataPath))
+	machineConfig, err = os.ReadFile(filepath.Join(mnt, configUserDataPath))
 	if err != nil {
 		log.Printf("failed to read %s", configUserDataPath)
 

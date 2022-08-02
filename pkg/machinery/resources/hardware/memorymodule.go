@@ -17,6 +17,7 @@ const MemoryModuleType = resource.Type("MemoryModules.hardware.talos.dev")
 type MemoryModule = typed.Resource[MemoryModuleSpec, MemoryModuleRD]
 
 // MemoryModuleSpec represents a single Memory.
+//
 //gotagsrewrite:gen
 type MemoryModuleSpec struct {
 	Size          uint32 `yaml:"sizeMiB,omitempty" protobuf:"1"`

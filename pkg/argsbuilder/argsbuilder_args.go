@@ -29,6 +29,7 @@ func (a Args) MustMerge(args Args, setters ...MergeOption) {
 }
 
 // Merge implements the ArgsBuilder interface.
+//
 //nolint:gocyclo
 func (a Args) Merge(args Args, setters ...MergeOption) error {
 	var opts MergeOptions

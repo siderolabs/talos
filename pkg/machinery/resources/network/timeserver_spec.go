@@ -20,6 +20,7 @@ type TimeServerSpec = typed.Resource[TimeServerSpecSpec, TimeServerSpecRD]
 const TimeServerID resource.ID = "timeservers"
 
 // TimeServerSpecSpec describes NTP servers.
+//
 //gotagsrewrite:gen
 type TimeServerSpecSpec struct {
 	NTPServers  []string    `yaml:"timeServers" protobuf:"1"`

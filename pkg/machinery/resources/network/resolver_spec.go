@@ -21,6 +21,7 @@ type ResolverSpec = typed.Resource[ResolverSpecSpec, ResolverSpecRD]
 const ResolverID resource.ID = "resolvers"
 
 // ResolverSpecSpec describes DNS resolvers.
+//
 //gotagsrewrite:gen
 type ResolverSpecSpec struct {
 	DNSServers  []netaddr.IP `yaml:"dnsServers" protobuf:"1"`

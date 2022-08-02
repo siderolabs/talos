@@ -613,8 +613,8 @@ metadata:
 
 // Config defines the v1alpha1 configuration file.
 //
-//  examples:
-//     - value: configExample
+//	examples:
+//	   - value: configExample
 type Config struct {
 	//   description: |
 	//     Indicates the schema used to decode the contents.
@@ -650,8 +650,8 @@ type Config struct {
 
 // MachineConfig represents the machine-specific config values.
 //
-//  examples:
-//     - value: machineConfigExample
+//	examples:
+//	   - value: machineConfigExample
 type MachineConfig struct {
 	//   description: |
 	//     Defines the role of the machine within the cluster.
@@ -842,8 +842,8 @@ type MachineSeccompProfile struct {
 
 // ClusterConfig represents the cluster-wide config values.
 //
-//  examples:
-//     - value: clusterConfigExample
+//	examples:
+//	   - value: clusterConfigExample
 type ClusterConfig struct {
 	//   description: |
 	//     Globally unique identifier for this cluster (base64 encoded random 32 bytes).
@@ -1297,6 +1297,7 @@ func (m *InstallDiskSizeMatcher) Matcher(d *disk.Disk) bool {
 }
 
 // InstallDiskSizeMatchData contains data for comparison - Op and Size.
+//
 //docgen:nodoc
 type InstallDiskSizeMatchData struct {
 	Op   string

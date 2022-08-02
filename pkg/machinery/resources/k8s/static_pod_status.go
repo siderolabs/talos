@@ -17,6 +17,7 @@ const StaticPodStatusType = resource.Type("StaticPodStatuses.kubernetes.talos.de
 type StaticPodStatus = typed.Resource[StaticPodStatusSpec, StaticPodStatusRD]
 
 // StaticPodStatusSpec describes kubelet static pod status.
+//
 //gotagsrewrite:gen
 type StaticPodStatusSpec struct {
 	PodStatus map[string]interface{} `protobuf:"1"`

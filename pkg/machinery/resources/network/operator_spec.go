@@ -18,6 +18,7 @@ const OperatorSpecType = resource.Type("OperatorSpecs.net.talos.dev")
 type OperatorSpec = typed.Resource[OperatorSpecSpec, OperatorSpecRD]
 
 // OperatorSpecSpec describes DNS resolvers.
+//
 //gotagsrewrite:gen
 type OperatorSpecSpec struct {
 	Operator  Operator `yaml:"operator" protobuf:"1"`
@@ -32,12 +33,14 @@ type OperatorSpecSpec struct {
 }
 
 // DHCP4OperatorSpec describes DHCP4 operator options.
+//
 //gotagsrewrite:gen
 type DHCP4OperatorSpec struct {
 	RouteMetric uint32 `yaml:"routeMetric" protobuf:"1"`
 }
 
 // DHCP6OperatorSpec describes DHCP6 operator options.
+//
 //gotagsrewrite:gen
 type DHCP6OperatorSpec struct {
 	DUID        string `yaml:"DUID,omitempty" protobuf:"1"`
@@ -45,6 +48,7 @@ type DHCP6OperatorSpec struct {
 }
 
 // VIPOperatorSpec describes virtual IP operator options.
+//
 //gotagsrewrite:gen
 type VIPOperatorSpec struct {
 	IP            netaddr.IP `yaml:"ip" protobuf:"1"`
@@ -55,6 +59,7 @@ type VIPOperatorSpec struct {
 }
 
 // VIPEquinixMetalSpec describes virtual (elastic) IP settings for Equinix Metal.
+//
 //gotagsrewrite:gen
 type VIPEquinixMetalSpec struct {
 	ProjectID string `yaml:"projectID" protobuf:"1"`
@@ -63,6 +68,7 @@ type VIPEquinixMetalSpec struct {
 }
 
 // VIPHCloudSpec describes virtual (elastic) IP settings for Hetzner Cloud.
+//
 //gotagsrewrite:gen
 type VIPHCloudSpec struct {
 	DeviceID  int    `yaml:"deviceID" protobuf:"1"`

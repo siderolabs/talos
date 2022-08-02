@@ -41,6 +41,7 @@ func (e *Encoder) Marshal() (*yaml.Node, error) {
 }
 
 // Encode converts value to yaml.
+//
 //nolint:gocyclo
 func (e *Encoder) Encode() ([]byte, error) {
 	if e.options.Comments == CommentsDisabled {

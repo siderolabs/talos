@@ -23,6 +23,7 @@ const ControllerManagerConfigID = resource.ID(ControllerManagerID)
 type ControllerManagerConfig = typed.Resource[ControllerManagerConfigSpec, ControllerManagerConfigRD]
 
 // ControllerManagerConfigSpec is configuration for kube-controller-manager.
+//
 //gotagsrewrite:gen
 type ControllerManagerConfigSpec struct {
 	Enabled              bool              `yaml:"enabled" protobuf:"1"`

@@ -7,7 +7,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -154,7 +153,7 @@ func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.R
 func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controller.Runtime, logger *zap.Logger, manifest k8s.ExtraManifest, id resource.ID) (err error) {
 	var tmpDir string
 
-	tmpDir, err = ioutil.TempDir("", "talos")
+	tmpDir, err = os.MkdirTemp("", "talos")
 	if err != nil {
 		return
 	}
@@ -200,7 +199,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 
 	var contents []byte
 
-	contents, err = ioutil.ReadFile(client.Dst)
+	contents, err = os.ReadFile(client.Dst)
 	if err != nil {
 		return
 	}

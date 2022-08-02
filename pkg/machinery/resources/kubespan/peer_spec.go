@@ -20,6 +20,7 @@ const PeerSpecType = resource.Type("KubeSpanPeerSpecs.kubespan.talos.dev")
 type PeerSpec = typed.Resource[PeerSpecSpec, PeerSpecRD]
 
 // PeerSpecSpec describes PeerSpec state.
+//
 //gotagsrewrite:gen
 type PeerSpecSpec struct {
 	Address    netaddr.IP         `yaml:"address" protobuf:"1"`

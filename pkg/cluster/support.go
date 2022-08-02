@@ -10,7 +10,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -139,6 +138,7 @@ var nodeCollectors = []nodeCollector{
 }
 
 // GetNodeSupportBundle writes all node information we can gather into a zip archive.
+//
 //nolint:gocyclo
 func GetNodeSupportBundle(ctx context.Context, options *BundleOptions) error {
 	var errors error
@@ -228,6 +228,7 @@ func GetNodeSupportBundle(ctx context.Context, options *BundleOptions) error {
 }
 
 // GetKubernetesSupportBundle writes cluster wide kubernetes information into a zip archive.
+//
 //nolint:gocyclo
 func GetKubernetesSupportBundle(ctx context.Context, options *BundleOptions) error {
 	var clientset *kubernetes.Clientset
@@ -641,7 +642,7 @@ func devices(ctx context.Context, options *BundleOptions) ([]byte, error) {
 
 	defer r.Close() //nolint:errcheck
 
-	return ioutil.ReadAll(r)
+	return io.ReadAll(r)
 }
 
 func ioPressure(ctx context.Context, options *BundleOptions) ([]byte, error) {

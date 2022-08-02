@@ -7,7 +7,6 @@ package grub
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 )
@@ -22,7 +21,7 @@ var (
 
 // Read reads the grub configuration from the disk.
 func Read(path string) (*Config, error) {
-	c, err := ioutil.ReadFile(path)
+	c, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}

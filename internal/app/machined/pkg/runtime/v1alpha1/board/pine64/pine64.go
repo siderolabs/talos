@@ -6,7 +6,6 @@ package pine64
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,7 +27,7 @@ var (
 // Pine64 represents the Pine64 board
 //
 // References:
-//	- http://linux-sunxi.org/Pine64
+//   - http://linux-sunxi.org/Pine64
 type Pine64 struct{}
 
 // Name implements the runtime.Board.
@@ -48,7 +47,7 @@ func (b Pine64) Install(disk string) (err error) {
 
 	var uboot []byte
 
-	uboot, err = ioutil.ReadFile(bin)
+	uboot, err = os.ReadFile(bin)
 	if err != nil {
 		return err
 	}

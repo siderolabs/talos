@@ -17,6 +17,7 @@ const KernelParamStatusType = resource.Type("KernelParamStatuses.runtime.talos.d
 type KernelParamStatus = typed.Resource[KernelParamStatusSpec, KernelParamStatusRD]
 
 // KernelParamStatusSpec describes status of the defined sysctls.
+//
 //gotagsrewrite:gen
 type KernelParamStatusSpec struct {
 	Current     string `yaml:"current" protobuf:"1"`

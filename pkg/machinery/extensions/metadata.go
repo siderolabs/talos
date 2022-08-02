@@ -11,6 +11,7 @@ type Manifest struct {
 }
 
 // Metadata describes base extension metadata.
+//
 //gotagsrewrite:gen
 type Metadata struct {
 	Name          string        `yaml:"name" protobuf:"1"`

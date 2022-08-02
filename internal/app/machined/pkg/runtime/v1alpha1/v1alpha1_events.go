@@ -33,17 +33,17 @@ import (
 // local to each Consumer, as Consumers are free to work on their own pace. Following diagram shows
 // Publisher and three Consumers:
 //
-//                                                 Consumer 3                         Consumer 2
-//                                                 pos = 27                           pos = 34
-//  e.stream []Event                               |                                  |
-//                                                 |                                  |
-//  +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-//  | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 | 13 | 14 | 15 | 16 |17  |
-//  +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
-//                                       |                                  |
-//                                       |                                  |
-//                                       Consumer 1                         Publisher
-//                                       pos = 43                           e.writePos = 50
+//	                                               Consumer 3                         Consumer 2
+//	                                               pos = 27                           pos = 34
+//	e.stream []Event                               |                                  |
+//	                                               |                                  |
+//	+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+//	| 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 | 13 | 14 | 15 | 16 |17  |
+//	+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+//	                                     |                                  |
+//	                                     |                                  |
+//	                                     Consumer 1                         Publisher
+//	                                     pos = 43                           e.writePos = 50
 //
 // Capacity of Events in this diagram is 18, Publisher published already 50 events, so it
 // already overwrote `e.stream` twice fully.

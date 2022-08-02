@@ -19,6 +19,7 @@ import (
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
+//
 //nolint:gocyclo
 func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
 	clientset, err := cl.K8sClient(ctx)

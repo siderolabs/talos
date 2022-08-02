@@ -9,14 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"strconv"
 )
 
 const sysfsPath = "/sys/bus/pci/devices/%s/%s"
 
 func readID(busPath, name string) (uint16, error) {
-	contents, err := ioutil.ReadFile(fmt.Sprintf(sysfsPath, busPath, name))
+	contents, err := os.ReadFile(fmt.Sprintf(sysfsPath, busPath, name))
 	if err != nil {
 		return 0, err
 	}

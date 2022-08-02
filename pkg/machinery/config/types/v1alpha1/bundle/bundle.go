@@ -6,7 +6,6 @@ package bundle
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +19,7 @@ import (
 )
 
 // NewConfigBundle returns a new bundle.
+//
 //nolint:gocyclo,cyclop
 func NewConfigBundle(opts ...Option) (*ConfigBundle, error) {
 	options := DefaultOptions()
@@ -40,7 +40,7 @@ func NewConfigBundle(opts ...Option) (*ConfigBundle, error) {
 
 		// Pull existing machine configs of each type
 		for _, configType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
-			data, err := ioutil.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
+			data, err := os.ReadFile(filepath.Join(options.ExistingConfigs, strings.ToLower(configType.String())+".yaml"))
 			if err != nil {
 				if configType == machine.TypeInit && os.IsNotExist(err) {
 					continue

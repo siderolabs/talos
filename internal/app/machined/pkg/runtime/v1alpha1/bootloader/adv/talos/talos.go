@@ -39,13 +39,14 @@ type Value []byte
 // ADV implements the Talos extended ADV.
 //
 // Layout (all in big-endian):
-//   0x0000   4 bytes       magic1
-//   0x0004   4 bytes       tag
-//   0x0008   4 bytes       size
-//   0x000c   (size) bytes  value
-//   ... more tags
-//  -0x0024   32 bytes      sha256 of the whole block with checksum set to zero
-//  -0x0004   4 bytes       magic2
+//
+//	 0x0000   4 bytes       magic1
+//	 0x0004   4 bytes       tag
+//	 0x0008   4 bytes       size
+//	 0x000c   (size) bytes  value
+//	 ... more tags
+//	-0x0024   32 bytes      sha256 of the whole block with checksum set to zero
+//	-0x0004   4 bytes       magic2
 //
 // Whole data structure is written twice for redundancy.
 type ADV struct {

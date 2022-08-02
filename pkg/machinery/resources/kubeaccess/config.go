@@ -22,6 +22,7 @@ const ConfigID = resource.ID("config")
 type Config = typed.Resource[ConfigSpec, ConfigRD]
 
 // ConfigSpec describes KubeSpan configuration..
+//
 //gotagsrewrite:gen
 type ConfigSpec struct {
 	Enabled                     bool     `yaml:"enabled" protobuf:"1"`

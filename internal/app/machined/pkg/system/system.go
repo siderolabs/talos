@@ -45,6 +45,7 @@ var (
 )
 
 // Services returns the instance of the system services API.
+//
 //nolint:revive,golint
 func Services(runtime runtime.Runtime) *singleton {
 	once.Do(func() {

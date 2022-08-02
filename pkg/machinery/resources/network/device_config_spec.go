@@ -20,6 +20,7 @@ const DeviceConfigSpecType = resource.Type("DeviceConfigSpecs.net.talos.dev")
 type DeviceConfigSpec = typed.Resource[DeviceConfigSpecSpec, DeviceConfigSpecRD]
 
 // DeviceConfigSpecSpec contains the spec of a device config.
+//
 //gotagsrewrite:gen
 type DeviceConfigSpecSpec struct {
 	Device config.Device `protobuf:"1"`

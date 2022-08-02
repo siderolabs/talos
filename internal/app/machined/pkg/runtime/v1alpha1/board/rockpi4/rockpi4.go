@@ -6,7 +6,6 @@ package rockpi4
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -47,7 +46,7 @@ func (r *Rockpi4) Install(disk string) (err error) {
 
 	defer f.Close() //nolint:errcheck
 
-	uboot, err := ioutil.ReadFile(bin)
+	uboot, err := os.ReadFile(bin)
 	if err != nil {
 		return err
 	}

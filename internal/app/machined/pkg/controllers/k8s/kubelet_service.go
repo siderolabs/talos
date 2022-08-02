@@ -12,7 +12,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -230,7 +229,7 @@ func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) 
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubeletBootstrapKubeconfig, buf.Bytes(), 0o600); err != nil {
+	if err := os.WriteFile(constants.KubeletBootstrapKubeconfig, buf.Bytes(), 0o600); err != nil {
 		return err
 	}
 
@@ -238,7 +237,7 @@ func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) 
 		return err
 	}
 
-	if err := ioutil.WriteFile(constants.KubernetesCACert, secretSpec.CA.Crt, 0o400); err != nil {
+	if err := os.WriteFile(constants.KubernetesCACert, secretSpec.CA.Crt, 0o400); err != nil {
 		return err
 	}
 
@@ -286,7 +285,7 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 		return err
 	}
 
-	return ioutil.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
+	return os.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
 }
 
 // updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.

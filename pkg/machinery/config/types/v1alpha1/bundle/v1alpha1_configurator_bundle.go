@@ -6,7 +6,7 @@ package bundle
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -81,7 +81,7 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 			return fmt.Errorf("unexpected machine type %v", t)
 		}
 
-		if err = ioutil.WriteFile(fullFilePath, []byte(configString), 0o644); err != nil {
+		if err = os.WriteFile(fullFilePath, []byte(configString), 0o644); err != nil {
 			return err
 		}
 

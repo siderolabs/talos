@@ -21,6 +21,7 @@ const EtcdRootID = resource.ID("etcd")
 type EtcdRoot = typed.Resource[EtcdRootSpec, EtcdRootRD]
 
 // EtcdRootSpec describes etcd CA secrets.
+//
 //gotagsrewrite:gen
 type EtcdRootSpec struct {
 	EtcdCA *x509.PEMEncodedCertificateAndKey `yaml:"etcdCA" protobuf:"1"`

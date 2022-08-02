@@ -19,6 +19,7 @@ const LinkSpecType = resource.Type("LinkSpecs.net.talos.dev")
 type LinkSpec = typed.Resource[LinkSpecSpec, LinkSpecRD]
 
 // LinkSpecSpec describes spec for the link.
+//
 //gotagsrewrite:gen
 type LinkSpecSpec struct {
 	// Name defines link name
@@ -59,6 +60,7 @@ type LinkSpecSpec struct {
 }
 
 // BondSlave contains a bond's master name and slave index.
+//
 //gotagsrewrite:gen
 type BondSlave struct {
 	// MasterName indicates master link for enslaved bonded interfaces.
@@ -69,6 +71,7 @@ type BondSlave struct {
 }
 
 // BridgeSlave contains a bond's master name and slave index.
+//
 //gotagsrewrite:gen
 type BridgeSlave struct {
 	// MasterName indicates master link for enslaved bridged interfaces.

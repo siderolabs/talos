@@ -14,6 +14,7 @@ import (
 )
 
 // DetectLowestVersion returns lowest Kubernetes components versions in the cluster.
+//
 //nolint:gocyclo
 func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) (string, error) {
 	k8sClient, err := cluster.K8sHelper(ctx)

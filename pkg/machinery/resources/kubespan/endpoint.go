@@ -20,6 +20,7 @@ const EndpointType = resource.Type("KubeSpanEndpoints.kubespan.talos.dev")
 type Endpoint = typed.Resource[EndpointSpec, EndpointRD]
 
 // EndpointSpec describes Endpoint state.
+//
 //gotagsrewrite:gen
 type EndpointSpec struct {
 	AffiliateID string         `yaml:"affiliateID" protobuf:"1"`

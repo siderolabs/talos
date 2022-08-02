@@ -8,7 +8,7 @@ import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -31,7 +31,7 @@ var genCrtCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		caBytes, err := ioutil.ReadFile(genCrtCmdFlags.ca + ".crt")
+		caBytes, err := os.ReadFile(genCrtCmdFlags.ca + ".crt")
 		if err != nil {
 			return fmt.Errorf("error reading CA cert: %s", err)
 		}
@@ -46,7 +46,7 @@ var genCrtCmd = &cobra.Command{
 			return fmt.Errorf("error parsing cert: %s", err)
 		}
 
-		keyBytes, err := ioutil.ReadFile(genCrtCmdFlags.ca + ".key")
+		keyBytes, err := os.ReadFile(genCrtCmdFlags.ca + ".key")
 		if err != nil {
 			return fmt.Errorf("error reading key file: %s", err)
 		}
@@ -61,7 +61,7 @@ var genCrtCmd = &cobra.Command{
 			return fmt.Errorf("error parsing EC key: %s", err)
 		}
 
-		csrBytes, err := ioutil.ReadFile(genCrtCmdFlags.csr)
+		csrBytes, err := os.ReadFile(genCrtCmdFlags.csr)
 		if err != nil {
 			return fmt.Errorf("error reading CSR: %s", err)
 		}
@@ -81,7 +81,7 @@ var genCrtCmd = &cobra.Command{
 			return fmt.Errorf("error signing certificate: %s", err)
 		}
 
-		if err = ioutil.WriteFile(genCrtCmdFlags.name+".crt", signedCrt.X509CertificatePEM, 0o600); err != nil {
+		if err = os.WriteFile(genCrtCmdFlags.name+".crt", signedCrt.X509CertificatePEM, 0o600); err != nil {
 			return fmt.Errorf("error writing certificate: %s", err)
 		}
 

@@ -10,7 +10,6 @@ package api
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
@@ -56,7 +55,7 @@ func (suite *DmesgSuite) TestNodeHasDmesg() {
 	logReader, errCh, err := client.ReadStream(dmesgStream)
 	suite.Require().NoError(err)
 
-	n, err := io.Copy(ioutil.Discard, logReader)
+	n, err := io.Copy(io.Discard, logReader)
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(<-errCh)

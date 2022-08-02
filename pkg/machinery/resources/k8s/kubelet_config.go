@@ -23,6 +23,7 @@ const KubeletID = resource.ID("kubelet")
 type KubeletConfig = typed.Resource[KubeletConfigSpec, KubeletConfigRD]
 
 // KubeletConfigSpec holds the source of kubelet configuration.
+//
 //gotagsrewrite:gen
 type KubeletConfigSpec struct {
 	Image                        string                 `yaml:"image" protobuf:"1"`

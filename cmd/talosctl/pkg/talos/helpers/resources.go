@@ -16,6 +16,7 @@ import (
 )
 
 // ForEachResource get resources from the controller runtime and run callback using each element.
+//
 //nolint:gocyclo
 func ForEachResource(ctx context.Context, c *client.Client, callback func(ctx context.Context, msg client.ResourceResponse) error, namespace string, args ...string) error {
 	if len(args) == 0 {

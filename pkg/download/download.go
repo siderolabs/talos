@@ -8,11 +8,12 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 
@@ -123,7 +124,7 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 
 		if u.Scheme == "file" {
 			var fileContent []byte
-			fileContent, err = ioutil.ReadFile(u.Path)
+			fileContent, err = os.ReadFile(u.Path)
 			if err != nil {
 				return err
 			}
@@ -202,7 +203,7 @@ func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err erro
 		return data, retry.ExpectedError(fmt.Errorf("failed to download config, received %d", resp.StatusCode))
 	}
 
-	data, err = ioutil.ReadAll(resp.Body)
+	data, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return data, retry.ExpectedError(fmt.Errorf("read config: %s", err.Error()))
 	}

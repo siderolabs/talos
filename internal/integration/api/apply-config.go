@@ -41,7 +41,6 @@ import (
 //   - not be defined by the default Talos configuration
 //
 //   - be generally harmless
-//
 const applyConfigTestSysctl = "net.ipv6.conf.all.accept_ra_mtu"
 
 const applyConfigTestSysctlVal = "1"
@@ -451,6 +450,7 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 }
 
 // TestApplyTry applies the config in try mode with a short timeout.
+//
 //nolint:gocyclo
 func (suite *ApplyConfigSuite) TestApplyTry() {
 	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)

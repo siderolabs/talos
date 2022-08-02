@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	stdlibtemplate "text/template"
@@ -258,7 +257,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				certAndKey := secret.getter()
 
 				if secret.certFilename != "" {
-					if err = ioutil.WriteFile(filepath.Join(pod.directory, secret.certFilename), certAndKey.Crt, 0o400); err != nil {
+					if err = os.WriteFile(filepath.Join(pod.directory, secret.certFilename), certAndKey.Crt, 0o400); err != nil {
 						return fmt.Errorf("error writing certificate %q for %q: %w", secret.certFilename, pod.name, err)
 					}
 
@@ -268,7 +267,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				}
 
 				if secret.keyFilename != "" {
-					if err = ioutil.WriteFile(filepath.Join(pod.directory, secret.keyFilename), certAndKey.Key, 0o400); err != nil {
+					if err = os.WriteFile(filepath.Join(pod.directory, secret.keyFilename), certAndKey.Key, 0o400); err != nil {
 						return fmt.Errorf("error writing key %q for %q: %w", secret.keyFilename, pod.name, err)
 					}
 
@@ -302,7 +301,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 					return fmt.Errorf("error executing template %q: %w", templ.filename, err)
 				}
 
-				if err = ioutil.WriteFile(filepath.Join(pod.directory, templ.filename), buf.Bytes(), 0o400); err != nil {
+				if err = os.WriteFile(filepath.Join(pod.directory, templ.filename), buf.Bytes(), 0o400); err != nil {
 					return fmt.Errorf("error writing template %q for %q: %w", templ.filename, pod.name, err)
 				}
 

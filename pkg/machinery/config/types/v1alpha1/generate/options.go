@@ -5,7 +5,7 @@
 package generate
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/siderolabs/go-pointer"
 	"gopkg.in/yaml.v3"
@@ -244,7 +244,7 @@ func WithSysctls(params map[string]string) GenOption {
 // WithSecrets reads secrets from a provided file.
 func WithSecrets(file string) GenOption {
 	return func(o *GenOptions) error {
-		yamlBytes, err := ioutil.ReadFile(file)
+		yamlBytes, err := os.ReadFile(file)
 		if err != nil {
 			return err
 		}

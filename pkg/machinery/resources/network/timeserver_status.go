@@ -17,6 +17,7 @@ const TimeServerStatusType = resource.Type("TimeServerStatuses.net.talos.dev")
 type TimeServerStatus = typed.Resource[TimeServerStatusSpec, TimeServerStatusRD]
 
 // TimeServerStatusSpec describes NTP servers.
+//
 //gotagsrewrite:gen
 type TimeServerStatusSpec struct {
 	NTPServers []string `yaml:"timeServers" protobuf:"1"`

@@ -77,6 +77,7 @@ func (item *Item) assign(value string) error {
 }
 
 // createFormItems dynamically creates tview.FormItem list based on the wrapped type.
+//
 //nolint:gocyclo,cyclop
 func (item *Item) createFormItems() ([]tview.Primitive, error) {
 	res := []tview.Primitive{}

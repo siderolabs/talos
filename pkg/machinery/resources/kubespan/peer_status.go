@@ -22,6 +22,7 @@ const PeerStatusType = resource.Type("KubeSpanPeerStatuses.kubespan.talos.dev")
 type PeerStatus = typed.Resource[PeerStatusSpec, PeerStatusRD]
 
 // PeerStatusSpec describes PeerStatus state.
+//
 //gotagsrewrite:gen
 type PeerStatusSpec struct {
 	// Active endpoint as seen by the Wireguard.

@@ -2922,7 +2922,7 @@ func (_ KernelModuleConfig) Doc() *encoder.Doc {
 // GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetConfigurationDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
-		Name: "Configuration",
+		Name:        "Configuration",
 		Description: "Package v1alpha1 configuration file contains all the options available for configuring a machine.\n\nTo generate a set of basic configuration files, run:\n\n	talosctl gen config --version v1alpha1 <cluster name> <cluster endpoint>\n\nThis will generate a machine config for each node type, and a talosconfig for the CLI.\n",
 		Structs: []*encoder.Doc{
 			&ConfigDoc,

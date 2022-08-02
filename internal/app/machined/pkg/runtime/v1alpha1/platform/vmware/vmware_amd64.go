@@ -111,6 +111,7 @@ func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
 }
 
 // Configuration implements the platform.Platform interface.
+//
 //nolint:gocyclo
 func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
 	var option *string

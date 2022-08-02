@@ -7,7 +7,6 @@ package install_test
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,7 +50,7 @@ func (suite *manifestSuite) SetupTest() {
 
 	var err error
 
-	suite.disk, err = ioutil.TempFile("", "talos")
+	suite.disk, err = os.CreateTemp("", "talos")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.disk.Truncate(diskSize))
@@ -200,8 +199,8 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 
 	if next != "" {
 		suite.Assert().NoError(os.MkdirAll(filepath.Join(tempDir, "boot", next), 0o700))
-		suite.Assert().NoError(ioutil.WriteFile(filepath.Join(tempDir, "boot", next, "kernel"), []byte("LINUX!"), 0o660))
-		suite.Assert().NoError(ioutil.WriteFile(filepath.Join(tempDir, "system", "state", "config.yaml"), []byte("#!yaml"), 0o660))
+		suite.Assert().NoError(os.WriteFile(filepath.Join(tempDir, "boot", next, "kernel"), []byte("LINUX!"), 0o660))
+		suite.Assert().NoError(os.WriteFile(filepath.Join(tempDir, "system", "state", "config.yaml"), []byte("#!yaml"), 0o660))
 
 		buf := []byte(next)
 
@@ -214,7 +213,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 		suite.Assert().NoError(f.Close())
 	}
 
-	suite.Assert().NoError(ioutil.WriteFile(filepath.Join(tempDir, "var", "content"), []byte("data"), 0o600))
+	suite.Assert().NoError(os.WriteFile(filepath.Join(tempDir, "var", "content"), []byte("data"), 0o600))
 }
 
 func (suite *manifestSuite) TestExecuteManifestClean() {
@@ -324,7 +323,7 @@ func (suite *manifestSuite) TestTargetInstall() {
 	dir := suite.T().TempDir()
 
 	// Create a tempfile for local copy
-	src, err := ioutil.TempFile(dir, "example")
+	src, err := os.CreateTemp(dir, "example")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(src.Close())

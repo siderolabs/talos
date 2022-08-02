@@ -32,6 +32,7 @@ var customCNIPresets = map[string][]string{
 }
 
 // NewState creates new installer state.
+//
 //nolint:gocyclo
 func NewState(ctx context.Context, installer *Installer, conn *Connection) (*State, error) {
 	opts := &machineapi.GenerateConfigurationRequest{

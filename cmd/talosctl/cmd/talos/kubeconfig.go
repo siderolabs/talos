@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -120,7 +119,7 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 				return extractAndMerge(data, localPath)
 			}
 
-			return ioutil.WriteFile(localPath, data, 0o640)
+			return os.WriteFile(localPath, data, 0o640)
 		})
 	},
 }

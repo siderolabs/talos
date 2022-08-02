@@ -23,6 +23,7 @@ const APIServerConfigID = resource.ID(APIServerID)
 type APIServerConfig = typed.Resource[APIServerConfigSpec, APIServerConfigRD]
 
 // ExtraVolume is a configuration of extra volume.
+//
 //gotagsrewrite:gen
 type ExtraVolume struct {
 	Name      string `yaml:"name" protobuf:"1"`

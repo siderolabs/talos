@@ -5,7 +5,7 @@
 package decoder_test
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -331,7 +331,7 @@ func TestDecoderV1Alpha1Config(t *testing.T) {
 		t.Run(file, func(t *testing.T) {
 			t.Parallel()
 
-			contents, err := ioutil.ReadFile(file)
+			contents, err := os.ReadFile(file)
 			require.NoError(t, err)
 
 			d := decoder.NewDecoder(contents)
@@ -345,7 +345,7 @@ func TestDecoderV1Alpha1Config(t *testing.T) {
 func BenchmarkDecoderV1Alpha1Config(b *testing.B) {
 	b.ReportAllocs()
 
-	contents, err := ioutil.ReadFile("testdata/controlplane.yaml")
+	contents, err := os.ReadFile("testdata/controlplane.yaml")
 	require.NoError(b, err)
 
 	for i := 0; i < b.N; i++ {

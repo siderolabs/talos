@@ -11,7 +11,6 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -158,17 +157,17 @@ var configAddCmd = &cobra.Command{
 			return fmt.Errorf("error reading config: %w", err)
 		}
 
-		caBytes, err := ioutil.ReadFile(configAddCmdFlags.ca)
+		caBytes, err := os.ReadFile(configAddCmdFlags.ca)
 		if err != nil {
 			return fmt.Errorf("error reading CA: %w", err)
 		}
 
-		crtBytes, err := ioutil.ReadFile(configAddCmdFlags.crt)
+		crtBytes, err := os.ReadFile(configAddCmdFlags.crt)
 		if err != nil {
 			return fmt.Errorf("error reading certificate: %w", err)
 		}
 
-		keyBytes, err := ioutil.ReadFile(configAddCmdFlags.key)
+		keyBytes, err := os.ReadFile(configAddCmdFlags.key)
 		if err != nil {
 			return fmt.Errorf("error reading key: %w", err)
 		}

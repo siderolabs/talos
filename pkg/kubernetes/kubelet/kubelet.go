@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -45,7 +44,7 @@ func NewClient(nodename string, clientCert, clientKey, caPEM []byte) (*Client, e
 		},
 	}
 
-	kubeletCert, err := ioutil.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet.crt"))
+	kubeletCert, err := os.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet.crt"))
 	if err == nil {
 		config.CAData = append(config.CAData, kubeletCert...)
 	} else if err != nil {

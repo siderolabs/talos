@@ -30,6 +30,7 @@ type KernelParam interface {
 type KernelParamSpec = typed.Resource[KernelParamSpecSpec, KernelParamSpecRD]
 
 // KernelParamSpecSpec describes status of the defined sysctls.
+//
 //gotagsrewrite:gen
 type KernelParamSpecSpec struct {
 	Value        string `yaml:"value" protobuf:"1"`

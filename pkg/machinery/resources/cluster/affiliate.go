@@ -66,6 +66,7 @@ func (r AffiliateRD) ResourceDefinition(resource.Metadata, AffiliateSpec) meta.R
 }
 
 // AffiliateSpec describes Affiliate state.
+//
 //gotagsrewrite:gen
 type AffiliateSpec struct {
 	NodeID          string                `yaml:"nodeId" protobuf:"1"`

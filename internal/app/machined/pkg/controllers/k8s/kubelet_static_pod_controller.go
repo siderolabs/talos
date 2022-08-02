@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -214,7 +213,7 @@ func (ctrl *KubeletStaticPodController) writePod(logger *zap.Logger, staticPod r
 
 	podPath := ctrl.podPath(staticPod)
 
-	existingPod, err := ioutil.ReadFile(podPath)
+	existingPod, err := os.ReadFile(podPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return err
@@ -227,7 +226,7 @@ func (ctrl *KubeletStaticPodController) writePod(logger *zap.Logger, staticPod r
 
 	logger.Sugar().Infof("writing static pod %q", podPath)
 
-	return ioutil.WriteFile(podPath, renderedPod, 0o600)
+	return os.WriteFile(podPath, renderedPod, 0o600)
 }
 
 func (ctrl *KubeletStaticPodController) teardownPod(logger *zap.Logger, staticPod resource.Resource) error {

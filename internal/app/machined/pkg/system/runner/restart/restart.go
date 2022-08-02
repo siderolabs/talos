@@ -100,6 +100,7 @@ func (r *restarter) Open() error {
 }
 
 // Run implements the Runner interface
+//
 //nolint:gocyclo
 func (r *restarter) Run(eventSink events.Recorder) error {
 	defer close(r.stopped)

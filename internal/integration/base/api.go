@@ -14,7 +14,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"strings"
 	"sync"
@@ -197,14 +196,14 @@ func (apiSuite *APISuite) ReadBootID(ctx context.Context) (string, error) {
 
 	defer reader.Close() //nolint:errcheck
 
-	body, err := ioutil.ReadAll(reader)
+	body, err := io.ReadAll(reader)
 	if err != nil {
 		return "", err
 	}
 
 	bootID := strings.TrimSpace(string(body))
 
-	_, err = io.Copy(ioutil.Discard, reader)
+	_, err = io.Copy(io.Discard, reader)
 	if err != nil {
 		return "", err
 	}

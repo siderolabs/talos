@@ -1,6 +1,6 @@
 module github.com/talos-systems/gotagsrewrite
 
-go 1.18
+go 1.19
 
 require (
 	github.com/fatih/structtag v1.2.0

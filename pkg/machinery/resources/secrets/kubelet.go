@@ -23,6 +23,7 @@ const KubeletID = resource.ID("kubelet")
 type Kubelet = typed.Resource[KubeletSpec, KubeletRD]
 
 // KubeletSpec describes root Kubernetes secrets.
+//
 //gotagsrewrite:gen
 type KubeletSpec struct {
 	Endpoint *url.URL `yaml:"endpoint" protobuf:"1"`

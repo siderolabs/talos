@@ -208,8 +208,9 @@ func getResourcesResponse(args []string, clientmsg *[]client.ResourceResponse) f
 	}
 }
 
-//nolint:gocyclo
 // completeResource represents tab complete options for `get` and `get *` commands.
+//
+//nolint:gocyclo
 func completeResource(resourceType string, hasAliasses bool, completeDot bool) []string {
 	var (
 		resourceResponse []client.ResourceResponse

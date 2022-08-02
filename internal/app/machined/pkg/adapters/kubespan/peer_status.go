@@ -54,10 +54,10 @@ const EndpointConnectionTimeout = 15 * time.Second
 //
 // The question is where is LastHandshakeTimeout vs. those points above:
 //
-//   * if we're past (T0+peerDownInterval), simply check that time since last handshake < peerDownInterval
-//   * if we're between (T0+endpointConnectionTimeout) and (T0+peerDownInterval), and there's no handshake
+//   - if we're past (T0+peerDownInterval), simply check that time since last handshake < peerDownInterval
+//   - if we're between (T0+endpointConnectionTimeout) and (T0+peerDownInterval), and there's no handshake
 //     after the endpoint change, assume that the endpoint is down
-//   * if we're between (T0) and (T0+endpointConnectionTimeout), and there's no handshake since the endpoint change,
+//   - if we're between (T0) and (T0+endpointConnectionTimeout), and there's no handshake since the endpoint change,
 //     consider the state to be unknown
 func (a peerStatus) CalculateState() {
 	sinceLastHandshake := time.Since(a.PeerStatusSpec.LastHandshakeTime)

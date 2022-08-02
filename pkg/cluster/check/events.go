@@ -18,6 +18,7 @@ import (
 )
 
 // AllNodesBootedAssertion checks whether nodes reached end of 'Boot' sequence.
+//
 //nolint:gocyclo
 func AllNodesBootedAssertion(ctx context.Context, cluster ClusterInfo) error {
 	cli, err := cluster.Client()

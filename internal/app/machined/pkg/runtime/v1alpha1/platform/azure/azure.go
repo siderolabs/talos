@@ -11,7 +11,6 @@ import (
 	"encoding/xml"
 	stderrors "errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -188,9 +187,10 @@ func (a *Azure) KernelArgs() procfs.Parameters {
 }
 
 // configFromCD handles looking for devices and trying to mount/fetch xml to get the custom data.
+//
 //nolint:gocyclo
 func (a *Azure) configFromCD() ([]byte, error) {
-	devList, err := ioutil.ReadDir("/dev")
+	devList, err := os.ReadDir("/dev")
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (a *Azure) configFromCD() ([]byte, error) {
 				continue
 			}
 
-			ovfEnvFile, err := ioutil.ReadFile(filepath.Join(mnt, "ovf-env.xml"))
+			ovfEnvFile, err := os.ReadFile(filepath.Join(mnt, "ovf-env.xml"))
 			if err != nil {
 				// Device mount worked, but it wasn't the "CD" that contains the xml file
 				if os.IsNotExist(err) {

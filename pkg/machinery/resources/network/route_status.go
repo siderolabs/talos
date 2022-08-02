@@ -20,6 +20,7 @@ const RouteStatusType = resource.Type("RouteStatuses.net.talos.dev")
 type RouteStatus = typed.Resource[RouteStatusSpec, RouteStatusRD]
 
 // RouteStatusSpec describes status of rendered secrets.
+//
 //gotagsrewrite:gen
 type RouteStatusSpec struct {
 	Family       nethelpers.Family        `yaml:"family" protobuf:"1"`

@@ -59,6 +59,7 @@ func (ctrl *KernelParamSpecController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
+//
 //nolint:gocyclo,cyclop
 func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.state == nil {

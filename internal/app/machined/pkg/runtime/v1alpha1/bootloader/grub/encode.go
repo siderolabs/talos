@@ -7,7 +7,6 @@ package grub
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -51,7 +50,7 @@ func (c *Config) Write(path string) error {
 
 	log.Printf("writing %s to disk", path)
 
-	return ioutil.WriteFile(path, wr.Bytes(), 0o600)
+	return os.WriteFile(path, wr.Bytes(), 0o600)
 }
 
 // Encode writes the grub configuration to the given writer.

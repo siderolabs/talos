@@ -19,6 +19,7 @@ type Config struct {
 }
 
 // Layer defines overlay mount layer.
+//
 //gotagsrewrite:gen
 type Layer struct {
 	Image    string   `yaml:"image" protobuf:"1"`

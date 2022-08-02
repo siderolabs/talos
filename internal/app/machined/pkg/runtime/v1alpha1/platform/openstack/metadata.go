@@ -7,8 +7,8 @@ package openstack
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
@@ -122,7 +122,7 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 
 	log.Printf("fetching meta config from: config-drive/%s", configMetadataPath)
 
-	metaConfig, err = ioutil.ReadFile(filepath.Join(mnt, configMetadataPath))
+	metaConfig, err = os.ReadFile(filepath.Join(mnt, configMetadataPath))
 	if err != nil {
 		log.Printf("failed to read %s", configMetadataPath)
 
@@ -131,7 +131,7 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 
 	log.Printf("fetching network config from: config-drive/%s", configNetworkDataPath)
 
-	networkConfig, err = ioutil.ReadFile(filepath.Join(mnt, configNetworkDataPath))
+	networkConfig, err = os.ReadFile(filepath.Join(mnt, configNetworkDataPath))
 	if err != nil {
 		log.Printf("failed to read %s", configNetworkDataPath)
 
@@ -140,7 +140,7 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 
 	log.Printf("fetching machine config from: config-drive/%s", configUserDataPath)
 
-	machineConfig, err = ioutil.ReadFile(filepath.Join(mnt, configUserDataPath))
+	machineConfig, err = os.ReadFile(filepath.Join(mnt, configUserDataPath))
 	if err != nil {
 		log.Printf("failed to read %s", configUserDataPath)
 

@@ -9,7 +9,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -106,7 +106,7 @@ func reportHealth(ctx context.Context, gsIncarnation, gsContainerID, gsInstanceI
 	//nolint:errcheck
 	defer resp.Body.Close()
 
-	_, err = ioutil.ReadAll(resp.Body)
+	_, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}

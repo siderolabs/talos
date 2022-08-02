@@ -1032,6 +1032,7 @@ func (i *InstallConfig) Disk() (string, error) {
 }
 
 // DiskMatchers implements the config.Provider interface.
+//
 //nolint:gocyclo
 func (i *InstallConfig) DiskMatchers() []disk.Matcher {
 	if i.InstallDiskSelector != nil {

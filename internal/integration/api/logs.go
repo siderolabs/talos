@@ -12,7 +12,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"time"
 
 	"github.com/talos-systems/talos/internal/integration/base"
@@ -74,7 +73,7 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 		logReader, errCh, err := client.ReadStream(logsStream)
 		suite.Require().NoError(err)
 
-		n, err := io.Copy(ioutil.Discard, logReader)
+		n, err := io.Copy(io.Discard, logReader)
 		suite.Require().NoError(err)
 
 		logsSize += n

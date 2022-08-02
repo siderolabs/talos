@@ -23,6 +23,7 @@ type HostnameSpec = typed.Resource[HostnameSpecSpec, HostnameSpecRD]
 const HostnameID resource.ID = "hostname"
 
 // HostnameSpecSpec describes node nostname.
+//
 //gotagsrewrite:gen
 type HostnameSpecSpec struct {
 	Hostname    string      `yaml:"hostname" protobuf:"1"`

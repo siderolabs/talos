@@ -32,6 +32,7 @@ func (o *Openstack) Name() string {
 }
 
 // ParseMetadata converts OpenStack metadata to platform network configuration.
+//
 //nolint:gocyclo,cyclop
 func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netaddr.IP) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}

@@ -6,7 +6,7 @@ package copy //nolint:predeclared
 
 import (
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path"
 )
@@ -62,7 +62,7 @@ func File(src, dst string, setters ...Option) error {
 func Dir(src, dst string, setters ...Option) error {
 	var (
 		err     error
-		files   []os.FileInfo
+		files   []fs.DirEntry
 		info    os.FileInfo
 		options Options
 	)
@@ -85,7 +85,7 @@ func Dir(src, dst string, setters ...Option) error {
 		return err
 	}
 
-	if files, err = ioutil.ReadDir(src); err != nil {
+	if files, err = os.ReadDir(src); err != nil {
 		return err
 	}
 

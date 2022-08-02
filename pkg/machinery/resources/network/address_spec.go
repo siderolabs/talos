@@ -23,6 +23,7 @@ const AddressSpecType = resource.Type("AddressSpecs.net.talos.dev")
 type AddressSpec = typed.Resource[AddressSpecSpec, AddressSpecRD]
 
 // AddressSpecSpec describes status of rendered secrets.
+//
 //gotagsrewrite:gen
 type AddressSpecSpec struct {
 	Address         netaddr.IPPrefix        `yaml:"address" protobuf:"1"`

@@ -250,13 +250,18 @@ func collectStructs(node ast.Node) ([]*structType, map[string]aliasType) {
 func parseComment(comment []byte) *Text {
 	text := &Text{}
 	if err := yaml.Unmarshal(comment, text); err != nil {
+		lines := strings.Split(string(comment), "\n")
+		for i := range lines {
+			lines[i] = strings.TrimLeft(lines[i], "\t")
+		}
+
 		// not yaml, fallback
-		text.Description = string(comment)
+		text.Description = strings.Join(lines, "\n")
 		// take only the first line from the Description for the comment
-		text.Comment = strings.Split(text.Description, "\n")[0]
+		text.Comment = lines[0]
 
 		// try to parse everything except for the first line as yaml
-		if err = yaml.Unmarshal([]byte(strings.Join(strings.Split(text.Description, "\n")[1:], "\n")), text); err == nil {
+		if err = yaml.Unmarshal([]byte(strings.Join(lines[1:], "\n")), text); err == nil {
 			// if parsed, remove it from the description
 			text.Description = text.Comment
 		}

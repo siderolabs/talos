@@ -25,6 +25,7 @@ const StatusID = resource.ID("node")
 type Status = typed.Resource[StatusSpec, StatusRD]
 
 // StatusSpec describes time sync state.
+//
 //gotagsrewrite:gen
 type StatusSpec struct {
 	// Synced indicates whether time is in sync.

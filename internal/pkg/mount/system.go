@@ -60,6 +60,7 @@ func SystemMountPointsForDevice(devpath string, opts ...Option) (mountpoints *Po
 }
 
 // SystemMountPointForLabel returns a mount point for the specified device and label.
+//
 //nolint:gocyclo
 func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opts ...Option) (mountpoint *Point, err error) {
 	var target string

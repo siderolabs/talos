@@ -23,6 +23,7 @@ const SchedulerConfigID = resource.ID(SchedulerID)
 type SchedulerConfig = typed.Resource[SchedulerConfigSpec, SchedulerConfigRD]
 
 // SchedulerConfigSpec is configuration for kube-scheduler.
+//
 //gotagsrewrite:gen
 type SchedulerConfigSpec struct {
 	Enabled              bool              `yaml:"enabled" protobuf:"1"`

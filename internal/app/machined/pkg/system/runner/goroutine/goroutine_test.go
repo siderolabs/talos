@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -157,7 +156,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 	//nolint:errcheck
 	defer logFile.Close()
 
-	logContents, err := ioutil.ReadAll(logFile)
+	logContents, err := io.ReadAll(logFile)
 	suite.Assert().NoError(err)
 
 	suite.Assert().Equal([]byte("Test 1\nTest 2\n"), logContents)

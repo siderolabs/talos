@@ -11,7 +11,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -159,7 +158,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 		return fmt.Errorf("error setting up log reader: %w", err)
 	}
 
-	logF, err := ioutil.TempFile("", "talos")
+	logF, err := os.CreateTemp("", "talos")
 	if err != nil {
 		return fmt.Errorf("error creating temporary file for logs: %w", err)
 	}

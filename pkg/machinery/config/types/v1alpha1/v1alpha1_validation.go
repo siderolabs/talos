@@ -65,6 +65,7 @@ var (
 type NetworkDeviceCheck func(*Device, map[string]string) ([]string, error)
 
 // Validate implements the config.Provider interface.
+//
 //nolint:gocyclo,cyclop
 func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationOption) ([]string, error) {
 	var (
@@ -460,6 +461,7 @@ func ValidateNetworkDevices(d *Device, pairedInterfaces map[string]string, check
 }
 
 // CheckDeviceInterface ensures that the interface has been specified.
+//
 //nolint:gocyclo
 func CheckDeviceInterface(d *Device, _ map[string]string) ([]string, error) {
 	var result *multierror.Error

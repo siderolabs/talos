@@ -17,6 +17,7 @@ const ProcessorType = resource.Type("Processors.hardware.talos.dev")
 type Processor = typed.Resource[ProcessorSpec, ProcessorRD]
 
 // ProcessorSpec represents a single processor.
+//
 //gotagsrewrite:gen
 type ProcessorSpec struct {
 	Socket       string `yaml:"socket,omitempty" protobuf:"1"`

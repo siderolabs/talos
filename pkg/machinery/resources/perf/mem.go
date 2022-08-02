@@ -20,6 +20,7 @@ const MemoryID = resource.ID("latest")
 type Memory = typed.Resource[MemorySpec, MemoryRD]
 
 // MemorySpec represents the last Memory stats snapshot.
+//
 //gotagsrewrite:gen
 type MemorySpec struct {
 	MemTotal          uint64 `yaml:"total" protobuf:"1"`

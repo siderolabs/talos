@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -73,6 +72,7 @@ func NewController() (*Controller, error) {
 
 // Run executes all phases known to the controller in serial. `Controller`
 // aborts immediately if any phase fails.
+//
 //nolint:gocyclo
 func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interface{}, setters ...runtime.LockOption) error {
 	// We must ensure that the runtime is configured since all sequences depend
@@ -406,7 +406,7 @@ func waitForUSBDelay() (err error) {
 	if wait {
 		var b []byte
 
-		b, err = ioutil.ReadFile(file)
+		b, err = os.ReadFile(file)
 		if err != nil {
 			return err
 		}

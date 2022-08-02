@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "5.15.57-talos"
+	DefaultKernelVersion = "5.15.58-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -697,7 +697,7 @@ const (
 	DBusClientSocketPath = "/run/dbus/system_bus_socket"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.18.4"
+	GoVersion = "go1.19"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
@@ -716,6 +716,7 @@ const (
 )
 
 // See https://linux.die.net/man/3/klogctl
+//
 //nolint:stylecheck,revive
 const (
 	// SYSLOG_ACTION_SIZE_BUFFER is a named type argument to klogctl.

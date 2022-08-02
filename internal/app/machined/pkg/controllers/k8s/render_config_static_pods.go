@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -128,7 +127,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 					return fmt.Errorf("error marshaling configuration %q for %q: %w", configFile.filename, pod.name, err)
 				}
 
-				if err = ioutil.WriteFile(filepath.Join(pod.directory, configFile.filename), buf.Bytes(), 0o400); err != nil {
+				if err = os.WriteFile(filepath.Join(pod.directory, configFile.filename), buf.Bytes(), 0o400); err != nil {
 					return fmt.Errorf("error writing configuration %q for %q: %w", configFile.filename, pod.name, err)
 				}
 

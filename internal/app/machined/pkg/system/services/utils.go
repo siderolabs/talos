@@ -6,7 +6,6 @@ package services
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -25,7 +24,7 @@ func prepareRootfs(id string) error {
 
 	executablePath := filepath.Join(rootfsPath, id)
 
-	if err := ioutil.WriteFile(executablePath, nil, 0o555); err != nil { // r-xr-xr-x, non-root programs should be able to execute & read
+	if err := os.WriteFile(executablePath, nil, 0o555); err != nil { // r-xr-xr-x, non-root programs should be able to execute & read
 		return fmt.Errorf("failed to create empty executable %q: %w", executablePath, err)
 	}
 

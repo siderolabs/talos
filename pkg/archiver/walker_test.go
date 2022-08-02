@@ -7,7 +7,6 @@ package archiver_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -151,7 +150,7 @@ func (suite *WalkerSuite) TestIterationSymlink() {
 		suite.Require().NoError(err)
 	}()
 
-	err = ioutil.WriteFile(filepath.Join(original, "original.txt"), []byte{}, 0o666)
+	err = os.WriteFile(filepath.Join(original, "original.txt"), []byte{}, 0o666)
 	suite.Require().NoError(err)
 
 	ch, err := archiver.Walker(context.Background(), newname)

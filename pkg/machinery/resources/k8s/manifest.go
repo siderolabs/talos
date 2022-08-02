@@ -17,6 +17,7 @@ const ManifestType = resource.Type("Manifests.kubernetes.talos.dev")
 type Manifest = typed.Resource[ManifestSpec, ManifestRD]
 
 // ManifestSpec holds the Kubernetes resources spec.
+//
 //gotagsrewrite:gen
 type ManifestSpec struct {
 	Items []map[string]interface{} `protobuf:"1"`

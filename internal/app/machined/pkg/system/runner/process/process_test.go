@@ -6,7 +6,7 @@ package process_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -87,7 +87,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 	//nolint:errcheck
 	defer logFile.Close()
 
-	logContents, err := ioutil.ReadAll(logFile)
+	logContents, err := io.ReadAll(logFile)
 	suite.Assert().NoError(err)
 
 	suite.Assert().Equal([]byte("Test 1\nTest 2\n"), logContents)
@@ -123,7 +123,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 		//nolint:errcheck
 		defer logFile.Close()
 
-		logContents, err := ioutil.ReadAll(logFile)
+		logContents, err := io.ReadAll(logFile)
 		suite.Assert().NoError(err)
 
 		return logContents

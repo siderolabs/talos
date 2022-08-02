@@ -27,6 +27,7 @@ func SetBondSlave(link *network.LinkSpecSpec, bond ordered.Pair[string, int]) {
 }
 
 // SetBondMaster sets the bond master spec.
+//
 //nolint:gocyclo
 func SetBondMaster(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
 	link.Logical = true
@@ -125,6 +126,7 @@ func SetBridgeSlave(link *network.LinkSpecSpec, bridge string) {
 }
 
 // SetBridgeMaster sets the bridge master spec.
+//
 //nolint:gocyclo
 func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.Bridge) error {
 	link.Logical = true

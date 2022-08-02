@@ -6,7 +6,6 @@ package vm
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -57,7 +56,7 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 		return err
 	}
 
-	if err = ioutil.WriteFile(pidPath, []byte(strconv.Itoa(cmd.Process.Pid)), os.ModePerm); err != nil {
+	if err = os.WriteFile(pidPath, []byte(strconv.Itoa(cmd.Process.Pid)), os.ModePerm); err != nil {
 		return fmt.Errorf("error writing LB PID file: %w", err)
 	}
 

@@ -6,7 +6,6 @@ package libretechallh3cch5
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -47,7 +46,7 @@ func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
 
 	var uboot []byte
 
-	uboot, err = ioutil.ReadFile(bin)
+	uboot, err = os.ReadFile(bin)
 	if err != nil {
 		return err
 	}

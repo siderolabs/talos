@@ -96,14 +96,14 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 // This method depends on grpc protobuf response structure, each response should
 // look like:
 //
-//   message SomeResponse {
-//     repeated SomeReply messages = 1; // please note field ID == 1
-//   }
+//	  message SomeResponse {
+//	    repeated SomeReply messages = 1; // please note field ID == 1
+//	  }
 //
-//   message SomeReply {
-//	   common.Metadata metadata = 1;
-//     <other fields go here ...>
-//   }
+//	  message SomeReply {
+//		   common.Metadata metadata = 1;
+//	    <other fields go here ...>
+//	  }
 //
 // As 'SomeReply' is repeated in 'SomeResponse', if we concatenate protobuf representation
 // of several 'SomeResponse' messages, we still get valid 'SomeResponse' representation but with more
@@ -122,9 +122,9 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 // To build only single field (Metadata) we use helper message which contains exactly this
 // field with same field ID as in every other 'SomeReply':
 //
-//   message Empty {
-//     common.Metadata metadata = 1;
-//	}
+//	  message Empty {
+//	    common.Metadata metadata = 1;
+//		}
 //
 // As streaming replies are not wrapped into 'SomeResponse' with 'repeated', handling is simpler: we just
 // need to append Empty with details.
@@ -190,13 +190,13 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 // So if 'Empty' is unmarshalled into any other reply message, all the fields
 // are undefined but 'Metadata':
 //
-//   message Empty {
-//    common.Metadata metadata = 1;
-//	}
+//	  message Empty {
+//	   common.Metadata metadata = 1;
+//		}
 //
-//  message EmptyResponse {
-//    repeated Empty messages = 1;
-// }
+//	 message EmptyResponse {
+//	   repeated Empty messages = 1;
+//	}
 //
 // Streaming responses are not wrapped into Empty, so we simply marshall EmptyResponse
 // message.

@@ -70,8 +70,8 @@ func (b JetsonNano) Install(disk string) (err error) {
 // KernelArgs implements the runtime.Board.
 //
 // References:
-//  - https://elinux.org/Jetson/Nano/Upstream to enable early console
-//  - http://en.techinfodepot.shoutwiki.com/wiki/NVIDIA_Jetson_Nano_Developer_Kit for other chips on the SoC
+//   - https://elinux.org/Jetson/Nano/Upstream to enable early console
+//   - http://en.techinfodepot.shoutwiki.com/wiki/NVIDIA_Jetson_Nano_Developer_Kit for other chips on the SoC
 func (b JetsonNano) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyS0,115200"),

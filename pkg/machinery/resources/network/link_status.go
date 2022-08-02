@@ -19,6 +19,7 @@ const LinkStatusType = resource.Type("LinkStatuses.net.talos.dev")
 type LinkStatus = typed.Resource[LinkStatusSpec, LinkStatusRD]
 
 // LinkStatusSpec describes status of rendered secrets.
+//
 //gotagsrewrite:gen
 type LinkStatusSpec struct {
 	// Fields coming from rtnetlink API.

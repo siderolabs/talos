@@ -91,9 +91,9 @@ vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.57
+* Linux: 5.15.58
 
-Talos is built with Go 1.18.4.
+Talos is built with Go 1.19.
 """
 
     [notes.talos-config-kernel-param-variable-substitution]

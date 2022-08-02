@@ -5,7 +5,6 @@
 package mount_test
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -45,7 +44,7 @@ func (suite *manifestSuite) SetupTest() {
 
 	var err error
 
-	suite.disk, err = ioutil.TempFile("", "talos")
+	suite.disk, err = os.CreateTemp("", "talos")
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.disk.Truncate(diskSize))

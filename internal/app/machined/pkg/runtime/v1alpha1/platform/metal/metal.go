@@ -7,9 +7,9 @@ package metal
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -126,6 +126,7 @@ func (r *replacer) ReplaceMatches(replacement string) string {
 }
 
 // PopulateURLParameters fills in empty parameters in the download URL.
+//
 //nolint:gocyclo
 func PopulateURLParameters(ctx context.Context, downloadURL string, r state.State) (string, error) {
 	populatedURL := downloadURL
@@ -314,7 +315,7 @@ func readConfigFromISO() ([]byte, error) {
 		return nil, fmt.Errorf("failed to mount iso: %w", err)
 	}
 
-	b, err := ioutil.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
+	b, err := os.ReadFile(filepath.Join(mnt, filepath.Base(constants.ConfigPath)))
 	if err != nil {
 		return nil, fmt.Errorf("read config: %s", err.Error())
 	}

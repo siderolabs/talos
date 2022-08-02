@@ -184,6 +184,7 @@ func (svcrunner *ServiceRunner) waitFor(ctx context.Context, condition condition
 // Start initializes the service and runs it
 //
 // Start should be run in a goroutine.
+//
 //nolint:gocyclo
 func (svcrunner *ServiceRunner) Start() {
 	defer func() {

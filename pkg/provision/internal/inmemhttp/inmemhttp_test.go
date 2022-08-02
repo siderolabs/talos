@@ -7,7 +7,7 @@ package inmemhttp_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -34,7 +34,7 @@ func TestServer(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	got, err := ioutil.ReadAll(resp.Body)
+	got, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 
 	assert.Equal(t, contents, got)

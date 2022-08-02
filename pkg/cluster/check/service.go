@@ -68,6 +68,7 @@ func ServiceStateAssertion(ctx context.Context, cl ClusterInfo, service string, 
 }
 
 // ServiceHealthAssertion checks whether service reached some specified state.
+//
 //nolint:gocyclo
 func ServiceHealthAssertion(ctx context.Context, cl ClusterInfo, service string, setters ...Option) error {
 	opts := DefaultOptions()

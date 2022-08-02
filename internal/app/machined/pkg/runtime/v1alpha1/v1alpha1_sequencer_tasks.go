@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -425,7 +424,7 @@ func OSRelease() (err error) {
 		return err
 	}
 
-	return ioutil.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), writer.Bytes(), 0o644)
+	return os.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), writer.Bytes(), 0o644)
 }
 
 // createBindMount creates a common way to create a writable source file with a
@@ -575,7 +574,7 @@ func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			return err
 		}
 
-		return ioutil.WriteFile(constants.ConfigPath, b, 0o600)
+		return os.WriteFile(constants.ConfigPath, b, 0o600)
 	}, "saveConfig"
 }
 
@@ -601,7 +600,7 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 
 		var unzippedData []byte
 
-		unzippedData, err = ioutil.ReadAll(gzipReader)
+		unzippedData, err = io.ReadAll(gzipReader)
 		if err != nil {
 			return nil, fmt.Errorf("error unzipping machine config: %w", err)
 		}
@@ -702,7 +701,7 @@ func WriteUdevRules(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			content.WriteByte('\n')
 		}
 
-		if err = ioutil.WriteFile(constants.UdevRulesPath, []byte(content.String()), 0o644); err != nil {
+		if err = os.WriteFile(constants.UdevRulesPath, []byte(content.String()), 0o644); err != nil {
 			return fmt.Errorf("failed writing custom udev rules: %w", err)
 		}
 
@@ -1035,7 +1034,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 				var existingFileContents []byte
 
-				existingFileContents, err = ioutil.ReadFile(f.Path())
+				existingFileContents, err = os.ReadFile(f.Path())
 				if err != nil {
 					result = multierror.Append(result, err)
 
@@ -1050,7 +1049,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 			}
 
 			if filepath.Dir(f.Path()) == constants.ManifestsDirectory {
-				if err = ioutil.WriteFile(f.Path(), []byte(content), f.Permissions()); err != nil {
+				if err = os.WriteFile(f.Path(), []byte(content), f.Permissions()); err != nil {
 					result = multierror.Append(result, err)
 
 					continue
@@ -1091,7 +1090,7 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				continue
 			}
 
-			if err = ioutil.WriteFile(p, []byte(content), f.Permissions()); err != nil {
+			if err = os.WriteFile(p, []byte(content), f.Permissions()); err != nil {
 				result = multierror.Append(result, err)
 
 				continue
@@ -1173,7 +1172,7 @@ func UnmountPodMounts(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var b []byte
 
-		if b, err = ioutil.ReadFile("/proc/self/mounts"); err != nil {
+		if b, err = os.ReadFile("/proc/self/mounts"); err != nil {
 			return err
 		}
 

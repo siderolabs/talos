@@ -31,6 +31,7 @@ type APIBootstrapper struct {
 // Bootstrap the cluster via the API.
 //
 // Bootstrap implements Bootstrapper interface.
+//
 //nolint:gocyclo
 func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	cli, err := s.Client()
