@@ -76,13 +76,11 @@ func (ext *Extension) validateContents() error {
 
 		// regular file: check for file path being whitelisted
 		if !d.IsDir() {
-			dirPath := filepath.Dir(itemPath)
-
 			allowed := false
 
 			for _, allowedPath := range extensions.AllowedPaths {
-				if strings.HasPrefix(dirPath, allowedPath) {
-					_, err = filepath.Rel(allowedPath, dirPath)
+				if strings.HasPrefix(itemPath, allowedPath) {
+					_, err = filepath.Rel(allowedPath, itemPath)
 					if err == nil {
 						allowed = true
 
