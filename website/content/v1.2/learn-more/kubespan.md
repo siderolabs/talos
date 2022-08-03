@@ -33,9 +33,8 @@ See [discovery service]({{< relref "discovery" >}}) to learn more about the exte
 
 The Kubernetes-based system utilises annotations on Kubernetes Nodes which describe each node's public key and local addresses.
 
-On top of this, we also route Pod subnets.
+On top of this, we also optionally route Pod subnets.
 This is often (maybe even usually) taken care of by the CNI, but there are many situations where the CNI fails to be able to do this itself, across networks.
-So we also scrape the Kubernetes Node resource to discover its `podCIDRs`.
 
 ## NAT, Multiple Routes, Multiple IPs
 

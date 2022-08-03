@@ -33,6 +33,8 @@ type ConfigSpec struct {
 	SharedSecret string `yaml:"sharedSecret" protobuf:"3"`
 	// Force routing via KubeSpan even if the peer connection is not up.
 	ForceRouting bool `yaml:"forceRouting" protobuf:"4"`
+	// Advertise Kubernetes pod networks or skip it completely.
+	AdvertiseKubernetesNetworks bool `yaml:"advertiseKubernetesNetworks" protobuf:"5"`
 }
 
 // NewConfig initializes a Config resource.

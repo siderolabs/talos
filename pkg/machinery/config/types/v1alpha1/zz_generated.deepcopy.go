@@ -1618,6 +1618,11 @@ func (in *NetworkKubeSpan) DeepCopyInto(out *NetworkKubeSpan) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.KubeSpanAdvertiseKubernetesNetworks != nil {
+		in, out := &in.KubeSpanAdvertiseKubernetesNetworks, &out.KubeSpanAdvertiseKubernetesNetworks
+		*out = new(bool)
+		**out = **in
+	}
 	if in.KubeSpanAllowDownPeerBypass != nil {
 		in, out := &in.KubeSpanAllowDownPeerBypass, &out.KubeSpanAllowDownPeerBypass
 		*out = new(bool)

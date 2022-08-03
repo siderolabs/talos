@@ -282,6 +282,7 @@ type Route interface {
 type KubeSpan interface {
 	Enabled() bool
 	ForceRouting() bool
+	AdvertiseKubernetesNetworks() bool
 }
 
 // NetworkDeviceSelector defines the set of fields that can be used to pick network a device.

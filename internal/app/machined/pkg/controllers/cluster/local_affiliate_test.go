@@ -88,6 +88,10 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	suite.Require().NoError(kubespanadapter.IdentitySpec(ksIdentity.TypedSpec()).UpdateAddress("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", mac))
 	suite.Require().NoError(suite.state.Create(suite.ctx, ksIdentity))
 
+	ksConfig := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
+	ksConfig.TypedSpec().AdvertiseKubernetesNetworks = true
+	suite.Require().NoError(suite.state.Create(suite.ctx, ksConfig))
+
 	// add KS address to the list of node addresses, it should be ignored in the endpoints
 	oldVersion := nonK8sAddresses.Metadata().Version()
 	nonK8sAddresses.TypedSpec().Addresses = append(nonK8sAddresses.TypedSpec().Addresses, ksIdentity.TypedSpec().Address)
@@ -123,6 +127,26 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 			suite.Assert().Equal(ksIdentity.TypedSpec().PublicKey, spec.KubeSpan.PublicKey)
 			suite.Assert().Equal([]netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.1.0/24")}, spec.KubeSpan.AdditionalAddresses)
 			suite.Assert().Equal([]netaddr.IPPort{netaddr.MustParseIPPort("172.20.0.2:51820"), netaddr.MustParseIPPort("10.5.0.1:51820")}, spec.KubeSpan.Endpoints)
+
+			return nil
+		}),
+	))
+
+	// disable advertising K8s addresses
+	oldVersion = ksConfig.Metadata().Version()
+	ksConfig.TypedSpec().AdvertiseKubernetesNetworks = false
+	ksConfig.Metadata().BumpVersion()
+	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, ksConfig))
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
+			spec := r.(*cluster.Affiliate).TypedSpec()
+
+			if spec.KubeSpan.AdditionalAddresses != nil {
+				return retry.ExpectedErrorf("additional addresses are not cleared yet")
+			}
+
+			suite.Assert().Empty(spec.KubeSpan.AdditionalAddresses)
 
 			return nil
 		}),

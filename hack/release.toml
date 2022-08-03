@@ -154,6 +154,17 @@ node id (e.g. `talos-2gd-76y`) instead of using the DHCP assigned IP address (e.
 This ensures that the node hostname is not changed when DHCP assigns a new IP to a node.
 """
 
+    [notes.kubespan-kubernetes-nets]
+        title = "KubeSpan Kubernetes Network Advertisement"
+        description="""\
+KubeSpan no longer by default advertises Kubernetes pod networks of the node over KubeSpan.
+This means that CNI should handle encapsulation of pod-to-pod traffic into the node-to-node tunnel,
+and node-to-node traffic will be handled by KubeSpan.
+This provides better compatibility with popular CNIs like Calico and Cilium.
+
+Old behavior can be restored by setting `.machine.kubespan.advertiseKubernetesNetworks = true` in the machine config.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -74,6 +74,7 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 					res.(*kubespan.Config).TypedSpec().ClusterID = c.Cluster().ID()
 					res.(*kubespan.Config).TypedSpec().SharedSecret = c.Cluster().Secret()
 					res.(*kubespan.Config).TypedSpec().ForceRouting = c.Machine().Network().KubeSpan().ForceRouting()
+					res.(*kubespan.Config).TypedSpec().AdvertiseKubernetesNetworks = c.Machine().Network().KubeSpan().AdvertiseKubernetesNetworks()
 
 					return nil
 				}); err != nil {

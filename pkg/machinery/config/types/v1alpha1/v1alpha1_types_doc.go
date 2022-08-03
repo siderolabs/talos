@@ -2410,17 +2410,22 @@ func init() {
 			FieldName: "kubespan",
 		},
 	}
-	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 2)
+	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 3)
 	NetworkKubeSpanDoc.Fields[0].Name = "enabled"
 	NetworkKubeSpanDoc.Fields[0].Type = "bool"
 	NetworkKubeSpanDoc.Fields[0].Note = ""
 	NetworkKubeSpanDoc.Fields[0].Description = "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled."
 	NetworkKubeSpanDoc.Fields[0].Comments[encoder.LineComment] = "Enable the KubeSpan feature."
-	NetworkKubeSpanDoc.Fields[1].Name = "allowDownPeerBypass"
+	NetworkKubeSpanDoc.Fields[1].Name = "advertiseKubernetesNetworks"
 	NetworkKubeSpanDoc.Fields[1].Type = "bool"
 	NetworkKubeSpanDoc.Fields[1].Note = ""
-	NetworkKubeSpanDoc.Fields[1].Description = "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established."
-	NetworkKubeSpanDoc.Fields[1].Comments[encoder.LineComment] = "Skip sending traffic via KubeSpan if the peer connection state is not up."
+	NetworkKubeSpanDoc.Fields[1].Description = "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM."
+	NetworkKubeSpanDoc.Fields[1].Comments[encoder.LineComment] = "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node."
+	NetworkKubeSpanDoc.Fields[2].Name = "allowDownPeerBypass"
+	NetworkKubeSpanDoc.Fields[2].Type = "bool"
+	NetworkKubeSpanDoc.Fields[2].Note = ""
+	NetworkKubeSpanDoc.Fields[2].Description = "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established."
+	NetworkKubeSpanDoc.Fields[2].Comments[encoder.LineComment] = "Skip sending traffic via KubeSpan if the peer connection state is not up."
 
 	NetworkDeviceSelectorDoc.Type = "NetworkDeviceSelector"
 	NetworkDeviceSelectorDoc.Comments[encoder.LineComment] = "NetworkDeviceSelector struct describes network device selector."

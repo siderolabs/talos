@@ -2403,6 +2403,14 @@ type NetworkKubeSpan struct {
 	//   Cluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled.
 	KubeSpanEnabled *bool `yaml:"enabled,omitempty"`
 	// description: |
+	//   Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.
+	//   If disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,
+	//   and KubeSpan handles the node-to-node traffic.
+	//   If enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.
+	//   When enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which
+	//   is not always the case with CNIs not relying on Kubernetes for IPAM.
+	KubeSpanAdvertiseKubernetesNetworks *bool `yaml:"advertiseKubernetesNetworks,omitempty"`
+	// description: |
 	//   Skip sending traffic via KubeSpan if the peer connection state is not up.
 	//   This provides configurable choice between connectivity and security: either traffic is always
 	//   forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly

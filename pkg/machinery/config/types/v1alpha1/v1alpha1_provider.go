@@ -987,6 +987,11 @@ func (k *NetworkKubeSpan) ForceRouting() bool {
 	return !pointer.SafeDeref(k.KubeSpanAllowDownPeerBypass)
 }
 
+// AdvertiseKubernetesNetworks implements KubeSpan interface.
+func (k *NetworkKubeSpan) AdvertiseKubernetesNetworks() bool {
+	return pointer.SafeDeref(k.KubeSpanAdvertiseKubernetesNetworks)
+}
+
 // Disabled implements the config.Provider interface.
 func (t *TimeConfig) Disabled() bool {
 	return pointer.SafeDeref(t.TimeDisabled)

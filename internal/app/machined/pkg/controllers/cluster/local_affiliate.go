@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -68,6 +69,12 @@ func (ctrl *LocalAffiliateController) Inputs() []controller.Input {
 			Namespace: kubespan.NamespaceName,
 			Type:      kubespan.IdentityType,
 			ID:        pointer.To(kubespan.LocalIdentity),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      kubespan.ConfigType,
+			ID:        pointer.To(kubespan.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -160,6 +167,11 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				return fmt.Errorf("error getting kubespan identity: %w", err)
 			}
 
+			kubespanConfig, err := safe.ReaderGet[*kubespan.Config](ctx, r, resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined))
+			if err != nil && !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting kubespan config: %w", err)
+			}
+
 			ksAdditionalAddresses, err := r.Get(ctx,
 				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterOnlyK8s), resource.VersionUndefined))
 			if err != nil && !state.IsNotFoundError(err) {
@@ -195,10 +207,15 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 
 					spec.KubeSpan = cluster.KubeSpanAffiliateSpec{}
 
-					if kubespanIdentity != nil {
+					if kubespanIdentity != nil && kubespanConfig != nil {
 						spec.KubeSpan.Address = kubespanIdentity.(*kubespan.Identity).TypedSpec().Address.IP()
 						spec.KubeSpan.PublicKey = kubespanIdentity.(*kubespan.Identity).TypedSpec().PublicKey
-						spec.KubeSpan.AdditionalAddresses = append([]netaddr.IPPrefix(nil), ksAdditionalAddresses.(*network.NodeAddress).TypedSpec().Addresses...)
+
+						if kubespanConfig.TypedSpec().AdvertiseKubernetesNetworks {
+							spec.KubeSpan.AdditionalAddresses = append([]netaddr.IPPrefix(nil), ksAdditionalAddresses.(*network.NodeAddress).TypedSpec().Addresses...)
+						} else {
+							spec.KubeSpan.AdditionalAddresses = nil
+						}
 
 						endpoints := make([]netaddr.IPPort, 0, len(nodeIPs))
 
