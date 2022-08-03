@@ -6,7 +6,6 @@ package archiver_test
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -58,10 +57,7 @@ var filesFixture = []struct {
 }
 
 func (suite *CommonSuite) SetupSuite() {
-	var err error
-
-	suite.tmpDir, err = ioutil.TempDir("", "archiver")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 
 	for _, file := range filesFixture {
 		suite.Require().NoError(os.MkdirAll(filepath.Join(suite.tmpDir, filepath.Dir(file.Path)), 0o777))
@@ -89,8 +85,4 @@ func (suite *CommonSuite) SetupSuite() {
 
 		suite.Require().NoError(f.Close())
 	}
-}
-
-func (suite *CommonSuite) TearDownSuite() {
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }

@@ -7,7 +7,6 @@ package file_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,10 +26,7 @@ type FileChunkerSuite struct {
 }
 
 func (suite *FileChunkerSuite) SetupSuite() {
-	var err error
-
-	suite.tmpDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 }
 
 func (suite *FileChunkerSuite) SetupTest() {
@@ -48,10 +44,6 @@ func (suite *FileChunkerSuite) SetupTest() {
 func (suite *FileChunkerSuite) TearDownTest() {
 	suite.Require().NoError(suite.writer.Close())
 	suite.reader.Close() //nolint:errcheck
-}
-
-func (suite *FileChunkerSuite) TearDownSuite() {
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
 func collectChunks(chunksCh <-chan []byte) <-chan []byte {

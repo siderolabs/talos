@@ -43,8 +43,7 @@ type GoroutineSuite struct {
 func (suite *GoroutineSuite) SetupSuite() {
 	var err error
 
-	suite.tmpDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 
 	suite.loggingManager = logging.NewFileLoggingManager(suite.tmpDir)
 
@@ -58,10 +57,6 @@ func (suite *GoroutineSuite) SetupSuite() {
 	r := v1alpha1.NewRuntime(cfg, s, e, suite.loggingManager)
 
 	suite.r = r
-}
-
-func (suite *GoroutineSuite) TearDownSuite() {
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
 func (suite *GoroutineSuite) TestRunSuccess() {

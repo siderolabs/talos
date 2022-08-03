@@ -39,10 +39,7 @@ type ProcessSuite struct {
 }
 
 func (suite *ProcessSuite) SetupSuite() {
-	var err error
-
-	suite.tmpDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 
 	suite.loggingManager = logging.NewFileLoggingManager(suite.tmpDir)
 
@@ -55,8 +52,6 @@ func (suite *ProcessSuite) TearDownSuite() {
 	if suite.runReaper {
 		reaper.Shutdown()
 	}
-
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
 func (suite *ProcessSuite) TestRunSuccess() {

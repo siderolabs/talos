@@ -65,8 +65,7 @@ type ContainerdSuite struct {
 func (suite *ContainerdSuite) SetupSuite() {
 	var err error
 
-	suite.tmpDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 
 	suite.loggingManager = logging.NewFileLoggingManager(suite.tmpDir)
 
@@ -146,8 +145,6 @@ func (suite *ContainerdSuite) TearDownSuite() {
 
 	suite.Require().NoError(suite.containerdRunner.Stop())
 	suite.containerdWg.Wait()
-
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
 func (suite *ContainerdSuite) getLogContents(filename string) []byte {

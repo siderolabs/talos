@@ -153,12 +153,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 
 	// verify filesystems by mounting and unmounting
 
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer func() {
-		suite.Assert().NoError(os.RemoveAll(tempDir))
-	}()
+	tempDir := suite.T().TempDir()
 
 	mountpoints, err = manifest.SystemMountpoints()
 	suite.Require().NoError(err)
@@ -326,11 +321,7 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 
 func (suite *manifestSuite) TestTargetInstall() {
 	// Create Temp dirname for mountpoint
-	dir, err := ioutil.TempDir("", "talostest")
-	suite.Require().NoError(err)
-
-	//nolint:errcheck
-	defer os.RemoveAll(dir)
+	dir := suite.T().TempDir()
 
 	// Create a tempfile for local copy
 	src, err := ioutil.TempFile(dir, "example")

@@ -27,19 +27,14 @@ func TestRun(t *testing.T) {
 		test := test
 
 		t.Run(name, func(t *testing.T) {
-			tempDir, err := os.MkdirTemp("", "go-pkg-*")
-			require.NoError(t, err)
-
-			t.Cleanup(func() {
-				require.NoError(t, os.RemoveAll(tempDir))
-			})
+			tempDir := t.TempDir()
 
 			tmpFile := filepath.Join(tempDir, "my.go")
 			origPath := filepath.Join("testdata", test.original)
 
 			require.NoError(t, CopyFile(origPath, tmpFile))
 
-			err = Run(tempDir)
+			err := Run(tempDir)
 			require.NoError(t, err)
 
 			fileData := string(must(os.ReadFile(tmpFile))(t))

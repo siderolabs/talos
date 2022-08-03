@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,10 +30,7 @@ type FollowSuite struct {
 }
 
 func (suite *FollowSuite) SetupSuite() {
-	var err error
-
-	suite.tmpDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 }
 
 func (suite *FollowSuite) SetupTest() {
@@ -53,10 +49,6 @@ func (suite *FollowSuite) TearDownTest() {
 	suite.Require().NoError(suite.writer.Close())
 
 	suite.reader.Close() //nolint:errcheck
-}
-
-func (suite *FollowSuite) TearDownSuite() {
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
 //nolint:unparam

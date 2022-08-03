@@ -88,12 +88,7 @@ func (suite *manifestSuite) skipUnderBuildkit() {
 func (suite *manifestSuite) TestCleanCorrupedXFSFileSystem() {
 	suite.skipUnderBuildkit()
 
-	tempDir, err := ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-
-	defer func() {
-		suite.Assert().NoError(os.RemoveAll(tempDir))
-	}()
+	tempDir := suite.T().TempDir()
 
 	mountDir := filepath.Join(tempDir, "var")
 

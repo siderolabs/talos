@@ -6,7 +6,6 @@ package cri_test
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -65,8 +64,7 @@ func (suite *CRISuite) SetupSuite() {
 
 	var err error
 
-	suite.tmpDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
+	suite.tmpDir = suite.T().TempDir()
 
 	stateDir, rootDir := filepath.Join(suite.tmpDir, "state"), filepath.Join(suite.tmpDir, "root")
 	suite.Require().NoError(os.Mkdir(stateDir, 0o777))
@@ -140,8 +138,6 @@ func (suite *CRISuite) TearDownSuite() {
 
 	suite.Require().NoError(suite.containerdRunner.Stop())
 	suite.containerdWg.Wait()
-
-	suite.Require().NoError(os.RemoveAll(suite.tmpDir))
 }
 
 func (suite *CRISuite) SetupTest() {

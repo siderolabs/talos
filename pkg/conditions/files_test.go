@@ -6,7 +6,6 @@ package conditions_test
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,13 +23,7 @@ type FilesSuite struct {
 }
 
 func (suite *FilesSuite) SetupSuite() {
-	var err error
-	suite.tempDir, err = ioutil.TempDir("", "talos")
-	suite.Require().NoError(err)
-}
-
-func (suite *FilesSuite) TearDownSuite() {
-	suite.Require().NoError(os.RemoveAll(suite.tempDir))
+	suite.tempDir = suite.T().TempDir()
 }
 
 func (suite *FilesSuite) createFile(name string) (path string) {
