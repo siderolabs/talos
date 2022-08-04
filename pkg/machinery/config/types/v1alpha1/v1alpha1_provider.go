@@ -353,6 +353,11 @@ func (k *KubeletConfig) NodeIP() config.KubeletNodeIP {
 	return k.KubeletNodeIP
 }
 
+// SkipNodeRegistration implements the config.Provider interface.
+func (k *KubeletConfig) SkipNodeRegistration() bool {
+	return pointer.SafeDeref(k.KubeletSkipNodeRegistration)
+}
+
 // ValidSubnets implements the config.Provider interface.
 func (k *KubeletNodeIPConfig) ValidSubnets() []string {
 	return k.KubeletNodeIPValidSubnets

@@ -594,7 +594,7 @@ func init() {
 			FieldName: "kubelet",
 		},
 	}
-	KubeletConfigDoc.Fields = make([]encoder.Doc, 8)
+	KubeletConfigDoc.Fields = make([]encoder.Doc, 9)
 	KubeletConfigDoc.Fields[0].Name = "image"
 	KubeletConfigDoc.Fields[0].Type = "string"
 	KubeletConfigDoc.Fields[0].Note = ""
@@ -661,6 +661,17 @@ func init() {
 	KubeletConfigDoc.Fields[7].Comments[encoder.LineComment] = "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet."
 
 	KubeletConfigDoc.Fields[7].AddExample("", kubeletNodeIPExample)
+	KubeletConfigDoc.Fields[8].Name = "skipNodeRegistration"
+	KubeletConfigDoc.Fields[8].Type = "bool"
+	KubeletConfigDoc.Fields[8].Note = ""
+	KubeletConfigDoc.Fields[8].Description = "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods."
+	KubeletConfigDoc.Fields[8].Comments[encoder.LineComment] = "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver."
+	KubeletConfigDoc.Fields[8].Values = []string{
+		"true",
+		"yes",
+		"false",
+		"no",
+	}
 
 	KubeletNodeIPConfigDoc.Type = "KubeletNodeIPConfig"
 	KubeletNodeIPConfigDoc.Comments[encoder.LineComment] = "KubeletNodeIPConfig represents the kubelet node IP configuration."

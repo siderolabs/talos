@@ -9,8 +9,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/opencontainers/runtime-spec/specs-go"
-
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 // KubeletConfigType is type of KubeletConfig resource.
@@ -34,29 +32,7 @@ type KubeletConfigSpec struct {
 	ExtraConfig                  map[string]interface{} `yaml:"extraConfig,omitempty" protobuf:"6"`
 	CloudProviderExternal        bool                   `yaml:"cloudProviderExternal" protobuf:"7"`
 	DefaultRuntimeSeccompEnabled bool                   `yaml:"defaultRuntimeSeccompEnabled" protobuf:"8"`
-}
-
-// DeepCopy implements typed.DeepCopyable interface.
-func (spec KubeletConfigSpec) DeepCopy() KubeletConfigSpec {
-	extraArgs := make(map[string]string, len(spec.ExtraArgs))
-
-	for k, v := range spec.ExtraArgs {
-		extraArgs[k] = v
-	}
-
-	extraConfig := &v1alpha1.Unstructured{Object: spec.ExtraConfig}
-	extraConfig = extraConfig.DeepCopy()
-
-	return KubeletConfigSpec{
-		Image:                        spec.Image,
-		ClusterDNS:                   append([]string(nil), spec.ClusterDNS...),
-		ClusterDomain:                spec.ClusterDomain,
-		ExtraArgs:                    extraArgs,
-		ExtraMounts:                  append([]specs.Mount(nil), spec.ExtraMounts...),
-		ExtraConfig:                  extraConfig.Object,
-		CloudProviderExternal:        spec.CloudProviderExternal,
-		DefaultRuntimeSeccompEnabled: spec.DefaultRuntimeSeccompEnabled,
-	}
+	SkipNodeRegistration         bool                   `yaml:"skipNodeRegistration" protobuf:"9"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.

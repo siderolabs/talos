@@ -286,7 +286,6 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	builder := argsbuilder.Args{
 		"admission-control-config-file": filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml"),
-		"advertise-address":             "$(POD_IP)",
 		"allow-privileged":              "true",
 		// Do not accept anonymous requests by default. Otherwise the kube-apiserver will set the request's group to system:unauthenticated exposing endpoints like /version etc.
 		"anonymous-auth":                     "false",
@@ -327,6 +326,10 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"tls-cert-file":                    filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt"),
 		"tls-private-key-file":             filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key"),
 		"kubelet-preferred-address-types":  "InternalIP,ExternalIP,Hostname",
+	}
+
+	if cfg.AdvertisedAddress != "" {
+		builder.Set("advertise-address", cfg.AdvertisedAddress)
 	}
 
 	if cfg.CloudProvider != "" {

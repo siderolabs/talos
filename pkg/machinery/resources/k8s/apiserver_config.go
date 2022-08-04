@@ -33,17 +33,20 @@ type ExtraVolume struct {
 }
 
 // APIServerConfigSpec is configuration for kube-apiserver.
+//
+//gotagsrewrite:gen
 type APIServerConfigSpec struct {
-	Image                    string            `yaml:"image"`
-	CloudProvider            string            `yaml:"cloudProvider"`
-	ControlPlaneEndpoint     string            `yaml:"controlPlaneEndpoint"`
-	EtcdServers              []string          `yaml:"etcdServers"`
-	LocalPort                int               `yaml:"localPort"`
-	ServiceCIDRs             []string          `yaml:"serviceCIDR"`
-	ExtraArgs                map[string]string `yaml:"extraArgs"`
-	ExtraVolumes             []ExtraVolume     `yaml:"extraVolumes"`
-	EnvironmentVariables     map[string]string `yaml:"environmentVariables"`
-	PodSecurityPolicyEnabled bool              `yaml:"podSecurityPolicyEnabled"`
+	Image                    string            `yaml:"image" protobuf:"1"`
+	CloudProvider            string            `yaml:"cloudProvider" protobuf:"2"`
+	ControlPlaneEndpoint     string            `yaml:"controlPlaneEndpoint" protobuf:"3"`
+	EtcdServers              []string          `yaml:"etcdServers" protobuf:"4"`
+	LocalPort                int               `yaml:"localPort" protobuf:"5"`
+	ServiceCIDRs             []string          `yaml:"serviceCIDR" protobuf:"6"`
+	ExtraArgs                map[string]string `yaml:"extraArgs" protobuf:"7"`
+	ExtraVolumes             []ExtraVolume     `yaml:"extraVolumes" protobuf:"8"`
+	EnvironmentVariables     map[string]string `yaml:"environmentVariables" protobuf:"9"`
+	PodSecurityPolicyEnabled bool              `yaml:"podSecurityPolicyEnabled" protobuf:"10"`
+	AdvertisedAddress        string            `yaml:"advertisedAddress" protobuf:"11"`
 }
 
 // NewAPIServerConfig returns new APIServerConfig resource.

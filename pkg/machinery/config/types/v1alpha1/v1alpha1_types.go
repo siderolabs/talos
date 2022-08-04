@@ -1083,6 +1083,15 @@ type KubeletConfig struct {
 	//   examples:
 	//     - value: kubeletNodeIPExample
 	KubeletNodeIP *KubeletNodeIPConfig `yaml:"nodeIP,omitempty"`
+	//   description: |
+	//      The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.
+	//      This runs kubelet as standalone and only runs static pods.
+	//   values:
+	//     - true
+	//     - yes
+	//     - false
+	//     - no
+	KubeletSkipNodeRegistration *bool `yaml:"skipNodeRegistration,omitempty"`
 }
 
 // KubeletNodeIPConfig represents the kubelet node IP configuration.

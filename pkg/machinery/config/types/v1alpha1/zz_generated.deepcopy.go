@@ -1142,6 +1142,11 @@ func (in *KubeletConfig) DeepCopyInto(out *KubeletConfig) {
 		*out = new(KubeletNodeIPConfig)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.KubeletSkipNodeRegistration != nil {
+		in, out := &in.KubeletSkipNodeRegistration, &out.KubeletSkipNodeRegistration
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

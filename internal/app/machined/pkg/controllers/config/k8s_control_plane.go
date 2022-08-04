@@ -160,6 +160,11 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 		cloudProvider = "external"
 	}
 
+	advertisedAddress := "$(POD_IP)"
+	if cfgProvider.Machine().Kubelet().SkipNodeRegistration() {
+		advertisedAddress = ""
+	}
+
 	return r.Modify(ctx, k8s.NewAPIServerConfig(), func(r resource.Resource) error {
 		*r.(*k8s.APIServerConfig).TypedSpec() = k8s.APIServerConfigSpec{
 			Image:                    cfgProvider.Cluster().APIServer().Image(),
@@ -172,6 +177,7 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 			ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
 			EnvironmentVariables:     cfgProvider.Cluster().APIServer().Env(),
 			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
+			AdvertisedAddress:        advertisedAddress,
 		}
 
 		return nil

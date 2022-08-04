@@ -265,6 +265,73 @@ func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
 	)
 }
 
+func (suite *KubeletSpecSuite) TestReconcileWithSkipNodeRegistration() {
+	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().Image = "kubelet:v2.0.0"
+	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.11"}
+	cfg.TypedSpec().ClusterDomain = "some.local"
+	cfg.TypedSpec().SkipNodeRegistration = true
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+
+	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
+	nodename.TypedSpec().Nodename = "foo.com"
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
+
+	nodeIP := k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID)
+	nodeIP.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("172.20.0.3")}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIP))
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				kubeletSpec, err := suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(
+						k8s.NamespaceName,
+						k8s.KubeletSpecType,
+						k8s.KubeletID,
+						resource.VersionUndefined,
+					),
+				)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return retry.ExpectedError(err)
+					}
+
+					return err
+				}
+
+				spec := kubeletSpec.(*k8s.KubeletSpec).TypedSpec()
+
+				var kubeletConfiguration kubeletconfig.KubeletConfiguration
+
+				if err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(
+					spec.Config,
+					&kubeletConfiguration,
+				); err != nil {
+					return err
+				}
+
+				suite.Assert().Equal("/", kubeletConfiguration.CgroupRoot)
+				suite.Assert().Equal(cfg.TypedSpec().ClusterDomain, kubeletConfiguration.ClusterDomain)
+				suite.Assert().Equal([]string{
+					"--cert-dir=/var/lib/kubelet/pki",
+					"--config=/etc/kubernetes/kubelet.yaml",
+					"--container-runtime=remote",
+					"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
+					"--hostname-override=foo.com",
+					"--node-ip=172.20.0.3",
+				}, spec.Args)
+
+				return nil
+			},
+		),
+	)
+}
+
 func (suite *KubeletSpecSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
@@ -279,33 +346,44 @@ func TestKubeletSpecSuite(t *testing.T) {
 
 func TestNewKubeletConfigurationFail(t *testing.T) {
 	for _, tt := range []struct {
-		name                                string
-		extraConfig                         map[string]interface{}
-		defaultRuntimeSeccompProfileEnabled bool
-		expectedErr                         string
+		name        string
+		cfgSpec     *k8s.KubeletConfigSpec
+		expectedErr string
 	}{
 		{
 			name: "wrong fields",
-			extraConfig: map[string]interface{}{
-				"API":  "v1",
-				"foo":  "bar",
-				"Port": "xyz",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:    []string{"10.96.0.10"},
+				ClusterDomain: "cluster.svc",
+				ExtraConfig: map[string]interface{}{
+					"API":  "v1",
+					"foo":  "bar",
+					"Port": "xyz",
+				},
 			},
 			expectedErr: "error unmarshalling extra kubelet configuration: strict decoding error: unknown field \"API\", unknown field \"Port\", unknown field \"foo\"",
 		},
 		{
 			name: "wrong field type",
-			extraConfig: map[string]interface{}{
-				"oomScoreAdj": "v1",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:    []string{"10.96.0.10"},
+				ClusterDomain: "cluster.svc",
+				ExtraConfig: map[string]interface{}{
+					"oomScoreAdj": "v1",
+				},
 			},
 			expectedErr: "error unmarshalling extra kubelet configuration: unrecognized type: int32",
 		},
 		{
 			name: "not overridable",
-			extraConfig: map[string]interface{}{
-				"oomScoreAdj":    -300,
-				"port":           81,
-				"authentication": nil,
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:    []string{"10.96.0.10"},
+				ClusterDomain: "cluster.svc",
+				ExtraConfig: map[string]interface{}{
+					"oomScoreAdj":    -300,
+					"port":           81,
+					"authentication": nil,
+				},
 			},
 			expectedErr: "2 errors occurred:\n\t* field \"authentication\" can't be overridden\n\t* field \"port\" can't be overridden\n\n",
 		},
@@ -314,7 +392,7 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 
 		t.Run(
 			tt.name, func(t *testing.T) {
-				_, err := k8sctrl.NewKubeletConfiguration([]string{"10.96.0.10"}, "cluster.svc", tt.extraConfig, tt.defaultRuntimeSeccompProfileEnabled)
+				_, err := k8sctrl.NewKubeletConfiguration(tt.cfgSpec)
 				require.Error(t, err)
 
 				assert.EqualError(t, err, tt.expectedErr)
@@ -372,16 +450,19 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name                                string
-		extraConfig                         map[string]interface{}
-		defaultRuntimeSeccompProfileEnabled bool
-		expectedOverrides                   func(*kubeletconfig.KubeletConfiguration)
+		name              string
+		cfgSpec           *k8s.KubeletConfigSpec
+		expectedOverrides func(*kubeletconfig.KubeletConfiguration)
 	}{
 		{
 			name: "override some",
-			extraConfig: map[string]interface{}{
-				"oomScoreAdj":             -300,
-				"enableDebuggingHandlers": true,
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:    []string{"10.0.0.5"},
+				ClusterDomain: "cluster.local",
+				ExtraConfig: map[string]interface{}{
+					"oomScoreAdj":             -300,
+					"enableDebuggingHandlers": true,
+				},
 			},
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.OOMScoreAdj = pointer.To[int32](-300)
@@ -390,9 +471,13 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		},
 		{
 			name: "disable graceful shutdown",
-			extraConfig: map[string]interface{}{
-				"shutdownGracePeriod":             "0s",
-				"shutdownGracePeriodCriticalPods": "0s",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:    []string{"10.0.0.5"},
+				ClusterDomain: "cluster.local",
+				ExtraConfig: map[string]interface{}{
+					"shutdownGracePeriod":             "0s",
+					"shutdownGracePeriodCriticalPods": "0s",
+				},
 			},
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.ShutdownGracePeriod = metav1.Duration{}
@@ -400,8 +485,12 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 		},
 		{
-			name:                                "enable seccomp default",
-			defaultRuntimeSeccompProfileEnabled: true,
+			name: "enable seccomp default",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:                   []string{"10.0.0.5"},
+				ClusterDomain:                "cluster.local",
+				DefaultRuntimeSeccompEnabled: true,
+			},
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.SeccompDefault = pointer.To(true)
 				kc.FeatureGates = map[string]bool{
@@ -410,11 +499,15 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 		},
 		{
-			name:                                "enable seccomp default when featuregate already set",
-			defaultRuntimeSeccompProfileEnabled: true,
-			extraConfig: map[string]interface{}{
-				"featureGates": map[string]interface{}{
-					"SeccompDefault": true,
+			name: "enable seccomp default when featuregate already set",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:                   []string{"10.0.0.5"},
+				ClusterDomain:                "cluster.local",
+				DefaultRuntimeSeccompEnabled: true,
+				ExtraConfig: map[string]interface{}{
+					"featureGates": map[string]interface{}{
+						"SeccompDefault": true,
+					},
 				},
 			},
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
@@ -425,11 +518,15 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 		},
 		{
-			name:                                "enable seccomp default when featuregate already set to false",
-			defaultRuntimeSeccompProfileEnabled: true,
-			extraConfig: map[string]interface{}{
-				"featureGates": map[string]interface{}{
-					"SeccompDefault": false,
+			name: "enable seccomp default when featuregate already set to false",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:                   []string{"10.0.0.5"},
+				ClusterDomain:                "cluster.local",
+				DefaultRuntimeSeccompEnabled: true,
+				ExtraConfig: map[string]interface{}{
+					"featureGates": map[string]interface{}{
+						"SeccompDefault": false,
+					},
 				},
 			},
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
@@ -437,6 +534,18 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				kc.FeatureGates = map[string]bool{
 					"SeccompDefault": true,
 				}
+			},
+		},
+		{
+			name: "enable skipNodeRegistration",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:           []string{"10.0.0.5"},
+				ClusterDomain:        "cluster.local",
+				SkipNodeRegistration: true,
+			},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.Authentication.Webhook.Enabled = pointer.To(false)
+				kc.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
 			},
 		},
 	} {
@@ -446,7 +555,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			expected := defaultKubeletConfig
 			tt.expectedOverrides(&expected)
 
-			config, err := k8sctrl.NewKubeletConfiguration([]string{"10.0.0.5"}, "cluster.local", tt.extraConfig, tt.defaultRuntimeSeccompProfileEnabled)
+			config, err := k8sctrl.NewKubeletConfiguration(tt.cfgSpec)
 
 			require.NoError(t, err)
 

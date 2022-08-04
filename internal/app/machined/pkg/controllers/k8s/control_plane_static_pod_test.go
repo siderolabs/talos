@@ -500,6 +500,79 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileEnvironmentVariables() {
 	}
 }
 
+func (suite *ControlPlaneStaticPodSuite) TestReconcileAdvertisedAddressArg() {
+	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
+	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
+	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
+
+	configAPIServer := k8s.NewAPIServerConfig()
+
+	*configAPIServer.TypedSpec() = k8s.APIServerConfigSpec{
+		AdvertisedAddress: "$(POD_IP)",
+	}
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertControlPlaneStaticPods(
+					[]string{
+						"kube-apiserver",
+					},
+				)
+			},
+		),
+	)
+
+	r, err := suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
+	)
+	suite.Require().NoError(err)
+
+	apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
+	suite.Require().NoError(err)
+
+	suite.Require().NotEmpty(apiServerPod.Spec.Containers)
+
+	suite.Assert().Contains(apiServerPod.Spec.Containers[0].Command, "--advertise-address=$(POD_IP)")
+
+	oldVersion := configAPIServer.Metadata().Version
+	configAPIServer.Metadata().BumpVersion()
+
+	configAPIServer.TypedSpec().AdvertisedAddress = ""
+
+	suite.Assert().NoError(suite.state.Update(suite.ctx, oldVersion(), configAPIServer))
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				r, err = suite.state.Get(
+					suite.ctx,
+					resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
+				)
+				suite.Require().NoError(err)
+
+				apiServerPod, err = k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
+				suite.Require().NoError(err)
+
+				for _, arg := range apiServerPod.Spec.Containers[0].Command {
+					if strings.Contains(arg, "--advertise-address=") {
+						return retry.ExpectedErrorf("expected no advertise-address, got %s", arg)
+					}
+				}
+
+				return nil
+			},
+		),
+	)
+
+	suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
+}
+
 func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptScheduler() {
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)

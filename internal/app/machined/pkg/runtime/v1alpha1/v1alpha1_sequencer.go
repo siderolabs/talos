@@ -232,11 +232,11 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"startEverything",
 		StartAllServices,
 	).AppendWhen(
-		r.Config().Machine().Type() != machine.TypeWorker,
+		r.Config().Machine().Type() != machine.TypeWorker && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
 		"labelMaster",
 		LabelNodeAsMaster,
 	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
+		r.State().Platform().Mode() != runtime.ModeContainer && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
 		"uncordon",
 		UncordonNode,
 	).AppendWhen(
@@ -282,7 +282,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			)
 	default:
 		phases = phases.AppendWhen(
-			in.GetGraceful(),
+			in.GetGraceful() && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
 			"drain",
 			taskErrorHandler(logError, CordonAndDrainNode),
 		).AppendWhen(
@@ -330,7 +330,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 // Shutdown is the shutdown sequence.
 func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []runtime.Phase {
 	phases := PhaseList{}.AppendWhen(
-		!in.GetForce(),
+		!in.GetForce() && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
 		"drain",
 		CordonAndDrainNode,
 	).Append(
@@ -383,7 +383,8 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 	case runtime.ModeContainer:
 		return nil
 	default:
-		phases = phases.Append(
+		phases = phases.AppendWhen(
+			!r.Config().Machine().Kubelet().SkipNodeRegistration(),
 			"drain",
 			CordonAndDrainNode,
 		).AppendWhen(

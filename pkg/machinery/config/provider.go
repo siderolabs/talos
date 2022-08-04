@@ -312,6 +312,7 @@ type Kubelet interface {
 	DefaultRuntimeSeccompProfileEnabled() bool
 	RegisterWithFQDN() bool
 	NodeIP() KubeletNodeIP
+	SkipNodeRegistration() bool
 }
 
 // KubeletNodeIP defines the way node IPs are selected for the kubelet.

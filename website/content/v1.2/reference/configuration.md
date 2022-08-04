@@ -790,6 +790,7 @@ nodeIP:
         - '!10.0.0.3/32'
         - fdc7::/16
 {{< /highlight >}}</details> | |
+|`skipNodeRegistration` |bool |<details><summary>The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.</summary>This runs kubelet as standalone and only runs static pods.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 

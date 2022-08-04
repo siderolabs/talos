@@ -109,8 +109,6 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 		expectedNodename := nodenameSpec.Nodename
 
 		args := argsbuilder.Args{
-			"bootstrap-kubeconfig":       constants.KubeletBootstrapKubeconfig,
-			"kubeconfig":                 constants.KubeletKubeconfig,
 			"container-runtime":          "remote",
 			"container-runtime-endpoint": "unix://" + constants.CRIContainerdAddress,
 			"config":                     "/etc/kubernetes/kubelet.yaml",
@@ -118,6 +116,11 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			"cert-dir": constants.KubeletPKIDir,
 
 			"hostname-override": expectedNodename,
+		}
+
+		if !cfgSpec.SkipNodeRegistration {
+			args["bootstrap-kubeconfig"] = constants.KubeletBootstrapKubeconfig
+			args["kubeconfig"] = constants.KubeletKubeconfig
 		}
 
 		if cfgSpec.CloudProviderExternal {
@@ -163,7 +166,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error merging arguments: %w", err)
 		}
 
-		kubeletConfig, err := NewKubeletConfiguration(cfgSpec.ClusterDNS, cfgSpec.ClusterDomain, cfgSpec.ExtraConfig, cfgSpec.DefaultRuntimeSeccompEnabled)
+		kubeletConfig, err := NewKubeletConfiguration(cfgSpec)
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
 		}
@@ -227,9 +230,9 @@ func prepareExtraConfig(extraConfig map[string]interface{}) (*kubeletconfig.Kube
 
 // NewKubeletConfiguration builds kubelet configuration with defaults and overrides from extraConfig.
 //
-//nolint:gocyclo
-func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig map[string]interface{}, defaultRuntimeSeccompProfileEnabled bool) (*kubeletconfig.KubeletConfiguration, error) {
-	config, err := prepareExtraConfig(extraConfig)
+//nolint:gocyclo,cyclop
+func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec) (*kubeletconfig.KubeletConfiguration, error) {
+	config, err := prepareExtraConfig(cfgSpec.ExtraConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +264,7 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 	config.RotateCertificates = true
 	config.ProtectKernelDefaults = true
 
-	if defaultRuntimeSeccompProfileEnabled {
+	if cfgSpec.DefaultRuntimeSeccompEnabled {
 		config.SeccompDefault = pointer.To(true)
 		if config.FeatureGates != nil {
 			if defaultRuntimeSeccompProfileEnabled, overridden := config.FeatureGates["SeccompDefault"]; overridden && !defaultRuntimeSeccompProfileEnabled {
@@ -274,6 +277,11 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 		}
 	}
 
+	if cfgSpec.SkipNodeRegistration {
+		config.Authentication.Webhook.Enabled = pointer.To(false)
+		config.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
+	}
+
 	// fields which can be overridden
 	if config.Address == "" {
 		config.Address = "0.0.0.0"
@@ -284,11 +292,11 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 	}
 
 	if config.ClusterDomain == "" {
-		config.ClusterDomain = dnsDomain
+		config.ClusterDomain = cfgSpec.ClusterDomain
 	}
 
 	if len(config.ClusterDNS) == 0 {
-		config.ClusterDNS = clusterDNS
+		config.ClusterDNS = cfgSpec.ClusterDNS
 	}
 
 	if config.SerializeImagePulls == nil {
@@ -311,6 +319,8 @@ func NewKubeletConfiguration(clusterDNS []string, dnsDomain string, extraConfig 
 	if config.Logging.Format == "" {
 		config.Logging.Format = "json"
 	}
+
+	extraConfig := cfgSpec.ExtraConfig
 
 	if _, overridden := extraConfig["shutdownGracePeriod"]; !overridden && config.ShutdownGracePeriod.Duration == 0 {
 		config.ShutdownGracePeriod = metav1.Duration{Duration: constants.KubeletShutdownGracePeriod}
