@@ -2087,6 +2087,7 @@ DHCPOptions contains options for configuring the DHCP settings for a given inter
 Appears in:
 
 - <code><a href="#device">Device</a>.dhcpOptions</code>
+- <code><a href="#vlan">Vlan</a>.dhcpOptions</code>
 
 
 
@@ -2342,6 +2343,7 @@ Appears in:
 |`vlanId` |uint16 |The VLAN's ID.  | |
 |`mtu` |uint32 |The VLAN's MTU.  | |
 |`vip` |<a href="#devicevipconfig">DeviceVIPConfig</a> |The VLAN's virtual IP address configuration.  | |
+|`dhcpOptions` |<a href="#dhcpoptions">DHCPOptions</a> |<details><summary>DHCP specific options.</summary>`dhcp` *must* be set to true for these to take effect.</details>  | |
 
 
 

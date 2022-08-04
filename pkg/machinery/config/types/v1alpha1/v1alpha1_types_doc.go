@@ -1740,6 +1740,10 @@ func init() {
 			TypeName:  "Device",
 			FieldName: "dhcpOptions",
 		},
+		{
+			TypeName:  "Vlan",
+			FieldName: "dhcpOptions",
+		},
 	}
 	DHCPOptionsDoc.Fields = make([]encoder.Doc, 4)
 	DHCPOptionsDoc.Fields[0].Name = "routeMetric"
@@ -2089,7 +2093,7 @@ func init() {
 			FieldName: "vlans",
 		},
 	}
-	VlanDoc.Fields = make([]encoder.Doc, 7)
+	VlanDoc.Fields = make([]encoder.Doc, 8)
 	VlanDoc.Fields[0].Name = "addresses"
 	VlanDoc.Fields[0].Type = "[]string"
 	VlanDoc.Fields[0].Note = ""
@@ -2120,6 +2124,11 @@ func init() {
 	VlanDoc.Fields[6].Note = ""
 	VlanDoc.Fields[6].Description = "The VLAN's virtual IP address configuration."
 	VlanDoc.Fields[6].Comments[encoder.LineComment] = "The VLAN's virtual IP address configuration."
+	VlanDoc.Fields[7].Name = "dhcpOptions"
+	VlanDoc.Fields[7].Type = "DHCPOptions"
+	VlanDoc.Fields[7].Note = ""
+	VlanDoc.Fields[7].Description = "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
+	VlanDoc.Fields[7].Comments[encoder.LineComment] = "DHCP specific options."
 
 	RouteDoc.Type = "Route"
 	RouteDoc.Comments[encoder.LineComment] = "Route represents a network route."

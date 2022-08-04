@@ -152,13 +152,36 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 				}
 
 				for _, vlan := range device.Vlans() {
-					if vlan.DHCP() {
+					if vlan.DHCP() && vlan.DHCPOptions().IPv4() {
+						routeMetric := vlan.DHCPOptions().RouteMetric()
+						if routeMetric == 0 {
+							routeMetric = DefaultRouteMetric
+						}
+
 						specs = append(specs, network.OperatorSpecSpec{
 							Operator:  network.OperatorDHCP4,
 							LinkName:  fmt.Sprintf("%s.%d", device.Interface(), vlan.ID()),
 							RequireUp: true,
 							DHCP4: network.DHCP4OperatorSpec{
-								RouteMetric: DefaultRouteMetric,
+								RouteMetric: routeMetric,
+							},
+							ConfigLayer: network.ConfigMachineConfiguration,
+						})
+					}
+
+					if vlan.DHCP() && vlan.DHCPOptions().IPv6() {
+						routeMetric := vlan.DHCPOptions().RouteMetric()
+						if routeMetric == 0 {
+							routeMetric = DefaultRouteMetric
+						}
+
+						specs = append(specs, network.OperatorSpecSpec{
+							Operator:  network.OperatorDHCP6,
+							LinkName:  fmt.Sprintf("%s.%d", device.Interface(), vlan.ID()),
+							RequireUp: true,
+							DHCP6: network.DHCP6OperatorSpec{
+								RouteMetric: routeMetric,
+								DUID:        vlan.DHCPOptions().DUIDv6(),
 							},
 							ConfigLayer: network.ConfigMachineConfiguration,
 						})

@@ -2084,6 +2084,11 @@ func (in *Vlan) DeepCopyInto(out *Vlan) {
 		*out = new(DeviceVIPConfig)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.VlanDHCPOptions != nil {
+		in, out := &in.VlanDHCPOptions, &out.VlanDHCPOptions
+		*out = new(DHCPOptions)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

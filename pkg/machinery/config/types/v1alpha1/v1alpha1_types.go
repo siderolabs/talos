@@ -2250,6 +2250,10 @@ type Vlan struct {
 	VlanMTU uint32 `yaml:"mtu,omitempty"`
 	//   description: The VLAN's virtual IP address configuration.
 	VlanVIP *DeviceVIPConfig `yaml:"vip,omitempty"`
+	//   description: |
+	//     DHCP specific options.
+	//     `dhcp` *must* be set to true for these to take effect.
+	VlanDHCPOptions *DHCPOptions `yaml:"dhcpOptions,omitempty"`
 }
 
 // Route represents a network route.

@@ -977,6 +977,18 @@ func (v *Vlan) DHCP() bool {
 	return pointer.SafeDeref(v.VlanDHCP)
 }
 
+// DHCPOptions implements the MachineNetwork interface.
+func (v *Vlan) DHCPOptions() config.DHCPOptions {
+	// Default route metric on systemd is 1024. This sets the same.
+	if v.VlanDHCPOptions == nil {
+		return &DHCPOptions{
+			DHCPRouteMetric: uint32(0),
+		}
+	}
+
+	return v.VlanDHCPOptions
+}
+
 // ID implements the MachineNetwork interface.
 func (v *Vlan) ID() uint16 {
 	return v.VlanID

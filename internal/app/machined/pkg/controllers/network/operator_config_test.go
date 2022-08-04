@@ -305,6 +305,12 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 								{
 									VlanID: 26,
 								},
+								{
+									VlanID: 27,
+									VlanDHCPOptions: &v1alpha1.DHCPOptions{
+										DHCPRouteMetric: 256,
+									},
+								},
 							},
 						},
 						{
@@ -348,6 +354,12 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 						case "configuration/dhcp4/eth4.25":
 							suite.Assert().Equal("eth4.25", r.TypedSpec().LinkName)
 							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+						case "configuration/dhcp4/eth4.26":
+							suite.Assert().Equal("eth4.26", r.TypedSpec().LinkName)
+							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+						case "configuration/dhcp4/eth4.27":
+							suite.Assert().Equal("eth4.27", r.TypedSpec().LinkName)
+							suite.Assert().EqualValues(256, r.TypedSpec().DHCP4.RouteMetric)
 						}
 
 						return nil
