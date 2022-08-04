@@ -6,16 +6,28 @@
 
 package etcd
 
+import (
+	"inet.af/netaddr"
+)
+
 // DeepCopy generates a deep copy of ConfigSpec.
 func (o ConfigSpec) DeepCopy() ConfigSpec {
 	var cp ConfigSpec = o
-	if o.ValidSubnets != nil {
-		cp.ValidSubnets = make([]string, len(o.ValidSubnets))
-		copy(cp.ValidSubnets, o.ValidSubnets)
+	if o.AdvertiseValidSubnets != nil {
+		cp.AdvertiseValidSubnets = make([]string, len(o.AdvertiseValidSubnets))
+		copy(cp.AdvertiseValidSubnets, o.AdvertiseValidSubnets)
 	}
-	if o.ExcludeSubnets != nil {
-		cp.ExcludeSubnets = make([]string, len(o.ExcludeSubnets))
-		copy(cp.ExcludeSubnets, o.ExcludeSubnets)
+	if o.AdvertiseExcludeSubnets != nil {
+		cp.AdvertiseExcludeSubnets = make([]string, len(o.AdvertiseExcludeSubnets))
+		copy(cp.AdvertiseExcludeSubnets, o.AdvertiseExcludeSubnets)
+	}
+	if o.ListenValidSubnets != nil {
+		cp.ListenValidSubnets = make([]string, len(o.ListenValidSubnets))
+		copy(cp.ListenValidSubnets, o.ListenValidSubnets)
+	}
+	if o.ListenExcludeSubnets != nil {
+		cp.ListenExcludeSubnets = make([]string, len(o.ListenExcludeSubnets))
+		copy(cp.ListenExcludeSubnets, o.ListenExcludeSubnets)
 	}
 	if o.ExtraArgs != nil {
 		cp.ExtraArgs = make(map[string]string, len(o.ExtraArgs))
@@ -35,6 +47,18 @@ func (o PKIStatusSpec) DeepCopy() PKIStatusSpec {
 // DeepCopy generates a deep copy of SpecSpec.
 func (o SpecSpec) DeepCopy() SpecSpec {
 	var cp SpecSpec = o
+	if o.AdvertisedAddresses != nil {
+		cp.AdvertisedAddresses = make([]netaddr.IP, len(o.AdvertisedAddresses))
+		copy(cp.AdvertisedAddresses, o.AdvertisedAddresses)
+	}
+	if o.ListenPeerAddresses != nil {
+		cp.ListenPeerAddresses = make([]netaddr.IP, len(o.ListenPeerAddresses))
+		copy(cp.ListenPeerAddresses, o.ListenPeerAddresses)
+	}
+	if o.ListenClientAddresses != nil {
+		cp.ListenClientAddresses = make([]netaddr.IP, len(o.ListenClientAddresses))
+		copy(cp.ListenClientAddresses, o.ListenClientAddresses)
+	}
 	if o.ExtraArgs != nil {
 		cp.ExtraArgs = make(map[string]string, len(o.ExtraArgs))
 		for k2, v2 := range o.ExtraArgs {

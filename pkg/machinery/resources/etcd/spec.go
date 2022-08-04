@@ -5,12 +5,11 @@
 package etcd
 
 import (
-	"net/netip"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -28,11 +27,12 @@ type Spec = typed.Resource[SpecSpec, SpecRD]
 //
 //gotagsrewrite:gen
 type SpecSpec struct {
-	Name              string            `yaml:"name" protobuf:"1"`
-	AdvertisedAddress netip.Addr        `yaml:"advertisedAddress" protobuf:"2"`
-	ListenAddress     netip.Addr        `yaml:"listenAddress" protobuf:"5"`
-	Image             string            `yaml:"image" protobuf:"3"`
-	ExtraArgs         map[string]string `yaml:"extraArgs" protobuf:"4"`
+	Name                  string            `yaml:"name" protobuf:"1"`
+	AdvertisedAddresses   []netaddr.IP      `yaml:"advertisedAddresses" protobuf:"2"`
+	ListenPeerAddresses   []netaddr.IP      `yaml:"listenPeerAddresses" protobuf:"5"`
+	ListenClientAddresses []netaddr.IP      `yaml:"listenClientAddresses" protobuf:"6"`
+	Image                 string            `yaml:"image" protobuf:"3"`
+	ExtraArgs             map[string]string `yaml:"extraArgs" protobuf:"4"`
 }
 
 // NewSpec initializes a Spec resource.
@@ -58,8 +58,16 @@ func (SpecRD) ResourceDefinition(resource.Metadata, SpecSpec) meta.ResourceDefin
 				JSONPath: "{.name}",
 			},
 			{
-				Name:     "AdvertisedAddress",
-				JSONPath: "{.advertisedAddress}",
+				Name:     "AdvertisedAddresses",
+				JSONPath: "{.advertisedAddresses}",
+			},
+			{
+				Name:     "ListenPeerAddresses",
+				JSONPath: "{.listenPeerAddresses}",
+			},
+			{
+				Name:     "ListenClientAddresses",
+				JSONPath: "{.listenClientAddresses}",
 			},
 		},
 	}

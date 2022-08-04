@@ -581,8 +581,9 @@ etcd:
     extraArgs:
         election-timeout: "5000"
 
-    # # The subnet from which the advertise URL should be.
-    # subnet: 10.0.0.0/8
+    # # The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.
+    # advertisedSubnets:
+    #     - 10.0.0.0/8
 {{< /highlight >}}</details> | |
 |`coreDNS` |<a href="#coredns">CoreDNS</a> |Core DNS specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 coreDNS:
@@ -1568,8 +1569,9 @@ ca:
 extraArgs:
     election-timeout: "5000"
 
-# # The subnet from which the advertise URL should be.
-# subnet: 10.0.0.0/8
+# # The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.
+# advertisedSubnets:
+#     - 10.0.0.0/8
 {{< /highlight >}}
 
 
@@ -1584,9 +1586,11 @@ ca:
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
 |`extraArgs` |map[string]string |<details><summary>Extra arguments to supply to etcd.</summary>Note that the following args are not allowed:<br /><br />- `name`<br />- `data-dir`<br />- `initial-cluster-state`<br />- `listen-peer-urls`<br />- `listen-client-urls`<br />- `cert-file`<br />- `key-file`<br />- `trusted-ca-file`<br />- `peer-client-cert-auth`<br />- `peer-cert-file`<br />- `peer-trusted-ca-file`<br />- `peer-key-file`</details>  | |
-|`subnet` |string |The subnet from which the advertise URL should be. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-subnet: 10.0.0.0/8
+|`advertisedSubnets` |[]string |<details><summary>The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.</summary><br />IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br />Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br />If not specified, advertised IP is selected as the first routable address of the node.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+advertisedSubnets:
+    - 10.0.0.0/8
 {{< /highlight >}}</details> | |
+|`listenSubnets` |[]string |<details><summary>The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.</summary><br />If `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to<br />`advertisedSubnets`.<br /><br />If neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.<br /><br />IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br />Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br />If not specified, advertised IP is selected as the first routable address of the node.</details>  | |
 
 
 

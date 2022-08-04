@@ -859,6 +859,16 @@ func (in *EtcdConfig) DeepCopyInto(out *EtcdConfig) {
 			(*out)[key] = val
 		}
 	}
+	if in.EtcdAdvertisedSubnets != nil {
+		in, out := &in.EtcdAdvertisedSubnets, &out.EtcdAdvertisedSubnets
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.EtcdListenSubnets != nil {
+		in, out := &in.EtcdListenSubnets, &out.EtcdListenSubnets
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

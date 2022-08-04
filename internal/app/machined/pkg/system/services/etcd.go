@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
+	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -45,6 +46,7 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	etcdresource "github.com/talos-systems/talos/pkg/machinery/resources/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
@@ -300,7 +302,7 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 	return list, add.Member.ID, nil
 }
 
-func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string) (initial string, learnerMemberID uint64, err error) {
+func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, peerAddrs []string) (initial string, learnerMemberID uint64, err error) {
 	var (
 		id      uint64
 		lastNag time.Time
@@ -311,10 +313,7 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name, ip string
 		retry.WithJitter(time.Second),
 		retry.WithErrorLogging(true),
 	).RetryWithContext(ctx, func(ctx context.Context) error {
-		var (
-			peerAddrs = []string{"https://" + nethelpers.JoinHostPort(ip, +constants.EtcdPeerPort)}
-			resp      *clientv3.MemberListResponse
-		)
+		var resp *clientv3.MemberListResponse
 
 		if time.Since(lastNag) > 30*time.Second {
 			lastNag = time.Now()
@@ -396,8 +395,8 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 		"auto-tls":                           "false",
 		"peer-auto-tls":                      "false",
 		"data-dir":                           constants.EtcdDataPath,
-		"listen-peer-urls":                   "https://" + nethelpers.JoinHostPort(spec.ListenAddress.String(), constants.EtcdPeerPort),
-		"listen-client-urls":                 "https://" + nethelpers.JoinHostPort(spec.ListenAddress.String(), constants.EtcdClientPort),
+		"listen-peer-urls":                   formatEtcdURLs(spec.ListenPeerAddresses, constants.EtcdPeerPort),
+		"listen-client-urls":                 formatEtcdURLs(spec.ListenClientAddresses, constants.EtcdClientPort),
 		"client-cert-auth":                   "true",
 		"cert-file":                          constants.EtcdCert,
 		"key-file":                           constants.EtcdKey,
@@ -427,12 +426,12 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 		}
 
 		if ok {
-			initialCluster := fmt.Sprintf("%s=https://%s", spec.Name, nethelpers.JoinHostPort(spec.AdvertisedAddress.String(), constants.EtcdPeerPort))
+			initialCluster := fmt.Sprintf("%s=%s", spec.Name, formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 
 			if upgraded {
 				denyListArgs.Set("initial-cluster-state", "existing")
 
-				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, spec.Name, spec.AdvertisedAddress.String())
+				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 				if err != nil {
 					return err
 				}
@@ -446,13 +445,13 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 
 	if !extraArgs.Contains("initial-advertise-peer-urls") {
 		denyListArgs.Set("initial-advertise-peer-urls",
-			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(spec.AdvertisedAddress.String(), constants.EtcdPeerPort)),
+			formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort),
 		)
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
 		denyListArgs.Set("advertise-client-urls",
-			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(spec.AdvertisedAddress.String(), constants.EtcdClientPort)),
+			formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdClientPort),
 		)
 	}
 
@@ -472,8 +471,8 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 		"auto-tls":                           "false",
 		"peer-auto-tls":                      "false",
 		"data-dir":                           constants.EtcdDataPath,
-		"listen-peer-urls":                   "https://" + nethelpers.JoinHostPort(spec.ListenAddress.String(), constants.EtcdPeerPort),
-		"listen-client-urls":                 "https://" + nethelpers.JoinHostPort(spec.ListenAddress.String(), constants.EtcdClientPort),
+		"listen-peer-urls":                   formatEtcdURLs(spec.ListenPeerAddresses, constants.EtcdPeerPort),
+		"listen-client-urls":                 formatEtcdURLs(spec.ListenClientAddresses, constants.EtcdClientPort),
 		"client-cert-auth":                   "true",
 		"cert-file":                          constants.EtcdCert,
 		"key-file":                           constants.EtcdKey,
@@ -515,9 +514,9 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 			var initialCluster string
 
 			if e.Bootstrap {
-				initialCluster = fmt.Sprintf("%s=https://%s", spec.Name, nethelpers.JoinHostPort(spec.AdvertisedAddress.String(), constants.EtcdPeerPort))
+				initialCluster = fmt.Sprintf("%s=%s", spec.Name, formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 			} else {
-				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, spec.Name, spec.AdvertisedAddress.String())
+				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 				if err != nil {
 					return fmt.Errorf("failed to build initial etcd cluster: %w", err)
 				}
@@ -528,14 +527,14 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 
 		if !extraArgs.Contains("initial-advertise-peer-urls") {
 			denyListArgs.Set("initial-advertise-peer-urls",
-				fmt.Sprintf("https://%s", nethelpers.JoinHostPort(spec.AdvertisedAddress.String(), constants.EtcdPeerPort)),
+				formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort),
 			)
 		}
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
 		denyListArgs.Set("advertise-client-urls",
-			fmt.Sprintf("https://%s", nethelpers.JoinHostPort(spec.AdvertisedAddress.String(), constants.EtcdClientPort)),
+			formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdClientPort),
 		)
 	}
 
@@ -566,9 +565,9 @@ func (e *Etcd) recoverFromSnapshot(spec *etcdresource.SpecSpec) error {
 		Name:          spec.Name,
 		OutputDataDir: constants.EtcdDataPath,
 
-		PeerURLs: []string{"https://" + nethelpers.JoinHostPort(spec.AdvertisedAddress.String(), constants.EtcdPeerPort)},
+		PeerURLs: getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort),
 
-		InitialCluster: fmt.Sprintf("%s=https://%s", spec.Name, nethelpers.JoinHostPort(spec.AdvertisedAddress.String(), constants.EtcdPeerPort)),
+		InitialCluster: fmt.Sprintf("%s=%s", spec.Name, formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort)),
 
 		SkipHashCheck: e.RecoverSkipHashCheck,
 	}); err != nil {
@@ -695,4 +694,18 @@ func BootstrapEtcd(ctx context.Context, r runtime.Runtime, req *machineapi.Boots
 	}
 
 	return nil
+}
+
+func formatEtcdURL(addr netaddr.IP, port int) string {
+	return fmt.Sprintf("https://%s", nethelpers.JoinHostPort(addr.String(), port))
+}
+
+func getEtcdURLs(addrs []netaddr.IP, port int) []string {
+	return slices.Map(addrs, func(addr netaddr.IP) string {
+		return formatEtcdURL(addr, port)
+	})
+}
+
+func formatEtcdURLs(addrs []netaddr.IP, port int) string {
+	return strings.Join(getEtcdURLs(addrs, port), ",")
 }

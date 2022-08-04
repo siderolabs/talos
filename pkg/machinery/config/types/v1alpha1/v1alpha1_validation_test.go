@@ -961,7 +961,14 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					EtcdConfig: &v1alpha1.EtcdConfig{
-						EtcdSubnet: "10.0.0.0/8",
+						EtcdAdvertisedSubnets: []string{
+							"10.0.0.0/8",
+							"!1.1.1.1/32",
+						},
+						EtcdListenSubnets: []string{
+							"10.0.0.0/8",
+							"1.1.1.1/32",
+						},
 					},
 				},
 			},
@@ -981,11 +988,16 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					EtcdConfig: &v1alpha1.EtcdConfig{
-						EtcdSubnet: "10.0.0.0",
+						EtcdAdvertisedSubnets: []string{
+							"1234:",
+						},
+						EtcdListenSubnets: []string{
+							"10",
+						},
 					},
 				},
 			},
-			expectedError: "1 error occurred:\n\t* \"10.0.0.0\" is not a valid subnet\n\n",
+			expectedError: "2 errors occurred:\n\t* etcd advertised subnet is not valid: \"1234:\"\n\t* etcd listen subnet is not valid: \"10\"\n\n",
 		},
 		{
 			name: "GoodKubeletSubnet",

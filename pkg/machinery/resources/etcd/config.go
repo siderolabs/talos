@@ -26,10 +26,14 @@ type Config = typed.Resource[ConfigSpec, ConfigRD]
 //
 //gotagsrewrite:gen
 type ConfigSpec struct {
-	ValidSubnets   []string          `yaml:"validSubnets,omitempty" protobuf:"1"`
-	ExcludeSubnets []string          `yaml:"excludeSubnets" protobuf:"2"`
-	Image          string            `yaml:"image" protobuf:"3"`
-	ExtraArgs      map[string]string `yaml:"extraArgs" protobuf:"4"`
+	AdvertiseValidSubnets   []string `yaml:"advertiseValidSubnets,omitempty" protobuf:"1"`
+	AdvertiseExcludeSubnets []string `yaml:"advertiseExcludeSubnets" protobuf:"2"`
+
+	ListenValidSubnets   []string `yaml:"listenValidSubnets,omitempty" protobuf:"5"`
+	ListenExcludeSubnets []string `yaml:"listenExcludeSubnets" protobuf:"6"`
+
+	Image     string            `yaml:"image" protobuf:"3"`
+	ExtraArgs map[string]string `yaml:"extraArgs" protobuf:"4"`
 }
 
 // NewConfig initializes a Config resource.

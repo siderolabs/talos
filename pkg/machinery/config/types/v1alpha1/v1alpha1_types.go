@@ -350,7 +350,7 @@ var (
 
 	clusterEtcdImageExample = (&EtcdConfig{}).Image()
 
-	clusterEtcdSubnetExample = (&EtcdConfig{EtcdSubnet: "10.0.0.0/8"}).Subnet()
+	clusterEtcdAdvertisedSubnetsExample = (&EtcdConfig{EtcdAdvertisedSubnets: []string{"10.0.0.0/8"}}).AdvertisedSubnets()
 
 	clusterCoreDNSExample = &CoreDNS{
 		CoreDNSImage: (&CoreDNS{}).Image(),
@@ -1707,12 +1707,32 @@ type EtcdConfig struct {
 	//           "advertise-client-urls": "https://1.2.3.4:2379",
 	//         }
 	EtcdExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
-	//   description: |
-	//     The subnet from which the advertise URL should be.
+	// docgen:nodoc
 	//
-	//   examples:
-	//     - value: clusterEtcdSubnetExample
+	// Deprecated: use EtcdAdvertistedSubnets
 	EtcdSubnet string `yaml:"subnet,omitempty"`
+	//  description: |
+	//    The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.
+	//
+	//    IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.
+	//    Negative subnet matches should be specified last to filter out IPs picked by positive matches.
+	//    If not specified, advertised IP is selected as the first routable address of the node.
+	//
+	//  examples:
+	//    - value: clusterEtcdAdvertisedSubnetsExample
+	EtcdAdvertisedSubnets []string `yaml:"advertisedSubnets,omitempty"`
+	//  description: |
+	//    The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.
+	//
+	//    If `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to
+	//    `advertisedSubnets`.
+	//
+	//    If neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.
+	//
+	//    IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.
+	//    Negative subnet matches should be specified last to filter out IPs picked by positive matches.
+	//    If not specified, advertised IP is selected as the first routable address of the node.
+	EtcdListenSubnets []string `yaml:"listenSubnets,omitempty"`
 }
 
 // ClusterNetworkConfig represents kube networking configuration options.

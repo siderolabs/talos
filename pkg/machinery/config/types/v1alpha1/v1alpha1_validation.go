@@ -310,10 +310,8 @@ func (c *ClusterConfig) Validate() error {
 		result = multierror.Append(result, ecp.Validate())
 	}
 
-	if c.EtcdConfig != nil && c.EtcdConfig.EtcdSubnet != "" {
-		if _, _, err := net.ParseCIDR(c.EtcdConfig.EtcdSubnet); err != nil {
-			result = multierror.Append(result, fmt.Errorf("%q is not a valid subnet", c.EtcdConfig.EtcdSubnet))
-		}
+	if c.EtcdConfig != nil {
+		result = multierror.Append(result, c.EtcdConfig.Validate())
 	}
 
 	result = multierror.Append(result, c.ClusterInlineManifests.Validate(), c.ClusterDiscoveryConfig.Validate(c))
@@ -792,4 +790,31 @@ func (k *KubeletConfig) Validate() ([]string, error) {
 	}
 
 	return nil, result.ErrorOrNil()
+}
+
+// Validate kubelet configuration.
+func (e *EtcdConfig) Validate() error {
+	var result *multierror.Error
+
+	if e.EtcdSubnet != "" && len(e.EtcdAdvertisedSubnets) > 0 {
+		result = multierror.Append(result, fmt.Errorf("etcd subnet can't be set when advertised subnets are set"))
+	}
+
+	for _, cidr := range e.AdvertisedSubnets() {
+		cidr = strings.TrimPrefix(cidr, "!")
+
+		if _, err := talosnet.ParseCIDR(cidr); err != nil {
+			result = multierror.Append(result, fmt.Errorf("etcd advertised subnet is not valid: %q", cidr))
+		}
+	}
+
+	for _, cidr := range e.ListenSubnets() {
+		cidr = strings.TrimPrefix(cidr, "!")
+
+		if _, err := talosnet.ParseCIDR(cidr); err != nil {
+			result = multierror.Append(result, fmt.Errorf("etcd listen subnet is not valid: %q", cidr))
+		}
+	}
+
+	return result.ErrorOrNil()
 }

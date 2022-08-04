@@ -7,7 +7,7 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"net/netip"
+	stdnet "net"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -16,7 +16,10 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/net"
 	"go.uber.org/zap"
+	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -48,7 +51,7 @@ func (ctrl *SpecController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s)),
+			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s)),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -93,50 +96,96 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 			return fmt.Errorf("error getting hostname status: %w", err)
 		}
 
-		cidrs := make([]string, 0, len(etcdConfig.TypedSpec().ValidSubnets)+len(etcdConfig.TypedSpec().ExcludeSubnets))
-
-		cidrs = append(cidrs, etcdConfig.TypedSpec().ValidSubnets...)
-
-		for _, subnet := range etcdConfig.TypedSpec().ExcludeSubnets {
-			cidrs = append(cidrs, "!"+subnet)
-		}
-
-		// we have trigger on NodeAddresses, but we don't use them directly as they contain
-		// some addresses which are not assigned to the node (like AWS ExternalIP).
-		// we need to find solution for that later, for now just pull addresses directly
-
-		ips, err := net.IPAddrs()
+		nodeAddrs, err := safe.ReaderGet[*network.NodeAddress](
+			ctx,
+			r,
+			resource.NewMetadata(
+				network.NamespaceName,
+				network.NodeAddressType,
+				network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
+				resource.VersionUndefined,
+			),
+		)
 		if err != nil {
-			return fmt.Errorf("error listing IPs: %w", err)
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting addresses: %w", err)
 		}
 
-		listenAddress := netip.IPv4Unspecified()
+		addrs := nodeAddrs.TypedSpec().IPs()
 
-		for _, ip := range ips {
-			if ip.To4() == nil {
-				listenAddress = netip.IPv6Unspecified()
+		// need at least a single address
+		if len(addrs) == 0 {
+			continue
+		}
+
+		advertisedCIDRs := make([]string, 0, len(etcdConfig.TypedSpec().AdvertiseValidSubnets)+len(etcdConfig.TypedSpec().AdvertiseExcludeSubnets))
+		advertisedCIDRs = append(advertisedCIDRs, etcdConfig.TypedSpec().AdvertiseValidSubnets...)
+		advertisedCIDRs = append(advertisedCIDRs, slices.Map(etcdConfig.TypedSpec().AdvertiseExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
+
+		listenCIDRs := make([]string, 0, len(etcdConfig.TypedSpec().ListenValidSubnets)+len(etcdConfig.TypedSpec().ListenExcludeSubnets))
+		listenCIDRs = append(listenCIDRs, etcdConfig.TypedSpec().ListenValidSubnets...)
+		listenCIDRs = append(listenCIDRs, slices.Map(etcdConfig.TypedSpec().ListenExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
+
+		defaultListenAddress := netaddr.IPv4(0, 0, 0, 0)
+		loopbackAddress := netaddr.IPv4(127, 0, 0, 1)
+
+		for _, ip := range addrs {
+			if ip.Is6() {
+				defaultListenAddress = netaddr.IPv6Unspecified()
+				loopbackAddress = netaddr.MustParseIP("::1")
 
 				break
 			}
 		}
 
-		// we use stdnet.IP here to re-use already existing functions in talos-systems/net
-		// once talos-systems/net is migrated to netaddr or netip, we can use it here
-		ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
+		var (
+			advertisedIPs   []netaddr.IP
+			listenPeerIPs   []netaddr.IP
+			listenClientIPs []netaddr.IP
+		)
 
-		ips, err = net.FilterIPs(ips, cidrs)
-		if err != nil {
-			return fmt.Errorf("error filtering IPs: %w", err)
+		if len(advertisedCIDRs) > 0 {
+			// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
+			var stdIPs []stdnet.IP
+
+			stdIPs, err = net.FilterIPs(nethelpers.MapNetAddrToStd(addrs), advertisedCIDRs)
+			if err != nil {
+				return fmt.Errorf("error filtering IPs: %w", err)
+			}
+
+			advertisedIPs = nethelpers.MapStdToNetAddr(stdIPs)
+		} else {
+			// if advertise subnet is not set, advertise the first address
+			advertisedIPs = []netaddr.IP{addrs[0]}
 		}
 
-		if len(ips) == 0 {
+		if len(listenCIDRs) > 0 {
+			// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
+			var stdIPs []stdnet.IP
+
+			stdIPs, err = net.FilterIPs(nethelpers.MapNetAddrToStd(addrs), listenCIDRs)
+			if err != nil {
+				return fmt.Errorf("error filtering IPs: %w", err)
+			}
+
+			listenPeerIPs = nethelpers.MapStdToNetAddr(stdIPs)
+			listenClientIPs = append([]netaddr.IP{loopbackAddress}, listenPeerIPs...)
+		} else {
+			listenPeerIPs = []netaddr.IP{defaultListenAddress}
+			listenClientIPs = []netaddr.IP{defaultListenAddress}
+		}
+
+		if len(advertisedIPs) == 0 || len(listenPeerIPs) == 0 {
 			continue
 		}
 
 		if err = safe.WriterModify(ctx, r, etcd.NewSpec(etcd.NamespaceName, etcd.SpecID), func(status *etcd.Spec) error {
-			status.TypedSpec().AdvertisedAddress, _ = netip.AddrFromSlice(ips[0])
-			status.TypedSpec().AdvertisedAddress = status.TypedSpec().AdvertisedAddress.Unmap()
-			status.TypedSpec().ListenAddress = listenAddress
+			status.TypedSpec().AdvertisedAddresses = advertisedIPs
+			status.TypedSpec().ListenClientAddresses = listenClientIPs
+			status.TypedSpec().ListenPeerAddresses = listenPeerIPs
 			status.TypedSpec().Name = hostnameStatus.TypedSpec().Hostname
 			status.TypedSpec().Image = etcdConfig.TypedSpec().Image
 			status.TypedSpec().ExtraArgs = etcdConfig.TypedSpec().ExtraArgs

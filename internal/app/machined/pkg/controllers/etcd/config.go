@@ -93,11 +93,8 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 		}
 
 		if err = safe.WriterModify(ctx, r, etcd.NewConfig(etcd.NamespaceName, etcd.ConfigID), func(status *etcd.Config) error {
-			if machineConfig.Config().Cluster().Etcd().Subnet() != "" {
-				status.TypedSpec().ValidSubnets = []string{machineConfig.Config().Cluster().Etcd().Subnet()}
-			} else {
-				status.TypedSpec().ValidSubnets = []string{"0.0.0.0/0", "::/0"}
-			}
+			status.TypedSpec().AdvertiseValidSubnets = machineConfig.Config().Cluster().Etcd().AdvertisedSubnets()
+			status.TypedSpec().ListenValidSubnets = machineConfig.Config().Cluster().Etcd().ListenSubnets()
 
 			status.TypedSpec().Image = machineConfig.Config().Cluster().Etcd().Image()
 			status.TypedSpec().ExtraArgs = machineConfig.Config().Cluster().Etcd().ExtraArgs()

@@ -1248,7 +1248,7 @@ func init() {
 			FieldName: "etcd",
 		},
 	}
-	EtcdConfigDoc.Fields = make([]encoder.Doc, 4)
+	EtcdConfigDoc.Fields = make([]encoder.Doc, 6)
 	EtcdConfigDoc.Fields[0].Name = "image"
 	EtcdConfigDoc.Fields[0].Type = "string"
 	EtcdConfigDoc.Fields[0].Note = ""
@@ -1269,13 +1269,18 @@ func init() {
 	EtcdConfigDoc.Fields[2].Description = "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n- `name`\n- `data-dir`\n- `initial-cluster-state`\n- `listen-peer-urls`\n- `listen-client-urls`\n- `cert-file`\n- `key-file`\n- `trusted-ca-file`\n- `peer-client-cert-auth`\n- `peer-cert-file`\n- `peer-trusted-ca-file`\n- `peer-key-file`"
 	EtcdConfigDoc.Fields[2].Comments[encoder.LineComment] = "Extra arguments to supply to etcd."
 
-	EtcdConfigDoc.Fields[3].Name = "subnet"
-	EtcdConfigDoc.Fields[3].Type = "string"
-	EtcdConfigDoc.Fields[3].Note = ""
-	EtcdConfigDoc.Fields[3].Description = "The subnet from which the advertise URL should be."
-	EtcdConfigDoc.Fields[3].Comments[encoder.LineComment] = "The subnet from which the advertise URL should be."
+	EtcdConfigDoc.Fields[4].Name = "advertisedSubnets"
+	EtcdConfigDoc.Fields[4].Type = "[]string"
+	EtcdConfigDoc.Fields[4].Note = ""
+	EtcdConfigDoc.Fields[4].Description = "The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node."
+	EtcdConfigDoc.Fields[4].Comments[encoder.LineComment] = "The `advertisedSubnets` field configures the networks to pick etcd advertised IP from."
 
-	EtcdConfigDoc.Fields[3].AddExample("", clusterEtcdSubnetExample)
+	EtcdConfigDoc.Fields[4].AddExample("", clusterEtcdAdvertisedSubnetsExample)
+	EtcdConfigDoc.Fields[5].Name = "listenSubnets"
+	EtcdConfigDoc.Fields[5].Type = "[]string"
+	EtcdConfigDoc.Fields[5].Note = ""
+	EtcdConfigDoc.Fields[5].Description = "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.\n\nIf `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to\n`advertisedSubnets`.\n\nIf neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node."
+	EtcdConfigDoc.Fields[5].Comments[encoder.LineComment] = "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections."
 
 	ClusterNetworkConfigDoc.Type = "ClusterNetworkConfig"
 	ClusterNetworkConfigDoc.Comments[encoder.LineComment] = "ClusterNetworkConfig represents kube networking configuration options."
