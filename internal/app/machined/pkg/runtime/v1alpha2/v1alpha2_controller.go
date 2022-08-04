@@ -245,6 +245,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&secrets.KubernetesController{},
 		&secrets.KubernetesCertSANsController{},
 		&secrets.RootController{},
+		&secrets.TrustdController{},
 		&siderolink.ManagerController{
 			Cmdline: procfs.ProcCmdline(),
 		},

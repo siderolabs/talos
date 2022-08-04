@@ -442,6 +442,9 @@ const (
 	// APIRuntimeSocketPath is the path to file socket of runtime server for apid.
 	APIRuntimeSocketPath = SystemRunPath + "/apid/runtime.sock"
 
+	// TrustdRuntimeSocketPath is the path to file socket of runtime server for trustd.
+	TrustdRuntimeSocketPath = SystemRunPath + "/trustd/runtime.sock"
+
 	// MachineSocketPath is the path to file socket of machine API.
 	MachineSocketPath = SystemRunPath + "/machined/machine.sock"
 

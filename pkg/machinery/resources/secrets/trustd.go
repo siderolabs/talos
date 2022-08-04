@@ -15,40 +15,35 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
-// APIType is type of API resource.
-const APIType = resource.Type("ApiCertificates.secrets.talos.dev")
+// TrustdType is type of Trustd resource.
+const TrustdType = resource.Type("TrustdCertificates.secrets.talos.dev")
 
-// APIID is a resource ID of singleton instance.
-const APIID = resource.ID("api")
+// TrustdID is a resource ID of singleton instance.
+const TrustdID = resource.ID("trustd")
 
-// API contains apid generated secrets.
-type API = typed.Resource[APICertsSpec, APIRD]
+// Trustd contains trustd generated secrets.
+type Trustd = typed.Resource[TrustdCertsSpec, TrustdRD]
 
-// APICertsSpec describes etcd certs secrets.
+// TrustdCertsSpec describes etcd certs secrets.
 //
 //gotagsrewrite:gen
-type APICertsSpec struct {
+type TrustdCertsSpec struct {
 	CA     *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"1"` // only cert is passed, without key
-	Client *x509.PEMEncodedCertificateAndKey `yaml:"client" protobuf:"2"`
-	Server *x509.PEMEncodedCertificateAndKey `yaml:"server" protobuf:"3"`
+	Server *x509.PEMEncodedCertificateAndKey `yaml:"server" protobuf:"2"`
 }
 
-// NewAPI initializes an API resource.
-func NewAPI() *API {
-	return typed.NewResource[APICertsSpec, APIRD](
-		resource.NewMetadata(NamespaceName, APIType, APIID, resource.VersionUndefined),
-		APICertsSpec{},
+// NewTrustd initializes a Trustd resource.
+func NewTrustd() *Trustd {
+	return typed.NewResource[TrustdCertsSpec, TrustdRD](
+		resource.NewMetadata(NamespaceName, TrustdType, TrustdID, resource.VersionUndefined),
+		TrustdCertsSpec{},
 	)
 }
 
 // MarshalProto implements ProtoMarshaler.
-func (spec APICertsSpec) MarshalProto() ([]byte, error) {
-	protoSpec := secretspb.APISpec{
+func (spec TrustdCertsSpec) MarshalProto() ([]byte, error) {
+	protoSpec := secretspb.TrustdSpec{
 		CaPem: spec.CA.Crt,
-		Client: &secretspb.CertAndKeyPEM{
-			Cert: spec.Client.Crt,
-			Key:  spec.Client.Key,
-		},
 		Server: &secretspb.CertAndKeyPEM{
 			Cert: spec.Server.Crt,
 			Key:  spec.Server.Key,
@@ -59,20 +54,16 @@ func (spec APICertsSpec) MarshalProto() ([]byte, error) {
 }
 
 // UnmarshalProto implements protobuf.ResourceUnmarshaler.
-func (spec *APICertsSpec) UnmarshalProto(protoBytes []byte) error {
-	protoSpec := secretspb.APISpec{}
+func (spec *TrustdCertsSpec) UnmarshalProto(protoBytes []byte) error {
+	protoSpec := secretspb.TrustdSpec{}
 
 	if err := proto.Unmarshal(protoBytes, &protoSpec); err != nil {
 		return err
 	}
 
-	*spec = APICertsSpec{
+	*spec = TrustdCertsSpec{
 		CA: &x509.PEMEncodedCertificateAndKey{
 			Crt: protoSpec.CaPem,
-		},
-		Client: &x509.PEMEncodedCertificateAndKey{
-			Crt: protoSpec.Client.Cert,
-			Key: protoSpec.Client.Key,
 		},
 		Server: &x509.PEMEncodedCertificateAndKey{
 			Crt: protoSpec.Server.Cert,
@@ -83,13 +74,13 @@ func (spec *APICertsSpec) UnmarshalProto(protoBytes []byte) error {
 	return nil
 }
 
-// APIRD provides auxiliary methods for API.
-type APIRD struct{}
+// TrustdRD provides auxiliary methods for Trustd.
+type TrustdRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (APIRD) ResourceDefinition(resource.Metadata, APICertsSpec) meta.ResourceDefinitionSpec {
+func (TrustdRD) ResourceDefinition(resource.Metadata, TrustdCertsSpec) meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
-		Type:             APIType,
+		Type:             TrustdType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
@@ -97,7 +88,7 @@ func (APIRD) ResourceDefinition(resource.Metadata, APICertsSpec) meta.ResourceDe
 }
 
 func init() {
-	if err := protobuf.RegisterResource(APIType, &API{}); err != nil {
+	if err := protobuf.RegisterResource(TrustdType, &Trustd{}); err != nil {
 		panic(err)
 	}
 }

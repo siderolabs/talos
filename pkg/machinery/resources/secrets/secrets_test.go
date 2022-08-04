@@ -33,6 +33,7 @@ func TestRegisterResource(t *testing.T) {
 		&secrets.Kubernetes{},
 		&secrets.KubernetesRoot{},
 		&secrets.OSRoot{},
+		&secrets.Trustd{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

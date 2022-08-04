@@ -7,23 +7,29 @@ package trustd
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
-	stdlibnet "net"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/talos-systems/crypto/tls"
-	"github.com/talos-systems/crypto/x509"
+	"github.com/cosi-project/runtime/api/v1alpha1"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/protobuf/client"
 	debug "github.com/talos-systems/go-debug"
-	"github.com/talos-systems/net"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/talos-systems/talos/internal/app/trustd/internal/provider"
 	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
 	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
@@ -40,88 +46,94 @@ func runDebugServer(ctx context.Context) {
 }
 
 // Main is the entrypoint into trustd.
-//
-//nolint:gocyclo
 func Main() {
+	if err := trustdMain(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+//nolint:gocyclo
+func trustdMain() error {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer cancel()
+
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
 	flag.Parse()
 
-	go runDebugServer(context.TODO())
+	go runDebugServer(ctx)
 
 	var err error
 
 	if err = startup.RandSeed(); err != nil {
-		log.Fatalf("startup: %s", err)
+		return fmt.Errorf("startup: %s", err)
 	}
 
-	config, err := configloader.NewFromStdin()
+	runtimeConn, err := grpc.Dial("unix://"+constants.TrustdRuntimeSocketPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to dial runtime connection: %w", err)
 	}
 
-	ips, err := net.IPAddrs()
+	stateClient := v1alpha1.NewStateClient(runtimeConn)
+	resources := state.WrapCore(client.NewAdapter(stateClient))
+
+	tlsConfig, err := provider.NewTLSConfig(resources)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to create remote certificate provider: %w", err)
 	}
 
-	ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
-
-	dnsNames, err := net.DNSNames()
+	serverTLSConfig, err := tlsConfig.ServerConfig()
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to create OS-level TLS configuration: %w", err)
 	}
 
-	for _, san := range config.Machine().Security().CertSANs() {
-		if ip := stdlibnet.ParseIP(san); ip != nil {
-			ips = append(ips, ip)
-		} else {
-			dnsNames = append(dnsNames, san)
-		}
-	}
+	creds := basic.NewTokenCredentialsDynamic(tokenGetter(resources))
 
-	var generator tls.Generator
-
-	generator, err = gen.NewLocalGenerator(config.Machine().Security().CA().Key, config.Machine().Security().CA().Crt)
-	if err != nil {
-		log.Fatalln("failed to create local generator provider:", err)
-	}
-
-	var provider tls.CertificateProvider
-
-	provider, err = tls.NewRenewingCertificateProvider(generator, x509.DNSNames(dnsNames), x509.IPAddresses(ips))
-	if err != nil {
-		log.Fatalln("failed to create local certificate provider:", err)
-	}
-
-	ca, err := provider.GetCA()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tlsConfig, err := tls.New(
-		tls.WithClientAuthType(tls.ServerOnly),
-		tls.WithCACertPEM(ca),
-		tls.WithServerCertificateProvider(provider),
+	networkListener, err := factory.NewListener(
+		factory.Port(constants.TrustdPort),
 	)
 	if err != nil {
-		log.Fatalf("failed to create TLS config: %v", err)
+		return fmt.Errorf("error creating listener: %w", err)
 	}
 
-	creds := basic.NewTokenCredentials(config.Machine().Security().Token())
-
-	err = factory.ListenAndServe(
-		&reg.Registrator{Config: config},
-		factory.Port(constants.TrustdPort),
+	networkServer := factory.NewServer(
+		&reg.Registrator{Resources: resources},
 		factory.WithDefaultLog(),
 		factory.WithUnaryInterceptor(creds.UnaryInterceptor()),
 		factory.ServerOptions(
 			grpc.Creds(
-				credentials.NewTLS(tlsConfig),
+				credentials.NewTLS(serverTLSConfig),
 			),
 		),
 	)
-	if err != nil {
-		log.Fatalf("listen: %v", err)
+
+	errGroup, ctx := errgroup.WithContext(ctx)
+
+	errGroup.Go(func() error {
+		return networkServer.Serve(networkListener)
+	})
+
+	errGroup.Go(func() error {
+		<-ctx.Done()
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer shutdownCancel()
+
+		factory.ServerGracefulStop(networkServer, shutdownCtx)
+
+		return nil
+	})
+
+	return errGroup.Wait()
+}
+
+func tokenGetter(state state.State) basic.TokenGetterFunc {
+	return func(ctx context.Context) (string, error) {
+		osRoot, err := safe.StateGet[*secrets.OSRoot](ctx, state, resource.NewMetadata(secrets.NamespaceName, secrets.OSRootType, secrets.OSRootID, resource.VersionUndefined))
+		if err != nil {
+			return "", err
+		}
+
+		return osRoot.TypedSpec().Token, nil
 	}
 }

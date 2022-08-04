@@ -2,20 +2,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:golint
+//nolint:golint,dupl
 package services
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
 
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/pkg/cap"
+	"github.com/cosi-project/runtime/api/v1alpha1"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/talos-systems/go-debug"
+	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
@@ -26,12 +30,15 @@ import (
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 )
 
 // Trustd implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Trustd struct{}
+type Trustd struct {
+	runtimeServer *grpc.Server
+}
 
 // ID implements the Service interface.
 func (t *Trustd) ID(r runtime.Runtime) string {
@@ -39,13 +46,66 @@ func (t *Trustd) ID(r runtime.Runtime) string {
 }
 
 // PreFunc implements the Service interface.
+//
+//nolint:gocyclo
 func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
+	// filter apid access to make sure apid can only access its certificates
+	resources := state.Filter(
+		r.State().V1Alpha2().Resources(),
+		func(ctx context.Context, access state.Access) error {
+			if !access.Verb.Readonly() {
+				return fmt.Errorf("write access denied")
+			}
+
+			switch {
+			case access.ResourceNamespace == secrets.NamespaceName && access.ResourceType == secrets.TrustdType && access.ResourceID == secrets.TrustdID:
+			case access.ResourceNamespace == secrets.NamespaceName && access.ResourceType == secrets.OSRootType && access.ResourceID == secrets.OSRootID:
+			default:
+				return fmt.Errorf("access denied")
+			}
+
+			return nil
+		},
+	)
+
+	// ensure socket dir exists
+	if err := os.MkdirAll(filepath.Dir(constants.TrustdRuntimeSocketPath), 0o750); err != nil {
+		return err
+	}
+
+	// set the final leaf to be world-executable to make trustd connect to the socket
+	if err := os.Chmod(filepath.Dir(constants.TrustdRuntimeSocketPath), 0o751); err != nil {
+		return err
+	}
+
+	// clean up the socket if it already exists (important for Talos in a container)
+	if err := os.RemoveAll(constants.TrustdRuntimeSocketPath); err != nil {
+		return err
+	}
+
+	listener, err := net.Listen("unix", constants.TrustdRuntimeSocketPath)
+	if err != nil {
+		return err
+	}
+
+	// chown the socket path to make it accessible to the apid
+	if err := os.Chown(constants.TrustdRuntimeSocketPath, constants.TrustdUserID, constants.TrustdUserID); err != nil {
+		return err
+	}
+
+	t.runtimeServer = grpc.NewServer()
+	v1alpha1.RegisterStateServer(t.runtimeServer, server.NewState(resources))
+
+	go t.runtimeServer.Serve(listener) //nolint:errcheck
+
 	return prepareRootfs(t.ID(r))
 }
 
 // PostFunc implements the Service interface.
 func (t *Trustd) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
-	return nil
+	t.runtimeServer.Stop()
+
+	return os.RemoveAll(constants.TrustdRuntimeSocketPath)
 }
 
 // Condition implements the Service interface.
@@ -72,6 +132,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/tmp", Source: "/tmp", Options: []string{"rbind", "rshared", "rw"}},
+		{Type: "bind", Destination: filepath.Dir(constants.TrustdRuntimeSocketPath), Source: filepath.Dir(constants.TrustdRuntimeSocketPath), Options: []string{"rbind", "ro"}},
 	}
 
 	env := []string{}
@@ -83,17 +144,9 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, "GORACE=halt_on_error=1")
 	}
 
-	b, err := r.Config().Bytes()
-	if err != nil {
-		return nil, err
-	}
-
-	stdin := bytes.NewReader(b)
-
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
-		runner.WithStdin(stdin),
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),

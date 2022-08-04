@@ -129,7 +129,7 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 	}
 }
 
-//nolint:gocyclo,cyclop
+//nolint:gocyclo,cyclop,dupl
 func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger, isControlplane bool) error {
 	inputs := []controller.Input{
 		{
@@ -404,8 +404,6 @@ func (ctrl *APIController) teardownAll(ctx context.Context, r controller.Runtime
 	if err != nil {
 		return err
 	}
-
-	// TODO: change this to proper teardown sequence
 
 	for _, res := range list.Items {
 		if err = r.Destroy(ctx, res.Metadata()); err != nil {

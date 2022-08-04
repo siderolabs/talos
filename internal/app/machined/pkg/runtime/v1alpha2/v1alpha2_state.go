@@ -162,6 +162,7 @@ func NewState() (*State, error) {
 		&secrets.Kubernetes{},
 		&secrets.KubernetesRoot{},
 		&secrets.OSRoot{},
+		&secrets.Trustd{},
 		&time.Status{},
 	} {
 		if err := s.resourceRegistry.Register(ctx, r); err != nil {

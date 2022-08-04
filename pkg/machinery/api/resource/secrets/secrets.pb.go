@@ -76,7 +76,7 @@ func (x *CertAndKeyPEM) GetKey() []byte {
 	return nil
 }
 
-// APISpec describes secrets.API.
+// APISpec describes secrets.API resource.
 type APISpec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -140,6 +140,119 @@ func (x *APISpec) GetClient() *CertAndKeyPEM {
 	return nil
 }
 
+// OsRootSpec describes secrets.OSRoot resource.
+type OsRootSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// this spec is specificlaly incomplete, with protobuf encoding it won't be needed anymore
+	Ca    *CertAndKeyPEM `protobuf:"bytes,1,opt,name=ca,proto3" json:"ca,omitempty"`
+	Token string         `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
+}
+
+func (x *OsRootSpec) Reset() {
+	*x = OsRootSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_resource_secrets_secrets_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *OsRootSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OsRootSpec) ProtoMessage() {}
+
+func (x *OsRootSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_secrets_secrets_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OsRootSpec.ProtoReflect.Descriptor instead.
+func (*OsRootSpec) Descriptor() ([]byte, []int) {
+	return file_resource_secrets_secrets_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *OsRootSpec) GetCa() *CertAndKeyPEM {
+	if x != nil {
+		return x.Ca
+	}
+	return nil
+}
+
+func (x *OsRootSpec) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+// TrustdSpec describes secrets.Trustd resource.
+type TrustdSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	CaPem  []byte         `protobuf:"bytes,1,opt,name=ca_pem,json=caPem,proto3" json:"ca_pem,omitempty"`
+	Server *CertAndKeyPEM `protobuf:"bytes,2,opt,name=server,proto3" json:"server,omitempty"`
+}
+
+func (x *TrustdSpec) Reset() {
+	*x = TrustdSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_resource_secrets_secrets_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TrustdSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrustdSpec) ProtoMessage() {}
+
+func (x *TrustdSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_secrets_secrets_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrustdSpec.ProtoReflect.Descriptor instead.
+func (*TrustdSpec) Descriptor() ([]byte, []int) {
+	return file_resource_secrets_secrets_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TrustdSpec) GetCaPem() []byte {
+	if x != nil {
+		return x.CaPem
+	}
+	return nil
+}
+
+func (x *TrustdSpec) GetServer() *CertAndKeyPEM {
+	if x != nil {
+		return x.Server
+	}
+	return nil
+}
+
 var File_resource_secrets_secrets_proto protoreflect.FileDescriptor
 
 var file_resource_secrets_secrets_proto_rawDesc = []byte{
@@ -158,12 +271,23 @@ var file_resource_secrets_secrets_proto_rawDesc = []byte{
 	0x65, 0x72, 0x76, 0x65, 0x72, 0x12, 0x37, 0x0a, 0x06, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x18,
 	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
 	0x2e, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x73, 0x2e, 0x43, 0x65, 0x72, 0x74, 0x41, 0x6e, 0x64,
-	0x4b, 0x65, 0x79, 0x50, 0x45, 0x4d, 0x52, 0x06, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x42, 0x43,
-	0x5a, 0x41, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x74, 0x61, 0x6c,
-	0x6f, 0x73, 0x2d, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x74, 0x61, 0x6c, 0x6f, 0x73,
-	0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x6d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x72, 0x79, 0x2f, 0x61,
-	0x70, 0x69, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2f, 0x73, 0x65, 0x63, 0x72,
-	0x65, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x4b, 0x65, 0x79, 0x50, 0x45, 0x4d, 0x52, 0x06, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x22, 0x53,
+	0x0a, 0x0a, 0x4f, 0x73, 0x52, 0x6f, 0x6f, 0x74, 0x53, 0x70, 0x65, 0x63, 0x12, 0x2f, 0x0a, 0x02,
+	0x63, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x2e, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x73, 0x2e, 0x43, 0x65, 0x72, 0x74,
+	0x41, 0x6e, 0x64, 0x4b, 0x65, 0x79, 0x50, 0x45, 0x4d, 0x52, 0x02, 0x63, 0x61, 0x12, 0x14, 0x0a,
+	0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x22, 0x5c, 0x0a, 0x0a, 0x54, 0x72, 0x75, 0x73, 0x74, 0x64, 0x53, 0x70, 0x65,
+	0x63, 0x12, 0x15, 0x0a, 0x06, 0x63, 0x61, 0x5f, 0x70, 0x65, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0c, 0x52, 0x05, 0x63, 0x61, 0x50, 0x65, 0x6d, 0x12, 0x37, 0x0a, 0x06, 0x73, 0x65, 0x72, 0x76,
+	0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x2e, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x73, 0x2e, 0x43, 0x65, 0x72, 0x74,
+	0x41, 0x6e, 0x64, 0x4b, 0x65, 0x79, 0x50, 0x45, 0x4d, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65,
+	0x72, 0x42, 0x43, 0x5a, 0x41, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
+	0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2d, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x73, 0x2f, 0x74, 0x61,
+	0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x6d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x72,
+	0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2f, 0x73,
+	0x65, 0x63, 0x72, 0x65, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -178,19 +302,23 @@ func file_resource_secrets_secrets_proto_rawDescGZIP() []byte {
 	return file_resource_secrets_secrets_proto_rawDescData
 }
 
-var file_resource_secrets_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_resource_secrets_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_resource_secrets_secrets_proto_goTypes = []interface{}{
 	(*CertAndKeyPEM)(nil), // 0: resource.secrets.CertAndKeyPEM
 	(*APISpec)(nil),       // 1: resource.secrets.APISpec
+	(*OsRootSpec)(nil),    // 2: resource.secrets.OsRootSpec
+	(*TrustdSpec)(nil),    // 3: resource.secrets.TrustdSpec
 }
 var file_resource_secrets_secrets_proto_depIdxs = []int32{
 	0, // 0: resource.secrets.APISpec.server:type_name -> resource.secrets.CertAndKeyPEM
 	0, // 1: resource.secrets.APISpec.client:type_name -> resource.secrets.CertAndKeyPEM
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // 2: resource.secrets.OsRootSpec.ca:type_name -> resource.secrets.CertAndKeyPEM
+	0, // 3: resource.secrets.TrustdSpec.server:type_name -> resource.secrets.CertAndKeyPEM
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_resource_secrets_secrets_proto_init() }
@@ -223,6 +351,30 @@ func file_resource_secrets_secrets_proto_init() {
 				return nil
 			}
 		}
+		file_resource_secrets_secrets_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OsRootSpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_resource_secrets_secrets_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TrustdSpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -230,7 +382,7 @@ func file_resource_secrets_secrets_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_resource_secrets_secrets_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -7,11 +7,14 @@ package reg
 import (
 	"context"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/grpc"
 
 	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"
-	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and
@@ -19,7 +22,7 @@ import (
 type Registrator struct {
 	securityapi.UnimplementedSecurityServiceServer
 
-	Config config.Provider
+	Resources state.State
 }
 
 // Register implements the factory.Registrator interface.
@@ -31,15 +34,20 @@ func (r *Registrator) Register(s *grpc.Server) {
 
 // Certificate implements the securityapi.SecurityServer interface.
 func (r *Registrator) Certificate(ctx context.Context, in *securityapi.CertificateRequest) (resp *securityapi.CertificateResponse, err error) {
+	osRoot, err := safe.StateGet[*secrets.OSRoot](ctx, r.Resources, resource.NewMetadata(secrets.NamespaceName, secrets.OSRootType, secrets.OSRootID, resource.VersionUndefined))
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: Verify that the request is coming from the IP addresss declared in
 	// the CSR.
-	signed, err := x509.NewCertificateFromCSRBytes(r.Config.Machine().Security().CA().Crt, r.Config.Machine().Security().CA().Key, in.Csr)
+	signed, err := x509.NewCertificateFromCSRBytes(osRoot.TypedSpec().CA.Crt, osRoot.TypedSpec().CA.Key, in.Csr)
 	if err != nil {
 		return
 	}
 
 	resp = &securityapi.CertificateResponse{
-		Ca:  r.Config.Machine().Security().CA().Crt,
+		Ca:  osRoot.TypedSpec().CA.Crt,
 		Crt: signed.X509CertificatePEM,
 	}
 
