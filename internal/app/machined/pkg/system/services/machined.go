@@ -105,6 +105,8 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 			Controller: s.c,
 			// breaking the import loop cycle between services/ package and v1alpha1_server.go
 			EtcdBootstrapper: BootstrapEtcd,
+
+			ShutdownCtx: ctx,
 		},
 		factory.WithLog("machined ", logWriter),
 

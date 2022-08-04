@@ -112,6 +112,9 @@ type Server struct {
 	// breaking the import loop cycle between services/ package and v1alpha1_server.go
 	EtcdBootstrapper func(context.Context, runtime.Runtime, *machine.BootstrapRequest) error
 
+	// ShutdownCtx signals that the server is shutting down.
+	ShutdownCtx context.Context //nolint:containedctx
+
 	server *grpc.Server
 }
 
@@ -1323,6 +1326,8 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 		errCh <- func() error {
 			for {
 				select {
+				case <-s.ShutdownCtx.Done():
+					return nil
 				case <-l.Context().Done():
 					return l.Context().Err()
 				case event, ok := <-events:
@@ -1590,6 +1595,10 @@ func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_Dme
 
 	for {
 		select {
+		case <-s.ShutdownCtx.Done():
+			if err = reader.Close(); err != nil {
+				return err
+			}
 		case <-ctx.Done():
 			if err = reader.Close(); err != nil {
 				return err
