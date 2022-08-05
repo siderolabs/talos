@@ -15,10 +15,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 	"time"
 
 	grpctls "github.com/talos-systems/crypto/tls"
+	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -182,7 +184,22 @@ func (c *Client) GetConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.Cl
 		// Such possibilities include SRV records, multiple IPs from A and/or AAAA
 		// records, and descriptive TXT records which include things like load
 		// balancer specs.
-		target = fmt.Sprintf("dns:///%s:%d", net.FormatAddress(endpoints[0]), constants.ApidPort)
+		endpoint := endpoints[0]
+
+		// TODO make port 443 the default for https://
+		endpointURL, err := url.Parse(endpoint)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse Endpoint URL: %w", err)
+		}
+
+		if endpointURL.Host != "" {
+			endpoint = endpointURL.Host
+		}
+		if net.AddressContainsPort(endpoint) {
+			target = fmt.Sprintf("dns:///%s", net.FormatAddress(endpoint))
+		} else {
+			target = fmt.Sprintf("dns:///%s:%d", net.FormatAddress(endpoint), constants.ApidPort)
+		}
 	}
 
 	dialOpts := []grpc.DialOption(nil)
@@ -221,7 +238,63 @@ func (c *Client) GetConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.Cl
 
 	dialOpts = append(dialOpts, opts...)
 
-	return grpc.DialContext(ctx, target, dialOpts...)
+	creds := BasicAuth{
+		auth: c.options.configContext.Auth.Basic.Username + ":" + c.options.configContext.Auth.Basic.Password,
+	}
+
+	return NewConnection(ctx, target, creds, nil, dialOpts...)
+}
+
+func NewConnection(ctx context.Context, address string, creds credentials.PerRPCCredentials, ca *x509.PEMEncodedCertificateAndKey, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
+	tlsConfig := &tls.Config{}
+
+	// TODO
+	// if ca == nil {
+	// 	tlsConfig.InsecureSkipVerify = true
+	// } else {
+	// 	tlsConfig.RootCAs = stdx509.NewCertPool()
+	// 	tlsConfig.RootCAs.AppendCertsFromPEM(ca.Crt)
+	// }
+
+	// tlsConfig.RootCAs = stdx509.NewCertPool()
+	// readBytes, err := ioutil.ReadFile("/etc/ssl/cert.pem")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// tlsConfig.RootCAs.AppendCertsFromPEM(readBytes)
+
+	grpcOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+		grpc.WithPerRPCCredentials(creds),
+	}
+
+	grpcOpts = append(grpcOpts, opts...)
+
+	conn, err = grpc.DialContext(ctx, address, grpcOpts...)
+	if err != nil {
+		return
+	}
+
+	return conn, nil
+}
+
+type BasicAuth struct {
+	auth string
+}
+
+// GetRequestMetadata implements credentials.PerGRPCCredentials.
+func (c BasicAuth) GetRequestMetadata(ctx context.Context, url ...string) (map[string]string, error) {
+	enc := base64.StdEncoding.EncodeToString([]byte(c.auth))
+
+	return map[string]string{
+		"Authorization": "Basic " + enc,
+	}, nil
+}
+
+// RequireTransportSecurity implements credentials.PerRPCCredentials.
+func (c BasicAuth) RequireTransportSecurity() bool {
+	// TODO require it?
+	return false
 }
 
 // CredentialsFromConfigContext constructs the client Credentials from the given configuration Context.

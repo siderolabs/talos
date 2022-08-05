@@ -7,6 +7,8 @@ package resolver
 import (
 	"fmt"
 	"math/rand"
+	gonet "net"
+	"strconv"
 	"strings"
 
 	"github.com/talos-systems/net"
@@ -62,9 +64,21 @@ func (r *roundRobinResolver) start() error {
 	var addrs []resolver.Address //nolint:prealloc
 
 	for _, a := range strings.Split(r.target.Endpoint, ",") { //nolint:staticcheck
+		addr := net.FormatAddress(a)
+		serverName := addr
+		if net.AddressContainsPort(addr) {
+			var err error
+			serverName, _, err = gonet.SplitHostPort(addr)
+			if err != nil {
+				return fmt.Errorf("failed to derive server name from address %s: %w", addr, err)
+			}
+		} else {
+			addr = gonet.JoinHostPort(addr, strconv.Itoa(r.port))
+		}
+
 		addrs = append(addrs, resolver.Address{
-			ServerName: a,
-			Addr:       fmt.Sprintf("%s:%d", net.FormatAddress(a), r.port),
+			ServerName: serverName,
+			Addr:       addr,
 		})
 	}
 

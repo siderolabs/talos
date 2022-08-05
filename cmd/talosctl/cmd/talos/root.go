@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/pkg/cli"
@@ -37,6 +38,7 @@ var (
 	Endpoints   []string
 	Nodes       []string
 	Cmdcontext  string
+	Cluster     string
 )
 
 const pathAutoCompleteLimit = 500
@@ -60,6 +62,18 @@ func WithClientNoNodes(action func(context.Context, *client.Client) error) error
 				opts = append(opts, client.WithContextName(Cmdcontext))
 			}
 
+			ctx = metadata.AppendToOutgoingContext(ctx, "runtime", "Talos")
+
+			// TODO should this be configurable?
+			// opts = append(opts, client.WithGRPCDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())))
+
+			// talosconfigContext, ok := cfg.Contexts[cfg.Context]
+			// if ok && talosconfigContext.Auth.Basic.Username != "" && talosconfigContext.Auth.Basic.Password != "" {
+			// 	opts = append(opts, client.WithGRPCDialOptions(grpc.WithPerRPCCredentials(BasicAuth{
+			// 		auth: talosconfigContext.Auth.Basic.Username + ":" + talosconfigContext.Auth.Basic.Password,
+			// 	})))
+			// }
+
 			if len(Endpoints) > 0 {
 				// override endpoints from command-line flags
 				opts = append(opts, client.WithEndpoints(Endpoints...))
@@ -77,6 +91,8 @@ func WithClientNoNodes(action func(context.Context, *client.Client) error) error
 	)
 }
 
+var configContextErr = fmt.Errorf("failed to resolve config context")
+
 // WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
 func WithClient(action func(context.Context, *client.Client) error) error {
 	return WithClientNoNodes(
@@ -84,7 +100,7 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 			if len(Nodes) < 1 {
 				configContext := c.GetConfigContext()
 				if configContext == nil {
-					return fmt.Errorf("failed to resolve config context")
+					return configContextErr
 				}
 
 				Nodes = configContext.Nodes
@@ -92,6 +108,19 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 
 			if len(Nodes) < 1 {
 				return fmt.Errorf("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
+			}
+
+			if Cluster == "" {
+				configContext := c.GetConfigContext()
+				if configContext == nil {
+					return configContextErr
+				}
+
+				Cluster = configContext.Cluster
+			}
+
+			if Cluster != "" {
+				ctx = metadata.AppendToOutgoingContext(ctx, "context", Cluster)
 			}
 
 			ctx = client.WithNodes(ctx, Nodes...)

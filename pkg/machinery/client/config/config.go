@@ -52,6 +52,17 @@ type Context struct {
 	CA               string   `yaml:"ca"`
 	Crt              string   `yaml:"crt"`
 	Key              string   `yaml:"key"`
+	Auth             Auth     `yaml:"auth"`
+	Cluster          string   `yaml:"cluster"`
+}
+
+type Auth struct {
+	Basic Basic `yaml:"basic"`
+}
+
+type Basic struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 func (c *Context) upgrade() {
