@@ -20,12 +20,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-var trustdResolverScheme string
-
-func init() {
-	trustdResolverScheme = resolver.RegisterRoundRobinResolver(constants.TrustdPort)
-}
-
 // RemoteGenerator represents the OS identity generator.
 type RemoteGenerator struct {
 	conn   *grpc.ClientConn
@@ -38,9 +32,11 @@ func NewRemoteGenerator(token string, endpoints []string, ca *x509.PEMEncodedCer
 		return nil, fmt.Errorf("at least one root of trust endpoint is required")
 	}
 
+	endpoints = resolver.EnsureEndpointsHavePorts(endpoints, constants.TrustdPort)
+
 	g = &RemoteGenerator{}
 
-	conn, err := basic.NewConnection(fmt.Sprintf("%s:///%s", trustdResolverScheme, strings.Join(endpoints, ",")), basic.NewTokenCredentials(token), ca)
+	conn, err := basic.NewConnection(fmt.Sprintf("%s:///%s", resolver.RoundRobinResolverScheme, strings.Join(endpoints, ",")), basic.NewTokenCredentials(token), ca)
 	if err != nil {
 		return nil, err
 	}

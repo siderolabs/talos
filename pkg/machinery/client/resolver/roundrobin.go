@@ -5,30 +5,28 @@
 package resolver
 
 import (
-	"fmt"
 	"math/rand"
+	"net"
+	"strconv"
 	"strings"
 
-	"github.com/talos-systems/net"
 	"google.golang.org/grpc/resolver"
+
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
-// RegisterRoundRobinResolver registers round-robin gRPC resolver for specified port and returns scheme to use in grpc.Dial.
-func RegisterRoundRobinResolver(port int) (scheme string) {
-	scheme = fmt.Sprintf(roundRobinResolverScheme, port)
+// RoundRobinResolverScheme is a scheme to use in grpc.Dial for the round-robin gRPC resolver.
+// This resolver requires that all endpoints have a port appended.
+// To ensure this, use EnsureEndpointsHavePorts before constructing a connection string.
+const RoundRobinResolverScheme = "talosroundrobin"
 
+func init() {
 	resolver.Register(&roundRobinResolverBuilder{
-		port:   port,
-		scheme: scheme,
+		scheme: RoundRobinResolverScheme,
 	})
-
-	return
 }
 
-const roundRobinResolverScheme = "taloslist-%d"
-
 type roundRobinResolverBuilder struct {
-	port   int
 	scheme string
 }
 
@@ -37,7 +35,6 @@ func (b *roundRobinResolverBuilder) Build(target resolver.Target, cc resolver.Cl
 	r := &roundRobinResolver{
 		target: target,
 		cc:     cc,
-		port:   b.port,
 	}
 
 	if err := r.start(); err != nil {
@@ -55,16 +52,37 @@ func (b *roundRobinResolverBuilder) Scheme() string {
 type roundRobinResolver struct {
 	target resolver.Target
 	cc     resolver.ClientConn
-	port   int
+}
+
+// EnsureEndpointsHavePorts returns the list of endpoints with default port appended to those addresses that don't have a port.
+func EnsureEndpointsHavePorts(endpoints []string, defaultPort int) []string {
+	return slices.Map(endpoints, func(endpoint string) string {
+		_, _, err := net.SplitHostPort(endpoint)
+		if err != nil {
+			return net.JoinHostPort(endpoint, strconv.Itoa(defaultPort))
+		}
+
+		return endpoint
+	})
 }
 
 func (r *roundRobinResolver) start() error {
 	var addrs []resolver.Address //nolint:prealloc
 
-	for _, a := range strings.Split(r.target.Endpoint, ",") { //nolint:staticcheck
+	//nolint:staticcheck
+	endpoints := strings.Split(r.target.Endpoint, ",")
+
+	for _, addr := range endpoints {
+		serverName := addr
+
+		host, _, err := net.SplitHostPort(serverName)
+		if err == nil {
+			serverName = host
+		}
+
 		addrs = append(addrs, resolver.Address{
-			ServerName: a,
-			Addr:       fmt.Sprintf("%s:%d", net.FormatAddress(a), r.port),
+			ServerName: serverName,
+			Addr:       addr,
 		})
 	}
 

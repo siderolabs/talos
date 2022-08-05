@@ -19,7 +19,6 @@ import (
 	"time"
 
 	grpctls "github.com/talos-systems/crypto/tls"
-	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -35,6 +34,7 @@ import (
 	storageapi "github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/talos-systems/talos/pkg/machinery/client/resolver"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -147,7 +147,7 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 		return nil, errors.New("failed to determine endpoints")
 	}
 
-	c.conn, err = c.GetConn(ctx)
+	c.conn, err = c.getConn(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client connection: %w", err)
 	}
@@ -165,9 +165,9 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	return c, nil
 }
 
-// GetConn creates new gRPC connection.
-func (c *Client) GetConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	endpoints := c.GetEndpoints()
+// getConn creates new gRPC connection.
+func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	endpoints := resolver.EnsureEndpointsHavePorts(c.GetEndpoints(), constants.ApidPort)
 
 	var target string
 
@@ -175,14 +175,14 @@ func (c *Client) GetConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.Cl
 	case c.options.unixSocketPath != "":
 		target = fmt.Sprintf("unix:///%s", c.options.unixSocketPath)
 	case len(endpoints) > 1:
-		target = fmt.Sprintf("%s:///%s", talosListResolverScheme, strings.Join(endpoints, ","))
+		target = fmt.Sprintf("%s:///%s", resolver.RoundRobinResolverScheme, strings.Join(endpoints, ","))
 	default:
 		// NB: we use the `dns` scheme here in order to handle fancier situations
 		// when there is a single endpoint.
 		// Such possibilities include SRV records, multiple IPs from A and/or AAAA
 		// records, and descriptive TXT records which include things like load
 		// balancer specs.
-		target = fmt.Sprintf("dns:///%s:%d", net.FormatAddress(endpoints[0]), constants.ApidPort)
+		target = fmt.Sprintf("dns:///%s", endpoints[0])
 	}
 
 	dialOpts := []grpc.DialOption(nil)
@@ -250,68 +250,6 @@ func CredentialsFromConfigContext(context *clientconfig.Context) (*Credentials, 
 		CA:  caBytes,
 		Crt: crt,
 	}, nil
-}
-
-// NewClientContextAndCredentialsFromConfig initializes Credentials from config file.
-//
-// Deprecated: use Option-based methods for client creation.
-func NewClientContextAndCredentialsFromConfig(p, ctx string) (context *clientconfig.Context, creds *Credentials, err error) {
-	c, err := clientconfig.Open(p)
-	if err != nil {
-		return
-	}
-
-	context, creds, err = NewClientContextAndCredentialsFromParsedConfig(c, ctx)
-
-	return
-}
-
-// NewClientContextAndCredentialsFromParsedConfig initializes Credentials from parsed configuration.
-//
-// Deprecated: use Option-based methods for client creation.
-func NewClientContextAndCredentialsFromParsedConfig(c *clientconfig.Config, ctx string) (context *clientconfig.Context, creds *Credentials, err error) {
-	if ctx != "" {
-		c.Context = ctx
-	}
-
-	if c.Context == "" {
-		return nil, nil, fmt.Errorf("'context' key is not set in the config")
-	}
-
-	context = c.Contexts[c.Context]
-	if context == nil {
-		return nil, nil, fmt.Errorf("context %q is not defined in 'contexts' key in config", c.Context)
-	}
-
-	creds, err = CredentialsFromConfigContext(context)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to extract credentials from context: %w", err)
-	}
-
-	return context, creds, nil
-}
-
-// NewClient initializes a Client.
-//
-// Deprecated: use client.NewFromConfigContext() instead.
-func NewClient(cfg *tls.Config, endpoints []string, port int, opts ...grpc.DialOption) (c *Client, err error) {
-	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(cfg)))
-
-	cfg.ServerName = endpoints[0]
-
-	c = &Client{}
-
-	// TODO(smira): endpoints[0] should be replaced with proper load-balancing
-	c.conn, err = grpc.DialContext(context.Background(), fmt.Sprintf("%s:%d", net.FormatAddress(endpoints[0]), port), opts...)
-	if err != nil {
-		return
-	}
-
-	c.MachineClient = machineapi.NewMachineServiceClient(c.conn)
-	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
-	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
-
-	return c, nil
 }
 
 // Close shuts down client protocol.
