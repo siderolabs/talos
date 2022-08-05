@@ -7,8 +7,11 @@ package kubespan
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // IdentityType is type of Identity resource.
@@ -63,5 +66,14 @@ func (IdentityRD) ResourceDefinition(resource.Metadata, IdentitySpec) meta.Resou
 			},
 		},
 		Sensitivity: meta.Sensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[IdentitySpec](IdentityType, &Identity{})
+	if err != nil {
+		panic(err)
 	}
 }

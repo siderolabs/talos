@@ -7,8 +7,11 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/opencontainers/runtime-spec/specs-go"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // KubeletConfigType is type of KubeletConfig resource.
@@ -52,5 +55,14 @@ func (KubeletConfigRD) ResourceDefinition(resource.Metadata, KubeletConfigSpec) 
 		Type:             KubeletConfigType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[KubeletConfigSpec](KubeletConfigType, &KubeletConfig{})
+	if err != nil {
+		panic(err)
 	}
 }

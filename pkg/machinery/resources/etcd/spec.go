@@ -9,7 +9,10 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // SpecType is type of Spec resource.
@@ -59,5 +62,14 @@ func (SpecRD) ResourceDefinition(resource.Metadata, SpecSpec) meta.ResourceDefin
 				JSONPath: "{.advertisedAddress}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[SpecSpec](SpecType, &Spec{})
+	if err != nil {
+		panic(err)
 	}
 }

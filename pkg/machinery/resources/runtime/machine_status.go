@@ -7,7 +7,10 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // MachineStatusType is type of MachineStatus resource.
@@ -70,5 +73,14 @@ func (MachineStatusRD) ResourceDefinition(resource.Metadata, MachineStatusSpec) 
 				JSONPath: `{.status.ready}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[MachineStatusSpec](MachineStatusType, &MachineStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

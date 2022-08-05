@@ -10,7 +10,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 //nolint:lll
@@ -53,5 +56,14 @@ func (AdmissionControlConfigRD) ResourceDefinition(_ resource.Metadata, _ Admiss
 	return meta.ResourceDefinitionSpec{
 		Type:             AdmissionControlConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[AdmissionControlConfigSpec](AdmissionControlConfigType, &AdmissionControlConfig{})
+	if err != nil {
+		panic(err)
 	}
 }

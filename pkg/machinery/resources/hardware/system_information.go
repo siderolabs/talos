@@ -7,7 +7,10 @@ package hardware
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // SystemInformationType is type of SystemInformation resource.
@@ -83,5 +86,14 @@ func (c SystemInformationRD) ResourceDefinition(resource.Metadata, SystemInforma
 				JSONPath: `{.skuNumber}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[SystemInformationSpec](SystemInformationType, &SystemInformation{})
+	if err != nil {
+		panic(err)
 	}
 }

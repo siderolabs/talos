@@ -7,8 +7,10 @@ package kubeaccess
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 
@@ -66,5 +68,14 @@ func (c ConfigRD) ResourceDefinition(resource.Metadata, ConfigSpec) meta.Resourc
 		DefaultNamespace: config.NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
 		Sensitivity:      meta.NonSensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ConfigSpec](ConfigType, &Config{})
+	if err != nil {
+		panic(err)
 	}
 }

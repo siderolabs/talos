@@ -7,7 +7,10 @@ package etcd
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // PKIStatusType is type of PKIStatus resource.
@@ -54,5 +57,14 @@ func (PKIStatusRD) ResourceDefinition(resource.Metadata, PKIStatusSpec) meta.Res
 				JSONPath: "{.version}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[PKIStatusSpec](PKIStatusType, &PKIStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

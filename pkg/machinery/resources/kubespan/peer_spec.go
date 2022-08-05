@@ -7,8 +7,11 @@ package kubespan
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // PeerSpecType is type of PeerSpec resource.
@@ -56,5 +59,14 @@ func (PeerSpecRD) ResourceDefinition(resource.Metadata, PeerSpecSpec) meta.Resou
 				JSONPath: `{.endpoints}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[PeerSpecSpec](PeerSpecType, &PeerSpec{})
+	if err != nil {
+		panic(err)
 	}
 }

@@ -10,7 +10,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // SchedulerConfigType is type of SchedulerConfig resource.
@@ -48,5 +51,14 @@ func (SchedulerConfigRD) ResourceDefinition(_ resource.Metadata, _ SchedulerConf
 	return meta.ResourceDefinitionSpec{
 		Type:             SchedulerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[SchedulerConfigSpec](SchedulerConfigType, &SchedulerConfig{})
+	if err != nil {
+		panic(err)
 	}
 }

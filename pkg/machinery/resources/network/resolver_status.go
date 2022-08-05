@@ -7,8 +7,11 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ResolverStatusType is type of ResolverStatus resource.
@@ -47,5 +50,14 @@ func (ResolverStatusRD) ResourceDefinition(resource.Metadata, ResolverStatusSpec
 				JSONPath: "{.dnsServers}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ResolverStatusSpec](ResolverStatusType, &ResolverStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

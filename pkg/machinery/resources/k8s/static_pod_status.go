@@ -7,7 +7,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // StaticPodStatusType is type of StaticPodStatus resource.
@@ -51,5 +54,14 @@ func (StaticPodStatusRD) ResourceDefinition(resource.Metadata, StaticPodStatusSp
 				JSONPath: `{.conditions[?(@.type=="Ready")].status}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[StaticPodStatusSpec](StaticPodStatusType, &StaticPodStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

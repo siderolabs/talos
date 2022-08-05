@@ -10,7 +10,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ControllerManagerConfigType is type of ControllerManagerConfig resource.
@@ -51,5 +54,14 @@ func (ControllerManagerConfigRD) ResourceDefinition(_ resource.Metadata, _ Contr
 	return meta.ResourceDefinitionSpec{
 		Type:             ControllerManagerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ControllerManagerConfigSpec](ControllerManagerConfigType, &ControllerManagerConfig{})
+	if err != nil {
+		panic(err)
 	}
 }

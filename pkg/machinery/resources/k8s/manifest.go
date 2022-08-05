@@ -7,7 +7,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ManifestType is type of Manifest resource.
@@ -45,5 +48,14 @@ func (ManifestRD) ResourceDefinition(resource.Metadata, ManifestSpec) meta.Resou
 		Type:             ManifestType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: ControlPlaneNamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ManifestSpec](ManifestType, &Manifest{})
+	if err != nil {
+		panic(err)
 	}
 }

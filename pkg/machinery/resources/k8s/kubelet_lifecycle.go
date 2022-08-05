@@ -7,7 +7,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // KubeletLifecycleType is type of KubeletLifecycle resource.
@@ -45,5 +48,14 @@ func (KubeletLifecycleRD) ResourceDefinition(resource.Metadata, KubeletLifecycle
 		Type:             KubeletLifecycleType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[KubeletLifecycleSpec](KubeletLifecycleType, &KubeletLifecycle{})
+	if err != nil {
+		panic(err)
 	}
 }

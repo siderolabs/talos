@@ -7,7 +7,10 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // MountStatusType is type of Mount resource.
@@ -57,5 +60,14 @@ func (MountStatusRD) ResourceDefinition(resource.Metadata, MountStatusSpec) meta
 				JSONPath: `{.filesystemType}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[MountStatusSpec](MountStatusType, &MountStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

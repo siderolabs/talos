@@ -7,8 +7,11 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // NodeIPType is type of NodeIP resource.
@@ -41,5 +44,14 @@ func (NodeIPRD) ResourceDefinition(resource.Metadata, NodeIPSpec) meta.ResourceD
 		Type:             NodeIPType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[NodeIPSpec](NodeIPType, &NodeIP{})
+	if err != nil {
+		panic(err)
 	}
 }

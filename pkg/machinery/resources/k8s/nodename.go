@@ -7,7 +7,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // NodenameType is type of Nodename resource.
@@ -50,5 +53,14 @@ func (NodenameRD) ResourceDefinition(resource.Metadata, NodenameSpec) meta.Resou
 				JSONPath: "{.nodename}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[NodenameSpec](NodenameType, &Nodename{})
+	if err != nil {
+		panic(err)
 	}
 }

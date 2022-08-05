@@ -7,7 +7,10 @@ package hardware
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // MemoryModuleType is type of MemoryModule resource.
@@ -64,5 +67,14 @@ func (c MemoryModuleRD) ResourceDefinition(resource.Metadata, MemoryModuleSpec) 
 				JSONPath: `{.sizeMiB}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[MemoryModuleSpec](MemoryModuleType, &MemoryModule{})
+	if err != nil {
+		panic(err)
 	}
 }

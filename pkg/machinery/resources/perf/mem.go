@@ -7,7 +7,10 @@ package perf
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // MemoryType is type of Etcd resource.
@@ -100,5 +103,14 @@ func (MemoryRD) ResourceDefinition(resource.Metadata, MemorySpec) meta.ResourceD
 				JSONPath: "{.total}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[MemorySpec](MemoryType, &Memory{})
+	if err != nil {
+		panic(err)
 	}
 }

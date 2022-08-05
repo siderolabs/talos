@@ -10,7 +10,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // SecretsStatusType is type of SecretsStatus resource.
@@ -57,5 +60,14 @@ func (SecretsStatusRD) ResourceDefinition(resource.Metadata, SecretsStatusSpec) 
 				JSONPath: "{.version}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[SecretsStatusSpec](SecretsStatusType, &SecretsStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

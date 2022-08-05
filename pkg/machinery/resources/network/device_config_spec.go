@@ -55,3 +55,5 @@ func (DeviceConfigSpecRD) ResourceDefinition(resource.Metadata, DeviceConfigSpec
 		Sensitivity:      meta.Sensitive,
 	}
 }
+
+// TODO(DmitriyMV): decide how to register DeviceConfigSpecSpec

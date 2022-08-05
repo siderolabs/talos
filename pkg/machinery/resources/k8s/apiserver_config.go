@@ -10,7 +10,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // APIServerConfigType is type of APIServerConfig resource.
@@ -64,5 +67,14 @@ func (APIServerConfigRD) ResourceDefinition(_ resource.Metadata, _ APIServerConf
 	return meta.ResourceDefinitionSpec{
 		Type:             APIServerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[APIServerConfigSpec](APIServerConfigType, &APIServerConfig{})
+	if err != nil {
+		panic(err)
 	}
 }

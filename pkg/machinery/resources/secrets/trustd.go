@@ -11,7 +11,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
 
-	secretspb "github.com/talos-systems/talos/pkg/machinery/api/resource/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
@@ -40,40 +39,6 @@ func NewTrustd() *Trustd {
 	)
 }
 
-// MarshalProto implements ProtoMarshaler.
-func (spec TrustdCertsSpec) MarshalProto() ([]byte, error) {
-	protoSpec := secretspb.TrustdSpec{
-		CaPem: spec.CA.Crt,
-		Server: &secretspb.CertAndKeyPEM{
-			Cert: spec.Server.Crt,
-			Key:  spec.Server.Key,
-		},
-	}
-
-	return proto.Marshal(&protoSpec)
-}
-
-// UnmarshalProto implements protobuf.ResourceUnmarshaler.
-func (spec *TrustdCertsSpec) UnmarshalProto(protoBytes []byte) error {
-	protoSpec := secretspb.TrustdSpec{}
-
-	if err := proto.Unmarshal(protoBytes, &protoSpec); err != nil {
-		return err
-	}
-
-	*spec = TrustdCertsSpec{
-		CA: &x509.PEMEncodedCertificateAndKey{
-			Crt: protoSpec.CaPem,
-		},
-		Server: &x509.PEMEncodedCertificateAndKey{
-			Crt: protoSpec.Server.Cert,
-			Key: protoSpec.Server.Key,
-		},
-	}
-
-	return nil
-}
-
 // TrustdRD provides auxiliary methods for Trustd.
 type TrustdRD struct{}
 
@@ -88,7 +53,9 @@ func (TrustdRD) ResourceDefinition(resource.Metadata, TrustdCertsSpec) meta.Reso
 }
 
 func init() {
-	if err := protobuf.RegisterResource(TrustdType, &Trustd{}); err != nil {
+	proto.RegisterDefaultTypes()
+
+	if err := protobuf.RegisterDynamic[TrustdCertsSpec](TrustdType, &Trustd{}); err != nil {
 		panic(err)
 	}
 }

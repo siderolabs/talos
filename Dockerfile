@@ -197,8 +197,6 @@ COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size cluster/cluster.proto
 COPY ./api/resource/resource.proto /api/resource/resource.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size resource/resource.proto
-COPY ./api/resource/secrets/secrets.proto /api/resource/secrets/secrets.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size resource/secrets/secrets.proto
 COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size inspect/inspect.proto
 # Goimports and gofumpt generated files to adjust import order
@@ -257,7 +255,6 @@ COPY --from=generate-build /api/time/*.pb.go /pkg/machinery/api/time/
 COPY --from=generate-build /api/cluster/*.pb.go /pkg/machinery/api/cluster/
 COPY --from=generate-build /api/storage/*.pb.go /pkg/machinery/api/storage/
 COPY --from=generate-build /api/resource/*.pb.go /pkg/machinery/api/resource/
-COPY --from=generate-build /api/resource/secrets/*.pb.go /pkg/machinery/api/resource/secrets/
 COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
 COPY --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
 COPY --from=go-generate /src/pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/

@@ -10,8 +10,11 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // KubernetesRootType is type of KubernetesRoot secret resource.
@@ -62,5 +65,14 @@ func (KubernetesRootRD) ResourceDefinition(resource.Metadata, KubernetesRootSpec
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[KubernetesRootSpec](KubernetesRootType, &KubernetesRoot{})
+	if err != nil {
+		panic(err)
 	}
 }

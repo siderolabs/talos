@@ -7,7 +7,10 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // TimeServerSpecType is type of TimeServerSpec resource.
@@ -45,5 +48,14 @@ func (TimeServerSpecRD) ResourceDefinition(resource.Metadata, TimeServerSpecSpec
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[TimeServerSpecSpec](TimeServerSpecType, &TimeServerSpec{})
+	if err != nil {
+		panic(err)
 	}
 }

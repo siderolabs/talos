@@ -7,9 +7,11 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/talos-systems/talos/pkg/machinery/extensions"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ExtensionStatusType is type of Extension resource.
@@ -48,5 +50,14 @@ func (ExtensionStatusRD) ResourceDefinition(resource.Metadata, ExtensionStatusSp
 				JSONPath: `{.metadata.version}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ExtensionStatusSpec](ExtensionStatusType, &ExtensionStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

@@ -7,7 +7,10 @@ package files
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // EtcFileStatusType is type of EtcFile resource.
@@ -41,5 +44,14 @@ func (EtcFileStatusMD) ResourceDefinition(resource.Metadata, EtcFileStatusSpec) 
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[EtcFileStatusSpec](EtcFileStatusType, &EtcFileStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

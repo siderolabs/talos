@@ -55,33 +55,41 @@ type BondMasterSpec struct {
 }
 
 // BridgeMasterSpec describes bridge settings if Kind == "bridge".
+//
+//gotagsrewrite:gen
 type BridgeMasterSpec struct {
-	STP STPSpec `yaml:"stp,omitempty"`
+	STP STPSpec `yaml:"stp,omitempty" protobuf:"1"`
 }
 
 // STPSpec describes Spanning Tree Protocol (STP) settings of a bridge.
+//
+//gotagsrewrite:gen
 type STPSpec struct {
-	Enabled bool `yaml:"enabled"`
+	Enabled bool `yaml:"enabled" protobuf:"1"`
 }
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
+//
+//gotagsrewrite:gen
 type WireguardSpec struct {
 	// PrivateKey is used to configure the link, present only in the LinkSpec.
-	PrivateKey string `yaml:"privateKey,omitempty"`
+	PrivateKey string `yaml:"privateKey,omitempty" protobuf:"1"`
 	// PublicKey is only used in LinkStatus to show the link status.
-	PublicKey    string          `yaml:"publicKey,omitempty"`
-	ListenPort   int             `yaml:"listenPort"`
-	FirewallMark int             `yaml:"firewallMark"`
-	Peers        []WireguardPeer `yaml:"peers"`
+	PublicKey    string          `yaml:"publicKey,omitempty" protobuf:"2"`
+	ListenPort   int             `yaml:"listenPort" protobuf:"3"`
+	FirewallMark int             `yaml:"firewallMark" protobuf:"4"`
+	Peers        []WireguardPeer `yaml:"peers" protobuf:"5"`
 }
 
 // WireguardPeer describes a single peer.
+//
+//gotagsrewrite:gen
 type WireguardPeer struct {
-	PublicKey                   string             `yaml:"publicKey"`
-	PresharedKey                string             `yaml:"presharedKey"`
-	Endpoint                    string             `yaml:"endpoint"`
-	PersistentKeepaliveInterval time.Duration      `yaml:"persistentKeepaliveInterval"`
-	AllowedIPs                  []netaddr.IPPrefix `yaml:"allowedIPs"`
+	PublicKey                   string             `yaml:"publicKey" protobuf:"1"`
+	PresharedKey                string             `yaml:"presharedKey" protobuf:"2"`
+	Endpoint                    string             `yaml:"endpoint" protobuf:"3"`
+	PersistentKeepaliveInterval time.Duration      `yaml:"persistentKeepaliveInterval" protobuf:"4"`
+	AllowedIPs                  []netaddr.IPPrefix `yaml:"allowedIPs" protobuf:"5"`
 }
 
 // ID Returns the VID for type VLANSpec.

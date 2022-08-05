@@ -10,7 +10,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ConfigStatusType is type of ConfigStatus resource.
@@ -57,5 +60,14 @@ func (ConfigStatusRD) ResourceDefinition(resource.Metadata, ConfigStatusSpec) me
 				JSONPath: "{.version}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ConfigStatusSpec](ConfigStatusType, &ConfigStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

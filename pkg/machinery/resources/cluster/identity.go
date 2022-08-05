@@ -7,7 +7,10 @@ package cluster
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // IdentityType is type of Identity resource.
@@ -54,5 +57,14 @@ func (c IdentityRD) ResourceDefinition(resource.Metadata, IdentitySpec) meta.Res
 				JSONPath: `{.nodeId}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[IdentitySpec](IdentityType, &Identity{})
+	if err != nil {
+		panic(err)
 	}
 }

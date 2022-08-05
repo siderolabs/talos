@@ -7,9 +7,11 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // LinkSpecType is type of LinkSpec resource.
@@ -136,5 +138,14 @@ func (LinkSpecRD) ResourceDefinition(resource.Metadata, LinkSpecSpec) meta.Resou
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
 		Sensitivity:      meta.Sensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[LinkSpecSpec](LinkSpecType, &LinkSpec{})
+	if err != nil {
+		panic(err)
 	}
 }

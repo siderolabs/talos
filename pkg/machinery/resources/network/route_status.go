@@ -7,10 +7,12 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // RouteStatusType is type of RouteStatus resource.
@@ -72,5 +74,14 @@ func (RouteStatusRD) ResourceDefinition(resource.Metadata, RouteStatusSpec) meta
 				JSONPath: `{.priority}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[RouteStatusSpec](RouteStatusType, &RouteStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

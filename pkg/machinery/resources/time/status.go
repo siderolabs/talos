@@ -7,8 +7,10 @@ package time
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -61,5 +63,14 @@ func (r StatusRD) ResourceDefinition(resource.Metadata, StatusSpec) meta.Resourc
 				JSONPath: "{.synced}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[StatusSpec](StatusType, &Status{})
+	if err != nil {
+		panic(err)
 	}
 }

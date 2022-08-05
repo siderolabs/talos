@@ -7,8 +7,11 @@ package kubespan
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // EndpointType is type of Endpoint resource.
@@ -54,5 +57,14 @@ func (EndpointRD) ResourceDefinition(resource.Metadata, EndpointSpec) meta.Resou
 				JSONPath: `{.affiliateID}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[EndpointSpec](EndpointType, &Endpoint{})
+	if err != nil {
+		panic(err)
 	}
 }

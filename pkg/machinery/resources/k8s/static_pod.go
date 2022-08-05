@@ -7,7 +7,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // StaticPodType is type of StaticPod resource.
@@ -45,5 +48,14 @@ func (StaticPodRD) ResourceDefinition(resource.Metadata, StaticPodSpec) meta.Res
 		Type:             StaticPodType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[StaticPodSpec](StaticPodType, &StaticPod{})
+	if err != nil {
+		panic(err)
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/talos-systems/crypto/x509"
 	"inet.af/netaddr"
 
-	secretspb "github.com/talos-systems/talos/pkg/machinery/api/resource/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
@@ -44,38 +43,6 @@ func NewOSRoot(id resource.ID) *OSRoot {
 	)
 }
 
-// MarshalProto implements ProtoMarshaler.
-func (spec OSRootSpec) MarshalProto() ([]byte, error) {
-	protoSpec := secretspb.OsRootSpec{
-		Ca: &secretspb.CertAndKeyPEM{
-			Cert: spec.CA.Crt,
-			Key:  spec.CA.Key,
-		},
-		Token: spec.Token,
-	}
-
-	return proto.Marshal(&protoSpec)
-}
-
-// UnmarshalProto implements protobuf.ResourceUnmarshaler.
-func (spec *OSRootSpec) UnmarshalProto(protoBytes []byte) error {
-	protoSpec := secretspb.OsRootSpec{}
-
-	if err := proto.Unmarshal(protoBytes, &protoSpec); err != nil {
-		return err
-	}
-
-	*spec = OSRootSpec{
-		CA: &x509.PEMEncodedCertificateAndKey{
-			Crt: protoSpec.Ca.Cert,
-			Key: protoSpec.Ca.Key,
-		},
-		Token: protoSpec.Token,
-	}
-
-	return nil
-}
-
 // OSRootRD provides auxiliary methods for OSRoot.
 type OSRootRD struct{}
 
@@ -90,7 +57,9 @@ func (OSRootRD) ResourceDefinition(resource.Metadata, OSRootSpec) meta.ResourceD
 }
 
 func init() {
-	if err := protobuf.RegisterResource(OSRootType, &OSRoot{}); err != nil {
+	proto.RegisterDefaultTypes()
+
+	if err := protobuf.RegisterDynamic[OSRootSpec](OSRootType, &OSRoot{}); err != nil {
 		panic(err)
 	}
 }

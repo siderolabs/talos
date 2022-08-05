@@ -11,7 +11,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
 
-	secretspb "github.com/talos-systems/talos/pkg/machinery/api/resource/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
@@ -41,48 +40,6 @@ func NewAPI() *API {
 	)
 }
 
-// MarshalProto implements ProtoMarshaler.
-func (spec APICertsSpec) MarshalProto() ([]byte, error) {
-	protoSpec := secretspb.APISpec{
-		CaPem: spec.CA.Crt,
-		Client: &secretspb.CertAndKeyPEM{
-			Cert: spec.Client.Crt,
-			Key:  spec.Client.Key,
-		},
-		Server: &secretspb.CertAndKeyPEM{
-			Cert: spec.Server.Crt,
-			Key:  spec.Server.Key,
-		},
-	}
-
-	return proto.Marshal(&protoSpec)
-}
-
-// UnmarshalProto implements protobuf.ResourceUnmarshaler.
-func (spec *APICertsSpec) UnmarshalProto(protoBytes []byte) error {
-	protoSpec := secretspb.APISpec{}
-
-	if err := proto.Unmarshal(protoBytes, &protoSpec); err != nil {
-		return err
-	}
-
-	*spec = APICertsSpec{
-		CA: &x509.PEMEncodedCertificateAndKey{
-			Crt: protoSpec.CaPem,
-		},
-		Client: &x509.PEMEncodedCertificateAndKey{
-			Crt: protoSpec.Client.Cert,
-			Key: protoSpec.Client.Key,
-		},
-		Server: &x509.PEMEncodedCertificateAndKey{
-			Crt: protoSpec.Server.Cert,
-			Key: protoSpec.Server.Key,
-		},
-	}
-
-	return nil
-}
-
 // APIRD provides auxiliary methods for API.
 type APIRD struct{}
 
@@ -97,7 +54,9 @@ func (APIRD) ResourceDefinition(resource.Metadata, APICertsSpec) meta.ResourceDe
 }
 
 func init() {
-	if err := protobuf.RegisterResource(APIType, &API{}); err != nil {
+	proto.RegisterDefaultTypes()
+
+	if err := protobuf.RegisterDynamic[APICertsSpec](APIType, &API{}); err != nil {
 		panic(err)
 	}
 }

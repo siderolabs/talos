@@ -7,10 +7,12 @@ package cluster
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // MemberType is type of Member resource.
@@ -67,5 +69,14 @@ func (MemberRD) ResourceDefinition(resource.Metadata, MemberSpec) meta.ResourceD
 				JSONPath: `{.addresses}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[MemberSpec](MemberType, &Member{})
+	if err != nil {
+		panic(err)
 	}
 }

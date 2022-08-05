@@ -7,8 +7,11 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // OperatorSpecType is type of OperatorSpec resource.
@@ -95,5 +98,14 @@ func (OperatorSpecRD) ResourceDefinition(resource.Metadata, OperatorSpecSpec) me
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
 		Sensitivity:      meta.Sensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[OperatorSpecSpec](OperatorSpecType, &OperatorSpec{})
+	if err != nil {
+		panic(err)
 	}
 }

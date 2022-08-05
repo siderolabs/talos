@@ -9,8 +9,11 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // KubeletType is type of Kubelet secret resource.
@@ -52,5 +55,14 @@ func (KubeletRD) ResourceDefinition(resource.Metadata, KubeletSpec) meta.Resourc
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[KubeletSpec](KubeletType, &Kubelet{})
+	if err != nil {
+		panic(err)
 	}
 }

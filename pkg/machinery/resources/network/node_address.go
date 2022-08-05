@@ -9,10 +9,12 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // NodeAddressType is type of NodeAddress resource.
@@ -78,4 +80,13 @@ func (spec *NodeAddressSpec) IPs() []netaddr.IP {
 // FilteredNodeAddressID returns resource ID for node addresses with filter applied.
 func FilteredNodeAddressID(kind resource.ID, filterID string) resource.ID {
 	return fmt.Sprintf("%s-%s", kind, filterID)
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[NodeAddressSpec](NodeAddressType, &NodeAddress{})
+	if err != nil {
+		panic(err)
+	}
 }

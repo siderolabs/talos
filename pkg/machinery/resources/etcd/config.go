@@ -7,7 +7,10 @@ package etcd
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ConfigType is type of Config resource.
@@ -52,5 +55,14 @@ func (ConfigRD) ResourceDefinition(resource.Metadata, ConfigSpec) meta.ResourceD
 				JSONPath: "{.image}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ConfigSpec](ConfigType, &Config{})
+	if err != nil {
+		panic(err)
 	}
 }

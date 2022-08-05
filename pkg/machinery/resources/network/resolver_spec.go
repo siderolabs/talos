@@ -7,8 +7,11 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ResolverSpecType is type of ResolverSpec resource.
@@ -46,5 +49,14 @@ func (ResolverSpecRD) ResourceDefinition(resource.Metadata, ResolverSpecSpec) me
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ResolverSpecSpec](ResolverSpecType, &ResolverSpec{})
+	if err != nil {
+		panic(err)
 	}
 }

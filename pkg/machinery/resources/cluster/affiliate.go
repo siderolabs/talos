@@ -7,10 +7,12 @@ package cluster
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 //go:generate deep-copy -type AffiliateSpec -type ConfigSpec -type IdentitySpec -type MemberSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
@@ -24,11 +26,13 @@ const AffiliateType = resource.Type("Affiliates.cluster.talos.dev")
 type Affiliate = typed.Resource[AffiliateSpec, AffiliateRD]
 
 // KubeSpanAffiliateSpec describes additional information specific for the KubeSpan.
+//
+//gotagsrewrite:gen
 type KubeSpanAffiliateSpec struct {
-	PublicKey           string             `yaml:"publicKey"`
-	Address             netaddr.IP         `yaml:"address"`
-	AdditionalAddresses []netaddr.IPPrefix `yaml:"additionalAddresses"`
-	Endpoints           []netaddr.IPPort   `yaml:"endpoints"`
+	PublicKey           string             `yaml:"publicKey" protobuf:"1"`
+	Address             netaddr.IP         `yaml:"address" protobuf:"2"`
+	AdditionalAddresses []netaddr.IPPrefix `yaml:"additionalAddresses" protobuf:"3"`
+	Endpoints           []netaddr.IPPort   `yaml:"endpoints" protobuf:"4"`
 }
 
 // NewAffiliate initializes the Affiliate resource.
@@ -148,5 +152,14 @@ func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 		if !found {
 			spec.KubeSpan.Endpoints = append(spec.KubeSpan.Endpoints, addr)
 		}
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[AffiliateSpec](AffiliateType, &Affiliate{})
+	if err != nil {
+		panic(err)
 	}
 }

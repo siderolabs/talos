@@ -7,8 +7,11 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // NodeAddressFilterType is type of NodeAddressFilter resource.
@@ -54,5 +57,14 @@ func (NodeAddressFilterRD) ResourceDefinition(resource.Metadata, NodeAddressFilt
 				JSONPath: `{.excludeSubnets}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[NodeAddressFilterSpec](NodeAddressFilterType, &NodeAddressFilter{})
+	if err != nil {
+		panic(err)
 	}
 }

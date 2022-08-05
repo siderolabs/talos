@@ -10,7 +10,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ExtraManifestsConfigType is type of ExtraManifestsConfig resource.
@@ -53,5 +56,14 @@ func (ExtraManifestsConfigRD) ResourceDefinition(_ resource.Metadata, _ ExtraMan
 	return meta.ResourceDefinitionSpec{
 		Type:             ExtraManifestsConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ExtraManifestsConfigSpec](ExtraManifestsConfigType, &ExtraManifestsConfig{})
+	if err != nil {
+		panic(err)
 	}
 }

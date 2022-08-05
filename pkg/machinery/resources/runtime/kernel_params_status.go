@@ -7,7 +7,10 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // KernelParamStatusType is type of KernelParam resource.
@@ -56,5 +59,14 @@ func (KernelParamStatusRD) ResourceDefinition(resource.Metadata, KernelParamStat
 				JSONPath: `{.unsupported}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[KernelParamStatusSpec](KernelParamStatusType, &KernelParamStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

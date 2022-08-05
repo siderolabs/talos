@@ -7,7 +7,10 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // TimeServerStatusType is type of TimeServerStatus resource.
@@ -46,5 +49,14 @@ func (TimeServerStatusRD) ResourceDefinition(resource.Metadata, TimeServerStatus
 				JSONPath: "{.timeServers}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[TimeServerStatusSpec](TimeServerStatusType, &TimeServerStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

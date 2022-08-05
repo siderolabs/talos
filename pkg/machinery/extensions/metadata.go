@@ -22,11 +22,15 @@ type Metadata struct {
 }
 
 // Compatibility describes extension compatibility.
+//
+//gotagsrewrite:gen
 type Compatibility struct {
-	Talos Constraint `yaml:"talos"`
+	Talos Constraint `yaml:"talos" protobuf:"1"`
 }
 
 // Constraint describes compatibility constraint.
+//
+//gotagsrewrite:gen
 type Constraint struct {
-	Version string `yaml:"version"`
+	Version string `yaml:"version" protobuf:"1"`
 }

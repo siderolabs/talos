@@ -7,7 +7,10 @@ package perf
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 //nolint:lll
@@ -79,5 +82,14 @@ func (CPURD) ResourceDefinition(resource.Metadata, CPUSpec) meta.ResourceDefinit
 				JSONPath: "{.cpuTotal.system}",
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[CPUSpec](CPUType, &CPU{})
+	if err != nil {
+		panic(err)
 	}
 }

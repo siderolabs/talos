@@ -9,8 +9,11 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // PeerStatusType is type of PeerStatus resource.
@@ -80,5 +83,14 @@ func (PeerStatusRD) ResourceDefinition(resource.Metadata, PeerStatusSpec) meta.R
 				JSONPath: `{.transmitBytes}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[PeerStatusSpec](PeerStatusType, &PeerStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

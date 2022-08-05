@@ -7,9 +7,11 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // HardwareAddrType is type of HardwareAddr resource.
@@ -50,5 +52,14 @@ func (HardwareAddrRD) ResourceDefinition(resource.Metadata, HardwareAddrSpec) me
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[HardwareAddrSpec](HardwareAddrType, &HardwareAddr{})
+	if err != nil {
+		panic(err)
 	}
 }

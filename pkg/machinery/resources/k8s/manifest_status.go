@@ -7,7 +7,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ManifestStatusType is type of ManifestStatus resource.
@@ -43,5 +46,14 @@ func (ManifestStatusRD) ResourceDefinition(resource.Metadata, ManifestStatusSpec
 		Type:             ManifestStatusType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: ControlPlaneNamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ManifestStatusSpec](ManifestStatusType, &ManifestStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

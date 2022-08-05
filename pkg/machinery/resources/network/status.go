@@ -7,7 +7,10 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // StatusType is type of Status resource.
@@ -47,5 +50,14 @@ func (StatusRD) ResourceDefinition(resource.Metadata, StatusSpec) meta.ResourceD
 		Aliases:          []resource.Type{"netstatus", "netstatuses"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[StatusSpec](StatusType, &Status{})
+	if err != nil {
+		panic(err)
 	}
 }

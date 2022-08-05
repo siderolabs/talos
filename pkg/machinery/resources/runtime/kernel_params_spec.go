@@ -7,8 +7,10 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -82,5 +84,19 @@ func (KernelParamDefaultSpecRD) ResourceDefinition(resource.Metadata, KernelPara
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[KernelParamSpecSpec](KernelParamSpecType, &KernelParamSpec{})
+	if err != nil {
+		panic(err)
+	}
+
+	err = protobuf.RegisterDynamic[KernelParamDefaultSpecSpec](KernelParamDefaultSpecType, &KernelParamDefaultSpec{})
+	if err != nil {
+		panic(err)
 	}
 }

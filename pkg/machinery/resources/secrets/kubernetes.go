@@ -7,8 +7,11 @@ package secrets
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // KubernetesType is type of Kubernetes resource.
@@ -54,5 +57,14 @@ func (KubernetesRD) ResourceDefinition(resource.Metadata, KubernetesCertsSpec) m
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[KubernetesCertsSpec](KubernetesType, &Kubernetes{})
+	if err != nil {
+		panic(err)
 	}
 }

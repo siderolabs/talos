@@ -7,10 +7,12 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // AddressStatusType is type of AddressStatus resource.
@@ -62,5 +64,14 @@ func (AddressStatusRD) ResourceDefinition(resource.Metadata, AddressStatusSpec) 
 				JSONPath: `{.linkName}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[AddressStatusSpec](AddressStatusType, &AddressStatus{})
+	if err != nil {
+		panic(err)
 	}
 }

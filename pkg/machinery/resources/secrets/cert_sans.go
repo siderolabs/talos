@@ -10,10 +10,12 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // CertSANType is type of CertSAN resource.
@@ -132,4 +134,13 @@ func (spec *CertSANSpec) StdIPs() []net.IP {
 func (spec *CertSANSpec) Sort() {
 	sort.Strings(spec.DNSNames)
 	sort.Slice(spec.IPs, func(i, j int) bool { return spec.IPs[i].Compare(spec.IPs[j]) < 0 })
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[CertSANSpec](CertSANType, &CertSAN{})
+	if err != nil {
+		panic(err)
+	}
 }

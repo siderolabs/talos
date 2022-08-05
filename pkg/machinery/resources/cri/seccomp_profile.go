@@ -7,7 +7,10 @@ package cri
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 //nolint:lll
@@ -45,5 +48,14 @@ func (SeccompProfileRD) ResourceDefinition(resource.Metadata, SeccompProfileSpec
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[SeccompProfileSpec](SeccompProfileType, &SeccompProfile{})
+	if err != nil {
+		panic(err)
 	}
 }

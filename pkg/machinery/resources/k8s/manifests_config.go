@@ -10,7 +10,10 @@ package k8s
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // BootstrapManifestsConfigType is type of BootstrapManifestsConfig resource.
@@ -65,5 +68,14 @@ func (BootstrapManifestsConfigRD) ResourceDefinition(_ resource.Metadata, _ Boot
 	return meta.ResourceDefinitionSpec{
 		Type:             BootstrapManifestsConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[BootstrapManifestsConfigSpec](BootstrapManifestsConfigType, &BootstrapManifestsConfig{})
+	if err != nil {
+		panic(err)
 	}
 }

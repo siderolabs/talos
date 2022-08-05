@@ -7,8 +7,11 @@ package secrets
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // EtcdType is type of Etcd resource.
@@ -48,5 +51,14 @@ func (EtcdRD) ResourceDefinition(resource.Metadata, EtcdCertsSpec) meta.Resource
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		Sensitivity:      meta.Sensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[EtcdCertsSpec](EtcdType, &Etcd{})
+	if err != nil {
+		panic(err)
 	}
 }

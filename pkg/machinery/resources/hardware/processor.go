@@ -7,7 +7,10 @@ package hardware
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // ProcessorType is type of Processor resource.
@@ -74,5 +77,14 @@ func (c ProcessorRD) ResourceDefinition(resource.Metadata, ProcessorSpec) meta.R
 				JSONPath: `{.threadCount}`,
 			},
 		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[ProcessorSpec](ProcessorType, &Processor{})
+	if err != nil {
+		panic(err)
 	}
 }

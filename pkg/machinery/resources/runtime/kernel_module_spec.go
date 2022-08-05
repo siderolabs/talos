@@ -7,7 +7,10 @@ package runtime
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // KernelModuleSpecType is type of KernelModuleSpec resource.
@@ -41,5 +44,14 @@ func (KernelModuleSpecRD) ResourceDefinition(resource.Metadata, KernelModuleSpec
 		Type:             KernelModuleSpecType,
 		Aliases:          []resource.Type{"modules"},
 		DefaultNamespace: NamespaceName,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[KernelModuleSpecSpec](KernelModuleSpecType, &KernelModuleSpec{})
+	if err != nil {
+		panic(err)
 	}
 }
