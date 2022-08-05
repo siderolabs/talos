@@ -14,7 +14,7 @@ NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.2.0-alpha.0-6-gcd35510
-PKGS ?= v1.2.0-alpha.0-25-g6feece4
+PKGS ?= v1.2.0-alpha.0-26-g360d596
 EXTRAS ?= v1.2.0-alpha.0-2-gda35a63
 GO_VERSION ?= 1.19
 GOIMPORTS_VERSION ?= v0.1.11
