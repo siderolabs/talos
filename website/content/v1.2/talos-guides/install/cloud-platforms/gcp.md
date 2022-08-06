@@ -145,7 +145,7 @@ for i in $( seq 1 3 ); do
 done
 
 # Add control plane nodes to instance group
-for i in $( seq 0 1 3 ); do
+for i in $( seq 1 3 ); do
   gcloud compute instance-groups unmanaged add-instances talos-ig \
       --zone $REGION-b \
       --instances talos-controlplane-$i
