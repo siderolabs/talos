@@ -20,7 +20,7 @@ Theila is published as a single static binary compiled for various platforms and
 You can download the correct binary for your system from the [releases](https://github.com/siderolabs/theila/releases) page, or use the following commands in your terminal.
 
 ```bash
-curl -Lo /usr/local/bin/theila https://github.com/siderolabs/thelia/releases/download/{{< thelia_release >}}/thelia-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
+curl -Lo /usr/local/bin/theila https://github.com/siderolabs/theila/releases/download/{{< theila_release >}}/theila-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
 chmod +x /usr/local/bin/theila
 ```
 
