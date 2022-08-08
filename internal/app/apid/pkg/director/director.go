@@ -53,14 +53,32 @@ func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mod
 		return proxy.One2One, []proxy.Backend{r.localBackend}, nil
 	}
 
-	var targets []string
+	nodes, okNodes := md["nodes"]
+	node, okNode := md["node"]
 
-	if targets, ok = md["nodes"]; !ok {
+	if okNode && len(node) != 1 {
+		return proxy.One2One, nil, status.Error(codes.InvalidArgument, "node metadata must be single-valued")
+	}
+
+	switch {
+	case okNodes:
+		return r.aggregateDirector(nodes)
+	case okNode:
+		return r.singleDirector(node[0])
+	default:
 		// send directly to local node, skips another layer of proxying
 		return proxy.One2One, []proxy.Backend{r.localBackend}, nil
 	}
+}
 
-	return r.aggregateDirector(targets)
+// singleDirector sends request to a single instance in one-2-one mode.
+func (r *Router) singleDirector(target string) (proxy.Mode, []proxy.Backend, error) {
+	backend, err := r.remoteBackendFactory(target)
+	if err != nil {
+		return proxy.One2One, nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return proxy.One2One, []proxy.Backend{backend}, nil
 }
 
 // aggregateDirector sends request across set of remote instances and aggregates results.

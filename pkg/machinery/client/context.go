@@ -10,13 +10,30 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// WithNodes wraps the context with metadata to send request to set of nodes.
+// WithNodes wraps the context with metadata to send request to a set of nodes.
+//
+// Responses from all nodes are aggregated by the `apid` service and sent back as a single response.
 func WithNodes(ctx context.Context, nodes ...string) context.Context {
 	md, _ := metadata.FromOutgoingContext(ctx)
 
 	// overwrite any previous nodes in the context metadata with new value
 	md = md.Copy()
+	md.Delete("node")
 	md.Set("nodes", nodes...)
+
+	return metadata.NewOutgoingContext(ctx, md)
+}
+
+// WithNode wraps the context with metadata to send request to a single node.
+//
+// Request will be proxied by the endpoint to the specified node without any further processing.
+func WithNode(ctx context.Context, node string) context.Context {
+	md, _ := metadata.FromOutgoingContext(ctx)
+
+	// overwrite any previous nodes in the context metadata with new value
+	md = md.Copy()
+	md.Delete("nodes")
+	md.Set("node", node)
 
 	return metadata.NewOutgoingContext(ctx, md)
 }

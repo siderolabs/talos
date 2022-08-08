@@ -11,7 +11,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/grpc-proxy/proxy"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
 )
@@ -60,6 +62,23 @@ func (suite *DirectorSuite) TestDirectorAggregate() {
 	suite.Assert().Len(backends, 1)
 	suite.Assert().Equal("127.0.0.1", backends[0].(*mockBackend).target)
 	suite.Assert().NoError(err)
+}
+
+func (suite *DirectorSuite) TestDirectorSingleNode() {
+	ctx := context.Background()
+
+	md := metadata.New(nil)
+	md.Set("node", "127.0.0.1")
+	mode, backends, err := suite.router.Director(metadata.NewIncomingContext(ctx, md), "/service.Service/method")
+	suite.Assert().Equal(proxy.One2One, mode)
+	suite.Assert().Len(backends, 1)
+	suite.Assert().Equal("127.0.0.1", backends[0].(*mockBackend).target)
+	suite.Assert().NoError(err)
+
+	md = metadata.New(nil)
+	md.Set("node", "127.0.0.1", "127.0.0.2")
+	_, _, err = suite.router.Director(metadata.NewIncomingContext(ctx, md), "/service.Service/method")
+	suite.Assert().Equal(codes.InvalidArgument, status.Code(err))
 }
 
 func TestDirectorSuite(t *testing.T) {

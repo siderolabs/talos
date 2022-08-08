@@ -66,6 +66,7 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 
 	delete(md, ":authority")
 	delete(md, "nodes")
+	delete(md, "node")
 
 	outCtx := metadata.NewOutgoingContext(ctx, md)
 
