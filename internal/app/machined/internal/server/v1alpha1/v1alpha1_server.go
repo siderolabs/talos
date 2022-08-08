@@ -143,9 +143,13 @@ func (s *Server) checkControlplane(apiName string) error {
 func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
+	// wrap resources with access filter
+	resourceState := s.Controller.Runtime().State().V1Alpha2().Resources()
+	resourceState = state.WrapCore(state.Filter(resourceState, resources.AccessPolicy(resourceState)))
+
 	machine.RegisterMachineServiceServer(obj, s)
 	cluster.RegisterClusterServiceServer(obj, s)
-	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: s.Controller.Runtime().State().V1Alpha2().Resources()})
+	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: resourceState})
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
 	timeapi.RegisterTimeServiceServer(obj, &TimeServer{ConfigProvider: s.Controller.Runtime()})
