@@ -14,19 +14,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/go-retry/retry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
-	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -462,30 +462,15 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 
 	node := nodes[0]
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 
 	getMachineConfig := func(ctx context.Context) (config.Provider, error) {
-		resp, err := suite.Client.Resources.Get(ctx, mc.NamespaceName, "mc", mc.V1Alpha1ID)
+		cfg, err := safe.StateGet[*mc.MachineConfig](ctx, suite.Client.COSI, resource.NewMetadata(mc.NamespaceName, mc.MachineConfigType, mc.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			return nil, err
 		}
 
-		var body []byte
-
-		for _, res := range resp {
-			if res.Resource == nil {
-				continue
-			}
-
-			body, err = yaml.Marshal(res.Resource.Spec())
-			if err != nil {
-				return nil, err
-			}
-
-			break
-		}
-
-		return configloader.NewFromBytes(body)
+		return cfg.Config(), nil
 	}
 
 	provider, err := getMachineConfig(nodeCtx)

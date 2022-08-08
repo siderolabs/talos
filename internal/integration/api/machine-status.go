@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"gopkg.in/yaml.v3"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -57,52 +57,41 @@ func (suite *MachineStatusSuite) TestMachineStatusReady() {
 
 //nolint:gocyclo
 func (suite *MachineStatusSuite) waitMachineStatusReady(node string) error {
-	ctx, cancel := context.WithTimeout(client.WithNodes(suite.ctx, node), 30*time.Second)
+	ctx, cancel := context.WithTimeout(client.WithNode(suite.ctx, node), 30*time.Second)
 	defer cancel()
 
-	watchClient, err := suite.Client.Resources.Watch(
+	watchCh := make(chan safe.WrappedStateEvent[*runtime.MachineStatus])
+
+	if err := safe.StateWatch(
 		ctx,
-		runtime.NamespaceName,
-		runtime.MachineStatusType,
-		runtime.MachineStatusID)
-	if err != nil {
+		suite.Client.COSI,
+		resource.NewMetadata(runtime.NamespaceName, runtime.MachineStatusType, runtime.MachineStatusID, resource.VersionUndefined),
+		watchCh,
+	); err != nil {
 		return err
 	}
 
 	for {
-		msg, err := watchClient.Recv()
-		if err != nil {
-			if client.StatusCode(err) == codes.DeadlineExceeded {
-				return fmt.Errorf("%s: timed out waiting for MachineStatus to be ready", node)
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("%s: timed out waiting for MachineStatus to be ready", node)
+		case event := <-watchCh:
+			machineStatus, err := event.Resource()
+			if err != nil {
+				return err
 			}
 
-			return fmt.Errorf("%s: %w", node, err)
+			if machineStatus.TypedSpec().Stage == runtime.MachineStageRunning && machineStatus.TypedSpec().Status.Ready {
+				return nil
+			}
+
+			suite.T().Logf(
+				"%s: MachineStatus stage %s ready %v, unmetConditions %v",
+				node, machineStatus.TypedSpec().Stage,
+				machineStatus.TypedSpec().Status.Ready,
+				machineStatus.TypedSpec().Status.UnmetConditions,
+			)
 		}
-
-		if msg.Metadata.GetError() != "" {
-			return fmt.Errorf("%s: %s", msg.Metadata.GetHostname(), msg.Metadata.GetError())
-		}
-
-		if msg.Resource == nil {
-			continue
-		}
-
-		b, err := yaml.Marshal(msg.Resource.Spec())
-		if err != nil {
-			return err
-		}
-
-		var spec runtime.MachineStatusSpec
-
-		if err = yaml.Unmarshal(b, &spec); err != nil {
-			return err
-		}
-
-		if spec.Stage == runtime.MachineStageRunning && spec.Status.Ready {
-			return nil
-		}
-
-		suite.T().Logf("%s: MachineStatus stage %s ready %v, unmetConditions %v", node, spec.Stage, spec.Status.Ready, spec.Status.UnmetConditions)
 	}
 }
 

@@ -159,13 +159,13 @@ func (o KubeletSpecSpec) DeepCopy() KubeletSpecSpec {
 func (o ManifestSpec) DeepCopy() ManifestSpec {
 	var cp ManifestSpec = o
 	if o.Items != nil {
-		cp.Items = make([]map[string]interface{}, len(o.Items))
+		cp.Items = make([]SingleManifest, len(o.Items))
 		copy(cp.Items, o.Items)
 		for i2 := range o.Items {
-			if o.Items[i2] != nil {
-				cp.Items[i2] = make(map[string]interface{}, len(o.Items[i2]))
-				for k3, v3 := range o.Items[i2] {
-					cp.Items[i2][k3] = v3
+			if o.Items[i2].Object != nil {
+				cp.Items[i2].Object = make(map[string]interface{}, len(o.Items[i2].Object))
+				for k4, v4 := range o.Items[i2].Object {
+					cp.Items[i2].Object[k4] = v4
 				}
 			}
 		}

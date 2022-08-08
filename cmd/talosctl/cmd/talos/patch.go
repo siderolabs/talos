@@ -8,12 +8,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
-	yaml "gopkg.in/yaml.v3"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
@@ -33,17 +32,18 @@ var patchCmdFlags struct {
 	configTryTimeout time.Duration
 }
 
-func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Context, client.ResourceResponse) error {
-	return func(ctx context.Context, msg client.ResourceResponse) error {
-		if msg.Resource == nil {
-			if msg.Definition.Metadata().ID() != strings.ToLower(config.MachineConfigType) {
-				return fmt.Errorf("only the machineconfig resource can be edited")
-			}
-
-			return nil
+func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Context, string, resource.Resource, error) error {
+	return func(ctx context.Context, node string, r resource.Resource, callError error) error {
+		if callError != nil {
+			return fmt.Errorf("%s: %w", node, callError)
 		}
 
-		body, err := yaml.Marshal(msg.Resource.Spec())
+		mc, ok := r.(*config.MachineConfig)
+		if !ok {
+			return fmt.Errorf("%s: unsupported resource type: %T", node, r)
+		}
+
+		body, err := mc.Config().Bytes()
 		if err != nil {
 			return err
 		}
@@ -77,9 +77,9 @@ func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Conte
 		}
 
 		fmt.Printf("patched %s/%s at the node %s\n",
-			msg.Resource.Metadata().Type(),
-			msg.Resource.Metadata().ID(),
-			msg.Metadata.GetHostname(),
+			r.Metadata().Type(),
+			r.Metadata().ID(),
+			node,
 		)
 
 		helpers.PrintApplyResults(resp)
@@ -110,7 +110,7 @@ var patchCmd = &cobra.Command{
 
 			for _, node := range Nodes {
 				nodeCtx := client.WithNodes(ctx, node)
-				if err := helpers.ForEachResource(nodeCtx, c, patchFn(c, patches), patchCmdFlags.namespace, args...); err != nil {
+				if err := helpers.ForEachResource(nodeCtx, c, nil, patchFn(c, patches), patchCmdFlags.namespace, args...); err != nil {
 					return err
 				}
 			}

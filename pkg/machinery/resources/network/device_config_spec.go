@@ -7,10 +7,14 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"gopkg.in/yaml.v3"
 
+	networkpb "github.com/talos-systems/talos/pkg/machinery/api/resource/network"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // DeviceConfigSpecType is type of DeviceConfigSpec resource.
@@ -56,4 +60,41 @@ func (DeviceConfigSpecRD) ResourceDefinition(resource.Metadata, DeviceConfigSpec
 	}
 }
 
-// TODO(DmitriyMV): decide how to register DeviceConfigSpecSpec
+// MarshalProto implements ProtoMarshaler.
+func (spec *DeviceConfigSpecSpec) MarshalProto() ([]byte, error) {
+	yamlBytes, err := yaml.Marshal(spec.Device)
+	if err != nil {
+		return nil, err
+	}
+
+	protoSpec := networkpb.DeviceConfigSpecSpec{
+		YamlMarshalled: yamlBytes,
+	}
+
+	return proto.Marshal(&protoSpec)
+}
+
+// UnmarshalProto implements protobuf.ResourceUnmarshaler.
+func (spec *DeviceConfigSpecSpec) UnmarshalProto(protoBytes []byte) error {
+	protoSpec := networkpb.DeviceConfigSpecSpec{}
+
+	if err := proto.Unmarshal(protoBytes, &protoSpec); err != nil {
+		return err
+	}
+
+	var dev v1alpha1.Device
+
+	if err := yaml.Unmarshal(protoSpec.YamlMarshalled, &dev); err != nil {
+		return err
+	}
+
+	spec.Device = &dev
+
+	return nil
+}
+
+func init() {
+	if err := protobuf.RegisterResource(DeviceConfigSpecType, &DeviceConfigSpec{}); err != nil {
+		panic(err)
+	}
+}

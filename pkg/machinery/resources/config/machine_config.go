@@ -7,9 +7,13 @@ package config
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 
+	configpb "github.com/talos-systems/talos/pkg/machinery/api/resource/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // MachineConfigType is type of Service resource.
@@ -87,7 +91,48 @@ func (r *MachineConfig) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
+// MarshalProto implements ProtoMarshaler.
+func (s *v1alpha1Spec) MarshalProto() ([]byte, error) {
+	yamlBytes, err := s.cfg.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	protoSpec := configpb.MachineConfigSpec{
+		YamlMarshalled: yamlBytes,
+	}
+
+	return proto.Marshal(&protoSpec)
+}
+
+// UnmarshalProto implements protobuf.ResourceUnmarshaler.
+func (r *MachineConfig) UnmarshalProto(md *resource.Metadata, protoBytes []byte) error {
+	protoSpec := configpb.MachineConfigSpec{}
+
+	if err := proto.Unmarshal(protoBytes, &protoSpec); err != nil {
+		return err
+	}
+
+	cfg, err := configloader.NewFromBytes(protoSpec.YamlMarshalled)
+	if err != nil {
+		return err
+	}
+
+	r.md = *md
+	r.spec = &v1alpha1Spec{
+		cfg: cfg,
+	}
+
+	return nil
+}
+
 // Config returns config.Provider.
 func (r *MachineConfig) Config() config.Provider {
 	return r.spec.cfg
+}
+
+func init() {
+	if err := protobuf.RegisterResource(MachineConfigType, &MachineConfig{}); err != nil {
+		panic(err)
+	}
 }

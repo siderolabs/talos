@@ -15,7 +15,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/emicklei/dot"
-	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
@@ -84,6 +84,15 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 	if withResources {
 		resources := map[string][]resource.Resource{}
 
+		md, _ := metadata.FromOutgoingContext(ctx)
+		nodes := md["nodes"]
+
+		nodeCtx := ctx
+
+		if len(nodes) > 0 {
+			nodeCtx = client.WithNode(ctx, nodes[0])
+		}
+
 		for _, msg := range resp.GetMessages() {
 			for _, edge := range msg.GetEdges() {
 				resourceType := resourceTypeID(edge)
@@ -92,25 +101,20 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 					continue
 				}
 
-				listClient, err := c.Resources.List(ctx, edge.GetResourceNamespace(), edge.GetResourceType())
+				namespace := edge.GetResourceNamespace()
+
+				rd, err := c.ResolveResourceKind(nodeCtx, &namespace, edge.GetResourceType())
 				if err != nil {
-					return fmt.Errorf("error listing resources: %w", err)
+					return err
 				}
 
-				for {
-					resp, err := listClient.Recv()
-					if err != nil {
-						if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-							break
-						}
-
-						return fmt.Errorf("error listing resources: %w", err)
-					}
-
-					if resp.Resource != nil {
-						resources[resourceType] = append(resources[resourceType], resp.Resource)
-					}
+				items, err := c.COSI.List(nodeCtx, resource.NewMetadata(namespace, rd.TypedSpec().Type, "", resource.VersionUndefined))
+				if err != nil {
+					// ignore errors here
+					continue
 				}
+
+				resources[resourceType] = append(resources[resourceType], items.Items...)
 			}
 		}
 

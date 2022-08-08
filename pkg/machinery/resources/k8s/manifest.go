@@ -23,7 +23,14 @@ type Manifest = typed.Resource[ManifestSpec, ManifestRD]
 //
 //gotagsrewrite:gen
 type ManifestSpec struct {
-	Items []map[string]interface{} `protobuf:"1"`
+	Items []SingleManifest `protobuf:"1" yaml:"items"`
+}
+
+// SingleManifest is a single manifest.
+//
+//gotagsrewrite:gen
+type SingleManifest struct {
+	Object map[string]interface{} `protobuf:"1" yaml:",inline"`
 }
 
 // MarshalYAML implements yaml.Marshaler.

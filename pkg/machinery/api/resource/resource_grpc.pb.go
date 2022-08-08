@@ -22,6 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 // ResourceServiceClient is the client API for ResourceService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Deprecated: Do not use.
 type ResourceServiceClient interface {
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (ResourceService_ListClient, error)
@@ -32,6 +34,7 @@ type resourceServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
+// Deprecated: Do not use.
 func NewResourceServiceClient(cc grpc.ClientConnInterface) ResourceServiceClient {
 	return &resourceServiceClient{cc}
 }
@@ -112,6 +115,8 @@ func (x *resourceServiceWatchClient) Recv() (*WatchResponse, error) {
 // ResourceServiceServer is the server API for ResourceService service.
 // All implementations must embed UnimplementedResourceServiceServer
 // for forward compatibility
+//
+// Deprecated: Do not use.
 type ResourceServiceServer interface {
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	List(*ListRequest, ResourceService_ListServer) error
@@ -141,6 +146,7 @@ type UnsafeResourceServiceServer interface {
 	mustEmbedUnimplementedResourceServiceServer()
 }
 
+// Deprecated: Do not use.
 func RegisterResourceServiceServer(s grpc.ServiceRegistrar, srv ResourceServiceServer) {
 	s.RegisterService(&ResourceService_ServiceDesc, srv)
 }

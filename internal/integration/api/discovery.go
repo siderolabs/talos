@@ -10,13 +10,12 @@ package api
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/netip"
 	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"gopkg.in/yaml.v3"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/integration/base"
@@ -74,7 +73,7 @@ func (suite *DiscoverySuite) TestMembers() {
 	expectedTalosVersion := fmt.Sprintf("Talos (%s)", suite.Version)
 
 	for _, node := range nodes {
-		nodeCtx := client.WithNodes(suite.ctx, node.InternalIP.String())
+		nodeCtx := client.WithNode(suite.ctx, node.InternalIP.String())
 
 		members := suite.getMembers(nodeCtx)
 
@@ -170,7 +169,7 @@ func (suite *DiscoverySuite) TestRegistries() {
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 
 	for _, node := range nodes {
-		nodeCtx := client.WithNodes(suite.ctx, node)
+		nodeCtx := client.WithNode(suite.ctx, node)
 
 		members := suite.getMembers(nodeCtx)
 		localIdentity := suite.getNodeIdentity(nodeCtx)
@@ -233,7 +232,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	suite.ClearConnectionRefused(suite.ctx, node)
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
@@ -244,7 +243,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 
 	for _, node := range nodes {
-		nodeCtx := client.WithNodes(suite.ctx, node)
+		nodeCtx := client.WithNode(suite.ctx, node)
 
 		peerSpecs := suite.getKubeSpanPeerSpecs(nodeCtx)
 		suite.Assert().Len(peerSpecs, len(nodes)-1)
@@ -265,51 +264,21 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.Member {
 	var result []*cluster.Member
 
-	memberList, err := suite.Client.Resources.List(nodeCtx, cluster.NamespaceName, cluster.MemberType)
+	items, err := safe.StateList[*cluster.Member](nodeCtx, suite.Client.COSI, resource.NewMetadata(cluster.NamespaceName, cluster.MemberType, "", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
-	for {
-		resp, err := memberList.Recv()
-		if err == io.EOF {
-			break
-		}
+	it := safe.IteratorFromList(items)
 
-		suite.Require().NoError(err)
-
-		if resp.Resource == nil {
-			continue
-		}
-
-		// TODO: this is hackery to decode back into Member resource
-		//       this should be fixed once we introduce protobuf properly
-		b, err := yaml.Marshal(resp.Resource.Spec())
-		suite.Require().NoError(err)
-
-		member := cluster.NewMember(resp.Resource.Metadata().Namespace(), resp.Resource.Metadata().ID())
-
-		suite.Require().NoError(yaml.Unmarshal(b, member.TypedSpec()))
-
-		result = append(result, member)
+	for it.Next() {
+		result = append(result, it.Value())
 	}
 
 	return result
 }
 
 func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.Identity {
-	list, err := suite.Client.Resources.Get(nodeCtx, cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity)
+	identity, err := safe.StateGet[*cluster.Identity](nodeCtx, suite.Client.COSI, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
 	suite.Require().NoError(err)
-	suite.Require().Len(list, 1)
-
-	resp := list[0]
-
-	// TODO: this is hackery to decode back into Member resource
-	//       this should be fixed once we introduce protobuf properly
-	b, err := yaml.Marshal(resp.Resource.Spec())
-	suite.Require().NoError(err)
-
-	identity := cluster.NewIdentity(resp.Resource.Metadata().Namespace(), resp.Resource.Metadata().ID())
-
-	suite.Require().NoError(yaml.Unmarshal(b, identity.TypedSpec()))
 
 	return identity
 }
@@ -318,31 +287,13 @@ func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.I
 func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace resource.Namespace) []*cluster.Affiliate {
 	var result []*cluster.Affiliate
 
-	affiliateList, err := suite.Client.Resources.List(nodeCtx, namespace, cluster.AffiliateType)
+	items, err := safe.StateList[*cluster.Affiliate](nodeCtx, suite.Client.COSI, resource.NewMetadata(namespace, cluster.AffiliateType, "", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
-	for {
-		resp, err := affiliateList.Recv()
-		if err == io.EOF {
-			break
-		}
+	it := safe.IteratorFromList(items)
 
-		suite.Require().NoError(err)
-
-		if resp.Resource == nil {
-			continue
-		}
-
-		// TODO: this is hackery to decode back into Affiliate resource
-		//       this should be fixed once we introduce protobuf properly
-		b, err := yaml.Marshal(resp.Resource.Spec())
-		suite.Require().NoError(err)
-
-		affiliate := cluster.NewAffiliate(resp.Resource.Metadata().Namespace(), resp.Resource.Metadata().ID())
-
-		suite.Require().NoError(yaml.Unmarshal(b, affiliate.TypedSpec()))
-
-		result = append(result, affiliate)
+	for it.Next() {
+		result = append(result, it.Value())
 	}
 
 	return result
@@ -352,31 +303,13 @@ func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace re
 func (suite *DiscoverySuite) getKubeSpanPeerSpecs(nodeCtx context.Context) []*kubespan.PeerSpec {
 	var result []*kubespan.PeerSpec
 
-	peerList, err := suite.Client.Resources.List(nodeCtx, kubespan.NamespaceName, kubespan.PeerSpecType)
+	items, err := safe.StateList[*kubespan.PeerSpec](nodeCtx, suite.Client.COSI, resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, "", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
-	for {
-		resp, err := peerList.Recv()
-		if err == io.EOF {
-			break
-		}
+	it := safe.IteratorFromList(items)
 
-		suite.Require().NoError(err)
-
-		if resp.Resource == nil {
-			continue
-		}
-
-		// TODO: this is hackery to decode back into KubeSpanPeerSpec resource
-		//       this should be fixed once we introduce protobuf properly
-		b, err := yaml.Marshal(resp.Resource.Spec())
-		suite.Require().NoError(err)
-
-		peerSpec := kubespan.NewPeerSpec(resp.Resource.Metadata().Namespace(), resp.Resource.Metadata().ID())
-
-		suite.Require().NoError(yaml.Unmarshal(b, peerSpec.TypedSpec()))
-
-		result = append(result, peerSpec)
+	for it.Next() {
+		result = append(result, it.Value())
 	}
 
 	return result
@@ -386,31 +319,13 @@ func (suite *DiscoverySuite) getKubeSpanPeerSpecs(nodeCtx context.Context) []*ku
 func (suite *DiscoverySuite) getKubeSpanPeerStatuses(nodeCtx context.Context) []*kubespan.PeerStatus {
 	var result []*kubespan.PeerStatus
 
-	peerList, err := suite.Client.Resources.List(nodeCtx, kubespan.NamespaceName, kubespan.PeerStatusType)
+	items, err := safe.StateList[*kubespan.PeerStatus](nodeCtx, suite.Client.COSI, resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerStatusType, "", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
-	for {
-		resp, err := peerList.Recv()
-		if err == io.EOF {
-			break
-		}
+	it := safe.IteratorFromList(items)
 
-		suite.Require().NoError(err)
-
-		if resp.Resource == nil {
-			continue
-		}
-
-		// TODO: this is hackery to decode back into KubeSpanPeerStatus resource
-		//       this should be fixed once we introduce protobuf properly
-		b, err := yaml.Marshal(resp.Resource.Spec())
-		suite.Require().NoError(err)
-
-		peerStatus := kubespan.NewPeerStatus(resp.Resource.Metadata().Namespace(), resp.Resource.Metadata().ID())
-
-		suite.Require().NoError(yaml.Unmarshal(b, peerStatus.TypedSpec()))
-
-		result = append(result, peerStatus)
+	for it.Next() {
+		result = append(result, it.Value())
 	}
 
 	return result

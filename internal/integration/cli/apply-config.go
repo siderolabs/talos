@@ -11,9 +11,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"time"
+
+	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // ApplyConfigSuite verifies dmesg command.
@@ -29,12 +32,13 @@ func (suite *ApplyConfigSuite) SuiteName() string {
 // TestApplyWithPatch verifies that .
 func (suite *ApplyConfigSuite) TestApplyWithPatch() {
 	patch := `---
-cluster:
-  apiServer:
-    extraArgs:
-      logging-format: text`
+machine:
+  network:
+    interfaces:
+      - interface: dummy-ap-patch
+        dummy: true`
 
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP()
 
 	patchPath := filepath.Join(suite.T().TempDir(), "patch.yaml")
 
@@ -47,6 +51,11 @@ cluster:
 	suite.Require().NoError(os.WriteFile(configPath, []byte(data), 0o777))
 
 	suite.RunCLI([]string{"apply-config", "--nodes", node, "--config-patch", fmt.Sprintf("@%s", patchPath), "-f", configPath})
+
+	suite.RunCLI([]string{"get", "--nodes", node, "links"},
+		base.StdoutShouldMatch(regexp.MustCompile("dummy-ap-patch")),
+		base.WithRetry(retry.Constant(15*time.Second, retry.WithUnits(time.Second))),
+	)
 }
 
 func init() {

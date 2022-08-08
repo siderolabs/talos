@@ -11,7 +11,9 @@ import (
 	"net"
 	"strings"
 
+	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -61,7 +63,8 @@ func (s *Server) Register(obj *grpc.Server) {
 
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
 	machine.RegisterMachineServiceServer(obj, s)
-	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: resourceState})
+	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: resourceState}) //nolint:staticcheck
+	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 }
 
 // ApplyConfiguration implements machine.MachineService.

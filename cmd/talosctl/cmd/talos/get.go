@@ -7,14 +7,15 @@ package talos
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/codes"
-	yaml "gopkg.in/yaml.v3"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/output"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
@@ -83,173 +84,143 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 
 		defer out.Flush() //nolint:errcheck
 
-		var headerWritten bool
-
 		if getCmdFlags.watch { // get -w <type> OR get -w <type> <id>
-			watchClient, err := c.Resources.Watch(ctx, getCmdFlags.namespace, resourceType, resourceID)
+			md, _ := metadata.FromOutgoingContext(ctx)
+			nodes := md.Get("nodes")
+
+			if len(nodes) == 0 {
+				return nil
+			}
+
+			// fetch the RD from the first node (it doesn't matter which one to use, so we'll use the first one)
+			rd, err := c.ResolveResourceKind(client.WithNode(ctx, nodes[0]), &getCmdFlags.namespace, resourceType)
 			if err != nil {
 				return err
 			}
 
-			for {
-				msg, err := watchClient.Recv()
-				if err != nil {
-					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-						return nil
-					}
+			resourceType = rd.TypedSpec().Type
 
+			if err = out.WriteHeader(rd, true); err != nil {
+				return err
+			}
+
+			aggregatedCh := make(chan nodeAndEvent)
+
+			for _, node := range nodes {
+				watchCh := make(chan state.Event)
+
+				if resourceID == "" {
+					err = c.COSI.WatchKind(client.WithNode(ctx, node), resource.NewMetadata(getCmdFlags.namespace, resourceType, "", resource.VersionUndefined), watchCh, state.WithBootstrapContents(true))
+				} else {
+					err = c.COSI.Watch(client.WithNode(ctx, node), resource.NewMetadata(getCmdFlags.namespace, resourceType, resourceID, resource.VersionUndefined), watchCh)
+				}
+
+				if err != nil {
+					return fmt.Errorf("error setting up watch on node %s: %w", node, err)
+				}
+
+				go aggregateEvents(ctx, aggregatedCh, watchCh, node)
+			}
+
+			for {
+				var nev nodeAndEvent
+
+				select {
+				case nev = <-aggregatedCh:
+				case <-ctx.Done():
+					return nil
+				}
+
+				if err = out.WriteResource(nev.node, nev.ev.Resource, nev.ev.Type); err != nil {
 					return err
 				}
 
-				if msg.Metadata.GetError() != "" {
-					fmt.Fprintf(os.Stderr, "%s: %s\n", msg.Metadata.GetHostname(), msg.Metadata.GetError())
-
-					continue
-				}
-
-				if msg.Definition != nil && !headerWritten {
-					if e := out.WriteHeader(msg.Definition, true); e != nil {
-						return e
-					}
-
-					headerWritten = true
-				}
-
-				if msg.Resource != nil {
-					if err := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, msg.EventType); err != nil {
-						return err
-					}
-
-					if err := out.Flush(); err != nil {
-						return err
-					}
+				if err = out.Flush(); err != nil {
+					return err
 				}
 			}
 		}
 
 		// get <type>
 		// get <type> <id>
-		printOut := func(parentCtx context.Context, msg client.ResourceResponse) error {
-			if msg.Definition != nil && !headerWritten {
-				if e := out.WriteHeader(msg.Definition, false); e != nil {
-					return e
-				}
+		callbackResource := func(parentCtx context.Context, hostname string, r resource.Resource, callError error) error {
+			if callError != nil {
+				fmt.Fprintf(os.Stderr, "%s: %s\n", hostname, callError)
 
-				headerWritten = true
+				return nil
 			}
 
-			if msg.Resource != nil {
-				if err := out.WriteResource(msg.Metadata.GetHostname(), msg.Resource, 0); err != nil {
-					return err
-				}
+			if err := out.WriteResource(hostname, r, 0); err != nil {
+				return err
 			}
 
 			return nil
 		}
 
-		return helpers.ForEachResource(ctx, c, printOut, getCmdFlags.namespace, args...)
+		callbackRD := func(definition *meta.ResourceDefinition) error {
+			return out.WriteHeader(definition, false)
+		}
+
+		return helpers.ForEachResource(ctx, c, callbackRD, callbackResource, getCmdFlags.namespace, args...)
 	}
 }
 
-//nolint:gocyclo
-func getResourcesResponse(args []string, clientmsg *[]client.ResourceResponse) func(ctx context.Context, c *client.Client) error {
-	return func(ctx context.Context, c *client.Client) error {
-		var resourceID string
+type nodeAndEvent struct {
+	node string
+	ev   state.Event
+}
 
-		resourceType := args[0]
-		namespace := getCmdFlags.namespace
-
-		if len(args) > 1 {
-			resourceID = args[1]
+func aggregateEvents(ctx context.Context, outCh chan<- nodeAndEvent, watchCh <-chan state.Event, node string) {
+	for {
+		select {
+		case ev := <-watchCh:
+			select {
+			case outCh <- nodeAndEvent{node, ev}:
+			case <-ctx.Done():
+				return
+			}
+		case <-ctx.Done():
+			return
 		}
-
-		if resourceID != "" {
-			resp, err := c.Resources.Get(ctx, namespace, resourceType, resourceID)
-			if err != nil {
-				return err
-			}
-
-			for _, msg := range resp {
-				if msg.Resource == nil {
-					continue
-				}
-
-				*clientmsg = append(*clientmsg, msg)
-			}
-		} else {
-			listClient, err := c.Resources.List(ctx, namespace, resourceType)
-			if err != nil {
-				return err
-			}
-
-			for {
-				msg, err := listClient.Recv()
-				if err != nil {
-					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-						return nil
-					}
-
-					return err
-				}
-
-				if msg.Metadata.GetError() != "" {
-					fmt.Fprintf(os.Stderr, "%s: %s\n", msg.Metadata.GetHostname(), msg.Metadata.GetError())
-
-					continue
-				}
-				if msg.Resource == nil {
-					continue
-				}
-				*clientmsg = append(*clientmsg, msg)
-			}
-		}
-
-		return nil
 	}
 }
 
 // completeResource represents tab complete options for `get` and `get *` commands.
 //
 //nolint:gocyclo
-func completeResource(resourceType string, hasAliasses bool, completeDot bool) []string {
-	var (
-		resourceResponse []client.ResourceResponse
-		resourceOptions  []string
-	)
+func completeResource(resourceType string, hasAliases bool, completeDot bool) []string {
+	var resourceOptions []string
 
-	if WithClient(getResourcesResponse([]string{resourceType}, &resourceResponse)) != nil {
-		return nil
-	}
+	callbackResource := func(_ context.Context, _ string, r resource.Resource, callError error) error {
+		if callError != nil {
+			return callError
+		}
 
-	for _, msg := range resourceResponse {
 		if completeDot {
-			resourceOptions = append(resourceOptions, msg.Resource.Metadata().ID())
+			resourceOptions = append(resourceOptions, r.Metadata().ID())
 		}
 
-		if !hasAliasses {
-			continue
+		if !hasAliases {
+			return nil
 		}
 
-		resourceSpec, err := yaml.Marshal(msg.Resource.Spec())
-		if err != nil {
-			continue
-		}
-
-		var resourceSpecRaw map[string]interface{}
-
-		if yaml.Unmarshal(resourceSpec, &resourceSpecRaw) != nil {
-			continue
-		}
-
-		if aliasSlice, ok := resourceSpecRaw["aliases"].([]interface{}); ok {
-			for _, alias := range aliasSlice {
-				if !completeDot && strings.Contains(alias.(string), ".") {
+		if definition, ok := r.(*meta.ResourceDefinition); ok {
+			for _, alias := range definition.TypedSpec().Aliases {
+				if !completeDot && strings.Contains(alias, ".") {
 					continue
 				}
 
-				resourceOptions = append(resourceOptions, alias.(string))
+				resourceOptions = append(resourceOptions, alias)
 			}
 		}
+
+		return nil
+	}
+
+	if WithClient(func(ctx context.Context, c *client.Client) error {
+		return helpers.ForEachResource(ctx, c, nil, callbackResource, "", resourceType)
+	}) != nil {
+		return nil
 	}
 
 	return resourceOptions
@@ -257,36 +228,29 @@ func completeResource(resourceType string, hasAliasses bool, completeDot bool) [
 
 // CompleteNodes represents tab completion for `--nodes` argument.
 func CompleteNodes(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	var (
-		resourceResponse []client.ResourceResponse
-		nodes            []string
-	)
+	var nodes []string
 
-	if WithClientNoNodes(getResourcesResponse([]string{cluster.MemberType}, &resourceResponse)) != nil {
-		return nil, cobra.ShellCompDirectiveError
-	}
-
-	for _, msg := range resourceResponse {
-		var resourceSpecRaw map[string]interface{}
-
-		resourceSpec, err := yaml.Marshal(msg.Resource.Spec())
+	if WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
+		items, err := safe.StateList[*cluster.Member](ctx, c.COSI, resource.NewMetadata(cluster.NamespaceName, cluster.MemberType, "", resource.VersionUndefined))
 		if err != nil {
-			continue
+			return err
 		}
 
-		if err = yaml.Unmarshal(resourceSpec, &resourceSpecRaw); err != nil {
-			continue
-		}
+		it := safe.IteratorFromList(items)
 
-		if hostname, ok := resourceSpecRaw["hostname"].(string); ok {
-			nodes = append(nodes, hostname)
-		}
+		for it.Next() {
+			if hostname := it.Value().TypedSpec().Hostname; hostname != "" {
+				nodes = append(nodes, hostname)
+			}
 
-		if addressSlice, ok := resourceSpecRaw["addresses"].([]interface{}); ok {
-			for _, address := range addressSlice {
-				nodes = append(nodes, address.(string))
+			for _, address := range it.Value().TypedSpec().Addresses {
+				nodes = append(nodes, address.String())
 			}
 		}
+
+		return nil
+	}) != nil {
+		return nil, cobra.ShellCompDirectiveError
 	}
 
 	return nodes, cobra.ShellCompDirectiveNoFileComp

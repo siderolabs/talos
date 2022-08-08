@@ -9,13 +9,14 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/spf13/cobra"
 )
 
 // Writer interface.
 type Writer interface {
-	WriteHeader(definition resource.Resource, withEvents bool) error
+	WriteHeader(definition *meta.ResourceDefinition, withEvents bool) error
 	WriteResource(node string, r resource.Resource, event state.EventType) error
 	Flush() error
 }

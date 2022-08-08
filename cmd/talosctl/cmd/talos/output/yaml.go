@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -26,7 +27,7 @@ func NewYAML() *YAML {
 }
 
 // WriteHeader implements output.Writer interface.
-func (y *YAML) WriteHeader(definition resource.Resource, withEvents bool) error {
+func (y *YAML) WriteHeader(definition *meta.ResourceDefinition, withEvents bool) error {
 	y.withEvents = withEvents
 
 	return nil

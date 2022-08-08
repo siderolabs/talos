@@ -85,6 +85,8 @@ const (
 var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
 
 // upgradePreviousToStable upgrades from the previous Talos release to the stable release.
+//
+//nolint:deadcode,unused
 func upgradePreviousToStable() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", previousRelease, stableRelease),
@@ -742,7 +744,8 @@ func (suite *UpgradeSuite) SuiteName() string {
 func init() {
 	allSuites = append(
 		allSuites,
-		&UpgradeSuite{specGen: upgradePreviousToStable, track: 0},
+		// TODO: temporarily disable the test until 'Stable' becomes v1.2.0-beta.0
+		// &UpgradeSuite{specGen: upgradePreviousToStable, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrent, track: 1},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent, track: 2},
 		&UpgradeSuite{specGen: upgradeStableToCurrentPreserve, track: 0},

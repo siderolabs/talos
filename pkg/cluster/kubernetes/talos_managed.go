@@ -15,11 +15,11 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/go-cmp/cmp"
 	"github.com/talos-systems/go-retry/retry"
-	"google.golang.org/grpc/codes"
-	"gopkg.in/yaml.v3"
+	"google.golang.org/grpc/metadata"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -40,7 +40,6 @@ import (
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
@@ -190,46 +189,36 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 		return fmt.Errorf("error building Talos API client: %w", err)
 	}
 
-	ctx = client.WithNodes(ctx, node)
+	ctx = client.WithNode(ctx, node)
 
 	options.Log(" > %q: starting update", node)
 
-	var watchClient *client.ResourceWatchClient
+	watchCh := make(chan state.Event)
 
-	// try specific resource type (Talos 1.1+, and fall back to generic resource type for Talos <=1.0)
-	watchClient, err = c.Resources.Watch(ctx, k8s.ControlPlaneNamespaceName, controlplaneConfigResourceType(service), service)
-	if err != nil {
+	if err = c.COSI.Watch(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, controlplaneConfigResourceType(service), service, resource.VersionUndefined), watchCh); err != nil {
 		return fmt.Errorf("error watching service configuration: %w", err)
 	}
 
-	// first response is resource definition
-	_, err = watchClient.Recv()
-	if err != nil && client.StatusCode(err) == codes.NotFound {
-		watchClient, err = c.Resources.Watch(ctx, config.NamespaceName, "KubernetesControlPlaneConfigs.config.talos.dev", service)
-		if err != nil {
-			return fmt.Errorf("error watching service configuration: %w", err)
+	var (
+		expectedConfigVersion string
+		initialConfig         resource.Resource
+	)
+
+	select {
+	case ev := <-watchCh:
+		if ev.Type != state.Created {
+			return fmt.Errorf("unexpected event type: %d", ev.Type)
 		}
 
-		_, err = watchClient.Recv()
-	}
-
-	if err != nil {
-		return fmt.Errorf("error watching config: %w", err)
-	}
-
-	// second is the initial state
-	watchInitial, err := watchClient.Recv()
-	if err != nil {
-		return fmt.Errorf("error watching config: %w", err)
-	}
-
-	if watchInitial.EventType != state.Created {
-		return fmt.Errorf("unexpected event type: %d", watchInitial.EventType)
+		expectedConfigVersion = ev.Resource.Metadata().Version().String()
+		initialConfig = ev.Resource
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 
 	skipConfigWait := false
 
-	err = patchNodeConfig(ctx, cluster, node, upgradeStaticPodPatcher(options, service, watchInitial.Resource))
+	err = patchNodeConfig(ctx, cluster, node, upgradeStaticPodPatcher(options, service, initialConfig))
 	if err != nil {
 		if errors.Is(err, errUpdateSkipped) {
 			skipConfigWait = true
@@ -245,23 +234,17 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 	options.Log(" > %q: machine configuration patched", node)
 	options.Log(" > %q: waiting for %s pod update", node, service)
 
-	var expectedConfigVersion string
-
 	if !skipConfigWait {
-		var watchUpdated client.WatchResponse
+		select {
+		case ev := <-watchCh:
+			if ev.Type != state.Updated {
+				return fmt.Errorf("unexpected event type: %d", ev.Type)
+			}
 
-		watchUpdated, err = watchClient.Recv()
-		if err != nil {
-			return fmt.Errorf("error watching config: %w", err)
+			expectedConfigVersion = ev.Resource.Metadata().Version().String()
+		case <-ctx.Done():
+			return ctx.Err()
 		}
-
-		if watchUpdated.EventType != state.Updated {
-			return fmt.Errorf("unexpected event type: %d", watchInitial.EventType)
-		}
-
-		expectedConfigVersion = watchUpdated.Resource.Metadata().Version().String()
-	} else {
-		expectedConfigVersion = watchInitial.Resource.Metadata().Version().String()
 	}
 
 	if err = retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
@@ -284,8 +267,18 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 			config.ClusterConfig = &v1alpha1config.ClusterConfig{}
 		}
 
-		configData := configResource.(*resource.Any).Value().(map[string]interface{}) //nolint:errcheck,forcetypeassert
-		configImage := configData["image"].(string)                                   //nolint:errcheck,forcetypeassert
+		var configImage string
+
+		switch r := configResource.(type) {
+		case *k8s.APIServerConfig:
+			configImage = r.TypedSpec().Image
+		case *k8s.ControllerManagerConfig:
+			configImage = r.TypedSpec().Image
+		case *k8s.SchedulerConfig:
+			configImage = r.TypedSpec().Image
+		default:
+			return fmt.Errorf("unsupported service config %T", configResource)
+		}
 
 		logUpdate := func(oldImage string) {
 			parts := strings.Split(oldImage, ":")
@@ -378,52 +371,23 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 
 	defer cluster.Close() //nolint:errcheck
 
-	listClient, err := talosclient.Resources.List(ctx, k8s.ControlPlaneNamespaceName, k8s.ManifestType)
+	md, _ := metadata.FromOutgoingContext(ctx)
+	if nodes := md["nodes"]; len(nodes) > 0 {
+		ctx = client.WithNode(ctx, nodes[0])
+	}
+
+	items, err := safe.StateList[*k8s.Manifest](ctx, talosclient.COSI, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, err
 	}
 
+	it := safe.IteratorFromList(items)
+
 	objects := []*unstructured.Unstructured{}
 
-	for {
-		msg, err := listClient.Recv()
-		if err != nil {
-			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-				return objects, nil
-			}
-
-			return nil, err
-		}
-
-		if msg.Metadata.GetError() != "" {
-			return nil, fmt.Errorf(msg.Metadata.GetError())
-		}
-
-		if msg.Resource == nil {
-			continue
-		}
-
-		// TODO: fix that when we get resource API to work through protobufs
-		out, err := resource.MarshalYAML(msg.Resource)
-		if err != nil {
-			return nil, err
-		}
-
-		data, err := yaml.Marshal(out)
-		if err != nil {
-			return nil, err
-		}
-
-		manifest := struct {
-			Objects []map[string]interface{} `yaml:"spec"`
-		}{}
-
-		if err = yaml.Unmarshal(data, &manifest); err != nil {
-			return nil, err
-		}
-
-		for _, o := range manifest.Objects {
-			obj := &unstructured.Unstructured{Object: o}
+	for it.Next() {
+		for _, o := range it.Value().TypedSpec().Items {
+			obj := &unstructured.Unstructured{Object: o.Object}
 
 			// kubeproxy daemon set is updated as part of a different flow
 			if obj.GetName() == kubeProxy && obj.GetKind() == "DaemonSet" {
@@ -433,6 +397,8 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 			objects = append(objects, obj)
 		}
 	}
+
+	return objects, nil
 }
 
 func updateManifest(

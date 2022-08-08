@@ -203,7 +203,7 @@ func run(suite *suite.Suite, cmdFunc func() *exec.Cmd, options ...RunOption) (st
 	if opts.shouldFail {
 		suite.Assert().Error(err, "command expected to fail, but did not")
 	} else {
-		suite.Assert().NoError(err, "command failed")
+		suite.Assert().NoError(err, "command failed, stdout: %q, stderr: %q", stdout, stderr)
 	}
 
 	if opts.stdoutEmpty {

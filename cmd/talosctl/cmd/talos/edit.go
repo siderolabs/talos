@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
-	yaml "gopkg.in/yaml.v3"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/cmd/util/editor"
 	"k8s.io/kubectl/pkg/cmd/util/editor/crlf"
@@ -35,7 +35,7 @@ var editCmdFlags struct {
 }
 
 //nolint:gocyclo
-func editFn(c *client.Client) func(context.Context, client.ResourceResponse) error {
+func editFn(c *client.Client) func(context.Context, string, resource.Resource, error) error {
 	var lastError string
 
 	edit := editor.NewDefaultEditor([]string{
@@ -43,21 +43,20 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 		"EDITOR",
 	})
 
-	return func(ctx context.Context, msg client.ResourceResponse) error {
-		if msg.Definition != nil {
-			if msg.Definition.Metadata().ID() != strings.ToLower(config.MachineConfigType) {
-				return fmt.Errorf("only the machineconfig resource can be edited")
-			}
+	return func(ctx context.Context, node string, r resource.Resource, callError error) error {
+		if callError != nil {
+			return fmt.Errorf("%s: %w", node, callError)
 		}
 
-		if msg.Resource == nil {
-			return nil
+		mc, ok := r.(*config.MachineConfig)
+		if !ok {
+			return fmt.Errorf("only the machineconfig resource can be edited")
 		}
 
-		metadata := msg.Resource.Metadata()
+		metadata := mc.Metadata()
 		id := metadata.ID()
 
-		body, err := yaml.Marshal(msg.Resource.Spec())
+		body, err := mc.Config().Bytes()
 		if err != nil {
 			return err
 		}
@@ -76,7 +75,7 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 
 			_, err := w.Write([]byte(
 				fmt.Sprintf(
-					"# Editing %s/%s at node %s\n", msg.Resource.Metadata().Type(), id, msg.Metadata.GetHostname(),
+					"# Editing %s/%s at node %s\n", mc.Metadata().Type(), id, node,
 				),
 			))
 			if err != nil {
@@ -99,7 +98,7 @@ func editFn(c *client.Client) func(context.Context, client.ResourceResponse) err
 				return err
 			}
 
-			edited, _, err = edit.LaunchTempFile(fmt.Sprintf("%s-%s-edit-", msg.Resource.Metadata().Type(), id), ".yaml", &buf)
+			edited, _, err = edit.LaunchTempFile(fmt.Sprintf("%s-%s-edit-", mc.Metadata().Type(), id), ".yaml", &buf)
 			if err != nil {
 				return err
 			}
@@ -171,7 +170,7 @@ or 'notepad' for Windows.`,
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			for _, node := range Nodes {
 				nodeCtx := client.WithNodes(ctx, node)
-				if err := helpers.ForEachResource(nodeCtx, c, editFn(c), editCmdFlags.namespace, args...); err != nil {
+				if err := helpers.ForEachResource(nodeCtx, c, nil, editFn(c), editCmdFlags.namespace, args...); err != nil {
 					return err
 				}
 			}

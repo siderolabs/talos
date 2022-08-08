@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -25,7 +26,7 @@ func NewJSON() *JSON {
 }
 
 // WriteHeader implements output.Writer interface.
-func (j *JSON) WriteHeader(definition resource.Resource, withEvents bool) error {
+func (j *JSON) WriteHeader(definition *meta.ResourceDefinition, withEvents bool) error {
 	j.withEvents = withEvents
 
 	return nil

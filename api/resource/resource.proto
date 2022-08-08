@@ -11,6 +11,8 @@ import "google/protobuf/timestamp.proto";
 //
 // ResourceService provides user-facing API for the Talos resources.
 service ResourceService {
+  option (common.remove_deprecated_service) = "v1.5";
+  option deprecated = true;
   rpc Get(GetRequest) returns (GetResponse);
   rpc List(ListRequest) returns (stream ListResponse);
   rpc Watch(WatchRequest) returns (stream WatchResponse);

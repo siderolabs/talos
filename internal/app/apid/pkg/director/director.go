@@ -8,6 +8,7 @@ package director
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
@@ -62,6 +63,11 @@ func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mod
 
 	switch {
 	case okNodes:
+		// COSI methods do not support one-2-many proxying.
+		if strings.HasPrefix(fullMethodName, "/cosi.") {
+			return proxy.One2One, nil, status.Error(codes.InvalidArgument, "one-2-many proxying is not supported for COSI methods")
+		}
+
 		return r.aggregateDirector(nodes)
 	case okNode:
 		return r.singleDirector(node[0])

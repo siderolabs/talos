@@ -7,8 +7,11 @@ package config
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 
+	configpb "github.com/talos-systems/talos/pkg/machinery/api/resource/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // MachineTypeType is type of MachineType resource.
@@ -84,4 +87,35 @@ func (r *MachineType) MachineType() machine.Type {
 // SetMachineType sets machine.Type.
 func (r *MachineType) SetMachineType(typ machine.Type) {
 	r.spec.Type = typ
+}
+
+// MarshalProto implements ProtoMarshaler.
+func (spec machineTypeSpec) MarshalProto() ([]byte, error) {
+	protoSpec := configpb.MachineTypeSpec{
+		MachineType: configpb.MachineType(spec.Type),
+	}
+
+	return proto.Marshal(&protoSpec)
+}
+
+// UnmarshalProto implements protobuf.ResourceUnmarshaler.
+func (r *MachineType) UnmarshalProto(md *resource.Metadata, protoBytes []byte) error {
+	protoSpec := configpb.MachineTypeSpec{}
+
+	if err := proto.Unmarshal(protoBytes, &protoSpec); err != nil {
+		return err
+	}
+
+	r.md = *md
+	r.spec = machineTypeSpec{
+		Type: machine.Type(protoSpec.MachineType),
+	}
+
+	return nil
+}
+
+func init() {
+	if err := protobuf.RegisterResource(MachineTypeType, &MachineType{}); err != nil {
+		panic(err)
+	}
 }

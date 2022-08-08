@@ -7,18 +7,24 @@ package helpers
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 
-	"google.golang.org/grpc/codes"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
-// ForEachResource get resources from the controller runtime and run callback using each element.
+// ForEachResource gets resources from the controller runtime and runs a callback for each resource.
 //
 //nolint:gocyclo
-func ForEachResource(ctx context.Context, c *client.Client, callback func(ctx context.Context, msg client.ResourceResponse) error, namespace string, args ...string) error {
+func ForEachResource(ctx context.Context,
+	c *client.Client,
+	callbackRD func(rd *meta.ResourceDefinition) error,
+	callback func(ctx context.Context, hostname string, r resource.Resource, callError error) error,
+	namespace string,
+	args ...string,
+) error {
 	if len(args) == 0 {
 		return fmt.Errorf("not enough arguments: at least 1 is expected")
 	}
@@ -31,41 +37,48 @@ func ForEachResource(ctx context.Context, c *client.Client, callback func(ctx co
 		resourceID = args[1]
 	}
 
-	if resourceID != "" {
-		resp, err := c.Resources.Get(ctx, namespace, resourceType, resourceID)
-		if err != nil {
+	md, _ := metadata.FromOutgoingContext(ctx)
+	nodes := md.Get("nodes")
+
+	if len(nodes) == 0 {
+		return nil
+	}
+
+	// fetch the RD from the first node (it doesn't matter which one to use, so we'll use the first one)
+	rd, err := c.ResolveResourceKind(client.WithNode(ctx, nodes[0]), &namespace, resourceType)
+	if err != nil {
+		return err
+	}
+
+	if callbackRD != nil {
+		if err = callbackRD(rd); err != nil {
 			return err
 		}
+	}
 
-		for _, msg := range resp {
-			if err = callback(ctx, msg); err != nil {
+	resourceType = rd.TypedSpec().Type
+
+	for _, node := range nodes {
+		if resourceID != "" {
+			r, callErr := c.COSI.Get(client.WithNode(ctx, node), resource.NewMetadata(namespace, rd.TypedSpec().Type, resourceID, resource.VersionUndefined))
+
+			if err = callback(ctx, node, r, callErr); err != nil {
 				return err
 			}
-		}
-	} else {
-		listClient, err := c.Resources.List(ctx, namespace, resourceType)
-		if err != nil {
-			return err
-		}
-
-		for {
-			msg, err := listClient.Recv()
-			if err != nil {
-				if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-					return nil
+		} else {
+			items, callErr := c.COSI.List(client.WithNode(ctx, node), resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined))
+			if callErr != nil {
+				if err = callback(ctx, node, nil, callErr); err != nil {
+					return err
 				}
-
-				return err
-			}
-
-			if msg.Metadata.GetError() != "" {
-				fmt.Fprintf(os.Stderr, "%s: %s\n", msg.Metadata.GetHostname(), msg.Metadata.GetError())
 
 				continue
 			}
 
-			if err = callback(ctx, msg); err != nil {
-				return err
+			for _, r := range items.Items {
+				if err = callback(ctx, node, r, nil); err != nil {
+					return err
+				}
 			}
 		}
 	}

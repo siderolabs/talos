@@ -68,7 +68,7 @@ func (a manifest) SetYAML(yamlBytes []byte) error {
 			return fmt.Errorf("error loading JSON manifest into unstructured: %w", err)
 		}
 
-		a.Manifest.TypedSpec().Items = append(a.Manifest.TypedSpec().Items, obj.Object)
+		a.Manifest.TypedSpec().Items = append(a.Manifest.TypedSpec().Items, k8s.SingleManifest{Object: obj.Object})
 	}
 
 	return nil
@@ -76,7 +76,7 @@ func (a manifest) SetYAML(yamlBytes []byte) error {
 
 // Objects returns list of unstructured object.
 func (a manifest) Objects() []*unstructured.Unstructured {
-	return slices.Map(a.Manifest.TypedSpec().Items, func(item map[string]interface{}) *unstructured.Unstructured {
-		return &unstructured.Unstructured{Object: item}
+	return slices.Map(a.Manifest.TypedSpec().Items, func(item k8s.SingleManifest) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: item.Object}
 	})
 }

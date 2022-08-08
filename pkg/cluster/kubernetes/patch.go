@@ -8,11 +8,11 @@ import (
 	"context"
 	"fmt"
 
-	yaml "gopkg.in/yaml.v3"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	v1alpha1config "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
@@ -26,30 +26,14 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 		return fmt.Errorf("error building Talos API client: %w", err)
 	}
 
-	ctx = client.WithNodes(ctx, node)
+	ctx = client.WithNode(ctx, node)
 
-	resources, err := c.Resources.Get(ctx, config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID)
+	mc, err := safe.StateGet[*config.MachineConfig](ctx, c.COSI, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 	if err != nil {
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}
 
-	if len(resources) != 1 {
-		return fmt.Errorf("expected 1 instance of config resource, got %d", len(resources))
-	}
-
-	r := resources[0]
-
-	yamlConfig, err := yaml.Marshal(r.Resource.Spec())
-	if err != nil {
-		return fmt.Errorf("error getting YAML config: %w", err)
-	}
-
-	config, err := configloader.NewFromBytes(yamlConfig)
-	if err != nil {
-		return fmt.Errorf("error loading config: %w", err)
-	}
-
-	cfg, ok := config.Raw().(*v1alpha1config.Config)
+	cfg, ok := mc.Config().Raw().(*v1alpha1config.Config)
 	if !ok {
 		return fmt.Errorf("config is not v1alpha1 config")
 	}

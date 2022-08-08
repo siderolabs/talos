@@ -19,10 +19,12 @@ import (
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gopkg.in/yaml.v3"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -391,32 +393,26 @@ func getKubernetesLogCollectors(ctx context.Context, c *client.Client) ([]nodeCo
 }
 
 func getResources(ctx context.Context, c *client.Client) ([]nodeCollector, error) {
-	responses, err := listResources(ctx, c, meta.NamespaceName, meta.ResourceDefinitionType)
+	md, _ := metadata.FromOutgoingContext(ctx)
+	nodes := md["nodes"]
+
+	if len(nodes) != 1 {
+		return nil, fmt.Errorf("got more than one node in the context: %v", nodes)
+	}
+
+	rds, err := safe.StateList[*meta.ResourceDefinition](client.WithNode(ctx, nodes[0]), c.COSI, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, err
 	}
 
+	it := safe.IteratorFromList(rds)
+
 	cols := []nodeCollector{}
 
-	for _, msg := range responses {
-		if msg.Resource == nil {
-			continue
-		}
-
-		b, err := yaml.Marshal(msg.Resource.Spec())
-		if err != nil {
-			return nil, err
-		}
-
-		spec := &meta.ResourceDefinitionSpec{}
-
-		if err = yaml.Unmarshal(b, spec); err != nil {
-			return nil, err
-		}
-
+	for it.Next() {
 		cols = append(cols, nodeCollector{
-			filename: fmt.Sprintf("talosResources/%s.yaml", spec.ID()),
-			collect:  talosResource(spec),
+			filename: fmt.Sprintf("talosResources/%s.yaml", it.Value().Metadata().ID()),
+			collect:  talosResource(it.Value()),
 		})
 	}
 
@@ -539,11 +535,11 @@ func dependencies(ctx context.Context, options *BundleOptions) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func talosResource(rd *meta.ResourceDefinitionSpec) collect {
+func talosResource(rd *meta.ResourceDefinition) collect {
 	return func(ctx context.Context, options *BundleOptions) ([]byte, error) {
-		options.Log("getting talos resource %s/%s", rd.DefaultNamespace, rd.ID())
+		options.Log("getting talos resource %s/%s", rd.TypedSpec().DefaultNamespace, rd.TypedSpec().Type)
 
-		responses, err := listResources(ctx, options.Client, rd.DefaultNamespace, rd.ID())
+		resources, err := listResources(ctx, options.Client, rd.TypedSpec().DefaultNamespace, rd.TypedSpec().Type)
 		if err != nil {
 			return nil, err
 		}
@@ -555,21 +551,17 @@ func talosResource(rd *meta.ResourceDefinitionSpec) collect {
 
 		encoder := yaml.NewEncoder(&buf)
 
-		for _, msg := range responses {
-			if msg.Resource == nil {
-				continue
-			}
-
+		for _, r := range resources {
 			data := struct {
 				Metadata *resource.Metadata `yaml:"metadata"`
 				Spec     interface{}        `yaml:"spec"`
 			}{
-				Metadata: msg.Resource.Metadata(),
+				Metadata: r.Metadata(),
 				Spec:     "<REDACTED>",
 			}
 
-			if rd.Sensitivity != meta.Sensitive {
-				data.Spec = msg.Resource.Spec()
+			if rd.TypedSpec().Sensitivity != meta.Sensitive {
+				data.Spec = r.Spec()
 			}
 
 			if err = encoder.Encode(&data); err != nil {
@@ -737,32 +729,20 @@ func summary(ctx context.Context, options *BundleOptions) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func listResources(ctx context.Context, c *client.Client, namespace, resourceType string) ([]client.ResourceResponse, error) {
-	listClient, err := c.Resources.List(ctx, namespace, resourceType)
+func listResources(ctx context.Context, c *client.Client, namespace, resourceType string) ([]resource.Resource, error) {
+	md, _ := metadata.FromOutgoingContext(ctx)
+	nodes := md["nodes"]
+
+	if len(nodes) != 1 {
+		return nil, fmt.Errorf("got more than one node in the context: %v", nodes)
+	}
+
+	items, err := c.COSI.List(client.WithNode(ctx, nodes[0]), resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, err
 	}
 
-	resources := []client.ResourceResponse{}
-
-	for {
-		msg, err := listClient.Recv()
-		if err != nil {
-			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-				return resources, nil
-			}
-
-			return nil, err
-		}
-
-		if msg.Metadata.GetError() != "" {
-			fmt.Fprintf(os.Stderr, "%s: %s\n", msg.Metadata.GetHostname(), msg.Metadata.GetError())
-
-			continue
-		}
-
-		resources = append(resources, msg)
-	}
+	return items.Items, nil
 }
 
 func marshalYAML(resource runtime.Object) ([]byte, error) {

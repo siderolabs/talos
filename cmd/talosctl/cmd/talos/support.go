@@ -16,12 +16,13 @@ import (
 	"sync"
 	"text/tabwriter"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/fatih/color"
 	"github.com/gosuri/uiprogress"
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -178,20 +179,15 @@ func getDiscoveryConfig() (*clusterresource.Config, error) {
 	var config *clusterresource.Config
 
 	if e := WithClient(func(ctx context.Context, c *client.Client) error {
-		list, err := c.Resources.Get(ctx, clusterresource.NamespaceName, clusterresource.IdentityType, clusterresource.LocalIdentity)
-		if err != nil {
-			return err
-		}
+		var err error
 
-		resp := list[0]
-		b, err := yaml.Marshal(resp.Resource.Spec())
-		if err != nil {
-			return err
-		}
+		config, err = safe.StateGet[*clusterresource.Config](
+			ctx,
+			c.COSI,
+			resource.NewMetadata(clusterresource.NamespaceName, clusterresource.IdentityType, clusterresource.LocalIdentity, resource.VersionUndefined),
+		)
 
-		config = clusterresource.NewConfig(resp.Resource.Metadata().Namespace(), resp.Resource.Metadata().ID())
-
-		return yaml.Unmarshal(b, config.TypedSpec())
+		return err
 	}); e != nil {
 		return nil, e
 	}

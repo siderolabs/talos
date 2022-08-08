@@ -33,12 +33,14 @@ type ExtraManifestsConfigSpec struct {
 }
 
 // ExtraManifest defines a single extra manifest to download.
+//
+//gotagsrewrite:gen
 type ExtraManifest struct {
-	Name           string            `yaml:"name"`
-	URL            string            `yaml:"url"`
-	Priority       string            `yaml:"priority"`
-	ExtraHeaders   map[string]string `yaml:"extraHeaders"`
-	InlineManifest string            `yaml:"inlineManifest"`
+	Name           string            `yaml:"name" protobuf:"1"`
+	URL            string            `yaml:"url" protobuf:"2"`
+	Priority       string            `yaml:"priority" protobuf:"3"`
+	ExtraHeaders   map[string]string `yaml:"extraHeaders" protobuf:"4"`
+	InlineManifest string            `yaml:"inlineManifest" protobuf:"5"`
 }
 
 // NewExtraManifestsConfig returns new ExtraManifestsConfig resource.

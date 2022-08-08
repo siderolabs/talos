@@ -18,6 +18,9 @@ import (
 	"strings"
 	"time"
 
+	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/protobuf/client"
 	grpctls "github.com/talos-systems/crypto/tls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -51,15 +54,19 @@ type Client struct {
 	options *Options
 	conn    *grpc.ClientConn
 
-	MachineClient  machineapi.MachineServiceClient
-	TimeClient     timeapi.TimeServiceClient
-	ClusterClient  clusterapi.ClusterServiceClient
-	StorageClient  storageapi.StorageServiceClient
-	ResourceClient resourceapi.ResourceServiceClient
-	InspectClient  inspectapi.InspectServiceClient
+	MachineClient machineapi.MachineServiceClient
+	TimeClient    timeapi.TimeServiceClient
+	ClusterClient clusterapi.ClusterServiceClient
+	StorageClient storageapi.StorageServiceClient
+	InspectClient inspectapi.InspectServiceClient
 
-	Resources *ResourcesClient
-	Inspect   *InspectClient
+	// Deprecated: use COSI client.
+	Resources      *ResourcesClient
+	ResourceClient resourceapi.ResourceServiceClient //nolint:staticcheck
+
+	COSI state.State
+
+	Inspect *InspectClient
 }
 
 func (c *Client) resolveConfigContext() error {
@@ -156,11 +163,12 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
-	c.ResourceClient = resourceapi.NewResourceServiceClient(c.conn)
+	c.ResourceClient = resourceapi.NewResourceServiceClient(c.conn) //nolint:staticcheck
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 
 	c.Resources = &ResourcesClient{c.ResourceClient}
 	c.Inspect = &InspectClient{c.InspectClient}
+	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))
 
 	return c, nil
 }

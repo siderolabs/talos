@@ -127,6 +127,7 @@ func (suite *TalosconfigSuite) TestNew() {
 			args:      []string{"get", "mc"},
 			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`MachineConfig`))},
 			readerOpts: []base.RunOption{
+				base.ShouldFail(),
 				base.StdoutEmpty(),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
 			},
@@ -135,6 +136,7 @@ func (suite *TalosconfigSuite) TestNew() {
 			args:      []string{"get", "osrootsecret"},
 			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`OSRootSecret`))},
 			readerOpts: []base.RunOption{
+				base.ShouldFail(),
 				base.StdoutEmpty(),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
 			},
