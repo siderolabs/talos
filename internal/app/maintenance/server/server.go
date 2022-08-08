@@ -11,6 +11,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -54,9 +55,13 @@ func New(r runtime.Runtime, logger *log.Logger, cfgCh chan []byte) *Server {
 func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
+	// wrap resources with access filter
+	resourceState := s.runtime.State().V1Alpha2().Resources()
+	resourceState = state.WrapCore(state.Filter(resourceState, resources.AccessPolicy(resourceState)))
+
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
 	machine.RegisterMachineServiceServer(obj, s)
-	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: s.runtime.State().V1Alpha2().Resources()})
+	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: resourceState})
 }
 
 // ApplyConfiguration implements machine.MachineService.
