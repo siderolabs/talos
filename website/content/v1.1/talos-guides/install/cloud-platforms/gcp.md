@@ -1,7 +1,7 @@
 ---
 title: "GCP"
 description: "Creating a cluster via the CLI on Google Cloud Platform."
-aliases: 
+aliases:
   - ../../../cloud-platforms/gcp
 ---
 
@@ -142,10 +142,11 @@ for i in $( seq 1 3 ); do
     --tags talos-controlplane \
     --boot-disk-size 20GB \
     --metadata-from-file=user-data=./controlplane.yaml
+    --tags talos-controlplane-$i
 done
 
 # Add control plane nodes to instance group
-for i in $( seq 0 1 3 ); do
+for i in $( seq 1 3 ); do
   gcloud compute instance-groups unmanaged add-instances talos-ig \
       --zone $REGION-b \
       --instances talos-controlplane-$i
@@ -157,6 +158,7 @@ gcloud compute instances create talos-worker-0 \
   --zone $REGION-b \
   --boot-disk-size 20GB \
   --metadata-from-file=user-data=./worker.yaml
+  --tags talos-worker-$i
 ```
 
 ### Bootstrap Etcd
@@ -255,10 +257,10 @@ cd talos-gcp-deployment
 We need to download two deployment manifests for the deployment from the Talos github repository.
 
 ```bash
-curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/cloud-platforms/gcp/config.yaml"
-curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/cloud-platforms/gcp/talos-ha.jinja"
+curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/cloud-platforms/gcp/config.yaml"
+curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/cloud-platforms/gcp/talos-ha.jinja"
 # if using ccm
-curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/cloud-platforms/gcp/gcp-ccm.yaml"
+curl -fsSLO "https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/cloud-platforms/gcp/gcp-ccm.yaml"
 ```
 
 ### Updating the config
