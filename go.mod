@@ -108,7 +108,7 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v1.2.0-alpha.1
 	github.com/u-root/u-root v0.9.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
-	github.com/vmware-tanzu/sonobuoy v0.56.8
+	github.com/vmware-tanzu/sonobuoy v0.56.9
 	github.com/vmware/govmomi v0.29.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
