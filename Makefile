@@ -117,6 +117,7 @@ To build this project, you must have the following installed:
 - make
 - docker (19.03 or higher)
 - buildx (https://github.com/docker/buildx)
+- crane (https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md)
 
 ## Creating a Builder Instance
 

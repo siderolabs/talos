@@ -12,5 +12,5 @@ To get started, run `make help` and follow the instructions.
 
 ## Conformance
 
-To very conformance status, run `make conformance`.
+To verify conformance status, run `make conformance`.
 This runs a series of tests on the working tree and is required to pass before a contribution is accepted.
