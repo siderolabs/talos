@@ -30,17 +30,17 @@ require (
 require (
 	cloud.google.com/go/compute v1.7.0
 	github.com/BurntSushi/toml v1.2.0
-	github.com/aws/aws-sdk-go v1.44.66
+	github.com/aws/aws-sdk-go v1.44.71
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4
-	github.com/containerd/containerd v1.6.6
+	github.com/containerd/containerd v1.6.8
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.1.2
 	github.com/containernetworking/plugins v1.1.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
-	github.com/cosi-project/runtime v0.0.0-20220705131812-22c6aa1ca7ec
+	github.com/cosi-project/runtime v0.0.0-20220805151220-a84c278ed996
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -54,7 +54,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.8
 	github.com/google/gopacket v1.1.19
-	github.com/google/nftables v0.0.0-20220729163259-ec1e802faf94
+	github.com/google/nftables v0.0.0-20220808154552-2eca00135732
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -80,7 +80,7 @@ require (
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.0.0
 	github.com/prometheus/procfs v0.8.0
-	github.com/rivo/tview v0.0.0-20220731115447-9d32d269593e
+	github.com/rivo/tview v0.0.0-20220805210617-37ad0bb93703
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
@@ -108,7 +108,7 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v1.2.0-alpha.1
 	github.com/u-root/u-root v0.9.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
-	github.com/vmware-tanzu/sonobuoy v0.56.8
+	github.com/vmware-tanzu/sonobuoy v0.56.9
 	github.com/vmware/govmomi v0.29.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
@@ -118,9 +118,9 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.4
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
-	golang.org/x/net v0.0.0-20220728211354-c7608f3a8462
+	golang.org/x/net v0.0.0-20220805013720-a33c5aa5df48
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
-	golang.org/x/sys v0.0.0-20220731174439-a90be440212d
+	golang.org/x/sys v0.0.0-20220808155132-1c4a2a72c664
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
@@ -147,7 +147,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
-	github.com/Microsoft/hcsshim v0.9.3 // indirect
+	github.com/Microsoft/hcsshim v0.9.4 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
@@ -245,11 +245,12 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
-	github.com/rivo/uniseg v0.3.1 // indirect
+	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/sethgrid/pester v0.0.0-20190127155807-68a33a018ad0 // indirect
+	github.com/siderolabs/protoenc v0.1.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
@@ -283,7 +284,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220407013110-ef5c587f782d // indirect
 	google.golang.org/api v0.84.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220728213248-dd149ef739b9 // indirect
+	google.golang.org/genproto v0.0.0-20220808145710-bf34ca4dd83a // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect

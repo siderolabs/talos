@@ -8,7 +8,7 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 
 require (
 	github.com/containerd/go-cni v1.1.7
-	github.com/cosi-project/runtime v0.0.0-20220705131812-22c6aa1ca7ec
+	github.com/cosi-project/runtime v0.0.0-20220805151220-a84c278ed996
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -22,7 +22,7 @@ require (
 	github.com/talos-systems/go-blockdevice v0.3.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
-	google.golang.org/genproto v0.0.0-20220728213248-dd149ef739b9
+	google.golang.org/genproto v0.0.0-20220808145710-bf34ca4dd83a
 	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -44,6 +44,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/siderolabs/protoenc v0.1.1 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
