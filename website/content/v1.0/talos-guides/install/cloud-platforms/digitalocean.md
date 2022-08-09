@@ -79,7 +79,7 @@ worker.yaml is valid for cloud mode
 
 #### Create the Control Plane Nodes
 
-Run the following twice, to give ourselves three total control plane nodes:
+Run the following commands, to give ourselves three total control plane nodes:
 
 ```bash
 doctl compute droplet create \
