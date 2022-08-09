@@ -60,6 +60,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.True(t, contract.KubernetesAlternateImageRegistries())
 	assert.True(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.True(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract1_2(t *testing.T) {
@@ -78,6 +79,7 @@ func TestContract1_2(t *testing.T) {
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.True(t, contract.KubernetesAlternateImageRegistries())
 	assert.True(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.True(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract1_1(t *testing.T) {
@@ -96,6 +98,7 @@ func TestContract1_1(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract1_0(t *testing.T) {
@@ -114,6 +117,7 @@ func TestContract1_0(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract0_14(t *testing.T) {
@@ -132,6 +136,7 @@ func TestContract0_14(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract0_13(t *testing.T) {
@@ -150,6 +155,7 @@ func TestContract0_13(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract0_12(t *testing.T) {
@@ -168,6 +174,7 @@ func TestContract0_12(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract0_11(t *testing.T) {
@@ -186,6 +193,7 @@ func TestContract0_11(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract0_10(t *testing.T) {
@@ -204,6 +212,7 @@ func TestContract0_10(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract0_9(t *testing.T) {
@@ -222,6 +231,7 @@ func TestContract0_9(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }
 
 func TestContract0_8(t *testing.T) {
@@ -240,4 +250,5 @@ func TestContract0_8(t *testing.T) {
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
 	assert.False(t, contract.KubernetesAlternateImageRegistries())
 	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
 }

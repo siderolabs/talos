@@ -131,3 +131,8 @@ func (contract *VersionContract) KubernetesAlternateImageRegistries() bool {
 func (contract *VersionContract) KubernetesAllowSchedulingOnControlPlanes() bool {
 	return contract.Greater(TalosVersion1_1)
 }
+
+// KubernetesDiscoveryBackendDisabled returns true if Kubernetes cluster discovery backend should be disabled by default.
+func (contract *VersionContract) KubernetesDiscoveryBackendDisabled() bool {
+	return contract.Greater(TalosVersion1_1)
+}

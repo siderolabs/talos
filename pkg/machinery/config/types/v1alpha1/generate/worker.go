@@ -95,6 +95,10 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
 			DiscoveryEnabled: pointer.To(in.DiscoveryEnabled),
 		}
+
+		if in.VersionContract.KubernetesDiscoveryBackendDisabled() {
+			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = pointer.To(true)
+		}
 	}
 
 	if machine.MachineRegistries.RegistryMirrors == nil {

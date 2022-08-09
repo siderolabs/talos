@@ -150,7 +150,22 @@ func (suite *DiscoverySuite) TestMembers() {
 
 // TestRegistries checks that all registries produce same raw Affiliate data.
 func (suite *DiscoverySuite) TestRegistries() {
-	registries := []string{"k8s/", "service/"}
+	node := suite.RandomDiscoveredNodeInternalIP()
+	suite.ClearConnectionRefused(suite.ctx, node)
+
+	nodeCtx := client.WithNodes(suite.ctx, node)
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	registries := []string{}
+
+	if provider.Cluster().Discovery().Registries().Kubernetes().Enabled() {
+		registries = append(registries, "k8s/")
+	}
+
+	if provider.Cluster().Discovery().Registries().Service().Enabled() {
+		registries = append(registries, "service/")
+	}
 
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 

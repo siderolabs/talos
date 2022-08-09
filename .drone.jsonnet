@@ -393,8 +393,9 @@ local integration_no_cluster_discovery = Step("e2e-no-cluster-discovery", target
 });
 local integration_kubespan = Step("e2e-kubespan", target="e2e-qemu", privileged=true, depends_on=[integration_no_cluster_discovery], environment={
         "SHORT_INTEGRATION_TEST": "yes",
-        "WITH_CLUSTER_DISCOVERY": "false",
+        "WITH_CLUSTER_DISCOVERY": "true",
         "IMAGE_REGISTRY": local_registry,
+        "WITH_CONFIG_PATCH": '[{"op": "replace", "path": "/cluster/discovery/registries/kubernetes/disabled", "value": false}]', # use Kubernetes discovery backend
 });
 local integration_qemu_encrypted_vip = Step("e2e-encrypted-vip", target="e2e-qemu", privileged=true, depends_on=[load_artifacts], environment={
         "WITH_DISK_ENCRYPTION": "true",

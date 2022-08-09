@@ -14,7 +14,7 @@ To see a live demo of Cluster Discovery, see the video below:
 ## Registries
 
 Peers are aggregated from a number of optional registries.
-By default, Talos will use the `kubernetes` and `service` registries.
+By default, Talos will use the `service` registry, while `kubernetes` registry is not enabled.
 Either one can be disabled.
 To disable a registry, set `disabled` to `true` (this option is the same for all registries):
 For example, to disable the `service` registry:

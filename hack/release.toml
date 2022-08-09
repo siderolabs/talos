@@ -238,6 +238,25 @@ This provides better compatibility with popular CNIs like Calico and Cilium.
 Old behavior can be restored by setting `.machine.kubespan.advertiseKubernetesNetworks = true` in the machine config.
 """
 
+    [notes.kubernetes-discovery]
+      title = "Kubernetes Discovery Backend"
+      description="""\
+Kubernetes cluster discovery backend is now disabled by default for new clusters.
+This backend doesn't provide any benefits over the Discovery Service based backend, while it
+causes issues for KubeSpan enabled clusters when control plane endpoint is KubeSpan-routed.
+
+For air-gapped installations when the Discovery Service is not enabled, Kubernetes Discovery Backend can be enabled by applying
+the following machine configuration patch:
+
+```yaml
+cluster:
+  discovery:
+    registries:
+      kubernetes:
+        disabled: false
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]
