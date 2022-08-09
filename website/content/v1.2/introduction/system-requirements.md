@@ -16,7 +16,7 @@ description: "Hardware requirements for running Talos Linux."
   </thead>
   <tbody>
     <tr>
-      <td class="border px-4 py-2">Init/Control Plane</td>
+      <td class="border px-4 py-2">Control Plane</td>
       <td class="border px-4 py-2">2GB</td>
       <td class="border px-4 py-2">2</td>
     </tr>
@@ -40,7 +40,7 @@ description: "Hardware requirements for running Talos Linux."
   </thead>
   <tbody>
     <tr>
-      <td class="border px-4 py-2">Init/Control Plane</td>
+      <td class="border px-4 py-2">Control Plane</td>
       <td class="border px-4 py-2">4GB</td>
       <td class="border px-4 py-2">4</td>
     </tr>

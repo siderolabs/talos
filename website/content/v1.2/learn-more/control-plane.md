@@ -23,8 +23,7 @@ Talos cluster bootstrap flow:
 All nodes start the `kubelet` service.
 The `kubelet` tries to contact the control plane endpoint, but as it is not up yet, it keeps retrying.
 
-One of the control plane nodes is chosen as the bootstrap node.
-The node's type can be either `init` or `controlplane`, where the `controlplane` type is promoted using the bootstrap API (`talosctl bootstrap`).
+One of the control plane nodes is chosen as the bootstrap node, and promoted using the bootstrap API (`talosctl bootstrap`).
 The bootstrap node initiates the `etcd` bootstrap process by initializing `etcd` as the first member of the cluster.
 
 > Note: there should be only one bootstrap node for the cluster lifetime.

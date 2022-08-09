@@ -197,7 +197,7 @@ while [[ "$CP_COUNT" -lt 4 ]]; do
 done
 ```
 
-> Make a note of the resulting `PrivateIpAddress` from the init and controlplane nodes for later use.
+> Make a note of the resulting `PrivateIpAddress` from the controlplane nodes for later use.
 
 #### Create the Worker Nodes
 
