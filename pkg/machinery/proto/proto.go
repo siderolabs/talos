@@ -89,16 +89,15 @@ func RegisterDefaultTypes() {
 
 		protoenc.RegisterEncoderDecoder(
 			// TODO(DmitriyMV): use generated proto representation of this
-			// TODO(DmitriyMV): use ptr version
-			func(v x509.PEMEncodedCertificateAndKey) ([]byte, error) {
+			func(v *x509.PEMEncodedCertificateAndKey) ([]byte, error) {
 				return json.Marshal(v)
 			},
-			func(slc []byte) (x509.PEMEncodedCertificateAndKey, error) {
-				result := x509.PEMEncodedCertificateAndKey{}
+			func(slc []byte) (*x509.PEMEncodedCertificateAndKey, error) {
+				var result *x509.PEMEncodedCertificateAndKey
 
 				err := json.Unmarshal(slc, &result)
 				if err != nil {
-					return x509.PEMEncodedCertificateAndKey{}, err
+					return &x509.PEMEncodedCertificateAndKey{}, err
 				}
 
 				return result, nil
@@ -106,15 +105,31 @@ func RegisterDefaultTypes() {
 		)
 
 		protoenc.RegisterEncoderDecoder(
-			// TODO(DmitriyMV): use ptr version
-			func(v url.URL) ([]byte, error) { return []byte(v.String()), nil },
-			func(slc []byte) (url.URL, error) {
-				parse, err := url.Parse(string(slc))
+			// TODO(DmitriyMV): use generated proto representation of this
+			func(v *x509.PEMEncodedKey) ([]byte, error) {
+				return json.Marshal(v)
+			},
+			func(slc []byte) (*x509.PEMEncodedKey, error) {
+				var result *x509.PEMEncodedKey
+
+				err := json.Unmarshal(slc, &result)
 				if err != nil {
-					return url.URL{}, err
+					return &x509.PEMEncodedKey{}, err
 				}
 
-				return *parse, nil
+				return result, nil
+			},
+		)
+
+		protoenc.RegisterEncoderDecoder(
+			func(v *url.URL) ([]byte, error) { return []byte(v.String()), nil },
+			func(slc []byte) (*url.URL, error) {
+				parse, err := url.Parse(string(slc))
+				if err != nil {
+					return &url.URL{}, err
+				}
+
+				return parse, nil
 			},
 		)
 

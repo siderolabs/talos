@@ -36,9 +36,11 @@ type AdmissionControlConfigSpec struct {
 }
 
 // AdmissionPluginSpec is a single admission plugin configuration Admission Control plugins.
+//
+//gotagsrewrite:gen
 type AdmissionPluginSpec struct {
-	Name          string                 `yaml:"name"`
-	Configuration map[string]interface{} `yaml:"configuration"`
+	Name          string                 `yaml:"name" protobuf:"1"`
+	Configuration map[string]interface{} `yaml:"configuration" protobuf:"2"`
 }
 
 // NewAdmissionControlConfig returns new AdmissionControlConfig resource.

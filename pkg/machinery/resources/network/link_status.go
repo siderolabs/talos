@@ -7,9 +7,11 @@ package network
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
 // LinkStatusType is type of LinkStatus resource.
@@ -101,5 +103,14 @@ func (LinkStatusRD) ResourceDefinition(resource.Metadata, LinkStatusSpec) meta.R
 			},
 		},
 		Sensitivity: meta.NonSensitive,
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	err := protobuf.RegisterDynamic[LinkStatusSpec](LinkStatusType, &LinkStatus{})
+	if err != nil {
+		panic(err)
 	}
 }
