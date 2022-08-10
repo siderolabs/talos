@@ -34,6 +34,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
+	"github.com/google/uuid"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
@@ -310,14 +311,18 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 //
 //nolint:dupl
 func (s *Server) Reboot(ctx context.Context, in *machine.RebootRequest) (reply *machine.RebootResponse, err error) {
-	log.Printf("reboot via API received")
+	actorID := uuid.New().String()
+
+	log.Printf("reboot via API received. actor id: %s", actorID)
 
 	if err := s.checkSupported(runtime.Reboot); err != nil {
 		return nil, err
 	}
 
+	rebootCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
+
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in); err != nil {
+		if err := s.Controller.Run(rebootCtx, runtime.SequenceReboot, in); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reboot failed:", err)
 			}
@@ -326,7 +331,9 @@ func (s *Server) Reboot(ctx context.Context, in *machine.RebootRequest) (reply *
 
 	reply = &machine.RebootResponse{
 		Messages: []*machine.Reboot{
-			{},
+			{
+				ActorId: actorID,
+			},
 		},
 	}
 
@@ -443,14 +450,18 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 //
 //nolint:dupl
 func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (reply *machine.ShutdownResponse, err error) {
-	log.Printf("shutdown via API received")
+	actorID := uuid.New().String()
+
+	log.Printf("shutdown via API received. actor id: %s", actorID)
 
 	if err = s.checkSupported(runtime.Shutdown); err != nil {
 		return nil, err
 	}
 
+	shutdownCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
+
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceShutdown, in, runtime.WithTakeover()); err != nil {
+		if err := s.Controller.Run(shutdownCtx, runtime.SequenceShutdown, in, runtime.WithTakeover()); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("shutdown failed:", err)
 			}
@@ -459,7 +470,9 @@ func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (rep
 
 	reply = &machine.ShutdownResponse{
 		Messages: []*machine.Shutdown{
-			{},
+			{
+				ActorId: actorID,
+			},
 		},
 	}
 
@@ -470,7 +483,11 @@ func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (rep
 //
 //nolint:gocyclo,cyclop
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
+	actorID := uuid.New().String()
+
 	var mu *concurrency.Mutex
+
+	ctx = context.WithValue(ctx, runtime.ActorIDCtxKey{}, actorID)
 
 	if err = s.checkSupported(runtime.Upgrade); err != nil {
 		return nil, err
@@ -506,7 +523,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		}
 	}
 
-	runCtx := context.Background()
+	runCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
 
 	if in.GetStage() {
 		meta, err := bootloader.NewMeta()
@@ -566,7 +583,8 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 	reply = &machine.UpgradeResponse{
 		Messages: []*machine.Upgrade{
 			{
-				Ack: "Upgrade request received",
+				Ack:     "Upgrade request received",
+				ActorId: actorID,
 			},
 		},
 	}
@@ -594,7 +612,9 @@ func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
 //
 //nolint:gocyclo
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
-	log.Printf("reset request received")
+	actorID := uuid.New().String()
+
+	log.Printf("reset request received. actorID: %s", actorID)
 
 	opts := ResetOptions{
 		ResetRequest: in,
@@ -641,8 +661,10 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 		}
 	}
 
+	resetCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
+
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceReset, &opts); err != nil {
+		if err := s.Controller.Run(resetCtx, runtime.SequenceReset, &opts); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reset failed:", err)
 			}
@@ -651,7 +673,9 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 
 	reply = &machine.ResetResponse{
 		Messages: []*machine.Reset{
-			{},
+			{
+				ActorId: actorID,
+			},
 		},
 	}
 
@@ -1305,6 +1329,12 @@ func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadSe
 //
 //nolint:gocyclo
 func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_EventsServer) error {
+	// send an empty (hello) event to indicate to client that streaming has started
+	err := sendEmptyEvent(req, l)
+	if err != nil {
+		return err
+	}
+
 	errCh := make(chan error)
 
 	var opts []runtime.WatchOptionFunc
@@ -1324,6 +1354,10 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 
 	if req.TailSeconds != 0 {
 		opts = append(opts, runtime.WithTailDuration(time.Duration(req.TailSeconds)*time.Second))
+	}
+
+	if req.WithActorId != "" {
+		opts = append(opts, runtime.WithActorID(req.WithActorId))
 	}
 
 	if err := s.Controller.Runtime().Events().Watch(func(events <-chan runtime.EventInfo) {
@@ -1355,6 +1389,15 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 	}
 
 	return <-errCh
+}
+
+func sendEmptyEvent(req *machine.EventsRequest, l machine.MachineService_EventsServer) error {
+	emptyEvent, err := pointer.To(runtime.NewEvent(nil, req.WithActorId)).ToMachineEvent()
+	if err != nil {
+		return err
+	}
+
+	return l.Send(emptyEvent)
 }
 
 //nolint:gocyclo

@@ -147,12 +147,14 @@ func (suite *EventsSinkSuite) TestPublish() {
 	defer cancel()
 
 	suite.events.Publish(
+		ctx,
 		&machine.AddressEvent{
 			Hostname: "localhost",
 		},
 	)
 
 	suite.events.Publish(
+		ctx,
 		&machine.PhaseEvent{
 			Phase:  "test",
 			Action: machine.PhaseEvent_START,
@@ -184,12 +186,14 @@ func (suite *EventsSinkSuite) TestDrain() {
 
 	for i := 0; i < 10; i++ {
 		suite.events.Publish(
+			ctx,
 			&machine.PhaseEvent{
 				Phase:  "test",
 				Action: machine.PhaseEvent_START,
 			},
 		)
 		suite.events.Publish(
+			ctx,
 			&machine.PhaseEvent{
 				Phase:  "test",
 				Action: machine.PhaseEvent_STOP,

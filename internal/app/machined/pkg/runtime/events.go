@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -15,11 +16,15 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
+// ActorIDCtxKey is the context key used for event actor id.
+type ActorIDCtxKey struct{}
+
 // Event is what is sent on the wire.
 type Event struct {
 	TypeURL string
 	ID      xid.ID
 	Payload proto.Message
+	ActorID string
 }
 
 // EventInfo unifies event and queue information for the WatchFunc.
@@ -43,6 +48,8 @@ type WatchOptions struct {
 	TailID xid.ID
 	// Start at timestamp Now() - TailDuration.
 	TailDuration time.Duration
+	// ActorID to ID of the actor to filter events by.
+	ActorID string
 }
 
 // WatchOptionFunc defines the options for the watcher.
@@ -89,6 +96,15 @@ func WithTailDuration(dur time.Duration) WatchOptionFunc {
 	}
 }
 
+// WithActorID sets up Watcher to return events filtered by given actor id.
+func WithActorID(actorID string) WatchOptionFunc {
+	return func(opts *WatchOptions) error {
+		opts.ActorID = actorID
+
+		return nil
+	}
+}
+
 // Watcher defines a runtime event watcher.
 type Watcher interface {
 	Watch(WatchFunc, ...WatchOptionFunc) error
@@ -96,13 +112,31 @@ type Watcher interface {
 
 // Publisher defines a runtime event publisher.
 type Publisher interface {
-	Publish(proto.Message)
+	Publish(context.Context, proto.Message)
 }
 
 // EventStream defines the runtime event stream.
 type EventStream interface {
 	Watcher
 	Publisher
+}
+
+// NewEvent creates a new event with the provided payload and actor ID.
+func NewEvent(payload proto.Message, actorID string) Event {
+	typeURL := ""
+	if payload != nil {
+		typeURL = fmt.Sprintf("talos/runtime/%s", payload.ProtoReflect().Descriptor().FullName())
+	}
+
+	return Event{
+		// In the future, we can publish `talos/runtime`, and
+		// `talos/plugin/<plugin>` (or something along those lines) events.
+		// TypeURL: fmt.Sprintf("talos/runtime/%s", protoreflect.MessageDescriptor.FullName(msg)),
+		TypeURL: typeURL,
+		Payload: payload,
+		ID:      xid.New(),
+		ActorID: actorID,
+	}
 }
 
 // ToMachineEvent serializes Event as proto message machine.Event.
@@ -117,6 +151,7 @@ func (event *Event) ToMachineEvent() (*machine.Event, error) {
 			TypeUrl: event.TypeURL,
 			Value:   value,
 		},
-		Id: event.ID.String(),
+		Id:      event.ID.String(),
+		ActorId: event.ActorID,
 	}, nil
 }

@@ -125,6 +125,7 @@ message RebootRequest {
 // The reboot message containing the reboot status.
 message Reboot {
   common.Metadata metadata = 1;
+  string actor_id = 2;
 }
 
 message RebootResponse {
@@ -248,12 +249,14 @@ message EventsRequest {
   int32 tail_events = 1;
   string tail_id = 2;
   int32 tail_seconds = 3;
+  string with_actor_id = 4;
 }
 
 message Event {
   common.Metadata metadata = 1;
   google.protobuf.Any data = 2;
   string id = 3;
+  string actor_id = 4;
 }
 
 // rpc reset
@@ -276,6 +279,7 @@ message ResetRequest {
 // The reset message containing the restart status.
 message Reset {
   common.Metadata metadata = 1;
+  string actor_id = 2;
 }
 
 message ResetResponse {
@@ -286,6 +290,7 @@ message ResetResponse {
 // The messages message containing the shutdown status.
 message Shutdown {
   common.Metadata metadata = 1;
+  string actor_id = 2;
 }
 
 message ShutdownRequest {
@@ -308,6 +313,7 @@ message UpgradeRequest {
 message Upgrade {
   common.Metadata metadata = 1;
   string ack = 2;
+  string actor_id = 3;
 }
 
 message UpgradeResponse {

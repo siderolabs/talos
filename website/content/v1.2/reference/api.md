@@ -1254,6 +1254,7 @@ EtcdMembers contains the list of members registered on the host.
 | metadata | [common.Metadata](#common.Metadata) |  |  |
 | data | [google.protobuf.Any](#google.protobuf.Any) |  |  |
 | id | [string](#string) |  |  |
+| actor_id | [string](#string) |  |  |
 
 
 
@@ -1271,6 +1272,7 @@ EtcdMembers contains the list of members registered on the host.
 | tail_events | [int32](#int32) |  |  |
 | tail_id | [string](#string) |  |  |
 | tail_seconds | [int32](#int32) |  |  |
+| with_actor_id | [string](#string) |  |  |
 
 
 
@@ -1973,6 +1975,7 @@ The reboot message containing the reboot status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
+| actor_id | [string](#string) |  |  |
 
 
 
@@ -2018,6 +2021,7 @@ The reset message containing the restart status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
+| actor_id | [string](#string) |  |  |
 
 
 
@@ -2474,6 +2478,7 @@ The messages message containing the shutdown status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
+| actor_id | [string](#string) |  |  |
 
 
 
@@ -2668,6 +2673,7 @@ The request message containing the containerd namespace.
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
 | ack | [string](#string) |  |  |
+| actor_id | [string](#string) |  |  |
 
 
 

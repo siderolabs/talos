@@ -112,7 +112,7 @@ func TestEvents_Publish(t *testing.T) {
 			for i := 0; i < tt.messages; i++ {
 				_ = l.Wait(context.Background()) //nolint:errcheck
 
-				e.Publish(&machine.SequenceEvent{
+				e.Publish(context.Background(), &machine.SequenceEvent{
 					Sequence: strconv.Itoa(i),
 				})
 			}
@@ -186,7 +186,7 @@ func TestEvents_WatchOptionsTailEvents(t *testing.T) {
 	e := NewEvents(100, 10)
 
 	for i := 0; i < 200; i++ {
-		e.Publish(&machine.SequenceEvent{
+		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -203,7 +203,7 @@ func TestEvents_WatchOptionsTailEvents(t *testing.T) {
 	e = NewEvents(100, 10)
 
 	for i := 0; i < 30; i++ {
-		e.Publish(&machine.SequenceEvent{
+		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -219,7 +219,7 @@ func TestEvents_WatchOptionsTailSeconds(t *testing.T) {
 	e := NewEvents(100, 10)
 
 	for i := 0; i < 20; i++ {
-		e.Publish(&machine.SequenceEvent{
+		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -228,7 +228,7 @@ func TestEvents_WatchOptionsTailSeconds(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	for i := 20; i < 30; i++ {
-		e.Publish(&machine.SequenceEvent{
+		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -242,7 +242,7 @@ func TestEvents_WatchOptionsTailID(t *testing.T) {
 	e := NewEvents(100, 10)
 
 	for i := 0; i < 20; i++ {
-		e.Publish(&machine.SequenceEvent{
+		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
 	}
@@ -296,7 +296,7 @@ func BenchmarkPublish(bb *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				e.Publish(&ev)
+				e.Publish(context.Background(), &ev)
 			}
 
 			wg.Wait()

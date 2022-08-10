@@ -668,7 +668,7 @@ func BootstrapEtcd(ctx context.Context, r runtime.Runtime, req *machineapi.Boots
 	// wait in the boot sequence to unblock.
 	for _, svc := range system.Services(r).List() {
 		if svc.AsProto().GetId() == "etcd" {
-			svc.UpdateState(events.StateFinished, "Bootstrap requested")
+			svc.UpdateState(ctx, events.StateFinished, "Bootstrap requested")
 
 			break
 		}

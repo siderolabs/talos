@@ -84,7 +84,7 @@ func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interfa
 	ctx, err := c.priorityLock.Lock(ctx, time.Minute, seq, setters...)
 	if err != nil {
 		if errors.Is(err, runtime.ErrLocked) {
-			c.Runtime().Events().Publish(&machine.SequenceEvent{
+			c.Runtime().Events().Publish(context.Background(), &machine.SequenceEvent{
 				Sequence: seq.String(),
 				Action:   machine.SequenceEvent_NOOP,
 				Error: &common.Error{
@@ -112,7 +112,7 @@ func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interfa
 			code = common.Code_CANCELED
 		}
 
-		c.Runtime().Events().Publish(&machine.SequenceEvent{
+		c.Runtime().Events().Publish(ctx, &machine.SequenceEvent{
 			Sequence: seq.String(),
 			Action:   machine.SequenceEvent_NOOP,
 			Error: &common.Error{
@@ -190,12 +190,12 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 }
 
 func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []runtime.Phase, data interface{}) error {
-	c.Runtime().Events().Publish(&machine.SequenceEvent{
+	c.Runtime().Events().Publish(ctx, &machine.SequenceEvent{
 		Sequence: seq.String(),
 		Action:   machine.SequenceEvent_START,
 	})
 
-	defer c.Runtime().Events().Publish(&machine.SequenceEvent{
+	defer c.Runtime().Events().Publish(ctx, &machine.SequenceEvent{
 		Sequence: seq.String(),
 		Action:   machine.SequenceEvent_STOP,
 	})
@@ -251,12 +251,12 @@ func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []run
 }
 
 func (c *Controller) runPhase(ctx context.Context, phase runtime.Phase, seq runtime.Sequence, data interface{}) error {
-	c.Runtime().Events().Publish(&machine.PhaseEvent{
+	c.Runtime().Events().Publish(ctx, &machine.PhaseEvent{
 		Phase:  phase.Name,
 		Action: machine.PhaseEvent_START,
 	})
 
-	defer c.Runtime().Events().Publish(&machine.PhaseEvent{
+	defer c.Runtime().Events().Publish(ctx, &machine.PhaseEvent{
 		Phase:  phase.Name,
 		Action: machine.PhaseEvent_START,
 	})
@@ -293,7 +293,7 @@ func (c *Controller) runTask(ctx context.Context, progress string, f runtime.Tas
 
 	start := time.Now()
 
-	c.Runtime().Events().Publish(&machine.TaskEvent{
+	c.Runtime().Events().Publish(ctx, &machine.TaskEvent{
 		Task:   taskName,
 		Action: machine.TaskEvent_START,
 	})
@@ -312,7 +312,7 @@ func (c *Controller) runTask(ctx context.Context, progress string, f runtime.Tas
 		}
 	}()
 
-	defer c.Runtime().Events().Publish(&machine.TaskEvent{
+	defer c.Runtime().Events().Publish(ctx, &machine.TaskEvent{
 		Task:   taskName,
 		Action: machine.TaskEvent_STOP,
 	})

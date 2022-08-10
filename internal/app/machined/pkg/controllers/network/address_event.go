@@ -106,7 +106,7 @@ func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtim
 			hostname = hostnameStatus.(*network.HostnameStatus).TypedSpec().Hostname
 		}
 
-		ctrl.V1Alpha1Events.Publish(&machine.AddressEvent{
+		ctrl.V1Alpha1Events.Publish(ctx, &machine.AddressEvent{
 			Hostname:  hostname,
 			Addresses: addresses,
 		})

@@ -6,12 +6,9 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/rs/xid"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -198,6 +195,11 @@ func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) erro
 
 			e.mu.Unlock()
 
+			// if actor id filter is specified and does not match the event, skip it
+			if opts.ActorID != "" && event.ActorID != opts.ActorID {
+				continue
+			}
+
 			// send event to WatchFunc, wait for it to process the event
 			select {
 			case ch <- runtime.EventInfo{
@@ -214,16 +216,13 @@ func (e *Events) Watch(f runtime.WatchFunc, opt ...runtime.WatchOptionFunc) erro
 }
 
 // Publish implements the Events interface.
-func (e *Events) Publish(msg proto.Message) {
-	event := runtime.Event{
-		// In the future, we can publish `talos/runtime`, and
-		// `talos/plugin/<plugin>` (or something along those lines) events.
-		// TypeURL: fmt.Sprintf("talos/runtime/%s", protoreflect.MessageDescriptor.FullName(msg)),
-
-		TypeURL: fmt.Sprintf("talos/runtime/%s", msg.ProtoReflect().Descriptor().FullName()),
-		Payload: msg,
-		ID:      xid.New(),
+func (e *Events) Publish(ctx context.Context, msg proto.Message) {
+	actorID, ok := ctx.Value(runtime.ActorIDCtxKey{}).(string)
+	if !ok {
+		actorID = ""
 	}
+
+	event := runtime.NewEvent(msg, actorID)
 
 	e.mu.Lock()
 	defer e.mu.Unlock()

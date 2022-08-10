@@ -33,7 +33,7 @@ type mockEventsStream struct {
 	messages   []proto.Message
 }
 
-func (s *mockEventsStream) Publish(m proto.Message) {
+func (s *mockEventsStream) Publish(_ context.Context, m proto.Message) {
 	s.messagesMu.Lock()
 	defer s.messagesMu.Unlock()
 

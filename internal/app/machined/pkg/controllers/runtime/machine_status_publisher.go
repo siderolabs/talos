@@ -65,7 +65,7 @@ func (ctrl *MachineStatusPublisherController) Run(ctx context.Context, r control
 			return fmt.Errorf("error reading machine status: %w", err)
 		}
 
-		ctrl.V1Alpha1Events.Publish(&machine.MachineStatusEvent{
+		ctrl.V1Alpha1Events.Publish(ctx, &machine.MachineStatusEvent{
 			Stage: machine.MachineStatusEvent_MachineStage(machineStatus.TypedSpec().Stage),
 			Status: &machine.MachineStatusEvent_MachineStatus{
 				Ready: machineStatus.TypedSpec().Status.Ready,

@@ -490,7 +490,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 			}
 
 			if e != nil {
-				r.Events().Publish(&machineapi.ConfigLoadErrorEvent{
+				r.Events().Publish(ctx, &machineapi.ConfigLoadErrorEvent{
 					Error: e.Error(),
 				})
 
@@ -510,7 +510,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 
 			cfg, e := r.LoadAndValidateConfig(b)
 			if e != nil {
-				r.Events().Publish(&machineapi.ConfigLoadErrorEvent{
+				r.Events().Publish(ctx, &machineapi.ConfigLoadErrorEvent{
 					Error: e.Error(),
 				})
 
@@ -615,12 +615,12 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 
 func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
 	// add "fake" events to signal when Talos enters and leaves maintenance mode
-	r.Events().Publish(&machineapi.TaskEvent{
+	r.Events().Publish(ctx, &machineapi.TaskEvent{
 		Action: machineapi.TaskEvent_START,
 		Task:   "runningMaintenance",
 	})
 
-	defer r.Events().Publish(&machineapi.TaskEvent{
+	defer r.Events().Publish(ctx, &machineapi.TaskEvent{
 		Action: machineapi.TaskEvent_STOP,
 		Task:   "runningMaintenance",
 	})
@@ -1652,7 +1652,7 @@ func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, 
 			rebootCmd = unix.LINUX_REBOOT_CMD_KEXEC
 		}
 
-		r.Events().Publish(&machineapi.RestartEvent{
+		r.Events().Publish(ctx, &machineapi.RestartEvent{
 			Cmd: int64(rebootCmd),
 		})
 
@@ -1680,7 +1680,7 @@ func Shutdown(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc
 			}
 		}
 
-		r.Events().Publish(&machineapi.RestartEvent{
+		r.Events().Publish(ctx, &machineapi.RestartEvent{
 			Cmd: int64(cmd),
 		})
 
