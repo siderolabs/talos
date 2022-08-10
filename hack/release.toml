@@ -257,6 +257,12 @@ cluster:
 ```
 """
 
+    [notes.apply-config]
+        title = "Apply Config Patches"
+        description="""\
+`talosctl apply-config` now supports patching the machine config file in memory before submitting it to the node.
+"""
+
 [make_deps]
 
     [make_deps.tools]

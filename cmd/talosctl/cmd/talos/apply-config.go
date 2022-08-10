@@ -18,12 +18,14 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/tui/installer"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 var applyConfigCmdFlags struct {
 	helpers.Mode
 	certFingerprints []string
+	patches          []string
 	filename         string
 	insecure         bool
 	dryRun           bool
@@ -63,6 +65,28 @@ var applyConfigCmd = &cobra.Command{
 
 			if len(cfgBytes) < 1 {
 				return fmt.Errorf("no configuration data read")
+			}
+
+			if len(applyConfigCmdFlags.patches) != 0 {
+				var (
+					cfg     configpatcher.Input
+					patches []configpatcher.Patch
+				)
+
+				patches, e = configpatcher.LoadPatches(applyConfigCmdFlags.patches)
+				if e != nil {
+					return e
+				}
+
+				cfg, e = configpatcher.Apply(configpatcher.WithBytes(cfgBytes), patches)
+				if e != nil {
+					return e
+				}
+
+				cfgBytes, e = cfg.Bytes()
+				if e != nil {
+					return e
+				}
 			}
 		} else if !applyConfigCmdFlags.Interactive {
 			return fmt.Errorf("no filename supplied for configuration")
@@ -137,6 +161,7 @@ func init() {
 	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
 	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.dryRun, "dry-run", false, "check how the config change will be applied in dry-run mode")
 	applyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
+	applyConfigCmd.Flags().StringSliceVarP(&applyConfigCmdFlags.patches, "config-patch", "p", nil, "the list of config patches to apply to the local config file before sending it to the node")
 	applyConfigCmd.Flags().DurationVar(&applyConfigCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
 	helpers.AddModeFlags(&applyConfigCmdFlags.Mode, applyConfigCmd)
 	addCommand(applyConfigCmd)
