@@ -277,11 +277,8 @@ const (
 	// Should be less than KubeletShutdownGracePeriod.
 	KubeletShutdownGracePeriodCriticalPods = 10 * time.Second
 
-	// SeccompProfilesDirectory is the path to the directory where user provided seccomp profiles are stored.
-	SeccompProfilesDirectory = "/var/lib/seccomp/profiles"
-
-	// KubeletSeccompProfilesDirectory is the path to the directory where user provided seccomp profiles are mounted inside Kubelet.
-	KubeletSeccompProfilesDirectory = "/var/lib/kubelet/seccomp/profiles"
+	// SeccompProfilesDirectory is the path to the directory where user provided seccomp profiles are mounted inside Kubelet.
+	SeccompProfilesDirectory = "/var/lib/kubelet/seccomp/profiles"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	DefaultKubernetesVersion = "1.25.0-beta.0"

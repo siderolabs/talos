@@ -30,8 +30,7 @@ Apply the machine config to all the nodes using talosctl:
 talosctl -e <endpoint ip/hostname> -n <node ip/hostname> patch mc -p @patch.yaml
 ```
 
-This would create a seccomp profile name `audit.json` on the node at `/var/lib/seccomp/profiles`.
-Talos automatically bind mounts `/var/lib/seccomp/profiles` into `/var/lib/kubelet/seccomp/profiles` so it can be used by the Kubelet.
+This would create a seccomp profile name `audit.json` on the node at `/var/lib/kubelet/seccomp/profiles`.
 
 The profiles can be used by Kubernetes pods by specfying the pod `securityContext` as below:
 
@@ -62,7 +61,7 @@ NODE       NAMESPACE   TYPE             ID           VERSION
 The content of the seccomp profile can be viewed by running the below command:
 
 ```bash
-talosctl -e <endpoint ip/hostname> -n <node ip/hostname> read /var/lib/seccomp/profiles/audit.json
+talosctl -e <endpoint ip/hostname> -n <node ip/hostname> read /var/lib/kubelet/seccomp/profiles/audit.json
 ```
 
 An output similar to below can be observed:

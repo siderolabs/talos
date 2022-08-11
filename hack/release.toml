@@ -103,7 +103,7 @@ machine:
 
 This profile data can be either configured as a YAML definition or as a JSON string.
 
-The profiles are created on the host under `/var/lib/seccomp/profiles` and bind mounted at `/var/lib/kubelet/seccomp/profiles` so Kubelet can use it.
+The profiles are created on the host under `/var/lib/kubelet/seccomp/profiles`.
 
 See [documentation](https://www.talos.dev/v1.2/kubernetes-guides/configuration/seccomp-profiles/) for more details.
 """
