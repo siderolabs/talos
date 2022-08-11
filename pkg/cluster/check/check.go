@@ -31,7 +31,7 @@ type ClusterCheck func(ClusterInfo) conditions.Condition
 //
 // It is supposed that reporter drops duplicate messages.
 type Reporter interface {
-	Update(check conditions.Condition)
+	Update(condition conditions.Condition)
 }
 
 // Wait run the checks against the cluster and waits for the full set to succeed.

@@ -180,7 +180,7 @@ func (suite *TalosconfigSuite) TestNew() {
 		readerOpts []base.RunOption
 	}{
 		{
-			args: []string{"reboot"},
+			args: []string{"reboot", "--wait=false"},
 			readerOpts: []base.RunOption{
 				base.ShouldFail(),
 				base.StdoutEmpty(),
@@ -188,7 +188,7 @@ func (suite *TalosconfigSuite) TestNew() {
 			},
 		},
 		{
-			args: []string{"reset"},
+			args: []string{"reset", "--wait=false"},
 			readerOpts: []base.RunOption{
 				base.ShouldFail(),
 				base.StdoutEmpty(),

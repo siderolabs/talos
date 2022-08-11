@@ -32,7 +32,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
 	rootCmd.PersistentFlags().StringVar(
-		&talos.Talosconfig,
+		&talos.GlobalArgs.Talosconfig,
 		"talosconfig",
 		"",
 		fmt.Sprintf("The path to the Talos configuration file. Defaults to '%s' env variable if set, otherwise '%s' and '%s' in order.",
@@ -41,12 +41,12 @@ func Execute() error {
 			filepath.Join(constants.ServiceAccountMountPath, constants.TalosconfigFilename),
 		),
 	)
-	rootCmd.PersistentFlags().StringVar(&talos.Cmdcontext, "context", "", "Context to be used in command")
-	rootCmd.PersistentFlags().StringSliceVarP(&talos.Nodes, "nodes", "n", []string{}, "target the specified nodes")
-	rootCmd.PersistentFlags().StringSliceVarP(&talos.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
+	rootCmd.PersistentFlags().StringVar(&talos.GlobalArgs.CmdContext, "context", "", "Context to be used in command")
+	rootCmd.PersistentFlags().StringSliceVarP(&talos.GlobalArgs.Nodes, "nodes", "n", []string{}, "target the specified nodes")
+	rootCmd.PersistentFlags().StringSliceVarP(&talos.GlobalArgs.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
 	cli.Should(rootCmd.RegisterFlagCompletionFunc("context", talos.CompleteConfigContext))
 	cli.Should(rootCmd.RegisterFlagCompletionFunc("nodes", talos.CompleteNodes))
-	rootCmd.PersistentFlags().StringVar(&talos.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
+	rootCmd.PersistentFlags().StringVar(&talos.GlobalArgs.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
 
 	cmd, err := rootCmd.ExecuteC()
 	if err != nil {

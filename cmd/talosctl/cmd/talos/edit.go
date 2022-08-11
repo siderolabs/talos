@@ -193,7 +193,7 @@ or 'notepad' for Windows.`,
 				return err
 			}
 
-			for _, node := range Nodes {
+			for _, node := range GlobalArgs.Nodes {
 				nodeCtx := client.WithNodes(ctx, node)
 				if err := helpers.ForEachResource(nodeCtx, c, nil, editFn(c), editCmdFlags.namespace, args...); err != nil {
 					return err

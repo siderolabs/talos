@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -145,12 +146,18 @@ type EventResult struct {
 //
 //nolint:gocyclo,cyclop
 func (c *Client) EventsWatchV2(ctx context.Context, ch chan<- EventResult, opts ...EventsOptionFunc) error {
+	ctx, cancel := context.WithCancel(ctx)
+
 	stream, err := c.Events(ctx, opts...)
 	if err != nil {
+		cancel()
+
 		return fmt.Errorf("error fetching events: %w", err)
 	}
 
 	if err = stream.CloseSend(); err != nil {
+		cancel()
+
 		return err
 	}
 
@@ -159,62 +166,57 @@ func (c *Client) EventsWatchV2(ctx context.Context, ch chan<- EventResult, opts 
 	// receive first (empty) watch event
 	_, err = stream.Recv()
 	if err != nil {
-		if err == io.EOF || StatusCode(err) == codes.Canceled {
-			return nil
-		}
+		cancel()
 
 		return fmt.Errorf("error while watching events: %w", err)
 	}
 
 	go func() {
-		for {
-			event, err := stream.Recv()
-			if err != nil {
-				if err == io.EOF || StatusCode(err) == codes.Canceled {
-					return
+		defer cancel()
+
+		err = func() error {
+			for {
+				event, eventErr := stream.Recv()
+				if eventErr != nil {
+					return eventErr
+				}
+
+				if event.GetMetadata().GetError() != "" {
+					var mdErr error
+					if event.GetMetadata().GetStatus() != nil {
+						mdErr = status.FromProto(event.GetMetadata().GetStatus()).Err()
+					} else {
+						mdErr = fmt.Errorf(event.GetMetadata().GetError())
+					}
+
+					return fmt.Errorf("%s: %w", event.GetMetadata().GetHostname(), mdErr)
+				}
+
+				ev, eventErr := UnmarshalEvent(event)
+				if eventErr != nil {
+					return eventErr
+				}
+
+				if ev == nil {
+					continue
+				}
+
+				if ev.Node == "" {
+					ev.Node = defaultNode
 				}
 
 				select {
-				case ch <- EventResult{Error: fmt.Errorf("error while watching events: %w", err)}:
+				case ch <- EventResult{Event: *ev}:
 				case <-ctx.Done():
+					return ctx.Err()
 				}
-
-				return
 			}
+		}()
 
-			if event.GetMetadata().GetError() != "" {
-				select {
-				case ch <- EventResult{Error: fmt.Errorf("error on event: %s", event.GetMetadata().GetError())}:
-				case <-ctx.Done():
-					return
-				}
-
-				continue
-			}
-
-			ev, err := UnmarshalEvent(event)
-			if err != nil {
-				select {
-				case ch <- EventResult{Error: err}:
-				case <-ctx.Done():
-					return
-				}
-
-				continue
-			}
-
-			if ev == nil {
-				continue
-			}
-
-			if ev.Node == "" {
-				ev.Node = defaultNode
-			}
-
+		if err != nil {
 			select {
-			case ch <- EventResult{Event: *ev}:
+			case ch <- EventResult{Error: err}:
 			case <-ctx.Done():
-				return
 			}
 		}
 	}()

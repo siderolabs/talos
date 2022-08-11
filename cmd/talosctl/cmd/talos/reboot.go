@@ -10,12 +10,15 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
 var rebootCmdFlags struct {
-	mode string
+	mode  string
+	wait  bool
+	debug bool
 }
 
 // rebootCmd represents the reboot command.
@@ -25,32 +28,63 @@ var rebootCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			opts := []client.RebootMode{}
+		if rebootCmdFlags.debug {
+			rebootCmdFlags.wait = true
+		}
 
-			switch rebootCmdFlags.mode {
-			// skips kexec and reboots with power cycle
-			case "powercycle":
-				opts = append(opts, client.WithPowerCycle)
-			case "default":
-			default:
-				return fmt.Errorf("invalid reboot mode: %q", rebootCmdFlags.mode)
-			}
+		var opts []client.RebootMode
 
-			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
-				return err
-			}
+		switch rebootCmdFlags.mode {
+		// skips kexec and reboots with power cycle
+		case "powercycle":
+			opts = append(opts, client.WithPowerCycle)
+		case "default":
+		default:
+			return fmt.Errorf("invalid reboot mode: %q", rebootCmdFlags.mode)
+		}
 
-			if err := c.Reboot(ctx, opts...); err != nil {
-				return fmt.Errorf("error executing reboot: %s", err)
-			}
+		if !rebootCmdFlags.wait {
+			return WithClient(func(ctx context.Context, c *client.Client) error {
+				if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+					return err
+				}
 
-			return nil
-		})
+				if err := c.Reboot(ctx, opts...); err != nil {
+					return fmt.Errorf("error executing reboot: %s", err)
+				}
+
+				return nil
+			})
+		}
+
+		cmd.SilenceErrors = true
+
+		postCheckFn := func(ctx context.Context, c *client.Client) error {
+			_, err := c.Disks(ctx)
+
+			return err
+		}
+
+		return action.NewTracker(&GlobalArgs, action.MachineReadyEventFn, rebootGetActorID, postCheckFn, rebootCmdFlags.debug).Run()
 	},
+}
+
+func rebootGetActorID(ctx context.Context, c *client.Client) (string, error) {
+	resp, err := c.RebootWithResponse(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	if len(resp.GetMessages()) == 0 {
+		return "", fmt.Errorf("no messages returned from action run")
+	}
+
+	return resp.GetMessages()[0].GetActorId(), nil
 }
 
 func init() {
 	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercycle\" (skips kexec)")
+	rebootCmd.Flags().BoolVar(&rebootCmdFlags.wait, "wait", false, "wait for the operation to complete, tracking its progress. always set to true when --debug is set")
+	rebootCmd.Flags().BoolVar(&rebootCmdFlags.debug, "debug", false, "debug operation from kernel logs. --no-wait is set to false when this flag is set")
 	addCommand(rebootCmd)
 }
