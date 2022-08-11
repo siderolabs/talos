@@ -128,7 +128,7 @@ talosctl cluster create [flags]
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster (QEMU provisioner only)
       --iso-path string                          the ISO path to use for the initial boot (VM only)
-      --kubernetes-version string                desired kubernetes version to run (default "1.25.0-beta.0")
+      --kubernetes-version string                desired kubernetes version to run (default "1.25.0-rc.0")
       --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
       --mtu int                                  MTU of the cluster network (default 1500)
@@ -1099,7 +1099,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/siderolabs/installer:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.25.0-beta.0")
+      --kubernetes-version string                desired kubernetes version to run (default "1.25.0-rc.0")
   -o, --output-dir string                        destination to output generated files
   -p, --persist                                  the desired persist value for configs (default true)
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
@@ -2164,7 +2164,7 @@ talosctl upgrade-k8s [flags]
       --endpoint string   the cluster control plane endpoint
       --from string       the Kubernetes control plane version to upgrade from
   -h, --help              help for upgrade-k8s
-      --to string         the Kubernetes control plane version to upgrade to (default "1.25.0-beta.0")
+      --to string         the Kubernetes control plane version to upgrade to (default "1.25.0-rc.0")
       --upgrade-kubelet   upgrade kubelet service (default true)
 ```
 
