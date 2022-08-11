@@ -37,13 +37,14 @@ var (
 	Endpoints   []string
 	Nodes       []string
 	Cmdcontext  string
+	Cluster     string
 )
 
 const pathAutoCompleteLimit = 500
 
 // WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
 //
-// WithClientNoNodes doesn't set any node information on request context.
+// WithClientNoNodes doesn't set any node information on the request context.
 func WithClientNoNodes(action func(context.Context, *client.Client) error) error {
 	return cli.WithContext(
 		context.Background(), func(ctx context.Context) error {
@@ -65,6 +66,10 @@ func WithClientNoNodes(action func(context.Context, *client.Client) error) error
 				opts = append(opts, client.WithEndpoints(Endpoints...))
 			}
 
+			if Cluster != "" {
+				opts = append(opts, client.WithCluster(Cluster))
+			}
+
 			c, err := client.New(ctx, opts...)
 			if err != nil {
 				return fmt.Errorf("error constructing client: %w", err)
@@ -77,6 +82,8 @@ func WithClientNoNodes(action func(context.Context, *client.Client) error) error
 	)
 }
 
+var errConfigContext = fmt.Errorf("failed to resolve config context")
+
 // WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
 func WithClient(action func(context.Context, *client.Client) error) error {
 	return WithClientNoNodes(
@@ -84,7 +91,7 @@ func WithClient(action func(context.Context, *client.Client) error) error {
 			if len(Nodes) < 1 {
 				configContext := c.GetConfigContext()
 				if configContext == nil {
-					return fmt.Errorf("failed to resolve config context")
+					return errConfigContext
 				}
 
 				Nodes = configContext.Nodes

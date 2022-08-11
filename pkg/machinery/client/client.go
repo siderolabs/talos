@@ -10,21 +10,16 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/tls"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/client"
-	grpctls "github.com/talos-systems/crypto/tls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -37,22 +32,13 @@ import (
 	storageapi "github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-	"github.com/talos-systems/talos/pkg/machinery/client/resolver"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
-
-// Credentials represents the set of values required to initialize a valid
-// Client.
-type Credentials struct {
-	CA  []byte
-	Crt tls.Certificate
-}
 
 // Client implements the proto.MachineServiceClient interface. It serves as the
 // concrete type with the required methods.
 type Client struct {
 	options *Options
-	conn    *grpc.ClientConn
+	conn    *grpcConnectionWrapper
 
 	MachineClient machineapi.MachineServiceClient
 	TimeClient    timeapi.TimeServiceClient
@@ -138,6 +124,24 @@ func (c *Client) GetEndpoints() []string {
 	return nil
 }
 
+// GetClusterName returns the client's cluster name from the override set with WithClustername
+// or from the configuration.
+func (c *Client) GetClusterName() string {
+	if c.options.clusterNameOverride != "" {
+		return c.options.clusterNameOverride
+	}
+
+	if c.options.config != nil {
+		if err := c.resolveConfigContext(); err != nil {
+			return ""
+		}
+
+		return c.options.configContext.Cluster
+	}
+
+	return ""
+}
+
 // New returns a new Client.
 func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c = new(Client)
@@ -171,93 +175,6 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))
 
 	return c, nil
-}
-
-// getConn creates new gRPC connection.
-func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
-	endpoints := resolver.EnsureEndpointsHavePorts(c.GetEndpoints(), constants.ApidPort)
-
-	var target string
-
-	switch {
-	case c.options.unixSocketPath != "":
-		target = fmt.Sprintf("unix:///%s", c.options.unixSocketPath)
-	case len(endpoints) > 1:
-		target = fmt.Sprintf("%s:///%s", resolver.RoundRobinResolverScheme, strings.Join(endpoints, ","))
-	default:
-		// NB: we use the `dns` scheme here in order to handle fancier situations
-		// when there is a single endpoint.
-		// Such possibilities include SRV records, multiple IPs from A and/or AAAA
-		// records, and descriptive TXT records which include things like load
-		// balancer specs.
-		target = fmt.Sprintf("dns:///%s", endpoints[0])
-	}
-
-	dialOpts := []grpc.DialOption(nil)
-
-	if c.options.unixSocketPath == "" {
-		// Add TLS credentials to gRPC DialOptions
-		tlsConfig := c.options.tlsConfig
-		if tlsConfig == nil {
-			if err := c.resolveConfigContext(); err != nil {
-				return nil, fmt.Errorf("failed to resolve configuration context: %w", err)
-			}
-
-			creds, err := CredentialsFromConfigContext(c.options.configContext)
-			if err != nil {
-				return nil, fmt.Errorf("failed to acquire credentials: %w", err)
-			}
-
-			tlsConfig, err = grpctls.New(
-				grpctls.WithKeypair(creds.Crt),
-				grpctls.WithClientAuthType(grpctls.Mutual),
-				grpctls.WithCACertPEM(creds.CA),
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to construct TLS credentials: %w", err)
-			}
-		}
-
-		dialOpts = append(dialOpts,
-			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
-			grpc.WithInitialWindowSize(65535*32),
-			grpc.WithInitialConnWindowSize(65535*16),
-		)
-	}
-
-	dialOpts = append(dialOpts, c.options.grpcDialOptions...)
-
-	dialOpts = append(dialOpts, opts...)
-
-	return grpc.DialContext(ctx, target, dialOpts...)
-}
-
-// CredentialsFromConfigContext constructs the client Credentials from the given configuration Context.
-func CredentialsFromConfigContext(context *clientconfig.Context) (*Credentials, error) {
-	caBytes, err := base64.StdEncoding.DecodeString(context.CA)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding CA: %w", err)
-	}
-
-	crtBytes, err := base64.StdEncoding.DecodeString(context.Crt)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding certificate: %w", err)
-	}
-
-	keyBytes, err := base64.StdEncoding.DecodeString(context.Key)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding key: %w", err)
-	}
-
-	crt, err := tls.X509KeyPair(crtBytes, keyBytes)
-	if err != nil {
-		return nil, fmt.Errorf("could not load client key pair: %s", err)
-	}
-
-	return &Credentials{
-		CA:  caBytes,
-		Crt: crt,
-	}, nil
 }
 
 // Close shuts down client protocol.

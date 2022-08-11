@@ -46,6 +46,7 @@ func Execute() error {
 	rootCmd.PersistentFlags().StringSliceVarP(&talos.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
 	cli.Should(rootCmd.RegisterFlagCompletionFunc("context", talos.CompleteConfigContext))
 	cli.Should(rootCmd.RegisterFlagCompletionFunc("nodes", talos.CompleteNodes))
+	rootCmd.PersistentFlags().StringVar(&talos.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
 
 	cmd, err := rootCmd.ExecuteC()
 	if err != nil {

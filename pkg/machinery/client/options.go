@@ -24,7 +24,8 @@ type Options struct {
 	contextOverride    string
 	contextOverrideSet bool
 
-	unixSocketPath string
+	unixSocketPath      string
+	clusterNameOverride string
 }
 
 // OptionFunc sets an option for the creation of the Client.
@@ -119,6 +120,15 @@ func WithConfigFromFile(fn string) OptionFunc {
 func WithUnixSocket(path string) OptionFunc {
 	return func(o *Options) error {
 		o.unixSocketPath = path
+
+		return nil
+	}
+}
+
+// WithCluster creates a Client which connects to the named cluster.
+func WithCluster(cluster string) OptionFunc {
+	return func(o *Options) error {
+		o.clusterNameOverride = cluster
 
 		return nil
 	}

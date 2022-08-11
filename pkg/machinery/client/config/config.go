@@ -51,9 +51,22 @@ type Context struct {
 	DeprecatedTarget string   `yaml:"target,omitempty"` // Field deprecated in favor of Endpoints
 	Endpoints        []string `yaml:"endpoints"`
 	Nodes            []string `yaml:"nodes,omitempty"`
-	CA               string   `yaml:"ca"`
-	Crt              string   `yaml:"crt"`
-	Key              string   `yaml:"key"`
+	CA               string   `yaml:"ca,omitempty"`
+	Crt              string   `yaml:"crt,omitempty"`
+	Key              string   `yaml:"key,omitempty"`
+	Auth             Auth     `yaml:"auth,omitempty"`
+	Cluster          string   `yaml:"cluster,omitempty"`
+}
+
+// Auth may hold credentials for an authentication method such as Basic Auth.
+type Auth struct {
+	Basic *Basic `yaml:"basic,omitempty"`
+}
+
+// Basic holds Basic Auth credentials.
+type Basic struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 func (c *Context) upgrade() {

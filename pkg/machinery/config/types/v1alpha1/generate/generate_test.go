@@ -122,12 +122,12 @@ func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
 	cfg, err := genv1alpha1.Talosconfig(suite.input)
 	suite.Require().NoError(err)
 
-	creds, err := client.CredentialsFromConfigContext(cfg.Contexts[cfg.Context])
+	creds, err := client.CertificateFromConfigContext(cfg.Contexts[cfg.Context])
 	suite.Require().NoError(err)
-	suite.Require().Nil(creds.Crt.Leaf)
-	suite.Require().Len(creds.Crt.Certificate, 1)
+	suite.Require().Nil(creds.Leaf)
+	suite.Require().Len(creds.Certificate, 1)
 
-	cert, err := x509.ParseCertificate(creds.Crt.Certificate[0])
+	cert, err := x509.ParseCertificate(creds.Certificate[0])
 	suite.Require().NoError(err)
 
 	suite.Equal([]string{string(role.Admin)}, cert.Subject.Organization)
