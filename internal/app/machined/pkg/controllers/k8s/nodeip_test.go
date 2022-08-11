@@ -66,8 +66,6 @@ func (suite *NodeIPSuite) startRuntime() {
 }
 
 func (suite *NodeIPSuite) TestReconcileIPv4() {
-	suite.T().Skip("skipping as the code relies on net.IPAddrs")
-
 	cfg := k8s.NewNodeIPConfig(k8s.NamespaceName, k8s.KubeletID)
 
 	cfg.TypedSpec().ValidSubnets = []string{"10.0.0.0/24", "::/0"}
@@ -77,13 +75,12 @@ func (suite *NodeIPSuite) TestReconcileIPv4() {
 
 	addresses := network.NewNodeAddress(
 		network.NamespaceName,
-		network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s),
+		network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
 	)
 
 	addresses.TypedSpec().Addresses = []netaddr.IPPrefix{
 		netaddr.MustParseIPPrefix("10.0.0.2/32"), // excluded explicitly
 		netaddr.MustParseIPPrefix("10.0.0.5/24"),
-		netaddr.MustParseIPPrefix("fdae:41e4:649b:9303::1/64"), // SideroLink IP
 	}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, addresses))
@@ -114,8 +111,6 @@ func (suite *NodeIPSuite) TestReconcileIPv4() {
 }
 
 func (suite *NodeIPSuite) TestReconcileDefaultSubnets() {
-	suite.T().Skip("skipping as the code relies on net.IPAddrs")
-
 	cfg := k8s.NewNodeIPConfig(k8s.NamespaceName, k8s.KubeletID)
 
 	cfg.TypedSpec().ValidSubnets = []string{"0.0.0.0/0", "::/0"}
@@ -124,7 +119,7 @@ func (suite *NodeIPSuite) TestReconcileDefaultSubnets() {
 
 	addresses := network.NewNodeAddress(
 		network.NamespaceName,
-		network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s),
+		network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
 	)
 
 	addresses.TypedSpec().Addresses = []netaddr.IPPrefix{

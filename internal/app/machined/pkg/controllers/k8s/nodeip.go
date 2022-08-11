@@ -10,12 +10,15 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/net"
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -40,7 +43,7 @@ func (ctrl *NodeIPController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s)),
+			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s)),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -67,7 +70,7 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPConfigType, k8s.KubeletID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGet[*k8s.NodeIPConfig](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPConfigType, k8s.KubeletID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -76,33 +79,39 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		cfgSpec := cfg.(*k8s.NodeIPConfig).TypedSpec()
+		cfgSpec := cfg.TypedSpec()
+
+		nodeAddrs, err := safe.ReaderGet[*network.NodeAddress](
+			ctx,
+			r,
+			resource.NewMetadata(
+				network.NamespaceName,
+				network.NodeAddressType,
+				network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
+				resource.VersionUndefined,
+			),
+		)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting addresses: %w", err)
+		}
+
+		addrs := nodeAddrs.TypedSpec().IPs()
 
 		cidrs := make([]string, 0, len(cfgSpec.ValidSubnets)+len(cfgSpec.ExcludeSubnets))
-
 		cidrs = append(cidrs, cfgSpec.ValidSubnets...)
+		cidrs = append(cidrs, slices.Map(cfgSpec.ExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
 
-		for _, subnet := range cfgSpec.ExcludeSubnets {
-			cidrs = append(cidrs, "!"+subnet)
-		}
-
-		// we have trigger on NodeAddresses, but we don't use them directly as they contain
-		// some addresses which are not assigned to the node (like AWS ExternalIP).
-		// we need to find solution for that later, for now just pull addresses directly
-
-		ips, err := net.IPAddrs()
-		if err != nil {
-			return fmt.Errorf("error listing IPs: %w", err)
-		}
-
-		// we use stdnet.IP here to re-use already existing functions in talos-systems/net
-		// once talos-systems/net is migrated to netaddr or netip, we can use it here
-		ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
-
-		ips, err = net.FilterIPs(ips, cidrs)
+		// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
+		stdIPs, err := net.FilterIPs(nethelpers.MapNetAddrToStd(addrs), cidrs)
 		if err != nil {
 			return fmt.Errorf("error filtering IPs: %w", err)
 		}
+
+		ips := nethelpers.MapStdToNetAddr(stdIPs)
 
 		// filter down to make sure only one IPv4 and one IPv6 address stays
 		var hasIPv4, hasIPv6 bool
@@ -111,18 +120,16 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 
 		for _, ip := range ips {
 			switch {
-			case ip.To4() != nil:
+			case ip.Is4():
 				if !hasIPv4 {
-					addr, _ := netaddr.FromStdIP(ip)
-					nodeIPs = append(nodeIPs, addr)
+					nodeIPs = append(nodeIPs, ip)
 					hasIPv4 = true
 				} else {
 					logger.Warn("node IP skipped, please use .machine.kubelet.nodeIP to provide explicit subnet for the node IP", zap.Stringer("address", ip))
 				}
-			case ip.To16() != nil:
+			case ip.Is6():
 				if !hasIPv6 {
-					addr, _ := netaddr.FromStdIP(ip)
-					nodeIPs = append(nodeIPs, addr)
+					nodeIPs = append(nodeIPs, ip)
 					hasIPv6 = true
 				} else {
 					logger.Warn("node IP skipped, please use .machine.kubelet.nodeIP to provide explicit subnet for the node IP", zap.Stringer("address", ip))

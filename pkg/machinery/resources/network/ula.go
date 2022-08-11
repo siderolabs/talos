@@ -69,6 +69,11 @@ func IsStdULA(ip net.IP, purpose ULAPurpose) bool {
 	return IsULA(addr, purpose)
 }
 
+// NotSideroLinkIP is a shorthand for !IsULA(ip, ULASideroLink).
+func NotSideroLinkIP(ip netaddr.IP) bool {
+	return !IsULA(ip, ULASideroLink)
+}
+
 // NotSideroLinkStdIP is a shorthand for !IsStdULA(ip, ULASideroLink).
 func NotSideroLinkStdIP(ip net.IP) bool {
 	return !IsStdULA(ip, ULASideroLink)

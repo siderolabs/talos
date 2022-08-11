@@ -114,6 +114,7 @@ func (suite *NodeAddressSuite) TestDefaults() {
 					[]string{
 						network.NodeAddressDefaultID,
 						network.NodeAddressCurrentID,
+						network.NodeAddressRoutedID,
 						network.NodeAddressAccumulativeID,
 					}, func(r *network.NodeAddress) error {
 						addrs := r.TypedSpec().Addresses
@@ -146,7 +147,7 @@ func (suite *NodeAddressSuite) TestDefaults() {
 	)
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (suite *NodeAddressSuite) TestFilters() {
 	var (
 		addressStatusController  netctrl.AddressStatusController
@@ -197,6 +198,7 @@ func (suite *NodeAddressSuite) TestFilters() {
 		"25.3.7.9/32",
 		"2001:470:6d:30e:4a62:b3ba:180b:b5b8/64",
 		"127.0.0.1/8",
+		"fdae:41e4:649b:9303:7886:731d:1ce9:4d4/128",
 	} {
 		newAddress(netaddr.MustParseIPPrefix(addr), linkUp)
 	}
@@ -227,10 +229,13 @@ func (suite *NodeAddressSuite) TestFilters() {
 					[]string{
 						network.NodeAddressDefaultID,
 						network.NodeAddressCurrentID,
+						network.NodeAddressRoutedID,
 						network.NodeAddressAccumulativeID,
 						network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter1.Metadata().ID()),
+						network.FilteredNodeAddressID(network.NodeAddressRoutedID, filter1.Metadata().ID()),
 						network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter1.Metadata().ID()),
 						network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter2.Metadata().ID()),
+						network.FilteredNodeAddressID(network.NodeAddressRoutedID, filter2.Metadata().ID()),
 						network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter2.Metadata().ID()),
 					}, func(r *network.NodeAddress) error {
 						addrs := r.TypedSpec().Addresses
@@ -243,32 +248,47 @@ func (suite *NodeAddressSuite) TestFilters() {
 						case network.NodeAddressCurrentID:
 							if !reflect.DeepEqual(
 								addrs,
-								ipList("1.2.3.4/32 10.0.0.1/8 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64"),
+								ipList("1.2.3.4/32 10.0.0.1/8 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64 fdae:41e4:649b:9303:7886:731d:1ce9:4d4/128"),
+							) {
+								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						case network.NodeAddressRoutedID:
+							if !reflect.DeepEqual(
+								addrs,
+								ipList("10.0.0.1/8 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64"),
 							) {
 								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 							}
 						case network.NodeAddressAccumulativeID:
 							if !reflect.DeepEqual(
 								addrs,
-								ipList("1.2.3.4/32 10.0.0.1/8 10.0.0.2/8 25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64"),
+								ipList("1.2.3.4/32 10.0.0.1/8 10.0.0.2/8 25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64 fdae:41e4:649b:9303:7886:731d:1ce9:4d4/128"),
 							) {
 								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 							}
 						case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter1.Metadata().ID()):
 							if !reflect.DeepEqual(
 								addrs,
-								ipList("1.2.3.4/32 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64"),
+								ipList("1.2.3.4/32 25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64 fdae:41e4:649b:9303:7886:731d:1ce9:4d4/128"),
+							) {
+								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
+							}
+						case network.FilteredNodeAddressID(network.NodeAddressRoutedID, filter1.Metadata().ID()):
+							if !reflect.DeepEqual(
+								addrs,
+								ipList("25.3.7.9/32 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64"),
 							) {
 								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 							}
 						case network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filter1.Metadata().ID()):
 							if !reflect.DeepEqual(
 								addrs,
-								ipList("1.2.3.4/32 25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64"),
+								ipList("1.2.3.4/32 25.3.7.9/32 192.168.3.7/24 2001:470:6d:30e:4a62:b3ba:180b:b5b8/64 fdae:41e4:649b:9303:7886:731d:1ce9:4d4/128"),
 							) {
 								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 							}
-						case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter2.Metadata().ID()):
+						case network.FilteredNodeAddressID(network.NodeAddressCurrentID, filter2.Metadata().ID()),
+							network.FilteredNodeAddressID(network.NodeAddressRoutedID, filter2.Metadata().ID()):
 							if !reflect.DeepEqual(addrs, ipList("10.0.0.1/8")) {
 								return fmt.Errorf("unexpected %q: %s", r.Metadata().ID(), addrs)
 							}

@@ -37,6 +37,12 @@ const (
 	//
 	// If some address is no longer present, it will be still kept in the accumulative list.
 	NodeAddressAccumulativeID = "accumulative"
+	// Routed current node addresses (as seen at the moment).
+	//
+	// This is current addresses minus 'external' IPs, and SideroLink IPs.
+	//
+	// This list is used to pick advertised/listen addresses for different services.
+	NodeAddressRoutedID = "routed"
 )
 
 // NodeAddressSpec describes a set of node addresses.

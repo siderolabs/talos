@@ -108,6 +108,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			defaultAddress      netaddr.IPPrefix
 			defaultAddrLinkName string
 			current             []netaddr.IPPrefix
+			routed              []netaddr.IPPrefix
 			accumulative        []netaddr.IPPrefix
 		)
 
@@ -137,14 +138,23 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				current = append(current, ip)
 			}
 
+			// routed: filter out external addresses and addresses from SideroLink
+			if _, up := linksUp[addr.TypedSpec().LinkIndex]; up && addr.TypedSpec().LinkName != externalLink {
+				if network.NotSideroLinkIP(ip.IP()) {
+					routed = append(routed, ip)
+				}
+			}
+
 			accumulative = append(accumulative, ip)
 		}
 
 		// sort current addresses
 		sort.Slice(current, func(i, j int) bool { return current[i].IP().Compare(current[j].IP()) < 0 })
+		sort.Slice(routed, func(i, j int) bool { return routed[i].IP().Compare(routed[j].IP()) < 0 })
 
 		// remove duplicates from current addresses
 		current = deduplicateIPPrefixes(current)
+		routed = deduplicateIPPrefixes(routed)
 
 		touchedIDs := make(map[resource.ID]struct{})
 
@@ -177,6 +187,12 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 		touchedIDs[network.NodeAddressCurrentID] = struct{}{}
 
+		if err = updateCurrentAddresses(ctx, r, network.NodeAddressRoutedID, routed); err != nil {
+			return err
+		}
+
+		touchedIDs[network.NodeAddressRoutedID] = struct{}{}
+
 		if err = updateAccumulativeAddresses(ctx, r, network.NodeAddressAccumulativeID, accumulative); err != nil {
 			return err
 		}
@@ -189,9 +205,14 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			filter := res.(*network.NodeAddressFilter).TypedSpec()
 
 			filteredCurrent := filterIPs(current, filter.IncludeSubnets, filter.ExcludeSubnets)
+			filteredRouted := filterIPs(routed, filter.IncludeSubnets, filter.ExcludeSubnets)
 			filteredAccumulative := filterIPs(accumulative, filter.IncludeSubnets, filter.ExcludeSubnets)
 
 			if err = updateCurrentAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressCurrentID, filterID), filteredCurrent); err != nil {
+				return err
+			}
+
+			if err = updateCurrentAddresses(ctx, r, network.FilteredNodeAddressID(network.NodeAddressRoutedID, filterID), filteredRouted); err != nil {
 				return err
 			}
 
@@ -200,6 +221,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 			}
 
 			touchedIDs[network.FilteredNodeAddressID(network.NodeAddressCurrentID, filterID)] = struct{}{}
+			touchedIDs[network.FilteredNodeAddressID(network.NodeAddressRoutedID, filterID)] = struct{}{}
 			touchedIDs[network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, filterID)] = struct{}{}
 		}
 
