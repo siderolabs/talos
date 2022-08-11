@@ -60,7 +60,7 @@ var supportCmd = &cobra.Command{
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(Nodes) == 0 {
+		if len(GlobalArgs.Nodes) == 0 {
 			return fmt.Errorf("please provide at least a single node to gather the debug information from")
 		}
 
@@ -120,7 +120,7 @@ var supportCmd = &cobra.Command{
 
 func collectData(archive *cluster.BundleArchive, progress chan cluster.BundleProgress) error {
 	return WithClient(func(ctx context.Context, c *client.Client) error {
-		sources := append([]string{}, Nodes...)
+		sources := append([]string{}, GlobalArgs.Nodes...)
 		sources = append(sources, "cluster")
 
 		var (

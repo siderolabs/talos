@@ -181,6 +181,16 @@ vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::
 Talos is built with Go 1.19.
 """
 
+    [notes.track-cli-action-progress]
+        title = "Tracking progress of shutdown, reboot, reset and upgrade from CLI"
+        description = """\
+`talosctl` subcommands `shutdown`, `reboot`, `reset` and `upgrade` now have a new flag `--wait` to
+wait until the operation is completed, displaying information on the current status of each node.
+A new `--debug` flag is added to these commands to get the kernel logs output from these nodes if the operation fails.
+
+![track-cli-action-progress](https://www.talos.dev/images/track-reboot.gif)
+"""
+
     [notes.talos-config-kernel-param-variable-substitution]
         title = "Variable substitution for URL query parameter in the talos.config kernel parameter"
         description="""\

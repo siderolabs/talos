@@ -6,96 +6,52 @@ package check
 
 import (
 	"fmt"
-	"os"
 	"strings"
-	"unicode/utf8"
-
-	"github.com/fatih/color"
-	"github.com/mattn/go-isatty"
-	"golang.org/x/term"
 
 	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/talos-systems/talos/pkg/reporter"
 )
 
-type writerReporter struct {
-	w                 *os.File
-	lastLine          string
-	lastLineTemporary bool
-
-	colorized  bool
-	spinnerIdx int
+// ConditionReporter is a reporter that reports conditions to a reporter.Reporter.
+type ConditionReporter struct {
+	w *reporter.Reporter
 }
 
-var spinner = []string{"◰", "◳", "◲", "◱"}
-
-//nolint:gocyclo
-func (wr *writerReporter) Update(condition conditions.Condition) {
-	line := strings.TrimSpace(fmt.Sprintf("waiting for %s", condition))
-	// replace tabs with spaces to get consistent output length
-	line = strings.ReplaceAll(line, "\t", "    ")
-
-	if !wr.colorized {
-		if line != wr.lastLine {
-			fmt.Fprintln(wr.w, line)
-			wr.lastLine = line
-		}
-
-		return
-	}
-
-	w, _, _ := term.GetSize(int(wr.w.Fd())) //nolint:errcheck
-	if w <= 0 {
-		w = 80
-	}
-
-	var coloredLine string
-
-	showSpinner := false
-	prevLineTemporary := wr.lastLineTemporary
-
-	switch {
-	case strings.HasSuffix(line, "..."):
-		line = fmt.Sprintf("%s %s", spinner[wr.spinnerIdx], line)
-		coloredLine = color.YellowString("%s", line)
-		wr.lastLineTemporary = true
-		showSpinner = true
-	case strings.HasSuffix(line, conditions.OK):
-		coloredLine = color.GreenString("%s", line)
-		wr.lastLineTemporary = false
-	case strings.HasSuffix(line, conditions.ErrSkipAssertion.Error()):
-		coloredLine = color.BlueString("%s", line)
-		wr.lastLineTemporary = false
-	default:
-		line = fmt.Sprintf("%s %s", spinner[wr.spinnerIdx], line)
-		coloredLine = color.RedString("%s", line)
-		wr.lastLineTemporary = true
-		showSpinner = true
-	}
-
-	if line == wr.lastLine {
-		return
-	}
-
-	if showSpinner {
-		wr.spinnerIdx = (wr.spinnerIdx + 1) % len(spinner)
-	}
-
-	if prevLineTemporary {
-		for _, outputLine := range strings.Split(wr.lastLine, "\n") {
-			for i := 0; i < (utf8.RuneCountInString(outputLine)+w-1)/w; i++ {
-				fmt.Fprint(wr.w, "\033[A\033[K") // cursor up, clear line
-			}
-		}
-	}
-
-	fmt.Fprintln(wr.w, coloredLine)
-	wr.lastLine = line
+// Update reports a condition to the reporter.
+func (r *ConditionReporter) Update(condition conditions.Condition) {
+	r.w.Report(conditionToUpdate(condition))
 }
 
 // StderrReporter returns console reporter with stderr output.
-func StderrReporter() Reporter {
-	return &writerReporter{
-		w:         os.Stderr,
-		colorized: isatty.IsTerminal(os.Stderr.Fd()),
+func StderrReporter() *ConditionReporter {
+	return &ConditionReporter{
+		w: reporter.New(),
+	}
+}
+
+func conditionToUpdate(condition conditions.Condition) reporter.Update {
+	line := strings.TrimSpace(fmt.Sprintf("waiting for %s", condition.String()))
+
+	switch {
+	case strings.HasSuffix(line, "..."):
+		return reporter.Update{
+			Message: line,
+			Status:  reporter.StatusRunning,
+		}
+	case strings.HasSuffix(line, conditions.OK):
+		return reporter.Update{
+			Message: line,
+			Status:  reporter.StatusSucceeded,
+		}
+	case strings.HasSuffix(line, conditions.ErrSkipAssertion.Error()):
+		return reporter.Update{
+			Message: line,
+			Status:  reporter.StatusSkip,
+		}
+	default:
+		return reporter.Update{
+			Message: line,
+			Status:  reporter.StatusError,
+		}
 	}
 }

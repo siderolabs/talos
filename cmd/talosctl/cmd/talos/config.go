@@ -38,7 +38,7 @@ var configCmd = &cobra.Command{
 }
 
 func openConfigAndContext(context string) (*clientconfig.Config, error) {
-	c, err := clientconfig.Open(Talosconfig)
+	c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 	if err != nil {
 		return nil, fmt.Errorf("error reading config: %w", err)
 	}
@@ -76,7 +76,7 @@ var configEndpointCmd = &cobra.Command{
 		}
 
 		c.Contexts[c.Context].Endpoints = args
-		if err := c.Save(Talosconfig); err != nil {
+		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %w", err)
 		}
 
@@ -102,7 +102,7 @@ var configNodeCmd = &cobra.Command{
 		}
 
 		c.Contexts[c.Context].Nodes = args
-		if err := c.Save(Talosconfig); err != nil {
+		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %w", err)
 		}
 
@@ -127,7 +127,7 @@ var configContextCmd = &cobra.Command{
 
 		c.Context = context
 
-		if err := c.Save(Talosconfig); err != nil {
+		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %s", err)
 		}
 
@@ -151,7 +151,7 @@ var configAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)
 		}
@@ -178,7 +178,7 @@ var configAddCmd = &cobra.Command{
 		}
 
 		c.Contexts[context] = newContext
-		if err := c.Save(Talosconfig); err != nil {
+		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %w", err)
 		}
 
@@ -222,7 +222,7 @@ var configGetContextsCmd = &cobra.Command{
 	Aliases: []string{"get-contexts"},
 	Long:    ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)
 		}
@@ -268,7 +268,7 @@ var configMergeCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		from := args[0]
-		c, err := clientconfig.Open(Talosconfig)
+		c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)
 		}
@@ -283,7 +283,7 @@ var configMergeCmd = &cobra.Command{
 			fmt.Printf("renamed talosconfig context %s\n", rename.String())
 		}
 
-		if err := c.Save(Talosconfig); err != nil {
+		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %s", err)
 		}
 
@@ -432,7 +432,7 @@ var configInfoCmd = &cobra.Command{
 
 // CompleteConfigContext represents tab completion for `--context` argument and `config context` command.
 func CompleteConfigContext(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	c, err := clientconfig.Open(Talosconfig)
+	c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
 	}

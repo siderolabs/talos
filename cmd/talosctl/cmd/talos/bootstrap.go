@@ -37,7 +37,7 @@ Talos etcd cluster can be recovered from a known snapshot with '--recover-from='
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			if len(Nodes) > 1 {
+			if len(GlobalArgs.Nodes) > 1 {
 				return fmt.Errorf("command \"bootstrap\" is not supported with multiple nodes")
 			}
 
