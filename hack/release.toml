@@ -161,7 +161,7 @@ vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.59
+* Linux: 5.15.60
 * Flannel 0.19.1
 * containerd 1.16.7
 * Kubernetes: v1.25.0-beta.0
