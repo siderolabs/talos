@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -44,24 +44,30 @@ var readCmd = &cobra.Command{
 
 			defer r.Close() //nolint:errcheck
 
-			var wg sync.WaitGroup
+			var eg errgroup.Group
 
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			eg.Go(func() error {
+				var errors error
+
 				for err := range errCh {
-					fmt.Fprintln(os.Stderr, err.Error())
+					if err != nil {
+						errors = helpers.AppendErrors(errors, err)
+					}
 				}
-			}()
 
-			defer wg.Wait()
+				return errors
+			})
 
 			_, err = io.Copy(os.Stdout, r)
 			if err != nil {
 				return fmt.Errorf("error reading: %w", err)
 			}
 
-			return r.Close()
+			if err = r.Close(); err != nil {
+				return err
+			}
+
+			return eg.Wait()
 		})
 	},
 }

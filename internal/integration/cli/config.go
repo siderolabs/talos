@@ -120,6 +120,7 @@ func (suite *TalosconfigSuite) TestNew() {
 			readerOpts: []base.RunOption{
 				base.StdoutEmpty(),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
+				base.ShouldFail(),
 			},
 		},
 		{
@@ -142,7 +143,7 @@ func (suite *TalosconfigSuite) TestNew() {
 			args:      []string{"kubeconfig", "--force", tempDir},
 			adminOpts: []base.RunOption{base.StdoutEmpty()},
 			readerOpts: []base.RunOption{
-				base.ShouldFail(), // why this one fails, but not others?
+				base.ShouldFail(),
 				base.StdoutEmpty(),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
 			},

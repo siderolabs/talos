@@ -69,12 +69,16 @@ var logsCmd = &cobra.Command{
 
 			respCh, errCh := newLineSlicer(stream)
 
+			var gotErrors bool
+
 			for data := range respCh {
 				if data.Metadata != nil && data.Metadata.Error != "" {
 					_, err = fmt.Fprintf(os.Stderr, "ERROR: %s\n", data.Metadata.Error)
 					if err != nil {
 						return err
 					}
+
+					gotErrors = true
 
 					continue
 				}
@@ -92,6 +96,10 @@ var logsCmd = &cobra.Command{
 
 			if err = <-errCh; err != nil {
 				return fmt.Errorf("error getting logs: %v", err)
+			}
+
+			if gotErrors {
+				os.Exit(1)
 			}
 
 			return nil

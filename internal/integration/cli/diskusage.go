@@ -133,8 +133,10 @@ func (suite *DiskUsageSuite) TestError() {
 		"usage", "--nodes",
 		suite.RandomDiscoveredNodeInternalIP(), "/no/such/folder/here/just/for/sure",
 	},
+		base.ShouldFail(),
 		base.StderrNotEmpty(),
-		base.StdoutEmpty())
+		base.StdoutEmpty(),
+	)
 }
 
 func init() {

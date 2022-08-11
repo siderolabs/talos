@@ -9,6 +9,8 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc/metadata"
+
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
 )
 
 // FailIfMultiNodes checks if ctx contains multi-node request metadata.
@@ -23,4 +25,18 @@ func FailIfMultiNodes(ctx context.Context, command string) error {
 	}
 
 	return fmt.Errorf("command %q is not supported with multiple nodes", command)
+}
+
+// CheckErrors goes through the returned message list and checks if any messages have errors set.
+func CheckErrors[T interface{ GetMetadata() *common.Metadata }](messages ...T) error {
+	var err error
+
+	for _, msg := range messages {
+		md := msg.GetMetadata()
+		if md.Error != "" {
+			err = AppendErrors(err, fmt.Errorf(md.Error))
+		}
+	}
+
+	return err
 }

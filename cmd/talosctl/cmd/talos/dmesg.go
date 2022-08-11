@@ -7,12 +7,11 @@ package talos
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/codes"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
@@ -31,33 +30,13 @@ var dmesgCmd = &cobra.Command{
 				return fmt.Errorf("error getting dmesg: %w", err)
 			}
 
-			defaultNode := client.RemotePeer(stream.Context())
-
-			for {
-				resp, err := stream.Recv()
-				if err != nil {
-					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-						break
-					}
-
-					return fmt.Errorf("error reading from stream: %w", err)
+			return helpers.ReadGRPCStream(stream, func(data *common.Data, node string, multipleNodes bool) error {
+				if data.Bytes != nil {
+					fmt.Printf("%s: %s", node, data.Bytes)
 				}
 
-				node := defaultNode
-				if resp.Metadata != nil {
-					node = resp.Metadata.Hostname
-
-					if resp.Metadata.Error != "" {
-						fmt.Fprintf(os.Stderr, "%s: %s\n", node, resp.Metadata.Error)
-					}
-				}
-
-				if resp.Bytes != nil {
-					fmt.Printf("%s: %s", node, resp.Bytes)
-				}
-			}
-
-			return nil
+				return nil
+			})
 		})
 	},
 }

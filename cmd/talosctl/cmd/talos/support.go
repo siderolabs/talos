@@ -89,7 +89,7 @@ var supportCmd = &cobra.Command{
 			return nil
 		})
 
-		err = collectData(archive, progress)
+		collectErr := collectData(archive, progress)
 
 		close(progress)
 
@@ -97,15 +97,23 @@ var supportCmd = &cobra.Command{
 			return e
 		}
 
-		if err != nil {
-			if err = printErrors(err); err != nil {
+		if collectErr != nil {
+			if err = printErrors(collectErr); err != nil {
 				return err
 			}
 		}
 
 		fmt.Printf("Support bundle is written to %s\n", supportCmdFlags.output)
 
-		return archive.Archive.Close()
+		if err = archive.Archive.Close(); err != nil {
+			return err
+		}
+
+		if collectErr != nil {
+			os.Exit(1)
+		}
+
+		return nil
 	},
 }
 

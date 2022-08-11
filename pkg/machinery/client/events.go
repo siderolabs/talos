@@ -18,6 +18,9 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
+// ErrEventNotSupported is returned from the event decoder when we encounter an unknown event.
+var ErrEventNotSupported = fmt.Errorf("event is not supported")
+
 // EventsOptionFunc defines the options for the Events API.
 type EventsOptionFunc func(opts *machineapi.EventsRequest)
 
@@ -103,53 +106,66 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 			return fmt.Errorf("failed to watch events: %w", err)
 		}
 
-		typeURL := event.GetData().GetTypeUrl()
-
-		var msg proto.Message
-
-		for _, eventType := range []proto.Message{
-			&machineapi.SequenceEvent{},
-			&machineapi.PhaseEvent{},
-			&machineapi.TaskEvent{},
-			&machineapi.ServiceStateEvent{},
-			&machineapi.ConfigLoadErrorEvent{},
-			&machineapi.ConfigValidationErrorEvent{},
-			&machineapi.AddressEvent{},
-			&machineapi.MachineStatusEvent{},
-		} {
-			if typeURL == "talos/runtime/"+string(eventType.ProtoReflect().Descriptor().FullName()) {
-				msg = eventType
-
-				break
-			}
-		}
-
-		if msg == nil {
-			// We haven't implemented the handling of this event yet.
+		ev, err := UnmarshalEvent(event)
+		if err != nil {
 			continue
 		}
 
-		if err = proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
-			log.Printf("failed to unmarshal message: %v", err) // TODO: this should be fixed to return errors
-
-			continue
-		}
-
-		ev := Event{
-			Node:    defaultNode,
-			TypeURL: typeURL,
-			ID:      event.Id,
-			Payload: msg,
-		}
-
-		if event.Metadata != nil {
-			ev.Node = event.Metadata.Hostname
+		if ev.Node == "" {
+			ev.Node = defaultNode
 		}
 
 		select {
-		case ch <- ev:
+		case ch <- *ev:
 		case <-ctx.Done():
 			return nil
 		}
 	}
+}
+
+// UnmarshalEvent decodes the event coming from the gRPC stream from any to the exact type.
+func UnmarshalEvent(event *machineapi.Event) (*Event, error) {
+	typeURL := event.GetData().GetTypeUrl()
+
+	var msg proto.Message
+
+	for _, eventType := range []proto.Message{
+		&machineapi.SequenceEvent{},
+		&machineapi.PhaseEvent{},
+		&machineapi.TaskEvent{},
+		&machineapi.ServiceStateEvent{},
+		&machineapi.ConfigLoadErrorEvent{},
+		&machineapi.ConfigValidationErrorEvent{},
+		&machineapi.AddressEvent{},
+		&machineapi.MachineStatusEvent{},
+	} {
+		if typeURL == "talos/runtime/"+string(eventType.ProtoReflect().Descriptor().FullName()) {
+			msg = eventType
+
+			break
+		}
+	}
+
+	if msg == nil {
+		// We haven't implemented the handling of this event yet.
+		return nil, ErrEventNotSupported
+	}
+
+	if err := proto.Unmarshal(event.GetData().GetValue(), msg); err != nil {
+		log.Printf("failed to unmarshal message: %v", err)
+
+		return nil, err
+	}
+
+	ev := Event{
+		TypeURL: typeURL,
+		ID:      event.Id,
+		Payload: msg,
+	}
+
+	if event.Metadata != nil {
+		ev.Node = event.Metadata.Hostname
+	}
+
+	return &ev, nil
 }

@@ -7,7 +7,6 @@ package talos
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -15,8 +14,8 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/codes"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -89,44 +88,15 @@ var lsCmd = &cobra.Command{
 				return fmt.Errorf("error fetching logs: %s", err)
 			}
 
-			defaultNode := client.RemotePeer(stream.Context())
-
 			if !long {
 				w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 				fmt.Fprintln(w, "NODE\tNAME")
 
-				multipleNodes := false
-				node := defaultNode
+				defer w.Flush() //nolint:errcheck
 
-				for {
-					info, err := stream.Recv()
-					if err != nil {
-						if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-							if multipleNodes {
-								return w.Flush()
-							}
-
-							return nil
-						}
-
-						return fmt.Errorf("error streaming results: %s", err)
-					}
-
-					if info.Metadata != nil && info.Metadata.Hostname != "" {
-						multipleNodes = true
-						node = info.Metadata.Hostname
-					}
-
-					if info.Metadata != nil && info.Metadata.Error != "" {
-						fmt.Fprintf(os.Stderr, "%s: %s\n", node, info.Metadata.Error)
-
-						continue
-					}
-
+				return helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
 					if info.Error != "" {
-						fmt.Fprintf(os.Stderr, "%s: error reading file %s: %s\n", node, info.Name, info.Error)
-
-						continue
+						return helpers.NonFatalError(fmt.Errorf("%s: error reading file %s: %s", node, info.Name, info.Error))
 					}
 
 					if !multipleNodes {
@@ -138,36 +108,18 @@ var lsCmd = &cobra.Command{
 						)
 					}
 
-				}
+					return nil
+				})
 			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			defer w.Flush() //nolint:errcheck
+
 			fmt.Fprintln(w, "NODE\tMODE\tUID\tGID\tSIZE(B)\tLASTMOD\tNAME")
-			for {
-				info, err := stream.Recv()
-				if err != nil {
-					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-						return w.Flush()
-					}
 
-					return fmt.Errorf("error streaming results: %s", err)
-				}
-
-				node := defaultNode
-				if info.Metadata != nil && info.Metadata.Hostname != "" {
-					node = info.Metadata.Hostname
-				}
-
+			return helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
 				if info.Error != "" {
-					fmt.Fprintf(os.Stderr, "%s: error reading file %s: %s\n", node, info.Name, info.Error)
-
-					continue
-				}
-
-				if info.Metadata != nil && info.Metadata.Error != "" {
-					fmt.Fprintf(os.Stderr, "%s: %s\n", node, info.Metadata.Error)
-
-					continue
+					return helpers.NonFatalError(fmt.Errorf("%s: error reading file %s: %s", node, info.Name, info.Error))
 				}
 
 				display := info.RelativeName
@@ -203,7 +155,9 @@ var lsCmd = &cobra.Command{
 					timestampFormatted,
 					display,
 				)
-			}
+
+				return nil
+			})
 		})
 	},
 }

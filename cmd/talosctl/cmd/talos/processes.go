@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -89,9 +90,17 @@ func processesUI(ctx context.Context, c *client.Client) {
 		cli.Should(err)
 		// x, y, w, h
 		l.SetRect(0, 0, w, h)
+		l.WrapText = false
 
 		processOutput, err = processesOutput(ctx, c)
-		cli.Should(err)
+		if err != nil {
+			l.Text = err.Error()
+			l.WrapText = true
+
+			ui.Render(l)
+
+			return
+		}
 
 		// Dont refresh if we dont have any output
 		if processOutput == "" {
@@ -174,11 +183,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 
 	resp, err := c.Processes(ctx, grpc.Peer(&remotePeer))
 	if err != nil {
-		// TODO: Figure out how to expose errors to client without messing
-		// up display
-		// TODO: Update server side code to not throw an error when process
-		// no longer exists ( /proc/1234/comm no such file or directory )
-		return output, nil //nolint:nilerr
+		return output, err
 	}
 
 	defaultNode := client.AddrFromPeer(&remotePeer)
@@ -221,5 +226,10 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 		}
 	}
 
-	return columnize.SimpleFormat(s), err
+	res := columnize.SimpleFormat(s)
+	if err != nil {
+		return res, err
+	}
+
+	return res, helpers.CheckErrors(resp.Messages...)
 }

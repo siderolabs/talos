@@ -7,14 +7,13 @@ package talos
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"text/tabwriter"
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/codes"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -62,16 +61,12 @@ var duCmd = &cobra.Command{
 				Paths:          paths,
 			})
 			if err != nil {
-				return fmt.Errorf("error fetching logs: %s", err)
+				return fmt.Errorf("error fetching disk usage: %s", err)
 			}
 
 			addedHeader := false
-			defaultNode := client.RemotePeer(stream.Context())
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-
-			multipleNodes := false
-			node := defaultNode
 
 			stringifySize := func(s int64) string {
 				if humanizeFlag {
@@ -81,20 +76,11 @@ var duCmd = &cobra.Command{
 				return fmt.Sprintf("%d", s)
 			}
 
-			for {
-				info, err := stream.Recv()
-				if err != nil {
-					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-						return w.Flush()
-					}
+			defer w.Flush() //nolint:errcheck
 
-					return fmt.Errorf("error streaming results: %s", err)
-				}
-
+			return helpers.ReadGRPCStream(stream, func(info *machineapi.DiskUsageInfo, node string, multipleNodes bool) error {
 				if info.Error != "" {
-					fmt.Fprintf(os.Stderr, "%s: error reading file %s: %s\n", node, info.Name, info.Error)
-
-					continue
+					return helpers.NonFatalError(fmt.Errorf(info.Error))
 				}
 
 				pattern := "%s\t%s\n"
@@ -119,19 +105,15 @@ var duCmd = &cobra.Command{
 					addedHeader = true
 				}
 
-				if info.Metadata != nil && info.Metadata.Error != "" {
-					fmt.Fprintf(os.Stderr, "%s: %s\n", node, info.Metadata.Error)
-
-					continue
-				}
-
 				if multipleNodes {
 					pattern = "%s\t%s\t%s\n"
 					args = append([]interface{}{node}, args...)
 				}
 
 				fmt.Fprintf(w, pattern, args...)
-			}
+
+				return nil
+			})
 		})
 	},
 }

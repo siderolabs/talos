@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
@@ -49,70 +51,64 @@ var eventsCmd = &cobra.Command{
 				opts = append(opts, client.WithTailID(eventsCmdFlags.tailID))
 			}
 
-			return c.EventsWatch(ctx, func(ch <-chan client.Event) {
-				for {
-					var (
-						event client.Event
-						ok    bool
-					)
+			events, err := c.Events(ctx, opts...)
+			if err != nil {
+				return err
+			}
 
-					select {
-					case event, ok = <-ch:
-						if !ok {
-							return
-						}
-					case <-ctx.Done():
-						return
+			return helpers.ReadGRPCStream(events, func(ev *machine.Event, node string, multipleNodes bool) error {
+				format := "%s\t%s\t%s\t%s\t%s\n"
+
+				event, err := client.UnmarshalEvent(ev)
+				if err != nil {
+					if errors.Is(err, client.ErrEventNotSupported) {
+						return nil
 					}
 
-					format := "%s\t%s\t%s\t%s\t%s\n"
-
-					var args []interface{}
-
-					switch msg := event.Payload.(type) {
-					case *machine.SequenceEvent:
-						args = []interface{}{msg.GetSequence()}
-						if msg.Error != nil {
-							args = append(args, "error:"+" "+msg.GetError().GetMessage())
-						} else {
-							args = append(args, msg.GetAction().String())
-						}
-					case *machine.PhaseEvent:
-						args = []interface{}{msg.GetPhase(), msg.GetAction().String()}
-					case *machine.TaskEvent:
-						args = []interface{}{msg.GetTask(), msg.GetAction().String()}
-					case *machine.ServiceStateEvent:
-						args = []interface{}{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
-					case *machine.ConfigLoadErrorEvent:
-						args = []interface{}{"error", msg.GetError()}
-					case *machine.ConfigValidationErrorEvent:
-						args = []interface{}{"error", msg.GetError()}
-					case *machine.AddressEvent:
-						args = []interface{}{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
-					case *machine.MachineStatusEvent:
-						args = []interface{}{
-							msg.GetStage().String(),
-							fmt.Sprintf("ready: %v, unmet conditions: %v",
-								msg.GetStatus().Ready,
-								slices.Map(msg.GetStatus().GetUnmetConditions(),
-									func(c *machine.MachineStatusEvent_MachineStatus_UnmetCondition) string {
-										return c.Name
-									},
-								),
-							),
-						}
-					default:
-						// We haven't implemented the handling of this event yet.
-						continue
-					}
-
-					args = append([]interface{}{event.Node, event.ID, event.TypeURL}, args...)
-					fmt.Fprintf(w, format, args...)
-
-					//nolint:errcheck
-					w.Flush()
+					return err
 				}
-			}, opts...)
+
+				var args []interface{}
+
+				switch msg := event.Payload.(type) {
+				case *machine.SequenceEvent:
+					args = []interface{}{msg.GetSequence()}
+					if msg.Error != nil {
+						args = append(args, "error:"+" "+msg.GetError().GetMessage())
+					} else {
+						args = append(args, msg.GetAction().String())
+					}
+				case *machine.PhaseEvent:
+					args = []interface{}{msg.GetPhase(), msg.GetAction().String()}
+				case *machine.TaskEvent:
+					args = []interface{}{msg.GetTask(), msg.GetAction().String()}
+				case *machine.ServiceStateEvent:
+					args = []interface{}{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
+				case *machine.ConfigLoadErrorEvent:
+					args = []interface{}{"error", msg.GetError()}
+				case *machine.ConfigValidationErrorEvent:
+					args = []interface{}{"error", msg.GetError()}
+				case *machine.AddressEvent:
+					args = []interface{}{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
+				case *machine.MachineStatusEvent:
+					args = []interface{}{
+						msg.GetStage().String(),
+						fmt.Sprintf("ready: %v, unmet conditions: %v",
+							msg.GetStatus().Ready,
+							slices.Map(msg.GetStatus().GetUnmetConditions(),
+								func(c *machine.MachineStatusEvent_MachineStatus_UnmetCondition) string {
+									return c.Name
+								},
+							),
+						),
+					}
+				}
+
+				args = append([]interface{}{event.Node, event.ID, event.TypeURL}, args...)
+				fmt.Fprintf(w, format, args...)
+
+				return w.Flush()
+			})
 		})
 	},
 }

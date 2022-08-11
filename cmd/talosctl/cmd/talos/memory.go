@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -42,10 +43,16 @@ var memoryCmd = &cobra.Command{
 			}
 
 			if verbose {
-				return verboseRender(&remotePeer, resp)
+				verboseRender(&remotePeer, resp)
+			} else {
+				err = briefRender(&remotePeer, resp)
+
+				if err != nil {
+					return err
+				}
 			}
 
-			return briefRender(&remotePeer, resp)
+			return helpers.CheckErrors(resp.Messages...)
 		})
 	},
 }
@@ -79,7 +86,7 @@ func briefRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) error {
 	return w.Flush()
 }
 
-func verboseRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) error {
+func verboseRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) {
 	defaultNode := client.AddrFromPeer(remotePeer)
 
 	// Dump as /proc/meminfo
@@ -140,8 +147,6 @@ func verboseRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) error
 		fmt.Printf("%s: %d %s\n", "DirectMap2M", msg.Meminfo.Directmap2M, "kB")
 		fmt.Printf("%s: %d %s\n", "DirectMap1G", msg.Meminfo.Directmap1G, "kB")
 	}
-
-	return nil
 }
 
 func init() {
