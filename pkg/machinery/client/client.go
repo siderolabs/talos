@@ -416,14 +416,21 @@ func (c *Client) Reset(ctx context.Context, graceful, reboot bool) (err error) {
 }
 
 // ResetGeneric implements the proto.MachineServiceClient interface.
-func (c *Client) ResetGeneric(ctx context.Context, req *machineapi.ResetRequest) (err error) {
+func (c *Client) ResetGeneric(ctx context.Context, req *machineapi.ResetRequest) error {
+	_, err := c.ResetGenericWithResponse(ctx, req)
+
+	return err
+}
+
+// ResetGenericWithResponse resets the machine and returns the response.
+func (c *Client) ResetGenericWithResponse(ctx context.Context, req *machineapi.ResetRequest) (*machineapi.ResetResponse, error) {
 	resp, err := c.MachineClient.Reset(ctx, req)
 
 	if err == nil {
 		_, err = FilterMessages(resp, err)
 	}
 
-	return
+	return resp, err
 }
 
 // RebootMode provides various mode through which the reboot process can be done.
@@ -435,7 +442,14 @@ func WithPowerCycle(req *machineapi.RebootRequest) {
 }
 
 // Reboot implements the proto.MachineServiceClient interface.
-func (c *Client) Reboot(ctx context.Context, opts ...RebootMode) (err error) {
+func (c *Client) Reboot(ctx context.Context, opts ...RebootMode) error {
+	_, err := c.RebootWithResponse(ctx, opts...)
+
+	return err
+}
+
+// RebootWithResponse reboots the machine and returns the response.
+func (c *Client) RebootWithResponse(ctx context.Context, opts ...RebootMode) (*machineapi.RebootResponse, error) {
 	var req machineapi.RebootRequest
 	for _, opt := range opts {
 		opt(&req)
@@ -447,7 +461,7 @@ func (c *Client) Reboot(ctx context.Context, opts ...RebootMode) (err error) {
 		_, err = FilterMessages(resp, err)
 	}
 
-	return
+	return resp, err
 }
 
 // Rollback implements the proto.MachineServiceClient interface.
@@ -483,7 +497,14 @@ func WithShutdownForce(force bool) ShutdownOption {
 }
 
 // Shutdown implements the proto.MachineServiceClient interface.
-func (c *Client) Shutdown(ctx context.Context, opts ...ShutdownOption) (err error) {
+func (c *Client) Shutdown(ctx context.Context, opts ...ShutdownOption) error {
+	_, err := c.ShutdownWithResponse(ctx, opts...)
+
+	return err
+}
+
+// ShutdownWithResponse shuts down the machine and returns the response.
+func (c *Client) ShutdownWithResponse(ctx context.Context, opts ...ShutdownOption) (*machineapi.ShutdownResponse, error) {
 	var req machineapi.ShutdownRequest
 
 	for _, opt := range opts {
@@ -496,7 +517,7 @@ func (c *Client) Shutdown(ctx context.Context, opts ...ShutdownOption) (err erro
 		_, err = FilterMessages(resp, err)
 	}
 
-	return
+	return resp, err
 }
 
 // Dmesg implements the proto.MachineServiceClient interface.
@@ -602,8 +623,7 @@ func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-ch
 	return ReadStream(stream)
 }
 
-// Upgrade initiates a Talos upgrade ... and implements the proto.MachineServiceClient
-// interface.
+// Upgrade initiates a Talos upgrade and implements the proto.MachineServiceClient interface.
 func (c *Client) Upgrade(ctx context.Context, image string, preserve, stage, force bool, callOptions ...grpc.CallOption) (resp *machineapi.UpgradeResponse, err error) {
 	resp, err = c.MachineClient.Upgrade(
 		ctx,

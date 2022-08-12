@@ -123,6 +123,97 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 	}
 }
 
+// EventResult is the result of an event watch, containing either an Event or an error.
+type EventResult struct {
+	// Event is the event that was received.
+	Event Event
+	// Err is the error that occurred.
+	Error error
+}
+
+// EventsWatchV2 watches events of a single node and wraps the Events by providing a simpler interface.
+// It blocks until the first (empty) event is received, then spawns a goroutine that sends events to the given channel.
+// EventResult objects sent into the channel contain either the errors or the received events.
+//
+//nolint:gocyclo,cyclop
+func (c *Client) EventsWatchV2(ctx context.Context, ch chan<- EventResult, opts ...EventsOptionFunc) error {
+	stream, err := c.Events(ctx, opts...)
+	if err != nil {
+		return fmt.Errorf("error fetching events: %w", err)
+	}
+
+	if err = stream.CloseSend(); err != nil {
+		return err
+	}
+
+	defaultNode := RemotePeer(stream.Context())
+
+	// receive first (empty) watch event
+	_, err = stream.Recv()
+	if err != nil {
+		if err == io.EOF || StatusCode(err) == codes.Canceled {
+			return nil
+		}
+
+		return fmt.Errorf("error while watching events: %w", err)
+	}
+
+	go func() {
+		for {
+			event, err := stream.Recv()
+			if err != nil {
+				if err == io.EOF || StatusCode(err) == codes.Canceled {
+					return
+				}
+
+				select {
+				case ch <- EventResult{Error: fmt.Errorf("error while watching events: %w", err)}:
+				case <-ctx.Done():
+				}
+
+				return
+			}
+
+			if event.GetMetadata().GetError() != "" {
+				select {
+				case ch <- EventResult{Error: fmt.Errorf("error on event: %s", event.GetMetadata().GetError())}:
+				case <-ctx.Done():
+					return
+				}
+
+				continue
+			}
+
+			ev, err := UnmarshalEvent(event)
+			if err != nil {
+				select {
+				case ch <- EventResult{Error: err}:
+				case <-ctx.Done():
+					return
+				}
+
+				continue
+			}
+
+			if ev == nil {
+				continue
+			}
+
+			if ev.Node == "" {
+				ev.Node = defaultNode
+			}
+
+			select {
+			case ch <- EventResult{Event: *ev}:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return nil
+}
+
 // UnmarshalEvent decodes the event coming from the gRPC stream from any to the exact type.
 func UnmarshalEvent(event *machineapi.Event) (*Event, error) {
 	typeURL := event.GetData().GetTypeUrl()
