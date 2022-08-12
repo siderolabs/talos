@@ -12,6 +12,12 @@ description: Talos gRPC API reference.
     - [EmptyResponse](#common.EmptyResponse)
     - [Error](#common.Error)
     - [Metadata](#common.Metadata)
+    - [NetIP](#common.NetIP)
+    - [NetIPPort](#common.NetIPPort)
+    - [NetIPPrefix](#common.NetIPPrefix)
+    - [PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey)
+    - [PEMEncodedKey](#common.PEMEncodedKey)
+    - [URL](#common.URL)
   
     - [Code](#common.Code)
     - [ContainerDriver](#common.ContainerDriver)
@@ -314,6 +320,99 @@ Common metadata message nested in all reply message types
 | hostname | [string](#string) |  | hostname of the server response comes from (injected by proxy) |
 | error | [string](#string) |  | error is set if request failed to the upstream (rest of response is undefined) |
 | status | [google.rpc.Status](#google.rpc.Status) |  | error as gRPC Status |
+
+
+
+
+
+
+<a name="common.NetIP"></a>
+
+### NetIP
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ip | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="common.NetIPPort"></a>
+
+### NetIPPort
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ip | [bytes](#bytes) |  |  |
+| port | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="common.NetIPPrefix"></a>
+
+### NetIPPrefix
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ip | [bytes](#bytes) |  |  |
+| prefix_length | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="common.PEMEncodedCertificateAndKey"></a>
+
+### PEMEncodedCertificateAndKey
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crt | [bytes](#bytes) |  |  |
+| key | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="common.PEMEncodedKey"></a>
+
+### PEMEncodedKey
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="common.URL"></a>
+
+### URL
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| full_path | [string](#string) |  |  |
 
 
 

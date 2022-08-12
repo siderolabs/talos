@@ -5,7 +5,6 @@
 package proto
 
 import (
-	"encoding/json"
 	"net/url"
 	"sync"
 
@@ -14,6 +13,8 @@ import (
 	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/protobuf/proto" //nolint:depguard
 	"inet.af/netaddr"
+
+	"github.com/talos-systems/talos/pkg/machinery/api/common"
 )
 
 // Message is the main interface for protobuf API v2 messages.
@@ -58,97 +59,7 @@ var once sync.Once
 
 // RegisterDefaultTypes registers the pair of encoders/decoders for common types.
 func RegisterDefaultTypes() {
-	once.Do(func() {
-		protoenc.RegisterEncoderDecoder(
-			func(v netaddr.IPPrefix) ([]byte, error) { return v.MarshalText() },
-			func(slc []byte) (netaddr.IPPrefix, error) {
-				var result netaddr.IPPrefix
-
-				err := result.UnmarshalText(slc)
-				if err != nil {
-					return netaddr.IPPrefix{}, err
-				}
-
-				return result, nil
-			},
-		)
-
-		protoenc.RegisterEncoderDecoder(
-			func(v netaddr.IPPort) ([]byte, error) { return v.MarshalText() },
-			func(slc []byte) (netaddr.IPPort, error) {
-				var result netaddr.IPPort
-
-				err := result.UnmarshalText(slc)
-				if err != nil {
-					return netaddr.IPPort{}, err
-				}
-
-				return result, nil
-			},
-		)
-
-		protoenc.RegisterEncoderDecoder(
-			// TODO(DmitriyMV): use generated proto representation of this
-			func(v *x509.PEMEncodedCertificateAndKey) ([]byte, error) {
-				return json.Marshal(v)
-			},
-			func(slc []byte) (*x509.PEMEncodedCertificateAndKey, error) {
-				var result *x509.PEMEncodedCertificateAndKey
-
-				err := json.Unmarshal(slc, &result)
-				if err != nil {
-					return &x509.PEMEncodedCertificateAndKey{}, err
-				}
-
-				return result, nil
-			},
-		)
-
-		protoenc.RegisterEncoderDecoder(
-			// TODO(DmitriyMV): use generated proto representation of this
-			func(v *x509.PEMEncodedKey) ([]byte, error) {
-				return json.Marshal(v)
-			},
-			func(slc []byte) (*x509.PEMEncodedKey, error) {
-				var result *x509.PEMEncodedKey
-
-				err := json.Unmarshal(slc, &result)
-				if err != nil {
-					return &x509.PEMEncodedKey{}, err
-				}
-
-				return result, nil
-			},
-		)
-
-		protoenc.RegisterEncoderDecoder(
-			func(v *url.URL) ([]byte, error) { return []byte(v.String()), nil },
-			func(slc []byte) (*url.URL, error) {
-				parse, err := url.Parse(string(slc))
-				if err != nil {
-					return &url.URL{}, err
-				}
-
-				return parse, nil
-			},
-		)
-
-		protoenc.RegisterEncoderDecoder(
-			func(v specs.Mount) ([]byte, error) {
-				return protoenc.Marshal(Mount(v))
-			},
-			func(slc []byte) (specs.Mount, error) {
-				var result Mount
-
-				err := protoenc.Unmarshal(slc, &result)
-				if err != nil {
-					return specs.Mount{}, err
-				}
-
-				return specs.Mount(result), nil
-			},
-		)
-	})
+	once.Do(registerDefaultTypes)
 }
 
 // Mount specifies a mount for a container.
@@ -157,4 +68,178 @@ type Mount struct {
 	Type        string   `protobuf:"2"`
 	Source      string   `protobuf:"3"`
 	Options     []string `protobuf:"4"`
+}
+
+// nolint:gocyclo
+func registerDefaultTypes() {
+	protoenc.RegisterEncoderDecoder(
+		func(v *url.URL) ([]byte, error) {
+			source := common.URL{
+				FullPath: v.String(),
+			}
+
+			return proto.Marshal(&source)
+		},
+		func(slc []byte) (*url.URL, error) {
+			var dest common.URL
+
+			if err := proto.Unmarshal(slc, &dest); err != nil {
+				return nil, err
+			}
+
+			return url.Parse(dest.FullPath)
+		},
+	)
+
+	protoenc.RegisterEncoderDecoder(
+		func(v *x509.PEMEncodedCertificateAndKey) ([]byte, error) {
+			source := common.PEMEncodedCertificateAndKey{
+				Crt: v.Crt,
+				Key: v.Key,
+			}
+
+			return proto.Marshal(&source)
+		},
+		func(slc []byte) (*x509.PEMEncodedCertificateAndKey, error) {
+			var dest common.PEMEncodedCertificateAndKey
+
+			if err := proto.Unmarshal(slc, &dest); err != nil {
+				return nil, err
+			}
+
+			return &x509.PEMEncodedCertificateAndKey{
+				Crt: dest.Crt,
+				Key: dest.Key,
+			}, nil
+		},
+	)
+
+	protoenc.RegisterEncoderDecoder(
+		func(v *x509.PEMEncodedKey) ([]byte, error) {
+			source := common.PEMEncodedKey{
+				Key: v.Key,
+			}
+
+			return proto.Marshal(&source)
+		},
+		func(slc []byte) (*x509.PEMEncodedKey, error) {
+			var dest common.PEMEncodedKey
+
+			if err := proto.Unmarshal(slc, &dest); err != nil {
+				return nil, err
+			}
+
+			return &x509.PEMEncodedKey{
+				Key: dest.Key,
+			}, nil
+		},
+	)
+
+	protoenc.RegisterEncoderDecoder(
+		func(v netaddr.IP) ([]byte, error) {
+			ipEncoded, err := v.MarshalBinary()
+			if err != nil {
+				return nil, err
+			}
+
+			source := common.NetIP{
+				Ip: ipEncoded,
+			}
+
+			return proto.Marshal(&source)
+		},
+		func(slc []byte) (netaddr.IP, error) {
+			var dest common.NetIP
+
+			if err := proto.Unmarshal(slc, &dest); err != nil {
+				return netaddr.IP{}, err
+			}
+
+			var parsedIP netaddr.IP
+
+			if err := parsedIP.UnmarshalBinary(dest.Ip); err != nil {
+				return netaddr.IP{}, err
+			}
+
+			return parsedIP, nil
+		},
+	)
+
+	protoenc.RegisterEncoderDecoder(
+		func(v netaddr.IPPort) ([]byte, error) {
+			ipEncoded, err := v.IP().MarshalBinary()
+			if err != nil {
+				return nil, err
+			}
+
+			source := common.NetIPPort{
+				Ip:   ipEncoded,
+				Port: int32(v.Port()),
+			}
+
+			return proto.Marshal(&source)
+		},
+		func(slc []byte) (netaddr.IPPort, error) {
+			var dest common.NetIPPort
+
+			if err := proto.Unmarshal(slc, &dest); err != nil {
+				return netaddr.IPPort{}, err
+			}
+
+			var parsedIP netaddr.IP
+
+			if err := parsedIP.UnmarshalBinary(dest.Ip); err != nil {
+				return netaddr.IPPort{}, err
+			}
+
+			return netaddr.IPPortFrom(parsedIP, uint16(dest.Port)), nil
+		},
+	)
+
+	protoenc.RegisterEncoderDecoder(
+		func(v netaddr.IPPrefix) ([]byte, error) {
+			ipEncoded, err := v.IP().WithZone("").MarshalBinary()
+			if err != nil {
+				return nil, err
+			}
+
+			source := common.NetIPPrefix{
+				Ip:           ipEncoded,
+				PrefixLength: int32(v.Bits()),
+			}
+
+			return proto.Marshal(&source)
+		},
+		func(slc []byte) (netaddr.IPPrefix, error) {
+			var dest common.NetIPPrefix
+
+			if err := proto.Unmarshal(slc, &dest); err != nil {
+				return netaddr.IPPrefix{}, err
+			}
+
+			var parsedIP netaddr.IP
+
+			if err := parsedIP.UnmarshalBinary(dest.Ip); err != nil {
+				return netaddr.IPPrefix{}, err
+			}
+
+			return netaddr.IPPrefixFrom(parsedIP, uint8(dest.PrefixLength)), nil
+		},
+	)
+
+	protoenc.RegisterEncoderDecoder(
+		func(v specs.Mount) ([]byte, error) {
+			return protoenc.Marshal(Mount(v))
+		},
+		func(slc []byte) (specs.Mount, error) {
+			var result Mount
+
+			err := protoenc.Unmarshal(slc, &result)
+			if err != nil {
+				return specs.Mount{}, err
+			}
+
+			return specs.Mount(result), nil
+		},
+	)
 }
