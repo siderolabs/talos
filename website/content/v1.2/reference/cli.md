@@ -1024,6 +1024,7 @@ talosctl events [flags]
 ### Options
 
 ```
+      --actor-id string     filter events by the specified actor ID (default is no filter)
       --duration duration   show events for the past duration interval (one second resolution, default is to show no history)
   -h, --help                help for events
       --since string        show events after the specified event ID (default is to show no history)

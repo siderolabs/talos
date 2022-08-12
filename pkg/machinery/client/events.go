@@ -47,6 +47,13 @@ func WithTailDuration(dur time.Duration) EventsOptionFunc {
 	}
 }
 
+// WithActorID sets up Watcher to return events with the specified actor ID.
+func WithActorID(actorID string) EventsOptionFunc {
+	return func(opts *machineapi.EventsRequest) {
+		opts.WithActorId = actorID
+	}
+}
+
 // Events implements the proto.OSClient interface.
 func (c *Client) Events(ctx context.Context, opts ...EventsOptionFunc) (stream machineapi.MachineService_EventsClient, err error) {
 	var req machineapi.EventsRequest
@@ -63,6 +70,7 @@ type Event struct {
 	Node    string
 	TypeURL string
 	ID      string
+	ActorID string
 	Payload proto.Message
 }
 
@@ -252,6 +260,7 @@ func UnmarshalEvent(event *machineapi.Event) (*Event, error) {
 		TypeURL: typeURL,
 		ID:      event.Id,
 		Payload: msg,
+		ActorID: event.ActorId,
 	}
 
 	if event.Metadata != nil {
