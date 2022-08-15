@@ -111,6 +111,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode:             ctrl.v1alpha1Runtime.State().Platform().Mode(),
 			SeccompProfilesDirectory: constants.SeccompProfilesDirectory,
 		},
+		&etcd.AdvertisedPeerController{},
 		&etcd.ConfigController{},
 		&etcd.PKIController{},
 		&etcd.SpecController{},
