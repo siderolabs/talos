@@ -7,8 +7,10 @@ package talos
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -36,7 +38,10 @@ var editCmdFlags struct {
 
 //nolint:gocyclo
 func editFn(c *client.Client) func(context.Context, string, resource.Resource, error) error {
-	var lastError string
+	var (
+		path      string
+		lastError string
+	)
 
 	edit := editor.NewDefaultEditor([]string{
 		"TALOS_EDITOR",
@@ -83,11 +88,7 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 			}
 
 			if lastError != "" {
-				lines := strings.Split(lastError, "\n")
-
-				_, err = w.Write([]byte(
-					fmt.Sprintf("# \n# %s\n", strings.Join(lines, "\n# ")),
-				))
+				_, err = w.Write([]byte(addEditingComment(lastError)))
 				if err != nil {
 					return err
 				}
@@ -98,12 +99,26 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 				return err
 			}
 
-			edited, _, err = edit.LaunchTempFile(fmt.Sprintf("%s-%s-edit-", mc.Metadata().Type(), id), ".yaml", &buf)
+			editedDiff := edited
+
+			edited, path, err = edit.LaunchTempFile(fmt.Sprintf("%s-%s-edit-", mc.Metadata().Type(), id), ".yaml", &buf)
 			if err != nil {
 				return err
 			}
 
+			defer os.Remove(path) //nolint:errcheck
+
 			edited = stripEditingComment(edited)
+
+			// If we're retrying the loop because of an error, and no change was made in the file, short-circuit
+			if lastError != "" && bytes.Equal(cmdutil.StripComments(editedDiff), cmdutil.StripComments(edited)) {
+				if _, err = os.Stat(path); !os.IsNotExist(err) {
+					message := addEditingComment(lastError)
+					message += fmt.Sprintf("A copy of your changes has been stored to %q\nEdit canceled, no valid changes were saved.\n", path)
+
+					return errors.New(message)
+				}
+			}
 
 			if len(bytes.TrimSpace(bytes.TrimSpace(cmdutil.StripComments(edited)))) == 0 {
 				fmt.Println("Apply was skipped: empty file.")
@@ -153,6 +168,12 @@ func stripEditingComment(in []byte) []byte {
 
 		in = in[idx+1:]
 	}
+}
+
+func addEditingComment(in string) string {
+	lines := strings.Split(in, "\n")
+
+	return fmt.Sprintf("# \n# %s\n", strings.Join(lines, "\n# "))
 }
 
 // editCmd represents the edit command.
