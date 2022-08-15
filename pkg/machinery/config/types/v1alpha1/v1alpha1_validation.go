@@ -43,6 +43,8 @@ var (
 
 	// Security.
 
+	// ErrEmptyKeyCert denotes that crypto key/cert combination should not be empty.
+	ErrEmptyKeyCert = errors.New("key/cert combination should not be empty")
 	// ErrInvalidCert denotes that the certificate specified is invalid.
 	ErrInvalidCert = errors.New("certificate is invalid")
 	// ErrInvalidCertType denotes that the certificate type is invalid.
@@ -792,9 +794,13 @@ func (k *KubeletConfig) Validate() ([]string, error) {
 	return nil, result.ErrorOrNil()
 }
 
-// Validate kubelet configuration.
+// Validate etcd configuration.
 func (e *EtcdConfig) Validate() error {
 	var result *multierror.Error
+
+	if e.CA() == nil {
+		result = multierror.Append(result, ErrEmptyKeyCert)
+	}
 
 	if e.EtcdSubnet != "" && len(e.EtcdAdvertisedSubnets) > 0 {
 		result = multierror.Append(result, fmt.Errorf("etcd subnet can't be set when advertised subnets are set"))
