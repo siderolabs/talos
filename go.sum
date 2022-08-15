@@ -1120,8 +1120,8 @@ github.com/talos-systems/go-debug v0.2.1 h1:VSN8P1zXWeHWgUBZn4cVT3keBcecCAJBG9Up
 github.com/talos-systems/go-debug v0.2.1/go.mod h1:pR4NjsZQNFqGx3n4qkD4MIj1F2CxyIF8DCiO1+05JO0=
 github.com/talos-systems/go-kmsg v0.1.1 h1:iCzV/6oPpClBP6uEoqer1+ceaW6hM1AtpeGV+9zJeXI=
 github.com/talos-systems/go-kmsg v0.1.1/go.mod h1:dppwQn+/mrdvsziGMbXjzfc4E+75oZhr39UIP6LgL0w=
-github.com/talos-systems/go-loadbalancer v0.1.2 h1:gWgOY5c4gVrahbDOAPHA2UbDY8QSgiR8S6bRXoC5Wqw=
-github.com/talos-systems/go-loadbalancer v0.1.2/go.mod h1:ptznwIJopZLeXBviQnIGqEuN1xJ5xVQSB7KWqGvqK8A=
+github.com/talos-systems/go-loadbalancer v0.1.3 h1:CiYyeM8R7OjJGcY3M12Db6u58p95i2z5vwW50QQWx48=
+github.com/talos-systems/go-loadbalancer v0.1.3/go.mod h1:IrSlVos79xXNRhONI7Eq/7OGmxmbm2i4Yg1KZroVoHg=
 github.com/talos-systems/go-procfs v0.1.0 h1:AuS3/4fx5Me6CUyPVDxBH79eSSnl+8C83tzGmsMAPzs=
 github.com/talos-systems/go-procfs v0.1.0/go.mod h1:ATyUGFQIW8OnbnmvqefZWVPgL9g+CAmXHfkgny21xX8=
 github.com/talos-systems/go-retry v0.1.1-0.20201113203059-8c63d290a688/go.mod h1:HiXQqyVStZ35uSY/MTLWVvQVmC3lIW2MS5VdDaMtoKM=
