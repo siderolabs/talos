@@ -23,8 +23,8 @@ github.com/containerd/go-cni v1.1.7 h1:1yKpVCQAXI21BJIy8q7Nyk4CWpIgUno6ib7JIDca7
 github.com/containerd/go-cni v1.1.7/go.mod h1:Ve4Q0RB2Bw78D90OL0YVyDjqdTL7FKh9W+UPbhWiZXA=
 github.com/containernetworking/cni v1.1.2 h1:wtRGZVv7olUHMOqouPpn3cXJWpJgM6+EUl31EQbXALQ=
 github.com/containernetworking/cni v1.1.2/go.mod h1:sDpYKmGVENF3s6uvMvGgldDWeG8dMxakj/u+i9ht9vw=
-github.com/cosi-project/runtime v0.0.0-20220809130718-cd5f564066ad h1:eoikVJYpgF497xuHVVWLy78Yw+JejMCApDqETsqS+4E=
-github.com/cosi-project/runtime v0.0.0-20220809130718-cd5f564066ad/go.mod h1:USHV71cmUcp4K4X+cBq+ySACihAEZw+xFIfkB3p3X80=
+github.com/cosi-project/runtime v0.1.0 h1:bxhh04J26ZpQFF50oOHFNP6DoYT581mpsvc+hjhDAgs=
+github.com/cosi-project/runtime v0.1.0/go.mod h1:hH8UMKs+oLy1CRGnK3YebSv5JgCg3e3+Jf2ZvE5bx0s=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -144,8 +144,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
-github.com/talos-systems/crypto v0.3.6-0.20220622130438-e9df1b8ca74c h1:JoZa0ZQlzm1RzxLMkM6Ak668qVmOTGR4l1kMFeSXTwc=
-github.com/talos-systems/crypto v0.3.6-0.20220622130438-e9df1b8ca74c/go.mod h1:jbt9CspHnhdwyKmXQQEIiFSHz1cfsCJjsd0iNat1wEA=
+github.com/talos-systems/crypto v0.3.6 h1:aq1uADaF71P2/K35igWx8u/ivHOYp3vHQ/kAzqu83vk=
+github.com/talos-systems/crypto v0.3.6/go.mod h1:jbt9CspHnhdwyKmXQQEIiFSHz1cfsCJjsd0iNat1wEA=
 github.com/talos-systems/go-blockdevice v0.3.4 h1:LP2hgIcd5qbympxYFlWbHYTPyD/f/sZjBMma01soniQ=
 github.com/talos-systems/go-blockdevice v0.3.4/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0/go.mod h1:kf+rZzTEmlDiYQ6ulslvRONnKLQH8x83TowltGMhO+k=

@@ -8,7 +8,7 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 
 require (
 	github.com/containerd/go-cni v1.1.7
-	github.com/cosi-project/runtime v0.0.0-20220809130718-cd5f564066ad
+	github.com/cosi-project/runtime v0.1.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -19,7 +19,7 @@ require (
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/protoenc v0.1.3
 	github.com/stretchr/testify v1.8.0
-	github.com/talos-systems/crypto v0.3.6-0.20220622130438-e9df1b8ca74c
+	github.com/talos-systems/crypto v0.3.6
 	github.com/talos-systems/go-blockdevice v0.3.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
