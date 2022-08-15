@@ -31,6 +31,7 @@ type PriorityLock[T Priority[T]] struct {
 	takeoverCh chan struct{}
 
 	mu              sync.Mutex
+	cancelCtxMu     sync.Mutex
 	runningPriority T
 	cancelCtx       context.CancelFunc
 }
@@ -46,11 +47,11 @@ func NewPriorityLock[T Priority[T]]() *PriorityLock[T] {
 	}
 }
 
-func (lock *PriorityLock[T]) getRunningPriority() T {
+func (lock *PriorityLock[T]) getRunningPriority() (T, context.CancelFunc) {
 	lock.mu.Lock()
 	defer lock.mu.Unlock()
 
-	return lock.runningPriority
+	return lock.runningPriority, lock.cancelCtx
 }
 
 func (lock *PriorityLock[T]) setRunningPriority(seq T, cancelCtx context.CancelFunc) {
@@ -62,6 +63,9 @@ func (lock *PriorityLock[T]) setRunningPriority(seq T, cancelCtx context.CancelF
 	if seq == zeroSeq && lock.cancelCtx != nil {
 		lock.cancelCtx()
 	}
+
+	lock.cancelCtxMu.Lock()
+	defer lock.cancelCtxMu.Unlock()
 
 	lock.runningPriority, lock.cancelCtx = seq, cancelCtx
 }
@@ -92,12 +96,14 @@ func (lock *PriorityLock[T]) Lock(ctx context.Context, takeOverTimeout time.Dura
 		<-lock.takeoverCh
 	}()
 
-	if !seq.CanTakeOver(lock.getRunningPriority()) && !opts.Takeover {
+	sequence, cancelCtx := lock.getRunningPriority()
+
+	if !seq.CanTakeOver(sequence) && !opts.Takeover {
 		return nil, runtime.ErrLocked
 	}
 
-	if lock.cancelCtx != nil {
-		lock.cancelCtx()
+	if cancelCtx != nil {
+		cancelCtx()
 	}
 
 	select {
