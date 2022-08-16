@@ -82,7 +82,7 @@ talosctl inject serviceaccount -f manifests.yaml > manifests-injected.yaml
 kubectl apply -f manifests-injected.yaml
 ```
 
-See [documentation](https://www.talos.dev/v1.2/advanced/configuration/talos-api-access-from-k8s/) for more details.
+See [documentation](https://www.talos.dev/v1.2/advanced/talos-api-access-from-k8s/) for more details.
 """
 
     [notes.seccomp]
