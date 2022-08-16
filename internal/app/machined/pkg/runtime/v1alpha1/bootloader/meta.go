@@ -117,6 +117,10 @@ func (m *Meta) Revert() (err error) {
 		return err
 	}
 
+	if conf == nil {
+		return nil
+	}
+
 	bootEntry, err := grub.ParseBootLabel(label)
 	if err != nil {
 		return err
