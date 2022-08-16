@@ -584,6 +584,7 @@ local release = {
       '_out/metal-bananapi_m64-arm64.img.xz',
       '_out/metal-libretech_all_h3_cc_h5-arm64.img.xz',
       '_out/metal-jetson_nano-arm64.img.xz',
+      '_out/metal-nanopi_r4s-arm64.img.xz',
       '_out/nocloud-amd64.raw.xz',
       '_out/nocloud-arm64.raw.xz',
       '_out/openstack-amd64.tar.gz',

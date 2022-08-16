@@ -247,14 +247,14 @@ images-essential: image-aws image-gcp image-metal ## Builds only essential image
 
 images: image-aws image-azure image-digital-ocean image-gcp image-hcloud image-metal image-nocloud image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, GCP, HCloud, Metal, NoCloud, Openstack, Oracle, Scaleway, UpCloud, Vultr and VMware).
 
-sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, libretech_all_h3_cc_h5, rockpi_4, rockpi_4c, pine64 and jetson_nano (e.g. sbc-rpi_4)
+sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rock64, bananapi_m64, libretech_all_h3_cc_h5, rockpi_4, rockpi_4c, pine64, jetson_nano and nanopi_r4s (e.g. sbc-rpi_4)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
 	@ . ./hack/imager.sh && \
 	    tmpdir=$$(prepare_extension_images linux/arm64 $(IMAGER_SYSTEM_EXTENSIONS)) && \
 		docker run --rm -v /dev:/dev -v "$${tmpdir}:/system/extensions" --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
 		rm -rf "$${tmpdir}"
 
-sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-rockpi_4c sbc-pine64 sbc-jetson_nano ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, Radxa ROCK Pi 4c, pine64, Libre Computer Board ALL-H3-CC and Jetson Nano).
+sbcs: sbc-rpi_4 sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-rockpi_4c sbc-pine64 sbc-jetson_nano sbc-nanopi_r4s ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, Radxa ROCK Pi 4c, Pine64, Libre Computer Board ALL-H3-CC, Jetson Nano and Nano Pi R4S).
 
 .PHONY: iso
 iso: ## Builds the ISO and outputs it to the artifact directory.
