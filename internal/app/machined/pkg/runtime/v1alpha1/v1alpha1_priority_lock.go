@@ -31,7 +31,6 @@ type PriorityLock[T Priority[T]] struct {
 	takeoverCh chan struct{}
 
 	mu              sync.Mutex
-	cancelCtxMu     sync.Mutex
 	runningPriority T
 	cancelCtx       context.CancelFunc
 }
@@ -63,9 +62,6 @@ func (lock *PriorityLock[T]) setRunningPriority(seq T, cancelCtx context.CancelF
 	if seq == zeroSeq && lock.cancelCtx != nil {
 		lock.cancelCtx()
 	}
-
-	lock.cancelCtxMu.Lock()
-	defer lock.cancelCtxMu.Unlock()
 
 	lock.runningPriority, lock.cancelCtx = seq, cancelCtx
 }
