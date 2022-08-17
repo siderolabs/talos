@@ -23,7 +23,6 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/pkg/cli"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
@@ -157,25 +156,21 @@ var configAddCmd = &cobra.Command{
 			return fmt.Errorf("error reading config: %w", err)
 		}
 
-		caBytes, err := os.ReadFile(configAddCmdFlags.ca)
-		if err != nil {
-			return fmt.Errorf("error reading CA: %w", err)
+		newContext := &clientconfig.Context{}
+
+		if configAddCmdFlags.ca != "" {
+			var caBytes []byte
+			caBytes, err = os.ReadFile(configAddCmdFlags.ca)
+			if err != nil {
+				return fmt.Errorf("error reading CA: %w", err)
+			}
+
+			newContext.CA = base64.StdEncoding.EncodeToString(caBytes)
 		}
 
-		crtBytes, err := os.ReadFile(configAddCmdFlags.crt)
+		err = checkAndSetCrtAndKey(newContext)
 		if err != nil {
-			return fmt.Errorf("error reading certificate: %w", err)
-		}
-
-		keyBytes, err := os.ReadFile(configAddCmdFlags.key)
-		if err != nil {
-			return fmt.Errorf("error reading key: %w", err)
-		}
-
-		newContext := &clientconfig.Context{
-			CA:  base64.StdEncoding.EncodeToString(caBytes),
-			Crt: base64.StdEncoding.EncodeToString(crtBytes),
-			Key: base64.StdEncoding.EncodeToString(keyBytes),
+			return err
 		}
 
 		if c.Contexts == nil {
@@ -189,6 +184,35 @@ var configAddCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func checkAndSetCrtAndKey(configContext *clientconfig.Context) error {
+	crt := configAddCmdFlags.crt
+	key := configAddCmdFlags.key
+
+	if crt == "" && key == "" {
+		return nil
+	}
+
+	if crt == "" || key == "" {
+		return fmt.Errorf("if either the 'crt' or 'key' flag is specified, both are required")
+	}
+
+	crtBytes, err := os.ReadFile(crt)
+	if err != nil {
+		return fmt.Errorf("error reading certificate: %w", err)
+	}
+
+	configContext.Crt = base64.StdEncoding.EncodeToString(crtBytes)
+
+	keyBytes, err := os.ReadFile(key)
+	if err != nil {
+		return fmt.Errorf("error reading key: %w", err)
+	}
+
+	configContext.Key = base64.StdEncoding.EncodeToString(keyBytes)
+
+	return nil
 }
 
 // configGetContextsCmd represents the `config contexts` command.
@@ -434,9 +458,6 @@ func init() {
 	configAddCmd.Flags().StringVar(&configAddCmdFlags.ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&configAddCmdFlags.crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&configAddCmdFlags.key, "key", "", "the path to the key")
-	cli.Should(configAddCmd.MarkFlagRequired("ca"))
-	cli.Should(configAddCmd.MarkFlagRequired("crt"))
-	cli.Should(configAddCmd.MarkFlagRequired("key"))
 
 	configNewCmd.Flags().StringSliceVar(&configNewCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
 	configNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", 87600*time.Hour, "certificate TTL")
