@@ -175,7 +175,7 @@ vlan=eth1.5:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.5:::::
 * Linux: 5.15.62
 * Flannel 0.19.1
 * containerd 1.6.8
-* Kubernetes: v1.25.0-rc.0
+* Kubernetes: v1.25.0-rc.1
 
 Talos is built with Go 1.19.
 """
