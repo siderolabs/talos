@@ -57,6 +57,9 @@ type NetworkRequest struct {
 	// CNI-specific parameters.
 	CNI CNIConfig
 
+	// DHCP options
+	DHCPSkipHostname bool
+
 	// Docker-specific parameters.
 	DockerDisableIPv6 bool
 }

@@ -108,6 +108,7 @@ talosctl cluster create [flags]
       --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")
       --crashdump                                print debug crashdump to stderr when cluster startup fails
       --custom-cni-url string                    install custom CNI from the URL (Talos cluster)
+      --disable-dhcp-hostname                    skip announcing hostname via DHCP (QEMU only)
       --disk int                                 default limit on disk size in MB (each VM) (default 6144)
       --disk-image-path string                   disk image to use
       --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
