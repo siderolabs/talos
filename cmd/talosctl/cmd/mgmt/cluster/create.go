@@ -71,11 +71,6 @@ const (
 	networkMTUFlag                = "mtu"
 	networkCIDRFlag               = "cidr"
 	nameserversFlag               = "nameservers"
-	cniBinPathFlag                = "cni-bin-path"
-	cniConfDirFlag                = "cni-conf-dir"
-	cniCacheDirFlag               = "cni-cache-dir"
-	cniBundleURLFlag              = "cni-bundle-url"
-	dockerDisableIPv6Flag         = "docker-disable-ipv6"
 	clusterDiskSizeFlag           = "disk"
 	clusterDisksFlag              = "user-disk"
 	customCNIUrlFlag              = "custom-cni-url"
@@ -152,6 +147,7 @@ var (
 	extraBootKernelArgs       string
 	dockerDisableIPv6         bool
 	controlPlanePort          int
+	dhcpSkipHostname          bool
 )
 
 // createCmd represents the cluster up command.
@@ -287,6 +283,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 
 				BundleURL: cniBundleURL,
 			},
+			DHCPSkipHostname:  dhcpSkipHostname,
 			DockerDisableIPv6: dockerDisableIPv6,
 		},
 
@@ -895,10 +892,10 @@ func init() {
 	createCmd.Flags().StringVar(&forceEndpoint, forceEndpointFlag, "", "use endpoint instead of provider defaults")
 	createCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
 	createCmd.Flags().StringVarP(&inputDir, inputDirFlag, "i", "", "location of pre-generated config files")
-	createCmd.Flags().StringSliceVar(&cniBinPath, cniBinPathFlag, []string{filepath.Join(defaultCNIDir, "bin")}, "search path for CNI binaries (VM only)")
-	createCmd.Flags().StringVar(&cniConfDir, cniConfDirFlag, filepath.Join(defaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
-	createCmd.Flags().StringVar(&cniCacheDir, cniCacheDirFlag, filepath.Join(defaultCNIDir, "cache"), "CNI cache directory path (VM only)")
-	createCmd.Flags().StringVar(&cniBundleURL, cniBundleURLFlag, fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
+	createCmd.Flags().StringSliceVar(&cniBinPath, "cni-bin-path", []string{filepath.Join(defaultCNIDir, "bin")}, "search path for CNI binaries (VM only)")
+	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", filepath.Join(defaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
+	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", filepath.Join(defaultCNIDir, "cache"), "CNI cache directory path (VM only)")
+	createCmd.Flags().StringVar(&cniBundleURL, "cni-bundle-url", fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
 		images.Username, trimVersion(version.Tag), constants.ArchVariable), "URL to download CNI bundle from (VM only)")
 	createCmd.Flags().StringVarP(&ports,
 		"exposed-ports",
@@ -924,8 +921,9 @@ func init() {
 	createCmd.Flags().StringArrayVar(&configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
-	createCmd.Flags().BoolVar(&dockerDisableIPv6, dockerDisableIPv6Flag, false, "skip enabling IPv6 in containers (Docker only)")
+	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
 	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
+	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
 
 	Cmd.AddCommand(createCmd)
 }
@@ -944,11 +942,6 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 		networkMTUFlag,
 		networkCIDRFlag,
 		nameserversFlag,
-		cniBinPathFlag,
-		cniConfDirFlag,
-		cniCacheDirFlag,
-		cniBundleURLFlag,
-		dockerDisableIPv6Flag,
 		clusterDiskSizeFlag,
 		clusterDisksFlag,
 		customCNIUrlFlag,

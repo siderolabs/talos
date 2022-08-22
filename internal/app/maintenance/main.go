@@ -34,9 +34,9 @@ import (
 //
 //nolint:gocyclo
 func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
-	logger.Println("waiting for network address and hostname to be ready")
+	logger.Println("waiting for network address to be ready")
 
-	if err := network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady).Wait(ctx); err != nil {
+	if err := network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady).Wait(ctx); err != nil {
 		return nil, fmt.Errorf("error waiting for the network to be ready: %w", err)
 	}
 
@@ -52,12 +52,17 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 
 	ips := currentAddresses.(*network.NodeAddress).TypedSpec().IPs()
 
+	// hostname might not be available yet, so use it only if it is available
 	hostnameStatus, err := r.State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
-	if err != nil {
+	if err != nil && !state.IsNotFoundError(err) {
 		return nil, fmt.Errorf("error getting node hostname: %w", err)
 	}
 
-	dnsNames := hostnameStatus.(*network.HostnameStatus).TypedSpec().DNSNames()
+	var dnsNames []string
+
+	if hostnameStatus != nil {
+		dnsNames = hostnameStatus.(*network.HostnameStatus).TypedSpec().DNSNames()
+	}
 
 	tlsConfig, provider, err := genTLSConfig(ips, dnsNames)
 	if err != nil {

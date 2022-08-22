@@ -111,21 +111,45 @@ func (suite *DiscoverySuite) TestMembers() {
 			continue
 		}
 
-		memberByID := make(map[string]*cluster.Member)
+		memberByName := slices.ToMap(members,
+			func(member *cluster.Member) (string, *cluster.Member) {
+				return member.Metadata().ID(), member
+			},
+		)
+
+		memberByIP := make(map[netaddr.IP]*cluster.Member)
 
 		for _, member := range members {
-			memberByID[member.Metadata().ID()] = member
+			for _, addr := range member.TypedSpec().Addresses {
+				memberByIP[addr] = member
+			}
 		}
 
 		nodesInfo := suite.Cluster.Info().Nodes
 
 		for _, nodeInfo := range nodesInfo {
-			matchingMember := memberByID[nodeInfo.Name]
+			matchingMember := memberByName[nodeInfo.Name]
+
+			var matchingMemberByIP *cluster.Member
+
+			for _, nodeIPStd := range nodeInfo.IPs {
+				nodeIP, ok := netaddr.FromStdIP(nodeIPStd)
+				suite.Assert().True(ok)
+
+				matchingMemberByIP = memberByIP[nodeIP]
+
+				break
+			}
+
+			// if hostnames are not set via DHCP, use match by IP
+			if matchingMember == nil {
+				matchingMember = matchingMemberByIP
+			}
+
 			suite.Require().NotNil(matchingMember)
 
 			suite.Assert().Equal(nodeInfo.Type, matchingMember.TypedSpec().MachineType)
 			suite.Assert().Equal(expectedTalosVersion, matchingMember.TypedSpec().OperatingSystem)
-			suite.Assert().Equal(nodeInfo.Name, matchingMember.TypedSpec().Hostname)
 
 			for _, nodeIPStd := range nodeInfo.IPs {
 				nodeIP, ok := netaddr.FromStdIP(nodeIPStd)

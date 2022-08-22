@@ -63,6 +63,23 @@ case "${WITH_CONTROL_PLANE_PORT:-false}" in
     ;;
 esac
 
+case "${VIA_MAINTENANCE_MODE:-false}" in
+  false)
+    ;;
+  *)
+    # apply config via maintenance mode
+    QEMU_FLAGS="${QEMU_FLAGS} --skip-injecting-config --with-apply-config"
+    ;;
+esac
+
+case "${DISABLE_DHCP_HOSTNAME:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS="${QEMU_FLAGS} --disable-dhcp-hostname"
+    ;;
+esac
+
 case "${USE_DISK_IMAGE:-false}" in
   false)
     DISK_IMAGE_FLAG=
