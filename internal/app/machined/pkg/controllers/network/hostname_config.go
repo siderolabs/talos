@@ -200,14 +200,10 @@ func (ctrl *HostnameConfigController) apply(ctx context.Context, r controller.Ru
 }
 
 func (ctrl *HostnameConfigController) getStableDefault(nodeID string) *network.HostnameSpecSpec {
-	h := sha256.New()
-	h.Write([]byte(nodeID))
+	hashBytes := sha256.Sum256([]byte(nodeID))
+	b36 := strings.ToLower(base36.EncodeBytes(hashBytes[:8]))
 
-	hashBytes := h.Sum(nil)
-
-	b36 := strings.ToLower(base36.EncodeBytes(hashBytes))
-
-	hostname := fmt.Sprintf("talos-%s-%s", b36[0:3], b36[3:6])
+	hostname := fmt.Sprintf("talos-%s-%s", b36[1:4], b36[4:7])
 
 	return &network.HostnameSpecSpec{
 		Hostname:    hostname,

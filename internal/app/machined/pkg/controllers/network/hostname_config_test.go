@@ -206,7 +206,7 @@ func (suite *HostnameConfigSuite) TestDefaultStableHostname() {
 					[]string{
 						"default/hostname",
 					}, func(r *network.HostnameSpec) error {
-						suite.Assert().Equal("talos-2gd-76y", r.TypedSpec().Hostname)
+						suite.Assert().Equal("talos-hwz-sw5", r.TypedSpec().Hostname)
 
 						return nil
 					},

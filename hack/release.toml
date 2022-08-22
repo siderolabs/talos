@@ -236,6 +236,9 @@ Talos now generates the default hostname (when there is no explicitly specified 
 node id (e.g. `talos-2gd-76y`) instead of using the DHCP assigned IP address (e.g. `talos-172-20-0-2`).
 
 This ensures that the node hostname is not changed when DHCP assigns a new IP to a node.
+
+Please note: the stable hostname generation algorithm changed between v1.2.0-beta.0 and v1.2.0-beta.1, please take care when upgrading
+from versions >= 1.2.0-alpha.1 to versions >= 1.2.0-beta.1 when using stable default hostname feature.
 """
 
     [notes.kubespan-kubernetes-nets]
