@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.8.0
+	cloud.google.com/go/compute v1.9.0
 	github.com/BurntSushi/toml v1.2.0
 	github.com/aws/aws-sdk-go v1.44.76
 	github.com/beevik/ntp v0.3.0
