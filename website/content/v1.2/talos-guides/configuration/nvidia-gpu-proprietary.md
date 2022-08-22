@@ -1,19 +1,75 @@
 ---
-title: "NVIDIA GPU (OSS drivers)"
-description: "In this guide we'll follow the procedure to support NVIDIA GPU using OSS drivers on Talos."
+title: "NVIDIA GPU (Proprietary drivers)"
+description: "In this guide we'll follow the procedure to support NVIDIA GPU using proprietary drivers on Talos."
 aliases:
-  - ../../guides/nvidia-gpu
+  - ../../guides/nvidia-gpu-proprietary
 ---
 
 > Enabling NVIDIA GPU support on Talos is bound by [NVIDIA EULA](https://www.nvidia.com/en-us/drivers/nvidia-license/).
 > Talos GPU support has been promoted to **beta**.
-> The Talos published NVIDIA OSS drivers are bound to a specific Talos release.
-> The extensions versions also needs to be updated when upgrading Talos.
 
-The published versions of the NVIDIA system extensions can be found here:
+These are the steps to enabling NVIDIA support in Talos.
 
-- [nvidia-open-gpu-kernel-modules](https://github.com/siderolabs/extensions/pkgs/container/nvidia-open-gpu-kernel-modules)
-- [nvidia-container-toolkit](https://github.com/siderolabs/extensions/pkgs/container/nvidia-container-toolkit)
+- Talos pre-installed on a node with NVIDIA GPU installed.
+- Building a custom Talos installer image with NVIDIA modules
+- Upgrading Talos with the custom installer and enabling NVIDIA modules and the system extension
+
+This requires that the user build and maintain their own Talos installer image.
+
+## Prerequisites
+
+This guide assumes the user has access to a container registry with `push` permissions, docker installed on the build machine and the Talos host has `pull` access to the container registry.
+
+Set the local registry and username environment variables:
+
+```bash
+export USERNAME=<username>
+export REGISTRY=<registry>
+```
+
+For eg:
+
+```bash
+export USERNAME=talos-user
+export REGISTRY=ghcr.io
+```
+
+> The examples below will use the sample variables set above.
+Modify accordingly for your environment.
+
+## Building the installer image
+
+Start by cloning the [pkgs](https://github.com/siderolabs/pkgs) repository.
+
+Now run the following command to build and push custom Talos kernel image and the NVIDIA image with the NVIDIA kernel modules signed by the kernel built along with it.
+
+```bash
+make kernel nonfree-kmod-nvidia PLATFORM=linux/amd64 PUSH=true
+```
+
+> Replace the platform with `linux/arm64` if building for ARM64
+
+Now we need to create a custom Talos installer image.
+
+Start by creating a `Dockerfile` with the following content:
+
+```Dockerfile
+FROM scratch as customization
+COPY --from=ghcr.io/talos-user/nonfree-kmod-nvidia:{{< release >}}-nvidia /lib/modules /lib/modules
+
+FROM ghcr.io/siderolabs/installer:{{< release >}}
+COPY --from=ghcr.io/talos-user/kernel:{{< release >}}-nvidia /boot/vmlinuz /usr/install/${TARGETARCH}/vmlinuz
+```
+
+Now build the image and push it to the registry.
+
+```bash
+DOCKER_BUILDKIT=0 docker build --squash --build-arg RM="/lib/modules" -t ghcr.io/talos-user/installer:{{< release >}}-nvidia .
+docker push ghcr.io/talos-user/installer:{{< release >}}-nvidia
+```
+
+> Note: buildkit has a bug [#816](https://github.com/moby/buildkit/issues/816), to disable it use DOCKER_BUILDKIT=0
+> Replace the platform with `linux/arm64` if building for ARM64
 
 ## Upgrading Talos and enabling the NVIDIA modules and the system extension
 
@@ -25,7 +81,6 @@ First create a patch yaml `gpu-worker-patch.yaml` to update the machine config s
 - op: add
   path: /machine/install/extensions
   value:
-    - image: ghcr.io/siderolabs/nvidia-open-gpu-kernel-modules:{{< nvidia_driver_release >}}-{{< release >}}
     - image: ghcr.io/siderolabs/nvidia-container-toolkit:{{< nvidia_driver_release >}}-{{< nvidia_container_toolkit_release >}}
 - op: add
   path: /machine/kernel
@@ -41,20 +96,16 @@ First create a patch yaml `gpu-worker-patch.yaml` to update the machine config s
     net.core.bpf_jit_harden: 1
 ```
 
-> Update the driver version and Talos release in the above patch yaml from the published versions if there is a newer one available.
-> Make sure the driver version matches for both the `nvidia-open-gpu-kernel-modules` and `nvidia-container-toolkit` extensions.
-> The `nvidia-open-gpu-kernel-modules` extension is versioned as `<nvidia-driver-version>-<talos-release-version>` and the `nvidia-container-toolkit` extension is versioned as `<nvidia-driver-version>-<nvidia-container-toolkit-version>`.
-
 Now apply the patch to all Talos nodes in the cluster having NVIDIA GPU's installed:
 
 ```bash
 talosctl patch mc --patch @gpu-worker-patch.yaml
 ```
 
-Now we can proceed to upgrading Talos to the same version to enable the system extension:
+Now we can proceed to upgrading Talos with the installer built previously:
 
 ```bash
-talosctl upgrade --image=ghcr.io/siderolabs/installer:{{< release >}}
+talosctl upgrade --image=ghcr.io/talos-user/installer:{{< release >}}-nvidia
 ```
 
 Once the node reboots, the NVIDIA modules should be loaded and the system extension should be installed.
@@ -81,9 +132,8 @@ talosctl get extensions
 which should produce an output similar to below:
 
 ```text
-NODE           NAMESPACE   TYPE              ID                                                                           VERSION   NAME                             VERSION
-172.31.41.27   runtime     ExtensionStatus   000.ghcr.io-siderolabs-nvidia-container-toolkit-515.65.01-v1.10.0            1         nvidia-container-toolkit         515.65.01-v1.10.0
-172.31.41.27   runtime     ExtensionStatus   000.ghcr.io-siderolabs-nvidia-open-gpu-kernel-modules-515.65.01-v1.2.0       1         nvidia-open-gpu-kernel-modules   515.65.01-v1.2.0
+NODE           NAMESPACE   TYPE              ID                                                                 VERSION   NAME                       VERSION
+172.31.41.27   runtime     ExtensionStatus   000.ghcr.io-frezbo-nvidia-container-toolkit-510.60.02-v1.9.0       1         nvidia-container-toolkit   510.60.02-v1.9.0
 ```
 
 ```bash
@@ -93,8 +143,8 @@ talosctl read /proc/driver/nvidia/version
 which should produce an output similar to below:
 
 ```text
-NVRM version: NVIDIA UNIX x86_64 Kernel Module  515.65.01  Wed Mar 16 11:24:05 UTC 2022
-GCC version:  gcc version 12.2.0 (GCC)
+NVRM version: NVIDIA UNIX x86_64 Kernel Module  510.60.02  Wed Mar 16 11:24:05 UTC 2022
+GCC version:  gcc version 11.2.0 (GCC)
 ```
 
 ## Deploying NVIDIA device plugin

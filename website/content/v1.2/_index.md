@@ -5,10 +5,12 @@ linkTitle: "Documentation"
 cascade:
   type: docs
 preRelease: true
-lastRelease: v1.2.0-alpha.1
+lastRelease: v1.2.0-beta.0
 kubernetesRelease: "v1.25.0-rc.1"
 prevKubernetesRelease: "1.24.3"
 theilaRelease: "v0.2.1"
+nvidiaContainerToolkitRelease: "v1.10.0"
+nvidiaDriverRelease: "515.65.01"
 ---
 
 ## Welcome
