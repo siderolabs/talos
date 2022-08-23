@@ -20,6 +20,7 @@ preface = """\
         title = "Component Updates"
         description="""\
 * containerd 1.6.8
+* Linux kernel 5.15.62
 """
 
     [notes.talos-config-kernel-param-variable-substitution]
