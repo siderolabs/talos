@@ -67,6 +67,8 @@ func apidMain() error {
 
 	go runDebugServer(ctx)
 
+	startup.LimitMaxProcs(constants.ApidMaxProcs)
+
 	if err := startup.RandSeed(); err != nil {
 		return fmt.Errorf("failed to seed RNG: %w", err)
 	}
