@@ -277,6 +277,33 @@ cluster:
 `talosctl apply-config` now supports patching the machine config file in memory before submitting it to the node.
 """
 
+    [notes.etcd]
+        title = "Etcd Configuration"
+        description="""\
+Configuration setting `cluster.etcd.subnet` is deprecated, but still supported.
+
+Two new configuration settings are introduce to control precisely which subnet is used for etcd peer communication:
+
+```yaml
+cluster:
+  etcd:
+    advertisedSubnets:
+       - 10.0.0.0/24
+    listenSubnets:
+       - 10.0.0.0/24
+       - 192.168.0.0/24
+```
+
+The `advertisedSubnets` setting is used to control which subnet is used for etcd peer communication, it will be advertised
+by each peer for other peers to connect to. If `advertiseSubnets` is set, `listenSubnets` defaults to the same value, so that
+`etcd` only listens on the same subnet as it advertises. Additional subnets can be configured in `listenSubnets` if needed.
+
+Default behavior hasn't changed - if the `advertisedSubnets` is not set, Talos picks up the first available network address as
+advertised address and `etcd` is configured to listen on all interfaces.
+
+> Note: most of the `etcd` configuration changes are accepted on the fly, but they are fully applied only after reboot.
+"""
+
 [make_deps]
 
     [make_deps.tools]
