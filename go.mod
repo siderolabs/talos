@@ -28,9 +28,9 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.8.0
+	cloud.google.com/go/compute v1.9.0
 	github.com/BurntSushi/toml v1.2.0
-	github.com/aws/aws-sdk-go v1.44.76
+	github.com/aws/aws-sdk-go v1.44.83
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4
@@ -48,7 +48,7 @@ require (
 	github.com/emicklei/dot v1.0.0
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.5.4
-	github.com/gdamore/tcell/v2 v2.5.2
+	github.com/gdamore/tcell/v2 v2.5.3
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/gizak/termui/v3 v3.1.0
 	github.com/godbus/dbus/v5 v5.1.0
@@ -64,8 +64,8 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hetznercloud/hcloud-go v1.35.2
-	github.com/insomniacslk/dhcp v0.0.0-20220812085412-509691fd59ec
-	github.com/jsimonetti/rtnetlink v1.2.1
+	github.com/insomniacslk/dhcp v0.0.0-20220822114210-de18a9d48e84
+	github.com/jsimonetti/rtnetlink v1.2.2
 	github.com/jxskiss/base62 v1.1.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.16
@@ -109,7 +109,7 @@ require (
 	github.com/talos-systems/talos/pkg/machinery v1.2.0-alpha.2
 	github.com/u-root/u-root v0.9.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
-	github.com/vmware-tanzu/sonobuoy v0.56.9
+	github.com/vmware-tanzu/sonobuoy v0.56.10
 	github.com/vmware/govmomi v0.29.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
@@ -117,11 +117,11 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.4
 	go.etcd.io/etcd/client/v3 v3.5.4
 	go.etcd.io/etcd/etcdutl/v3 v3.5.4
-	go.uber.org/atomic v1.9.0
+	go.uber.org/atomic v1.10.0
 	go.uber.org/zap v1.22.0
-	golang.org/x/net v0.0.0-20220812174116-3211cb980234
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab
+	golang.org/x/net v0.0.0-20220822230855-b0a4917ee28c
+	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
+	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
@@ -279,7 +279,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220407013110-ef5c587f782d // indirect
 	google.golang.org/api v0.91.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220812140447-cec7f5303424 // indirect
+	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
