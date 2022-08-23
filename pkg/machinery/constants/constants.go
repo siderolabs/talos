@@ -740,6 +740,15 @@ const (
 
 	// DefaultTrustedCAFile is the default path to the trusted CA file.
 	DefaultTrustedCAFile = "/etc/ssl/certs/ca-certificates"
+
+	// MachinedMaxProcs is the maximum number of GOMAXPROCS for machined.
+	MachinedMaxProcs = 4
+
+	// ApidMaxProcs is the maximum number of GOMAXPROCS for apid.
+	ApidMaxProcs = 2
+
+	// TrustdMaxProcs is the maximum number of GOMAXPROCS for trustd.
+	TrustdMaxProcs = 2
 )
 
 // See https://linux.die.net/man/3/klogctl

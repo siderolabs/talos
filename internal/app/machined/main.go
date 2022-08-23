@@ -173,6 +173,9 @@ func runDebugServer(ctx context.Context) {
 func run() error {
 	errCh := make(chan error)
 
+	// Limit GOMAXPROCS.
+	startup.LimitMaxProcs(constants.MachinedMaxProcs)
+
 	// Ensure RNG is seeded.
 	if err := startup.RandSeed(); err != nil {
 		return err
