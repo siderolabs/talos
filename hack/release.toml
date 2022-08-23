@@ -15,6 +15,17 @@ preface = """\
 
 [notes]
 
+    [notes.nvidia]
+        title = "NVIDIA GPU support promoted to beta"
+        description = """\
+NVIDIA GPU support on Talos has been promoted to beta and SideroLabs now publishes the NVIDIA Open GPU Kernel Modules as a system extension making it easier to run GPU workloads on Talos. Refer to enabling NVIDIA GPU support docs here:
+
+- https://www.talos.dev/v1.2/talos-guides/configuration/nvidia-gpu/
+- https://www.talos.dev/v1.2/talos-guides/configuration/nvidia-gpu-proprietary/
+- https://www.talos.dev/v1.2/talos-guides/configuration/nvidia-fabricmanager/
+"""
+
+
     [notes.kubernetes]
         title = "Kubernetes Control Plane labels and taints"
         description = """\
