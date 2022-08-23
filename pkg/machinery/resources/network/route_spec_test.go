@@ -5,12 +5,12 @@
 package network_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -19,9 +19,9 @@ import (
 func TestRoutSpecMarshalYAML(t *testing.T) {
 	spec := network.RouteSpecSpec{
 		Family:      nethelpers.FamilyInet6,
-		Destination: netaddr.MustParseIPPrefix("192.168.3.4/25"),
-		Source:      netaddr.MustParseIP("1.1.1.1"),
-		Gateway:     netaddr.MustParseIP("2.2.2.2"),
+		Destination: netip.MustParsePrefix("192.168.3.4/25"),
+		Source:      netip.MustParseAddr("1.1.1.1"),
+		Gateway:     netip.MustParseAddr("2.2.2.2"),
 		OutLinkName: "eth0",
 		Table:       nethelpers.TableLocal,
 		Priority:    1024,

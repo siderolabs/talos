@@ -5,11 +5,12 @@
 package kubespan
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -26,10 +27,10 @@ type PeerSpec = typed.Resource[PeerSpecSpec, PeerSpecRD]
 //
 //gotagsrewrite:gen
 type PeerSpecSpec struct {
-	Address    netaddr.IP         `yaml:"address" protobuf:"1"`
-	AllowedIPs []netaddr.IPPrefix `yaml:"allowedIPs" protobuf:"2"`
-	Endpoints  []netaddr.IPPort   `yaml:"endpoints" protobuf:"3"`
-	Label      string             `yaml:"label" protobuf:"4"`
+	Address    netip.Addr       `yaml:"address" protobuf:"1"`
+	AllowedIPs []netip.Prefix   `yaml:"allowedIPs" protobuf:"2"`
+	Endpoints  []netip.AddrPort `yaml:"endpoints" protobuf:"3"`
+	Label      string           `yaml:"label" protobuf:"4"`
 }
 
 // NewPeerSpec initializes a PeerSpec resource.

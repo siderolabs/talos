@@ -7,6 +7,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -14,9 +15,9 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -117,7 +118,7 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 	}
 }
 
-func findRoutes(routes []rtnetlink.RouteMessage, family nethelpers.Family, destination netaddr.IPPrefix, gateway netaddr.IP, table nethelpers.RoutingTable) []*rtnetlink.RouteMessage {
+func findRoutes(routes []rtnetlink.RouteMessage, family nethelpers.Family, destination netip.Prefix, gateway netip.Addr, table nethelpers.RoutingTable) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
 	for i, route := range routes {
@@ -125,15 +126,15 @@ func findRoutes(routes []rtnetlink.RouteMessage, family nethelpers.Family, desti
 			continue
 		}
 
-		if route.DstLength != destination.Bits() {
+		if int(route.DstLength) != destination.Bits() {
 			continue
 		}
 
-		if !route.Attributes.Dst.Equal(destination.IP().IPAddr().IP) {
+		if !route.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
 			continue
 		}
 
-		if !route.Attributes.Gateway.Equal(gateway.IPAddr().IP) {
+		if !route.Attributes.Gateway.Equal(gateway.AsSlice()) {
 			continue
 		}
 
@@ -154,17 +155,17 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 	linkIndex := resolveLinkName(links, route.TypedSpec().OutLinkName)
 
 	destinationStr := route.TypedSpec().Destination.String()
-	if route.TypedSpec().Destination.IsZero() {
+	if generic.IsZero(route.TypedSpec().Destination) {
 		destinationStr = "default"
 	}
 
 	sourceStr := route.TypedSpec().Source.String()
-	if route.TypedSpec().Source.IsZero() {
+	if generic.IsZero(route.TypedSpec().Source) {
 		sourceStr = ""
 	}
 
 	gatewayStr := route.TypedSpec().Gateway.String()
-	if route.TypedSpec().Gateway.IsZero() {
+	if generic.IsZero(route.TypedSpec().Gateway) {
 		gatewayStr = ""
 	}
 
@@ -201,8 +202,8 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
 				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.TypedSpec().Priority &&
-				(route.TypedSpec().Source.IsZero() ||
-					existing.Attributes.Src.Equal(route.TypedSpec().Source.IPAddr().IP)) {
+				(generic.IsZero(route.TypedSpec().Source) ||
+					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) {
 				matchFound = true
 
 				continue
@@ -240,16 +241,16 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		// add route
 		msg := &rtnetlink.RouteMessage{
 			Family:    uint8(route.TypedSpec().Family),
-			DstLength: route.TypedSpec().Destination.Bits(),
+			DstLength: uint8(route.TypedSpec().Destination.Bits()),
 			SrcLength: 0,
 			Protocol:  uint8(route.TypedSpec().Protocol),
 			Scope:     uint8(route.TypedSpec().Scope),
 			Type:      uint8(route.TypedSpec().Type),
 			Flags:     uint32(route.TypedSpec().Flags),
 			Attributes: rtnetlink.RouteAttributes{
-				Dst:      route.TypedSpec().Destination.IP().IPAddr().IP,
-				Src:      route.TypedSpec().Source.IPAddr().IP,
-				Gateway:  route.TypedSpec().Gateway.IPAddr().IP,
+				Dst:      route.TypedSpec().Destination.Addr().AsSlice(),
+				Src:      route.TypedSpec().Source.AsSlice(),
+				Gateway:  route.TypedSpec().Gateway.AsSlice(),
 				OutIface: linkIndex,
 				Priority: route.TypedSpec().Priority,
 				Table:    uint32(route.TypedSpec().Table),

@@ -5,19 +5,19 @@
 package network_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 func TestResolverSpecMarshalYAML(t *testing.T) {
 	spec := network.ResolverSpecSpec{
-		DNSServers:  []netaddr.IP{netaddr.MustParseIP("1.1.1.1"), netaddr.MustParseIP("8.8.8.8")},
+		DNSServers:  []netip.Addr{netip.MustParseAddr("1.1.1.1"), netip.MustParseAddr("8.8.8.8")},
 		ConfigLayer: network.ConfigPlatform,
 	}
 

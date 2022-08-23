@@ -5,13 +5,13 @@
 package k8s
 
 import (
+	"net/netip"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -33,7 +33,7 @@ type Endpoint = typed.Resource[EndpointSpec, EndpointRD]
 //
 //gotagsrewrite:gen
 type EndpointSpec struct {
-	Addresses []netaddr.IP `yaml:"addresses" protobuf:"1"`
+	Addresses []netip.Addr `yaml:"addresses" protobuf:"1"`
 }
 
 // NewEndpoint initializes the Endpoint resource.
@@ -63,7 +63,7 @@ func (EndpointRD) ResourceDefinition(resource.Metadata, EndpointSpec) meta.Resou
 }
 
 // EndpointList is a flattened list of endpoints.
-type EndpointList []netaddr.IP
+type EndpointList []netip.Addr
 
 // Merge endpoints from multiple Endpoint resources into a single list.
 func (l EndpointList) Merge(endpoint *Endpoint) EndpointList {
@@ -76,7 +76,7 @@ func (l EndpointList) Merge(endpoint *Endpoint) EndpointList {
 			continue
 		}
 
-		l = append(l[:idx], append([]netaddr.IP{ip}, l[idx:]...)...)
+		l = append(l[:idx], append([]netip.Addr{ip}, l[idx:]...)...)
 	}
 
 	return l
@@ -84,7 +84,7 @@ func (l EndpointList) Merge(endpoint *Endpoint) EndpointList {
 
 // Strings returns a slice of formatted endpoints to string.
 func (l EndpointList) Strings() []string {
-	return slices.Map(l, netaddr.IP.String)
+	return slices.Map(l, netip.Addr.String)
 }
 
 func init() {

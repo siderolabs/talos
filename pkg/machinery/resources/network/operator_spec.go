@@ -5,11 +5,12 @@
 package network
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -54,7 +55,7 @@ type DHCP6OperatorSpec struct {
 //
 //gotagsrewrite:gen
 type VIPOperatorSpec struct {
-	IP            netaddr.IP `yaml:"ip" protobuf:"1"`
+	IP            netip.Addr `yaml:"ip" protobuf:"1"`
 	GratuitousARP bool       `yaml:"gratuitousARP" protobuf:"2"`
 
 	EquinixMetal VIPEquinixMetalSpec `yaml:"equinixMetal,omitempty" protobuf:"3"`

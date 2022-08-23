@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"net/url"
 	"strings"
 	"sync"
@@ -24,7 +25,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -126,7 +126,7 @@ func (suite *HostnameConfigSuite) TestNoDefaultWithoutMachineConfig() {
 	suite.startRuntime()
 
 	defaultAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
-	defaultAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("33.11.22.44/32")}
+	defaultAddress.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("33.11.22.44/32")}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, defaultAddress))
 
@@ -153,7 +153,7 @@ func (suite *HostnameConfigSuite) TestDefaultIPBasedHostname() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	defaultAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
-	defaultAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("33.11.22.44/32")}
+	defaultAddress.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("33.11.22.44/32")}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, defaultAddress))
 

@@ -6,6 +6,7 @@ package kubespan_test
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"sync"
 	"testing"
@@ -14,8 +15,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
+	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"inet.af/netaddr"
 
 	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
 	kubespanctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
@@ -88,10 +89,10 @@ func (mock mockRulesManager) Cleanup() error {
 
 type mockNftablesManager struct {
 	mu    sync.Mutex
-	ipSet *netaddr.IPSet
+	ipSet *netipx.IPSet
 }
 
-func (mock *mockNftablesManager) Update(ipSet *netaddr.IPSet) error {
+func (mock *mockNftablesManager) Update(ipSet *netipx.IPSet) error {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
 
@@ -104,7 +105,7 @@ func (mock *mockNftablesManager) Cleanup() error {
 	return nil
 }
 
-func (mock *mockNftablesManager) IPSet() *netaddr.IPSet {
+func (mock *mockNftablesManager) IPSet() *netipx.IPSet {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
 
@@ -200,7 +201,7 @@ func (suite *ManagerSuite) TestReconcile() {
 				func(res resource.Resource) error {
 					spec := res.(*network.AddressSpec).TypedSpec()
 
-					suite.Assert().Equal(localIdentity.TypedSpec().Address.IP(), spec.Address.IP())
+					suite.Assert().Equal(localIdentity.TypedSpec().Address.Addr(), spec.Address.Addr())
 					suite.Assert().Equal(localIdentity.TypedSpec().Subnet.Bits(), spec.Address.Bits())
 					suite.Assert().Equal(network.ConfigOperator, spec.ConfigLayer)
 					suite.Assert().Equal(nethelpers.FamilyInet6, spec.Family)
@@ -229,8 +230,8 @@ func (suite *ManagerSuite) TestReconcile() {
 						network.RouteID(
 							constants.KubeSpanDefaultRoutingTable,
 							nethelpers.FamilyInet4,
-							netaddr.IPPrefix{},
-							netaddr.IP{},
+							netip.Prefix{},
+							netip.Addr{},
 							1,
 						),
 					),
@@ -239,8 +240,8 @@ func (suite *ManagerSuite) TestReconcile() {
 						network.RouteID(
 							constants.KubeSpanDefaultRoutingTable,
 							nethelpers.FamilyInet6,
-							netaddr.IPPrefix{},
-							netaddr.IP{},
+							netip.Prefix{},
+							netip.Addr{},
 							1,
 						),
 					),
@@ -259,13 +260,13 @@ func (suite *ManagerSuite) TestReconcile() {
 
 	// add two peers, they should be added to the wireguard link spec and should be tracked in peer statuses
 	peer1 := kubespan.NewPeerSpec(kubespan.NamespaceName, "3FxU7UuwektMjbyuJBs7i1hDj2rQA6tHnbNB6WrQxww=")
-	peer1.TypedSpec().Address = netaddr.MustParseIP("fd8a:4396:731e:e702:145e:c4ff:fe41:1ef9")
+	peer1.TypedSpec().Address = netip.MustParseAddr("fd8a:4396:731e:e702:145e:c4ff:fe41:1ef9")
 	peer1.TypedSpec().Label = "worker-1"
-	peer1.TypedSpec().AllowedIPs = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.244.1.0/24"),
+	peer1.TypedSpec().AllowedIPs = []netip.Prefix{
+		netip.MustParsePrefix("10.244.1.0/24"),
 	}
-	peer1.TypedSpec().Endpoints = []netaddr.IPPort{
-		netaddr.MustParseIPPort("172.20.0.3:51280"),
+	peer1.TypedSpec().Endpoints = []netip.AddrPort{
+		netip.MustParseAddrPort("172.20.0.3:51280"),
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, peer1))
 
@@ -273,13 +274,13 @@ func (suite *ManagerSuite) TestReconcile() {
 	suite.Require().NoError(err)
 
 	peer2 := kubespan.NewPeerSpec(kubespan.NamespaceName, "tQuicRD0tqCu48M+zrySTe4slT15JxWhWIboZOB4tWs=")
-	peer2.TypedSpec().Address = netaddr.MustParseIP("fd8a:4396:731e:e702:9c83:cbff:fed0:f94b")
+	peer2.TypedSpec().Address = netip.MustParseAddr("fd8a:4396:731e:e702:9c83:cbff:fed0:f94b")
 	peer2.TypedSpec().Label = "worker-2"
-	peer2.TypedSpec().AllowedIPs = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.244.2.0/24"),
+	peer2.TypedSpec().AllowedIPs = []netip.Prefix{
+		netip.MustParsePrefix("10.244.2.0/24"),
 	}
-	peer2.TypedSpec().Endpoints = []netaddr.IPPort{
-		netaddr.MustParseIPPort("172.20.0.4:51280"),
+	peer2.TypedSpec().Endpoints = []netip.AddrPort{
+		netip.MustParseAddrPort("172.20.0.4:51280"),
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, peer2))
 
@@ -394,12 +395,12 @@ func (suite *ManagerSuite) TestReconcile() {
 			Peers: []wgtypes.Peer{
 				{
 					PublicKey:         key1,
-					Endpoint:          peer1.TypedSpec().Endpoints[0].UDPAddr(),
+					Endpoint:          asUDP(peer1.TypedSpec().Endpoints[0]),
 					LastHandshakeTime: time.Now(),
 				},
 				{
 					PublicKey:         key2,
-					Endpoint:          peer2.TypedSpec().Endpoints[0].UDPAddr(),
+					Endpoint:          asUDP(peer2.TypedSpec().Endpoints[0]),
 					LastHandshakeTime: time.Now(),
 				},
 			},
@@ -472,6 +473,14 @@ func (suite *ManagerSuite) TestReconcile() {
 			),
 		),
 	)
+}
+
+func asUDP(addr netip.AddrPort) *net.UDPAddr {
+	return &net.UDPAddr{
+		IP:   addr.Addr().AsSlice(),
+		Port: int(addr.Port()),
+		Zone: addr.Addr().Zone(),
+	}
 }
 
 func TestManagerSuite(t *testing.T) {

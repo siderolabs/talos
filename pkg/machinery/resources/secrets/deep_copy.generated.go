@@ -8,9 +8,8 @@ package secrets
 
 import (
 	"net"
+	"net/netip"
 	"net/url"
-
-	"inet.af/netaddr"
 )
 
 // DeepCopy generates a deep copy of APICertsSpec.
@@ -32,7 +31,7 @@ func (o APICertsSpec) DeepCopy() APICertsSpec {
 func (o CertSANSpec) DeepCopy() CertSANSpec {
 	var cp CertSANSpec = o
 	if o.IPs != nil {
-		cp.IPs = make([]netaddr.IP, len(o.IPs))
+		cp.IPs = make([]netip.Addr, len(o.IPs))
 		copy(cp.IPs, o.IPs)
 	}
 	if o.DNSNames != nil {
@@ -153,7 +152,7 @@ func (o OSRootSpec) DeepCopy() OSRootSpec {
 		cp.CA = o.CA.DeepCopy()
 	}
 	if o.CertSANIPs != nil {
-		cp.CertSANIPs = make([]netaddr.IP, len(o.CertSANIPs))
+		cp.CertSANIPs = make([]netip.Addr, len(o.CertSANIPs))
 		copy(cp.CertSANIPs, o.CertSANIPs)
 	}
 	if o.CertSANDNSNames != nil {

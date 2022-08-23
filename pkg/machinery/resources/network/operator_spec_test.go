@@ -5,12 +5,12 @@
 package network_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -28,7 +28,7 @@ func TestOperatorSpecMarshalYAML(t *testing.T) {
 			RouteMetric: 1024,
 		},
 		VIP: network.VIPOperatorSpec{
-			IP:            netaddr.MustParseIP("192.168.1.1"),
+			IP:            netip.MustParseAddr("192.168.1.1"),
 			GratuitousARP: true,
 			EquinixMetal: network.VIPEquinixMetalSpec{
 				ProjectID: "a",

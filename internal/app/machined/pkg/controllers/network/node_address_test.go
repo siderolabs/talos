@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"reflect"
 	"sort"
 	"strings"
@@ -23,7 +24,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -124,7 +124,7 @@ func (suite *NodeAddressSuite) TestDefaults() {
 						suite.Assert().True(
 							sort.SliceIsSorted(
 								addrs, func(i, j int) bool {
-									return addrs[i].IP().Compare(addrs[j].IP()) < 0
+									return addrs[i].Addr().Compare(addrs[j].Addr()) < 0
 								},
 							), "addresses %s", addrs,
 						)
@@ -166,7 +166,7 @@ func (suite *NodeAddressSuite) TestFilters() {
 	linkDown.TypedSpec().Index = 2
 	suite.Require().NoError(suite.state.Create(suite.ctx, linkDown))
 
-	newAddress := func(addr netaddr.IPPrefix, link *network.LinkStatus) {
+	newAddress := func(addr netip.Prefix, link *network.LinkStatus) {
 		addressStatus := network.NewAddressStatus(network.NamespaceName, network.AddressID(link.Metadata().ID(), addr))
 		addressStatus.TypedSpec().Address = addr
 		addressStatus.TypedSpec().LinkName = link.Metadata().ID()
@@ -180,7 +180,7 @@ func (suite *NodeAddressSuite) TestFilters() {
 		)
 	}
 
-	newExternalAddress := func(addr netaddr.IPPrefix) {
+	newExternalAddress := func(addr netip.Prefix) {
 		addressStatus := network.NewAddressStatus(network.NamespaceName, network.AddressID("external", addr))
 		addressStatus.TypedSpec().Address = addr
 		addressStatus.TypedSpec().LinkName = "external"
@@ -200,25 +200,25 @@ func (suite *NodeAddressSuite) TestFilters() {
 		"127.0.0.1/8",
 		"fdae:41e4:649b:9303:7886:731d:1ce9:4d4/128",
 	} {
-		newAddress(netaddr.MustParseIPPrefix(addr), linkUp)
+		newAddress(netip.MustParsePrefix(addr), linkUp)
 	}
 
 	for _, addr := range []string{"10.0.0.2/8", "192.168.3.7/24"} {
-		newAddress(netaddr.MustParseIPPrefix(addr), linkDown)
+		newAddress(netip.MustParsePrefix(addr), linkDown)
 	}
 
 	for _, addr := range []string{"1.2.3.4/32", "25.3.7.9/32"} { // duplicate with link address: 25.3.7.9
-		newExternalAddress(netaddr.MustParseIPPrefix(addr))
+		newExternalAddress(netip.MustParsePrefix(addr))
 	}
 
 	filter1 := network.NewNodeAddressFilter(network.NamespaceName, "no-k8s")
-	filter1.TypedSpec().ExcludeSubnets = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.0.0.0/8")}
+	filter1.TypedSpec().ExcludeSubnets = []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
 	suite.Require().NoError(suite.state.Create(suite.ctx, filter1))
 
 	filter2 := network.NewNodeAddressFilter(network.NamespaceName, "only-k8s")
-	filter2.TypedSpec().IncludeSubnets = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.0.0.0/8"),
-		netaddr.MustParseIPPrefix("192.168.0.0/16"),
+	filter2.TypedSpec().IncludeSubnets = []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.0/8"),
+		netip.MustParsePrefix("192.168.0.0/16"),
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, filter2))
 
@@ -316,7 +316,7 @@ func (suite *NodeAddressSuite) TestDefaultAddressChange() {
 	linkUp.TypedSpec().Index = 1
 	suite.Require().NoError(suite.state.Create(suite.ctx, linkUp))
 
-	newAddress := func(addr netaddr.IPPrefix, link *network.LinkStatus) {
+	newAddress := func(addr netip.Prefix, link *network.LinkStatus) {
 		addressStatus := network.NewAddressStatus(network.NamespaceName, network.AddressID(link.Metadata().ID(), addr))
 		addressStatus.TypedSpec().Address = addr
 		addressStatus.TypedSpec().LinkName = link.Metadata().ID()
@@ -335,7 +335,7 @@ func (suite *NodeAddressSuite) TestDefaultAddressChange() {
 		"25.3.7.9/32",
 		"127.0.0.1/8",
 	} {
-		newAddress(netaddr.MustParseIPPrefix(addr), linkUp)
+		newAddress(netip.MustParsePrefix(addr), linkUp)
 	}
 
 	suite.Assert().NoError(
@@ -378,7 +378,7 @@ func (suite *NodeAddressSuite) TestDefaultAddressChange() {
 	)
 
 	// add another address which is "smaller", but default address shouldn't change
-	newAddress(netaddr.MustParseIPPrefix("1.1.1.1/32"), linkUp)
+	newAddress(netip.MustParsePrefix("1.1.1.1/32"), linkUp)
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -421,7 +421,7 @@ func (suite *NodeAddressSuite) TestDefaultAddressChange() {
 
 	// remove the previous default address, now default address should change
 	suite.Require().NoError(suite.state.Destroy(suite.ctx,
-		network.NewAddressStatus(network.NamespaceName, network.AddressID(linkUp.Metadata().ID(), netaddr.MustParseIPPrefix("10.0.0.5/8"))).Metadata(),
+		network.NewAddressStatus(network.NamespaceName, network.AddressID(linkUp.Metadata().ID(), netip.MustParsePrefix("10.0.0.5/8"))).Metadata(),
 		state.WithDestroyOwner(addressStatusController.Name()),
 	))
 
@@ -491,11 +491,11 @@ func TestNodeAddressSuite(t *testing.T) {
 	suite.Run(t, new(NodeAddressSuite))
 }
 
-func ipList(ips string) []netaddr.IPPrefix {
-	var result []netaddr.IPPrefix //nolint:prealloc
+func ipList(ips string) []netip.Prefix {
+	var result []netip.Prefix //nolint:prealloc
 
 	for _, ip := range strings.Split(ips, " ") {
-		result = append(result, netaddr.MustParseIPPrefix(ip))
+		result = append(result, netip.MustParsePrefix(ip))
 	}
 
 	return result

@@ -9,11 +9,11 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"gopkg.in/yaml.v3"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -81,7 +81,7 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, host, e
 	}
 
 	if len(extIP) > 0 {
-		if ip, err := netaddr.ParseIP(string(extIP)); err == nil {
+		if ip, err := netip.ParseAddr(string(extIP)); err == nil {
 			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 		}
 	}
@@ -110,13 +110,13 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, host, e
 			}
 
 			if subnet.Type == "static" {
-				ipAddr, err := netaddr.ParseIPPrefix(subnet.Address)
+				ipAddr, err := netip.ParsePrefix(subnet.Address)
 				if err != nil {
 					return nil, err
 				}
 
 				family := nethelpers.FamilyInet4
-				if ipAddr.IP().Is6() {
+				if ipAddr.Addr().Is6() {
 					family = nethelpers.FamilyInet6
 				}
 
@@ -133,7 +133,7 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, host, e
 			}
 
 			if subnet.Gateway != "" && subnet.Ipv6 {
-				gw, err := netaddr.ParseIP(subnet.Gateway)
+				gw, err := netip.ParseAddr(subnet.Gateway)
 				if err != nil {
 					return nil, err
 				}

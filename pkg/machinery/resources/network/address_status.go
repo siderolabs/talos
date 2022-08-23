@@ -5,11 +5,12 @@
 package network
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -25,11 +26,11 @@ type AddressStatus = typed.Resource[AddressStatusSpec, AddressStatusRD]
 //
 //gotagsrewrite:gen
 type AddressStatusSpec struct {
-	Address   netaddr.IPPrefix        `yaml:"address" protobuf:"1"`
-	Local     netaddr.IP              `yaml:"local,omitempty" protobuf:"2"`
-	Broadcast netaddr.IP              `yaml:"broadcast,omitempty" protobuf:"3"`
-	Anycast   netaddr.IP              `yaml:"anycast,omitempty" protobuf:"4"`
-	Multicast netaddr.IP              `yaml:"multicast,omitempty" protobuf:"5"`
+	Address   netip.Prefix            `yaml:"address" protobuf:"1"`
+	Local     netip.Addr              `yaml:"local,omitempty" protobuf:"2"`
+	Broadcast netip.Addr              `yaml:"broadcast,omitempty" protobuf:"3"`
+	Anycast   netip.Addr              `yaml:"anycast,omitempty" protobuf:"4"`
+	Multicast netip.Addr              `yaml:"multicast,omitempty" protobuf:"5"`
 	LinkIndex uint32                  `yaml:"linkIndex" protobuf:"6"`
 	LinkName  string                  `yaml:"linkName" protobuf:"7"`
 	Family    nethelpers.Family       `yaml:"family" protobuf:"8"`

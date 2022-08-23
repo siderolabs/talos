@@ -5,11 +5,12 @@
 package network
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -25,9 +26,9 @@ type NodeAddressFilter = typed.Resource[NodeAddressFilterSpec, NodeAddressFilter
 //gotagsrewrite:gen
 type NodeAddressFilterSpec struct {
 	// Address is skipped if it doesn't match any of the includeSubnets (if includeSubnets is not empty).
-	IncludeSubnets []netaddr.IPPrefix `yaml:"includeSubnets" protobuf:"1"`
+	IncludeSubnets []netip.Prefix `yaml:"includeSubnets" protobuf:"1"`
 	// Address is skipped if it matches any of the includeSubnets.
-	ExcludeSubnets []netaddr.IPPrefix `yaml:"excludeSubnets" protobuf:"2"`
+	ExcludeSubnets []netip.Prefix `yaml:"excludeSubnets" protobuf:"2"`
 }
 
 // NewNodeAddressFilter initializes a NodeAddressFilter resource.

@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
@@ -92,7 +93,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 				continue
 			}
 
-			if peerStatus.Endpoint.IsZero() {
+			if generic.IsZero(peerStatus.Endpoint) {
 				continue
 			}
 

@@ -40,7 +40,7 @@ type TalosSuite struct {
 // DiscoverNodes provides basic functionality to discover cluster nodes via test settings.
 //
 // This method is overridden in specific suites to allow for specific discovery.
-func (talosSuite *TalosSuite) DiscoverNodes(ctx context.Context) cluster.Info {
+func (talosSuite *TalosSuite) DiscoverNodes(_ context.Context) cluster.Info {
 	if talosSuite.discoveredNodes == nil {
 		if talosSuite.Cluster != nil {
 			talosSuite.discoveredNodes = access.NewAdapter(talosSuite.Cluster).Info

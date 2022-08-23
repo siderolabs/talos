@@ -17,8 +17,8 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/mdlayher/arp"
 	"go.uber.org/zap"
+	"go4.org/netipx"
 	"golang.org/x/sys/unix"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -125,17 +125,17 @@ func resolveLinkName(links []rtnetlink.LinkMessage, linkName string) uint32 {
 	return 0
 }
 
-func findAddress(addrs []rtnetlink.AddressMessage, linkIndex uint32, ipPrefix netaddr.IPPrefix) *rtnetlink.AddressMessage {
+func findAddress(addrs []rtnetlink.AddressMessage, linkIndex uint32, ipPrefix netip.Prefix) *rtnetlink.AddressMessage {
 	for i, addr := range addrs {
 		if addr.Index != linkIndex {
 			continue
 		}
 
-		if addr.PrefixLength != ipPrefix.Bits() {
+		if int(addr.PrefixLength) != ipPrefix.Bits() {
 			continue
 		}
 
-		if !addr.Attributes.Address.Equal(ipPrefix.IP().IPAddr().IP) {
+		if !addr.Attributes.Address.Equal(ipPrefix.Addr().AsSlice()) {
 			continue
 		}
 
@@ -212,13 +212,13 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 		// add address
 		if err := conn.Address.New(&rtnetlink.AddressMessage{
 			Family:       uint8(address.TypedSpec().Family),
-			PrefixLength: address.TypedSpec().Address.Bits(),
+			PrefixLength: uint8(address.TypedSpec().Address.Bits()),
 			Flags:        uint8(address.TypedSpec().Flags),
 			Scope:        uint8(address.TypedSpec().Scope),
 			Index:        linkIndex,
 			Attributes: &rtnetlink.AddressAttributes{
-				Address:   address.TypedSpec().Address.IP().IPAddr().IP,
-				Local:     address.TypedSpec().Address.IP().IPAddr().IP,
+				Address:   address.TypedSpec().Address.Addr().AsSlice(),
+				Local:     address.TypedSpec().Address.Addr().AsSlice(),
 				Broadcast: broadcastAddr(address.TypedSpec().Address),
 				Flags:     uint32(address.TypedSpec().Flags),
 			},
@@ -232,7 +232,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 		logger.Info("assigned address", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName))
 
 		if address.TypedSpec().AnnounceWithARP {
-			if err := ctrl.gratuitousARP(logger, linkIndex, address.TypedSpec().Address.IP()); err != nil {
+			if err := ctrl.gratuitousARP(logger, linkIndex, address.TypedSpec().Address.Addr()); err != nil {
 				logger.Warn("failure sending gratuitous ARP", zap.Stringer("address", address.TypedSpec().Address), zap.String("link", address.TypedSpec().LinkName), zap.Error(err))
 			}
 		}
@@ -241,7 +241,7 @@ func (ctrl *AddressSpecController) syncAddress(ctx context.Context, r controller
 	return nil
 }
 
-func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex uint32, ip netaddr.IP) error {
+func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex uint32, ip netip.Addr) error {
 	etherBroadcast := net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
 
 	if !ip.Is4() {
@@ -265,7 +265,7 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 
 	defer cli.Close() //nolint:errcheck
 
-	packet, err := arp.NewPacket(arp.OperationRequest, cli.HardwareAddr(), netaddrIPToNetipAddr(ip), cli.HardwareAddr(), netaddrIPToNetipAddr(ip))
+	packet, err := arp.NewPacket(arp.OperationRequest, cli.HardwareAddr(), ip, cli.HardwareAddr(), ip)
 	if err != nil {
 		return fmt.Errorf("error building packet: %w", err)
 	}
@@ -279,18 +279,12 @@ func (ctrl *AddressSpecController) gratuitousARP(logger *zap.Logger, linkIndex u
 	return nil
 }
 
-func netaddrIPToNetipAddr(addr netaddr.IP) netip.Addr {
-	ip, _ := netip.AddrFromSlice(addr.IPAddr().IP)
-
-	return ip
-}
-
-func broadcastAddr(addr netaddr.IPPrefix) net.IP {
-	if !addr.IP().Is4() {
+func broadcastAddr(addr netip.Prefix) net.IP {
+	if !addr.Addr().Is4() {
 		return nil
 	}
 
-	ipnet := addr.IPNet()
+	ipnet := netipx.PrefixIPNet(addr)
 
 	ip := ipnet.IP.To4()
 	if ip == nil {

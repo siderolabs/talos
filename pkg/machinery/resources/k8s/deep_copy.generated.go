@@ -7,8 +7,9 @@
 package k8s
 
 import (
+	"net/netip"
+
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"inet.af/netaddr"
 )
 
 // DeepCopy generates a deep copy of AdmissionControlConfigSpec.
@@ -99,7 +100,7 @@ func (o ControllerManagerConfigSpec) DeepCopy() ControllerManagerConfigSpec {
 func (o EndpointSpec) DeepCopy() EndpointSpec {
 	var cp EndpointSpec = o
 	if o.Addresses != nil {
-		cp.Addresses = make([]netaddr.IP, len(o.Addresses))
+		cp.Addresses = make([]netip.Addr, len(o.Addresses))
 		copy(cp.Addresses, o.Addresses)
 	}
 	return cp
@@ -233,7 +234,7 @@ func (o KubeletConfigSpec) DeepCopy() KubeletConfigSpec {
 func (o NodeIPSpec) DeepCopy() NodeIPSpec {
 	var cp NodeIPSpec = o
 	if o.Addresses != nil {
-		cp.Addresses = make([]netaddr.IP, len(o.Addresses))
+		cp.Addresses = make([]netip.Addr, len(o.Addresses))
 		copy(cp.Addresses, o.Addresses)
 	}
 	return cp

@@ -7,6 +7,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -14,7 +15,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
@@ -194,7 +194,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 
 					nodeIPs := addresses.(*network.NodeAddress).TypedSpec().IPs()
 
-					spec.Addresses = make([]netaddr.IP, 0, len(nodeIPs))
+					spec.Addresses = make([]netip.Addr, 0, len(nodeIPs))
 
 					for _, ip := range nodeIPs {
 						if network.IsULA(ip, network.ULASideroLink) {
@@ -208,16 +208,16 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					spec.KubeSpan = cluster.KubeSpanAffiliateSpec{}
 
 					if kubespanIdentity != nil && kubespanConfig != nil {
-						spec.KubeSpan.Address = kubespanIdentity.(*kubespan.Identity).TypedSpec().Address.IP()
+						spec.KubeSpan.Address = kubespanIdentity.(*kubespan.Identity).TypedSpec().Address.Addr()
 						spec.KubeSpan.PublicKey = kubespanIdentity.(*kubespan.Identity).TypedSpec().PublicKey
 
 						if kubespanConfig.TypedSpec().AdvertiseKubernetesNetworks {
-							spec.KubeSpan.AdditionalAddresses = append([]netaddr.IPPrefix(nil), ksAdditionalAddresses.(*network.NodeAddress).TypedSpec().Addresses...)
+							spec.KubeSpan.AdditionalAddresses = append([]netip.Prefix(nil), ksAdditionalAddresses.(*network.NodeAddress).TypedSpec().Addresses...)
 						} else {
 							spec.KubeSpan.AdditionalAddresses = nil
 						}
 
-						endpoints := make([]netaddr.IPPort, 0, len(nodeIPs))
+						endpoints := make([]netip.AddrPort, 0, len(nodeIPs))
 
 						for _, ip := range nodeIPs {
 							if ip == spec.KubeSpan.Address {
@@ -230,7 +230,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 								continue
 							}
 
-							endpoints = append(endpoints, netaddr.IPPortFrom(ip, constants.KubeSpanDefaultPort))
+							endpoints = append(endpoints, netip.AddrPortFrom(ip, constants.KubeSpanDefaultPort))
 						}
 
 						spec.KubeSpan.Endpoints = endpoints

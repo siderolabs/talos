@@ -11,6 +11,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -24,7 +25,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -74,7 +74,7 @@ func (suite *AddressSpecSuite) startRuntime() {
 }
 
 func (suite *AddressSpecSuite) assertLinkAddress(linkName, address string) error {
-	addr := netaddr.MustParseIPPrefix(address)
+	addr := netip.MustParsePrefix(address)
 
 	iface, err := net.InterfaceByName(linkName)
 	suite.Require().NoError(err)
@@ -92,11 +92,11 @@ func (suite *AddressSpecSuite) assertLinkAddress(linkName, address string) error
 			continue
 		}
 
-		if linkAddress.PrefixLength != addr.Bits() {
+		if int(linkAddress.PrefixLength) != addr.Bits() {
 			continue
 		}
 
-		if !linkAddress.Attributes.Address.Equal(addr.IP().IPAddr().IP) {
+		if !linkAddress.Attributes.Address.Equal(addr.Addr().AsSlice()) {
 			continue
 		}
 
@@ -107,7 +107,7 @@ func (suite *AddressSpecSuite) assertLinkAddress(linkName, address string) error
 }
 
 func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) error {
-	addr := netaddr.MustParseIPPrefix(address)
+	addr := netip.MustParsePrefix(address)
 
 	iface, err := net.InterfaceByName(linkName)
 	suite.Require().NoError(err)
@@ -121,7 +121,7 @@ func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) err
 	suite.Require().NoError(err)
 
 	for _, linkAddress := range linkAddresses {
-		if linkAddress.Index == uint32(iface.Index) && linkAddress.PrefixLength == addr.Bits() && linkAddress.Attributes.Address.Equal(addr.IP().IPAddr().IP) {
+		if linkAddress.Index == uint32(iface.Index) && int(linkAddress.PrefixLength) == addr.Bits() && linkAddress.Attributes.Address.Equal(addr.Addr().AsSlice()) {
 			return retry.ExpectedError(fmt.Errorf("address %s is assigned to %q", addr, linkName))
 		}
 	}
@@ -132,7 +132,7 @@ func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) err
 func (suite *AddressSpecSuite) TestLoopback() {
 	loopback := network.NewAddressSpec(network.NamespaceName, "lo/127.0.0.1/8")
 	*loopback.TypedSpec() = network.AddressSpecSpec{
-		Address:     netaddr.MustParseIPPrefix("127.11.0.1/32"),
+		Address:     netip.MustParsePrefix("127.11.0.1/32"),
 		LinkName:    "lo",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeHost,
@@ -180,7 +180,7 @@ func (suite *AddressSpecSuite) TestDummy() {
 
 	dummy := network.NewAddressSpec(network.NamespaceName, "dummy/10.0.0.1/8")
 	*dummy.TypedSpec() = network.AddressSpecSpec{
-		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		Address:     netip.MustParsePrefix("10.0.0.1/8"),
 		LinkName:    dummyInterface,
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,

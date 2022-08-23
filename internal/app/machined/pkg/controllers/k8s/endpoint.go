@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"reflect"
 	"sort"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -196,11 +196,11 @@ func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context
 }
 
 func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r controller.Runtime, logger *zap.Logger, endpoints *corev1.Endpoints) error {
-	addrs := []netaddr.IP{}
+	var addrs []netip.Addr
 
 	for _, endpoint := range endpoints.Subsets {
 		for _, addr := range endpoint.Addresses {
-			ip, err := netaddr.ParseIP(addr.IP)
+			ip, err := netip.ParseAddr(addr.IP)
 			if err == nil {
 				addrs = append(addrs, ip)
 			}

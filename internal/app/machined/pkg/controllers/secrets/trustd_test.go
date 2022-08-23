@@ -8,6 +8,7 @@ package secrets_test
 import (
 	stdlibx509 "crypto/x509"
 	"fmt"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
@@ -53,7 +53,7 @@ func (suite *TrustdSuite) TestReconcileControlPlane() {
 		Key: talosCA.KeyPEM,
 	}
 	rootSecrets.TypedSpec().CertSANDNSNames = []string{"example.com"}
-	rootSecrets.TypedSpec().CertSANIPs = []netaddr.IP{netaddr.MustParseIP("10.4.3.2"), netaddr.MustParseIP("10.2.1.3")}
+	rootSecrets.TypedSpec().CertSANIPs = []netip.Addr{netip.MustParseAddr("10.4.3.2"), netip.MustParseAddr("10.2.1.3")}
 	rootSecrets.TypedSpec().Token = "something"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), rootSecrets))
 

@@ -7,8 +7,9 @@ package network
 import (
 	"crypto/sha256"
 	"net"
+	"net/netip"
 
-	"inet.af/netaddr"
+	"go4.org/netipx"
 )
 
 // ULAPurpose is the Unique Local Addressing key for the Talos-specific purpose of the prefix.
@@ -31,7 +32,7 @@ const (
 // ULAPrefix calculates and returns a Talos-specific Unique Local Address prefix for the given purpose.
 // This implements a Talos-specific implementation of RFC4193.
 // The Talos implementation uses a combination of a 48-bit cluster-unique portion with an 8-bit purpose portion.
-func ULAPrefix(clusterID string, purpose ULAPurpose) netaddr.IPPrefix {
+func ULAPrefix(clusterID string, purpose ULAPurpose) netip.Prefix {
 	var prefixData [16]byte
 
 	hash := sha256.Sum256([]byte(clusterID))
@@ -45,11 +46,11 @@ func ULAPrefix(clusterID string, purpose ULAPurpose) netaddr.IPPrefix {
 	// Apply the Talos-specific ULA Purpose suffix
 	prefixData[7] = byte(purpose)
 
-	return netaddr.IPPrefixFrom(netaddr.IPFrom16(prefixData), 64).Masked()
+	return netip.PrefixFrom(netip.AddrFrom16(prefixData), 64).Masked()
 }
 
 // IsULA checks whether IP address is a Unique Local Address with the specific purpose.
-func IsULA(ip netaddr.IP, purpose ULAPurpose) bool {
+func IsULA(ip netip.Addr, purpose ULAPurpose) bool {
 	if !ip.Is6() {
 		return false
 	}
@@ -61,7 +62,7 @@ func IsULA(ip netaddr.IP, purpose ULAPurpose) bool {
 
 // IsStdULA implements IsULA for stdlib net.IP.
 func IsStdULA(ip net.IP, purpose ULAPurpose) bool {
-	addr, ok := netaddr.FromStdIP(ip)
+	addr, ok := netipx.FromStdIP(ip)
 	if !ok {
 		return false
 	}
@@ -70,7 +71,7 @@ func IsStdULA(ip net.IP, purpose ULAPurpose) bool {
 }
 
 // NotSideroLinkIP is a shorthand for !IsULA(ip, ULASideroLink).
-func NotSideroLinkIP(ip netaddr.IP) bool {
+func NotSideroLinkIP(ip netip.Addr) bool {
 	return !IsULA(ip, ULASideroLink)
 }
 

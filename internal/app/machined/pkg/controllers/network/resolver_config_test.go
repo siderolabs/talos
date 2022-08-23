@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"net/url"
 	"sync"
 	"testing"
@@ -22,7 +23,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -131,9 +131,9 @@ func (suite *ResolverConfigSuite) TestDefaults() {
 						"default/resolvers",
 					}, func(r *network.ResolverSpec) error {
 						suite.Assert().Equal(
-							[]netaddr.IP{
-								netaddr.MustParseIP(constants.DefaultPrimaryResolver),
-								netaddr.MustParseIP(constants.DefaultSecondaryResolver),
+							[]netip.Addr{
+								netip.MustParseAddr(constants.DefaultPrimaryResolver),
+								netip.MustParseAddr(constants.DefaultSecondaryResolver),
 							}, r.TypedSpec().DNSServers,
 						)
 						suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
@@ -165,9 +165,9 @@ func (suite *ResolverConfigSuite) TestCmdline() {
 						"cmdline/resolvers",
 					}, func(r *network.ResolverSpec) error {
 						suite.Assert().Equal(
-							[]netaddr.IP{
-								netaddr.MustParseIP("10.0.0.1"),
-								netaddr.MustParseIP("10.0.0.2"),
+							[]netip.Addr{
+								netip.MustParseAddr("10.0.0.1"),
+								netip.MustParseAddr("10.0.0.2"),
 							}, r.TypedSpec().DNSServers,
 						)
 
@@ -215,9 +215,9 @@ func (suite *ResolverConfigSuite) TestMachineConfiguration() {
 						"configuration/resolvers",
 					}, func(r *network.ResolverSpec) error {
 						suite.Assert().Equal(
-							[]netaddr.IP{
-								netaddr.MustParseIP("2.2.2.2"),
-								netaddr.MustParseIP("3.3.3.3"),
+							[]netip.Addr{
+								netip.MustParseAddr("2.2.2.2"),
+								netip.MustParseAddr("3.3.3.3"),
 							}, r.TypedSpec().DNSServers,
 						)
 

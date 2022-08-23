@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"net/url"
 	"sync"
 	"testing"
@@ -22,7 +23,6 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -94,18 +94,18 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 	)
 
 	suite.defaultAddress = network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
-	suite.defaultAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("33.11.22.44/32")}
+	suite.defaultAddress.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("33.11.22.44/32")}
 
 	suite.hostnameStatus = network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
 	suite.hostnameStatus.TypedSpec().Hostname = "foo"
 	suite.hostnameStatus.TypedSpec().Domainname = "example.com"
 
 	suite.resolverStatus = network.NewResolverStatus(network.NamespaceName, network.ResolverID)
-	suite.resolverStatus.TypedSpec().DNSServers = []netaddr.IP{
-		netaddr.MustParseIP("1.1.1.1"),
-		netaddr.MustParseIP("2.2.2.2"),
-		netaddr.MustParseIP("3.3.3.3"),
-		netaddr.MustParseIP("4.4.4.4"),
+	suite.resolverStatus.TypedSpec().DNSServers = []netip.Addr{
+		netip.MustParseAddr("1.1.1.1"),
+		netip.MustParseAddr("2.2.2.2"),
+		netip.MustParseAddr("3.3.3.3"),
+		netip.MustParseAddr("4.4.4.4"),
 	}
 }
 

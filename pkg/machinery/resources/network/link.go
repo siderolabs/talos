@@ -5,10 +5,9 @@
 package network
 
 import (
+	"net/netip"
 	"sort"
 	"time"
-
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
@@ -85,11 +84,11 @@ type WireguardSpec struct {
 //
 //gotagsrewrite:gen
 type WireguardPeer struct {
-	PublicKey                   string             `yaml:"publicKey" protobuf:"1"`
-	PresharedKey                string             `yaml:"presharedKey" protobuf:"2"`
-	Endpoint                    string             `yaml:"endpoint" protobuf:"3"`
-	PersistentKeepaliveInterval time.Duration      `yaml:"persistentKeepaliveInterval" protobuf:"4"`
-	AllowedIPs                  []netaddr.IPPrefix `yaml:"allowedIPs" protobuf:"5"`
+	PublicKey                   string         `yaml:"publicKey" protobuf:"1"`
+	PresharedKey                string         `yaml:"presharedKey" protobuf:"2"`
+	Endpoint                    string         `yaml:"endpoint" protobuf:"3"`
+	PersistentKeepaliveInterval time.Duration  `yaml:"persistentKeepaliveInterval" protobuf:"4"`
+	AllowedIPs                  []netip.Prefix `yaml:"allowedIPs" protobuf:"5"`
 }
 
 // ID Returns the VID for type VLANSpec.
@@ -129,7 +128,7 @@ func (peer *WireguardPeer) Equal(other *WireguardPeer) bool {
 	}
 
 	for i := range peer.AllowedIPs {
-		if peer.AllowedIPs[i].IP().Compare(other.AllowedIPs[i].IP()) != 0 {
+		if peer.AllowedIPs[i].Addr().Compare(other.AllowedIPs[i].Addr()) != 0 {
 			return false
 		}
 
@@ -192,7 +191,7 @@ func (spec *WireguardSpec) Sort() {
 			left := spec.Peers[k].AllowedIPs[i]
 			right := spec.Peers[k].AllowedIPs[j]
 
-			switch left.IP().Compare(right.IP()) {
+			switch left.Addr().Compare(right.Addr()) {
 			case -1:
 				return true
 			case 0:

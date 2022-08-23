@@ -5,13 +5,13 @@
 package cluster_test
 
 import (
+	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -33,12 +33,12 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 		Hostname:    "foo.com",
 		Nodename:    "bar",
 		MachineType: machine.TypeControlPlane,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24")},
-			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+			Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
+			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
 	}
 
@@ -48,7 +48,7 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 		Hostname:    "foo.com",
 		Nodename:    "bar",
 		MachineType: machine.TypeControlPlane,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4"), netaddr.MustParseIP("10.5.0.2")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4"), netip.MustParseAddr("10.5.0.2")},
 	}
 
 	affiliate3 := cluster.NewAffiliate(cluster.RawNamespaceName, "service/9dwHNUViZlPlIervqX9Qo256RUhrfhgO0xBBnKcKl4F")
@@ -57,7 +57,7 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 		Hostname:    "worker-1",
 		Nodename:    "worker-1",
 		MachineType: machine.TypeWorker,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.5")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.5")},
 	}
 
 	for _, r := range []resource.Resource{affiliate1, affiliate2, affiliate3} {
@@ -70,14 +70,14 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 			spec := r.(*cluster.Affiliate).TypedSpec()
 
 			suite.Assert().Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
-			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.4"), netaddr.MustParseIP("10.5.0.2")}, spec.Addresses)
+			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("192.168.3.4"), netip.MustParseAddr("10.5.0.2")}, spec.Addresses)
 			suite.Assert().Equal("foo.com", spec.Hostname)
 			suite.Assert().Equal("bar", spec.Nodename)
 			suite.Assert().Equal(machine.TypeControlPlane, spec.MachineType)
-			suite.Assert().Equal(netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"), spec.KubeSpan.Address)
+			suite.Assert().Equal(netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"), spec.KubeSpan.Address)
 			suite.Assert().Equal("PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=", spec.KubeSpan.PublicKey)
-			suite.Assert().Equal([]netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24")}, spec.KubeSpan.AdditionalAddresses)
-			suite.Assert().Equal([]netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")}, spec.KubeSpan.Endpoints)
+			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")}, spec.KubeSpan.AdditionalAddresses)
+			suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")}, spec.KubeSpan.Endpoints)
 
 			return nil
 		}),
@@ -88,7 +88,7 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 			spec := r.(*cluster.Affiliate).TypedSpec()
 
 			suite.Assert().Equal(affiliate3.TypedSpec().NodeID, spec.NodeID)
-			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.5")}, spec.Addresses)
+			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
 			suite.Assert().Equal("worker-1", spec.Hostname)
 			suite.Assert().Equal("worker-1", spec.Nodename)
 			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)

@@ -7,13 +7,14 @@ package kubespan
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
+	"go4.org/netipx"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
@@ -91,7 +92,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 			if cfg != nil && localIdentity != nil && cfg.(*kubespan.Config).TypedSpec().Enabled {
 				localAffiliateID := localIdentity.(*cluster.Identity).TypedSpec().NodeID
 
-				peerIPSets := make(map[string]*netaddr.IPSet, len(affiliates.Items))
+				peerIPSets := make(map[string]*netipx.IPSet, len(affiliates.Items))
 
 			affiliateLoop:
 				for _, affiliate := range affiliates.Items {
@@ -107,7 +108,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 						continue
 					}
 
-					var builder netaddr.IPSetBuilder
+					var builder netipx.IPSetBuilder
 
 					for _, ipPrefix := range spec.KubeSpan.AdditionalAddresses {
 						builder.AddPrefix(ipPrefix)
@@ -119,7 +120,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 					builder.Add(spec.KubeSpan.Address)
 
-					var ipSet *netaddr.IPSet
+					var ipSet *netipx.IPSet
 
 					ipSet, err = builder.IPSet()
 					if err != nil {
@@ -134,7 +135,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 								zap.Strings("this_ips", dumpSet(ipSet)), zap.Strings("other_ips", dumpSet(otherIPSet)))
 
 							// exclude overlapping IPs from the ipSet
-							var bldr netaddr.IPSetBuilder
+							var bldr netipx.IPSetBuilder
 
 							// ipSet = ipSet & ~otherIPSet
 							bldr.AddSet(otherIPSet)
@@ -160,7 +161,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 						*res.(*kubespan.PeerSpec).TypedSpec() = kubespan.PeerSpecSpec{
 							Address:    spec.KubeSpan.Address,
 							AllowedIPs: ipSet.Prefixes(),
-							Endpoints:  append([]netaddr.IPPort(nil), spec.KubeSpan.Endpoints...),
+							Endpoints:  append([]netip.AddrPort(nil), spec.KubeSpan.Endpoints...),
 							Label:      spec.Nodename,
 						}
 
@@ -195,6 +196,6 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 }
 
 // dumpSet converts IPSet to a form suitable for logging.
-func dumpSet(set *netaddr.IPSet) []string {
-	return slices.Map(set.Ranges(), netaddr.IPRange.String)
+func dumpSet(set *netipx.IPSet) []string {
+	return slices.Map(set.Ranges(), netipx.IPRange.String)
 }

@@ -8,6 +8,7 @@ package network_test
 import (
 	"context"
 	"log"
+	"net/netip"
 	"reflect"
 	"sync"
 	"testing"
@@ -20,7 +21,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -65,7 +65,7 @@ func (suite *ResolverSpecSuite) startRuntime() {
 	}()
 }
 
-func (suite *ResolverSpecSuite) assertStatus(id string, servers ...netaddr.IP) error {
+func (suite *ResolverSpecSuite) assertStatus(id string, servers ...netip.Addr) error {
 	r, err := suite.state.Get(
 		suite.ctx,
 		resource.NewMetadata(network.NamespaceName, network.ResolverStatusType, id, resource.VersionUndefined),
@@ -90,7 +90,7 @@ func (suite *ResolverSpecSuite) assertStatus(id string, servers ...netaddr.IP) e
 func (suite *ResolverSpecSuite) TestSpec() {
 	spec := network.NewResolverSpec(network.NamespaceName, "resolvers")
 	*spec.TypedSpec() = network.ResolverSpecSpec{
-		DNSServers:  []netaddr.IP{netaddr.MustParseIP(constants.DefaultPrimaryResolver)},
+		DNSServers:  []netip.Addr{netip.MustParseAddr(constants.DefaultPrimaryResolver)},
 		ConfigLayer: network.ConfigDefault,
 	}
 
@@ -101,7 +101,7 @@ func (suite *ResolverSpecSuite) TestSpec() {
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				return suite.assertStatus("resolvers", netaddr.MustParseIP(constants.DefaultPrimaryResolver))
+				return suite.assertStatus("resolvers", netip.MustParseAddr(constants.DefaultPrimaryResolver))
 			},
 		),
 	)

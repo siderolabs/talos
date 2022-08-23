@@ -48,7 +48,7 @@ func (suite *EventsSuite) TearDownTest() {
 // TestEventsWatch verifies events watch API.
 func (suite *EventsSuite) TestEventsWatch() {
 	receiveEvents := func(opts ...client.EventsOptionFunc) []client.Event {
-		result := []client.Event{}
+		var result []client.Event
 
 		watchCtx, watchCtxCancel := context.WithCancel(suite.nodeCtx)
 		defer watchCtxCancel()

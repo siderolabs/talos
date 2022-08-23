@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"net/url"
 	"sync"
 	"testing"
@@ -22,7 +23,6 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -174,16 +174,16 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 						switch r.Metadata().ID() {
 						case "configuration/vip/eth1":
 							suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
-							suite.Assert().EqualValues(netaddr.MustParseIP("2.3.4.5"), r.TypedSpec().VIP.IP)
+							suite.Assert().EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
 						case "configuration/vip/eth2":
 							suite.Assert().Equal("eth2", r.TypedSpec().LinkName)
 							suite.Assert().EqualValues(
-								netaddr.MustParseIP("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"),
+								netip.MustParseAddr("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"),
 								r.TypedSpec().VIP.IP,
 							)
 						case "configuration/vip/eth3.26":
 							suite.Assert().Equal("eth3.26", r.TypedSpec().LinkName)
-							suite.Assert().EqualValues(netaddr.MustParseIP("5.5.4.4"), r.TypedSpec().VIP.IP)
+							suite.Assert().EqualValues(netip.MustParseAddr("5.5.4.4"), r.TypedSpec().VIP.IP)
 						}
 
 						return nil

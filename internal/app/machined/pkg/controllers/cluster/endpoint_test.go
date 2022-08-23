@@ -6,13 +6,13 @@ package cluster_test
 
 import (
 	"fmt"
+	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -32,7 +32,7 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 	member1 := cluster.NewMember(cluster.NamespaceName, "talos-default-controlplane-1")
 	*member1.TypedSpec() = cluster.MemberSpec{
 		NodeID:          "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
-		Addresses:       []netaddr.IP{netaddr.MustParseIP("172.20.0.2"), netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0")},
+		Addresses:       []netip.Addr{netip.MustParseAddr("172.20.0.2"), netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0")},
 		Hostname:        "talos-default-controlplane-1",
 		MachineType:     machine.TypeControlPlane,
 		OperatingSystem: "Talos (v1.0.0)",
@@ -41,7 +41,7 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 	member2 := cluster.NewMember(cluster.NamespaceName, "talos-default-controlplane-2")
 	*member2.TypedSpec() = cluster.MemberSpec{
 		NodeID:          "9dwHNUViZlPlIervqX9Qo256RUhrfhgO0xBBnKcKl4F",
-		Addresses:       []netaddr.IP{netaddr.MustParseIP("172.20.0.3"), netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1")},
+		Addresses:       []netip.Addr{netip.MustParseAddr("172.20.0.3"), netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1")},
 		Hostname:        "talos-default-controlplane-2",
 		MachineType:     machine.TypeControlPlane,
 		OperatingSystem: "Talos (v1.0.0)",
@@ -50,7 +50,7 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 	member3 := cluster.NewMember(cluster.NamespaceName, "talos-default-worker-1")
 	*member3.TypedSpec() = cluster.MemberSpec{
 		NodeID:          "xCnFFfxylOf9i5ynhAkt6ZbfcqaLDGKfIa3gwpuaxe7F",
-		Addresses:       []netaddr.IP{netaddr.MustParseIP("172.20.0.4")},
+		Addresses:       []netip.Addr{netip.MustParseAddr("172.20.0.4")},
 		Hostname:        "talos-default-worker-1",
 		MachineType:     machine.TypeWorker,
 		OperatingSystem: "Talos (v1.0.0)",

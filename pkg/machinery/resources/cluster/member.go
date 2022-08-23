@@ -5,11 +5,12 @@
 package cluster
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -28,7 +29,7 @@ type Member = typed.Resource[MemberSpec, MemberRD]
 //gotagsrewrite:gen
 type MemberSpec struct {
 	NodeID          string       `yaml:"nodeId" protobuf:"1"`
-	Addresses       []netaddr.IP `yaml:"addresses" protobuf:"2"`
+	Addresses       []netip.Addr `yaml:"addresses" protobuf:"2"`
 	Hostname        string       `yaml:"hostname" protobuf:"3"`
 	MachineType     machine.Type `yaml:"machineType" protobuf:"4"`
 	OperatingSystem string       `yaml:"operatingSystem" protobuf:"5"`

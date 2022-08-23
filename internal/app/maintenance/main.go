@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -18,7 +19,6 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/maintenance/server"
@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -40,7 +41,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 		return nil, fmt.Errorf("error waiting for the network to be ready: %w", err)
 	}
 
-	var sideroLinkAddress netaddr.IP
+	var sideroLinkAddress netip.Addr
 
 	currentAddresses, err := r.State().V1Alpha2().Resources().WatchFor(ctx,
 		resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressCurrentID, resource.VersionUndefined),
@@ -114,8 +115,8 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 		server.Serve(listener)
 	}()
 
-	if !sideroLinkAddress.IsZero() {
-		ips = []netaddr.IP{sideroLinkAddress}
+	if !generic.IsZero(sideroLinkAddress) {
+		ips = []netip.Addr{sideroLinkAddress}
 	}
 
 	logger.Println("this machine is reachable at:")
@@ -151,23 +152,23 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	}
 }
 
-func formatIP(addr netaddr.IP) string {
-	if addr.IsZero() {
+func formatIP(addr netip.Addr) string {
+	if generic.IsZero(addr) {
 		return ""
 	}
 
 	return addr.String()
 }
 
-func genTLSConfig(ips []netaddr.IP, dnsNames []string) (tlsConfig *tls.Config, provider ttls.CertificateProvider, err error) {
+func genTLSConfig(ips []netip.Addr, dnsNames []string) (tlsConfig *tls.Config, provider ttls.CertificateProvider, err error) {
 	ca, err := x509.NewSelfSignedCertificateAuthority()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate self-signed CA: %w", err)
 	}
 
-	ips = append(ips, netaddr.MustParseIP("127.0.0.1"), netaddr.MustParseIP("::1"))
+	ips = append(ips, netip.MustParseAddr("127.0.0.1"), netip.MustParseAddr("::1"))
 
-	netIPs := slices.Map(ips, func(ip netaddr.IP) net.IP { return ip.IPAddr().IP })
+	netIPs := slices.Map(ips, func(ip netip.Addr) net.IP { return ip.AsSlice() })
 
 	var generator ttls.Generator
 
@@ -198,7 +199,7 @@ func genTLSConfig(ips []netaddr.IP, dnsNames []string) (tlsConfig *tls.Config, p
 	return tlsConfig, provider, nil
 }
 
-func sideroLinkAddressFinder(address *netaddr.IP, logger *log.Logger) state.WatchForConditionFunc {
+func sideroLinkAddressFinder(address *netip.Addr, logger *log.Logger) state.WatchForConditionFunc {
 	sideroLinkEnabled := false
 	if procfs.ProcCmdline().Get(constants.KernelParamSideroLink).First() != nil {
 		sideroLinkEnabled = true

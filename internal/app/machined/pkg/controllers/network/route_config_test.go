@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"net/url"
 	"sync"
 	"testing"
@@ -23,7 +24,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -253,7 +253,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 							suite.Assert().Equal("eth1", r.TypedSpec().OutLinkName)
 							suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
-							suite.Assert().EqualValues(netaddr.MustParseIP("192.244.0.10"), r.TypedSpec().Source)
+							suite.Assert().EqualValues(netip.MustParseAddr("192.244.0.10"), r.TypedSpec().Source)
 						case "configuration/inet4//169.254.254.254/32/1024":
 							suite.Assert().Equal("eth3", r.TypedSpec().OutLinkName)
 							suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)

@@ -7,9 +7,9 @@ package network
 
 import (
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 )
@@ -23,7 +23,7 @@ const NamespaceName resource.Namespace = "network"
 const ConfigNamespaceName resource.Namespace = "network-config"
 
 // AddressID builds ID (primary key) for the address.
-func AddressID(linkName string, addr netaddr.IPPrefix) string {
+func AddressID(linkName string, addr netip.Prefix) string {
 	return fmt.Sprintf("%s/%s", linkName, addr)
 }
 
@@ -33,7 +33,7 @@ func LinkID(linkName string) string {
 }
 
 // RouteID builds ID (primary key) for the route.
-func RouteID(table nethelpers.RoutingTable, family nethelpers.Family, destination netaddr.IPPrefix, gateway netaddr.IP, priority uint32) string {
+func RouteID(table nethelpers.RoutingTable, family nethelpers.Family, destination netip.Prefix, gateway netip.Addr, priority uint32) string {
 	dst, _ := destination.MarshalText() //nolint:errcheck
 	gw, _ := gateway.MarshalText()      //nolint:errcheck
 

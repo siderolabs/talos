@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"reflect"
 	"sync"
 	"testing"
@@ -21,7 +22,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -104,28 +104,28 @@ func (suite *ResolverMergeSuite) assertResolvers(requiredIDs []string, check fun
 func (suite *ResolverMergeSuite) TestMerge() {
 	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
 	*def.TypedSpec() = network.ResolverSpecSpec{
-		DNSServers: []netaddr.IP{
-			netaddr.MustParseIP(constants.DefaultPrimaryResolver),
-			netaddr.MustParseIP(constants.DefaultSecondaryResolver),
+		DNSServers: []netip.Addr{
+			netip.MustParseAddr(constants.DefaultPrimaryResolver),
+			netip.MustParseAddr(constants.DefaultSecondaryResolver),
 		},
 		ConfigLayer: network.ConfigDefault,
 	}
 
 	dhcp1 := network.NewResolverSpec(network.ConfigNamespaceName, "dhcp/eth0")
 	*dhcp1.TypedSpec() = network.ResolverSpecSpec{
-		DNSServers:  []netaddr.IP{netaddr.MustParseIP("1.1.2.0")},
+		DNSServers:  []netip.Addr{netip.MustParseAddr("1.1.2.0")},
 		ConfigLayer: network.ConfigOperator,
 	}
 
 	dhcp2 := network.NewResolverSpec(network.ConfigNamespaceName, "dhcp/eth1")
 	*dhcp2.TypedSpec() = network.ResolverSpecSpec{
-		DNSServers:  []netaddr.IP{netaddr.MustParseIP("1.1.2.1")},
+		DNSServers:  []netip.Addr{netip.MustParseAddr("1.1.2.1")},
 		ConfigLayer: network.ConfigOperator,
 	}
 
 	static := network.NewResolverSpec(network.ConfigNamespaceName, "configuration/resolvers")
 	*static.TypedSpec() = network.ResolverSpecSpec{
-		DNSServers:  []netaddr.IP{netaddr.MustParseIP("2.2.2.2")},
+		DNSServers:  []netip.Addr{netip.MustParseAddr("2.2.2.2")},
 		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
@@ -160,7 +160,7 @@ func (suite *ResolverMergeSuite) TestMerge() {
 					}, func(r *network.ResolverSpec) error {
 						if !reflect.DeepEqual(
 							r.TypedSpec().DNSServers,
-							[]netaddr.IP{netaddr.MustParseIP("1.1.2.0"), netaddr.MustParseIP("1.1.2.1")},
+							[]netip.Addr{netip.MustParseAddr("1.1.2.0"), netip.MustParseAddr("1.1.2.1")},
 						) {
 							return retry.ExpectedErrorf("unexpected servers %q", r.TypedSpec().DNSServers)
 						}

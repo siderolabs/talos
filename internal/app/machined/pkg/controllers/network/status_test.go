@@ -8,6 +8,7 @@ package network_test
 import (
 	"context"
 	"log"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -96,7 +96,7 @@ func (suite *StatusSuite) TestNone() {
 
 func (suite *StatusSuite) TestAddresses() {
 	nodeAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressCurrentID)
-	nodeAddress.TypedSpec().Addresses = []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.0.0.1/24")}
+	nodeAddress.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("10.0.0.1/24")}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddress))
 
@@ -111,7 +111,7 @@ func (suite *StatusSuite) TestAddresses() {
 
 func (suite *StatusSuite) TestRoutes() {
 	route := network.NewRouteStatus(network.NamespaceName, "foo")
-	route.TypedSpec().Gateway = netaddr.MustParseIP("10.0.0.1")
+	route.TypedSpec().Gateway = netip.MustParseAddr("10.0.0.1")
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, route))
 

@@ -5,6 +5,7 @@
 package etcd_test
 
 import (
+	"net/netip"
 	"testing"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
 	etcdctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/etcd"
@@ -46,11 +46,11 @@ func (suite *SpecSuite) TestReconcile() {
 		network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
 	)
 
-	addresses.TypedSpec().Addresses = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.0.0.5/24"),
-		netaddr.MustParseIPPrefix("192.168.1.1/24"),
-		netaddr.MustParseIPPrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7334/64"),
-		netaddr.MustParseIPPrefix("2002:0db8:85a3:0000:0000:8a2e:0370:7335/64"),
+	addresses.TypedSpec().Addresses = []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.5/24"),
+		netip.MustParsePrefix("192.168.1.1/24"),
+		netip.MustParsePrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7334/64"),
+		netip.MustParsePrefix("2002:0db8:85a3:0000:0000:8a2e:0370:7335/64"),
 	}
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), addresses))
@@ -74,14 +74,14 @@ func (suite *SpecSuite) TestReconcile() {
 				ExtraArgs: map[string]string{
 					"arg": "value",
 				},
-				AdvertisedAddresses: []netaddr.IP{
-					netaddr.MustParseIP("10.0.0.5"),
+				AdvertisedAddresses: []netip.Addr{
+					netip.MustParseAddr("10.0.0.5"),
 				},
-				ListenPeerAddresses: []netaddr.IP{
-					netaddr.IPv6Unspecified(),
+				ListenPeerAddresses: []netip.Addr{
+					netip.IPv6Unspecified(),
 				},
-				ListenClientAddresses: []netaddr.IP{
-					netaddr.IPv6Unspecified(),
+				ListenClientAddresses: []netip.Addr{
+					netip.IPv6Unspecified(),
 				},
 			},
 		},
@@ -96,14 +96,14 @@ func (suite *SpecSuite) TestReconcile() {
 			expected: etcd.SpecSpec{
 				Name:  "worker1",
 				Image: "foo/bar:v1.0.0",
-				AdvertisedAddresses: []netaddr.IP{
-					netaddr.MustParseIP("192.168.1.1"),
+				AdvertisedAddresses: []netip.Addr{
+					netip.MustParseAddr("192.168.1.1"),
 				},
-				ListenPeerAddresses: []netaddr.IP{
-					netaddr.IPv6Unspecified(),
+				ListenPeerAddresses: []netip.Addr{
+					netip.IPv6Unspecified(),
 				},
-				ListenClientAddresses: []netaddr.IP{
-					netaddr.IPv6Unspecified(),
+				ListenClientAddresses: []netip.Addr{
+					netip.IPv6Unspecified(),
 				},
 			},
 		},
@@ -122,16 +122,16 @@ func (suite *SpecSuite) TestReconcile() {
 			expected: etcd.SpecSpec{
 				Name:  "worker1",
 				Image: "foo/bar:v1.0.0",
-				AdvertisedAddresses: []netaddr.IP{
-					netaddr.MustParseIP("192.168.1.1"),
-					netaddr.MustParseIP("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
+				AdvertisedAddresses: []netip.Addr{
+					netip.MustParseAddr("192.168.1.1"),
+					netip.MustParseAddr("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 				},
-				ListenPeerAddresses: []netaddr.IP{
-					netaddr.MustParseIP("192.168.1.1"),
+				ListenPeerAddresses: []netip.Addr{
+					netip.MustParseAddr("192.168.1.1"),
 				},
-				ListenClientAddresses: []netaddr.IP{
-					netaddr.MustParseIP("::1"),
-					netaddr.MustParseIP("192.168.1.1"),
+				ListenClientAddresses: []netip.Addr{
+					netip.MustParseAddr("::1"),
+					netip.MustParseAddr("192.168.1.1"),
 				},
 			},
 		},

@@ -5,13 +5,13 @@
 package kubespan
 
 import (
+	"net/netip"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -29,7 +29,7 @@ type PeerStatus = typed.Resource[PeerStatusSpec, PeerStatusRD]
 //gotagsrewrite:gen
 type PeerStatusSpec struct {
 	// Active endpoint as seen by the Wireguard.
-	Endpoint netaddr.IPPort `yaml:"endpoint" protobuf:"1"`
+	Endpoint netip.AddrPort `yaml:"endpoint" protobuf:"1"`
 	// Label derived from the peer spec.
 	Label string `yaml:"label" protobuf:"2"`
 	// Calculated state.
@@ -40,7 +40,7 @@ type PeerStatusSpec struct {
 	// Handshake.
 	LastHandshakeTime time.Time `yaml:"lastHandshakeTime" protobuf:"6"`
 	// Endpoint selection input.
-	LastUsedEndpoint   netaddr.IPPort `yaml:"lastUsedEndpoint" protobuf:"7"`
+	LastUsedEndpoint   netip.AddrPort `yaml:"lastUsedEndpoint" protobuf:"7"`
 	LastEndpointChange time.Time      `yaml:"lastEndpointChange" protobuf:"8"`
 }
 

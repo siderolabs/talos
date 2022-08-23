@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"regexp"
 
@@ -23,7 +24,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/pkg/smbios"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -185,12 +185,12 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error accessing SideroLink API: %w", err)
 		}
 
-		serverAddress, err := netaddr.ParseIP(resp.ServerAddress)
+		serverAddress, err := netip.ParseAddr(resp.ServerAddress)
 		if err != nil {
 			return fmt.Errorf("error parsing server address: %w", err)
 		}
 
-		nodeAddress, err := netaddr.ParseIPPrefix(resp.NodeAddressPrefix)
+		nodeAddress, err := netip.ParsePrefix(resp.NodeAddressPrefix)
 		if err != nil {
 			return fmt.Errorf("error parsing node address: %w", err)
 		}
@@ -213,8 +213,8 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 						{
 							PublicKey: resp.ServerPublicKey,
 							Endpoint:  resp.ServerEndpoint,
-							AllowedIPs: []netaddr.IPPrefix{
-								netaddr.IPPrefixFrom(serverAddress, serverAddress.BitLen()),
+							AllowedIPs: []netip.Prefix{
+								netip.PrefixFrom(serverAddress, serverAddress.BitLen()),
 							},
 							// make sure Talos pings SideroLink endpoint, so that tunnel is established:
 							// SideroLink doesn't know Talos endpoint.

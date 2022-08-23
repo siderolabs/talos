@@ -5,12 +5,13 @@
 package secrets
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/talos-systems/crypto/x509"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -29,7 +30,7 @@ type OSRoot = typed.Resource[OSRootSpec, OSRootRD]
 //gotagsrewrite:gen
 type OSRootSpec struct {
 	CA              *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"1"`
-	CertSANIPs      []netaddr.IP                      `yaml:"certSANIPs" protobuf:"2"`
+	CertSANIPs      []netip.Addr                      `yaml:"certSANIPs" protobuf:"2"`
 	CertSANDNSNames []string                          `yaml:"certSANDNSNames" protobuf:"3"`
 
 	Token string `yaml:"token" protobuf:"4"`

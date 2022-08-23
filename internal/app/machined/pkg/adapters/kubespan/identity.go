@@ -7,11 +7,13 @@ package kubespan
 import (
 	"fmt"
 	"net"
+	"net/netip"
 
 	"github.com/mdlayher/netx/eui64"
+	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -53,20 +55,20 @@ func (a identity) UpdateAddress(clusterID string, mac net.HardwareAddr) error {
 	return err
 }
 
-func wgEUI64(prefix netaddr.IPPrefix, mac net.HardwareAddr) (out netaddr.IPPrefix, err error) {
-	if prefix.IsZero() {
+func wgEUI64(prefix netip.Prefix, mac net.HardwareAddr) (out netip.Prefix, err error) {
+	if generic.IsZero(prefix) {
 		return out, fmt.Errorf("cannot calculate IP from zero prefix")
 	}
 
-	stdIP, err := eui64.ParseMAC(prefix.IPNet().IP, mac)
+	stdIP, err := eui64.ParseMAC(netipx.PrefixIPNet(prefix).IP, mac)
 	if err != nil {
 		return out, fmt.Errorf("failed to parse MAC into EUI-64 address: %w", err)
 	}
 
-	ip, ok := netaddr.FromStdIP(stdIP)
+	ip, ok := netipx.FromStdIP(stdIP)
 	if !ok {
 		return out, fmt.Errorf("failed to parse intermediate standard IP %q: %w", stdIP.String(), err)
 	}
 
-	return netaddr.IPPrefixFrom(ip, ip.BitLen()), nil
+	return netip.PrefixFrom(ip, ip.BitLen()), nil
 }

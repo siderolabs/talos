@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"net/url"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -14,7 +15,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -140,7 +140,7 @@ func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Provider, os
 	osSecrets.CertSANDNSNames = nil
 
 	for _, san := range cfgProvider.Machine().Security().CertSANs() {
-		if ip, err := netaddr.ParseIP(san); err == nil {
+		if ip, err := netip.ParseAddr(san); err == nil {
 			osSecrets.CertSANIPs = append(osSecrets.CertSANIPs, ip)
 		} else {
 			osSecrets.CertSANDNSNames = append(osSecrets.CertSANDNSNames, san)

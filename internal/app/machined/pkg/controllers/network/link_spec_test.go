@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"inet.af/netaddr"
 
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
@@ -801,14 +801,14 @@ func (suite *LinkSpecSuite) TestWireguard() {
 				{
 					PublicKey: pub1.PublicKey().String(),
 					Endpoint:  "10.2.0.3:20000",
-					AllowedIPs: []netaddr.IPPrefix{
-						netaddr.MustParseIPPrefix("172.24.0.0/16"),
+					AllowedIPs: []netip.Prefix{
+						netip.MustParsePrefix("172.24.0.0/16"),
 					},
 				},
 				{
 					PublicKey: pub2.PublicKey().String(),
-					AllowedIPs: []netaddr.IPPrefix{
-						netaddr.MustParseIPPrefix("172.25.0.0/24"),
+					AllowedIPs: []netip.Prefix{
+						netip.MustParsePrefix("172.25.0.0/24"),
 					},
 				},
 			},

@@ -5,11 +5,12 @@
 package network
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -28,7 +29,7 @@ type AddressSpec = typed.Resource[AddressSpecSpec, AddressSpecRD]
 //
 //gotagsrewrite:gen
 type AddressSpecSpec struct {
-	Address         netaddr.IPPrefix        `yaml:"address" protobuf:"1"`
+	Address         netip.Prefix            `yaml:"address" protobuf:"1"`
 	LinkName        string                  `yaml:"linkName" protobuf:"2"`
 	Family          nethelpers.Family       `yaml:"family" protobuf:"3"`
 	Scope           nethelpers.Scope        `yaml:"scope" protobuf:"4"`

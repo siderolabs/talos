@@ -47,7 +47,7 @@ func (suite *GenerateConfigSuite) TearDownTest() {
 	}
 }
 
-// TestGenerate verifies the generate config API.
+// TestGenerate verifies the generated config API.
 func (suite *GenerateConfigSuite) TestGenerate() {
 	request := &machineapi.GenerateConfigurationRequest{
 		ConfigVersion: "v1alpha1",

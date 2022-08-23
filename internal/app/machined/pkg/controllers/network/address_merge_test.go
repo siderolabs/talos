@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -21,7 +22,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sync/errgroup"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -122,7 +122,7 @@ func (suite *AddressMergeSuite) assertNoAddress(id string) error {
 func (suite *AddressMergeSuite) TestMerge() {
 	loopback := network.NewAddressSpec(network.ConfigNamespaceName, "default/lo/127.0.0.1/8")
 	*loopback.TypedSpec() = network.AddressSpecSpec{
-		Address:     netaddr.MustParseIPPrefix("127.0.0.1/8"),
+		Address:     netip.MustParsePrefix("127.0.0.1/8"),
 		LinkName:    "lo",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeHost,
@@ -131,7 +131,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 
 	dhcp := network.NewAddressSpec(network.ConfigNamespaceName, "dhcp/eth0/10.0.0.1/8")
 	*dhcp.TypedSpec() = network.AddressSpecSpec{
-		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		Address:     netip.MustParsePrefix("10.0.0.1/8"),
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
@@ -140,7 +140,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 
 	static := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.35/32")
 	*static.TypedSpec() = network.AddressSpecSpec{
-		Address:     netaddr.MustParseIPPrefix("10.0.0.35/32"),
+		Address:     netip.MustParsePrefix("10.0.0.35/32"),
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
@@ -149,7 +149,7 @@ func (suite *AddressMergeSuite) TestMerge() {
 
 	override := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.1/8")
 	*override.TypedSpec() = network.AddressSpecSpec{
-		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		Address:     netip.MustParsePrefix("10.0.0.1/8"),
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeHost,
@@ -215,7 +215,7 @@ func (suite *AddressMergeSuite) TestMergeFlapping() {
 	// simulate two conflicting address definitions which are getting removed/added constantly
 	dhcp := network.NewAddressSpec(network.ConfigNamespaceName, "dhcp/eth0/10.0.0.1/8")
 	*dhcp.TypedSpec() = network.AddressSpecSpec{
-		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		Address:     netip.MustParsePrefix("10.0.0.1/8"),
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeGlobal,
@@ -224,7 +224,7 @@ func (suite *AddressMergeSuite) TestMergeFlapping() {
 
 	override := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.1/8")
 	*override.TypedSpec() = network.AddressSpecSpec{
-		Address:     netaddr.MustParseIPPrefix("10.0.0.1/8"),
+		Address:     netip.MustParsePrefix("10.0.0.1/8"),
 		LinkName:    "eth0",
 		Family:      nethelpers.FamilyInet4,
 		Scope:       nethelpers.ScopeHost,

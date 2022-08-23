@@ -7,12 +7,12 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -89,7 +89,7 @@ func (ctrl *ResolverSpecController) Run(ctx context.Context, r controller.Runtim
 					return fmt.Errorf("error removing finalizer: %w", err)
 				}
 			case resource.PhaseRunning:
-				resolvers := slices.Map(spec.TypedSpec().DNSServers, netaddr.IP.String)
+				resolvers := slices.Map(spec.TypedSpec().DNSServers, netip.Addr.String)
 				logger.Info("setting resolvers", zap.Strings("resolvers", resolvers))
 
 				if err = r.Modify(ctx, network.NewResolverStatus(network.NamespaceName, spec.Metadata().ID()), func(r resource.Resource) error {

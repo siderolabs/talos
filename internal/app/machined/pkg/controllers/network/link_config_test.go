@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"net/url"
 	"sync"
 	"testing"
@@ -23,7 +24,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -375,9 +375,9 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 										{
 											PublicKey: "DEF",
 											Endpoint:  "10.0.0.1:3000",
-											AllowedIPs: []netaddr.IPPrefix{
-												netaddr.MustParseIPPrefix("10.2.3.0/24"),
-												netaddr.MustParseIPPrefix("10.2.4.0/24"),
+											AllowedIPs: []netip.Prefix{
+												netip.MustParsePrefix("10.2.3.0/24"),
+												netip.MustParsePrefix("10.2.4.0/24"),
 											},
 										},
 									},

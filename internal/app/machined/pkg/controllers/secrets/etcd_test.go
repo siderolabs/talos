@@ -7,6 +7,7 @@ package secrets_test
 
 import (
 	"fmt"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/crypto/x509"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
@@ -66,9 +66,9 @@ func (suite *EtcdSuite) TestReconcile() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), hostnameStatus))
 
 	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s))
-	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.3.4.5/24"),
-		netaddr.MustParseIPPrefix("2001:db8::1eaf/64"),
+	nodeAddresses.TypedSpec().Addresses = []netip.Prefix{
+		netip.MustParsePrefix("10.3.4.5/24"),
+		netip.MustParsePrefix("2001:db8::1eaf/64"),
 	}
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeAddresses))
 
@@ -134,8 +134,8 @@ func (suite *EtcdSuite) TestReconcile() {
 
 	// update node addresses, certs should be updated
 	oldVersion := nodeAddresses.Metadata().Version()
-	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.3.4.5/24"),
+	nodeAddresses.TypedSpec().Addresses = []netip.Prefix{
+		netip.MustParsePrefix("10.3.4.5/24"),
 	}
 	nodeAddresses.Metadata().BumpVersion()
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), oldVersion, nodeAddresses))

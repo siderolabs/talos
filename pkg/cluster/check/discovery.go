@@ -7,8 +7,6 @@ package check
 import (
 	"net/netip"
 
-	"inet.af/netaddr"
-
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
@@ -67,7 +65,7 @@ func membersToNodeInfoMap(members []*clussterres.Member) (map[machine.Type][]clu
 }
 
 func memberToNodeInfo(member *clussterres.Member) (cluster.NodeInfo, error) {
-	ips, err := stringsToNetipAddrs(slices.Map(member.TypedSpec().Addresses, func(ip netaddr.IP) string {
+	ips, err := stringsToNetipAddrs(slices.Map(member.TypedSpec().Addresses, func(ip netip.Addr) string {
 		return ip.String()
 	}))
 	if err != nil {

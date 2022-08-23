@@ -6,10 +6,10 @@ package runtime
 
 import (
 	"context"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -54,5 +54,5 @@ type PlatformNetworkConfig struct {
 
 	Operators []network.OperatorSpecSpec `yaml:"operators"`
 
-	ExternalIPs []netaddr.IP `yaml:"externalIPs"`
+	ExternalIPs []netip.Addr `yaml:"externalIPs"`
 }

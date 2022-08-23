@@ -8,13 +8,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"os"
 	"path/filepath"
 
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"golang.org/x/sys/unix"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
@@ -174,7 +174,7 @@ func (o *Openstack) hostname(ctx context.Context) []byte {
 	return hostname
 }
 
-func (o *Openstack) externalIPs(ctx context.Context) (addrs []netaddr.IP) {
+func (o *Openstack) externalIPs(ctx context.Context) (addrs []netip.Addr) {
 	log.Printf("fetching externalIP from: %q", OpenstackExternalIPEndpoint)
 
 	exIP, err := download.Download(ctx, OpenstackExternalIPEndpoint,
@@ -186,7 +186,7 @@ func (o *Openstack) externalIPs(ctx context.Context) (addrs []netaddr.IP) {
 		return nil
 	}
 
-	if addr, err := netaddr.ParseIP(string(exIP)); err == nil {
+	if addr, err := netip.ParseAddr(string(exIP)); err == nil {
 		addrs = append(addrs, addr)
 	}
 

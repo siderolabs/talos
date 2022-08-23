@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"sync"
@@ -23,7 +24,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -212,9 +212,9 @@ func (suite *PlatformConfigSuite) TestPlatformMockAddresses() {
 		suite.runtime.RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
-					addresses: []netaddr.IPPrefix{
-						netaddr.MustParseIPPrefix("192.168.1.24/24"),
-						netaddr.MustParseIPPrefix("2001:fd::3/64"),
+					addresses: []netip.Prefix{
+						netip.MustParsePrefix("192.168.1.24/24"),
+						netip.MustParsePrefix("2001:fd::3/64"),
 					},
 				},
 				StatePath: suite.statePath,
@@ -293,7 +293,7 @@ func (suite *PlatformConfigSuite) TestPlatformMockRoutes() {
 		suite.runtime.RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
-					defaultRoutes: []netaddr.IP{netaddr.MustParseIP("10.0.0.1")},
+					defaultRoutes: []netip.Addr{netip.MustParseAddr("10.0.0.1")},
 				},
 				StatePath: suite.statePath,
 			},
@@ -362,7 +362,7 @@ func (suite *PlatformConfigSuite) TestPlatformMockResolvers() {
 		suite.runtime.RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
-					resolvers: []netaddr.IP{netaddr.MustParseIP("1.1.1.1")},
+					resolvers: []netip.Addr{netip.MustParseAddr("1.1.1.1")},
 				},
 				StatePath: suite.statePath,
 			},
@@ -430,9 +430,9 @@ func (suite *PlatformConfigSuite) TestPlatformMockExternalIPs() {
 		suite.runtime.RegisterController(
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
-					externalIPs: []netaddr.IP{
-						netaddr.MustParseIP("10.3.4.5"),
-						netaddr.MustParseIP("2001:470:6d:30e:96f4:4219:5733:b860"),
+					externalIPs: []netip.Addr{
+						netip.MustParseAddr("10.3.4.5"),
+						netip.MustParseAddr("2001:470:6d:30e:96f4:4219:5733:b860"),
 					},
 				},
 				StatePath: suite.statePath,
@@ -477,9 +477,9 @@ func (suite *PlatformConfigSuite) TestStoreConfig() {
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{
 					hostname: []byte("talos-e2e-897b4e49-gcp-controlplane-jvcnl"),
-					externalIPs: []netaddr.IP{
-						netaddr.MustParseIP("10.3.4.5"),
-						netaddr.MustParseIP("2001:470:6d:30e:96f4:4219:5733:b860"),
+					externalIPs: []netip.Addr{
+						netip.MustParseAddr("10.3.4.5"),
+						netip.MustParseAddr("2001:470:6d:30e:96f4:4219:5733:b860"),
 					},
 				},
 				StatePath: suite.statePath,
@@ -603,11 +603,11 @@ type platformMock struct {
 	noData bool
 
 	hostname      []byte
-	externalIPs   []netaddr.IP
-	addresses     []netaddr.IPPrefix
-	defaultRoutes []netaddr.IP
+	externalIPs   []netip.Addr
+	addresses     []netip.Prefix
+	defaultRoutes []netip.Addr
 	linksUp       []string
-	resolvers     []netaddr.IP
+	resolvers     []netip.Addr
 	timeServers   []string
 	dhcp4Links    []string
 }
@@ -652,7 +652,7 @@ func (mock *platformMock) NetworkConfiguration(
 
 	for _, addr := range mock.addresses {
 		family := nethelpers.FamilyInet4
-		if addr.IP().Is6() {
+		if addr.Addr().Is6() {
 			family = nethelpers.FamilyInet6
 		}
 

@@ -13,12 +13,12 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/netip"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	networkctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
@@ -211,13 +211,13 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 			continue
 		}
 
-		ipAddr, err := netaddr.ParseIPPrefix(fmt.Sprintf("%s/%d", addr.Address, addr.CIDR))
+		ipAddr, err := netip.ParsePrefix(fmt.Sprintf("%s/%d", addr.Address, addr.CIDR))
 		if err != nil {
 			return nil, err
 		}
 
 		family := nethelpers.FamilyInet4
-		if ipAddr.IP().Is6() {
+		if ipAddr.Addr().Is6() {
 			family = nethelpers.FamilyInet6
 		}
 
@@ -240,19 +240,19 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 			continue
 		}
 
-		ipAddr, err := netaddr.ParseIPPrefix(fmt.Sprintf("%s/%d", addr.Address, addr.CIDR))
+		ipAddr, err := netip.ParsePrefix(fmt.Sprintf("%s/%d", addr.Address, addr.CIDR))
 		if err != nil {
 			return nil, err
 		}
 
 		family := nethelpers.FamilyInet4
-		if ipAddr.IP().Is6() {
+		if ipAddr.Addr().Is6() {
 			family = nethelpers.FamilyInet6
 		}
 
 		if addr.Public {
 			// for "Public" address add the default route
-			gw, err := netaddr.ParseIP(addr.Gateway)
+			gw, err := netip.ParseAddr(addr.Gateway)
 			if err != nil {
 				return nil, err
 			}
@@ -278,12 +278,12 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 		} else {
 			// for "Private" addresses, we add a route that goes out the gateway for the private subnets.
 			for _, privSubnet := range equinixMetadata.PrivateSubnets {
-				gw, err := netaddr.ParseIP(addr.Gateway)
+				gw, err := netip.ParseAddr(addr.Gateway)
 				if err != nil {
 					return nil, err
 				}
 
-				dest, err := netaddr.ParseIPPrefix(privSubnet)
+				dest, err := netip.ParsePrefix(privSubnet)
 				if err != nil {
 					return nil, err
 				}

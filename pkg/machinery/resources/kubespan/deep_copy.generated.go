@@ -7,7 +7,7 @@
 package kubespan
 
 import (
-	"inet.af/netaddr"
+	"net/netip"
 )
 
 // DeepCopy generates a deep copy of ConfigSpec.
@@ -32,11 +32,11 @@ func (o IdentitySpec) DeepCopy() IdentitySpec {
 func (o PeerSpecSpec) DeepCopy() PeerSpecSpec {
 	var cp PeerSpecSpec = o
 	if o.AllowedIPs != nil {
-		cp.AllowedIPs = make([]netaddr.IPPrefix, len(o.AllowedIPs))
+		cp.AllowedIPs = make([]netip.Prefix, len(o.AllowedIPs))
 		copy(cp.AllowedIPs, o.AllowedIPs)
 	}
 	if o.Endpoints != nil {
-		cp.Endpoints = make([]netaddr.IPPort, len(o.Endpoints))
+		cp.Endpoints = make([]netip.AddrPort, len(o.Endpoints))
 		copy(cp.Endpoints, o.Endpoints)
 	}
 	return cp

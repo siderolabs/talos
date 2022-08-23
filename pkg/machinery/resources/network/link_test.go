@@ -5,11 +5,11 @@
 package network_test
 
 import (
+	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -22,18 +22,18 @@ func TestWireguardPeer(t *testing.T) {
 		PublicKey:                   key1,
 		Endpoint:                    "127.0.0.1:1000",
 		PersistentKeepaliveInterval: 10 * time.Second,
-		AllowedIPs: []netaddr.IPPrefix{
-			netaddr.MustParseIPPrefix("10.2.0.0/16"),
-			netaddr.MustParseIPPrefix("10.2.0.0/24"),
+		AllowedIPs: []netip.Prefix{
+			netip.MustParsePrefix("10.2.0.0/16"),
+			netip.MustParsePrefix("10.2.0.0/24"),
 		},
 	}
 
 	peer2 := network.WireguardPeer{
 		PublicKey: key2,
 		Endpoint:  "127.0.0.1:2000",
-		AllowedIPs: []netaddr.IPPrefix{
-			netaddr.MustParseIPPrefix("10.2.0.0/15"),
-			netaddr.MustParseIPPrefix("10.3.0.0/28"),
+		AllowedIPs: []netip.Prefix{
+			netip.MustParsePrefix("10.2.0.0/15"),
+			netip.MustParsePrefix("10.3.0.0/28"),
 		},
 	}
 
@@ -41,18 +41,18 @@ func TestWireguardPeer(t *testing.T) {
 		PublicKey:                   key1,
 		Endpoint:                    "127.0.0.1:1000",
 		PersistentKeepaliveInterval: 10 * time.Second,
-		AllowedIPs: []netaddr.IPPrefix{
-			netaddr.MustParseIPPrefix("10.2.0.0/15"),
-			netaddr.MustParseIPPrefix("10.3.0.0/28"),
+		AllowedIPs: []netip.Prefix{
+			netip.MustParsePrefix("10.2.0.0/15"),
+			netip.MustParsePrefix("10.3.0.0/28"),
 		},
 	}
 
 	peer1_2 := network.WireguardPeer{
 		PublicKey:                   key1,
 		PersistentKeepaliveInterval: 10 * time.Second,
-		AllowedIPs: []netaddr.IPPrefix{
-			netaddr.MustParseIPPrefix("10.2.0.0/16"),
-			netaddr.MustParseIPPrefix("10.2.0.0/24"),
+		AllowedIPs: []netip.Prefix{
+			netip.MustParsePrefix("10.2.0.0/16"),
+			netip.MustParsePrefix("10.2.0.0/24"),
 		},
 	}
 

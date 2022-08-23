@@ -5,13 +5,15 @@
 package cluster
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
@@ -29,10 +31,10 @@ type Affiliate = typed.Resource[AffiliateSpec, AffiliateRD]
 //
 //gotagsrewrite:gen
 type KubeSpanAffiliateSpec struct {
-	PublicKey           string             `yaml:"publicKey" protobuf:"1"`
-	Address             netaddr.IP         `yaml:"address" protobuf:"2"`
-	AdditionalAddresses []netaddr.IPPrefix `yaml:"additionalAddresses" protobuf:"3"`
-	Endpoints           []netaddr.IPPort   `yaml:"endpoints" protobuf:"4"`
+	PublicKey           string           `yaml:"publicKey" protobuf:"1"`
+	Address             netip.Addr       `yaml:"address" protobuf:"2"`
+	AdditionalAddresses []netip.Prefix   `yaml:"additionalAddresses" protobuf:"3"`
+	Endpoints           []netip.AddrPort `yaml:"endpoints" protobuf:"4"`
 }
 
 // NewAffiliate initializes the Affiliate resource.
@@ -74,7 +76,7 @@ func (r AffiliateRD) ResourceDefinition(resource.Metadata, AffiliateSpec) meta.R
 //gotagsrewrite:gen
 type AffiliateSpec struct {
 	NodeID          string                `yaml:"nodeId" protobuf:"1"`
-	Addresses       []netaddr.IP          `yaml:"addresses" protobuf:"2"`
+	Addresses       []netip.Addr          `yaml:"addresses" protobuf:"2"`
 	Hostname        string                `yaml:"hostname" protobuf:"3"`
 	Nodename        string                `yaml:"nodename,omitempty" protobuf:"4"`
 	OperatingSystem string                `yaml:"operatingSystem" protobuf:"5"`
@@ -118,7 +120,7 @@ func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 		spec.KubeSpan.PublicKey = other.KubeSpan.PublicKey
 	}
 
-	if !other.KubeSpan.Address.IsZero() {
+	if !generic.IsZero(other.KubeSpan.Address) {
 		spec.KubeSpan.Address = other.KubeSpan.Address
 	}
 

@@ -7,13 +7,13 @@ package config
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
@@ -71,12 +71,12 @@ func (ctrl *K8sAddressFilterController) Run(ctx context.Context, r controller.Ru
 		if cfg != nil {
 			cfgProvider := cfg.(*config.MachineConfig).Config()
 
-			var podCIDRs, serviceCIDRs []netaddr.IPPrefix
+			var podCIDRs, serviceCIDRs []netip.Prefix
 
 			for _, cidr := range cfgProvider.Cluster().Network().PodCIDRs() {
-				var ipPrefix netaddr.IPPrefix
+				var ipPrefix netip.Prefix
 
-				ipPrefix, err = netaddr.ParseIPPrefix(cidr)
+				ipPrefix, err = netip.ParsePrefix(cidr)
 				if err != nil {
 					return fmt.Errorf("error parsing podCIDR: %w", err)
 				}
@@ -85,9 +85,9 @@ func (ctrl *K8sAddressFilterController) Run(ctx context.Context, r controller.Ru
 			}
 
 			for _, cidr := range cfgProvider.Cluster().Network().ServiceCIDRs() {
-				var ipPrefix netaddr.IPPrefix
+				var ipPrefix netip.Prefix
 
-				ipPrefix, err = netaddr.ParseIPPrefix(cidr)
+				ipPrefix, err = netip.ParsePrefix(cidr)
 				if err != nil {
 					return fmt.Errorf("error parsing serviceCIDR: %w", err)
 				}
@@ -98,7 +98,7 @@ func (ctrl *K8sAddressFilterController) Run(ctx context.Context, r controller.Ru
 			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterNoK8s), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddressFilter).TypedSpec()
 
-				spec.ExcludeSubnets = append(append([]netaddr.IPPrefix(nil), podCIDRs...), serviceCIDRs...)
+				spec.ExcludeSubnets = append(append([]netip.Prefix(nil), podCIDRs...), serviceCIDRs...)
 
 				return nil
 			}); err != nil {
@@ -110,7 +110,7 @@ func (ctrl *K8sAddressFilterController) Run(ctx context.Context, r controller.Ru
 			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterOnlyK8s), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddressFilter).TypedSpec()
 
-				spec.IncludeSubnets = append(append([]netaddr.IPPrefix(nil), podCIDRs...), serviceCIDRs...)
+				spec.IncludeSubnets = append(append([]netip.Prefix(nil), podCIDRs...), serviceCIDRs...)
 
 				return nil
 			}); err != nil {

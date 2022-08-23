@@ -5,10 +5,10 @@
 package cluster_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
@@ -28,65 +28,65 @@ func TestAffiliateSpec_Merge(t *testing.T) {
 				Hostname:    "foo.com",
 				Nodename:    "bar",
 				MachineType: machine.TypeControlPlane,
-				Addresses:   []netaddr.IP{netaddr.MustParseIP("10.0.0.2")},
+				Addresses:   []netip.Addr{netip.MustParseAddr("10.0.0.2")},
 			},
 			b: cluster.AffiliateSpec{
 				Hostname:    "foo.com",
 				Nodename:    "bar",
 				MachineType: machine.TypeControlPlane,
-				Addresses:   []netaddr.IP{netaddr.MustParseIP("10.0.0.2"), netaddr.MustParseIP("192.168.3.4")},
+				Addresses:   []netip.Addr{netip.MustParseAddr("10.0.0.2"), netip.MustParseAddr("192.168.3.4")},
 				KubeSpan: cluster.KubeSpanAffiliateSpec{
 					PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-					Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-					AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24")},
-					Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+					Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+					AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
+					Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 				},
 			},
 			expected: cluster.AffiliateSpec{
 				Hostname:    "foo.com",
 				Nodename:    "bar",
 				MachineType: machine.TypeControlPlane,
-				Addresses:   []netaddr.IP{netaddr.MustParseIP("10.0.0.2"), netaddr.MustParseIP("192.168.3.4")},
+				Addresses:   []netip.Addr{netip.MustParseAddr("10.0.0.2"), netip.MustParseAddr("192.168.3.4")},
 				KubeSpan: cluster.KubeSpanAffiliateSpec{
 					PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-					Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-					AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24")},
-					Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+					Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+					AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
+					Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 				},
 			},
 		},
 		{
 			name: "merge mixed",
 			a: cluster.AffiliateSpec{
-				Addresses: []netaddr.IP{netaddr.MustParseIP("10.0.0.2")},
+				Addresses: []netip.Addr{netip.MustParseAddr("10.0.0.2")},
 				KubeSpan: cluster.KubeSpanAffiliateSpec{
 					PublicKey: "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-					Address:   netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-					Endpoints: []netaddr.IPPort{netaddr.MustParseIPPort("192.168.3.4:51820")},
+					Address:   netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+					Endpoints: []netip.AddrPort{netip.MustParseAddrPort("192.168.3.4:51820")},
 				},
 			},
 			b: cluster.AffiliateSpec{
 				Hostname:    "foo.com",
 				Nodename:    "bar",
 				MachineType: machine.TypeControlPlane,
-				Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
+				Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
 				KubeSpan: cluster.KubeSpanAffiliateSpec{
 					PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-					Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-					AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24")},
-					Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+					Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+					AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
+					Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 				},
 			},
 			expected: cluster.AffiliateSpec{
 				Hostname:    "foo.com",
 				Nodename:    "bar",
 				MachineType: machine.TypeControlPlane,
-				Addresses:   []netaddr.IP{netaddr.MustParseIP("10.0.0.2"), netaddr.MustParseIP("192.168.3.4")},
+				Addresses:   []netip.Addr{netip.MustParseAddr("10.0.0.2"), netip.MustParseAddr("192.168.3.4")},
 				KubeSpan: cluster.KubeSpanAffiliateSpec{
 					PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-					Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-					AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24")},
-					Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("192.168.3.4:51820"), netaddr.MustParseIPPort("10.0.0.2:51820")},
+					Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+					AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
+					Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("192.168.3.4:51820"), netip.MustParseAddrPort("10.0.0.2:51820")},
 				},
 			},
 		},

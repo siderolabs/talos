@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/netip"
 	"os"
 	"strings"
 	"sync"
@@ -17,7 +18,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator/vip"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
@@ -35,7 +35,7 @@ type VIP struct {
 	logger *zap.Logger
 
 	linkName      string
-	sharedIP      netaddr.IP
+	sharedIP      netip.Addr
 	gratuitousARP bool
 
 	state state.State
@@ -111,7 +111,7 @@ func (vip *VIP) AddressSpecs() []network.AddressSpecSpec {
 
 	return []network.AddressSpecSpec{
 		{
-			Address:         netaddr.IPPrefixFrom(vip.sharedIP, vip.sharedIP.BitLen()),
+			Address:         netip.PrefixFrom(vip.sharedIP, vip.sharedIP.BitLen()),
 			LinkName:        vip.linkName,
 			Family:          family,
 			Scope:           nethelpers.ScopeGlobal,

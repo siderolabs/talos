@@ -7,7 +7,7 @@
 package etcd
 
 import (
-	"inet.af/netaddr"
+	"net/netip"
 )
 
 // DeepCopy generates a deep copy of ConfigSpec.
@@ -48,15 +48,15 @@ func (o PKIStatusSpec) DeepCopy() PKIStatusSpec {
 func (o SpecSpec) DeepCopy() SpecSpec {
 	var cp SpecSpec = o
 	if o.AdvertisedAddresses != nil {
-		cp.AdvertisedAddresses = make([]netaddr.IP, len(o.AdvertisedAddresses))
+		cp.AdvertisedAddresses = make([]netip.Addr, len(o.AdvertisedAddresses))
 		copy(cp.AdvertisedAddresses, o.AdvertisedAddresses)
 	}
 	if o.ListenPeerAddresses != nil {
-		cp.ListenPeerAddresses = make([]netaddr.IP, len(o.ListenPeerAddresses))
+		cp.ListenPeerAddresses = make([]netip.Addr, len(o.ListenPeerAddresses))
 		copy(cp.ListenPeerAddresses, o.ListenPeerAddresses)
 	}
 	if o.ListenClientAddresses != nil {
-		cp.ListenClientAddresses = make([]netaddr.IP, len(o.ListenClientAddresses))
+		cp.ListenClientAddresses = make([]netip.Addr, len(o.ListenClientAddresses))
 		copy(cp.ListenClientAddresses, o.ListenClientAddresses)
 	}
 	if o.ExtraArgs != nil {

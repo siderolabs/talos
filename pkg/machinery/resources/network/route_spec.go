@@ -5,12 +5,14 @@
 package network
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -26,9 +28,9 @@ type RouteSpec = typed.Resource[RouteSpecSpec, RouteSpecRD]
 //gotagsrewrite:gen
 type RouteSpecSpec struct {
 	Family      nethelpers.Family        `yaml:"family" protobuf:"1"`
-	Destination netaddr.IPPrefix         `yaml:"dst" protobuf:"2"`
-	Source      netaddr.IP               `yaml:"src" protobuf:"3"`
-	Gateway     netaddr.IP               `yaml:"gateway" protobuf:"4"`
+	Destination netip.Prefix             `yaml:"dst" protobuf:"2"`
+	Source      netip.Addr               `yaml:"src" protobuf:"3"`
+	Gateway     netip.Addr               `yaml:"gateway" protobuf:"4"`
 	OutLinkName string                   `yaml:"outLinkName,omitempty" protobuf:"5"`
 	Table       nethelpers.RoutingTable  `yaml:"table" protobuf:"6"`
 	Priority    uint32                   `yaml:"priority,omitempty" protobuf:"7"`
@@ -40,29 +42,29 @@ type RouteSpecSpec struct {
 }
 
 var (
-	zero16 = netaddr.MustParseIP("::")
-	zero4  = netaddr.MustParseIP("0.0.0.0")
+	zero16 = netip.MustParseAddr("::")
+	zero4  = netip.MustParseAddr("0.0.0.0")
 )
 
 // Normalize converts 0.0.0.0 to zero value.
 func (route *RouteSpecSpec) Normalize() {
-	if route.Destination.Bits() == 0 && (route.Destination.IP().Compare(zero4) == 0 || route.Destination.IP().Compare(zero16) == 0) {
+	if route.Destination.Bits() == 0 && (route.Destination.Addr().Compare(zero4) == 0 || route.Destination.Addr().Compare(zero16) == 0) {
 		// clear destination to be zero value to support "0.0.0.0/0" routes
-		route.Destination = netaddr.IPPrefix{}
+		route.Destination = netip.Prefix{}
 	}
 
 	if route.Gateway.Compare(zero4) == 0 || route.Gateway.Compare(zero16) == 0 {
-		route.Gateway = netaddr.IP{}
+		route.Gateway = netip.Addr{}
 	}
 
 	if route.Source.Compare(zero4) == 0 || route.Source.Compare(zero16) == 0 {
-		route.Source = netaddr.IP{}
+		route.Source = netip.Addr{}
 	}
 
 	switch {
-	case route.Gateway.IsZero():
+	case generic.IsZero(route.Gateway):
 		route.Scope = nethelpers.ScopeLink
-	case route.Destination.IP().IsLoopback():
+	case route.Destination.Addr().IsLoopback():
 		route.Scope = nethelpers.ScopeHost
 	default:
 		route.Scope = nethelpers.ScopeGlobal

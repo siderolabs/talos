@@ -8,10 +8,10 @@ import (
 	"context"
 	stderrors "errors"
 	"log"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -90,7 +90,7 @@ func (d *DigitalOcean) NetworkConfiguration(ctx context.Context, ch chan<- *runt
 	}
 
 	if len(extIP) > 0 {
-		if ip, err := netaddr.ParseIP(string(extIP)); err == nil {
+		if ip, err := netip.ParseAddr(string(extIP)); err == nil {
 			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 		}
 	}

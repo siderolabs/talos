@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"sync"
@@ -20,7 +21,6 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
-	"inet.af/netaddr"
 
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -381,8 +381,8 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				return networkConfig.ExternalIPs[i]
 			},
 			idBuilder: func(spec interface{}) resource.ID {
-				ipAddr := spec.(netaddr.IP) //nolint:errcheck,forcetypeassert
-				ipPrefix := netaddr.IPPrefixFrom(ipAddr, ipAddr.BitLen())
+				ipAddr := spec.(netip.Addr) //nolint:errcheck,forcetypeassert
+				ipPrefix := netip.PrefixFrom(ipAddr, ipAddr.BitLen())
 
 				return network.AddressID(externalLink, ipPrefix)
 			},
@@ -391,8 +391,8 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			},
 			resourceModifier: func(newSpec interface{}) func(r resource.Resource) error {
 				return func(r resource.Resource) error {
-					ipAddr := newSpec.(netaddr.IP) //nolint:errcheck,forcetypeassert
-					ipPrefix := netaddr.IPPrefixFrom(ipAddr, ipAddr.BitLen())
+					ipAddr := newSpec.(netip.Addr) //nolint:errcheck,forcetypeassert
+					ipPrefix := netip.PrefixFrom(ipAddr, ipAddr.BitLen())
 
 					status := r.(*network.AddressStatus).TypedSpec()
 

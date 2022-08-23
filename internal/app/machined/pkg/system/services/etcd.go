@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/netip"
 	"os"
 	goruntime "runtime"
 	"strings"
@@ -26,7 +27,6 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -696,16 +696,16 @@ func BootstrapEtcd(ctx context.Context, r runtime.Runtime, req *machineapi.Boots
 	return nil
 }
 
-func formatEtcdURL(addr netaddr.IP, port int) string {
+func formatEtcdURL(addr netip.Addr, port int) string {
 	return fmt.Sprintf("https://%s", nethelpers.JoinHostPort(addr.String(), port))
 }
 
-func getEtcdURLs(addrs []netaddr.IP, port int) []string {
-	return slices.Map(addrs, func(addr netaddr.IP) string {
+func getEtcdURLs(addrs []netip.Addr, port int) []string {
+	return slices.Map(addrs, func(addr netip.Addr) string {
 		return formatEtcdURL(addr, port)
 	})
 }
 
-func formatEtcdURLs(addrs []netaddr.IP, port int) string {
+func formatEtcdURLs(addrs []netip.Addr, port int) string {
 	return strings.Join(getEtcdURLs(addrs, port), ",")
 }

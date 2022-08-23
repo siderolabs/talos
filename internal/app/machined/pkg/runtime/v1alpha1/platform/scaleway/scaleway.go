@@ -8,12 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/netip"
 	"strconv"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/scaleway/scaleway-sdk-go/api/instance/v1"
 	"github.com/talos-systems/go-procfs/procfs"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -54,7 +54,7 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 	}
 
 	if metadataConfig.PublicIP.Address != "" {
-		ip, err := netaddr.ParseIP(metadataConfig.PublicIP.Address)
+		ip, err := netip.ParseAddr(metadataConfig.PublicIP.Address)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 		ConfigLayer: network.ConfigPlatform,
 	})
 
-	gw, _ := netaddr.ParseIPPrefix("169.254.42.42/32") //nolint:errcheck
+	gw, _ := netip.ParsePrefix("169.254.42.42/32") //nolint:errcheck
 	route := network.RouteSpecSpec{
 		ConfigLayer: network.ConfigPlatform,
 		OutLinkName: "eth0",
@@ -99,12 +99,12 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 			return nil, err
 		}
 
-		ip, err := netaddr.ParseIP(metadataConfig.IPv6.Address)
+		ip, err := netip.ParseAddr(metadataConfig.IPv6.Address)
 		if err != nil {
 			return nil, err
 		}
 
-		addr := netaddr.IPPrefixFrom(ip, uint8(bits))
+		addr := netip.PrefixFrom(ip, bits)
 
 		networkConfig.Addresses = append(networkConfig.Addresses,
 			network.AddressSpecSpec{
@@ -117,7 +117,7 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 			},
 		)
 
-		gw, err := netaddr.ParseIP(metadataConfig.IPv6.Gateway)
+		gw, err := netip.ParseAddr(metadataConfig.IPv6.Gateway)
 		if err != nil {
 			return nil, err
 		}

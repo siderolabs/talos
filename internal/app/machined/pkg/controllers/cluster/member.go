@@ -7,11 +7,11 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
@@ -73,7 +73,7 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, log
 			if err = r.Modify(ctx, cluster.NewMember(cluster.NamespaceName, affiliateSpec.Nodename), func(res resource.Resource) error {
 				spec := res.(*cluster.Member).TypedSpec()
 
-				spec.Addresses = append([]netaddr.IP(nil), affiliateSpec.Addresses...)
+				spec.Addresses = append([]netip.Addr(nil), affiliateSpec.Addresses...)
 				spec.Hostname = affiliateSpec.Hostname
 				spec.MachineType = affiliateSpec.MachineType
 				spec.OperatingSystem = affiliateSpec.OperatingSystem

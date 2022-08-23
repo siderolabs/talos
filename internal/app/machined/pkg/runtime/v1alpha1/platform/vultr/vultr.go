@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/vultr/metadata"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -47,7 +47,7 @@ func (v *Vultr) Name() string {
 func (v *Vultr) ParseMetadata(meta *metadata.MetaData, extIP []byte) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if ip, err := netaddr.ParseIP(string(extIP)); err == nil {
+	if ip, err := netip.ParseAddr(string(extIP)); err == nil {
 		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 	}
 
@@ -90,19 +90,19 @@ func (v *Vultr) ParseMetadata(meta *metadata.MetaData, extIP []byte) (*runtime.P
 					ConfigLayer: network.ConfigPlatform,
 				})
 			} else {
-				ip, err := netaddr.ParseIP(addr.IPv4.Address)
+				ip, err := netip.ParseAddr(addr.IPv4.Address)
 				if err != nil {
 					return nil, err
 				}
 
-				netmask, err := netaddr.ParseIP(addr.IPv4.Netmask)
+				netmask, err := netip.ParseAddr(addr.IPv4.Netmask)
 				if err != nil {
 					return nil, err
 				}
 
 				mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
 				ones, _ := net.IPMask(mask).Size()
-				ipAddr := netaddr.IPPrefixFrom(ip, uint8(ones))
+				ipAddr := netip.PrefixFrom(ip, ones)
 
 				networkConfig.Addresses = append(networkConfig.Addresses,
 					network.AddressSpecSpec{

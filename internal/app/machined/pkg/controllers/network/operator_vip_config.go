@@ -7,6 +7,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -14,7 +15,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator/vip"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
@@ -193,9 +193,9 @@ func (ctrl *OperatorVIPConfigController) apply(ctx context.Context, r controller
 }
 
 func handleVIP(ctx context.Context, vlanConfig talosconfig.VIPConfig, deviceName string, logger *zap.Logger) (network.OperatorSpecSpec, error) {
-	var sharedIP netaddr.IP
+	var sharedIP netip.Addr
 
-	sharedIP, err := netaddr.ParseIP(vlanConfig.IP())
+	sharedIP, err := netip.ParseAddr(vlanConfig.IP())
 	if err != nil {
 		logger.Warn("ignoring vip parse failure", zap.Error(err), zap.String("link", deviceName))
 

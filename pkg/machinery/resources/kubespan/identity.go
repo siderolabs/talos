@@ -5,11 +5,12 @@
 package kubespan
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -31,8 +32,8 @@ type Identity = typed.Resource[IdentitySpec, IdentityRD]
 //gotagsrewrite:gen
 type IdentitySpec struct {
 	// Address of the node on the Wireguard network.
-	Address netaddr.IPPrefix `yaml:"address" protobuf:"1"`
-	Subnet  netaddr.IPPrefix `yaml:"subnet" protobuf:"2"`
+	Address netip.Prefix `yaml:"address" protobuf:"1"`
+	Subnet  netip.Prefix `yaml:"subnet" protobuf:"2"`
 	// Public and private Wireguard keys.
 	PrivateKey string `yaml:"privateKey" protobuf:"3"`
 	PublicKey  string `yaml:"publicKey" protobuf:"4"`

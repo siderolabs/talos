@@ -7,22 +7,22 @@
 package cluster
 
 import (
-	"inet.af/netaddr"
+	"net/netip"
 )
 
 // DeepCopy generates a deep copy of AffiliateSpec.
 func (o AffiliateSpec) DeepCopy() AffiliateSpec {
 	var cp AffiliateSpec = o
 	if o.Addresses != nil {
-		cp.Addresses = make([]netaddr.IP, len(o.Addresses))
+		cp.Addresses = make([]netip.Addr, len(o.Addresses))
 		copy(cp.Addresses, o.Addresses)
 	}
 	if o.KubeSpan.AdditionalAddresses != nil {
-		cp.KubeSpan.AdditionalAddresses = make([]netaddr.IPPrefix, len(o.KubeSpan.AdditionalAddresses))
+		cp.KubeSpan.AdditionalAddresses = make([]netip.Prefix, len(o.KubeSpan.AdditionalAddresses))
 		copy(cp.KubeSpan.AdditionalAddresses, o.KubeSpan.AdditionalAddresses)
 	}
 	if o.KubeSpan.Endpoints != nil {
-		cp.KubeSpan.Endpoints = make([]netaddr.IPPort, len(o.KubeSpan.Endpoints))
+		cp.KubeSpan.Endpoints = make([]netip.AddrPort, len(o.KubeSpan.Endpoints))
 		copy(cp.KubeSpan.Endpoints, o.KubeSpan.Endpoints)
 	}
 	return cp
@@ -48,7 +48,7 @@ func (o IdentitySpec) DeepCopy() IdentitySpec {
 func (o MemberSpec) DeepCopy() MemberSpec {
 	var cp MemberSpec = o
 	if o.Addresses != nil {
-		cp.Addresses = make([]netaddr.IP, len(o.Addresses))
+		cp.Addresses = make([]netip.Addr, len(o.Addresses))
 		copy(cp.Addresses, o.Addresses)
 	}
 	return cp

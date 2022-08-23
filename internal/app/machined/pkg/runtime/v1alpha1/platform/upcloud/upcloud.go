@@ -9,10 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -82,7 +82,7 @@ func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig,
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	var dnsIPs []netaddr.IP
+	var dnsIPs []netip.Addr
 
 	firstIP := true
 
@@ -101,7 +101,7 @@ func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig,
 
 		for _, ip := range addr.IPAddresses {
 			if firstIP {
-				ipAddr, err := netaddr.ParseIP(ip.Address)
+				ipAddr, err := netip.ParseAddr(ip.Address)
 				if err != nil {
 					return nil, err
 				}
@@ -112,7 +112,7 @@ func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig,
 			}
 
 			for _, addr := range ip.DNS {
-				if ipAddr, err := netaddr.ParseIP(addr); err == nil {
+				if ipAddr, err := netip.ParseAddr(addr); err == nil {
 					dnsIPs = append(dnsIPs, ipAddr)
 				}
 			}
@@ -130,17 +130,17 @@ func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig,
 			}
 
 			if !ip.DHCP {
-				ntwrk, err := netaddr.ParseIPPrefix(ip.Network)
+				ntwrk, err := netip.ParsePrefix(ip.Network)
 				if err != nil {
 					return nil, err
 				}
 
-				addr, err := netaddr.ParseIP(ip.Address)
+				addr, err := netip.ParseAddr(ip.Address)
 				if err != nil {
 					return nil, err
 				}
 
-				ipPrefix := netaddr.IPPrefixFrom(addr, ntwrk.Bits())
+				ipPrefix := netip.PrefixFrom(addr, ntwrk.Bits())
 
 				family := nethelpers.FamilyInet4
 				if addr.Is6() {
@@ -159,7 +159,7 @@ func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig,
 				)
 
 				if ip.Gateway != "" {
-					gw, err := netaddr.ParseIP(ip.Gateway)
+					gw, err := netip.ParseAddr(ip.Gateway)
 					if err != nil {
 						return nil, err
 					}

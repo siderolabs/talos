@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"io"
 	"log"
+	"net/netip"
 	"net/url"
 	"testing"
 	"time"
@@ -20,7 +21,6 @@ import (
 	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
 	"github.com/talos-systems/discovery-client/pkg/client"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
@@ -78,12 +78,12 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 		Hostname:    "foo.com",
 		Nodename:    "bar",
 		MachineType: machine.TypeControlPlane,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24")},
-			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+			Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
+			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, localAffiliate))
@@ -189,15 +189,15 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 			spec := r.(*cluster.Affiliate).TypedSpec()
 
 			suite.Assert().Equal("7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", spec.NodeID)
-			suite.Assert().Equal([]netaddr.IP{netaddr.MustParseIP("192.168.3.5")}, spec.Addresses)
+			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
 			suite.Assert().Equal("some.com", spec.Hostname)
 			suite.Assert().Equal("some", spec.Nodename)
 			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)
 			suite.Assert().Equal("test OS", spec.OperatingSystem)
-			suite.Assert().Equal(netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"), spec.KubeSpan.Address)
+			suite.Assert().Equal(netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"), spec.KubeSpan.Address)
 			suite.Assert().Equal("1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=", spec.KubeSpan.PublicKey)
-			suite.Assert().Equal([]netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.4.1/24")}, spec.KubeSpan.AdditionalAddresses)
-			suite.Assert().Equal([]netaddr.IPPort{netaddr.MustParseIPPort("192.168.3.5:51820")}, spec.KubeSpan.Endpoints)
+			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.244.4.1/24")}, spec.KubeSpan.AdditionalAddresses)
+			suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("192.168.3.5:51820")}, spec.KubeSpan.Endpoints)
 
 			return nil
 		}),
@@ -207,7 +207,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	endpoint := kubespan.NewEndpoint(kubespan.NamespaceName, "1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=")
 	*endpoint.TypedSpec() = kubespan.EndpointSpec{
 		AffiliateID: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
-		Endpoint:    netaddr.MustParseIPPort("1.1.1.1:343"),
+		Endpoint:    netip.MustParseAddrPort("1.1.1.1:343"),
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, endpoint))
 
@@ -219,9 +219,9 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 				return retry.ExpectedErrorf("waiting for 2 endpoints, got %d", len(spec.KubeSpan.Endpoints))
 			}
 
-			suite.Assert().Equal([]netaddr.IPPort{
-				netaddr.MustParseIPPort("192.168.3.5:51820"),
-				netaddr.MustParseIPPort("1.1.1.1:343"),
+			suite.Assert().Equal([]netip.AddrPort{
+				netip.MustParseAddrPort("192.168.3.5:51820"),
+				netip.MustParseAddrPort("1.1.1.1:343"),
 			}, spec.KubeSpan.Endpoints)
 
 			return nil
@@ -273,7 +273,7 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 		Hostname:    "foo.com",
 		Nodename:    "bar",
 		MachineType: machine.TypeControlPlane,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, localAffiliate))
 

@@ -15,10 +15,11 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"inet.af/netaddr"
+	"go4.org/netipx"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
@@ -87,7 +88,7 @@ func (suite *DiscoverySuite) TestMembers() {
 			found := false
 
 			for _, member := range members {
-				memberAddresses := slices.Map(member.TypedSpec().Addresses, func(t netaddr.IP) string {
+				memberAddresses := slices.Map(member.TypedSpec().Addresses, func(t netip.Addr) string {
 					return t.String()
 				})
 
@@ -116,7 +117,7 @@ func (suite *DiscoverySuite) TestMembers() {
 			},
 		)
 
-		memberByIP := make(map[netaddr.IP]*cluster.Member)
+		memberByIP := make(map[netip.Addr]*cluster.Member)
 
 		for _, member := range members {
 			for _, addr := range member.TypedSpec().Addresses {
@@ -132,7 +133,7 @@ func (suite *DiscoverySuite) TestMembers() {
 			var matchingMemberByIP *cluster.Member
 
 			for _, nodeIPStd := range nodeInfo.IPs {
-				nodeIP, ok := netaddr.FromStdIP(nodeIPStd)
+				nodeIP, ok := netipx.FromStdIP(nodeIPStd)
 				suite.Assert().True(ok)
 
 				matchingMemberByIP = memberByIP[nodeIP]
@@ -151,7 +152,7 @@ func (suite *DiscoverySuite) TestMembers() {
 			suite.Assert().Equal(expectedTalosVersion, matchingMember.TypedSpec().OperatingSystem)
 
 			for _, nodeIPStd := range nodeInfo.IPs {
-				nodeIP, ok := netaddr.FromStdIP(nodeIPStd)
+				nodeIP, ok := netipx.FromStdIP(nodeIPStd)
 				suite.Assert().True(ok)
 
 				found := false
@@ -179,7 +180,7 @@ func (suite *DiscoverySuite) TestRegistries() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	registries := []string{}
+	var registries []string
 
 	if provider.Cluster().Discovery().Registries().Kubernetes().Enabled() {
 		registries = append(registries, "k8s/")
@@ -276,7 +277,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 
 		for _, status := range peerStatuses {
 			suite.Assert().Equal(kubespan.PeerStateUp, status.TypedSpec().State)
-			suite.Assert().False(status.TypedSpec().Endpoint.IsZero())
+			suite.Assert().False(generic.IsZero(status.TypedSpec().Endpoint))
 			suite.Assert().Greater(status.TypedSpec().ReceiveBytes, int64(0))
 			suite.Assert().Greater(status.TypedSpec().TransmitBytes, int64(0))
 		}

@@ -187,7 +187,7 @@ func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatu
 
 	write("127.0.0.1\tlocalhost\n")
 
-	write(fmt.Sprintf("%s\t%s", nodeAddressStatus.Addresses[0].IP(), hostnameStatus.FQDN()))
+	write(fmt.Sprintf("%s\t%s", nodeAddressStatus.Addresses[0].Addr(), hostnameStatus.FQDN()))
 
 	if hostnameStatus.Hostname != hostnameStatus.FQDN() {
 		write(" " + hostnameStatus.Hostname)

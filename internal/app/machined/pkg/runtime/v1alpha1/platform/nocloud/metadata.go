@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -17,7 +18,6 @@ import (
 	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
 	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
 	"golang.org/x/sys/unix"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -227,10 +227,10 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 	for _, ntwrk := range config.Config {
 		switch ntwrk.Type {
 		case "nameserver":
-			dnsIPs := make([]netaddr.IP, 0, len(ntwrk.Address))
+			dnsIPs := make([]netip.Addr, 0, len(ntwrk.Address))
 
 			for i := range ntwrk.Address {
-				if ip, err := netaddr.ParseIP(ntwrk.Address[i]); err == nil {
+				if ip, err := netip.ParseAddr(ntwrk.Address[i]); err == nil {
 					dnsIPs = append(dnsIPs, ip)
 				} else {
 					return err
@@ -267,21 +267,21 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 						family = nethelpers.FamilyInet6
 					}
 
-					ipPrefix, err := netaddr.ParseIPPrefix(subnet.Address)
+					ipPrefix, err := netip.ParsePrefix(subnet.Address)
 					if err != nil {
-						ip, err := netaddr.ParseIP(subnet.Address)
+						ip, err := netip.ParseAddr(subnet.Address)
 						if err != nil {
 							return err
 						}
 
-						netmask, err := netaddr.ParseIP(subnet.Netmask)
+						netmask, err := netip.ParseAddr(subnet.Netmask)
 						if err != nil {
 							return err
 						}
 
 						mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
 						ones, _ := net.IPMask(mask).Size()
-						ipPrefix = netaddr.IPPrefixFrom(ip, uint8(ones))
+						ipPrefix = netip.PrefixFrom(ip, ones)
 					}
 
 					networkConfig.Addresses = append(networkConfig.Addresses,
@@ -296,7 +296,7 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 					)
 
 					if subnet.Gateway != "" {
-						gw, err := netaddr.ParseIP(subnet.Gateway)
+						gw, err := netip.ParseAddr(subnet.Gateway)
 						if err != nil {
 							return err
 						}
@@ -340,7 +340,7 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 
 //nolint:gocyclo
 func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, networkConfig *runtime.PlatformNetworkConfig) error {
-	var dnsIPs []netaddr.IP
+	var dnsIPs []netip.Addr
 
 	for name, eth := range config.Ethernets {
 		if !strings.HasPrefix(name, "eth") {
@@ -379,14 +379,14 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, networkConfig *run
 		}
 
 		for _, addr := range eth.Address {
-			ipPrefix, err := netaddr.ParseIPPrefix(addr)
+			ipPrefix, err := netip.ParsePrefix(addr)
 			if err != nil {
 				return err
 			}
 
 			family := nethelpers.FamilyInet4
 
-			if ipPrefix.IP().Is6() {
+			if ipPrefix.Addr().Is6() {
 				family = nethelpers.FamilyInet6
 			}
 
@@ -403,7 +403,7 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, networkConfig *run
 		}
 
 		if eth.Gateway4 != "" {
-			gw, err := netaddr.ParseIP(eth.Gateway4)
+			gw, err := netip.ParseAddr(eth.Gateway4)
 			if err != nil {
 				return err
 			}
@@ -425,7 +425,7 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, networkConfig *run
 		}
 
 		if eth.Gateway6 != "" {
-			gw, err := netaddr.ParseIP(eth.Gateway6)
+			gw, err := netip.ParseAddr(eth.Gateway6)
 			if err != nil {
 				return err
 			}
@@ -447,7 +447,7 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, networkConfig *run
 		}
 
 		for _, addr := range eth.NameServers.Address {
-			if ip, err := netaddr.ParseIP(addr); err == nil {
+			if ip, err := netip.ParseAddr(addr); err == nil {
 				dnsIPs = append(dnsIPs, ip)
 			} else {
 				return err

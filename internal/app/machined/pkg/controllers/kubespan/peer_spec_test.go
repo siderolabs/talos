@@ -5,13 +5,13 @@ package kubespan_test
 
 import (
 	"fmt"
+	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
 	kubespanctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
@@ -56,12 +56,12 @@ func (suite *PeerSpecSuite) TestReconcile() {
 		Hostname:    "foo.com",
 		Nodename:    "bar",
 		MachineType: machine.TypeControlPlane,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24"), netaddr.MustParseIPPrefix("10.244.3.0/32")},
-			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+			Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24"), netip.MustParsePrefix("10.244.3.0/32")},
+			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
 	}
 
@@ -71,7 +71,7 @@ func (suite *PeerSpecSuite) TestReconcile() {
 		Hostname:    "worker-1",
 		Nodename:    "worker-1",
 		MachineType: machine.TypeWorker,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.5")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.5")},
 	}
 
 	affiliate3 := cluster.NewAffiliate(cluster.NamespaceName, "xCnFFfxylOf9i5ynhAkt6ZbfcqaLDGKfIa3gwpuaxe7F")
@@ -79,12 +79,12 @@ func (suite *PeerSpecSuite) TestReconcile() {
 		NodeID:      "xCnFFfxylOf9i5ynhAkt6ZbfcqaLDGKfIa3gwpuaxe7F",
 		MachineType: machine.TypeWorker,
 		Nodename:    "worker-2",
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.6")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.6")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "mB6WlFOR66Jx5rtPMIpxJ3s4XHyer9NCzqWPP7idGRo",
-			Address:             netaddr.MustParseIP("fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.4.1/24")},
-			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("192.168.3.6:51820")},
+			Address:             netip.MustParseAddr("fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67"),
+			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.4.1/24")},
+			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("192.168.3.6:51820")},
 		},
 	}
 
@@ -93,12 +93,12 @@ func (suite *PeerSpecSuite) TestReconcile() {
 	*affiliate4.TypedSpec() = cluster.AffiliateSpec{
 		NodeID:      nodeIdentity.TypedSpec().NodeID,
 		MachineType: machine.TypeWorker,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.7")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.7")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "27E8I+ekrqT21cq2iW6+fDe+H7WBw6q9J7vqLCeswiM=",
-			Address:             netaddr.MustParseIP("fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.5.1/24")},
-			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("192.168.3.7:51820")},
+			Address:             netip.MustParseAddr("fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67"),
+			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.5.1/24")},
+			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("192.168.3.7:51820")},
 		},
 	}
 
@@ -124,7 +124,7 @@ func (suite *PeerSpecSuite) TestReconcile() {
 
 				suite.Assert().Equal("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0", spec.Address.String())
 				suite.Assert().Equal("[10.244.3.0/24 192.168.3.4/32 fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128]", fmt.Sprintf("%v", spec.AllowedIPs))
-				suite.Assert().Equal([]netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")}, spec.Endpoints)
+				suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")}, spec.Endpoints)
 				suite.Assert().Equal("bar", spec.Label)
 
 				return nil
@@ -140,7 +140,7 @@ func (suite *PeerSpecSuite) TestReconcile() {
 
 				suite.Assert().Equal("fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67", spec.Address.String())
 				suite.Assert().Equal("[10.244.4.0/24 192.168.3.6/32 fdc8:8aee:4e2d:1202:f073:9cff:fe6c:4d67/128]", fmt.Sprintf("%v", spec.AllowedIPs))
-				suite.Assert().Equal([]netaddr.IPPort{netaddr.MustParseIPPort("192.168.3.6:51820")}, spec.Endpoints)
+				suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("192.168.3.6:51820")}, spec.Endpoints)
 				suite.Assert().Equal("worker-2", spec.Label)
 
 				return nil
@@ -194,9 +194,9 @@ func (suite *PeerSpecSuite) TestIPOverlap() {
 		MachineType: machine.TypeControlPlane,
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24"), netaddr.MustParseIPPrefix("10.244.3.0/32")},
-			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+			Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24"), netip.MustParsePrefix("10.244.3.0/32")},
+			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
 	}
 
@@ -208,9 +208,9 @@ func (suite *PeerSpecSuite) TestIPOverlap() {
 		MachineType: machine.TypeWorker,
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "Zr5ewpUm2Ywo1c+/59WFKIBjZ3c/nVbIWsT5elbjwCU=",
-			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.2.0/23"), netaddr.MustParseIPPrefix("192.168.3.0/24")},
-			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+			Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"),
+			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.2.0/23"), netip.MustParsePrefix("192.168.3.0/24")},
+			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
 	}
 

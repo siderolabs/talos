@@ -6,12 +6,12 @@ package network
 
 import (
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -49,7 +49,7 @@ const (
 //
 //gotagsrewrite:gen
 type NodeAddressSpec struct {
-	Addresses []netaddr.IPPrefix `yaml:"addresses" protobuf:"1"`
+	Addresses []netip.Prefix `yaml:"addresses" protobuf:"1"`
 }
 
 // NewNodeAddress initializes a NodeAddress resource.
@@ -79,8 +79,8 @@ func (NodeAddressRD) ResourceDefinition(resource.Metadata, NodeAddressSpec) meta
 }
 
 // IPs returns IP without prefix.
-func (spec *NodeAddressSpec) IPs() []netaddr.IP {
-	return slices.Map(spec.Addresses, netaddr.IPPrefix.IP)
+func (spec *NodeAddressSpec) IPs() []netip.Addr {
+	return slices.Map(spec.Addresses, netip.Prefix.Addr)
 }
 
 // FilteredNodeAddressID returns resource ID for node addresses with filter applied.

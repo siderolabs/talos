@@ -6,6 +6,7 @@ package network_test
 
 import (
 	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -92,8 +92,8 @@ func TestLinkStatusMarshalYAML(t *testing.T) {
 					PresharedKey:                "key=",
 					Endpoint:                    "127.0.0.1:3333",
 					PersistentKeepaliveInterval: 30 * time.Second,
-					AllowedIPs: []netaddr.IPPrefix{
-						netaddr.MustParseIPPrefix("192.83.93.94/31"),
+					AllowedIPs: []netip.Prefix{
+						netip.MustParsePrefix("192.83.93.94/31"),
 					},
 				},
 			},

@@ -7,16 +7,15 @@ package utils
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"strconv"
 	"strings"
-
-	"inet.af/netaddr"
 )
 
-// IPPrefixFrom make netaddr.IPPrefix from cidr-address and netmask strings.
+// IPPrefixFrom make netip.Prefix from cidr-address and netmask strings.
 // address can be IP or CIDR (1.1.1.1 or 1.1.1.1/8 or 1.1.1.1/255.0.0.0)
 // netmask can be IP or number (255.255.255.0 or 24 or empty).
-func IPPrefixFrom(address, netmask string) (netaddr.IPPrefix, error) {
+func IPPrefixFrom(address, netmask string) (netip.Prefix, error) {
 	cidr := strings.SplitN(address, "/", 2)
 	if len(cidr) == 1 {
 		address = cidr[0]
@@ -25,9 +24,9 @@ func IPPrefixFrom(address, netmask string) (netaddr.IPPrefix, error) {
 		netmask = cidr[1]
 	}
 
-	ip, err := netaddr.ParseIP(address)
+	ip, err := netip.ParseAddr(address)
 	if err != nil {
-		return netaddr.IPPrefix{}, fmt.Errorf("failed to parse ip address: %w", err)
+		return netip.Prefix{}, fmt.Errorf("failed to parse ip address: %w", err)
 	}
 
 	if netmask == "" {
@@ -40,9 +39,9 @@ func IPPrefixFrom(address, netmask string) (netaddr.IPPrefix, error) {
 
 	bits, err := strconv.Atoi(netmask)
 	if err != nil {
-		netmask, err := netaddr.ParseIP(netmask)
+		netmask, err := netip.ParseAddr(netmask)
 		if err != nil {
-			return netaddr.IPPrefix{}, fmt.Errorf("failed to parse netmask: %w", err)
+			return netip.Prefix{}, fmt.Errorf("failed to parse netmask: %w", err)
 		}
 
 		mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
@@ -50,8 +49,8 @@ func IPPrefixFrom(address, netmask string) (netaddr.IPPrefix, error) {
 	}
 
 	if ip.Is4() && bits > 32 {
-		return netaddr.IPPrefix{}, fmt.Errorf("failed netmask should be the same address family")
+		return netip.Prefix{}, fmt.Errorf("failed netmask should be the same address family")
 	}
 
-	return netaddr.IPPrefixFrom(ip, uint8(bits)), nil
+	return netip.PrefixFrom(ip, bits), nil
 }

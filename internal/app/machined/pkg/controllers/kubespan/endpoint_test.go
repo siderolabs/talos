@@ -4,13 +4,13 @@
 package kubespan_test
 
 import (
+	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	kubespanctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -34,12 +34,12 @@ func (suite *EndpointSuite) TestReconcile() {
 		Hostname:    "foo.com",
 		Nodename:    "bar",
 		MachineType: machine.TypeControlPlane,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.4")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-			Address:             netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-			AdditionalAddresses: []netaddr.IPPrefix{netaddr.MustParseIPPrefix("10.244.3.1/24")},
-			Endpoints:           []netaddr.IPPort{netaddr.MustParseIPPort("10.0.0.2:51820"), netaddr.MustParseIPPort("192.168.3.4:51820")},
+			Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
+			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
 	}
 
@@ -47,10 +47,10 @@ func (suite *EndpointSuite) TestReconcile() {
 	*affiliate2.TypedSpec() = cluster.AffiliateSpec{
 		NodeID:      "roLng5hmP0Gv9S5Pbfzaa93JSZjsdpXNAn7vzuCfsc8",
 		MachineType: machine.TypeControlPlane,
-		Addresses:   []netaddr.IP{netaddr.MustParseIP("192.168.3.5")},
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.5")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
 			PublicKey: "1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=",
-			Address:   netaddr.MustParseIP("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"),
+			Address:   netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"),
 		},
 	}
 
@@ -59,19 +59,19 @@ func (suite *EndpointSuite) TestReconcile() {
 
 	peerStatus1 := kubespan.NewPeerStatus(kubespan.NamespaceName, affiliate1.TypedSpec().KubeSpan.PublicKey)
 	*peerStatus1.TypedSpec() = kubespan.PeerStatusSpec{
-		Endpoint: netaddr.MustParseIPPort("10.3.4.8:278"),
+		Endpoint: netip.MustParseAddrPort("10.3.4.8:278"),
 		State:    kubespan.PeerStateUp,
 	}
 
 	peerStatus2 := kubespan.NewPeerStatus(kubespan.NamespaceName, affiliate2.TypedSpec().KubeSpan.PublicKey)
 	*peerStatus2.TypedSpec() = kubespan.PeerStatusSpec{
-		Endpoint: netaddr.MustParseIPPort("10.3.4.9:279"),
+		Endpoint: netip.MustParseAddrPort("10.3.4.9:279"),
 		State:    kubespan.PeerStateUnknown,
 	}
 
 	peerStatus3 := kubespan.NewPeerStatus(kubespan.NamespaceName, "LoXPyyYh3kZwyKyWfCcf9VvgVv588cKhSKXavuUZqDg=")
 	*peerStatus3.TypedSpec() = kubespan.PeerStatusSpec{
-		Endpoint: netaddr.MustParseIPPort("10.3.4.10:270"),
+		Endpoint: netip.MustParseAddrPort("10.3.4.10:270"),
 		State:    kubespan.PeerStateUp,
 	}
 

@@ -5,11 +5,13 @@
 package kubespan
 
 import (
+	"net/netip"
 	"time"
 
+	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
 
@@ -93,7 +95,7 @@ func (a peerStatus) CalculateStateWithDurations(sinceLastHandshake, sinceEndpoin
 		}
 	}
 
-	if a.PeerStatusSpec.State == kubespan.PeerStateDown && a.PeerStatusSpec.LastUsedEndpoint.IsZero() {
+	if a.PeerStatusSpec.State == kubespan.PeerStateDown && generic.IsZero(a.PeerStatusSpec.LastUsedEndpoint) {
 		// no endpoint, so unknown
 		a.PeerStatusSpec.State = kubespan.PeerStateUnknown
 	}
@@ -102,9 +104,9 @@ func (a peerStatus) CalculateStateWithDurations(sinceLastHandshake, sinceEndpoin
 // UpdateFromWireguard updates fields from wgtypes information.
 func (a peerStatus) UpdateFromWireguard(peer wgtypes.Peer) {
 	if peer.Endpoint != nil {
-		a.PeerStatusSpec.Endpoint, _ = netaddr.FromStdAddr(peer.Endpoint.IP, peer.Endpoint.Port, "")
+		a.PeerStatusSpec.Endpoint, _ = netipx.FromStdAddr(peer.Endpoint.IP, peer.Endpoint.Port, "")
 	} else {
-		a.PeerStatusSpec.Endpoint = netaddr.IPPort{}
+		a.PeerStatusSpec.Endpoint = netip.AddrPort{}
 	}
 
 	a.PeerStatusSpec.LastHandshakeTime = peer.LastHandshakeTime
@@ -113,7 +115,7 @@ func (a peerStatus) UpdateFromWireguard(peer wgtypes.Peer) {
 }
 
 // UpdateEndpoint updates the endpoint information and last update timestamp.
-func (a peerStatus) UpdateEndpoint(endpoint netaddr.IPPort) {
+func (a peerStatus) UpdateEndpoint(endpoint netip.AddrPort) {
 	a.PeerStatusSpec.Endpoint = endpoint
 	a.PeerStatusSpec.LastUsedEndpoint = endpoint
 	a.PeerStatusSpec.LastEndpointChange = time.Now()
@@ -122,18 +124,18 @@ func (a peerStatus) UpdateEndpoint(endpoint netaddr.IPPort) {
 
 // ShouldChangeEndpoint tells whether endpoint should be updated.
 func (a peerStatus) ShouldChangeEndpoint() bool {
-	return a.PeerStatusSpec.State == kubespan.PeerStateDown || a.PeerStatusSpec.LastUsedEndpoint.IsZero()
+	return a.PeerStatusSpec.State == kubespan.PeerStateDown || generic.IsZero(a.PeerStatusSpec.LastUsedEndpoint)
 }
 
 // PickNewEndpoint picks new endpoint given the state and list of available endpoints.
 //
 // If returned newEndpoint is zero value, no new endpoint is available.
-func (a peerStatus) PickNewEndpoint(endpoints []netaddr.IPPort) (newEndpoint netaddr.IPPort) {
+func (a peerStatus) PickNewEndpoint(endpoints []netip.AddrPort) (newEndpoint netip.AddrPort) {
 	if len(endpoints) == 0 {
 		return
 	}
 
-	if a.PeerStatusSpec.LastUsedEndpoint.IsZero() {
+	if generic.IsZero(a.PeerStatusSpec.LastUsedEndpoint) {
 		// first time setting the endpoint
 		newEndpoint = endpoints[0]
 	} else {

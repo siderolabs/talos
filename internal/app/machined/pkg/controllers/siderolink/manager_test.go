@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/talos-systems/go-retry/retry"
 	pb "github.com/talos-systems/siderolink/api/siderolink"
 	"google.golang.org/grpc"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
 	siderolinkctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/siderolink"
@@ -83,7 +83,7 @@ func (suite *ManagerSuite) TestReconcile() {
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), networkStatus))
 
-	nodeAddress := netaddr.MustParseIPPrefix(mockNodeAddressPrefix)
+	nodeAddress := netip.MustParsePrefix(mockNodeAddressPrefix)
 
 	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
 		addressResource, err := ctest.Get[*network.AddressSpec](
@@ -139,9 +139,9 @@ func (suite *ManagerSuite) TestReconcile() {
 		suite.Assert().Equal(mockServerEndpoint, link.Wireguard.Peers[0].Endpoint)
 		suite.Assert().Equal(mockServerPublicKey, link.Wireguard.Peers[0].PublicKey)
 		suite.Assert().Equal(
-			[]netaddr.IPPrefix{
-				netaddr.IPPrefixFrom(
-					netaddr.MustParseIP(mockServerAddress),
+			[]netip.Prefix{
+				netip.PrefixFrom(
+					netip.MustParseAddr(mockServerAddress),
 					128,
 				),
 			}, link.Wireguard.Peers[0].AllowedIPs,

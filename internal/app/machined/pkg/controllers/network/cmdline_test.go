@@ -6,12 +6,12 @@ package network_test
 
 import (
 	"net"
+	"net/netip"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -97,8 +97,8 @@ func (suite *CmdlineSuite) TestParse() {
 			cmdline: "ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::",
 
 			expectedSettings: network.CmdlineNetworking{
-				Address:  netaddr.MustParseIPPrefix("172.20.0.2/24"),
-				Gateway:  netaddr.MustParseIP("172.20.0.1"),
+				Address:  netip.MustParsePrefix("172.20.0.2/24"),
+				Gateway:  netip.MustParseAddr("172.20.0.1"),
 				LinkName: "eth1",
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
@@ -114,8 +114,8 @@ func (suite *CmdlineSuite) TestParse() {
 			cmdline: "ip=172.20.0.2::172.20.0.1",
 
 			expectedSettings: network.CmdlineNetworking{
-				Address:  netaddr.MustParseIPPrefix("172.20.0.2/32"),
-				Gateway:  netaddr.MustParseIP("172.20.0.1"),
+				Address:  netip.MustParsePrefix("172.20.0.2/32"),
+				Gateway:  netip.MustParseAddr("172.20.0.1"),
 				LinkName: defaultIfaceName,
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
@@ -131,12 +131,12 @@ func (suite *CmdlineSuite) TestParse() {
 			cmdline: "ip=172.20.0.2:172.21.0.1:172.20.0.1:255.255.255.0:master1:eth1::10.0.0.1:10.0.0.2:10.0.0.1",
 
 			expectedSettings: network.CmdlineNetworking{
-				Address:      netaddr.MustParseIPPrefix("172.20.0.2/24"),
-				Gateway:      netaddr.MustParseIP("172.20.0.1"),
+				Address:      netip.MustParsePrefix("172.20.0.2/24"),
+				Gateway:      netip.MustParseAddr("172.20.0.1"),
 				Hostname:     "master1",
 				LinkName:     "eth1",
-				DNSAddresses: []netaddr.IP{netaddr.MustParseIP("10.0.0.1"), netaddr.MustParseIP("10.0.0.2")},
-				NTPAddresses: []netaddr.IP{netaddr.MustParseIP("10.0.0.1")},
+				DNSAddresses: []netip.Addr{netip.MustParseAddr("10.0.0.1"), netip.MustParseAddr("10.0.0.2")},
+				NTPAddresses: []netip.Addr{netip.MustParseAddr("10.0.0.1")},
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
 						Name:        "eth1",
@@ -150,12 +150,12 @@ func (suite *CmdlineSuite) TestParse() {
 			name:    "ipv6",
 			cmdline: "ip=[2001:db8::a]:[2001:db8::b]:[fe80::1]::master1:eth1::[2001:4860:4860::6464]:[2001:4860:4860::64]:[2001:4860:4806::]",
 			expectedSettings: network.CmdlineNetworking{
-				Address:      netaddr.MustParseIPPrefix("2001:db8::a/128"),
-				Gateway:      netaddr.MustParseIP("fe80::1"),
+				Address:      netip.MustParsePrefix("2001:db8::a/128"),
+				Gateway:      netip.MustParseAddr("fe80::1"),
 				Hostname:     "master1",
 				LinkName:     "eth1",
-				DNSAddresses: []netaddr.IP{netaddr.MustParseIP("2001:4860:4860::6464"), netaddr.MustParseIP("2001:4860:4860::64")},
-				NTPAddresses: []netaddr.IP{netaddr.MustParseIP("2001:4860:4806::")},
+				DNSAddresses: []netip.Addr{netip.MustParseAddr("2001:4860:4860::6464"), netip.MustParseAddr("2001:4860:4860::64")},
+				NTPAddresses: []netip.Addr{netip.MustParseAddr("2001:4860:4806::")},
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
 						Name:        "eth1",
@@ -169,7 +169,7 @@ func (suite *CmdlineSuite) TestParse() {
 			name:    "unparseable IP",
 			cmdline: "ip=xyz:",
 
-			expectedError: "cmdline address parse failure: ParseIP(\"xyz\"): unable to parse IP",
+			expectedError: "cmdline address parse failure: ParseAddr(\"xyz\"): unable to parse IP",
 		},
 		{
 			name:    "hostname override",
@@ -315,8 +315,8 @@ func (suite *CmdlineSuite) TestParse() {
 			name:    "vlan configuration",
 			cmdline: "vlan=eth1.169:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.169:::::",
 			expectedSettings: network.CmdlineNetworking{
-				Address:  netaddr.MustParseIPPrefix("172.20.0.2/24"),
-				Gateway:  netaddr.MustParseIP("172.20.0.1"),
+				Address:  netip.MustParsePrefix("172.20.0.2/24"),
+				Gateway:  netip.MustParseAddr("172.20.0.1"),
 				LinkName: "eth1.169",
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{

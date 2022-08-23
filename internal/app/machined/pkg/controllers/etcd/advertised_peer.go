@@ -7,6 +7,7 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"reflect"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	etcdcli "github.com/talos-systems/talos/internal/pkg/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -112,7 +112,7 @@ func (ctrl *AdvertisedPeerController) Run(ctx context.Context, r controller.Runt
 	}
 }
 
-func (ctrl *AdvertisedPeerController) updateAdvertisedPeers(ctx context.Context, logger *zap.Logger, advertisedAddresses []netaddr.IP) error {
+func (ctrl *AdvertisedPeerController) updateAdvertisedPeers(ctx context.Context, logger *zap.Logger, advertisedAddresses []netip.Addr) error {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
@@ -145,7 +145,7 @@ func (ctrl *AdvertisedPeerController) updateAdvertisedPeers(ctx context.Context,
 		return fmt.Errorf("local member not found in member list")
 	}
 
-	newPeerURLs := slices.Map(advertisedAddresses, func(addr netaddr.IP) string {
+	newPeerURLs := slices.Map(advertisedAddresses, func(addr netip.Addr) string {
 		return fmt.Sprintf("https://%s", nethelpers.JoinHostPort(addr.String(), constants.EtcdPeerPort))
 	})
 	currentPeerURLs := localMember.PeerURLs

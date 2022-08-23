@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	stdnet "net"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -16,7 +17,6 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/net"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -129,53 +129,53 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 		listenCIDRs = append(listenCIDRs, etcdConfig.TypedSpec().ListenValidSubnets...)
 		listenCIDRs = append(listenCIDRs, slices.Map(etcdConfig.TypedSpec().ListenExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
 
-		defaultListenAddress := netaddr.IPv4(0, 0, 0, 0)
-		loopbackAddress := netaddr.IPv4(127, 0, 0, 1)
+		defaultListenAddress := netip.AddrFrom4([4]byte{0, 0, 0, 0})
+		loopbackAddress := netip.AddrFrom4([4]byte{127, 0, 0, 1})
 
 		for _, ip := range addrs {
 			if ip.Is6() {
-				defaultListenAddress = netaddr.IPv6Unspecified()
-				loopbackAddress = netaddr.MustParseIP("::1")
+				defaultListenAddress = netip.IPv6Unspecified()
+				loopbackAddress = netip.MustParseAddr("::1")
 
 				break
 			}
 		}
 
 		var (
-			advertisedIPs   []netaddr.IP
-			listenPeerIPs   []netaddr.IP
-			listenClientIPs []netaddr.IP
+			advertisedIPs   []netip.Addr
+			listenPeerIPs   []netip.Addr
+			listenClientIPs []netip.Addr
 		)
 
 		if len(advertisedCIDRs) > 0 {
 			// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
 			var stdIPs []stdnet.IP
 
-			stdIPs, err = net.FilterIPs(nethelpers.MapNetAddrToStd(addrs), advertisedCIDRs)
+			stdIPs, err = net.FilterIPs(nethelpers.MapNetIPToStd(addrs), advertisedCIDRs)
 			if err != nil {
 				return fmt.Errorf("error filtering IPs: %w", err)
 			}
 
-			advertisedIPs = nethelpers.MapStdToNetAddr(stdIPs)
+			advertisedIPs = nethelpers.MapStdToNetIP(stdIPs)
 		} else {
 			// if advertise subnet is not set, advertise the first address
-			advertisedIPs = []netaddr.IP{addrs[0]}
+			advertisedIPs = []netip.Addr{addrs[0]}
 		}
 
 		if len(listenCIDRs) > 0 {
 			// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
 			var stdIPs []stdnet.IP
 
-			stdIPs, err = net.FilterIPs(nethelpers.MapNetAddrToStd(addrs), listenCIDRs)
+			stdIPs, err = net.FilterIPs(nethelpers.MapNetIPToStd(addrs), listenCIDRs)
 			if err != nil {
 				return fmt.Errorf("error filtering IPs: %w", err)
 			}
 
-			listenPeerIPs = nethelpers.MapStdToNetAddr(stdIPs)
-			listenClientIPs = append([]netaddr.IP{loopbackAddress}, listenPeerIPs...)
+			listenPeerIPs = nethelpers.MapStdToNetIP(stdIPs)
+			listenClientIPs = append([]netip.Addr{loopbackAddress}, listenPeerIPs...)
 		} else {
-			listenPeerIPs = []netaddr.IP{defaultListenAddress}
-			listenClientIPs = []netaddr.IP{defaultListenAddress}
+			listenPeerIPs = []netip.Addr{defaultListenAddress}
+			listenClientIPs = []netip.Addr{defaultListenAddress}
 		}
 
 		if len(advertisedIPs) == 0 || len(listenPeerIPs) == 0 {

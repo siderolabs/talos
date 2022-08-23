@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -93,7 +94,7 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, log
 		}
 
 		for _, item := range list.Items {
-			if item.(*network.RouteStatus).TypedSpec().Destination.IsZero() {
+			if generic.IsZero(item.(*network.RouteStatus).TypedSpec().Destination) {
 				result.ConnectivityReady = true
 
 				break

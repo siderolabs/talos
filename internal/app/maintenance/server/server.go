@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 	"strings"
 
 	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
@@ -19,7 +20,6 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/resources"
@@ -131,7 +131,7 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	return nil, status.Error(codes.Unimplemented, "client configuration (talosconfig) can't be generated in the maintenance mode")
 }
 
-func verifyPeer(ctx context.Context, condition func(netaddr.IP) bool) bool {
+func verifyPeer(ctx context.Context, condition func(netip.Addr) bool) bool {
 	remotePeer, ok := peer.FromContext(ctx)
 	if !ok {
 		return false
@@ -146,7 +146,7 @@ func verifyPeer(ctx context.Context, condition func(netaddr.IP) bool) bool {
 		return false
 	}
 
-	addr, err := netaddr.ParseIP(ip)
+	addr, err := netip.ParseAddr(ip)
 	if err != nil {
 		return false
 	}
@@ -156,7 +156,7 @@ func verifyPeer(ctx context.Context, condition func(netaddr.IP) bool) bool {
 
 // Version implements the machine.MachineServer interface.
 func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (*machine.VersionResponse, error) {
-	if !verifyPeer(ctx, func(addr netaddr.IP) bool {
+	if !verifyPeer(ctx, func(addr netip.Addr) bool {
 		return network.IsULA(addr, network.ULASideroLink)
 	}) {
 		return nil, status.Error(codes.Unimplemented, "Version API is not implemented in maintenance mode")

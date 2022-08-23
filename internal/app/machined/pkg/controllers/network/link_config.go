@@ -7,13 +7,13 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
@@ -425,10 +425,10 @@ func wireguardLink(link *network.LinkSpecSpec, config talosconfig.WireguardConfi
 	}
 
 	for _, peer := range config.Peers() {
-		allowedIPs := make([]netaddr.IPPrefix, 0, len(peer.AllowedIPs()))
+		allowedIPs := make([]netip.Prefix, 0, len(peer.AllowedIPs()))
 
 		for _, allowedIP := range peer.AllowedIPs() {
-			ip, err := netaddr.ParseIPPrefix(allowedIP)
+			ip, err := netip.ParsePrefix(allowedIP)
 			if err != nil {
 				return err
 			}

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -20,7 +21,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -78,9 +78,9 @@ func (suite *NodeIPSuite) TestReconcileIPv4() {
 		network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
 	)
 
-	addresses.TypedSpec().Addresses = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.0.0.2/32"), // excluded explicitly
-		netaddr.MustParseIPPrefix("10.0.0.5/24"),
+	addresses.TypedSpec().Addresses = []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.2/32"), // excluded explicitly
+		netip.MustParsePrefix("10.0.0.5/24"),
 	}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, addresses))
@@ -122,11 +122,11 @@ func (suite *NodeIPSuite) TestReconcileDefaultSubnets() {
 		network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
 	)
 
-	addresses.TypedSpec().Addresses = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.0.0.5/24"),
-		netaddr.MustParseIPPrefix("192.168.1.1/24"),
-		netaddr.MustParseIPPrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7334/64"),
-		netaddr.MustParseIPPrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7335/64"),
+	addresses.TypedSpec().Addresses = []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.5/24"),
+		netip.MustParsePrefix("192.168.1.1/24"),
+		netip.MustParsePrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7334/64"),
+		netip.MustParsePrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7335/64"),
 	}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, addresses))

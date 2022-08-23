@@ -8,12 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/talos-systems/go-procfs/procfs"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
@@ -25,12 +25,12 @@ import (
 // CmdlineNetworking contains parsed cmdline networking settings.
 type CmdlineNetworking struct {
 	DHCP             bool
-	Address          netaddr.IPPrefix
-	Gateway          netaddr.IP
+	Address          netip.Prefix
+	Gateway          netip.Addr
 	Hostname         string
 	LinkName         string
-	DNSAddresses     []netaddr.IP
-	NTPAddresses     []netaddr.IP
+	DNSAddresses     []netip.Addr
+	NTPAddresses     []netip.Addr
 	IgnoreInterfaces []string
 	NetworkLinkSpecs []network.LinkSpecSpec
 }
@@ -110,31 +110,31 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 				switch i {
 				case 0:
-					var ip netaddr.IP
+					var ip netip.Addr
 
-					ip, err = netaddr.ParseIP(fields[0])
+					ip, err = netip.ParseAddr(fields[0])
 					if err != nil {
 						return settings, fmt.Errorf("cmdline address parse failure: %s", err)
 					}
 
 					// default is to have complete address masked
-					settings.Address = netaddr.IPPrefixFrom(ip, ip.BitLen())
+					settings.Address = netip.PrefixFrom(ip, ip.BitLen())
 				case 2:
-					settings.Gateway, err = netaddr.ParseIP(fields[2])
+					settings.Gateway, err = netip.ParseAddr(fields[2])
 					if err != nil {
 						return settings, fmt.Errorf("cmdline gateway parse failure: %s", err)
 					}
 				case 3:
-					var netmask netaddr.IP
+					var netmask netip.Addr
 
-					netmask, err = netaddr.ParseIP(fields[3])
+					netmask, err = netip.ParseAddr(fields[3])
 					if err != nil {
 						return settings, fmt.Errorf("cmdline netmask parse failure: %s", err)
 					}
 
-					ones, _ := net.IPMask(netmask.IPAddr().IP).Size()
+					ones, _ := net.IPMask(netmask.AsSlice()).Size()
 
-					settings.Address = netaddr.IPPrefixFrom(settings.Address.IP(), uint8(ones))
+					settings.Address = netip.PrefixFrom(settings.Address.Addr(), ones)
 				case 4:
 					if settings.Hostname == "" {
 						settings.Hostname = fields[4]
@@ -142,18 +142,18 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 				case 5:
 					settings.LinkName = fields[5]
 				case 7, 8:
-					var dnsIP netaddr.IP
+					var dnsIP netip.Addr
 
-					dnsIP, err = netaddr.ParseIP(fields[i])
+					dnsIP, err = netip.ParseAddr(fields[i])
 					if err != nil {
 						return settings, fmt.Errorf("error parsing DNS IP: %w", err)
 					}
 
 					settings.DNSAddresses = append(settings.DNSAddresses, dnsIP)
 				case 9:
-					var ntpIP netaddr.IP
+					var ntpIP netip.Addr
 
-					ntpIP, err = netaddr.ParseIP(fields[i])
+					ntpIP, err = netip.ParseAddr(fields[i])
 					if err != nil {
 						return settings, fmt.Errorf("error parsing DNS IP: %w", err)
 					}

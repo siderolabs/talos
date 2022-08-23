@@ -5,11 +5,12 @@
 package network
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -24,7 +25,7 @@ type ResolverStatus = typed.Resource[ResolverStatusSpec, ResolverStatusRD]
 //
 //gotagsrewrite:gen
 type ResolverStatusSpec struct {
-	DNSServers []netaddr.IP `yaml:"dnsServers" protobuf:"1"`
+	DNSServers []netip.Addr `yaml:"dnsServers" protobuf:"1"`
 }
 
 // NewResolverStatus initializes a ResolverStatus resource.

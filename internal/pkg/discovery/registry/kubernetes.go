@@ -8,11 +8,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/netip"
 	"strings"
 	"time"
 
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +26,7 @@ import (
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
@@ -48,7 +49,7 @@ func NewKubernetes(client *kubernetes.Client) *Kubernetes {
 func AnnotationsFromAffiliate(affiliate *cluster.Affiliate) map[string]string {
 	var kubeSpanAddress string
 
-	if !affiliate.TypedSpec().KubeSpan.Address.IsZero() {
+	if !generic.IsZero(affiliate.TypedSpec().KubeSpan.Address) {
 		kubeSpanAddress = affiliate.TypedSpec().KubeSpan.Address.String()
 	}
 
@@ -110,7 +111,7 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 	}
 
 	if ksIP, ok := node.Annotations[constants.KubeSpanIPAnnotation]; ok {
-		affiliate.KubeSpan.Address, _ = netaddr.ParseIP(ksIP) //nolint:errcheck
+		affiliate.KubeSpan.Address, _ = netip.ParseAddr(ksIP) //nolint:errcheck
 	}
 
 	if additionalAddresses, ok := node.Annotations[constants.KubeSpanAssignedPrefixesAnnotation]; ok {
@@ -124,23 +125,23 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 	return affiliate
 }
 
-func ipsToString(in []netaddr.IP) string {
-	return strings.Join(slices.Map(in, netaddr.IP.String), ",")
+func ipsToString(in []netip.Addr) string {
+	return strings.Join(slices.Map(in, netip.Addr.String), ",")
 }
 
-func ipPrefixesToString(in []netaddr.IPPrefix) string {
-	return strings.Join(slices.Map(in, netaddr.IPPrefix.String), ",")
+func ipPrefixesToString(in []netip.Prefix) string {
+	return strings.Join(slices.Map(in, netip.Prefix.String), ",")
 }
 
-func ipPortsToString(in []netaddr.IPPort) string {
-	return strings.Join(slices.Map(in, netaddr.IPPort.String), ",")
+func ipPortsToString(in []netip.AddrPort) string {
+	return strings.Join(slices.Map(in, netip.AddrPort.String), ",")
 }
 
-func parseIPs(in string) []netaddr.IP {
-	var result []netaddr.IP
+func parseIPs(in string) []netip.Addr {
+	var result []netip.Addr
 
 	for _, item := range strings.Split(in, ",") {
-		if ip, err := netaddr.ParseIP(item); err == nil {
+		if ip, err := netip.ParseAddr(item); err == nil {
 			result = append(result, ip)
 		}
 	}
@@ -148,11 +149,11 @@ func parseIPs(in string) []netaddr.IP {
 	return result
 }
 
-func parseIPPrefixes(in string) []netaddr.IPPrefix {
-	var result []netaddr.IPPrefix
+func parseIPPrefixes(in string) []netip.Prefix {
+	var result []netip.Prefix
 
 	for _, item := range strings.Split(in, ",") {
-		if ip, err := netaddr.ParseIPPrefix(item); err == nil {
+		if ip, err := netip.ParsePrefix(item); err == nil {
 			result = append(result, ip)
 		}
 	}
@@ -160,11 +161,11 @@ func parseIPPrefixes(in string) []netaddr.IPPrefix {
 	return result
 }
 
-func parseIPPorts(in string) []netaddr.IPPort {
-	var result []netaddr.IPPort
+func parseIPPorts(in string) []netip.AddrPort {
+	var result []netip.AddrPort
 
 	for _, item := range strings.Split(in, ",") {
-		if ip, err := netaddr.ParseIPPort(item); err == nil {
+		if ip, err := netip.ParseAddrPort(item); err == nil {
 			result = append(result, ip)
 		}
 	}

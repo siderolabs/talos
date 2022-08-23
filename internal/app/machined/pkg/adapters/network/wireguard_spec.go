@@ -6,9 +6,10 @@ package network
 
 import (
 	"net"
+	"net/netip"
 
+	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -95,8 +96,8 @@ func (a wireguardSpec) Encode(existing *network.WireguardSpec) (*wgtypes.Config,
 				PresharedKey:                presharedKey,
 				PersistentKeepaliveInterval: &peer.PersistentKeepaliveInterval,
 				ReplaceAllowedIPs:           true,
-				AllowedIPs: slices.Map(peer.AllowedIPs, func(peerIP netaddr.IPPrefix) net.IPNet {
-					return *peerIP.IPNet()
+				AllowedIPs: slices.Map(peer.AllowedIPs, func(peerIP netip.Prefix) net.IPNet {
+					return *netipx.PrefixIPNet(peerIP)
 				}),
 			})
 
@@ -189,8 +190,8 @@ func (a wireguardSpec) Decode(dev *wgtypes.Device, isStatus bool) {
 		}
 
 		spec.Peers[i].PersistentKeepaliveInterval = dev.Peers[i].PersistentKeepaliveInterval
-		spec.Peers[i].AllowedIPs = slices.Map(dev.Peers[i].AllowedIPs, func(peerIP net.IPNet) netaddr.IPPrefix {
-			res, _ := netaddr.FromStdIPNet(&peerIP)
+		spec.Peers[i].AllowedIPs = slices.Map(dev.Peers[i].AllowedIPs, func(peerIP net.IPNet) netip.Prefix {
+			res, _ := netipx.FromStdIPNet(&peerIP)
 
 			return res
 		})

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -16,7 +17,7 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
+	"go4.org/netipx"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
@@ -154,7 +155,7 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	addr, _ := netaddr.FromStdIPNet(&net.IPNet{
+	addr, _ := netipx.FromStdIPNet(&net.IPNet{
 		IP:   ack.YourIPAddr,
 		Mask: ack.SubnetMask(),
 	})
@@ -190,13 +191,13 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 
 	if len(ack.ClasslessStaticRoute()) > 0 {
 		for _, route := range ack.ClasslessStaticRoute() {
-			gw, _ := netaddr.FromStdIP(route.Router)
-			dst, _ := netaddr.FromStdIPNet(route.Dest)
+			gw, _ := netipx.FromStdIP(route.Router)
+			dst, _ := netipx.FromStdIPNet(route.Dest)
 
 			d.routes = append(d.routes, network.RouteSpecSpec{
 				Family:      nethelpers.FamilyInet4,
 				Destination: dst,
-				Source:      addr.IP(),
+				Source:      addr.Addr(),
 				Gateway:     gw,
 				OutLinkName: d.linkName,
 				Table:       nethelpers.TableMain,
@@ -209,12 +210,12 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 		}
 	} else {
 		for _, router := range ack.Router() {
-			gw, _ := netaddr.FromStdIP(router)
+			gw, _ := netipx.FromStdIP(router)
 
 			d.routes = append(d.routes, network.RouteSpecSpec{
 				Family:      nethelpers.FamilyInet4,
 				Gateway:     gw,
-				Source:      addr.IP(),
+				Source:      addr.Addr(),
 				OutLinkName: d.linkName,
 				Table:       nethelpers.TableMain,
 				Priority:    d.routeMetric,
@@ -228,8 +229,8 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 				// add an interface route for the gateway if it's not in the same network
 				d.routes = append(d.routes, network.RouteSpecSpec{
 					Family:      nethelpers.FamilyInet4,
-					Destination: netaddr.IPPrefixFrom(gw, gw.BitLen()),
-					Source:      addr.IP(),
+					Destination: netip.PrefixFrom(gw, gw.BitLen()),
+					Source:      addr.Addr(),
 					OutLinkName: d.linkName,
 					Table:       nethelpers.TableMain,
 					Priority:    d.routeMetric,
@@ -247,8 +248,8 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 	}
 
 	if len(ack.DNS()) > 0 {
-		convertIP := func(ip net.IP) netaddr.IP {
-			result, _ := netaddr.FromStdIP(ip)
+		convertIP := func(ip net.IP) netip.Addr {
+			result, _ := netipx.FromStdIP(ip)
 
 			return result
 		}
@@ -285,7 +286,7 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 
 	if len(ack.NTPServers()) > 0 {
 		convertIP := func(ip net.IP) string {
-			result, _ := netaddr.FromStdIP(ip)
+			result, _ := netipx.FromStdIP(ip)
 
 			return result.String()
 		}

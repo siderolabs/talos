@@ -10,6 +10,7 @@ import (
 	"crypto/cipher"
 	"errors"
 	"fmt"
+	"net/netip"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -19,7 +20,6 @@ import (
 	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
 	discoveryclient "github.com/talos-systems/discovery-client/pkg/client"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
@@ -280,7 +280,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 }
 
 func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
-	addresses := slices.Map(affiliate.Addresses, func(address netaddr.IP) []byte {
+	addresses := slices.Map(affiliate.Addresses, func(address netip.Addr) []byte {
 		result, _ := address.MarshalBinary() //nolint:errcheck // doesn't fail
 
 		return result
@@ -302,7 +302,7 @@ func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
 				Bits: uint32(affiliate.KubeSpan.AdditionalAddresses[i].Bits()),
 			}
 
-			additionalAddresses[i].Ip, _ = affiliate.KubeSpan.AdditionalAddresses[i].IP().MarshalBinary() //nolint:errcheck // doesn't fail
+			additionalAddresses[i].Ip, _ = affiliate.KubeSpan.AdditionalAddresses[i].Addr().MarshalBinary() //nolint:errcheck // doesn't fail
 		}
 
 		kubeSpan.AdditionalAddresses = additionalAddresses
@@ -331,7 +331,7 @@ func pbEndpoints(affiliate *cluster.AffiliateSpec) []*pb.Endpoint {
 			Port: uint32(affiliate.KubeSpan.Endpoints[i].Port()),
 		}
 
-		result[i].Ip, _ = affiliate.KubeSpan.Endpoints[i].IP().MarshalBinary() //nolint:errcheck // doesn't fail
+		result[i].Ip, _ = affiliate.KubeSpan.Endpoints[i].Addr().MarshalBinary() //nolint:errcheck // doesn't fail
 	}
 
 	return result
@@ -351,7 +351,7 @@ func pbOtherEndpoints(otherEndpointsList resource.List) []discoveryclient.Endpoi
 			Port: uint32(endpoint.Endpoint.Port()),
 		}
 
-		encodedEndpoint.Ip, _ = endpoint.Endpoint.IP().MarshalBinary() //nolint:errcheck // doesn't fail
+		encodedEndpoint.Ip, _ = endpoint.Endpoint.Addr().MarshalBinary() //nolint:errcheck // doesn't fail
 
 		result = append(result, discoveryclient.Endpoint{
 			AffiliateID: endpoint.AffiliateID,
@@ -414,10 +414,10 @@ func specAffiliate(affiliate *pb.Affiliate, endpoints []*pb.Endpoint) cluster.Af
 
 	result.MachineType, _ = machine.ParseType(affiliate.MachineType) //nolint:errcheck // ignore parse error (machine.TypeUnknown)
 
-	result.Addresses = make([]netaddr.IP, 0, len(affiliate.Addresses))
+	result.Addresses = make([]netip.Addr, 0, len(affiliate.Addresses))
 
 	for i := range affiliate.Addresses {
-		var ip netaddr.IP
+		var ip netip.Addr
 
 		if err := ip.UnmarshalBinary(affiliate.Addresses[i]); err == nil {
 			result.Addresses = append(result.Addresses, ip)
@@ -428,23 +428,23 @@ func specAffiliate(affiliate *pb.Affiliate, endpoints []*pb.Endpoint) cluster.Af
 		result.KubeSpan.PublicKey = affiliate.Kubespan.PublicKey
 		result.KubeSpan.Address.UnmarshalBinary(affiliate.Kubespan.Address) //nolint:errcheck // ignore error, address will be zero
 
-		result.KubeSpan.AdditionalAddresses = make([]netaddr.IPPrefix, 0, len(affiliate.Kubespan.AdditionalAddresses))
+		result.KubeSpan.AdditionalAddresses = make([]netip.Prefix, 0, len(affiliate.Kubespan.AdditionalAddresses))
 
 		for i := range affiliate.Kubespan.AdditionalAddresses {
-			var ip netaddr.IP
+			var ip netip.Addr
 
 			if err := ip.UnmarshalBinary(affiliate.Kubespan.AdditionalAddresses[i].Ip); err == nil {
-				result.KubeSpan.AdditionalAddresses = append(result.KubeSpan.AdditionalAddresses, netaddr.IPPrefixFrom(ip, uint8(affiliate.Kubespan.AdditionalAddresses[i].Bits)))
+				result.KubeSpan.AdditionalAddresses = append(result.KubeSpan.AdditionalAddresses, netip.PrefixFrom(ip, int(affiliate.Kubespan.AdditionalAddresses[i].Bits)))
 			}
 		}
 
-		result.KubeSpan.Endpoints = make([]netaddr.IPPort, 0, len(endpoints))
+		result.KubeSpan.Endpoints = make([]netip.AddrPort, 0, len(endpoints))
 
 		for i := range endpoints {
-			var ip netaddr.IP
+			var ip netip.Addr
 
 			if err := ip.UnmarshalBinary(endpoints[i].Ip); err == nil {
-				result.KubeSpan.Endpoints = append(result.KubeSpan.Endpoints, netaddr.IPPortFrom(ip, uint16(endpoints[i].Port)))
+				result.KubeSpan.Endpoints = append(result.KubeSpan.Endpoints, netip.AddrPortFrom(ip, uint16(endpoints[i].Port)))
 			}
 		}
 	}

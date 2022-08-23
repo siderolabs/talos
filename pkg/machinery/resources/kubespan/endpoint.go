@@ -5,11 +5,12 @@
 package kubespan
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -27,7 +28,7 @@ type Endpoint = typed.Resource[EndpointSpec, EndpointRD]
 //gotagsrewrite:gen
 type EndpointSpec struct {
 	AffiliateID string         `yaml:"affiliateID" protobuf:"1"`
-	Endpoint    netaddr.IPPort `yaml:"endpoint" protobuf:"2"`
+	Endpoint    netip.AddrPort `yaml:"endpoint" protobuf:"2"`
 }
 
 // NewEndpoint initializes a Endpoint resource.

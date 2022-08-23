@@ -5,11 +5,12 @@
 package network
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -26,9 +27,9 @@ type RouteStatus = typed.Resource[RouteStatusSpec, RouteStatusRD]
 //gotagsrewrite:gen
 type RouteStatusSpec struct {
 	Family       nethelpers.Family        `yaml:"family" protobuf:"1"`
-	Destination  netaddr.IPPrefix         `yaml:"dst" protobuf:"2"`
-	Source       netaddr.IP               `yaml:"src" protobuf:"3"`
-	Gateway      netaddr.IP               `yaml:"gateway" protobuf:"4"`
+	Destination  netip.Prefix             `yaml:"dst" protobuf:"2"`
+	Source       netip.Addr               `yaml:"src" protobuf:"3"`
+	Gateway      netip.Addr               `yaml:"gateway" protobuf:"4"`
 	OutLinkIndex uint32                   `yaml:"outLinkIndex,omitempty" protobuf:"5"`
 	OutLinkName  string                   `yaml:"outLinkName,omitempty" protobuf:"6"`
 	Table        nethelpers.RoutingTable  `yaml:"table" protobuf:"7"`

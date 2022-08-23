@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -15,7 +16,6 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/net"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -106,17 +106,17 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 		cidrs = append(cidrs, slices.Map(cfgSpec.ExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
 
 		// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
-		stdIPs, err := net.FilterIPs(nethelpers.MapNetAddrToStd(addrs), cidrs)
+		stdIPs, err := net.FilterIPs(nethelpers.MapNetIPToStd(addrs), cidrs)
 		if err != nil {
 			return fmt.Errorf("error filtering IPs: %w", err)
 		}
 
-		ips := nethelpers.MapStdToNetAddr(stdIPs)
+		ips := nethelpers.MapStdToNetIP(stdIPs)
 
 		// filter down to make sure only one IPv4 and one IPv6 address stays
 		var hasIPv4, hasIPv6 bool
 
-		nodeIPs := make([]netaddr.IP, 0, 2)
+		nodeIPs := make([]netip.Addr, 0, 2)
 
 		for _, ip := range ips {
 			switch {

@@ -5,13 +5,14 @@
 package kubespan_test
 
 import (
+	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"inet.af/netaddr"
 
 	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
 
@@ -20,11 +21,11 @@ func TestPeerStatus_PickNewEndpoint(t *testing.T) {
 	peerStatus := kubespan.PeerStatusSpec{}
 
 	// no endpoint => no way to pick new one
-	assert.True(t, kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(nil).IsZero())
+	assert.True(t, generic.IsZero(kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(nil)))
 
-	endpoints := []netaddr.IPPort{
-		netaddr.MustParseIPPort("10.3.4.5:10500"),
-		netaddr.MustParseIPPort("192.168.3.8:457"),
+	endpoints := []netip.AddrPort{
+		netip.MustParseAddrPort("10.3.4.5:10500"),
+		netip.MustParseAddrPort("192.168.3.8:457"),
 	}
 
 	// initial choice should be the first endpoint
@@ -43,7 +44,7 @@ func TestPeerStatus_PickNewEndpoint(t *testing.T) {
 	kubespanadapter.PeerStatusSpec(&peerStatus).UpdateEndpoint(newEndpoint)
 
 	// can't rotate a single endpoint
-	assert.True(t, kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(endpoints[:1]).IsZero())
+	assert.True(t, generic.IsZero(kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(endpoints[:1])))
 
 	// can rotate if the endpoint is different
 	newEndpoint = kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(endpoints[1:])
@@ -51,9 +52,9 @@ func TestPeerStatus_PickNewEndpoint(t *testing.T) {
 	kubespanadapter.PeerStatusSpec(&peerStatus).UpdateEndpoint(newEndpoint)
 
 	// if totally new list of endpoints is given, pick the first one
-	endpoints = []netaddr.IPPort{
-		netaddr.MustParseIPPort("10.3.4.5:10501"),
-		netaddr.MustParseIPPort("192.168.3.8:458"),
+	endpoints = []netip.AddrPort{
+		netip.MustParseAddrPort("10.3.4.5:10501"),
+		netip.MustParseAddrPort("192.168.3.8:458"),
 	}
 	newEndpoint = kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(endpoints)
 	assert.Equal(t, endpoints[0], newEndpoint)
@@ -123,7 +124,7 @@ func TestPeerStatus_CalculateState(t *testing.T) {
 			}
 
 			if !tt.lastUsedEndpointZero {
-				peerStatus.LastUsedEndpoint = netaddr.MustParseIPPort("192.168.1.1:10000")
+				peerStatus.LastUsedEndpoint = netip.MustParseAddrPort("192.168.1.1:10000")
 			}
 
 			kubespanadapter.PeerStatusSpec(&peerStatus).CalculateStateWithDurations(tt.sinceLastHandshake, tt.sinceEndpointChange)

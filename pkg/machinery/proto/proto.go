@@ -5,6 +5,7 @@
 package proto
 
 import (
+	"net/netip"
 	"net/url"
 	"sync"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/siderolabs/protoenc"
 	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/protobuf/proto" //nolint:depguard
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 )
@@ -136,7 +136,7 @@ func registerDefaultTypes() {
 	)
 
 	protoenc.RegisterEncoderDecoder(
-		func(v netaddr.IP) ([]byte, error) {
+		func(v netip.Addr) ([]byte, error) {
 			ipEncoded, err := v.MarshalBinary()
 			if err != nil {
 				return nil, err
@@ -148,17 +148,17 @@ func registerDefaultTypes() {
 
 			return proto.Marshal(&source)
 		},
-		func(slc []byte) (netaddr.IP, error) {
+		func(slc []byte) (netip.Addr, error) {
 			var dest common.NetIP
 
 			if err := proto.Unmarshal(slc, &dest); err != nil {
-				return netaddr.IP{}, err
+				return netip.Addr{}, err
 			}
 
-			var parsedIP netaddr.IP
+			var parsedIP netip.Addr
 
 			if err := parsedIP.UnmarshalBinary(dest.Ip); err != nil {
-				return netaddr.IP{}, err
+				return netip.Addr{}, err
 			}
 
 			return parsedIP, nil
@@ -166,8 +166,8 @@ func registerDefaultTypes() {
 	)
 
 	protoenc.RegisterEncoderDecoder(
-		func(v netaddr.IPPort) ([]byte, error) {
-			ipEncoded, err := v.IP().MarshalBinary()
+		func(v netip.AddrPort) ([]byte, error) {
+			ipEncoded, err := v.Addr().MarshalBinary()
 			if err != nil {
 				return nil, err
 			}
@@ -179,26 +179,26 @@ func registerDefaultTypes() {
 
 			return proto.Marshal(&source)
 		},
-		func(slc []byte) (netaddr.IPPort, error) {
+		func(slc []byte) (netip.AddrPort, error) {
 			var dest common.NetIPPort
 
 			if err := proto.Unmarshal(slc, &dest); err != nil {
-				return netaddr.IPPort{}, err
+				return netip.AddrPort{}, err
 			}
 
-			var parsedIP netaddr.IP
+			var parsedIP netip.Addr
 
 			if err := parsedIP.UnmarshalBinary(dest.Ip); err != nil {
-				return netaddr.IPPort{}, err
+				return netip.AddrPort{}, err
 			}
 
-			return netaddr.IPPortFrom(parsedIP, uint16(dest.Port)), nil
+			return netip.AddrPortFrom(parsedIP, uint16(dest.Port)), nil
 		},
 	)
 
 	protoenc.RegisterEncoderDecoder(
-		func(v netaddr.IPPrefix) ([]byte, error) {
-			ipEncoded, err := v.IP().WithZone("").MarshalBinary()
+		func(v netip.Prefix) ([]byte, error) {
+			ipEncoded, err := v.Addr().WithZone("").MarshalBinary()
 			if err != nil {
 				return nil, err
 			}
@@ -210,20 +210,20 @@ func registerDefaultTypes() {
 
 			return proto.Marshal(&source)
 		},
-		func(slc []byte) (netaddr.IPPrefix, error) {
+		func(slc []byte) (netip.Prefix, error) {
 			var dest common.NetIPPrefix
 
 			if err := proto.Unmarshal(slc, &dest); err != nil {
-				return netaddr.IPPrefix{}, err
+				return netip.Prefix{}, err
 			}
 
-			var parsedIP netaddr.IP
+			var parsedIP netip.Addr
 
 			if err := parsedIP.UnmarshalBinary(dest.Ip); err != nil {
-				return netaddr.IPPrefix{}, err
+				return netip.Prefix{}, err
 			}
 
-			return netaddr.IPPrefixFrom(parsedIP, uint8(dest.PrefixLength)), nil
+			return netip.PrefixFrom(parsedIP, int(dest.PrefixLength)), nil
 		},
 	)
 

@@ -12,6 +12,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -20,7 +21,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -104,13 +104,13 @@ func (a *Azure) ParseMetadata(interfaceAddresses []NetworkConfig, host []byte) (
 	// external IP
 	for _, iface := range interfaceAddresses {
 		for _, ipv4addr := range iface.IPv4.IPAddresses {
-			if ip, err := netaddr.ParseIP(ipv4addr.PublicIPAddress); err == nil {
+			if ip, err := netip.ParseAddr(ipv4addr.PublicIPAddress); err == nil {
 				networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 			}
 		}
 
 		for _, ipv6addr := range iface.IPv6.IPAddresses {
-			if ip, err := netaddr.ParseIP(ipv6addr.PublicIPAddress); err == nil {
+			if ip, err := netip.ParseAddr(ipv6addr.PublicIPAddress); err == nil {
 				networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 			}
 		}
@@ -140,7 +140,7 @@ func (a *Azure) ParseMetadata(interfaceAddresses []NetworkConfig, host []byte) (
 }
 
 // ParseLoadBalancerIP parses Azure LoadBalancer metadata into the platform external ip list.
-func (a *Azure) ParseLoadBalancerIP(lbConfig LoadBalancerMetadata, exIP []netaddr.IP) ([]netaddr.IP, error) {
+func (a *Azure) ParseLoadBalancerIP(lbConfig LoadBalancerMetadata, exIP []netip.Addr) ([]netip.Addr, error) {
 	lbAddresses := exIP
 
 	for _, addr := range lbConfig.LoadBalancer.PublicIPAddresses {
@@ -150,7 +150,7 @@ func (a *Azure) ParseLoadBalancerIP(lbConfig LoadBalancerMetadata, exIP []netadd
 			ipaddr = strings.TrimPrefix(ipaddr[:i], "[")
 		}
 
-		if ip, err := netaddr.ParseIP(ipaddr); err == nil {
+		if ip, err := netip.ParseAddr(ipaddr); err == nil {
 			lbAddresses = append(lbAddresses, ip)
 		}
 	}

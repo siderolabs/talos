@@ -7,6 +7,7 @@ package secrets_test
 
 import (
 	"fmt"
+	"net/netip"
 	"reflect"
 	"testing"
 	"time"
@@ -15,7 +16,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
@@ -42,7 +42,7 @@ func (suite *APICertSANsSuite) TestReconcileControlPlane() {
 	rootSecrets := secrets.NewOSRoot(secrets.OSRootID)
 
 	rootSecrets.TypedSpec().CertSANDNSNames = []string{"some.org"}
-	rootSecrets.TypedSpec().CertSANIPs = []netaddr.IP{netaddr.MustParseIP("10.4.3.2"), netaddr.MustParseIP("10.2.1.3")}
+	rootSecrets.TypedSpec().CertSANIPs = []netip.Addr{netip.MustParseAddr("10.4.3.2"), netip.MustParseAddr("10.2.1.3")}
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), rootSecrets))
 
 	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
@@ -54,9 +54,9 @@ func (suite *APICertSANsSuite) TestReconcileControlPlane() {
 		network.NamespaceName,
 		network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s),
 	)
-	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{
-		netaddr.MustParseIPPrefix("10.2.1.3/24"),
-		netaddr.MustParseIPPrefix("172.16.0.1/32"),
+	nodeAddresses.TypedSpec().Addresses = []netip.Prefix{
+		netip.MustParsePrefix("10.2.1.3/24"),
+		netip.MustParsePrefix("172.16.0.1/32"),
 	}
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeAddresses))
 

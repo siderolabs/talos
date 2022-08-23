@@ -7,13 +7,14 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
 	"go.uber.org/zap"
+	"go4.org/netipx"
 	"golang.org/x/sys/unix"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -97,18 +98,18 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 			// * but for point-to-point IFA_ADDRESS is DESTINATION address,
 			// * local address is supplied in IFA_LOCAL attribute.
 
-			ipAddr, _ := netaddr.FromStdIPRaw(addr.Attributes.Address)
-			ipPrefix := netaddr.IPPrefixFrom(ipAddr, addr.PrefixLength)
+			ipAddr, _ := netipx.FromStdIPRaw(addr.Attributes.Address)
+			ipPrefix := netip.PrefixFrom(ipAddr, int(addr.PrefixLength))
 			id := network.AddressID(linkLookup[addr.Index], ipPrefix)
 
 			if err = r.Modify(ctx, network.NewAddressStatus(network.NamespaceName, id), func(r resource.Resource) error {
 				status := r.(*network.AddressStatus).TypedSpec()
 
 				status.Address = ipPrefix
-				status.Local, _ = netaddr.FromStdIPRaw(addr.Attributes.Local)
-				status.Broadcast, _ = netaddr.FromStdIPRaw(addr.Attributes.Broadcast)
-				status.Anycast, _ = netaddr.FromStdIPRaw(addr.Attributes.Anycast)
-				status.Multicast, _ = netaddr.FromStdIPRaw(addr.Attributes.Multicast)
+				status.Local, _ = netipx.FromStdIPRaw(addr.Attributes.Local)
+				status.Broadcast, _ = netipx.FromStdIPRaw(addr.Attributes.Broadcast)
+				status.Anycast, _ = netipx.FromStdIPRaw(addr.Attributes.Anycast)
+				status.Multicast, _ = netipx.FromStdIPRaw(addr.Attributes.Multicast)
 				status.LinkIndex = addr.Index
 				status.LinkName = linkLookup[addr.Index]
 				status.Family = nethelpers.Family(addr.Family)

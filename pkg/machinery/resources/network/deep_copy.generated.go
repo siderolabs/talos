@@ -7,7 +7,7 @@
 package network
 
 import (
-	"inet.af/netaddr"
+	"net/netip"
 )
 
 // DeepCopy generates a deep copy of AddressSpecSpec.
@@ -58,7 +58,7 @@ func (o LinkSpecSpec) DeepCopy() LinkSpecSpec {
 		copy(cp.Wireguard.Peers, o.Wireguard.Peers)
 		for i3 := range o.Wireguard.Peers {
 			if o.Wireguard.Peers[i3].AllowedIPs != nil {
-				cp.Wireguard.Peers[i3].AllowedIPs = make([]netaddr.IPPrefix, len(o.Wireguard.Peers[i3].AllowedIPs))
+				cp.Wireguard.Peers[i3].AllowedIPs = make([]netip.Prefix, len(o.Wireguard.Peers[i3].AllowedIPs))
 				copy(cp.Wireguard.Peers[i3].AllowedIPs, o.Wireguard.Peers[i3].AllowedIPs)
 			}
 		}
@@ -82,7 +82,7 @@ func (o LinkStatusSpec) DeepCopy() LinkStatusSpec {
 		copy(cp.Wireguard.Peers, o.Wireguard.Peers)
 		for i3 := range o.Wireguard.Peers {
 			if o.Wireguard.Peers[i3].AllowedIPs != nil {
-				cp.Wireguard.Peers[i3].AllowedIPs = make([]netaddr.IPPrefix, len(o.Wireguard.Peers[i3].AllowedIPs))
+				cp.Wireguard.Peers[i3].AllowedIPs = make([]netip.Prefix, len(o.Wireguard.Peers[i3].AllowedIPs))
 				copy(cp.Wireguard.Peers[i3].AllowedIPs, o.Wireguard.Peers[i3].AllowedIPs)
 			}
 		}
@@ -94,7 +94,7 @@ func (o LinkStatusSpec) DeepCopy() LinkStatusSpec {
 func (o NodeAddressSpec) DeepCopy() NodeAddressSpec {
 	var cp NodeAddressSpec = o
 	if o.Addresses != nil {
-		cp.Addresses = make([]netaddr.IPPrefix, len(o.Addresses))
+		cp.Addresses = make([]netip.Prefix, len(o.Addresses))
 		copy(cp.Addresses, o.Addresses)
 	}
 	return cp
@@ -104,11 +104,11 @@ func (o NodeAddressSpec) DeepCopy() NodeAddressSpec {
 func (o NodeAddressFilterSpec) DeepCopy() NodeAddressFilterSpec {
 	var cp NodeAddressFilterSpec = o
 	if o.IncludeSubnets != nil {
-		cp.IncludeSubnets = make([]netaddr.IPPrefix, len(o.IncludeSubnets))
+		cp.IncludeSubnets = make([]netip.Prefix, len(o.IncludeSubnets))
 		copy(cp.IncludeSubnets, o.IncludeSubnets)
 	}
 	if o.ExcludeSubnets != nil {
-		cp.ExcludeSubnets = make([]netaddr.IPPrefix, len(o.ExcludeSubnets))
+		cp.ExcludeSubnets = make([]netip.Prefix, len(o.ExcludeSubnets))
 		copy(cp.ExcludeSubnets, o.ExcludeSubnets)
 	}
 	return cp
@@ -124,7 +124,7 @@ func (o OperatorSpecSpec) DeepCopy() OperatorSpecSpec {
 func (o ResolverSpecSpec) DeepCopy() ResolverSpecSpec {
 	var cp ResolverSpecSpec = o
 	if o.DNSServers != nil {
-		cp.DNSServers = make([]netaddr.IP, len(o.DNSServers))
+		cp.DNSServers = make([]netip.Addr, len(o.DNSServers))
 		copy(cp.DNSServers, o.DNSServers)
 	}
 	return cp
@@ -134,7 +134,7 @@ func (o ResolverSpecSpec) DeepCopy() ResolverSpecSpec {
 func (o ResolverStatusSpec) DeepCopy() ResolverStatusSpec {
 	var cp ResolverStatusSpec = o
 	if o.DNSServers != nil {
-		cp.DNSServers = make([]netaddr.IP, len(o.DNSServers))
+		cp.DNSServers = make([]netip.Addr, len(o.DNSServers))
 		copy(cp.DNSServers, o.DNSServers)
 	}
 	return cp

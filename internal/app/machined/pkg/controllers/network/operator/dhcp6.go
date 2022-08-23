@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -19,8 +20,8 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/talos-systems/go-retry/retry"
 	"go.uber.org/zap"
+	"go4.org/netipx"
 	"golang.org/x/sys/unix"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
@@ -151,7 +152,7 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 	defer d.mu.Unlock()
 
 	if reply.Options.OneIANA() != nil && reply.Options.OneIANA().Options.OneAddress() != nil {
-		addr, _ := netaddr.FromStdIPNet(&net.IPNet{
+		addr, _ := netipx.FromStdIPNet(&net.IPNet{
 			IP:   reply.Options.OneIANA().Options.OneAddress().IPv6Addr,
 			Mask: net.CIDRMask(128, 128),
 		})
@@ -173,8 +174,8 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 	}
 
 	if len(reply.Options.DNS()) > 0 {
-		convertIP := func(ip net.IP) netaddr.IP {
-			result, _ := netaddr.FromStdIP(ip)
+		convertIP := func(ip net.IP) netip.Addr {
+			result, _ := netipx.FromStdIP(ip)
 
 			return result
 		}
@@ -203,7 +204,7 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 
 	if len(reply.Options.NTPServers()) > 0 {
 		convertIP := func(ip net.IP) string {
-			result, _ := netaddr.FromStdIP(ip)
+			result, _ := netipx.FromStdIP(ip)
 
 			return result.String()
 		}

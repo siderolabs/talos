@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/netip"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -18,7 +19,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -129,7 +129,7 @@ func (a *AWS) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.Platf
 	}
 
 	if externalIP != "" {
-		ip, err := netaddr.ParseIP(externalIP)
+		ip, err := netip.ParseAddr(externalIP)
 		if err != nil {
 			return err
 		}

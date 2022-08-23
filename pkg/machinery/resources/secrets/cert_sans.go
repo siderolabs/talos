@@ -6,13 +6,14 @@ package secrets
 
 import (
 	"net"
+	"net/netip"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"inet.af/netaddr"
+	"go4.org/netipx"
 
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
@@ -34,7 +35,7 @@ type CertSAN = typed.Resource[CertSANSpec, CertSANRD]
 //
 //gotagsrewrite:gen
 type CertSANSpec struct {
-	IPs      []netaddr.IP `yaml:"ips" protobuf:"1"`
+	IPs      []netip.Addr `yaml:"ips" protobuf:"1"`
 	DNSNames []string     `yaml:"dnsNames" protobuf:"2"`
 	FQDN     string       `yaml:"fqdn" protobuf:"3"`
 }
@@ -70,7 +71,7 @@ func (spec *CertSANSpec) Reset() {
 // Append list of SANs splitting into IPs/DNS names.
 func (spec *CertSANSpec) Append(sans ...string) {
 	for _, san := range sans {
-		if ip, err := netaddr.ParseIP(san); err == nil {
+		if ip, err := netip.ParseAddr(san); err == nil {
 			spec.AppendIPs(ip)
 		} else {
 			spec.AppendDNSNames(san)
@@ -79,7 +80,7 @@ func (spec *CertSANSpec) Append(sans ...string) {
 }
 
 // AppendIPs skipping duplicates.
-func (spec *CertSANSpec) AppendIPs(ips ...netaddr.IP) {
+func (spec *CertSANSpec) AppendIPs(ips ...netip.Addr) {
 	for _, ip := range ips {
 		found := false
 
@@ -100,7 +101,7 @@ func (spec *CertSANSpec) AppendIPs(ips ...netaddr.IP) {
 // AppendStdIPs is same as AppendIPs, but for net.IP.
 func (spec *CertSANSpec) AppendStdIPs(ips ...net.IP) {
 	for _, ip := range ips {
-		if nip, ok := netaddr.FromStdIP(ip); ok {
+		if nip, ok := netipx.FromStdIP(ip); ok {
 			spec.AppendIPs(nip)
 		}
 	}
@@ -127,7 +128,7 @@ func (spec *CertSANSpec) AppendDNSNames(dnsNames ...string) {
 
 // StdIPs returns a list of converted std.IPs.
 func (spec *CertSANSpec) StdIPs() []net.IP {
-	return slices.Map(spec.IPs, func(ip netaddr.IP) net.IP { return ip.IPAddr().IP })
+	return slices.Map(spec.IPs, func(ip netip.Addr) net.IP { return ip.AsSlice() })
 }
 
 // Sort the CertSANs.

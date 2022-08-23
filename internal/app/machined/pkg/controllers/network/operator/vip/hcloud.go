@@ -8,11 +8,11 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"strconv"
 
 	"github.com/hetznercloud/hcloud-go/hcloud"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -155,7 +155,7 @@ func (handler *HCloudHandler) Release(ctx context.Context) error {
 const HCloudMetaDataEndpoint = "http://169.254.169.254/hetzner/v1/metadata/instance-id"
 
 // GetNetworkAndDeviceIDs fills in parts of the spec based on the API token and instance metadata.
-func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vip netaddr.IP) error {
+func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vip netip.Addr) error {
 	metadataInstanceID, err := download.Download(ctx, HCloudMetaDataEndpoint)
 	if err != nil {
 		return fmt.Errorf("error downloading instance-id: %w", err)
@@ -181,7 +181,7 @@ func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vi
 			return fmt.Errorf("error getting network info: %w", err)
 		}
 
-		if network.IPRange.Contains(vip.IPAddr().IP) {
+		if network.IPRange.Contains(vip.AsSlice()) {
 			spec.NetworkID = privnet.Network.ID
 
 			break

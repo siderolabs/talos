@@ -7,13 +7,13 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"reflect"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
@@ -63,7 +63,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error listing members: %w", err)
 		}
 
-		var endpoints []netaddr.IP
+		var endpoints []netip.Addr
 
 		for _, res := range memberList.Items {
 			member := res.(*cluster.Member).TypedSpec()

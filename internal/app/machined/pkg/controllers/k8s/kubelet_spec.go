@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -149,7 +149,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 			nodeIPSpec := nodeIP.(*k8s.NodeIP).TypedSpec()
 
-			nodeIPsString := slices.Map(nodeIPSpec.Addresses, netaddr.IP.String)
+			nodeIPsString := slices.Map(nodeIPSpec.Addresses, netip.Addr.String)
 			args["node-ip"] = strings.Join(nodeIPsString, ",")
 		}
 

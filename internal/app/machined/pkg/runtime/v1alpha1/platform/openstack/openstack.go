@@ -11,10 +11,10 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -34,7 +34,7 @@ func (o *Openstack) Name() string {
 // ParseMetadata converts OpenStack metadata to platform network configuration.
 //
 //nolint:gocyclo,cyclop
-func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netaddr.IP) (*runtime.PlatformNetworkConfig, error) {
+func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netip.Addr) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if hostname == "" {
@@ -55,11 +55,11 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 
 	networkConfig.ExternalIPs = extIPs
 
-	var dnsIPs []netaddr.IP
+	var dnsIPs []netip.Addr
 
 	for _, netsvc := range unmarshalledNetworkConfig.Services {
 		if netsvc.Type == "dns" && netsvc.Address != "" {
-			if ip, err := netaddr.ParseIP(netsvc.Address); err == nil {
+			if ip, err := netip.ParseAddr(netsvc.Address); err == nil {
 				dnsIPs = append(dnsIPs, ip)
 			} else {
 				return nil, fmt.Errorf("failed to parse dns service ip: %w", err)
@@ -135,7 +135,7 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 			}
 
 			family := nethelpers.FamilyInet4
-			if ipPrefix.IP().Is6() {
+			if ipPrefix.Addr().Is6() {
 				family = nethelpers.FamilyInet6
 			}
 
@@ -151,7 +151,7 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 			)
 
 			if ntwrk.Gateway != "" {
-				gw, err := netaddr.ParseIP(ntwrk.Gateway)
+				gw, err := netip.ParseAddr(ntwrk.Gateway)
 				if err != nil {
 					return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
 				}
@@ -174,7 +174,7 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 		}
 
 		for _, route := range ntwrk.Routes {
-			gw, err := netaddr.ParseIP(route.Gateway)
+			gw, err := netip.ParseAddr(route.Gateway)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse route gateway: %w", err)
 			}
@@ -185,7 +185,7 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 			}
 
 			family := nethelpers.FamilyInet4
-			if dest.IP().Is6() {
+			if dest.Addr().Is6() {
 				family = nethelpers.FamilyInet6
 			}
 

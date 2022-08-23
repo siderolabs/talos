@@ -7,10 +7,10 @@ package etcd
 import (
 	stdlibx509 "crypto/x509"
 	"fmt"
+	"net/netip"
 	"time"
 
 	"github.com/talos-systems/crypto/x509"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -29,11 +29,11 @@ func (gen *CertificateGenerator) buildOptions(autoSANs, includeLocalhost bool) [
 	addresses := gen.NodeAddresses.TypedSpec().IPs()
 
 	if includeLocalhost {
-		addresses = append(addresses, netaddr.MustParseIP("127.0.0.1"))
+		addresses = append(addresses, netip.MustParseAddr("127.0.0.1"))
 
 		for _, addr := range addresses {
 			if addr.Is6() {
-				addresses = append(addresses, netaddr.MustParseIP("::1"))
+				addresses = append(addresses, netip.MustParseAddr("::1"))
 
 				break
 			}
@@ -56,7 +56,7 @@ func (gen *CertificateGenerator) buildOptions(autoSANs, includeLocalhost bool) [
 		result = append(result,
 			x509.CommonName(hostname),
 			x509.DNSNames(dnsNames),
-			x509.IPAddresses(nethelpers.MapNetAddrToStd(addresses)),
+			x509.IPAddresses(nethelpers.MapNetIPToStd(addresses)),
 		)
 	}
 

@@ -5,10 +5,10 @@
 package k8s_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
@@ -19,15 +19,15 @@ func TestEndpointList(t *testing.T) {
 	var l k8s.EndpointList
 
 	e1 := k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, "1")
-	e1.TypedSpec().Addresses = []netaddr.IP{
-		netaddr.MustParseIP("172.20.0.2"),
-		netaddr.MustParseIP("172.20.0.3"),
+	e1.TypedSpec().Addresses = []netip.Addr{
+		netip.MustParseAddr("172.20.0.2"),
+		netip.MustParseAddr("172.20.0.3"),
 	}
 
 	e2 := k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, "2")
-	e2.TypedSpec().Addresses = []netaddr.IP{
-		netaddr.MustParseIP("172.20.0.4"),
-		netaddr.MustParseIP("172.20.0.3"),
+	e2.TypedSpec().Addresses = []netip.Addr{
+		netip.MustParseAddr("172.20.0.4"),
+		netip.MustParseAddr("172.20.0.3"),
 	}
 
 	l = l.Merge(e1)

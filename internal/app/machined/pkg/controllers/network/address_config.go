@@ -7,6 +7,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -14,10 +15,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -100,7 +101,7 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 
 		// parse kernel cmdline for the address
 		cmdlineAddress := ctrl.parseCmdline(logger)
-		if !cmdlineAddress.Address.IsZero() {
+		if !generic.IsZero(cmdlineAddress.Address) {
 			if _, ignored := ignoredInterfaces[cmdlineAddress.LinkName]; !ignored {
 				var ids []string
 
@@ -186,7 +187,7 @@ func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpe
 
 	return []network.AddressSpecSpec{
 		{
-			Address:     netaddr.IPPrefixFrom(netaddr.IPv4(127, 0, 0, 1), 8),
+			Address:     netip.PrefixFrom(netip.AddrFrom4([4]byte{127, 0, 0, 1}), 8),
 			Family:      nethelpers.FamilyInet4,
 			Scope:       nethelpers.ScopeHost,
 			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
@@ -208,12 +209,12 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address n
 		return
 	}
 
-	if settings.Address.IsZero() {
+	if generic.IsZero(settings.Address) {
 		return
 	}
 
 	address.Address = settings.Address
-	if address.Address.IP().Is6() {
+	if address.Address.Addr().Is6() {
 		address.Family = nethelpers.FamilyInet6
 	} else {
 		address.Family = nethelpers.FamilyInet4
@@ -227,18 +228,18 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address n
 	return address
 }
 
-func parseIPOrIPPrefix(address string) (netaddr.IPPrefix, error) {
+func parseIPOrIPPrefix(address string) (netip.Prefix, error) {
 	if strings.IndexByte(address, '/') >= 0 {
-		return netaddr.ParseIPPrefix(address)
+		return netip.ParsePrefix(address)
 	}
 
 	// parse as IP address and assume netmask of all ones
-	ip, err := netaddr.ParseIP(address)
+	ip, err := netip.ParseAddr(address)
 	if err != nil {
-		return netaddr.IPPrefix{}, err
+		return netip.Prefix{}, err
 	}
 
-	return netaddr.IPPrefixFrom(ip, ip.BitLen()), nil
+	return netip.PrefixFrom(ip, ip.BitLen()), nil
 }
 
 func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Logger, devices []config.Device) (addresses []network.AddressSpecSpec) {
@@ -263,7 +264,7 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 			}
 
-			if address.Address.IP().Is6() {
+			if address.Address.Addr().Is6() {
 				address.Family = nethelpers.FamilyInet6
 			} else {
 				address.Family = nethelpers.FamilyInet4
@@ -274,7 +275,7 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 
 		for _, vlan := range device.Vlans() {
 			for _, cidr := range vlan.Addresses() {
-				ipPrefix, err := netaddr.ParseIPPrefix(cidr)
+				ipPrefix, err := netip.ParsePrefix(cidr)
 				if err != nil {
 					logger.Info(fmt.Sprintf("skipping address %q on interface %q vlan %d", cidr, device.Interface(), vlan.ID()), zap.Error(err))
 
@@ -289,7 +290,7 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 				}
 
-				if address.Address.IP().Is6() {
+				if address.Address.Addr().Is6() {
 					address.Family = nethelpers.FamilyInet6
 				} else {
 					address.Family = nethelpers.FamilyInet4

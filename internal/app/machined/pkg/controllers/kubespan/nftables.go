@@ -10,12 +10,12 @@ import (
 	"github.com/google/nftables"
 	"github.com/google/nftables/binaryutil"
 	"github.com/google/nftables/expr"
-	"inet.af/netaddr"
+	"go4.org/netipx"
 )
 
 // NfTablesManager manages nftables outside of controllers/resources scope.
 type NfTablesManager interface {
-	Update(*netaddr.IPSet) error
+	Update(*netipx.IPSet) error
 	Cleanup() error
 }
 
@@ -53,7 +53,7 @@ type nfTablesManager struct {
 	ExternalMark uint32
 	MarkMask     uint32
 
-	currentSet *netaddr.IPSet
+	currentSet *netipx.IPSet
 
 	// nfTable is a handle for the KubeSpan root table
 	nfTable *nftables.Table
@@ -66,7 +66,7 @@ type nfTablesManager struct {
 }
 
 // Update the nftables rules based on the IPSet.
-func (m *nfTablesManager) Update(desired *netaddr.IPSet) error {
+func (m *nfTablesManager) Update(desired *netipx.IPSet) error {
 	if m.currentSet != nil && m.currentSet.Equal(desired) {
 		return nil
 	}
@@ -129,7 +129,7 @@ func (m *nfTablesManager) tableExists() (bool, error) {
 	return foundExisting, nil
 }
 
-func (m *nfTablesManager) setNFTable(ips *netaddr.IPSet) error {
+func (m *nfTablesManager) setNFTable(ips *netipx.IPSet) error {
 	c := &nftables.Conn{}
 
 	// NB: sets should be flushed before new members because nftables will fail
@@ -324,7 +324,7 @@ func matchIPSet(set *nftables.Set, mark, mask uint32, family nftables.TableFamil
 	}
 }
 
-func (m *nfTablesManager) setElements(ips *netaddr.IPSet) (setElements4, setElements6 []nftables.SetElement) {
+func (m *nfTablesManager) setElements(ips *netipx.IPSet) (setElements4, setElements6 []nftables.SetElement) {
 	if ips == nil {
 		return nil, nil
 	}

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -18,7 +19,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/logging"
@@ -141,8 +141,8 @@ func (suite *AddressEventsSuite) TestReconcile() {
 
 	nodeAddress.TypedSpec().Addresses = append(
 		nodeAddress.TypedSpec().Addresses,
-		netaddr.IPPrefixFrom(netaddr.MustParseIP(addrs[0]), 32),
-		netaddr.IPPrefixFrom(netaddr.MustParseIP(addrs[1]), 32),
+		netip.PrefixFrom(netip.MustParseAddr(addrs[0]), 32),
+		netip.PrefixFrom(netip.MustParseAddr(addrs[1]), 32),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddress))

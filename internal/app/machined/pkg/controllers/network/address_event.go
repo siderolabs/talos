@@ -90,7 +90,7 @@ func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtim
 			for _, addr := range nodeAddr.(*network.NodeAddress).TypedSpec().Addresses {
 				addresses = append(
 					addresses,
-					addr.IP().String(),
+					addr.Addr().String(),
 				)
 			}
 		}

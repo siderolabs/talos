@@ -7,13 +7,14 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -105,11 +106,11 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		var (
-			defaultAddress      netaddr.IPPrefix
+			defaultAddress      netip.Prefix
 			defaultAddrLinkName string
-			current             []netaddr.IPPrefix
-			routed              []netaddr.IPPrefix
-			accumulative        []netaddr.IPPrefix
+			current             []netip.Prefix
+			routed              []netip.Prefix
+			accumulative        []netip.Prefix
 		)
 
 		for _, r := range addresses.Items {
@@ -121,13 +122,13 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 			ip := addr.TypedSpec().Address
 
-			if ip.IP().IsLoopback() || ip.IP().IsMulticast() || ip.IP().IsLinkLocalUnicast() {
+			if ip.Addr().IsLoopback() || ip.Addr().IsMulticast() || ip.Addr().IsLinkLocalUnicast() {
 				continue
 			}
 
 			// set defaultAddress to the smallest IP from the alphabetically first link
 			if addr.Metadata().Owner() == addressStatusControllerName {
-				if defaultAddress.IsZero() || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.IP().Compare(defaultAddress.IP()) < 0) {
+				if generic.IsZero(defaultAddress) || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.Addr().Compare(defaultAddress.Addr()) < 0) {
 					defaultAddress = ip
 					defaultAddrLinkName = addr.TypedSpec().LinkName
 				}
@@ -140,7 +141,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 			// routed: filter out external addresses and addresses from SideroLink
 			if _, up := linksUp[addr.TypedSpec().LinkIndex]; up && addr.TypedSpec().LinkName != externalLink {
-				if network.NotSideroLinkIP(ip.IP()) {
+				if network.NotSideroLinkIP(ip.Addr()) {
 					routed = append(routed, ip)
 				}
 			}
@@ -149,8 +150,8 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		// sort current addresses
-		sort.Slice(current, func(i, j int) bool { return current[i].IP().Compare(current[j].IP()) < 0 })
-		sort.Slice(routed, func(i, j int) bool { return routed[i].IP().Compare(routed[j].IP()) < 0 })
+		sort.Slice(current, func(i, j int) bool { return current[i].Addr().Compare(current[j].Addr()) < 0 })
+		sort.Slice(routed, func(i, j int) bool { return routed[i].Addr().Compare(routed[j].Addr()) < 0 })
 
 		// remove duplicates from current addresses
 		current = deduplicateIPPrefixes(current)
@@ -159,7 +160,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		touchedIDs := make(map[resource.ID]struct{})
 
 		// update output resources
-		if !defaultAddress.IsZero() {
+		if !generic.IsZero(defaultAddress) {
 			if err = r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddress).TypedSpec()
 
@@ -167,11 +168,11 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				// we should start handing default address updates, but for now we're not ready
 				//
 				// at the same time check that recorded default address is still on the host, if it's not => replace it
-				if len(spec.Addresses) > 0 && slices.Contains(current, func(addr netaddr.IPPrefix) bool { return spec.Addresses[0] == addr }) {
+				if len(spec.Addresses) > 0 && slices.Contains(current, func(addr netip.Prefix) bool { return spec.Addresses[0] == addr }) {
 					return nil
 				}
 
-				spec.Addresses = []netaddr.IPPrefix{defaultAddress}
+				spec.Addresses = []netip.Prefix{defaultAddress}
 
 				return nil
 			}); err != nil {
@@ -245,11 +246,11 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 	}
 }
 
-func deduplicateIPPrefixes(current []netaddr.IPPrefix) []netaddr.IPPrefix {
+func deduplicateIPPrefixes(current []netip.Prefix) []netip.Prefix {
 	// assumes that current is sorted
 	n := 0
 
-	var prev netaddr.IPPrefix
+	var prev netip.Prefix
 
 	for _, x := range current {
 		if prev != x {
@@ -263,8 +264,8 @@ func deduplicateIPPrefixes(current []netaddr.IPPrefix) []netaddr.IPPrefix {
 	return current[:n]
 }
 
-func filterIPs(addrs []netaddr.IPPrefix, includeSubnets, excludeSubnets []netaddr.IPPrefix) []netaddr.IPPrefix {
-	result := make([]netaddr.IPPrefix, 0, len(addrs))
+func filterIPs(addrs []netip.Prefix, includeSubnets, excludeSubnets []netip.Prefix) []netip.Prefix {
+	result := make([]netip.Prefix, 0, len(addrs))
 
 outer:
 	for _, ip := range addrs {
@@ -296,7 +297,7 @@ outer:
 	return result
 }
 
-func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resource.ID, current []netaddr.IPPrefix) error {
+func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resource.ID, current []netip.Prefix) error {
 	if err := r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, id), func(r resource.Resource) error {
 		spec := r.(*network.NodeAddress).TypedSpec()
 
@@ -310,7 +311,7 @@ func updateCurrentAddresses(ctx context.Context, r controller.Runtime, id resour
 	return nil
 }
 
-func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netaddr.IPPrefix) error {
+func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id resource.ID, accumulative []netip.Prefix) error {
 	if err := r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, id), func(r resource.Resource) error {
 		spec := r.(*network.NodeAddress).TypedSpec()
 
@@ -319,15 +320,15 @@ func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id r
 
 			// find insert position using binary search
 			i := sort.Search(len(spec.Addresses), func(j int) bool {
-				return !spec.Addresses[j].IP().Less(ip.IP())
+				return !spec.Addresses[j].Addr().Less(ip.Addr())
 			})
 
-			if i < len(spec.Addresses) && spec.Addresses[i].IP().Compare(ip.IP()) == 0 {
+			if i < len(spec.Addresses) && spec.Addresses[i].Addr().Compare(ip.Addr()) == 0 {
 				continue
 			}
 
 			// insert at position i
-			spec.Addresses = append(spec.Addresses, netaddr.IPPrefix{})
+			spec.Addresses = append(spec.Addresses, netip.Prefix{})
 			copy(spec.Addresses[i+1:], spec.Addresses[i:])
 			spec.Addresses[i] = ip
 		}

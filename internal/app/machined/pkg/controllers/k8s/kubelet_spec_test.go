@@ -8,6 +8,7 @@ package k8s_test
 import (
 	"context"
 	"log"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -23,7 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"inet.af/netaddr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	v1 "k8s.io/component-base/logs/api/v1"
@@ -90,7 +90,7 @@ func (suite *KubeletSpecSuite) TestReconcileDefault() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	nodeIP := k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID)
-	nodeIP.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("172.20.0.2")}
+	nodeIP.TypedSpec().Addresses = []netip.Addr{netip.MustParseAddr("172.20.0.2")}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIP))
 
@@ -220,7 +220,7 @@ func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
 
 	nodeIP := k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID)
-	nodeIP.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("172.20.0.3")}
+	nodeIP.TypedSpec().Addresses = []netip.Addr{netip.MustParseAddr("172.20.0.3")}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIP))
 
@@ -280,7 +280,7 @@ func (suite *KubeletSpecSuite) TestReconcileWithSkipNodeRegistration() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
 
 	nodeIP := k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID)
-	nodeIP.TypedSpec().Addresses = []netaddr.IP{netaddr.MustParseIP("172.20.0.3")}
+	nodeIP.TypedSpec().Addresses = []netip.Addr{netip.MustParseAddr("172.20.0.3")}
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIP))
 

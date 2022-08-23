@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -20,7 +21,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/operator"
@@ -254,7 +254,7 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 		LinkName:  "eth0",
 		RequireUp: false,
 		VIP: network.VIPOperatorSpec{
-			IP: netaddr.MustParseIP("1.2.3.4"),
+			IP: netip.MustParseAddr("1.2.3.4"),
 		},
 	}
 
@@ -287,7 +287,7 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 			func() error {
 				return suite.assertRunning(
 					[]string{"vip/eth0"}, func(op *mockOperator) error {
-						suite.Assert().Equal(netaddr.MustParseIP("1.2.3.4"), op.spec.VIP.IP)
+						suite.Assert().Equal(netip.MustParseAddr("1.2.3.4"), op.spec.VIP.IP)
 
 						return nil
 					},
@@ -315,7 +315,7 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 						case network.OperatorDHCP4:
 							suite.Assert().EqualValues(1024, op.spec.DHCP4.RouteMetric)
 						case network.OperatorVIP:
-							suite.Assert().Equal(netaddr.MustParseIP("1.2.3.4"), op.spec.VIP.IP)
+							suite.Assert().Equal(netip.MustParseAddr("1.2.3.4"), op.spec.VIP.IP)
 						default:
 							panic("unreachable")
 						}
@@ -330,7 +330,7 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 	// change the spec, operator should be rescheduled
 	_, err = suite.state.UpdateWithConflicts(
 		suite.ctx, specVIP.Metadata(), func(r resource.Resource) error {
-			r.(*network.OperatorSpec).TypedSpec().VIP.IP = netaddr.MustParseIP("3.4.5.6")
+			r.(*network.OperatorSpec).TypedSpec().VIP.IP = netip.MustParseAddr("3.4.5.6")
 
 			return nil
 		},
@@ -346,7 +346,7 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 						case network.OperatorDHCP4:
 							suite.Assert().EqualValues(1024, op.spec.DHCP4.RouteMetric)
 						case network.OperatorVIP:
-							if op.spec.VIP.IP.Compare(netaddr.MustParseIP("3.4.5.6")) != 0 {
+							if op.spec.VIP.IP.Compare(netip.MustParseAddr("3.4.5.6")) != 0 {
 								return retry.ExpectedErrorf("unexpected vip: %s", op.spec.VIP.IP)
 							}
 						default:
@@ -475,7 +475,7 @@ func (suite *OperatorSpecSuite) TestOperatorOutputs() {
 	dhcpMock.mu.Lock()
 	dhcpMock.addresses = []network.AddressSpecSpec{
 		{
-			Address:     netaddr.MustParseIPPrefix("10.5.0.2/24"),
+			Address:     netip.MustParsePrefix("10.5.0.2/24"),
 			LinkName:    "eth0",
 			Family:      nethelpers.FamilyInet4,
 			Scope:       nethelpers.ScopeGlobal,
@@ -526,7 +526,7 @@ func (suite *OperatorSpecSuite) TestOperatorOutputs() {
 	dhcpMock.mu.Lock()
 	dhcpMock.addresses = []network.AddressSpecSpec{
 		{
-			Address:     netaddr.MustParseIPPrefix("10.5.0.3/24"),
+			Address:     netip.MustParsePrefix("10.5.0.3/24"),
 			LinkName:    "eth0",
 			Family:      nethelpers.FamilyInet4,
 			Scope:       nethelpers.ScopeGlobal,

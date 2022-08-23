@@ -7,15 +7,16 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
-	"inet.af/netaddr"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -95,7 +96,7 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 
 		// parse kernel cmdline for the default gateway
 		cmdlineRoute := ctrl.parseCmdline(logger)
-		if !cmdlineRoute.Gateway.IsZero() {
+		if !generic.IsZero(cmdlineRoute.Gateway) {
 			if _, ignored := ignoredInterfaces[cmdlineRoute.OutLinkName]; !ignored {
 				var ids []string
 
@@ -184,7 +185,7 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route netwo
 		return
 	}
 
-	if settings.Gateway.IsZero() {
+	if generic.IsZero(settings.Gateway) {
 		return
 	}
 
@@ -213,21 +214,21 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route netwo
 func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logger, devices []talosconfig.Device) (routes []network.RouteSpecSpec) {
 	convert := func(linkName string, in talosconfig.Route) (route network.RouteSpecSpec, err error) {
 		if in.Network() != "" {
-			route.Destination, err = netaddr.ParseIPPrefix(in.Network())
+			route.Destination, err = netip.ParsePrefix(in.Network())
 			if err != nil {
 				return route, fmt.Errorf("error parsing route network: %w", err)
 			}
 		}
 
 		if in.Gateway() != "" {
-			route.Gateway, err = netaddr.ParseIP(in.Gateway())
+			route.Gateway, err = netip.ParseAddr(in.Gateway())
 			if err != nil {
 				return route, fmt.Errorf("error parsing route gateway: %w", err)
 			}
 		}
 
 		if in.Source() != "" {
-			route.Source, err = netaddr.ParseIP(in.Source())
+			route.Source, err = netip.ParseAddr(in.Source())
 			if err != nil {
 				return route, fmt.Errorf("error parsing route source: %w", err)
 			}
@@ -241,9 +242,9 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 		}
 
 		switch {
-		case !route.Gateway.IsZero() && route.Gateway.Is6():
+		case !generic.IsZero(route.Gateway) && route.Gateway.Is6():
 			route.Family = nethelpers.FamilyInet6
-		case !route.Destination.IsZero() && route.Destination.IP().Is6():
+		case !generic.IsZero(route.Destination) && route.Destination.Addr().Is6():
 			route.Family = nethelpers.FamilyInet6
 		default:
 			route.Family = nethelpers.FamilyInet4
@@ -256,7 +257,7 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 
 		route.Type = nethelpers.TypeUnicast
 
-		if route.Destination.IP().IsMulticast() {
+		if route.Destination.Addr().IsMulticast() {
 			route.Type = nethelpers.TypeMulticast
 		}
 
