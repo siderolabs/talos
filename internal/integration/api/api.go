@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //go:build integration
-// +build integration
 
 // Package api provides API integration tests for Talos
 package api

@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //go:build integration
-// +build integration
 
 // Package cli provides CLI (talosctl) integration tests for Talos
 package cli

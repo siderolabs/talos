@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //go:build integration
-// +build integration
 
 // Package provision provides integration tests which rely on provisioning cluster per test.
 package provision

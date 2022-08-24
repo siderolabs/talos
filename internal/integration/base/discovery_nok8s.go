@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //go:build integration && !integration_k8s
-// +build integration,!integration_k8s
 
 package base
 

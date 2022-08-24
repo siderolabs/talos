@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //go:build go1.18
-// +build go1.18
 
 package configloader_test
 
