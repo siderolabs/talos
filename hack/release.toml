@@ -19,8 +19,9 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* containerd 1.6.8
-* Linux kernel 5.15.62
+* containerd: 1.6.8
+* Linux: 5.15.62
+* Kubernetes: v1.25.0
 """
 
     [notes.talos-config-kernel-param-variable-substitution]
