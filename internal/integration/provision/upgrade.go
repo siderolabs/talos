@@ -73,20 +73,18 @@ type upgradeSpec struct {
 }
 
 const (
-	previousRelease = "v1.0.6"
-	stableRelease   = "v1.1.0" // or soon-to-be-stable
+	previousRelease = "v1.1.2"
+	stableRelease   = "v1.2.0-beta.1" // or soon-to-be-stable
 	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
-	previousK8sVersion = "1.23.6" // constants.DefaultKubernetesVersion in the previousRelease
-	stableK8sVersion   = "1.24.2" // constants.DefaultKubernetesVersion in the stableRelease
+	previousK8sVersion = "1.24.3"      // constants.DefaultKubernetesVersion in the previousRelease
+	stableK8sVersion   = "1.25.0-rc.1" // constants.DefaultKubernetesVersion in the stableRelease
 	currentK8sVersion  = constants.DefaultKubernetesVersion
 )
 
 var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
 
 // upgradePreviousToStable upgrades from the previous Talos release to the stable release.
-//
-//nolint:deadcode,unused
 func upgradePreviousToStable() upgradeSpec {
 	return upgradeSpec{
 		ShortName: fmt.Sprintf("%s-%s", previousRelease, stableRelease),
@@ -744,8 +742,7 @@ func (suite *UpgradeSuite) SuiteName() string {
 func init() {
 	allSuites = append(
 		allSuites,
-		// TODO: temporarily disable the test until 'Stable' becomes v1.2.0-beta.0
-		// &UpgradeSuite{specGen: upgradePreviousToStable, track: 0},
+		&UpgradeSuite{specGen: upgradePreviousToStable, track: 0},
 		&UpgradeSuite{specGen: upgradeStableToCurrent, track: 1},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrent, track: 2},
 		&UpgradeSuite{specGen: upgradeStableToCurrentPreserve, track: 0},
