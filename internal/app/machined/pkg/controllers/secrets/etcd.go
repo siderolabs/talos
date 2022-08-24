@@ -10,11 +10,13 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/resources/time"
@@ -50,6 +52,18 @@ func (ctrl *EtcdController) Inputs() []controller.Input {
 			ID:        pointer.To(time.StatusID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.HostnameStatusType,
+			ID:        pointer.To(network.HostnameID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.NodeAddressType,
+			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s)),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -74,7 +88,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 		case <-r.EventCh():
 		}
 
-		etcdRootRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdRootType, secrets.EtcdRootID, resource.VersionUndefined))
+		etcdRootRes, err := safe.ReaderGet[*secrets.EtcdRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdRootType, secrets.EtcdRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -87,10 +101,10 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			return fmt.Errorf("error getting etcd root secrets: %w", err)
 		}
 
-		etcdRoot := etcdRootRes.(*secrets.EtcdRoot).TypedSpec()
+		etcdRoot := etcdRootRes.TypedSpec()
 
 		// wait for network to be ready as it might change IPs/hostname
-		networkResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
+		networkResource, err := safe.ReaderGet[*network.Status](ctx, r, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -99,7 +113,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			return err
 		}
 
-		networkStatus := networkResource.(*network.Status).TypedSpec()
+		networkStatus := networkResource.TypedSpec()
 
 		if !(networkStatus.AddressReady && networkStatus.HostnameReady) {
 			continue
@@ -119,33 +133,67 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			continue
 		}
 
-		if err = r.Modify(ctx, secrets.NewEtcd(), func(r resource.Resource) error {
-			return ctrl.updateSecrets(etcdRoot, r.(*secrets.Etcd).TypedSpec())
+		hostnameStatus, err := safe.ReaderGet[*network.HostnameStatus](ctx, r, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting hostname status: %w", err)
+		}
+
+		nodeAddrs, err := safe.ReaderGet[*network.NodeAddress](
+			ctx,
+			r,
+			resource.NewMetadata(
+				network.NamespaceName,
+				network.NodeAddressType,
+				network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
+				resource.VersionUndefined,
+			),
+		)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting addresses: %w", err)
+		}
+
+		if err = safe.WriterModify(ctx, r, secrets.NewEtcd(), func(r *secrets.Etcd) error {
+			return ctrl.updateSecrets(etcdRoot, nodeAddrs, hostnameStatus, r.TypedSpec())
 		}); err != nil {
 			return err
 		}
 	}
 }
 
-func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.EtcdRootSpec, etcdCerts *secrets.EtcdCertsSpec) error {
+func (ctrl *EtcdController) updateSecrets(etcdRoot *secrets.EtcdRootSpec, nodeAddress *network.NodeAddress, hostnameStatus *network.HostnameStatus, etcdCerts *secrets.EtcdCertsSpec) error {
+	generator := etcd.CertificateGenerator{
+		CA: etcdRoot.EtcdCA,
+
+		NodeAddresses:  nodeAddress,
+		HostnameStatus: hostnameStatus,
+	}
+
 	var err error
 
-	etcdCerts.Etcd, err = etcd.GenerateServerCert(etcdRoot.EtcdCA)
+	etcdCerts.Etcd, err = generator.GenerateServerCert()
 	if err != nil {
 		return fmt.Errorf("error generating etcd client certs: %w", err)
 	}
 
-	etcdCerts.EtcdPeer, err = etcd.GeneratePeerCert(etcdRoot.EtcdCA)
+	etcdCerts.EtcdPeer, err = generator.GeneratePeerCert()
 	if err != nil {
 		return fmt.Errorf("error generating etcd peer certs: %w", err)
 	}
 
-	etcdCerts.EtcdAdmin, err = etcd.GenerateClientCert(etcdRoot.EtcdCA, "talos")
+	etcdCerts.EtcdAdmin, err = generator.GenerateClientCert("talos")
 	if err != nil {
 		return fmt.Errorf("error generating admin client certs: %w", err)
 	}
 
-	etcdCerts.EtcdAPIServer, err = etcd.GenerateClientCert(etcdRoot.EtcdCA, "kube-apiserver")
+	etcdCerts.EtcdAPIServer, err = generator.GenerateClientCert("kube-apiserver")
 	if err != nil {
 		return fmt.Errorf("error generating kube-apiserver etcd client certs: %w", err)
 	}
