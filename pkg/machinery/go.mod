@@ -15,9 +15,9 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink v1.2.2
 	github.com/mdlayher/ethtool v0.0.0-20220213132912-856bd6cb8a38
-	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
+	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/siderolabs/go-pointer v1.0.0
-	github.com/siderolabs/protoenc v0.1.3
+	github.com/siderolabs/protoenc v0.1.5
 	github.com/stretchr/testify v1.8.0
 	github.com/talos-systems/crypto v0.3.6
 	github.com/talos-systems/go-blockdevice v0.3.4
@@ -42,17 +42,20 @@ require (
 	github.com/mdlayher/genetlink v1.2.0 // indirect
 	github.com/mdlayher/netlink v1.6.0 // indirect
 	github.com/mdlayher/socket v0.2.3 // indirect
+	github.com/onsi/ginkgo/v2 v2.1.4 // indirect
+	github.com/onsi/gomega v1.19.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.22.0 // indirect
 	go4.org/intern v0.0.0-20220617035311-6925f38cc365 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
-	golang.org/x/net v0.0.0-20220809184613-07c6da5e1ced // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.0.0-20220808155132-1c4a2a72c664 // indirect
+	golang.org/x/net v0.0.0-20220822230855-b0a4917ee28c // indirect
+	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
+	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6 // indirect
 	golang.org/x/text v0.3.7 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

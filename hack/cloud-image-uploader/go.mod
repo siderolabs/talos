@@ -10,4 +10,9 @@ require (
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 )
 
-require github.com/jmespath/go-jmespath v0.4.0 // indirect
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	golang.org/x/net v0.0.0-20220822230855-b0a4917ee28c // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
+)

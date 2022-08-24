@@ -1055,8 +1055,8 @@ github.com/siderolabs/go-pcidb v0.1.0 h1:6cJPBBmHlIF4GouYR/1g3JXS/niAON+6lIOfKl/
 github.com/siderolabs/go-pcidb v0.1.0/go.mod h1:wT/tUxNZFlKSuGBniVwXL53vlGQq2/CVu16y6sMGIao=
 github.com/siderolabs/go-pointer v1.0.0 h1:6TshPKep2doDQJAAtHUuHWXbca8ZfyRySjSBT/4GsMU=
 github.com/siderolabs/go-pointer v1.0.0/go.mod h1:HTRFUNYa3R+k0FFKNv11zgkaCLzEkWVzoYZ433P3kHc=
-github.com/siderolabs/protoenc v0.1.3 h1:MtKTRogutD28T2UeVS5h4dyQ9iKfCT5Q+46M8Ms2oGU=
-github.com/siderolabs/protoenc v0.1.3/go.mod h1:mu4gc6pJxhdJYpuloacKE4jsJojj87qDXwn8LUvs2bY=
+github.com/siderolabs/protoenc v0.1.5 h1:CBXqQQbjO56e2MtpjBsAYvAF5quIuoDVTJ1xGAE1mEo=
+github.com/siderolabs/protoenc v0.1.5/go.mod h1:mu4gc6pJxhdJYpuloacKE4jsJojj87qDXwn8LUvs2bY=
 github.com/sirupsen/logrus v1.0.4-0.20170822132746-89742aefa4b2/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
 github.com/sirupsen/logrus v1.0.6/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
@@ -1879,7 +1879,6 @@ gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
-gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
 gopkg.in/cheggaaa/pb.v1 v1.0.25/go.mod h1:V/YB90LKu/1FcN3WVnfiiE5oMCibMjukxqG/qStrOgw=
 gopkg.in/cheggaaa/pb.v1 v1.0.27/go.mod h1:V/YB90LKu/1FcN3WVnfiiE5oMCibMjukxqG/qStrOgw=
 gopkg.in/errgo.v2 v2.1.0/go.mod h1:hNsd1EY+bozCKY1Ytp96fpM3vjJbqLJn88ws8XvfDNI=
