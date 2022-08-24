@@ -5,8 +5,8 @@ linkTitle: "Documentation"
 cascade:
   type: docs
 preRelease: true
-lastRelease: v1.2.0-alpha.1
-kubernetesRelease: "v1.25.0-rc.1"
+lastRelease: v1.2.0-beta.1
+kubernetesRelease: "v1.25.0"
 prevKubernetesRelease: "1.24.3"
 theilaRelease: "v0.2.1"
 ---
