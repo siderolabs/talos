@@ -7,41 +7,41 @@ package etcd
 import (
 	stdlibx509 "crypto/x509"
 	"fmt"
-	stdlibnet "net"
-	"os"
 	"time"
 
 	"github.com/talos-systems/crypto/x509"
-	"github.com/talos-systems/net"
+	"inet.af/netaddr"
 
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
-// buildOptions set common certificate options.
-func buildOptions(autoSANs, includeLocalhost bool) ([]x509.Option, error) {
-	ips, err := net.IPAddrs()
-	if err != nil {
-		return nil, fmt.Errorf("failed to discover IP addresses: %w", err)
-	}
+// CertificateGenerator contains etcd certificate options.
+type CertificateGenerator struct {
+	CA *x509.PEMEncodedCertificateAndKey
 
-	ips = net.IPFilter(ips, network.NotSideroLinkStdIP)
+	NodeAddresses  *network.NodeAddress
+	HostnameStatus *network.HostnameStatus
+}
+
+// buildOptions set common certificate options.
+func (gen *CertificateGenerator) buildOptions(autoSANs, includeLocalhost bool) []x509.Option {
+	addresses := gen.NodeAddresses.TypedSpec().IPs()
 
 	if includeLocalhost {
-		ips = append(ips, stdlibnet.ParseIP("127.0.0.1"))
-		if net.IsIPv6(ips...) {
-			ips = append(ips, stdlibnet.ParseIP("::1"))
+		addresses = append(addresses, netaddr.MustParseIP("127.0.0.1"))
+
+		for _, addr := range addresses {
+			if addr.Is6() {
+				addresses = append(addresses, netaddr.MustParseIP("::1"))
+
+				break
+			}
 		}
 	}
 
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get hostname: %w", err)
-	}
-
-	dnsNames, err := net.DNSNames()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get host DNS names: %w", err)
-	}
+	hostname := gen.HostnameStatus.TypedSpec().Hostname
+	dnsNames := gen.HostnameStatus.TypedSpec().DNSNames()
 
 	if includeLocalhost {
 		dnsNames = append(dnsNames, "localhost")
@@ -56,21 +56,18 @@ func buildOptions(autoSANs, includeLocalhost bool) ([]x509.Option, error) {
 		result = append(result,
 			x509.CommonName(hostname),
 			x509.DNSNames(dnsNames),
-			x509.IPAddresses(ips),
+			x509.IPAddresses(nethelpers.MapNetAddrToStd(addresses)),
 		)
 	}
 
-	return result, nil
+	return result
 }
 
 // GeneratePeerCert generates etcd peer certificate and key from etcd CA.
 //
 //nolint:dupl
-func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := buildOptions(true, false)
-	if err != nil {
-		return nil, err
-	}
+func (gen *CertificateGenerator) GeneratePeerCert() (*x509.PEMEncodedCertificateAndKey, error) {
+	opts := gen.buildOptions(true, false)
 
 	opts = append(opts,
 		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
@@ -79,7 +76,7 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 		}),
 	)
 
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(gen.CA)
 	if err != nil {
 		return nil, fmt.Errorf("failed loading CA from config: %w", err)
 	}
@@ -95,11 +92,8 @@ func GeneratePeerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncode
 // GenerateServerCert generates server etcd certificate and key from etcd CA.
 //
 //nolint:dupl
-func GenerateServerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := buildOptions(true, true)
-	if err != nil {
-		return nil, err
-	}
+func (gen *CertificateGenerator) GenerateServerCert() (*x509.PEMEncodedCertificateAndKey, error) {
+	opts := gen.buildOptions(true, true)
 
 	opts = append(opts,
 		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
@@ -108,7 +102,7 @@ func GenerateServerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEnco
 		}),
 	)
 
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(gen.CA)
 	if err != nil {
 		return nil, fmt.Errorf("failed loading CA from config: %w", err)
 	}
@@ -122,11 +116,8 @@ func GenerateServerCert(etcdCA *x509.PEMEncodedCertificateAndKey) (*x509.PEMEnco
 }
 
 // GenerateClientCert generates client certificate and key from etcd CA.
-func GenerateClientCert(etcdCA *x509.PEMEncodedCertificateAndKey, commonName string) (*x509.PEMEncodedCertificateAndKey, error) {
-	opts, err := buildOptions(false, false)
-	if err != nil {
-		return nil, err
-	}
+func (gen *CertificateGenerator) GenerateClientCert(commonName string) (*x509.PEMEncodedCertificateAndKey, error) {
+	opts := gen.buildOptions(false, false)
 
 	opts = append(opts, x509.CommonName(commonName))
 	opts = append(opts,
@@ -135,7 +126,7 @@ func GenerateClientCert(etcdCA *x509.PEMEncodedCertificateAndKey, commonName str
 		}),
 	)
 
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(etcdCA)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(gen.CA)
 	if err != nil {
 		return nil, fmt.Errorf("failed loading CA from config: %w", err)
 	}
