@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/discovery-client/pkg/client"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
-	"github.com/talos-systems/discovery-client/pkg/client"
 	"github.com/talos-systems/go-retry/retry"
 
 	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
@@ -31,6 +31,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 type DiscoveryServiceSuite struct {
@@ -226,6 +227,25 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 
 			return nil
 		}),
+	))
+
+	// pretend that machine is being reset
+	machineStatus := runtime.NewMachineStatus()
+	machineStatus.TypedSpec().Stage = runtime.MachineStageResetting
+	suite.Require().NoError(suite.state.Create(suite.ctx, machineStatus))
+
+	// client should see the affiliate being deleted
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			// controller should delete its local affiliate
+			affiliates := cli.GetAffiliates()
+
+			if len(affiliates) != 0 {
+				return retry.ExpectedErrorf("affiliates len %d != 0", len(affiliates))
+			}
+
+			return nil
+		},
 	))
 
 	cliCtxCancel()
