@@ -14,10 +14,11 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	discoveryclient "github.com/siderolabs/discovery-client/pkg/client"
 	"github.com/siderolabs/go-pointer"
 	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
-	discoveryclient "github.com/talos-systems/discovery-client/pkg/client"
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -60,6 +62,12 @@ func (ctrl *DiscoveryServiceController) Inputs() []controller.Input {
 		{
 			Namespace: kubespan.NamespaceName,
 			Type:      kubespan.EndpointType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtime.NamespaceName,
+			Type:      runtime.MachineStatusType,
+			ID:        pointer.To(runtime.MachineStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -206,6 +214,11 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			return fmt.Errorf("error listing endpoints: %w", err)
 		}
 
+		machineStatus, err := safe.ReaderGet[*runtime.MachineStatus](ctx, r, resource.NewMetadata(runtime.NamespaceName, runtime.MachineStatusType, runtime.MachineStatusID, resource.VersionUndefined))
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting machine status: %w", err)
+		}
+
 		if client == nil {
 			var cipher cipher.Block
 
@@ -236,23 +249,31 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			}()
 		}
 
-		localData := pbAffiliate(affiliateSpec)
-		localEndpoints := pbEndpoints(affiliateSpec)
-		otherEndpoints := pbOtherEndpoints(otherEndpointsList)
+		// delete/update local affiliate
+		//
+		// if the node enters resetting stage, cleanup the local affiliate
+		// otherwise, update local affiliate data
+		if machineStatus != nil && machineStatus.TypedSpec().Stage == runtime.MachineStageResetting {
+			client.DeleteLocalAffiliate()
+		} else {
+			localData := pbAffiliate(affiliateSpec)
+			localEndpoints := pbEndpoints(affiliateSpec)
+			otherEndpoints := pbOtherEndpoints(otherEndpointsList)
 
-		// don't send updates on localData if it hasn't changed: this introduces positive feedback loop,
-		// as the watch loop will notify on self update
-		if !proto.Equal(localData, prevLocalData) || !equalEndpoints(localEndpoints, prevLocalEndpoints) || !equalOtherEndpoints(otherEndpoints, prevOtherEndpoints) {
-			if err = client.SetLocalData(&discoveryclient.Affiliate{
-				Affiliate: localData,
-				Endpoints: localEndpoints,
-			}, otherEndpoints); err != nil {
-				return fmt.Errorf("error setting local affiliate data: %w", err) //nolint:govet
+			// don't send updates on localData if it hasn't changed: this introduces positive feedback loop,
+			// as the watch loop will notify on self update
+			if !proto.Equal(localData, prevLocalData) || !equalEndpoints(localEndpoints, prevLocalEndpoints) || !equalOtherEndpoints(otherEndpoints, prevOtherEndpoints) {
+				if err = client.SetLocalData(&discoveryclient.Affiliate{
+					Affiliate: localData,
+					Endpoints: localEndpoints,
+				}, otherEndpoints); err != nil {
+					return fmt.Errorf("error setting local affiliate data: %w", err) //nolint:govet
+				}
+
+				prevLocalData = localData
+				prevLocalEndpoints = localEndpoints
+				prevOtherEndpoints = otherEndpoints
 			}
-
-			prevLocalData = localData
-			prevLocalEndpoints = localEndpoints
-			prevOtherEndpoints = otherEndpoints
 		}
 
 		touchedIDs := make(map[resource.ID]struct{})
@@ -267,7 +288,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 				return nil
 			}); err != nil {
-				return err
+				return err //nolint:govet
 			}
 
 			touchedIDs[id] = struct{}{}
