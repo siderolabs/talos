@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
@@ -25,6 +26,10 @@ var shutdownCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+				return err
+			}
+
 			if err := c.Shutdown(ctx, client.WithShutdownForce(shutdownCmdFlags.force)); err != nil {
 				return fmt.Errorf("error executing shutdown: %s", err)
 			}

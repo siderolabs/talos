@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -46,6 +47,10 @@ func init() {
 
 func upgrade() error {
 	return WithClient(func(ctx context.Context, c *client.Client) error {
+		if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+			return err
+		}
+
 		var remotePeer peer.Peer
 
 		// TODO: See if we can validate version and prevent starting upgrades to

@@ -189,6 +189,10 @@ or EDITOR environment variables, or fall back to 'vi' for Linux
 or 'notepad' for Windows.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+				return err
+			}
+
 			for _, node := range Nodes {
 				nodeCtx := client.WithNodes(ctx, node)
 				if err := helpers.ForEachResource(nodeCtx, c, nil, editFn(c), editCmdFlags.namespace, args...); err != nil {
