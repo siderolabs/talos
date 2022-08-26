@@ -110,9 +110,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 		var buf bytes.Buffer
 
-		enc := toml.NewEncoder(&buf)
-
-		for _, endpoint := range endpoints.Endpoints() {
+		for i, endpoint := range endpoints.Endpoints() {
 			hostsToml := HostsToml{
 				HostConfigs: map[string]*HostToml{},
 			}
@@ -128,9 +126,33 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 			configureTLS(u.Host, directoryName, hostsToml.HostConfigs[endpoint], directory)
 
-			if err = enc.Encode(hostsToml); err != nil {
+			tomlBytes, err := toml.Marshal(hostsToml)
+			if err != nil {
 				return nil, err
 			}
+
+			// this is an ugly hack, and neither TOML format nor go-toml library make it easier
+			//
+			// we need to marshal each endpoint in the order they are specified in the config, but go-toml defines
+			// the tree as map[string]interface{} and doesn't guarantee the order of keys
+			//
+			// so we marshal each entry separately and combine the output, which results in something like:
+			//
+			//   [host]
+			//     [host."foo.bar"]
+			//	 [host]
+			//     [host."bar.foo"]
+			//
+			// but this is invalid TOML, as `[host]' is repeated, so we do an ugly hack and remove it below
+			const hostPrefix = "\n[host]\n"
+
+			if i > 0 {
+				if bytes.HasPrefix(tomlBytes, []byte(hostPrefix)) {
+					tomlBytes = tomlBytes[len(hostPrefix):]
+				}
+			}
+
+			buf.Write(tomlBytes) //nolint:errcheck
 		}
 
 		directory.Files = append(directory.Files,
