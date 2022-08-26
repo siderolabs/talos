@@ -20,7 +20,8 @@ preface = """\
         title = "Component Updates"
         description="""\
 * containerd: 1.6.8
-* Linux: 5.15.62
+* runc: v1.1.4
+* Linux: 5.15.63
 * Kubernetes: v1.25.0
 """
 
