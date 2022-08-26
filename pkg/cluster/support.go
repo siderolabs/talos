@@ -715,12 +715,17 @@ func processes(ctx context.Context, options *BundleOptions) ([]byte, error) {
 }
 
 func summary(ctx context.Context, options *BundleOptions) ([]byte, error) {
+	var buf bytes.Buffer
+
+	fmt.Fprintln(&buf, "Client:")
+	version.WriteLongVersionFromExisting(&buf, version.NewVersion())
+
 	resp, err := options.Client.Version(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	var buf bytes.Buffer
+	fmt.Fprintln(&buf, "Server:")
 
 	for _, m := range resp.Messages {
 		version.WriteLongVersionFromExisting(&buf, m.Version)

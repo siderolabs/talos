@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/cluster"
 	k8s "github.com/talos-systems/talos/pkg/cluster/kubernetes"
@@ -41,6 +42,10 @@ func init() {
 }
 
 func upgradeKubernetes(ctx context.Context, c *client.Client) error {
+	if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+		return err
+	}
+
 	clientProvider := &cluster.ConfigClientProvider{
 		DefaultClient: c,
 	}

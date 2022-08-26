@@ -108,6 +108,10 @@ var patchCmd = &cobra.Command{
 				return err
 			}
 
+			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+				return err
+			}
+
 			for _, node := range Nodes {
 				nodeCtx := client.WithNodes(ctx, node)
 				if err := helpers.ForEachResource(nodeCtx, c, nil, patchFn(c, patches), patchCmdFlags.namespace, args...); err != nil {

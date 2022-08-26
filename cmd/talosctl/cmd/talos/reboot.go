@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
@@ -34,6 +35,10 @@ var rebootCmd = &cobra.Command{
 			case "default":
 			default:
 				return fmt.Errorf("invalid reboot mode: %q", rebootCmdFlags.mode)
+			}
+
+			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+				return err
 			}
 
 			if err := c.Reboot(ctx, opts...); err != nil {

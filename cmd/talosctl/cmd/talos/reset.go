@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
@@ -28,6 +29,10 @@ var resetCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+				return err
+			}
+
 			var systemPartitionsToWipe []*machine.ResetPartitionSpec
 
 			for _, label := range resetCmdFlags.systemLabelsToWipe {
