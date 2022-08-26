@@ -59,7 +59,7 @@ func TestGenerateHosts(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://registry-1.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n\n[host]\n\n  [host.\"https://registry-2.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n    skip_verify = true\n"), //nolint:lll
+						Contents: []byte("\n[host]\n\n  [host.\"https://registry-1.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n\n  [host.\"https://registry-2.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n    skip_verify = true\n"), //nolint:lll
 					},
 				},
 			},
@@ -127,7 +127,7 @@ func TestGenerateHosts(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://registry-1.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n\n[host]\n\n  [host.\"https://registry-2.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n"), //nolint:lll
+						Contents: []byte("\n[host]\n\n  [host.\"https://registry-1.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n\n  [host.\"https://registry-2.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n"), //nolint:lll
 					},
 				},
 			},
