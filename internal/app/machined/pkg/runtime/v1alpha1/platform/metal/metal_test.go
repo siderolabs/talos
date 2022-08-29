@@ -30,8 +30,7 @@ import (
 
 func createOrUpdate(ctx context.Context, st state.State, r resource.Resource) error {
 	oldRes, err := st.Get(ctx, r.Metadata())
-
-	if oldRes != nil && err != nil {
+	if err != nil && !state.IsNotFoundError(err) {
 		return err
 	}
 
@@ -41,8 +40,9 @@ func createOrUpdate(ctx context.Context, st state.State, r resource.Resource) er
 			return err
 		}
 	} else {
-		r.Metadata().BumpVersion()
-		err = st.Update(ctx, oldRes.Metadata().Version(), r)
+		r.Metadata().SetVersion(oldRes.Metadata().Version())
+
+		err = st.Update(ctx, r)
 		if err != nil {
 			return err
 		}

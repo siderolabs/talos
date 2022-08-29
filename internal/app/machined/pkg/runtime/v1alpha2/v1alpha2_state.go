@@ -203,7 +203,6 @@ func (s *State) SetConfig(cfg talosconfig.Provider) error {
 	}
 
 	cfgResource.Metadata().SetVersion(oldCfg.Metadata().Version())
-	cfgResource.Metadata().BumpVersion()
 
-	return s.resources.Update(ctx, oldCfg.Metadata().Version(), cfgResource)
+	return s.resources.Update(ctx, cfgResource)
 }

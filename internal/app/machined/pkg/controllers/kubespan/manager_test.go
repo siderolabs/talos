@@ -366,10 +366,8 @@ func (suite *ManagerSuite) TestReconcile() {
 	)
 
 	// update config and disable force routing, nothing should be routed
-	oldVersion := cfg.Metadata().Version()
 	cfg.TypedSpec().ForceRouting = false
-	cfg.Metadata().BumpVersion()
-	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, cfg))
+	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -456,10 +454,8 @@ func (suite *ManagerSuite) TestReconcile() {
 	)
 
 	// update config and disable wireguard, everything should be cleaned up
-	oldVersion = cfg.Metadata().Version()
 	cfg.TypedSpec().Enabled = false
-	cfg.Metadata().BumpVersion()
-	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, cfg))
+	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

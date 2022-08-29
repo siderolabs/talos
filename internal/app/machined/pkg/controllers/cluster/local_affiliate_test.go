@@ -93,10 +93,8 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, ksConfig))
 
 	// add KS address to the list of node addresses, it should be ignored in the endpoints
-	oldVersion := nonK8sAddresses.Metadata().Version()
 	nonK8sAddresses.TypedSpec().Addresses = append(nonK8sAddresses.TypedSpec().Addresses, ksIdentity.TypedSpec().Address)
-	nonK8sAddresses.Metadata().BumpVersion()
-	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, nonK8sAddresses))
+	suite.Require().NoError(suite.state.Update(suite.ctx, nonK8sAddresses))
 
 	onlyK8sAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterOnlyK8s))
 	onlyK8sAddresses.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("10.244.1.0/24")}
@@ -133,10 +131,8 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	))
 
 	// disable advertising K8s addresses
-	oldVersion = ksConfig.Metadata().Version()
 	ksConfig.TypedSpec().AdvertiseKubernetesNetworks = false
-	ksConfig.Metadata().BumpVersion()
-	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, ksConfig))
+	suite.Require().NoError(suite.state.Update(suite.ctx, ksConfig))
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
@@ -153,10 +149,8 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	))
 
 	// disable discovery, local affiliate should be removed
-	oldVersion = discoveryConfig.Metadata().Version()
 	discoveryConfig.TypedSpec().DiscoveryEnabled = false
-	discoveryConfig.Metadata().BumpVersion()
-	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, discoveryConfig))
+	suite.Require().NoError(suite.state.Update(suite.ctx, discoveryConfig))
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertNoResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata()),

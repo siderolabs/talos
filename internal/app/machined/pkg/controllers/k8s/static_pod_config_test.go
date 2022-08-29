@@ -147,9 +147,7 @@ func (suite *StaticPodConfigSuite) TestReconcile() {
 
 	// update the pod changing the namespace
 	cfg.Config().Raw().(*v1alpha1.Config).MachineConfig.MachinePods[0].Object["metadata"].(map[string]interface{})["namespace"] = "custom"
-	oldVersion := cfg.Metadata().Version()
-	cfg.Metadata().BumpVersion()
-	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, cfg))
+	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
 
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -180,9 +178,7 @@ func (suite *StaticPodConfigSuite) TestReconcile() {
 
 	// remove all pods
 	cfg.Config().Raw().(*v1alpha1.Config).MachineConfig.MachinePods = nil
-	oldVersion = cfg.Metadata().Version()
-	cfg.Metadata().BumpVersion()
-	suite.Require().NoError(suite.state.Update(suite.ctx, oldVersion, cfg))
+	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
 
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

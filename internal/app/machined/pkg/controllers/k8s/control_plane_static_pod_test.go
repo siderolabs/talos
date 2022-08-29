@@ -540,12 +540,9 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileAdvertisedAddressArg() {
 
 	suite.Assert().Contains(apiServerPod.Spec.Containers[0].Command, "--advertise-address=$(POD_IP)")
 
-	oldVersion := configAPIServer.Metadata().Version
-	configAPIServer.Metadata().BumpVersion()
-
 	configAPIServer.TypedSpec().AdvertisedAddress = ""
 
-	suite.Assert().NoError(suite.state.Update(suite.ctx, oldVersion(), configAPIServer))
+	suite.Assert().NoError(suite.state.Update(suite.ctx, configAPIServer))
 
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

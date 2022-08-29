@@ -133,12 +133,10 @@ func (suite *EtcdSuite) TestReconcile() {
 		}))
 
 	// update node addresses, certs should be updated
-	oldVersion := nodeAddresses.Metadata().Version()
 	nodeAddresses.TypedSpec().Addresses = []netip.Prefix{
 		netip.MustParsePrefix("10.3.4.5/24"),
 	}
-	nodeAddresses.Metadata().BumpVersion()
-	suite.Require().NoError(suite.State().Update(suite.Ctx(), oldVersion, nodeAddresses))
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), nodeAddresses))
 
 	suite.AssertWithin(3*time.Second, 100*time.Millisecond,
 		ctest.WrapRetry(func(assert *assert.Assertions, require *require.Assertions) {

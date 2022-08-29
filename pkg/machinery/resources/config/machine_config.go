@@ -46,8 +46,6 @@ func NewMachineConfig(spec config.Provider) *MachineConfig {
 		},
 	}
 
-	r.md.BumpVersion()
-
 	return r
 }
 

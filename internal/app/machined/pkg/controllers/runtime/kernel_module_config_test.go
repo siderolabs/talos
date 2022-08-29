@@ -58,6 +58,7 @@ func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
 		),
 	))
 
+	old := cfg.Metadata().Version()
 	cfg = config.NewMachineConfig(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
@@ -66,11 +67,8 @@ func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
 		ClusterConfig: &v1alpha1.ClusterConfig{},
 	})
 
-	old := cfg.Metadata().Version()
-
-	cfg.Metadata().BumpVersion()
-
-	suite.Require().NoError(suite.state.Update(suite.ctx, old, cfg))
+	cfg.Metadata().SetVersion(old)
+	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
 
 	var err error
 

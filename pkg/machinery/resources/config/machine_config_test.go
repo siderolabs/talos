@@ -41,7 +41,7 @@ func TestMachineConfigMarshal(t *testing.T) {
 	enc = regexp.MustCompile("(created|updated): [0-9-:TZ+]+").ReplaceAll(enc, nil)
 
 	assert.Equal(t,
-		"metadata:\n    namespace: config\n    type: MachineConfigs.config.talos.dev\n    id: v1alpha1\n    version: 1\n    owner:\n    phase: running\n    \n    \n"+
+		"metadata:\n    namespace: config\n    type: MachineConfigs.config.talos.dev\n    id: v1alpha1\n    version: undefined\n    owner:\n    phase: running\n    \n    \n"+
 			"spec:\n    version: v1alpha1\n    persist: true # foo\n    debug: false\n    machine:\n      type: controlplane\n",
 		string(enc))
 }

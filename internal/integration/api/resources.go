@@ -108,7 +108,7 @@ func (suite *ResourcesSuite) TestForbiddenOperations() {
 	suite.Require().Error(err)
 	suite.Assert().True(state.IsConflictError(err)) // this is how COSI wraps the error
 
-	err = suite.Client.COSI.Update(ctx, resource.VersionUndefined, v1alpha1.NewService("kubelet"))
+	err = suite.Client.COSI.Update(ctx, v1alpha1.NewService("kubelet"))
 	suite.Require().Error(err)
 	suite.Assert().True(state.IsConflictError(err)) // this is how COSI wraps the error
 }

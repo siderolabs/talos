@@ -41,8 +41,6 @@ func NewMachineType() *MachineType {
 		spec: machineTypeSpec{},
 	}
 
-	r.md.BumpVersion()
-
 	return r
 }
 
