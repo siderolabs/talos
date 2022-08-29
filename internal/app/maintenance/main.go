@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"net/netip"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -144,7 +145,10 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 
 	select {
 	case cfg := <-cfgCh:
-		server.GracefulStop()
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 5*time.Second)
+		defer shutdownCancel()
+
+		factory.ServerGracefulStop(server, shutdownCtx)
 
 		return cfg, err
 	case <-ctx.Done():
