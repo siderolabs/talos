@@ -41,7 +41,7 @@ func ForEachResource(ctx context.Context,
 	nodes := md.Get("nodes")
 
 	if len(nodes) == 0 {
-		return nil
+		nodes = c.GetEndpoints()
 	}
 
 	// fetch the RD from the first node (it doesn't matter which one to use, so we'll use the first one)
