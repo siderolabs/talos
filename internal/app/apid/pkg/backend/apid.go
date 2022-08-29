@@ -8,10 +8,12 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -77,6 +79,13 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 		return outCtx, a.conn, nil
 	}
 
+	// override  max delay to avoid excessive backoff when the another node is unavailable (e.g. rebooted),
+	// and apid used as an endpoint considers another node to be down for longer than expected.
+	//
+	// default max delay is 2 minutes, which is too long for our use case.
+	backoffConfig := backoff.DefaultConfig
+	backoffConfig.MaxDelay = 15 * time.Second
+
 	var err error
 	a.conn, err = grpc.DialContext(
 		ctx,
@@ -84,6 +93,12 @@ func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.Client
 		grpc.WithInitialWindowSize(65535*32),
 		grpc.WithInitialConnWindowSize(65535*16),
 		grpc.WithTransportCredentials(a.creds),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoffConfig,
+			// not published as a constant in gRPC library
+			// see: https://github.com/grpc/grpc-go/blob/d5dee5fdbdeb52f6ea10b37b2cc7ce37814642d7/clientconn.go#L55-L56
+			MinConnectTimeout: 20 * time.Second,
+		}),
 		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 	)
 
