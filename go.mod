@@ -30,7 +30,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.9.0
 	github.com/BurntSushi/toml v1.2.0
-	github.com/aws/aws-sdk-go v1.44.83
+	github.com/aws/aws-sdk-go v1.44.87
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4
@@ -118,15 +118,15 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.4
 	go.etcd.io/etcd/etcdutl/v3 v3.5.4
 	go.uber.org/atomic v1.10.0
-	go.uber.org/zap v1.22.0
+	go.uber.org/zap v1.23.0
 	go4.org/netipx v0.0.0-20220812043211-3cc044ffd68d
-	golang.org/x/net v0.0.0-20220822230855-b0a4917ee28c
+	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
-	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6
+	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.1
@@ -287,7 +287,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220407013110-ef5c587f782d // indirect
 	google.golang.org/api v0.91.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
+	google.golang.org/genproto v0.0.0-20220829175752-36a9c930ecbf // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
