@@ -93,7 +93,8 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 			nodes := md.Get("nodes")
 
 			if len(nodes) == 0 {
-				return nil
+				// use "current" node
+				nodes = []string{""}
 			}
 
 			// fetch the RD from the first node (it doesn't matter which one to use, so we'll use the first one)
@@ -111,12 +112,20 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 			aggregatedCh := make(chan nodeAndEvent)
 
 			for _, node := range nodes {
+				var nodeCtx context.Context
+
+				if node == "" {
+					nodeCtx = ctx
+				} else {
+					nodeCtx = client.WithNode(ctx, node)
+				}
+
 				watchCh := make(chan state.Event)
 
 				if resourceID == "" {
-					err = c.COSI.WatchKind(client.WithNode(ctx, node), resource.NewMetadata(getCmdFlags.namespace, resourceType, "", resource.VersionUndefined), watchCh, state.WithBootstrapContents(true))
+					err = c.COSI.WatchKind(nodeCtx, resource.NewMetadata(getCmdFlags.namespace, resourceType, "", resource.VersionUndefined), watchCh, state.WithBootstrapContents(true))
 				} else {
-					err = c.COSI.Watch(client.WithNode(ctx, node), resource.NewMetadata(getCmdFlags.namespace, resourceType, resourceID, resource.VersionUndefined), watchCh)
+					err = c.COSI.Watch(nodeCtx, resource.NewMetadata(getCmdFlags.namespace, resourceType, resourceID, resource.VersionUndefined), watchCh)
 				}
 
 				if err != nil {
