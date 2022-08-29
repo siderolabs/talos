@@ -41,7 +41,7 @@ func ForEachResource(ctx context.Context,
 	nodes := md.Get("nodes")
 
 	if len(nodes) == 0 {
-		return nil
+		nodes = []string{""}
 	}
 
 	// fetch the RD from the first node (it doesn't matter which one to use, so we'll use the first one)
@@ -59,14 +59,22 @@ func ForEachResource(ctx context.Context,
 	resourceType = rd.TypedSpec().Type
 
 	for _, node := range nodes {
+		var nodeCtx context.Context
+
+		if node == "" {
+			nodeCtx = ctx
+		} else {
+			nodeCtx = client.WithNode(ctx, node)
+		}
+
 		if resourceID != "" {
-			r, callErr := c.COSI.Get(client.WithNode(ctx, node), resource.NewMetadata(namespace, rd.TypedSpec().Type, resourceID, resource.VersionUndefined))
+			r, callErr := c.COSI.Get(nodeCtx, resource.NewMetadata(namespace, rd.TypedSpec().Type, resourceID, resource.VersionUndefined))
 
 			if err = callback(ctx, node, r, callErr); err != nil {
 				return err
 			}
 		} else {
-			items, callErr := c.COSI.List(client.WithNode(ctx, node), resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined))
+			items, callErr := c.COSI.List(nodeCtx, resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined))
 			if callErr != nil {
 				if err = callback(ctx, node, nil, callErr); err != nil {
 					return err
