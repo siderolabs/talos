@@ -24,8 +24,8 @@ import (
 )
 
 // Conn returns underlying client connection.
-func (c *Client) Conn() grpc.ClientConnInterface {
-	return c.conn
+func (c *Client) Conn() *grpc.ClientConn {
+	return c.conn.ClientConn
 }
 
 // getConn creates new gRPC connection.
