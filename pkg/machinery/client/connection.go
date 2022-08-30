@@ -23,6 +23,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
+// Conn returns underlying client connection.
+func (c *Client) Conn() grpc.ClientConnInterface {
+	return c.conn
+}
+
 // getConn creates new gRPC connection.
 func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcConnectionWrapper, error) {
 	endpoints := c.GetEndpoints()
