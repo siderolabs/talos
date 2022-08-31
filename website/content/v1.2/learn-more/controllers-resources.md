@@ -171,9 +171,9 @@ Getting control plane static pod statuses:
 ```bash
 $ talosctl get staticpodstatus
 NODE         NAMESPACE      TYPE              ID                                                           VERSION   READY
-172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-apiserver-talos-default-master-1            3         True
-172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-controller-manager-talos-default-master-1   3         True
-172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-scheduler-talos-default-master-1            4         True
+172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-apiserver-talos-default-controlplane-1            3         True
+172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-controller-manager-talos-default-controlplane-1   3         True
+172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-scheduler-talos-default-controlplane-1            4         True
 ```
 
 Getting static pod definition for `kube-apiserver`:

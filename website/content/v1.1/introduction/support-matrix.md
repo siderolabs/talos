@@ -20,7 +20,7 @@ description: "Table of supported Talos Linux versions and respective platforms."
 | **Cluster API**                                                                                                |                                    |                                    |
 | [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.5.4                           | >= 0.5.3                           |
 | [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.4.6                           | >= 0.4.5                           |
-| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.5.1                           | >= 0.5.0                           |
+| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.5.4                           | >= 0.5.0                           |
 | **UI**                                                                                                         |                                    |                                    |
 | [Theila](https://github.com/siderolabs/theila)                                                                 | ✓                                  | ✓                                  |
 

@@ -1,7 +1,7 @@
 ---
 title: "Nocloud"
 description: "Creating a cluster via the CLI using qemu."
-aliases: 
+aliases:
   - ../../../cloud-platforms/nocloud
 ---
 
@@ -114,14 +114,14 @@ Edit the cloud-init config information in Proxmox as follows, substitute your ow
 and then update ```cicustom``` param at `/etc/pve/qemu-server/$ID.conf`.
 
 ```config
-cicustom: user=local:snippets/master-1.yml
+cicustom: user=local:snippets/controlplane-1.yml
 ipconfig0: ip=192.168.1.10/24,gw=192.168.10.254
 nameserver: 1.1.1.1
 searchdomain: local
 ```
 
-> Note: `snippets/master-1.yml` is Talos machine config.
-It is usually located at `/var/lib/vz/snippets/master-1.yml`.
+> Note: `snippets/controlplane-1.yml` is Talos machine config.
+It is usually located at `/var/lib/vz/snippets/controlplane-1.yml`.
 This file must be placed to this path manually, as Proxmox does not support snippet uploading via API/GUI.
 
 Click on `Regenerate Image` button after the above changes are made.

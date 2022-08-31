@@ -118,11 +118,11 @@ NETWORK MTU       1500
 
 NODES:
 
-NAME                     TYPE           IP         CPU    RAM      DISK
-talos-default-master-1   Init           10.5.0.2   1.00   1.6 GB   4.3 GB
-talos-default-master-2   ControlPlane   10.5.0.3   1.00   1.6 GB   4.3 GB
-talos-default-master-3   ControlPlane   10.5.0.4   1.00   1.6 GB   4.3 GB
-talos-default-worker-1   Worker         10.5.0.5   1.00   1.6 GB   4.3 GB
+NAME                           TYPE           IP         CPU    RAM      DISK
+talos-default-controlplane-1   ControlPlane   10.5.0.2   1.00   1.6 GB   4.3 GB
+talos-default-controlplane-2   ControlPlane   10.5.0.3   1.00   1.6 GB   4.3 GB
+talos-default-controlplane-3   ControlPlane   10.5.0.4   1.00   1.6 GB   4.3 GB
+talos-default-worker-1         Worker         10.5.0.5   1.00   1.6 GB   4.3 GB
 ```
 
 ## Cleaning Up

@@ -74,12 +74,12 @@ An affiliate is a proposed member attributed to the fact that the node has the s
 
 ```sh
 $ talosctl get affiliates
-ID                                             VERSION   HOSTNAME                 MACHINE TYPE   ADDRESSES
-2VfX3nu67ZtZPl57IdJrU87BMjVWkSBJiL9ulP9TCnF    2         talos-default-master-2   controlplane   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
-6EVq8RHIne03LeZiJ60WsJcoQOtttw1ejvTS6SOBzhUA   2         talos-default-worker-1   worker         ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
-NVtfu1bT1QjhNq5xJFUZl8f8I8LOCnnpGrZfPpdN9WlB   2         talos-default-worker-2   worker         ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
-Utoh3O0ZneV0kT2IUBrh7TgdouRcUW2yzaaMl4VXnCd    4         talos-default-master-1   controlplane   ["172.20.0.2","fd83:b1f7:fcb5:2802:8c13:71ff:feaf:7c94"]
-b3DebkPaCRLTLLWaeRF1ejGaR0lK3m79jRJcPn0mfA6C   2         talos-default-master-3   controlplane   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
+ID                                             VERSION   HOSTNAME                       MACHINE TYPE   ADDRESSES
+2VfX3nu67ZtZPl57IdJrU87BMjVWkSBJiL9ulP9TCnF    2         talos-default-controlplane-2   controlplane   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
+6EVq8RHIne03LeZiJ60WsJcoQOtttw1ejvTS6SOBzhUA   2         talos-default-worker-1         worker         ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
+NVtfu1bT1QjhNq5xJFUZl8f8I8LOCnnpGrZfPpdN9WlB   2         talos-default-worker-2         worker         ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
+Utoh3O0ZneV0kT2IUBrh7TgdouRcUW2yzaaMl4VXnCd    4         talos-default-controlplane-1   controlplane   ["172.20.0.2","fd83:b1f7:fcb5:2802:8c13:71ff:feaf:7c94"]
+b3DebkPaCRLTLLWaeRF1ejGaR0lK3m79jRJcPn0mfA6C   2         talos-default-controlplane-3   controlplane   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
 ```
 
 One of the `Affiliates` with the `ID` matching node identity is populated from the node data, other `Affiliates` are pulled from the registries.
@@ -89,15 +89,15 @@ Details about data coming from each registry can be queried from the `cluster-ra
 
 ```sh
 $ talosctl get affiliates --namespace=cluster-raw
-ID                                                     VERSION   HOSTNAME                 MACHINE TYPE   ADDRESSES
-k8s/2VfX3nu67ZtZPl57IdJrU87BMjVWkSBJiL9ulP9TCnF        3         talos-default-master-2   controlplane   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
-k8s/6EVq8RHIne03LeZiJ60WsJcoQOtttw1ejvTS6SOBzhUA       2         talos-default-worker-1   worker         ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
-k8s/NVtfu1bT1QjhNq5xJFUZl8f8I8LOCnnpGrZfPpdN9WlB       2         talos-default-worker-2   worker         ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
-k8s/b3DebkPaCRLTLLWaeRF1ejGaR0lK3m79jRJcPn0mfA6C       3         talos-default-master-3   controlplane   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
-service/2VfX3nu67ZtZPl57IdJrU87BMjVWkSBJiL9ulP9TCnF    23        talos-default-master-2   controlplane   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
-service/6EVq8RHIne03LeZiJ60WsJcoQOtttw1ejvTS6SOBzhUA   26        talos-default-worker-1   worker         ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
-service/NVtfu1bT1QjhNq5xJFUZl8f8I8LOCnnpGrZfPpdN9WlB   20        talos-default-worker-2   worker         ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
-service/b3DebkPaCRLTLLWaeRF1ejGaR0lK3m79jRJcPn0mfA6C   14        talos-default-master-3   controlplane   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
+ID                                                     VERSION   HOSTNAME                       MACHINE TYPE   ADDRESSES
+k8s/2VfX3nu67ZtZPl57IdJrU87BMjVWkSBJiL9ulP9TCnF        3         talos-default-controlplane-2   controlplane   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
+k8s/6EVq8RHIne03LeZiJ60WsJcoQOtttw1ejvTS6SOBzhUA       2         talos-default-worker-1         worker         ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
+k8s/NVtfu1bT1QjhNq5xJFUZl8f8I8LOCnnpGrZfPpdN9WlB       2         talos-default-worker-2         worker         ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
+k8s/b3DebkPaCRLTLLWaeRF1ejGaR0lK3m79jRJcPn0mfA6C       3         talos-default-controlplane-3   controlplane   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
+service/2VfX3nu67ZtZPl57IdJrU87BMjVWkSBJiL9ulP9TCnF    23        talos-default-controlplane-2   controlplane   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
+service/6EVq8RHIne03LeZiJ60WsJcoQOtttw1ejvTS6SOBzhUA   26        talos-default-worker-1         worker         ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
+service/NVtfu1bT1QjhNq5xJFUZl8f8I8LOCnnpGrZfPpdN9WlB   20        talos-default-worker-2         worker         ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
+service/b3DebkPaCRLTLLWaeRF1ejGaR0lK3m79jRJcPn0mfA6C   14        talos-default-controlplane-3   controlplane   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
 ```
 
 Each `Affiliate` ID is prefixed with `k8s/` for data coming from the Kubernetes registry and with `service/` for data coming from the discovery service.
@@ -109,10 +109,10 @@ The members of the cluster can be obtained with:
 
 ```sh
 $ talosctl get members
-ID                       VERSION   HOSTNAME                 MACHINE TYPE   OS                ADDRESSES
-talos-default-master-1   2         talos-default-master-1   controlplane   Talos ({{< release >}})   ["172.20.0.2","fd83:b1f7:fcb5:2802:8c13:71ff:feaf:7c94"]
-talos-default-master-2   1         talos-default-master-2   controlplane   Talos ({{< release >}})   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
-talos-default-master-3   1         talos-default-master-3   controlplane   Talos ({{< release >}})   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
-talos-default-worker-1   1         talos-default-worker-1   worker         Talos ({{< release >}})   ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
-talos-default-worker-2   1         talos-default-worker-2   worker         Talos ({{< release >}})   ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
+ID                             VERSION   HOSTNAME                       MACHINE TYPE   OS                ADDRESSES
+talos-default-controlplane-1   2         talos-default-controlplane-1   controlplane   Talos ({{< release >}})   ["172.20.0.2","fd83:b1f7:fcb5:2802:8c13:71ff:feaf:7c94"]
+talos-default-controlplane-2   1         talos-default-controlplane-2   controlplane   Talos ({{< release >}})   ["172.20.0.3","fd83:b1f7:fcb5:2802:986b:7eff:fec5:889d"]
+talos-default-controlplane-3   1         talos-default-controlplane-3   controlplane   Talos ({{< release >}})   ["172.20.0.4","fd83:b1f7:fcb5:2802:248f:1fff:fe5c:c3f"]
+talos-default-worker-1         1         talos-default-worker-1         worker         Talos ({{< release >}})   ["172.20.0.5","fd83:b1f7:fcb5:2802:cc80:3dff:fece:d89d"]
+talos-default-worker-2         1         talos-default-worker-2         worker         Talos ({{< release >}})   ["172.20.0.6","fd83:b1f7:fcb5:2802:2805:fbff:fe80:5ed2"]
 ```

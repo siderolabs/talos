@@ -72,7 +72,7 @@ sudo --preserve-env=HOME _out/talosctl-linux-amd64 cluster create \
     --registry-mirror ghcr.io=http://172.20.0.1:5004 \
     --registry-mirror 127.0.0.1:5005=http://172.20.0.1:5005 \
     --install-image=127.0.0.1:5005/siderolabs/installer:<RECORDED HASH from the build step> \
-    --masters 3 \
+    --controlplanes 3 \
     --workers 2 \
     --with-bootloader=false
 ```
@@ -81,7 +81,7 @@ sudo --preserve-env=HOME _out/talosctl-linux-amd64 cluster create \
 - custom `--cidr` to make QEMU cluster use different network than default Docker setup (optional)
 - `--registry-mirror` uses the caching proxies set up above to speed up boot time a lot, last one adds your local registry (installer image was pushed to it)
 - `--install-image` is the image you built with `make installer` above
-- `--masters` & `--workers` configure cluster size, choose to match your resources; 3 masters give you HA control plane; 1 master is enough, never do 2 masters
+- `--controlplanes` & `--workers` configure cluster size, choose to match your resources; 3 controlplanes give you HA control plane; 1 controlplane is enough, never do 2 controlplanes
 - `--with-bootloader=false` disables boot from disk (Talos will always boot from `_out/vmlinuz-amd64` and `_out/initramfs-amd64.xz`).
   This speeds up development cycle a lot - no need to rebuild installer and perform install, rebooting is enough to get new code.
 

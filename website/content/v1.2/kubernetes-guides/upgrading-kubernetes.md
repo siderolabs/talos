@@ -22,14 +22,14 @@ Upgrading Kubernetes is non-disruptive to the cluster workloads.
 
 To trigger a Kubernetes upgrade, issue a command specifiying the version of Kubernetes to ugprade to, such as:
 
-`talosctl --nodes <master node> upgrade-k8s --to {{< k8s_release >}}`
+`talosctl --nodes <controlplane node> upgrade-k8s --to {{< k8s_release >}}`
 
 Note that the `--nodes` parameter specifies the control plane node to send the API call to, but all members of the cluster will be upgraded.
 
 To check what will be upgraded you can run `talosctl upgrade-k8s` with the `--dry-run` flag:
 
 ```bash
-$ talosctl --nodes <master node> upgrade-k8s --to {{< k8s_release >}} --dry-run
+$ talosctl --nodes <controlplane node> upgrade-k8s --to {{< k8s_release >}} --dry-run
 WARNING: found resources which are going to be deprecated/migrated in the version {{< k8s_release >}}
 RESOURCE                                                               COUNT
 validatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io   4
@@ -39,7 +39,7 @@ apiservices.v1beta1.apiregistration.k8s.io                             54
 leases.v1beta1.coordination.k8s.io                                     4
 automatically detected the lowest Kubernetes version {{< k8s_prev_release >}}
 checking for resource APIs to be deprecated in version {{< k8s_release >}}
-discovered master nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
+discovered controlplane nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
 discovered worker nodes ["172.20.0.5" "172.20.0.6"]
 updating "kube-apiserver" to version "{{< k8s_release >}}"
  > "172.20.0.2": starting update
@@ -70,10 +70,10 @@ updating manifests
 To upgrade Kubernetes from v{{< k8s_prev_release >}} to v{{< k8s_release >}} run:
 
 ```bash
-$ talosctl --nodes <master node> upgrade-k8s --to {{< k8s_release >}}
+$ talosctl --nodes <controlplane node> upgrade-k8s --to {{< k8s_release >}}
 automatically detected the lowest Kubernetes version {{< k8s_prev_release >}}
 checking for resource APIs to be deprecated in version {{< k8s_release >}}
-discovered master nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
+discovered controlplane nodes ["172.20.0.2" "172.20.0.3" "172.20.0.4"]
 discovered worker nodes ["172.20.0.5" "172.20.0.6"]
 updating "kube-apiserver" to version "{{< k8s_release >}}"
  > "172.20.0.2": starting update
@@ -112,7 +112,7 @@ In order to edit the control plane, you need a working `kubectl` config.
 If you don't already have one, you can get one by running:
 
 ```bash
-talosctl --nodes <master node> kubeconfig
+talosctl --nodes <controlplane node> kubeconfig
 ```
 
 ### API Server
@@ -152,19 +152,19 @@ spec:
 ```
 
 In this example, the new version is `5`.
-Wait for the new pod definition to propagate to the API server state (replace `talos-default-master-1` with the node name):
+Wait for the new pod definition to propagate to the API server state (replace `talos-default-controlplane-1` with the node name):
 
 ```bash
-$ kubectl get pod -n kube-system -l k8s-app=kube-apiserver --field-selector spec.nodeName=talos-default-master-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
+$ kubectl get pod -n kube-system -l k8s-app=kube-apiserver --field-selector spec.nodeName=talos-default-controlplane-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
 5
 ```
 
 Check that the pod is running:
 
 ```bash
-$ kubectl get pod -n kube-system -l k8s-app=kube-apiserver --field-selector spec.nodeName=talos-default-master-1
+$ kubectl get pod -n kube-system -l k8s-app=kube-apiserver --field-selector spec.nodeName=talos-default-controlplane-1
 NAME                                    READY   STATUS    RESTARTS   AGE
-kube-apiserver-talos-default-master-1   1/1     Running   0          16m
+kube-apiserver-talos-default-controlplane-1   1/1     Running   0          16m
 ```
 
 Repeat this process for every control plane node, verifying that state got propagated successfully between each node update.
@@ -201,19 +201,19 @@ spec:
 ```
 
 In this example, new version is `3`.
-Wait for the new pod definition to propagate to the API server state (replace `talos-default-master-1` with the node name):
+Wait for the new pod definition to propagate to the API server state (replace `talos-default-controlplane-1` with the node name):
 
 ```bash
-$ kubectl get pod -n kube-system -l k8s-app=kube-controller-manager --field-selector spec.nodeName=talos-default-master-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
+$ kubectl get pod -n kube-system -l k8s-app=kube-controller-manager --field-selector spec.nodeName=talos-default-controlplane-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
 3
 ```
 
 Check that the pod is running:
 
 ```bash
-$ kubectl get pod -n kube-system -l k8s-app=kube-controller-manager --field-selector spec.nodeName=talos-default-master-1
+$ kubectl get pod -n kube-system -l k8s-app=kube-controller-manager --field-selector spec.nodeName=talos-default-controlplane-1
 NAME                                             READY   STATUS    RESTARTS   AGE
-kube-controller-manager-talos-default-master-1   1/1     Running   0          35m
+kube-controller-manager-talos-default-controlplane-1   1/1     Running   0          35m
 ```
 
 Repeat this process for every control plane node, verifying that state propagated successfully between each node update.
@@ -247,19 +247,19 @@ spec:
 ```
 
 In this example, new version is `3`.
-Wait for the new pod definition to propagate to the API server state (replace `talos-default-master-1` with the node name):
+Wait for the new pod definition to propagate to the API server state (replace `talos-default-controlplane-1` with the node name):
 
 ```bash
-$ kubectl get pod -n kube-system -l k8s-app=kube-scheduler --field-selector spec.nodeName=talos-default-master-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
+$ kubectl get pod -n kube-system -l k8s-app=kube-scheduler --field-selector spec.nodeName=talos-default-controlplane-1 -o jsonpath='{.items[0].metadata.annotations.talos\.dev/config\-version}'
 3
 ```
 
 Check that the pod is running:
 
 ```bash
-$ kubectl get pod -n kube-system -l k8s-app=kube-scheduler --field-selector spec.nodeName=talos-default-master-1
+$ kubectl get pod -n kube-system -l k8s-app=kube-scheduler --field-selector spec.nodeName=talos-default-controlplane-1
 NAME                                    READY   STATUS    RESTARTS   AGE
-kube-scheduler-talos-default-master-1   1/1     Running   0          39m
+kube-scheduler-talos-default-controlplane-1   1/1     Running   0          39m
 ```
 
 Repeat this process for every control plane node, verifying that state got propagated successfully between each node update.
@@ -314,7 +314,7 @@ kubectl edit daemonsets -n kube-system kube-proxy
 Bootstrap manifests can be retrieved in a format which works for `kubectl` with the following command:
 
 ```bash
-talosctl -n <master IP> get manifests -o yaml | yq eval-all '.spec | .[] | splitDoc' - > manifests.yaml
+talosctl -n <controlplane IP> get manifests -o yaml | yq eval-all '.spec | .[] | splitDoc' - > manifests.yaml
 ```
 
 Diff the manifests with the cluster:
@@ -343,7 +343,7 @@ patched mc at the node 172.20.0.2
 Once `kubelet` restarts with the new configuration, confirm upgrade with `kubectl get nodes <name>`:
 
 ```bash
-$ kubectl get nodes talos-default-master-1
-NAME                     STATUS   ROLES                  AGE    VERSION
-talos-default-master-1   Ready    control-plane,master   123m   v{{< k8s_release >}}
+$ kubectl get nodes talos-default-controlplane-1
+NAME                           STATUS   ROLES                  AGE    VERSION
+talos-default-controlplane-1   Ready    control-plane          123m   v{{< k8s_release >}}
 ```

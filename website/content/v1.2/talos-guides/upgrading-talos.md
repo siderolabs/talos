@@ -25,6 +25,20 @@ This means an upgrade of the Talos Linux OS will not apply an upgrade of the Kub
 Kubernetes upgrades should be managed separately per [upgrading kubernetes]({{< relref "../kubernetes-guides/upgrading-kubernetes" >}}).
 Each release of Talos Linux includes the latest stable Kubernetes version by default.
 
+## Before Upgrade to {{% release %}}
+
+### PodSecurityPolicy removal
+
+`PodSecurityPolicy` is removed in Kubernetes 1.25, so make sure that it is disabled on Talos side before trying to use Kubernetes 1.25:
+
+```yaml
+cluster:
+  apiServer:
+    disablePodSecurityPolicy: true
+```
+
+This setting defaulted to `true` since Talos v1.0.0 release.
+
 ## Video Walkthrough
 
 To see a live demo of an upgrade of Talos Linux, see the video below:
@@ -56,11 +70,11 @@ However, if you are running a single-node control-plane, you will want to make s
 Rarely, a upgrade command will fail to run due to a process holding a file open on disk, or you may wish to set a node to upgrade, but delay the actual reboot as long as possible.
 In these cases, you can use the `--stage` flag.
 This puts the upgrade artifacts on disk, and adds some metadata to a disk partition that gets checked very early in the boot process.
-The node is *not* rebooted by the `upgrade --stage` process.
-However, whenever the system does next reboot, Talos sees that it needs to apply an upgrade, and will do so immediately.
+Finally, the node is rebooted by the `upgrade --stage` process.
+On the reboot, Talos sees that it needs to apply an upgrade, and will do so immediately.
 Because this occurs in a just rebooted system, there will be no conflict with any files being held open.
 After the upgrade is applied, the node will reboot again, in order to boot into the new version.
-Note that because Talos Linux now reboots via the kexec syscall, the extra reboot adds very little time.
+Note that because Talos Linux now reboots via the `kexec` syscall, the extra reboot adds very little time.
 
 <!--
 ## Talos Controller Manager
@@ -81,7 +95,16 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+* [`.machine.features.stableHostname`]({{<relref "../reference/configuration#featuresconfig" >}}) allows to generate a default hostname based on machine IDs
+* [`.machine.features.kubernetesTalosAPIAccess`]({{<relref "../reference/configuration#featuresconfig" >}}) configures [Talos API access from Kubernetes]({{<relref "../advanced/talos-api-access-from-k8s">}}) feature
+* [`.machine.kubelet.defaultRuntimeSeccompProfileEnabled`]({{<relref "../reference/configuration#kubeletconfig" >}}) enables seccomp profile by default for Kubernetes workloads
+* [`.machine.kubelet.skipNodeRegistration`]({{<relref "../reference/configuration#kubeletconfig" >}}) allows to skip Kubernetes node registration (node only runs static pods)
+* [`.machine.network.interfaces`]({{<relref "../reference/configuration#device" >}}) supports bridge interfaces
+* [`.machine.network.interfaces.*.vlan`]({{<relref "../reference/configuration#vlan" >}}) supports DHCP settings for VLANs
+* [`.machine.network.kubespan.advertiseKubernetesNetworks`]({{<relref "../reference/configuration#networkkubespan" >}}) controls whether KubeSpan advertises Kubernetes pod networks or just host networks (defaults to false in 1.2.0)
+* [`.machine.seccompProfiles`]({{<relref "../reference/configuration#machineseccompprofile" >}}) configures additional seccomp profiles
+* `.cluster.allowSchedulingOnMasters` renamed to `.cluster.allowSchedulingOnControlPlanes`, old setting is still supported
+* [`.cluster.etcd`]({{<relref "../reference/configuration#etcdconfig" >}}) now has more options to configure etcd advertised and listen subnets, old settings are still supported
 
 ## Upgrade Sequence
 

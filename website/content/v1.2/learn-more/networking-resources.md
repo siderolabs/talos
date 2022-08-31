@@ -202,19 +202,19 @@ metadata:
     finalizers:
         - network.HostnameSpecController
 spec:
-    hostname: talos-default-master-1
+    hostname: talos-default-controlplane-1
     domainname: ""
     layer: operator
 ```
 
-We can see that the final configuration for the hostname is `talos-default-master-1`.
+We can see that the final configuration for the hostname is `talos-default-controlplane-1`.
 And this is the hostname that was actually applied.
 This can be verified by querying a `HostnameStatus` resource:
 
 ```sh
 $ talosctl get hostnamestatus
 NODE         NAMESPACE   TYPE             ID         VERSION   HOSTNAME                 DOMAINNAME
-172.20.0.2   network     HostnameStatus   hostname   1         talos-default-master-1
+172.20.0.2   network     HostnameStatus   hostname   1         talos-default-controlplane-1
 ```
 
 Initial configuration for the hostname in the `network-config` namespace is:
@@ -247,7 +247,7 @@ metadata:
     created: 2021-06-29T20:23:18Z
     updated: 2021-06-29T20:23:18Z
 spec:
-    hostname: talos-default-master-1
+    hostname: talos-default-controlplane-1
     domainname: ""
     layer: operator
 ```
@@ -255,7 +255,7 @@ spec:
 We can see that there are two specs for the hostname:
 
 * one from the `default` configuration layer which defines the hostname as `talos-172-20-0-2` (default driven by the default node address);
-* another one from the layer `operator` that defines the hostname as `talos-default-master-1` (DHCP).
+* another one from the layer `operator` that defines the hostname as `talos-default-controlplane-1` (DHCP).
 
 Talos merges these two specs into a final `HostnameSpec` based on the configuration layer and merge rules.
 Here is the order of precedence from low to high:
@@ -266,7 +266,7 @@ Here is the order of precedence from low to high:
 * `operator` (various dynamic configuration options: DHCP, Virtual IP, etc);
 * `configuration` (derived from the machine configuration).
 
-So in our example the `operator` layer `HostnameSpec` overrides the `default` layer producing the final hostname `talos-default-master-1`.
+So in our example the `operator` layer `HostnameSpec` overrides the `default` layer producing the final hostname `talos-default-controlplane-1`.
 
 The merge process applies to all six core networking specs.
 For each spec, the `layer` controls the merge behavior

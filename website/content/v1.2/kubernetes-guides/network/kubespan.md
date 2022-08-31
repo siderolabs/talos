@@ -136,11 +136,11 @@ A node's WireGuard peers can be obtained with:
 
 ```sh
 $ talosctl get kubespanpeerspecs
-ID                                             VERSION   LABEL                    ENDPOINTS
-06D9QQOydzKrOL7oeLiqHy9OWE8KtmJzZII2A5/FLFI=   2         talos-default-master-2   ["172.20.0.3:51820"]
-THtfKtfNnzJs1nMQKs5IXqK0DFXmM//0WMY+NnaZrhU=   2         talos-default-master-3   ["172.20.0.4:51820"]
-nVHu7l13uZyk0AaI1WuzL2/48iG8af4WRv+LWmAax1M=   2         talos-default-worker-2   ["172.20.0.6:51820"]
-zXP0QeqRo+CBgDH1uOBiQ8tA+AKEQP9hWkqmkE/oDlc=   2         talos-default-worker-1   ["172.20.0.5:51820"]
+ID                                             VERSION   LABEL                          ENDPOINTS
+06D9QQOydzKrOL7oeLiqHy9OWE8KtmJzZII2A5/FLFI=   2         talos-default-controlplane-2   ["172.20.0.3:51820"]
+THtfKtfNnzJs1nMQKs5IXqK0DFXmM//0WMY+NnaZrhU=   2         talos-default-controlplane-3   ["172.20.0.4:51820"]
+nVHu7l13uZyk0AaI1WuzL2/48iG8af4WRv+LWmAax1M=   2         talos-default-worker-2         ["172.20.0.6:51820"]
+zXP0QeqRo+CBgDH1uOBiQ8tA+AKEQP9hWkqmkE/oDlc=   2         talos-default-worker-1         ["172.20.0.5:51820"]
 ```
 
 The peer ID is the Wireguard public key.
@@ -152,11 +152,11 @@ The status of a node's WireGuard peers can be obtained with:
 
 ```sh
 $ talosctl get kubespanpeerstatuses
-ID                                             VERSION   LABEL                    ENDPOINT           STATE   RX         TX
-06D9QQOydzKrOL7oeLiqHy9OWE8KtmJzZII2A5/FLFI=   63        talos-default-master-2   172.20.0.3:51820   up      15043220   17869488
-THtfKtfNnzJs1nMQKs5IXqK0DFXmM//0WMY+NnaZrhU=   62        talos-default-master-3   172.20.0.4:51820   up      14573208   18157680
-nVHu7l13uZyk0AaI1WuzL2/48iG8af4WRv+LWmAax1M=   60        talos-default-worker-2   172.20.0.6:51820   up      130072     46888
-zXP0QeqRo+CBgDH1uOBiQ8tA+AKEQP9hWkqmkE/oDlc=   60        talos-default-worker-1   172.20.0.5:51820   up      130044     46556
+ID                                             VERSION   LABEL                          ENDPOINT           STATE   RX         TX
+06D9QQOydzKrOL7oeLiqHy9OWE8KtmJzZII2A5/FLFI=   63        talos-default-controlplane-2   172.20.0.3:51820   up      15043220   17869488
+THtfKtfNnzJs1nMQKs5IXqK0DFXmM//0WMY+NnaZrhU=   62        talos-default-controlplane-3   172.20.0.4:51820   up      14573208   18157680
+nVHu7l13uZyk0AaI1WuzL2/48iG8af4WRv+LWmAax1M=   60        talos-default-worker-2         172.20.0.6:51820   up      130072     46888
+zXP0QeqRo+CBgDH1uOBiQ8tA+AKEQP9hWkqmkE/oDlc=   60        talos-default-worker-1         172.20.0.5:51820   up      130044     46556
 ```
 
 KubeSpan peer status includes following information:

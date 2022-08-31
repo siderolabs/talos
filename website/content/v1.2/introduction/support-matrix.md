@@ -18,9 +18,9 @@ description: "Table of supported Talos Linux versions and respective platforms."
 | - SBCs                                                                                                         | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B |
 | - local                                                                                                        | Docker, QEMU                       | Docker, QEMU                       |
 | **Cluster API**                                                                                                |                                    |                                    |
-| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.5.4                           | >= 0.5.3                           |
-| [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.4.6                           | >= 0.4.6                           |
-| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.5.1                           | >= 0.5.1                           |
+| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.5.5                           | >= 0.5.3                           |
+| [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.4.8                           | >= 0.4.6                           |
+| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.5.5                           | >= 0.5.4                           |
 | **UI**                                                                                                         |                                    |                                    |
 | [Theila](https://github.com/siderolabs/theila)                                                                 | ✓                                  | ✓                                  |
 

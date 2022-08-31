@@ -201,7 +201,7 @@ This is expected during initial cluster bootstrap and sometimes after a reboot:
 
 ```bash
 [   70.093289] [talos] task labelNodeAsControlPlane (1/1): starting
-[   80.094038] [talos] retrying error: an error on the server ("") has prevented the request from succeeding (get nodes talos-default-master-1)
+[   80.094038] [talos] retrying error: an error on the server ("") has prevented the request from succeeding (get nodes talos-default-controlplane-1)
 ```
 
 Initially `kube-apiserver` component is not running yet, and it takes some time before it becomes fully up
@@ -215,16 +215,16 @@ In any case, the status of the control plane components on each control plane no
 
 ```bash
 $ talosctl -n <IP> containers --kubernetes
-NODE         NAMESPACE   ID                                                                                      IMAGE                                        PID    STATUS
-172.20.0.2   k8s.io      kube-system/kube-apiserver-talos-default-master-1                                       k8s.gcr.io/pause:3.2                         2539   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-master-1:kube-apiserver                     k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}            2572   CONTAINER_RUNNING
+NODE         NAMESPACE   ID                                                                                            IMAGE                                              PID    STATUS
+172.20.0.2   k8s.io      kube-system/kube-apiserver-talos-default-controlplane-1                                       k8s.gcr.io/pause:3.2                               2539   SANDBOX_READY
+172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-controlplane-1:kube-apiserver                     k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}     2572   CONTAINER_RUNNING
 ```
 
 If `kube-apiserver` shows as `CONTAINER_EXITED`, it might have exited due to configuration error.
 Logs can be checked with `taloctl logs --kubernetes` (or with `-k` as a shorthand):
 
 ```bash
-$ talosctl -n <IP> logs -k kube-system/kube-apiserver-talos-default-master-1:kube-apiserver
+$ talosctl -n <IP> logs -k kube-system/kube-apiserver-talos-default-controlplane-1:kube-apiserver
 172.20.0.2: 2021-03-05T20:46:13.133902064Z stderr F 2021/03/05 20:46:13 Running command:
 172.20.0.2: 2021-03-05T20:46:13.133933824Z stderr F Command env: (log-file=, also-stdout=false, redirect-stderr=true)
 172.20.0.2: 2021-03-05T20:46:13.133938524Z stderr F Run from directory:
@@ -232,7 +232,7 @@ $ talosctl -n <IP> logs -k kube-system/kube-apiserver-talos-default-master-1:kub
 ...
 ```
 
-### Talos prints error `nodes "talos-default-master-1" not found`
+### Talos prints error `nodes "talos-default-controlplane-1" not found`
 
 This error means that `kube-apiserver` is up and the control plane endpoint is healthy, but the `kubelet` hasn't received
 its client certificate yet, and it wasn't able to register itself to Kubernetes.
@@ -304,10 +304,10 @@ If the control plane endpoint is up, the status of the pods can be ascertained w
 
 ```bash
 $ kubectl get pods -n kube-system -l k8s-app=kube-controller-manager
-NAME                                             READY   STATUS    RESTARTS   AGE
-kube-controller-manager-talos-default-master-1   1/1     Running   0          28m
-kube-controller-manager-talos-default-master-2   1/1     Running   0          28m
-kube-controller-manager-talos-default-master-3   1/1     Running   0          28m
+NAME                                                   READY   STATUS    RESTARTS   AGE
+kube-controller-manager-talos-default-controlplane-1   1/1     Running   0          28m
+kube-controller-manager-talos-default-controlplane-2   1/1     Running   0          28m
+kube-controller-manager-talos-default-controlplane-3   1/1     Running   0          28m
 ```
 
 If the control plane endpoint is not yet up, the container status of the control plane components can be queried with
@@ -315,12 +315,12 @@ If the control plane endpoint is not yet up, the container status of the control
 
 ```bash
 $ talosctl -n <IP> c -k
-NODE         NAMESPACE   ID                                                                                      IMAGE                                        PID    STATUS
+NODE         NAMESPACE   ID                                                                                            IMAGE                                        PID    STATUS
 ...
-172.20.0.2   k8s.io      kube-system/kube-controller-manager-talos-default-master-1                              k8s.gcr.io/pause:3.2                         2547   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-master-1:kube-controller-manager   k8s.gcr.io/kube-controller-manager:v{{< k8s_release >}}   2580   CONTAINER_RUNNING
-172.20.0.2   k8s.io      kube-system/kube-scheduler-talos-default-master-1                                       k8s.gcr.io/pause:3.2                         2638   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-master-1:kube-scheduler                     k8s.gcr.io/kube-scheduler:v{{< k8s_release >}}            2670   CONTAINER_RUNNING
+172.20.0.2   k8s.io      kube-system/kube-controller-manager-talos-default-controlplane-1                              k8s.gcr.io/pause:3.2                         2547   SANDBOX_READY
+172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-controlplane-1:kube-controller-manager   k8s.gcr.io/kube-controller-manager:v{{< k8s_release >}}   2580   CONTAINER_RUNNING
+172.20.0.2   k8s.io      kube-system/kube-scheduler-talos-default-controlplane-1                                       k8s.gcr.io/pause:3.2                         2638   SANDBOX_READY
+172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-controlplane-1:kube-scheduler                     k8s.gcr.io/kube-scheduler:v{{< k8s_release >}}            2670   CONTAINER_RUNNING
 ...
 ```
 
@@ -329,7 +329,7 @@ Otherwise the process might crashing.
 The logs can be checked with `talosctl logs --kubernetes <containerID>`:
 
 ```bash
-$ talosctl -n <IP> logs -k kube-system/kube-controller-manager-talos-default-master-1:kube-controller-manager
+$ talosctl -n <IP> logs -k kube-system/kube-controller-manager-talos-default-controlplane-1:kube-controller-manager
 172.20.0.3: 2021-03-09T13:59:34.291667526Z stderr F 2021/03/09 13:59:34 Running command:
 172.20.0.3: 2021-03-09T13:59:34.291702262Z stderr F Command env: (log-file=, also-stdout=false, redirect-stderr=true)
 172.20.0.3: 2021-03-09T13:59:34.291707121Z stderr F Run from directory:
@@ -416,10 +416,10 @@ The status of the static pods can queried with `talosctl get staticpodstatus`:
 
 ```bash
 $ talosctl -n <IP> get staticpodstatus
-NODE         NAMESPACE      TYPE              ID                                                           VERSION   READY
-172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-apiserver-talos-default-master-1            1         True
-172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-controller-manager-talos-default-master-1   1         True
-172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-scheduler-talos-default-master-1            1         True
+NODE         NAMESPACE      TYPE              ID                                                                 VERSION   READY
+172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-apiserver-talos-default-controlplane-1            1         True
+172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-controller-manager-talos-default-controlplane-1   1         True
+172.20.0.2   controlplane   StaticPodStatus   kube-system/kube-scheduler-talos-default-controlplane-1            1         True
 ```
 
 The most important status field is `READY`, which is the last column printed.

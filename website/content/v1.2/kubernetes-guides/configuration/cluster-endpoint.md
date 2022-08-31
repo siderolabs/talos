@@ -9,7 +9,7 @@ In this section, we will step through the configuration of a Talos based Kuberne
 There are three major components we will configure:
 
 - `apid` and `talosctl`
-- the master nodes
+- the controlplane nodes
 - the worker nodes
 
 Talos enforces a high level of security by using mutual TLS for authentication and authorization.

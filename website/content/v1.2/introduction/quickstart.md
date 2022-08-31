@@ -47,7 +47,7 @@ Verify that you can reach Kubernetes:
 ```bash
 $ kubectl get nodes -o wide
 NAME                     STATUS   ROLES    AGE    VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE         KERNEL-VERSION   CONTAINER-RUNTIME
-talos-default-master-1   Ready    master   115s   v{{< k8s_release >}}   10.5.0.2      <none>        Talos ({{< release >}})   <host kernel>    containerd://1.5.5
+talos-default-controlplane-1   Ready    master   115s   v{{< k8s_release >}}   10.5.0.2      <none>        Talos ({{< release >}})   <host kernel>    containerd://1.5.5
 talos-default-worker-1   Ready    <none>   115s   v{{< k8s_release >}}   10.5.0.3      <none>        Talos ({{< release >}})   <host kernel>    containerd://1.5.5
 ```
 

@@ -41,7 +41,7 @@ Kubelet mirrors pod definition to the API server state, so static pods can be in
 ```bash
 $ kubectl get pods
 NAME                           READY   STATUS    RESTARTS   AGE
-nginx-talos-default-master-2   1/1     Running   0          17s
+nginx-talos-default-controlplane-2   1/1     Running   0          17s
 ```
 
 If the API server is not available, status of the static pod can also be inspected with `talosctl containers --kubernetes`:
@@ -49,15 +49,15 @@ If the API server is not available, status of the static pod can also be inspect
 ```bash
 $ talosctl containers --kubernetes
 NODE         NAMESPACE   ID                                                                                      IMAGE                                                         PID    STATUS
-172.20.0.3   k8s.io      default/nginx-talos-default-master-2                                                    k8s.gcr.io/pause:3.6                                          4886   SANDBOX_READY
-172.20.0.3   k8s.io      └─ default/nginx-talos-default-master-2:nginx                                           docker.io/library/nginx:latest
+172.20.0.3   k8s.io      default/nginx-talos-default-controlplane-2                                                    k8s.gcr.io/pause:3.6                                          4886   SANDBOX_READY
+172.20.0.3   k8s.io      └─ default/nginx-talos-default-controlplane-2:nginx                                           docker.io/library/nginx:latest
 ...
 ```
 
 Logs of static pods can be retrieved with `talosctl logs --kubernetes`:
 
 ```bash
-$ talosctl logs --kubernetes default/nginx-talos-default-master-2:nginx
+$ talosctl logs --kubernetes default/nginx-talos-default-controlplane-2:nginx
 172.20.0.3: 2022-02-10T15:26:01.289208227Z stderr F 2022/02/10 15:26:01 [notice] 1#1: using the "epoll" event method
 172.20.0.3: 2022-02-10T15:26:01.2892466Z stderr F 2022/02/10 15:26:01 [notice] 1#1: nginx/1.21.6
 172.20.0.3: 2022-02-10T15:26:01.28925723Z stderr F 2022/02/10 15:26:01 [notice] 1#1: built by gcc 10.2.1 20210110 (Debian 10.2.1-6)
@@ -93,8 +93,8 @@ On control plane nodes status of the running static pods is available in the `St
 ```bash
 $ talosctl get staticpodstatus
 NODE         NAMESPACE   TYPE              ID                                                           VERSION   READY
-172.20.0.3   k8s         StaticPodStatus   default/nginx-talos-default-master-2                         2         True
-172.20.0.3   k8s         StaticPodStatus   kube-system/kube-apiserver-talos-default-master-2            2         True
-172.20.0.3   k8s         StaticPodStatus   kube-system/kube-controller-manager-talos-default-master-2   3         True
-172.20.0.3   k8s         StaticPodStatus   kube-system/kube-scheduler-talos-default-master-2            3         True
+172.20.0.3   k8s         StaticPodStatus   default/nginx-talos-default-controlplane-2                         2         True
+172.20.0.3   k8s         StaticPodStatus   kube-system/kube-apiserver-talos-default-controlplane-2            2         True
+172.20.0.3   k8s         StaticPodStatus   kube-system/kube-controller-manager-talos-default-controlplane-2   3         True
+172.20.0.3   k8s         StaticPodStatus   kube-system/kube-scheduler-talos-default-controlplane-2            3         True
 ```
