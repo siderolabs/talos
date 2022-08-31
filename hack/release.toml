@@ -21,7 +21,7 @@ preface = """\
         description="""\
 * containerd: 1.6.8
 * runc: v1.1.4
-* Linux: 5.15.63
+* Linux: 5.15.64
 * Kubernetes: v1.25.0
 """
 
