@@ -136,7 +136,9 @@ func (c *Client) GetClusterName() string {
 			return ""
 		}
 
-		return c.options.configContext.Cluster
+		if c.options.configContext != nil {
+			return c.options.configContext.Cluster
+		}
 	}
 
 	return ""
