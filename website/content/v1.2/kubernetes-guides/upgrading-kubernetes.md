@@ -329,7 +329,7 @@ Apply the manifests:
 kubectl apply -f manifests.yaml
 ```
 
-> Note: if some boostrap resources were removed, they have to be removed from the cluster manually.
+> Note: if some bootstrap resources were removed, they have to be removed from the cluster manually.
 
 ### kubelet
 

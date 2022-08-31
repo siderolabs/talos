@@ -7,72 +7,30 @@ aliases:
 
 <!-- markdownlint-disable MD026 -->
 
-This guide is written as series of topics and detailed answers for each topic.
-It starts with basics of control plane and goes into Talos specifics.
-
 In this guide we assume that Talos client config is available and Talos API access is available.
 Kubernetes client configuration can be pulled from control plane nodes with `talosctl -n <IP> kubeconfig`
 (this command works before Kubernetes is fully booted).
-
-### What is a control plane node?
-
-A control plane node is a node which:
-
-- runs etcd, the Kubernetes database
-- runs the Kubernetes control plane
-  - kube-apiserver
-  - kube-controller-manager
-  - kube-scheduler
-- serves as an administrative proxy to the worker nodes
-
-These nodes are critical to the operation of your cluster.
-Without control plane nodes, Kubernetes will not respond to changes in the
-system, and certain central services may not be available.
-
-Talos nodes which have `.machine.type` of `controlplane` are control plane nodes.
-
-Control plane nodes are tainted by default to prevent workloads from being scheduled to control plane nodes.
-
-### How many control plane nodes should be deployed?
-
-Because control plane nodes are so important, it is important that they be
-deployed with redundancy to ensure consistent, reliable operation of the cluster
-during upgrades, reboots, hardware failures, and other such events.
-This is also known as high-availability or just HA.
-Non-HA clusters are sometimes used as test clusters, CI clusters, or in specific scenarios
-which warrant the loss of redundancy, but they should almost never be used in production.
-
-Maintaining the proper count of control plane nodes is also critical.
-The etcd database operates on the principles of membership and quorum, so
-membership should always be an odd number, and there is exponentially-increasing
-overhead for each additional member.
-Therefore, the number of control plane nodes should almost always be 3.
-In some particularly large or distributed clusters, the count may be 5, but this
-is very rare.
-
-See [this document]({{< relref "../learn-more/concepts#control-planes-are-not-linear-replicas" >}}) on the topic for more information.
 
 ### What is the control plane endpoint?
 
 The Kubernetes control plane endpoint is the single canonical URL by which the
 Kubernetes API is accessed.
-Especially with high-availability (HA) control planes, it is common that this endpoint may not point to the Kubernetes API server
-directly, but may be instead point to a load balancer or a DNS name which may
+Especially with high-availability (HA) control planes, this endpoint may point to a load balancer or a DNS name which may
 have multiple `A` and `AAAA` records.
 
-Like Talos' own API, the Kubernetes API is constructed with mutual TLS, client
+Like Talos' own API, the Kubernetes API uses mutual TLS, client
 certs, and a common Certificate Authority (CA).
 Unlike general-purpose websites, there is no need for an upstream CA, so tools
-such as cert-manager, services such as Let's Encrypt, or purchased products such
+such as cert-manager, Let's Encrypt, or products such
 as validated TLS certificates are not required.
 Encryption, however, _is_, and hence the URL scheme will always be `https://`.
 
 By default, the Kubernetes API server in Talos runs on port 6443.
 As such, the control plane endpoint URLs for Talos will almost always be of the form
-`https://endpoint:6443`, noting that the port, since it is not the `https`
-default of `443` is _required_.
+`https://endpoint:6443`.
+(The port, since it is not the `https` default of `443` is required.)
 The `endpoint` above may be a DNS name or IP address, but it should be
-ultimately be directed to the _set_ of all controlplane nodes, as opposed to a
+directed to the _set_ of all controlplane nodes, as opposed to a
 single one.
 
 As mentioned above, this can be achieved by a number of strategies, including:
@@ -82,10 +40,9 @@ As mentioned above, this can be achieved by a number of strategies, including:
 - Talos-builtin shared IP ([VIP]({{< relref "../talos-guides/network/vip" >}}))
 - BGP peering of a shared IP (such as with [kube-vip](https://kube-vip.io))
 
-Using a DNS name here is usually a good idea, it being the most flexible
-option, since it allows the combination with any _other_ option, while offering
+Using a DNS name here is a good idea, since it allows any other option, while offering
 a layer of abstraction.
-It allows the underlying IP addresses to change over time without impacting the
+It allows the underlying IP addresses to change without impacting the
 canonical URL.
 
 Unlike most services in Kubernetes, the API server runs with host networking,
@@ -94,11 +51,10 @@ This means you can use the IP address(es) of the host to refer to the Kubernetes
 API server.
 
 For availability of the API, it is important that any load balancer be aware of
-the health of the backend API servers.
-This makes a load balancer-based system valuable to minimize disruptions during
-common node lifecycle operations like reboots and upgrades.
+the health of the backend API servers, to minimize disruptions during
+common node operations like reboots and upgrades.
 
-It is critical that control plane endpoint works correctly during cluster bootstrap phase, as nodes discover
+It is critical that the control plane endpoint works correctly during cluster bootstrap phase, as nodes discover
 each other using control plane endpoint.
 
 ### kubelet is not running on control plane node

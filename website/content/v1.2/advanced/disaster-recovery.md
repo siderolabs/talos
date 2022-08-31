@@ -5,14 +5,12 @@ aliases:
   - ../guides/disaster-recovery
 ---
 
-`etcd` database backs Kubernetes control plane state, so if the `etcd` service is unavailable
-Kubernetes control plane goes down, and the cluster is not recoverable until `etcd` is recovered with contents.
-The `etcd` consistency model builds around the consensus protocol Raft, so for highly-available control plane clusters,
-loss of one control plane node doesn't impact cluster health.
-In general, `etcd` stays up as long as a sufficient number of nodes to maintain quorum are up.
+`etcd` database backs Kubernetes control plane state, so if the `etcd` service is unavailable,
+ the Kubernetes control plane goes down, and the cluster is not recoverable until `etcd` is recovered.
+`etcd` builds around the consensus protocol Raft, so highly-available control plane clusters can tolerate the loss of nodes so long as more than half of the members are running and reachable.
 For a three control plane node Talos cluster, this means that the cluster tolerates a failure of any single node,
 but losing more than one node at the same time leads to complete loss of service.
-Because of that, it is important to take routine backups of `etcd` state to have a snapshot to recover cluster from
+Because of that, it is important to take routine backups of `etcd` state to have a snapshot to recover the cluster from
 in case of catastrophic failure.
 
 ## Backup
@@ -35,7 +33,7 @@ It is recommended to configure `etcd` snapshots to be created on some schedule t
 
 ### Disaster Database Snapshot
 
-If `etcd` cluster is not healthy, the `talosctl etcd snapshot` command might fail.
+If the `etcd` cluster is not healthy (for example, if quorum has already been lost), the `talosctl etcd snapshot` command might fail.
 In that case, copy the database snapshot directly from the control plane node:
 
 ```bash
@@ -81,17 +79,18 @@ NODE         NAMESPACE   TYPE          ID             VERSION   TYPE
 172.20.0.3   config      MachineType   machine-type   2         controlplane
 ```
 
-Nodes with `init` type are incompatible with `etcd` recovery procedure.
+Init node type is deprecated, and are incompatible with `etcd` recovery procedure.
 `init` node can be converted to `controlplane` type with `talosctl edit mc --mode=staged` command followed
 by node reboot with `talosctl reboot` command.
 
 ### Preparing Control Plane Nodes
 
 If some control plane nodes experienced hardware failure, replace them with new nodes.
+
 Use machine configuration backup to re-create the nodes with the same secret material and control plane settings
 to allow workers to join the recovered control plane.
 
-If a control plane node is healthy but `etcd` isn't, wipe the node's [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partition to remove the `etcd`
+If a control plane node is up but `etcd` isn't, wipe the node's [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partition to remove the `etcd`
 data directory (make sure a database snapshot is taken before doing this):
 
 ```bash
@@ -100,8 +99,8 @@ talosctl -n <IP> reset --graceful=false --reboot --system-labels-to-wipe=EPHEMER
 
 At this point, all control plane nodes should boot up, and `etcd` service should be in the `Preparing` state.
 
-Kubernetes control plane endpoint should be pointed to the new control plane nodes if there were
-any changes to the node addresses.
+The Kubernetes control plane endpoint should be pointed to the new control plane nodes if there were
+changes to the node addresses.
 
 ### Recovering from the Backup
 

@@ -10,7 +10,7 @@ Talos implements concepts of *resources* and *controllers* to facilitate interna
 Talos resources and controllers are very similar to Kubernetes resources and controllers, but there are some differences.
 The content of this document is not required to operate Talos, but it is useful for troubleshooting.
 
-Starting with Talos 0.9, most of the Kubernetes control plane boostrapping and operations is implemented via controllers and resources which allows Talos to be reactive to configuration changes, environment changes (e.g. time sync).
+Starting with Talos 0.9, most of the Kubernetes control plane bootstrapping and operations is implemented via controllers and resources which allows Talos to be reactive to configuration changes, environment changes (e.g. time sync).
 
 ## Resources
 
