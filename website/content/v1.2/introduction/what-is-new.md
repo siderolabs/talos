@@ -224,6 +224,24 @@ A new `--debug` flag is added to these commands to get the kernel logs output fr
 
 ![track-cli-action-progress](/images/track-reboot.gif)
 
+### Generating Machine Config from Secrets
+
+It is now possible to pre-generate secret material for the cluster with `talosctl gen secrets`:
+
+```shell
+talosctl gen secrets -o cluster1-secrets.yaml
+```
+
+Secrets file should be stored in a safe place, and machine configuration for the node in the cluster can be generated on demand
+with `talosctl gen config`:
+
+```shell
+talosctl gen config --with-secrets cluster1-secrets.yaml cluster1 https://cluster1.example.com:6443/
+```
+
+This way configuration can be generated on demand, for example with configuration patches.
+Nodes with machine configuration generated from the same secrets file can join each other to form a cluster.
+
 ## Integrations
 
 ### Talos API access from Kubernetes
