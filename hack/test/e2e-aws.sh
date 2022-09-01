@@ -58,7 +58,7 @@ function setup {
   export AWS_VPC_ID=vpc-ff5c5687
   export AWS_SUBNET=subnet-c4e9b3a0
   export AWS_SUBNET_AZ=us-east-1a
-  export CALICO_VERSION=v3.18
+  export CALICO_VERSION=v3.24.1
   export AWS_CLOUD_PROVIDER_VERSION=v1.20.0-alpha.0
 
   ## Control plane vars
@@ -77,13 +77,9 @@ function setup {
   export AWS_NODE_ADDL_SEC_GROUPS='[{id: sg-ebe8e59f}]'
   export AWS_NODE_IAM_PROFILE=CAPI_AWS_Worker
 
-  # TODO: frezbo
-  # revert to the standard templates from siderolabs once upstream PR's are merged and a new release is tagged.
-  # - https://github.com/projectcalico/calico/pull/6370
-  # - https://github.com/kubernetes/cloud-provider-aws/pull/431
   ${CLUSTERCTL} generate cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
-    --from https://github.com/frezbo/cluster-api-templates/blob/use-templated-ccm-manifests/aws/standard/standard.yaml > ${TMP}/cluster.yaml
+    --from https://github.com/siderolabs/cluster-api-templates/blob/main/aws/standard/standard.yaml > ${TMP}/cluster.yaml
 }
 
 setup
