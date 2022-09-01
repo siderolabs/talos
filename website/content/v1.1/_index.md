@@ -10,7 +10,6 @@ kubernetesRelease: "1.24.2"
 prevKubernetesRelease: "1.23.5"
 iscsiToolsRelease: "v0.1.1"
 theilaRelease: "v0.2.1"
-menu: main
 ---
 
 ## Welcome
