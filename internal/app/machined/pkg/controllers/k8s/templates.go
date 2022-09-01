@@ -100,20 +100,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 `)
 
-var kubeSystemSARoleBindingTemplate = []byte(`apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: system:default-sa
-subjects:
-  - kind: ServiceAccount
-    name: default
-    namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
-`)
-
 var kubeProxyTemplate = []byte(`apiVersion: apps/v1
 kind: DaemonSet
 metadata:

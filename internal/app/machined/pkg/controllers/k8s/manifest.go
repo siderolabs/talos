@@ -196,7 +196,6 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		{"01-csr-node-bootstrap", csrNodeBootstrapTemplate},
 		{"01-csr-approver-role-binding", csrApproverRoleBindingTemplate},
 		{"01-csr-renewal-role-binding", csrRenewalRoleBindingTemplate},
-		{"02-kube-system-sa-role-binding", kubeSystemSARoleBindingTemplate},
 		{"11-kube-config-in-cluster", kubeConfigInClusterTemplate},
 	}
 
