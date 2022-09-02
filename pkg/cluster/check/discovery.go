@@ -5,6 +5,7 @@
 package check
 
 import (
+	"fmt"
 	"net/netip"
 
 	"inet.af/netaddr"
@@ -72,6 +73,10 @@ func memberToNodeInfo(member *clussterres.Member) (cluster.NodeInfo, error) {
 	}))
 	if err != nil {
 		return cluster.NodeInfo{}, err
+	}
+
+	if len(ips) == 0 {
+		return cluster.NodeInfo{}, fmt.Errorf("no IP address found for member: %s", member.Metadata().ID())
 	}
 
 	return cluster.NodeInfo{
