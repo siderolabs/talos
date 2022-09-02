@@ -23,6 +23,7 @@ preface = """\
 * runc: v1.1.4
 * Linux: 5.15.64
 * Kubernetes: v1.25.0
+* Flannel: v0.19.2
 """
 
     [notes.track-cli-action-progress]
