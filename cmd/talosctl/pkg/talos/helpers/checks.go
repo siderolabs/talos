@@ -66,8 +66,8 @@ func ClientVersionCheck(ctx context.Context, c *client.Client) error {
 			return fmt.Errorf("%s: error parsing server version: %w", node, err)
 		}
 
-		if serverVersion.Compare(clientVersion) > 0 {
-			warnings = append(warnings, fmt.Sprintf("%s: server version %s is newer than client version %s", node, serverVersion, clientVersion))
+		if serverVersion.Compare(clientVersion) < 0 {
+			warnings = append(warnings, fmt.Sprintf("%s: server version %s is older than client version %s", node, serverVersion, clientVersion))
 		}
 	}
 
