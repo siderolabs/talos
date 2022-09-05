@@ -2661,12 +2661,17 @@ func init() {
 			FieldName: "modules",
 		},
 	}
-	KernelModuleConfigDoc.Fields = make([]encoder.Doc, 1)
+	KernelModuleConfigDoc.Fields = make([]encoder.Doc, 2)
 	KernelModuleConfigDoc.Fields[0].Name = "name"
 	KernelModuleConfigDoc.Fields[0].Type = "string"
 	KernelModuleConfigDoc.Fields[0].Note = ""
 	KernelModuleConfigDoc.Fields[0].Description = "Module name."
 	KernelModuleConfigDoc.Fields[0].Comments[encoder.LineComment] = "Module name."
+	KernelModuleConfigDoc.Fields[1].Name = "parameters"
+	KernelModuleConfigDoc.Fields[1].Type = "[]string"
+	KernelModuleConfigDoc.Fields[1].Note = ""
+	KernelModuleConfigDoc.Fields[1].Description = "Module parameters, changes applied after reboot."
+	KernelModuleConfigDoc.Fields[1].Comments[encoder.LineComment] = "Module parameters, changes applied after reboot."
 }
 
 func (_ Config) Doc() *encoder.Doc {

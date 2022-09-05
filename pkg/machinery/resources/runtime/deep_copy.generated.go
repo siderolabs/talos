@@ -9,6 +9,10 @@ package runtime
 // DeepCopy generates a deep copy of KernelModuleSpecSpec.
 func (o KernelModuleSpecSpec) DeepCopy() KernelModuleSpecSpec {
 	var cp KernelModuleSpecSpec = o
+	if o.Parameters != nil {
+		cp.Parameters = make([]string, len(o.Parameters))
+		copy(cp.Parameters, o.Parameters)
+	}
 	return cp
 }
 

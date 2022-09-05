@@ -7,6 +7,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -68,8 +69,9 @@ func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Ru
 			// note: this code doesn't support module unloading in any way for now
 			for _, res := range modules.Items {
 				module := res.(*runtime.KernelModuleSpec).TypedSpec()
+				parameters := strings.Join(module.Parameters, " ")
 
-				if err = manager.Load(module.Name, "", 0); err != nil {
+				if err = manager.Load(module.Name, parameters, 0); err != nil {
 					return fmt.Errorf("error loading module %q: %w", module.Name, err)
 				}
 			}

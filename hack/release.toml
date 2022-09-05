@@ -15,6 +15,29 @@ preface = """\
 
 [notes]
 
+    [notes.kernel_modules]
+        title = "Kernel Modules"
+        description = """\
+Talos now supports settings kernel module parameters.
+
+Eg:
+
+```yaml
+machine:
+  kernel:
+    modules:
+      - name: "br_netfilter"
+        parameters:
+          - nf_conntrack_max=131072
+```
+"""
+
+    [notes.sbc]
+        title = "Nano Pi R4S"
+        description = """\
+Talos now supports the Nano Pi R4S SBC.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description="""\

@@ -18,3 +18,8 @@ func (kc *KernelConfig) Modules() []config.KernelModule {
 func (kmc *KernelModuleConfig) Name() string {
 	return kmc.ModuleName
 }
+
+// Parameters implements config.KernelModule interface.
+func (kmc *KernelModuleConfig) Parameters() []string {
+	return kmc.ModuleParameters
+}

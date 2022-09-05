@@ -9,6 +9,7 @@ import "resource/definitions/enums/enums.proto";
 // KernelModuleSpecSpec describes Linux kernel module to load.
 message KernelModuleSpecSpec {
   string name = 1;
+  repeated string parameters = 2;
 }
 
 // KernelParamSpecSpec describes status of the defined sysctls.

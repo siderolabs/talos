@@ -2920,5 +2920,6 @@ Appears in:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Module name.  | |
+|`parameters` |[]string |Module parameters, changes applied after reboot.  | |
 
 

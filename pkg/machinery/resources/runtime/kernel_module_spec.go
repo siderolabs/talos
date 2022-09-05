@@ -23,8 +23,9 @@ type KernelModuleSpec = typed.Resource[KernelModuleSpecSpec, KernelModuleSpecRD]
 //
 //gotagsrewrite:gen
 type KernelModuleSpecSpec struct {
-	Name string `yaml:"string" protobuf:"1"`
-	// more options in the future: args, aliases, etc.
+	Name       string   `yaml:"string" protobuf:"1"`
+	Parameters []string `yaml:"parameters" protobuf:"2"`
+	// more options in the future: aliases, etc.
 }
 
 // NewKernelModuleSpec initializes a KernelModuleSpec resource.

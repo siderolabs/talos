@@ -2549,4 +2549,7 @@ type KernelModuleConfig struct {
 	// description: |
 	//   Module name.
 	ModuleName string `yaml:"name"`
+	// description: |
+	//   Module parameters, changes applied after reboot.
+	ModuleParameters []string `yaml:"parameters,omitempty"`
 }

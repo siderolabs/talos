@@ -74,6 +74,7 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 
 					if err = r.Modify(ctx, item, func(res resource.Resource) error {
 						res.(*runtime.KernelModuleSpec).TypedSpec().Name = module.Name()
+						res.(*runtime.KernelModuleSpec).TypedSpec().Parameters = module.Parameters()
 
 						return nil
 					}); err != nil {

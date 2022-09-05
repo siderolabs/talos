@@ -599,4 +599,5 @@ type Kernel interface {
 // KernelModule describes Linux module to load.
 type KernelModule interface {
 	Name() string
+	Parameters() []string
 }

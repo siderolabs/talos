@@ -3002,6 +3002,7 @@ KernelModuleSpecSpec describes Linux kernel module to load.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
+| parameters | [string](#string) | repeated |  |
 
 
 
