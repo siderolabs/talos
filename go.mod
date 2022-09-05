@@ -30,7 +30,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.9.0
 	github.com/BurntSushi/toml v1.2.0
-	github.com/aws/aws-sdk-go v1.44.87
+	github.com/aws/aws-sdk-go v1.44.91
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4
@@ -55,7 +55,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.8
 	github.com/google/gopacket v1.1.19
-	github.com/google/nftables v0.0.0-20220808154552-2eca00135732
+	github.com/google/nftables v0.0.0-20220904180503-6cd15ed86387
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -70,18 +70,18 @@ require (
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.16
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
-	github.com/mdlayher/ethtool v0.0.0-20220213132912-856bd6cb8a38
+	github.com/mdlayher/ethtool v0.0.0-20220830195143-0e16326d06d1
 	github.com/mdlayher/genetlink v1.2.0
 	github.com/mdlayher/netlink v1.6.0
 	github.com/mdlayher/netx v0.0.0-20220422152302-c711c2f8512f
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
-	github.com/packethost/packngo v0.25.0
+	github.com/packethost/packngo v0.26.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.0.0
 	github.com/prometheus/procfs v0.8.0
-	github.com/rivo/tview v0.0.0-20220812085834-0e6b21a48e96
+	github.com/rivo/tview v0.0.0-20220903125348-532bb46474ec
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
@@ -122,7 +122,7 @@ require (
 	go4.org/netipx v0.0.0-20220812043211-3cc044ffd68d
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
-	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64
+	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
@@ -131,7 +131,7 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.1
 	inet.af/netaddr v0.0.0-20220811202034-502d2d690317
-	k8s.io/klog/v2 v2.70.1
+	k8s.io/klog/v2 v2.80.0
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.65
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -287,7 +287,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220407013110-ef5c587f782d // indirect
 	google.golang.org/api v0.91.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220829175752-36a9c930ecbf // indirect
+	google.golang.org/genproto v0.0.0-20220902135211-223410557253 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
