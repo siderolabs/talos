@@ -42,16 +42,19 @@ type APISuite struct {
 	suite.Suite
 	TalosSuite
 
-	Client *client.Client
+	Client      *client.Client
+	Talosconfig *clientconfig.Config
 }
 
 // SetupSuite initializes Talos API client.
 func (apiSuite *APISuite) SetupSuite() {
-	cfg, err := clientconfig.Open(apiSuite.TalosConfig)
+	var err error
+
+	apiSuite.Talosconfig, err = clientconfig.Open(apiSuite.TalosConfig)
 	apiSuite.Require().NoError(err)
 
 	opts := []client.OptionFunc{
-		client.WithConfig(cfg),
+		client.WithConfig(apiSuite.Talosconfig),
 	}
 
 	if apiSuite.Endpoint != "" {

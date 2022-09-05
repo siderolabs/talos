@@ -34,3 +34,13 @@ func (m *mockBackend) BuildError(streaming bool, err error) ([]byte, error) {
 func mockBackendFactory(target string) (proxy.Backend, error) {
 	return &mockBackend{target: target}, nil
 }
+
+type mockLocalAddressProvider struct {
+	local map[string]struct{}
+}
+
+func (m *mockLocalAddressProvider) IsLocalTarget(t string) bool {
+	_, ok := m.local[t]
+
+	return ok
+}

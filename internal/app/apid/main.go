@@ -55,6 +55,7 @@ func Main() {
 	}
 }
 
+//nolint:gocyclo
 func apidMain() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
@@ -96,10 +97,21 @@ func apidMain() error {
 		return fmt.Errorf("failed to create client TLS config: %w", err)
 	}
 
-	backendFactory := apidbackend.NewAPIDFactory(clientTLSConfig)
+	var remoteFactory director.RemoteBackendFactory
+
+	if clientTLSConfig != nil {
+		backendFactory := apidbackend.NewAPIDFactory(clientTLSConfig)
+		remoteFactory = backendFactory.Get
+	}
+
+	localAddressProvider, err := director.NewLocalAddressProvider(resources)
+	if err != nil {
+		return fmt.Errorf("failed to create local address provider: %w", err)
+	}
+
 	localBackend := backend.NewLocal("machined", constants.MachineSocketPath)
 
-	router := director.NewRouter(backendFactory.Get, localBackend)
+	router := director.NewRouter(remoteFactory, localBackend, localAddressProvider)
 
 	// all existing streaming methods
 	for _, methodName := range []string{
