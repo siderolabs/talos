@@ -43,6 +43,7 @@ func (suite *ConfigSuite) TestReconcile() {
 	for _, tt := range []struct {
 		name           string
 		etcdConfig     *v1alpha1.EtcdConfig
+		networkConfig  v1alpha1.NetworkDeviceList
 		expectedConfig etcd.ConfigSpec
 	}{
 		{
@@ -102,11 +103,59 @@ func (suite *ConfigSuite) TestReconcile() {
 				ListenValidSubnets:    []string{"10.0.0.0/8"},
 			},
 		},
+		{
+			name: "default with vip",
+			etcdConfig: &v1alpha1.EtcdConfig{
+				ContainerImage: "foo/bar:v1.0.0",
+			},
+			networkConfig: v1alpha1.NetworkDeviceList{
+				{
+					DeviceInterface: "eth0",
+					DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+						SharedIP: "10.0.0.4",
+					},
+				},
+			},
+			expectedConfig: etcd.ConfigSpec{
+				Image:                   "foo/bar:v1.0.0",
+				ExtraArgs:               map[string]string{},
+				AdvertiseValidSubnets:   nil,
+				AdvertiseExcludeSubnets: []string{"10.0.0.4"},
+				ListenValidSubnets:      nil,
+			},
+		},
+		{
+			name: "advertised with vip",
+			etcdConfig: &v1alpha1.EtcdConfig{
+				ContainerImage:        "foo/bar:v1.0.0",
+				EtcdAdvertisedSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
+			},
+			networkConfig: v1alpha1.NetworkDeviceList{
+				{
+					DeviceInterface: "eth0",
+					DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+						SharedIP: "10.0.0.4",
+					},
+				},
+			},
+			expectedConfig: etcd.ConfigSpec{
+				Image:                   "foo/bar:v1.0.0",
+				ExtraArgs:               map[string]string{},
+				AdvertiseValidSubnets:   []string{"10.0.0.0/8", "192.168.0.0/24"},
+				AdvertiseExcludeSubnets: []string{"10.0.0.4"},
+				ListenValidSubnets:      []string{"10.0.0.0/8", "192.168.0.0/24"},
+			},
+		},
 	} {
 		suite.Run(tt.name, func() {
 			cfg := &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					EtcdConfig: tt.etcdConfig,
+				},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: tt.networkConfig,
+					},
 				},
 			}
 

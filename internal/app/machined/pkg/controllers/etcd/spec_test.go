@@ -49,6 +49,7 @@ func (suite *SpecSuite) TestReconcile() {
 	addresses.TypedSpec().Addresses = []netip.Prefix{
 		netip.MustParsePrefix("10.0.0.5/24"),
 		netip.MustParsePrefix("192.168.1.1/24"),
+		netip.MustParsePrefix("192.168.1.50/32"),
 		netip.MustParsePrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7334/64"),
 		netip.MustParsePrefix("2002:0db8:85a3:0000:0000:8a2e:0370:7335/64"),
 	}
@@ -86,11 +87,60 @@ func (suite *SpecSuite) TestReconcile() {
 			},
 		},
 		{
+			name: "defaults with exclude",
+			cfg: etcd.ConfigSpec{
+				Image: "foo/bar:v1.0.0",
+				AdvertiseExcludeSubnets: []string{
+					"10.0.0.5",
+				},
+			},
+			expected: etcd.SpecSpec{
+				Name:  "worker1",
+				Image: "foo/bar:v1.0.0",
+				AdvertisedAddresses: []netip.Addr{
+					netip.MustParseAddr("192.168.1.1"),
+				},
+				ListenPeerAddresses: []netip.Addr{
+					netip.IPv6Unspecified(),
+				},
+				ListenClientAddresses: []netip.Addr{
+					netip.IPv6Unspecified(),
+				},
+			},
+		},
+		{
 			name: "only advertised",
 			cfg: etcd.ConfigSpec{
 				Image: "foo/bar:v1.0.0",
 				AdvertiseValidSubnets: []string{
 					"192.168.0.0/16",
+				},
+			},
+			expected: etcd.SpecSpec{
+				Name:  "worker1",
+				Image: "foo/bar:v1.0.0",
+				AdvertisedAddresses: []netip.Addr{
+					netip.MustParseAddr("192.168.1.1"),
+					netip.MustParseAddr("192.168.1.50"),
+				},
+				ListenPeerAddresses: []netip.Addr{
+					netip.IPv6Unspecified(),
+				},
+				ListenClientAddresses: []netip.Addr{
+					netip.IPv6Unspecified(),
+				},
+			},
+		},
+		{
+			name: "only advertised with exclude",
+			cfg: etcd.ConfigSpec{
+				Image: "foo/bar:v1.0.0",
+				AdvertiseValidSubnets: []string{
+					"192.168.0.0/16",
+				},
+				AdvertiseExcludeSubnets: []string{
+					"10.0.0.5",
+					"192.168.1.50",
 				},
 			},
 			expected: etcd.SpecSpec{
@@ -124,14 +174,17 @@ func (suite *SpecSuite) TestReconcile() {
 				Image: "foo/bar:v1.0.0",
 				AdvertisedAddresses: []netip.Addr{
 					netip.MustParseAddr("192.168.1.1"),
+					netip.MustParseAddr("192.168.1.50"),
 					netip.MustParseAddr("2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
 				},
 				ListenPeerAddresses: []netip.Addr{
 					netip.MustParseAddr("192.168.1.1"),
+					netip.MustParseAddr("192.168.1.50"),
 				},
 				ListenClientAddresses: []netip.Addr{
 					netip.MustParseAddr("::1"),
 					netip.MustParseAddr("192.168.1.1"),
+					netip.MustParseAddr("192.168.1.50"),
 				},
 			},
 		},
@@ -150,7 +203,7 @@ func (suite *SpecSuite) TestReconcile() {
 					return
 				}
 
-				assert.Equal(tt.expected, *etcdSpec.TypedSpec())
+				assert.Equal(tt.expected, *etcdSpec.TypedSpec(), "spec %v", *etcdSpec.TypedSpec())
 			}))
 
 			suite.Require().NoError(suite.State().Destroy(suite.Ctx(), etcdConfig.Metadata()))

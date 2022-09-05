@@ -69,7 +69,7 @@ func (ctrl *SpecController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -121,8 +121,15 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 			continue
 		}
 
-		advertisedCIDRs := make([]string, 0, len(etcdConfig.TypedSpec().AdvertiseValidSubnets)+len(etcdConfig.TypedSpec().AdvertiseExcludeSubnets))
-		advertisedCIDRs = append(advertisedCIDRs, etcdConfig.TypedSpec().AdvertiseValidSubnets...)
+		advertiseValidSubnets := etcdConfig.TypedSpec().AdvertiseValidSubnets
+
+		if len(advertiseValidSubnets) == 0 {
+			// not specified, advertise all addresses
+			advertiseValidSubnets = []string{"0.0.0.0/0", "::/0"}
+		}
+
+		advertisedCIDRs := make([]string, 0, len(advertiseValidSubnets)+len(etcdConfig.TypedSpec().AdvertiseExcludeSubnets))
+		advertisedCIDRs = append(advertisedCIDRs, advertiseValidSubnets...)
 		advertisedCIDRs = append(advertisedCIDRs, slices.Map(etcdConfig.TypedSpec().AdvertiseExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
 
 		listenCIDRs := make([]string, 0, len(etcdConfig.TypedSpec().ListenValidSubnets)+len(etcdConfig.TypedSpec().ListenExcludeSubnets))
@@ -147,19 +154,21 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 			listenClientIPs []netip.Addr
 		)
 
-		if len(advertisedCIDRs) > 0 {
-			// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
-			var stdIPs []stdnet.IP
+		// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
+		var stdIPs []stdnet.IP
 
-			stdIPs, err = net.FilterIPs(nethelpers.MapNetIPToStd(addrs), advertisedCIDRs)
-			if err != nil {
-				return fmt.Errorf("error filtering IPs: %w", err)
-			}
+		stdIPs, err = net.FilterIPs(nethelpers.MapNetIPToStd(addrs), advertisedCIDRs)
+		if err != nil {
+			return fmt.Errorf("error filtering IPs: %w", err)
+		}
 
-			advertisedIPs = nethelpers.MapStdToNetIP(stdIPs)
-		} else {
+		advertisedIPs = nethelpers.MapStdToNetIP(stdIPs)
+
+		if len(etcdConfig.TypedSpec().AdvertiseValidSubnets) == 0 {
 			// if advertise subnet is not set, advertise the first address
-			advertisedIPs = []netip.Addr{addrs[0]}
+			if len(advertisedIPs) > 0 {
+				advertisedIPs = advertisedIPs[:1]
+			}
 		}
 
 		if len(listenCIDRs) > 0 {
