@@ -31,6 +31,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )
 
@@ -47,23 +48,30 @@ func (o *APID) ID(r runtime.Runtime) string {
 	return "apid"
 }
 
+// apidResourceFilter filters access to COSI state for apid.
+func apidResourceFilter(ctx context.Context, access state.Access) error {
+	if !access.Verb.Readonly() {
+		return fmt.Errorf("write access denied")
+	}
+
+	switch {
+	case access.ResourceNamespace == secrets.NamespaceName && access.ResourceType == secrets.APIType && access.ResourceID == secrets.APIID:
+		// allowed, contains apid certificates
+	case access.ResourceNamespace == network.NamespaceName && access.ResourceType == network.NodeAddressType:
+		// allowed, contains local node addresses
+	case access.ResourceNamespace == network.NamespaceName && access.ResourceType == network.HostnameStatusType:
+		// allowed, contains local node hostname
+	default:
+		return fmt.Errorf("access denied")
+	}
+
+	return nil
+}
+
 // PreFunc implements the Service interface.
 func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// filter apid access to make sure apid can only access its certificates
-	resources := state.Filter(
-		r.State().V1Alpha2().Resources(),
-		func(ctx context.Context, access state.Access) error {
-			if !access.Verb.Readonly() {
-				return fmt.Errorf("write access denied")
-			}
-
-			if !(access.ResourceNamespace == secrets.NamespaceName && access.ResourceType == secrets.APIType && access.ResourceID == secrets.APIID) {
-				return fmt.Errorf("access denied")
-			}
-
-			return nil
-		},
-	)
+	resources := state.Filter(r.State().V1Alpha2().Resources(), apidResourceFilter)
 
 	// ensure socket dir exists
 	if err := os.MkdirAll(filepath.Dir(constants.APIRuntimeSocketPath), 0o750); err != nil {

@@ -86,6 +86,10 @@ func (tlsConfig *TLSConfig) ServerConfig() (*stdlibtls.Config, error) {
 
 // ClientConfig generates client-side tls.Config.
 func (tlsConfig *TLSConfig) ClientConfig() (*stdlibtls.Config, error) {
+	if !tlsConfig.certificateProvider.HasClientCertificate() {
+		return nil, nil
+	}
+
 	ca, err := tlsConfig.certificateProvider.GetCA()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get root CA: %w", err)
@@ -118,12 +122,16 @@ func (p *certificateProvider) Update(apiCerts *secrets.API) error {
 
 	p.serverCert = &serverCert
 
-	clientCert, err := stdlibtls.X509KeyPair(p.apiCerts.TypedSpec().Client.Crt, p.apiCerts.TypedSpec().Client.Key)
-	if err != nil {
-		return fmt.Errorf("failed to parse client cert and key into a TLS Certificate: %w", err)
-	}
+	if p.apiCerts.TypedSpec().Client != nil {
+		clientCert, err := stdlibtls.X509KeyPair(p.apiCerts.TypedSpec().Client.Crt, p.apiCerts.TypedSpec().Client.Key)
+		if err != nil {
+			return fmt.Errorf("failed to parse client cert and key into a TLS Certificate: %w", err)
+		}
 
-	p.clientCert = &clientCert
+		p.clientCert = &clientCert
+	} else {
+		p.clientCert = nil
+	}
 
 	return nil
 }
@@ -140,6 +148,13 @@ func (p *certificateProvider) GetCertificate(h *stdlibtls.ClientHelloInfo) (*std
 	defer p.mu.Unlock()
 
 	return p.serverCert, nil
+}
+
+func (p *certificateProvider) HasClientCertificate() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	return p.clientCert != nil
 }
 
 func (p *certificateProvider) GetClientCertificate(*stdlibtls.CertificateRequestInfo) (*stdlibtls.Certificate, error) {
