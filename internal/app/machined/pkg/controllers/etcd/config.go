@@ -92,12 +92,27 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 			return fmt.Errorf("error getting machine config: %w", err)
 		}
 
-		if err = safe.WriterModify(ctx, r, etcd.NewConfig(etcd.NamespaceName, etcd.ConfigID), func(status *etcd.Config) error {
-			status.TypedSpec().AdvertiseValidSubnets = machineConfig.Config().Cluster().Etcd().AdvertisedSubnets()
-			status.TypedSpec().ListenValidSubnets = machineConfig.Config().Cluster().Etcd().ListenSubnets()
+		if err = safe.WriterModify(ctx, r, etcd.NewConfig(etcd.NamespaceName, etcd.ConfigID), func(cfg *etcd.Config) error {
+			cfg.TypedSpec().AdvertiseValidSubnets = machineConfig.Config().Cluster().Etcd().AdvertisedSubnets()
+			cfg.TypedSpec().AdvertiseExcludeSubnets = nil
+			cfg.TypedSpec().ListenValidSubnets = machineConfig.Config().Cluster().Etcd().ListenSubnets()
+			cfg.TypedSpec().ListenExcludeSubnets = nil
 
-			status.TypedSpec().Image = machineConfig.Config().Cluster().Etcd().Image()
-			status.TypedSpec().ExtraArgs = machineConfig.Config().Cluster().Etcd().ExtraArgs()
+			// filter out any virtual IPs, they can't be node IPs either
+			for _, device := range machineConfig.Config().Machine().Network().Devices() {
+				if device.VIPConfig() != nil {
+					cfg.TypedSpec().AdvertiseExcludeSubnets = append(cfg.TypedSpec().AdvertiseExcludeSubnets, device.VIPConfig().IP())
+				}
+
+				for _, vlan := range device.Vlans() {
+					if vlan.VIPConfig() != nil {
+						cfg.TypedSpec().AdvertiseExcludeSubnets = append(cfg.TypedSpec().AdvertiseExcludeSubnets, vlan.VIPConfig().IP())
+					}
+				}
+			}
+
+			cfg.TypedSpec().Image = machineConfig.Config().Cluster().Etcd().Image()
+			cfg.TypedSpec().ExtraArgs = machineConfig.Config().Cluster().Etcd().ExtraArgs()
 
 			return nil
 		}); err != nil {
