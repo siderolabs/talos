@@ -63,6 +63,8 @@ func RegisterDefaultTypes() {
 }
 
 // Mount specifies a mount for a container.
+//
+//gotagsrewrite:gen
 type Mount struct {
 	Destination string   `protobuf:"1"`
 	Type        string   `protobuf:"2"`

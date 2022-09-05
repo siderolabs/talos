@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package talos.resource.definitions.etcd;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/etcd";
+
+import "common/common.proto";
+
+// ConfigSpec describes (some) configuration settings of etcd.
+message ConfigSpec {
+  repeated string advertise_valid_subnets = 1;
+  repeated string advertise_exclude_subnets = 2;
+  string image = 3;
+  map<string, string> extra_args = 4;
+  repeated string listen_valid_subnets = 5;
+  repeated string listen_exclude_subnets = 6;
+}
+
+// PKIStatusSpec describes status of rendered secrets.
+message PKIStatusSpec {
+  bool ready = 1;
+  string version = 2;
+}
+
+// SpecSpec describes (some) Specuration settings of etcd.
+message SpecSpec {
+  string name = 1;
+  repeated common.NetIP advertised_addresses = 2;
+  string image = 3;
+  map<string, string> extra_args = 4;
+  repeated common.NetIP listen_peer_addresses = 5;
+  repeated common.NetIP listen_client_addresses = 6;
+}
+

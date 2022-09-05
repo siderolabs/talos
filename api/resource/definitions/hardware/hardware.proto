@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package talos.resource.definitions.hardware;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/hardware";
+
+// MemoryModuleSpec represents a single Memory.
+message MemoryModuleSpec {
+  uint32 size = 1;
+  string device_locator = 2;
+  string bank_locator = 3;
+  uint32 speed = 4;
+  string manufacturer = 5;
+  string serial_number = 6;
+  string asset_tag = 7;
+  string product_name = 8;
+}
+
+// ProcessorSpec represents a single processor.
+message ProcessorSpec {
+  string socket = 1;
+  string manufacturer = 2;
+  string product_name = 3;
+  uint32 max_speed = 4;
+  uint32 boot_speed = 5;
+  uint32 status = 6;
+  string serial_number = 7;
+  string asset_tag = 8;
+  string part_number = 9;
+  uint32 core_count = 10;
+  uint32 core_enabled = 11;
+  uint32 thread_count = 12;
+}
+
+// SystemInformationSpec represents the system information obtained from smbios.
+message SystemInformationSpec {
+  string manufacturer = 1;
+  string product_name = 2;
+  string version = 3;
+  string serial_number = 4;
+  string uuid = 5;
+  string wake_up_type = 6;
+  string sku_number = 7;
+}
+

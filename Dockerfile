@@ -127,6 +127,10 @@ COPY ./hack/gotagsrewrite /go/src/github.com/talos-systems/gotagsrewrite
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/gotagsrewrite \
     && go build -o gotagsrewrite . \
     && mv gotagsrewrite /toolchain/go/bin/
+COPY ./hack/structprotogen /go/src/github.com/talos-systems/structprotogen
+RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/structprotogen \
+    && go build -o structprotogen . \
+    && mv structprotogen /toolchain/go/bin/
 COPY --from=importvet /importvet /toolchain/go/bin/importvet
 
 # The build target creates a container that will be used to build Talos source
@@ -178,6 +182,23 @@ RUN --mount=type=cache,target=/.cache prototool format --overwrite --protoc-bin-
 FROM --platform=${BUILDPLATFORM} scratch AS fmt-protobuf
 COPY --from=proto-format-build /src/api/ /api/
 
+# run docgen for machinery config
+FROM build-go AS go-generate
+COPY ./pkg ./pkg
+COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
+RUN --mount=type=cache,target=/.cache go generate ./pkg/...
+RUN goimports -w -local github.com/talos-systems/talos ./pkg/
+RUN gofumpt -w ./pkg/
+WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache go generate ./...
+RUN gotagsrewrite .
+RUN goimports -w -local github.com/talos-systems/talos ./
+RUN gofumpt -w ./
+
+FROM go-generate AS gen-proto-go
+WORKDIR /src/
+RUN structprotogen github.com/talos-systems/talos/pkg/machinery/... /api/resource/definitions/
+
 # compile protobuf service definitions
 FROM build AS generate-build
 COPY --from=proto-format-build /src/api /api/
@@ -203,22 +224,11 @@ COPY ./api/resource/network/device_config.proto /api/resource/network/device_con
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size resource/network/device_config.proto
 COPY ./api/inspect/inspect.proto /api/inspect/inspect.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size inspect/inspect.proto
+COPY --from=gen-proto-go /api/resource/definitions/ /api/resource/definitions/
+RUN find /api/resource/definitions/ -type f -name "*.proto" | xargs -I {} /bin/sh -c 'protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size {} && mkdir -p /api/resource/definitions_go/$(basename {} .proto) && mv /api/resource/definitions/$(basename {} .proto)/*.go /api/resource/definitions_go/$(basename {} .proto)'
 # Goimports and gofumpt generated files to adjust import order
 RUN goimports -w -local github.com/talos-systems/talos /api/
 RUN gofumpt -w /api/
-
-# run docgen for machinery config
-FROM build-go AS go-generate
-COPY ./pkg ./pkg
-COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
-RUN --mount=type=cache,target=/.cache go generate ./pkg/...
-RUN goimports -w -local github.com/talos-systems/talos ./pkg/
-RUN gofumpt -w ./pkg/
-WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache go generate ./...
-RUN gotagsrewrite .
-RUN goimports -w -local github.com/talos-systems/talos ./
-RUN gofumpt -w ./
 
 FROM build AS embed-generate
 ARG NAME
@@ -253,6 +263,8 @@ COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
+COPY --from=generate-build /api/resource/definitions/ /api/resource/definitions/
+COPY --from=generate-build /api/resource/definitions_go/ /pkg/machinery/api/resource/definitions/
 COPY --from=generate-build /api/security/*.pb.go /pkg/machinery/api/security/
 COPY --from=generate-build /api/machine/*.pb.go /pkg/machinery/api/machine/
 COPY --from=generate-build /api/time/*.pb.go /pkg/machinery/api/time/
@@ -796,6 +808,7 @@ COPY ./hack/protoc-gen-doc/markdown.tmpl /tmp/markdown.tmpl
 RUN protoc \
     -I/protos \
     -I/protos/common \
+    -I/protos/resource/definitions \
     -I/protos/inspect \
     -I/protos/machine \
     -I/protos/resource \
@@ -806,6 +819,7 @@ RUN protoc \
     --doc_opt=/tmp/markdown.tmpl,api.md \
     --doc_out=/tmp \
     /protos/common/*.proto \
+    /protos/resource/definitions/**/*.proto \
     /protos/inspect/*.proto \
     /protos/machine/*.proto \
     /protos/resource/*.proto \

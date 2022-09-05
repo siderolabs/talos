@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package talos.resource.definitions.runtime;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/runtime";
+
+import "resource/definitions/enums/enums.proto";
+
+// KernelModuleSpecSpec describes Linux kernel module to load.
+message KernelModuleSpecSpec {
+  string name = 1;
+}
+
+// KernelParamSpecSpec describes status of the defined sysctls.
+message KernelParamSpecSpec {
+  string value = 1;
+  bool ignore_errors = 2;
+}
+
+// KernelParamStatusSpec describes status of the defined sysctls.
+message KernelParamStatusSpec {
+  string current = 1;
+  string default = 2;
+  bool unsupported = 3;
+}
+
+// MachineStatusSpec describes status of the defined sysctls.
+message MachineStatusSpec {
+  talos.resource.definitions.enums.RuntimeMachineStage stage = 1;
+  MachineStatusStatus status = 2;
+}
+
+// MachineStatusStatus describes machine current status at the stage.
+message MachineStatusStatus {
+  bool ready = 1;
+  repeated UnmetCondition unmet_conditions = 2;
+}
+
+// MountStatusSpec describes status of the defined sysctls.
+message MountStatusSpec {
+  string source = 1;
+  string target = 2;
+  string filesystem_type = 3;
+  repeated string options = 4;
+}
+
+// UnmetCondition is a failure which prevents machine from being ready at the stage.
+message UnmetCondition {
+  string name = 1;
+  string reason = 2;
+}
+

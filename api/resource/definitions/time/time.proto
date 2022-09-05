@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package talos.resource.definitions.time;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/time";
+
+// StatusSpec describes time sync state.
+message StatusSpec {
+  bool synced = 1;
+  int64 epoch = 2;
+  bool sync_disabled = 3;
+}
+

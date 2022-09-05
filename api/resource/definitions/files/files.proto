@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package talos.resource.definitions.files;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/files";
+
+// EtcFileSpecSpec describes status of rendered secrets.
+message EtcFileSpecSpec {
+  bytes contents = 1;
+  uint32 mode = 2;
+}
+
+// EtcFileStatusSpec describes status of rendered secrets.
+message EtcFileStatusSpec {
+  string spec_version = 1;
+}
+

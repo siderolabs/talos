@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package talos.resource.definitions.kubespan;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/kubespan";
+
+import "common/common.proto";
+import "google/protobuf/timestamp.proto";
+import "resource/definitions/enums/enums.proto";
+
+// ConfigSpec describes KubeSpan configuration..
+message ConfigSpec {
+  bool enabled = 1;
+  string cluster_id = 2;
+  string shared_secret = 3;
+  bool force_routing = 4;
+  bool advertise_kubernetes_networks = 5;
+}
+
+// EndpointSpec describes Endpoint state.
+message EndpointSpec {
+  string affiliate_id = 1;
+  common.NetIPPort endpoint = 2;
+}
+
+// IdentitySpec describes KubeSpan keys and address.
+//
+// Note: IdentitySpec is persisted on disk in the STATE partition,
+// so YAML serialization should be kept backwards compatible.
+message IdentitySpec {
+  common.NetIPPrefix address = 1;
+  common.NetIPPrefix subnet = 2;
+  string private_key = 3;
+  string public_key = 4;
+}
+
+// PeerSpecSpec describes PeerSpec state.
+message PeerSpecSpec {
+  common.NetIP address = 1;
+  repeated common.NetIPPrefix allowed_ips = 2;
+  repeated common.NetIPPort endpoints = 3;
+  string label = 4;
+}
+
+// PeerStatusSpec describes PeerStatus state.
+message PeerStatusSpec {
+  common.NetIPPort endpoint = 1;
+  string label = 2;
+  talos.resource.definitions.enums.KubespanPeerState state = 3;
+  int64 receive_bytes = 4;
+  int64 transmit_bytes = 5;
+  google.protobuf.Timestamp last_handshake_time = 6;
+  common.NetIPPort last_used_endpoint = 7;
+  google.protobuf.Timestamp last_endpoint_change = 8;
+}
+

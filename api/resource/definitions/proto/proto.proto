@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package talos.resource.definitions.proto;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/proto";
+
+// Mount specifies a mount for a container.
+message Mount {
+  string destination = 1;
+  string type = 2;
+  string source = 3;
+  repeated string options = 4;
+}
+

@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package talos.resource.definitions.cluster;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/cluster";
+
+import "common/common.proto";
+import "resource/definitions/enums/enums.proto";
+
+// AffiliateSpec describes Affiliate state.
+message AffiliateSpec {
+  string node_id = 1;
+  repeated common.NetIP addresses = 2;
+  string hostname = 3;
+  string nodename = 4;
+  string operating_system = 5;
+  talos.resource.definitions.enums.MachineType machine_type = 6;
+  KubeSpanAffiliateSpec kube_span = 7;
+}
+
+// ConfigSpec describes KubeSpan configuration.
+message ConfigSpec {
+  bool discovery_enabled = 1;
+  bool registry_kubernetes_enabled = 2;
+  bool registry_service_enabled = 3;
+  string service_endpoint = 4;
+  bool service_endpoint_insecure = 5;
+  bytes service_encryption_key = 6;
+  string service_cluster_id = 7;
+}
+
+// IdentitySpec describes status of rendered secrets.
+//
+// Note: IdentitySpec is persisted on disk in the STATE partition,
+// so YAML serialization should be kept backwards compatible.
+message IdentitySpec {
+  string node_id = 1;
+}
+
+// KubeSpanAffiliateSpec describes additional information specific for the KubeSpan.
+message KubeSpanAffiliateSpec {
+  string public_key = 1;
+  common.NetIP address = 2;
+  repeated common.NetIPPrefix additional_addresses = 3;
+  repeated common.NetIPPort endpoints = 4;
+}
+
+// MemberSpec describes Member state.
+message MemberSpec {
+  string node_id = 1;
+  repeated common.NetIP addresses = 2;
+  string hostname = 3;
+  talos.resource.definitions.enums.MachineType machine_type = 4;
+  string operating_system = 5;
+}
+

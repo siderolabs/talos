@@ -1,0 +1,300 @@
+syntax = "proto3";
+
+package talos.resource.definitions.network;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/network";
+
+import "common/common.proto";
+import "google/protobuf/duration.proto";
+import "resource/definitions/enums/enums.proto";
+
+// AddressSpecSpec describes status of rendered secrets.
+message AddressSpecSpec {
+  common.NetIPPrefix address = 1;
+  string link_name = 2;
+  talos.resource.definitions.enums.NethelpersFamily family = 3;
+  talos.resource.definitions.enums.NethelpersScope scope = 4;
+  uint32 flags = 5;
+  bool announce_with_arp = 6;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 7;
+}
+
+// AddressStatusSpec describes status of rendered secrets.
+message AddressStatusSpec {
+  common.NetIPPrefix address = 1;
+  common.NetIP local = 2;
+  common.NetIP broadcast = 3;
+  common.NetIP anycast = 4;
+  common.NetIP multicast = 5;
+  uint32 link_index = 6;
+  string link_name = 7;
+  talos.resource.definitions.enums.NethelpersFamily family = 8;
+  talos.resource.definitions.enums.NethelpersScope scope = 9;
+  uint32 flags = 10;
+}
+
+// BondMasterSpec describes bond settings if Kind == "bond".
+message BondMasterSpec {
+  talos.resource.definitions.enums.NethelpersBondMode mode = 1;
+  talos.resource.definitions.enums.NethelpersBondXmitHashPolicy hash_policy = 2;
+  talos.resource.definitions.enums.NethelpersLACPRate lacp_rate = 3;
+  talos.resource.definitions.enums.NethelpersARPValidate arp_validate = 4;
+  talos.resource.definitions.enums.NethelpersARPAllTargets arp_all_targets = 5;
+  uint32 primary_index = 6;
+  talos.resource.definitions.enums.NethelpersPrimaryReselect primary_reselect = 7;
+  talos.resource.definitions.enums.NethelpersFailOverMAC fail_over_mac = 8;
+  talos.resource.definitions.enums.NethelpersADSelect ad_select = 9;
+  uint32 mii_mon = 10;
+  uint32 up_delay = 11;
+  uint32 down_delay = 12;
+  uint32 arp_interval = 13;
+  uint32 resend_igmp = 14;
+  uint32 min_links = 15;
+  uint32 lp_interval = 16;
+  uint32 packets_per_slave = 17;
+  fixed32 num_peer_notif = 18;
+  fixed32 tlb_dynamic_lb = 19;
+  fixed32 all_slaves_active = 20;
+  bool use_carrier = 21;
+  fixed32 ad_actor_sys_prio = 22;
+  fixed32 ad_user_port_key = 23;
+  uint32 peer_notify_delay = 24;
+}
+
+// BondSlave contains a bond's master name and slave index.
+message BondSlave {
+  string master_name = 1;
+  int64 slave_index = 2;
+}
+
+// BridgeMasterSpec describes bridge settings if Kind == "bridge".
+message BridgeMasterSpec {
+  STPSpec stp = 1;
+}
+
+// BridgeSlave contains a bond's master name and slave index.
+message BridgeSlave {
+  string master_name = 1;
+}
+
+// DHCP4OperatorSpec describes DHCP4 operator options.
+message DHCP4OperatorSpec {
+  uint32 route_metric = 1;
+}
+
+// DHCP6OperatorSpec describes DHCP6 operator options.
+message DHCP6OperatorSpec {
+  string duid = 1;
+  uint32 route_metric = 2;
+}
+
+// HardwareAddrSpec describes spec for the link.
+message HardwareAddrSpec {
+  string name = 1;
+  bytes hardware_addr = 2;
+}
+
+// HostnameSpecSpec describes node nostname.
+message HostnameSpecSpec {
+  string hostname = 1;
+  string domainname = 2;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 3;
+}
+
+// HostnameStatusSpec describes node nostname.
+message HostnameStatusSpec {
+  string hostname = 1;
+  string domainname = 2;
+}
+
+// LinkRefreshSpec describes status of rendered secrets.
+message LinkRefreshSpec {
+  int64 generation = 1;
+}
+
+// LinkSpecSpec describes spec for the link.
+message LinkSpecSpec {
+  string name = 1;
+  bool logical = 2;
+  bool up = 3;
+  uint32 mtu = 4;
+  string kind = 5;
+  talos.resource.definitions.enums.NethelpersLinkType type = 6;
+  string parent_name = 7;
+  BondSlave bond_slave = 8;
+  BridgeSlave bridge_slave = 9;
+  VLANSpec vlan = 10;
+  BondMasterSpec bond_master = 11;
+  BridgeMasterSpec bridge_master = 12;
+  WireguardSpec wireguard = 13;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 14;
+}
+
+// LinkStatusSpec describes status of rendered secrets.
+message LinkStatusSpec {
+  uint32 index = 1;
+  talos.resource.definitions.enums.NethelpersLinkType type = 2;
+  uint32 link_index = 3;
+  uint32 flags = 4;
+  bytes hardware_addr = 5;
+  bytes broadcast_addr = 6;
+  uint32 mtu = 7;
+  string queue_disc = 8;
+  uint32 master_index = 9;
+  talos.resource.definitions.enums.NethelpersOperationalState operational_state = 10;
+  string kind = 11;
+  string slave_kind = 12;
+  string bus_path = 13;
+  string pciid = 14;
+  string driver = 15;
+  string driver_version = 16;
+  string firmware_version = 17;
+  string product_id = 18;
+  string vendor_id = 19;
+  string product = 20;
+  string vendor = 21;
+  bool link_state = 22;
+  int64 speed_megabits = 23;
+  talos.resource.definitions.enums.NethelpersPort port = 24;
+  talos.resource.definitions.enums.NethelpersDuplex duplex = 25;
+  VLANSpec vlan = 26;
+  BridgeMasterSpec bridge_master = 27;
+  BondMasterSpec bond_master = 28;
+  WireguardSpec wireguard = 29;
+}
+
+// NodeAddressFilterSpec describes a filter for NodeAddresses.
+message NodeAddressFilterSpec {
+  repeated common.NetIPPrefix include_subnets = 1;
+  repeated common.NetIPPrefix exclude_subnets = 2;
+}
+
+// NodeAddressSpec describes a set of node addresses.
+message NodeAddressSpec {
+  repeated common.NetIPPrefix addresses = 1;
+}
+
+// OperatorSpecSpec describes DNS resolvers.
+message OperatorSpecSpec {
+  talos.resource.definitions.enums.NetworkOperator operator = 1;
+  string link_name = 2;
+  bool require_up = 3;
+  DHCP4OperatorSpec dhcp4 = 4;
+  DHCP6OperatorSpec dhcp6 = 5;
+  VIPOperatorSpec vip = 6;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 7;
+}
+
+// ResolverSpecSpec describes DNS resolvers.
+message ResolverSpecSpec {
+  repeated common.NetIP dns_servers = 1;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 2;
+}
+
+// ResolverStatusSpec describes DNS resolvers.
+message ResolverStatusSpec {
+  repeated common.NetIP dns_servers = 1;
+}
+
+// RouteSpecSpec describes the route.
+message RouteSpecSpec {
+  talos.resource.definitions.enums.NethelpersFamily family = 1;
+  common.NetIPPrefix destination = 2;
+  common.NetIP source = 3;
+  common.NetIP gateway = 4;
+  string out_link_name = 5;
+  talos.resource.definitions.enums.NethelpersRoutingTable table = 6;
+  uint32 priority = 7;
+  talos.resource.definitions.enums.NethelpersScope scope = 8;
+  talos.resource.definitions.enums.NethelpersRouteType type = 9;
+  uint32 flags = 10;
+  talos.resource.definitions.enums.NethelpersRouteProtocol protocol = 11;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 12;
+}
+
+// RouteStatusSpec describes status of rendered secrets.
+message RouteStatusSpec {
+  talos.resource.definitions.enums.NethelpersFamily family = 1;
+  common.NetIPPrefix destination = 2;
+  common.NetIP source = 3;
+  common.NetIP gateway = 4;
+  uint32 out_link_index = 5;
+  string out_link_name = 6;
+  talos.resource.definitions.enums.NethelpersRoutingTable table = 7;
+  uint32 priority = 8;
+  talos.resource.definitions.enums.NethelpersScope scope = 9;
+  talos.resource.definitions.enums.NethelpersRouteType type = 10;
+  uint32 flags = 11;
+  talos.resource.definitions.enums.NethelpersRouteProtocol protocol = 12;
+}
+
+// STPSpec describes Spanning Tree Protocol (STP) settings of a bridge.
+message STPSpec {
+  bool enabled = 1;
+}
+
+// StatusSpec describes network state.
+message StatusSpec {
+  bool address_ready = 1;
+  bool connectivity_ready = 2;
+  bool hostname_ready = 3;
+  bool etc_files_ready = 4;
+}
+
+// TimeServerSpecSpec describes NTP servers.
+message TimeServerSpecSpec {
+  repeated string ntp_servers = 1;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 2;
+}
+
+// TimeServerStatusSpec describes NTP servers.
+message TimeServerStatusSpec {
+  repeated string ntp_servers = 1;
+}
+
+// VIPEquinixMetalSpec describes virtual (elastic) IP settings for Equinix Metal.
+message VIPEquinixMetalSpec {
+  string project_id = 1;
+  string device_id = 2;
+  string api_token = 3;
+}
+
+// VIPHCloudSpec describes virtual (elastic) IP settings for Hetzner Cloud.
+message VIPHCloudSpec {
+  int64 device_id = 1;
+  int64 network_id = 2;
+  string api_token = 3;
+}
+
+// VIPOperatorSpec describes virtual IP operator options.
+message VIPOperatorSpec {
+  common.NetIP ip = 1;
+  bool gratuitous_arp = 2;
+  VIPEquinixMetalSpec equinix_metal = 3;
+  VIPHCloudSpec h_cloud = 4;
+}
+
+// VLANSpec describes VLAN settings if Kind == "vlan".
+message VLANSpec {
+  fixed32 vid = 1;
+  talos.resource.definitions.enums.NethelpersVLANProtocol protocol = 2;
+}
+
+// WireguardPeer describes a single peer.
+message WireguardPeer {
+  string public_key = 1;
+  string preshared_key = 2;
+  string endpoint = 3;
+  google.protobuf.Duration persistent_keepalive_interval = 4;
+  repeated common.NetIPPrefix allowed_ips = 5;
+}
+
+// WireguardSpec describes Wireguard settings if Kind == "wireguard".
+message WireguardSpec {
+  string private_key = 1;
+  string public_key = 2;
+  int64 listen_port = 3;
+  int64 firewall_mark = 4;
+  repeated WireguardPeer peers = 5;
+}
+

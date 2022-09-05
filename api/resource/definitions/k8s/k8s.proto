@@ -1,0 +1,179 @@
+syntax = "proto3";
+
+package talos.resource.definitions.k8s;
+
+option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/k8s";
+
+import "common/common.proto";
+import "google/protobuf/struct.proto";
+import "resource/definitions/proto/proto.proto";
+
+// APIServerConfigSpec is configuration for kube-apiserver.
+message APIServerConfigSpec {
+  string image = 1;
+  string cloud_provider = 2;
+  string control_plane_endpoint = 3;
+  repeated string etcd_servers = 4;
+  int64 local_port = 5;
+  repeated string service_cid_rs = 6;
+  map<string, string> extra_args = 7;
+  repeated ExtraVolume extra_volumes = 8;
+  map<string, string> environment_variables = 9;
+  bool pod_security_policy_enabled = 10;
+  string advertised_address = 11;
+}
+
+// AdmissionControlConfigSpec is configuration for kube-apiserver.
+message AdmissionControlConfigSpec {
+  repeated AdmissionPluginSpec config = 1;
+}
+
+// AdmissionPluginSpec is a single admission plugin configuration Admission Control plugins.
+message AdmissionPluginSpec {
+  string name = 1;
+  google.protobuf.Struct configuration = 2;
+}
+
+// BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
+message BootstrapManifestsConfigSpec {
+  string server = 1;
+  string cluster_domain = 2;
+  repeated string pod_cid_rs = 3;
+  bool proxy_enabled = 4;
+  string proxy_image = 5;
+  repeated string proxy_args = 6;
+  bool core_dns_enabled = 7;
+  string core_dns_image = 8;
+  string dns_service_ip = 9;
+  string dns_service_i_pv6 = 10;
+  bool flannel_enabled = 11;
+  string flannel_image = 12;
+  string flannel_cni_image = 13;
+  bool pod_security_policy_enabled = 14;
+  bool talos_api_service_enabled = 15;
+}
+
+// ConfigStatusSpec describes status of rendered secrets.
+message ConfigStatusSpec {
+  bool ready = 1;
+  string version = 2;
+}
+
+// ControllerManagerConfigSpec is configuration for kube-controller-manager.
+message ControllerManagerConfigSpec {
+  bool enabled = 1;
+  string image = 2;
+  string cloud_provider = 3;
+  repeated string pod_cid_rs = 4;
+  repeated string service_cid_rs = 5;
+  map<string, string> extra_args = 6;
+  repeated ExtraVolume extra_volumes = 7;
+  map<string, string> environment_variables = 8;
+}
+
+// EndpointSpec describes status of rendered secrets.
+message EndpointSpec {
+  repeated common.NetIP addresses = 1;
+}
+
+// ExtraManifest defines a single extra manifest to download.
+message ExtraManifest {
+  string name = 1;
+  string url = 2;
+  string priority = 3;
+  map<string, string> extra_headers = 4;
+  string inline_manifest = 5;
+}
+
+// ExtraManifestsConfigSpec is configuration for extra bootstrap manifests.
+message ExtraManifestsConfigSpec {
+  repeated ExtraManifest extra_manifests = 1;
+}
+
+// ExtraVolume is a configuration of extra volume.
+message ExtraVolume {
+  string name = 1;
+  string host_path = 2;
+  string mount_path = 3;
+  bool read_only = 4;
+}
+
+// KubeletConfigSpec holds the source of kubelet configuration.
+message KubeletConfigSpec {
+  string image = 1;
+  repeated string cluster_dns = 2;
+  string cluster_domain = 3;
+  map<string, string> extra_args = 4;
+  repeated talos.resource.definitions.proto.Mount extra_mounts = 5;
+  google.protobuf.Struct extra_config = 6;
+  bool cloud_provider_external = 7;
+  bool default_runtime_seccomp_enabled = 8;
+  bool skip_node_registration = 9;
+}
+
+// KubeletSpecSpec holds the source of kubelet configuration.
+message KubeletSpecSpec {
+  string image = 1;
+  repeated string args = 2;
+  repeated talos.resource.definitions.proto.Mount extra_mounts = 3;
+  string expected_nodename = 4;
+  google.protobuf.Struct config = 5;
+}
+
+// ManifestSpec holds the Kubernetes resources spec.
+message ManifestSpec {
+  repeated SingleManifest items = 1;
+}
+
+// ManifestStatusSpec describes manifest application status.
+message ManifestStatusSpec {
+  repeated string manifests_applied = 1;
+}
+
+// NodeIPConfigSpec holds the Node IP specification.
+message NodeIPConfigSpec {
+  repeated string valid_subnets = 1;
+  repeated string exclude_subnets = 2;
+}
+
+// NodeIPSpec holds the Node IP specification.
+message NodeIPSpec {
+  repeated common.NetIP addresses = 1;
+}
+
+// NodenameSpec describes Kubernetes nodename.
+message NodenameSpec {
+  string nodename = 1;
+  string hostname_version = 2;
+}
+
+// SchedulerConfigSpec is configuration for kube-scheduler.
+message SchedulerConfigSpec {
+  bool enabled = 1;
+  string image = 2;
+  map<string, string> extra_args = 3;
+  repeated ExtraVolume extra_volumes = 4;
+  map<string, string> environment_variables = 5;
+}
+
+// SecretsStatusSpec describes status of rendered secrets.
+message SecretsStatusSpec {
+  bool ready = 1;
+  string version = 2;
+}
+
+// SingleManifest is a single manifest.
+message SingleManifest {
+  google.protobuf.Struct object = 1;
+}
+
+// StaticPodSpec describes static pod spec, it contains marshaled *v1.Pod spec.
+message StaticPodSpec {
+  google.protobuf.Struct pod = 1;
+}
+
+// StaticPodStatusSpec describes kubelet static pod status.
+message StaticPodStatusSpec {
+  google.protobuf.Struct pod_status = 1;
+}
+

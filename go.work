@@ -4,5 +4,6 @@ use (
 	.
 	./hack/cloud-image-uploader
 	./hack/gotagsrewrite
+	./hack/structprotogen
 	./pkg/machinery
 )
