@@ -19,6 +19,9 @@ preface = """\
         title = "Component Updates"
         description="""\
 * Flannel: v0.19.2
+* Linux: 5.15.65
+
+Talos is built with Go 1.19.1.
 """
 
 
