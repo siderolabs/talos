@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/crypto/x509"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/talos/pkg/kubeconfig"

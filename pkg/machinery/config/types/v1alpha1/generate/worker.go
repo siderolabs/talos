@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
-	"github.com/talos-systems/crypto/x509"
 
 	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"

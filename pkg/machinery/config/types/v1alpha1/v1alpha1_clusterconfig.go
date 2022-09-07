@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
-	"github.com/talos-systems/crypto/x509"
 	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"

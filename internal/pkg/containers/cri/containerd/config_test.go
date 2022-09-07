@@ -8,9 +8,9 @@ import (
 	_ "embed"
 	"testing"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
 	"github.com/talos-systems/talos/pkg/machinery/config"

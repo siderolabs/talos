@@ -15,8 +15,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
-	"github.com/talos-systems/crypto/x509"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/kubeconfig"

@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/talos-systems/crypto/x509"
+	"github.com/siderolabs/crypto/x509"
 	tnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"

@@ -13,10 +13,10 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"

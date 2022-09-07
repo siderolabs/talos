@@ -9,8 +9,8 @@ import (
 	"net"
 	"os"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/cli"
 )

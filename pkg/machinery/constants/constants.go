@@ -8,7 +8,7 @@ import (
 	"time"
 
 	cni "github.com/containerd/go-cni"
-	"github.com/talos-systems/crypto/x509"
+	"github.com/siderolabs/crypto/x509"
 )
 
 const (

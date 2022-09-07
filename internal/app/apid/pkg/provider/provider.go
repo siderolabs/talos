@@ -14,7 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/talos-systems/crypto/tls"
+	"github.com/siderolabs/crypto/tls"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )

@@ -10,7 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/talos-systems/crypto/x509"
+	"github.com/siderolabs/crypto/x509"
 	"google.golang.org/grpc"
 
 	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"

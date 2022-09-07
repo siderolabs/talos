@@ -12,7 +12,7 @@ import (
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/talos-systems/crypto/x509"
+	"github.com/siderolabs/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"

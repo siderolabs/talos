@@ -28,8 +28,8 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
-	"github.com/talos-systems/crypto/x509"
 	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
 	yaml "gopkg.in/yaml.v3"
 

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	goruntime "runtime"
 
-	"github.com/talos-systems/crypto/x509"
+	"github.com/siderolabs/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )

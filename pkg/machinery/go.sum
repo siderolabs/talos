@@ -103,6 +103,8 @@ github.com/rogpeppe/go-internal v1.6.1 h1:/FiVV8dS/e+YqF2JvO3yXRFbBLTIuSDkuC7aBO
 github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkBk=
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
+github.com/siderolabs/crypto v0.4.0 h1:o1KIR1KyevUcY9nbJlSyQAj7+p+rveGGF8LjAAFMtjc=
+github.com/siderolabs/crypto v0.4.0/go.mod h1:itZpBsJ9i0aH8jiHAuSlKCal7hni7X1aDYo6vGVl5LY=
 github.com/siderolabs/go-pointer v1.0.0 h1:6TshPKep2doDQJAAtHUuHWXbca8ZfyRySjSBT/4GsMU=
 github.com/siderolabs/go-pointer v1.0.0/go.mod h1:HTRFUNYa3R+k0FFKNv11zgkaCLzEkWVzoYZ433P3kHc=
 github.com/siderolabs/protoenc v0.1.5 h1:CBXqQQbjO56e2MtpjBsAYvAF5quIuoDVTJ1xGAE1mEo=
@@ -116,8 +118,6 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
-github.com/talos-systems/crypto v0.3.6 h1:aq1uADaF71P2/K35igWx8u/ivHOYp3vHQ/kAzqu83vk=
-github.com/talos-systems/crypto v0.3.6/go.mod h1:jbt9CspHnhdwyKmXQQEIiFSHz1cfsCJjsd0iNat1wEA=
 github.com/talos-systems/go-blockdevice v0.3.4 h1:LP2hgIcd5qbympxYFlWbHYTPyD/f/sZjBMma01soniQ=
 github.com/talos-systems/go-blockdevice v0.3.4/go.mod h1:qnn/zDc09I1DA2BUDDCOSA2D0P8pIDjN8pGiRoRaQig=
 github.com/talos-systems/go-cmd v0.0.0-20210216164758-68eb0067e0f0/go.mod h1:kf+rZzTEmlDiYQ6ulslvRONnKLQH8x83TowltGMhO+k=

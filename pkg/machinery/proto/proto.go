@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/protoenc"
-	"github.com/talos-systems/crypto/x509"
 	"google.golang.org/protobuf/proto" //nolint:depguard
 
 	"github.com/talos-systems/talos/pkg/machinery/api/common"

@@ -15,8 +15,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	ttls "github.com/talos-systems/crypto/tls"
-	"github.com/talos-systems/crypto/x509"
+	ttls "github.com/siderolabs/crypto/tls"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/talos-systems/go-procfs/procfs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

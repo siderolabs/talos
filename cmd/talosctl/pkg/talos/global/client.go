@@ -9,7 +9,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/talos-systems/crypto/x509"
+	"github.com/siderolabs/crypto/x509"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/pkg/cli"

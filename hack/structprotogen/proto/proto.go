@@ -373,9 +373,9 @@ func formatTypeName(fieldTypePkg string, fieldType string, declPkg string) (stri
 		return commoProto, "common.NetIP"
 	case typeData{"github.com/opencontainers/runtime-spec/specs-go", "Mount"}:
 		return "resource/definitions/proto/proto.proto", "talos.resource.definitions.proto.Mount"
-	case typeData{"github.com/talos-systems/crypto/x509", "PEMEncodedCertificateAndKey"}:
+	case typeData{"github.com/siderolabs/crypto/x509", "PEMEncodedCertificateAndKey"}:
 		return commoProto, "common.PEMEncodedCertificateAndKey"
-	case typeData{"github.com/talos-systems/crypto/x509", "PEMEncodedKey"}:
+	case typeData{"github.com/siderolabs/crypto/x509", "PEMEncodedKey"}:
 		return commoProto, "common.PEMEncodedKey"
 	default:
 		return "", ""

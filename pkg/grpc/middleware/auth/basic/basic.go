@@ -8,7 +8,7 @@ import (
 	"crypto/tls"
 	stdx509 "crypto/x509"
 
-	"github.com/talos-systems/crypto/x509"
+	"github.com/siderolabs/crypto/x509"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

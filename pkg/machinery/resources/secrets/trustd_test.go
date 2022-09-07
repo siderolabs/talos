@@ -9,8 +9,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/require"
-	"github.com/talos-systems/crypto/x509"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 )

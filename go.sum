@@ -1051,6 +1051,8 @@ github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sethgrid/pester v0.0.0-20190127155807-68a33a018ad0 h1:X9XMOYjxEfAYSy3xK1DzO5dMkkWhs9E9UCcS1IERx2k=
 github.com/sethgrid/pester v0.0.0-20190127155807-68a33a018ad0/go.mod h1:Ad7IjTpvzZO8Fl0vh9AzQ+j/jYZfyp2diGwI8m5q+ns=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
+github.com/siderolabs/crypto v0.4.0 h1:o1KIR1KyevUcY9nbJlSyQAj7+p+rveGGF8LjAAFMtjc=
+github.com/siderolabs/crypto v0.4.0/go.mod h1:itZpBsJ9i0aH8jiHAuSlKCal7hni7X1aDYo6vGVl5LY=
 github.com/siderolabs/discovery-client v0.1.1 h1:1lhXTepW4V1IJPf91ApvF77cBl086d1OXuC4WdVp8hM=
 github.com/siderolabs/discovery-client v0.1.1/go.mod h1:gBE5qxdB4BcY2nXOBJ14Qh8u7cBadCofjbxBLohcnbQ=
 github.com/siderolabs/go-pcidb v0.1.0 h1:6cJPBBmHlIF4GouYR/1g3JXS/niAON+6lIOfKl/t794=
@@ -1126,8 +1128,6 @@ github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
-github.com/talos-systems/crypto v0.3.6 h1:aq1uADaF71P2/K35igWx8u/ivHOYp3vHQ/kAzqu83vk=
-github.com/talos-systems/crypto v0.3.6/go.mod h1:jbt9CspHnhdwyKmXQQEIiFSHz1cfsCJjsd0iNat1wEA=
 github.com/talos-systems/discovery-api v0.1.0 h1:aKod6uqakH6VfeQ6HaxPF7obqFAL1QTJe4HHTb2mVKk=
 github.com/talos-systems/discovery-api v0.1.0/go.mod h1:ZsbzzOC5bzToaF3+YvUXDf9paeWV5bedpDu5RPXrglM=
 github.com/talos-systems/go-blockdevice v0.3.4 h1:LP2hgIcd5qbympxYFlWbHYTPyD/f/sZjBMma01soniQ=
