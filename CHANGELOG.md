@@ -1,3 +1,72 @@
+## [Talos 1.2.1](https://github.com/siderolabs/talos/releases/tag/v1.2.1) (2022-09-07)
+
+Welcome to the v1.2.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Flannel: v0.19.2
+* Linux: 5.15.65
+
+Talos is built with Go 1.19.1.
+
+
+### Contributors
+
+* Noel Georgi
+* Andrey Smirnov
+* Utku Ozdemir
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`a5ecc1a9a`](https://github.com/siderolabs/talos/commit/a5ecc1a9a88185b92b368b2e950d1d1f92089edd) chore: bump kernel and go
+* [`6efe6144d`](https://github.com/siderolabs/talos/commit/6efe6144d451a2ce472d2eb008558adfd93ec109) fix: automatically discard VIPs for etcd advertised addresses
+* [`0e4cead3f`](https://github.com/siderolabs/talos/commit/0e4cead3fb1f15aaa65af74de95b4f73ef7cc1d3) fix: flip the client-server version check
+* [`b902247ee`](https://github.com/siderolabs/talos/commit/b902247eee1cfc076043a8bcdcd45faa342864d2) fix: prevent panic on health check if a member has no IPs
+* [`2921221ff`](https://github.com/siderolabs/talos/commit/2921221ff6e5875d45bae3789e26770f6f4527c2) feat: update Flannel to v0.19.2
+* [`7a0e3738f`](https://github.com/siderolabs/talos/commit/7a0e3738fb0b44427f8aa0e1fca2a2a96e391155) chore: remove capi hacks
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`116c5a9`](https://github.com/siderolabs/extras/commit/116c5a9e779dba92c5d15b902d04b2f7b8c31eb8) chore: bump go to 1.19.1
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`b264dc2`](https://github.com/siderolabs/pkgs/commit/b264dc2e36a88e8bc950d01c738946b4d56e4118) chore: bump kernel and go
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`ccc64f9`](https://github.com/siderolabs/tools/commit/ccc64f9a1e5ed5c3614d6f13066ebf165f617e35) chore: bump go to 1.19.1
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**  v1.2.0 -> v1.2.0-1-g116c5a9
+* **github.com/siderolabs/pkgs**    v1.2.0-8-g970860d -> v1.2.0-9-gb264dc2
+* **github.com/siderolabs/tools**   v1.2.0 -> v1.2.0-1-gccc64f9
+
+Previous release can be found at [v1.2.0](https://github.com/siderolabs/talos/releases/tag/v1.2.0)
+
+
 ## [Talos 1.2.0](https://github.com/siderolabs/talos/releases/tag/v1.2.0) (2022-08-31)
 
 Welcome to the v1.2.0 release of Talos!
