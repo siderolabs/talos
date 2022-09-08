@@ -7,13 +7,13 @@ package talos
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/metadata"
 
@@ -154,11 +154,13 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 			}
 		}
 
+		var multiErr *multierror.Error
+
 		// get <type>
 		// get <type> <id>
 		callbackResource := func(parentCtx context.Context, hostname string, r resource.Resource, callError error) error {
 			if callError != nil {
-				fmt.Fprintf(os.Stderr, "%s: %s\n", hostname, callError)
+				multiErr = multierror.Append(multiErr, callError)
 
 				return nil
 			}
@@ -174,7 +176,12 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 			return out.WriteHeader(definition, false)
 		}
 
-		return helpers.ForEachResource(ctx, c, callbackRD, callbackResource, getCmdFlags.namespace, args...)
+		helperErr := helpers.ForEachResource(ctx, c, callbackRD, callbackResource, getCmdFlags.namespace, args...)
+		if helperErr != nil {
+			return helperErr
+		}
+
+		return multiErr.ErrorOrNil()
 	}
 }
 

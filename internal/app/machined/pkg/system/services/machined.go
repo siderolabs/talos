@@ -75,6 +75,12 @@ var rules = map[string]role.Set{
 	"/resource.ResourceService/Get":   role.MakeSet(role.Admin, role.Reader),
 	"/resource.ResourceService/List":  role.MakeSet(role.Admin, role.Reader),
 	"/resource.ResourceService/Watch": role.MakeSet(role.Admin, role.Reader),
+	"/cosi.resource.State/Create":     role.MakeSet(role.Admin),
+	"/cosi.resource.State/Destroy":    role.MakeSet(role.Admin),
+	"/cosi.resource.State/Get":        role.MakeSet(role.Admin, role.Reader),
+	"/cosi.resource.State/List":       role.MakeSet(role.Admin, role.Reader),
+	"/cosi.resource.State/Update":     role.MakeSet(role.Admin),
+	"/cosi.resource.State/Watch":      role.MakeSet(role.Admin, role.Reader),
 
 	"/storage.StorageService/Disks": role.MakeSet(role.Admin, role.Reader),
 

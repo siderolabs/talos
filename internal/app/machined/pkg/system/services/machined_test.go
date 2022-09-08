@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	cosi "github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -24,6 +25,7 @@ func collectMethods(t *testing.T) map[string]struct{} {
 	methods := make(map[string]struct{})
 
 	for _, service := range []grpc.ServiceDesc{
+		cosi.State_ServiceDesc,
 		cluster.ClusterService_ServiceDesc,
 		inspect.InspectService_ServiceDesc,
 		machine.MachineService_ServiceDesc,
