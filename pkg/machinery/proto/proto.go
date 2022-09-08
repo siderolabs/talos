@@ -229,7 +229,9 @@ func registerDefaultTypes() {
 
 	protoenc.RegisterEncoderDecoder(
 		func(v specs.Mount) ([]byte, error) {
-			return protoenc.Marshal(Mount(v))
+			mount := Mount(v)
+
+			return protoenc.Marshal(&mount)
 		},
 		func(slc []byte) (specs.Mount, error) {
 			var result Mount
