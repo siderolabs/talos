@@ -947,6 +947,11 @@ func (in *FeaturesConfig) DeepCopyInto(out *FeaturesConfig) {
 		*out = new(KubernetesTalosAPIAccessConfig)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ApidCheckExtKeyUsage != nil {
+		in, out := &in.ApidCheckExtKeyUsage, &out.ApidCheckExtKeyUsage
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

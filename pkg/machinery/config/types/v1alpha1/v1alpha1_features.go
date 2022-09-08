@@ -28,3 +28,8 @@ func (f *FeaturesConfig) StableHostnameEnabled() bool {
 func (f *FeaturesConfig) KubernetesTalosAPIAccess() config.KubernetesTalosAPIAccess {
 	return f.KubernetesTalosAPIAccessConfig
 }
+
+// ApidCheckExtKeyUsageEnabled implements config.Features interface.
+func (f *FeaturesConfig) ApidCheckExtKeyUsageEnabled() bool {
+	return pointer.SafeDeref(f.ApidCheckExtKeyUsage)
+}

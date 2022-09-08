@@ -10,6 +10,7 @@ package generate
 import (
 	"bufio"
 	"crypto/rand"
+	stdx509 "crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -576,6 +577,8 @@ func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertifi
 		x509.Organization(roles.Strings()...),
 		x509.NotAfter(currentTime.Add(ttl)),
 		x509.NotBefore(currentTime),
+		x509.KeyUsage(stdx509.KeyUsageDigitalSignature),
+		x509.ExtKeyUsage([]stdx509.ExtKeyUsage{stdx509.ExtKeyUsageClientAuth}),
 	}
 
 	talosCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(ca)

@@ -529,6 +529,7 @@ type Features interface {
 	RBACEnabled() bool
 	StableHostnameEnabled() bool
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
+	ApidCheckExtKeyUsageEnabled() bool
 }
 
 // KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.

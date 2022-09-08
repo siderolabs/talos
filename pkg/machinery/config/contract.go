@@ -24,6 +24,7 @@ type VersionContract struct {
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
+	TalosVersion1_3     = &VersionContract{1, 3}
 	TalosVersion1_2     = &VersionContract{1, 2}
 	TalosVersion1_1     = &VersionContract{1, 1}
 	TalosVersion1_0     = &VersionContract{1, 0}
@@ -135,4 +136,9 @@ func (contract *VersionContract) KubernetesAllowSchedulingOnControlPlanes() bool
 // KubernetesDiscoveryBackendDisabled returns true if Kubernetes cluster discovery backend should be disabled by default.
 func (contract *VersionContract) KubernetesDiscoveryBackendDisabled() bool {
 	return contract.Greater(TalosVersion1_1)
+}
+
+// ApidExtKeyUsageCheckEnabled returns true if apid should check ext key usage of client certificates.
+func (contract *VersionContract) ApidExtKeyUsageCheckEnabled() bool {
+	return contract.Greater(TalosVersion1_2)
 }

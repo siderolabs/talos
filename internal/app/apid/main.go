@@ -6,10 +6,12 @@ package apid
 
 import (
 	"context"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"log"
 	"os/signal"
+	"reflect"
 	"regexp"
 	"syscall"
 	"time"
@@ -34,8 +36,6 @@ import (
 	"github.com/talos-systems/talos/pkg/startup"
 )
 
-var rbacEnabled *bool
-
 func runDebugServer(ctx context.Context) {
 	const debugAddr = ":9981"
 
@@ -55,13 +55,15 @@ func Main() {
 	}
 }
 
+//nolint:gocyclo
 func apidMain() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds | log.Ltime)
 
-	rbacEnabled = flag.Bool("enable-rbac", false, "enable RBAC for Talos API")
+	rbacEnabled := flag.Bool("enable-rbac", false, "enable RBAC for Talos API")
+	extKeyUsageCheckEnabled := flag.Bool("enable-ext-key-usage-check", false, "enable check for client certificate ext key usage")
 
 	flag.Parse()
 
@@ -89,6 +91,10 @@ func apidMain() error {
 	serverTLSConfig, err := tlsConfig.ServerConfig()
 	if err != nil {
 		return fmt.Errorf("failed to create OS-level TLS configuration: %w", err)
+	}
+
+	if *extKeyUsageCheckEnabled {
+		serverTLSConfig.VerifyPeerCertificate = verifyExtKeyUsage
 	}
 
 	clientTLSConfig, err := tlsConfig.ClientConfig()
@@ -214,4 +220,24 @@ func apidMain() error {
 	})
 
 	return errGroup.Wait()
+}
+
+func verifyExtKeyUsage(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+	if len(verifiedChains) == 0 {
+		return fmt.Errorf("no verified chains")
+	}
+
+	certs := verifiedChains[0]
+
+	for _, cert := range certs {
+		if cert.IsCA {
+			continue
+		}
+
+		if !reflect.DeepEqual(cert.ExtKeyUsage, []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}) {
+			return fmt.Errorf("certificate %q is missing the client auth extended key usage", cert.Subject)
+		}
+	}
+
+	return nil
 }

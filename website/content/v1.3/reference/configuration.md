@@ -2600,6 +2600,7 @@ kubernetesTalosAPIAccess:
     allowedKubernetesNamespaces:
         - kube-system
 {{< /highlight >}}</details> | |
+|`apidCheckExtKeyUsage` |bool |Enable checks for extended key usage of client certificates in apid.  | |
 
 
 

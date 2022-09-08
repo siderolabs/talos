@@ -65,6 +65,10 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		machine.MachineFeatures.StableHostname = pointer.To(true)
 	}
 
+	if in.VersionContract.ApidExtKeyUsageCheckEnabled() {
+		machine.MachineFeatures.ApidCheckExtKeyUsage = pointer.To(true)
+	}
+
 	if in.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
 		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
 	}

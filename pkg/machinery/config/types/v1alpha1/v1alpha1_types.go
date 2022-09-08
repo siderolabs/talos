@@ -2379,6 +2379,9 @@ type FeaturesConfig struct {
 	//   examples:
 	//     - value: kubernetesTalosAPIAccessConfigExample
 	KubernetesTalosAPIAccessConfig *KubernetesTalosAPIAccessConfig `yaml:"kubernetesTalosAPIAccess,omitempty"`
+	//   description: |
+	//     Enable checks for extended key usage of client certificates in apid.
+	ApidCheckExtKeyUsage *bool `yaml:"apidCheckExtKeyUsage,omitempty"`
 }
 
 // KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.

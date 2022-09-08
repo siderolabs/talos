@@ -2318,7 +2318,7 @@ func init() {
 			FieldName: "features",
 		},
 	}
-	FeaturesConfigDoc.Fields = make([]encoder.Doc, 3)
+	FeaturesConfigDoc.Fields = make([]encoder.Doc, 4)
 	FeaturesConfigDoc.Fields[0].Name = "rbac"
 	FeaturesConfigDoc.Fields[0].Type = "bool"
 	FeaturesConfigDoc.Fields[0].Note = ""
@@ -2336,6 +2336,11 @@ func init() {
 	FeaturesConfigDoc.Fields[2].Comments[encoder.LineComment] = "Configure Talos API access from Kubernetes pods."
 
 	FeaturesConfigDoc.Fields[2].AddExample("", kubernetesTalosAPIAccessConfigExample)
+	FeaturesConfigDoc.Fields[3].Name = "apidCheckExtKeyUsage"
+	FeaturesConfigDoc.Fields[3].Type = "bool"
+	FeaturesConfigDoc.Fields[3].Note = ""
+	FeaturesConfigDoc.Fields[3].Description = "Enable checks for extended key usage of client certificates in apid."
+	FeaturesConfigDoc.Fields[3].Comments[encoder.LineComment] = "Enable checks for extended key usage of client certificates in apid."
 
 	KubernetesTalosAPIAccessConfigDoc.Type = "KubernetesTalosAPIAccessConfig"
 	KubernetesTalosAPIAccessConfigDoc.Comments[encoder.LineComment] = "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods."
