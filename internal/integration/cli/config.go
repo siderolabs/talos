@@ -127,7 +127,7 @@ func (suite *TalosconfigSuite) TestNew() {
 			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`MachineConfig`))},
 			readerOpts: []base.RunOption{
 				base.ShouldFail(),
-				base.StdoutEmpty(),
+				base.StdoutShouldMatch(regexp.MustCompile(`\QNODE   NAMESPACE   TYPE   ID   VERSION`)),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
 			},
 		},
@@ -136,7 +136,7 @@ func (suite *TalosconfigSuite) TestNew() {
 			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`OSRootSecret`))},
 			readerOpts: []base.RunOption{
 				base.ShouldFail(),
-				base.StdoutEmpty(),
+				base.StdoutShouldMatch(regexp.MustCompile(`\QNODE   NAMESPACE   TYPE   ID   VERSION`)),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
 			},
 		},
