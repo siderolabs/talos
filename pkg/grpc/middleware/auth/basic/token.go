@@ -7,8 +7,6 @@ package basic
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -81,20 +79,10 @@ func (b *TokenCredentials) authenticate(ctx context.Context) error {
 // basic authentication.
 func (b *TokenCredentials) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		start := time.Now()
-
 		if err := b.authenticate(ctx); err != nil {
 			return nil, err
 		}
 
-		h, err := handler(ctx, req)
-
-		log.Printf("request - Method:%s\tDuration:%s\tError:%v\n",
-			info.FullMethod,
-			time.Since(start),
-			err,
-		)
-
-		return h, err
+		return handler(ctx, req)
 	}
 }
