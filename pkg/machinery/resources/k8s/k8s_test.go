@@ -9,11 +9,14 @@ import (
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
@@ -47,4 +50,40 @@ func TestRegisterResource(t *testing.T) {
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}
+}
+
+func TestKubeletConfig(t *testing.T) {
+	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().Image = "kubelet:v1.0.0"
+	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.10"}
+	cfg.TypedSpec().ClusterDomain = "cluster.local"
+	cfg.TypedSpec().ExtraArgs = map[string]string{"foo": "bar"}
+	cfg.TypedSpec().ExtraMounts = []specs.Mount{
+		{
+			Destination: "/tmp",
+			Source:      "/var",
+			Type:        "tmpfs",
+		},
+	}
+	cfg.TypedSpec().CloudProviderExternal = true
+
+	res, err := protobuf.FromResource(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, res)
+}
+
+func TestKubeletSpec(t *testing.T) {
+	cfg := k8s.NewKubeletSpec(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().Image = "kubelet:v1.0.0"
+	cfg.TypedSpec().ExtraMounts = []specs.Mount{
+		{
+			Destination: "/tmp",
+			Source:      "/var",
+			Type:        "tmpfs",
+		},
+	}
+
+	res, err := protobuf.FromResource(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, res)
 }
