@@ -19,7 +19,7 @@ require (
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/protoenc v0.1.3
 	github.com/stretchr/testify v1.8.0
-	github.com/talos-systems/crypto v0.3.6
+	github.com/talos-systems/crypto v0.3.7
 	github.com/talos-systems/go-blockdevice v0.3.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
