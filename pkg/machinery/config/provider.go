@@ -491,6 +491,7 @@ type ExternalCloudProvider interface {
 
 // AdminKubeconfig defines settings for admin kubeconfig.
 type AdminKubeconfig interface {
+	CommonName() string
 	CertLifetime() time.Duration
 }
 

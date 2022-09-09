@@ -1153,6 +1153,11 @@ func (a *AdminKubeconfigConfig) CertLifetime() time.Duration {
 	return a.AdminKubeconfigCertLifetime
 }
 
+// CommonName implements the config.Provider interface.
+func (a *AdminKubeconfigConfig) CommonName() string {
+	return constants.KubernetesAdminCertCommonName
+}
+
 // Endpoints implements the config.Provider interface.
 func (r *RegistryMirrorConfig) Endpoints() []string {
 	return r.MirrorEndpoints

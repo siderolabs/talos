@@ -58,7 +58,7 @@ func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
 			CA:                  config.CA(),
 			CertificateLifetime: config.AdminKubeconfig().CertLifetime(),
 
-			CommonName:   constants.KubernetesAdminCertCommonName,
+			CommonName:   config.AdminKubeconfig().CommonName(),
 			Organization: constants.KubernetesAdminCertOrganization,
 
 			Endpoint:    config.Endpoint().String(),

@@ -202,6 +202,9 @@ const (
 	// KubernetesAdminCertCommonName defines CN property of Kubernetes admin certificate.
 	KubernetesAdminCertCommonName = "admin"
 
+	// KubernetesTalosAdminCertCommonName defines CN property of Kubernetes admin certificate used by Talos itself.
+	KubernetesTalosAdminCertCommonName = "talos:admin"
+
 	// KubernetesAdminCertOrganization defines Organization values of Kubernetes admin certificate.
 	KubernetesAdminCertOrganization = "system:masters"
 

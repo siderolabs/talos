@@ -343,3 +343,7 @@ func (adapter *generateAdminAdapter) CertLifetime() time.Duration {
 	// this certificate is not delivered to the user, it's used only internally by control plane components
 	return KubernetesCertificateValidityDuration
 }
+
+func (adapter *generateAdminAdapter) CommonName() string {
+	return constants.KubernetesTalosAdminCertCommonName
+}
