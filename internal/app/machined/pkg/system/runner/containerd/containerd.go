@@ -124,7 +124,7 @@ func (c *containerdRunner) Close() error {
 
 // Run implements runner.Runner interface
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	defer close(c.stopped)
 
@@ -137,6 +137,24 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	// attempt to clean up a task if it already exists
 	task, err = c.container.Task(c.ctx, nil)
 	if err == nil {
+		var s <-chan containerd.ExitStatus
+
+		s, err = task.Wait(c.ctx)
+		if err != nil {
+			return fmt.Errorf("failed to wait for the task %q: %w", c.args.ID, err)
+		}
+
+		err = task.Kill(c.ctx, syscall.SIGKILL, containerd.WithKillAll)
+		if err != nil && !errdefs.IsNotFound(err) {
+			return fmt.Errorf("failed to kill the task %q: %w", c.args.ID, err)
+		}
+
+		select {
+		case <-s:
+		case <-c.stop:
+			return nil
+		}
+
 		if _, err = task.Delete(c.ctx); err != nil {
 			return fmt.Errorf("failed to clean up task %q: %w", c.args.ID, err)
 		}
