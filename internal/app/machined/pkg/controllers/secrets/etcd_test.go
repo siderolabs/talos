@@ -65,7 +65,7 @@ func (suite *EtcdSuite) TestReconcile() {
 	hostnameStatus.TypedSpec().Domainname = "domain"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), hostnameStatus))
 
-	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s))
+	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s))
 	nodeAddresses.TypedSpec().Addresses = []netaddr.IPPrefix{
 		netaddr.MustParseIPPrefix("10.3.4.5/24"),
 		netaddr.MustParseIPPrefix("2001:db8::1eaf/64"),

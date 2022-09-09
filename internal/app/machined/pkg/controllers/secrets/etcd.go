@@ -61,7 +61,7 @@ func (ctrl *EtcdController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s)),
+			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s)),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -148,7 +148,7 @@ func (ctrl *EtcdController) Run(ctx context.Context, r controller.Runtime, logge
 			resource.NewMetadata(
 				network.NamespaceName,
 				network.NodeAddressType,
-				network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
+				network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s),
 				resource.VersionUndefined,
 			),
 		)
