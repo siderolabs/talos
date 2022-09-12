@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package proto defines a functions to work with proto messages.
 package proto
 
 import (
@@ -149,6 +150,16 @@ func registerDefaultTypes() {
 			return proto.Marshal(&source)
 		},
 		func(slc []byte) (netaddr.IP, error) {
+			if len(slc) == 0 || len(slc) == 4 || len(slc) == 16 {
+				var parsedIP netaddr.IP
+
+				if err := parsedIP.UnmarshalBinary(slc); err != nil {
+					return netaddr.IP{}, err
+				}
+
+				return parsedIP, nil
+			}
+
 			var dest common.NetIP
 
 			if err := proto.Unmarshal(slc, &dest); err != nil {
