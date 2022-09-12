@@ -131,7 +131,7 @@ require (
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.1
 	inet.af/netaddr v0.0.0-20220811202034-502d2d690317
-	k8s.io/klog/v2 v2.80.0
+	k8s.io/klog/v2 v2.80.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.65
 	sigs.k8s.io/yaml v1.3.0
 )
