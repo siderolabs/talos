@@ -107,8 +107,8 @@ github.com/siderolabs/crypto v0.4.0 h1:o1KIR1KyevUcY9nbJlSyQAj7+p+rveGGF8LjAAFMt
 github.com/siderolabs/crypto v0.4.0/go.mod h1:itZpBsJ9i0aH8jiHAuSlKCal7hni7X1aDYo6vGVl5LY=
 github.com/siderolabs/go-pointer v1.0.0 h1:6TshPKep2doDQJAAtHUuHWXbca8ZfyRySjSBT/4GsMU=
 github.com/siderolabs/go-pointer v1.0.0/go.mod h1:HTRFUNYa3R+k0FFKNv11zgkaCLzEkWVzoYZ433P3kHc=
-github.com/siderolabs/protoenc v0.1.5 h1:CBXqQQbjO56e2MtpjBsAYvAF5quIuoDVTJ1xGAE1mEo=
-github.com/siderolabs/protoenc v0.1.5/go.mod h1:mu4gc6pJxhdJYpuloacKE4jsJojj87qDXwn8LUvs2bY=
+github.com/siderolabs/protoenc v0.1.6 h1:1u+y3fZ5XguoMZoHa/FCAz6w9J7IeCZtZi4sy135nDY=
+github.com/siderolabs/protoenc v0.1.6/go.mod h1:mu4gc6pJxhdJYpuloacKE4jsJojj87qDXwn8LUvs2bY=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0 h1:M2gUjqZET1qApGOWNSnZ49BAIMX4F/1plDv3+l31EJ4=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=

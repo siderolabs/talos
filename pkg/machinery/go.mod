@@ -18,7 +18,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/go-pointer v1.0.0
-	github.com/siderolabs/protoenc v0.1.5
+	github.com/siderolabs/protoenc v0.1.6
 	github.com/stretchr/testify v1.8.0
 	github.com/talos-systems/go-blockdevice v0.3.4
 	github.com/talos-systems/go-debug v0.2.1
