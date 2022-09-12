@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure
@@ -124,12 +126,6 @@ func (c *Client) StopAndRemovePodSandboxes(ctx context.Context, stopAction StopA
 				return nil
 			}
 
-			if pod.GetState() != runtimeapi.PodSandboxState_SANDBOX_READY {
-				log.Printf("skipping pod %s/%s, state %s", pod.Metadata.Namespace, pod.Metadata.Name, pod.GetState())
-
-				return nil
-			}
-
 			if e = stopAndRemove(ctx, stopAction, c, pod, networkMode.String()); e != nil {
 				return fmt.Errorf("failed stopping pod %s/%s: %w", pod.Metadata.Namespace, pod.Metadata.Name, e)
 			}
@@ -182,18 +178,22 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 		container := container // https://golang.org/doc/faq#closures_and_goroutines
 
 		g.Go(func() error {
-			log.Printf("%s container %s/%s:%s", action, pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
-
 			// TODO(andrewrynhard): Can we set the timeout dynamically?
-			if criErr := client.StopContainer(ctx, container.Id, 30); criErr != nil {
-				if grpcstatus.Code(criErr) == codes.NotFound {
-					return nil
-				}
+			if container.State == runtimeapi.ContainerState_CONTAINER_RUNNING || container.State == runtimeapi.ContainerState_CONTAINER_UNKNOWN {
+				log.Printf("stopping container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
 
-				return criErr
+				if criErr := client.StopContainer(ctx, container.Id, int64(constants.KubeletShutdownGracePeriod.Seconds())); criErr != nil {
+					if grpcstatus.Code(criErr) == codes.NotFound {
+						return nil
+					}
+
+					return criErr
+				}
 			}
 
 			if stopAction == StopAndRemove {
+				log.Printf("removing container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
+
 				if criErr := client.RemoveContainer(ctx, container.Id); criErr != nil {
 					if grpcstatus.Code(criErr) == codes.NotFound {
 						return nil
@@ -213,14 +213,16 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 		return err
 	}
 
-	if err = client.StopPodSandbox(ctx, pod.Id); err != nil {
-		if grpcstatus.Code(err) == codes.NotFound {
+	if pod.State == runtimeapi.PodSandboxState_SANDBOX_READY {
+		if err = client.StopPodSandbox(ctx, pod.Id); err != nil {
+			if grpcstatus.Code(err) == codes.NotFound {
+				return nil
+			}
+
+			log.Printf("error stopping pod %s/%s, ignored: %s", pod.Metadata.Namespace, pod.Metadata.Name, err)
+
 			return nil
 		}
-
-		log.Printf("error stopping pod %s/%s, ignored: %s", pod.Metadata.Namespace, pod.Metadata.Name, err)
-
-		return nil
 	}
 
 	if stopAction == StopAndRemove {
