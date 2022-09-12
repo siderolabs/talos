@@ -648,6 +648,8 @@ type Config struct {
 	ClusterConfig *ClusterConfig `yaml:"cluster"`
 }
 
+var _ config.MachineConfig = (*MachineConfig)(nil)
+
 // MachineConfig represents the machine-specific config values.
 //
 //	examples:
@@ -839,6 +841,12 @@ type MachineSeccompProfile struct {
 	//   The `value` field is used to provide the seccomp profile.
 	MachineSeccompProfileValue Unstructured `yaml:"value"`
 }
+
+var (
+	_ config.ClusterConfig  = (*ClusterConfig)(nil)
+	_ config.ClusterNetwork = (*ClusterConfig)(nil)
+	_ config.Token          = (*ClusterConfig)(nil)
+)
 
 // ClusterConfig represents the cluster-wide config values.
 //
@@ -1532,6 +1540,8 @@ type ControlPlaneConfig struct {
 	LocalAPIServerPort int `yaml:"localAPIServerPort,omitempty"`
 }
 
+var _ config.APIServer = (*APIServerConfig)(nil)
+
 // APIServerConfig represents the kube apiserver configuration options.
 type APIServerConfig struct {
 	//   description: |
@@ -1614,6 +1624,8 @@ type AdmissionPluginConfig struct {
 	PluginConfiguration Unstructured `yaml:"configuration"`
 }
 
+var _ config.ControllerManager = (*ControllerManagerConfig)(nil)
+
 // ControllerManagerConfig represents the kube controller manager configuration options.
 type ControllerManagerConfig struct {
 	//   description: |
@@ -1653,6 +1665,8 @@ type ProxyConfig struct {
 	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
 }
 
+var _ config.Scheduler = (*SchedulerConfig)(nil)
+
 // SchedulerConfig represents the kube scheduler configuration options.
 type SchedulerConfig struct {
 	//   description: |
@@ -1670,6 +1684,8 @@ type SchedulerConfig struct {
 	//     The `env` field allows for the addition of environment variables for the control plane component.
 	EnvConfig Env `yaml:"env,omitempty"`
 }
+
+var _ config.Etcd = (*EtcdConfig)(nil)
 
 // EtcdConfig represents the etcd configuration options.
 type EtcdConfig struct {
@@ -1781,6 +1797,8 @@ type CNIConfig struct {
 	//     Should be present for "custom", must be empty for "flannel" and "none".
 	CNIUrls []string `yaml:"urls,omitempty"`
 }
+
+var _ config.ExternalCloudProvider = (*ExternalCloudProviderConfig)(nil)
 
 // ExternalCloudProviderConfig contains external cloud provider configuration.
 type ExternalCloudProviderConfig struct {
@@ -2363,6 +2381,8 @@ type SystemDiskEncryptionConfig struct {
 	//     Ephemeral partition encryption.
 	EphemeralPartition *EncryptionConfig `yaml:"ephemeral,omitempty"`
 }
+
+var _ config.Features = (*FeaturesConfig)(nil)
 
 // FeaturesConfig describes individual Talos features that can be switched on or off.
 type FeaturesConfig struct {

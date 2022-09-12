@@ -16,6 +16,8 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 )
 
+var _ proxy.Backend = (*Local)(nil)
+
 // Local implements local backend (proxying one2one to local service).
 type Local struct {
 	name       string

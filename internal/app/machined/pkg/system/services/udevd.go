@@ -12,6 +12,7 @@ import (
 	"github.com/talos-systems/go-cmd/pkg/cmd"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -20,6 +21,8 @@ import (
 	"github.com/talos-systems/talos/pkg/conditions"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
+
+var _ system.HealthcheckedService = (*Udevd)(nil)
 
 // Udevd implements the Service interface. It serves as the concrete type with
 // the required methods.

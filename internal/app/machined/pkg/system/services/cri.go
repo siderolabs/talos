@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -23,6 +24,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
+
+var _ system.HealthcheckedService = (*CRI)(nil)
 
 // CRI implements the Service interface. It serves as the concrete type with
 // the required methods.

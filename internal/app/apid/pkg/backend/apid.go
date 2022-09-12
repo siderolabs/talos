@@ -25,6 +25,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
+var _ proxy.Backend = (*APID)(nil)
+
 // APID backend performs proxying to another apid instance.
 //
 // Backend authenticates itself using given grpc credentials.

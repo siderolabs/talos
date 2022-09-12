@@ -54,6 +54,8 @@ import (
 	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 )
 
+var _ system.HealthcheckedService = (*Etcd)(nil)
+
 // Etcd implements the Service interface. It serves as the concrete type with
 // the required methods.
 type Etcd struct {

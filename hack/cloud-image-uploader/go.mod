@@ -13,6 +13,6 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b // indirect
+	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

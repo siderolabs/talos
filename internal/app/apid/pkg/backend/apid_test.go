@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	protobuf "google.golang.org/protobuf/proto" //nolint:depguard
@@ -36,10 +35,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/role"
 	"github.com/talos-systems/talos/pkg/version"
 )
-
-func TestAPIDInterfaces(t *testing.T) {
-	assert.Implements(t, (*proxy.Backend)(nil), new(backend.APID))
-}
 
 type APIDSuite struct {
 	suite.Suite

@@ -9,17 +9,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
-
-func TestLocalInterfaces(t *testing.T) {
-	assert.Implements(t, (*proxy.Backend)(nil), new(backend.Local))
-}
 
 func TestLocalGetConnection(t *testing.T) {
 	t.Parallel()

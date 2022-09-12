@@ -19,6 +19,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
@@ -33,6 +34,8 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
 )
+
+var _ system.HealthcheckedService = (*Kubelet)(nil)
 
 // Kubelet implements the Service interface. It serves as the concrete type with
 // the required methods.
