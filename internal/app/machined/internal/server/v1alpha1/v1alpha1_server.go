@@ -181,7 +181,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 
 	cfgProvider, err := s.Controller.Runtime().LoadAndValidateConfig(in.GetData())
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	//nolint:exhaustive
