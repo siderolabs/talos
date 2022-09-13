@@ -115,6 +115,10 @@ func (svc *Extension) getOCIOptions() []oci.SpecOpts {
 		ociOpts = append(ociOpts, oci.WithWriteableSysfs)
 	}
 
+	if svc.Spec.Container.Environment != nil {
+		ociOpts = append(ociOpts, oci.WithEnv(svc.Spec.Container.Environment))
+	}
+
 	if svc.Spec.Container.Security.MaskedPaths != nil {
 		ociOpts = append(ociOpts, oci.WithMaskedPaths(svc.Spec.Container.Security.MaskedPaths))
 	}

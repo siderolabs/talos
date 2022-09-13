@@ -36,6 +36,8 @@ type Spec struct {
 type Container struct {
 	// Entrypoint for the service, relative to the container rootfs.
 	Entrypoint string `yaml:"entrypoint"`
+	// Environment variables for the service.
+	Environment []string `yaml:"environment"`
 	// Args to pass to the entrypoint.
 	Args []string `yaml:"args"`
 	// Volume mounts.

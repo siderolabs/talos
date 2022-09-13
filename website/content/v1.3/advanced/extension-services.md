@@ -27,6 +27,8 @@ Format of the extension service config:
 name: hello-world
 container:
   entrypoint: ./hello-world
+  environment:
+    - XDG_RUNTIME_DIR=/run
   args:
      - -f
   mounts:
@@ -52,6 +54,7 @@ The extension service will be registered as a Talos service under an `ext-<name>
 ### `container`
 
 * `entrypoint` defines the container entrypoint relative to the container root filesystem (`/usr/local/lib/containers/<name>`)
+* `environment` defines the container environment variables
 * `args` defines the additional arguments to pass to the entrypoint
 * `mounts` defines the volumes to be mounted into the container root
 

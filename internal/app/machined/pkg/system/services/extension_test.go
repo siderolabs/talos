@@ -136,4 +136,24 @@ func TestGetOCIOptions(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, true, spec.Root.Readonly)
 	})
+
+	t.Run("allows setting extra env vars", func(t *testing.T) {
+		// given
+		svc := &services.Extension{
+			Spec: &extservices.Spec{
+				Container: extservices.Container{
+					Environment: []string{
+						"FOO=BAR",
+					},
+				},
+			},
+		}
+
+		// when
+		spec, err := generateOCISpec(svc)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"FOO=BAR"}, spec.Process.Env)
+	})
 }
