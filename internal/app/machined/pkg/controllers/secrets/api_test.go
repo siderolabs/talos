@@ -113,7 +113,7 @@ func (suite *APISuite) TestReconcileControlPlane() {
 		suite.Assert().Empty(serverCert.Subject.Organization)
 
 		suite.Assert().Equal(
-			stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
+			stdlibx509.KeyUsageDigitalSignature,
 			serverCert.KeyUsage,
 		)
 		suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, serverCert.ExtKeyUsage)
@@ -128,7 +128,7 @@ func (suite *APISuite) TestReconcileControlPlane() {
 		suite.Assert().Equal([]string{string(role.Impersonator)}, clientCert.Subject.Organization)
 
 		suite.Assert().Equal(
-			stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment,
+			stdlibx509.KeyUsageDigitalSignature,
 			clientCert.KeyUsage,
 		)
 		suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth}, clientCert.ExtKeyUsage)
