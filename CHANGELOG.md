@@ -1,3 +1,68 @@
+## [Talos 1.2.2](https://github.com/siderolabs/talos/releases/tag/v1.2.2) (2022-09-13)
+
+Welcome to the v1.2.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### CVE-2022-36103
+
+This releases fixes [CVE-2022-36103](https://github.com/siderolabs/talos/security/advisories/GHSA-7hgc-php5-77qq).
+
+
+### Component Updates
+
+* Linux: 5.15.67
+
+Talos is built with Go 1.19.1.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Dmitriy Matrenichev
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`9369283f5`](https://github.com/siderolabs/talos/commit/9369283f576589b19692e2f33d4b0c5359cbb759) release(v1.2.2): prepare release
+* [`6ba6b91ae`](https://github.com/siderolabs/talos/commit/6ba6b91aedf96b0c401e475962bf099f438c44b0) test: fix api controller test
+* [`b644fbde2`](https://github.com/siderolabs/talos/commit/b644fbde251e5432f07b72062a7afd0f8aa83fc8) fix: stop worker nodes from acting as apid routers
+* [`d0a0341f6`](https://github.com/siderolabs/talos/commit/d0a0341f6bcfab9e2401b83ac6b8404314709d90) fix: never sign client certificate requests in trustd
+* [`39c68b625`](https://github.com/siderolabs/talos/commit/39c68b625ba49d871adc7321918300bca44802d3) fix: include all node addresses into etcd cert SANs
+* [`09140a855`](https://github.com/siderolabs/talos/commit/09140a8555c29f0046502fa936e5cbdc16fe8c6a) fix: list COSI APIs for the apid authenticator
+* [`015c6d438`](https://github.com/siderolabs/talos/commit/015c6d4381325837c15f7f28333e0c61178c05f8) fix: pass a pointer to specs.Mount into protoenc.Marshal
+* [`577ff4fb8`](https://github.com/siderolabs/talos/commit/577ff4fb8cbd51d21cac75cb5f0bf347cf3a7f75) chore: bump kernel to 5.15.67
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`0f4351f`](https://github.com/siderolabs/pkgs/commit/0f4351fced61a7854258cd584515e41fc7d903b5) chore: bump kernel to 5.15.67
+</p>
+</details>
+
+### Changes from talos-systems/crypto
+<details><summary>1 commit</summary>
+<p>
+
+* [`f60380e`](https://github.com/talos-systems/crypto/commit/f60380e39a22bf3a2eabd5ee533b1562416efd6b) feat: allow CSR template subject field to be overridden
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**       v1.2.0-9-gb264dc2 -> v1.2.0-10-g0f4351f
+* **github.com/talos-systems/crypto**  v0.3.6 -> v0.3.7
+
+Previous release can be found at [v1.2.1](https://github.com/siderolabs/talos/releases/tag/v1.2.1)
+
 ## [Talos 1.2.1](https://github.com/siderolabs/talos/releases/tag/v1.2.1) (2022-09-07)
 
 Welcome to the v1.2.1 release of Talos!
