@@ -67,3 +67,20 @@ promtail:
                 host: ${HOSTNAME}
                 __path__: /var/log/audit/kube/*.log
 ```
+
+## Setting CPU scaling governer
+
+While its possible to set [CPU scaling governer](https://kernelnewbies.org/Linux_5.9#CPU_Frequency_scaling) via `.machine.sysfs` it's sometimes cumbersome to set it for all CPU's individually.
+A more elegant approach would be set it via a kernel commandline parameter.
+This also means that the options are applied way early in the boot process.
+
+This can be set in the machineconfig via the snippet below:
+
+```yaml
+machine:
+  install:
+    extraKernelArgs:
+      - cpufreq.default_governor=performance
+```
+
+> Note: Talos needs to be upgraded for the `extraKernelArgs` to take effect.
