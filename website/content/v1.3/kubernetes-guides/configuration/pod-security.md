@@ -168,3 +168,13 @@ debug-container   2         2         0       2            0           <none>   
 ```
 
 As enforce policy was updated to the `privileged` for the `default` namespace, `debug-container` is now successfully running.
+
+## Disable admission control
+
+Although it is not recommended from a security point of view, admission control can be r emoved by patching your control plane machine configuration:
+
+```bash
+talosctl gen config \
+    my-cluster https://mycluster.local:6443 \
+    --config-patch-control-plane '[{"op": "remove", "path": "/cluster/apiServer/admissionControl"}]'
+```
