@@ -482,6 +482,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 		"peer-key-file":                      constants.EtcdPeerKey,
 		"peer-trusted-ca-file":               constants.EtcdCACert,
 		"experimental-initial-corrupt-check": "true",
+		"experimental-watch-progress-notify-interval": "5s",
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
