@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package proto defines a functions to work with proto messages.
 package proto
 
 import (
@@ -19,6 +20,9 @@ import (
 
 // Message is the main interface for protobuf API v2 messages.
 type Message = proto.Message
+
+// UnmarshalOptions is alias for [proto.UnmarshalOptions].
+type UnmarshalOptions = proto.UnmarshalOptions
 
 // Equal reports whether two messages are equal.
 func Equal(a, b Message) bool {
@@ -151,6 +155,16 @@ func registerDefaultTypes() {
 			return proto.Marshal(&source)
 		},
 		func(slc []byte) (netip.Addr, error) {
+			if len(slc) == 0 || len(slc) == 4 || len(slc) == 16 {
+				var parsedIP netip.Addr
+
+				if err := parsedIP.UnmarshalBinary(slc); err != nil {
+					return netip.Addr{}, err
+				}
+
+				return parsedIP, nil
+			}
+
 			var dest common.NetIP
 
 			if err := proto.Unmarshal(slc, &dest); err != nil {
