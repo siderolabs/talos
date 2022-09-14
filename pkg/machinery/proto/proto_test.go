@@ -14,6 +14,7 @@ import (
 	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -147,6 +148,26 @@ func ExampleVIPOperatorSpec_output() {
 	// 00000010  1a 01 63 22 07 08 03 10  04 1a 01 64              |..c".......d|
 	//
 	// 0a04c0a8010110011a090a01611201621a01632207080310041a0164
+}
+
+func ExampleVLANSpec_output() {
+	spec := network.VLANSpec{
+		VID:      25,
+		Protocol: nethelpers.VLANProtocol8021AD,
+	}
+
+	result, err := protoenc.Marshal(&spec)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(hex.Dump(result))
+	fmt.Println(hex.EncodeToString(result))
+
+	// Output:
+	// 00000000  0d 19 00 00 00 15 a8 88  00 00                    |..........|
+	//
+	// 0d1900000015a8880000
 }
 
 func must[T any](v T, err error) func(t *testing.T) T {
