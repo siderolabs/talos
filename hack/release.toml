@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.2.0"
+previous = "v1.2.2"
 
 pre_release = true
 
@@ -44,6 +44,7 @@ Talos now supports the Nano Pi R4S SBC.
 * Flannel: v0.19.2
 * CoreDNS: v1.9.4
 * etcd: v3.5.5
+* Linux: 5.15.68
 """
 
 [make_deps]
