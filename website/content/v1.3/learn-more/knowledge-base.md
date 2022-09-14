@@ -84,3 +84,15 @@ machine:
 ```
 
 > Note: Talos needs to be upgraded for the `extraKernelArgs` to take effect.
+
+## Disable `admissionControl` on control plane nodes
+
+Talos Linux enables admission control in the API Server by default.
+
+Although it is not recommended from a security point of view, admission control can be removed by patching your control plane machine configuration:
+
+```bash
+talosctl gen config \
+    my-cluster https://mycluster.local:6443 \
+    --config-patch-control-plane '[{"op": "remove", "path": "/cluster/apiServer/admissionControl"}]'
+```
