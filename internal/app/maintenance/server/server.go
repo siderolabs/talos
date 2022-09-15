@@ -77,7 +77,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		fallthrough
 	case machine.ApplyConfigurationRequest_AUTO:
 	default:
-		return nil, fmt.Errorf("apply configuration --mode='%s' is not supported in maintenance mode",
+		return nil, status.Errorf(codes.Unimplemented, "apply configuration --mode='%s' is not supported in maintenance mode",
 			strings.ReplaceAll(strings.ToLower(in.Mode.String()), "_", "-"))
 	}
 
@@ -88,7 +88,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 
 	warnings, err := cfgProvider.Validate(s.runtime.State().Platform().Mode())
 	if err != nil {
-		return nil, fmt.Errorf("configuration validation failed: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument, "configuration validation failed: %s", err)
 	}
 
 	reply := &machine.ApplyConfigurationResponse{
