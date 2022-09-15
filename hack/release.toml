@@ -47,6 +47,15 @@ Talos now supports the Nano Pi R4S SBC.
 * Linux: 5.15.68
 """
 
+    [notes.etcd]
+        title = "etcd Consistency Check"
+        description="""\
+Talos enables [--experimental-compact-hash-check-enabled](https://github.com/etcd-io/etcd/pull/14120) option by default to improve
+etcd store consistency guarantees.
+
+This options is only available with etcd >= v3.5.5, so Talos doesn't support version of etcd before v3.5.5.
+"""
+
 [make_deps]
 
     [make_deps.tools]

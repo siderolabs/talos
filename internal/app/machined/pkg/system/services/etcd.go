@@ -409,6 +409,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 		"peer-trusted-ca-file":               constants.EtcdCACert,
 		"experimental-initial-corrupt-check": "true",
 		"experimental-watch-progress-notify-interval": "5s",
+		"experimental-compact-hash-check-enabled":     "true",
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
@@ -485,6 +486,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 		"peer-trusted-ca-file":               constants.EtcdCACert,
 		"experimental-initial-corrupt-check": "true",
 		"experimental-watch-progress-notify-interval": "5s",
+		"experimental-compact-hash-check-enabled":     "true",
 	}
 
 	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
