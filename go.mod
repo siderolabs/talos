@@ -87,14 +87,14 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.2.0
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9
-	github.com/siderolabs/discovery-client v0.1.1
+	github.com/siderolabs/discovery-api v0.1.1
+	github.com/siderolabs/discovery-client v0.1.2
 	github.com/siderolabs/go-pcidb v0.1.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
 	github.com/talos-systems/crypto v0.3.7
-	github.com/talos-systems/discovery-api v0.1.0
 	github.com/talos-systems/go-blockdevice v0.3.4
 	github.com/talos-systems/go-cmd v0.1.0
 	github.com/talos-systems/go-debug v0.2.1
@@ -125,7 +125,7 @@ require (
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220504211119-3d4a969bb56b
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.1

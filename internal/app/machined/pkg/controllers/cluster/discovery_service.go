@@ -16,9 +16,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/discovery-api/api/v1alpha1/client/pb"
 	discoveryclient "github.com/siderolabs/discovery-client/pkg/client"
 	"github.com/siderolabs/go-pointer"
-	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
 	"go.uber.org/zap"
 	"inet.af/netaddr"
 
