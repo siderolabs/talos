@@ -43,6 +43,7 @@ Talos now supports the Nano Pi R4S SBC.
         description="""\
 * Flannel: v0.19.2
 * CoreDNS: v1.9.4
+* etcd: v3.5.5
 """
 
 [make_deps]
