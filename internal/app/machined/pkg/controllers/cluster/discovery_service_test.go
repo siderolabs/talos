@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/discovery-api/api/v1alpha1/client/pb"
 	"github.com/siderolabs/discovery-client/pkg/client"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/discovery-api/api/v1alpha1/client/pb"
 	"github.com/talos-systems/go-retry/retry"
 
 	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
