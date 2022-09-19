@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.2.1"
+previous = "v1.2.2"
 
 pre_release = false
 
@@ -18,15 +18,8 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 5.15.67
-
-Talos is built with Go 1.19.1.
-"""
-
-    [notes.security]
-        title = "CVE-2022-36103"
-        description="""\
-This releases fixes [CVE-2022-36103](https://github.com/siderolabs/talos/security/advisories/GHSA-7hgc-php5-77qq).
+* Kubernetes: v1.25.1
+* etcd: v3.5.5
 """
 
 [make_deps]
