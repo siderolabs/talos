@@ -256,7 +256,7 @@ local push_latest = {
   volumes: volumes.ForStep(),
   when: {
     branch: [
-      'master',
+      'main',
     ],
     event: [
       'push',
