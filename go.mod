@@ -18,7 +18,7 @@ replace (
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.25.0
-	k8s.io/apimachinery v0.25.0
+	k8s.io/apimachinery v0.25.1
 	k8s.io/apiserver v0.25.0
 	k8s.io/client-go v0.25.0
 	k8s.io/component-base v0.25.0
