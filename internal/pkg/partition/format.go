@@ -11,7 +11,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/siderolabs/go-blockdevice/blockdevice"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/makefs"

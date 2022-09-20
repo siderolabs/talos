@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/siderolabs/go-blockdevice/blockdevice"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )

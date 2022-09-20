@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/siderolabs/go-blockdevice/blockdevice/loopback"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-blockdevice/blockdevice/loopback"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/pkg/mount"

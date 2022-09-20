@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice"
-	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
-	"github.com/talos-systems/go-blockdevice/blockdevice/util"
+	"github.com/siderolabs/go-blockdevice/blockdevice"
+	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
+	"github.com/siderolabs/go-blockdevice/blockdevice/util"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
 

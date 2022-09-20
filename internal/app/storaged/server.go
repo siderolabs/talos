@@ -7,7 +7,7 @@ package internal
 import (
 	"context"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
+	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"

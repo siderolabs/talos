@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv/syslinux"

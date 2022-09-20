@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	humanize "github.com/dustin/go-humanize"
+	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/talos-systems/go-blockdevice/blockdevice/util/disk"
 	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"

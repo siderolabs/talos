@@ -19,9 +19,9 @@ import (
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/talos-systems/go-blockdevice/blockdevice/encryption"
 	"github.com/talos-systems/go-procfs/procfs"
 	talosnet "github.com/talos-systems/net"
 	"k8s.io/client-go/tools/clientcmd"

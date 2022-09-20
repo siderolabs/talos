@@ -17,10 +17,10 @@ require (
 	github.com/mdlayher/ethtool v0.0.0-20220830195143-0e16326d06d1
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/siderolabs/crypto v0.4.0
+	github.com/siderolabs/go-blockdevice v0.4.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/protoenc v0.2.0
 	github.com/stretchr/testify v1.8.0
-	github.com/talos-systems/go-blockdevice v0.3.4
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
 	go4.org/netipx v0.0.0-20220812043211-3cc044ffd68d

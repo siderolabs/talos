@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-blockdevice/blockdevice/encryption"
 	"github.com/talos-systems/go-retry/retry"
 	talosnet "github.com/talos-systems/net"
 	corev1 "k8s.io/api/core/v1"

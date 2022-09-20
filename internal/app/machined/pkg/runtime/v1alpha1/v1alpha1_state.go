@@ -9,7 +9,7 @@ import (
 	"os"
 
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/talos-systems/go-blockdevice/blockdevice/probe"
+	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"

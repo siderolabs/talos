@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice"
+	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/talos-systems/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 

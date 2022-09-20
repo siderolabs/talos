@@ -8,8 +8,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/talos-systems/go-blockdevice/blockdevice"
-	"github.com/talos-systems/go-blockdevice/blockdevice/filesystem"
+	"github.com/siderolabs/go-blockdevice/blockdevice"
+	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
