@@ -1,3 +1,71 @@
+## [Talos 1.2.3](https://github.com/siderolabs/talos/releases/tag/v1.2.3) (2022-09-20)
+
+Welcome to the v1.2.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Kubernetes: v1.25.1
+* etcd: v3.5.5
+* Linux: 5.15.68
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Noel Georgi
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`19cb6203c`](https://github.com/siderolabs/talos/commit/19cb6203cfa1f042a3804ce8c6c4d18c82165ada) chore: add ice drivers
+* [`4e23aa2a7`](https://github.com/siderolabs/talos/commit/4e23aa2a71598ea671ab97ad8e38055d6631e4a4) feat: update etcd to v3.5.5
+* [`4754b59ce`](https://github.com/siderolabs/talos/commit/4754b59ce0d2f259718dbe315a14754abea3c0f2) feat: update Kubernetes to v1.25.1
+* [`b00186463`](https://github.com/siderolabs/talos/commit/b001864634114d98d402b0717eccbb2bb5ae4736) chore: return InvalidArgument on invalid config in maintenance mode
+* [`1d7d8d5dd`](https://github.com/siderolabs/talos/commit/1d7d8d5dde58e870d4ab90e240f68a3fc1356e9c) fix: set etcd options consistently
+* [`88861e770`](https://github.com/siderolabs/talos/commit/88861e770691b285229357a1783484034dd0e60a) chore: mark machine configuration validation failure as InvalidArgument
+* [`04406b0ba`](https://github.com/siderolabs/talos/commit/04406b0ba6987abe07657969823f31a08007aaa1) chore: add output of VLANSpec encoding to tests
+* [`1d522938d`](https://github.com/siderolabs/talos/commit/1d522938dd5d1578b5c95ccb47fcbe120d6e5aa0) fix: ensure that custom Decoder gets called for netaddr.IP
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`eb07d7c`](https://github.com/siderolabs/pkgs/commit/eb07d7c999986370089b2e30d2b2b487cbe9206f) chore: bump kernel + enable intel ice drivers
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**     v1.2.0-10-g0f4351f -> v1.2.0-11-geb07d7c
+* **go.etcd.io/etcd/api/v3**         v3.5.4 -> v3.5.5
+* **go.etcd.io/etcd/client/pkg/v3**  v3.5.4 -> v3.5.5
+* **go.etcd.io/etcd/client/v3**      v3.5.4 -> v3.5.5
+* **go.etcd.io/etcd/etcdutl/v3**     v3.5.4 -> v3.5.5
+* **go.uber.org/atomic**             v1.9.0 -> v1.10.0
+* **go.uber.org/zap**                v1.22.0 -> v1.23.0
+* **golang.org/x/net**               3211cb980234 -> bea034e7d591
+* **golang.org/x/sync**              886fb9371eb4 -> f12130a52804
+* **golang.org/x/sys**               fbc7d0a398ab -> aba9fc2a8ff2
+* **k8s.io/api**                     v0.25.0 -> v0.25.1
+* **k8s.io/apimachinery**            v0.25.0 -> v0.25.1
+* **k8s.io/apiserver**               v0.25.0 -> v0.25.1
+* **k8s.io/client-go**               v0.25.0 -> v0.25.1
+* **k8s.io/component-base**          v0.25.0 -> v0.25.1
+* **k8s.io/cri-api**                 v0.25.0 -> v0.25.1
+* **k8s.io/kubectl**                 v0.25.0 -> v0.25.1
+* **k8s.io/kubelet**                 v0.25.0 -> v0.25.1
+
+Previous release can be found at [v1.2.2](https://github.com/siderolabs/talos/releases/tag/v1.2.2)
+
 ## [Talos 1.2.2](https://github.com/siderolabs/talos/releases/tag/v1.2.2) (2022-09-13)
 
 Welcome to the v1.2.2 release of Talos!

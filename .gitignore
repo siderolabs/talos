@@ -24,6 +24,8 @@ hack/test/libvirt/matchbox/assets/*
 # Go
 .artifacts/
 
+go.work.sum
+
 sha256sum.txt
 sha512sum.txt
 
