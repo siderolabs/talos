@@ -28,6 +28,7 @@ var upgradeCmdFlags struct {
 	force        bool
 	wait         bool
 	debug        bool
+	insecure     bool
 }
 
 // upgradeCmd represents the processes command.
@@ -39,6 +40,10 @@ var upgradeCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if upgradeCmdFlags.debug {
 			upgradeCmdFlags.wait = true
+		}
+
+		if upgradeCmdFlags.wait && upgradeCmdFlags.insecure {
+			return fmt.Errorf("cannot use --wait and --insecure together")
 		}
 
 		if !upgradeCmdFlags.wait {
@@ -58,7 +63,7 @@ var upgradeCmd = &cobra.Command{
 }
 
 func runUpgradeNoWait() error {
-	return WithClient(func(ctx context.Context, c *client.Client) error {
+	upgradeFn := func(ctx context.Context, c *client.Client) error {
 		if err := helpers.ClientVersionCheck(ctx, c); err != nil {
 			return err
 		}
@@ -98,7 +103,13 @@ func runUpgradeNoWait() error {
 		}
 
 		return w.Flush()
-	})
+	}
+
+	if upgradeCmdFlags.insecure {
+		return WithClientMaintenance(nil, upgradeFn)
+	}
+
+	return WithClient(upgradeFn)
 }
 
 func upgradeGetActorID(ctx context.Context, c *client.Client) (string, error) {
@@ -127,5 +138,6 @@ func init() {
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.wait, "wait", false, "wait for the operation to complete, tracking its progress. always set to true when --debug is set")
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.debug, "debug", false, "debug operation from kernel logs. --no-wait is set to false when this flag is set")
+	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.insecure, "insecure", false, "upgrade using the insecure (encrypted with no auth) maintenance service")
 	addCommand(upgradeCmd)
 }

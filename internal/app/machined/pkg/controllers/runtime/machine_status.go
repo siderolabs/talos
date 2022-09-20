@@ -353,7 +353,7 @@ func (ctrl *MachineStatusController) watchEvents() {
 						// install sequence is run always, even if the machine is already installed, so we'll catch it by phase name
 					case v1alpha1runtime.SequenceShutdown.String():
 						newStage = runtime.MachineStageShuttingDown
-					case v1alpha1runtime.SequenceUpgrade.String(), v1alpha1runtime.SequenceStageUpgrade.String():
+					case v1alpha1runtime.SequenceUpgrade.String(), v1alpha1runtime.SequenceStageUpgrade.String(), v1alpha1runtime.SequenceMaintenanceUpgrade.String():
 						newStage = runtime.MachineStageUpgrading
 					case v1alpha1runtime.SequenceReset.String():
 						newStage = runtime.MachineStageResetting
@@ -375,7 +375,9 @@ func (ctrl *MachineStatusController) watchEvents() {
 					case currentSequence == v1alpha1runtime.SequenceInstall.String() && event.Phase == "install":
 						newStage = runtime.MachineStageInstalling
 					case (currentSequence == v1alpha1runtime.SequenceInstall.String() ||
-						currentSequence == v1alpha1runtime.SequenceUpgrade.String()) && event.Phase == "kexec":
+						currentSequence == v1alpha1runtime.SequenceUpgrade.String() ||
+						currentSequence == v1alpha1runtime.SequenceStageUpgrade.String() ||
+						currentSequence == v1alpha1runtime.SequenceMaintenanceUpgrade.String()) && event.Phase == "kexec":
 						newStage = runtime.MachineStageRebooting
 					}
 				}

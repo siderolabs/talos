@@ -22,11 +22,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -55,7 +50,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
-	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -68,8 +62,8 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/containers"
 	taloscontainerd "github.com/talos-systems/talos/internal/pkg/containers/containerd"
 	"github.com/talos-systems/talos/internal/pkg/containers/cri"
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/internal/pkg/install"
 	"github.com/talos-systems/talos/internal/pkg/miniprocfs"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/pkg/archiver"
@@ -84,7 +78,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -125,7 +118,7 @@ func (s *Server) checkSupported(feature runtime.ModeCapability) error {
 	mode := s.Controller.Runtime().State().Platform().Mode()
 
 	if !mode.Supports(feature) {
-		return fmt.Errorf("method is not supported in %s mode", mode.String())
+		return status.Errorf(codes.FailedPrecondition, "method is not supported in %s mode", mode.String())
 	}
 
 	return nil
@@ -500,7 +493,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 
 	log.Printf("validating %q", in.GetImage())
 
-	if err = pullAndValidateInstallerImage(ctx, s.Controller.Runtime().Config().Machine().Registries(), in.GetImage()); err != nil {
+	if err = install.PullAndValidateInstallerImage(ctx, s.Controller.Runtime().Config().Machine().Registries(), in.GetImage()); err != nil {
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
@@ -1401,94 +1394,6 @@ func sendEmptyEvent(req *machine.EventsRequest, l machine.MachineService_EventsS
 	}
 
 	return l.Send(emptyEvent)
-}
-
-//nolint:gocyclo
-func pullAndValidateInstallerImage(ctx context.Context, reg config.Registries, ref string) error {
-	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
-	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-
-	const containerID = "validate"
-
-	client, err := containerd.New(constants.SystemContainerdAddress)
-	if err != nil {
-		return err
-	}
-
-	defer client.Close() //nolint:errcheck
-
-	img, err := image.Pull(containerdctx, reg, client, ref, image.WithSkipIfAlreadyPulled())
-	if err != nil {
-		return err
-	}
-
-	// See if there's previous container/snapshot to clean up
-	var oldcontainer containerd.Container
-
-	if oldcontainer, err = client.LoadContainer(containerdctx, containerID); err == nil {
-		if err = oldcontainer.Delete(containerdctx, containerd.WithSnapshotCleanup); err != nil {
-			return fmt.Errorf("error deleting old container instance: %w", err)
-		}
-	}
-
-	if err = client.SnapshotService("").Remove(containerdctx, containerID); err != nil && !errdefs.IsNotFound(err) {
-		return fmt.Errorf("error cleaning up stale snapshot: %w", err)
-	}
-
-	// Launch the container with a known help command for a simple check to make sure the image is valid
-	args := []string{
-		"/bin/installer",
-		"--help",
-	}
-
-	specOpts := []oci.SpecOpts{
-		oci.WithImageConfig(img),
-		oci.WithProcessArgs(args...),
-	}
-
-	containerOpts := []containerd.NewContainerOpts{
-		containerd.WithImage(img),
-		containerd.WithNewSnapshot(containerID, img),
-		containerd.WithNewSpec(specOpts...),
-	}
-
-	container, err := client.NewContainer(containerdctx, containerID, containerOpts...)
-	if err != nil {
-		return err
-	}
-
-	//nolint:errcheck
-	defer container.Delete(containerdctx, containerd.WithSnapshotCleanup)
-
-	task, err := container.NewTask(containerdctx, cio.NullIO)
-	if err != nil {
-		return err
-	}
-
-	//nolint:errcheck
-	defer task.Delete(containerdctx)
-
-	exitStatusC, err := task.Wait(containerdctx)
-	if err != nil {
-		return err
-	}
-
-	if err = task.Start(containerdctx); err != nil {
-		return err
-	}
-
-	status := <-exitStatusC
-
-	code, _, err := status.Result()
-	if err != nil {
-		return err
-	}
-
-	if code != 0 {
-		return fmt.Errorf("installer help returned non-zero exit. assuming invalid installer")
-	}
-
-	return nil
 }
 
 // Containers implements the machine.MachineServer interface.

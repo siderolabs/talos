@@ -59,6 +59,10 @@ func (m *mockSequencer) StageUpgrade(r runtime.Runtime, req *machine.UpgradeRequ
 	return m.phases[runtime.SequenceStageUpgrade]
 }
 
+func (m *mockSequencer) MaintenanceUpgrade(r runtime.Runtime, req *machine.UpgradeRequest) []runtime.Phase {
+	return m.phases[runtime.SequenceMaintenanceUpgrade]
+}
+
 func (m *mockSequencer) Upgrade(r runtime.Runtime, req *machine.UpgradeRequest) []runtime.Phase {
 	return m.phases[runtime.SequenceUpgrade]
 }

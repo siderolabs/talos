@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -29,6 +30,7 @@ import (
 	"github.com/talos-systems/talos/internal/pkg/extensions"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
@@ -46,9 +48,16 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 		}
 	}
 
-	configBytes, err := cfg.Bytes()
-	if err != nil {
-		return err
+	var (
+		registriesConfig config.Registries
+		extensionsConfig []config.Extension
+	)
+
+	if cfg != nil {
+		registriesConfig = cfg.Machine().Registries()
+		extensionsConfig = cfg.Machine().Install().Extensions()
+	} else {
+		registriesConfig = &v1alpha1.RegistriesConfig{}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -77,7 +86,7 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 	if img == nil || err != nil && errdefs.IsNotFound(err) {
 		log.Printf("pulling %q", ref)
 
-		img, err = image.Pull(ctx, cfg.Machine().Registries(), client, ref)
+		img, err = image.Pull(ctx, registriesConfig, client, ref)
 	}
 
 	if err != nil {
@@ -89,8 +98,10 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 		return err
 	}
 
-	if err = puller.PullAndMount(ctx, cfg.Machine().Registries(), cfg.Machine().Install().Extensions()); err != nil {
-		return err
+	if extensionsConfig != nil {
+		if err = puller.PullAndMount(ctx, registriesConfig, extensionsConfig); err != nil {
+			return err
+		}
 	}
 
 	defer func() {
@@ -205,19 +216,35 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 
 	w := &kmsg.Writer{KmsgWriter: f}
 
-	configR := &containerdrunner.StdinCloser{
-		Stdin:  bytes.NewReader(configBytes),
-		Closer: make(chan struct{}),
+	var r interface {
+		io.Reader
+		WaitAndClose(context.Context, containerd.Task)
 	}
 
-	creator := cio.NewCreator(cio.WithStreams(configR, w, w))
+	if cfg != nil {
+		var configBytes []byte
+
+		configBytes, err = cfg.Bytes()
+		if err != nil {
+			return err
+		}
+
+		r = &containerdrunner.StdinCloser{
+			Stdin:  bytes.NewReader(configBytes),
+			Closer: make(chan struct{}),
+		}
+	}
+
+	creator := cio.NewCreator(cio.WithStreams(r, w, w))
 
 	t, err := container.NewTask(ctx, creator)
 	if err != nil {
 		return err
 	}
 
-	go configR.WaitAndClose(ctx, t)
+	if r != nil {
+		go r.WaitAndClose(ctx, t)
+	}
 
 	defer t.Delete(ctx) //nolint:errcheck
 
@@ -242,10 +269,15 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 
 // OptionsFromUpgradeRequest builds installer options from upgrade request.
 func OptionsFromUpgradeRequest(r runtime.Runtime, in *machineapi.UpgradeRequest) []Option {
-	return []Option{
+	opts := []Option{
 		WithPull(false),
 		WithUpgrade(true),
 		WithForce(!in.GetPreserve()),
-		WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
 	}
+
+	if r.Config() != nil {
+		opts = append(opts, WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()))
+	}
+
+	return opts
 }

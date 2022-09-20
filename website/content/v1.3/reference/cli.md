@@ -2201,6 +2201,7 @@ talosctl upgrade [flags]
   -f, --force          force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help           help for upgrade
   -i, --image string   the container image to use for performing the install
+      --insecure       upgrade using the insecure (encrypted with no auth) maintenance service
   -p, --preserve       preserve data
   -s, --stage          stage the upgrade to perform it after a reboot
       --wait           wait for the operation to complete, tracking its progress. always set to true when --debug is set

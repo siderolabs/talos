@@ -336,12 +336,8 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 	case runtime.SequenceInstall:
 		phases = c.s.Install(c.r)
 	case runtime.SequenceShutdown:
-		var (
-			in *machine.ShutdownRequest
-			ok bool
-		)
-
-		if in, ok = data.(*machine.ShutdownRequest); !ok {
+		in, ok := data.(*machine.ShutdownRequest)
+		if !ok {
 			return nil, runtime.ErrInvalidSequenceData
 		}
 
@@ -349,34 +345,29 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 	case runtime.SequenceReboot:
 		phases = c.s.Reboot(c.r)
 	case runtime.SequenceUpgrade:
-		var (
-			in *machine.UpgradeRequest
-			ok bool
-		)
-
-		if in, ok = data.(*machine.UpgradeRequest); !ok {
+		in, ok := data.(*machine.UpgradeRequest)
+		if !ok {
 			return nil, runtime.ErrInvalidSequenceData
 		}
 
 		phases = c.s.Upgrade(c.r, in)
 	case runtime.SequenceStageUpgrade:
-		var (
-			in *machine.UpgradeRequest
-			ok bool
-		)
-
-		if in, ok = data.(*machine.UpgradeRequest); !ok {
+		in, ok := data.(*machine.UpgradeRequest)
+		if !ok {
 			return nil, runtime.ErrInvalidSequenceData
 		}
 
 		phases = c.s.StageUpgrade(c.r, in)
-	case runtime.SequenceReset:
-		var (
-			in runtime.ResetOptions
-			ok bool
-		)
+	case runtime.SequenceMaintenanceUpgrade:
+		in, ok := data.(*machine.UpgradeRequest)
+		if !ok {
+			return nil, runtime.ErrInvalidSequenceData
+		}
 
-		if in, ok = data.(runtime.ResetOptions); !ok {
+		phases = c.s.MaintenanceUpgrade(c.r, in)
+	case runtime.SequenceReset:
+		in, ok := data.(runtime.ResetOptions)
+		if !ok {
 			return nil, runtime.ErrInvalidSequenceData
 		}
 
