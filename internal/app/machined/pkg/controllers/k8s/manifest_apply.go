@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -175,7 +176,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logger, mapper *restmapper.DeferredDiscoveryRESTMapper, dyn dynamic.Interface, manifests resource.List) error {
 	// flatten list of objects to be applied
 	objects := slices.FlatMap(manifests.Items, func(m resource.Resource) []*unstructured.Unstructured {
@@ -217,13 +218,28 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 		return false
 	})
 
+	var multiErr *multierror.Error
+
 	for _, obj := range objects {
 		gvk := obj.GroupVersionKind()
 		objName := fmt.Sprintf("%s/%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind, obj.GetName())
 
 		mapping, err := mapper.RESTMapping(obj.GroupVersionKind().GroupKind(), obj.GroupVersionKind().Version)
 		if err != nil {
-			return fmt.Errorf("error creating mapping for object %s: %w", objName, err)
+			switch {
+			case apierrors.IsNotFound(err):
+				fallthrough
+			case apierrors.IsInvalid(err):
+				fallthrough
+			case meta.IsNoMatchError(err):
+				// most probably a problem with the manifest, so we should continue with other manifests
+				multiErr = multierror.Append(multiErr, fmt.Errorf("error creating mapping for object %s: %w", objName, err))
+
+				continue
+			default:
+				// connection errors, etc.; it makes no sense to continue with other manifests
+				return fmt.Errorf("error creating mapping for object %s: %w", objName, err)
+			}
 		}
 
 		var dr dynamic.ResourceInterface
@@ -249,9 +265,18 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 			FieldManager: "talos",
 		})
 		if err != nil {
-			if apierrors.IsAlreadyExists(err) {
+			switch {
+			case apierrors.IsAlreadyExists(err):
 				// later on we might want to do something here, e.g. do server-side apply, for now do nothing
-			} else {
+			case apierrors.IsMethodNotSupported(err):
+				fallthrough
+			case apierrors.IsBadRequest(err):
+				fallthrough
+			case apierrors.IsInvalid(err):
+				// resource is malformed, continue with other manifests
+				multiErr = multierror.Append(multiErr, fmt.Errorf("error creating %s: %w", objName, err))
+			default:
+				// connection errors, etc.; it makes no sense to continue with other manifests
 				return fmt.Errorf("error creating %s: %w", objName, err)
 			}
 		} else {
@@ -259,7 +284,7 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 		}
 	}
 
-	return nil
+	return multiErr.ErrorOrNil()
 }
 
 func isNamespace(gvk schema.GroupVersionKind) bool {
