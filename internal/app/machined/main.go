@@ -28,6 +28,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
+	"github.com/talos-systems/talos/internal/app/maintenance"
 	"github.com/talos-systems/talos/internal/app/poweroff"
 	"github.com/talos-systems/talos/internal/app/trustd"
 	"github.com/talos-systems/talos/internal/pkg/mount"
@@ -197,11 +198,10 @@ func run() error {
 
 	drainer := runtime.NewDrainer()
 	defer func() {
-		c, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		drainCtx, drainCtxCancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer drainCtxCancel()
 
-		defer cancel()
-
-		if e := drainer.Drain(c); e != nil {
+		if e := drainer.Drain(drainCtx); e != nil {
 			log.Printf("WARNING: failed to drain controllers: %s", e)
 		}
 	}()
@@ -227,25 +227,37 @@ func run() error {
 		log.Printf("controller runtime finished")
 	}()
 
+	// Inject controller into maintenance service.
+	maintenance.InjectController(c)
+
+	initializeCanceled := false
+
 	// Initialize the machine.
 	if err = c.Run(ctx, runtime.SequenceInitialize, nil); err != nil {
-		return err
+		if errors.Is(err, context.Canceled) {
+			initializeCanceled = true
+		} else {
+			return err
+		}
 	}
 
-	// Perform an installation if required.
-	if err = c.Run(ctx, runtime.SequenceInstall, nil); err != nil {
-		return err
-	}
+	// If Initialize sequence was canceled, don't run any other sequence.
+	if !initializeCanceled {
+		// Perform an installation if required.
+		if err = c.Run(ctx, runtime.SequenceInstall, nil); err != nil {
+			return err
+		}
 
-	// Start the machine API.
-	system.Services(c.Runtime()).LoadAndStart(
-		&services.Machined{Controller: c},
-		&services.APID{},
-	)
+		// Start the machine API.
+		system.Services(c.Runtime()).LoadAndStart(
+			&services.Machined{Controller: c},
+			&services.APID{},
+		)
 
-	// Boot the machine.
-	if err = c.Run(ctx, runtime.SequenceBoot, nil); err != nil && !errors.Is(err, context.Canceled) {
-		return err
+		// Boot the machine.
+		if err = c.Run(ctx, runtime.SequenceBoot, nil); err != nil && !errors.Is(err, context.Canceled) {
+			return err
+		}
 	}
 
 	// Watch and handle runtime events.

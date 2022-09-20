@@ -375,6 +375,44 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 	return phases
 }
 
+// MaintenanceUpgrade is the upgrade sequence in maintenance mode.
+func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
+	phases := PhaseList{}
+
+	switch r.State().Platform().Mode() { //nolint:exhaustive
+	case runtime.ModeContainer:
+		return nil
+	default:
+		phases = phases.Append(
+			"containerd",
+			StartContainerd,
+		).Append(
+			"verifyDisk",
+			VerifyDiskAvailability,
+		).Append(
+			"upgrade",
+			Upgrade,
+		).Append(
+			"mountBoot",
+			MountBootPartition,
+		).Append(
+			"kexec",
+			KexecPrepare,
+		).Append(
+			"unmountBoot",
+			UnmountBootPartition,
+		).Append(
+			"stopEverything",
+			StopAllServices,
+		).Append(
+			"reboot",
+			Reboot,
+		)
+	}
+
+	return phases
+}
+
 // Upgrade is the upgrade sequence.
 func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}

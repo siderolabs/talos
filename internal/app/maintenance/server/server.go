@@ -8,18 +8,16 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"strings"
 
 	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"inet.af/netaddr"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/resources"
@@ -30,7 +28,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
 	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
 	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/version"
 )
 
@@ -38,18 +35,18 @@ import (
 type Server struct {
 	machine.UnimplementedMachineServiceServer
 
-	runtime runtime.Runtime
-	logger  *log.Logger
-	cfgCh   chan []byte
-	server  *grpc.Server
+	controller runtime.Controller
+	logger     *log.Logger
+	cfgCh      chan<- []byte
+	server     *grpc.Server
 }
 
 // New initializes and returns a `Server`.
-func New(r runtime.Runtime, logger *log.Logger, cfgCh chan []byte) *Server {
+func New(c runtime.Controller, logger *log.Logger, cfgCh chan<- []byte) *Server {
 	return &Server{
-		runtime: r,
-		logger:  logger,
-		cfgCh:   cfgCh,
+		controller: c,
+		logger:     logger,
+		cfgCh:      cfgCh,
 	}
 }
 
@@ -58,7 +55,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
 	// wrap resources with access filter
-	resourceState := s.runtime.State().V1Alpha2().Resources()
+	resourceState := s.controller.Runtime().State().V1Alpha2().Resources()
 	resourceState = state.WrapCore(state.Filter(resourceState, resources.AccessPolicy(resourceState)))
 
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
@@ -86,7 +83,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
-	warnings, err := cfgProvider.Validate(s.runtime.State().Platform().Mode())
+	warnings, err := cfgProvider.Validate(s.controller.Runtime().State().Platform().Mode())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "configuration validation failed: %s", err)
 	}
@@ -131,43 +128,19 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	return nil, status.Error(codes.Unimplemented, "client configuration (talosconfig) can't be generated in the maintenance mode")
 }
 
-func verifyPeer(ctx context.Context, condition func(netaddr.IP) bool) bool {
-	remotePeer, ok := peer.FromContext(ctx)
-	if !ok {
-		return false
-	}
-
-	if remotePeer.Addr.Network() != "tcp" {
-		return false
-	}
-
-	ip, _, err := net.SplitHostPort(remotePeer.Addr.String())
-	if err != nil {
-		return false
-	}
-
-	addr, err := netaddr.ParseIP(ip)
-	if err != nil {
-		return false
-	}
-
-	return condition(addr)
-}
-
+// Version implements the machine.MachineServer interface.
 // Version implements the machine.MachineServer interface.
 func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (*machine.VersionResponse, error) {
-	if !verifyPeer(ctx, func(addr netaddr.IP) bool {
-		return network.IsULA(addr, network.ULASideroLink)
-	}) {
-		return nil, status.Error(codes.Unimplemented, "Version API is not implemented in maintenance mode")
+	if err := assertPeerSideroLink(ctx); err != nil {
+		return nil, err
 	}
 
 	var platform *machine.PlatformInfo
 
-	if s.runtime.State().Platform() != nil {
+	if s.controller.Runtime().State().Platform() != nil {
 		platform = &machine.PlatformInfo{
-			Name: s.runtime.State().Platform().Name(),
-			Mode: s.runtime.State().Platform().Mode().String(),
+			Name: s.controller.Runtime().State().Platform().Name(),
+			Mode: s.controller.Runtime().State().Platform().Mode().String(),
 		}
 	}
 
@@ -179,4 +152,53 @@ func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (*machine.Versi
 			},
 		},
 	}, nil
+}
+
+// Upgrade initiates an upgrade.
+//
+//nolint:gocyclo,cyclop
+func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
+	if err = assertPeerSideroLink(ctx); err != nil {
+		return nil, err
+	}
+
+	if s.controller.Runtime().State().Machine().Disk() == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "Talos is not installed")
+	}
+
+	actorID := uuid.New().String()
+
+	mode := s.controller.Runtime().State().Platform().Mode()
+
+	if !mode.Supports(runtime.Upgrade) {
+		return nil, status.Errorf(codes.FailedPrecondition, "method is not supported in %s mode", mode.String())
+	}
+
+	// none of the options are supported in maintenance mode
+	if in.GetPreserve() || in.GetStage() || in.GetForce() {
+		return nil, status.Errorf(codes.Unimplemented, "upgrade --preserve, --stage, and --force are not supported in maintenance mode")
+	}
+
+	log.Printf("upgrade request received: %q", in.GetImage())
+
+	runCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
+
+	go func() {
+		if err := s.controller.Run(runCtx, runtime.SequenceMaintenanceUpgrade, in); err != nil {
+			if !runtime.IsRebootError(err) {
+				log.Println("upgrade failed:", err)
+			}
+		}
+	}()
+
+	reply = &machine.UpgradeResponse{
+		Messages: []*machine.Upgrade{
+			{
+				Ack:     "Upgrade request received",
+				ActorId: actorID,
+			},
+		},
+	}
+
+	return reply, nil
 }

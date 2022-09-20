@@ -43,7 +43,6 @@ import (
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
 	installer "github.com/talos-systems/talos/cmd/installer/pkg/install"
-	"github.com/talos-systems/talos/internal/app/machined/internal/install"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
@@ -56,6 +55,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/maintenance"
 	"github.com/talos-systems/talos/internal/pkg/cri"
 	"github.com/talos-systems/talos/internal/pkg/etcd"
+	"github.com/talos-systems/talos/internal/pkg/install"
 	"github.com/talos-systems/talos/internal/pkg/mount"
 	"github.com/talos-systems/talos/internal/pkg/partition"
 	"github.com/talos-systems/talos/pkg/conditions"
@@ -625,7 +625,7 @@ func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger,
 		Task:   "runningMaintenance",
 	})
 
-	cfgBytes, err := maintenance.Run(ctx, logger, r)
+	cfgBytes, err := maintenance.Run(ctx, logger)
 	if err != nil {
 		return nil, fmt.Errorf("maintenance service failed: %w", err)
 	}

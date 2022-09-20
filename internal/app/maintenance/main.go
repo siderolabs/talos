@@ -31,19 +31,30 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
+var ctrl runtime.Controller
+
+// InjectController is used to pass the controller into the maintenance service.
+func InjectController(c runtime.Controller) {
+	ctrl = c
+}
+
 // Run executes the configuration receiver, returning any configuration it receives.
 //
 //nolint:gocyclo
-func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
+func Run(ctx context.Context, logger *log.Logger) ([]byte, error) {
+	if ctrl == nil {
+		return nil, fmt.Errorf("controller is not injected")
+	}
+
 	logger.Println("waiting for network address to be ready")
 
-	if err := network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady).Wait(ctx); err != nil {
+	if err := network.NewReadyCondition(ctrl.Runtime().State().V1Alpha2().Resources(), network.AddressReady).Wait(ctx); err != nil {
 		return nil, fmt.Errorf("error waiting for the network to be ready: %w", err)
 	}
 
 	var sideroLinkAddress netaddr.IP
 
-	currentAddresses, err := r.State().V1Alpha2().Resources().WatchFor(ctx,
+	currentAddresses, err := ctrl.Runtime().State().V1Alpha2().Resources().WatchFor(ctx,
 		resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressCurrentID, resource.VersionUndefined),
 		sideroLinkAddressFinder(&sideroLinkAddress, logger),
 	)
@@ -54,7 +65,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 	ips := currentAddresses.(*network.NodeAddress).TypedSpec().IPs()
 
 	// hostname might not be available yet, so use it only if it is available
-	hostnameStatus, err := r.State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+	hostnameStatus, err := ctrl.Runtime().State().V1Alpha2().Resources().Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
 	if err != nil && !state.IsNotFoundError(err) {
 		return nil, fmt.Errorf("error getting node hostname: %w", err)
 	}
@@ -82,7 +93,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 
 	cfgCh := make(chan []byte)
 
-	s := server.New(r, logger, cfgCh)
+	s := server.New(ctrl, logger, cfgCh)
 
 	injector := &authz.Injector{
 		Mode:   authz.ReadOnly,
@@ -151,7 +162,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 
 		return cfg, err
 	case <-ctx.Done():
-		return nil, fmt.Errorf("context is done")
+		return nil, ctx.Err()
 	}
 }
 

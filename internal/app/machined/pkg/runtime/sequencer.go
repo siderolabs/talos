@@ -28,6 +28,8 @@ const (
 	SequenceUpgrade
 	// SequenceStageUpgrade is the stage upgrade sequence.
 	SequenceStageUpgrade
+	// SequenceMaintenanceUpgrade is the upgrade sequence in maintenance mode.
+	SequenceMaintenanceUpgrade
 	// SequenceReset is the reset sequence.
 	SequenceReset
 	// SequenceReboot is the reboot sequence.
@@ -35,18 +37,22 @@ const (
 )
 
 const (
-	boot         = "boot"
-	initialize   = "initialize"
-	install      = "install"
-	shutdown     = "shutdown"
-	upgrade      = "upgrade"
-	stageUpgrade = "stageUpgrade"
-	reset        = "reset"
-	reboot       = "reboot"
-	noop         = "noop"
+	boot               = "boot"
+	initialize         = "initialize"
+	install            = "install"
+	shutdown           = "shutdown"
+	upgrade            = "upgrade"
+	stageUpgrade       = "stageUpgrade"
+	maintenanceUpgrade = "maintenanceUpgrade"
+	reset              = "reset"
+	reboot             = "reboot"
+	noop               = "noop"
 )
 
 var sequenceTakeOver = map[Sequence]map[Sequence]struct{}{
+	SequenceInitialize: {
+		SequenceMaintenanceUpgrade: {},
+	},
 	SequenceBoot: {
 		SequenceReboot:  {},
 		SequenceReset:   {},
@@ -62,7 +68,7 @@ var sequenceTakeOver = map[Sequence]map[Sequence]struct{}{
 
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{noop, boot, initialize, install, shutdown, upgrade, stageUpgrade, reset, reboot}[s]
+	return [...]string{noop, boot, initialize, install, shutdown, upgrade, stageUpgrade, maintenanceUpgrade, reset, reboot}[s]
 }
 
 // CanTakeOver defines sequences priority.
@@ -141,6 +147,7 @@ type Sequencer interface {
 	Shutdown(Runtime, *machine.ShutdownRequest) []Phase
 	StageUpgrade(Runtime, *machine.UpgradeRequest) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase
+	MaintenanceUpgrade(Runtime, *machine.UpgradeRequest) []Phase
 }
 
 // EventSequenceStart represents the sequence start event.
