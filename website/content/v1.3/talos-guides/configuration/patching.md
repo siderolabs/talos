@@ -249,5 +249,5 @@ talosctl gen config test-cluster https://172.20.0.1:6443 --config-patch @all.yam
 Machine configuration on the running Talos node can be patched with `talosctl patch`:
 
 ```shell
-talosctl patch --nodes 172.20.0.2 --patch @patch.yaml
+talosctl patch mc --nodes 172.20.0.2 --patch @patch.yaml
 ```
