@@ -247,7 +247,7 @@ func (r *Kubernetes) List(localNodeName string) ([]*cluster.AffiliateSpec, error
 }
 
 // Watch starts watching Node state and notifies on updates via notify channel.
-func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan struct{}, error) {
+func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan struct{}, func(), error) {
 	informerFactory := informers.NewSharedInformerFactory(r.client.Clientset, 30*time.Second)
 
 	notifyCh := make(chan struct{}, 1)
@@ -260,16 +260,22 @@ func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan stru
 	}
 
 	r.nodes = informerFactory.Core().V1().Nodes()
-	r.nodes.Informer().SetWatchErrorHandler(func(r *cache.Reflector, err error) { //nolint:errcheck
+
+	if err := r.nodes.Informer().SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 		logger.Error("kubernetes registry node watch error", zap.Error(err))
-	})
-	r.nodes.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	}); err != nil {
+		return nil, nil, fmt.Errorf("failed to set watch error handler: %w", err)
+	}
+
+	if _, err := r.nodes.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    notify,
 		DeleteFunc: notify,
 		UpdateFunc: func(_, _ interface{}) { notify(nil) },
-	})
+	}); err != nil {
+		return nil, nil, fmt.Errorf("failed to add event handler: %w", err)
+	}
 
 	informerFactory.Start(ctx.Done())
 
-	return notifyCh, nil
+	return notifyCh, informerFactory.Shutdown, nil
 }

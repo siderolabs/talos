@@ -239,7 +239,16 @@ func (ctrl *EndpointController) watchKubernetesEndpoint(ctx context.Context, r c
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	notifyCh := kubernetesEndpointWatcher(ctx, logger, client)
+	notifyCh, watchCloser, err := kubernetesEndpointWatcher(ctx, logger, client)
+	if err != nil {
+		return fmt.Errorf("error watching Kubernetes endpoint: %w", err)
+	}
+
+	defer func() {
+		cancel() // cancel the context before stopping the watcher
+
+		watchCloser()
+	}()
 
 	for {
 		select {
@@ -258,7 +267,7 @@ func (ctrl *EndpointController) watchKubernetesEndpoint(ctx context.Context, r c
 	}
 }
 
-func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) chan *corev1.Endpoints {
+func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *corev1.Endpoints, func(), error) {
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		client.Clientset, 30*time.Second,
 		informers.WithNamespace(corev1.NamespaceDefault),
@@ -270,16 +279,22 @@ func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *
 	notifyCh := make(chan *corev1.Endpoints, 1)
 
 	informer := informerFactory.Core().V1().Endpoints().Informer()
-	informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) { //nolint:errcheck
+
+	if err := informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 		logger.Error("kubernetes endpoint watch error", zap.Error(err))
-	})
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	}); err != nil {
+		return nil, nil, fmt.Errorf("error setting watch error handler: %w", err)
+	}
+
+	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    func(obj interface{}) { notifyCh <- obj.(*corev1.Endpoints) },
 		DeleteFunc: func(_ interface{}) { notifyCh <- &corev1.Endpoints{} },
 		UpdateFunc: func(_, obj interface{}) { notifyCh <- obj.(*corev1.Endpoints) },
-	})
+	}); err != nil {
+		return nil, nil, fmt.Errorf("error adding watch event handler: %w", err)
+	}
 
 	informerFactory.Start(ctx.Done())
 
-	return notifyCh
+	return notifyCh, informerFactory.Shutdown, nil
 }

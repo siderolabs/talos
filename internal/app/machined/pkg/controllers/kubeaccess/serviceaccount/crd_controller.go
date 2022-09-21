@@ -173,14 +173,16 @@ func NewCRDController(
 		secretsLister:  secrets.Lister(),
 	}
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	if _, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueTalosSA,
 		UpdateFunc: func(oldTalosSA, newTalosSA interface{}) {
 			controller.enqueueTalosSA(newTalosSA)
 		},
-	})
+	}); err != nil {
+		return nil, err
+	}
 
-	secrets.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	if _, err = secrets.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.handleSecret,
 		UpdateFunc: func(oldSec, newSec interface{}) {
 			newSecret := newSec.(*corev1.Secret) //nolint:errcheck
@@ -193,7 +195,9 @@ func NewCRDController(
 			controller.handleSecret(newSec)
 		},
 		DeleteFunc: controller.handleSecret,
-	})
+	}); err != nil {
+		return nil, err
+	}
 
 	return &controller, nil
 }
@@ -237,6 +241,8 @@ func (t *CRDController) Run(ctx context.Context, workers int) error {
 	<-ctx.Done()
 
 	t.logger.Debug("shutting down workers")
+
+	t.kubeInformerFactory.Shutdown()
 
 	return nil
 }

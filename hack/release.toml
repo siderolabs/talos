@@ -41,7 +41,7 @@ Talos now supports the Nano Pi R4S SBC.
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Kubernetes: v1.25.1
+* Kubernetes: v1.26.0-alpha.1
 * Flannel: v0.19.2
 * CoreDNS: v1.10.0
 * etcd: v3.5.5

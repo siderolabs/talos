@@ -69,6 +69,11 @@ var deprecations = map[string][]string{
 		"podsecuritypolicies.v1beta1.policy",
 		"runtimeclasses.v1beta1.node.k8s.io",
 	},
+	"1.25->1.26": {
+		"flowschemas.v1beta1.flowcontrol.apiserver.k8s.io",
+		"prioritylevelconfigurations.v1beta1.flowcontrol.apiserver.k8s.io",
+		"horizontalpodautoscalers.v2beta2.autoscaling",
+	},
 }
 
 // UpgradeTalosManaged the Kubernetes control plane.
@@ -94,6 +99,8 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 	case "1.24->1.24":
 	case "1.24->1.25":
 	case "1.25->1.25":
+	case "1.25->1.26":
+	case "1.26->1.26":
 
 	default:
 		return fmt.Errorf("unsupported upgrade path %q (from %q to %q)", path, options.FromVersion, options.ToVersion)
