@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // singleton the system services API interface.

@@ -14,13 +14,13 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/siderolabs/gen/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/client/resolver"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Conn returns underlying client connection.

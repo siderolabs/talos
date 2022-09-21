@@ -13,13 +13,13 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	yaml "gopkg.in/yaml.v3"
 
 	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Server implements ResourceService API.

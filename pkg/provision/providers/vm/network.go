@@ -19,9 +19,9 @@ import (
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/google/uuid"
 	"github.com/jsimonetti/rtnetlink"
+	"github.com/siderolabs/gen/slices"
 	talosnet "github.com/talos-systems/net"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 )
 

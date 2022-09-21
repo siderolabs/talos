@@ -11,13 +11,13 @@ import (
 	"strings"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	talosnet "github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // ClusterConfig implements config.ClusterConfig, config.Token, and config.ClusterNetwork interfaces.

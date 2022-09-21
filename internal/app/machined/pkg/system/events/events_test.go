@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 type EventsSuite struct {

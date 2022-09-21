@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/go-cmp/cmp"
+	"github.com/siderolabs/gen/slices"
 	"github.com/talos-systems/go-retry/retry"
 	"google.golang.org/grpc/metadata"
 	v1 "k8s.io/api/core/v1"
@@ -39,7 +40,6 @@ import (
 	v1alpha1config "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	machinetype "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 

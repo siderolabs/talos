@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink"
+	"github.com/siderolabs/gen/pair/ordered"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -21,7 +22,6 @@ import (
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 

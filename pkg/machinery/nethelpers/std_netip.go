@@ -8,9 +8,8 @@ import (
 	"net"
 	"net/netip"
 
+	"github.com/siderolabs/gen/slices"
 	"go4.org/netipx"
-
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // MapStdToNetIP converts a slice of net.IP to a slice of netip.Addr.

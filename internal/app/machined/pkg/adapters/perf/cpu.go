@@ -6,8 +6,8 @@ package perf
 
 import (
 	"github.com/prometheus/procfs"
+	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/perf"
 )
 

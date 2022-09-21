@@ -13,12 +13,12 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 var eventsCmdFlags struct {

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/siderolabs/gen/slices"
 )
 
 // Buffer implements circular buffer with a thread-safe writer,

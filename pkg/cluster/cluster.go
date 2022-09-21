@@ -12,14 +12,14 @@ import (
 	"net/netip"
 	"sort"
 
+	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	k8s "github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // ClientProvider builds Talos client by endpoint.

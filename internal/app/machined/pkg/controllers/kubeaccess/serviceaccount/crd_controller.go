@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/slices"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -44,7 +45,6 @@ import (
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 

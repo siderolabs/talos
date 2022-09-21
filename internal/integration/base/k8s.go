@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/talos-systems/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
@@ -22,8 +23,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // K8sSuite is a base suite for K8s tests.

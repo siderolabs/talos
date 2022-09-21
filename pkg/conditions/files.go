@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
+	"github.com/siderolabs/gen/slices"
 )
 
 type file string

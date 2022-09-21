@@ -19,11 +19,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/discovery-api/api/v1alpha1/client/pb"
 	discoveryclient "github.com/siderolabs/discovery-client/pkg/client"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"

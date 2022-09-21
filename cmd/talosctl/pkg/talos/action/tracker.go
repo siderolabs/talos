@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/mattn/go-isatty"
+	"github.com/siderolabs/gen/maps"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
@@ -24,7 +25,6 @@ import (
 	"github.com/talos-systems/talos/pkg/circular"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 	"github.com/talos-systems/talos/pkg/reporter"
 )
 

@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/siderolabs/gen/value"
 	"github.com/stretchr/testify/assert"
 
 	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
 
@@ -21,7 +21,7 @@ func TestPeerStatus_PickNewEndpoint(t *testing.T) {
 	peerStatus := kubespan.PeerStatusSpec{}
 
 	// no endpoint => no way to pick new one
-	assert.True(t, generic.IsZero(kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(nil)))
+	assert.True(t, value.IsZero(kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(nil)))
 
 	endpoints := []netip.AddrPort{
 		netip.MustParseAddrPort("10.3.4.5:10500"),
@@ -44,7 +44,7 @@ func TestPeerStatus_PickNewEndpoint(t *testing.T) {
 	kubespanadapter.PeerStatusSpec(&peerStatus).UpdateEndpoint(newEndpoint)
 
 	// can't rotate a single endpoint
-	assert.True(t, generic.IsZero(kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(endpoints[:1])))
+	assert.True(t, value.IsZero(kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(endpoints[:1])))
 
 	// can rotate if the endpoint is different
 	newEndpoint = kubespanadapter.PeerStatusSpec(&peerStatus).PickNewEndpoint(endpoints[1:])

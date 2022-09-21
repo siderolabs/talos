@@ -8,10 +8,11 @@ package network
 import (
 	"net"
 
+	"github.com/siderolabs/gen/pair/ordered"
+
 	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 

@@ -18,12 +18,12 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/nclient6"
 	"github.com/jsimonetti/rtnetlink"
+	"github.com/siderolabs/gen/slices"
 	"github.com/talos-systems/go-retry/retry"
 	"go.uber.org/zap"
 	"go4.org/netipx"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )

@@ -6,9 +6,9 @@ package components
 
 import (
 	"github.com/gizak/termui/v3/widgets"
+	"github.com/siderolabs/gen/slices"
 
 	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // BaseGraph represents the widget with some usage graph.

@@ -13,11 +13,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink"
+	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -155,17 +155,17 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 	linkIndex := resolveLinkName(links, route.TypedSpec().OutLinkName)
 
 	destinationStr := route.TypedSpec().Destination.String()
-	if generic.IsZero(route.TypedSpec().Destination) {
+	if value.IsZero(route.TypedSpec().Destination) {
 		destinationStr = "default"
 	}
 
 	sourceStr := route.TypedSpec().Source.String()
-	if generic.IsZero(route.TypedSpec().Source) {
+	if value.IsZero(route.TypedSpec().Source) {
 		sourceStr = ""
 	}
 
 	gatewayStr := route.TypedSpec().Gateway.String()
-	if generic.IsZero(route.TypedSpec().Gateway) {
+	if value.IsZero(route.TypedSpec().Gateway) {
 		gatewayStr = ""
 	}
 
@@ -202,7 +202,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
 				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.TypedSpec().Priority &&
-				(generic.IsZero(route.TypedSpec().Source) ||
+				(value.IsZero(route.TypedSpec().Source) ||
 					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) {
 				matchFound = true
 

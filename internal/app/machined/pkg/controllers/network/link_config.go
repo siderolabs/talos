@@ -12,13 +12,13 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/pair/ordered"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 

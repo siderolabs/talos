@@ -20,10 +20,10 @@ import (
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/google/uuid"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	talosnet "github.com/talos-systems/net"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/internal/cniutils"
 	"github.com/talos-systems/talos/pkg/provision/providers/vm"

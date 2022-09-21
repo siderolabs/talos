@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 
@@ -26,7 +27,6 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 

@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go4.org/netipx"
@@ -23,7 +24,6 @@ import (
 
 	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
@@ -320,7 +320,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			if kubespanadapter.PeerStatusSpec(peerStatus).ShouldChangeEndpoint() {
 				newEndpoint := kubespanadapter.PeerStatusSpec(peerStatus).PickNewEndpoint(peerSpec.Endpoints)
 
-				if !generic.IsZero(newEndpoint) {
+				if !value.IsZero(newEndpoint) {
 					logger.Debug("updating endpoint for the peer", zap.String("peer", pubKey), zap.String("label", peerSpec.Label), zap.Stringer("endpoint", newEndpoint))
 
 					endpoint = newEndpoint.String()
@@ -331,7 +331,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 
 			// re-establish the endpoint if it wasn't applied to the Wireguard config completely
-			if !generic.IsZero(peerStatus.LastUsedEndpoint) && (generic.IsZero(peerStatus.Endpoint) || peerStatus.Endpoint == peerStatus.LastUsedEndpoint) {
+			if !value.IsZero(peerStatus.LastUsedEndpoint) && (value.IsZero(peerStatus.Endpoint) || peerStatus.Endpoint == peerStatus.LastUsedEndpoint) {
 				endpoint = peerStatus.LastUsedEndpoint.String()
 				peerStatus.Endpoint = peerStatus.LastUsedEndpoint
 

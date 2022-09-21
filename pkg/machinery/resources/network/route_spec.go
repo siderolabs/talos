@@ -11,8 +11,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/siderolabs/gen/value"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -62,7 +62,7 @@ func (route *RouteSpecSpec) Normalize() {
 	}
 
 	switch {
-	case generic.IsZero(route.Gateway):
+	case value.IsZero(route.Gateway):
 		route.Scope = nethelpers.ScopeLink
 	case route.Destination.Addr().IsLoopback():
 		route.Scope = nethelpers.ScopeHost

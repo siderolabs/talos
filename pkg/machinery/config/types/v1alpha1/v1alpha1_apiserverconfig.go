@@ -7,11 +7,11 @@ package v1alpha1
 import (
 	"fmt"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Image implements the config.APIServer interface.

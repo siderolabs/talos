@@ -11,13 +11,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/siderolabs/gen/slices"
+
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/pkg/conditions"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // WaitConditionCheckInterval is time between checking for wait condition

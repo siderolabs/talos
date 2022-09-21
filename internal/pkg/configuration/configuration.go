@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
@@ -19,7 +20,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Generate config for GenerateConfiguration grpc.

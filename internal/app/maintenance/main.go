@@ -17,6 +17,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	ttls "github.com/siderolabs/crypto/tls"
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/value"
 	"github.com/talos-systems/go-procfs/procfs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -27,8 +29,6 @@ import (
 	"github.com/talos-systems/talos/pkg/grpc/gen"
 	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
@@ -116,7 +116,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 		server.Serve(listener)
 	}()
 
-	if !generic.IsZero(sideroLinkAddress) {
+	if !value.IsZero(sideroLinkAddress) {
 		ips = []netip.Addr{sideroLinkAddress}
 	}
 
@@ -157,7 +157,7 @@ func Run(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, er
 }
 
 func formatIP(addr netip.Addr) string {
-	if generic.IsZero(addr) {
+	if value.IsZero(addr) {
 		return ""
 	}
 

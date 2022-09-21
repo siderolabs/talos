@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
+	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -24,7 +25,6 @@ import (
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 )
 
 var kubernetes bool

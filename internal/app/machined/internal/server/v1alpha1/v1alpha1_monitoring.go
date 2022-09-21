@@ -12,11 +12,11 @@ import (
 	"strings"
 
 	"github.com/prometheus/procfs"
+	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Hostname implements the machine.MachineServer interface.

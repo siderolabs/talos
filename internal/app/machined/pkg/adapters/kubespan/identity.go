@@ -10,10 +10,10 @@ import (
 	"net/netip"
 
 	"github.com/mdlayher/netx/eui64"
+	"github.com/siderolabs/gen/value"
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -56,7 +56,7 @@ func (a identity) UpdateAddress(clusterID string, mac net.HardwareAddr) error {
 }
 
 func wgEUI64(prefix netip.Prefix, mac net.HardwareAddr) (out netip.Prefix, err error) {
-	if generic.IsZero(prefix) {
+	if value.IsZero(prefix) {
 		return out, fmt.Errorf("cannot calculate IP from zero prefix")
 	}
 

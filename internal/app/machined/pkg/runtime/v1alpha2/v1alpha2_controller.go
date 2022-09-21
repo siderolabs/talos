@@ -15,6 +15,7 @@ import (
 	osruntime "github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/slices"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -41,7 +42,6 @@ import (
 	"github.com/talos-systems/talos/pkg/logging"
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	configresource "github.com/talos-systems/talos/pkg/machinery/resources/config"
 )
 

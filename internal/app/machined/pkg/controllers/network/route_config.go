@@ -12,11 +12,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/value"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -96,7 +96,7 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 
 		// parse kernel cmdline for the default gateway
 		cmdlineRoute := ctrl.parseCmdline(logger)
-		if !generic.IsZero(cmdlineRoute.Gateway) {
+		if !value.IsZero(cmdlineRoute.Gateway) {
 			if _, ignored := ignoredInterfaces[cmdlineRoute.OutLinkName]; !ignored {
 				var ids []string
 
@@ -185,7 +185,7 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route netwo
 		return
 	}
 
-	if generic.IsZero(settings.Gateway) {
+	if value.IsZero(settings.Gateway) {
 		return
 	}
 
@@ -242,9 +242,9 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 		}
 
 		switch {
-		case !generic.IsZero(route.Gateway) && route.Gateway.Is6():
+		case !value.IsZero(route.Gateway) && route.Gateway.Is6():
 			route.Family = nethelpers.FamilyInet6
-		case !generic.IsZero(route.Destination) && route.Destination.Addr().Is6():
+		case !value.IsZero(route.Destination) && route.Destination.Addr().Is6():
 			route.Family = nethelpers.FamilyInet6
 		default:
 			route.Family = nethelpers.FamilyInet4

@@ -1044,6 +1044,8 @@ github.com/siderolabs/discovery-api v0.1.1 h1:DI+CjD/Nl0nIk8qkaNKz1sEquWTEKHKH4+
 github.com/siderolabs/discovery-api v0.1.1/go.mod h1:JnJg4h1HbAhOazQl0lYHEjrg63rg/cf9r2te6/DqUxo=
 github.com/siderolabs/discovery-client v0.1.2 h1:QsNwt/boSPM+f8Ww+GlAMv2+9o5KPhLdPUfjvVuNIm8=
 github.com/siderolabs/discovery-client v0.1.2/go.mod h1:4ahEk2dMPKAGCLK5sRUxHfVryROxflwDPL+2c5MrLMI=
+github.com/siderolabs/gen v0.1.0 h1:TPbacvAe+JGVgSpVPLFxT5tYuoDk/bVRlTW4dU5nLWg=
+github.com/siderolabs/gen v0.1.0/go.mod h1:vzcXVRNpo9j2tyQJU+9ZQ1J6yoebX9KL1TkHt18HNqw=
 github.com/siderolabs/go-blockdevice v0.4.0 h1:b+5b4Lu35U6MFXQDE2g0hAW6pTqkJypPF8WbktbbXlQ=
 github.com/siderolabs/go-blockdevice v0.4.0/go.mod h1:viu/gYeRpdr41UcR39SjlFr4vID4WyaIuGd8lOKuyA4=
 github.com/siderolabs/go-pcidb v0.1.0 h1:6cJPBBmHlIF4GouYR/1g3JXS/niAON+6lIOfKl/t794=

@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
+	"github.com/siderolabs/gen/maps"
 )
 
 // Role represents Talos user role.

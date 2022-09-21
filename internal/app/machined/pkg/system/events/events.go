@@ -7,11 +7,11 @@ package events
 import (
 	"time"
 
+	"github.com/siderolabs/gen/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // MaxEventsToKeep is maximum number of events to keep per service before dropping old entries.

@@ -12,10 +12,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // ResolveResourceKind resolves potentially aliased 'resourceType' and replaces empty 'resourceNamespace' with the default namespace for the resource.

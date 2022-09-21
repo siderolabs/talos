@@ -10,13 +10,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Router wraps grpc-proxy StreamDirector.

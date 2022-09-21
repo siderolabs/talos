@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
@@ -40,7 +41,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/access"

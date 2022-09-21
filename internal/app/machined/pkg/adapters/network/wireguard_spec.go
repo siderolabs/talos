@@ -8,10 +8,10 @@ import (
 	"net"
 	"net/netip"
 
+	"github.com/siderolabs/gen/slices"
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 

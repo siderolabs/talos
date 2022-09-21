@@ -5,8 +5,9 @@
 package v1alpha1
 
 import (
+	"github.com/siderolabs/gen/slices"
+
 	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Modules implements config.Kernel interface.

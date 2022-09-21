@@ -17,6 +17,7 @@ require (
 	github.com/mdlayher/ethtool v0.0.0-20220830195143-0e16326d06d1
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/siderolabs/crypto v0.4.0
+	github.com/siderolabs/gen v0.1.0
 	github.com/siderolabs/go-blockdevice v0.4.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/protoenc v0.2.0
@@ -42,8 +43,8 @@ require (
 	github.com/mdlayher/genetlink v1.2.0 // indirect
 	github.com/mdlayher/netlink v1.6.0 // indirect
 	github.com/mdlayher/socket v0.2.3 // indirect
-	github.com/onsi/ginkgo/v2 v2.1.4 // indirect
-	github.com/onsi/gomega v1.19.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
+	github.com/onsi/gomega v1.20.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
@@ -52,7 +53,7 @@ require (
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	golang.org/x/sync v0.0.0-20220907140024-f12130a52804 // indirect
-	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
+	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

@@ -14,6 +14,7 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/siderolabs/go-pointer"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 const (

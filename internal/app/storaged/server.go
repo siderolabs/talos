@@ -7,11 +7,11 @@ package internal
 import (
 	"context"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/talos-systems/talos/pkg/machinery/api/storage"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Server implements storage.StorageService.

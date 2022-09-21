@@ -8,10 +8,11 @@ import (
 	"fmt"
 	"net/netip"
 
+	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
+
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	clussterres "github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 

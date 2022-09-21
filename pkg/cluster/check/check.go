@@ -10,9 +10,10 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/siderolabs/gen/slices"
+
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 const updateInterval = 100 * time.Millisecond

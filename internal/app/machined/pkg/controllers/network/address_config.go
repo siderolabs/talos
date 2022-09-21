@@ -13,12 +13,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/value"
 	"github.com/talos-systems/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -101,7 +101,7 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 
 		// parse kernel cmdline for the address
 		cmdlineAddress := ctrl.parseCmdline(logger)
-		if !generic.IsZero(cmdlineAddress.Address) {
+		if !value.IsZero(cmdlineAddress.Address) {
 			if _, ignored := ignoredInterfaces[cmdlineAddress.LinkName]; !ignored {
 				var ids []string
 
@@ -209,7 +209,7 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address n
 		return
 	}
 
-	if generic.IsZero(settings.Address) {
+	if value.IsZero(settings.Address) {
 		return
 	}
 

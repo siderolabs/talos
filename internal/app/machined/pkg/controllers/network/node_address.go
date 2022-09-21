@@ -12,10 +12,10 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -128,7 +128,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 			// set defaultAddress to the smallest IP from the alphabetically first link
 			if addr.Metadata().Owner() == addressStatusControllerName {
-				if generic.IsZero(defaultAddress) || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.Addr().Compare(defaultAddress.Addr()) < 0) {
+				if value.IsZero(defaultAddress) || addr.TypedSpec().LinkName < defaultAddrLinkName || (addr.TypedSpec().LinkName == defaultAddrLinkName && ip.Addr().Compare(defaultAddress.Addr()) < 0) {
 					defaultAddress = ip
 					defaultAddrLinkName = addr.TypedSpec().LinkName
 				}
@@ -160,7 +160,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 		touchedIDs := make(map[resource.ID]struct{})
 
 		// update output resources
-		if !generic.IsZero(defaultAddress) {
+		if !value.IsZero(defaultAddress) {
 			if err = r.Modify(ctx, network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddress).TypedSpec()
 

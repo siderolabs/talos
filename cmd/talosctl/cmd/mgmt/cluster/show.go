@@ -14,11 +14,11 @@ import (
 	"text/tabwriter"
 
 	"github.com/dustin/go-humanize"
+	"github.com/siderolabs/gen/slices"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/providers"
 )

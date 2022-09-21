@@ -9,11 +9,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 )
 
 // InteractiveMode fake mode value for the interactive config mode.

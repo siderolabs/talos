@@ -15,13 +15,13 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/value"
 	"go4.org/netipx"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
 )
@@ -277,7 +277,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 
 		for _, status := range peerStatuses {
 			suite.Assert().Equal(kubespan.PeerStateUp, status.TypedSpec().State)
-			suite.Assert().False(generic.IsZero(status.TypedSpec().Endpoint))
+			suite.Assert().False(value.IsZero(status.TypedSpec().Endpoint))
 			suite.Assert().Greater(status.TypedSpec().ReceiveBytes, int64(0))
 			suite.Assert().Greater(status.TypedSpec().TransmitBytes, int64(0))
 		}

@@ -12,8 +12,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/siderolabs/gen/slices"
+
 	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // DmesgSuite verifies dmesg command.

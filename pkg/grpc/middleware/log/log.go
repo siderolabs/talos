@@ -12,11 +12,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siderolabs/gen/maps"
 	"google.golang.org/grpc"
-	metadata "google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
 )
 
 // Middleware provides grpc logging middleware.

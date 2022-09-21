@@ -9,8 +9,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/siderolabs/gen/slices"
+
 	"github.com/talos-systems/talos/pkg/chunker"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Options is the functional options struct.

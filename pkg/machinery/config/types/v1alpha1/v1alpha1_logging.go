@@ -9,10 +9,10 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/slices"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // Validate checks logging configuration for errors.

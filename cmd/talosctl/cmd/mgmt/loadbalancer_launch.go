@@ -7,11 +7,11 @@ package mgmt
 import (
 	"fmt"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/spf13/cobra"
 	"github.com/talos-systems/go-loadbalancer/loadbalancer"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 var loadbalancerLaunchCmdFlags struct {

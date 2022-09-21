@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/slices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -18,7 +19,6 @@ import (
 	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"

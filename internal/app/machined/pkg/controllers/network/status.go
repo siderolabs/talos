@@ -11,10 +11,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/resources/files"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -94,7 +94,7 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, log
 		}
 
 		for _, item := range list.Items {
-			if generic.IsZero(item.(*network.RouteStatus).TypedSpec().Destination) {
+			if value.IsZero(item.(*network.RouteStatus).TypedSpec().Destination) {
 				result.ConnectivityReady = true
 
 				break

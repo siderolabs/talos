@@ -13,12 +13,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/siderolabs/gen/pair/ordered"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/ordered"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 

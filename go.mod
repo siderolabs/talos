@@ -90,6 +90,7 @@ require (
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/discovery-api v0.1.1
 	github.com/siderolabs/discovery-client v0.1.2
+	github.com/siderolabs/gen v0.1.0
 	github.com/siderolabs/go-blockdevice v0.4.0
 	github.com/siderolabs/go-pcidb v0.1.0
 	github.com/siderolabs/go-pointer v1.0.0

@@ -11,9 +11,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/siderolabs/gen/value"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
 
@@ -120,7 +120,7 @@ func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 		spec.KubeSpan.PublicKey = other.KubeSpan.PublicKey
 	}
 
-	if !generic.IsZero(other.KubeSpan.Address) {
+	if !value.IsZero(other.KubeSpan.Address) {
 		spec.KubeSpan.Address = other.KubeSpan.Address
 	}
 

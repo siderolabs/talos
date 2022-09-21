@@ -11,12 +11,13 @@ import (
 	"net/url"
 	"sort"
 
+	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
+
 	"github.com/talos-systems/talos/pkg/cluster"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/generic/maps"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // EtcdConsistentAssertion checks that etcd membership is consistent across nodes.

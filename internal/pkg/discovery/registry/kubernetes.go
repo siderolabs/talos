@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,8 +28,6 @@ import (
 	"github.com/talos-systems/talos/pkg/kubernetes"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/generic"
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
 )
 
@@ -49,7 +49,7 @@ func NewKubernetes(client *kubernetes.Client) *Kubernetes {
 func AnnotationsFromAffiliate(affiliate *cluster.Affiliate) map[string]string {
 	var kubeSpanAddress string
 
-	if !generic.IsZero(affiliate.TypedSpec().KubeSpan.Address) {
+	if !value.IsZero(affiliate.TypedSpec().KubeSpan.Address) {
 		kubeSpanAddress = affiliate.TypedSpec().KubeSpan.Address.String()
 	}
 

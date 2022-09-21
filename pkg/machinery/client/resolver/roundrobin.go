@@ -10,9 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/siderolabs/gen/slices"
 	"google.golang.org/grpc/resolver"
-
-	"github.com/talos-systems/talos/pkg/machinery/generic/slices"
 )
 
 // RoundRobinResolverScheme is a scheme to use in grpc.Dial for the round-robin gRPC resolver.
