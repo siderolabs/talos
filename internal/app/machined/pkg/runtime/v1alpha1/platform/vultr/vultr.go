@@ -7,7 +7,6 @@ package vultr
 
 import (
 	"context"
-	"encoding/json"
 	stderrors "errors"
 	"fmt"
 	"log"
@@ -23,17 +22,7 @@ import (
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-)
-
-const (
-	// VultrMetadataEndpoint is the local Vultr endpoint fot the instance metadata.
-	VultrMetadataEndpoint = "http://169.254.169.254/v1.json"
-	// VultrExternalIPEndpoint is the local Vultr endpoint for the external IP.
-	VultrExternalIPEndpoint = "http://169.254.169.254/latest/meta-data/public-ipv4"
-	// VultrHostnameEndpoint is the local Vultr endpoint for the hostname.
-	VultrHostnameEndpoint = "http://169.254.169.254/latest/meta-data/hostname"
-	// VultrUserDataEndpoint is the local Vultr endpoint for the config.
-	VultrUserDataEndpoint = "http://169.254.169.254/latest/user-data"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // Vultr is the concrete type that implements the runtime.Platform interface.
@@ -45,26 +34,28 @@ func (v *Vultr) Name() string {
 }
 
 // ParseMetadata converts Vultr platform metadata into platform network config.
-func (v *Vultr) ParseMetadata(meta *metadata.MetaData, extIP []byte) (*runtime.PlatformNetworkConfig, error) {
+//
+//nolint:gocyclo
+func (v *Vultr) ParseMetadata(extIP []byte, metadata *metadata.MetaData) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if ip, err := netip.ParseAddr(string(extIP)); err == nil {
 		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 	}
 
-	if meta.Hostname != "" {
+	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(meta.Hostname); err != nil {
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
 			return nil, err
 		}
 
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	for i, addr := range meta.Interfaces {
+	for i, addr := range metadata.Interfaces {
 		iface := fmt.Sprintf("eth%d", i)
 
 		link := network.LinkSpecSpec{
@@ -119,10 +110,20 @@ func (v *Vultr) ParseMetadata(meta *metadata.MetaData, extIP []byte) (*runtime.P
 		}
 	}
 
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:   v.Name(),
+		Hostname:   metadata.Hostname,
+		Region:     metadata.Region.RegionCode,
+		InstanceID: metadata.InstanceV2ID,
+		ProviderID: fmt.Sprintf("vultr://%s", metadata.InstanceV2ID),
+	}
+
 	return networkConfig, nil
 }
 
 // Configuration implements the runtime.Platform interface.
+//
+//nolint:stylecheck
 func (v *Vultr) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from: %q", VultrUserDataEndpoint)
 
@@ -143,15 +144,10 @@ func (v *Vultr) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (v *Vultr) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	log.Printf("fetching Vultr instance config from: %q ", VultrMetadataEndpoint)
+	log.Printf("fetching Vultr instance metadata from: %q", VultrMetadataEndpoint)
 
-	metaConfigDl, err := download.Download(ctx, VultrMetadataEndpoint)
+	metadata, err := v.getMetadata(ctx)
 	if err != nil {
-		return fmt.Errorf("error fetching metadata: %w", err)
-	}
-
-	meta := &metadata.MetaData{}
-	if err = json.Unmarshal(metaConfigDl, meta); err != nil {
 		return err
 	}
 
@@ -162,7 +158,7 @@ func (v *Vultr) NetworkConfiguration(ctx context.Context, _ state.State, ch chan
 		return err
 	}
 
-	networkConfig, err := v.ParseMetadata(meta, extIP)
+	networkConfig, err := v.ParseMetadata(extIP, metadata)
 	if err != nil {
 		return err
 	}

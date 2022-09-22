@@ -7,6 +7,8 @@ package gcp
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/netip"
 	"strings"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // GCP is the concrete type that implements the platform.Platform interface.
@@ -25,6 +28,62 @@ type GCP struct{}
 // Name implements the platform.Platform interface.
 func (g *GCP) Name() string {
 	return "gcp"
+}
+
+// ParseMetadata converts GCP platform metadata into platform network config.
+func (g *GCP) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
+	networkConfig := &runtime.PlatformNetworkConfig{}
+
+	if metadata.Hostname != "" {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
+			return nil, err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+	}
+
+	if metadata.PublicIPv4 != "" {
+		ip, err := netip.ParseAddr(metadata.PublicIPv4)
+		if err != nil {
+			return nil, err
+		}
+
+		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+	}
+
+	dns, _ := netip.ParseAddr(gcpResolverServer) //nolint:errcheck
+
+	networkConfig.Resolvers = append(networkConfig.Resolvers, network.ResolverSpecSpec{
+		DNSServers:  []netip.Addr{dns},
+		ConfigLayer: network.ConfigPlatform,
+	})
+
+	networkConfig.TimeServers = append(networkConfig.TimeServers, network.TimeServerSpecSpec{
+		NTPServers:  []string{gcpTimeServer},
+		ConfigLayer: network.ConfigPlatform,
+	})
+
+	region := metadata.Zone
+
+	if idx := strings.LastIndex(region, "-"); idx != -1 {
+		region = region[:idx]
+	}
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:     g.Name(),
+		Hostname:     metadata.Hostname,
+		Region:       region,
+		Zone:         metadata.Zone,
+		InstanceType: metadata.InstanceType,
+		InstanceID:   metadata.InstanceID,
+		ProviderID:   fmt.Sprintf("gce://%s/%s/%s", metadata.ProjectID, metadata.Zone, metadata.Name),
+	}
+
+	return networkConfig, nil
 }
 
 // Configuration implements the platform.Platform interface.
@@ -59,39 +118,16 @@ func (g *GCP) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (g *GCP) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	networkConfig := &runtime.PlatformNetworkConfig{}
+	log.Printf("fetching gcp instance config")
 
-	hostname, err := metadata.Hostname()
+	metadata, err := g.getMetadata(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to receive GCP metadata: %w", err)
+	}
+
+	networkConfig, err := g.ParseMetadata(metadata)
 	if err != nil {
 		return err
-	}
-
-	if hostname != "" {
-		hostnameSpec := network.HostnameSpecSpec{
-			ConfigLayer: network.ConfigPlatform,
-		}
-
-		if err = hostnameSpec.ParseFQDN(hostname); err != nil {
-			return err
-		}
-
-		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
-	}
-
-	externalIP, err := metadata.ExternalIP()
-	if err != nil {
-		if _, ok := err.(metadata.NotDefinedError); !ok {
-			return err
-		}
-	}
-
-	if externalIP != "" {
-		ip, err := netip.ParseAddr(externalIP)
-		if err != nil {
-			return err
-		}
-
-		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 	}
 
 	select {

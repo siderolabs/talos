@@ -22,6 +22,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/utils"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // Openstack is the concrete type that implements the runtime.Platform interface.
@@ -35,19 +36,15 @@ func (o *Openstack) Name() string {
 // ParseMetadata converts OpenStack metadata to platform network configuration.
 //
 //nolint:gocyclo,cyclop
-func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netip.Addr) (*runtime.PlatformNetworkConfig, error) {
+func (o *Openstack) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, extIPs []netip.Addr, metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if hostname == "" {
-		hostname = unmarshalledMetadataConfig.Hostname
-	}
-
-	if hostname != "" {
+	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(hostname); err != nil {
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
 			return nil, err
 		}
 
@@ -210,6 +207,15 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 		}
 	}
 
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:     o.Name(),
+		Hostname:     metadata.Hostname,
+		Zone:         metadata.AvailabilityZone,
+		InstanceID:   metadata.UUID,
+		InstanceType: metadata.InstanceType,
+		ProviderID:   fmt.Sprintf("openstack:///%s", metadata.UUID),
+	}
+
 	return networkConfig, nil
 }
 
@@ -246,6 +252,8 @@ func (o *Openstack) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *Openstack) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	networkSource := false
+
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
 	if err != nil {
 		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx)
@@ -256,21 +264,30 @@ func (o *Openstack) NetworkConfiguration(ctx context.Context, _ state.State, ch 
 		if err != nil {
 			return err
 		}
+
+		networkSource = true
 	}
 
-	hostname := o.hostname(ctx)
-	extIPs := o.externalIPs(ctx)
-
 	var (
-		unmarshalledMetadataConfig MetadataConfig
-		unmarshalledNetworkConfig  NetworkConfig
+		meta                      MetadataConfig
+		unmarshalledNetworkConfig NetworkConfig
 	)
 
 	// ignore errors unmarshaling, empty configs work just fine as empty default
-	_ = json.Unmarshal(metadataConfigDl, &unmarshalledMetadataConfig)       //nolint:errcheck
+	_ = json.Unmarshal(metadataConfigDl, &meta)                             //nolint:errcheck
 	_ = json.Unmarshal(metadataNetworkConfigDl, &unmarshalledNetworkConfig) //nolint:errcheck
 
-	networkConfig, err := o.ParseMetadata(&unmarshalledMetadataConfig, &unmarshalledNetworkConfig, string(hostname), extIPs)
+	var extIPs []netip.Addr
+
+	if networkSource {
+		extIPs = o.externalIPs(ctx)
+
+		if meta.InstanceType == "" {
+			meta.InstanceType = o.instanceType(ctx)
+		}
+	}
+
+	networkConfig, err := o.ParseMetadata(&unmarshalledNetworkConfig, extIPs, &meta)
 	if err != nil {
 		return err
 	}

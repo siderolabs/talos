@@ -31,6 +31,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.KernelParamStatus{},
 		&runtime.MachineStatus{},
 		&runtime.MountStatus{},
+		&runtime.PlatformMetadata{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

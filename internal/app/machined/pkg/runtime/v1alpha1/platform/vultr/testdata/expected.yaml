@@ -36,3 +36,9 @@ operators:
       layer: platform
 externalIPs:
     - 1.2.3.4
+metadata:
+    platform: vultr
+    hostname: talos
+    region: AMS
+    instanceId: 91b07056-af72-4551-b15b-d57d34071be9
+    providerId: vultr://91b07056-af72-4551-b15b-d57d34071be9

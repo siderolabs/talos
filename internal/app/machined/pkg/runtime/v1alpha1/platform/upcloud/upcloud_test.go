@@ -25,11 +25,11 @@ var expectedNetworkConfig string
 func TestParseMetadata(t *testing.T) {
 	p := &upcloud.UpCloud{}
 
-	var m upcloud.MetaData
+	var metadata upcloud.MetadataConfig
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &m))
+	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
 
-	networkConfig, err := p.ParseMetadata(&m)
+	networkConfig, err := p.ParseMetadata(&metadata)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)

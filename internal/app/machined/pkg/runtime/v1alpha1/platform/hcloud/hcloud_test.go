@@ -6,7 +6,6 @@ package hcloud_test
 
 import (
 	_ "embed"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,17 +24,21 @@ var expectedNetworkConfig string
 func TestParseMetadata(t *testing.T) {
 	h := &hcloud.Hcloud{}
 
+	metadata := &hcloud.MetadataConfig{
+		Hostname:   "talos.fqdn",
+		PublicIPv4: "1.2.3.4",
+		InstanceID: "0",
+	}
+
 	var m hcloud.NetworkConfig
 
 	require.NoError(t, yaml.Unmarshal(rawMetadata, &m))
 
-	networkConfig, err := h.ParseMetadata(&m, []byte("some.fqdn"), []byte("1.2.3.4"))
+	networkConfig, err := h.ParseMetadata(&m, metadata)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)
 	require.NoError(t, err)
-
-	fmt.Print(string(marshaled))
 
 	assert.Equal(t, expectedNetworkConfig, string(marshaled))
 }

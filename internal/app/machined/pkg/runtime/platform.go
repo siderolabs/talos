@@ -12,6 +12,7 @@ import (
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // Platform defines the requirements for a platform.
@@ -55,4 +56,6 @@ type PlatformNetworkConfig struct {
 	Operators []network.OperatorSpecSpec `yaml:"operators"`
 
 	ExternalIPs []netip.Addr `yaml:"externalIPs"`
+
+	Metadata *runtime.PlatformMetadataSpec `yaml:"metadata,omitempty"`
 }

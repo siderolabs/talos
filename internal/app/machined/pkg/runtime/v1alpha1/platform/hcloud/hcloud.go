@@ -7,7 +7,6 @@ package hcloud
 
 import (
 	"context"
-	stderrors "errors"
 	"fmt"
 	"log"
 	"net/netip"
@@ -21,39 +20,8 @@ import (
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
-
-const (
-	// HCloudExternalIPEndpoint is the local hcloud endpoint for the external IP.
-	HCloudExternalIPEndpoint = "http://169.254.169.254/hetzner/v1/metadata/public-ipv4"
-
-	// HCloudNetworkEndpoint is the local hcloud endpoint for the network-config.
-	HCloudNetworkEndpoint = "http://169.254.169.254/hetzner/v1/metadata/network-config"
-
-	// HCloudHostnameEndpoint is the local hcloud endpoint for the hostname.
-	HCloudHostnameEndpoint = "http://169.254.169.254/hetzner/v1/metadata/hostname"
-
-	// HCloudUserDataEndpoint is the local hcloud endpoint for the config.
-	HCloudUserDataEndpoint = "http://169.254.169.254/hetzner/v1/userdata"
-)
-
-// NetworkConfig holds hcloud network-config info.
-type NetworkConfig struct {
-	Version int `yaml:"version"`
-	Config  []struct {
-		Mac        string `yaml:"mac_address"`
-		Interfaces string `yaml:"name"`
-		Subnets    []struct {
-			NameServers []string `yaml:"dns_nameservers,omitempty"`
-			Address     string   `yaml:"address,omitempty"`
-			Gateway     string   `yaml:"gateway,omitempty"`
-			Ipv4        bool     `yaml:"ipv4,omitempty"`
-			Ipv6        bool     `yaml:"ipv6,omitempty"`
-			Type        string   `yaml:"type"`
-		} `yaml:"subnets"`
-		Type string `yaml:"type"`
-	} `yaml:"config"`
-}
 
 // Hcloud is the concrete type that implements the runtime.Platform interface.
 type Hcloud struct{}
@@ -66,23 +34,23 @@ func (h *Hcloud) Name() string {
 // ParseMetadata converts HCloud metadata to platform network configuration.
 //
 //nolint:gocyclo
-func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, host, extIP []byte) (*runtime.PlatformNetworkConfig, error) {
+func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if len(host) > 0 {
+	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(string(host)); err != nil {
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
 			return nil, err
 		}
 
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if len(extIP) > 0 {
-		if ip, err := netip.ParseAddr(string(extIP)); err == nil {
+	if metadata.PublicIPv4 != "" {
+		if ip, err := netip.ParseAddr(metadata.PublicIPv4); err == nil {
 			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 		}
 	}
@@ -156,6 +124,13 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, host, e
 		}
 	}
 
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:   h.Name(),
+		Hostname:   metadata.Hostname,
+		InstanceID: metadata.InstanceID,
+		ProviderID: fmt.Sprintf("hcloud://%s", metadata.InstanceID),
+	}
+
 	return networkConfig, nil
 }
 
@@ -181,9 +156,12 @@ func (h *Hcloud) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-//
-//nolint:gocyclo
 func (h *Hcloud) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	metadata, err := h.getMetadata(ctx)
+	if err != nil {
+		return err
+	}
+
 	log.Printf("fetching hcloud network config from: %q", HCloudNetworkEndpoint)
 
 	metadataNetworkConfig, err := download.Download(ctx, HCloudNetworkEndpoint)
@@ -201,25 +179,7 @@ func (h *Hcloud) NetworkConfiguration(ctx context.Context, _ state.State, ch cha
 		return fmt.Errorf("network-config metadata version=%d is not supported", unmarshalledNetworkConfig.Version)
 	}
 
-	log.Printf("fetching hostname from: %q", HCloudHostnameEndpoint)
-
-	host, err := download.Download(ctx, HCloudHostnameEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil && !stderrors.Is(err, errors.ErrNoHostname) {
-		return err
-	}
-
-	log.Printf("fetching externalIP from: %q", HCloudExternalIPEndpoint)
-
-	extIP, err := download.Download(ctx, HCloudExternalIPEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
-	if err != nil && !stderrors.Is(err, errors.ErrNoExternalIPs) {
-		return err
-	}
-
-	networkConfig, err := h.ParseMetadata(&unmarshalledNetworkConfig, host, extIP)
+	networkConfig, err := h.ParseMetadata(&unmarshalledNetworkConfig, metadata)
 	if err != nil {
 		return err
 	}

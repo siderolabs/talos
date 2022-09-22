@@ -29,15 +29,15 @@ var expectedNetworkConfig string
 func TestParseMetadata(t *testing.T) {
 	o := &openstack.Openstack{}
 
-	var m openstack.MetadataConfig
+	var metadata openstack.MetadataConfig
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &m))
+	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
 
 	var n openstack.NetworkConfig
 
 	require.NoError(t, json.Unmarshal(rawNetwork, &n))
 
-	networkConfig, err := o.ParseMetadata(&m, &n, "", []netip.Addr{netip.MustParseAddr("1.2.3.4")})
+	networkConfig, err := o.ParseMetadata(&n, []netip.Addr{netip.MustParseAddr("1.2.3.4")}, &metadata)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)

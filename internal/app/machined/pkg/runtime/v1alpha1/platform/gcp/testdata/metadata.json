@@ -1,0 +1,8 @@
+{
+    "project-id": "123",
+    "hostname": "talos",
+    "id": "0",
+    "zone": "us-central1-a",
+    "name": "my-server",
+    "machine-type": "n1-standard-1"
+}

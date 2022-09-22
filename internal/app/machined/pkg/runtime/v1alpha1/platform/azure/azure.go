@@ -27,20 +27,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-)
-
-const (
-	// AzureInternalEndpoint is the Azure Internal Channel IP
-	// https://blogs.msdn.microsoft.com/mast/2015/05/18/what-is-the-ip-address-168-63-129-16/
-	AzureInternalEndpoint = "http://168.63.129.16"
-	// AzureHostnameEndpoint is the local endpoint for the hostname.
-	AzureHostnameEndpoint = "http://169.254.169.254/metadata/instance/compute/osProfile/computerName?api-version=2021-12-13&format=text"
-	// AzureInterfacesEndpoint is the local endpoint to get external IPs.
-	AzureInterfacesEndpoint = "http://169.254.169.254/metadata/instance/network/interface?api-version=2021-12-13&format=json"
-	// AzureLoadbalancerEndpoint is the local endpoint for load balancer config.
-	AzureLoadbalancerEndpoint = "http://169.254.169.254/metadata/loadbalancer?api-version=2021-05-01&format=json"
-
-	mnt = "/mnt"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // NetworkConfig holds network interface meta config.
@@ -86,7 +73,7 @@ func (a *Azure) Name() string {
 // ParseMetadata parses Azure network metadata into the platform network config.
 //
 //nolint:gocyclo
-func (a *Azure) ParseMetadata(interfaceAddresses []NetworkConfig, host []byte) (*runtime.PlatformNetworkConfig, error) {
+func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []NetworkConfig, host []byte) (*runtime.PlatformNetworkConfig, error) {
 	var networkConfig runtime.PlatformNetworkConfig
 
 	// hostname
@@ -135,6 +122,21 @@ func (a *Azure) ParseMetadata(interfaceAddresses []NetworkConfig, host []byte) (
 				},
 			})
 		}
+	}
+
+	zone := metadata.FaultDomain
+	if metadata.Zone != "" {
+		zone = fmt.Sprintf("%s-%s", metadata.Location, metadata.Zone)
+	}
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:     a.Name(),
+		Hostname:     metadata.OSProfile.ComputerName,
+		Region:       strings.ToLower(metadata.Location),
+		Zone:         strings.ToLower(zone),
+		InstanceType: metadata.VMSize,
+		InstanceID:   metadata.ResourceID,
+		ProviderID:   fmt.Sprintf("azure://%s", metadata.ResourceID),
 	}
 
 	return &networkConfig, nil
@@ -251,6 +253,13 @@ func (a *Azure) configFromCD() ([]byte, error) {
 //
 //nolint:gocyclo
 func (a *Azure) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	log.Printf("fetching azure instance config from: %q", AzureMetadataEndpoint)
+
+	metadata, err := a.getMetadata(ctx)
+	if err != nil {
+		return err
+	}
+
 	log.Printf("fetching network config from %q", AzureInterfacesEndpoint)
 
 	metadataNetworkConfig, err := download.Download(ctx, AzureInterfacesEndpoint,
@@ -265,17 +274,7 @@ func (a *Azure) NetworkConfiguration(ctx context.Context, _ state.State, ch chan
 		return err
 	}
 
-	log.Printf("fetching hostname from: %q", AzureHostnameEndpoint)
-
-	host, err := download.Download(ctx, AzureHostnameEndpoint,
-		download.WithHeaders(map[string]string{"Metadata": "true"}),
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil && !stderrors.Is(err, errors.ErrNoHostname) {
-		return fmt.Errorf("failed to fetch hostname from metadata service: %w", err)
-	}
-
-	networkConfig, err := a.ParseMetadata(interfaceAddresses, host)
+	networkConfig, err := a.ParseMetadata(metadata, interfaceAddresses, []byte(metadata.OSProfile.ComputerName))
 	if err != nil {
 		return fmt.Errorf("failed to parse network metadata: %w", err)
 	}

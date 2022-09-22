@@ -31,7 +31,7 @@ var expectedNetworkConfig string
 func TestParseMetadata(t *testing.T) {
 	p := &equinixmetal.EquinixMetal{}
 
-	var m equinixmetal.Metadata
+	var m equinixmetal.MetadataConfig
 
 	require.NoError(t, json.Unmarshal(rawMetadata, &m))
 

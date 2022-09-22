@@ -32,13 +32,11 @@ func TestParseMetadata(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		raw      []byte
-		hostname string
 		expected string
 	}{
 		{
 			name:     "V1",
 			raw:      rawMetadataV1,
-			hostname: "talos",
 			expected: expectedNetworkConfigV1,
 		},
 		{
@@ -56,7 +54,12 @@ func TestParseMetadata(t *testing.T) {
 
 			require.NoError(t, yaml.Unmarshal(tt.raw, &m))
 
-			networkConfig, err := n.ParseMetadata(&m, tt.hostname)
+			mc := nocloud.MetadataConfig{
+				Hostname:   "talos.fqdn",
+				InstanceID: "0",
+			}
+
+			networkConfig, err := n.ParseMetadata(&m, &mc)
 			require.NoError(t, err)
 
 			marshaled, err := yaml.Marshal(networkConfig)

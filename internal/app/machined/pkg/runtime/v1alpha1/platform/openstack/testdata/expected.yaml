@@ -133,3 +133,9 @@ operators:
       layer: platform
 externalIPs:
     - 1.2.3.4
+metadata:
+    platform: openstack
+    hostname: talos
+    zone: nova
+    instanceId: 39073b0a-1234-1234-1234-5e76a4bd64b2
+    providerId: openstack:///39073b0a-1234-1234-1234-5e76a4bd64b2

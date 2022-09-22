@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	platformerrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // VMware is the concrete type that implements the platform.Platform interface.
@@ -202,5 +203,15 @@ func (v *VMware) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (v *VMware) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	networkConfig := &runtime.PlatformNetworkConfig{
+		Metadata: &runtimeres.PlatformMetadataSpec{Platform: v.Name()},
+	}
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case ch <- networkConfig:
+	}
+
 	return nil
 }

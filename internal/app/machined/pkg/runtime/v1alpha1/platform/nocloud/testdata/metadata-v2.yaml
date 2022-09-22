@@ -1,6 +1,8 @@
 version: 2
 ethernets:
   eth0:
+    match:
+      macaddress: '00:20:6e:1f:f9:a8'
     dhcp4: true
     addresses:
       - 192.168.14.2/24

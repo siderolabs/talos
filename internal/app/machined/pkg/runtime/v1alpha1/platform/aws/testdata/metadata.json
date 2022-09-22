@@ -1,0 +1,7 @@
+{
+    "hostname": "talos",
+	"instance-id": "i-0a0a0a0a0a0a0a0a0",
+    "public-ipv4": "1.2.3.4",
+    "region": "us-east-1",
+    "zone": "us-east-1a"
+}

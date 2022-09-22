@@ -64,7 +64,10 @@ func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.Clus
 
 //nolint:gocyclo
 func (p *provisioner) createNode(ctx context.Context, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, options *provision.Options) (provision.NodeInfo, error) {
-	env := []string{"PLATFORM=container"}
+	env := []string{
+		"PLATFORM=container",
+		fmt.Sprintf("TALOSSKU=%dCPU-%dRAM", nodeReq.NanoCPUs/(1000*1000*1000), nodeReq.Memory/(1024*1024)),
+	}
 
 	if !nodeReq.SkipInjectingConfig {
 		cfg, err := nodeReq.Config.EncodeString()

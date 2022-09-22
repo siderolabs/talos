@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 	"golang.org/x/sys/unix"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -59,8 +60,8 @@ type NetworkConfig struct {
 // Ethernet holds network interface info.
 type Ethernet struct {
 	Match struct {
-		Name   []string `yaml:"name,omitempty"`
-		HWAddr []string `yaml:"macaddress,omitempty"`
+		Name   string `yaml:"name,omitempty"`
+		HWAddr string `yaml:"macaddress,omitempty"`
 	} `yaml:"match,omitempty"`
 	DHCPv4      bool     `yaml:"dhcp4,omitempty"`
 	DHCPv6      bool     `yaml:"dhcp6,omitempty"`
@@ -179,14 +180,16 @@ func (n *Nocloud) configFromCD() (metaConfig []byte, networkConfig []byte, machi
 }
 
 //nolint:gocyclo
-func (n *Nocloud) acquireConfig(ctx context.Context) (metadataConfigDl, metadataNetworkConfigDl, machineConfigDl []byte, hostname string, err error) {
+func (n *Nocloud) acquireConfig(ctx context.Context) (metadataConfigDl, metadataNetworkConfigDl, machineConfigDl []byte, metadata *MetadataConfig, err error) {
 	s, err := smbios.GetSMBIOSInfo()
 	if err != nil {
-		return nil, nil, nil, "", err
+		return nil, nil, nil, nil, err
 	}
 
-	metaBaseURL := ""
-	networkSource := false
+	var (
+		metaBaseURL, hostname string
+		networkSource         bool
+	)
 
 	options := strings.Split(s.SystemInformation.SerialNumber, ";")
 	for _, option := range options {
@@ -220,7 +223,17 @@ func (n *Nocloud) acquireConfig(ctx context.Context) (metadataConfigDl, metadata
 		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromCD()
 	}
 
-	return metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, hostname, err
+	metadata = &MetadataConfig{}
+
+	if metadataConfigDl != nil {
+		_ = yaml.Unmarshal(metadataConfigDl, metadata) //nolint:errcheck
+	}
+
+	if hostname != "" {
+		metadata.Hostname = hostname
+	}
+
+	return metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, metadata, err
 }
 
 //nolint:gocyclo

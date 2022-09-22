@@ -477,6 +477,44 @@ func (suite *PlatformConfigSuite) TestPlatformMockExternalIPs() {
 	)
 }
 
+func (suite *PlatformConfigSuite) TestPlatformMockMetadata() {
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&netctrl.PlatformConfigController{
+				V1alpha1Platform: &platformMock{
+					metadata: &runtimeres.PlatformMetadataSpec{
+						Platform: "mock",
+						Zone:     "mock-zone",
+					},
+				},
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
+			},
+		),
+	)
+
+	suite.startRuntime()
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertResources(
+					runtimeres.NamespaceName, runtimeres.PlatformMetadataType, []string{
+						runtimeres.PlatformMetadataID,
+					}, func(r resource.Resource) error {
+						spec := r.(*runtimeres.PlatformMetadata).TypedSpec()
+
+						suite.Assert().Equal("mock", spec.Platform)
+						suite.Assert().Equal("mock-zone", spec.Zone)
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+}
+
 const sampleStoredConfig = "addresses: []\nlinks: []\nroutes: []\nhostnames:\n    - hostname: talos-e2e-897b4e49-gcp-controlplane-jvcnl\n      domainname: \"\"\n      layer: default\nresolvers: []\ntimeServers: []\noperators: []\nexternalIPs:\n    - 10.3.4.5\n    - 2001:470:6d:30e:96f4:4219:5733:b860\n" //nolint:lll
 
 func (suite *PlatformConfigSuite) TestStoreConfig() {
@@ -620,6 +658,8 @@ type platformMock struct {
 	resolvers     []netip.Addr
 	timeServers   []string
 	dhcp4Links    []string
+
+	metadata *runtimeres.PlatformMetadataSpec
 }
 
 func (mock *platformMock) Name() string {
@@ -628,6 +668,10 @@ func (mock *platformMock) Name() string {
 
 func (mock *platformMock) Configuration(context.Context, state.State) ([]byte, error) {
 	return nil, nil
+}
+
+func (mock *platformMock) Metadata(context.Context, state.State) (runtimeres.PlatformMetadataSpec, error) {
+	return runtimeres.PlatformMetadataSpec{Platform: mock.Name()}, nil
 }
 
 func (mock *platformMock) Mode() v1alpha1runtime.Mode {
@@ -740,6 +784,8 @@ func (mock *platformMock) NetworkConfiguration(
 			},
 		)
 	}
+
+	networkConfig.Metadata = mock.metadata
 
 	select {
 	case ch <- networkConfig:

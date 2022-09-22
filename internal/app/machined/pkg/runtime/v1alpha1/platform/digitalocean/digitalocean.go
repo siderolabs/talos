@@ -7,26 +7,21 @@ package digitalocean
 
 import (
 	"context"
-	stderrors "errors"
+	"fmt"
 	"log"
 	"net/netip"
+	"strconv"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/utils"
 	"github.com/talos-systems/talos/pkg/download"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-)
-
-const (
-	// DigitalOceanExternalIPEndpoint displays all external addresses associated with the instance.
-	DigitalOceanExternalIPEndpoint = "http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address"
-	// DigitalOceanHostnameEndpoint is the local endpoint for the hostname.
-	DigitalOceanHostnameEndpoint = "http://169.254.169.254/metadata/v1/hostname"
-	// DigitalOceanUserDataEndpoint is the local endpoint for the config.
-	DigitalOceanUserDataEndpoint = "http://169.254.169.254/metadata/v1/user-data"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // DigitalOcean is the concrete type that implements the platform.Platform interface.
@@ -35,6 +30,200 @@ type DigitalOcean struct{}
 // Name implements the platform.Platform interface.
 func (d *DigitalOcean) Name() string {
 	return "digital-ocean"
+}
+
+// ParseMetadata converts DigitalOcean platform metadata into platform network config.
+//
+//nolint:gocyclo,cyclop
+func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
+	networkConfig := &runtime.PlatformNetworkConfig{}
+
+	if metadata.Hostname != "" {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
+			return nil, err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+	}
+
+	if len(metadata.DNS.Nameservers) > 0 {
+		var dnsIPs []netip.Addr
+
+		for _, dnsIP := range metadata.DNS.Nameservers {
+			if ip, err := netip.ParseAddr(dnsIP); err == nil {
+				dnsIPs = append(dnsIPs, ip)
+			}
+		}
+
+		networkConfig.Resolvers = append(networkConfig.Resolvers, network.ResolverSpecSpec{
+			DNSServers:  dnsIPs,
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
+		Name:        "eth0",
+		Up:          true,
+		ConfigLayer: network.ConfigPlatform,
+	})
+
+	for _, iface := range metadata.Interfaces["public"] {
+		if iface.IPv4 != nil {
+			ifAddr, err := utils.IPPrefixFrom(iface.IPv4.IPAddress, iface.IPv4.Netmask)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse ip address: %w", err)
+			}
+
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ifAddr.Addr())
+
+			networkConfig.Addresses = append(networkConfig.Addresses,
+				network.AddressSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					LinkName:    "eth0",
+					Address:     ifAddr,
+					Scope:       nethelpers.ScopeGlobal,
+					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+					Family:      nethelpers.FamilyInet4,
+				},
+			)
+
+			if iface.IPv4.Gateway != "" {
+				gw, err := netip.ParseAddr(iface.IPv4.Gateway)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
+				}
+
+				route := network.RouteSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					Gateway:     gw,
+					OutLinkName: "eth0",
+					Table:       nethelpers.TableMain,
+					Protocol:    nethelpers.ProtocolStatic,
+					Type:        nethelpers.TypeUnicast,
+					Family:      nethelpers.FamilyInet4,
+					Priority:    1024,
+				}
+
+				route.Normalize()
+
+				networkConfig.Routes = append(networkConfig.Routes, route)
+
+				metaServer, _ := netip.ParsePrefix("169.254.169.254/32") //nolint:errcheck
+
+				networkConfig.Routes = append(networkConfig.Routes, network.RouteSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					OutLinkName: "eth0",
+					Destination: metaServer,
+					Gateway:     gw,
+					Table:       nethelpers.TableMain,
+					Protocol:    nethelpers.ProtocolStatic,
+					Type:        nethelpers.TypeUnicast,
+					Family:      nethelpers.FamilyInet4,
+					Priority:    512,
+				})
+			}
+		}
+
+		if iface.IPv6 != nil {
+			ifAddr, err := utils.IPPrefixFrom(iface.IPv6.IPAddress, strconv.Itoa(iface.IPv6.CIDR))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse ip address: %w", err)
+			}
+
+			networkConfig.Addresses = append(networkConfig.Addresses,
+				network.AddressSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					LinkName:    "eth0",
+					Address:     ifAddr,
+					Scope:       nethelpers.ScopeGlobal,
+					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+					Family:      nethelpers.FamilyInet6,
+				},
+			)
+
+			if iface.IPv6.Gateway != "" {
+				gw, err := netip.ParseAddr(iface.IPv6.Gateway)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
+				}
+
+				route := network.RouteSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					Gateway:     gw,
+					OutLinkName: "eth0",
+					Table:       nethelpers.TableMain,
+					Protocol:    nethelpers.ProtocolStatic,
+					Type:        nethelpers.TypeUnicast,
+					Family:      nethelpers.FamilyInet6,
+					Priority:    1024,
+				}
+
+				route.Normalize()
+
+				networkConfig.Routes = append(networkConfig.Routes, route)
+			}
+		}
+
+		if iface.AnchorIPv4 != nil {
+			ifAddr, err := utils.IPPrefixFrom(iface.AnchorIPv4.IPAddress, iface.AnchorIPv4.Netmask)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse ip address: %w", err)
+			}
+
+			networkConfig.Addresses = append(networkConfig.Addresses,
+				network.AddressSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					LinkName:    "eth0",
+					Address:     ifAddr,
+					Scope:       nethelpers.ScopeGlobal,
+					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+					Family:      nethelpers.FamilyInet4,
+				},
+			)
+		}
+	}
+
+	for idx, iface := range metadata.Interfaces["private"] {
+		ifName := fmt.Sprintf("eth%d", idx+1)
+
+		networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
+			Name:        ifName,
+			Up:          true,
+			ConfigLayer: network.ConfigPlatform,
+		})
+
+		if iface.IPv4 != nil {
+			ifAddr, err := utils.IPPrefixFrom(iface.IPv4.IPAddress, iface.IPv4.Netmask)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse ip address: %w", err)
+			}
+
+			networkConfig.Addresses = append(networkConfig.Addresses,
+				network.AddressSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					LinkName:    ifName,
+					Address:     ifAddr,
+					Scope:       nethelpers.ScopeGlobal,
+					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+					Family:      nethelpers.FamilyInet4,
+				},
+			)
+		}
+	}
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:   d.Name(),
+		Hostname:   metadata.Hostname,
+		Region:     metadata.Region,
+		InstanceID: strconv.Itoa(metadata.DropletID),
+		ProviderID: fmt.Sprintf("digitalocean://%d", metadata.DropletID),
+	}
+
+	return networkConfig, nil
 }
 
 // Configuration implements the platform.Platform interface.
@@ -59,41 +248,17 @@ func (d *DigitalOcean) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-//
-//nolint:gocyclo
 func (d *DigitalOcean) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	host, err := download.Download(ctx, DigitalOceanHostnameEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil && !stderrors.Is(err, errors.ErrNoHostname) {
+	log.Printf("fetching DigitalOcean instance config from: %q ", DigitalOceanMetadataEndpoint)
+
+	metadata, err := d.getMetadata(ctx)
+	if err != nil {
 		return err
 	}
 
-	extIP, err := download.Download(ctx, DigitalOceanExternalIPEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
-	if err != nil && !stderrors.Is(err, errors.ErrNoExternalIPs) {
+	networkConfig, err := d.ParseMetadata(metadata)
+	if err != nil {
 		return err
-	}
-
-	networkConfig := &runtime.PlatformNetworkConfig{}
-
-	if len(host) > 0 {
-		hostnameSpec := network.HostnameSpecSpec{
-			ConfigLayer: network.ConfigPlatform,
-		}
-
-		if err := hostnameSpec.ParseFQDN(string(host)); err != nil {
-			return err
-		}
-
-		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
-	}
-
-	if len(extIP) > 0 {
-		if ip, err := netip.ParseAddr(string(extIP)); err == nil {
-			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
-		}
 	}
 
 	select {

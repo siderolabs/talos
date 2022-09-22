@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
@@ -19,16 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-)
-
-// Ref: https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/gettingmetadata.htm
-const (
-	// OracleHostnameEndpoint is the local metadata endpoint for the hostname.
-	OracleHostnameEndpoint = "http://169.254.169.254/opc/v2/instance/hostname"
-	// OracleUserDataEndpoint is the local metadata endpoint inside of Oracle Cloud.
-	OracleUserDataEndpoint = "http://169.254.169.254/opc/v2/instance/metadata/user_data"
-	// OracleNetworkEndpoint is the local network metadata endpoint inside of Oracle Cloud.
-	OracleNetworkEndpoint = "http://169.254.169.254/opc/v2/vnics/"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // NetworkConfig holds network interface meta config.
@@ -50,15 +42,15 @@ func (o *Oracle) Name() string {
 }
 
 // ParseMetadata converts Oracle Cloud metadata into platform network configuration.
-func (o *Oracle) ParseMetadata(interfaceAddresses []NetworkConfig, hostname string) (*runtime.PlatformNetworkConfig, error) {
+func (o *Oracle) ParseMetadata(interfaceAddresses []NetworkConfig, metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if hostname != "" {
+	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(hostname); err != nil {
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
 			return nil, err
 		}
 
@@ -79,6 +71,22 @@ func (o *Oracle) ParseMetadata(interfaceAddresses []NetworkConfig, hostname stri
 				ConfigLayer: network.ConfigPlatform,
 			})
 		}
+	}
+
+	zone := metadata.AvailabilityDomain
+
+	if idx := strings.LastIndex(zone, ":"); idx != -1 {
+		zone = zone[:idx]
+	}
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:     o.Name(),
+		Hostname:     metadata.Hostname,
+		Region:       strings.ToLower(metadata.Region),
+		Zone:         strings.ToLower(zone),
+		InstanceType: metadata.Shape,
+		InstanceID:   metadata.ID,
+		ProviderID:   fmt.Sprintf("oci://%s", metadata.ID),
 	}
 
 	return networkConfig, nil
@@ -118,28 +126,28 @@ func (o *Oracle) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *Oracle) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	log.Printf("fetching oracle metadata from: %q", OracleMetadataEndpoint)
+
+	metadata, err := o.getMetadata(ctx)
+	if err != nil {
+		return err
+	}
+
 	log.Printf("fetching network config from %q", OracleNetworkEndpoint)
 
-	metadataNetworkConfig, err := download.Download(ctx, OracleNetworkEndpoint,
+	metadataNetworkConfigDl, err := download.Download(ctx, OracleNetworkEndpoint,
 		download.WithHeaders(map[string]string{"Authorization": "Bearer Oracle"}))
 	if err != nil {
-		return fmt.Errorf("failed to fetch network config from metadata service: %w", err)
+		return fmt.Errorf("failed to fetch network config from: %w", err)
 	}
 
 	var interfaceAddresses []NetworkConfig
 
-	if err = json.Unmarshal(metadataNetworkConfig, &interfaceAddresses); err != nil {
+	if err = json.Unmarshal(metadataNetworkConfigDl, &interfaceAddresses); err != nil {
 		return err
 	}
 
-	log.Printf("fetching hostname from: %q", OracleHostnameEndpoint)
-
-	hostname, _ := download.Download(ctx, OracleHostnameEndpoint, //nolint:errcheck
-		download.WithHeaders(map[string]string{"Authorization": "Bearer Oracle"}),
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-
-	networkConfig, err := o.ParseMetadata(interfaceAddresses, string(hostname))
+	networkConfig, err := o.ParseMetadata(interfaceAddresses, metadata)
 	if err != nil {
 		return err
 	}

@@ -26,7 +26,7 @@ routes:
       protocol: static
       layer: platform
 hostnames:
-    - hostname: some
+    - hostname: talos
       domainname: fqdn
       layer: platform
 resolvers: []
@@ -40,3 +40,8 @@ operators:
       layer: platform
 externalIPs:
     - 1.2.3.4
+metadata:
+    platform: hcloud
+    hostname: talos.fqdn
+    instanceId: "0"
+    providerId: hcloud://0

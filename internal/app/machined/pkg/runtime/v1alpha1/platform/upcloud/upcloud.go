@@ -7,7 +7,6 @@ package upcloud
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/netip"
@@ -20,42 +19,8 @@ import (
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
-
-const (
-	// UpCloudMetadataEndpoint is the local UpCloud endpoint.
-	UpCloudMetadataEndpoint = "http://169.254.169.254/metadata/v1.json"
-
-	// UpCloudUserDataEndpoint is the local UpCloud endpoint for the config.
-	UpCloudUserDataEndpoint = "http://169.254.169.254/metadata/v1/user_data"
-)
-
-// MetaData represents a metadata Upcloud interface.
-type MetaData struct {
-	Hostname   string   `json:"hostname,omitempty"`
-	InstanceID string   `json:"instance_id,omitempty"`
-	PublicKeys []string `json:"public_keys,omitempty"`
-	Region     string   `json:"region,omitempty"`
-
-	Network struct {
-		Interfaces []struct {
-			Index       int `json:"index,omitempty"`
-			IPAddresses []struct {
-				Address  string   `json:"address,omitempty"`
-				DHCP     bool     `json:"dhcp,omitempty"`
-				DNS      []string `json:"dns,omitempty"`
-				Family   string   `json:"family,omitempty"`
-				Floating bool     `json:"floating,omitempty"`
-				Gateway  string   `json:"gateway,omitempty"`
-				Network  string   `json:"network,omitempty"`
-			} `json:"ip_addresses,omitempty"`
-			MAC         string `json:"mac,omitempty"`
-			NetworkType string `json:"type,omitempty"`
-			NetworkID   string `json:"network_id,omitempty"`
-		} `json:"interfaces,omitempty"`
-		DNS []string `json:"dns,omitempty"`
-	} `json:"network,omitempty"`
-}
 
 // UpCloud is the concrete type that implements the runtime.Platform interface.
 type UpCloud struct{}
@@ -68,15 +33,15 @@ func (u *UpCloud) Name() string {
 // ParseMetadata converts Upcloud metadata into platform network configuration.
 //
 //nolint:gocyclo
-func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig, error) {
+func (u *UpCloud) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if meta.Hostname != "" {
+	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(meta.Hostname); err != nil {
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
 			return nil, err
 		}
 
@@ -87,7 +52,7 @@ func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig,
 
 	firstIP := true
 
-	for _, addr := range meta.Network.Interfaces {
+	for _, addr := range metadata.Network.Interfaces {
 		if addr.Index <= 0 { // protect from negative interface name
 			continue
 		}
@@ -192,6 +157,14 @@ func (u *UpCloud) ParseMetadata(meta *MetaData) (*runtime.PlatformNetworkConfig,
 		})
 	}
 
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:   u.Name(),
+		Hostname:   metadata.Hostname,
+		Zone:       metadata.Zone,
+		InstanceID: metadata.InstanceID,
+		ProviderID: fmt.Sprintf("upcloud://%s", metadata.InstanceID),
+	}
+
 	return networkConfig, nil
 }
 
@@ -216,19 +189,14 @@ func (u *UpCloud) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (u *UpCloud) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	log.Printf("fetching UpCloud instance config from: %q ", UpCloudMetadataEndpoint)
+	log.Printf("fetching UpCloud instance config from: %q", UpCloudMetadataEndpoint)
 
-	metaConfigDl, err := download.Download(ctx, UpCloudMetadataEndpoint)
+	metadata, err := u.getMetadata(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to fetch network config from metadata service: %w", err)
-	}
-
-	meta := &MetaData{}
-	if err = json.Unmarshal(metaConfigDl, meta); err != nil {
 		return err
 	}
 
-	networkConfig, err := u.ParseMetadata(meta)
+	networkConfig, err := u.ParseMetadata(metadata)
 	if err != nil {
 		return err
 	}

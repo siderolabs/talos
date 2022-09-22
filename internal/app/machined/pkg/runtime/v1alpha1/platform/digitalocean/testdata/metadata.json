@@ -1,0 +1,70 @@
+{
+    "droplet_id": 320206672,
+    "hostname": "debian-s-1vcpu-512mb-10gb-ams3-01",
+    "user_data": "",
+    "vendor_data": "",
+    "public_keys": [],
+    "auth_key": "490eac0a2fc04503267ef85064407f2f",
+    "region": "ams3",
+    "interfaces": {
+        "private": [
+            {
+                "ipv4": {
+                    "ip_address": "10.133.0.2",
+                    "netmask": "255.255.0.0",
+                    "gateway": "10.133.0.1"
+                },
+                "mac": "2a:3c:79:3d:f3:b7",
+                "type": "private"
+            }
+        ],
+        "public": [
+            {
+                "ipv4": {
+                    "ip_address": "128.199.52.32",
+                    "netmask": "255.255.224.0",
+                    "gateway": "128.199.32.1"
+                },
+                "ipv6": {
+                    "ip_address": "2A03:B0C0:0002:00D0:0000:0000:1478:3001",
+                    "cidr": 64,
+                    "gateway": "2a03:b0c0:2:d0::1"
+                },
+                "anchor_ipv4": {
+                    "ip_address": "10.18.0.5",
+                    "netmask": "255.255.0.0",
+                    "gateway": "10.18.0.1"
+                },
+                "mac": "12:2f:49:0c:eb:c0",
+                "type": "public"
+            }
+        ]
+    },
+    "floating_ip": {
+        "ipv4": {
+            "active": false
+        }
+    },
+    "reserved_ip": {
+        "ipv4": {
+            "active": false
+        }
+    },
+    "dns": {
+        "nameservers": [
+            "67.207.67.2",
+            "67.207.67.3"
+        ]
+    },
+    "tags": [
+        "label123"
+    ],
+    "features": {
+        "dhcp_enabled": false
+    },
+    "modify_index": 113261986,
+    "dotty_status": "running",
+    "ssh_info": {
+        "port": 22
+    }
+}

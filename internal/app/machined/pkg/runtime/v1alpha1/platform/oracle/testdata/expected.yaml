@@ -15,3 +15,11 @@ operators:
         routeMetric: 1024
       layer: platform
 externalIPs: []
+metadata:
+    platform: oracle
+    hostname: talos
+    region: phx
+    zone: emir
+    instanceType: VM.Standard.E3.Flex
+    instanceId: ocid1.instance.oc1.phx.exampleuniqueID
+    providerId: oci://ocid1.instance.oc1.phx.exampleuniqueID

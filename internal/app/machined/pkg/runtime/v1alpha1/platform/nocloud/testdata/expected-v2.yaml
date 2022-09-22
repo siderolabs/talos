@@ -44,7 +44,10 @@ routes:
       flags: ""
       protocol: static
       layer: platform
-hostnames: []
+hostnames:
+    - hostname: talos
+      domainname: fqdn
+      layer: platform
 resolvers:
     - dnsServers:
         - 8.8.8.8
@@ -58,3 +61,7 @@ operators:
         routeMetric: 1024
       layer: platform
 externalIPs: []
+metadata:
+    platform: nocloud
+    hostname: talos.fqdn
+    instanceId: "0"

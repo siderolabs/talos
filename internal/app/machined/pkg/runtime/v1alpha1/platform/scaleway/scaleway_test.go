@@ -26,11 +26,11 @@ var expectedNetworkConfig string
 func TestParseMetadata(t *testing.T) {
 	p := &scaleway.Scaleway{}
 
-	var m instance.Metadata
+	var metadata instance.Metadata
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &m))
+	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
 
-	networkConfig, err := p.ParseMetadata(&m)
+	networkConfig, err := p.ParseMetadata(&metadata)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)

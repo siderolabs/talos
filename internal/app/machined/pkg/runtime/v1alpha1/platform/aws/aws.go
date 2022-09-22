@@ -24,6 +24,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // AWS is the concrete type that implements the runtime.Platform interface.
@@ -45,6 +46,44 @@ func NewAWS() (*AWS, error) {
 	a.metadataClient = ec2metadata.New(sess)
 
 	return a, nil
+}
+
+// ParseMetadata converts AWS platform metadata into platform network config.
+func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
+	networkConfig := &runtime.PlatformNetworkConfig{}
+
+	if metadata.Hostname != "" {
+		hostnameSpec := network.HostnameSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+		}
+
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
+			return nil, err
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+	}
+
+	if metadata.PublicIPv4 != "" {
+		ip, err := netip.ParseAddr(metadata.PublicIPv4)
+		if err != nil {
+			return nil, err
+		}
+
+		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+	}
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:     a.Name(),
+		Hostname:     metadata.Hostname,
+		Region:       metadata.Region,
+		Zone:         metadata.Zone,
+		InstanceType: metadata.InstanceType,
+		InstanceID:   metadata.InstanceID,
+		ProviderID:   fmt.Sprintf("aws://%s/%s", metadata.Zone, metadata.InstanceID),
+	}
+
+	return networkConfig, nil
 }
 
 // Name implements the runtime.Platform interface.
@@ -87,55 +126,17 @@ func (a *AWS) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-//
-//nolint:gocyclo
 func (a *AWS) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	getMetadataKey := func(key string) (string, error) {
-		v, err := a.metadataClient.GetMetadataWithContext(ctx, key)
-		if err != nil {
-			if awsErr, ok := err.(awserr.RequestFailure); ok {
-				if awsErr.StatusCode() == http.StatusNotFound {
-					return "", nil
-				}
-			}
+	log.Printf("fetching aws instance config")
 
-			return "", fmt.Errorf("failed to fetch %q from IMDS: %w", key, err)
-		}
-
-		return v, nil
-	}
-
-	networkConfig := &runtime.PlatformNetworkConfig{}
-
-	hostname, err := getMetadataKey("hostname")
+	metadata, err := a.getMetadata(ctx)
 	if err != nil {
 		return err
 	}
 
-	if hostname != "" {
-		hostnameSpec := network.HostnameSpecSpec{
-			ConfigLayer: network.ConfigPlatform,
-		}
-
-		if err = hostnameSpec.ParseFQDN(hostname); err != nil {
-			return err
-		}
-
-		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
-	}
-
-	externalIP, err := getMetadataKey("public-ipv4")
+	networkConfig, err := a.ParseMetadata(metadata)
 	if err != nil {
 		return err
-	}
-
-	if externalIP != "" {
-		ip, err := netip.ParseAddr(externalIP)
-		if err != nil {
-			return err
-		}
-
-		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 	}
 
 	select {

@@ -1,0 +1,96 @@
+addresses:
+- address: 128.199.52.32/19
+  linkName: eth0
+  family: inet4
+  scope: global
+  flags: permanent
+  layer: platform
+- address: 2a03:b0c0:2:d0::1478:3001/64
+  linkName: eth0
+  family: inet6
+  scope: global
+  flags: permanent
+  layer: platform
+- address: 10.18.0.5/16
+  linkName: eth0
+  family: inet4
+  scope: global
+  flags: permanent
+  layer: platform
+- address: 10.133.0.2/16
+  linkName: eth1
+  family: inet4
+  scope: global
+  flags: permanent
+  layer: platform
+links:
+- name: eth0
+  logical: false
+  up: true
+  mtu: 0
+  kind: ""
+  type: netrom
+  layer: platform
+- name: eth1
+  logical: false
+  up: true
+  mtu: 0
+  kind: ""
+  type: netrom
+  layer: platform
+routes:
+- family: inet4
+  dst: ""
+  src: ""
+  gateway: 128.199.32.1
+  outLinkName: eth0
+  table: main
+  priority: 1024
+  scope: global
+  type: unicast
+  flags: ""
+  protocol: static
+  layer: platform
+- family: inet4
+  dst: 169.254.169.254/32
+  src: ""
+  gateway: 128.199.32.1
+  outLinkName: eth0
+  table: main
+  priority: 512
+  scope: global
+  type: unicast
+  flags: ""
+  protocol: static
+  layer: platform
+- family: inet6
+  dst: ""
+  src: ""
+  gateway: 2a03:b0c0:2:d0::1
+  outLinkName: eth0
+  table: main
+  priority: 1024
+  scope: global
+  type: unicast
+  flags: ""
+  protocol: static
+  layer: platform
+hostnames:
+- hostname: debian-s-1vcpu-512mb-10gb-ams3-01
+  domainname: ""
+  layer: platform
+resolvers:
+- dnsServers:
+  - 67.207.67.2
+  - 67.207.67.3
+  layer: platform
+timeServers: []
+operators: []
+externalIPs:
+- 128.199.52.32
+metadata:
+  platform: digital-ocean
+  hostname: debian-s-1vcpu-512mb-10gb-ams3-01
+  region: ams3
+  instanceId: "320206672"
+  providerId: digitalocean://320206672

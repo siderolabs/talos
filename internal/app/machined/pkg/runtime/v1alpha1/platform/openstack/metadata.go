@@ -32,8 +32,8 @@ const (
 
 	// OpenstackExternalIPEndpoint is the local Openstack endpoint for the external IP.
 	OpenstackExternalIPEndpoint = "http://169.254.169.254/latest/meta-data/public-ipv4"
-	// OpenstackHostnameEndpoint is the local Openstack endpoint for the hostname.
-	OpenstackHostnameEndpoint = "http://169.254.169.254/latest/meta-data/hostname"
+	// OpenstackInstanceTypeEndpoint is the local Openstack endpoint for the instance-type.
+	OpenstackInstanceTypeEndpoint = "http://169.254.169.254/latest/meta-data/instance-type"
 	// OpenstackMetaDataEndpoint is the local Openstack endpoint for the meta config.
 	OpenstackMetaDataEndpoint = "http://169.254.169.254/" + configMetadataPath
 	// OpenstackNetworkDataEndpoint is the local Openstack endpoint for the network config.
@@ -71,7 +71,11 @@ type NetworkConfig struct {
 
 // MetadataConfig holds meta info.
 type MetadataConfig struct {
-	Hostname string `json:"hostname,omitempty"`
+	UUID             string `json:"uuid,omitempty"`
+	Hostname         string `json:"hostname,omitempty"`
+	AvailabilityZone string `json:"availability_zone,omitempty"`
+	ProjectID        string `json:"project_id"`
+	InstanceType     string `json:"instance_type"`
 }
 
 func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
@@ -158,20 +162,15 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 	return metaConfig, networkConfig, machineConfig, nil
 }
 
-func (o *Openstack) hostname(ctx context.Context) []byte {
-	log.Printf("fetching hostname from: %q", OpenstackHostnameEndpoint)
+func (o *Openstack) instanceType(ctx context.Context) string {
+	log.Printf("fetching instance-type from: %q", OpenstackInstanceTypeEndpoint)
 
-	hostname, err := download.Download(ctx, OpenstackHostnameEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
+	sku, err := download.Download(ctx, OpenstackInstanceTypeEndpoint)
 	if err != nil {
-		// Platform cannot support this endpoint, or returns timeout.
-		log.Printf("failed to fetch hostname, ignored: %s", err)
-
-		return nil
+		return ""
 	}
 
-	return hostname
+	return string(sku)
 }
 
 func (o *Openstack) externalIPs(ctx context.Context) (addrs []netip.Addr) {

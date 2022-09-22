@@ -1,0 +1,25 @@
+addresses: []
+links: []
+routes: []
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers:
+    - dnsServers:
+        - 169.254.169.254
+      layer: platform
+timeServers:
+    - timeServers:
+        - metadata.google.internal
+      layer: platform
+operators: []
+externalIPs: []
+metadata:
+    platform: gcp
+    hostname: talos
+    region: us-central1
+    zone: us-central1-a
+    instanceType: n1-standard-1
+    instanceId: "0"
+    providerId: gce://123/us-central1-a/my-server

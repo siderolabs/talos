@@ -18,6 +18,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // Container is a platform for installing Talos via an Container image.
@@ -64,15 +65,23 @@ func (c *Container) NetworkConfiguration(ctx context.Context, _ state.State, ch 
 		return err
 	}
 
+	hostname = bytes.TrimSpace(hostname)
+
 	hostnameSpec := network.HostnameSpecSpec{
 		ConfigLayer: network.ConfigPlatform,
 	}
 
-	if err := hostnameSpec.ParseFQDN(string(bytes.TrimSpace(hostname))); err != nil {
+	if err := hostnameSpec.ParseFQDN(string(hostname)); err != nil {
 		return err
 	}
 
 	networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:     c.Name(),
+		Hostname:     string(hostname),
+		InstanceType: os.Getenv("TALOSSKU"),
+	}
 
 	select {
 	case ch <- networkConfig:

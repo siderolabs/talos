@@ -19,17 +19,24 @@ import (
 //go:embed testdata/metadata.json
 var rawMetadata []byte
 
+//go:embed testdata/metadatanetwork.json
+var rawMetadataNetwork []byte
+
 //go:embed testdata/expected.yaml
 var expectedNetworkConfig string
 
 func TestParseMetadata(t *testing.T) {
-	o := &oracle.Oracle{}
+	p := &oracle.Oracle{}
+
+	var metadata oracle.MetadataConfig
+
+	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
 
 	var m []oracle.NetworkConfig
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &m))
+	require.NoError(t, json.Unmarshal(rawMetadataNetwork, &m))
 
-	networkConfig, err := o.ParseMetadata(m, "talos")
+	networkConfig, err := p.ParseMetadata(m, &metadata)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)

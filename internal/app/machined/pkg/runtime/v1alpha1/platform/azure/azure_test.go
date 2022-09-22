@@ -16,8 +16,11 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/azure"
 )
 
-//go:embed testdata/metadata.json
-var rawMetadata []byte
+//go:embed testdata/interfaces.json
+var rawInterfaces []byte
+
+//go:embed testdata/compute.json
+var rawCompute []byte
 
 //go:embed testdata/loadbalancer.json
 var rawLoadBalancerMetadata []byte
@@ -28,11 +31,15 @@ var expectedNetworkConfig string
 func TestParseMetadata(t *testing.T) {
 	a := &azure.Azure{}
 
-	var m []azure.NetworkConfig
+	var interfacesMetadata []azure.NetworkConfig
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &m))
+	require.NoError(t, json.Unmarshal(rawInterfaces, &interfacesMetadata))
 
-	networkConfig, err := a.ParseMetadata(m, []byte("some.fqdn"))
+	var computeMetadata azure.ComputeMetadata
+
+	require.NoError(t, json.Unmarshal(rawCompute, &computeMetadata))
+
+	networkConfig, err := a.ParseMetadata(&computeMetadata, interfacesMetadata, []byte("some.fqdn"))
 	require.NoError(t, err)
 
 	var lb azure.LoadBalancerMetadata

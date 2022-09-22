@@ -45,6 +45,17 @@ message MountStatusSpec {
   repeated string options = 4;
 }
 
+// PlatformMetadataSpec describes platform metadata properties.
+message PlatformMetadataSpec {
+  string platform = 1;
+  string hostname = 2;
+  string region = 3;
+  string zone = 4;
+  string instance_type = 5;
+  string instance_id = 6;
+  string provider_id = 7;
+}
+
 // UnmetCondition is a failure which prevents machine from being ready at the stage.
 message UnmetCondition {
   string name = 1;

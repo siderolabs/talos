@@ -103,3 +103,11 @@ resolvers: []
 timeServers: []
 operators: []
 externalIPs: []
+metadata:
+    platform: equinixMetal
+    hostname: infra-green-ci
+    region: ny
+    zone: ny5
+    instanceType: c3.medium.x86
+    instanceId: X
+    providerId: equinixmetal://X

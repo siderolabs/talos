@@ -173,6 +173,7 @@ description: Talos gRPC API reference.
     - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
+    - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
   
 - [resource/definitions/secrets/secrets.proto](#resource/definitions/secrets/secrets.proto)
@@ -3127,6 +3128,27 @@ MountStatusSpec describes status of the defined sysctls.
 | target | [string](#string) |  |  |
 | filesystem_type | [string](#string) |  |  |
 | options | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.PlatformMetadataSpec"></a>
+
+### PlatformMetadataSpec
+PlatformMetadataSpec describes platform metadata properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| platform | [string](#string) |  |  |
+| hostname | [string](#string) |  |  |
+| region | [string](#string) |  |  |
+| zone | [string](#string) |  |  |
+| instance_type | [string](#string) |  |  |
+| instance_id | [string](#string) |  |  |
+| provider_id | [string](#string) |  |  |
 
 
 

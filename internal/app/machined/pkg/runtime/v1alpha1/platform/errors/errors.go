@@ -18,3 +18,6 @@ var ErrNoExternalIPs = errors.New("failed to fetch external addresses from metad
 
 // ErrNoEventURL indicates that the platform does not have an expected events URL in the kernel params.
 var ErrNoEventURL = errors.New("no event URL")
+
+// ErrMetadataNotReady indicates that the platform does not have metadata yet.
+var ErrMetadataNotReady = errors.New("platform metadata is not ready")

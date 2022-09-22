@@ -30,19 +30,13 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // Event holds data to pass to the Equinix Metal event URL.
 type Event struct {
 	Type    string `json:"type"`
 	Message string `json:"msg"`
-}
-
-// Metadata holds equinixmetal metadata info.
-type Metadata struct {
-	Hostname       string   `json:"hostname"`
-	Network        Network  `json:"network"`
-	PrivateSubnets []string `json:"private_subnets"`
 }
 
 // Network holds network info from the equinixmetal metadata.
@@ -116,7 +110,7 @@ func (p *EquinixMetal) KernelArgs() procfs.Parameters {
 // ParseMetadata converts Equinix Metal metadata into Talos network configuration.
 //
 //nolint:gocyclo,cyclop
-func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metadata, st state.State) (*runtime.PlatformNetworkConfig, error) {
+func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *MetadataConfig, st state.State) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	// 1. Links
@@ -325,6 +319,18 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
+	// 5. platform metadata
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:     p.Name(),
+		Hostname:     equinixMetadata.Hostname,
+		Region:       equinixMetadata.Metro,
+		Zone:         equinixMetadata.Facility,
+		InstanceType: equinixMetadata.Plan,
+		InstanceID:   equinixMetadata.ID,
+		ProviderID:   fmt.Sprintf("equinixmetal://%s", equinixMetadata.ID),
+	}
+
 	return networkConfig, nil
 }
 
@@ -337,12 +343,12 @@ func (p *EquinixMetal) NetworkConfiguration(ctx context.Context, st state.State,
 		return err
 	}
 
-	var equinixMetadata Metadata
-	if err = json.Unmarshal(metadataConfig, &equinixMetadata); err != nil {
+	var meta MetadataConfig
+	if err = json.Unmarshal(metadataConfig, &meta); err != nil {
 		return err
 	}
 
-	networkConfig, err := p.ParseMetadata(ctx, &equinixMetadata, st)
+	networkConfig, err := p.ParseMetadata(ctx, &meta, st)
 	if err != nil {
 		return err
 	}

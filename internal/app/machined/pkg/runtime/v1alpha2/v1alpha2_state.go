@@ -156,6 +156,7 @@ func NewState() (*State, error) {
 		&runtime.KernelParamStatus{},
 		&runtime.MachineStatus{},
 		&runtime.MountStatus{},
+		&runtime.PlatformMetadata{},
 		&secrets.API{},
 		&secrets.CertSAN{},
 		&secrets.Etcd{},

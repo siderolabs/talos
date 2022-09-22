@@ -17,6 +17,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // Nocloud is the concrete type that implements the runtime.Platform interface.
@@ -28,15 +29,15 @@ func (n *Nocloud) Name() string {
 }
 
 // ParseMetadata converts nocloud metadata to platform network config.
-func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, hostname string) (*runtime.PlatformNetworkConfig, error) {
+func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if hostname != "" {
+	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(hostname); err != nil {
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
 			return nil, err
 		}
 
@@ -54,6 +55,12 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, hostna
 		}
 	default:
 		return nil, fmt.Errorf("network-config metadata version=%d is not supported", unmarshalledNetworkConfig.Version)
+	}
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:   n.Name(),
+		Hostname:   metadata.Hostname,
+		InstanceID: metadata.InstanceID,
 	}
 
 	return networkConfig, nil
@@ -89,7 +96,7 @@ func (n *Nocloud) KernelArgs() procfs.Parameters {
 //
 //nolint:gocyclo
 func (n *Nocloud) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	metadataConfigDl, metadataNetworkConfigDl, _, hostname, err := n.acquireConfig(ctx)
+	metadataConfigDl, metadataNetworkConfigDl, _, metadata, err := n.acquireConfig(ctx)
 	if stderrors.Is(err, errors.ErrNoConfigSource) {
 		err = nil
 	}
@@ -98,31 +105,19 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, _ state.State, ch ch
 		return err
 	}
 
-	if metadataConfigDl == nil && metadataNetworkConfigDl == nil && hostname == "" {
+	if metadataConfigDl == nil && metadataNetworkConfigDl == nil {
 		// no data, use cached network configuration if available
 		return nil
 	}
 
-	var (
-		unmarshalledMetadataConfig MetadataConfig
-		unmarshalledNetworkConfig  NetworkConfig
-	)
-
-	if metadataConfigDl != nil {
-		_ = yaml.Unmarshal(metadataConfigDl, &unmarshalledMetadataConfig) //nolint:errcheck
-	}
-
+	var unmarshalledNetworkConfig NetworkConfig
 	if metadataNetworkConfigDl != nil {
 		if err = yaml.Unmarshal(metadataNetworkConfigDl, &unmarshalledNetworkConfig); err != nil {
 			return err
 		}
 	}
 
-	if hostname == "" {
-		hostname = unmarshalledMetadataConfig.Hostname
-	}
-
-	networkConfig, err := n.ParseMetadata(&unmarshalledNetworkConfig, hostname)
+	networkConfig, err := n.ParseMetadata(&unmarshalledNetworkConfig, metadata)
 	if err != nil {
 		return err
 	}

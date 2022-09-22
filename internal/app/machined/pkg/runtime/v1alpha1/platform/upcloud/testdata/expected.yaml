@@ -73,3 +73,8 @@ operators:
       layer: platform
 externalIPs:
     - 185.70.197.2
+metadata:
+    platform: upcloud
+    hostname: talos
+    instanceId: 00123456-1111-2222-3333-123456789012
+    providerId: upcloud://00123456-1111-2222-3333-123456789012

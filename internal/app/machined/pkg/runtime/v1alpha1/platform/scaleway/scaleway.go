@@ -7,10 +7,11 @@ package scaleway
 
 import (
 	"context"
-	"encoding/json"
+	"fmt"
 	"log"
 	"net/netip"
 	"strconv"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/scaleway/scaleway-sdk-go/api/instance/v1"
@@ -21,13 +22,7 @@ import (
 	"github.com/talos-systems/talos/pkg/download"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-)
-
-const (
-	// ScalewayMetadataEndpoint is the local Scaleway endpoint.
-	ScalewayMetadataEndpoint = "http://169.254.42.42/conf?format=json"
-	// ScalewayUserDataEndpoint is the local Scaleway endpoint for the config.
-	ScalewayUserDataEndpoint = "http://169.254.42.42/user_data/cloud-init"
+	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
 )
 
 // Scaleway is the concrete type that implements the runtime.Platform interface.
@@ -38,24 +33,24 @@ func (s *Scaleway) Name() string {
 	return "scaleway"
 }
 
-// ParseMetadata converts Scaleway met.
-func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.PlatformNetworkConfig, error) {
+// ParseMetadata converts Scaleway platform metadata into platform network config.
+func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if metadataConfig.Hostname != "" {
+	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(metadataConfig.Hostname); err != nil {
+		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
 			return nil, err
 		}
 
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if metadataConfig.PublicIP.Address != "" {
-		ip, err := netip.ParseAddr(metadataConfig.PublicIP.Address)
+	if metadata.PublicIP.Address != "" {
+		ip, err := netip.ParseAddr(metadata.PublicIP.Address)
 		if err != nil {
 			return nil, err
 		}
@@ -94,13 +89,13 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 		ConfigLayer: network.ConfigPlatform,
 	})
 
-	if metadataConfig.IPv6.Address != "" {
-		bits, err := strconv.Atoi(metadataConfig.IPv6.Netmask)
+	if metadata.IPv6.Address != "" {
+		bits, err := strconv.Atoi(metadata.IPv6.Netmask)
 		if err != nil {
 			return nil, err
 		}
 
-		ip, err := netip.ParseAddr(metadataConfig.IPv6.Address)
+		ip, err := netip.ParseAddr(metadata.IPv6.Address)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +113,7 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 			},
 		)
 
-		gw, err := netip.ParseAddr(metadataConfig.IPv6.Gateway)
+		gw, err := netip.ParseAddr(metadata.IPv6.Gateway)
 		if err != nil {
 			return nil, err
 		}
@@ -139,20 +134,34 @@ func (s *Scaleway) ParseMetadata(metadataConfig *instance.Metadata) (*runtime.Pl
 		networkConfig.Routes = append(networkConfig.Routes, route)
 	}
 
+	zoneParts := strings.Split(metadata.Location.ZoneID, "-")
+	if len(zoneParts) > 2 {
+		zoneParts = zoneParts[:2]
+	}
+
+	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+		Platform:     s.Name(),
+		Hostname:     metadata.Hostname,
+		Region:       strings.Join(zoneParts, "-"),
+		Zone:         metadata.Location.ZoneID,
+		InstanceType: metadata.CommercialType,
+		InstanceID:   metadata.ID,
+		ProviderID:   fmt.Sprintf("scaleway://instance/%s/%s", metadata.Location.ZoneID, metadata.ID),
+	}
+
 	return networkConfig, nil
 }
 
 // Configuration implements the runtime.Platform interface.
+//
+//nolint:stylecheck
 func (s *Scaleway) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	log.Printf("fetching machine config from %q", ScalewayUserDataEndpoint)
 
-	machineConfigDl, err := download.Download(ctx, ScalewayUserDataEndpoint,
-		download.WithLowSrcPort())
-	if err != nil {
-		return nil, errors.ErrNoConfigSource
-	}
-
-	return machineConfigDl, nil
+	return download.Download(ctx, ScalewayUserDataEndpoint,
+		download.WithLowSrcPort(),
+		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 }
 
 // Mode implements the runtime.Platform interface.
@@ -171,13 +180,8 @@ func (s *Scaleway) KernelArgs() procfs.Parameters {
 func (s *Scaleway) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching scaleway instance config from: %q", ScalewayMetadataEndpoint)
 
-	metadataDl, err := download.Download(ctx, ScalewayMetadataEndpoint)
+	metadata, err := s.getMetadata(ctx)
 	if err != nil {
-		return err
-	}
-
-	metadata := &instance.Metadata{}
-	if err = json.Unmarshal(metadataDl, metadata); err != nil {
 		return err
 	}
 

@@ -26,11 +26,11 @@ var expectedNetworkConfig string
 func TestParseMetadata(t *testing.T) {
 	p := &vultr.Vultr{}
 
-	var m metadata.MetaData
+	var metadata metadata.MetaData
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &m))
+	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
 
-	networkConfig, err := p.ParseMetadata(&m, []byte("1.2.3.4"))
+	networkConfig, err := p.ParseMetadata([]byte("1.2.3.4"), &metadata)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)

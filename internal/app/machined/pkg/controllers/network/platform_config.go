@@ -92,6 +92,10 @@ func (ctrl *PlatformConfigController) Outputs() []controller.Output {
 			Type: network.OperatorSpecType,
 			Kind: controller.OutputShared,
 		},
+		{
+			Type: runtimeres.PlatformMetadataType,
+			Kind: controller.OutputExclusive,
+		},
 	}
 }
 
@@ -173,7 +177,7 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 
 		if stateMounted && networkConfig != nil {
 			if err := ctrl.storeConfig(filepath.Join(ctrl.StatePath, constants.PlatformNetworkConfigFilename), networkConfig); err != nil {
-				return fmt.Errorf("error saving config: %w", err)
+				return fmt.Errorf("error saving platform network config: %w", err)
 			}
 
 			logger.Debug("stored cached platform network config")
@@ -198,6 +202,12 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 
 //nolint:dupl,gocyclo
 func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Runtime, networkConfig *v1alpha1runtime.PlatformNetworkConfig) error {
+	metadataLength := 0
+
+	if networkConfig.Metadata != nil {
+		metadataLength = 1
+	}
+
 	// handle all network specs in a loop as all specs can be handled in a similar way
 	for _, specType := range []struct {
 		length           int
@@ -407,6 +417,28 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 					}
 
 					status.Scope = nethelpers.ScopeGlobal
+
+					return nil
+				}
+			},
+		},
+		// Platform metadata
+		{
+			length: metadataLength,
+			getter: func(i int) interface{} {
+				return networkConfig.Metadata
+			},
+			idBuilder: func(spec interface{}) resource.ID {
+				return runtimeres.PlatformMetadataID
+			},
+			resourceBuilder: func(id string) resource.Resource {
+				return runtimeres.NewPlatformMetadataSpec(runtimeres.NamespaceName, id)
+			},
+			resourceModifier: func(newSpec interface{}) func(r resource.Resource) error {
+				return func(r resource.Resource) error {
+					metadata := newSpec.(*runtimeres.PlatformMetadataSpec) //nolint:errcheck,forcetypeassert
+
+					*r.(*runtimeres.PlatformMetadata).TypedSpec() = *metadata
 
 					return nil
 				}

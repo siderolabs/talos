@@ -46,7 +46,7 @@ routes:
       layer: platform
 hostnames:
     - hostname: talos
-      domainname: ""
+      domainname: fqdn
       layer: platform
 resolvers:
     - dnsServers:
@@ -55,3 +55,7 @@ resolvers:
 timeServers: []
 operators: []
 externalIPs: []
+metadata:
+    platform: nocloud
+    hostname: talos.fqdn
+    instanceId: "0"
