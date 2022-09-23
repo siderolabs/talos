@@ -119,7 +119,7 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 				return extractAndMerge(data, localPath)
 			}
 
-			return os.WriteFile(localPath, data, 0o640)
+			return os.WriteFile(localPath, data, 0o600)
 		})
 	},
 }
