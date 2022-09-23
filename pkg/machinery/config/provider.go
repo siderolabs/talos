@@ -417,6 +417,7 @@ type APIServer interface {
 	Env() Env
 	DisablePodSecurityPolicy() bool
 	AdmissionControl() []AdmissionPlugin
+	AuditPolicy() map[string]interface{}
 }
 
 // AdmissionPlugin defines the API server Admission Plugin configuration.

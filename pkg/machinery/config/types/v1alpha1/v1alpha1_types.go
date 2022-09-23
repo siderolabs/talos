@@ -1569,6 +1569,11 @@ type APIServerConfig struct {
 	//   examples:
 	//     - value: admissionControlConfigExample
 	AdmissionControlConfig AdmissionPluginConfigList `yaml:"admissionControl,omitempty"`
+	//   description: |
+	//     Configure the API server audit policy.
+	//   examples:
+	//     - value: APIServerDefaultAuditPolicy
+	AuditPolicyConfig Unstructured `yaml:"auditPolicy,omitempty"`
 }
 
 // AdmissionPluginConfigList represents the admission plugin configuration list.

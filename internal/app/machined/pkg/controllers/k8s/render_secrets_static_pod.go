@@ -202,10 +202,6 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						filename: "encryptionconfig.yaml",
 						template: kubeSystemEncryptionConfigTemplate,
 					},
-					{
-						filename: "auditpolicy.yaml",
-						template: kubeSystemAuditPolicyTemplate,
-					},
 				},
 			},
 			{

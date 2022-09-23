@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
+	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
@@ -38,6 +39,11 @@ func (ctrl *RenderConfigsStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.AdmissionControlConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.AuditPolicyConfigType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -75,6 +81,17 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		admissionConfig := admissionRes.(*k8s.AdmissionControlConfig).TypedSpec()
 
+		auditRes, err := r.Get(ctx, k8s.NewAuditPolicyConfig().Metadata())
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting audit config resource: %w", err)
+		}
+
+		auditConfig := auditRes.(*k8s.AuditPolicyConfig).TypedSpec()
+
 		type configFile struct {
 			filename string
 			f        func() (runtime.Object, error)
@@ -105,6 +122,10 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 					{
 						filename: "admission-control-config.yaml",
 						f:        admissionControlConfig(admissionConfig),
+					},
+					{
+						filename: "auditpolicy.yaml",
+						f:        auditPolicyConfig(auditConfig),
 					},
 				},
 			},
@@ -139,7 +160,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		if err = r.Modify(ctx, k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID), func(r resource.Resource) error {
 			r.(*k8s.ConfigStatus).TypedSpec().Ready = true
-			r.(*k8s.ConfigStatus).TypedSpec().Version = admissionRes.Metadata().Version().String()
+			r.(*k8s.ConfigStatus).TypedSpec().Version = admissionRes.Metadata().Version().String() + auditRes.Metadata().Version().String()
 
 			return nil
 		}); err != nil {
@@ -170,6 +191,18 @@ func admissionControlConfig(spec *k8s.AdmissionControlConfigSpec) func() (runtim
 					},
 				},
 			)
+		}
+
+		return &cfg, nil
+	}
+}
+
+func auditPolicyConfig(spec *k8s.AuditPolicyConfigSpec) func() (runtime.Object, error) {
+	return func() (runtime.Object, error) {
+		var cfg auditv1.Policy
+
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructuredWithValidation(spec.Config, &cfg, true); err != nil {
+			return nil, fmt.Errorf("error unmarshaling audit policy configuration: %w", err)
 		}
 
 		return &cfg, nil

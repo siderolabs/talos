@@ -19,12 +19,6 @@ resources:
   - identity: {}
 `)
 
-var kubeSystemAuditPolicyTemplate = []byte(`apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: Metadata
-`)
-
 // manifests injected into kube-apiserver
 
 var kubeletBootstrappingToken = []byte(`apiVersion: v1

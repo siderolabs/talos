@@ -102,6 +102,7 @@ func NewState() (*State, error) {
 		&hardware.MemoryModule{},
 		&hardware.SystemInformation{},
 		&k8s.AdmissionControlConfig{},
+		&k8s.AuditPolicyConfig{},
 		&k8s.APIServerConfig{},
 		&k8s.ConfigStatus{},
 		&k8s.ControllerManagerConfig{},

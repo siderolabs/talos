@@ -1066,7 +1066,7 @@ func init() {
 			FieldName: "apiServer",
 		},
 	}
-	APIServerConfigDoc.Fields = make([]encoder.Doc, 7)
+	APIServerConfigDoc.Fields = make([]encoder.Doc, 8)
 	APIServerConfigDoc.Fields[0].Name = "image"
 	APIServerConfigDoc.Fields[0].Type = "string"
 	APIServerConfigDoc.Fields[0].Note = ""
@@ -1106,6 +1106,13 @@ func init() {
 	APIServerConfigDoc.Fields[6].Comments[encoder.LineComment] = "Configure the API server admission plugins."
 
 	APIServerConfigDoc.Fields[6].AddExample("", admissionControlConfigExample)
+	APIServerConfigDoc.Fields[7].Name = "auditPolicy"
+	APIServerConfigDoc.Fields[7].Type = "Unstructured"
+	APIServerConfigDoc.Fields[7].Note = ""
+	APIServerConfigDoc.Fields[7].Description = "Configure the API server audit policy."
+	APIServerConfigDoc.Fields[7].Comments[encoder.LineComment] = "Configure the API server audit policy."
+
+	APIServerConfigDoc.Fields[7].AddExample("", APIServerDefaultAuditPolicy)
 
 	AdmissionPluginConfigDoc.Type = "AdmissionPluginConfig"
 	AdmissionPluginConfigDoc.Comments[encoder.LineComment] = "AdmissionPluginConfig represents the API server admission plugin configuration."

@@ -30,6 +30,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []resource.Resource{
 		&k8s.AdmissionControlConfig{},
 		&k8s.APIServerConfig{},
+		&k8s.AuditPolicyConfig{},
 		&k8s.ConfigStatus{},
 		&k8s.ControllerManagerConfig{},
 		&k8s.Endpoint{},

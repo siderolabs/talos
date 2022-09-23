@@ -34,6 +34,11 @@ message AdmissionPluginSpec {
   google.protobuf.Struct configuration = 2;
 }
 
+// AuditPolicyConfigSpec is audit policy configuration for kube-apiserver.
+message AuditPolicyConfigSpec {
+  google.protobuf.Struct config = 1;
+}
+
 // BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 message BootstrapManifestsConfigSpec {
   string server = 1;

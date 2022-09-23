@@ -103,6 +103,7 @@ func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) k8s.A
 			func() error {
 				return suite.assertControlPlaneConfigs(
 					k8s.AdmissionControlConfigType,
+					k8s.AuditPolicyConfigType,
 					k8s.APIServerConfigType,
 					k8s.ControllerManagerConfigType,
 					k8s.SchedulerConfigType,

@@ -61,6 +61,10 @@ func (ctrl *K8sControlPlaneController) Outputs() []controller.Output {
 			Kind: controller.OutputExclusive,
 		},
 		{
+			Type: k8s.AuditPolicyConfigType,
+			Kind: controller.OutputExclusive,
+		},
+		{
 			Type: k8s.APIServerConfigType,
 			Kind: controller.OutputExclusive,
 		},
@@ -131,6 +135,7 @@ func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Run
 		for _, f := range []func(context.Context, controller.Runtime, *zap.Logger, talosconfig.Provider) error{
 			ctrl.manageAPIServerConfig,
 			ctrl.manageAdmissionControlConfig,
+			ctrl.manageAuditPolicyConfig,
 			ctrl.manageControllerManagerConfig,
 			ctrl.manageSchedulerConfig,
 			ctrl.manageManifestsConfig,
@@ -198,6 +203,18 @@ func (ctrl *K8sControlPlaneController) manageAdmissionControlConfig(ctx context.
 
 	return r.Modify(ctx, k8s.NewAdmissionControlConfig(), func(r resource.Resource) error {
 		*r.(*k8s.AdmissionControlConfig).TypedSpec() = spec
+
+		return nil
+	})
+}
+
+func (ctrl *K8sControlPlaneController) manageAuditPolicyConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+	spec := k8s.AuditPolicyConfigSpec{}
+
+	spec.Config = cfgProvider.Cluster().APIServer().AuditPolicy()
+
+	return r.Modify(ctx, k8s.NewAuditPolicyConfig(), func(r resource.Resource) error {
+		*r.(*k8s.AuditPolicyConfig).TypedSpec() = spec
 
 		return nil
 	})

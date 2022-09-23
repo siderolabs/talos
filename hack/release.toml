@@ -65,6 +65,12 @@ etcd store consistency guarantees.
 This options is only available with etcd >= v3.5.5, so Talos doesn't support version of etcd before v3.5.5.
 """
 
+    [notes.auditpolicy]
+        title = "kube-apiserver Audit Policy"
+        description="""\
+Talos now supports setting custom audit policy for `kube-apiserver` in the machine configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]

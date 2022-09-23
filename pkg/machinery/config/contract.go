@@ -142,3 +142,8 @@ func (contract *VersionContract) KubernetesDiscoveryBackendDisabled() bool {
 func (contract *VersionContract) ApidExtKeyUsageCheckEnabled() bool {
 	return contract.Greater(TalosVersion1_2)
 }
+
+// APIServerAuditPolicySupported returns true if kube-apiserver custom audit policy is supported.
+func (contract *VersionContract) APIServerAuditPolicySupported() bool {
+	return contract.Greater(TalosVersion1_2)
+}

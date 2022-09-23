@@ -109,6 +109,12 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		)
 	}
 
+	var auditPolicyConfig v1alpha1.Unstructured
+
+	if in.VersionContract.APIServerAuditPolicySupported() {
+		auditPolicyConfig = v1alpha1.APIServerDefaultAuditPolicy
+	}
+
 	cluster := &v1alpha1.ClusterConfig{
 		ClusterID:     in.ClusterID,
 		ClusterName:   in.ClusterName,
@@ -121,6 +127,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			CertSANs:               certSANs,
 			ContainerImage:         emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
 			AdmissionControlConfig: admissionControlConfig,
+			AuditPolicyConfig:      auditPolicyConfig,
 		},
 		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
 			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion), in.KubernetesVersion),

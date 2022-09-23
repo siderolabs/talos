@@ -87,6 +87,7 @@ description: Talos gRPC API reference.
     - [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry)
     - [AdmissionControlConfigSpec](#talos.resource.definitions.k8s.AdmissionControlConfigSpec)
     - [AdmissionPluginSpec](#talos.resource.definitions.k8s.AdmissionPluginSpec)
+    - [AuditPolicyConfigSpec](#talos.resource.definitions.k8s.AuditPolicyConfigSpec)
     - [BootstrapManifestsConfigSpec](#talos.resource.definitions.k8s.BootstrapManifestsConfigSpec)
     - [ConfigStatusSpec](#talos.resource.definitions.k8s.ConfigStatusSpec)
     - [ControllerManagerConfigSpec](#talos.resource.definitions.k8s.ControllerManagerConfigSpec)
@@ -1624,6 +1625,21 @@ AdmissionPluginSpec is a single admission plugin configuration Admission Control
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | configuration | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.AuditPolicyConfigSpec"></a>
+
+### AuditPolicyConfigSpec
+AuditPolicyConfigSpec is audit policy configuration for kube-apiserver.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 
 
 

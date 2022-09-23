@@ -533,6 +533,13 @@ apiServer:
     #             runtimeClasses: []
     #             usernames: []
     #         kind: PodSecurityConfiguration
+
+    # # Configure the API server audit policy.
+    # auditPolicy:
+    #     apiVersion: audit.k8s.io/v1
+    #     kind: Policy
+    #     rules:
+    #         - level: Metadata
 {{< /highlight >}}</details> | |
 |`controllerManager` |<a href="#controllermanagerconfig">ControllerManagerConfig</a> |Controller manager server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 controllerManager:
@@ -1382,6 +1389,13 @@ certSANs:
 #             runtimeClasses: []
 #             usernames: []
 #         kind: PodSecurityConfiguration
+
+# # Configure the API server audit policy.
+# auditPolicy:
+#     apiVersion: audit.k8s.io/v1
+#     kind: Policy
+#     rules:
+#         - level: Metadata
 {{< /highlight >}}
 
 
@@ -1414,6 +1428,13 @@ admissionControl:
             runtimeClasses: []
             usernames: []
         kind: PodSecurityConfiguration
+{{< /highlight >}}</details> | |
+|`auditPolicy` |Unstructured |Configure the API server audit policy. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+auditPolicy:
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    rules:
+        - level: Metadata
 {{< /highlight >}}</details> | |
 
 

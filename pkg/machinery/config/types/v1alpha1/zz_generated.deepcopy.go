@@ -52,6 +52,7 @@ func (in *APIServerConfig) DeepCopyInto(out *APIServerConfig) {
 			}
 		}
 	}
+	in.AuditPolicyConfig.DeepCopyInto(&out.AuditPolicyConfig)
 	return
 }
 

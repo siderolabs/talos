@@ -17,7 +17,7 @@ import (
 )
 
 //nolint:lll
-//go:generate deep-copy -type AdmissionControlConfigSpec -type APIServerConfigSpec -type ConfigStatusSpec -type ControllerManagerConfigSpec -type EndpointSpec -type ExtraManifestsConfigSpec -type KubeletLifecycleSpec -type KubeletSpecSpec -type ManifestSpec -type ManifestStatusSpec -type BootstrapManifestsConfigSpec -type KubeletConfigSpec -type NodeIPSpec -type NodeIPConfigSpec -type NodenameSpec -type SchedulerConfigSpec -type SecretsStatusSpec -type StaticPodSpec -type StaticPodStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type AdmissionControlConfigSpec -type APIServerConfigSpec -type AuditPolicyConfigSpec -type ConfigStatusSpec -type ControllerManagerConfigSpec -type EndpointSpec -type ExtraManifestsConfigSpec -type KubeletLifecycleSpec -type KubeletSpecSpec -type ManifestSpec -type ManifestStatusSpec -type BootstrapManifestsConfigSpec -type KubeletConfigSpec -type NodeIPSpec -type NodeIPConfigSpec -type NodenameSpec -type SchedulerConfigSpec -type SecretsStatusSpec -type StaticPodSpec -type StaticPodStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // AdmissionControlConfigType is type of AdmissionControlConfig resource.
 const AdmissionControlConfigType = resource.Type("AdmissionControlConfigs.kubernetes.talos.dev")
