@@ -582,6 +582,7 @@ local release = {
       '_out/metal-amd64.tar.gz',
       '_out/metal-arm64.tar.gz',
       '_out/metal-rpi_4-arm64.img.xz',
+      '_out/metal-rpi_generic-arm64.img.xz',
       '_out/metal-rockpi_4-arm64.img.xz',
       '_out/metal-rockpi_4c-arm64.img.xz',
       '_out/metal-rock64-arm64.img.xz',

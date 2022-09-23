@@ -51,6 +51,9 @@ const (
 	// BoardRPi4 is the  name of the Raspberry Pi 4 Model B.
 	BoardRPi4 = "rpi_4"
 
+	// BoardRPiGeneric is the  name of the Raspberry Pi Compute Module 4.
+	BoardRPiGeneric = "rpi_generic"
+
 	// BoardBananaPiM64 is the  name of the Banana Pi M64.
 	BoardBananaPiM64 = "bananapi_m64"
 
