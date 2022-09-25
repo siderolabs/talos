@@ -11,6 +11,8 @@
 {{ else -}}
 <meta name="robots" content="noindex, nofollow">
 {{ end -}}
+{{ $latest_doc := partial "doc_latest_version.html" . -}}
+<link rel="canonical" href="{{ $latest_doc | safeURL }}" />
 
 {{ partialCached "favicons.html" . }}
 <title>
