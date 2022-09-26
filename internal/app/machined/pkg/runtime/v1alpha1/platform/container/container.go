@@ -55,7 +55,7 @@ func (c *Container) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (c *Container) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (c *Container) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	hostname, err := os.ReadFile("/etc/hostname")

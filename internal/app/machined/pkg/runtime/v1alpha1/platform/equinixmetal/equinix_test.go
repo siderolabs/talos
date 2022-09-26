@@ -5,15 +5,21 @@
 package equinixmetal_test
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"testing"
 
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/equinixmetal"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 //go:embed testdata/metadata.json
@@ -29,7 +35,19 @@ func TestParseMetadata(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawMetadata, &m))
 
-	networkConfig, err := p.ParseMetadata(&m)
+	ctx := context.Background()
+
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
+	eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf8}
+	require.NoError(t, st.Create(ctx, eth1))
+
+	eth2 := network.NewLinkStatus(network.NamespaceName, "eth2")
+	eth2.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf9}
+	require.NoError(t, st.Create(ctx, eth2))
+
+	networkConfig, err := p.ParseMetadata(ctx, &m, st)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)

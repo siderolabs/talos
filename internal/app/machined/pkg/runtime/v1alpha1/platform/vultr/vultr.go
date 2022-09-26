@@ -141,7 +141,7 @@ func (v *Vultr) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (v *Vultr) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (v *Vultr) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching Vultr instance config from: %q ", VultrMetadataEndpoint)
 
 	metaConfigDl, err := download.Download(ctx, VultrMetadataEndpoint)

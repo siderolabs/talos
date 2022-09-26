@@ -36,6 +36,7 @@ const externalLink = "external"
 // PlatformConfigController manages updates hostnames and addressstatuses based on platform information.
 type PlatformConfigController struct {
 	V1alpha1Platform v1alpha1runtime.Platform
+	PlatformState    state.State
 	StatePath        string
 }
 
@@ -126,7 +127,7 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 		defer platformWg.Done()
 
 		ctrl.runWithRestarts(platformCtx, logger, func() error {
-			return ctrl.V1alpha1Platform.NetworkConfiguration(platformCtx, platformCh)
+			return ctrl.V1alpha1Platform.NetworkConfiguration(platformCtx, ctrl.PlatformState, platformCh)
 		})
 	}()
 

@@ -182,7 +182,7 @@ func (h *Hcloud) KernelArgs() procfs.Parameters {
 // NetworkConfiguration implements the runtime.Platform interface.
 //
 //nolint:gocyclo
-func (h *Hcloud) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (h *Hcloud) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching hcloud network config from: %q", HCloudNetworkEndpoint)
 
 	metadataNetworkConfig, err := download.Download(ctx, HCloudNetworkEndpoint)

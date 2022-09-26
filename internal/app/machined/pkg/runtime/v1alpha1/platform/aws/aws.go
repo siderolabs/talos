@@ -88,7 +88,7 @@ func (a *AWS) KernelArgs() procfs.Parameters {
 // NetworkConfiguration implements the runtime.Platform interface.
 //
 //nolint:gocyclo
-func (a *AWS) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (a *AWS) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	getMetadataKey := func(key string) (string, error) {
 		v, err := a.metadataClient.GetMetadataWithContext(ctx, key)
 		if err != nil {

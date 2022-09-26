@@ -18,7 +18,7 @@ addresses:
       flags: permanent
       layer: platform
 links:
-    - name: eth0
+    - name: eth1
       logical: false
       up: true
       mtu: 0
@@ -26,7 +26,7 @@ links:
       type: netrom
       masterName: bond0
       layer: platform
-    - name: eth1
+    - name: eth2
       logical: false
       up: true
       mtu: 0

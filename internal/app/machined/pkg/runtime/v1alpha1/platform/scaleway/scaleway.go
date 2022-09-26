@@ -167,7 +167,7 @@ func (s *Scaleway) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (s *Scaleway) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (s *Scaleway) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching scaleway instance config from: %q", ScalewayMetadataEndpoint)
 
 	metadataDl, err := download.Download(ctx, ScalewayMetadataEndpoint)

@@ -214,7 +214,7 @@ func (u *UpCloud) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (u *UpCloud) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (u *UpCloud) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching UpCloud instance config from: %q ", UpCloudMetadataEndpoint)
 
 	metaConfigDl, err := download.Download(ctx, UpCloudMetadataEndpoint)

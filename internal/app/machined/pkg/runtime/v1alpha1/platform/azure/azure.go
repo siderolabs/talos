@@ -249,7 +249,7 @@ func (a *Azure) configFromCD() ([]byte, error) {
 // NetworkConfiguration implements the runtime.Platform interface.
 //
 //nolint:gocyclo
-func (a *Azure) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (a *Azure) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching network config from %q", AzureInterfacesEndpoint)
 
 	metadataNetworkConfig, err := download.Download(ctx, AzureInterfacesEndpoint,
