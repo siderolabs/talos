@@ -1042,6 +1042,15 @@ func (m *LinkStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.PermanentAddr) > 0 {
+		i -= len(m.PermanentAddr)
+		copy(dAtA[i:], m.PermanentAddr)
+		i = encodeVarint(dAtA, i, uint64(len(m.PermanentAddr)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xf2
+	}
 	if m.Wireguard != nil {
 		size, err := m.Wireguard.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -3066,6 +3075,10 @@ func (m *LinkStatusSpec) SizeVT() (n int) {
 	}
 	if m.Wireguard != nil {
 		l = m.Wireguard.SizeVT()
+		n += 2 + l + sov(uint64(l))
+	}
+	l = len(m.PermanentAddr)
+	if l > 0 {
 		n += 2 + l + sov(uint64(l))
 	}
 	if m.unknownFields != nil {
@@ -6859,6 +6872,40 @@ func (m *LinkStatusSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			if err := m.Wireguard.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		case 30:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PermanentAddr", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PermanentAddr = append(m.PermanentAddr[:0], dAtA[iNdEx:postIndex]...)
+			if m.PermanentAddr == nil {
+				m.PermanentAddr = []byte{}
 			}
 			iNdEx = postIndex
 		default:

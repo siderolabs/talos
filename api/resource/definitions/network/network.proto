@@ -161,6 +161,7 @@ message LinkStatusSpec {
   BridgeMasterSpec bridge_master = 27;
   BondMasterSpec bond_master = 28;
   WireguardSpec wireguard = 29;
+  bytes permanent_addr = 30;
 }
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.

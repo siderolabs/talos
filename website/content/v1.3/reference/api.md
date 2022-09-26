@@ -2509,6 +2509,7 @@ LinkStatusSpec describes status of rendered secrets.
 | bridge_master | [BridgeMasterSpec](#talos.resource.definitions.network.BridgeMasterSpec) |  |  |
 | bond_master | [BondMasterSpec](#talos.resource.definitions.network.BondMasterSpec) |  |  |
 | wireguard | [WireguardSpec](#talos.resource.definitions.network.WireguardSpec) |  |  |
+| permanent_addr | [bytes](#bytes) |  |  |
 
 
 

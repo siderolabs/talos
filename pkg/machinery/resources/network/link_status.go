@@ -30,6 +30,7 @@ type LinkStatusSpec struct {
 	LinkIndex        uint32                      `yaml:"linkIndex" protobuf:"3"`
 	Flags            nethelpers.LinkFlags        `yaml:"flags" protobuf:"4"`
 	HardwareAddr     nethelpers.HardwareAddr     `yaml:"hardwareAddr" protobuf:"5"`
+	PermanentAddr    nethelpers.HardwareAddr     `yaml:"permanentAddr" protobuf:"30"`
 	BroadcastAddr    nethelpers.HardwareAddr     `yaml:"broadcastAddr" protobuf:"6"`
 	MTU              uint32                      `yaml:"mtu" protobuf:"7"`
 	QueueDisc        string                      `yaml:"queueDisc" protobuf:"8"`
