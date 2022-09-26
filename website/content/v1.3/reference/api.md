@@ -111,6 +111,7 @@ description: Talos gRPC API reference.
     - [SchedulerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry)
     - [SecretsStatusSpec](#talos.resource.definitions.k8s.SecretsStatusSpec)
     - [SingleManifest](#talos.resource.definitions.k8s.SingleManifest)
+    - [StaticPodServerStatusSpec](#talos.resource.definitions.k8s.StaticPodServerStatusSpec)
     - [StaticPodSpec](#talos.resource.definitions.k8s.StaticPodSpec)
     - [StaticPodStatusSpec](#talos.resource.definitions.k8s.StaticPodStatusSpec)
   
@@ -1845,6 +1846,8 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | cloud_provider_external | [bool](#bool) |  |  |
 | default_runtime_seccomp_enabled | [bool](#bool) |  |  |
 | skip_node_registration | [bool](#bool) |  |  |
+| static_pod_list_url | [string](#string) |  |  |
+| disable_manifests_directory | [bool](#bool) |  |  |
 
 
 
@@ -2039,6 +2042,21 @@ SingleManifest is a single manifest.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | object | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.StaticPodServerStatusSpec"></a>
+
+### StaticPodServerStatusSpec
+StaticPodServerStatusSpec describes static pod spec, it contains marshaled *v1.Pod spec.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| url | [string](#string) |  |  |
 
 
 

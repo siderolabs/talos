@@ -594,7 +594,7 @@ func init() {
 			FieldName: "kubelet",
 		},
 	}
-	KubeletConfigDoc.Fields = make([]encoder.Doc, 9)
+	KubeletConfigDoc.Fields = make([]encoder.Doc, 10)
 	KubeletConfigDoc.Fields[0].Name = "image"
 	KubeletConfigDoc.Fields[0].Type = "string"
 	KubeletConfigDoc.Fields[0].Note = ""
@@ -667,6 +667,17 @@ func init() {
 	KubeletConfigDoc.Fields[8].Description = "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods."
 	KubeletConfigDoc.Fields[8].Comments[encoder.LineComment] = "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver."
 	KubeletConfigDoc.Fields[8].Values = []string{
+		"true",
+		"yes",
+		"false",
+		"no",
+	}
+	KubeletConfigDoc.Fields[9].Name = "disableManifestsDirectory"
+	KubeletConfigDoc.Fields[9].Type = "bool"
+	KubeletConfigDoc.Fields[9].Note = ""
+	KubeletConfigDoc.Fields[9].Description = "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt's recommended to configure static pods with the \"pods\" key instead."
+	KubeletConfigDoc.Fields[9].Comments[encoder.LineComment] = "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory."
+	KubeletConfigDoc.Fields[9].Values = []string{
 		"true",
 		"yes",
 		"false",

@@ -95,6 +95,22 @@ ip=172.20.0.2::172.20.0.1:255.255.255.0::enx7085c2dfbc59
 KubeSpan MTU link size is now configurable via `network.kubespan.mtu` setting in the machine configuration.
 """
 
+    [notes.static_pod_manifests]
+        title = "Static Pod Manifests"
+        description = """\
+The directory "/etc/kubernetes/manifests" is now deprecated.
+Static pods should always be configured in machine.pods.
+To reenable support you may set `machine.kubelet.disableManifestsDirectory`.
+
+Eg:
+
+```yaml
+machine:
+  kubelet:
+    disableManifestsDirectory: no
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

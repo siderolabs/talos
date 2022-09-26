@@ -1173,6 +1173,11 @@ func (in *KubeletConfig) DeepCopyInto(out *KubeletConfig) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.KubeletDisableManifestsDirectory != nil {
+		in, out := &in.KubeletDisableManifestsDirectory, &out.KubeletDisableManifestsDirectory
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

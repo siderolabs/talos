@@ -407,8 +407,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			APIVersion: kubeletconfig.SchemeGroupVersion.String(),
 			Kind:       "KubeletConfiguration",
 		},
-		StaticPodPath: constants.ManifestsDirectory,
-		Port:          constants.KubeletPort,
+		Port: constants.KubeletPort,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
 				ClientCAFile: constants.KubernetesCACert,
@@ -447,6 +446,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		ShutdownGracePeriodCriticalPods: metav1.Duration{Duration: constants.KubeletShutdownGracePeriodCriticalPods},
 		StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
 		TLSMinVersion:                   "VersionTLS13",
+		StaticPodPath:                   constants.ManifestsDirectory,
 	}
 
 	for _, tt := range []struct {
@@ -546,6 +546,17 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.Authentication.Webhook.Enabled = pointer.To(false)
 				kc.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
+			},
+		},
+		{
+			name: "disable manifests directory",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:                []string{"10.0.0.5"},
+				ClusterDomain:             "cluster.local",
+				DisableManifestsDirectory: true,
+			},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.StaticPodPath = ""
 			},
 		},
 	} {

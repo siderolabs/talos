@@ -1104,6 +1104,15 @@ type KubeletConfig struct {
 	//     - false
 	//     - no
 	KubeletSkipNodeRegistration *bool `yaml:"skipNodeRegistration,omitempty"`
+	//   description: |
+	//     The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.
+	//     It's recommended to configure static pods with the "pods" key instead.
+	//   values:
+	//     - true
+	//     - yes
+	//     - false
+	//     - no
+	KubeletDisableManifestsDirectory *bool `yaml:"disableManifestsDirectory,omitempty"`
 }
 
 // KubeletNodeIPConfig represents the kubelet node IP configuration.

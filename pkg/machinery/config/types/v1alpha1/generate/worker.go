@@ -74,6 +74,10 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
 	}
 
+	if in.VersionContract.KubeletManifestsDirectoryDisabled() {
+		machine.MachineKubelet.KubeletDisableManifestsDirectory = pointer.To(true)
+	}
+
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
 	if err != nil {
 		return config, err

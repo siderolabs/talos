@@ -322,6 +322,7 @@ type Kubelet interface {
 	RegisterWithFQDN() bool
 	NodeIP() KubeletNodeIP
 	SkipNodeRegistration() bool
+	DisableManifestsDirectory() bool
 }
 
 // KubeletNodeIP defines the way node IPs are selected for the kubelet.

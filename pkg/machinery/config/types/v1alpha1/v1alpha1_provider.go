@@ -358,6 +358,11 @@ func (k *KubeletConfig) SkipNodeRegistration() bool {
 	return pointer.SafeDeref(k.KubeletSkipNodeRegistration)
 }
 
+// DisableManifestsDirectory implements the KubeletConfig interface.
+func (k *KubeletConfig) DisableManifestsDirectory() bool {
+	return pointer.SafeDeref(k.KubeletDisableManifestsDirectory)
+}
+
 // ValidSubnets implements the config.Provider interface.
 func (k *KubeletNodeIPConfig) ValidSubnets() []string {
 	return k.KubeletNodeIPValidSubnets

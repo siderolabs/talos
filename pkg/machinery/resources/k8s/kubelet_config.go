@@ -36,6 +36,8 @@ type KubeletConfigSpec struct {
 	CloudProviderExternal        bool                   `yaml:"cloudProviderExternal" protobuf:"7"`
 	DefaultRuntimeSeccompEnabled bool                   `yaml:"defaultRuntimeSeccompEnabled" protobuf:"8"`
 	SkipNodeRegistration         bool                   `yaml:"skipNodeRegistration" protobuf:"9"`
+	StaticPodListURL             string                 `yaml:"staticPodListURL" protobuf:"10"`
+	DisableManifestsDirectory    bool                   `yaml:"disableManifestsDirectory" protobuf:"11"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.

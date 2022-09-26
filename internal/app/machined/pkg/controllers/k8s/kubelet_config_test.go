@@ -68,9 +68,19 @@ func (suite *KubeletConfigSuite) startRuntime() {
 	}()
 }
 
+func (suite *KubeletConfigSuite) createStaticPodServerStatus() {
+	staticPodServerStatus := k8s.NewStaticPodServerStatus(k8s.NamespaceName, k8s.StaticPodServerStatusResourceID)
+
+	staticPodServerStatus.TypedSpec().URL = "http://127.0.0.1:12345"
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, staticPodServerStatus))
+}
+
 func (suite *KubeletConfigSuite) TestReconcile() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
+
+	suite.createStaticPodServerStatus()
 
 	cfg := config.NewMachineConfig(
 		&v1alpha1.Config{
@@ -176,6 +186,8 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
+
+	suite.createStaticPodServerStatus()
 
 	cfg := config.NewMachineConfig(
 		&v1alpha1.Config{

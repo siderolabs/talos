@@ -799,6 +799,7 @@ nodeIP:
         - fdc7::/16
 {{< /highlight >}}</details> | |
 |`skipNodeRegistration` |bool |<details><summary>The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.</summary>This runs kubelet as standalone and only runs static pods.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`disableManifestsDirectory` |bool |<details><summary>The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.</summary>It's recommended to configure static pods with the "pods" key instead.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 

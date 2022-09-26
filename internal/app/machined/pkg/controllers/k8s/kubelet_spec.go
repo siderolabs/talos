@@ -242,7 +242,14 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec) (*kubeletconfig.Kub
 		APIVersion: kubeletconfig.SchemeGroupVersion.String(),
 		Kind:       "KubeletConfiguration",
 	}
-	config.StaticPodPath = constants.ManifestsDirectory
+
+	if cfgSpec.DisableManifestsDirectory {
+		config.StaticPodPath = ""
+	} else {
+		config.StaticPodPath = constants.ManifestsDirectory
+	}
+
+	config.StaticPodURL = cfgSpec.StaticPodListURL
 	config.Port = constants.KubeletPort
 	config.Authentication = kubeletconfig.KubeletAuthentication{
 		X509: kubeletconfig.KubeletX509Authentication{

@@ -119,6 +119,7 @@ func NewState() (*State, error) {
 		&k8s.Nodename{},
 		&k8s.SchedulerConfig{},
 		&k8s.StaticPod{},
+		&k8s.StaticPodServerStatus{},
 		&k8s.StaticPodStatus{},
 		&k8s.SecretsStatus{},
 		&kubeaccess.Config{},

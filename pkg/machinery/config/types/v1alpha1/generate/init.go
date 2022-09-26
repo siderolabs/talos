@@ -73,6 +73,10 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
 	}
 
+	if in.VersionContract.KubeletManifestsDirectoryDisabled() {
+		machine.MachineKubelet.KubeletDisableManifestsDirectory = pointer.To(true)
+	}
+
 	certSANs := in.GetAPIServerSANs()
 
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)

@@ -33,7 +33,7 @@ func (ctrl *RenderSecretsStaticPodController) Name() string {
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input {
+func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input { //nolint:dupl
 	return []controller.Input{
 		{
 			Namespace: secrets.NamespaceName,

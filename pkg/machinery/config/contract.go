@@ -147,3 +147,8 @@ func (contract *VersionContract) ApidExtKeyUsageCheckEnabled() bool {
 func (contract *VersionContract) APIServerAuditPolicySupported() bool {
 	return contract.Greater(TalosVersion1_2)
 }
+
+// KubeletManifestsDirectoryDisabled returns true if the manifests directory flag is supported.
+func (contract *VersionContract) KubeletManifestsDirectoryDisabled() bool {
+	return contract.Greater(TalosVersion1_2)
+}
