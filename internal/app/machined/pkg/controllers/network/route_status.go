@@ -13,7 +13,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink"
 	"go.uber.org/zap"
-	"go4.org/netipx"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
@@ -101,10 +100,10 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 		for _, route := range routes {
 			route := route
 
-			dstAddr, _ := netipx.FromStdIPRaw(route.Attributes.Dst)
+			dstAddr, _ := netip.AddrFromSlice(route.Attributes.Dst)
 			dstPrefix := netip.PrefixFrom(dstAddr, int(route.DstLength))
-			srcAddr, _ := netipx.FromStdIPRaw(route.Attributes.Src)
-			gatewayAddr, _ := netipx.FromStdIPRaw(route.Attributes.Gateway)
+			srcAddr, _ := netip.AddrFromSlice(route.Attributes.Src)
+			gatewayAddr, _ := netip.AddrFromSlice(route.Attributes.Gateway)
 			id := network.RouteID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority)
 
 			if err = r.Modify(ctx, network.NewRouteStatus(network.NamespaceName, id), func(r resource.Resource) error {
