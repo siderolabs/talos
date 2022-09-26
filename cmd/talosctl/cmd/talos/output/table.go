@@ -7,7 +7,7 @@ package output
 import (
 	"bytes"
 	"fmt"
-	"os"
+	"io"
 	"strings"
 	"text/tabwriter"
 
@@ -29,9 +29,9 @@ type Table struct {
 type dynamicColumn func(value interface{}) (string, error)
 
 // NewTable initializes table resource output.
-func NewTable() *Table {
+func NewTable(writer io.Writer) *Table {
 	output := &Table{}
-	output.w.Init(os.Stdout, 0, 0, 3, ' ', 0)
+	output.w.Init(writer, 0, 0, 3, ' ', 0)
 
 	return output
 }

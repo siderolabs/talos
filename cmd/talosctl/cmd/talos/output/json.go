@@ -6,7 +6,7 @@ package output
 
 import (
 	"encoding/json"
-	"os"
+	"io"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -18,11 +18,14 @@ import (
 // JSON outputs resources in JSON format.
 type JSON struct {
 	withEvents bool
+	writer     io.Writer
 }
 
 // NewJSON initializes JSON resource output.
-func NewJSON() *JSON {
-	return &JSON{}
+func NewJSON(writer io.Writer) *JSON {
+	return &JSON{
+		writer: writer,
+	}
 }
 
 // WriteHeader implements output.Writer interface.
@@ -32,23 +35,23 @@ func (j *JSON) WriteHeader(definition *meta.ResourceDefinition, withEvents bool)
 	return nil
 }
 
-// WriteResource implements output.Writer interface.
-func (j *JSON) WriteResource(node string, r resource.Resource, event state.EventType) error {
+// prepareEncodableData prepares the data of a resource to be encoded as JSON and populates it with some extra information.
+func (j *JSON) prepareEncodableData(node string, r resource.Resource, event state.EventType) (map[string]interface{}, error) {
 	out, err := resource.MarshalYAML(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	yamlBytes, err := yaml.Marshal(out)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var data map[string]interface{}
 
 	err = yaml.Unmarshal(yamlBytes, &data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	data["node"] = node
@@ -57,10 +60,24 @@ func (j *JSON) WriteResource(node string, r resource.Resource, event state.Event
 		data["event"] = strings.ToLower(event.String())
 	}
 
-	enc := json.NewEncoder(os.Stdout)
+	return data, nil
+}
+
+func writeAsIndentedJSON(wr io.Writer, data interface{}) error {
+	enc := json.NewEncoder(wr)
 	enc.SetIndent("", "    ")
 
 	return enc.Encode(data)
+}
+
+// WriteResource implements output.Writer interface.
+func (j *JSON) WriteResource(node string, r resource.Resource, event state.EventType) error {
+	data, err := j.prepareEncodableData(node, r, event)
+	if err != nil {
+		return err
+	}
+
+	return writeAsIndentedJSON(j.writer, data)
 }
 
 // Flush implements output.Writer interface.
