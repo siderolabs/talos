@@ -153,10 +153,11 @@ func (suite *LinkStatusSuite) TestInterfaceHwInfo() {
 				emptyFields := []string{}
 
 				for key, value := range map[string]string{
-					"hw addr":  spec.HardwareAddr.String(),
-					"driver":   spec.Driver,
-					"bus path": spec.BusPath,
-					"PCI id":   spec.PCIID,
+					"hw addr":   spec.HardwareAddr.String(),
+					"perm addr": spec.PermanentAddr.String(),
+					"driver":    spec.Driver,
+					"bus path":  spec.BusPath,
+					"PCI id":    spec.PCIID,
 				} {
 					if value == "" {
 						emptyFields = append(emptyFields, key)

@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -152,10 +153,11 @@ func (ctrl *LinkStatusController) reconcile(
 		link := link
 
 		var (
-			ethState   *ethtool.LinkState
-			ethInfo    *ethtool.LinkInfo
-			ethMode    *ethtool.LinkMode
-			driverInfo ethtoolioctl.DrvInfo
+			ethState      *ethtool.LinkState
+			ethInfo       *ethtool.LinkInfo
+			ethMode       *ethtool.LinkMode
+			driverInfo    ethtoolioctl.DrvInfo
+			permanentAddr net.HardwareAddr
 		)
 
 		if ethClient != nil {
@@ -190,6 +192,13 @@ func (ctrl *LinkStatusController) reconcile(
 
 		if ethtoolIoctlClient != nil {
 			driverInfo, _ = ethtoolIoctlClient.DriverInfo(link.Attributes.Name) //nolint:errcheck
+
+			var permAddr string
+
+			permAddr, err = ethtoolIoctlClient.PermAddr(link.Attributes.Name)
+			if err == nil && permAddr != "" {
+				permanentAddr, _ = net.ParseMAC(permAddr) //nolint:errcheck
+			}
 		}
 
 		if err = r.Modify(ctx, network.NewLinkStatus(network.NamespaceName, link.Attributes.Name), func(r resource.Resource) error {
@@ -197,6 +206,7 @@ func (ctrl *LinkStatusController) reconcile(
 
 			status.Index = link.Index
 			status.HardwareAddr = nethelpers.HardwareAddr(link.Attributes.Address)
+			status.PermanentAddr = nethelpers.HardwareAddr(permanentAddr)
 			status.BroadcastAddr = nethelpers.HardwareAddr(link.Attributes.Broadcast)
 			status.LinkIndex = link.Attributes.Type
 			status.Flags = nethelpers.LinkFlags(link.Flags)

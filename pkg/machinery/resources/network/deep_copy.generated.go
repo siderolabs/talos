@@ -73,6 +73,10 @@ func (o LinkStatusSpec) DeepCopy() LinkStatusSpec {
 		cp.HardwareAddr = make([]byte, len(o.HardwareAddr))
 		copy(cp.HardwareAddr, o.HardwareAddr)
 	}
+	if o.PermanentAddr != nil {
+		cp.PermanentAddr = make([]byte, len(o.PermanentAddr))
+		copy(cp.PermanentAddr, o.PermanentAddr)
+	}
 	if o.BroadcastAddr != nil {
 		cp.BroadcastAddr = make([]byte, len(o.BroadcastAddr))
 		copy(cp.BroadcastAddr, o.BroadcastAddr)

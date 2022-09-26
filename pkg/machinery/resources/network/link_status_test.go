@@ -32,6 +32,7 @@ func TestLinkStatusMarshalYAML(t *testing.T) {
 		LinkIndex:        44,
 		Flags:            nethelpers.LinkFlags(nethelpers.LinkUp | nethelpers.LinkRunning),
 		HardwareAddr:     nethelpers.HardwareAddr(hwAddr),
+		PermanentAddr:    nethelpers.HardwareAddr(hwAddr),
 		BroadcastAddr:    nethelpers.HardwareAddr(bcAddr),
 		MTU:              1500,
 		QueueDisc:        "fifo",
@@ -109,6 +110,7 @@ type: ether
 linkIndex: 44
 flags: UP,RUNNING
 hardwareAddr: 01:23:45:67:89:ab
+permanentAddr: 01:23:45:67:89:ab
 broadcastAddr: ff:ff:ff:ff:ff:ff
 mtu: 1500
 queueDisc: fifo
