@@ -60,7 +60,7 @@ func (d *DigitalOcean) KernelArgs() procfs.Parameters {
 // NetworkConfiguration implements the runtime.Platform interface.
 //
 //nolint:gocyclo
-func (d *DigitalOcean) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (d *DigitalOcean) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	host, err := download.Download(ctx, DigitalOceanHostnameEndpoint,
 		download.WithErrorOnNotFound(errors.ErrNoHostname),
 		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))

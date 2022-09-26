@@ -36,7 +36,7 @@ type Platform interface {
 	// Controller will run this in function a separate goroutine, restarting it
 	// on error. Platform is expected to deliver network configuration over the channel,
 	// including updates to the configuration over time.
-	NetworkConfiguration(context.Context, chan<- *PlatformNetworkConfig) error
+	NetworkConfiguration(context.Context, state.State, chan<- *PlatformNetworkConfig) error
 }
 
 // PlatformNetworkConfig describes the network configuration produced by the platform.

@@ -57,7 +57,7 @@ func (g *GCP) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (g *GCP) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (g *GCP) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	hostname, err := metadata.Hostname()

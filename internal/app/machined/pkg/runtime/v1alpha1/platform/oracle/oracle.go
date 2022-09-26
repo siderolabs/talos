@@ -116,7 +116,7 @@ func (o *Oracle) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (o *Oracle) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (o *Oracle) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching network config from %q", OracleNetworkEndpoint)
 
 	metadataNetworkConfig, err := download.Download(ctx, OracleNetworkEndpoint,

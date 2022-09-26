@@ -11,10 +11,11 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
@@ -114,7 +115,7 @@ func (p *EquinixMetal) KernelArgs() procfs.Parameters {
 // ParseMetadata converts Equinix Metal metadata into Talos network configuration.
 //
 //nolint:gocyclo,cyclop
-func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.PlatformNetworkConfig, error) {
+func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metadata, st state.State) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	// 1. Links
@@ -125,7 +126,7 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 	// determine bond name and build list of interfaces enslaved by the bond
 	bondName := ""
 
-	hostInterfaces, err := net.Interfaces()
+	hostInterfaces, err := safe.StateList[*network.LinkStatus](ctx, st, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, fmt.Errorf("error listing host interfaces: %w", err)
 	}
@@ -145,15 +146,18 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 
 		found := false
 
-		for _, hostIf := range hostInterfaces {
-			// if the bond configuration has already been applied, bond0 inherits the MAC address of the first slave (e.g. eth0)
-			// we don't want to match on the bond, so we skip it explicitly
-			if hostIf.HardwareAddr.String() == iface.MAC && hostIf.Name != iface.Bond {
+		hostInterfaceIter := safe.IteratorFromList(hostInterfaces)
+
+		for hostInterfaceIter.Next() {
+			// match using permanent MAC address:
+			// - bond interfaces don't have permanent addresses set, so we skip them this way
+			// - if the bond is already configured, regular hardware address is overwritten with bond address
+			if hostInterfaceIter.Value().TypedSpec().PermanentAddr.String() == iface.MAC {
 				found = true
 
 				networkConfig.Links = append(networkConfig.Links,
 					network.LinkSpecSpec{
-						Name: hostIf.Name,
+						Name: hostInterfaceIter.Value().Metadata().ID(),
 						Up:   true,
 						BondSlave: network.BondSlave{
 							MasterName: bondName,
@@ -324,7 +328,7 @@ func (p *EquinixMetal) ParseMetadata(equinixMetadata *Metadata) (*runtime.Platfo
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (p *EquinixMetal) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (p *EquinixMetal) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	log.Printf("fetching equinix network config from: %q", EquinixMetalMetaDataEndpoint)
 
 	metadataConfig, err := download.Download(ctx, EquinixMetalMetaDataEndpoint)
@@ -337,7 +341,7 @@ func (p *EquinixMetal) NetworkConfiguration(ctx context.Context, ch chan<- *runt
 		return err
 	}
 
-	networkConfig, err := p.ParseMetadata(&equinixMetadata)
+	networkConfig, err := p.ParseMetadata(ctx, &equinixMetadata, st)
 	if err != nil {
 		return err
 	}

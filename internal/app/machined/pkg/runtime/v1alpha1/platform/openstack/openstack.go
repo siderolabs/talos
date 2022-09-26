@@ -242,7 +242,7 @@ func (o *Openstack) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (o *Openstack) NetworkConfiguration(ctx context.Context, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (o *Openstack) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
 	if err != nil {
 		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx)

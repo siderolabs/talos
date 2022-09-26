@@ -180,6 +180,7 @@ func (suite *PlatformConfigSuite) TestPlatformMockHostnameNoDomain() {
 			&netctrl.PlatformConfigController{
 				V1alpha1Platform: &platformMock{hostname: []byte("talos-e2e-897b4e49-gcp-controlplane-jvcnl")},
 				StatePath:        suite.statePath,
+				PlatformState:    suite.state,
 			},
 		),
 	)
@@ -217,7 +218,8 @@ func (suite *PlatformConfigSuite) TestPlatformMockAddresses() {
 						netaddr.MustParseIPPrefix("2001:fd::3/64"),
 					},
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -260,7 +262,8 @@ func (suite *PlatformConfigSuite) TestPlatformMockLinks() {
 				V1alpha1Platform: &platformMock{
 					linksUp: []string{"eth0", "eth1"},
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -295,7 +298,8 @@ func (suite *PlatformConfigSuite) TestPlatformMockRoutes() {
 				V1alpha1Platform: &platformMock{
 					defaultRoutes: []netaddr.IP{netaddr.MustParseIP("10.0.0.1")},
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -329,7 +333,8 @@ func (suite *PlatformConfigSuite) TestPlatformMockOperators() {
 				V1alpha1Platform: &platformMock{
 					dhcp4Links: []string{"eth1", "eth2"},
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -364,7 +369,8 @@ func (suite *PlatformConfigSuite) TestPlatformMockResolvers() {
 				V1alpha1Platform: &platformMock{
 					resolvers: []netaddr.IP{netaddr.MustParseIP("1.1.1.1")},
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -398,7 +404,8 @@ func (suite *PlatformConfigSuite) TestPlatformMockTimeServers() {
 				V1alpha1Platform: &platformMock{
 					timeServers: []string{"pool.ntp.org"},
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -435,7 +442,8 @@ func (suite *PlatformConfigSuite) TestPlatformMockExternalIPs() {
 						netaddr.MustParseIP("2001:470:6d:30e:96f4:4219:5733:b860"),
 					},
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -482,7 +490,8 @@ func (suite *PlatformConfigSuite) TestStoreConfig() {
 						netaddr.MustParseIP("2001:470:6d:30e:96f4:4219:5733:b860"),
 					},
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -520,7 +529,8 @@ func (suite *PlatformConfigSuite) TestLoadConfig() {
 				V1alpha1Platform: &platformMock{
 					noData: true,
 				},
-				StatePath: suite.statePath,
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
 			},
 		),
 	)
@@ -631,6 +641,7 @@ func (mock *platformMock) KernelArgs() procfs.Parameters {
 //nolint:gocyclo
 func (mock *platformMock) NetworkConfiguration(
 	ctx context.Context,
+	st state.State,
 	ch chan<- *v1alpha1runtime.PlatformNetworkConfig,
 ) error {
 	if mock.noData {
