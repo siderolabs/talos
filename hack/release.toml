@@ -38,6 +38,14 @@ machine:
 Talos now supports the Nano Pi R4S SBC.
 """
 
+    [notes.sbc1]
+        title = "Raspberry Generic Images"
+        description = """\
+The Raspberry Pi 4 specific image has been deprecated and will be removed in the v1.4 release of Talos.
+Talos now ships a generic Raspberry Pi image that should support more Raspberry Pi variants.
+Refer to the docs at https://www.talos.dev/v1.3/talos-guides/install/single-board-computers/rpi_generic/ to find which ones are supported.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description="""\

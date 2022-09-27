@@ -1,7 +1,7 @@
 ---
 title: "Jetson Nano"
 description: "Installing Talos on Jetson Nano SBC using raw disk image."
-aliases: 
+aliases:
   - ../../../single-board-computers/jetson_nano
 ---
 
@@ -48,7 +48,7 @@ Next we will extract the L4T release and replace the `u-boot` binary with the pa
 ```bash
 tar xf jetson-210_linux_r32.6.1_aarch64.tbz2
 cd Linux_for_Tegra
-crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.1.0-alpha.0-42-gcd05ae8 - | tar xf - --strip-components=1 -C bootloader/t210ref/p3450-0000/ jetson_nano/u-boot.bin
+crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.3.0-alpha.0-25-g0ac7773 - | tar xf - --strip-components=1 -C bootloader/t210ref/p3450-0000/ jetson_nano/u-boot.bin
 ```
 
 Next we will flash the firmware to the Jetson Nano SPI flash.

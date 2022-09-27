@@ -61,7 +61,7 @@ This requires the user has access to [crane CLI](https://github.com/google/go-co
 
 ```bash
 mkdir _out
-crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.1.0-alpha.0-19-g6691342 - | tar xf - --strip-components=1 -C _out rockpi_4/rkspi_loader.img
+crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.3.0-alpha.0-25-g0ac7773 - | tar xf - --strip-components=1 -C _out rockpi_4/rkspi_loader.img
 sudo dd if=rkspi_loader.img of=/dev/mtdblock0 bs=4K
 ```
 

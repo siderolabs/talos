@@ -1,12 +1,13 @@
 ---
-title: "Raspberry Pi 4 Model B"
-description: "Installing Talos on Rpi4 SBC using raw disk image."
+title: "Raspberry Pi Series"
+description: "Installing Talos on Raspberry Pi SBC's using raw disk image."
 aliases:
-  - ../../../single-board-computers/rpi_4
+  - ../../../single-board-computers/rpi_generic
 ---
 
-> The Raspberry Pi specific image is now deprecated and Talos will continue to use a generic image for the various Raspberry Pi models as supported by [u-boot](https://github.com/u-boot/u-boot/blob/master/doc/board/broadcom/raspberrypi.rst#64-bit) `rpi_arm64_defconfig`.
-Refer to the generic docs available [here]({{< relref "rpi_generic" >}})
+Talos disk image for the Raspberry Pi generic should in theory work for the boards supported by [u-boot](https://github.com/u-boot/u-boot/blob/master/doc/board/broadcom/raspberrypi.rst#64-bit) `rpi_arm64_defconfig`.
+This has only been officialy tested on the Raspberry Pi 4 and community tested on one variant of the Compute Module 4 using Super 6C boards.
+If you have tested this on other Raspberry Pi boards, please let us know.
 
 ## Video Walkthrough
 
@@ -29,20 +30,8 @@ chmod +x /usr/local/bin/talosctl
 
 ## Updating the EEPROM
 
-At least version `v2020.09.03-138a1` of the bootloader (`rpi-eeprom`) is required.
-To update the bootloader we will need an SD card.
-Insert the SD card into your computer and use [Raspberry Pi Imager](https://www.raspberrypi.org/software/)
-to install the bootloader on it (select Operating System > Misc utility images > Bootloader > SD Card Boot).
-Alternatively, you can use the console on Linux or macOS.
-The path to your SD card can be found using `fdisk` on Linux or `diskutil` on macOS.
-In this example, we will assume `/dev/mmcblk0`.
-
-```bash
-curl -Lo rpi-boot-eeprom-recovery.zip https://github.com/raspberrypi/rpi-eeprom/releases/download/v2021.04.29-138a1/rpi-boot-eeprom-recovery-2021-04-29-vl805-000138a1.zip
-sudo mkfs.fat -I /dev/mmcblk0
-sudo mount /dev/mmcblk0p1 /mnt
-sudo bsdtar rpi-boot-eeprom-recovery.zip -C /mnt
-```
+Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to write an EEPROM update image to a spare SD card.
+Select Misc utility images under the Operating System tab.
 
 Remove the SD card from your local machine and insert it into the Raspberry Pi.
 Power the Raspberry Pi on, and wait at least 10 seconds.
@@ -58,8 +47,8 @@ Power off the Raspberry Pi and remove the SD card from it.
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rpi_4-arm64.img.xz
-xz -d metal-rpi_4-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rpi_generic-arm64.img.xz
+xz -d metal-rpi_generic-arm64.img.xz
 ```
 
 ## Writing the Image
