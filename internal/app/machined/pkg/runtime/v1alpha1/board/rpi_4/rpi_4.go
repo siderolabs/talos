@@ -35,12 +35,7 @@ func (r *RPi4) Install(disk string) (err error) {
 		return err
 	}
 
-	err = copy.File("/usr/install/arm64/u-boot/rpi_4/u-boot.bin", "/boot/EFI/u-boot.bin")
-	if err != nil {
-		return err
-	}
-
-	err = copy.File("/usr/install/arm64/u-boot/rpi_4/bl31.bin", "/boot/EFI/bl31.bin")
+	err = copy.File("/usr/install/arm64/u-boot/rpi_generic/u-boot.bin", "/boot/EFI/u-boot.bin")
 	if err != nil {
 		return err
 	}
