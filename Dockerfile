@@ -118,6 +118,8 @@ RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepc
 ARG VTPROTOBUF_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
     && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
+RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
+    && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
 RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.10.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
 COPY ./hack/docgen /go/src/github.com/talos-systems/talos-hack-docgen
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/talos-hack-docgen \
@@ -294,6 +296,11 @@ WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go mod download
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src
+
+# The vulncheck target runs the vulnerability check tool.
+
+FROM build-go AS lint-vulncheck
+RUN --mount=type=cache,target=/.cache govulncheck ./...
 
 # The init target builds the init binary.
 
