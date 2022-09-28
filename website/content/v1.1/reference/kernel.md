@@ -12,7 +12,6 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 
 **Required** parameters:
 
-- `talos.config`: the HTTP(S) URL at which the machine configuration data can be found
 - `talos.platform`: can be one of `aws`, `azure`, `container`, `digitalocean`, `gcp`, `metal`, `equinixMetal`, or `vmware`
 - `init_on_alloc=1`: required by KSPP
 - `slab_nomerge`: required by KSPP
