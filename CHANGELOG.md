@@ -1,3 +1,430 @@
+## [Talos 1.3.0-alpha.0](https://github.com/siderolabs/talos/releases/tag/v1.3.0-alpha.0) (2022-09-28)
+
+Welcome to the v1.3.0-alpha.0 release of Talos!  
+*This is a pre-release of Talos*
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### kube-apiserver Audit Policy
+
+Talos now supports setting custom audit policy for `kube-apiserver` in the machine configuration.
+
+
+### etcd Consistency Check
+
+Talos enables [--experimental-compact-hash-check-enabled](https://github.com/etcd-io/etcd/pull/14120) option by default to improve
+etcd store consistency guarantees.
+
+This options is only available with etcd >= v3.5.5, so Talos doesn't support version of etcd before v3.5.5.
+
+
+### Kernel Modules
+
+Talos now supports settings kernel module parameters.
+
+Eg:
+
+```yaml
+machine:
+  kernel:
+    modules:
+      - name: "br_netfilter"
+        parameters:
+          - nf_conntrack_max=131072
+```
+
+
+### Nano Pi R4S
+
+Talos now supports the Nano Pi R4S SBC.
+
+
+### Raspberry Generic Images
+
+The Raspberry Pi 4 specific image has been deprecated and will be removed in the v1.4 release of Talos.
+Talos now ships a generic Raspberry Pi image that should support more Raspberry Pi variants.
+Refer to the docs at https://www.talos.dev/v1.3/talos-guides/install/single-board-computers/rpi_generic/ to find which ones are supported.
+
+
+### Component Updates
+
+* Kubernetes: v1.26.0-alpha.1
+* Flannel: v0.19.2
+* CoreDNS: v1.10.0
+* etcd: v3.5.5
+* Linux: 5.15.70
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Andrey Smirnov
+* Artem Chernyshev
+* Dmitriy Matrenichev
+* Artem Chernyshev
+* Alexey Palazhchenko
+* Serge Logvinov
+* Andrew Rynhard
+* Utku Ozdemir
+* Kris Reeves
+* Marvin Drees
+* Philipp Sauter
+* Andrew Rynhard
+* Branden Cash
+* Matt Zahorik
+* Olli Janatuinen
+* Pau Campana
+* Sander Maijers
+* Seán C McCord
+* Spencer Smith
+* Steve Francis
+* Tim Jones
+
+### Changes
+<details><summary>105 commits</summary>
+<p>
+
+* [`18c377a4d`](https://github.com/siderolabs/talos/commit/18c377a4d1ce046b310e3609033e9c1f39f9337b) feat: customize audit policy
+* [`23c9ea46b`](https://github.com/siderolabs/talos/commit/23c9ea46bba20d8b7cc336bbc64e04af46cccf5d) fix: raspberry pi install
+* [`f17cdee16`](https://github.com/siderolabs/talos/commit/f17cdee167cfd6d673e2ed71fd5c8d28399a80f3) feat: jsonpath filter for talosctl get outputs
+* [`6bd3cca1a`](https://github.com/siderolabs/talos/commit/6bd3cca1a8d206fb40199a9f0352aa2670fca754) chore: generic raspberry pi images
+* [`d914ab8bb`](https://github.com/siderolabs/talos/commit/d914ab8bb4a34cdb5ffc396a20a32a437c5989e1) chore: add vulncheck tool as a linter
+* [`a0151aa13`](https://github.com/siderolabs/talos/commit/a0151aa13e63b24aba7e39082f6cef3dac923a22) feat: add generic rpi u-boot support
+* [`30f851d09`](https://github.com/siderolabs/talos/commit/30f851d0931f5d6767e13142876c94dac67ec38b) chore: bump dependences
+* [`8b2235c3b`](https://github.com/siderolabs/talos/commit/8b2235c3b6de64abb15bf77e9648bf6bebc18e1f) fix: lookup Equinix Metal bond slaves using 'permanent addr'
+* [`b3257ebb1`](https://github.com/siderolabs/talos/commit/b3257ebb1c529a8f266ba3852d5e4191e0261a79) chore: bump kernel to 5.15.70
+* [`0b2767c16`](https://github.com/siderolabs/talos/commit/0b2767c1646e84ce147030692f3904b9feb02b3e) feat: implement 'permanent addr' in link statuses
+* [`c90e20251`](https://github.com/siderolabs/talos/commit/c90e20251d09a9bedcbd8b1a2055de5e126fc97e) fix: kubeconfig permission
+* [`fc48849d0`](https://github.com/siderolabs/talos/commit/fc48849d00c185442fb37c72e2c20462cc573a69) chore: move maps/slices/ordered to gen module
+* [`8b09bd4b0`](https://github.com/siderolabs/talos/commit/8b09bd4b0400f17ef543f0d117ae35e4ba2356cb) feat: update Kubernetes to v1.26.0-alpha.1
+* [`276d4175b`](https://github.com/siderolabs/talos/commit/276d4175bbd168d12409a1e96b191abdf09f2ff0) chore: bump extension versions in testing
+* [`357b770cb`](https://github.com/siderolabs/talos/commit/357b770cb593196fccaf9b6ba3cd740463351a07) fix: cryptsetup delete slot
+* [`711128839`](https://github.com/siderolabs/talos/commit/7111288393ae4dfdfa7331e39df1803724bc93c0) fix: continue applying bootstrap manifests on some errors
+* [`ce12c7b38`](https://github.com/siderolabs/talos/commit/ce12c7b3805da65315309a465aeed1764f0ce20a) chore: update COSI runtime to v0.2.0-alpha.1
+* [`1b435c0b3`](https://github.com/siderolabs/talos/commit/1b435c0b36a8d0d3e48c5a5e6121117933deeb69) chore: bump kernel + ice drivers
+* [`18e041f1e`](https://github.com/siderolabs/talos/commit/18e041f1ecb88d0b1e8e874d9b1fb580bc7c2297) docs: fix typo in patching example
+* [`0ad6452ca`](https://github.com/siderolabs/talos/commit/0ad6452ca152afef2f3c0e97a2255a237b30941a) feat: update CoreDNS to v1.10.0
+* [`479f3f52e`](https://github.com/siderolabs/talos/commit/479f3f52ee7149ff2a39bec3d8f78b59978af70a) chore: bump dependencies
+* [`e07c6ae99`](https://github.com/siderolabs/talos/commit/e07c6ae99ec347735cf0316294ef0c54ebc45234) feat: update Kubernetes to v1.25.1
+* [`13fdfaffc`](https://github.com/siderolabs/talos/commit/13fdfaffc4a0eb812cd63c5d188efd4aff6da51c) test: fix up default branch name
+* [`ef181321a`](https://github.com/siderolabs/talos/commit/ef181321a5be4d03e4f87aab1483b95a8e61f0fe) docs: add component diagram; K8s & Talos Linux
+* [`aade73643`](https://github.com/siderolabs/talos/commit/aade7364357da6644e8b70ad1dd939130f2fe470) docs: fix missing variable in OpenEBS docs
+* [`472590aa8`](https://github.com/siderolabs/talos/commit/472590aa82d16e1bd3825ecc8106886e7e1b9053) chore: return InvalidArgument on invalid config in maintenance mode
+* [`e5cabd42c`](https://github.com/siderolabs/talos/commit/e5cabd42cc7f86bee5486f73fa4068382bf6a7fb) feat: enable etcd consistency hashcheck
+* [`015535d90`](https://github.com/siderolabs/talos/commit/015535d9051dea243f439b385577d17fd57a122e) fix: update discovery client with the redirect fix
+* [`d0c8e7699`](https://github.com/siderolabs/talos/commit/d0c8e7699cf3e2415c5712ff9ff620c38857a0dc) chore: bump kernel and go
+* [`985b0c2e7`](https://github.com/siderolabs/talos/commit/985b0c2e796006f401376ebf30a1ce888d90a1c9) chore: remove go.work.sum
+* [`69124f102`](https://github.com/siderolabs/talos/commit/69124f10263bdabc556b58b98a3e1f129b85b8ab) feat: update etcd to v3.5.5
+* [`1985a796c`](https://github.com/siderolabs/talos/commit/1985a796c0d5a984c397754445b33827f5690806) docs: update docs for pod security
+* [`94b088f02`](https://github.com/siderolabs/talos/commit/94b088f02f8f8e5b63f0c38e8e091f2ba3329dde) fix: set etcd options consistently
+* [`92ae7ef4b`](https://github.com/siderolabs/talos/commit/92ae7ef4b1abe0a510fea31e0fde2566281f38b1) fix: fix protoenc encoding for enums and types with custom encoders
+* [`93809017c`](https://github.com/siderolabs/talos/commit/93809017c594b1faf1405932d884852eb0ce567c) docs: cpu scaling governor knowledgebase
+* [`7b270ff33`](https://github.com/siderolabs/talos/commit/7b270ff33d6bf74d1fa195c07f98233098b337e9) test: fix api controller test
+* [`2dadcd669`](https://github.com/siderolabs/talos/commit/2dadcd6695003eb940848583caa6ade53ef94fa0) fix: stop worker nodes from acting as apid routers
+* [`9eaf33f3f`](https://github.com/siderolabs/talos/commit/9eaf33f3f274e746ca1b442c0a1a0dae0cec088f) fix: never sign client certificate requests in trustd
+* [`436749124`](https://github.com/siderolabs/talos/commit/43674912479d3fb58c30e350fea9c4daf4ba45d4) feat: environment vars for extension service
+* [`0c0cb671e`](https://github.com/siderolabs/talos/commit/0c0cb671ead1f514b1f1eb89e8d78f455e1efedb) chore: mark machine configuration validation failure as InvalidArgument
+* [`f424e5340`](https://github.com/siderolabs/talos/commit/f424e53404db61bbdbcbe8fab7cfec91785aa628) fix: stop containers more thoroughly
+* [`12827b861`](https://github.com/siderolabs/talos/commit/12827b861c13bb9b83a2f0ea2960582e8be319f0) chore: move "implements" checks to compile time
+* [`3a67c42cb`](https://github.com/siderolabs/talos/commit/3a67c42cbfdbd565e0af500d97c264ef6095637b) fix: kill the task processes when cleaning up stale task
+* [`14a79e325`](https://github.com/siderolabs/talos/commit/14a79e325bf0ffa107aaee9c07d3501b7010693c) chore: bump dependencies
+* [`9beee92e7`](https://github.com/siderolabs/talos/commit/9beee92e71e712a2af24dee612e27c30cac39d0d) docs: fix double vv in Kubernetes version
+* [`688272515`](https://github.com/siderolabs/talos/commit/6882725157f4c2ea79c248f79160e362be6c2c07) fix: use different username for Talos Kubernetes API access
+* [`161a52a9e`](https://github.com/siderolabs/talos/commit/161a52a9ef60eb9c1c1a6c31b06d06894456300c) feat: check apid client certificate extended key usage
+* [`9dadc4a59`](https://github.com/siderolabs/talos/commit/9dadc4a599f52cc564f5411dd35bc981e482d24a) fix: include all node addresses into etcd cert SANs
+* [`71bfd3e43`](https://github.com/siderolabs/talos/commit/71bfd3e43cdc9790d3cb7a134c3b49256b1942a1) feat: update CoreDNS to 1.9.4
+* [`9df8f1ff1`](https://github.com/siderolabs/talos/commit/9df8f1ff1aebb24a6b0649ba491b10b23a0b2198) fix: list COSI APIs for the apid authenticator
+* [`31462450f`](https://github.com/siderolabs/talos/commit/31462450f19700dd6691ebc4b0c18edca4f6a1b7) fix: pass a pointer to specs.Mount into protoenc.Marshal
+* [`e626540df`](https://github.com/siderolabs/talos/commit/e626540dfb470386d0750f2f8bbaf4b5cb36b203) chore: avoid double API request logging in trustd
+* [`f62d17125`](https://github.com/siderolabs/talos/commit/f62d17125b8c1b26b0b62d22c2846f3a2ece37d1) chore: update crypto to use new import path siderolabs/crypto
+* [`ef27dd855`](https://github.com/siderolabs/talos/commit/ef27dd8553ee0e5467c3baaf4be18d1ccb30dad1) chore: bump dependencies
+* [`6472ae00b`](https://github.com/siderolabs/talos/commit/6472ae00b21c0f637b1e6610a8f3f71a1b775628) fix: automatically discard VIPs for etcd advertised addresses
+* [`5e21cca52`](https://github.com/siderolabs/talos/commit/5e21cca52d7462240bb42aafa225ee97d08bdc25) feat: support setting kernel parameters
+* [`bd56621cd`](https://github.com/siderolabs/talos/commit/bd56621cdf50d25013756a8792dc7b4d5354396f) feat: add structprotogen tool
+* [`cdb6bb2cc`](https://github.com/siderolabs/talos/commit/cdb6bb2cc78685c218506c61a477c8a8e569e861) feat: add Nano Pi R4S support
+* [`36c1f1d6e`](https://github.com/siderolabs/talos/commit/36c1f1d6e6aa50379343acba5348d8cc038b137e) fix: flip the client-server version check
+* [`cd6c53a97`](https://github.com/siderolabs/talos/commit/cd6c53a979236543afc302a67da627ee633883b3) docs: fork docs for v1.3
+* [`0847400f7`](https://github.com/siderolabs/talos/commit/0847400f728d67889b9f740a0359eb916108d8ea) fix: prevent panic on health check if a member has no IPs
+* [`7471d7f01`](https://github.com/siderolabs/talos/commit/7471d7f0174a5240fa3c4cd2f16325ec2a4f1810) feat: update Flannel to v0.19.2
+* [`148c75cfb`](https://github.com/siderolabs/talos/commit/148c75cfb99537f64d43a3add3259bf591cb79a9) docs: consolidate the control-plane documentation
+* [`353154281`](https://github.com/siderolabs/talos/commit/353154281a4cf72076b99160e50e617109f72996) fix: drop kube-system SA default binding
+* [`4f37b668b`](https://github.com/siderolabs/talos/commit/4f37b668befdbd26bc2d32106e0bcc654f7e6119) chore: remove capi hacks
+* [`1369afea8`](https://github.com/siderolabs/talos/commit/1369afea853423f22fde20effd431c3f8d906a9d) docs: make 1.2.0 docs default ones
+* [`7627cb0e3`](https://github.com/siderolabs/talos/commit/7627cb0e30a8b2a5a1cc30906b547511c9d3c98b) docs: add new `talosctl gen secrets`
+* [`8aa60a37a`](https://github.com/siderolabs/talos/commit/8aa60a37a6ea57bf54d558c7a2f54d806fad3173) chore: bump kernel to 5.15.64
+* [`a798dbd5d`](https://github.com/siderolabs/talos/commit/a798dbd5d2d9bc6d1410a56035550d44de934950) docs: update docs for upcoming 1.2.0 release
+* [`b2fec3c97`](https://github.com/siderolabs/talos/commit/b2fec3c975dba7b0bc2dc7d5447e62350057061b) fix: properly handle `configContext` being `nil` in Talos client
+* [`1c0977b3a`](https://github.com/siderolabs/talos/commit/1c0977b3af22f9f4b61b80ca6dcedf14a5ef63ae) fix: change the type of returned gRPC connection object from the client
+* [`41848e421`](https://github.com/siderolabs/talos/commit/41848e421496184008ad2302e3cb03a882c0f5bf) fix: expose Talos client gRPC connection via the function `Conn`
+* [`2e9be4af8`](https://github.com/siderolabs/talos/commit/2e9be4af8b521eca985c425f62dfc7a59d19e7da) chore: bump dependencies
+* [`d283aba3a`](https://github.com/siderolabs/talos/commit/d283aba3a3670cfde8ab9137deba3ab3b343906f) test: fix cli reboot test
+* [`0b339a9dc`](https://github.com/siderolabs/talos/commit/0b339a9dc508327347777619749ff1e2c3e47f37) feat: track progress of action API calls
+* [`072349812`](https://github.com/siderolabs/talos/commit/072349812506c5cd32159bb14bab5b294ee59811) fix: update COSI to the version with gRPC Wait fix
+* [`89d57aa81`](https://github.com/siderolabs/talos/commit/89d57aa816a57448d6e350698a8f6a5d128209ac) fix: always abort the maintenance service
+* [`f6fa74619`](https://github.com/siderolabs/talos/commit/f6fa7461932462160f40f670a5252fbc2981bdc3) fix: limit apid backoff max delay
+* [`d7ef346db`](https://github.com/siderolabs/talos/commit/d7ef346db8ea7d4f7676ae5e032a3c0d06823d47) fix: get command in the case 'nodes' are not set in the context
+* [`4e9c32256`](https://github.com/siderolabs/talos/commit/4e9c322564d7f65c82d636a9f80c0c5354455967) fix: correctly render hosts.toml with multiple endpoints
+* [`cdd0f08bc`](https://github.com/siderolabs/talos/commit/cdd0f08bc5d8d47bc2d21745ee5a13ced3632c8a) feat: check client <> server version in some Talos commands
+* [`446b0af58`](https://github.com/siderolabs/talos/commit/446b0af58bf273712374472bfa2777de5b7ac46f) chore: bump kernel and runc
+* [`8c203ce9b`](https://github.com/siderolabs/talos/commit/8c203ce9b1722c5832c506857cb56e14e2a34fe1) feat: remove the machine from the discovery service on reset
+* [`b59ca5810`](https://github.com/siderolabs/talos/commit/b59ca5810e6cf75f6a3042a47535431110004201) chore: move from inet.af/netaddr to net/netip and go4.org/netipx
+* [`053af1d59`](https://github.com/siderolabs/talos/commit/053af1d59ea266b84bb049460f92b33b32c1b82e) fix: update etcd certificates when node addresses changes
+* [`11edb2c6f`](https://github.com/siderolabs/talos/commit/11edb2c6f84fbbfba437361ce4dcd70c50eb08d8) test: re-enable upgrade tests
+* [`0310e2089`](https://github.com/siderolabs/talos/commit/0310e20890b11e1f4015e923eb9984aea1188d20) chore: bump github.com/siderolabs/protoenc to v0.1.5
+* [`29bd63240`](https://github.com/siderolabs/talos/commit/29bd632401ca694df0a2ab921a2a525b4c3440d8) chore: remove old build tags syntax
+* [`b500d0aa9`](https://github.com/siderolabs/talos/commit/b500d0aa9052ab5066eb6cde06bcdac3e998705a) chore: bump k8s to v1.25.0
+* [`29e574be7`](https://github.com/siderolabs/talos/commit/29e574be74c96211fd010ee5bd06675898f04db8) docs: update to v1.2.0-beta.1
+* [`26b549f2a`](https://github.com/siderolabs/talos/commit/26b549f2a12c3486b52a8877b8a0a4f985695c7d) chore: bump dependencies
+* [`8c3ac4c42`](https://github.com/siderolabs/talos/commit/8c3ac4c42bff1f1678ddb62e0f20a9c419460ad4) chore: limit GOMAXPROCS for Talos services
+* [`361e85b74`](https://github.com/siderolabs/talos/commit/361e85b7443f6f4ff24fbf99a9f9276b73b73ed4) fix: properly read kexec disabled sysctl
+* [`cfe6c2bc2`](https://github.com/siderolabs/talos/commit/cfe6c2bc2d42ca28f3a5b3217aa4d126777e3db6) docs: nvidia oss drivers
+* [`2f2d97b6b`](https://github.com/siderolabs/talos/commit/2f2d97b6b5663a0873db9d47b7706f2c0a531d8c) fix: don't wait for the hostname in maintenance mode
+* [`b15a63924`](https://github.com/siderolabs/talos/commit/b15a6392465aa2aa0df231c622ca1762972ccd20) chore: bump kernel to 5.15.62
+* [`a0d94be30`](https://github.com/siderolabs/talos/commit/a0d94be30d3dcf41b2b8b34a1caa6928a029f81a) fix: stable default hostname bias
+* [`da4cd34ef`](https://github.com/siderolabs/talos/commit/da4cd34ef5c5a01cfc3c3ee56b3f8c2f77997b49) feat: update etcd advertised peer addresses on the fly
+* [`faf92ce01`](https://github.com/siderolabs/talos/commit/faf92ce01661c5a9a86f9e579da3a2822d93f1f6) chore: bump kubernetes to v1.25.0-rc.1
+* [`52de919e3`](https://github.com/siderolabs/talos/commit/52de919e34789c36c4ee71ca133240b50b068064) chore: bump containerd to v1.6.8
+* [`7d43fc79b`](https://github.com/siderolabs/talos/commit/7d43fc79b1e913d51f111ecc7c2c8b3bfb36e679) fix: make 'ca', 'crt' and 'key' flags optional for 'talosctl config add'
+* [`fd467e02c`](https://github.com/siderolabs/talos/commit/fd467e02c1edcfc0eff656392ece5dd8ba1114f2) fix: handle grub config being empty in the `Revert` function
+* [`9492aca65`](https://github.com/siderolabs/talos/commit/9492aca652eec4d4049fef1c8d141696ed72a197) fix: clean up `cancelCtxMu` leftovers in PriorityLock
+* [`61e3eb2ea`](https://github.com/siderolabs/talos/commit/61e3eb2eaab1c7974a27440ddd98139a27dfb9dc) fix: talosctl edit mc loop
+* [`32db7a7f5`](https://github.com/siderolabs/talos/commit/32db7a7f5d6638fc0f731a009dfb0c1870c69083) fix: surround `cancelCtx` with the mutex
+</p>
+</details>
+
+### Changes from siderolabs/crypto
+<details><summary>27 commits</summary>
+<p>
+
+* [`c3225ee`](https://github.com/siderolabs/crypto/commit/c3225eee603a8d1218c67e1bfe33ddde7953ed74) feat: allow CSR template subject field to be overridden
+* [`8570669`](https://github.com/siderolabs/crypto/commit/85706698dac8cddd0e9f41006bed059347d2ea26) chore: rename to siderolabs/crypto
+* [`e9df1b8`](https://github.com/siderolabs/crypto/commit/e9df1b8ca74c6efdc7f72191e5d2613830162fd5) feat: add support for generating keys from RSA-SHA256 CAs
+* [`510b0d2`](https://github.com/siderolabs/crypto/commit/510b0d2753a89170d0c0f60e052a66484997a5b2) chore: add json tags
+* [`6fa2d93`](https://github.com/siderolabs/crypto/commit/6fa2d93d0382299d5471e0de8e831c923398aaa8) fix: deepcopy nil fields as `nil`
+* [`9a63cba`](https://github.com/siderolabs/crypto/commit/9a63cba8dabd278f3080fa8c160613efc48c43f8) fix: add back support for generating ECDSA keys with P-256 and SHA512
+* [`893bc66`](https://github.com/siderolabs/crypto/commit/893bc66e4716a4cb7d1d5e66b5660ffc01f22823) fix: use SHA256 for ECDSA-P256
+* [`deec8d4`](https://github.com/siderolabs/crypto/commit/deec8d47700e10e3ea813bdce01377bd93c83367) chore: implement DeepCopy methods for PEMEncoded* types
+* [`d3cb772`](https://github.com/siderolabs/crypto/commit/d3cb77220384b3a3119a6f3ddb1340bbc811f1d1) feat: make possible to change KeyUsage
+* [`6bc5bb5`](https://github.com/siderolabs/crypto/commit/6bc5bb50c52767296a1b1cab6580e3fcf1358f34) chore: remove unused argument
+* [`cd18ef6`](https://github.com/siderolabs/crypto/commit/cd18ef62eb9f65d8b6730a2eb73e47e629949e1b) feat: add support for several organizations
+* [`97c888b`](https://github.com/siderolabs/crypto/commit/97c888b3924dd5ac70b8d30dd66b4370b5ab1edc) chore: add options to CSR
+* [`7776057`](https://github.com/siderolabs/crypto/commit/7776057f5086157873f62f6a21ec23fa9fd86e05) chore: fix typos
+* [`80df078`](https://github.com/siderolabs/crypto/commit/80df078327030af7e822668405bb4853c512bd7c) chore: remove named result parameters
+* [`15bdd28`](https://github.com/siderolabs/crypto/commit/15bdd282b74ac406ab243853c1b50338a1bc29d0) chore: minor updates
+* [`4f80b97`](https://github.com/siderolabs/crypto/commit/4f80b976b640d773fb025d981bf85bcc8190815b) fix: verify CSR signature before issuing a certificate
+* [`39584f1`](https://github.com/siderolabs/crypto/commit/39584f1b6e54e9966db1f16369092b2215707134) feat: support for key/certificate types RSA, Ed25519, ECDSA
+* [`cf75519`](https://github.com/siderolabs/crypto/commit/cf75519cab82bd1b128ae9b45107c6bb422bd96a) fix: function NewKeyPair should create certificate with proper subject
+* [`751c95a`](https://github.com/siderolabs/crypto/commit/751c95aa9434832a74deb6884cff7c5fd785db0b) feat: add 'PEMEncodedKey' which allows to transport keys in YAML
+* [`562c3b6`](https://github.com/siderolabs/crypto/commit/562c3b66f89866746c0ba47927c55f41afed0f7f) feat: add support for public RSA key in RSAKey
+* [`bda0e9c`](https://github.com/siderolabs/crypto/commit/bda0e9c24e80c658333822e2002e0bc671ac53a3) feat: enable more conversions between encoded and raw versions
+* [`e0dd56a`](https://github.com/siderolabs/crypto/commit/e0dd56ac47456f85c0b247999afa93fb87ebc78b) feat: add NotBefore option for x509 cert creation
+* [`12a4897`](https://github.com/siderolabs/crypto/commit/12a489768a6bb2c13e16e54617139c980f99a658) feat: add support for SPKI fingerprint generation and matching
+* [`d0c3eef`](https://github.com/siderolabs/crypto/commit/d0c3eef149ec9b713e7eca8c35a6214bd0a64bc4) fix: implement NewKeyPair
+* [`196679e`](https://github.com/siderolabs/crypto/commit/196679e9ec77cb709db54879ddeddd4eaafaea01) feat: move `pkg/grpc/tls` from `github.com/talos-systems/talos` as `./tls`
+* [`1ff6242`](https://github.com/siderolabs/crypto/commit/1ff6242c91bb298ceeb4acd65685cba952fe4178) chore: initial version as imported from talos-systems/talos
+* [`835063e`](https://github.com/siderolabs/crypto/commit/835063e055b28a525038b826a6d80cbe76402414) chore: initial commit
+</p>
+</details>
+
+### Changes from siderolabs/discovery-api
+<details><summary>3 commits</summary>
+<p>
+
+* [`5b0c5e7`](https://github.com/siderolabs/discovery-api/commit/5b0c5e78097c1489457b148a7f13c73890f5ecad) chore: rename to siderolabs, rekres, etc
+* [`db279ef`](https://github.com/siderolabs/discovery-api/commit/db279ef42a1fad2e1feb4902150b4969f7082c81) feat: initial set of APIs and generated files
+* [`ac52a37`](https://github.com/siderolabs/discovery-api/commit/ac52a378211475ebd281dcbb00954eec42459778) chore: initial commit
+</p>
+</details>
+
+### Changes from siderolabs/discovery-client
+<details><summary>1 commit</summary>
+<p>
+
+* [`230f317`](https://github.com/siderolabs/discovery-client/commit/230f317a8e6e9542b82efcbac9f5cd7b9cff34b6) fix: reconnect the client on update failure
+</p>
+</details>
+
+### Changes from siderolabs/gen
+<details><summary>4 commits</summary>
+<p>
+
+* [`726e066`](https://github.com/siderolabs/gen/commit/726e066dcb35c86f82866097bed806f22b936292) fix: rename tuples.go to pair.go and set proper package name
+* [`d8d7d25`](https://github.com/siderolabs/gen/commit/d8d7d25ce9a588609c00cb798206a01a866bf7a6) chore: minor additions
+* [`338a650`](https://github.com/siderolabs/gen/commit/338a65065f92eb6426a66c4a88a0cc02cc02e529) chore: add initial implementation and documentation
+* [`4fd8667`](https://github.com/siderolabs/gen/commit/4fd866707052c792a6adccbc28efec5debdd18a8) Initial commit
+</p>
+</details>
+
+### Changes from siderolabs/go-blockdevice
+<details><summary>55 commits</summary>
+<p>
+
+* [`dcf6044`](https://github.com/siderolabs/go-blockdevice/commit/dcf6044c906b36f183e11b6553458c680126d1d9) chore: rekres and rename
+* [`9c4af49`](https://github.com/siderolabs/go-blockdevice/commit/9c4af492cc17279f0281fcd271e7423be78442bb) fix: cryptsetup remove slot
+* [`74ea471`](https://github.com/siderolabs/go-blockdevice/commit/74ea47109c4525bec139640fed6354ad3097f5fb) feat: add freebsd stubs
+* [`9fa801c`](https://github.com/siderolabs/go-blockdevice/commit/9fa801cf4da184e3560b9a18ba43d13316f172f9) feat: add ReadOnly attribute to Disk
+* [`fccee8b`](https://github.com/siderolabs/go-blockdevice/commit/fccee8bb082b105cb60db40cb01636efc3241b5f) chore: rekres the source, fix issues
+* [`d9c3a27`](https://github.com/siderolabs/go-blockdevice/commit/d9c3a273886113e24809ef1e9930fc982318217d) feat: support probing FAT12/FAT16 filesystems
+* [`b374eb4`](https://github.com/siderolabs/go-blockdevice/commit/b374eb48148dc92a82d8bf9540432bb8531f73f3) fix: align partition to 1M boundary by default
+* [`ec428fe`](https://github.com/siderolabs/go-blockdevice/commit/ec428fed2ecd5a389833a88f8dc333762816db99) fix: lookup filesystem labels on the actual device path
+* [`7b9de26`](https://github.com/siderolabs/go-blockdevice/commit/7b9de26bc6bc3d54b95bd8e8fb3aade4b45adc6c) feat: read symlink fullpath in block device list function
+* [`6928ee4`](https://github.com/siderolabs/go-blockdevice/commit/6928ee43c3034549e32f000f8b7bc16a6ebb7ed4) refactor: rewrite GPT serialize/deserialize functions
+* [`0c7e429`](https://github.com/siderolabs/go-blockdevice/commit/0c7e4296e01b3df815a935db3e30de6b9d4cc1d1) refactor: simplify middle endian functions
+* [`15b182d`](https://github.com/siderolabs/go-blockdevice/commit/15b182db0cd233b163ed83d1724c7e28cf29d71a) fix: return partition table not exist when trying to read an empty dev
+* [`b9517d5`](https://github.com/siderolabs/go-blockdevice/commit/b9517d51120d385f97b0026f99ce3c4782940c37) fix: resize partition
+* [`70d2865`](https://github.com/siderolabs/go-blockdevice/commit/70d28650b398a14469cbb5356417355b0ba62956) fix: try to find cdrom disks
+* [`667bf53`](https://github.com/siderolabs/go-blockdevice/commit/667bf539b99ac34b629a0103ef7a7278a5a5f35d) fix: revert gpt partition not found
+* [`d7d4cdd`](https://github.com/siderolabs/go-blockdevice/commit/d7d4cdd7ac56c82caab19246b5decd59f12195eb) fix: gpt partition not found
+* [`33afba3`](https://github.com/siderolabs/go-blockdevice/commit/33afba347c0dce38a436c46a0aac26d2f99427c1) fix: also open in readonly mode when running `All` lookup method
+* [`e367f9d`](https://github.com/siderolabs/go-blockdevice/commit/e367f9dc7fa935f11672de0fdc8a89429285a07a) feat: make probe always open blockdevices in readonly mode
+* [`d981156`](https://github.com/siderolabs/go-blockdevice/commit/d9811569588ba44be878a00ce316f59a37abed8b) fix: allow Build for Windows
+* [`fe24303`](https://github.com/siderolabs/go-blockdevice/commit/fe2430349e9d734ce6dbf4e7b2e0f8a37bb22679) fix: perform correct PMBR partition calculations
+* [`2ec0c3c`](https://github.com/siderolabs/go-blockdevice/commit/2ec0c3cc0ff5ff705ed5c910ca1bcd5d93c7b102) fix: preserve the PMBR bootable flag when opening GPT partition
+* [`87816a8`](https://github.com/siderolabs/go-blockdevice/commit/87816a81cefc728cfe3cb221b476d8ed4b609fd8) feat: align partition to minimum I/O size
+* [`c34b59f`](https://github.com/siderolabs/go-blockdevice/commit/c34b59fb33a7ad8be18bb19bc8c8d8294b4b3a78) feat: expose more encryption options in the LUKS module
+* [`30c2bc3`](https://github.com/siderolabs/go-blockdevice/commit/30c2bc3cb62af52f0aea9ce347923b0649fb7928) feat: mark MBR bootable
+* [`1292574`](https://github.com/siderolabs/go-blockdevice/commit/1292574643e06512255fb0f45107e0c296eb5a3b) fix: make disk type matcher parser case insensitive
+* [`b77400e`](https://github.com/siderolabs/go-blockdevice/commit/b77400e0a7261bf25da77c1f28c2f393f367bfa9) fix: properly detect nvme and sd card disk types
+* [`1d830a2`](https://github.com/siderolabs/go-blockdevice/commit/1d830a25f64f6fb96a1bedd800c0b40b107dc833) fix: revert mark the EFI partition in PMBR as bootable
+* [`bec914f`](https://github.com/siderolabs/go-blockdevice/commit/bec914ffdda42abcfe642bc2cdfc9fcda56a74ee) fix: mark the EFI partition in PMBR as bootable
+* [`776b37d`](https://github.com/siderolabs/go-blockdevice/commit/776b37d31de0781f098f5d9d1894fbea3f2dfa1d) feat: add options to probe disk by various sysblock parameters
+* [`bb3ad73`](https://github.com/siderolabs/go-blockdevice/commit/bb3ad73f69836acc2785ec659435e24a531359e7) fix: align partition start to physical sector size
+* [`8f976c2`](https://github.com/siderolabs/go-blockdevice/commit/8f976c2031108651738ebd4db69fb09758754a28) feat: replace exec.Command with go-cmd module
+* [`1cf7f25`](https://github.com/siderolabs/go-blockdevice/commit/1cf7f252c38cf11ef07723de2debc27d1da6b520) fix: properly handle no child processes error from cmd.Wait
+* [`04a9851`](https://github.com/siderolabs/go-blockdevice/commit/04a98510c07fe8477f598befbfe6eaec4f4b73a2) feat: implement luks encryption provider
+* [`b0375e4`](https://github.com/siderolabs/go-blockdevice/commit/b0375e4267fdc6108bd9ff7a5dc97b80cd924b1d) feat: add an option to open block device with exclusive flock
+* [`5a1c7f7`](https://github.com/siderolabs/go-blockdevice/commit/5a1c7f768e016c93f6c0be130ffeaf34109b5b4d) refactor: add devname into gpt.Partition, refactor probe package
+* [`f2728a5`](https://github.com/siderolabs/go-blockdevice/commit/f2728a581972be977d863d5d9177a873b8f3fc7b) fix: keep contents of PMBR when writing it
+* [`2878460`](https://github.com/siderolabs/go-blockdevice/commit/2878460b54e8b8c3846c6a882ca9e1472c8b6b3b) fix: write second copy of partition entries
+* [`943b08b`](https://github.com/siderolabs/go-blockdevice/commit/943b08bc32a2156cffb23e92b8be9288de4a7421) fix: blockdevice reset should read partition table from disk
+* [`5b4ee44`](https://github.com/siderolabs/go-blockdevice/commit/5b4ee44cfd434a03ec2d7167bcc56d0f164c3fa2) fix: ignore `/dev/ram` devices
+* [`98754ec`](https://github.com/siderolabs/go-blockdevice/commit/98754ec2bb200acc9e9e573fa766754d60e25ff2) refactor: rewrite GPT library
+* [`2a1baad`](https://github.com/siderolabs/go-blockdevice/commit/2a1baadffdf8c9b65355e9af6e744aeab838c9db) fix: correctly build paths for `mmcblk` devices
+* [`8076344`](https://github.com/siderolabs/go-blockdevice/commit/8076344a95021f25ab5d1fbf5ea4fefc790f6c3c) fix: return proper disk size from GetDisks function
+* [`8742133`](https://github.com/siderolabs/go-blockdevice/commit/874213371a3fb0925aab45cbba68a957e3319525) chore: add common method to list available disks using /sys/block
+* [`c4b5833`](https://github.com/siderolabs/go-blockdevice/commit/c4b583363d63503ed7e4adb9a9fa64335f7e198d) feat: implement "fast" wipe
+* [`b4e67d7`](https://github.com/siderolabs/go-blockdevice/commit/b4e67d73d70d8dc06aa2b4986622dcb854dfc40c) feat: return resize status from Resize() function
+* [`ceae64e`](https://github.com/siderolabs/go-blockdevice/commit/ceae64edb3a591c6f6bbd75b1149d1cfe426dd8e) fix: sync kernel partition table incrementally
+* [`2cb9516`](https://github.com/siderolabs/go-blockdevice/commit/2cb95165aa67b0b839863b5ad89920c3ac7e2c82) fix: return correct error value from blkpg functions
+* [`cebe43d`](https://github.com/siderolabs/go-blockdevice/commit/cebe43d1fdc1e509437198e578faa9d5a804cc37) refactor: expose `InsertAt` method via interface
+* [`c40dcd8`](https://github.com/siderolabs/go-blockdevice/commit/c40dcd80c50b41c1f2a60ea6aa9d5fb3d3b180a3) fix: properly inform kernel about partition deletion
+* [`bb8ac5d`](https://github.com/siderolabs/go-blockdevice/commit/bb8ac5d6a25e279e16213f585dc8d02ba6ed645f) feat: implement disk wiping via several methods
+* [`23fb7dc`](https://github.com/siderolabs/go-blockdevice/commit/23fb7dc755325cfe12e48c8e8e31bebab9ddc2bc) feat: expose partition name (label)
+* [`ff3a821`](https://github.com/siderolabs/go-blockdevice/commit/ff3a8210be999b8bfb2019f19f8a8b50901c64cc) feat: implement 'InsertAt' method to insert partitions at any position
+* [`3d1ce4f`](https://github.com/siderolabs/go-blockdevice/commit/3d1ce4fc859fa614a4c5c54a10c0f5f4fce38bb6) fix: calculate last lba of partition correctly
+* [`b71540f`](https://github.com/siderolabs/go-blockdevice/commit/b71540f6c398e958bdb7c118396a736419f735d4) feat: copy initial version from talos-systems/talos
+* [`ca3c078`](https://github.com/siderolabs/go-blockdevice/commit/ca3c078da95e6497c9d41667dc242e32682e517d) Initial commit
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>26 commits</summary>
+<p>
+
+* [`0ac7773`](https://github.com/siderolabs/pkgs/commit/0ac77733506d2f0b0944ff569b6817ae44821bda) chore: use generic raspberry pi u-boot
+* [`d5633d4`](https://github.com/siderolabs/pkgs/commit/d5633d4838bd6e168b9c80f124540a30c29ae7be) chore: bump kernel to 5.15.70
+* [`39c0d43`](https://github.com/siderolabs/pkgs/commit/39c0d4364fd4eedd281e46ce7d305f2562e2cf78) feat: add generic rpi_arm64_defconfig configuration
+* [`ed269ca`](https://github.com/siderolabs/pkgs/commit/ed269cabad82446095221e45078c8ba85bce5c2e) chore: bump kernel to 5.15.69
+* [`f2f8333`](https://github.com/siderolabs/pkgs/commit/f2f83331f93a0a5d2dd1c013e2ff46900684096a) fix: no slack notifications on failure
+* [`6f0af33`](https://github.com/siderolabs/pkgs/commit/6f0af3390fc170f0cf57450adfada6a87de7ece4) chore: disable drone slack pipeline for renovate
+* [`32aea3f`](https://github.com/siderolabs/pkgs/commit/32aea3f005b93aaa91d52e4dfd04dd9ce9d564a9) chore: disable drone for renovate/dependabot
+* [`44579f0`](https://github.com/siderolabs/pkgs/commit/44579f0238993f529e2c141f42c99b32803fd6a5) fix: rollback xfsprogs to 5.18.0
+* [`792c0e3`](https://github.com/siderolabs/pkgs/commit/792c0e32ef6b1cf13514dc2693c4c302e1440d3b) feat: add gasket driver package
+* [`07f1898`](https://github.com/siderolabs/pkgs/commit/07f1898b231390b85519f83638946ed65adacc64) chore: update deps
+* [`f78f410`](https://github.com/siderolabs/pkgs/commit/f78f410d193953e730aeb14f4e148e47dfa827fd) chore: enable conntrack zones and timestamps
+* [`049b3c6`](https://github.com/siderolabs/pkgs/commit/049b3c6f080b9af76b1b2e924baade69db27bc0b) chore: enable intel ice drivers
+* [`606ff32`](https://github.com/siderolabs/pkgs/commit/606ff32cb7e75b6975749b6250b68352b71e943b) chore: bump deps
+* [`eee5c8a`](https://github.com/siderolabs/pkgs/commit/eee5c8af13ee1fe0b1e660a9581d4f1b14158a39) chore: disable irc in conntrack
+* [`70e6c46`](https://github.com/siderolabs/pkgs/commit/70e6c460d7b3bd5e154a4e681858832afcf32368) chore: bump kernel to 5.15.64
+* [`e510321`](https://github.com/siderolabs/pkgs/commit/e5103217e714bea04e06fd0c4940e84406cb68cf) chore: update renovate config
+* [`d1fa510`](https://github.com/siderolabs/pkgs/commit/d1fa510cc66ddc63a53482f6ced5573466049d49) feat: enable renovate bot
+* [`e427a77`](https://github.com/siderolabs/pkgs/commit/e427a778146664b988664008bfe20611f91216b0) chore: bump runc to v1.1.4
+* [`40e1215`](https://github.com/siderolabs/pkgs/commit/40e12152a027eb509330c41db21680b9a662fa05) chore: enable nfsv4.2 client support
+* [`15efada`](https://github.com/siderolabs/pkgs/commit/15efadaa9db4b8dc8003359d6d0ed84016f54746) chore: bump kernel to 5.15.63
+* [`e70e3c1`](https://github.com/siderolabs/pkgs/commit/e70e3c1af2b11d4b4646401a617b3d0efa2db4a3) fix: nvidia oss pkg name
+* [`30b8d79`](https://github.com/siderolabs/pkgs/commit/30b8d79b9ca3e463b5f403f01d39e64e89edc7b1) chore: bump kernel to 5.15.62
+* [`862c392`](https://github.com/siderolabs/pkgs/commit/862c392b6defe3c9ce90f9b15eae154e021b0b4d) chore: bump gcc to 12.2.0
+* [`2ecd14e`](https://github.com/siderolabs/pkgs/commit/2ecd14ede04637a581fbe7dcbbf612cdd6f9d882) fix: containerd version
+* [`01df058`](https://github.com/siderolabs/pkgs/commit/01df0583a430f3793f19725c920e942cf37efee4) feat: add NanoPi R4S configuration
+* [`d4cb33b`](https://github.com/siderolabs/pkgs/commit/d4cb33b9bdfb8c27ea86a42ea60a88e294129ad4) chore: bump containerd to v1.6.8
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>15 commits</summary>
+<p>
+
+* [`5df6589`](https://github.com/siderolabs/tools/commit/5df658937f7bd667ceda8760e2e15ed85c80dc2c) chore: disable drone for renovate/dependabot
+* [`1f00d2e`](https://github.com/siderolabs/tools/commit/1f00d2e854cdf357c1192428bd44ee846af1b4e4) fix: revert gawk to 5.1.1
+* [`feeda1f`](https://github.com/siderolabs/tools/commit/feeda1fc708a0cdb461ac5967ec34bf24ccc2b62) chore: bump grpc-go
+* [`8542014`](https://github.com/siderolabs/tools/commit/8542014568a101fb6c03a76c91e59dcfb1b893b6) chore: bump deps
+* [`e5c4968`](https://github.com/siderolabs/tools/commit/e5c496893fb71ff19a33daa4c86792ed03187356) chore: update renovate config
+* [`f34f94d`](https://github.com/siderolabs/tools/commit/f34f94daa300baab0803f22cecee65b57ee3c1fd) chore: update renovate config
+* [`cef4cc6`](https://github.com/siderolabs/tools/commit/cef4cc67342c06904258bcf4b7ec681d4c732d53) chore: update renovate config
+* [`bab8e9e`](https://github.com/siderolabs/tools/commit/bab8e9ee8d0fc2dc1b5676a45175b507d8927e49) chore: add libbpf to tools
+* [`0a15f7b`](https://github.com/siderolabs/tools/commit/0a15f7bb35f479fbf5551ea4bf02f3716783e33f) chore: build pahole properly
+* [`a322d06`](https://github.com/siderolabs/tools/commit/a322d066483814db80a15b8c0c7f44224b134429) chore: remove img
+* [`c7ff47b`](https://github.com/siderolabs/tools/commit/c7ff47b27962cf0f6a95e07c6f45aa2a3c2c5c8b) feat: enable renovate dependency updates (3/3)
+* [`6e095cf`](https://github.com/siderolabs/tools/commit/6e095cf86a6f734b2f07cc1b854a9a37b055cacc) feat: enable renovate dependency updates (2/n)
+* [`bad1ad1`](https://github.com/siderolabs/tools/commit/bad1ad17f7fd1208fcbb70b950320f805a765868) feat: add renovatebot
+* [`7d6f9c3`](https://github.com/siderolabs/tools/commit/7d6f9c35a81392918560ea0c20b3c06b18501ea0) chore: bump gcc to 12.2.0
+* [`2719b4b`](https://github.com/siderolabs/tools/commit/2719b4be551134a9d70ab235f56889708377f3c5) chore: bump toolchain
+</p>
+</details>
+
+### Dependency Changes
+
+* **cloud.google.com/go/compute**                    v1.8.0 -> v1.10.0
+* **github.com/aws/aws-sdk-go**                      v1.44.76 -> v1.44.105
+* **github.com/cosi-project/runtime**                v0.1.1 -> v0.2.0-alpha.1
+* **github.com/docker/docker**                       v20.10.17 -> v20.10.18
+* **github.com/google/go-cmp**                       v0.5.8 -> v0.5.9
+* **github.com/google/nftables**                     2eca00135732 -> cbeb0fb1eccf
+* **github.com/hetznercloud/hcloud-go**              v1.35.2 -> v1.35.3
+* **github.com/insomniacslk/dhcp**                   509691fd59ec -> 043f1726f02e
+* **github.com/mdlayher/ethtool**                    856bd6cb8a38 -> 0e16326d06d1
+* **github.com/mdlayher/netlink**                    v1.6.0 -> v1.6.2
+* **github.com/opencontainers/image-spec**           c5a74bcca799 -> v1.1.0-rc1
+* **github.com/packethost/packngo**                  v0.25.0 -> v0.26.0
+* **github.com/rivo/tview**                          0e6b21a48e96 -> 2e69b7385a37
+* **github.com/siderolabs/crypto**                   v0.4.0 **_new_**
+* **github.com/siderolabs/discovery-api**            v0.1.1 **_new_**
+* **github.com/siderolabs/discovery-client**         v0.1.1 -> v0.1.2
+* **github.com/siderolabs/gen**                      v0.2.0 **_new_**
+* **github.com/siderolabs/go-blockdevice**           v0.4.0 **_new_**
+* **github.com/siderolabs/pkgs**                     v1.2.0-8-g970860d -> v1.3.0-alpha.0-25-g0ac7773
+* **github.com/siderolabs/tools**                    v1.2.0 -> v1.3.0-alpha.0-14-g5df6589
+* **github.com/vmware-tanzu/sonobuoy**               v0.56.9 -> v0.56.10
+* **go.etcd.io/etcd/api/v3**                         v3.5.4 -> v3.5.5
+* **go.etcd.io/etcd/client/pkg/v3**                  v3.5.4 -> v3.5.5
+* **go.etcd.io/etcd/client/v3**                      v3.5.4 -> v3.5.5
+* **go.etcd.io/etcd/etcdutl/v3**                     v3.5.4 -> v3.5.5
+* **go.uber.org/atomic**                             v1.9.0 -> v1.10.0
+* **go.uber.org/zap**                                v1.22.0 -> v1.23.0
+* **go4.org/netipx**                                 797b0c90d8ab **_new_**
+* **golang.org/x/net**                               3211cb980234 -> 8be639271d50
+* **golang.org/x/sync**                              886fb9371eb4 -> 7f9b1623fab7
+* **golang.org/x/sys**                               fbc7d0a398ab -> fb04ddd9f9c8
+* **golang.org/x/term**                              a9ba230a4035 -> 7a66f970e087
+* **golang.org/x/time**                              e5dcc9cfc0b9 -> f3bd1da661af
+* **golang.zx2c4.com/wireguard/wgctrl**              3d4a969bb56b -> 473347a5e6e3
+* **google.golang.org/grpc**                         v1.48.0 -> v1.49.0
+* **k8s.io/api**                                     v0.25.0 -> v0.26.0-alpha.1
+* **k8s.io/apimachinery**                            v0.25.0 -> v0.26.0-alpha.1
+* **k8s.io/apiserver**                               v0.25.0 -> v0.26.0-alpha.1
+* **k8s.io/client-go**                               v0.25.0 -> v0.26.0-alpha.1
+* **k8s.io/component-base**                          v0.25.0 -> v0.26.0-alpha.1
+* **k8s.io/cri-api**                                 v0.25.0 -> v0.26.0-alpha.1
+* **k8s.io/kubectl**                                 v0.25.0 -> v0.26.0-alpha.1
+* **k8s.io/kubelet**                                 v0.25.0 -> v0.26.0-alpha.1
+* **kernel.org/pub/linux/libs/security/libcap/cap**  v1.2.65 -> v1.2.66
+
+Previous release can be found at [v1.2.0](https://github.com/siderolabs/talos/releases/tag/v1.2.0)
+
 ## [Talos 1.2.0-alpha.2](https://github.com/siderolabs/talos/releases/tag/v1.2.0-alpha.2) (2022-08-10)
 
 Welcome to the v1.2.0-alpha.2 release of Talos!  
