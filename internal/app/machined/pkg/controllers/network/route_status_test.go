@@ -111,6 +111,7 @@ func (suite *RouteStatusSuite) TestRoutes() {
 						suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
 						suite.Assert().Equal(nethelpers.TypeLocal, r.TypedSpec().Type)
 						suite.Assert().Equal(nethelpers.ProtocolKernel, r.TypedSpec().Protocol)
+						suite.Assert().EqualValues(0, r.TypedSpec().MTU)
 
 						return nil
 					},

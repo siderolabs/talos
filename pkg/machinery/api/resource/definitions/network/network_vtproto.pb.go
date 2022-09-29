@@ -1657,6 +1657,11 @@ func (m *RouteSpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Mtu != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Mtu))
+		i--
+		dAtA[i] = 0x68
+	}
 	if m.ConfigLayer != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.ConfigLayer))
 		i--
@@ -1802,6 +1807,11 @@ func (m *RouteStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Mtu != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.Mtu))
+		i--
+		dAtA[i] = 0x68
 	}
 	if m.Protocol != 0 {
 		i = encodeVarint(dAtA, i, uint64(m.Protocol))
@@ -3299,6 +3309,9 @@ func (m *RouteSpecSpec) SizeVT() (n int) {
 	if m.ConfigLayer != 0 {
 		n += 1 + sov(uint64(m.ConfigLayer))
 	}
+	if m.Mtu != 0 {
+		n += 1 + sov(uint64(m.Mtu))
+	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
 	}
@@ -3368,6 +3381,9 @@ func (m *RouteStatusSpec) SizeVT() (n int) {
 	}
 	if m.Protocol != 0 {
 		n += 1 + sov(uint64(m.Protocol))
+	}
+	if m.Mtu != 0 {
+		n += 1 + sov(uint64(m.Mtu))
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -7957,6 +7973,25 @@ func (m *RouteSpecSpec) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 13:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Mtu", wireType)
+			}
+			m.Mtu = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Mtu |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])
@@ -8320,6 +8355,25 @@ func (m *RouteStatusSpec) UnmarshalVT(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.Protocol |= enums.NethelpersRouteProtocol(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 13:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Mtu", wireType)
+			}
+			m.Mtu = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Mtu |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

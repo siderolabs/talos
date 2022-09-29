@@ -198,12 +198,19 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		matchFound := false
 
 		for _, existing := range findRoutes(routes, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
+			var existingMTU uint32
+
+			if existing.Attributes.Metrics != nil {
+				existingMTU = existing.Attributes.Metrics.MTU
+			}
+
 			// check if existing route matches the spec: if it does, skip update
 			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
 				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.TypedSpec().Priority &&
 				(value.IsZero(route.TypedSpec().Source) ||
-					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) {
+					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) &&
+				existingMTU == route.TypedSpec().MTU {
 				matchFound = true
 
 				continue
@@ -238,23 +245,31 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			return nil
 		}
 
+		routeAttributes := rtnetlink.RouteAttributes{
+			Dst:      route.TypedSpec().Destination.Addr().AsSlice(),
+			Src:      route.TypedSpec().Source.AsSlice(),
+			Gateway:  route.TypedSpec().Gateway.AsSlice(),
+			OutIface: linkIndex,
+			Priority: route.TypedSpec().Priority,
+			Table:    uint32(route.TypedSpec().Table),
+		}
+
+		if route.TypedSpec().MTU != 0 {
+			routeAttributes.Metrics = &rtnetlink.RouteMetrics{
+				MTU: route.TypedSpec().MTU,
+			}
+		}
+
 		// add route
 		msg := &rtnetlink.RouteMessage{
-			Family:    uint8(route.TypedSpec().Family),
-			DstLength: uint8(route.TypedSpec().Destination.Bits()),
-			SrcLength: 0,
-			Protocol:  uint8(route.TypedSpec().Protocol),
-			Scope:     uint8(route.TypedSpec().Scope),
-			Type:      uint8(route.TypedSpec().Type),
-			Flags:     uint32(route.TypedSpec().Flags),
-			Attributes: rtnetlink.RouteAttributes{
-				Dst:      route.TypedSpec().Destination.Addr().AsSlice(),
-				Src:      route.TypedSpec().Source.AsSlice(),
-				Gateway:  route.TypedSpec().Gateway.AsSlice(),
-				OutIface: linkIndex,
-				Priority: route.TypedSpec().Priority,
-				Table:    uint32(route.TypedSpec().Table),
-			},
+			Family:     uint8(route.TypedSpec().Family),
+			DstLength:  uint8(route.TypedSpec().Destination.Bits()),
+			SrcLength:  0,
+			Protocol:   uint8(route.TypedSpec().Protocol),
+			Scope:      uint8(route.TypedSpec().Scope),
+			Type:       uint8(route.TypedSpec().Type),
+			Flags:      uint32(route.TypedSpec().Flags),
+			Attributes: routeAttributes,
 		}
 
 		if err := conn.Route.Add(msg); err != nil {

@@ -2635,6 +2635,7 @@ RouteSpecSpec describes the route.
 | flags | [uint32](#uint32) |  |  |
 | protocol | [talos.resource.definitions.enums.NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol) |  |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+| mtu | [uint32](#uint32) |  |  |
 
 
 
@@ -2661,6 +2662,7 @@ RouteStatusSpec describes status of rendered secrets.
 | type | [talos.resource.definitions.enums.NethelpersRouteType](#talos.resource.definitions.enums.NethelpersRouteType) |  |  |
 | flags | [uint32](#uint32) |  |  |
 | protocol | [talos.resource.definitions.enums.NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol) |  |  |
+| mtu | [uint32](#uint32) |  |  |
 
 
 

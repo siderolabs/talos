@@ -122,6 +122,12 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 				status.Protocol = nethelpers.RouteProtocol(route.Protocol)
 				status.Flags = nethelpers.RouteFlags(route.Flags)
 
+				if route.Attributes.Metrics != nil {
+					status.MTU = route.Attributes.Metrics.MTU
+				} else {
+					status.MTU = 0
+				}
+
 				return nil
 			}); err != nil {
 				return fmt.Errorf("error modifying resource: %w", err)

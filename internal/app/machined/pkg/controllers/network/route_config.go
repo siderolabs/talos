@@ -241,6 +241,8 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 			route.Priority = DefaultRouteMetric
 		}
 
+		route.MTU = in.MTU()
+
 		switch {
 		case !value.IsZero(route.Gateway) && route.Gateway.Is6():
 			route.Family = nethelpers.FamilyInet6

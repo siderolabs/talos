@@ -222,6 +222,8 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 					netip.Prefix{}, netip.MustParseAddr("127.0.11.2"), func(route rtnetlink.RouteMessage) error {
 						suite.Assert().Nil(route.Attributes.Dst)
 						suite.Assert().EqualValues(1048576, route.Attributes.Priority)
+						// make sure not extra route metric attributes are set
+						suite.Assert().Empty(route.Attributes.Metrics)
 
 						return nil
 					},
@@ -230,12 +232,13 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 		),
 	)
 
-	// update the route metric
+	// update the route metric and mtu
 	_, err := suite.state.UpdateWithConflicts(
 		suite.ctx, def.Metadata(), func(r resource.Resource) error {
 			defR := r.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
 
 			defR.TypedSpec().Priority = 1048577
+			defR.TypedSpec().MTU = 1700
 
 			return nil
 		},
@@ -252,6 +255,40 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 						if route.Attributes.Priority != 1048577 {
 							return fmt.Errorf("route metric wasn't updated: %d", route.Attributes.Priority)
 						}
+
+						suite.Assert().EqualValues(1700, route.Attributes.Metrics.MTU)
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+
+	// remove mtu and make sure it's unset
+	_, err = suite.state.UpdateWithConflicts(
+		suite.ctx, def.Metadata(), func(r resource.Resource) error {
+			defR := r.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
+
+			defR.TypedSpec().MTU = 0
+
+			return nil
+		},
+	)
+	suite.Assert().NoError(err)
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoute(
+					netip.Prefix{}, netip.MustParseAddr("127.0.11.2"), func(route rtnetlink.RouteMessage) error {
+						suite.Assert().Nil(route.Attributes.Dst)
+
+						if route.Attributes.Metrics != nil {
+							return retry.ExpectedErrorf("route mtu expected to be empty, got: %d", route.Attributes.Metrics.MTU)
+						}
+
+						suite.Assert().Empty(route.Attributes.Metrics)
 
 						return nil
 					},

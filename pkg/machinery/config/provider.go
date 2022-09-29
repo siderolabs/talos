@@ -277,6 +277,7 @@ type Route interface {
 	Gateway() string
 	Source() string
 	Metric() uint32
+	MTU() uint32
 }
 
 // KubeSpan configures KubeSpan feature.

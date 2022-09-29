@@ -771,6 +771,11 @@ func (r *Route) Metric() uint32 {
 	return r.RouteMetric
 }
 
+// MTU implements the MachineNetwork interface.
+func (r *Route) MTU() uint32 {
+	return r.RouteMTU
+}
+
 // Interfaces implements the MachineNetwork interface.
 func (b *Bond) Interfaces() []string {
 	if b == nil {

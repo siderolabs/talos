@@ -39,6 +39,7 @@ type RouteSpecSpec struct {
 	Flags       nethelpers.RouteFlags    `yaml:"flags" protobuf:"10"`
 	Protocol    nethelpers.RouteProtocol `yaml:"protocol" protobuf:"11"`
 	ConfigLayer ConfigLayer              `yaml:"layer" protobuf:"12"`
+	MTU         uint32                   `yaml:"mtu,omitempty" protobuf:"13"`
 }
 
 var (

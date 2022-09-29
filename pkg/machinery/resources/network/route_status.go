@@ -38,6 +38,7 @@ type RouteStatusSpec struct {
 	Type         nethelpers.RouteType     `yaml:"type" protobuf:"10"`
 	Flags        nethelpers.RouteFlags    `yaml:"flags" protobuf:"11"`
 	Protocol     nethelpers.RouteProtocol `yaml:"protocol" protobuf:"12"`
+	MTU          uint32                   `yaml:"mtu,omitempty" protobuf:"13"`
 }
 
 // NewRouteStatus initializes a RouteStatus resource.

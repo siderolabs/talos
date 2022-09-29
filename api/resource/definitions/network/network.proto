@@ -211,6 +211,7 @@ message RouteSpecSpec {
   uint32 flags = 10;
   talos.resource.definitions.enums.NethelpersRouteProtocol protocol = 11;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 12;
+  uint32 mtu = 13;
 }
 
 // RouteStatusSpec describes status of rendered secrets.
@@ -227,6 +228,7 @@ message RouteStatusSpec {
   talos.resource.definitions.enums.NethelpersRouteType type = 10;
   uint32 flags = 11;
   talos.resource.definitions.enums.NethelpersRouteProtocol protocol = 12;
+  uint32 mtu = 13;
 }
 
 // STPSpec describes Spanning Tree Protocol (STP) settings of a bridge.

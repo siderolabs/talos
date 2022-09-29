@@ -71,6 +71,12 @@ This options is only available with etcd >= v3.5.5, so Talos doesn't support ver
 Talos now supports setting custom audit policy for `kube-apiserver` in the machine configuration.
 """
 
+    [notes.routes]
+        title = "Routes"
+        description="""\
+Talos now supports setting MTU for a specific route.
+"""
+
 [make_deps]
 
     [make_deps.tools]

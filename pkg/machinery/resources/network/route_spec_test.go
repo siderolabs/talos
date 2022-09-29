@@ -30,6 +30,7 @@ func TestRoutSpecMarshalYAML(t *testing.T) {
 		Flags:       nethelpers.RouteFlags(nethelpers.RouteOffload | nethelpers.RouteCloned),
 		Protocol:    nethelpers.ProtocolBoot,
 		ConfigLayer: network.ConfigPlatform,
+		MTU:         1400,
 	}
 
 	marshaled, err := yaml.Marshal(spec)
@@ -48,6 +49,7 @@ type: anycast
 flags: cloned,offload
 protocol: boot
 layer: platform
+mtu: 1400
 `,
 		string(marshaled))
 
