@@ -4,8 +4,7 @@ weight: 110
 description: "The design and use of the Talos Linux control application."
 ---
 
-The `talosctl` tool packs a lot of power into a small package.
-It acts as a reference implementation for the Talos API, but it also handles a lot of
+The `talosctl` tool acts as a reference implementation for the Talos API, but it also handles a lot of
 conveniences for the use of Talos and its clusters.
 
 ### Video Walkthrough
@@ -21,7 +20,7 @@ Otherwise it is in `$HOME/.talos/config`.
 The location can always be overridden by the `TALOSCONFIG` environment variable or the `--talosconfig` parameter.
 
 Like `kubectl`, `talosctl` uses the concept of configuration contexts, so any number of Talos clusters can be managed with a single configuration file.
-Unlike `kubectl`, it also comes with some intelligent tooling to manage the merging of new contexts into the config.
+It also comes with some intelligent tooling to manage the merging of new contexts into the config.
 The default operation is a non-destructive merge, where if a context of the same name already exists in the file, the context to be added is renamed by appending an index number.
 You can easily overwrite instead, as well.
 See the `talosctl config help` for more information.
@@ -30,21 +29,21 @@ See the `talosctl config help` for more information.
 
 ![Endpoints and Nodes](/images/endpoints-and-nodes.png)
 
-The `endpoints` are the communication endpoints to which the client directly talks.
+`endpoints` are the communication endpoints to which the client directly talks.
 These can be load balancers, DNS hostnames, a list of IPs, etc.
-Further, if multiple endpoints are specified, the client will automatically load
+If multiple endpoints are specified, the client will automatically load
 balance and fail over between them.
-In general, it is recommended that these point to the set of control plane nodes, either directly or through a reverse proxy or load balancer.
+It is recommended that these point to the set of control plane nodes, either directly or through a load balancer.
 
 Each endpoint will automatically proxy requests destined to another node through it, so it is not necessary to change the endpoint configuration just because you wish to talk to a different node within the cluster.
 
 Endpoints _do_, however, need to be members of the same Talos cluster as the target node, because these proxied connections reply on certificate-based authentication.
 
 The `node` is the target node on which you wish to perform the API call.
-While you can configure the target node (or even set of target nodes) inside the 'talosctl' configuration file, it is often useful to simply and explicitly declare the target node(s) using the `-n` or `--nodes` command-line parameter.
+While you can configure the target node (or even set of target nodes) inside the 'talosctl' configuration file, it is recommended not to do so, but to explicitly declare the target node(s) using the `-n` or `--nodes` command-line parameter.
 
-Keep in mind, when specifying nodes that their IPs and/or hostnames are as seen by the endpoint servers, not as from the client.
-This is because all connections are proxied first through the endpoints.
+> When specifying nodes, their IPs and/or hostnames are as seen by the endpoint servers, not as from the client.
+> This is because all connections are proxied first through the endpoints.
 
 ## Kubeconfig
 

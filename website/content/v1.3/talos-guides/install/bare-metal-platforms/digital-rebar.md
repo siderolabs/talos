@@ -146,8 +146,6 @@ Once selected, you need to assign to following:
 This will provision the Stage and Bootenv with the talos values.
 Once this is done, you can boot the machine.
 
-To understand the boot process, we have a higher level overview located at [metal overview]({{< relref "../../../reference/platform" >}}).
-
 ### Bootstrap Etcd
 
 To configure `talosctl` we will need the first control plane node's IP:

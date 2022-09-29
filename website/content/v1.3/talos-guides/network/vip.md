@@ -5,30 +5,26 @@ aliases:
   - ../../guides/vip
 ---
 
-One of the biggest pain points when building a high-availability controlplane
+One of the pain points when building a high-availability controlplane
 is giving clients a single IP or URL at which they can reach any of the controlplane nodes.
-The most common approaches all require external resources:  reverse proxy, load
-balancer, BGP, and DNS.
+The most common approaches - reverse proxy, load
+balancer, BGP, and DNS - all require external resources, and add complexity in setting up Kubernetes.
 
-Using a "Virtual" IP address, on the other hand, provides high availability
-without external coordination or resources, so long as the controlplane members
-share a layer 2 network.
-In practical terms, this means that they are all connected via a switch, with no
-router in between them.
+To simplify cluster creation, Talos Linux supports a "Virtual" IP (VIP) address to access the Kubernetes API server, providing high availability with no other resources required.
 
-The term "virtual" is misleading here.
-The IP address is real, and it is assigned to an interface.
-Instead, what actually happens is that the controlplane machines vie for
-control of the shared IP address using etcd elections.
-There can be only one owner of the IP address at any given time, but if that
-owner disappears or becomes non-responsive, another owner will be chosen,
-and it will take up the mantle: the IP address.
+What happens is that the controlplane machines vie for control of the shared IP address using etcd elections.
+There can be only one owner of the IP address at any given time.
+If that owner disappears or becomes non-responsive, another owner will be chosen,
+and it will take up the IP address.
 
-Talos has (as of version 0.9) built-in support for this form of shared IP address,
-and it can utilize this for both the Kubernetes API server and the Talos endpoint set.
-Talos uses `etcd` for elections and leadership (control) of the IP address.
-It is not reccomended to use a virtual IP to access the API of Talos itself, since the
-node using the shared IP is not deterministic and could change.
+### Requirements
+
+The controlplane nodes must share a layer 2 network, and the virtual IP must be assigned from that shared network subnet.
+In practical terms, this means that they are all connected via a switch, with no router in between them.
+Note that the virtual IP election depends on `etcd` being up, as Talos uses `etcd` for elections and leadership (control) of the IP address.
+
+The virtual IP is not restricted by ports - you can access any port that the control plane nodes are listening on, on that IP address.
+Thus it *is* possible to access the Talos API over the VIP, but it is *not recommended*, as you cannot access the VIP when etcd is down - and then you could not access the Talos API to recover etcd.
 
 ## Video Walkthrough
 
@@ -38,8 +34,7 @@ To see a live demo of this writeup, see the video below:
 
 ## Choose your Shared IP
 
-To begin with, you should choose your shared IP address.
-It should generally be a reserved, unused IP address in the same subnet as
+The Virtual IP should be a reserved, unused IP address in the same subnet as
 your controlplane nodes.
 It should not be assigned or assignable by your DHCP server.
 
@@ -88,16 +83,14 @@ machine:
             ip: 192.168.1.15
 ```
 
-Obviously, for your own environment, the interface and the DHCP setting may
-differ.
-You are free to use static addressing (`cidr`) instead of DHCP.
+For your own environment, the interface and the DHCP setting may differ, or you may
+use static addressing (`cidr`) instead of DHCP.
 
 ## Caveats
 
-In general, the shared IP should just work.
-However, since it relies on `etcd` for elections, the shared IP will not come
+Since VIP functionality relies on `etcd` for elections, the shared IP will not come
 alive until after you have bootstrapped Kubernetes.
-In general, this is not a problem, but it does mean that you cannot use the
-shared IP when issuing the `talosctl bootstrap` command.
-Instead, that command will need to target one of the controlplane nodes
-discretely.
+This does mean that you cannot use the
+shared IP when issuing the `talosctl bootstrap` command (although, as noted above, it is not recommended to access the Talos API via the VIP).
+Instead, the `bootstrap` command will need to target one of the controlplane nodes
+directly.
