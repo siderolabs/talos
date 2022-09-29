@@ -145,7 +145,7 @@ func init() {
 			FieldName: "machine",
 		},
 	}
-	MachineConfigDoc.Fields = make([]encoder.Doc, 22)
+	MachineConfigDoc.Fields = make([]encoder.Doc, 23)
 	MachineConfigDoc.Fields[0].Name = "type"
 	MachineConfigDoc.Fields[0].Type = "string"
 	MachineConfigDoc.Fields[0].Note = ""
@@ -313,6 +313,13 @@ func init() {
 	MachineConfigDoc.Fields[21].Comments[encoder.LineComment] = "Configures the seccomp profiles for the machine."
 
 	MachineConfigDoc.Fields[21].AddExample("", machineSeccompExample)
+	MachineConfigDoc.Fields[22].Name = "nodeLabels"
+	MachineConfigDoc.Fields[22].Type = "map[string]string"
+	MachineConfigDoc.Fields[22].Note = ""
+	MachineConfigDoc.Fields[22].Description = "Configures the node labels for the machine."
+	MachineConfigDoc.Fields[22].Comments[encoder.LineComment] = "Configures the node labels for the machine."
+
+	MachineConfigDoc.Fields[22].AddExample("node labels example.", map[string]string{"exampleLabel": "exampleLabelValue"})
 
 	MachineSeccompProfileDoc.Type = "MachineSeccompProfile"
 	MachineSeccompProfileDoc.Comments[encoder.LineComment] = "MachineSeccompProfile defines seccomp profiles for the machine."

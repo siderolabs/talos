@@ -208,7 +208,23 @@ system
 ```
 
 > Note: `cgroupsv1` is deprecated and it should be used only for compatibility with workloads which don't support `cgroupsv2` yet.
+"""
 
+    [notes.nodelabels]
+        title = "Node Labels"
+        description = """\
+Talos now supports specifying node labels in the machine configuration:
+
+```yaml
+machine:
+  nodeLabels:
+    rack: rack1a
+    zone: us-east-1a
+```
+
+Changes to the node labels will be applied immediately without `kubelet` restart.
+
+Talos keeps track of the owned node labels in the `talos.dev/owned-labels` annotation.
 """
 
 [make_deps]

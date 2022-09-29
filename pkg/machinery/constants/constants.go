@@ -603,6 +603,9 @@ const (
 	// AnnotationStaticPodConfigFileVersion is the annotation key for the static pod configuration file version.
 	AnnotationStaticPodConfigFileVersion = "talos.dev/config-file-version"
 
+	// AnnotationOwnedLabels is the annotation key for the list of node labels owned by Talos.
+	AnnotationOwnedLabels = "talos.dev/owned-labels"
+
 	// DefaultNTPServer is the NTP server to use if not configured explicitly.
 	//
 	// TODO: Once we get naming sorted we need to apply for a project specific address

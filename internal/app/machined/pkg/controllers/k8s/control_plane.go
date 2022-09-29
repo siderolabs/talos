@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package config
+package k8s
 
 import (
 	"context"
@@ -26,16 +26,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-// K8sControlPlaneController manages Kubernetes control plane resources based on configuration.
-type K8sControlPlaneController struct{}
+// ControlPlaneController manages Kubernetes control plane resources based on configuration.
+type ControlPlaneController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *K8sControlPlaneController) Name() string {
-	return "config.K8sControlPlaneController"
+func (ctrl *ControlPlaneController) Name() string {
+	return "k8s.ControlPlaneController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *K8sControlPlaneController) Inputs() []controller.Input {
+func (ctrl *ControlPlaneController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
@@ -53,7 +53,7 @@ func (ctrl *K8sControlPlaneController) Inputs() []controller.Input {
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *K8sControlPlaneController) Outputs() []controller.Output {
+func (ctrl *ControlPlaneController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: k8s.AdmissionControlConfigType,
@@ -89,7 +89,7 @@ func (ctrl *K8sControlPlaneController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *K8sControlPlaneController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ControlPlaneController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -158,10 +158,10 @@ func convertVolumes(volumes []talosconfig.VolumeMount) []k8s.ExtraVolume {
 	})
 }
 
-func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+func (ctrl *ControlPlaneController) manageAPIServerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	var cloudProvider string
 	if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
-		cloudProvider = "external"
+		cloudProvider = "external" //nolint:goconst
 	}
 
 	advertisedAddress := "$(POD_IP)"
@@ -188,7 +188,7 @@ func (ctrl *K8sControlPlaneController) manageAPIServerConfig(ctx context.Context
 	})
 }
 
-func (ctrl *K8sControlPlaneController) manageAdmissionControlConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+func (ctrl *ControlPlaneController) manageAdmissionControlConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	spec := k8s.AdmissionControlConfigSpec{}
 
 	for _, cfg := range cfgProvider.Cluster().APIServer().AdmissionControl() {
@@ -207,7 +207,7 @@ func (ctrl *K8sControlPlaneController) manageAdmissionControlConfig(ctx context.
 	})
 }
 
-func (ctrl *K8sControlPlaneController) manageAuditPolicyConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+func (ctrl *ControlPlaneController) manageAuditPolicyConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	spec := k8s.AuditPolicyConfigSpec{}
 
 	spec.Config = cfgProvider.Cluster().APIServer().AuditPolicy()
@@ -219,7 +219,7 @@ func (ctrl *K8sControlPlaneController) manageAuditPolicyConfig(ctx context.Conte
 	})
 }
 
-func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+func (ctrl *ControlPlaneController) manageControllerManagerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	var cloudProvider string
 	if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
 		cloudProvider = "external"
@@ -241,7 +241,7 @@ func (ctrl *K8sControlPlaneController) manageControllerManagerConfig(ctx context
 	})
 }
 
-func (ctrl *K8sControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+func (ctrl *ControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	return r.Modify(ctx, k8s.NewSchedulerConfig(), func(r resource.Resource) error {
 		*r.(*k8s.SchedulerConfig).TypedSpec() = k8s.SchedulerConfigSpec{
 			Enabled:              !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
@@ -255,7 +255,7 @@ func (ctrl *K8sControlPlaneController) manageSchedulerConfig(ctx context.Context
 	})
 }
 
-func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+func (ctrl *ControlPlaneController) manageManifestsConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	dnsServiceIPs, err := cfgProvider.Cluster().Network().DNSServiceIPs()
 	if err != nil {
 		return fmt.Errorf("error calculating DNS service IPs: %w", err)
@@ -311,7 +311,7 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 	})
 }
 
-func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
+func (ctrl *ControlPlaneController) manageExtraManifestsConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Provider) error {
 	return r.Modify(ctx, k8s.NewExtraManifestsConfig(), func(r resource.Resource) error {
 		spec := k8s.ExtraManifestsConfigSpec{}
 
@@ -354,7 +354,7 @@ func (ctrl *K8sControlPlaneController) manageExtraManifestsConfig(ctx context.Co
 	})
 }
 
-func (ctrl *K8sControlPlaneController) teardownAll(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ControlPlaneController) teardownAll(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	return nil
 }
 

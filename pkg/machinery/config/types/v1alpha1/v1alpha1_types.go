@@ -830,6 +830,12 @@ type MachineConfig struct {
 	//  examples:
 	//    - value: machineSeccompExample
 	MachineSeccompProfiles []*MachineSeccompProfile `yaml:"seccompProfiles,omitempty" talos:"omitonlyifnil"`
+	//  description: |
+	//    Configures the node labels for the machine.
+	//  examples:
+	//    - name: node labels example.
+	//      value: 'map[string]string{"exampleLabel": "exampleLabelValue"}'
+	MachineNodeLabels map[string]string `yaml:"nodeLabels,omitempty"`
 }
 
 // MachineSeccompProfile defines seccomp profiles for the machine.

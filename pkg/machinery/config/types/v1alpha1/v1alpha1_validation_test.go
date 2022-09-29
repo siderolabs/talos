@@ -7,6 +7,7 @@ package v1alpha1_test
 import (
 	"fmt"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/siderolabs/crypto/x509"
@@ -1197,6 +1198,31 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			expectedError: "1 error occurred:\n\t* feature Kubernetes Talos API Access can only be enabled on control plane machines\n\n",
+		},
+		{
+			name: "NodeLabels",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineNodeLabels: map[string]string{
+						"/foo":          "bar",
+						"key":           "value",
+						"talos.dev/foo": "bar",
+						"@!":            "#$",
+						"123@.dev/":     "456",
+						"a/b/c":         strings.Repeat("a", 64),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* invalid machine node labels: 6 errors occurred:\n\t* prefix cannot be empty: \"/foo\"\n\t* prefix \"123@.dev\" is invalid: domain doesn't match required format: \"123@.dev\"\n\t* name \"@!\" is invalid\n\t* label value \"#$\" is invalid\n\t* invalid format: too many slashes: \"a/b/c\"\n\t* label value length exceeds limit of 63: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n\n\n\n", //nolint:lll
 		},
 	} {
 		test := test

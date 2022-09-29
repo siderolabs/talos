@@ -106,6 +106,7 @@ description: Talos gRPC API reference.
     - [ManifestStatusSpec](#talos.resource.definitions.k8s.ManifestStatusSpec)
     - [NodeIPConfigSpec](#talos.resource.definitions.k8s.NodeIPConfigSpec)
     - [NodeIPSpec](#talos.resource.definitions.k8s.NodeIPSpec)
+    - [NodeLabelSpecSpec](#talos.resource.definitions.k8s.NodeLabelSpecSpec)
     - [NodenameSpec](#talos.resource.definitions.k8s.NodenameSpec)
     - [SchedulerConfigSpec](#talos.resource.definitions.k8s.SchedulerConfigSpec)
     - [SchedulerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry)
@@ -1964,6 +1965,22 @@ NodeIPSpec holds the Node IP specification.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | addresses | [common.NetIP](#common.NetIP) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.NodeLabelSpecSpec"></a>
+
+### NodeLabelSpecSpec
+NodeLabelSpecSpec represents a label that's attached to a Talos node.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

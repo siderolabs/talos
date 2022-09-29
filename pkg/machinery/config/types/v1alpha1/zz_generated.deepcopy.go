@@ -1410,6 +1410,13 @@ func (in *MachineConfig) DeepCopyInto(out *MachineConfig) {
 			}
 		}
 	}
+	if in.MachineNodeLabels != nil {
+		in, out := &in.MachineNodeLabels, &out.MachineNodeLabels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

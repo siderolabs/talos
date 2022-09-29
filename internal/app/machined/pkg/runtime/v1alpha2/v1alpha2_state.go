@@ -92,6 +92,7 @@ func NewState() (*State, error) {
 		&cluster.Member{},
 		&config.MachineConfig{},
 		&config.MachineType{},
+		&k8s.NodeLabelSpec{},
 		&cri.SeccompProfile{},
 		&etcd.Config{},
 		&etcd.PKIStatus{},

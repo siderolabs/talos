@@ -400,6 +400,10 @@ seccompProfiles:
       value:
         defaultAction: SCMP_ACT_LOG
 {{< /highlight >}}</details> | |
+|`nodeLabels` |map[string]string |Configures the node labels for the machine. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+nodeLabels:
+    exampleLabel: exampleLabelValue
+{{< /highlight >}}</details> | |
 
 
 

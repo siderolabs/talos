@@ -85,27 +85,18 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	go ctrl.watchMachineConfig(ctx)
 
 	for _, c := range []controller.Controller{
-		&v1alpha1.ServiceController{
-			// V1Events
-			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
-		},
-		&timecontrollers.SyncController{
-			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-		},
 		&cluster.AffiliateMergeController{},
 		&cluster.ConfigController{},
 		&cluster.DiscoveryServiceController{},
 		&cluster.EndpointController{},
-		&cluster.LocalAffiliateController{},
-		&cluster.MemberController{},
 		&cluster.KubernetesPullController{},
 		&cluster.KubernetesPushController{},
+		&cluster.LocalAffiliateController{},
+		&cluster.MemberController{},
 		&cluster.NodeIdentityController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&config.MachineTypeController{},
-		&config.K8sAddressFilterController{},
-		&config.K8sControlPlaneController{},
 		&cri.SeccompProfileController{},
 		&cri.SeccompProfileFileController{
 			V1Alpha1Mode:             ctrl.v1alpha1Runtime.State().Platform().Mode(),
@@ -125,6 +116,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&hardware.SystemInfoController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&k8s.AddressFilterController{},
+		&k8s.ControlPlaneController{},
 		&k8s.ControlPlaneStaticPodController{},
 		&k8s.EndpointController{},
 		&k8s.ExtraManifestController{},
@@ -137,18 +130,20 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&k8s.KubeletStaticPodController{},
-		&k8s.ManifestController{},
 		&k8s.ManifestApplyController{},
-		&k8s.NodeIPController{},
+		&k8s.ManifestController{},
 		&k8s.NodeIPConfigController{},
+		&k8s.NodeIPController{},
+		&k8s.NodeLabelSpecController{},
+		&k8s.NodeLabelsApplyController{},
 		&k8s.NodenameController{},
 		&k8s.RenderConfigsStaticPodController{},
 		&k8s.RenderSecretsStaticPodController{},
 		&k8s.StaticPodConfigController{},
 		&k8s.StaticPodServerController{},
 		&kubeaccess.ConfigController{},
-		&kubeaccess.EndpointController{},
 		&kubeaccess.CRDController{},
+		&kubeaccess.EndpointController{},
 		&kubespan.ConfigController{},
 		&kubespan.EndpointController{},
 		&kubespan.IdentityController{},
@@ -178,8 +173,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Cmdline: procfs.ProcCmdline(),
 		},
 		&network.LinkMergeController{},
-		&network.LinkStatusController{},
 		&network.LinkSpecController{},
+		&network.LinkStatusController{},
 		&network.NodeAddressController{},
 		&network.OperatorConfigController{
 			Cmdline: procfs.ProcCmdline(),
@@ -205,8 +200,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Cmdline: procfs.ProcCmdline(),
 		},
 		&network.RouteMergeController{},
-		&network.RouteStatusController{},
 		&network.RouteSpecController{},
+		&network.RouteStatusController{},
 		&network.StatusController{},
 		&network.TimeServerConfigController{
 			Cmdline: procfs.ProcCmdline(),
@@ -243,16 +238,22 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.MachineStatusPublisherController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
-		&secrets.APIController{},
 		&secrets.APICertSANsController{},
+		&secrets.APIController{},
 		&secrets.EtcdController{},
 		&secrets.KubeletController{},
-		&secrets.KubernetesController{},
 		&secrets.KubernetesCertSANsController{},
+		&secrets.KubernetesController{},
 		&secrets.RootController{},
 		&secrets.TrustdController{},
 		&siderolink.ManagerController{
 			Cmdline: procfs.ProcCmdline(),
+		},
+		&timecontrollers.SyncController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
+		&v1alpha1.ServiceController{
+			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
 	} {
 		if err := ctrl.controllerRuntime.RegisterController(c); err != nil {

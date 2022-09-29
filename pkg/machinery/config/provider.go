@@ -66,6 +66,7 @@ type MachineConfig interface {
 	Logging() Logging
 	Kernel() Kernel
 	SeccompProfiles() []SeccompProfile
+	NodeLabels() NodeLabels
 }
 
 // SeccompProfile defines the requirements for a config that pertains to seccomp
@@ -74,6 +75,9 @@ type SeccompProfile interface {
 	Name() string
 	Value() map[string]interface{}
 }
+
+// NodeLabels defines the labels that should be set on a node.
+type NodeLabels map[string]string
 
 // Disk represents the options available for partitioning, formatting, and
 // mounting extra disks.

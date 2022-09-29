@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 //nolint:dupl
-package config_test
+package k8s_test
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	configctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/config"
+	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -53,7 +53,7 @@ func (suite *K8sAddressFilterSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&configctrl.K8sAddressFilterController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.AddressFilterController{}))
 
 	suite.startRuntime()
 }

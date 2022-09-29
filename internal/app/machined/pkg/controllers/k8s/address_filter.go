@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package config
+package k8s
 
 import (
 	"context"
@@ -20,16 +20,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-// K8sAddressFilterController creates NodeAddressFilters based on machine configuration.
-type K8sAddressFilterController struct{}
+// AddressFilterController creates NodeAddressFilters based on machine configuration.
+type AddressFilterController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *K8sAddressFilterController) Name() string {
-	return "network.K8sAddressFilterController"
+func (ctrl *AddressFilterController) Name() string {
+	return "k8s.AddressFilterController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *K8sAddressFilterController) Inputs() []controller.Input {
+func (ctrl *AddressFilterController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
@@ -41,7 +41,7 @@ func (ctrl *K8sAddressFilterController) Inputs() []controller.Input {
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *K8sAddressFilterController) Outputs() []controller.Output {
+func (ctrl *AddressFilterController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: network.NodeAddressFilterType,
@@ -53,7 +53,7 @@ func (ctrl *K8sAddressFilterController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *K8sAddressFilterController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():

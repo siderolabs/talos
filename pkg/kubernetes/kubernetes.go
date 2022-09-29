@@ -224,9 +224,9 @@ func (h *Client) LabelNodeAsControlPlane(ctx context.Context, name string, taint
 	}
 
 	// The node may appear to have no labels at first, so we check for the
-	// existence of a well known label to ensure the patch will be successful.
+	// existence of a well known label to ensure that a patch will be successful.
 	if _, found := n.ObjectMeta.Labels[corev1.LabelHostname]; !found {
-		return errors.New("could not find hostname label")
+		return fmt.Errorf("could not find hostname label")
 	}
 
 	oldData, err := json.Marshal(n)
@@ -268,12 +268,12 @@ func (h *Client) LabelNodeAsControlPlane(ctx context.Context, name string, taint
 		return fmt.Errorf("failed to create two way merge patch: %w", err)
 	}
 
-	if _, err := h.CoreV1().Nodes().Patch(ctx, n.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
+	if _, err := h.CoreV1().Nodes().Patch(ctx, name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
 		if apierrors.IsConflict(err) {
 			return fmt.Errorf("unable to update node metadata due to conflict: %w", err)
 		}
 
-		return fmt.Errorf("error patching node %q: %w", n.Name, err)
+		return fmt.Errorf("error patching node %q: %w", name, err)
 	}
 
 	return nil

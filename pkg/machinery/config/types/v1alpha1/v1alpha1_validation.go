@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
+	"github.com/siderolabs/talos/pkg/machinery/labels"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
@@ -255,6 +256,10 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 
 			extensions[ext.Image()] = struct{}{}
 		}
+	}
+
+	if err := labels.Validate(c.MachineConfig.MachineNodeLabels); err != nil {
+		result = multierror.Append(result, fmt.Errorf("invalid machine node labels: %w", err))
 	}
 
 	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() && !c.Machine().Features().RBACEnabled() {

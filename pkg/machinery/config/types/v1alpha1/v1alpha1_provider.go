@@ -68,6 +68,11 @@ func (m *MachineSeccompProfile) Value() map[string]interface{} {
 	return m.MachineSeccompProfileValue.Object
 }
 
+// NodeLabels implements the config.Provider interface.
+func (m *MachineConfig) NodeLabels() config.NodeLabels {
+	return m.MachineNodeLabels
+}
+
 // Cluster implements the config.Provider interface.
 func (c *Config) Cluster() config.ClusterConfig {
 	if c.ClusterConfig == nil {

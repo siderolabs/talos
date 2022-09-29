@@ -148,6 +148,12 @@ message NodeIPSpec {
   repeated common.NetIP addresses = 1;
 }
 
+// NodeLabelSpecSpec represents a label that's attached to a Talos node.
+message NodeLabelSpecSpec {
+  string key = 1;
+  string value = 2;
+}
+
 // NodenameSpec describes Kubernetes nodename.
 message NodenameSpec {
   string nodename = 1;
