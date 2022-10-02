@@ -127,6 +127,12 @@ func (suite *CmdlineSuite) TestParse() {
 			},
 		},
 		{
+			name:    "no iface by mac address",
+			cmdline: "ip=172.20.0.2::172.20.0.1:255.255.255.0::enx001122aabbcc",
+
+			expectedError: "cmdline device parse failure: interface by MAC not found enx001122aabbcc",
+		},
+		{
 			name:    "complete",
 			cmdline: "ip=172.20.0.2:172.21.0.1:172.20.0.1:255.255.255.0:master1:eth1::10.0.0.1:10.0.0.2:10.0.0.1",
 

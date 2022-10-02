@@ -79,6 +79,16 @@ Talos now supports setting custom audit policy for `kube-apiserver` in the machi
 Talos now supports setting MTU for a specific route.
 """
 
+    [notes.cmdline]
+        title = "Kernel Command Line ip= Argument"
+        description="""\
+Talos now supports referencing interface name via `enxMAC` address notation:
+
+```
+ip=172.20.0.2::172.20.0.1:255.255.255.0::enx7085c2dfbc59
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

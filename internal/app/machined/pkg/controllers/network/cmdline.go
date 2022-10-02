@@ -163,6 +163,25 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 			}
 		}
 
+		// resolve enx* (with MAC address) to the actual interface name
+		if strings.HasPrefix(settings.LinkName, "enx") {
+			ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
+			mac := strings.ToLower(strings.TrimPrefix(settings.LinkName, "enx"))
+
+			for _, iface := range ifaces {
+				ifaceMAC := strings.ReplaceAll(iface.HardwareAddr.String(), ":", "")
+				if ifaceMAC == mac {
+					settings.LinkName = iface.Name
+
+					break
+				}
+			}
+
+			if strings.HasPrefix(settings.LinkName, "enx") {
+				return settings, fmt.Errorf("cmdline device parse failure: interface by MAC not found %s", settings.LinkName)
+			}
+		}
+
 		// if interface name is not set, pick the first non-loopback interface
 		if settings.LinkName == "" {
 			ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty

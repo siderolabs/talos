@@ -12,7 +12,7 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 
 **Required** parameters:
 
-* `talos.platform`: can be one of `aws`, `azure`, `container`, `digitalocean`, `gcp`, `metal`, `equinixMetal`, or `vmware`
+* `talos.platform`: can be one of `aws`, `azure`, `container`, `digitalocean`, `equinixMetal`, `gcp`, `hcloud`, `metal`, `nocloud`, `openstack`, `oracle`, `scaleway`, `upcloud`, `vmware` or `vultr`
 * `init_on_alloc=1`: required by KSPP
 * `slab_nomerge`: required by KSPP
 * `pti=on`: required by KSPP
@@ -38,6 +38,8 @@ before loading machine configuration.
 Partial configuration can be applied as well, e.g. `ip=<:::::::<dns0-ip>:<dns1-ip>:<ntp0-ip>` sets only the DNS and NTP servers.
 
 IPv6 addresses can be specified by enclosing them in the square brackets, e.g. `ip=[2001:db8::a]:[2001:db8::b]:[fe80::1]::controlplane1:eth1::[2001:4860:4860::6464]:[2001:4860:4860::64]:[2001:4860:4806::]`.
+
+`<device>` can be traditional interface naming scheme `eth0, eth1` or `enx<MAC>`, example: `enx78e7d1ea46da`
 
 #### `bond`
 
@@ -128,10 +130,17 @@ Valid options are:
 * `azure`
 * `container`
 * `digitalocean`
-* `gcp`
-* `metal`
 * `equinixMetal`
+* `gcp`
+* `hcloud`
+* `metal`
+* `nocloud`
+* `openstack`
+* `oracle`
+* `scaleway`
+* `upcloud`
 * `vmware`
+* `vultr`
 
 #### `talos.board`
 
