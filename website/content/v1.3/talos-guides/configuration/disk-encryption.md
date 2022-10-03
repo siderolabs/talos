@@ -6,9 +6,9 @@ aliases:
 ---
 
 It is possible to enable encryption for system disks at the OS level.
-As of this writing, only [STATE]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) and [EPHEMERAL]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) partitions can be encrypted.
+Currently, only [STATE]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) and [EPHEMERAL]({{< relref "../../learn-more/architecture/#file-system-partitions" >}}) partitions can be encrypted.
 STATE contains the most sensitive node data: secrets and certs.
-EPHEMERAL partition may contain some sensitive workload data.
+The EPHEMERAL partition may contain sensitive workload data.
 Data is encrypted using LUKS2, which is provided by the Linux kernel modules and `cryptsetup` utility.
 The operating system will run additional setup steps when encryption is enabled.
 
@@ -24,11 +24,16 @@ If the disk encryption is enabled for the EPHEMERAL partition, the system will:
 
 - Get the encryption config from the machine config.
 - Before mounting the EPHEMERAL partition, encrypt and format it.
-  This occurs only if the EPHEMERAL partition is empty and has no filesystem.
+
+This occurs only if the EPHEMERAL partition is empty and has no filesystem.
+
+> Note: Talos Linux disk encryption is designed to guard against data being leaked or recovered from a drive that has been removed from a Talos Linux node.
+It uses the hardware characteristics of the machine in order to decrypt the data, so drives that have been removed, or recycled from a cloud environment or attached to a different virtual machine, will maintain their protection and encryption.
+It is not designed to protect against attacks where physical access to the machine, including the drive, is available.
 
 ## Configuration
 
-Right now this encryption is disabled by default.
+Disk encryption is disabled by default.
 To enable disk encryption you should modify the machine configuration with the following options:
 
 ```yaml
@@ -54,7 +59,7 @@ machine:
 
 LUKS2 supports up to 32 encryption keys and it is possible to specify all of them in the machine configuration.
 Talos always tries to sync the keys list defined in the machine config with the actual keys defined for the LUKS2 partition.
-So if you update the keys list you should have at least one key that is not changed to be used for keys management.
+So if you update the keys list, keep at least one key that is not changed to be used for key management.
 
 When you define a key you should specify the key kind and the `slot`:
 
@@ -88,7 +93,7 @@ Talos supports two kinds of keys:
 
 ### Key Rotation
 
-It is necessary to do `talosctl apply-config` a couple of times to rotate keys, since there is a need to always maintain a single working key while changing the other keys around it.
+In order to completely rotate keys, it is necessary to do `talosctl apply-config` a couple of times, since there is a need to always maintain a single working key while changing the other keys around it.
 
 So, for example, first add a new key:
 
@@ -135,7 +140,7 @@ talosctl apply-config -n <node> -f config.yaml
 
 ### Ephemeral Partition
 
-There is no in-place encryption support for the partitions right now, so to avoid losing any data only empty partitions can be encrypted.
+There is no in-place encryption support for the partitions right now, so to avoid losing data only empty partitions can be encrypted.
 
 As such, migration from unencrypted to encrypted needs some additional handling, especially around explicitly wiping partitions.
 
