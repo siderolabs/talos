@@ -291,6 +291,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		EnaSupport:         aws.Bool(true),
 		Description:        aws.String(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
 		Architecture:       aws.String(awsArchitectures[arch]),
+		ImdsSupport:        aws.String("v2.0"),
 	})
 	if err != nil {
 		return err
