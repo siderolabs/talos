@@ -1,29 +1,38 @@
 ---
 title: "Upgrading Talos Linux"
-description: "Guide on upgrading a Talos Linux machine."
+description: "Guide to upgrading a Talos Linux machine."
 aliases:
   - ../guides/upgrading-talos
 ---
 
-OS upgrades, like other operations on Talos Linux, are effected by an API call, which can be sent via the `talosctl` CLI utility.
-Because Talos Linux is image based, an upgrade is almost the same as installing Talos, with the difference that the system has already been initialized with a configuration.
+OS upgrades are effected by an API call, which can be sent via the `talosctl` CLI utility.
 
 The upgrade API call passes a node the installer image to use to perform the upgrade.
-Each Talos version has a corresponding installer.
+Each Talos version has a corresponding installer image, listed on the release page for the version, for example [{{% release %}}](https://github.com/siderolabs/talos/releases/tag/{{% release %}}).
 
 Upgrades use an A-B image scheme in order to facilitate rollbacks.
 This scheme retains the previous Talos kernel and OS image following each upgrade.
 If an upgrade fails to boot, Talos will roll back to the previous version.
-Likewise, Talos may be manually rolled back via API (or `talosctl rollback`).
-This will simply update the boot reference and reboot.
+Likewise, Talos may be manually rolled back via API (or `talosctl rollback`), which will update the boot reference and reboot.
 
-Unless explicitly told to `preserve` data, an upgrade will cause the node to wipe the [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partition, remove itself from the etcd cluster (if it is a control node), and generally make itself as pristine as is possible.
-(This is generally the desired behavior, except in specialised use cases such as single-node clusters.)
+Unless explicitly told to `preserve` data, an upgrade will cause the node to wipe the [EPHEMERAL]({{< relref "../learn-more/architecture/#file-system-partitions" >}}) partition, remove itself from the etcd cluster (if it is a controlplane node), and make itself as pristine as is possible.
+(This is the desired behavior except in specialised use cases such as single-node clusters.)
 
-*Note* that the default since Talos version 1.0 is to specify the Kubernetes version in the machine config.
-This means an upgrade of the Talos Linux OS will not apply an upgrade of the Kubernetes version by default.
+*Note* An upgrade of the Talos Linux OS will not (since v1.0) apply an upgrade to the Kubernetes version by default.
 Kubernetes upgrades should be managed separately per [upgrading kubernetes]({{< relref "../kubernetes-guides/upgrading-kubernetes" >}}).
-Each release of Talos Linux includes the latest stable Kubernetes version by default.
+
+## Supported Upgrade Paths
+
+Because Talos Linux is image based, an upgrade is almost the same as installing Talos, with the difference that the system has already been initialized with a configuration.
+The supported configuration may change between versions.
+The upgrade process should handle such changes transparently, but this migration is only tested between adjacent minor releases.
+Thus the recommended upgrade path is to always upgrade to the latest patch release of all intermediate minor releases.
+
+For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade path would be:
+
+* upgrade from 1.0 to latest patch of 1.0 - to v1.0.6
+* upgrade from v1.0.6 to latest patch of 1.1 - to v1.1.2
+* upgrade from v1.1.2 to latest patch of 1.2 - to v1.2.4
 
 ## Before Upgrade to {{% release %}}
 
@@ -45,7 +54,7 @@ To upgrade a Talos node, specify the node's IP address and the
 installer container image for the version of Talos to upgrade to.
 
 For instance, if your Talos node has the IP address `10.20.30.40` and you want
-to install the official version `v1.0.0`, you would enter a command such
+to install the current version, you would enter a command such
 as:
 
 ```sh
@@ -55,16 +64,15 @@ as:
 
 There is an option to this command: `--preserve`, which will explicitly tell Talos to keep ephemeral data intact.
 In most cases, it is correct to let Talos perform its default action of erasing the ephemeral data.
-However, if you are running a single-node control-plane, you will want to make sure that `--preserve=true`.
+However, for a single-node control-plane, make sure that `--preserve=true`.
 
-Rarely, a upgrade command will fail to run due to a process holding a file open on disk, or you may wish to set a node to upgrade, but delay the actual reboot as long as possible.
+Rarely, an upgrade command will fail due to a process holding a file open on disk.
 In these cases, you can use the `--stage` flag.
-This puts the upgrade artifacts on disk, and adds some metadata to a disk partition that gets checked very early in the boot process.
-Finally, the node is rebooted by the `upgrade --stage` process.
+This puts the upgrade artifacts on disk, and adds some metadata to a disk partition that gets checked very early in the boot process, then reboots the node.
 On the reboot, Talos sees that it needs to apply an upgrade, and will do so immediately.
 Because this occurs in a just rebooted system, there will be no conflict with any files being held open.
 After the upgrade is applied, the node will reboot again, in order to boot into the new version.
-Note that because Talos Linux now reboots via the `kexec` syscall, the extra reboot adds very little time.
+Note that because Talos Linux reboots via the `kexec` syscall, the extra reboot adds very little time.
 
 <!--
 ## Talos Controller Manager
@@ -135,6 +143,7 @@ This is when you would use the `talosctl rollback` command to revert back to the
 **Q.** Can the upgrade process be observed?
 
 **A.** Yes, using the `talosctl dmesg -f` command.
+You can also use `talosctl upgrade --wait`, and optionally `talosctl upgrade --wait --debug` to observe kernel logs
 
 **Q.** Are worker node upgrades handled differently from control plane node upgrades?
 
@@ -149,7 +158,7 @@ If running a single-node cluster, and you want to force an upgrade despite the l
 
 **Q.** Can I break my cluster by upgrading everything at once?
 
-**A.** Maybe - it's not recommended.
+**A.** Possibly - it's not recommended.
 
 Nothing prevents the user from sending near-simultaneous upgrades to each node of the cluster - and while Talos Linux and Kubernetes can generally deal with this situation, other components of the cluster may not be able to recover from more than one node rebooting at a time.
 (e.g. any software that maintains a quorum or state across nodes, such as Rook/Ceph)
