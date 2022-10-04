@@ -7,7 +7,7 @@ package smbios
 import (
 	"sync"
 
-	"github.com/talos-systems/go-smbios/smbios"
+	"github.com/siderolabs/go-smbios/smbios"
 )
 
 var (

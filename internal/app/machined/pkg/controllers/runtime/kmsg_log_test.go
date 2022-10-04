@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -17,11 +18,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/siderolink/pkg/logreceiver"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	"github.com/talos-systems/siderolink/pkg/logreceiver"
-	"inet.af/netaddr"
 
 	controllerruntime "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
 	talosruntime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
@@ -36,7 +36,7 @@ type logHandler struct {
 }
 
 // HandleLog implements logreceiver.Handler.
-func (s *logHandler) HandleLog(srcAddr netaddr.IP, msg map[string]interface{}) {
+func (s *logHandler) HandleLog(srcAddr netip.Addr, msg map[string]interface{}) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

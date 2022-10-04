@@ -11,7 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/talos-systems/go-smbios/smbios"
+	"github.com/siderolabs/go-smbios/smbios"
 	"go.uber.org/zap"
 
 	hwadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/hardware"

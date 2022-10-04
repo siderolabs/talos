@@ -17,11 +17,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	eventsapi "github.com/siderolabs/siderolink/api/events"
+	"github.com/siderolabs/siderolink/pkg/events"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-procfs/procfs"
 	"github.com/talos-systems/go-retry/retry"
-	eventsapi "github.com/talos-systems/siderolink/api/events"
-	"github.com/talos-systems/siderolink/pkg/events"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 

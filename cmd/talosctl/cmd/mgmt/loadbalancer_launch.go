@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/go-loadbalancer/loadbalancer"
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/go-loadbalancer/loadbalancer"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )

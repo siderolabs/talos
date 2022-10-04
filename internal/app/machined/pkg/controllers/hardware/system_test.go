@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/go-smbios/smbios"
 	"github.com/stretchr/testify/suite"
 	"github.com/talos-systems/go-retry/retry"
-	"github.com/talos-systems/go-smbios/smbios"
 
 	hardwarectrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/hardware"
 	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
