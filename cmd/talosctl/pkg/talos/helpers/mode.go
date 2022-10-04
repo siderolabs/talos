@@ -20,7 +20,7 @@ import (
 // Should be never passed to the API.
 const InteractiveMode machine.ApplyConfigurationRequest_Mode = -1
 
-// Mode apply, patch, edit config config update mode.
+// Mode apply, patch, edit config update mode.
 type Mode struct {
 	options     map[string]machine.ApplyConfigurationRequest_Mode
 	Mode        machine.ApplyConfigurationRequest_Mode

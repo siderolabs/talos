@@ -4,6 +4,7 @@
 
 //go:build amd64
 
+// Package vmware provides the VMware platform implementation.
 package vmware
 
 import (

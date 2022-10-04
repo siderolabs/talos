@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package rpigeneric provides the Raspberry Pi Compute Module 4 implementation.
 package rpigeneric
 
 import (

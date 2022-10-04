@@ -159,6 +159,8 @@ func dumpPackets(r io.Reader) error {
 //	{ 0x30, 0, 0, 0x00000000 },
 //	{ 0x54, 0, 0, 0x000000f0 },
 //	{ 0x15, 0, 8, 0x00000060 },
+//
+//nolint:dupword
 func parseBPFInstructions(in string) ([]*machine.BPFInstruction, error) {
 	in = strings.TrimSpace(in)
 

@@ -167,6 +167,8 @@ linters:
     - typecheck
     - varnamelen # too annoying
     - wrapcheck
+    - contextcheck # enable once golangci-lint 1.50.1 or 1.51 lands
+    - dupword # too annoying
 
     # abandoned linters for which golangci shows the warning that the repo is archived by the owner
     - golint
@@ -196,6 +198,238 @@ issues:
     - path: internal/app/machined/pkg/system/services
       linters:
         - dupl
+    - path: cmd/installer/pkg/qemuimg
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: cmd/talosctl/cmd/mgmt
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: cmd/talosctl/cmd/mgmt/inject
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: cmd/talosctl/cmd/talos
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: cmd/talosctl/pkg/talos/action
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: cmd/talosctl/pkg/talos/global
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: cmd/talosctl/pkg/talos/helpers
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/controllers/cri
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/controllers/kubeaccess/serviceaccount
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/controllers/perf
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/system/events
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/system/health
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/system/runner/containerd
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/system/runner/goroutine
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/system/runner/process
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/system/runner/restart
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/machined/pkg/system
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/maintenance
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/maintenance/server
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/poweroff
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/trustd/internal/reg
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/app/trustd
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/pkg/containers/image
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/pkg/etcd
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/pkg/install
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/pkg/mount
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/pkg/mount/switchroot
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: internal/pkg/tui/components
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/argsbuilder
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/chunker
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/chunker/file
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/chunker/stream
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/download
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/grpc/dialer
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/grpc/factory
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/grpc/gen
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/grpc/middleware/auth/basic
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/grpc/middleware/authz
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/kubernetes
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/kubernetes/inject
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/provision/providers
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: pkg/provision/providers/qemu
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: config/encoder
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: resources/kubespan
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: client/config
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: config/merge
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: config/types/v1alpha1/bundle
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: resources/cri
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: resources/runtime
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: kernel
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: constants
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: resources/perf
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: resources/cluster
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: role
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: resources/hardware
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: config/decoder
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: config/internal/cis
+      text: "should have a package comment"
+      linters:
+        - revive
+    - path: config/types/v1alpha1/machine
+      text: "should have a package comment"
+      linters:
+        - revive
 
     # pkg/machinery module
     - path: config/types/v1alpha1

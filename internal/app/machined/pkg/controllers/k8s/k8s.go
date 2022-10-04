@@ -12,5 +12,5 @@ import (
 func init() {
 	// ugly hack, but it doesn't look like there's better API
 	// cut out error handler which logs error to standard logger
-	utilruntime.ErrorHandlers = utilruntime.ErrorHandlers[len(utilruntime.ErrorHandlers)-1:]
+	utilruntime.ErrorHandlers = utilruntime.ErrorHandlers[len(utilruntime.ErrorHandlers)-1:] //nolint:reassign
 }

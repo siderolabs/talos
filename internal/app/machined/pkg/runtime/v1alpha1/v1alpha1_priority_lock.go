@@ -113,6 +113,7 @@ func (lock *PriorityLock[T]) Lock(ctx context.Context, takeOverTimeout time.Dura
 	}
 }
 
+// Unlock releases the lock.
 func (lock *PriorityLock[T]) Unlock() {
 	var zeroSeq T
 

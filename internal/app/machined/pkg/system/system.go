@@ -126,9 +126,9 @@ func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 	return nil
 }
 
-// Start will invoke the service's Pre, Condition, and Type funcs. If the any
+// Start will invoke the service's Pre, Condition, and Type funcs. If any
 // error occurs in the Pre or Condition invocations, it is up to the caller to
-// to restart the service.
+// restart the service.
 func (s *singleton) Start(serviceIDs ...string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

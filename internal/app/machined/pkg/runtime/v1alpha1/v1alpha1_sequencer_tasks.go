@@ -1772,7 +1772,7 @@ func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 
 		var encryption config.Encryption
 		// first try reading encryption from the config
-		// config always has the priority here
+		// which always has the priority here
 		if r.Config() != nil && r.Config().Machine() != nil {
 			encryption = r.Config().Machine().SystemDiskEncryption().Get(constants.StatePartitionLabel)
 		}

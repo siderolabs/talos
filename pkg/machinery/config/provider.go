@@ -43,6 +43,8 @@ type Provider interface {
 
 // MachineConfig defines the requirements for a config that pertains to machine
 // related options.
+//
+//nolint:interfacebloat
 type MachineConfig interface {
 	Install() Install
 	Security() Security
@@ -159,6 +161,8 @@ type ExtraHost interface {
 }
 
 // Device represents a network interface.
+//
+//nolint:interfacebloat
 type Device interface {
 	Interface() string
 	Addresses() []string
@@ -219,6 +223,8 @@ type WireguardPeer interface {
 
 // Bond contains the various options for configuring a
 // bonded interface.
+//
+//nolint:interfacebloat
 type Bond interface {
 	Interfaces() []string
 	ARPIPTarget() []string
@@ -360,6 +366,8 @@ type RegistryTLSConfig interface {
 
 // ClusterConfig defines the requirements for a config that pertains to cluster
 // related options.
+//
+//nolint:interfacebloat
 type ClusterConfig interface {
 	ID() string
 	Name() string

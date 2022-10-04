@@ -92,7 +92,7 @@ type machinedService struct {
 	c runtime.Controller
 }
 
-// Main is an entrypoint the the API service.
+// Main is an entrypoint to the API service.
 func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter io.Writer) error {
 	injector := &authz.Injector{
 		Mode:   authz.MetadataOnly,
@@ -106,7 +106,7 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 	}
 
 	// Start the API server.
-	server := factory.NewServer(
+	server := factory.NewServer( //nolint:contextcheck
 		&v1alpha1server.Server{
 			Controller: s.c,
 			// breaking the import loop cycle between services/ package and v1alpha1_server.go
@@ -117,10 +117,10 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 		factory.WithLog("machined ", logWriter),
 
 		factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
-		factory.WithStreamInterceptor(injector.StreamInterceptor()),
+		factory.WithStreamInterceptor(injector.StreamInterceptor()), //nolint:contextcheck
 
 		factory.WithUnaryInterceptor(authorizer.UnaryInterceptor()),
-		factory.WithStreamInterceptor(authorizer.StreamInterceptor()),
+		factory.WithStreamInterceptor(authorizer.StreamInterceptor()), //nolint:contextcheck
 	)
 
 	// ensure socket dir exists
@@ -133,7 +133,7 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 		return err
 	}
 
-	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath))
+	listener, err := factory.NewListener(factory.Network("unix"), factory.SocketPath(constants.MachineSocketPath)) //nolint:contextcheck
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
-	factory.ServerGracefulStop(server, shutdownCtx)
+	factory.ServerGracefulStop(server, shutdownCtx) //nolint:contextcheck
 
 	return nil
 }

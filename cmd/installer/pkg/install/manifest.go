@@ -212,6 +212,7 @@ func (m *Manifest) checkMounts(device Device) error {
 				}
 
 				if !device.SkipOverlayMountsCheck && fields[len(fields)-2] == "overlay" {
+					//nolint:dupword
 					// parsing options (last column) in the overlay mount line which looks like:
 					// 163 70 0:52 /apid / ro,relatime - overlay overlay rw,lowerdir=/opt,upperdir=/var/system/overlays/opt-diff,workdir=/var/system/overlays/opt-workdir
 

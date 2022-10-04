@@ -180,6 +180,7 @@ func ExampleVIPOperatorSpec_outputProtoMarshal() {
 	// 0a060a04c0a8010110011a090a01611201621a01632207080310041a0164
 }
 
+//nolint:dupword
 func ExampleVIPOperatorSpec_outputProtoencMarshal() {
 	spec := &network.VIPOperatorSpec{
 		IP:            netip.MustParseAddr("192.168.1.1"),
@@ -240,6 +241,7 @@ func TestVIPOperatorSpec(t *testing.T) {
 	runTestPipe[networkpb.VIPOperatorSpec](t, spec)
 }
 
+//nolint:dupword
 func TestVLANSpecOldEncoding(t *testing.T) {
 	t.Parallel()
 	// Input:

@@ -12,7 +12,7 @@ import (
 )
 
 // Role represents Talos user role.
-// Its string value is used everywhere: as the the Organization value of Talos client certificate,
+// Its string value is used everywhere: as the Organization value of Talos client certificate,
 // as the value of talosctl flag, etc.
 type Role string
 

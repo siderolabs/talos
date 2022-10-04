@@ -28,7 +28,7 @@ type localAddressProvider struct {
 }
 
 // NewLocalAddressProvider initializes and returns a new LocalAddressProvider.
-func NewLocalAddressProvider(st state.State) (*localAddressProvider, error) {
+func NewLocalAddressProvider(st state.State) (LocalAddressProvider, error) {
 	p := &localAddressProvider{}
 
 	evCh := make(chan state.Event)

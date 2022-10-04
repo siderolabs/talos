@@ -157,7 +157,7 @@ func NewDefaultOptions(setters ...Option) *Options {
 		logger = log.New(opts.logDestination, opts.logPrefix, log.Flags())
 	}
 
-	// Recovery is installed as the the first middleware in the chain to handle panics (via defer and recover()) in all subsequent middlewares.
+	// Recovery is installed as the first middleware in the chain to handle panics (via defer and recover()) in all subsequent middlewares.
 	recoveryOpt := grpc_recovery.WithRecoveryHandler(recoveryHandler(logger))
 	opts.UnaryInterceptors = append(
 		[]grpc.UnaryServerInterceptor{grpc_recovery.UnaryServerInterceptor(recoveryOpt)},

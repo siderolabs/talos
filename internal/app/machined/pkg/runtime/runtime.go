@@ -11,7 +11,7 @@ import (
 )
 
 // Runtime defines the runtime parameters.
-type Runtime interface {
+type Runtime interface { //nolint:interfacebloat
 	Config() config.Provider
 	LoadAndValidateConfig([]byte) (config.Provider, error)
 	RollbackToConfigAfter([]byte, time.Duration) error

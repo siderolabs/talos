@@ -15,7 +15,7 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
-//nolint:wsl
+//nolint:wsl,testableexamples
 func Example() {
 	// This is an example of generating a set of machine configuration files for multiple
 	// nodes of the cluster from a single cluster-specific cluster.

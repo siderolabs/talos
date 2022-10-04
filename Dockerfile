@@ -300,7 +300,7 @@ WORKDIR /src
 
 # The vulncheck target runs the vulnerability check tool.
 
-FROM build-go AS lint-vulncheck
+FROM base AS lint-vulncheck
 RUN --mount=type=cache,target=/.cache govulncheck ./...
 
 # The init target builds the init binary.

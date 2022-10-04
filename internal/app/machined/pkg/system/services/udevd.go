@@ -37,7 +37,8 @@ func (c *Udevd) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (c *Udevd) PreFunc(ctx context.Context, r runtime.Runtime) error {
-	_, err := cmd.Run(
+	_, err := cmd.RunContext(
+		ctx,
 		"/sbin/udevadm",
 		"hwdb",
 		"--update",

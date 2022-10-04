@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package cmd provides the talosctl command implementation.
 package cmd
 
 import (
@@ -98,7 +99,7 @@ var docsCmd = &cobra.Command{
 	},
 }
 
-// GenMarkdownReference is the the same as GenMarkdownTree, but
+// GenMarkdownReference is the same as GenMarkdownTree, but
 // with custom filePrepender and linkHandler.
 func GenMarkdownReference(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
 	for _, c := range cmd.Commands() {

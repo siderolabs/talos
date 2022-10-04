@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package conditions provides a set of conditions which can be used to wait for some condition to be met.
 package conditions
 
 import (

@@ -166,7 +166,7 @@ const (
 	// KubernetesDefaultCertificateValidityDuration specifies default certificate duration for Kubernetes generated certificates.
 	KubernetesDefaultCertificateValidityDuration = time.Hour * 24 * 365
 
-	// DefaultCertificatesDir is the path the the Kubernetes PKI directory.
+	// DefaultCertificatesDir is the path the Kubernetes PKI directory.
 	DefaultCertificatesDir = "/etc/kubernetes/pki"
 
 	// KubernetesCACert is the path to the root CA certificate.

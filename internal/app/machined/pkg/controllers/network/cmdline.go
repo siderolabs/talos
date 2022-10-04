@@ -336,7 +336,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 // v1alpha1.Bond was chosen to re-use the `SetBondMaster` and `SetBondSlave` functions
 // ref: modinfo bonding
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo,cyclop,dupword
 func parseBondOptions(options string) (v1alpha1.Bond, error) {
 	var bond v1alpha1.Bond
 
