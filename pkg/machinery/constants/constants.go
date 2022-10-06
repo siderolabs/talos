@@ -780,3 +780,12 @@ const (
 	HostnameKey     = "hostname"
 	MacKey          = "mac"
 )
+
+// Overlays is the set of paths to create overlay mounts for.
+var Overlays = []string{
+	"/etc/cni",
+	"/etc/kubernetes",
+	"/usr/libexec/kubernetes",
+	"/usr/etc/udev",
+	"/opt",
+}

@@ -6,6 +6,8 @@ package mount
 
 import (
 	"golang.org/x/sys/unix"
+
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 )
 
 // OverlayMountPoints returns the mountpoints required to boot the system.
@@ -13,15 +15,7 @@ import (
 func OverlayMountPoints() (mountpoints *Points, err error) {
 	mountpoints = NewMountPoints()
 
-	overlays := []string{
-		"/etc/kubernetes",
-		"/etc/cni",
-		"/usr/libexec/kubernetes",
-		"/usr/etc/udev",
-		"/opt",
-	}
-
-	for _, target := range overlays {
+	for _, target := range constants.Overlays {
 		mountpoint := NewMountPoint("", target, "", unix.MS_I_VERSION, "", WithFlags(Overlay))
 		mountpoints.Set(target, mountpoint)
 	}

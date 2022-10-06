@@ -120,7 +120,8 @@ RUN --mount=type=cache,target=/.cache go install github.com/planetscale/vtprotob
     && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
 RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
     && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
-RUN curl -sfL https://github.com/uber/prototool/releases/download/v1.10.0/prototool-Linux-x86_64.tar.gz | tar -xz --strip-components=2 -C /toolchain/bin prototool/bin/prototool
+RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@v1.10.0 \
+    && mv /go/bin/prototool /toolchain/go/bin/prototool
 COPY ./hack/docgen /go/src/github.com/talos-systems/talos-hack-docgen
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/talos-hack-docgen \
     && go build -o docgen . \

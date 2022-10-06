@@ -842,7 +842,7 @@ func MountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.Ta
 // SetupSharedFilesystems represents the SetupSharedFilesystems task.
 func SetupSharedFilesystems(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		targets := []string{"/", "/var/lib/kubelet", "/etc/cni", "/run"}
+		targets := []string{"/", "/var", "/etc/cni", "/run"}
 		for _, t := range targets {
 			if err = unix.Mount("", t, "", unix.MS_SHARED|unix.MS_REC, ""); err != nil {
 				return err

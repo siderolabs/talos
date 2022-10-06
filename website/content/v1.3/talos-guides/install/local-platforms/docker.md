@@ -1,7 +1,7 @@
 ---
 title: Docker
 description: "Creating Talos Kubernetes cluster using Docker."
-aliases: 
+aliases:
   - ../../../local-platforms/docker
 ---
 
@@ -52,4 +52,29 @@ To cleanup, run:
 
 ```bash
 talosctl cluster destroy
+```
+
+## Running Talos in Docker Manually
+
+To run Talos in a container manually, run:
+
+```bash
+docker run --rm -it \
+  --name tutorial \
+  --hostname talos-cp \
+  --read-only \
+  --privileged \
+  --security-opt seccomp=unconfined \
+  --mount type=tmpfs,destination=/run \
+  --mount type=tmpfs,destination=/system \
+  --mount type=tmpfs,destination=/tmp \
+  --mount type=volume,destination=/system/state \
+  --mount type=volume,destination=/var \
+  --mount type=volume,destination=/etc/cni \
+  --mount type=volume,destination=/etc/kubernetes \
+  --mount type=volume,destination=/usr/libexec/kubernetes \
+  --mount type=volume,destination=/usr/etc/udev \
+  --mount type=volume,destination=/opt \
+  -e PLATFORM=container \
+  ghcr.io/siderolabs/talos:v1.3.0
 ```
