@@ -32,8 +32,9 @@ import (
 type DHCP6 struct {
 	logger *zap.Logger
 
-	linkName string
-	duid     []byte
+	linkName            string
+	duid                []byte
+	skipHostnameRequest bool
 
 	mu          sync.Mutex
 	addresses   []network.AddressSpecSpec
@@ -43,13 +44,14 @@ type DHCP6 struct {
 }
 
 // NewDHCP6 creates DHCPv6 operator.
-func NewDHCP6(logger *zap.Logger, linkName string, duid string) *DHCP6 {
-	duidBin, _ := hex.DecodeString(duid) //nolint:errcheck
+func NewDHCP6(logger *zap.Logger, linkName string, config network.DHCP6OperatorSpec) *DHCP6 {
+	duidBin, _ := hex.DecodeString(config.DUID) //nolint:errcheck
 
 	return &DHCP6{
-		logger:   logger,
-		linkName: linkName,
-		duid:     duidBin,
+		logger:              logger,
+		linkName:            linkName,
+		duid:                duidBin,
+		skipHostnameRequest: config.SkipHostnameRequest,
 	}
 }
 
@@ -190,7 +192,7 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 		d.resolvers = nil
 	}
 
-	if reply.Options.FQDN() != nil && len(reply.Options.FQDN().DomainName.Labels) > 0 {
+	if reply.Options.FQDN() != nil && len(reply.Options.FQDN().DomainName.Labels) > 0 && !d.skipHostnameRequest {
 		d.hostname = []network.HostnameSpecSpec{
 			{
 				Hostname:    reply.Options.FQDN().DomainName.Labels[0],

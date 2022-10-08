@@ -106,7 +106,8 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 				LinkName:  iface,
 				RequireUp: true,
 				DHCP4: network.DHCP4OperatorSpec{
-					RouteMetric: 1024,
+					RouteMetric:         1024,
+					SkipHostnameRequest: true,
 				},
 				ConfigLayer: network.ConfigPlatform,
 			})
@@ -116,7 +117,8 @@ func (o *Openstack) ParseMetadata(unmarshalledMetadataConfig *MetadataConfig, un
 				LinkName:  iface,
 				RequireUp: true,
 				DHCP6: network.DHCP6OperatorSpec{
-					RouteMetric: 1024,
+					RouteMetric:         1024,
+					SkipHostnameRequest: true,
 				},
 				ConfigLayer: network.ConfigPlatform,
 			})

@@ -40,15 +40,17 @@ type OperatorSpecSpec struct {
 //
 //gotagsrewrite:gen
 type DHCP4OperatorSpec struct {
-	RouteMetric uint32 `yaml:"routeMetric" protobuf:"1"`
+	RouteMetric         uint32 `yaml:"routeMetric" protobuf:"1"`
+	SkipHostnameRequest bool   `yaml:"skipHostnameRequest,omitempty" protobuf:"2"`
 }
 
 // DHCP6OperatorSpec describes DHCP6 operator options.
 //
 //gotagsrewrite:gen
 type DHCP6OperatorSpec struct {
-	DUID        string `yaml:"DUID,omitempty" protobuf:"1"`
-	RouteMetric uint32 `yaml:"routeMetric" protobuf:"2"`
+	DUID                string `yaml:"DUID,omitempty" protobuf:"1"`
+	RouteMetric         uint32 `yaml:"routeMetric" protobuf:"2"`
+	SkipHostnameRequest bool   `yaml:"skipHostnameRequest,omitempty" protobuf:"3"`
 }
 
 // VIPOperatorSpec describes virtual IP operator options.

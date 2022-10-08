@@ -29,9 +29,10 @@ import (
 type DHCP4 struct {
 	logger *zap.Logger
 
-	linkName    string
-	routeMetric uint32
-	requestMTU  bool
+	linkName            string
+	routeMetric         uint32
+	skipHostnameRequest bool
+	requestMTU          bool
 
 	offer *dhcpv4.DHCPv4
 
@@ -45,11 +46,12 @@ type DHCP4 struct {
 }
 
 // NewDHCP4 creates DHCPv4 operator.
-func NewDHCP4(logger *zap.Logger, linkName string, routeMetric uint32, platform runtime.Platform) *DHCP4 {
+func NewDHCP4(logger *zap.Logger, linkName string, config network.DHCP4OperatorSpec, platform runtime.Platform) *DHCP4 {
 	return &DHCP4{
-		logger:      logger,
-		linkName:    linkName,
-		routeMetric: routeMetric,
+		logger:              logger,
+		linkName:            linkName,
+		routeMetric:         config.RouteMetric,
+		skipHostnameRequest: config.SkipHostnameRequest,
 		// <3 azure
 		// When including dhcp.OptionInterfaceMTU we don't get a dhcp offer back on azure.
 		// So we'll need to explicitly exclude adding this option for azure.
@@ -264,7 +266,7 @@ func (d *DHCP4) parseAck(ack *dhcpv4.DHCPv4) {
 		d.resolvers = nil
 	}
 
-	if ack.HostName() != "" {
+	if ack.HostName() != "" && !d.skipHostnameRequest {
 		spec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigOperator,
 		}
@@ -307,9 +309,12 @@ func (d *DHCP4) renew(ctx context.Context) (time.Duration, error) {
 		dhcpv4.OptionClasslessStaticRoute,
 		dhcpv4.OptionDomainNameServer,
 		dhcpv4.OptionDNSDomainSearchList,
-		dhcpv4.OptionHostName,
 		dhcpv4.OptionNTPServers,
 		dhcpv4.OptionDomainName,
+	}
+
+	if !d.skipHostnameRequest {
+		opts = append(opts, dhcpv4.OptionHostName)
 	}
 
 	if d.requestMTU {

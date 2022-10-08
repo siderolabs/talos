@@ -80,12 +80,14 @@ message BridgeSlave {
 // DHCP4OperatorSpec describes DHCP4 operator options.
 message DHCP4OperatorSpec {
   uint32 route_metric = 1;
+  bool skip_hostname_request = 2;
 }
 
 // DHCP6OperatorSpec describes DHCP6 operator options.
 message DHCP6OperatorSpec {
   string duid = 1;
   uint32 route_metric = 2;
+  bool skip_hostname_request = 3;
 }
 
 // HardwareAddrSpec describes spec for the link.

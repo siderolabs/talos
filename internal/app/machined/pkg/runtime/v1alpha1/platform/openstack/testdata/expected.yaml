@@ -122,12 +122,14 @@ operators:
       requireUp: true
       dhcp4:
         routeMetric: 1024
+        skipHostnameRequest: true
       layer: platform
     - operator: dhcp6
       linkName: eth2
       requireUp: true
       dhcp6:
         routeMetric: 1024
+        skipHostnameRequest: true
       layer: platform
 externalIPs:
     - 1.2.3.4

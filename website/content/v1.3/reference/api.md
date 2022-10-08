@@ -2374,6 +2374,7 @@ DHCP4OperatorSpec describes DHCP4 operator options.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | route_metric | [uint32](#uint32) |  |  |
+| skip_hostname_request | [bool](#bool) |  |  |
 
 
 
@@ -2390,6 +2391,7 @@ DHCP6OperatorSpec describes DHCP6 operator options.
 | ----- | ---- | ----- | ----------- |
 | duid | [string](#string) |  |  |
 | route_metric | [uint32](#uint32) |  |  |
+| skip_hostname_request | [bool](#bool) |  |  |
 
 
 
