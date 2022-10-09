@@ -102,7 +102,7 @@ require (
 	github.com/talos-systems/go-loadbalancer v0.1.3
 	github.com/talos-systems/go-procfs v0.1.0
 	github.com/talos-systems/go-retry v0.3.1
-	github.com/talos-systems/go-smbios v0.2.0
+	github.com/talos-systems/go-smbios v0.2.1
 	github.com/talos-systems/grpc-proxy v0.3.1
 	github.com/talos-systems/net v0.3.2
 	github.com/talos-systems/siderolink v0.1.2
