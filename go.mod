@@ -95,7 +95,7 @@ require (
 	github.com/siderolabs/go-loadbalancer v0.2.0
 	github.com/siderolabs/go-pcidb v0.1.0
 	github.com/siderolabs/go-pointer v1.0.0
-	github.com/siderolabs/go-smbios v0.3.0
+	github.com/siderolabs/go-smbios v0.3.1
 	github.com/siderolabs/siderolink v0.2.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
