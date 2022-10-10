@@ -1054,8 +1054,8 @@ github.com/siderolabs/go-pcidb v0.1.0 h1:6cJPBBmHlIF4GouYR/1g3JXS/niAON+6lIOfKl/
 github.com/siderolabs/go-pcidb v0.1.0/go.mod h1:wT/tUxNZFlKSuGBniVwXL53vlGQq2/CVu16y6sMGIao=
 github.com/siderolabs/go-pointer v1.0.0 h1:6TshPKep2doDQJAAtHUuHWXbca8ZfyRySjSBT/4GsMU=
 github.com/siderolabs/go-pointer v1.0.0/go.mod h1:HTRFUNYa3R+k0FFKNv11zgkaCLzEkWVzoYZ433P3kHc=
-github.com/siderolabs/go-smbios v0.3.0 h1:v3ycVVnpKUXj+dUExW1TQL9mv0ZHDLTX+W4c1BOP0hw=
-github.com/siderolabs/go-smbios v0.3.0/go.mod h1:Yyyj/yY9qrYTXZnQViyhGuCV4b3IRSZNj3sOXrLvl/c=
+github.com/siderolabs/go-smbios v0.3.1 h1:lS7axBwd485Gevb20a8QSimBh2OoP88P2SgA2mSHumA=
+github.com/siderolabs/go-smbios v0.3.1/go.mod h1:Yyyj/yY9qrYTXZnQViyhGuCV4b3IRSZNj3sOXrLvl/c=
 github.com/siderolabs/protoenc v0.2.0 h1:QFxWIAo//12+/bm27GNYoK/TpQGTYsRrrZCu9jSghvU=
 github.com/siderolabs/protoenc v0.2.0/go.mod h1:mu4gc6pJxhdJYpuloacKE4jsJojj87qDXwn8LUvs2bY=
 github.com/siderolabs/siderolink v0.2.0 h1:IbiHdiMSpyXWPtuNxUvhm9tP5jCG2G3ITPCESbIL61E=
