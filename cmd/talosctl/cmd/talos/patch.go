@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"gopkg.in/yaml.v3"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
@@ -33,17 +34,16 @@ var patchCmdFlags struct {
 }
 
 func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Context, string, resource.Resource, error) error {
-	return func(ctx context.Context, node string, r resource.Resource, callError error) error {
+	return func(ctx context.Context, node string, mc resource.Resource, callError error) error {
 		if callError != nil {
 			return fmt.Errorf("%s: %w", node, callError)
 		}
 
-		mc, ok := r.(*config.MachineConfig)
-		if !ok {
-			return fmt.Errorf("%s: unsupported resource type: %T", node, r)
+		if mc.Metadata().Type() != config.MachineConfigType {
+			return fmt.Errorf("%s: unsupported resource type: %s", node, mc.Metadata().Type())
 		}
 
-		body, err := mc.Config().Bytes()
+		body, err := yaml.Marshal(mc.Spec())
 		if err != nil {
 			return err
 		}
@@ -77,8 +77,8 @@ func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Conte
 		}
 
 		fmt.Printf("patched %s/%s at the node %s\n",
-			r.Metadata().Type(),
-			r.Metadata().ID(),
+			mc.Metadata().Type(),
+			mc.Metadata().ID(),
 			node,
 		)
 

@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"gopkg.in/yaml.v3"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/cmd/util/editor"
 	"k8s.io/kubectl/pkg/cmd/util/editor/crlf"
@@ -48,20 +49,19 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 		"EDITOR",
 	})
 
-	return func(ctx context.Context, node string, r resource.Resource, callError error) error {
+	return func(ctx context.Context, node string, mc resource.Resource, callError error) error {
 		if callError != nil {
 			return fmt.Errorf("%s: %w", node, callError)
 		}
 
-		mc, ok := r.(*config.MachineConfig)
-		if !ok {
+		if mc.Metadata().Type() != config.MachineConfigType {
 			return fmt.Errorf("only the machineconfig resource can be edited")
 		}
 
 		metadata := mc.Metadata()
 		id := metadata.ID()
 
-		body, err := mc.Config().Bytes()
+		body, err := yaml.Marshal(mc.Spec())
 		if err != nil {
 			return err
 		}

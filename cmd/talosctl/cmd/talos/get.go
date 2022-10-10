@@ -123,9 +123,20 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 				watchCh := make(chan state.Event)
 
 				if resourceID == "" {
-					err = c.COSI.WatchKind(nodeCtx, resource.NewMetadata(getCmdFlags.namespace, resourceType, "", resource.VersionUndefined), watchCh, state.WithBootstrapContents(true))
+					err = c.COSI.WatchKind(
+						nodeCtx,
+						resource.NewMetadata(getCmdFlags.namespace, resourceType, "", resource.VersionUndefined),
+						watchCh,
+						state.WithBootstrapContents(true),
+						state.WithWatchKindUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
+					)
 				} else {
-					err = c.COSI.Watch(nodeCtx, resource.NewMetadata(getCmdFlags.namespace, resourceType, resourceID, resource.VersionUndefined), watchCh)
+					err = c.COSI.Watch(
+						nodeCtx,
+						resource.NewMetadata(getCmdFlags.namespace, resourceType, resourceID, resource.VersionUndefined),
+						watchCh,
+						state.WithWatchUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
+					)
 				}
 
 				if err != nil {

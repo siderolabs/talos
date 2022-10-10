@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -68,13 +69,21 @@ func ForEachResource(ctx context.Context,
 		}
 
 		if resourceID != "" {
-			r, callErr := c.COSI.Get(nodeCtx, resource.NewMetadata(namespace, rd.TypedSpec().Type, resourceID, resource.VersionUndefined))
+			r, callErr := c.COSI.Get(
+				nodeCtx,
+				resource.NewMetadata(namespace, rd.TypedSpec().Type, resourceID, resource.VersionUndefined),
+				state.WithGetUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
+			)
 
 			if err = callback(ctx, node, r, callErr); err != nil {
 				return err
 			}
 		} else {
-			items, callErr := c.COSI.List(nodeCtx, resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined))
+			items, callErr := c.COSI.List(
+				nodeCtx,
+				resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined),
+				state.WithListUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
+			)
 			if callErr != nil {
 				if err = callback(ctx, node, nil, callErr); err != nil {
 					return err

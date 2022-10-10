@@ -40,7 +40,7 @@ require (
 	github.com/containernetworking/plugins v1.1.1
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.0
-	github.com/cosi-project/runtime v0.2.0-alpha.1
+	github.com/cosi-project/runtime v0.2.0-alpha.1.0.20221009084302-e8a8fdcc7548
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.18+incompatible
 	github.com/docker/go-connections v0.4.0
