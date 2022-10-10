@@ -1,3 +1,113 @@
+## [Talos 1.2.4](https://github.com/siderolabs/talos/releases/tag/v1.2.4) (2022-10-10)
+
+Welcome to the v1.2.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Kubernetes: v1.25.2
+* Linux: 5.15.72
+
+Talos is built with Go 1.19.2.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`ce540ff6a`](https://github.com/siderolabs/talos/commit/ce540ff6aaabc3d93629b6c2e35d8881a5b191db) fix: lookup Equinix Metal bond slaves using 'permanent addr'
+* [`806d2c438`](https://github.com/siderolabs/talos/commit/806d2c438aa9514af6093ce68ec5b53ab11d4b1c) feat: implement 'permanent addr' in link statuses
+* [`f522f9e39`](https://github.com/siderolabs/talos/commit/f522f9e39bf42026919021855f9cda840192e25a) feat: allow upgrades in maintenance mode (only over SideroLink)
+* [`afa5e087b`](https://github.com/siderolabs/talos/commit/afa5e087bbcc22e858a880247871e8c7a1372638) fix: update discovery client with the redirect fix
+* [`0cce9ef0a`](https://github.com/siderolabs/talos/commit/0cce9ef0a438deb5e8a0debacaeef7b9702b89bc) fix: update go-smbios to v0.2.1
+* [`1e63eeb36`](https://github.com/siderolabs/talos/commit/1e63eeb36c75364332a5fef696356504052a06da) chore: bump kernel and go
+* [`f048bdca1`](https://github.com/siderolabs/talos/commit/f048bdca1d7c5a7f049db5a29f01bf862057ff2b) chore: bump kernel to 5.15.70
+* [`43e34bcae`](https://github.com/siderolabs/talos/commit/43e34bcae442f2b5c8428a80c39e1fbddc95a16f) feat: update Kubernetes to v1.25.2
+</p>
+</details>
+
+### Changes from siderolabs/discovery-api
+<details><summary>3 commits</summary>
+<p>
+
+* [`5b0c5e7`](https://github.com/siderolabs/discovery-api/commit/5b0c5e78097c1489457b148a7f13c73890f5ecad) chore: rename to siderolabs, rekres, etc
+* [`db279ef`](https://github.com/siderolabs/discovery-api/commit/db279ef42a1fad2e1feb4902150b4969f7082c81) feat: initial set of APIs and generated files
+* [`ac52a37`](https://github.com/siderolabs/discovery-api/commit/ac52a378211475ebd281dcbb00954eec42459778) chore: initial commit
+</p>
+</details>
+
+### Changes from siderolabs/discovery-client
+<details><summary>1 commit</summary>
+<p>
+
+* [`230f317`](https://github.com/siderolabs/discovery-client/commit/230f317a8e6e9542b82efcbac9f5cd7b9cff34b6) fix: reconnect the client on update failure
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`f14175f`](https://github.com/siderolabs/extras/commit/f14175fe64fde2060f2b340c7a68a41253eb3ca5) chore: bump go to 1.19.2
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`fca1701`](https://github.com/siderolabs/pkgs/commit/fca1701df51bab5d68dc25165e83c9135f7185e5) chore: bump kernel to 5.15.72
+* [`631278e`](https://github.com/siderolabs/pkgs/commit/631278ef2b0e42d572aa581c536e39235b6ed86d) chore: bump go to 1.19.2
+* [`fd9fbae`](https://github.com/siderolabs/pkgs/commit/fd9fbaecb731dcea89be74a08f639bbb6515cb31) chore: bump kernel to 5.15.71
+* [`85c7cae`](https://github.com/siderolabs/pkgs/commit/85c7caee21c8904eacd876663cfd56f534681b20) chore: bump kernel to 5.15.70
+* [`3c1f04d`](https://github.com/siderolabs/pkgs/commit/3c1f04da2056c86fd5f1e11b7b731e31a1da783e) chore: bump kernel to 5.15.69
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`dcbd748`](https://github.com/siderolabs/tools/commit/dcbd748cbbd27389ea7e1f9ffa749fe138d7c038) chore: bump go to 1.19.2
+</p>
+</details>
+
+### Changes from talos-systems/go-smbios
+<details><summary>1 commit</summary>
+<p>
+
+* [`72c40f7`](https://github.com/talos-systems/go-smbios/commit/72c40f7b5accf5de94c1d463cd0f6d12ec1967a3) fix: check for end of the slice properly
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/discovery-api**     v0.1.1 **_new_**
+* **github.com/siderolabs/discovery-client**  v0.1.1 -> v0.1.2
+* **github.com/siderolabs/extras**            v1.2.0-1-g116c5a9 -> v1.2.0-2-gf14175f
+* **github.com/siderolabs/pkgs**              v1.2.0-11-geb07d7c -> v1.2.0-16-gfca1701
+* **github.com/siderolabs/tools**             v1.2.0-1-gccc64f9 -> v1.2.0-2-gdcbd748
+* **github.com/talos-systems/go-smbios**      v0.2.0 -> v0.2.1
+* **google.golang.org/grpc**                  v1.48.0 -> v1.49.0
+* **k8s.io/api**                              v0.25.1 -> v0.25.2
+* **k8s.io/apimachinery**                     v0.25.1 -> v0.25.2
+* **k8s.io/apiserver**                        v0.25.1 -> v0.25.2
+* **k8s.io/client-go**                        v0.25.1 -> v0.25.2
+* **k8s.io/component-base**                   v0.25.1 -> v0.25.2
+* **k8s.io/kubectl**                          v0.25.1 -> v0.25.2
+* **k8s.io/kubelet**                          v0.25.1 -> v0.25.2
+
+Previous release can be found at [v1.2.3](https://github.com/siderolabs/talos/releases/tag/v1.2.3)
+
 ## [Talos 1.2.3](https://github.com/siderolabs/talos/releases/tag/v1.2.3) (2022-09-20)
 
 Welcome to the v1.2.3 release of Talos!
