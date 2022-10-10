@@ -30,7 +30,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.10.0
 	github.com/BurntSushi/toml v1.2.0
-	github.com/aws/aws-sdk-go v1.44.110
+	github.com/aws/aws-sdk-go v1.44.114
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4
@@ -65,7 +65,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hetznercloud/hcloud-go v1.35.3
 	github.com/insomniacslk/dhcp v0.0.0-20221001123530-5308ebe5334c
-	github.com/jsimonetti/rtnetlink v1.2.2
+	github.com/jsimonetti/rtnetlink v1.2.3
 	github.com/jxskiss/base62 v1.1.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.16
@@ -121,13 +121,13 @@ require (
 	go.uber.org/atomic v1.10.0
 	go.uber.org/zap v1.23.0
 	go4.org/netipx v0.0.0-20220925034521-797b0c90d8ab
-	golang.org/x/net v0.0.0-20220923203811-8be639271d50
-	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7
-	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8
+	golang.org/x/net v0.0.0-20221004154528-8021a29435af
+	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
+	golang.org/x/sys v0.0.0-20221006211917-84dc82d7e875
 	golang.org/x/term v0.0.0-20220919170432-7a66f970e087
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220916014741-473347a5e6e3
-	google.golang.org/grpc v1.49.0
+	google.golang.org/grpc v1.50.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
 	gopkg.in/yaml.v3 v3.0.1
@@ -153,7 +153,7 @@ require (
 	github.com/briandowns/spinner v1.6.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/cilium/ebpf v0.9.1 // indirect
+	github.com/cilium/ebpf v0.9.3 // indirect
 	github.com/containerd/continuity v0.2.2 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/go-cni v1.1.7 // indirect
