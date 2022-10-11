@@ -14,6 +14,9 @@ A list of adopters of Talos Linux, and the use
   
 * **[Sidero Labs](https://www.siderolabs.com)**  
   Sidero Labs uses Talos to build & test Talos! All the unit and end-to-end testing happens on our CI platform running in Talos-backed Kubernetes clusters.
+  
+* **[Tremor Video](https://www.tremorvideo.com)**  
+  Tremor Video helps advertisers deliver impactful brand stories across all screens through the power of innovative video technology combined with advanced audience data and captivating creative.
 
 ## Contributing
 
