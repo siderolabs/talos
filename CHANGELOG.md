@@ -1,3 +1,44 @@
+## [Talos 1.2.5](https://github.com/siderolabs/talos/releases/tag/v1.2.5) (2022-10-11)
+
+Welcome to the v1.2.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.72 + UEFI/arm64 patch
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>1 commit</summary>
+<p>
+
+* [`7e7b07b7d`](https://github.com/siderolabs/talos/commit/7e7b07b7d13afca0090ced75900b715d5d4b9d0e) feat: patch Linux kernel with UEFI randomize fix
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`4e4a1c6`](https://github.com/siderolabs/pkgs/commit/4e4a1c61d222c9ee6261cfd7bcaedb3d9a7d009d) feat: revert kernel to 5.15.68, add UEFI no randomize patch
+* [`08408bb`](https://github.com/siderolabs/pkgs/commit/08408bb8f7f9d68234d7875c3fb9d2ea0876ab33) feat: revert kernel to 5.15.68
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.2.0-16-gfca1701 -> v1.2.0-18-g4e4a1c6
+
+Previous release can be found at [v1.2.4](https://github.com/siderolabs/talos/releases/tag/v1.2.4)
+
 ## [Talos 1.2.4](https://github.com/siderolabs/talos/releases/tag/v1.2.4) (2022-10-10)
 
 Welcome to the v1.2.4 release of Talos!
