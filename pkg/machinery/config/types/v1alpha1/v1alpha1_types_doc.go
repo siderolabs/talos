@@ -2452,7 +2452,7 @@ func init() {
 			FieldName: "kubespan",
 		},
 	}
-	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 3)
+	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 4)
 	NetworkKubeSpanDoc.Fields[0].Name = "enabled"
 	NetworkKubeSpanDoc.Fields[0].Type = "bool"
 	NetworkKubeSpanDoc.Fields[0].Note = ""
@@ -2468,6 +2468,11 @@ func init() {
 	NetworkKubeSpanDoc.Fields[2].Note = ""
 	NetworkKubeSpanDoc.Fields[2].Description = "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established."
 	NetworkKubeSpanDoc.Fields[2].Comments[encoder.LineComment] = "Skip sending traffic via KubeSpan if the peer connection state is not up."
+	NetworkKubeSpanDoc.Fields[3].Name = "mtu"
+	NetworkKubeSpanDoc.Fields[3].Type = "uint32"
+	NetworkKubeSpanDoc.Fields[3].Note = ""
+	NetworkKubeSpanDoc.Fields[3].Description = "KubeSpan link MTU size.\nDefault value is 1420."
+	NetworkKubeSpanDoc.Fields[3].Comments[encoder.LineComment] = "KubeSpan link MTU size."
 
 	NetworkDeviceSelectorDoc.Type = "NetworkDeviceSelector"
 	NetworkDeviceSelectorDoc.Comments[encoder.LineComment] = "NetworkDeviceSelector struct describes network device selector."

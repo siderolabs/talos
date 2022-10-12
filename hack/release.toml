@@ -89,6 +89,12 @@ ip=172.20.0.2::172.20.0.1:255.255.255.0::enx7085c2dfbc59
 ```
 """
 
+    [notes.kubespan]
+        title = "KubeSpan"
+        description="""\
+KubeSpan MTU link size is now configurable via `network.kubespan.mtu` setting in the machine configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]

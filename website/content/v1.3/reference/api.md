@@ -2137,6 +2137,7 @@ ConfigSpec describes KubeSpan configuration..
 | shared_secret | [string](#string) |  |  |
 | force_routing | [bool](#bool) |  |  |
 | advertise_kubernetes_networks | [bool](#bool) |  |  |
+| mtu | [uint32](#uint32) |  |  |
 
 
 

@@ -413,12 +413,18 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error modifying address: %w", err)
 		}
 
+		mtu := cfgSpec.MTU
+		if mtu == 0 {
+			mtu = constants.KubeSpanLinkMTU
+		}
+
 		for _, spec := range []network.RouteSpecSpec{
 			{
 				Family:      nethelpers.FamilyInet4,
 				Destination: netip.Prefix{},
 				Source:      netip.Addr{},
 				Gateway:     netip.Addr{},
+				MTU:         mtu,
 				OutLinkName: constants.KubeSpanLinkName,
 				Table:       nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable),
 				Priority:    1,
@@ -433,6 +439,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				Destination: netip.Prefix{},
 				Source:      netip.Addr{},
 				Gateway:     netip.Addr{},
+				MTU:         mtu,
 				OutLinkName: constants.KubeSpanLinkName,
 				Table:       nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable),
 				Priority:    1,
@@ -474,6 +481,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec.Kind = "wireguard"
 				spec.Up = true
 				spec.Logical = true
+				spec.MTU = mtu
 
 				spec.Wireguard = network.WireguardSpec{
 					PrivateKey:   localSpec.PrivateKey,

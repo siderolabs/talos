@@ -2483,6 +2483,10 @@ type NetworkKubeSpan struct {
 	//   forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly
 	//   to the peer if Wireguard connection can't be established.
 	KubeSpanAllowDownPeerBypass *bool `yaml:"allowDownPeerBypass,omitempty"`
+	// description: |
+	//   KubeSpan link MTU size.
+	//   Default value is 1420.
+	KubeSpanMTU *uint32 `yaml:"mtu,omitempty"`
 }
 
 // NetworkDeviceSelector struct describes network device selector.

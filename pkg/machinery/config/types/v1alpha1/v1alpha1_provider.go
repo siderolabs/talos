@@ -1014,6 +1014,11 @@ func (k *NetworkKubeSpan) AdvertiseKubernetesNetworks() bool {
 	return pointer.SafeDeref(k.KubeSpanAdvertiseKubernetesNetworks)
 }
 
+// MTU implements the KubeSpan interface.
+func (k *NetworkKubeSpan) MTU() uint32 {
+	return pointer.SafeDeref(k.KubeSpanMTU)
+}
+
 // Disabled implements the config.Provider interface.
 func (t *TimeConfig) Disabled() bool {
 	return pointer.SafeDeref(t.TimeDisabled)

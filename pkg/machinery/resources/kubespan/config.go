@@ -37,6 +37,8 @@ type ConfigSpec struct {
 	ForceRouting bool `yaml:"forceRouting" protobuf:"4"`
 	// Advertise Kubernetes pod networks or skip it completely.
 	AdvertiseKubernetesNetworks bool `yaml:"advertiseKubernetesNetworks" protobuf:"5"`
+	// Force kubeSpan MTU size.
+	MTU uint32 `yaml:"mtu,omitempty" protobuf:"6"`
 }
 
 // NewConfig initializes a Config resource.
