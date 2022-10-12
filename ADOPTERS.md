@@ -6,6 +6,9 @@ A list of adopters of Talos Linux, and the use
 * **[Equinix Managed Services NL](https://www.equinix.nl/services/managed-services/netherlands)**  
   Equinix Managed Services NL offers various infrastructure services, amongst which [EQAP](https://www.equinix.nl/services/managed-services/netherlands/application-platform), which is a managed Kubernetes, based on Talos Linux.
 
+* **[Lofty](https://hirelofty.com)**  
+  Lofty makes amazing custom software for our clients that our employees are passionate about. Lofty's specialization in software development around GIS/geospatial applications, field data collection, and data science operations makes Lofty an ideal partner for our key industries. Lofty is using Talos as a secure and portable base Operating System for deploying our applications.
+
 * **[Nedap Security Atlas](https://nedapsecurityatlas.com)**  
   Nedap Security Atlas does all on-premise development, unit and integration testing in Gitlab running on Talos clusters.
 
