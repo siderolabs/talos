@@ -49,7 +49,7 @@ Refer to the docs at https://www.talos.dev/v1.3/talos-guides/install/single-boar
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Kubernetes: v1.26.0-alpha.1
+* Kubernetes: v1.26.0-alpha.2
 * Flannel: v0.19.2
 * CoreDNS: v1.10.0
 * etcd: v3.5.5
