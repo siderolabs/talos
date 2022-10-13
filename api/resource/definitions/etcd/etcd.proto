@@ -16,6 +16,11 @@ message ConfigSpec {
   repeated string listen_exclude_subnets = 6;
 }
 
+// MemberSpec holds information about an etcd member.
+message MemberSpec {
+  string member_id = 1;
+}
+
 // PKIStatusSpec describes status of rendered secrets.
 message PKIStatusSpec {
   bool ready = 1;

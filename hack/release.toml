@@ -137,6 +137,21 @@ Exoscale provides a firewall, TCP load balancer and autoscale groups.
 It works well with CCM and Kubernetes node autoscaler.
 """
 
+    [notes.etcd-member-id]
+        title = "etcd Member ID"
+        description = """\
+Talos now internally handles etcd member removal by member ID instead of member name (hostname).
+This resolves the case when member name is not accurate or empty (eg: when etcd hasn't fully joined yet).
+
+Command `talosctl etcd remove-member` now accepts member IDs instead of member names.
+
+New resource can be used to get member ID of the Talos node:
+
+```bash
+talosctl get etcdmember
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

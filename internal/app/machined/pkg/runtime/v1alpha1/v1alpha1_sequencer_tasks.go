@@ -1361,7 +1361,7 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 
 		ctx = clientv3.WithRequireLeader(ctx)
 
-		if err = client.LeaveCluster(ctx); err != nil {
+		if err = client.LeaveCluster(ctx, r.State().V1Alpha2().Resources()); err != nil {
 			return fmt.Errorf("failed to leave cluster: %w", err)
 		}
 

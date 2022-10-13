@@ -40,6 +40,7 @@ import (
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-pointer"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"golang.org/x/net/bpf"
@@ -83,6 +84,7 @@ import (
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
 	"github.com/siderolabs/talos/pkg/machinery/role"
@@ -1691,12 +1693,15 @@ func (s *Server) Memory(ctx context.Context, in *emptypb.Empty) (reply *machine.
 }
 
 // EtcdMemberList implements the machine.MachineServer interface.
-func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListRequest) (reply *machine.EtcdMemberListResponse, err error) {
-	if err = s.checkControlplane("member list"); err != nil {
+func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListRequest) (*machine.EtcdMemberListResponse, error) {
+	if err := s.checkControlplane("member list"); err != nil {
 		return nil, err
 	}
 
-	var client *etcd.Client
+	var (
+		client *etcd.Client
+		err    error
+	)
 
 	if in.QueryLocal {
 		client, err = etcd.NewLocalClient()
@@ -1718,7 +1723,7 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 		return nil, err
 	}
 
-	reply = &machine.EtcdMemberListResponse{
+	return &machine.EtcdMemberListResponse{
 		Messages: []*machine.EtcdMembers{
 			{
 				LegacyMembers: slices.Map(resp.Members, (*etcdserverpb.Member).GetName),
@@ -1733,14 +1738,12 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 				}),
 			},
 		},
-	}
-
-	return reply, nil
+	}, nil
 }
 
 // EtcdRemoveMember implements the machine.MachineServer interface.
-func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMemberRequest) (reply *machine.EtcdRemoveMemberResponse, err error) {
-	if err = s.checkControlplane("etcd remove member"); err != nil {
+func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMemberRequest) (*machine.EtcdRemoveMemberResponse, error) {
+	if err := s.checkControlplane("etcd remove member"); err != nil {
 		return nil, err
 	}
 
@@ -1749,27 +1752,54 @@ func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMem
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
 
-	//nolint:errcheck
-	defer client.Close()
+	defer client.Close() //nolint:errcheck
 
 	ctx = clientv3.WithRequireLeader(ctx)
 
-	if err = client.RemoveMember(ctx, in.Member); err != nil {
+	if err = client.RemoveMemberByHostname(ctx, in.Member); err != nil { //nolint:staticcheck // deprecated, remove in v1.7
 		return nil, fmt.Errorf("failed to remove member: %w", err)
 	}
 
-	reply = &machine.EtcdRemoveMemberResponse{
+	return &machine.EtcdRemoveMemberResponse{
 		Messages: []*machine.EtcdRemoveMember{
 			{},
 		},
+	}, nil
+}
+
+// EtcdRemoveMemberByID implements the machine.MachineServer interface.
+func (s *Server) EtcdRemoveMemberByID(ctx context.Context, in *machine.EtcdRemoveMemberByIDRequest) (*machine.EtcdRemoveMemberByIDResponse, error) {
+	if err := s.checkControlplane("etcd remove member"); err != nil {
+		return nil, err
 	}
 
-	return reply, nil
+	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	defer client.Close() //nolint:errcheck
+
+	ctx = clientv3.WithRequireLeader(ctx)
+
+	if err = client.RemoveMemberByMemberID(ctx, in.MemberId); err != nil {
+		if errors.Is(err, rpctypes.ErrMemberNotFound) {
+			return nil, status.Errorf(codes.NotFound, err.Error())
+		}
+
+		return nil, fmt.Errorf("failed to remove member: %w", err)
+	}
+
+	return &machine.EtcdRemoveMemberByIDResponse{
+		Messages: []*machine.EtcdRemoveMemberByID{
+			{},
+		},
+	}, nil
 }
 
 // EtcdLeaveCluster implements the machine.MachineServer interface.
-func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClusterRequest) (reply *machine.EtcdLeaveClusterResponse, err error) {
-	if err = s.checkControlplane("etcd leave"); err != nil {
+func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClusterRequest) (*machine.EtcdLeaveClusterResponse, error) {
+	if err := s.checkControlplane("etcd leave"); err != nil {
 		return nil, err
 	}
 
@@ -1778,27 +1808,24 @@ func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClus
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
 
-	//nolint:errcheck
-	defer client.Close()
+	defer client.Close() //nolint:errcheck
 
 	ctx = clientv3.WithRequireLeader(ctx)
 
-	if err = client.LeaveCluster(ctx); err != nil {
+	if err = client.LeaveCluster(ctx, s.Controller.Runtime().State().V1Alpha2().Resources()); err != nil {
 		return nil, fmt.Errorf("failed to leave cluster: %w", err)
 	}
 
-	reply = &machine.EtcdLeaveClusterResponse{
+	return &machine.EtcdLeaveClusterResponse{
 		Messages: []*machine.EtcdLeaveCluster{
 			{},
 		},
-	}
-
-	return reply, nil
+	}, nil
 }
 
 // EtcdForfeitLeadership implements the machine.MachineServer interface.
-func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForfeitLeadershipRequest) (reply *machine.EtcdForfeitLeadershipResponse, err error) {
-	if err = s.checkControlplane("etcd forfeit leadership"); err != nil {
+func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForfeitLeadershipRequest) (*machine.EtcdForfeitLeadershipResponse, error) {
+	if err := s.checkControlplane("etcd forfeit leadership"); err != nil {
 		return nil, err
 	}
 
@@ -1807,25 +1834,27 @@ func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForf
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
 
-	//nolint:errcheck
-	defer client.Close()
+	defer client.Close() //nolint:errcheck
 
 	ctx = clientv3.WithRequireLeader(ctx)
 
-	leader, err := client.ForfeitLeadership(ctx)
+	memberID, err := etcd.GetLocalMemberID(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
+	if err != nil {
+		return nil, err
+	}
+
+	leader, err := client.ForfeitLeadership(ctx, etcdresource.FormatMemberID(memberID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to forfeit leadership: %w", err)
 	}
 
-	reply = &machine.EtcdForfeitLeadershipResponse{
+	return &machine.EtcdForfeitLeadershipResponse{
 		Messages: []*machine.EtcdForfeitLeadership{
 			{
 				Member: leader,
 			},
 		},
-	}
-
-	return reply, nil
+	}, nil
 }
 
 // EtcdSnapshot implements the machine.MachineServer interface.

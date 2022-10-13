@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 )
 
 // QuorumCheckTimeout is the amount of time to allow for KV operations before quorum is declared invalid.
@@ -148,53 +149,77 @@ func validateMemberHealth(ctx context.Context, memberURIs []string) (err error) 
 }
 
 // LeaveCluster removes the current member from the etcd cluster and nukes etcd data directory.
-func (c *Client) LeaveCluster(ctx context.Context) error {
-	hostname, err := os.Hostname()
+func (c *Client) LeaveCluster(ctx context.Context, st state.State) error {
+	memberID, err := GetLocalMemberID(ctx, st)
 	if err != nil {
 		return err
 	}
 
-	if err = c.RemoveMember(ctx, hostname); err != nil {
+	if err := c.RemoveMemberByMemberID(ctx, memberID); err != nil {
 		return err
 	}
 
-	if err = system.Services(nil).Stop(ctx, "etcd"); err != nil {
+	if err := system.Services(nil).Stop(ctx, "etcd"); err != nil {
 		return fmt.Errorf("failed to stop etcd: %w", err)
 	}
 
 	// Once the member is removed, the data is no longer valid.
-	if err = os.RemoveAll(constants.EtcdDataPath); err != nil {
+	if err := os.RemoveAll(constants.EtcdDataPath); err != nil {
 		return fmt.Errorf("failed to remove %s: %w", constants.EtcdDataPath, err)
 	}
 
 	return nil
 }
 
-// RemoveMember removes the member from the etcd cluster.
-func (c *Client) RemoveMember(ctx context.Context, hostname string) error {
-	resp, err := c.MemberList(ctx)
+// GetMemberID returns the member ID of the node client is connected to.
+func (c *Client) GetMemberID(ctx context.Context) (uint64, error) {
+	resp, err := c.Client.Maintenance.AlarmList(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	var id *uint64
+	return resp.Header.MemberId, nil
+}
+
+func (c *Client) getMemberIDByHostname(ctx context.Context, hostname string) (uint64, error) {
+	resp, err := c.MemberList(ctx)
+	if err != nil {
+		return 0, err
+	}
 
 	for _, member := range resp.Members {
 		if member.Name == hostname {
 			member := member
-			id = &member.ID
 
-			break
+			return member.ID, nil
 		}
 	}
 
-	if id == nil {
-		return fmt.Errorf("failed to find %q in list of etcd members", hostname)
+	return 0, fmt.Errorf("could not get member ID for hostname %q", hostname)
+}
+
+// RemoveMemberByHostname removes the member from the etcd cluster.
+//
+// Deprecated: use RemoveMemberByMemberID instead.
+func (c *Client) RemoveMemberByHostname(ctx context.Context, hostname string) error {
+	id, err := c.getMemberIDByHostname(ctx, hostname)
+	if err != nil {
+		return err
 	}
 
-	_, err = c.MemberRemove(ctx, *id)
+	err = c.RemoveMemberByMemberID(ctx, id)
 	if err != nil {
-		return fmt.Errorf("failed to remove member %d: %w", *id, err)
+		return fmt.Errorf("failed to remove member %d: %w", id, err)
+	}
+
+	return nil
+}
+
+// RemoveMemberByMemberID removes the member from the etcd cluster.
+func (c *Client) RemoveMemberByMemberID(ctx context.Context, memberID uint64) error {
+	_, err := c.MemberRemove(ctx, memberID)
+	if err != nil {
+		return fmt.Errorf("failed to remove member %d: %w", memberID, err)
 	}
 
 	return nil
@@ -204,12 +229,7 @@ func (c *Client) RemoveMember(ctx context.Context, hostname string) error {
 // member.
 //
 //nolint:gocyclo
-func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return "", fmt.Errorf("failed to get hostname: %w", err)
-	}
-
+func (c *Client) ForfeitLeadership(ctx context.Context, memberID string) (string, error) {
 	resp, err := c.MemberList(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to list etcd members: %w", err)
@@ -221,8 +241,13 @@ func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
 
 	var member *etcdserverpb.Member
 
+	memberIDUint64, err := etcdresource.ParseMemberID(memberID)
+	if err != nil {
+		return "", err
+	}
+
 	for _, m := range resp.Members {
-		if m.Name == hostname {
+		if m.ID == memberIDUint64 {
 			member = m
 
 			break
@@ -230,7 +255,7 @@ func (c *Client) ForfeitLeadership(ctx context.Context) (string, error) {
 	}
 
 	if member == nil {
-		return "", fmt.Errorf("failed to find %q in list of etcd members", hostname)
+		return "", fmt.Errorf("failed to find %q in list of etcd members", memberID)
 	}
 
 	for _, ep := range member.GetClientURLs() {

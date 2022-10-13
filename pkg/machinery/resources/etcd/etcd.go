@@ -5,9 +5,29 @@
 // Package etcd provides resources which interface with etcd.
 package etcd
 
-import "github.com/cosi-project/runtime/pkg/resource"
+import (
+	"fmt"
+	"strconv"
 
-//go:generate deep-copy -type ConfigSpec -type PKIStatusSpec -type SpecSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+	"github.com/cosi-project/runtime/pkg/resource"
+)
+
+//go:generate deep-copy -type ConfigSpec -type PKIStatusSpec -type SpecSpec -type MemberSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // NamespaceName contains resources supporting etcd service.
 const NamespaceName resource.Namespace = "etcd"
+
+// FormatMemberID represents a uint64 in hexadecimal notation.
+func FormatMemberID(memberID uint64) string {
+	return fmt.Sprintf("%016x", memberID)
+}
+
+// ParseMemberID converts a member ID in hexadecimal notation to a uint64.
+func ParseMemberID(memberID string) (uint64, error) {
+	id, err := strconv.ParseUint(memberID, 16, 64)
+	if err != nil {
+		return 0, fmt.Errorf("error parsing etcd member id: %w", err)
+	}
+
+	return id, nil
+}

@@ -27,7 +27,18 @@ service MachineService {
   rpc Dmesg(DmesgRequest) returns (stream common.Data);
   rpc Events(EventsRequest) returns (stream Event);
   rpc EtcdMemberList(EtcdMemberListRequest) returns (EtcdMemberListResponse);
-  rpc EtcdRemoveMember(EtcdRemoveMemberRequest) returns (EtcdRemoveMemberResponse);
+  // EtcdRemoveMember removes a member from the etcd cluster by hostname.
+  //
+  // Please use EtcdRemoveMemberByID instead.
+  rpc EtcdRemoveMember(EtcdRemoveMemberRequest) returns (EtcdRemoveMemberResponse) {
+    option (common.remove_deprecated_method) = "v1.7";
+    option deprecated = true;
+  }
+  // EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
+  //
+  // This API should be used to remove members which don't have an associated Talos node anymore.
+  // To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed.
+  rpc EtcdRemoveMemberByID(EtcdRemoveMemberByIDRequest) returns (EtcdRemoveMemberByIDResponse);
   rpc EtcdLeaveCluster(EtcdLeaveClusterRequest) returns (EtcdLeaveClusterResponse);
   rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest) returns (EtcdForfeitLeadershipResponse);
   // EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot
@@ -915,6 +926,18 @@ message EtcdRemoveMember {
 
 message EtcdRemoveMemberResponse {
   repeated EtcdRemoveMember messages = 1;
+}
+
+message EtcdRemoveMemberByIDRequest {
+  uint64 member_id = 1;
+}
+
+message EtcdRemoveMemberByID {
+  common.Metadata metadata = 1;
+}
+
+message EtcdRemoveMemberByIDResponse {
+  repeated EtcdRemoveMemberByID messages = 1;
 }
 
 message EtcdForfeitLeadershipRequest {}

@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 )
@@ -28,5 +29,34 @@ func TestRegisterResource(t *testing.T) {
 		&etcd.PKIStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
+	}
+}
+
+func TestFormatMemberID(t *testing.T) {
+	tests := []struct {
+		name string
+		id   uint64
+		str  string
+	}{
+		{
+			name: "small id",
+			id:   1,
+			str:  "0000000000000001",
+		},
+		{
+			name: "big id",
+			id:   uint64(1) << 63,
+			str:  "8000000000000000",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.str, etcd.FormatMemberID(tt.id))
+
+			id, err := etcd.ParseMemberID(tt.str)
+			require.NoError(t, err)
+			assert.Equal(t, tt.id, id)
+		})
 	}
 }

@@ -96,6 +96,7 @@ func NewState() (*State, error) {
 		&etcd.Config{},
 		&etcd.PKIStatus{},
 		&etcd.Spec{},
+		&etcd.Member{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
 		&hardware.Processor{},

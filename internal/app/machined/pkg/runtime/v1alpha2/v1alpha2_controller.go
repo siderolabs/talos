@@ -115,6 +115,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&etcd.ConfigController{},
 		&etcd.PKIController{},
 		&etcd.SpecController{},
+		&etcd.MemberController{},
 		&files.CRIConfigPartsController{},
 		&files.CRIRegistryConfigController{},
 		&files.EtcFileController{

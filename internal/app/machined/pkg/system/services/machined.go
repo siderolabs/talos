@@ -45,6 +45,7 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/EtcdMemberList":              role.MakeSet(role.Admin, role.Reader),
 	"/machine.MachineService/EtcdRecover":                 role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdRemoveMember":            role.MakeSet(role.Admin),
+	"/machine.MachineService/EtcdRemoveMemberByID":        role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdSnapshot":                role.MakeSet(role.Admin, role.EtcdBackup),
 	"/machine.MachineService/Events":                      role.MakeSet(role.Admin, role.Reader),
 	"/machine.MachineService/GenerateClientConfiguration": role.MakeSet(role.Admin),

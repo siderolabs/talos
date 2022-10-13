@@ -62,6 +62,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/etcd/etcd.proto](#resource/definitions/etcd/etcd.proto)
     - [ConfigSpec](#talos.resource.definitions.etcd.ConfigSpec)
     - [ConfigSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry)
+    - [MemberSpec](#talos.resource.definitions.etcd.MemberSpec)
     - [PKIStatusSpec](#talos.resource.definitions.etcd.PKIStatusSpec)
     - [SpecSpec](#talos.resource.definitions.etcd.SpecSpec)
     - [SpecSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry)
@@ -246,6 +247,9 @@ description: Talos gRPC API reference.
     - [EtcdRecover](#machine.EtcdRecover)
     - [EtcdRecoverResponse](#machine.EtcdRecoverResponse)
     - [EtcdRemoveMember](#machine.EtcdRemoveMember)
+    - [EtcdRemoveMemberByID](#machine.EtcdRemoveMemberByID)
+    - [EtcdRemoveMemberByIDRequest](#machine.EtcdRemoveMemberByIDRequest)
+    - [EtcdRemoveMemberByIDResponse](#machine.EtcdRemoveMemberByIDResponse)
     - [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest)
     - [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse)
     - [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest)
@@ -1258,6 +1262,21 @@ ConfigSpec describes (some) configuration settings of etcd.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.etcd.MemberSpec"></a>
+
+### MemberSpec
+MemberSpec holds information about an etcd member.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| member_id | [string](#string) |  |  |
 
 
 
@@ -4266,6 +4285,51 @@ EtcdMembers contains the list of members registered on the host.
 
 
 
+<a name="machine.EtcdRemoveMemberByID"></a>
+
+### EtcdRemoveMemberByID
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdRemoveMemberByIDRequest"></a>
+
+### EtcdRemoveMemberByIDRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| member_id | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdRemoveMemberByIDResponse"></a>
+
+### EtcdRemoveMemberByIDResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdRemoveMemberByID](#machine.EtcdRemoveMemberByID) | repeated |  |
+
+
+
+
+
+
 <a name="machine.EtcdRemoveMemberRequest"></a>
 
 ### EtcdRemoveMemberRequest
@@ -5983,7 +6047,12 @@ If recover_etcd argument is specified, etcd is recovered from a snapshot uploade
 | Dmesg | [DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |
 | Events | [EventsRequest](#machine.EventsRequest) | [Event](#machine.Event) stream |  |
 | EtcdMemberList | [EtcdMemberListRequest](#machine.EtcdMemberListRequest) | [EtcdMemberListResponse](#machine.EtcdMemberListResponse) |  |
-| EtcdRemoveMember | [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest) | [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse) |  |
+| EtcdRemoveMember | [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest) | [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse) | EtcdRemoveMember removes a member from the etcd cluster by hostname.
+
+Please use EtcdRemoveMemberByID instead. |
+| EtcdRemoveMemberByID | [EtcdRemoveMemberByIDRequest](#machine.EtcdRemoveMemberByIDRequest) | [EtcdRemoveMemberByIDResponse](#machine.EtcdRemoveMemberByIDResponse) | EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
+
+This API should be used to remove members which don't have an associated Talos node anymore. To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed. |
 | EtcdLeaveCluster | [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest) | [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse) |  |
 | EtcdForfeitLeadership | [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest) | [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse) |  |
 | EtcdRecover | [.common.Data](#common.Data) stream | [EtcdRecoverResponse](#machine.EtcdRecoverResponse) | EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot to the node.
