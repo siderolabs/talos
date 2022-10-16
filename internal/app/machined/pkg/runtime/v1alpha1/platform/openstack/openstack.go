@@ -48,7 +48,7 @@ func PrettyPrint(v interface{}) (err error) {
 //
 //nolint:gocyclo,cyclop
 func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netip.Addr, st state.State) (*runtime.PlatformNetworkConfig, error) {
-	PrettyPrint(unmarshalledNetworkConfig)
+	fmt.Println("Parsing metadata...")
 
 	networkConfig := &runtime.PlatformNetworkConfig{}
 

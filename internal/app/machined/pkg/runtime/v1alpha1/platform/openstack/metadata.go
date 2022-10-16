@@ -6,6 +6,7 @@ package openstack
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/netip"
@@ -102,6 +103,14 @@ func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, n
 	return metaConfig, networkConfig, machineConfig, err
 }
 
+func PrettyPrint(v interface{}) (err error) {
+	b, err := json.Marshal(v)
+	if err == nil {
+		fmt.Println(string(b))
+	}
+	return
+}
+
 func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
 	var dev *probe.ProbedBlockDevice
 
@@ -133,6 +142,8 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		metaConfig = nil
 	}
 
+	log.Printf("Successfuly fetched meta config from: config-drive/%s", configMetadataPath)
+
 	log.Printf("fetching network config from: config-drive/%s", configNetworkDataPath)
 
 	networkConfig, err = os.ReadFile(filepath.Join(mnt, configNetworkDataPath))
@@ -153,9 +164,13 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		machineConfig = nil
 	}
 
+	log.Printf("Successfuly fetched machine config from: config-drive/%s", configUserDataPath)
+
 	if err = unix.Unmount(mnt, 0); err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to unmount: %w", err)
 	}
+
+	PrettyPrint(networkConfig)
 
 	if machineConfig == nil {
 		return metaConfig, networkConfig, machineConfig, errors.ErrNoConfigSource
