@@ -39,7 +39,7 @@ func (o *Openstack) Name() string {
 func PrettyPrint(v interface{}) (err error) {
 	b, err := json.Marshal(v)
 	if err == nil {
-		fmt.Println(string(b))
+		fmt.Printf(string(b))
 	}
 	return
 }
@@ -48,7 +48,7 @@ func PrettyPrint(v interface{}) (err error) {
 //
 //nolint:gocyclo,cyclop
 func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netip.Addr, st state.State) (*runtime.PlatformNetworkConfig, error) {
-	fmt.Println("Parsing metadata...")
+	fmt.Printf("Parsing metadata...")
 
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
@@ -342,23 +342,23 @@ func (o *Openstack) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *Openstack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	fmt.Println("NetworkConfiguration...")
+	fmt.Printf("NetworkConfiguration...")
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
 	if err != nil {
-		fmt.Println("NetworkConfiguration... 2")
+		fmt.Printf("NetworkConfiguration... 2")
 		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx)
 		if stderrors.Is(err, errors.ErrNoConfigSource) {
-			fmt.Println("NetworkConfiguration... 3")
+			fmt.Printf("NetworkConfiguration... 3")
 			err = nil
 		}
 
 		if err != nil {
-			fmt.Println("NetworkConfiguration... 4")
+			fmt.Printf("NetworkConfiguration... 4")
 			return err
 		}
 	}
 
-	fmt.Println("NetworkConfiguration... 5")
+	fmt.Printf("NetworkConfiguration... 5")
 
 	hostname := o.hostname(ctx)
 	extIPs := o.externalIPs(ctx)
