@@ -142,6 +142,8 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		networkConfig = nil
 	}
 
+	log.Printf("Successfuly fetched network config from: config-drive/%s", configNetworkDataPath)
+
 	log.Printf("fetching machine config from: config-drive/%s", configUserDataPath)
 
 	machineConfig, err = os.ReadFile(filepath.Join(mnt, configUserDataPath))
