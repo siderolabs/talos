@@ -6,7 +6,6 @@ package openstack
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/netip"
@@ -101,14 +100,6 @@ func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, n
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 
 	return metaConfig, networkConfig, machineConfig, err
-}
-
-func PrettyPrint(v interface{}) (err error) {
-	b, err := json.Marshal(v)
-	if err == nil {
-		fmt.Println(string(b))
-	}
-	return
 }
 
 func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
