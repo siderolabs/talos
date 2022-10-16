@@ -131,9 +131,9 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		log.Printf("failed to read %s", configMetadataPath)
 
 		metaConfig = nil
+	} else {
+		log.Printf("Successfuly fetched meta config from: config-drive/%s", configMetadataPath)
 	}
-
-	log.Printf("Successfuly fetched meta config from: config-drive/%s", configMetadataPath)
 
 	log.Printf("fetching network config from: config-drive/%s", configNetworkDataPath)
 
@@ -142,9 +142,9 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		log.Printf("failed to read %s", configNetworkDataPath)
 
 		networkConfig = nil
+	} else {
+		log.Printf("Successfuly fetched network config from: config-drive/%s", configNetworkDataPath)
 	}
-
-	log.Printf("Successfuly fetched network config from: config-drive/%s", configNetworkDataPath)
 
 	log.Printf("fetching machine config from: config-drive/%s", configUserDataPath)
 
@@ -153,9 +153,9 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		log.Printf("failed to read %s", configUserDataPath)
 
 		machineConfig = nil
+	} else {
+		log.Printf("Successfuly fetched machine config from: config-drive/%s", configUserDataPath)
 	}
-
-	log.Printf("Successfuly fetched machine config from: config-drive/%s", configUserDataPath)
 
 	if err = unix.Unmount(mnt, 0); err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to unmount: %w", err)
