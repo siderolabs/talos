@@ -342,17 +342,23 @@ func (o *Openstack) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *Openstack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	fmt.Println("NetworkConfiguration...")
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
 	if err != nil {
+		fmt.Println("NetworkConfiguration... 2")
 		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx)
 		if stderrors.Is(err, errors.ErrNoConfigSource) {
+			fmt.Println("NetworkConfiguration... 3")
 			err = nil
 		}
 
 		if err != nil {
+			fmt.Println("NetworkConfiguration... 4")
 			return err
 		}
 	}
+
+	fmt.Println("NetworkConfiguration... 5")
 
 	hostname := o.hostname(ctx)
 	extIPs := o.externalIPs(ctx)
