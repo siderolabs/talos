@@ -24,6 +24,30 @@ addresses:
       flags: permanent
       layer: platform
 links:
+    - name: bond0
+      logical: true
+      up: true
+      mtu: 1500
+      kind: bond
+      type: ether
+      bondMaster:
+        mode: 802.3ad
+        xmitHashPolicy: layer2+3
+        lacpRate: fast
+        arpValidate: none
+        arpAllTargets: any
+        primaryReselect: always
+        failOverMac: 0
+        miimon: 100
+        updelay: 200
+        downdelay: 200
+        resendIgmp: 1
+        lpInterval: 1
+        packetsPerSlave: 1
+        numPeerNotif: 1
+        tlbLogicalLb: 1
+        adActorSysPrio: 65535
+      layer: platform
     - name: eth0
       logical: false
       up: true
@@ -44,6 +68,23 @@ links:
       mtu: 0
       kind: ""
       type: netrom
+      layer: platform
+    - name: eth3
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: bond0
+      layer: platform
+    - name: eth4
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: bond0
+      slaveIndex: 1
       layer: platform
 routes:
     - family: inet6

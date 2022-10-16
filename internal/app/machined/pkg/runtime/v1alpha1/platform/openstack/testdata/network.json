@@ -19,6 +19,30 @@
             "id": "aae16046-6c74-4f33-acf2-a16e9ab093ed",
             "type": "vif",
             "vif_id": "c816df7e-7bcc-45ca-9eb2-3d3d3dca063a"
+        },
+        {
+            "id": "tap7819ff08-20",
+            "vif_id": "7819ff08-204b-4193-8c4d-1fff242932e5",
+            "type": "bond",
+            "mtu": 1500,
+            "ethernet_mac_address": "4c:d9:8f:b3:34:f7",
+            "bond_mode": "802.3ad",
+            "bond_links": [
+                "411f3980-d8f9-4bf0-a09a-9c01c81e1022",
+                "83f59825-bf2d-4ea7-98be-edc772fe82de"
+            ],
+            "bond_miimon": "100",
+            "bond_xmit_hash_policy": "layer2+3"
+        },
+        {
+            "id": "411f3980-d8f9-4bf0-a09a-9c01c81e1022",
+            "type": "phy",
+            "ethernet_mac_address": "4c:d9:8f:b3:34:f8"
+        },
+        {
+            "id": "83f59825-bf2d-4ea7-98be-edc772fe82de",
+            "type": "phy",
+            "ethernet_mac_address": "4c:d9:8f:b3:34:f7"
         }
     ],
     "networks": [

@@ -5,16 +5,22 @@
 package openstack_test
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"net/netip"
 	"testing"
 
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/openstack"
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
 
 //go:embed testdata/metadata.json
@@ -37,7 +43,33 @@ func TestParseMetadata(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawNetwork, &n))
 
-	networkConfig, err := o.ParseMetadata(&m, &n, "", []netip.Addr{netip.MustParseAddr("1.2.3.4")})
+	ctx := context.Background()
+
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
+	eth0.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xa4, 0xbf, 0x00, 0x10, 0x20, 0x30}
+	require.NoError(t, st.Create(ctx, eth0))
+
+	eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
+	eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xa4, 0xbf, 0x00, 0x10, 0x20, 0x31}
+	require.NoError(t, st.Create(ctx, eth1))
+
+	eth2 := network.NewLinkStatus(network.NamespaceName, "eth2")
+	eth2.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xa4, 0xbf, 0x00, 0x10, 0x20, 0x33}
+	require.NoError(t, st.Create(ctx, eth2))
+
+	// Bond slaves
+
+	eth3 := network.NewLinkStatus(network.NamespaceName, "eth3")
+	eth3.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x4c, 0xd9, 0x8f, 0xb3, 0x34, 0xf8}
+	require.NoError(t, st.Create(ctx, eth3))
+
+	eth4 := network.NewLinkStatus(network.NamespaceName, "eth4")
+	eth4.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x4c, 0xd9, 0x8f, 0xb3, 0x34, 0xf7}
+	require.NoError(t, st.Create(ctx, eth4))
+
+	networkConfig, err := o.ParseMetadata(ctx, &m, &n, "", []netip.Addr{netip.MustParseAddr("1.2.3.4")}, st)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)
