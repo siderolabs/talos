@@ -52,6 +52,8 @@ func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfi
 
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
+	return networkConfig, nil
+
 	if hostname == "" {
 		hostname = unmarshalledMetadataConfig.Hostname
 	}
