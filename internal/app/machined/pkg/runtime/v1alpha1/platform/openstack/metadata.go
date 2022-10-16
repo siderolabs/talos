@@ -84,6 +84,8 @@ func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, n
 	metaConfig, err = download.Download(ctx, OpenstackMetaDataEndpoint)
 	if err != nil {
 		metaConfig = nil
+	} else {
+		log.Printf("Successfuly fetched meta config from: %q", OpenstackMetaDataEndpoint)
 	}
 
 	log.Printf("fetching network config from: %q", OpenstackNetworkDataEndpoint)
@@ -91,6 +93,8 @@ func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, n
 	networkConfig, err = download.Download(ctx, OpenstackNetworkDataEndpoint)
 	if err != nil {
 		networkConfig = nil
+	} else {
+		log.Printf("Successfuly fetched network config from: %q", OpenstackNetworkDataEndpoint)
 	}
 
 	log.Printf("fetching machine config from: %q", OpenstackUserDataEndpoint)
