@@ -19,6 +19,30 @@
             "id": "aae16046-6c74-4f33-acf2-a16e9ab093ed",
             "type": "vif",
             "vif_id": "c816df7e-7bcc-45ca-9eb2-3d3d3dca063a"
+        },
+        {
+            "id": "tap7819ff08-20",
+            "vif_id": "7819ff08-204b-4193-8c4d-1fff242932e5",
+            "type": "bond",
+            "mtu": 1500,
+            "ethernet_mac_address": "4c:d9:8f:b3:34:f7",
+            "bond_mode": "802.3ad",
+            "bond_links": [
+                "411f3980-d8f9-4bf0-a09a-9c01c81e1022",
+                "83f59825-bf2d-4ea7-98be-edc772fe82de"
+            ],
+            "bond_miimon": "100",
+            "bond_xmit_hash_policy": "layer2+3"
+        },
+        {
+            "id": "411f3980-d8f9-4bf0-a09a-9c01c81e1022",
+            "type": "phy",
+            "ethernet_mac_address": "4c:d9:8f:b3:34:f8"
+        },
+        {
+            "id": "83f59825-bf2d-4ea7-98be-edc772fe82de",
+            "type": "phy",
+            "ethernet_mac_address": "4c:d9:8f:b3:34:f7"
         }
     ],
     "networks": [
@@ -89,6 +113,31 @@
             "ip_address": "fd60:172:16:84:f816:3eff:fe73:5901",
             "netmask": "ffff:ffff:ffff:ffff::",
             "routes": []
+        },
+        {
+            "id": "network0",
+            "type": "ipv4",
+            "link": "tap7819ff08-20",
+            "ip_address": "94.156.45.48",
+            "netmask": "255.255.255.0",
+            "routes": [
+                {
+                    "network": "0.0.0.0",
+                    "netmask": "0.0.0.0",
+                    "gateway": "94.156.45.1"
+                }
+            ],
+            "network_id": "dc4b2e65-869b-46b1-b53b-538774dbdc16",
+            "services": [
+                {
+                    "type": "dns",
+                    "address": "8.8.8.8"
+                },
+                {
+                    "type": "dns",
+                    "address": "8.8.4.4"
+                }
+            ]
         }
     ],
     "services": [

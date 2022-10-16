@@ -13,10 +13,14 @@ import (
 	"fmt"
 	"log"
 	"net/netip"
+	"strings"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 
+	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/utils"
@@ -36,7 +40,13 @@ func (o *Openstack) Name() string {
 // ParseMetadata converts OpenStack metadata to platform network configuration.
 //
 //nolint:gocyclo,cyclop
-func (o *Openstack) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, extIPs []netip.Addr, metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
+func (o *Openstack) ParseMetadata(
+	ctx context.Context,
+	unmarshalledNetworkConfig *NetworkConfig,
+	extIPs []netip.Addr,
+	metadata *MetadataConfig,
+	st state.State,
+) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if metadata.Hostname != "" {
@@ -72,21 +82,106 @@ func (o *Openstack) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, extI
 		})
 	}
 
+	hostInterfaces, err := safe.StateList[*network.LinkStatus](ctx, st, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+	if err != nil {
+		return nil, fmt.Errorf("error listing host interfaces: %w", err)
+	}
+
 	ifaces := make(map[string]string)
+	bondLinks := make(map[string]string)
 
-	for idx, netLinks := range unmarshalledNetworkConfig.Links {
-		switch netLinks.Type {
+	// Bonds
+
+	bondIndex := 0
+
+	for _, netLink := range unmarshalledNetworkConfig.Links {
+		if netLink.Type != "bond" {
+			continue
+		}
+
+		mode, err := nethelpers.BondModeByName(netLink.BondMode)
+		if err != nil {
+			return nil, fmt.Errorf("invalid bond_mode: %w", err)
+		}
+
+		hashPolicy, err := nethelpers.BondXmitHashPolicyByName(netLink.BondHashPolicy)
+		if err != nil {
+			return nil, fmt.Errorf("invalid bond_xmit_hash_policy: %w", err)
+		}
+
+		bondName := fmt.Sprintf("bond%d", bondIndex)
+		ifaces[netLink.ID] = bondName
+
+		bondLink := network.LinkSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Name:        bondName,
+			Logical:     true,
+			Up:          true,
+			MTU:         uint32(netLink.MTU),
+			Kind:        network.LinkKindBond,
+			Type:        nethelpers.LinkEther,
+			BondMaster: network.BondMasterSpec{
+				Mode:       mode,
+				MIIMon:     netLink.BondMIIMon,
+				HashPolicy: hashPolicy,
+				UpDelay:    200,
+				DownDelay:  200,
+				LACPRate:   nethelpers.LACPRateFast,
+			},
+		}
+
+		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
+		networkConfig.Links = append(networkConfig.Links, bondLink)
+
+		for _, link := range netLink.BondLinks {
+			bondLinks[link] = bondName
+		}
+
+		bondIndex++
+	}
+
+	bondSlaveIndexes := make(map[string]int)
+
+	// Interfaces
+
+	for idx, netLink := range unmarshalledNetworkConfig.Links {
+		switch netLink.Type {
 		case "phy", "vif", "ovs":
-			// We need to define name of interface by MAC
-			// I hope it will solve after https://github.com/talos-systems/talos/issues/4203, https://github.com/talos-systems/talos/issues/3265
-			ifaces[netLinks.ID] = fmt.Sprintf("eth%d", idx)
+			linkName := ""
 
-			networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
-				Name:        ifaces[netLinks.ID],
+			for hostInterfaceIter := safe.IteratorFromList(hostInterfaces); hostInterfaceIter.Next(); {
+				if strings.EqualFold(hostInterfaceIter.Value().TypedSpec().PermanentAddr.String(), netLink.Mac) {
+					linkName = hostInterfaceIter.Value().Metadata().ID()
+
+					break
+				}
+			}
+
+			if linkName == "" {
+				linkName = fmt.Sprintf("eth%d", idx)
+
+				log.Printf("failed to find interface with MAC %q, using %q", netLink.Mac, linkName)
+			}
+
+			ifaces[netLink.ID] = linkName
+
+			link := network.LinkSpecSpec{
+				Name:        ifaces[netLink.ID],
 				Up:          true,
-				MTU:         uint32(netLinks.MTU),
+				MTU:         uint32(netLink.MTU),
 				ConfigLayer: network.ConfigPlatform,
-			})
+			}
+
+			if bondName, ok := bondLinks[netLink.ID]; ok {
+				link.BondSlave = network.BondSlave{
+					MasterName: bondName,
+					SlaveIndex: bondSlaveIndexes[bondName],
+				}
+
+				bondSlaveIndexes[bondName]++
+			}
+
+			networkConfig.Links = append(networkConfig.Links, link)
 		}
 	}
 
@@ -251,7 +346,7 @@ func (o *Openstack) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (o *Openstack) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (o *Openstack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	networkSource := false
 
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
@@ -287,7 +382,7 @@ func (o *Openstack) NetworkConfiguration(ctx context.Context, _ state.State, ch 
 		}
 	}
 
-	networkConfig, err := o.ParseMetadata(&unmarshalledNetworkConfig, extIPs, &meta)
+	networkConfig, err := o.ParseMetadata(ctx, &unmarshalledNetworkConfig, extIPs, &meta, st)
 	if err != nil {
 		return err
 	}

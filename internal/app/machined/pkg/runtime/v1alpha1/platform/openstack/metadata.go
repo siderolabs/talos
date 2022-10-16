@@ -45,10 +45,14 @@ const (
 // NetworkConfig holds NetworkData config.
 type NetworkConfig struct {
 	Links []struct {
-		ID   string `json:"id,omitempty"`
-		Type string `json:"type"`
-		Mac  string `json:"ethernet_mac_address,omitempty"`
-		MTU  int    `json:"mtu,omitempty"`
+		ID             string   `json:"id,omitempty"`
+		Type           string   `json:"type"`
+		Mac            string   `json:"ethernet_mac_address,omitempty"`
+		MTU            int      `json:"mtu,omitempty"`
+		BondMode       string   `json:"bond_mode,omitempty"`
+		BondLinks      []string `json:"bond_links,omitempty"`
+		BondMIIMon     uint32   `json:"bond_miimon,string,omitempty"`
+		BondHashPolicy string   `json:"bond_xmit_hash_policy,omitempty"`
 	} `json:"links"`
 	Networks []struct {
 		ID      string `json:"id,omitempty"`
