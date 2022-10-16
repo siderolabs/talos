@@ -36,10 +36,20 @@ func (o *Openstack) Name() string {
 	return "openstack"
 }
 
+func PrettyPrint(v interface{}) (err error) {
+	b, err := json.Marshal(v)
+	if err == nil {
+		fmt.Println(string(b))
+	}
+	return
+}
+
 // ParseMetadata converts OpenStack metadata to platform network configuration.
 //
 //nolint:gocyclo,cyclop
 func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netip.Addr, st state.State) (*runtime.PlatformNetworkConfig, error) {
+	PrettyPrint(unmarshalledNetworkConfig)
+
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if hostname == "" {
@@ -293,6 +303,8 @@ func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfi
 			networkConfig.Routes = append(networkConfig.Routes, route)
 		}
 	}
+
+	PrettyPrint(networkConfig.Links)
 
 	return networkConfig, nil
 }
