@@ -26,7 +26,7 @@ require (
 	github.com/talos-systems/net v0.3.2
 	go4.org/netipx v0.0.0-20220925034521-797b0c90d8ab
 	google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91
-	google.golang.org/grpc v1.50.0
+	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 )
