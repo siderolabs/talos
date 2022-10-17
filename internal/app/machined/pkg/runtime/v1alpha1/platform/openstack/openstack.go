@@ -48,11 +48,9 @@ func PrettyPrint(v interface{}) (err error) {
 //
 //nolint:gocyclo,cyclop
 func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netip.Addr, st state.State) (*runtime.PlatformNetworkConfig, error) {
-	fmt.Printf("Parsing metadata...")
+	fmt.Println("Parsing metadata...")
 
 	networkConfig := &runtime.PlatformNetworkConfig{}
-
-	return networkConfig, nil
 
 	if hostname == "" {
 		hostname = unmarshalledMetadataConfig.Hostname
@@ -313,9 +311,11 @@ func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfi
 
 // Configuration implements the runtime.Platform interface.
 func (o *Openstack) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
+	fmt.Println("[[[[Configuration]]]]")
+
 	_, _, machineConfig, err = o.configFromCD()
 	if err != nil {
-		_, _, machineConfig, err = o.configFromNetwork(ctx)
+		_, _, machineConfig, err = o.configFromNetwork(ctx, "Configuration")
 		if err != nil {
 			return nil, err
 		}
@@ -324,6 +324,7 @@ func (o *Openstack) Configuration(ctx context.Context, r state.State) (machineCo
 	// Some openstack setups does not allow you to change user-data,
 	// so skip this case.
 	if bytes.HasPrefix(machineConfig, []byte("#cloud-config")) {
+		fmt.Println("Skipping cloud-config as it is not supported by OpenStack")
 		return nil, errors.ErrNoConfigSource
 	}
 
@@ -344,23 +345,23 @@ func (o *Openstack) KernelArgs() procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *Openstack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	fmt.Printf("NetworkConfiguration...")
+	fmt.Println("[[[[NetworkConfiguration]]]]")
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
 	if err != nil {
-		fmt.Printf("NetworkConfiguration... 2")
-		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx)
+		fmt.Println("NetworkConfiguration... 2")
+		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx, "NetworkConfiguration")
 		if stderrors.Is(err, errors.ErrNoConfigSource) {
-			fmt.Printf("NetworkConfiguration... 3")
+			fmt.Println("NetworkConfiguration... 3")
 			err = nil
 		}
 
 		if err != nil {
-			fmt.Printf("NetworkConfiguration... 4")
+			fmt.Println("NetworkConfiguration... 4")
 			return err
 		}
 	}
 
-	fmt.Printf("NetworkConfiguration... 5")
+	fmt.Println("NetworkConfiguration... 5")
 
 	hostname := o.hostname(ctx)
 	extIPs := o.externalIPs(ctx)

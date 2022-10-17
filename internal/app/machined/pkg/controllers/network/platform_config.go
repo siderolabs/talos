@@ -99,6 +99,7 @@ func (ctrl *PlatformConfigController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	fmt.Printf("Run PlatformConfigController")
 	if ctrl.StatePath == "" {
 		ctrl.StatePath = constants.StateMountPoint
 	}

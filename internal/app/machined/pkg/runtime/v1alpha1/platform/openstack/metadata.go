@@ -78,7 +78,8 @@ type MetadataConfig struct {
 	Hostname string `json:"hostname,omitempty"`
 }
 
-func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+func (o *Openstack) configFromNetwork(ctx context.Context, src string) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+	log.Printf("configFromNetwork, source: %s", src)
 	log.Printf("fetching meta config from: %q", OpenstackMetaDataEndpoint)
 
 	metaConfig, err = download.Download(ctx, OpenstackMetaDataEndpoint)
