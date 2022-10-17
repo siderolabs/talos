@@ -47,7 +47,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/emicklei/dot v1.0.0
 	github.com/fatih/color v1.13.0
-	github.com/fsnotify/fsnotify v1.5.4
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gdamore/tcell/v2 v2.5.3
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/gizak/termui/v3 v3.1.0
