@@ -92,9 +92,7 @@ func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfi
 	bondIndex := 0
 
 	for _, netLink := range unmarshalledNetworkConfig.Links {
-		switch netLink.Type {
-		case "bond":
-			// Bond master
+		if netLink.Type == "bond" {
 			mode, err := nethelpers.BondModeByName(netLink.BondMode)
 
 			if err != nil {
@@ -332,6 +330,7 @@ func (o *Openstack) KernelArgs() procfs.Parameters {
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *Openstack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	var hostname []byte
+
 	var extIPs []netip.Addr
 
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
