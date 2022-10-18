@@ -19,13 +19,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/talos-systems/go-procfs/procfs"
 
+	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/utils"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-
-	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
 )
 
 // Openstack is the concrete type that implements the runtime.Platform interface.
@@ -39,7 +38,14 @@ func (o *Openstack) Name() string {
 // ParseMetadata converts OpenStack metadata to platform network configuration.
 //
 //nolint:gocyclo,cyclop
-func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfig *MetadataConfig, unmarshalledNetworkConfig *NetworkConfig, hostname string, extIPs []netip.Addr, st state.State) (*runtime.PlatformNetworkConfig, error) {
+func (o *Openstack) ParseMetadata(
+	ctx context.Context,
+	unmarshalledMetadataConfig *MetadataConfig,
+	unmarshalledNetworkConfig *NetworkConfig,
+	hostname string,
+	extIPs []netip.Addr,
+	st state.State,
+) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if hostname == "" {
@@ -94,13 +100,11 @@ func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfi
 	for _, netLink := range unmarshalledNetworkConfig.Links {
 		if netLink.Type == "bond" {
 			mode, err := nethelpers.BondModeByName(netLink.BondMode)
-
 			if err != nil {
 				return nil, fmt.Errorf("invalid bond_mode: %w", err)
 			}
 
 			hashPolicy, err := nethelpers.BondXmitHashPolicyByName(netLink.BondHashPolicy)
-
 			if err != nil {
 				return nil, fmt.Errorf("invalid bond_xmit_hash_policy: %w", err)
 			}
