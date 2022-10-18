@@ -113,6 +113,31 @@
             "ip_address": "fd60:172:16:84:f816:3eff:fe73:5901",
             "netmask": "ffff:ffff:ffff:ffff::",
             "routes": []
+        },
+        {
+            "id": "network0",
+            "type": "ipv4",
+            "link": "tap7819ff08-20",
+            "ip_address": "94.156.45.48",
+            "netmask": "255.255.255.0",
+            "routes": [
+                {
+                    "network": "0.0.0.0",
+                    "netmask": "0.0.0.0",
+                    "gateway": "94.156.45.1"
+                }
+            ],
+            "network_id": "dc4b2e65-869b-46b1-b53b-538774dbdc16",
+            "services": [
+                {
+                    "type": "dns",
+                    "address": "8.8.8.8"
+                },
+                {
+                    "type": "dns",
+                    "address": "8.8.4.4"
+                }
+            ]
         }
     ],
     "services": [

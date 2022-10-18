@@ -108,6 +108,7 @@ func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfi
 			}
 
 			bondName := fmt.Sprintf("bond%d", bondIndex)
+			ifaces[netLink.ID] = bondName
 
 			bondLink := network.LinkSpecSpec{
 				ConfigLayer: network.ConfigPlatform,
@@ -130,8 +131,8 @@ func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfi
 			networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
 			networkConfig.Links = append(networkConfig.Links, bondLink)
 
-			for _, bondLink := range netLink.BondLinks {
-				bondLinks[bondLink] = bondName
+			for _, link := range netLink.BondLinks {
+				bondLinks[link] = bondName
 			}
 
 			bondIndex++
