@@ -50,7 +50,7 @@ To do so, you can take our [survey](https://docs.google.com/forms/d/1TUna5YTYGCK
 
 You can subscribe to this meeting by joining the community forum above.
 
-> Note: You can convert the meeting hours to your [local time](https://everytimezone.com/s/6bb1045a).
+> Note: You can convert the meeting hours to your [local time](https://everytimezone.com/s/599e61d6).
 
 ## Contributing
 
