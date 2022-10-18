@@ -301,7 +301,7 @@ func (o *Openstack) ParseMetadata(ctx context.Context, unmarshalledMetadataConfi
 func (o *Openstack) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
 	_, _, machineConfig, err = o.configFromCD()
 	if err != nil {
-		_, _, machineConfig, err = o.configFromNetwork(ctx, "Configuration")
+		_, _, machineConfig, err = o.configFromNetwork(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -335,7 +335,7 @@ func (o *Openstack) NetworkConfiguration(ctx context.Context, st state.State, ch
 
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
 	if err != nil {
-		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx, "NetworkConfiguration")
+		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx)
 		if stderrors.Is(err, errors.ErrNoConfigSource) {
 			err = nil
 		}
