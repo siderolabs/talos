@@ -85,8 +85,6 @@ func (o *Openstack) configFromNetwork(ctx context.Context, src string) (metaConf
 	metaConfig, err = download.Download(ctx, OpenstackMetaDataEndpoint)
 	if err != nil {
 		metaConfig = nil
-	} else {
-		log.Printf("Successfuly fetched meta config from: %q", OpenstackMetaDataEndpoint)
 	}
 
 	log.Printf("fetching network config from: %q", OpenstackNetworkDataEndpoint)
@@ -94,8 +92,6 @@ func (o *Openstack) configFromNetwork(ctx context.Context, src string) (metaConf
 	networkConfig, err = download.Download(ctx, OpenstackNetworkDataEndpoint)
 	if err != nil {
 		networkConfig = nil
-	} else {
-		log.Printf("Successfuly fetched network config from: %q", OpenstackNetworkDataEndpoint)
 	}
 
 	log.Printf("fetching machine config from: %q", OpenstackUserDataEndpoint)
@@ -136,8 +132,6 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		log.Printf("failed to read %s", configMetadataPath)
 
 		metaConfig = nil
-	} else {
-		log.Printf("Successfully fetched meta config from: config-drive/%s", configMetadataPath)
 	}
 
 	log.Printf("fetching network config from: config-drive/%s", configNetworkDataPath)
@@ -147,9 +141,6 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		log.Printf("failed to read %s", configNetworkDataPath)
 
 		networkConfig = nil
-	} else {
-		log.Printf("Successfully fetched network config from: config-drive/%s", configNetworkDataPath)
-		PrettyPrint(networkConfig)
 	}
 
 	log.Printf("fetching machine config from: config-drive/%s", configUserDataPath)
@@ -159,8 +150,6 @@ func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, mac
 		log.Printf("failed to read %s", configUserDataPath)
 
 		machineConfig = nil
-	} else {
-		log.Printf("Successfully fetched machine config from: config-drive/%s", configUserDataPath)
 	}
 
 	if err = unix.Unmount(mnt, 0); err != nil {
