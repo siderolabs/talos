@@ -118,7 +118,7 @@ func (suite *NodenameSuite) TestDefault() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
-	hostnameStatus.TypedSpec().Hostname = "foo"
+	hostnameStatus.TypedSpec().Hostname = "Foo"
 	hostnameStatus.TypedSpec().Domainname = "bar.ltd"
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))

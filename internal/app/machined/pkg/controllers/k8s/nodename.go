@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -93,9 +94,9 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, l
 				nodename := r.(*k8s.Nodename) //nolint:errcheck,forcetypeassert
 
 				if cfgProvider.Machine().Kubelet().RegisterWithFQDN() {
-					nodename.TypedSpec().Nodename = hostnameStatus.FQDN()
+					nodename.TypedSpec().Nodename = strings.ToLower(hostnameStatus.FQDN())
 				} else {
-					nodename.TypedSpec().Nodename = hostnameStatus.Hostname
+					nodename.TypedSpec().Nodename = strings.ToLower(hostnameStatus.Hostname)
 				}
 
 				nodename.TypedSpec().HostnameVersion = hostnameResource.Metadata().Version().String()
