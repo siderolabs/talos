@@ -15,6 +15,7 @@ message ConfigSpec {
   string shared_secret = 3;
   bool force_routing = 4;
   bool advertise_kubernetes_networks = 5;
+  uint32 mtu = 6;
 }
 
 // EndpointSpec describes Endpoint state.

@@ -1659,6 +1659,11 @@ func (in *NetworkKubeSpan) DeepCopyInto(out *NetworkKubeSpan) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.KubeSpanMTU != nil {
+		in, out := &in.KubeSpanMTU, &out.KubeSpanMTU
+		*out = new(uint32)
+		**out = **in
+	}
 	return
 }
 
