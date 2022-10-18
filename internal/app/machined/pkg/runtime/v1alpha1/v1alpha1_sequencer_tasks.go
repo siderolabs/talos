@@ -1282,12 +1282,6 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 // This action undoes the CordonAndDrainNode task.
 func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var nodename string
-
-		if nodename, err = r.NodeName(); err != nil {
-			return err
-		}
-
 		var kubeHelper *kubernetes.Client
 
 		if err = retry.Constant(5*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx,
@@ -1300,6 +1294,12 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 		}
 
 		defer kubeHelper.Close() //nolint:errcheck
+
+		var nodename string
+
+		if nodename, err = r.NodeName(); err != nil {
+			return err
+		}
 
 		if err = kubeHelper.WaitUntilReady(ctx, nodename); err != nil {
 			return err
@@ -1592,20 +1592,22 @@ func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 // LabelNodeAsControlPlane represents the LabelNodeAsControlPlane task.
 func LabelNodeAsControlPlane(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		h, err := kubernetes.NewTemporaryClientFromPKI(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
-		if err != nil {
-			return err
-		}
-
-		defer h.Close() //nolint:errcheck
-
-		var nodename string
-
-		if nodename, err = r.NodeName(); err != nil {
-			return err
-		}
-
 		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
+			var h *kubernetes.Client
+
+			h, err = kubernetes.NewTemporaryClientFromPKI(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
+			if err != nil {
+				return err
+			}
+
+			defer h.Close() //nolint:errcheck
+
+			var nodename string
+
+			if nodename, err = r.NodeName(); err != nil {
+				return err
+			}
+
 			if err = h.LabelNodeAsControlPlane(ctx, nodename, !r.Config().Cluster().ScheduleOnControlPlanes()); err != nil {
 				return retry.ExpectedError(err)
 			}
