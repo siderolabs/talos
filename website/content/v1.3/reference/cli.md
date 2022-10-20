@@ -141,6 +141,7 @@ talosctl cluster create [flags]
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
       --talos-version string                     the desired Talos version to generate config for (if not set, defaults to image version)
+      --talosconfig string                       The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --use-vip                                  use a virtual IP for the controlplane endpoint instead of the loadbalancer
       --user-disk strings                        list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>
       --vmlinuz-path string                      the compressed kernel image to use (default "_out/vmlinuz-${ARCH}")
@@ -167,7 +168,6 @@ talosctl cluster create [flags]
   -n, --nodes strings        target the specified nodes
       --provisioner string   Talos cluster provisioner to use (default "docker")
       --state string         directory path to store cluster state (default "/home/user/.talos/clusters")
-      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
 
 ### SEE ALSO

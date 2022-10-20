@@ -8,8 +8,6 @@ package circular
 import (
 	"fmt"
 	"sync"
-
-	"github.com/siderolabs/gen/slices"
 )
 
 // Buffer implements circular buffer with a thread-safe writer,
@@ -78,7 +76,9 @@ func (buf *Buffer) Write(p []byte) (int, error) {
 				size = buf.opt.MaxCapacity
 			}
 
-			buf.data = slices.Copy(buf.data, size)
+			data := make([]byte, size)
+			copy(data, buf.data)
+			buf.data = data
 		}
 	}
 

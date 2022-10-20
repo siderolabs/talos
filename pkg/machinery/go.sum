@@ -103,8 +103,8 @@ github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkB
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
 github.com/siderolabs/crypto v0.4.0 h1:o1KIR1KyevUcY9nbJlSyQAj7+p+rveGGF8LjAAFMtjc=
 github.com/siderolabs/crypto v0.4.0/go.mod h1:itZpBsJ9i0aH8jiHAuSlKCal7hni7X1aDYo6vGVl5LY=
-github.com/siderolabs/gen v0.3.0 h1:tMWVK9+EEXhGdGYTCuox0Bb4kpRjJzx7aUn4Txzw2GE=
-github.com/siderolabs/gen v0.3.0/go.mod h1:vzcXVRNpo9j2tyQJU+9ZQ1J6yoebX9KL1TkHt18HNqw=
+github.com/siderolabs/gen v0.4.0 h1:t+f2TimPoAGBNeXW3qLQBlbDC5GnFik+E/4PWL/uf9c=
+github.com/siderolabs/gen v0.4.0/go.mod h1:vzcXVRNpo9j2tyQJU+9ZQ1J6yoebX9KL1TkHt18HNqw=
 github.com/siderolabs/go-blockdevice v0.4.0 h1:b+5b4Lu35U6MFXQDE2g0hAW6pTqkJypPF8WbktbbXlQ=
 github.com/siderolabs/go-blockdevice v0.4.0/go.mod h1:viu/gYeRpdr41UcR39SjlFr4vID4WyaIuGd8lOKuyA4=
 github.com/siderolabs/go-pointer v1.0.0 h1:6TshPKep2doDQJAAtHUuHWXbca8ZfyRySjSBT/4GsMU=
@@ -194,10 +194,10 @@ golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8T
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
-google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91 h1:Ezh2cpcnP5Rq60sLensUsFnxh7P6513NLvNtCm9iyJ4=
-google.golang.org/genproto v0.0.0-20220930163606-c98284e70a91/go.mod h1:3526vdqwhZAwq4wsRUaVG555sVgsNmIjRtO7t/JH29U=
-google.golang.org/grpc v1.50.0 h1:fPVVDxY9w++VjTZsYvXWqEf9Rqar/e+9zYfxKK+W+YU=
-google.golang.org/grpc v1.50.0/go.mod h1:ZgQEeidpAuNRZ8iRrlBKXZQP1ghovWIVhdJRyCDK+GI=
+google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55 h1:U1u4KB2kx6KR/aJDjQ97hZ15wQs8ZPvDcGcRynBhkvg=
+google.golang.org/genproto v0.0.0-20221018160656-63c7b68cfc55/go.mod h1:45EK0dUbEZ2NHjCeAd2LXmyjAgGUGrpGROgjhC3ADck=
+google.golang.org/grpc v1.50.1 h1:DS/BukOZWp8s6p4Dt/tOaJaTQyPyOoCcrjroHuCeLzY=
+google.golang.org/grpc v1.50.1/go.mod h1:ZgQEeidpAuNRZ8iRrlBKXZQP1ghovWIVhdJRyCDK+GI=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=

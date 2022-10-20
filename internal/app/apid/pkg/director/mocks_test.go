@@ -7,7 +7,7 @@ package director_test
 import (
 	"context"
 
-	"github.com/talos-systems/grpc-proxy/proxy"
+	"github.com/siderolabs/grpc-proxy/proxy"
 	"google.golang.org/grpc"
 )
 
@@ -19,7 +19,7 @@ func (m *mockBackend) String() string {
 	return m.target
 }
 
-func (m *mockBackend) GetConnection(ctx context.Context) (context.Context, *grpc.ClientConn, error) {
+func (m *mockBackend) GetConnection(ctx context.Context, fullMethodName string) (context.Context, *grpc.ClientConn, error) {
 	return ctx, nil, nil
 }
 

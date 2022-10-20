@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/slices"
-	"github.com/talos-systems/grpc-proxy/proxy"
+	"github.com/siderolabs/grpc-proxy/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

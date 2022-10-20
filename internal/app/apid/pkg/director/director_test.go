@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/siderolabs/grpc-proxy/proxy"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/grpc-proxy/proxy"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"

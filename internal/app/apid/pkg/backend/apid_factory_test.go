@@ -9,8 +9,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/siderolabs/grpc-proxy/proxy"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/grpc-proxy/proxy"
 
 	"github.com/talos-systems/talos/internal/app/apid/pkg/backend"
 )

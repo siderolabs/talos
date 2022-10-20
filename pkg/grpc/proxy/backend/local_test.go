@@ -25,7 +25,7 @@ func TestLocalGetConnection(t *testing.T) {
 	md1.Set("key", "value1", "value2")
 	ctx1 := metadata.NewIncomingContext(authz.ContextWithRoles(context.Background(), role.MakeSet(role.Admin)), md1)
 
-	outCtx1, conn1, err1 := l.GetConnection(ctx1)
+	outCtx1, conn1, err1 := l.GetConnection(ctx1, "")
 	assert.NoError(t, err1)
 	assert.NotNil(t, conn1)
 	assert.Equal(t, role.MakeSet(role.Admin), authz.GetRoles(outCtx1))
@@ -39,7 +39,7 @@ func TestLocalGetConnection(t *testing.T) {
 		t.Parallel()
 
 		ctx2 := ctx1
-		outCtx2, conn2, err2 := l.GetConnection(ctx2)
+		outCtx2, conn2, err2 := l.GetConnection(ctx2, "")
 		assert.NoError(t, err2)
 		assert.Equal(t, conn1, conn2) // connection is cached
 		assert.Equal(t, role.MakeSet(role.Admin), authz.GetRoles(outCtx2))
@@ -57,7 +57,7 @@ func TestLocalGetConnection(t *testing.T) {
 		md3.Set("key", "value3", "value4")
 		ctx3 := metadata.NewIncomingContext(authz.ContextWithRoles(context.Background(), role.MakeSet(role.Reader)), md3)
 
-		outCtx3, conn3, err3 := l.GetConnection(ctx3)
+		outCtx3, conn3, err3 := l.GetConnection(ctx3, "")
 		assert.NoError(t, err3)
 		assert.Equal(t, conn1, conn3) // connection is cached
 		assert.Equal(t, role.MakeSet(role.Reader), authz.GetRoles(outCtx3))

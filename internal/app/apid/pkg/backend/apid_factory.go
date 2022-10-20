@@ -8,7 +8,7 @@ import (
 	"crypto/tls"
 	"sync"
 
-	"github.com/talos-systems/grpc-proxy/proxy"
+	"github.com/siderolabs/grpc-proxy/proxy"
 	"google.golang.org/grpc/credentials"
 )
 

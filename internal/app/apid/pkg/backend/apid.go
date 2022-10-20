@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/talos-systems/grpc-proxy/proxy"
+	"github.com/siderolabs/grpc-proxy/proxy"
 	"github.com/talos-systems/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
@@ -56,7 +56,7 @@ func (a *APID) String() string {
 }
 
 // GetConnection returns a grpc connection to the backend.
-func (a *APID) GetConnection(ctx context.Context) (context.Context, *grpc.ClientConn, error) {
+func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (context.Context, *grpc.ClientConn, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
 	md = md.Copy()
 

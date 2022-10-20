@@ -8,7 +8,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/talos-systems/grpc-proxy/proxy"
+	"github.com/siderolabs/grpc-proxy/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -40,7 +40,7 @@ func (l *Local) String() string {
 }
 
 // GetConnection returns a grpc connection to the backend.
-func (l *Local) GetConnection(ctx context.Context) (context.Context, *grpc.ClientConn, error) {
+func (l *Local) GetConnection(ctx context.Context, fullMethodName string) (context.Context, *grpc.ClientConn, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
 	md = md.Copy()
 

@@ -53,7 +53,7 @@ Note for zsh users: [1] zsh completions are only supported in versions of zsh >=
 # Set the talosctl completion code for zsh[1] to autoload on startup
     talosctl completion zsh > "${fpath[1]}/_talosctl"`,
 	ValidArgs: []string{"bash", "fish", "zsh"},
-	Args:      cobra.ExactValidArgs(1),
+	Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			cli.Should(cmd.Usage())

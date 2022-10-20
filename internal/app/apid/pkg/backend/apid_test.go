@@ -55,7 +55,7 @@ func (suite *APIDSuite) TestGetConnection() {
 	md1.Set("key", "value1", "value2")
 	ctx1 := metadata.NewIncomingContext(authz.ContextWithRoles(context.Background(), role.MakeSet(role.Admin)), md1)
 
-	outCtx1, conn1, err1 := suite.b.GetConnection(ctx1)
+	outCtx1, conn1, err1 := suite.b.GetConnection(ctx1, "")
 	suite.Require().NoError(err1)
 	suite.Assert().NotNil(conn1)
 	suite.Assert().Equal(role.MakeSet(role.Admin), authz.GetRoles(outCtx1))
@@ -69,7 +69,7 @@ func (suite *APIDSuite) TestGetConnection() {
 	suite.Run(
 		"Same context", func() {
 			ctx2 := ctx1
-			outCtx2, conn2, err2 := suite.b.GetConnection(ctx2)
+			outCtx2, conn2, err2 := suite.b.GetConnection(ctx2, "")
 			suite.Require().NoError(err2)
 			suite.Assert().Equal(conn1, conn2) // connection is cached
 			suite.Assert().Equal(role.MakeSet(role.Admin), authz.GetRoles(outCtx2))
@@ -93,7 +93,7 @@ func (suite *APIDSuite) TestGetConnection() {
 				md3,
 			)
 
-			outCtx3, conn3, err3 := suite.b.GetConnection(ctx3)
+			outCtx3, conn3, err3 := suite.b.GetConnection(ctx3, "")
 			suite.Require().NoError(err3)
 			suite.Assert().Equal(conn1, conn3) // connection is cached
 			suite.Assert().Equal(role.MakeSet(role.Reader), authz.GetRoles(outCtx3))
