@@ -65,6 +65,25 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcCon
 		dialOpts = append(dialOpts, WithGRPCBasicAuth(basicAuth.Username, basicAuth.Password))
 	}
 
+	sideroV1 := c.options.configContext.Auth.SideroV1
+	if sideroV1 != nil {
+		var contextName string
+
+		if c.options.config != nil {
+			contextName = c.options.config.Context
+		}
+
+		if c.options.contextOverrideSet {
+			contextName = c.options.contextOverride
+		}
+
+		authInterceptor := newAuthInterceptorConfig(contextName, sideroV1.Identity)
+		dialOpts = append(dialOpts,
+			grpc.WithUnaryInterceptor(authInterceptor.Interceptor().Unary()),
+			grpc.WithStreamInterceptor(authInterceptor.Interceptor().Stream()),
+		)
+	}
+
 	creds, err := buildCredentials(c.options.configContext, endpoints)
 	if err != nil {
 		return nil, err
