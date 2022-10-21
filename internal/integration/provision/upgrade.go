@@ -394,6 +394,10 @@ func (suite *UpgradeSuite) setupCluster() {
 		)
 	}
 
+	genOptions = append(genOptions, generate.WithSysctls(map[string]string{
+		"kernel.kexec_load_disabled": "1",
+	}))
+
 	versionContract, err := config.ParseContractFromVersion(suite.spec.SourceVersion)
 	suite.Require().NoError(err)
 
