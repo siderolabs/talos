@@ -60,13 +60,19 @@ type Context struct {
 
 // Auth may hold credentials for an authentication method such as Basic Auth.
 type Auth struct {
-	Basic *Basic `yaml:"basic,omitempty"`
+	Basic    *Basic    `yaml:"basic,omitempty"`
+	SideroV1 *SideroV1 `yaml:"siderov1,omitempty"`
 }
 
 // Basic holds Basic Auth credentials.
 type Basic struct {
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
+}
+
+// SideroV1 holds information for SideroV1 API signature auth.
+type SideroV1 struct {
+	Identity string `yaml:"identity"`
 }
 
 func (c *Context) upgrade() {
