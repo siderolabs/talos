@@ -14,3 +14,12 @@ func Convert(inputFmt, outputFmt, options, src, dest string) (err error) {
 
 	return nil
 }
+
+// Resize an image.
+func Resize(file, size string) (err error) {
+	if _, err = cmd.Run("qemu-img", "resize", file, size); err != nil {
+		return err
+	}
+
+	return nil
+}

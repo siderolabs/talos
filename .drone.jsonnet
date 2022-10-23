@@ -573,6 +573,8 @@ local release = {
       '_out/cloud-images.json',
       '_out/digital-ocean-amd64.raw.gz',
       '_out/digital-ocean-arm64.raw.gz',
+      '_out/exoscale-amd64.qcow2',
+      '_out/exoscale-arm64.qcow2',
       '_out/gcp-amd64.tar.gz',
       '_out/gcp-arm64.tar.gz',
       '_out/hcloud-amd64.raw.xz',

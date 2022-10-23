@@ -127,6 +127,15 @@ dd if=/dev/random of=/dev/stdout bs=32 count=1 | base64
 ```
 """
 
+    [notes.exoscale]
+        title = "Exocale Platform"
+        description = """\
+Talos now supports new platform: Exoscale.
+
+Exoscale provides a firewall, TCP load balancer and autoscale groups.
+It works well with CCM and Kubernetes node autoscaler.
+"""
+
 [make_deps]
 
     [make_deps.tools]

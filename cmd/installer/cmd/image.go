@@ -143,6 +143,16 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 		if err = gz(file); err != nil {
 			return err
 		}
+	case "exoscale":
+		file = filepath.Join(outputArg, fmt.Sprintf("exoscale-%s.qcow2", arch))
+
+		if err = qemuimg.Convert("raw", "qcow2", "cluster_size=8k", img, file); err != nil {
+			return err
+		}
+
+		if err = qemuimg.Resize(file, "10G"); err != nil {
+			return err
+		}
 	case "gcp":
 		if err = tar(fmt.Sprintf("gcp-%s.tar.gz", arch), file, dir); err != nil {
 			return err
@@ -178,8 +188,7 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 			return err
 		}
 	case "oracle":
-		name = fmt.Sprintf("oracle-%s.qcow2", arch)
-		file = filepath.Join(outputArg, name)
+		file = filepath.Join(outputArg, fmt.Sprintf("oracle-%s.qcow2", arch))
 
 		if err = qemuimg.Convert("raw", "qcow2", "cluster_size=8k", img, file); err != nil {
 			return err

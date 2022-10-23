@@ -20,6 +20,7 @@ import (
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/container"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/digitalocean"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/equinixmetal"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/exoscale"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/gcp"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/hcloud"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
@@ -110,6 +111,8 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 	// "packet" kept for backwards compatibility
 	case "equinixMetal", "packet":
 		p = &equinixmetal.EquinixMetal{}
+	case "exoscale":
+		p = &exoscale.Exoscale{}
 	case "scaleway":
 		p = &scaleway.Scaleway{}
 	case "upcloud":
