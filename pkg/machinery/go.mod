@@ -23,7 +23,7 @@ require (
 	github.com/siderolabs/go-blockdevice v0.4.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/protoenc v0.2.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	github.com/talos-systems/go-debug v0.2.1
 	github.com/talos-systems/net v0.3.2
 	go4.org/netipx v0.0.0-20220925034521-797b0c90d8ab
