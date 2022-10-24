@@ -29,7 +29,7 @@ require (
 
 require (
 	cloud.google.com/go/compute v1.10.0
-	github.com/BurntSushi/toml v1.2.0
+	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.44.120
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
