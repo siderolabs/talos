@@ -102,6 +102,11 @@ func (c *ClusterConfig) AESCBCEncryptionSecret() string {
 	return c.ClusterAESCBCEncryptionSecret
 }
 
+// SecretboxEncryptionSecret implements the config.ClusterConfig interface.
+func (c *ClusterConfig) SecretboxEncryptionSecret() string {
+	return c.ClusterSecretboxEncryptionSecret
+}
+
 // Config implements the config.ClusterConfig interface.
 func (c *ClusterConfig) Config(t machine.Type) (string, error) {
 	return "", nil

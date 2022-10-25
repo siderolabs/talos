@@ -147,8 +147,9 @@ type Cluster struct {
 
 // Secrets holds the sensitive kubeadm data.
 type Secrets struct {
-	BootstrapToken         string `json:"BootstrapToken"`
-	AESCBCEncryptionSecret string `json:"AESCBCEncryptionSecret"`
+	BootstrapToken            string `json:"BootstrapToken"`
+	AESCBCEncryptionSecret    string `json:"AESCBCEncryptionSecret,omitempty" yaml:",omitempty"`
+	SecretboxEncryptionSecret string `json:"SecretboxEncryptionSecret,omitempty" yaml:",omitempty"`
 }
 
 // TrustdInfo holds the trustd credentials.
@@ -414,13 +415,24 @@ func populateSecretsBundle(versionContract *config.VersionContract, bundle *Secr
 		bundle.Secrets.BootstrapToken = token
 	}
 
-	if bundle.Secrets.AESCBCEncryptionSecret == "" {
-		aesCBCEncryptionSecret, err := cis.CreateEncryptionToken()
-		if err != nil {
-			return err
-		}
+	if versionContract.Greater(config.TalosVersion1_2) {
+		if bundle.Secrets.SecretboxEncryptionSecret == "" {
+			secretboxEncryptionSecret, err := cis.CreateEncryptionToken()
+			if err != nil {
+				return err
+			}
 
-		bundle.Secrets.AESCBCEncryptionSecret = aesCBCEncryptionSecret
+			bundle.Secrets.SecretboxEncryptionSecret = secretboxEncryptionSecret
+		}
+	} else {
+		if bundle.Secrets.AESCBCEncryptionSecret == "" {
+			aesCBCEncryptionSecret, err := cis.CreateEncryptionToken()
+			if err != nil {
+				return err
+			}
+
+			bundle.Secrets.AESCBCEncryptionSecret = aesCBCEncryptionSecret
+		}
 	}
 
 	if bundle.TrustdInfo == nil {
@@ -487,8 +499,9 @@ func NewSecretsBundleFromConfig(clock Clock, c config.Provider) *SecretsBundle {
 	)
 
 	secrets := &Secrets{
-		AESCBCEncryptionSecret: c.Cluster().AESCBCEncryptionSecret(),
-		BootstrapToken:         bootstrapToken,
+		AESCBCEncryptionSecret:    c.Cluster().AESCBCEncryptionSecret(),
+		SecretboxEncryptionSecret: c.Cluster().SecretboxEncryptionSecret(),
+		BootstrapToken:            bootstrapToken,
 	}
 
 	return &SecretsBundle{

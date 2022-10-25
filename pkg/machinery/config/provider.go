@@ -384,6 +384,7 @@ type ClusterConfig interface {
 	AggregatorCA() *x509.PEMEncodedCertificateAndKey
 	ServiceAccount() *x509.PEMEncodedKey
 	AESCBCEncryptionSecret() string
+	SecretboxEncryptionSecret() string
 	Config(machine.Type) (string, error)
 	Etcd() Etcd
 	Network() ClusterNetwork

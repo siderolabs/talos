@@ -485,8 +485,9 @@ network:
 |`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 token: wlzjyw.bei2zfylhs2by0wd
 {{< /highlight >}}</details> | |
-|`aescbcEncryptionSecret` |string |The key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-aescbcEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
+|`aescbcEncryptionSecret` |string |<details><summary>description: |</summary>    A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).<br />  examples:<br />    - name: Decryption secret example (do not use in production!).<br />    Enables encryption with AESCBC.<br />      value: '"z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM="'<br /></details>  | |
+|`secretboxEncryptionSecret` |string |<details><summary>A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).</summary>Enables encryption with secretbox.<br />Secretbox has precedence over AESCBC.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+secretboxEncryptionSecret: z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |The base64 encoded root certificate authority used by Kubernetes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:

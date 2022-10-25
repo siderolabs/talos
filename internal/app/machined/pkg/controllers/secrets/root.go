@@ -202,6 +202,7 @@ func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Provider, k
 	k8sSecrets.ServiceAccount = cfgProvider.Cluster().ServiceAccount()
 
 	k8sSecrets.AESCBCEncryptionSecret = cfgProvider.Cluster().AESCBCEncryptionSecret()
+	k8sSecrets.SecretboxEncryptionSecret = cfgProvider.Cluster().SecretboxEncryptionSecret()
 
 	k8sSecrets.BootstrapTokenID = cfgProvider.Cluster().Token().ID()
 	k8sSecrets.BootstrapTokenSecret = cfgProvider.Cluster().Token().Secret()

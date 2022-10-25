@@ -3291,6 +3291,7 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | aescbc_encryption_secret | [string](#string) |  |  |
 | bootstrap_token_id | [string](#string) |  |  |
 | bootstrap_token_secret | [string](#string) |  |  |
+| secretbox_encryption_secret | [string](#string) |  |  |
 
 
 

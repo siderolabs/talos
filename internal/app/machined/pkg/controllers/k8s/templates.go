@@ -12,10 +12,18 @@ resources:
 - resources:
   - secrets
   providers:
+  {{if .Root.SecretboxEncryptionSecret}}
+  - secretbox:
+      keys:
+      - name: key2
+        secret: {{ .Root.SecretboxEncryptionSecret }}
+  {{end}}
+  {{if .Root.AESCBCEncryptionSecret}}
   - aescbc:
       keys:
       - name: key1
         secret: {{ .Root.AESCBCEncryptionSecret }}
+  {{end}}
   - identity: {}
 `)
 

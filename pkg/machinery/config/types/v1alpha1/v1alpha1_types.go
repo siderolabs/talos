@@ -882,11 +882,20 @@ type ClusterConfig struct {
 	//       value: '"wlzjyw.bei2zfylhs2by0wd"'
 	BootstrapToken string `yaml:"token,omitempty"`
 	//   description: |
-	//     The key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
+	//     A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
+	//   examples:
+	//     - name: Decryption secret example (do not use in production!).
+	//     Enables encryption with AESCBC.
+	//       value: '"z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM="'
+	ClusterAESCBCEncryptionSecret string `yaml:"aescbcEncryptionSecret,omitempty"`
+	//   description: |
+	//     A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
+	//     Enables encryption with secretbox.
+	//     Secretbox has precedence over AESCBC.
 	//   examples:
 	//     - name: Decryption secret example (do not use in production!).
 	//       value: '"z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM="'
-	ClusterAESCBCEncryptionSecret string `yaml:"aescbcEncryptionSecret"`
+	ClusterSecretboxEncryptionSecret string `yaml:"secretboxEncryptionSecret,omitempty"`
 	//   description: |
 	//     The base64 encoded root certificate authority used by Kubernetes.
 	//   examples:

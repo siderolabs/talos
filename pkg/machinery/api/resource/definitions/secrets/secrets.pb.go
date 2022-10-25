@@ -445,18 +445,19 @@ type KubernetesRootSpec struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Name                   string                              `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Endpoint               *common.URL                         `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	LocalEndpoint          *common.URL                         `protobuf:"bytes,3,opt,name=local_endpoint,json=localEndpoint,proto3" json:"local_endpoint,omitempty"`
-	CertSaNs               []string                            `protobuf:"bytes,4,rep,name=cert_sa_ns,json=certSaNs,proto3" json:"cert_sa_ns,omitempty"`
-	ApiServerIps           [][]byte                            `protobuf:"bytes,5,rep,name=api_server_ips,json=apiServerIps,proto3" json:"api_server_ips,omitempty"`
-	DnsDomain              string                              `protobuf:"bytes,6,opt,name=dns_domain,json=dnsDomain,proto3" json:"dns_domain,omitempty"`
-	Ca                     *common.PEMEncodedCertificateAndKey `protobuf:"bytes,7,opt,name=ca,proto3" json:"ca,omitempty"`
-	ServiceAccount         *common.PEMEncodedKey               `protobuf:"bytes,8,opt,name=service_account,json=serviceAccount,proto3" json:"service_account,omitempty"`
-	AggregatorCa           *common.PEMEncodedCertificateAndKey `protobuf:"bytes,9,opt,name=aggregator_ca,json=aggregatorCa,proto3" json:"aggregator_ca,omitempty"`
-	AescbcEncryptionSecret string                              `protobuf:"bytes,10,opt,name=aescbc_encryption_secret,json=aescbcEncryptionSecret,proto3" json:"aescbc_encryption_secret,omitempty"`
-	BootstrapTokenId       string                              `protobuf:"bytes,11,opt,name=bootstrap_token_id,json=bootstrapTokenId,proto3" json:"bootstrap_token_id,omitempty"`
-	BootstrapTokenSecret   string                              `protobuf:"bytes,12,opt,name=bootstrap_token_secret,json=bootstrapTokenSecret,proto3" json:"bootstrap_token_secret,omitempty"`
+	Name                      string                              `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Endpoint                  *common.URL                         `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	LocalEndpoint             *common.URL                         `protobuf:"bytes,3,opt,name=local_endpoint,json=localEndpoint,proto3" json:"local_endpoint,omitempty"`
+	CertSaNs                  []string                            `protobuf:"bytes,4,rep,name=cert_sa_ns,json=certSaNs,proto3" json:"cert_sa_ns,omitempty"`
+	ApiServerIps              [][]byte                            `protobuf:"bytes,5,rep,name=api_server_ips,json=apiServerIps,proto3" json:"api_server_ips,omitempty"`
+	DnsDomain                 string                              `protobuf:"bytes,6,opt,name=dns_domain,json=dnsDomain,proto3" json:"dns_domain,omitempty"`
+	Ca                        *common.PEMEncodedCertificateAndKey `protobuf:"bytes,7,opt,name=ca,proto3" json:"ca,omitempty"`
+	ServiceAccount            *common.PEMEncodedKey               `protobuf:"bytes,8,opt,name=service_account,json=serviceAccount,proto3" json:"service_account,omitempty"`
+	AggregatorCa              *common.PEMEncodedCertificateAndKey `protobuf:"bytes,9,opt,name=aggregator_ca,json=aggregatorCa,proto3" json:"aggregator_ca,omitempty"`
+	AescbcEncryptionSecret    string                              `protobuf:"bytes,10,opt,name=aescbc_encryption_secret,json=aescbcEncryptionSecret,proto3" json:"aescbc_encryption_secret,omitempty"`
+	BootstrapTokenId          string                              `protobuf:"bytes,11,opt,name=bootstrap_token_id,json=bootstrapTokenId,proto3" json:"bootstrap_token_id,omitempty"`
+	BootstrapTokenSecret      string                              `protobuf:"bytes,12,opt,name=bootstrap_token_secret,json=bootstrapTokenSecret,proto3" json:"bootstrap_token_secret,omitempty"`
+	SecretboxEncryptionSecret string                              `protobuf:"bytes,13,opt,name=secretbox_encryption_secret,json=secretboxEncryptionSecret,proto3" json:"secretbox_encryption_secret,omitempty"`
 }
 
 func (x *KubernetesRootSpec) Reset() {
@@ -571,6 +572,13 @@ func (x *KubernetesRootSpec) GetBootstrapTokenId() string {
 func (x *KubernetesRootSpec) GetBootstrapTokenSecret() string {
 	if x != nil {
 		return x.BootstrapTokenSecret
+	}
+	return ""
+}
+
+func (x *KubernetesRootSpec) GetSecretboxEncryptionSecret() string {
+	if x != nil {
+		return x.SecretboxEncryptionSecret
 	}
 	return ""
 }
@@ -796,7 +804,7 @@ var file_resource_definitions_secrets_secrets_proto_rawDesc = []byte{
 	0x69, 0x6e, 0x4b, 0x75, 0x62, 0x65, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x29, 0x0a, 0x10,
 	0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x6b, 0x75, 0x62, 0x65, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
 	0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x4b, 0x75, 0x62,
-	0x65, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x22, 0xc5, 0x04, 0x0a, 0x12, 0x4b, 0x75, 0x62, 0x65,
+	0x65, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x22, 0x85, 0x05, 0x0a, 0x12, 0x4b, 0x75, 0x62, 0x65,
 	0x72, 0x6e, 0x65, 0x74, 0x65, 0x73, 0x52, 0x6f, 0x6f, 0x74, 0x53, 0x70, 0x65, 0x63, 0x12, 0x12,
 	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61,
 	0x6d, 0x65, 0x12, 0x27, 0x0a, 0x08, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x02,
@@ -832,7 +840,11 @@ var file_resource_definitions_secrets_secrets_proto_rawDesc = []byte{
 	0x61, 0x70, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x12, 0x34, 0x0a, 0x16, 0x62, 0x6f, 0x6f,
 	0x74, 0x73, 0x74, 0x72, 0x61, 0x70, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x73, 0x65, 0x63,
 	0x72, 0x65, 0x74, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x14, 0x62, 0x6f, 0x6f, 0x74, 0x73,
-	0x74, 0x72, 0x61, 0x70, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x22,
+	0x74, 0x72, 0x61, 0x70, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x12,
+	0x3e, 0x0a, 0x1b, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x62, 0x6f, 0x78, 0x5f, 0x65, 0x6e, 0x63,
+	0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x18, 0x0d,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x19, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x62, 0x6f, 0x78, 0x45,
+	0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x22,
 	0xb4, 0x01, 0x0a, 0x0a, 0x4f, 0x53, 0x52, 0x6f, 0x6f, 0x74, 0x53, 0x70, 0x65, 0x63, 0x12, 0x33,
 	0x0a, 0x02, 0x63, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63, 0x6f, 0x6d,
 	0x6d, 0x6f, 0x6e, 0x2e, 0x50, 0x45, 0x4d, 0x45, 0x6e, 0x63, 0x6f, 0x64, 0x65, 0x64, 0x43, 0x65,

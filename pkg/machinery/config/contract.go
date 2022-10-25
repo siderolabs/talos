@@ -152,3 +152,8 @@ func (contract *VersionContract) APIServerAuditPolicySupported() bool {
 func (contract *VersionContract) KubeletManifestsDirectoryDisabled() bool {
 	return contract.Greater(TalosVersion1_2)
 }
+
+// SecretboxEncryptionSupported returns true if encryption with secretbox is supported.
+func (contract *VersionContract) SecretboxEncryptionSupported() bool {
+	return contract.Greater(TalosVersion1_2)
+}

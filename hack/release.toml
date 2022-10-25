@@ -111,6 +111,22 @@ machine:
 ```
 """
 
+    [notes.secretbox]
+        title = "Encryption with secretbox"
+        description = """\
+By default new clusters will use secretbox for encryption instead of AESCBC.
+If both are configured secretbox will take precedence.
+Old clusters may keep using AESCBC.
+To enable secretbox you may add an encryption secret at `cluster.secretboxEncryptionSecret`.
+You should keep `aescbcEncryptionSecret` however, even if secretbox is enabled older data will still be encrypted with AESCBC.
+
+How to generate the secret:
+
+```bash
+dd if=/dev/random of=/dev/stdout bs=32 count=1 | base64
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

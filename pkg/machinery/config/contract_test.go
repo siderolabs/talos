@@ -64,6 +64,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.True(t, contract.APIServerAuditPolicySupported())
 	assert.True(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.True(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract1_3(t *testing.T) {
@@ -86,6 +87,7 @@ func TestContract1_3(t *testing.T) {
 	assert.True(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.True(t, contract.APIServerAuditPolicySupported())
 	assert.True(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.True(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract1_2(t *testing.T) {
@@ -108,6 +110,7 @@ func TestContract1_2(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract1_1(t *testing.T) {
@@ -130,6 +133,7 @@ func TestContract1_1(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract1_0(t *testing.T) {
@@ -152,6 +156,7 @@ func TestContract1_0(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract0_14(t *testing.T) {
@@ -174,6 +179,7 @@ func TestContract0_14(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract0_13(t *testing.T) {
@@ -196,6 +202,7 @@ func TestContract0_13(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract0_12(t *testing.T) {
@@ -218,6 +225,7 @@ func TestContract0_12(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract0_11(t *testing.T) {
@@ -240,6 +248,7 @@ func TestContract0_11(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract0_10(t *testing.T) {
@@ -262,6 +271,7 @@ func TestContract0_10(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract0_9(t *testing.T) {
@@ -284,6 +294,7 @@ func TestContract0_9(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }
 
 func TestContract0_8(t *testing.T) {
@@ -306,4 +317,5 @@ func TestContract0_8(t *testing.T) {
 	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
 	assert.False(t, contract.APIServerAuditPolicySupported())
 	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.False(t, contract.SecretboxEncryptionSupported())
 }

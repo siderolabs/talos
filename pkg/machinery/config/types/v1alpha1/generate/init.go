@@ -151,13 +151,12 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			ServiceSubnet: in.ServiceNet,
 			CNI:           in.CNIConfig,
 		},
-		ClusterCA:                     in.Certs.K8s,
-		ClusterAggregatorCA:           in.Certs.K8sAggregator,
-		ClusterServiceAccount:         in.Certs.K8sServiceAccount,
-		BootstrapToken:                in.Secrets.BootstrapToken,
-		ClusterAESCBCEncryptionSecret: in.Secrets.AESCBCEncryptionSecret,
-		ExtraManifests:                []string{},
-		ClusterInlineManifests:        v1alpha1.ClusterInlineManifests{},
+		ClusterCA:              in.Certs.K8s,
+		ClusterAggregatorCA:    in.Certs.K8sAggregator,
+		ClusterServiceAccount:  in.Certs.K8sServiceAccount,
+		BootstrapToken:         in.Secrets.BootstrapToken,
+		ExtraManifests:         []string{},
+		ClusterInlineManifests: v1alpha1.ClusterInlineManifests{},
 	}
 
 	if in.AllowSchedulingOnControlPlanes {
@@ -181,6 +180,12 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 
 	if !in.VersionContract.PodSecurityPolicyEnabled() {
 		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = pointer.To(true)
+	}
+
+	if in.VersionContract.SecretboxEncryptionSupported() {
+		cluster.ClusterSecretboxEncryptionSecret = in.Secrets.SecretboxEncryptionSecret
+	} else {
+		cluster.ClusterAESCBCEncryptionSecret = in.Secrets.AESCBCEncryptionSecret
 	}
 
 	if machine.MachineRegistries.RegistryMirrors == nil {
