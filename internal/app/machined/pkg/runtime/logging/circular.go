@@ -15,11 +15,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/siderolabs/go-circular"
+	"github.com/siderolabs/go-tail"
 	"github.com/talos-systems/go-debug"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/circular"
-	"github.com/talos-systems/talos/pkg/tail"
 )
 
 // These constants should some day move to config.

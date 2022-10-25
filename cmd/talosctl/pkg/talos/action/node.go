@@ -11,12 +11,12 @@ import (
 	"io"
 	"strings"
 
+	"github.com/siderolabs/go-circular"
 	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/pkg/circular"
 	"github.com/talos-systems/talos/pkg/machinery/api/common"
 	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
 	"github.com/talos-systems/talos/pkg/machinery/client"

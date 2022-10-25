@@ -12,8 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/siderolabs/go-tail"
+
 	"github.com/talos-systems/talos/pkg/provision"
-	"github.com/talos-systems/talos/pkg/tail"
 )
 
 // CrashDump produces debug information to help with debugging failures.

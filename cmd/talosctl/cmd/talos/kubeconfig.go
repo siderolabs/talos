@@ -14,11 +14,11 @@ import (
 	"sync"
 
 	"github.com/mattn/go-isatty"
+	"github.com/siderolabs/go-kubeconfig"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/talos-systems/talos/pkg/kubeconfig"
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 

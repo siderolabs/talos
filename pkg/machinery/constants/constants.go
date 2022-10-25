@@ -761,6 +761,9 @@ const (
 
 	// TrustdMaxProcs is the maximum number of GOMAXPROCS for trustd.
 	TrustdMaxProcs = 2
+
+	// APIAuthzRoleMetadataKey is the gRPC metadata key used to submit a role with os:impersonator.
+	APIAuthzRoleMetadataKey = "talos-role"
 )
 
 // See https://linux.die.net/man/3/klogctl

@@ -20,6 +20,7 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
+	"github.com/siderolabs/go-kubeconfig"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/talos-systems/go-procfs/procfs"
@@ -30,7 +31,6 @@ import (
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/cluster/check"
 	"github.com/talos-systems/talos/pkg/images"
-	"github.com/talos-systems/talos/pkg/kubeconfig"
 	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"

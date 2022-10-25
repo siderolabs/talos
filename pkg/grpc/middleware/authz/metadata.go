@@ -9,12 +9,13 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
+	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/role"
 )
 
 // mdKey is used to store roles in gRPC metadata.
 // Should be used only in this file.
-const mdKey = "talos-role"
+const mdKey = constants.APIAuthzRoleMetadataKey
 
 // SetMetadata sets given roles in gRPC metadata.
 func SetMetadata(md metadata.MD, roles role.Set) {
