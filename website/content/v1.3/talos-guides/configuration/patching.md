@@ -228,6 +228,77 @@ machine:
         - 192.168.10.0/24
 ```
 
+### Admission Control: Pod Security Policy
+
+Base machine configuration:
+
+```yaml
+cluster:
+  apiServer:
+    admissionControl:
+      - name: PodSecurity
+        configuration:
+          apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+          defaults:
+            audit: restricted
+            audit-version: latest
+            enforce: baseline
+            enforce-version: latest
+            warn: restricted
+            warn-version: latest
+          exemptions:
+            namespaces:
+              - kube-system
+            runtimeClasses: []
+            usernames: []
+          kind: PodSecurityConfiguration
+```
+
+The goal is to add an exemption for the namespace `rook-ceph`.
+
+{{< tabpane lang="yaml" >}}
+{{< tab header="Strategic merge patch" >}}
+cluster:
+  apiServer:
+    admissionControl:
+      - name: PodSecurity
+        configuration:
+          exemptions:
+            namespaces:
+              - rook-ceph
+{{< /tab >}}
+{{< tab header="JSON patch" >}}
+- op: add
+  path: /cluster/apiServer/admissionControl/0/configuration/exemptions/namespaces/-
+  value: rook-ceph
+{{< /tab >}}
+{{< /tabpane >}}
+
+Patched machine configuration:
+
+```yaml
+cluster:
+  apiServer:
+    admissionControl:
+      - name: PodSecurity
+        configuration:
+          apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+          defaults:
+            audit: restricted
+            audit-version: latest
+            enforce: baseline
+            enforce-version: latest
+            warn: restricted
+            warn-version: latest
+          exemptions:
+            namespaces:
+              - kube-system
+              - rook-ceph
+            runtimeClasses: []
+            usernames: []
+          kind: PodSecurityConfiguration
+```
+
 ## Configuration Patching with `talosctl` CLI
 
 Several `talosctl` commands accept config patches as command-line flags.
