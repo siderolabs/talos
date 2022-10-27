@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/provision/internal/inmemhttp"
 )
 
@@ -95,7 +96,7 @@ func httpGetWrapper(f func(w io.Writer)) http.Handler {
 
 // NewHTTPServer creates new inmemhttp.Server and mounts config file into it.
 func NewHTTPServer(gatewayAddr net.IP, port int, config []byte, controller Controller) (inmemhttp.Server, error) {
-	httpServer, err := inmemhttp.NewServer(fmt.Sprintf("%s:%d", gatewayAddr, port))
+	httpServer, err := inmemhttp.NewServer(nethelpers.JoinHostPort(gatewayAddr.String(), port))
 	if err != nil {
 		return nil, fmt.Errorf("error launching in-memory HTTP server: %w", err)
 	}
