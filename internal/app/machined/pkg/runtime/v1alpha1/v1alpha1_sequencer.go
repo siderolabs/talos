@@ -211,6 +211,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"overlay",
 		MountOverlayFilesystems,
 	).Append(
+		"legacyCleanup",
+		CleanupLegacyStaticPodFiles,
+	).Append(
 		"udevSetup",
 		WriteUdevRules,
 	).AppendWhen(

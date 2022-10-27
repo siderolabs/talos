@@ -7,9 +7,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -20,7 +17,6 @@ import (
 
 	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/talos-systems/talos/pkg/kubernetes/kubelet"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
 	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
@@ -78,10 +74,6 @@ func (ctrl *KubeletStaticPodController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	if err := ctrl.cleanupLegacyStaticPodFiles(logger); err != nil {
-		logger.Warn("error cleaning up legacy static pod files: %w", zap.Error(err))
-	}
-
 	var kubeletClient *kubelet.Client
 
 	refreshTicker := time.NewTicker(15 * time.Second) // refresh kubelet pods status every 15 seconds
@@ -170,37 +162,6 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return fmt.Errorf("error building kubelet client: %w", err)
 		}
 	}
-}
-
-func (ctrl *KubeletStaticPodController) cleanupLegacyStaticPodFiles(logger *zap.Logger) error {
-	manifestDir, err := os.Open(constants.ManifestsDirectory)
-	if err != nil {
-		return fmt.Errorf("error opening manifests directory: %w", err)
-	}
-
-	defer manifestDir.Close() //nolint:errcheck
-
-	manifests, err := manifestDir.Readdirnames(0)
-	if err != nil {
-		return fmt.Errorf("error listing manifests: %w", err)
-	}
-
-	for _, manifest := range manifests {
-		// skip manifests not owned by Talos
-		if !strings.HasPrefix(manifest, constants.TalosManifestPrefix) {
-			continue
-		}
-
-		podPath := filepath.Join(constants.ManifestsDirectory, manifest)
-
-		logger.Sugar().Infof("cleaning up legacy static pod file %q", podPath)
-
-		if err = os.Remove(podPath); err != nil {
-			return fmt.Errorf("error cleaning up legacy static pod file: %w", err)
-		}
-	}
-
-	return nil
 }
 
 func (ctrl *KubeletStaticPodController) teardownStatuses(ctx context.Context, r controller.Runtime) error {
