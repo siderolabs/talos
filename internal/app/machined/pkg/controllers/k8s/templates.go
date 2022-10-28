@@ -503,7 +503,7 @@ data:
   cni-conf.json: |
     {
       "name": "cbr0",
-      "cniVersion": "0.3.1",
+      "cniVersion": "1.0.0",
       "plugins": [
         {
           "type": "flannel",
@@ -522,13 +522,18 @@ data:
     }
   net-conf.json: |
     {
+      {{- $hasIPv4 := false }}
       {{- range $cidr := .PodCIDRs }}
         {{- if contains $cidr "." }}
+        {{- $hasIPv4 = true }}
       "Network": "{{ $cidr }}",
         {{- else }}
-      "IPv6Network" : "{{ $cidr }}",
-      "EnableIPv6" : true,
+      "IPv6Network": "{{ $cidr }}",
+      "EnableIPv6": true,
         {{- end }}
+      {{- end }}
+      {{- if not $hasIPv4 }}
+      "EnableIPv4": false,
       {{- end }}
       "Backend": {
         "Type": "vxlan",
