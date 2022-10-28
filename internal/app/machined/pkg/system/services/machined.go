@@ -8,13 +8,16 @@ import (
 	"context"
 	"io"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"time"
 
 	v1alpha1server "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
+	"github.com/talos-systems/talos/internal/app/machined/pkg/system/health"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/goroutine"
 	"github.com/talos-systems/talos/pkg/conditions"
@@ -158,6 +161,8 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 	return nil
 }
 
+var _ system.HealthcheckedService = (*Machined)(nil)
+
 // Machined implements the Service interface. It serves as the concrete type with
 // the required methods.
 type Machined struct {
@@ -194,4 +199,23 @@ func (m *Machined) Runner(r runtime.Runtime) (runner.Runner, error) {
 	svc := &machinedService{m.Controller}
 
 	return goroutine.NewRunner(r, "machined", svc.Main, runner.WithLoggingManager(r.Logging())), nil
+}
+
+// HealthFunc implements the HealthcheckedService interface.
+func (m *Machined) HealthFunc(runtime.Runtime) health.Check {
+	return func(ctx context.Context) error {
+		var d net.Dialer
+
+		conn, err := d.DialContext(ctx, "unix", constants.MachineSocketPath)
+		if err != nil {
+			return err
+		}
+
+		return conn.Close()
+	}
+}
+
+// HealthSettings implements the HealthcheckedService interface.
+func (m *Machined) HealthSettings(runtime.Runtime) *health.Settings {
+	return &health.DefaultSettings
 }
