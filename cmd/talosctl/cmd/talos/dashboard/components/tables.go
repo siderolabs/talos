@@ -70,6 +70,12 @@ func (widget *ProcessTable) Update(node string, data *data.Data) {
 			totalWeightedCPU = 1
 		}
 
+		// All downstream logic relies on nodeData.Processes to be not nil
+		// Putting a check here to reduce cyclomatic complexity
+		if nodeData.Processes == nil {
+			return
+		}
+
 		if nodeData.ProcsDiff != nil {
 			sort.Slice(nodeData.Processes.Processes, func(i, j int) bool {
 				proc1 := nodeData.Processes.Processes[i]
