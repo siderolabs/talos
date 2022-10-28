@@ -60,6 +60,8 @@ func (suite *UpdateEndpointSuite) TestUpdateControlPlaneEndpoint() {
 	node, err := suite.GetK8sNodeByInternalIP(suite.ctx, nodeInternalIP)
 	suite.Require().NoError(err)
 
+	suite.T().Logf("updating control plane endpoint to an invalid URL on node %q (IP %q)", node.Name, nodeInternalIP)
+
 	oldURL := suite.updateEndpointURL(nodeInternalIP, "https://127.0.0.1:40443")
 
 	nodeReady := func(status corev1.ConditionStatus) bool {
@@ -71,12 +73,18 @@ func (suite *UpdateEndpointSuite) TestUpdateControlPlaneEndpoint() {
 	}
 
 	defer func() {
+		suite.T().Logf("reverting control plane endpoint on node %q (IP %q)", node.Name, nodeInternalIP)
+
 		// revert the endpoint URL back to the original one
 		suite.updateEndpointURL(nodeInternalIP, oldURL)
+
+		suite.T().Logf("waiting for node %q to be ready once again", node.Name)
 
 		// expect node status to be Ready again
 		suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, node.Name, nodeReady))
 	}()
+
+	suite.T().Logf("waiting for node %q to be not ready", node.Name)
 
 	// expect node status to become NotReady
 	suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, node.Name, nodeNotReady))

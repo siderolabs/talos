@@ -42,6 +42,8 @@ func (suite *RebootSuite) TestReboot() {
 		workerNode,
 	)
 
+	suite.T().Logf("rebooting nodes %s via the CLI", nodes)
+
 	suite.RunCLI([]string{"reboot", "-n", nodes, "--debug"}, base.StdoutMatchFunc(func(stdout string) error {
 		if strings.Contains(stdout, "method is not supported") {
 			suite.T().Skip("reboot is not supported")
@@ -61,6 +63,20 @@ func (suite *RebootSuite) TestReboot() {
 
 		return err
 	}))
+
+	suite.T().Logf("running the cluster health check")
+
+	// run the health check to make sure cluster is fully healthy after a node reboot
+	args := []string{"--server=false"}
+
+	if suite.K8sEndpoint != "" {
+		args = append(args, "--k8s-endpoint", strings.Split(suite.K8sEndpoint, ":")[0])
+	}
+
+	suite.RunCLI(append([]string{"health"}, args...),
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+	)
 }
 
 func init() {

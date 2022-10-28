@@ -76,6 +76,8 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 
 	newHostname := "test-update-hostname"
 
+	suite.T().Logf("updating hostname of node %q to %q (IP: %s)", oldHostname, newHostname, nodeInternalIP)
+
 	err = suite.updateHostname(nodeCtx, newHostname)
 	suite.Require().NoError(err)
 
@@ -88,16 +90,24 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 	}
 
 	defer func() {
+		suite.T().Logf("reverting hostname of node %q to %q (IP: %s)", newHostname, oldHostname, nodeInternalIP)
+
 		// revert the hostname back to the original one
 		err = suite.updateHostname(nodeCtx, oldHostname)
 		suite.Require().NoError(err)
 
+		suite.T().Logf("waiting for node %q to be ready", oldHostname)
+
 		// expect node status to be Ready again
 		suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, oldHostname, nodeReady))
+
+		suite.T().Logf("deleting node %q", newHostname)
 
 		// Delete the node with the test hostname
 		err = suite.Clientset.CoreV1().Nodes().Delete(suite.ctx, newHostname, metav1.DeleteOptions{})
 		suite.Require().NoError(err)
+
+		suite.T().Logf("rebooting node %s", nodeInternalIP)
 
 		// Reboot node for CNI bridge to be reconfigured: https://stackoverflow.com/questions/61373366
 		suite.AssertRebooted(
@@ -107,11 +117,17 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 		)
 	}()
 
+	suite.T().Logf("waiting for node %q to be not ready", oldHostname)
+
 	// expect node with old hostname to become NotReady
 	suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, oldHostname, nodeNotReady))
 
+	suite.T().Logf("waiting for node %q to be ready", newHostname)
+
 	// expect node with new hostname to become Ready
 	suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, newHostname, nodeReady))
+
+	suite.T().Logf("deleting node %q", oldHostname)
 
 	// Delete the node with the old hostname
 	err = suite.Clientset.CoreV1().Nodes().Delete(suite.ctx, oldHostname, metav1.DeleteOptions{})
