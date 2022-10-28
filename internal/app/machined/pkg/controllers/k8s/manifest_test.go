@@ -296,6 +296,28 @@ func (suite *ManifestSuite) TestReconcileIPv6() {
 
 	v, _, _ = unstructured.NestedString(service.Object, "spec", "ipFamilyPolicy") //nolint:errcheck
 	suite.Assert().Equal("SingleStack", v)
+
+	r, err = suite.state.Get(
+		suite.ctx,
+		resource.NewMetadata(
+			k8s.ControlPlaneNamespaceName,
+			k8s.ManifestType,
+			"05-flannel",
+			resource.VersionUndefined,
+		),
+	)
+	suite.Require().NoError(err)
+
+	manifest = r.(*k8s.Manifest) //nolint:errcheck,forcetypeassert
+	suite.Assert().Len(k8sadapter.Manifest(manifest).Objects(), 5)
+
+	configmap := k8sadapter.Manifest(manifest).Objects()[3]
+	suite.Assert().Equal("ConfigMap", configmap.GetKind())
+
+	v, _, _ = unstructured.NestedString(configmap.Object, "data", "net-conf.json") //nolint:errcheck
+	suite.Assert().Contains(v, `"EnableIPv4": false`)
+	suite.Assert().Contains(v, `"EnableIPv6": true`)
+	suite.Assert().Contains(v, fmt.Sprintf(`"IPv6Network": "%s"`, constants.DefaultIPv6PodNet))
 }
 
 func (suite *ManifestSuite) TestReconcileDisablePSP() {
