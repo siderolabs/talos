@@ -42,7 +42,7 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.2.0-alpha.1.0.20221009084302-e8a8fdcc7548
 	github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker v20.10.20+incompatible
+	github.com/docker/docker v20.10.21+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/emicklei/dot v1.0.0
@@ -133,6 +133,7 @@ require (
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.80.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.66
@@ -287,7 +288,6 @@ require (
 	google.golang.org/genproto v0.0.0-20221025140454-527a21cfbd71 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252 // indirect
 	k8s.io/cli-runtime v0.26.0-alpha.2 // indirect
 	k8s.io/klog v1.0.0 // indirect
