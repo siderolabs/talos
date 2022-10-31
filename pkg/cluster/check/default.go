@@ -71,6 +71,13 @@ func DefaultClusterChecks() []ClusterCheck {
 			}, 10*time.Minute, 5*time.Second)
 		},
 
+		// wait for k8s control plane static pods
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("all control plane static pods to be running", func(ctx context.Context) error {
+				return K8sControlPlaneStaticPods(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
+
 		// wait for HA k8s control plane
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all control plane components to be ready", func(ctx context.Context) error {

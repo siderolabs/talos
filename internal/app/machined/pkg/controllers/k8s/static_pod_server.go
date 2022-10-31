@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
@@ -23,6 +24,8 @@ import (
 type StaticPodServerController struct {
 	podList   []byte
 	podListMu sync.Mutex
+
+	staticPodVersions map[string]string
 }
 
 // Name implements controller.Controller interface.
@@ -65,6 +68,8 @@ type podList struct {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *StaticPodServerController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	ctrl.staticPodVersions = map[string]string{}
+
 	shutdownServer, serverError, err := ctrl.createServer(ctx, r, logger)
 	if err != nil {
 		return fmt.Errorf("failed to start http server to serve static pod list: %w", err)
@@ -79,7 +84,7 @@ func (ctrl *StaticPodServerController) Run(ctx context.Context, r controller.Run
 		case err := <-serverError:
 			return fmt.Errorf("http server closed unexpectedly: %w", err)
 		case <-r.EventCh():
-			staticPodList, err := buildPodList(ctx, r)
+			staticPodList, err := ctrl.buildPodList(ctx, r, logger)
 			if err != nil {
 				logger.Error("error building static pod list", zap.Error(err))
 			}
@@ -91,8 +96,8 @@ func (ctrl *StaticPodServerController) Run(ctx context.Context, r controller.Run
 	}
 }
 
-func buildPodList(ctx context.Context, r controller.Runtime) ([]byte, error) {
-	staticPods, err := r.List(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+func (ctrl *StaticPodServerController) buildPodList(ctx context.Context, r controller.Runtime, logger *zap.Logger) ([]byte, error) {
+	staticPods, err := safe.ReaderList[*k8s.StaticPod](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
 	if err != nil {
 		return nil, fmt.Errorf("error listing static pods: %w", err)
 	}
@@ -102,10 +107,37 @@ func buildPodList(ctx context.Context, r controller.Runtime) ([]byte, error) {
 		APIVersion: "v1",
 	}
 
-	for _, staticPod := range staticPods.Items {
-		staticPodSpec := staticPod.(*k8s.StaticPod).TypedSpec()
+	touchedPodIDs := map[string]struct{}{}
+
+	for iter := safe.IteratorFromList(staticPods); iter.Next(); {
+		id := iter.Value().Metadata().ID()
+		version := iter.Value().Metadata().Version().String()
+
+		if oldVersion, exists := ctrl.staticPodVersions[id]; !exists || oldVersion != version {
+			ctrl.staticPodVersions[id] = version
+
+			if !exists {
+				logger.Info("rendered new static pod", zap.String("id", id))
+			} else {
+				logger.Info("rendered updated static pod", zap.String("id", id), zap.String("old_version", oldVersion), zap.String("new_version", version))
+			}
+		}
+
+		staticPodSpec := iter.Value().TypedSpec()
 
 		pl.Items = append(pl.Items, staticPodSpec.Pod)
+
+		touchedPodIDs[id] = struct{}{}
+	}
+
+	for id := range ctrl.staticPodVersions {
+		if _, exists := touchedPodIDs[id]; exists {
+			continue
+		}
+
+		logger.Info("removed static pod", zap.String("id", id))
+
+		delete(ctrl.staticPodVersions, id)
 	}
 
 	manifestContent, err := yaml.Marshal(pl)

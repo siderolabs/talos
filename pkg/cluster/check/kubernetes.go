@@ -9,13 +9,19 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"strings"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/maps"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/talos-systems/talos/pkg/cluster"
+	"github.com/talos-systems/talos/pkg/machinery/client"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
@@ -378,4 +384,48 @@ func ReplicaSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespa
 	}
 
 	return len(rss.Items) > 0, nil
+}
+
+// K8sControlPlaneStaticPods checks whether all the controlplane nodes are running required Kubernetes static pods.
+//
+//nolint:gocyclo,cyclop
+func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
+	expectedNodes := append(cl.NodesByType(machine.TypeInit), cl.NodesByType(machine.TypeControlPlane)...)
+
+	// using here new Talos COSI API, Talos 1.2+ required
+	c, err := cl.Client()
+	if err != nil {
+		return err
+	}
+
+	for _, node := range expectedNodes {
+		expectedStaticPods := map[string]struct{}{
+			"kube-system/kube-apiserver":          {},
+			"kube-system/kube-controller-manager": {},
+			"kube-system/kube-scheduler":          {},
+		}
+
+		items, err := safe.StateList[*k8s.StaticPodStatus](
+			client.WithNode(ctx, node.InternalIP.String()),
+			c.COSI,
+			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined),
+		)
+		if err != nil {
+			return fmt.Errorf("error listing static pods on node %s: %w", node.InternalIP, err)
+		}
+
+		for iter := safe.IteratorFromList(items); iter.Next(); {
+			for expectedStaticPod := range expectedStaticPods {
+				if strings.HasPrefix(iter.Value().Metadata().ID(), expectedStaticPod) {
+					delete(expectedStaticPods, expectedStaticPod)
+				}
+			}
+		}
+
+		if len(expectedStaticPods) > 0 {
+			return fmt.Errorf("missing static pods on node %s: %v", node.InternalIP, maps.Keys(expectedStaticPods))
+		}
+	}
+
+	return nil
 }

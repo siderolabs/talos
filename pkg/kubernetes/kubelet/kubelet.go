@@ -102,6 +102,6 @@ type Metadata struct {
 // Annotations are the annotations on a pod.
 type Annotations struct {
 	// ConfigMapSource indicates where the resource is coming from.
-	// Its value is "file" for static pods and "api" for resources came from kube-apiserver.
+	// Its value is "file"/"http" for static pods and "api" for resources came from kube-apiserver.
 	ConfigSource string `json:"kubernetes.io/config.source"`
 }

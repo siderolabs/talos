@@ -155,8 +155,6 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 
 		nodename := nodenameResource.(*k8s.Nodename).TypedSpec().Nodename
 
-		// render static pods first, and attempt to build kubelet client last,
-		// as if kubelet issues certs from the API server, API server should be launched first.
 		kubeletClient, err = kubelet.NewClient(nodename, secrets.APIServerKubeletClient.Crt, secrets.APIServerKubeletClient.Key, rootSecrets.CA.Crt)
 		if err != nil {
 			return fmt.Errorf("error building kubelet client: %w", err)
@@ -189,11 +187,17 @@ func (ctrl *KubeletStaticPodController) refreshPodStatus(ctx context.Context, r 
 	podsSeen := map[string]struct{}{}
 
 	for _, pod := range podList.Items {
-		if pod.Metadata.Annotations.ConfigSource != "file" {
+		pod := pod
+
+		switch pod.Metadata.Annotations.ConfigSource {
+		case "file":
+			// static pod from a file source
+		case "http":
+			// static pod from an HTTP source
+		default:
+			// anything else is not a static pod, skip it
 			continue
 		}
-
-		pod := pod
 
 		statusID := fmt.Sprintf("%s/%s", pod.Metadata.Namespace, pod.Metadata.Name)
 
