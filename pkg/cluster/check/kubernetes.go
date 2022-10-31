@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/maps"
+	"google.golang.org/grpc/codes"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -411,6 +412,11 @@ func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
 			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined),
 		)
 		if err != nil {
+			if client.StatusCode(err) == codes.Unimplemented {
+				// old version of Talos without COSI API
+				return nil
+			}
+
 			return fmt.Errorf("error listing static pods on node %s: %w", node.InternalIP, err)
 		}
 
