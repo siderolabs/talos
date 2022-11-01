@@ -17,8 +17,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/talos-systems/go-kmsg"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-kmsg"
+	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 	"gopkg.in/freddierice/go-losetup.v1"
 

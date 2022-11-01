@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"

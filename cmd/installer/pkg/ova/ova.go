@@ -15,7 +15,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/talos-systems/go-cmd/pkg/cmd"
+	"github.com/siderolabs/go-cmd/pkg/cmd"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg"
 	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"

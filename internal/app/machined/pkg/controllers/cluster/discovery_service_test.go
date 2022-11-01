@@ -19,8 +19,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/siderolabs/discovery-api/api/v1alpha1/client/pb"
 	"github.com/siderolabs/discovery-client/pkg/client"
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-retry/retry"
 
 	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"

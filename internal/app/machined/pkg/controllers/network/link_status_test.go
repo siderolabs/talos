@@ -24,8 +24,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/mdlayher/netlink"
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-retry/retry"
 	"golang.org/x/sys/unix"
 
 	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"

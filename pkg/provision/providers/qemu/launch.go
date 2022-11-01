@@ -22,7 +22,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
-	talosnet "github.com/talos-systems/net"
+	sideronet "github.com/siderolabs/net"
 
 	"github.com/talos-systems/talos/pkg/provision"
 	"github.com/talos-systems/talos/pkg/provision/internal/cniutils"
@@ -108,7 +108,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 
 	ips := make([]string, len(config.IPs))
 	for j := range ips {
-		ips[j] = talosnet.FormatCIDR(config.IPs[j], config.CIDRs[j])
+		ips[j] = sideronet.FormatCIDR(config.IPs[j], config.CIDRs[j])
 	}
 
 	gatewayAddrs := slices.Map(config.GatewayAddrs, net.IP.String)

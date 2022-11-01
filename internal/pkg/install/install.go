@@ -19,8 +19,8 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/talos-systems/go-kmsg"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-kmsg"
+	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"

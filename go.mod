@@ -91,25 +91,25 @@ require (
 	github.com/siderolabs/discovery-api v0.1.1
 	github.com/siderolabs/discovery-client v0.1.2
 	github.com/siderolabs/gen v0.4.0
-	github.com/siderolabs/go-blockdevice v0.4.0
+	github.com/siderolabs/go-blockdevice v0.4.1
 	github.com/siderolabs/go-circular v0.1.0
+	github.com/siderolabs/go-cmd v0.1.1
+	github.com/siderolabs/go-debug v0.2.2
+	github.com/siderolabs/go-kmsg v0.1.2
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-loadbalancer v0.2.0
+	github.com/siderolabs/go-loadbalancer v0.2.1
 	github.com/siderolabs/go-pcidb v0.1.0
 	github.com/siderolabs/go-pointer v1.0.0
+	github.com/siderolabs/go-procfs v0.1.1
+	github.com/siderolabs/go-retry v0.3.2
 	github.com/siderolabs/go-smbios v0.3.1
 	github.com/siderolabs/go-tail v0.1.0
 	github.com/siderolabs/grpc-proxy v0.4.0
+	github.com/siderolabs/net v0.3.3
 	github.com/siderolabs/siderolink v0.2.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.1
-	github.com/talos-systems/go-cmd v0.1.0
-	github.com/talos-systems/go-debug v0.2.1
-	github.com/talos-systems/go-kmsg v0.1.1
-	github.com/talos-systems/go-procfs v0.1.0
-	github.com/talos-systems/go-retry v0.3.1
-	github.com/talos-systems/net v0.3.2
 	github.com/talos-systems/talos/pkg/machinery v1.3.0-alpha.1
 	github.com/u-root/u-root v0.10.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
@@ -288,7 +288,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	inet.af/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252 // indirect
+	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect
 	k8s.io/cli-runtime v0.26.0-alpha.2 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect

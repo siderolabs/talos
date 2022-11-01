@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/go-pointer"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"

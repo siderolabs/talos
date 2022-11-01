@@ -11,8 +11,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-retry/retry"
 
 	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"

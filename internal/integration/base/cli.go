@@ -16,9 +16,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siderolabs/go-cmd/pkg/cmd"
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-cmd/pkg/cmd"
-	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/pkg/cluster"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"

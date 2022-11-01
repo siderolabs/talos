@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/pkg/machinery/constants"

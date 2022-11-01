@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"

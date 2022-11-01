@@ -13,8 +13,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-retry/retry"
 )
 
 // RunOption configures options for Run.

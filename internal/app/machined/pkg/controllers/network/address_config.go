@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/value"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"

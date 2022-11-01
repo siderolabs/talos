@@ -18,10 +18,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/go-procfs/procfs"
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/siderolabs/siderolink/pkg/logreceiver"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-procfs/procfs"
-	"github.com/talos-systems/go-retry/retry"
 
 	controllerruntime "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
 	talosruntime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"

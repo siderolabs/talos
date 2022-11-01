@@ -14,8 +14,8 @@ import (
 	"time"
 
 	beevikntp "github.com/beevik/ntp"
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-retry/retry"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/internal/pkg/ntp"

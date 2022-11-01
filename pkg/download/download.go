@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/talos-systems/talos/pkg/httpdefaults"
 )

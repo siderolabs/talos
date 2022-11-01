@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 )

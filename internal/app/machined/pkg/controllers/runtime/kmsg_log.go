@@ -13,9 +13,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-pointer"
-	"github.com/talos-systems/go-kmsg"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 

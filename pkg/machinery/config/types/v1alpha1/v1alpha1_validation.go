@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/talos-systems/go-debug"
-	talosnet "github.com/talos-systems/net"
+	"github.com/siderolabs/go-debug"
+	sideronet "github.com/siderolabs/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -300,7 +300,7 @@ func (c *ClusterConfig) Validate() error {
 		return fmt.Errorf("cluster controlplane endpoint is required")
 	}
 
-	if err := talosnet.ValidateEndpointURI(c.ControlPlane.Endpoint.URL.String()); err != nil {
+	if err := sideronet.ValidateEndpointURI(c.ControlPlane.Endpoint.URL.String()); err != nil {
 		result = multierror.Append(result, fmt.Errorf("invalid controlplane endpoint: %w", err))
 	}
 
@@ -344,7 +344,7 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 		}
 
 		for _, u := range cni.URLs() {
-			if err := talosnet.ValidateEndpointURI(u); err != nil {
+			if err := sideronet.ValidateEndpointURI(u); err != nil {
 				result = multierror.Append(result, err)
 			}
 		}
@@ -366,7 +366,7 @@ func (ecp *ExternalCloudProviderConfig) Validate() error {
 	var result *multierror.Error
 
 	for _, url := range ecp.ExternalManifests {
-		if err := talosnet.ValidateEndpointURI(url); err != nil {
+		if err := sideronet.ValidateEndpointURI(url); err != nil {
 			err = fmt.Errorf("invalid external cloud provider manifest url %q: %w", url, err)
 			result = multierror.Append(result, err)
 		}
@@ -626,7 +626,7 @@ func checkWireguard(b *DeviceWireguardConfig) error {
 		}
 
 		if peer.WireguardEndpoint != "" {
-			if !talosnet.AddressContainsPort(peer.WireguardEndpoint) {
+			if !sideronet.AddressContainsPort(peer.WireguardEndpoint) {
 				result = multierror.Append(result, fmt.Errorf("peer endpoint %q is invalid", peer.WireguardEndpoint))
 			}
 		}
@@ -779,7 +779,7 @@ func (k *KubeletConfig) Validate() ([]string, error) {
 		for _, cidr := range k.KubeletNodeIP.KubeletNodeIPValidSubnets {
 			cidr = strings.TrimPrefix(cidr, "!")
 
-			if _, err := talosnet.ParseCIDR(cidr); err != nil {
+			if _, err := sideronet.ParseCIDR(cidr); err != nil {
 				result = multierror.Append(result, fmt.Errorf("kubelet nodeIP subnet is not valid: %q", cidr))
 			}
 		}
@@ -809,7 +809,7 @@ func (e *EtcdConfig) Validate() error {
 	for _, cidr := range e.AdvertisedSubnets() {
 		cidr = strings.TrimPrefix(cidr, "!")
 
-		if _, err := talosnet.ParseCIDR(cidr); err != nil {
+		if _, err := sideronet.ParseCIDR(cidr); err != nil {
 			result = multierror.Append(result, fmt.Errorf("etcd advertised subnet is not valid: %q", cidr))
 		}
 	}
@@ -817,7 +817,7 @@ func (e *EtcdConfig) Validate() error {
 	for _, cidr := range e.ListenSubnets() {
 		cidr = strings.TrimPrefix(cidr, "!")
 
-		if _, err := talosnet.ParseCIDR(cidr); err != nil {
+		if _, err := sideronet.ParseCIDR(cidr); err != nil {
 			result = multierror.Append(result, fmt.Errorf("etcd listen subnet is not valid: %q", cidr))
 		}
 	}

@@ -19,7 +19,7 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/gen/value"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-procfs/procfs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 

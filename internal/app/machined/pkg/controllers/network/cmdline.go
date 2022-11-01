@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/pair/ordered"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/talos-systems/talos/pkg/machinery/constants"

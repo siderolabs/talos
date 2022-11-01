@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"

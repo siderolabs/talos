@@ -15,11 +15,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/go-procfs/procfs"
+	"github.com/siderolabs/go-retry/retry"
 	pb "github.com/siderolabs/siderolink/api/siderolink"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-procfs/procfs"
-	"github.com/talos-systems/go-retry/retry"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"

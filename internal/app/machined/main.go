@@ -17,10 +17,10 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/talos-systems/go-cmd/pkg/cmd/proc"
-	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
-	debug "github.com/talos-systems/go-debug"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-cmd/pkg/cmd/proc"
+	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
+	debug "github.com/siderolabs/go-debug"
+	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
 	"github.com/talos-systems/talos/internal/app/apid"

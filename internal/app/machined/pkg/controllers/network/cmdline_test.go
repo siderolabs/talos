@@ -10,8 +10,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/talos-systems/talos/pkg/machinery/nethelpers"

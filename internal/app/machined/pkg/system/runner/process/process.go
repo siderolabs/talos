@@ -16,7 +16,7 @@ import (
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
 	"github.com/containerd/containerd/sys"
-	"github.com/talos-systems/go-cmd/pkg/cmd/proc/reaper"
+	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"

@@ -18,9 +18,9 @@ import (
 
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
+	"github.com/siderolabs/go-retry/retry"
+	sideronet "github.com/siderolabs/net"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-retry/retry"
-	talosnet "github.com/talos-systems/net"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -306,13 +306,13 @@ func (suite *UpgradeSuite) setupCluster() {
 
 	var gatewayIP net.IP
 
-	gatewayIP, err = talosnet.NthIPInNetwork(cidr, 1)
+	gatewayIP, err = sideronet.NthIPInNetwork(cidr, 1)
 	suite.Require().NoError(err)
 
 	ips := make([]net.IP, suite.spec.MasterNodes+suite.spec.WorkerNodes)
 
 	for i := range ips {
-		ips[i], err = talosnet.NthIPInNetwork(cidr, i+2)
+		ips[i], err = sideronet.NthIPInNetwork(cidr, i+2)
 		suite.Require().NoError(err)
 	}
 

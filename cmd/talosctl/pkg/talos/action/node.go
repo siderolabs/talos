@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/siderolabs/go-circular"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 

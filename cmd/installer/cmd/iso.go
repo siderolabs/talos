@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"

@@ -13,7 +13,7 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
-	talosnet "github.com/talos-systems/net"
+	sideronet "github.com/siderolabs/net"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
 	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -246,22 +246,22 @@ func (c *ClusterConfig) DNSDomain() string {
 
 // APIServerIPs implements the config.ClusterNetwork interface.
 func (c *ClusterConfig) APIServerIPs() ([]net.IP, error) {
-	serviceCIDRs, err := talosnet.SplitCIDRs(strings.Join(c.ServiceCIDRs(), ","))
+	serviceCIDRs, err := sideronet.SplitCIDRs(strings.Join(c.ServiceCIDRs(), ","))
 	if err != nil {
 		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
 	}
 
-	return talosnet.NthIPInCIDRSet(serviceCIDRs, 1)
+	return sideronet.NthIPInCIDRSet(serviceCIDRs, 1)
 }
 
 // DNSServiceIPs implements the config.ClusterNetwork interface.
 func (c *ClusterConfig) DNSServiceIPs() ([]net.IP, error) {
-	serviceCIDRs, err := talosnet.SplitCIDRs(strings.Join(c.ServiceCIDRs(), ","))
+	serviceCIDRs, err := sideronet.SplitCIDRs(strings.Join(c.ServiceCIDRs(), ","))
 	if err != nil {
 		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
 	}
 
-	return talosnet.NthIPInCIDRSet(serviceCIDRs, 10)
+	return sideronet.NthIPInCIDRSet(serviceCIDRs, 10)
 }
 
 // Discovery implements the config.Cluster interface.

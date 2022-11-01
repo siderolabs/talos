@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/grpc-proxy/proxy"
-	"github.com/talos-systems/net"
+	"github.com/siderolabs/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials"

@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
-	talosnet "github.com/talos-systems/net"
 	"gopkg.in/yaml.v3"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
@@ -270,7 +270,7 @@ func validateClusterEndpoint(endpoint string) error {
 		return fmt.Errorf("the control plane endpoint URL should have scheme https://\ntry: %q", fixControlPlaneEndpoint(u))
 	}
 
-	if err = talosnet.ValidateEndpointURI(endpoint); err != nil {
+	if err = sideronet.ValidateEndpointURI(endpoint); err != nil {
 		return fmt.Errorf("error validating the cluster endpoint URL: %w", err)
 	}
 

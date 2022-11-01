@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 

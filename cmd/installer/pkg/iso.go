@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/talos-systems/go-cmd/pkg/cmd"
+	"github.com/siderolabs/go-cmd/pkg/cmd"
 )
 
 // CreateISO creates an iso by invoking the `grub-mkrescue` command.

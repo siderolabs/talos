@@ -15,8 +15,8 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/net"
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/net"
 
 	"github.com/talos-systems/talos/pkg/cli"
 	"github.com/talos-systems/talos/pkg/provision"

@@ -20,7 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/siderolabs/gen/slices"
-	talosnet "github.com/talos-systems/net"
+	sideronet "github.com/siderolabs/net"
 
 	"github.com/talos-systems/talos/pkg/provision"
 )
@@ -74,12 +74,12 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 	for j := range fakeIPs {
 		var fakeIP net.IP
 
-		fakeIP, err = talosnet.NthIPInNetwork(&network.CIDRs[j], 2)
+		fakeIP, err = sideronet.NthIPInNetwork(&network.CIDRs[j], 2)
 		if err != nil {
 			return err
 		}
 
-		fakeIPs[j] = talosnet.FormatCIDR(fakeIP, network.CIDRs[j])
+		fakeIPs[j] = sideronet.FormatCIDR(fakeIP, network.CIDRs[j])
 	}
 
 	gatewayAddrs := slices.Map(network.GatewayAddrs, net.IP.String)

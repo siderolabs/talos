@@ -4,7 +4,7 @@
 
 package runtime
 
-import "github.com/talos-systems/go-procfs/procfs"
+import "github.com/siderolabs/go-procfs/procfs"
 
 // PartitionOptions are the board specific options for customizing the
 // partition table.

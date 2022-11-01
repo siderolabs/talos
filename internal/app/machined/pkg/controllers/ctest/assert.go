@@ -9,9 +9,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/talos-systems/go-retry/retry"
 )
 
 type assertionAggregator struct {

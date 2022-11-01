@@ -21,10 +21,10 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-kubeconfig"
+	"github.com/siderolabs/go-procfs/procfs"
+	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/talos-systems/go-procfs/procfs"
-	talosnet "github.com/talos-systems/net"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/talos-systems/talos/cmd/talosctl/pkg/mgmt/helpers"
@@ -218,7 +218,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	gatewayIPs := make([]net.IP, len(cidrs))
 
 	for j := range gatewayIPs {
-		gatewayIPs[j], err = talosnet.NthIPInNetwork(&cidrs[j], gatewayOffset)
+		gatewayIPs[j], err = sideronet.NthIPInNetwork(&cidrs[j], gatewayOffset)
 		if err != nil {
 			return err
 		}
@@ -231,7 +231,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		ips[j] = make([]net.IP, controlplanes+workers)
 
 		for i := range ips[j] {
-			ips[j][i], err = talosnet.NthIPInNetwork(&cidrs[j], nodesOffset+i)
+			ips[j][i], err = sideronet.NthIPInNetwork(&cidrs[j], nodesOffset+i)
 			if err != nil {
 				return err
 			}
@@ -252,7 +252,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	var vip net.IP
 
 	if useVIP {
-		vip, err = talosnet.NthIPInNetwork(&cidrs[0], vipOffset)
+		vip, err = sideronet.NthIPInNetwork(&cidrs[0], vipOffset)
 		if err != nil {
 			return err
 		}

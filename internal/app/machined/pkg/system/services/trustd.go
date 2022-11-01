@@ -18,7 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/talos-systems/go-debug"
+	"github.com/siderolabs/go-debug"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"

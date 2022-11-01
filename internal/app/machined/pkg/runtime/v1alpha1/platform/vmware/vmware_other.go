@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )

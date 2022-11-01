@@ -17,7 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"

@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

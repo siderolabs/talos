@@ -19,7 +19,7 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv6/nclient6"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/siderolabs/gen/slices"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	"go.uber.org/zap"
 	"go4.org/netipx"
 	"golang.org/x/sys/unix"

@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-	"github.com/talos-systems/go-retry/retry"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"

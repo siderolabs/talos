@@ -19,7 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/go-cmp/cmp"
 	"github.com/siderolabs/gen/slices"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/metadata"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

@@ -5,7 +5,7 @@
 package makefs
 
 import (
-	"github.com/talos-systems/go-cmd/pkg/cmd"
+	"github.com/siderolabs/go-cmd/pkg/cmd"
 )
 
 // VFAT creates a VFAT filesystem on the specified partition.

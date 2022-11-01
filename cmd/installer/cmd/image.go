@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/spf13/cobra"
-	"github.com/talos-systems/go-cmd/pkg/cmd"
 
 	"github.com/talos-systems/talos/cmd/installer/pkg"
 	"github.com/talos-systems/talos/cmd/installer/pkg/install"

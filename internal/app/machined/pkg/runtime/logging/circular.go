@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/siderolabs/go-circular"
+	"github.com/siderolabs/go-debug"
 	"github.com/siderolabs/go-tail"
-	"github.com/talos-systems/go-debug"
 
 	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
 )

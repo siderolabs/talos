@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/talos-systems/go-retry/retry"
+	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc"
 
 	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"

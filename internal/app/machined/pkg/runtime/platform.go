@@ -9,7 +9,7 @@ import (
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/talos-systems/go-procfs/procfs"
+	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"

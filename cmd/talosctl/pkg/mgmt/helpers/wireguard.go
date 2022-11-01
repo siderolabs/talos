@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	talosnet "github.com/talos-systems/net"
+	sideronet "github.com/siderolabs/net"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	"github.com/talos-systems/talos/pkg/machinery/config"
@@ -53,7 +53,7 @@ func NewWireguardConfigBundle(ips []net.IP, wireguardCidr string, listenPort, ma
 	}
 
 	for i, nodeIP := range ips {
-		wgIP, err := talosnet.NthIPInNetwork(network, i+2)
+		wgIP, err := sideronet.NthIPInNetwork(network, i+2)
 		if err != nil {
 			return nil, err
 		}

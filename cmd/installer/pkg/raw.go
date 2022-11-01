@@ -7,7 +7,7 @@ package pkg
 import (
 	"fmt"
 
-	"github.com/talos-systems/go-cmd/pkg/cmd"
+	"github.com/siderolabs/go-cmd/pkg/cmd"
 )
 
 const (
