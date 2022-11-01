@@ -5,7 +5,7 @@
 package provision
 
 import (
-	"net"
+	"net/netip"
 
 	"github.com/google/uuid"
 
@@ -36,8 +36,8 @@ type ClusterInfo struct {
 // NetworkInfo describes cluster network.
 type NetworkInfo struct {
 	Name         string
-	CIDRs        []net.IPNet
-	GatewayAddrs []net.IP
+	CIDRs        []netip.Prefix
+	GatewayAddrs []netip.Addr
 	MTU          int
 }
 
@@ -55,7 +55,7 @@ type NodeInfo struct {
 	// Disk (volume) size in bytes, if applicable
 	DiskSize uint64
 
-	IPs []net.IP
+	IPs []netip.Addr
 
 	APIPort int
 }

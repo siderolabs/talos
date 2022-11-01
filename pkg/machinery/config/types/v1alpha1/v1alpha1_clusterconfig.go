@@ -6,7 +6,7 @@ package v1alpha1
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"net/url"
 	"strings"
 
@@ -245,7 +245,7 @@ func (c *ClusterConfig) DNSDomain() string {
 }
 
 // APIServerIPs implements the config.ClusterNetwork interface.
-func (c *ClusterConfig) APIServerIPs() ([]net.IP, error) {
+func (c *ClusterConfig) APIServerIPs() ([]netip.Addr, error) {
 	serviceCIDRs, err := sideronet.SplitCIDRs(strings.Join(c.ServiceCIDRs(), ","))
 	if err != nil {
 		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)
@@ -255,7 +255,7 @@ func (c *ClusterConfig) APIServerIPs() ([]net.IP, error) {
 }
 
 // DNSServiceIPs implements the config.ClusterNetwork interface.
-func (c *ClusterConfig) DNSServiceIPs() ([]net.IP, error) {
+func (c *ClusterConfig) DNSServiceIPs() ([]netip.Addr, error) {
 	serviceCIDRs, err := sideronet.SplitCIDRs(strings.Join(c.ServiceCIDRs(), ","))
 	if err != nil {
 		return nil, fmt.Errorf("failed to process Service CIDRs: %w", err)

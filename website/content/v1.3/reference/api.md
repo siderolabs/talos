@@ -3305,7 +3305,6 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | endpoint | [common.URL](#common.URL) |  |  |
 | local_endpoint | [common.URL](#common.URL) |  |  |
 | cert_sa_ns | [string](#string) | repeated |  |
-| api_server_ips | [bytes](#bytes) | repeated |  |
 | dns_domain | [string](#string) |  |  |
 | ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | service_account | [common.PEMEncodedKey](#common.PEMEncodedKey) |  |  |
@@ -3314,6 +3313,7 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | bootstrap_token_id | [string](#string) |  |  |
 | bootstrap_token_secret | [string](#string) |  |  |
 | secretbox_encryption_secret | [string](#string) |  |  |
+| api_server_ips | [common.NetIP](#common.NetIP) | repeated |  |
 
 
 

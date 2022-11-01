@@ -7,7 +7,7 @@ package cluster
 import (
 	"context"
 	"fmt"
-	stdnet "net"
+	"net/netip"
 	"os"
 	"sort"
 	"strings"
@@ -15,7 +15,6 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/gen/slices"
-	"github.com/siderolabs/net"
 	"github.com/spf13/cobra"
 
 	"github.com/talos-systems/talos/pkg/cli"
@@ -56,11 +55,11 @@ func showCluster(cluster provision.Cluster) error {
 	fmt.Fprintf(w, "NAME\t%s\n", cluster.Info().ClusterName)
 	fmt.Fprintf(w, "NETWORK NAME\t%s\n", cluster.Info().Network.Name)
 
-	cidrs := slices.Map(cluster.Info().Network.CIDRs, func(v stdnet.IPNet) string { return net.FormatCIDR(v.IP, v) })
+	cidrs := slices.Map(cluster.Info().Network.CIDRs, netip.Prefix.String)
 
 	fmt.Fprintf(w, "NETWORK CIDR\t%s\n", strings.Join(cidrs, ","))
 
-	gateways := slices.Map(cluster.Info().Network.GatewayAddrs, stdnet.IP.String)
+	gateways := slices.Map(cluster.Info().Network.GatewayAddrs, netip.Addr.String)
 
 	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", strings.Join(gateways, ","))
 	fmt.Fprintf(w, "NETWORK MTU\t%d\n", cluster.Info().Network.MTU)
@@ -94,7 +93,7 @@ func showCluster(cluster provision.Cluster) error {
 			disk = humanize.Bytes(node.DiskSize)
 		}
 
-		ips := slices.Map(node.IPs, stdnet.IP.String)
+		ips := slices.Map(node.IPs, netip.Addr.String)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			node.Name,

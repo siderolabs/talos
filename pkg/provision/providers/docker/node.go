@@ -9,7 +9,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net"
+	"net/netip"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -181,6 +181,12 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		return provision.NodeInfo{}, err
 	}
 
+	// Get the container's IP address.
+	addr, err := netip.ParseAddr(info.NetworkSettings.Networks[clusterReq.Network.Name].IPAddress)
+	if err != nil {
+		return provision.NodeInfo{}, err
+	}
+
 	nodeInfo := provision.NodeInfo{
 		ID:   info.ID,
 		Name: info.Name,
@@ -189,7 +195,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		NanoCPUs: nodeReq.NanoCPUs,
 		Memory:   nodeReq.Memory,
 
-		IPs: []net.IP{net.ParseIP(info.NetworkSettings.Networks[clusterReq.Network.Name].IPAddress)},
+		IPs: []netip.Addr{addr},
 	}
 
 	return nodeInfo, nil

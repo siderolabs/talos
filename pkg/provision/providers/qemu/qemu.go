@@ -39,7 +39,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 	hasIPv6 := false
 
 	for _, cidr := range networkReq.CIDRs {
-		if cidr.IP.To4() == nil {
+		if cidr.Addr().Is6() {
 			hasIPv6 = true
 		} else {
 			hasIPv4 = true

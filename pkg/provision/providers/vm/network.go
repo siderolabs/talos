@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
+	"net/netip"
 	"strconv"
 	"strings"
 	"text/template"
@@ -72,9 +73,9 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 	// pick a fake address to use for provisioning an interface
 	fakeIPs := make([]string, len(network.CIDRs))
 	for j := range fakeIPs {
-		var fakeIP net.IP
+		var fakeIP netip.Addr
 
-		fakeIP, err = sideronet.NthIPInNetwork(&network.CIDRs[j], 2)
+		fakeIP, err = sideronet.NthIPInNetwork(network.CIDRs[j], 2)
 		if err != nil {
 			return err
 		}
@@ -82,7 +83,7 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		fakeIPs[j] = sideronet.FormatCIDR(fakeIP, network.CIDRs[j])
 	}
 
-	gatewayAddrs := slices.Map(network.GatewayAddrs, net.IP.String)
+	gatewayAddrs := slices.Map(network.GatewayAddrs, netip.Addr.String)
 
 	containerID := uuid.New().String()
 	runtimeConf := libcni.RuntimeConf{

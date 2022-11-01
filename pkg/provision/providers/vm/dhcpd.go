@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/netip"
 	"os"
 	"os/exec"
 	"strconv"
@@ -61,10 +62,10 @@ func handlerDHCP4(serverIP net.IP, statePath string) server4.Handler {
 		}
 
 		modifiers := []dhcpv4.Modifier{
-			dhcpv4.WithNetmask(match.Netmask),
-			dhcpv4.WithYourIP(match.IP),
-			dhcpv4.WithOption(dhcpv4.OptDNS(match.Nameservers...)),
-			dhcpv4.WithOption(dhcpv4.OptRouter(match.Gateway)),
+			dhcpv4.WithNetmask(net.CIDRMask(int(match.Netmask), match.IP.BitLen())),
+			dhcpv4.WithYourIP(match.IP.AsSlice()),
+			dhcpv4.WithOption(dhcpv4.OptDNS(netipAddrsToIPs(match.Nameservers)...)),
+			dhcpv4.WithOption(dhcpv4.OptRouter(match.Gateway.AsSlice())),
 			dhcpv4.WithOption(dhcpv4.OptIPAddressLeaseTime(5 * time.Minute)),
 			dhcpv4.WithOption(dhcpv4.OptServerIdentifier(serverIP)),
 		}
@@ -161,9 +162,9 @@ func handlerDHCP6(serverHwAddr net.HardwareAddr, statePath string) server6.Handl
 		}
 
 		modifiers := []dhcpv6.Modifier{
-			dhcpv6.WithDNS(match.Nameservers...),
+			dhcpv6.WithDNS(netipAddrsToIPs(match.Nameservers)...),
 			dhcpv6.WithIANA(dhcpv6.OptIAAddress{
-				IPv6Addr:          match.IP,
+				IPv6Addr:          match.IP.AsSlice(),
 				PreferredLifetime: 5 * time.Minute,
 				ValidLifetime:     5 * time.Minute,
 			}),
@@ -203,6 +204,12 @@ func handlerDHCP6(serverHwAddr net.HardwareAddr, statePath string) server6.Handl
 			log.Printf("failure sending response: %s", err)
 		}
 	}
+}
+
+func netipAddrsToIPs(addrs []netip.Addr) []net.IP {
+	return slices.Map(addrs, func(addr netip.Addr) net.IP {
+		return addr.AsSlice()
+	})
 }
 
 // DHCPd entrypoint.
@@ -274,7 +281,7 @@ func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequ
 		return err
 	}
 
-	gatewayAddrs := slices.Map(clusterReq.Network.GatewayAddrs, net.IP.String)
+	gatewayAddrs := slices.Map(clusterReq.Network.GatewayAddrs, netip.Addr.String)
 
 	args := []string{
 		"dhcpd-launch",

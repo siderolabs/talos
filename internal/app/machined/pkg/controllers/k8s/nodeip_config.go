@@ -7,12 +7,12 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
-	"github.com/siderolabs/net"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/machinery/resources/config"
@@ -125,12 +125,12 @@ func ipSubnetsFromServiceCIDRs(serviceCIDRs []string) ([]string, error) {
 	result := make([]string, 0, len(serviceCIDRs))
 
 	for _, cidr := range serviceCIDRs {
-		network, err := net.ParseCIDR(cidr)
+		network, err := netip.ParsePrefix(cidr)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse subnet: %w", err)
 		}
 
-		if network.IP.To4() == nil {
+		if network.Addr().Is6() {
 			result = append(result, "::/0")
 		} else {
 			result = append(result, "0.0.0.0/0")

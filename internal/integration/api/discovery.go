@@ -18,7 +18,6 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/gen/value"
-	"go4.org/netipx"
 
 	"github.com/talos-systems/talos/internal/integration/base"
 	"github.com/talos-systems/talos/pkg/machinery/client"
@@ -132,10 +131,7 @@ func (suite *DiscoverySuite) TestMembers() {
 
 			var matchingMemberByIP *cluster.Member
 
-			for _, nodeIPStd := range nodeInfo.IPs {
-				nodeIP, ok := netipx.FromStdIP(nodeIPStd)
-				suite.Assert().True(ok)
-
+			for _, nodeIP := range nodeInfo.IPs {
 				matchingMemberByIP = memberByIP[nodeIP]
 
 				break
@@ -151,10 +147,7 @@ func (suite *DiscoverySuite) TestMembers() {
 			suite.Assert().Equal(nodeInfo.Type, matchingMember.TypedSpec().MachineType)
 			suite.Assert().Equal(expectedTalosVersion, matchingMember.TypedSpec().OperatingSystem)
 
-			for _, nodeIPStd := range nodeInfo.IPs {
-				nodeIP, ok := netipx.FromStdIP(nodeIPStd)
-				suite.Assert().True(ok)
-
+			for _, nodeIP := range nodeInfo.IPs {
 				found := false
 
 				for _, memberAddr := range matchingMember.TypedSpec().Addresses {

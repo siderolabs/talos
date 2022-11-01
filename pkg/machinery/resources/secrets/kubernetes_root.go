@@ -5,7 +5,7 @@
 package secrets
 
 import (
-	"net"
+	"net/netip"
 	"net/url"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -30,12 +30,12 @@ type KubernetesRoot = typed.Resource[KubernetesRootSpec, KubernetesRootRD]
 //
 //gotagsrewrite:gen
 type KubernetesRootSpec struct {
-	Name          string   `yaml:"name" protobuf:"1"`
-	Endpoint      *url.URL `yaml:"endpoint" protobuf:"2"`
-	LocalEndpoint *url.URL `yaml:"local_endpoint" protobuf:"3"`
-	CertSANs      []string `yaml:"certSANs" protobuf:"4"`
-	APIServerIPs  []net.IP `yaml:"apiServerIPs" protobuf:"5"`
-	DNSDomain     string   `yaml:"dnsDomain" protobuf:"6"`
+	Name          string       `yaml:"name" protobuf:"1"`
+	Endpoint      *url.URL     `yaml:"endpoint" protobuf:"2"`
+	LocalEndpoint *url.URL     `yaml:"local_endpoint" protobuf:"3"`
+	CertSANs      []string     `yaml:"certSANs" protobuf:"4"`
+	APIServerIPs  []netip.Addr `yaml:"apiServerIPs" protobuf:"14"`
+	DNSDomain     string       `yaml:"dnsDomain" protobuf:"6"`
 
 	CA             *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"7"`
 	ServiceAccount *x509.PEMEncodedKey               `yaml:"serviceAccount" protobuf:"8"`

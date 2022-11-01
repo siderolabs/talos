@@ -6,7 +6,7 @@ package docker
 
 import (
 	"context"
-	"net"
+	"net/netip"
 	"strconv"
 	"strings"
 
@@ -30,16 +30,22 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 	if len(networks) > 0 {
 		network := networks[0]
 
-		var cidr *net.IPNet
-		_, cidr, err = net.ParseCIDR(network.IPAM.Config[0].Subnet)
+		var cidr netip.Prefix
 
+		cidr, err = netip.ParsePrefix(network.IPAM.Config[0].Subnet)
 		if err != nil {
 			return nil, err
 		}
 
 		res.clusterInfo.Network.Name = network.Name
-		res.clusterInfo.Network.CIDRs = []net.IPNet{*cidr}
-		res.clusterInfo.Network.GatewayAddrs = []net.IP{net.ParseIP(network.IPAM.Config[0].Gateway)}
+		res.clusterInfo.Network.CIDRs = []netip.Prefix{cidr}
+		res.clusterInfo.Network.GatewayAddrs = []netip.Addr{}
+
+		var addr netip.Addr
+
+		if addr, err = netip.ParseAddr(network.IPAM.Config[0].Gateway); err == nil {
+			res.clusterInfo.Network.GatewayAddrs = append(res.clusterInfo.Network.GatewayAddrs, addr)
+		}
 
 		mtuStr := network.Options["com.docker.network.driver.mtu"]
 		res.clusterInfo.Network.MTU, err = strconv.Atoi(mtuStr)
@@ -61,13 +67,18 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 			return nil, err
 		}
 
+		addr, err := netip.ParseAddr(node.NetworkSettings.Networks[res.clusterInfo.Network.Name].IPAddress)
+		if err != nil {
+			return nil, err
+		}
+
 		res.clusterInfo.Nodes = append(res.clusterInfo.Nodes,
 			provision.NodeInfo{
 				ID:   node.ID,
 				Name: strings.TrimLeft(node.Names[0], "/"),
 				Type: t,
 
-				IPs: []net.IP{net.ParseIP(node.NetworkSettings.Networks[res.clusterInfo.Network.Name].IPAddress)},
+				IPs: []netip.Addr{addr},
 			})
 	}
 

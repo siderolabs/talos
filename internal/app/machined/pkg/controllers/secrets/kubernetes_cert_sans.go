@@ -133,7 +133,7 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 				hostnameStatus.FQDN(),
 			)
 
-			spec.AppendStdIPs(k8sRoot.APIServerIPs...)
+			spec.AppendIPs(k8sRoot.APIServerIPs...)
 			spec.AppendIPs(nodeAddresses.IPs()...)
 
 			spec.Sort()

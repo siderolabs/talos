@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -185,29 +185,34 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	// Validate CIDR range and allocate IPs
 	fmt.Println("validating CIDR and reserving IPs")
 
-	_, cidr4, err := net.ParseCIDR(networkCIDR)
+	cidr4, err := netip.ParsePrefix(networkCIDR)
 	if err != nil {
 		return fmt.Errorf("error validating cidr block: %w", err)
 	}
 
-	if cidr4.IP.To4() == nil {
+	if !cidr4.Addr().Is4() {
 		return fmt.Errorf("--cidr is expected to be IPV4 CIDR")
 	}
 
 	// use ULA IPv6 network fd00::/8, add 'TAL' in hex to build /32 network, add IPv4 CIDR to build /64 unique network
-	_, cidr6, err := net.ParseCIDR(fmt.Sprintf("fd74:616c:%02x%02x:%02x%02x::/64", cidr4.IP[0], cidr4.IP[1], cidr4.IP[2], cidr4.IP[3]))
+	cidr6, err := netip.ParsePrefix(
+		fmt.Sprintf(
+			"fd74:616c:%02x%02x:%02x%02x::/64",
+			cidr4.Addr().As4()[0], cidr4.Addr().As4()[1], cidr4.Addr().As4()[2], cidr4.Addr().As4()[3],
+		),
+	)
 	if err != nil {
 		return fmt.Errorf("error validating cidr IPv6 block: %w", err)
 	}
 
-	var cidrs []net.IPNet
+	var cidrs []netip.Prefix
 
 	if networkIPv4 {
-		cidrs = append(cidrs, *cidr4)
+		cidrs = append(cidrs, cidr4)
 	}
 
 	if networkIPv6 {
-		cidrs = append(cidrs, *cidr6)
+		cidrs = append(cidrs, cidr6)
 	}
 
 	if len(cidrs) == 0 {
@@ -215,23 +220,23 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	}
 
 	// Gateway addr at 1st IP in range, ex. 192.168.0.1
-	gatewayIPs := make([]net.IP, len(cidrs))
+	gatewayIPs := make([]netip.Addr, len(cidrs))
 
 	for j := range gatewayIPs {
-		gatewayIPs[j], err = sideronet.NthIPInNetwork(&cidrs[j], gatewayOffset)
+		gatewayIPs[j], err = sideronet.NthIPInNetwork(cidrs[j], gatewayOffset)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Set starting ip at 2nd ip in range, ex: 192.168.0.2
-	ips := make([][]net.IP, len(cidrs))
+	ips := make([][]netip.Addr, len(cidrs))
 
 	for j := range cidrs {
-		ips[j] = make([]net.IP, controlplanes+workers)
+		ips[j] = make([]netip.Addr, controlplanes+workers)
 
 		for i := range ips[j] {
-			ips[j][i], err = sideronet.NthIPInNetwork(&cidrs[j], nodesOffset+i)
+			ips[j][i], err = sideronet.NthIPInNetwork(cidrs[j], nodesOffset+i)
 			if err != nil {
 				return err
 			}
@@ -239,20 +244,20 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	}
 
 	// Parse nameservers
-	nameserverIPs := make([]net.IP, len(nameservers))
+	nameserverIPs := make([]netip.Addr, len(nameservers))
 
 	for i := range nameserverIPs {
-		nameserverIPs[i] = net.ParseIP(nameservers[i])
-		if nameserverIPs[i] == nil {
-			return fmt.Errorf("failed parsing nameserver IP %q", nameservers[i])
+		nameserverIPs[i], err = netip.ParseAddr(nameservers[i])
+		if err != nil {
+			return fmt.Errorf("failed parsing nameserver IP %q: %w", nameservers[i], err)
 		}
 	}
 
 	// Virtual (shared) IP at the vipOffset IP in range, ex. 192.168.0.50
-	var vip net.IP
+	var vip netip.Addr
 
 	if useVIP {
-		vip, err = sideronet.NthIPInNetwork(&cidrs[0], vipOffset)
+		vip, err = sideronet.NthIPInNetwork(cidrs[0], vipOffset)
 		if err != nil {
 			return err
 		}
@@ -564,7 +569,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	for i := 0; i < controlplanes; i++ {
 		var cfg config.Provider
 
-		nodeIPs := make([]net.IP, len(cidrs))
+		nodeIPs := make([]netip.Addr, len(cidrs))
 		for j := range nodeIPs {
 			nodeIPs[j] = ips[j][i]
 		}
@@ -615,7 +620,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 
 		cfg := configBundle.Worker()
 
-		nodeIPs := make([]net.IP, len(cidrs))
+		nodeIPs := make([]netip.Addr, len(cidrs))
 		for j := range nodeIPs {
 			nodeIPs[j] = ips[j][controlplanes+i-1]
 		}

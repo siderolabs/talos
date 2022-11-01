@@ -8,7 +8,7 @@ package secrets_test
 import (
 	stdlibx509 "crypto/x509"
 	"fmt"
-	"net"
+	"net/netip"
 	"net/url"
 	"testing"
 	"time"
@@ -80,7 +80,7 @@ func (suite *KubernetesSuite) TestReconcile() {
 		Key: serviceAccount.KeyPEM,
 	}
 	rootSecrets.TypedSpec().CertSANs = []string{"example.com"}
-	rootSecrets.TypedSpec().APIServerIPs = []net.IP{net.ParseIP("10.4.3.2"), net.ParseIP("10.2.1.3")}
+	rootSecrets.TypedSpec().APIServerIPs = []netip.Addr{netip.MustParseAddr("10.4.3.2"), netip.MustParseAddr("10.2.1.3")}
 	rootSecrets.TypedSpec().DNSDomain = "cluster.remote"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), rootSecrets))
 

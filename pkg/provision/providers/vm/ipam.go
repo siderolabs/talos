@@ -8,20 +8,20 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 )
 
 // IPAMRecord describes a single record about a node.
 type IPAMRecord struct {
-	IP          net.IP
-	Netmask     net.IPMask
+	IP          netip.Addr
+	Netmask     byte
 	MAC         string
 	Hostname    string
-	Gateway     net.IP
+	Gateway     netip.Addr
 	MTU         int
-	Nameservers []net.IP
+	Nameservers []netip.Addr
 
 	TFTPServer       string
 	IPXEBootFilename string
@@ -76,7 +76,7 @@ func LoadIPAMRecords(statePath string) (IPAMDatabase, error) {
 		}
 
 		ipFormat := 4
-		if record.IP.To4() == nil {
+		if record.IP.Is6() {
 			ipFormat = 6
 		}
 

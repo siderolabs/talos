@@ -10,7 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -85,7 +85,7 @@ const (
 	currentK8sVersion  = constants.DefaultKubernetesVersion
 )
 
-var defaultNameservers = []net.IP{net.ParseIP("8.8.8.8"), net.ParseIP("1.1.1.1")}
+var defaultNameservers = []netip.Addr{netip.MustParseAddr("8.8.8.8"), netip.MustParseAddr("1.1.1.1")}
 
 // upgradePreviousToStable upgrades from the previous Talos release to the stable release.
 func upgradePreviousToStable() upgradeSpec {
@@ -301,15 +301,15 @@ func (suite *UpgradeSuite) setupCluster() {
 
 	clusterName := suite.spec.ShortName
 
-	_, cidr, err := net.ParseCIDR(DefaultSettings.CIDR)
+	cidr, err := netip.ParsePrefix(DefaultSettings.CIDR)
 	suite.Require().NoError(err)
 
-	var gatewayIP net.IP
+	var gatewayIP netip.Addr
 
 	gatewayIP, err = sideronet.NthIPInNetwork(cidr, 1)
 	suite.Require().NoError(err)
 
-	ips := make([]net.IP, suite.spec.MasterNodes+suite.spec.WorkerNodes)
+	ips := make([]netip.Addr, suite.spec.MasterNodes+suite.spec.WorkerNodes)
 
 	for i := range ips {
 		ips[i], err = sideronet.NthIPInNetwork(cidr, i+2)
@@ -323,8 +323,8 @@ func (suite *UpgradeSuite) setupCluster() {
 
 		Network: provision.NetworkRequest{
 			Name:         clusterName,
-			CIDRs:        []net.IPNet{*cidr},
-			GatewayAddrs: []net.IP{gatewayIP},
+			CIDRs:        []netip.Prefix{cidr},
+			GatewayAddrs: []netip.Addr{gatewayIP},
 			MTU:          DefaultSettings.MTU,
 			Nameservers:  defaultNameservers,
 			CNI: provision.CNIConfig{
@@ -429,7 +429,7 @@ func (suite *UpgradeSuite) setupCluster() {
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("master-%d", i+1),
 				Type:     machine.TypeControlPlane,
-				IPs:      []net.IP{ips[i]},
+				IPs:      []netip.Addr{ips[i]},
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
 				Disks: []*provision.Disk{
@@ -448,7 +448,7 @@ func (suite *UpgradeSuite) setupCluster() {
 			provision.NodeRequest{
 				Name:     fmt.Sprintf("worker-%d", i),
 				Type:     machine.TypeWorker,
-				IPs:      []net.IP{ips[suite.spec.MasterNodes+i-1]},
+				IPs:      []netip.Addr{ips[suite.spec.MasterNodes+i-1]},
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
 				Disks: []*provision.Disk{

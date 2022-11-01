@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -620,7 +621,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 
 	var podNet, serviceNet string
 
-	if tnet.IsIPv6(net.ParseIP(endpoint)) {
+	if addr, addrErr := netip.ParseAddr(endpoint); addrErr == nil && addr.Is6() {
 		podNet = constants.DefaultIPv6PodNet
 		serviceNet = constants.DefaultIPv6ServiceNet
 	} else {

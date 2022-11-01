@@ -23,10 +23,9 @@ require (
 	github.com/siderolabs/go-blockdevice v0.4.0
 	github.com/siderolabs/go-debug v0.2.2
 	github.com/siderolabs/go-pointer v1.0.0
-	github.com/siderolabs/net v0.3.3
+	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.0
 	github.com/stretchr/testify v1.8.1
-	go4.org/netipx v0.0.0-20220925034521-797b0c90d8ab
 	google.golang.org/genproto v0.0.0-20221025140454-527a21cfbd71
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1

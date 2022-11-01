@@ -6,7 +6,7 @@ package config
 
 import (
 	"crypto/tls"
-	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"time"
@@ -408,9 +408,9 @@ type ClusterNetwork interface {
 	ServiceCIDRs() []string
 	DNSDomain() string
 	// APIServerIPs returns kube-apiserver IPs in the ServiceCIDR.
-	APIServerIPs() ([]net.IP, error)
+	APIServerIPs() ([]netip.Addr, error)
 	// DNSServiceIPs returns DNS service IPs in the ServiceCIDR.
-	DNSServiceIPs() ([]net.IP, error)
+	DNSServiceIPs() ([]netip.Addr, error)
 }
 
 // CNI defines the requirements for a config that pertains to Kubernetes

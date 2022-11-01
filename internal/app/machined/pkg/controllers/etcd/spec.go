@@ -7,7 +7,6 @@ package etcd
 import (
 	"context"
 	"fmt"
-	stdnet "net"
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -19,7 +18,6 @@ import (
 	"github.com/siderolabs/net"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/etcd"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
@@ -154,15 +152,10 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 			listenClientIPs []netip.Addr
 		)
 
-		// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
-		var stdIPs []stdnet.IP
-
-		stdIPs, err = net.FilterIPs(nethelpers.MapNetIPToStd(addrs), advertisedCIDRs)
+		advertisedIPs, err = net.FilterIPs(addrs, advertisedCIDRs)
 		if err != nil {
 			return fmt.Errorf("error filtering IPs: %w", err)
 		}
-
-		advertisedIPs = nethelpers.MapStdToNetIP(stdIPs)
 
 		if len(etcdConfig.TypedSpec().AdvertiseValidSubnets) == 0 {
 			// if advertise subnet is not set, advertise the first address
@@ -172,15 +165,11 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 		}
 
 		if len(listenCIDRs) > 0 {
-			// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
-			var stdIPs []stdnet.IP
-
-			stdIPs, err = net.FilterIPs(nethelpers.MapNetIPToStd(addrs), listenCIDRs)
+			listenPeerIPs, err = net.FilterIPs(addrs, listenCIDRs)
 			if err != nil {
 				return fmt.Errorf("error filtering IPs: %w", err)
 			}
 
-			listenPeerIPs = nethelpers.MapStdToNetIP(stdIPs)
 			listenClientIPs = append([]netip.Addr{loopbackAddress}, listenPeerIPs...)
 		} else {
 			listenPeerIPs = []netip.Addr{defaultListenAddress}

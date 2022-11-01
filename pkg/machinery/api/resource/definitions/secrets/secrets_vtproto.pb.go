@@ -618,6 +618,30 @@ func (m *KubernetesRootSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.ApiServerIps) > 0 {
+		for iNdEx := len(m.ApiServerIps) - 1; iNdEx >= 0; iNdEx-- {
+			if marshalto, ok := interface{}(m.ApiServerIps[iNdEx]).(interface {
+				MarshalToSizedBufferVT([]byte) (int, error)
+			}); ok {
+				size, err := marshalto.MarshalToSizedBufferVT(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarint(dAtA, i, uint64(size))
+			} else {
+				encoded, err := proto.Marshal(m.ApiServerIps[iNdEx])
+				if err != nil {
+					return 0, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = encodeVarint(dAtA, i, uint64(len(encoded)))
+			}
+			i--
+			dAtA[i] = 0x72
+		}
+	}
 	if len(m.SecretboxEncryptionSecret) > 0 {
 		i -= len(m.SecretboxEncryptionSecret)
 		copy(dAtA[i:], m.SecretboxEncryptionSecret)
@@ -718,15 +742,6 @@ func (m *KubernetesRootSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i = encodeVarint(dAtA, i, uint64(len(m.DnsDomain)))
 		i--
 		dAtA[i] = 0x32
-	}
-	if len(m.ApiServerIps) > 0 {
-		for iNdEx := len(m.ApiServerIps) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.ApiServerIps[iNdEx])
-			copy(dAtA[i:], m.ApiServerIps[iNdEx])
-			i = encodeVarint(dAtA, i, uint64(len(m.ApiServerIps[iNdEx])))
-			i--
-			dAtA[i] = 0x2a
-		}
 	}
 	if len(m.CertSaNs) > 0 {
 		for iNdEx := len(m.CertSaNs) - 1; iNdEx >= 0; iNdEx-- {
@@ -1258,12 +1273,6 @@ func (m *KubernetesRootSpec) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
-	if len(m.ApiServerIps) > 0 {
-		for _, b := range m.ApiServerIps {
-			l = len(b)
-			n += 1 + l + sov(uint64(l))
-		}
-	}
 	l = len(m.DnsDomain)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
@@ -1313,6 +1322,18 @@ func (m *KubernetesRootSpec) SizeVT() (n int) {
 	l = len(m.SecretboxEncryptionSecret)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
+	}
+	if len(m.ApiServerIps) > 0 {
+		for _, e := range m.ApiServerIps {
+			if size, ok := interface{}(e).(interface {
+				SizeVT() int
+			}); ok {
+				l = size.SizeVT()
+			} else {
+				l = proto.Size(e)
+			}
+			n += 1 + l + sov(uint64(l))
+		}
 	}
 	if m.unknownFields != nil {
 		n += len(m.unknownFields)
@@ -2759,38 +2780,6 @@ func (m *KubernetesRootSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.CertSaNs = append(m.CertSaNs, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ApiServerIps", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLength
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ApiServerIps = append(m.ApiServerIps, make([]byte, postIndex-iNdEx))
-			copy(m.ApiServerIps[len(m.ApiServerIps)-1], dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field DnsDomain", wireType)
@@ -3082,6 +3071,48 @@ func (m *KubernetesRootSpec) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.SecretboxEncryptionSecret = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 14:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ApiServerIps", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ApiServerIps = append(m.ApiServerIps, &common.NetIP{})
+			if unmarshal, ok := interface{}(m.ApiServerIps[len(m.ApiServerIps)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.ApiServerIps[len(m.ApiServerIps)-1]); err != nil {
+					return err
+				}
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

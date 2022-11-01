@@ -14,7 +14,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/siderolabs/gen/slices"
-	"go4.org/netipx"
 
 	"github.com/talos-systems/talos/pkg/machinery/proto"
 )
@@ -94,15 +93,6 @@ func (spec *CertSANSpec) AppendIPs(ips ...netip.Addr) {
 
 		if !found {
 			spec.IPs = append(spec.IPs, ip)
-		}
-	}
-}
-
-// AppendStdIPs is same as AppendIPs, but for net.IP.
-func (spec *CertSANSpec) AppendStdIPs(ips ...net.IP) {
-	for _, ip := range ips {
-		if nip, ok := netipx.FromStdIP(ip); ok {
-			spec.AppendIPs(nip)
 		}
 	}
 }

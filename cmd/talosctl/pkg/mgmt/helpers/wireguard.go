@@ -6,7 +6,7 @@ package helpers
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -18,7 +18,7 @@ import (
 )
 
 // NewWireguardConfigBundle creates a new Wireguard config bundle.
-func NewWireguardConfigBundle(ips []net.IP, wireguardCidr string, listenPort, mastersCount int) (*WireguardConfigBundle, error) {
+func NewWireguardConfigBundle(ips []netip.Addr, wireguardCidr string, listenPort, mastersCount int) (*WireguardConfigBundle, error) {
 	configs := map[string]*v1alpha1.Device{}
 	keys := make([]wgtypes.Key, len(ips))
 	peers := make([]*v1alpha1.DeviceWireguardPeer, len(ips))
@@ -47,7 +47,7 @@ func NewWireguardConfigBundle(ips []net.IP, wireguardCidr string, listenPort, ma
 	parts := strings.Split(wireguardCidr, "/")
 	networkNumber := parts[1]
 
-	_, network, err := net.ParseCIDR(wireguardCidr)
+	network, err := netip.ParsePrefix(wireguardCidr)
 	if err != nil {
 		return nil, err
 	}

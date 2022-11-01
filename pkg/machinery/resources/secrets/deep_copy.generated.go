@@ -7,7 +7,6 @@
 package secrets
 
 import (
-	"net"
 	"net/netip"
 	"net/url"
 )
@@ -124,14 +123,8 @@ func (o KubernetesRootSpec) DeepCopy() KubernetesRootSpec {
 		copy(cp.CertSANs, o.CertSANs)
 	}
 	if o.APIServerIPs != nil {
-		cp.APIServerIPs = make([]net.IP, len(o.APIServerIPs))
+		cp.APIServerIPs = make([]netip.Addr, len(o.APIServerIPs))
 		copy(cp.APIServerIPs, o.APIServerIPs)
-		for i2 := range o.APIServerIPs {
-			if o.APIServerIPs[i2] != nil {
-				cp.APIServerIPs[i2] = make([]byte, len(o.APIServerIPs[i2]))
-				copy(cp.APIServerIPs[i2], o.APIServerIPs[i2])
-			}
-		}
 	}
 	if o.CA != nil {
 		cp.CA = o.CA.DeepCopy()

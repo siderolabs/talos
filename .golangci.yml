@@ -132,7 +132,6 @@ linters-settings:
     replace-allow-list:
       - gopkg.in/yaml.v3
       - inet.af/tcpproxy
-      - github.com/vmware-tanzu/sonobuoy
     retract-allow-no-explanation: false
     exclude-forbidden: true
 

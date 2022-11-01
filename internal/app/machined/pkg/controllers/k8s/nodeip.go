@@ -18,7 +18,6 @@ import (
 	"github.com/siderolabs/net"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
 	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
 	"github.com/talos-systems/talos/pkg/machinery/resources/network"
 )
@@ -105,13 +104,10 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 		cidrs = append(cidrs, cfgSpec.ValidSubnets...)
 		cidrs = append(cidrs, slices.Map(cfgSpec.ExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
 
-		// TODO: this should eventually be rewritten with `net.FilterIPs` on netaddrs, but for now we'll keep same code and do the conversion.
-		stdIPs, err := net.FilterIPs(nethelpers.MapNetIPToStd(addrs), cidrs)
+		ips, err := net.FilterIPs(addrs, cidrs)
 		if err != nil {
 			return fmt.Errorf("error filtering IPs: %w", err)
 		}
-
-		ips := nethelpers.MapStdToNetIP(stdIPs)
 
 		// filter down to make sure only one IPv4 and one IPv6 address stays
 		var hasIPv4, hasIPv6 bool

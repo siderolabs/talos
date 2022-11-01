@@ -105,7 +105,7 @@ require (
 	github.com/siderolabs/go-smbios v0.3.1
 	github.com/siderolabs/go-tail v0.1.0
 	github.com/siderolabs/grpc-proxy v0.4.0
-	github.com/siderolabs/net v0.3.3
+	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/siderolink v0.2.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
@@ -170,7 +170,7 @@ require (
 	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
+	github.com/emicklei/go-restful v2.16.0+incompatible // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect

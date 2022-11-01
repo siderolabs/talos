@@ -6,7 +6,7 @@ package provision
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 
 	"github.com/siderolabs/go-procfs/procfs"
 
@@ -47,10 +47,10 @@ type CNIConfig struct {
 // NetworkRequest describes cluster network.
 type NetworkRequest struct {
 	Name         string
-	CIDRs        []net.IPNet
-	GatewayAddrs []net.IP
+	CIDRs        []netip.Prefix
+	GatewayAddrs []netip.Addr
 	MTU          int
-	Nameservers  []net.IP
+	Nameservers  []netip.Addr
 
 	LoadBalancerPorts []int
 
@@ -139,7 +139,7 @@ type Disk struct {
 // NodeRequest describes a request for a node.
 type NodeRequest struct {
 	Name   string
-	IPs    []net.IP
+	IPs    []netip.Addr
 	Config config.Provider
 	Type   machine.Type
 

@@ -779,7 +779,7 @@ func (k *KubeletConfig) Validate() ([]string, error) {
 		for _, cidr := range k.KubeletNodeIP.KubeletNodeIPValidSubnets {
 			cidr = strings.TrimPrefix(cidr, "!")
 
-			if _, err := sideronet.ParseCIDR(cidr); err != nil {
+			if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {
 				result = multierror.Append(result, fmt.Errorf("kubelet nodeIP subnet is not valid: %q", cidr))
 			}
 		}
@@ -809,7 +809,7 @@ func (e *EtcdConfig) Validate() error {
 	for _, cidr := range e.AdvertisedSubnets() {
 		cidr = strings.TrimPrefix(cidr, "!")
 
-		if _, err := sideronet.ParseCIDR(cidr); err != nil {
+		if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {
 			result = multierror.Append(result, fmt.Errorf("etcd advertised subnet is not valid: %q", cidr))
 		}
 	}
@@ -817,7 +817,7 @@ func (e *EtcdConfig) Validate() error {
 	for _, cidr := range e.ListenSubnets() {
 		cidr = strings.TrimPrefix(cidr, "!")
 
-		if _, err := sideronet.ParseCIDR(cidr); err != nil {
+		if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {
 			result = multierror.Append(result, fmt.Errorf("etcd listen subnet is not valid: %q", cidr))
 		}
 	}

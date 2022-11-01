@@ -6,10 +6,7 @@ package network
 
 import (
 	"crypto/sha256"
-	"net"
 	"net/netip"
-
-	"go4.org/netipx"
 )
 
 // ULAPurpose is the Unique Local Addressing key for the Talos-specific purpose of the prefix.
@@ -60,22 +57,7 @@ func IsULA(ip netip.Addr, purpose ULAPurpose) bool {
 	return raw[0] == 0xfd && raw[7] == byte(purpose)
 }
 
-// IsStdULA implements IsULA for stdlib net.IP.
-func IsStdULA(ip net.IP, purpose ULAPurpose) bool {
-	addr, ok := netipx.FromStdIP(ip)
-	if !ok {
-		return false
-	}
-
-	return IsULA(addr, purpose)
-}
-
 // NotSideroLinkIP is a shorthand for !IsULA(ip, ULASideroLink).
 func NotSideroLinkIP(ip netip.Addr) bool {
 	return !IsULA(ip, ULASideroLink)
-}
-
-// NotSideroLinkStdIP is a shorthand for !IsStdULA(ip, ULASideroLink).
-func NotSideroLinkStdIP(ip net.IP) bool {
-	return !IsStdULA(ip, ULASideroLink)
 }

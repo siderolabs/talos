@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net"
+	"net/netip"
 	"os"
 	"os/exec"
 	"strconv"
@@ -58,12 +58,12 @@ type LaunchConfig struct {
 	BridgeName    string
 	NetworkConfig *libcni.NetworkConfigList
 	CNI           provision.CNIConfig
-	IPs           []net.IP
-	CIDRs         []net.IPNet
+	IPs           []netip.Addr
+	CIDRs         []netip.Prefix
 	Hostname      string
-	GatewayAddrs  []net.IP
+	GatewayAddrs  []netip.Addr
 	MTU           int
-	Nameservers   []net.IP
+	Nameservers   []netip.Addr
 
 	// PXE
 	TFTPServer       string
@@ -111,7 +111,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 		ips[j] = sideronet.FormatCIDR(config.IPs[j], config.CIDRs[j])
 	}
 
-	gatewayAddrs := slices.Map(config.GatewayAddrs, net.IP.String)
+	gatewayAddrs := slices.Map(config.GatewayAddrs, netip.Addr.String)
 
 	runtimeConf := libcni.RuntimeConf{
 		ContainerID: containerID,
@@ -159,16 +159,16 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 	config.ns = ns
 
 	for j := range config.CIDRs {
-		nameservers := make([]net.IP, 0, len(config.Nameservers))
+		nameservers := make([]netip.Addr, 0, len(config.Nameservers))
 
 		// filter nameservers by IPv4/IPv6 matching IPs
 		for i := range config.Nameservers {
-			if config.IPs[j].To4() == nil {
-				if config.Nameservers[i].To4() == nil {
+			if config.IPs[j].Is6() {
+				if config.Nameservers[i].Is6() {
 					nameservers = append(nameservers, config.Nameservers[i])
 				}
 			} else {
-				if config.Nameservers[i].To4() != nil {
+				if config.Nameservers[i].Is4() {
 					nameservers = append(nameservers, config.Nameservers[i])
 				}
 			}
@@ -177,7 +177,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 		// dump node IP/mac/hostname for dhcp
 		if err = vm.DumpIPAMRecord(config.StatePath, vm.IPAMRecord{
 			IP:               config.IPs[j],
-			Netmask:          config.CIDRs[j].Mask,
+			Netmask:          byte(config.CIDRs[j].Bits()),
 			MAC:              vmIface.Mac,
 			Hostname:         config.Hostname,
 			Gateway:          config.GatewayAddrs[j],

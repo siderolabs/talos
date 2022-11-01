@@ -14,7 +14,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
-	sideronet "github.com/siderolabs/net"
 	"go.uber.org/zap"
 
 	"github.com/talos-systems/talos/pkg/argsbuilder"
@@ -266,11 +265,11 @@ func (ctrl *K8sControlPlaneController) manageManifestsConfig(ctx context.Context
 	dnsServiceIPv6 := ""
 
 	for _, ip := range dnsServiceIPs {
-		if dnsServiceIP == "" && ip.To4().Equal(ip) {
+		if dnsServiceIP == "" && ip.Is4() {
 			dnsServiceIP = ip.String()
 		}
 
-		if dnsServiceIPv6 == "" && sideronet.IsNonLocalIPv6(ip) {
+		if dnsServiceIPv6 == "" && ip.Is6() {
 			dnsServiceIPv6 = ip.String()
 		}
 	}

@@ -7,7 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"net"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -130,7 +130,7 @@ func modifyKubeletConfig(cfgProvider talosconfig.Provider, staticPodListURL stri
 				return fmt.Errorf("error building DNS service IPs: %w", err)
 			}
 
-			kubeletConfig.ClusterDNS = slices.Map(addrs, net.IP.String)
+			kubeletConfig.ClusterDNS = slices.Map(addrs, netip.Addr.String)
 		}
 
 		kubeletConfig.ClusterDomain = cfgProvider.Cluster().Network().DNSDomain()

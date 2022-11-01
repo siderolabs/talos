@@ -53,7 +53,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 	hasV6 := false
 
 	for _, subnet := range networkReq.CIDRs {
-		if subnet.IP.To4() == nil {
+		if subnet.Addr().Is6() {
 			hasV6 = true
 		} else {
 			hasV4 = true
@@ -62,9 +62,9 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 
 	// filter nameservers by IPv4/IPv6
 	for i := range networkReq.Nameservers {
-		if networkReq.Nameservers[i].To4() == nil && hasV6 {
+		if networkReq.Nameservers[i].Is6() && hasV6 {
 			nameservers = append(nameservers, networkReq.Nameservers[i].String())
-		} else if networkReq.Nameservers[i].To4() != nil && hasV4 {
+		} else if networkReq.Nameservers[i].Is4() && hasV4 {
 			nameservers = append(nameservers, networkReq.Nameservers[i].String())
 		}
 	}
