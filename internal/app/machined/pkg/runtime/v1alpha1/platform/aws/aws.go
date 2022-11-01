@@ -64,13 +64,20 @@ func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if metadata.PublicIPv4 != "" {
-		ip, err := netip.ParseAddr(metadata.PublicIPv4)
-		if err != nil {
-			return nil, err
-		}
+	publicIPs := []string{}
 
-		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+	if metadata.PublicIPv4 != "" {
+		publicIPs = append(publicIPs, metadata.PublicIPv4)
+	}
+
+	if metadata.PublicIPv6 != "" {
+		publicIPs = append(publicIPs, metadata.PublicIPv6)
+	}
+
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+		}
 	}
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
@@ -81,6 +88,7 @@ func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		InstanceType: metadata.InstanceType,
 		InstanceID:   metadata.InstanceID,
 		ProviderID:   fmt.Sprintf("aws://%s/%s", metadata.Zone, metadata.InstanceID),
+		Spot:         metadata.InstanceLifeCycle == "spot",
 	}
 
 	return networkConfig, nil

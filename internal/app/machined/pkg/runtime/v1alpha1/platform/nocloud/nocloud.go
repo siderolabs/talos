@@ -58,9 +58,13 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metada
 	}
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
-		Platform:   n.Name(),
-		Hostname:   metadata.Hostname,
-		InstanceID: metadata.InstanceID,
+		Platform:     n.Name(),
+		Hostname:     metadata.Hostname,
+		InstanceID:   metadata.InstanceID,
+		InstanceType: metadata.InstanceType,
+		ProviderID:   metadata.ProviderID,
+		Region:       metadata.Region,
+		Zone:         metadata.Zone,
 	}
 
 	return networkConfig, nil

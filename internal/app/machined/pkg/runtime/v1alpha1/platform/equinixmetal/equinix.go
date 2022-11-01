@@ -205,9 +205,15 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 
 	// 2. addresses
 
+	publicIPs := []string{}
+
 	for _, addr := range equinixMetadata.Network.Addresses {
 		if !(addr.Enabled && addr.Management) {
 			continue
+		}
+
+		if addr.Public {
+			publicIPs = append(publicIPs, addr.Address)
 		}
 
 		ipAddr, err := netip.ParsePrefix(fmt.Sprintf("%s/%d", addr.Address, addr.CIDR))
@@ -230,6 +236,12 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 				Family:      family,
 			},
 		)
+	}
+
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+		}
 	}
 
 	// 3. routes

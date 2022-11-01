@@ -25,6 +25,7 @@ type MetadataConfig struct {
 	InstanceType string `json:"machine-type"`
 	InstanceID   string `json:"id"`
 	PublicIPv4   string `json:"external-ip"`
+	Preempted    string `json:"preempted"`
 }
 
 func (g *GCP) getMetadata(context.Context) (*MetadataConfig, error) {
@@ -64,6 +65,11 @@ func (g *GCP) getMetadata(context.Context) (*MetadataConfig, error) {
 		if _, ok := err.(metadata.NotDefinedError); !ok {
 			return nil, err
 		}
+	}
+
+	meta.Preempted, err = metadata.Get("instance/scheduling/preemptible")
+	if err != nil {
+		return nil, err
 	}
 
 	return &meta, nil

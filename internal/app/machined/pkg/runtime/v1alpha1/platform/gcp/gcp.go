@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/netip"
+	"strconv"
 	"strings"
 
 	"cloud.google.com/go/compute/metadata"
@@ -46,13 +47,10 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if metadata.PublicIPv4 != "" {
-		ip, err := netip.ParseAddr(metadata.PublicIPv4)
-		if err != nil {
-			return nil, err
-		}
+	publicIPs := []string{}
 
-		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+	if metadata.PublicIPv4 != "" {
+		publicIPs = append(publicIPs, metadata.PublicIPv4)
 	}
 
 	dns, _ := netip.ParseAddr(gcpResolverServer) //nolint:errcheck
@@ -73,6 +71,14 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		region = region[:idx]
 	}
 
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+		}
+	}
+
+	preempted, _ := strconv.ParseBool(metadata.Preempted) //nolint:errcheck
+
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:     g.Name(),
 		Hostname:     metadata.Hostname,
@@ -81,6 +87,7 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		InstanceType: metadata.InstanceType,
 		InstanceID:   metadata.InstanceID,
 		ProviderID:   fmt.Sprintf("gce://%s/%s/%s", metadata.ProjectID, metadata.Zone, metadata.Name),
+		Spot:         preempted,
 	}
 
 	return networkConfig, nil

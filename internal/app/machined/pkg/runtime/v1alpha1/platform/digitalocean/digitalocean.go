@@ -71,6 +71,8 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 		ConfigLayer: network.ConfigPlatform,
 	})
 
+	publicIPs := []string{}
+
 	for _, iface := range metadata.Interfaces["public"] {
 		if iface.IPv4 != nil {
 			ifAddr, err := utils.IPPrefixFrom(iface.IPv4.IPAddress, iface.IPv4.Netmask)
@@ -78,7 +80,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 				return nil, fmt.Errorf("failed to parse ip address: %w", err)
 			}
 
-			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ifAddr.Addr())
+			publicIPs = append(publicIPs, iface.IPv4.IPAddress)
 
 			networkConfig.Addresses = append(networkConfig.Addresses,
 				network.AddressSpecSpec{
@@ -134,6 +136,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 				return nil, fmt.Errorf("failed to parse ip address: %w", err)
 			}
 
+			publicIPs = append(publicIPs, iface.IPv6.IPAddress)
 			networkConfig.Addresses = append(networkConfig.Addresses,
 				network.AddressSpecSpec{
 					ConfigLayer: network.ConfigPlatform,
@@ -212,6 +215,12 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 					Family:      nethelpers.FamilyInet4,
 				},
 			)
+		}
+	}
+
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 		}
 	}
 

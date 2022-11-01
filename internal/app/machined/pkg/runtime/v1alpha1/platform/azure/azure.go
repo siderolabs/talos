@@ -89,18 +89,16 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
+	publicIPs := []string{}
+
 	// external IP
 	for _, iface := range interfaceAddresses {
 		for _, ipv4addr := range iface.IPv4.IPAddresses {
-			if ip, err := netip.ParseAddr(ipv4addr.PublicIPAddress); err == nil {
-				networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
-			}
+			publicIPs = append(publicIPs, ipv4addr.PublicIPAddress)
 		}
 
 		for _, ipv6addr := range iface.IPv6.IPAddresses {
-			if ip, err := netip.ParseAddr(ipv6addr.PublicIPAddress); err == nil {
-				networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
-			}
+			publicIPs = append(publicIPs, ipv6addr.PublicIPAddress)
 		}
 	}
 
@@ -124,6 +122,12 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 		}
 	}
 
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+		}
+	}
+
 	zone := metadata.FaultDomain
 	if metadata.Zone != "" {
 		zone = fmt.Sprintf("%s-%s", metadata.Location, metadata.Zone)
@@ -137,6 +141,7 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 		InstanceType: metadata.VMSize,
 		InstanceID:   metadata.ResourceID,
 		ProviderID:   fmt.Sprintf("azure://%s", metadata.ResourceID),
+		Spot:         metadata.EvictionPolicy != "",
 	}
 
 	return &networkConfig, nil

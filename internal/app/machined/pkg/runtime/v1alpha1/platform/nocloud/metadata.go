@@ -92,8 +92,12 @@ type Bonds struct {
 
 // MetadataConfig holds meta info.
 type MetadataConfig struct {
-	Hostname   string `yaml:"hostname,omitempty"`
-	InstanceID string `yaml:"instance-id,omitempty"`
+	Hostname     string `yaml:"hostname,omitempty"`
+	InstanceID   string `yaml:"instance-id,omitempty"`
+	InstanceType string `yaml:"instance-type,omitempty"`
+	ProviderID   string `yaml:"provider-id,omitempty"`
+	Region       string `yaml:"region,omitempty"`
+	Zone         string `yaml:"zone,omitempty"`
 }
 
 func (n *Nocloud) configFromNetwork(ctx context.Context, metaBaseURL string) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {

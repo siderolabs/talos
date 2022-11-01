@@ -40,6 +40,7 @@ operators:
       layer: platform
 externalIPs:
     - 1.2.3.4
+    - 2a01:4f8:1:2::1
 metadata:
     platform: hcloud
     hostname: talos.fqdn

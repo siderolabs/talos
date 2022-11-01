@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/netip"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -49,10 +50,10 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadat
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
+	publicIPs := []string{}
+
 	if metadata.PublicIPv4 != "" {
-		if ip, err := netip.ParseAddr(metadata.PublicIPv4); err == nil {
-			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
-		}
+		publicIPs = append(publicIPs, metadata.PublicIPv4)
 	}
 
 	for _, ntwrk := range unmarshalledNetworkConfig.Config {
@@ -85,7 +86,9 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadat
 				}
 
 				family := nethelpers.FamilyInet4
+
 				if ipAddr.Addr().Is6() {
+					publicIPs = append(publicIPs, strings.SplitN(subnet.Address, "/", 2)[0])
 					family = nethelpers.FamilyInet6
 				}
 
@@ -121,6 +124,12 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadat
 
 				networkConfig.Routes = append(networkConfig.Routes, route)
 			}
+		}
+	}
+
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 		}
 	}
 

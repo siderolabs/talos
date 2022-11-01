@@ -33,6 +33,7 @@ type PlatformMetadataSpec struct {
 	InstanceType string `yaml:"instanceType,omitempty" protobuf:"5"`
 	InstanceID   string `yaml:"instanceId,omitempty" protobuf:"6"`
 	ProviderID   string `yaml:"providerId,omitempty" protobuf:"7"`
+	Spot         bool   `yaml:"spot,omitempty" protobuf:"8"`
 }
 
 // NewPlatformMetadataSpec initializes a MetadataSpec resource.
@@ -51,7 +52,24 @@ func (PlatformMetadataRD) ResourceDefinition(resource.Metadata, PlatformMetadata
 	return meta.ResourceDefinitionSpec{
 		Type:             PlatformMetadataType,
 		DefaultNamespace: NamespaceName,
-		PrintColumns:     []meta.PrintColumn{},
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Platform",
+				JSONPath: `{.platform}`,
+			},
+			{
+				Name:     "Type",
+				JSONPath: `{.instanceType}`,
+			},
+			{
+				Name:     "Region",
+				JSONPath: `{.region}`,
+			},
+			{
+				Name:     "Zone",
+				JSONPath: `{.zone}`,
+			},
+		},
 	}
 }
 

@@ -30,7 +30,7 @@ func TestParseMetadata(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
 
-	networkConfig, err := p.ParseMetadata([]byte("1.2.3.4"), &metadata)
+	networkConfig, err := p.ParseMetadata(&metadata)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)

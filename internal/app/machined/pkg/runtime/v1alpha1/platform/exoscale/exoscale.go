@@ -42,12 +42,9 @@ func (e *Exoscale) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNet
 	}
 
 	if metadata.PublicIPv4 != "" {
-		ip, err := netip.ParseAddr(metadata.PublicIPv4)
-		if err != nil {
-			return nil, err
+		if ip, err := netip.ParseAddr(metadata.PublicIPv4); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 		}
-
-		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 	}
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{

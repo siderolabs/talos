@@ -7,7 +7,6 @@ package vultr
 
 import (
 	"context"
-	stderrors "errors"
 	"fmt"
 	"log"
 	"net"
@@ -36,12 +35,8 @@ func (v *Vultr) Name() string {
 // ParseMetadata converts Vultr platform metadata into platform network config.
 //
 //nolint:gocyclo
-func (v *Vultr) ParseMetadata(extIP []byte, metadata *metadata.MetaData) (*runtime.PlatformNetworkConfig, error) {
+func (v *Vultr) ParseMetadata(metadata *metadata.MetaData) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
-
-	if ip, err := netip.ParseAddr(string(extIP)); err == nil {
-		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
-	}
 
 	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
@@ -54,6 +49,8 @@ func (v *Vultr) ParseMetadata(extIP []byte, metadata *metadata.MetaData) (*runti
 
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
+
+	publicIPs := []string{}
 
 	for i, addr := range metadata.Interfaces {
 		iface := fmt.Sprintf("eth%d", i)
@@ -71,42 +68,77 @@ func (v *Vultr) ParseMetadata(extIP []byte, metadata *metadata.MetaData) (*runti
 		networkConfig.Links = append(networkConfig.Links, link)
 
 		if addr.IPv4.Address != "" {
-			if addr.NetworkType != "private" {
-				networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
-					Operator:  network.OperatorDHCP4,
-					LinkName:  iface,
-					RequireUp: true,
-					DHCP4: network.DHCP4OperatorSpec{
-						RouteMetric: 1024,
-					},
-					ConfigLayer: network.ConfigPlatform,
-				})
-			} else {
-				ip, err := netip.ParseAddr(addr.IPv4.Address)
-				if err != nil {
-					return nil, err
-				}
-
-				netmask, err := netip.ParseAddr(addr.IPv4.Netmask)
-				if err != nil {
-					return nil, err
-				}
-
-				mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
-				ones, _ := net.IPMask(mask).Size()
-				ipAddr := netip.PrefixFrom(ip, ones)
-
-				networkConfig.Addresses = append(networkConfig.Addresses,
-					network.AddressSpecSpec{
-						ConfigLayer: network.ConfigPlatform,
-						LinkName:    iface,
-						Address:     ipAddr,
-						Scope:       nethelpers.ScopeGlobal,
-						Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
-						Family:      nethelpers.FamilyInet4,
-					},
-				)
+			if addr.NetworkType == "public" {
+				publicIPs = append(publicIPs, addr.IPv4.Address)
 			}
+
+			ip, err := netip.ParseAddr(addr.IPv4.Address)
+			if err != nil {
+				return nil, err
+			}
+
+			netmask, err := netip.ParseAddr(addr.IPv4.Netmask)
+			if err != nil {
+				return nil, err
+			}
+
+			mask, _ := netmask.MarshalBinary() //nolint:errcheck // never fails
+			ones, _ := net.IPMask(mask).Size()
+			ipAddr := netip.PrefixFrom(ip, ones)
+
+			networkConfig.Addresses = append(networkConfig.Addresses,
+				network.AddressSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					LinkName:    iface,
+					Address:     ipAddr,
+					Scope:       nethelpers.ScopeGlobal,
+					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+					Family:      nethelpers.FamilyInet4,
+				},
+			)
+
+			if addr.IPv4.Gateway != "" {
+				gw, err := netip.ParseAddr(addr.IPv4.Gateway)
+				if err != nil {
+					return nil, err
+				}
+
+				route := network.RouteSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					Gateway:     gw,
+					OutLinkName: iface,
+					Table:       nethelpers.TableMain,
+					Protocol:    nethelpers.ProtocolStatic,
+					Type:        nethelpers.TypeUnicast,
+					Family:      nethelpers.FamilyInet4,
+				}
+
+				route.Normalize()
+
+				networkConfig.Routes = append(networkConfig.Routes, route)
+			}
+		} else {
+			networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+				Operator:  network.OperatorDHCP4,
+				LinkName:  iface,
+				RequireUp: true,
+				DHCP4: network.DHCP4OperatorSpec{
+					RouteMetric: 1024,
+				},
+				ConfigLayer: network.ConfigPlatform,
+			})
+		}
+
+		if addr.IPv6.Address != "" {
+			if addr.NetworkType == "public" {
+				publicIPs = append(publicIPs, addr.IPv6.Address)
+			}
+		}
+	}
+
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
 		}
 	}
 
@@ -151,14 +183,7 @@ func (v *Vultr) NetworkConfiguration(ctx context.Context, _ state.State, ch chan
 		return err
 	}
 
-	extIP, err := download.Download(ctx, VultrExternalIPEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
-	if err != nil && !stderrors.Is(err, errors.ErrNoExternalIPs) {
-		return err
-	}
-
-	networkConfig, err := v.ParseMetadata(extIP, metadata)
+	networkConfig, err := v.ParseMetadata(metadata)
 	if err != nil {
 		return err
 	}

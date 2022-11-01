@@ -34,6 +34,8 @@ func (s *Scaleway) Name() string {
 }
 
 // ParseMetadata converts Scaleway platform metadata into platform network config.
+//
+//nolint:gocyclo
 func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
@@ -49,13 +51,10 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	if metadata.PublicIP.Address != "" {
-		ip, err := netip.ParseAddr(metadata.PublicIP.Address)
-		if err != nil {
-			return nil, err
-		}
+	publicIPs := []string{}
 
-		networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+	if metadata.PublicIP.Address != "" {
+		publicIPs = append(publicIPs, metadata.PublicIP.Address)
 	}
 
 	networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
@@ -102,6 +101,7 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 
 		addr := netip.PrefixFrom(ip, bits)
 
+		publicIPs = append(publicIPs, metadata.IPv6.Address)
 		networkConfig.Addresses = append(networkConfig.Addresses,
 			network.AddressSpecSpec{
 				ConfigLayer: network.ConfigPlatform,
@@ -137,6 +137,12 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 	zoneParts := strings.Split(metadata.Location.ZoneID, "-")
 	if len(zoneParts) > 2 {
 		zoneParts = zoneParts[:2]
+	}
+
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+		}
 	}
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{

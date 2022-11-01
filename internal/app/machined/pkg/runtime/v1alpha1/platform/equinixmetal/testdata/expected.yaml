@@ -102,7 +102,9 @@ hostnames:
 resolvers: []
 timeServers: []
 operators: []
-externalIPs: []
+externalIPs:
+    - 147.75.78.41
+    - 2604:1380:45d1:fd00::11
 metadata:
     platform: equinixMetal
     hostname: infra-green-ci

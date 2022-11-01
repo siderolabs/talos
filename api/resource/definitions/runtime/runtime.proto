@@ -54,6 +54,7 @@ message PlatformMetadataSpec {
   string instance_type = 5;
   string instance_id = 6;
   string provider_id = 7;
+  bool spot = 8;
 }
 
 // UnmetCondition is a failure which prevents machine from being ready at the stage.

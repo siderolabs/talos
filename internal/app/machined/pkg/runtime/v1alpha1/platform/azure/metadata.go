@@ -47,6 +47,7 @@ type ComputeMetadata struct {
 	ResourceID             string `json:"resourceId,omitempty"`
 	VMScaleSetName         string `json:"vmScaleSetName,omitempty"`
 	SubscriptionID         string `json:"subscriptionId,omitempty"`
+	EvictionPolicy         string `json:"evictionPolicy,omitempty"`
 }
 
 func (a *Azure) getMetadata(ctx context.Context) (*ComputeMetadata, error) {

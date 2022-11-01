@@ -14,13 +14,14 @@ import (
 
 // MetadataConfig represents a metadata AWS instance.
 type MetadataConfig struct {
-	Hostname     string `json:"hostname,omitempty"`
-	InstanceID   string `json:"instance-id,omitempty"`
-	InstanceType string `json:"instance-type,omitempty"`
-	PublicIPv4   string `json:"public-ipv4,omitempty"`
-	PublicIPv6   string `json:"ipv6,omitempty"`
-	Region       string `json:"region,omitempty"`
-	Zone         string `json:"zone,omitempty"`
+	Hostname          string `json:"hostname,omitempty"`
+	InstanceID        string `json:"instance-id,omitempty"`
+	InstanceType      string `json:"instance-type,omitempty"`
+	InstanceLifeCycle string `json:"instance-life-cycle,omitempty"`
+	PublicIPv4        string `json:"public-ipv4,omitempty"`
+	PublicIPv6        string `json:"ipv6,omitempty"`
+	Region            string `json:"region,omitempty"`
+	Zone              string `json:"zone,omitempty"`
 }
 
 //nolint:gocyclo
@@ -50,6 +51,10 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 	}
 
 	if metadata.InstanceType, err = getMetadataKey("instance-type"); err != nil {
+		return nil, err
+	}
+
+	if metadata.InstanceLifeCycle, err = getMetadataKey("instance-life-cycle"); err != nil {
 		return nil, err
 	}
 

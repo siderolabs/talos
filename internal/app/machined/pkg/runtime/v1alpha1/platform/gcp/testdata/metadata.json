@@ -4,5 +4,6 @@
     "id": "0",
     "zone": "us-central1-a",
     "name": "my-server",
-    "machine-type": "n1-standard-1"
+    "machine-type": "n1-standard-1",
+    "preempted": "FALSE"
 }

@@ -48,7 +48,10 @@ func (u *UpCloud) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetw
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	var dnsIPs []netip.Addr
+	var (
+		publicIPs []string
+		dnsIPs    []netip.Addr
+	)
 
 	firstIP := true
 
@@ -67,12 +70,7 @@ func (u *UpCloud) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetw
 
 		for _, ip := range addr.IPAddresses {
 			if firstIP {
-				ipAddr, err := netip.ParseAddr(ip.Address)
-				if err != nil {
-					return nil, err
-				}
-
-				networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ipAddr)
+				publicIPs = append(publicIPs, ip.Address)
 
 				firstIP = false
 			}
@@ -109,7 +107,9 @@ func (u *UpCloud) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetw
 				ipPrefix := netip.PrefixFrom(addr, ntwrk.Bits())
 
 				family := nethelpers.FamilyInet4
+
 				if addr.Is6() {
+					publicIPs = append(publicIPs, ip.Address)
 					family = nethelpers.FamilyInet6
 				}
 
@@ -155,6 +155,12 @@ func (u *UpCloud) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetw
 			DNSServers:  dnsIPs,
 			ConfigLayer: network.ConfigPlatform,
 		})
+	}
+
+	for _, ipStr := range publicIPs {
+		if ip, err := netip.ParseAddr(ipStr); err == nil {
+			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+		}
 	}
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{

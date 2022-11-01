@@ -1,4 +1,10 @@
 addresses:
+    - address: 95.111.222.111/23
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
     - address: 10.7.96.3/20
       linkName: eth1
       family: inet4
@@ -20,22 +26,28 @@ links:
       kind: ""
       type: netrom
       layer: platform
-routes: []
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 95.111.222.1
+      outLinkName: eth0
+      table: main
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
 hostnames:
     - hostname: talos
       domainname: ""
       layer: platform
 resolvers: []
 timeServers: []
-operators:
-    - operator: dhcp4
-      linkName: eth0
-      requireUp: true
-      dhcp4:
-        routeMetric: 1024
-      layer: platform
+operators: []
 externalIPs:
-    - 1.2.3.4
+    - 95.111.222.111
+    - 2001:19f0:5001:2095:1111:2222:3333:4444
 metadata:
     platform: vultr
     hostname: talos

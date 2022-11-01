@@ -15,5 +15,8 @@
         "address": "2001:111:222:3333::1",
         "gateway": "2001:111:222:3333::",
         "netmask": "64"
+    },
+    "location": {
+        "zone_id": "zone-name-1"
     }
 }
