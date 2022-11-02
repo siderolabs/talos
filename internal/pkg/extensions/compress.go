@@ -12,7 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // List of paths to be moved to the future initramfs.

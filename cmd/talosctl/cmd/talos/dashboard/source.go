@@ -12,8 +12,8 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
-	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // APISource provides monitoring data via Talos API.

@@ -8,7 +8,7 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
 )
 
 // BaseGraph represents the widget with some usage graph.

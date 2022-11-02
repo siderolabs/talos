@@ -11,7 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // NamespaceName contains resources related to networking.

@@ -35,7 +35,7 @@ KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/v0.4.34/kub
 HELM_URL ?= https://get.helm.sh/helm-v3.9.2-linux-amd64.tar.gz
 CLUSTERCTL_VERSION ?= 1.1.3
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
-TESTPKGS ?= github.com/talos-systems/talos/...
+TESTPKGS ?= github.com/siderolabs/talos/...
 RELEASES ?= v1.1.2 v1.2.6
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
@@ -288,7 +288,7 @@ api-descriptors: ## Generates API descriptors used to detect breaking API change
 	@$(MAKE) local-api-descriptors DEST=./ PLATFORM=linux/amd64
 
 fmt-go: ## Formats the source code.
-	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION) && goimports -w -local github.com/talos-systems/talos . && go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && gofumpt -w ."
+	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION) && goimports -w -local github.com/siderolabs/talos . && go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && gofumpt -w ."
 
 fmt-protobuf: ## Formats protobuf files.
 	@$(MAKE) local-fmt-protobuf DEST=./ PLATFORM=linux/amd64

@@ -7,7 +7,7 @@ package authz
 import (
 	"context"
 
-	"github.com/talos-systems/talos/pkg/machinery/role"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 // ctxKey is used to store parsed roles in the context.

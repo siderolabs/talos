@@ -14,7 +14,7 @@ import (
 
 	"github.com/siderolabs/go-tail"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // CrashDump produces debug information to help with debugging failures.

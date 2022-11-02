@@ -10,7 +10,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 func newQemu(ctx context.Context) (provision.Provisioner, error) {

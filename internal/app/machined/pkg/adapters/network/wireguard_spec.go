@@ -12,7 +12,7 @@ import (
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // WireguardSpec adapter provides encoding/decoding to netlink structures.

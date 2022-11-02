@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/files"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
 // EtcFileController watches EtcFileSpecs, creates/updates files.

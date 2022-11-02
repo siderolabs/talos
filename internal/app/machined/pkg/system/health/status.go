@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 // Status of the healthcheck.

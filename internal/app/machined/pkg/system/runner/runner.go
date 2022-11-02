@@ -14,10 +14,10 @@ import (
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Runner describes the requirements for running a process.

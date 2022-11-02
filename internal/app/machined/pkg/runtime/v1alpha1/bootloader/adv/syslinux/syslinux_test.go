@@ -12,7 +12,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 )
 
 func TestNewADV(t *testing.T) {

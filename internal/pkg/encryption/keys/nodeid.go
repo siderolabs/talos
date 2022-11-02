@@ -7,7 +7,7 @@ package keys
 import (
 	"fmt"
 
-	"github.com/talos-systems/talos/internal/pkg/smbios"
+	"github.com/siderolabs/talos/internal/pkg/smbios"
 )
 
 // NodeIDKeyHandler generates the key based on current node information

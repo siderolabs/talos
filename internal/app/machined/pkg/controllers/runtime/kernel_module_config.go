@@ -14,8 +14,8 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // KernelModuleConfigController watches v1alpha1.Config, creates/updates/deletes kernel module specs.

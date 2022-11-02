@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/talos-systems/talos/pkg/safepath"
+	"github.com/siderolabs/talos/pkg/safepath"
 )
 
 // ExtractFileFromTarGz reads a single file data from an archive.

@@ -17,10 +17,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // ResourcesSuite ...

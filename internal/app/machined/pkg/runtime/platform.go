@@ -11,8 +11,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // Platform defines the requirements for a platform.

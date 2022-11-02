@@ -14,8 +14,8 @@ import (
 
 	"github.com/siderolabs/go-tail"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/follow"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/follow"
 )
 
 // FileLoggingManager implements simple logging to files.

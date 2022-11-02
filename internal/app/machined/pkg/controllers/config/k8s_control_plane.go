@@ -16,14 +16,14 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/argsbuilder"
-	"github.com/talos-systems/talos/pkg/images"
-	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/argsbuilder"
+	"github.com/siderolabs/talos/pkg/images"
+	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 // K8sControlPlaneController manages Kubernetes control plane resources based on configuration.

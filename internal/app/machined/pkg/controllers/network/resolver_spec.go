@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // ResolverSpecController applies network.ResolverSpec to the actual interfaces.

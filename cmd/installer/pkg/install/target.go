@@ -20,10 +20,10 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/util"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/internal/pkg/partition"
-	"github.com/talos-systems/talos/pkg/archiver"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/pkg/archiver"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Target represents an installation partition.

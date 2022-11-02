@@ -9,9 +9,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 func TestVLANSpec(t *testing.T) {

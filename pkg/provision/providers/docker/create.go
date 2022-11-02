@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // Create Talos cluster as a set of docker containers on docker network.

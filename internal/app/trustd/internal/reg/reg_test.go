@@ -20,11 +20,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/peer"
 
-	"github.com/talos-systems/talos/internal/app/trustd/internal/reg"
-	"github.com/talos-systems/talos/pkg/machinery/api/security"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
-	"github.com/talos-systems/talos/pkg/machinery/role"
+	"github.com/siderolabs/talos/internal/app/trustd/internal/reg"
+	"github.com/siderolabs/talos/pkg/machinery/api/security"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 func TestCertificate(t *testing.T) {

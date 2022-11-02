@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/conditions"
 )
 
 type FilesSuite struct {

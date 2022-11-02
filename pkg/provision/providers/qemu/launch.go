@@ -24,9 +24,9 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	sideronet "github.com/siderolabs/net"
 
-	"github.com/talos-systems/talos/pkg/provision"
-	"github.com/talos-systems/talos/pkg/provision/internal/cniutils"
-	"github.com/talos-systems/talos/pkg/provision/providers/vm"
+	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/internal/cniutils"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // LaunchConfig is passed in to the Launch function over stdin.

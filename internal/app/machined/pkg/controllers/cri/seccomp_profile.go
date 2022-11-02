@@ -15,8 +15,8 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/cri"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
 // SeccompProfileController manages v1alpha1.Stats which is the current snaphot of the machine CPU and Memory consumption.

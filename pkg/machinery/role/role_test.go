@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/pkg/machinery/role"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 func TestSet(t *testing.T) {

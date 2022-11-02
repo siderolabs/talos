@@ -7,7 +7,7 @@ package v1alpha1
 import (
 	"github.com/siderolabs/go-pointer"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 )
 
 // RBACEnabled implements config.Features interface.

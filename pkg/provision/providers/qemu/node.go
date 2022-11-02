@@ -21,10 +21,10 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/kernel"
-	"github.com/talos-systems/talos/pkg/provision"
-	"github.com/talos-systems/talos/pkg/provision/providers/vm"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 //nolint:gocyclo,cyclop

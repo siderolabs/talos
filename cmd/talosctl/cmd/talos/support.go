@@ -24,9 +24,9 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/talos-systems/talos/pkg/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	clusterresource "github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	clusterresource "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 
 var supportCmdFlags struct {

@@ -27,14 +27,14 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	apidbackend "github.com/talos-systems/talos/internal/app/apid/pkg/backend"
-	"github.com/talos-systems/talos/internal/app/apid/pkg/director"
-	"github.com/talos-systems/talos/internal/app/apid/pkg/provider"
-	"github.com/talos-systems/talos/pkg/grpc/factory"
-	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
-	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/startup"
+	apidbackend "github.com/siderolabs/talos/internal/app/apid/pkg/backend"
+	"github.com/siderolabs/talos/internal/app/apid/pkg/director"
+	"github.com/siderolabs/talos/internal/app/apid/pkg/provider"
+	"github.com/siderolabs/talos/pkg/grpc/factory"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	"github.com/siderolabs/talos/pkg/grpc/proxy/backend"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/startup"
 )
 
 func runDebugServer(ctx context.Context) {

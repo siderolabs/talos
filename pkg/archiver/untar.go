@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/talos-systems/talos/pkg/safepath"
+	"github.com/siderolabs/talos/pkg/safepath"
 )
 
 // Untar extracts .tar archive from r into filesystem under rootPath.

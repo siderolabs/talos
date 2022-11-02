@@ -13,9 +13,9 @@ import (
 
 	"github.com/docker/docker/client"
 
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 type provisioner struct {

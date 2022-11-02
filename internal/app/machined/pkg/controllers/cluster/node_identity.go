@@ -15,14 +15,14 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/resources/files"
-	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // NodeIdentityController manages runtime.Identity caching identity in the STATE.

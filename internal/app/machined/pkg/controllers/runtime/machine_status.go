@@ -18,16 +18,16 @@ import (
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 
-	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
-	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/resources/time"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/time"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // MachineStatusController watches MachineStatuss, sets/resets kernel params.

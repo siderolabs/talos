@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/talos-systems/talos/pkg/machinery/role"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 // ErrNotAuthorized should be returned to the client when they are not authorized.

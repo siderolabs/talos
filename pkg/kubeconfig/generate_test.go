@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/talos-systems/talos/pkg/kubeconfig"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/kubeconfig"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type GenerateSuite struct {

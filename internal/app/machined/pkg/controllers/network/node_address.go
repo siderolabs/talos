@@ -16,8 +16,8 @@ import (
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // NodeAddressController manages secrets.Etcd based on configuration.

@@ -13,15 +13,15 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
-	kubespanctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
-	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
+	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type PeerSpecSuite struct {

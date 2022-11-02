@@ -4,7 +4,7 @@
 
 package grub
 
-import "github.com/talos-systems/talos/pkg/machinery/constants"
+import "github.com/siderolabs/talos/pkg/machinery/constants"
 
 const (
 	// BootA is a bootloader label.

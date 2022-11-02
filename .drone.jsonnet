@@ -3,7 +3,7 @@
 // (e.g. builds, E2E testing, conformance testing, releases). Each pipeline
 // after the default builds on a previous pipeline.
 // Generate with `drone jsonnet --source ./hack/drone.jsonnet --stream --format`
-// Sign with `drone sign talos-systems/talos --save`
+// Sign with `drone sign siderolabs/talos --save`
 
 local build_container = 'autonomy/build-container:latest';
 local local_registry = 'registry.dev.talos-systems.io';

@@ -15,14 +15,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/pkg/makefs"
+	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/pkg/makefs"
 )
 
 // Some tests in this package cannot be run under buildkit, as buildkit doesn't propagate partition devices
 // like /dev/loopXpY into the sandbox. To run the tests on your local computer, do the following:
 //
-//  go test -exec sudo -v --count 1 github.com/talos-systems/talos/internal/pkg/mount
+//  go test -exec sudo -v --count 1 github.com/siderolabs/talos/internal/pkg/mount
 
 type manifestSuite struct {
 	suite.Suite

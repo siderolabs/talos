@@ -13,12 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
-	etcdctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/etcd"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/etcd"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	etcdctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 )
 
 func TestConfigSuite(t *testing.T) {

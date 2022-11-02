@@ -14,9 +14,9 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
+	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 )
 
 type ExtensionServiceSuite struct {

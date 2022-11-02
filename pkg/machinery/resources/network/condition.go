@@ -10,7 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // ReadyCondition implements condition which waits for the network to be ready.

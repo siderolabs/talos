@@ -13,9 +13,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 var allSuites []suite.TestingSuite
@@ -64,7 +64,7 @@ var DefaultSettings = Settings{
 	MasterNodes:                3,
 	WorkerNodes:                1,
 	TargetInstallImageRegistry: "ghcr.io",
-	CNIBundleURL:               fmt.Sprintf("https://github.com/talos-systems/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz", trimVersion(version.Tag), constants.ArchVariable),
+	CNIBundleURL:               fmt.Sprintf("https://github.com/siderolabs/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz", trimVersion(version.Tag), constants.ArchVariable),
 }
 
 func trimVersion(version string) string {

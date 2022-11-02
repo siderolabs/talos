@@ -18,12 +18,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
-	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
-	timeres "github.com/talos-systems/talos/pkg/machinery/resources/time"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
 
 func TestEtcdSuite(t *testing.T) {

@@ -4,7 +4,7 @@
 
 package check
 
-import "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+import "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 
 // Option represents functional option.
 type Option func(o *Options) error

@@ -7,7 +7,7 @@ package client
 import (
 	"crypto/tls"
 
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 func ReduceURLsToAddresses(endpoints []string) []string {

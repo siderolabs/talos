@@ -9,8 +9,8 @@ import (
 
 	criconfig "github.com/containerd/containerd/pkg/cri/config"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 // Versions holds all the images (and their versions) that are used in Talos.

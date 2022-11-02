@@ -14,7 +14,7 @@ import (
 	grpcstatus "google.golang.org/grpc/status"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // RunPodSandbox creates and starts a pod-level sandbox. Runtimes should ensure

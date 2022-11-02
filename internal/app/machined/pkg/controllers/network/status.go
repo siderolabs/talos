@@ -15,8 +15,8 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/files"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // StatusController manages secrets.Etcd based on configuration.

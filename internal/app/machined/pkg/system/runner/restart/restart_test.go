@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 )
 
 type RestartSuite struct {

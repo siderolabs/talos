@@ -12,7 +12,7 @@ import (
 
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // Reflect decode state file.

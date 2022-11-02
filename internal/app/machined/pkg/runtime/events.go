@@ -12,8 +12,8 @@ import (
 	"github.com/rs/xid"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
 // ActorIDCtxKey is the context key used for event actor id.

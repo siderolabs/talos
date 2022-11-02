@@ -26,11 +26,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
-	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
-	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
+	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type LinkSpecSuite struct {

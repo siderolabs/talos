@@ -26,13 +26,13 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/kubernetes"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/kubernetes"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 // EndpointController looks up control plane endpoints.

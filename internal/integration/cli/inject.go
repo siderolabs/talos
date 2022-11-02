@@ -16,7 +16,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 var (

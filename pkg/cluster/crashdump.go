@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/machinery/api/common"
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // APICrashDumper collects crash dump via Talos API.

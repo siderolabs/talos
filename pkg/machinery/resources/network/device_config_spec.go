@@ -11,10 +11,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"gopkg.in/yaml.v3"
 
-	networkpb "github.com/talos-systems/talos/pkg/machinery/api/resource/network"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/proto"
+	networkpb "github.com/siderolabs/talos/pkg/machinery/api/resource/network"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
 // DeviceConfigSpecType is type of DeviceConfigSpec resource.

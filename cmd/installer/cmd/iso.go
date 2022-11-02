@@ -17,10 +17,10 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/kernel"
+	"github.com/siderolabs/talos/cmd/installer/pkg"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
 //go:embed grub.iso.cfg

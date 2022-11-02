@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package resource.network;
 
-option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/network";
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/network";
 
 // DeviceConfigSpecSpec is the spec for the network.DeviceConfigSpec resource.
 message DeviceConfigSpecSpec {

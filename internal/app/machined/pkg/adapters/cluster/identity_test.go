@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 
 func TestIdentityGenerate(t *testing.T) {

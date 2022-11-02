@@ -14,16 +14,16 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	clusteradapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/cluster"
-	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
-	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	"github.com/talos-systems/talos/pkg/version"
+	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
+	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
+	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 type LocalAffiliateSuite struct {

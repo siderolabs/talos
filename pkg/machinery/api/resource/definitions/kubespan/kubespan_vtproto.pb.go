@@ -13,8 +13,8 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
-	common "github.com/talos-systems/talos/pkg/machinery/api/common"
-	enums "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/enums"
+	common "github.com/siderolabs/talos/pkg/machinery/api/common"
+	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 )
 
 const (

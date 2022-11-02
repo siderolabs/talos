@@ -20,8 +20,8 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
-	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	securityapi "github.com/siderolabs/talos/pkg/machinery/api/security"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 // Registrator is the concrete type that implements the factory.Registrator and

@@ -12,7 +12,7 @@ import (
 
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 )
 
 var (

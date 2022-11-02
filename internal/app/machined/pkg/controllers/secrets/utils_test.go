@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
 )
 
 func TestRateLimitEvents(t *testing.T) {

@@ -24,8 +24,8 @@ import (
 	"go4.org/netipx"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // DHCP6 implements the DHCPv6 network operator.

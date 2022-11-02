@@ -14,8 +14,8 @@ import (
 	"github.com/pmorjan/kmod"
 	"go.uber.org/zap"
 
-	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // KernelModuleSpecController watches KernelModuleSpecs, sets/resets kernel params.

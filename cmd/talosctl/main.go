@@ -8,9 +8,9 @@ package main
 import (
 	"os"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd"
-	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/startup"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd"
+	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/startup"
 )
 
 func main() {

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/talos-systems/talos/internal/pkg/extensions"
+	"github.com/siderolabs/talos/internal/pkg/extensions"
 )
 
 func TestList(t *testing.T) {

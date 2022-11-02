@@ -10,7 +10,7 @@ import (
 
 	"github.com/siderolabs/crypto/x509"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Image implements the config.Etcd interface.

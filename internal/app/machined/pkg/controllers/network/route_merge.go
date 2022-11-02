@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // RouteMergeController merges network.RouteSpec in network.ConfigNamespace and produces final network.RouteSpec in network.Namespace.

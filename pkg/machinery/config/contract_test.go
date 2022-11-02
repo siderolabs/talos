@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 )
 
 func TestContractGreater(t *testing.T) {

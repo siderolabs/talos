@@ -14,7 +14,7 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // CertificateGenerator contains etcd certificate options.

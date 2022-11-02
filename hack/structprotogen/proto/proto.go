@@ -14,8 +14,8 @@ import (
 
 	"gopkg.in/typ.v4/slices"
 
-	"github.com/talos-systems/structprotogen/sliceutil"
-	"github.com/talos-systems/structprotogen/types"
+	"github.com/siderolabs/structprotogen/sliceutil"
+	"github.com/siderolabs/structprotogen/types"
 )
 
 // Pkg represents a protobuf package.
@@ -60,7 +60,7 @@ func (p *Pkg) WriteDebug(w io.Writer) {
 
 	fmt.Fprint(w, "syntax = \"proto3\";\n\n")
 	fmt.Fprintf(w, "package talos.resource.definitions.%s; // %s\n\n", p.Name, p.GoPkg)
-	fmt.Fprintf(w, "option go_package = \"github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/%s\";\n\n", pkgName) // TODO: insert proper path
+	fmt.Fprintf(w, "option go_package = \"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/%s\";\n\n", pkgName) // TODO: insert proper path
 
 	if p.imports.Len() > 0 {
 		for i := 0; i < p.imports.Len(); i++ {
@@ -87,7 +87,7 @@ func (p *Pkg) Format(w io.Writer) {
 
 	fmt.Fprint(w, "syntax = \"proto3\";\n\n")
 	fmt.Fprintf(w, "package talos.resource.definitions.%s;\n\n", p.Name)
-	fmt.Fprintf(w, "option go_package = \"github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/%s\";\n\n", pkgName) // TODO: insert proper path
+	fmt.Fprintf(w, "option go_package = \"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/%s\";\n\n", pkgName) // TODO: insert proper path
 
 	if p.imports.Len() > 0 {
 		for i := 0; i < p.imports.Len(); i++ {
@@ -427,57 +427,57 @@ func formatBasicTypeName(typPkg string, typ string) (importPath, fullName string
 		return "google/protobuf/duration.proto", "google.protobuf.Duration"
 	case typeData{"io/fs", "FileMode"}:
 		return "", "uint32" //nolint:goconst
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine", "Type"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine", "Type"}:
 		return enumsProto, "talos.resource.definitions.enums.MachineType"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/resources/kubespan", "PeerState"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/kubespan", "PeerState"}:
 		return enumsProto, "talos.resource.definitions.enums.KubespanPeerState"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/resources/network", "ConfigLayer"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/network", "ConfigLayer"}:
 		return enumsProto, "talos.resource.definitions.enums.NetworkConfigLayer"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/resources/network", "Operator"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/network", "Operator"}:
 		return enumsProto, "talos.resource.definitions.enums.NetworkOperator"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "Family"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "Family"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersFamily"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "AddressFlags"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "AddressFlags"}:
 		return "", "uint32"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "Scope"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "Scope"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersScope"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "ADSelect"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "ADSelect"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersADSelect"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "ARPAllTargets"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "ARPAllTargets"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersARPAllTargets"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "ARPValidate"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "ARPValidate"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersARPValidate"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "FailOverMAC"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "FailOverMAC"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersFailOverMAC"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "BondXmitHashPolicy"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "BondXmitHashPolicy"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersBondXmitHashPolicy"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "LACPRate"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "LACPRate"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersLACPRate"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "BondMode"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "BondMode"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersBondMode"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "PrimaryReselect"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "PrimaryReselect"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersPrimaryReselect"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "LinkType"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "LinkType"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersLinkType"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "Duplex"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "Duplex"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersDuplex"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "LinkFlags"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "LinkFlags"}:
 		return "", "uint32"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "OperationalState"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "OperationalState"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersOperationalState"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "Port"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "Port"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersPort"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "RouteFlags"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "RouteFlags"}:
 		return "", "uint32"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "RouteProtocol"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "RouteProtocol"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersRouteProtocol"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "RoutingTable"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "RoutingTable"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersRoutingTable"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "RouteType"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "RouteType"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersRouteType"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/nethelpers", "VLANProtocol"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/nethelpers", "VLANProtocol"}:
 		return enumsProto, "talos.resource.definitions.enums.NethelpersVLANProtocol"
-	case typeData{"github.com/talos-systems/talos/pkg/machinery/resources/runtime", "MachineStage"}:
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/runtime", "MachineStage"}:
 		return enumsProto, "talos.resource.definitions.enums.RuntimeMachineStage"
 	default:
 		return "", ""

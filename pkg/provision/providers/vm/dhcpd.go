@@ -24,7 +24,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 //nolint:gocyclo

@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	inspectapi "github.com/talos-systems/talos/pkg/machinery/api/inspect"
+	inspectapi "github.com/siderolabs/talos/pkg/machinery/api/inspect"
 )
 
 // InspectServer implements InspectService API.

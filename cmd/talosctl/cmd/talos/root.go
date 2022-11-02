@@ -18,13 +18,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/global"
-	"github.com/talos-systems/talos/pkg/cli"
-	_ "github.com/talos-systems/talos/pkg/grpc/codec" // register codec
-	"github.com/talos-systems/talos/pkg/machinery/api/common"
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/pkg/cli"
+	_ "github.com/siderolabs/talos/pkg/grpc/codec" // register codec
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var kubernetes bool

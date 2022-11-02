@@ -19,10 +19,10 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
-	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type HostnameSpecSuite struct {

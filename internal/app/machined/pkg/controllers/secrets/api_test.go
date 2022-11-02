@@ -18,13 +18,13 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
-	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
-	"github.com/talos-systems/talos/pkg/machinery/role"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 func TestAPISuite(t *testing.T) {

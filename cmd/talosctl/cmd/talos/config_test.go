@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 func TestConfigInfoCommand(t *testing.T) {

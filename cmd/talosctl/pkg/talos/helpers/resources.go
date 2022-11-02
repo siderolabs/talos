@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // ForEachResource gets resources from the controller runtime and runs a callback for each resource.

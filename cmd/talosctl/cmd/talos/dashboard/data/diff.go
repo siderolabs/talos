@@ -4,7 +4,7 @@
 
 package data
 
-import "github.com/talos-systems/talos/pkg/machinery/api/machine"
+import "github.com/siderolabs/talos/pkg/machinery/api/machine"
 
 func cpuInfoDiff(old, next *machine.CPUStat) *machine.CPUStat {
 	if old == nil || next == nil {

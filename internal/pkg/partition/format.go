@@ -13,8 +13,8 @@ import (
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/makefs"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/makefs"
 )
 
 // FormatOptions contains format parameters.

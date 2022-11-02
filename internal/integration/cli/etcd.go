@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // EtcdSuite verifies etcd command.

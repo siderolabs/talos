@@ -12,7 +12,7 @@ import (
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 
-	common "github.com/talos-systems/talos/pkg/machinery/api/common"
+	common "github.com/siderolabs/talos/pkg/machinery/api/common"
 )
 
 const (

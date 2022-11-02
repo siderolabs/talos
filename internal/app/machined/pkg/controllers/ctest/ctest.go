@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/logging"
 )
 
 // DefaultSuite is a base suite for controller testing.

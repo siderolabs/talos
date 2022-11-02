@@ -7,9 +7,9 @@ package components_test
 import (
 	"testing"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/components"
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/components"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 func TestUpdate(t *testing.T) {

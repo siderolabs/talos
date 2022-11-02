@@ -41,11 +41,11 @@ import (
 	"k8s.io/client-go/util/connrotation"
 	"k8s.io/client-go/util/workqueue"
 
-	taloskubernetes "github.com/talos-systems/talos/pkg/kubernetes"
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/role"
+	taloskubernetes "github.com/siderolabs/talos/pkg/kubernetes"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 const (

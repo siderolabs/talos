@@ -9,7 +9,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 // StaticPod adapter provides conversion from *v1.Pod.

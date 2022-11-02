@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/pkg/machinery/extensions/services"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/extensions/services"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 //go:embed "testdata/hello.yaml"

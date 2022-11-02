@@ -15,10 +15,10 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	runtimecontrollers "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
-	krnl "github.com/talos-systems/talos/pkg/kernel"
-	"github.com/talos-systems/talos/pkg/machinery/kernel"
-	runtimeresource "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	krnl "github.com/siderolabs/talos/pkg/kernel"
+	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	runtimeresource "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type KernelParamSpecSuite struct {

@@ -19,7 +19,7 @@ import (
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	yaml "gopkg.in/yaml.v3"
 
-	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
+	resourceapi "github.com/siderolabs/talos/pkg/machinery/api/resource"
 )
 
 // Server implements ResourceService API.

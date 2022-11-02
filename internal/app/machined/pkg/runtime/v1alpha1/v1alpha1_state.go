@@ -11,13 +11,13 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha2"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha2"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // State implements the state interface.

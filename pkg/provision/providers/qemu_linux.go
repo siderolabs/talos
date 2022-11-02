@@ -9,8 +9,8 @@ package providers
 import (
 	"context"
 
-	"github.com/talos-systems/talos/pkg/provision"
-	"github.com/talos-systems/talos/pkg/provision/providers/qemu"
+	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/qemu"
 )
 
 func newQemu(ctx context.Context) (provision.Provisioner, error) {

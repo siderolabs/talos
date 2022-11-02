@@ -17,14 +17,14 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
-	"github.com/talos-systems/talos/internal/pkg/encryption"
-	"github.com/talos-systems/talos/internal/pkg/partition"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
+	"github.com/siderolabs/talos/internal/pkg/encryption"
+	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 var (

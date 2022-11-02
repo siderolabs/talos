@@ -19,13 +19,13 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/kubeconfig"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
-	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	"github.com/siderolabs/talos/pkg/kubeconfig"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // KubernetesCertificateValidityDuration is the validity duration for the certificates created with this controller.

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package talos.resource.definitions.proto;
 
-option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/proto";
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/proto";
 
 // Mount specifies a mount for a container.
 message Mount {

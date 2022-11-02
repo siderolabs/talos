@@ -12,8 +12,8 @@ import (
 
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/pkg/cluster"
-	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/conditions"
 )
 
 const updateInterval = 100 * time.Millisecond

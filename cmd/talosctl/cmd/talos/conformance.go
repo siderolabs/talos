@@ -10,9 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/pkg/cluster"
-	"github.com/talos-systems/talos/pkg/cluster/sonobuoy"
-	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/cluster/sonobuoy"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // conformanceCmd represents the conformance command.

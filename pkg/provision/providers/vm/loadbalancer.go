@@ -14,7 +14,7 @@ import (
 
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 const (

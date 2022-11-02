@@ -7,7 +7,7 @@ package runtime
 import (
 	"time"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 )
 
 // Runtime defines the runtime parameters.

@@ -16,14 +16,14 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // IdentityController watches KubeSpan configuration, updates KubeSpan Identity.

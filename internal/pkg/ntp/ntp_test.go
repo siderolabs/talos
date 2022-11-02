@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/internal/pkg/ntp"
-	"github.com/talos-systems/talos/internal/pkg/timex"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/pkg/ntp"
+	"github.com/siderolabs/talos/internal/pkg/timex"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 type NTPSuite struct {

@@ -19,10 +19,10 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/gen/value"
 
-	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
 // DiscoverySuite verifies Discovery API.

@@ -13,8 +13,8 @@ import (
 
 	hashiversion "github.com/hashicorp/go-version"
 
-	"github.com/talos-systems/talos/pkg/machinery/extensions"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 // Validate the extension: compatibility, contents, etc.

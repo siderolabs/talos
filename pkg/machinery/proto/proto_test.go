@@ -13,15 +13,15 @@ import (
 	"github.com/siderolabs/protoenc"
 	"github.com/stretchr/testify/require"
 
-	"github.com/talos-systems/talos/pkg/machinery/api/common"
-	clusterpb "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/enums"
-	networkpb "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/network"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/proto"
-	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	clusterpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
+	networkpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 //nolint:lll

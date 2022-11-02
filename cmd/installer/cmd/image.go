@@ -15,14 +15,14 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg"
-	"github.com/talos-systems/talos/cmd/installer/pkg/install"
-	"github.com/talos-systems/talos/cmd/installer/pkg/ova"
-	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
-	"github.com/talos-systems/talos/pkg/archiver"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/cmd/installer/pkg"
+	"github.com/siderolabs/talos/cmd/installer/pkg/install"
+	"github.com/siderolabs/talos/cmd/installer/pkg/ova"
+	"github.com/siderolabs/talos/cmd/installer/pkg/qemuimg"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
+	"github.com/siderolabs/talos/pkg/archiver"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var (

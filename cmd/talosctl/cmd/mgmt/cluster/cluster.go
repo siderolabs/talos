@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 // Cmd represents the cluster command.

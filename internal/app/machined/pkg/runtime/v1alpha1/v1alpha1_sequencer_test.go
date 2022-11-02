@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 )
 
 func TestNewSequencer(t *testing.T) {

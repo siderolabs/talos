@@ -13,9 +13,9 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/cmd/talosctl/pkg/talos/helpers"
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 var (

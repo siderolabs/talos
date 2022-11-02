@@ -15,10 +15,10 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cri"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
-	criseccompresource "github.com/talos-systems/talos/pkg/machinery/resources/cri"
-	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	criseccompresource "github.com/siderolabs/talos/pkg/machinery/resources/cri"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 func (suite *CRISeccompProfileFileSuite) TestReconcileSeccompProfileFile() {

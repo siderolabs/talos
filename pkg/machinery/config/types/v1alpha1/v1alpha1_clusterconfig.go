@@ -15,9 +15,9 @@ import (
 	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // ClusterConfig implements config.ClusterConfig, config.Token, and config.ClusterNetwork interfaces.

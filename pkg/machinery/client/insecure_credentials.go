@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 // shouldInsecureConnectionsBeAllowed returns true if one endpoint starts with http://

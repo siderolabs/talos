@@ -12,10 +12,10 @@ import (
 
 	yaml "gopkg.in/yaml.v3"
 
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // NewConfigBundle returns a new bundle.

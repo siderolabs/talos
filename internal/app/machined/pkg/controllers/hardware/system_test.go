@@ -15,9 +15,9 @@ import (
 	"github.com/siderolabs/go-smbios/smbios"
 	"github.com/stretchr/testify/suite"
 
-	hardwarectrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/hardware"
-	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
+	hardwarectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hardware"
+	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 type SystemInfoSuite struct {

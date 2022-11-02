@@ -6,7 +6,7 @@
 package extensions
 
 import (
-	"github.com/talos-systems/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
 // Extension represents unpacked extension in the filesystem.

@@ -13,8 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/siderolabs/gen/value"
 
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
 //go:generate deep-copy -type AffiliateSpec -type ConfigSpec -type IdentitySpec -type MemberSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .

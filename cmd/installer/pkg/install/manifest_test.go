@@ -16,11 +16,11 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/loopback"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg/install"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/internal/pkg/partition"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/cmd/installer/pkg/install"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Some tests in this package cannot be run under buildkit, as buildkit doesn't propagate partition devices

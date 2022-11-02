@@ -19,7 +19,7 @@ OS:
   Version: '0.6'
   IsoFile: 'talos.tar.gz'
   IsoSha256: '401ec26cef179e0a66d44f020dad47f7322f4cfc84826242e9c83d6cce4f2547'
-  IsoUrl: 'https://github.com/talos-systems/talos/releases/download/v0.6.0/boot.tar.gz'
+  IsoUrl: 'https://github.com/siderolabs/talos/releases/download/v0.6.0/boot.tar.gz'
   SupportedArchitectures: {}
 Templates:
   - Name: 'pxelinux'

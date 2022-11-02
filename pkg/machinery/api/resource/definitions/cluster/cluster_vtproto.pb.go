@@ -12,8 +12,8 @@ import (
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 
-	common "github.com/talos-systems/talos/pkg/machinery/api/common"
-	enums "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/enums"
+	common "github.com/siderolabs/talos/pkg/machinery/api/common"
+	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 )
 
 const (

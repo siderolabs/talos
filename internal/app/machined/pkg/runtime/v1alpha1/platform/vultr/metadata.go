@@ -11,7 +11,7 @@ import (
 
 	"github.com/vultr/metadata"
 
-	"github.com/talos-systems/talos/pkg/download"
+	"github.com/siderolabs/talos/pkg/download"
 )
 
 const (

@@ -20,9 +20,9 @@ import (
 	"go4.org/netipx"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // AddressSpecController applies network.AddressSpec to the actual interfaces.

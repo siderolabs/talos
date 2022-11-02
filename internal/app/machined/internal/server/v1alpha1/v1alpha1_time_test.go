@@ -16,12 +16,12 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	runtime "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
-	"github.com/talos-systems/talos/pkg/grpc/dialer"
-	"github.com/talos-systems/talos/pkg/grpc/factory"
-	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	runtime "github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1"
+	"github.com/siderolabs/talos/pkg/grpc/dialer"
+	"github.com/siderolabs/talos/pkg/grpc/factory"
+	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 type TimedSuite struct {

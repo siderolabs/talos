@@ -24,7 +24,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	taloskubernetes "github.com/talos-systems/talos/pkg/kubernetes"
+	taloskubernetes "github.com/siderolabs/talos/pkg/kubernetes"
 )
 
 // K8sSuite is a base suite for K8s tests.

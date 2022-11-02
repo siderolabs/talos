@@ -10,8 +10,8 @@ import (
 	stderrors "errors"
 	"fmt"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/talos-systems/talos/pkg/download"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/pkg/download"
 )
 
 const (

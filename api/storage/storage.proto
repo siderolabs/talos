@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package storage;
 
-option go_package = "github.com/talos-systems/talos/pkg/machinery/api/storage";
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/storage";
 
 import "common/common.proto";
 import "google/protobuf/empty.proto";

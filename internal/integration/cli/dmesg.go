@@ -14,7 +14,7 @@ import (
 
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // DmesgSuite verifies dmesg command.

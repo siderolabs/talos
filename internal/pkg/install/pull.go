@@ -14,9 +14,9 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // PullAndValidateInstallerImage pulls down the installer and validates that it can run.

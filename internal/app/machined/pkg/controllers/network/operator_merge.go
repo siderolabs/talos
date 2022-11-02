@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // OperatorMergeController merges network.OperatorSpec in network.ConfigNamespace and produces final network.OperatorSpec in network.Namespace.

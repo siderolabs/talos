@@ -13,9 +13,9 @@ import (
 	hashiversion "github.com/hashicorp/go-version"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/talos-systems/talos/pkg/machinery/api/common"
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 // FailIfMultiNodes checks if ctx contains multi-node request metadata.

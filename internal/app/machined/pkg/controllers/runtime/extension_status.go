@@ -15,9 +15,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/extensions"
-	"github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // ExtensionStatusController loads extensions.yaml and updates ExtensionStatus resources.

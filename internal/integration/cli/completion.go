@@ -7,7 +7,7 @@
 package cli
 
 import (
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // CompletionSuite verifies dmesg command.

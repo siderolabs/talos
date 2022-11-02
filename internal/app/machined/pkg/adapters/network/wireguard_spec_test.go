@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
-	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 func TestWireguardSpecDecode(t *testing.T) {

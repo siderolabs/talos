@@ -19,15 +19,15 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/cluster"
-	"github.com/talos-systems/talos/pkg/cluster/check"
-	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
-	clusterapi "github.com/talos-systems/talos/pkg/machinery/api/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	clusterres "github.com/talos-systems/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/cluster/check"
+	"github.com/siderolabs/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	clusterapi "github.com/siderolabs/talos/pkg/machinery/api/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	clusterres "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 
 // HealthCheck implements the cluster.ClusterServer interface.

@@ -20,12 +20,12 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/proto"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	networkresource "github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	networkresource "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type mockEventsStream struct {

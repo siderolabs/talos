@@ -12,8 +12,8 @@ import (
 	"runtime"
 	"text/template"
 
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/gendata"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/gendata"
 )
 
 var (

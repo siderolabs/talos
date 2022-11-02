@@ -17,8 +17,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/client-go/kubernetes"
 
-	k8s "github.com/talos-systems/talos/pkg/kubernetes"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	k8s "github.com/siderolabs/talos/pkg/kubernetes"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 //nolint:gocyclo

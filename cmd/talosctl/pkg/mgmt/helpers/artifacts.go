@@ -8,7 +8,7 @@ package helpers
 import (
 	"path/filepath"
 
-	"github.com/talos-systems/talos/pkg/machinery/gendata"
+	"github.com/siderolabs/talos/pkg/machinery/gendata"
 )
 
 // ArtifactsPath is a path to artifacts output directory (set during the build).

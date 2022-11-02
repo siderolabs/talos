@@ -20,10 +20,10 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
-	"github.com/talos-systems/talos/pkg/httpdefaults"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
+	"github.com/siderolabs/talos/pkg/httpdefaults"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // ExtraManifestController renders manifests based on templates and config/secrets.

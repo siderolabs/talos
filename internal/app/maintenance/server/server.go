@@ -19,16 +19,16 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/resources"
-	storaged "github.com/talos-systems/talos/internal/app/storaged"
-	"github.com/talos-systems/talos/internal/pkg/configuration"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/api/resource"
-	"github.com/talos-systems/talos/pkg/machinery/api/storage"
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
-	v1alpha1machine "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/resources"
+	storaged "github.com/siderolabs/talos/internal/app/storaged"
+	"github.com/siderolabs/talos/internal/pkg/configuration"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/resource"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
+	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 // Server implements machine.MachineService, network.NetworkService, and storage.StorageService.

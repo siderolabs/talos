@@ -17,9 +17,9 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/provision"
-	"github.com/talos-systems/talos/pkg/provision/providers"
+	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers"
 )
 
 // showCmd represents the cluster show command.

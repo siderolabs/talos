@@ -15,7 +15,7 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/pelletier/go-toml"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 )
 
 // HostsConfig describes layout of registry configuration in "hosts" format.

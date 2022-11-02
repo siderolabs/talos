@@ -12,8 +12,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 func TestReduceURLsToAddresses(t *testing.T) {

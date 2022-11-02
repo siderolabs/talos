@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // ValidateSuite verifies dmesg command.

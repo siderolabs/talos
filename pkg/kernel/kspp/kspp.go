@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/pkg/machinery/kernel"
+	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
 // RequiredKSPPKernelParameters is the set of kernel parameters required to

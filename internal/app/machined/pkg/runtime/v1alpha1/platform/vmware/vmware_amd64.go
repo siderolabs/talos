@@ -21,10 +21,10 @@ import (
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	platformerrors "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	platformerrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // VMware is the concrete type that implements the platform.Platform interface.

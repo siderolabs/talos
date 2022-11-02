@@ -14,10 +14,10 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	clusterctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
+	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
 type ConfigSuite struct {

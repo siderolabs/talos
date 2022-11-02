@@ -7,7 +7,7 @@ package docker
 import (
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 type result struct {

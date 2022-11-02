@@ -13,8 +13,8 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 
-	common "github.com/talos-systems/talos/pkg/machinery/api/common"
-	proto1 "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/proto"
+	common "github.com/siderolabs/talos/pkg/machinery/api/common"
+	proto1 "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/proto"
 )
 
 const (

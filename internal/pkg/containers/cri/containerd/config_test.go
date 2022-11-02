@@ -12,9 +12,9 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 //go:embed testdata/cri.toml

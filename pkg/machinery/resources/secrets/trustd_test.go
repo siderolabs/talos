@@ -12,7 +12,7 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/require"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 func TestTrustdProtobufMarshal(t *testing.T) {

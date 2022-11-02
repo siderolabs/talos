@@ -13,8 +13,8 @@ import (
 	sideronet "github.com/siderolabs/net"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 // NewWireguardConfigBundle creates a new Wireguard config bundle.

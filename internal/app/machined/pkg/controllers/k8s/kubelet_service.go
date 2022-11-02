@@ -28,14 +28,14 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
-	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/files"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	runtimeres "github.com/talos-systems/talos/pkg/machinery/resources/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
+	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 // ServiceManager is the interface to the v1alpha1 services subsystems.

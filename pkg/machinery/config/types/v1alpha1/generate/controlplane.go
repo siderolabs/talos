@@ -5,8 +5,8 @@
 package generate
 
 import (
-	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {

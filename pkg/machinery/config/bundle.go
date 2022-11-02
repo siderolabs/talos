@@ -6,7 +6,7 @@
 package config
 
 import (
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 // ProviderBundle defines the configuration bundle interface.

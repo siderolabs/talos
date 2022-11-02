@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go4.org/netipx"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/kubespan"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestNfTables(t *testing.T) {

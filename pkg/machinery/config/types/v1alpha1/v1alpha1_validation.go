@@ -20,11 +20,11 @@ import (
 	"github.com/siderolabs/go-debug"
 	sideronet "github.com/siderolabs/net"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/kubelet"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/kubelet"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 var (

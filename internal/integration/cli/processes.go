@@ -9,7 +9,7 @@ package cli
 import (
 	"regexp"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // ProcessesSuite verifies dmesg command.

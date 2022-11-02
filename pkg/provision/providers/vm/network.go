@@ -23,7 +23,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 	sideronet "github.com/siderolabs/net"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // CreateNetwork builds bridge interface name by taking part of checksum of the network name

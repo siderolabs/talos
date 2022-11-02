@@ -13,7 +13,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	"gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/pkg/machinery/config/configloader"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 )
 
 type patch []map[string]interface{}

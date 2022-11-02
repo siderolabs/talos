@@ -15,8 +15,8 @@ import (
 
 	"github.com/siderolabs/crypto/x509"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const kubeConfigTemplate = `apiVersion: v1

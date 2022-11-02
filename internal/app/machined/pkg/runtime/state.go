@@ -11,8 +11,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/disk"
-	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 )
 
 // State defines the state.

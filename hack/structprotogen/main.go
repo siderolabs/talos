@@ -15,17 +15,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/structprotogen/ast"
-	"github.com/talos-systems/structprotogen/loader"
-	"github.com/talos-systems/structprotogen/proto"
-	"github.com/talos-systems/structprotogen/types"
+	"github.com/siderolabs/structprotogen/ast"
+	"github.com/siderolabs/structprotogen/loader"
+	"github.com/siderolabs/structprotogen/proto"
+	"github.com/siderolabs/structprotogen/types"
 )
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:     "structprotogen path dest",
 	Short:   "This CLI is used to generate proto files from Go structs into one proto file",
-	Example: "gotagsrewrite github.com/talos-systems/talos/pkg/machinery/resources/... ./api/resource/definitions",
+	Example: "gotagsrewrite github.com/siderolabs/talos/pkg/machinery/resources/... ./api/resource/definitions",
 	Args:    cobra.ExactArgs(2),
 	Version: "v1.0.0",
 	RunE: func(cmd *cobra.Command, args []string) error {

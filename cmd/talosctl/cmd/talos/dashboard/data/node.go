@@ -7,7 +7,7 @@ package data
 import (
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 // Node represents data gathered from a single node.

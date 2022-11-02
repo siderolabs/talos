@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/talos-systems/talos/internal/pkg/logind"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/pkg/logind"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // DBusState implements the logind mock.

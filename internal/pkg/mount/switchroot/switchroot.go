@@ -13,8 +13,8 @@ import (
 	"github.com/siderolabs/go-debug"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Paths preserved in the initramfs.

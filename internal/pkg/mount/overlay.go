@@ -7,7 +7,7 @@ package mount
 import (
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // OverlayMountPoints returns the mountpoints required to boot the system.

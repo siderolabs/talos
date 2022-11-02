@@ -15,9 +15,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	hardwareResource "github.com/talos-systems/talos/pkg/machinery/resources/hardware"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	hardwareResource "github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // PopulateURLParameters fills in empty parameters in the download URL.

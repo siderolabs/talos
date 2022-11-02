@@ -14,9 +14,9 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	timeapi "github.com/talos-systems/talos/pkg/machinery/api/time"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // ConfigProvider defines an interface sufficient for the TimeServer.

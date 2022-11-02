@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 
-	"github.com/talos-systems/talos/pkg/machinery/api/common"
-	resourceapi "github.com/talos-systems/talos/pkg/machinery/api/resource"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	resourceapi "github.com/siderolabs/talos/pkg/machinery/api/resource"
 )
 
 // ResourcesClient provides access to resource API.

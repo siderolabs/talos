@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 )
 
 type jsonLinesSender struct {

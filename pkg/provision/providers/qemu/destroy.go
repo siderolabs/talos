@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/talos-systems/talos/pkg/provision"
-	"github.com/talos-systems/talos/pkg/provision/providers/vm"
+	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // Destroy Talos cluster as set of qemu VMs.

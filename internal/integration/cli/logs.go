@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // LogsSuite verifies logs command.

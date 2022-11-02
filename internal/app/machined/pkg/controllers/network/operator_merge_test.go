@@ -22,9 +22,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
-	netctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type OperatorMergeSuite struct {

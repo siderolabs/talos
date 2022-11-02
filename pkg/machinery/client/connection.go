@@ -18,9 +18,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-	"github.com/talos-systems/talos/pkg/machinery/client/resolver"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/client/resolver"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Conn returns underlying client connection.

@@ -13,8 +13,8 @@ import (
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
 // EndpointController watches KubeSpanPeerStatuses, Affiliates and harvests additional endpoints for the peers.

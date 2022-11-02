@@ -19,7 +19,7 @@ import (
 	"github.com/siderolabs/go-debug"
 	"github.com/siderolabs/go-tail"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 )
 
 // These constants should some day move to config.

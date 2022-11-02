@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/conditions"
 )
 
 // StateEvent is a service event (e.g. 'up', 'down').

@@ -20,14 +20,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/ctest"
-	secretsctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/secrets"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
-	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
 
 func TestKubernetesSuite(t *testing.T) {

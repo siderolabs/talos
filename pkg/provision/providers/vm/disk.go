@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // UserDiskName returns disk device path.

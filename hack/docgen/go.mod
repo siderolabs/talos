@@ -1,4 +1,4 @@
-module github.com/talos-systems/talos-hack-docgen
+module github.com/siderolabs/talos-hack-docgen
 
 go 1.19
 

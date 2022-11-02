@@ -13,8 +13,8 @@ import (
 	"github.com/prometheus/procfs"
 	"go.uber.org/zap"
 
-	perfadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/perf"
-	"github.com/talos-systems/talos/pkg/machinery/resources/perf"
+	perfadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/perf"
+	"github.com/siderolabs/talos/pkg/machinery/resources/perf"
 )
 
 const updateInterval = time.Second * 30

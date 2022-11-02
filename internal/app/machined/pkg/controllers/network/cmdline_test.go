@@ -13,9 +13,9 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	netconfig "github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	netconfig "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type CmdlineSuite struct {

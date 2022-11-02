@@ -25,13 +25,14 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
-	controllerruntime "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
-	talosruntime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	controllerruntime "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type handler struct {
@@ -108,7 +109,12 @@ func (suite *EventsSinkSuite) startRuntime() {
 }
 
 func (suite *EventsSinkSuite) startServer(ctx context.Context) {
-	suite.sink = events.NewSink(suite.handler)
+	suite.sink = events.NewSink(
+		suite.handler,
+		[]proto.Message{
+			&machine.AddressEvent{},
+			&machine.PhaseEvent{},
+		})
 
 	status := network.NewStatus(network.NamespaceName, network.StatusID)
 	status.TypedSpec().AddressReady = true

@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // ServicesSuite verifies dmesg command.

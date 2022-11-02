@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/protoenc"
 	"google.golang.org/protobuf/proto" //nolint:depguard
 
-	"github.com/talos-systems/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 )
 
 // Message is the main interface for protobuf API v2 messages.

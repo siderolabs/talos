@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/procfs"
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/perf"
+	"github.com/siderolabs/talos/pkg/machinery/resources/perf"
 )
 
 // CPU adapter provides conversion from procfs.

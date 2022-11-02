@@ -14,7 +14,7 @@
 #  - INSTALLER_IMAGE
 #
 # Some environment variables set in this file (e. g. TALOS_VERSION and KUBERNETES_VERSION)
-# are referenced by https://github.com/talos-systems/cluster-api-templates.
+# are referenced by https://github.com/siderolabs/cluster-api-templates.
 # See other e2e-*.sh scripts.
 
 set -eoux pipefail

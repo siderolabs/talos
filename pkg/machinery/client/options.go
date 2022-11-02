@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 // Options contains the set of client configuration options.

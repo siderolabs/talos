@@ -2,7 +2,7 @@ style: github
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://github.com/talos-systems/talos
+  repository_url: https://github.com/siderolabs/talos
 options:
   commits:
     # filters:

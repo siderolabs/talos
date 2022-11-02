@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 func TestRouteFlagsStrings(t *testing.T) {

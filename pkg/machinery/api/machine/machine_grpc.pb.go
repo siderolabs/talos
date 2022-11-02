@@ -14,7 +14,7 @@ import (
 	status "google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 
-	common "github.com/talos-systems/talos/pkg/machinery/api/common"
+	common "github.com/siderolabs/talos/pkg/machinery/api/common"
 )
 
 // This is a compile-time assertion to ensure that this generated file

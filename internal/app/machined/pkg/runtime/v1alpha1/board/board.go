@@ -12,18 +12,18 @@ import (
 
 	"github.com/siderolabs/go-procfs/procfs"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	bananapim64 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/bananapi_m64"
-	jetsonnano "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/jetson_nano"
-	libretechallh3cch5 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/libretech_all_h3_cc_h5"
-	nanopir4s "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/nanopi_r4s"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/pine64"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock64"
-	rockpi4 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4"
-	rockpi4c "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4c"
-	rpi4 "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_4"
-	rpigeneric "github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_generic"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	bananapim64 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/bananapi_m64"
+	jetsonnano "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/jetson_nano"
+	libretechallh3cch5 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/libretech_all_h3_cc_h5"
+	nanopir4s "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/nanopi_r4s"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/pine64"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock64"
+	rockpi4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4"
+	rockpi4c "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4c"
+	rpi4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_4"
+	rpigeneric "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_generic"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // CurrentBoard is a helper func for discovering the current board.

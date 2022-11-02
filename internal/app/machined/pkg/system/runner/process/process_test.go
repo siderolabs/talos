@@ -17,12 +17,12 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/process"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 )
 
 func MockEventSink(state events.ServiceState, message string, args ...interface{}) {

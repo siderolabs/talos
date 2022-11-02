@@ -16,9 +16,9 @@ import (
 	"github.com/containerd/containerd/mount"
 	"github.com/opencontainers/image-spec/identity"
 
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Puller pulls, unpacks and mounts extensions images.

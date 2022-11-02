@@ -8,8 +8,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/conditions"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
 // DefaultClusterChecks returns a set of default Talos cluster readiness checks.

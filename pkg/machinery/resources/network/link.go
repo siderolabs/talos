@@ -9,7 +9,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // VLANSpec describes VLAN settings if Kind == "vlan".

@@ -15,9 +15,9 @@ import (
 	"path/filepath"
 	"text/tabwriter"
 
-	"github.com/talos-systems/talos/internal/pkg/extensions"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	extinterface "github.com/talos-systems/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/internal/pkg/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	extinterface "github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
 func (i *Installer) installExtensions() error {

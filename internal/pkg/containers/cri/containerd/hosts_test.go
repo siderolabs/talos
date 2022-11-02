@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/talos-systems/talos/internal/pkg/containers/cri/containerd"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 func TestGenerateHosts(t *testing.T) {

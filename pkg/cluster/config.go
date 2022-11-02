@@ -8,8 +8,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/talos-systems/talos/pkg/machinery/client"
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 // ConfigClientProvider builds Talos client from client config.

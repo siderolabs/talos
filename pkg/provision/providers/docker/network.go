@@ -14,7 +14,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // createNetwork will take a network request and check if a network with the same name + cidr exists.

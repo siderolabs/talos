@@ -14,9 +14,9 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/services"
-	extservices "github.com/talos-systems/talos/pkg/machinery/extensions/services"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	extservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
 )
 
 // ServiceManager is the interface to the v1alpha1 services subsystems.

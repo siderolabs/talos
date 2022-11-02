@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/conditions"
 )
 
 func TestPollingCondition(t *testing.T) {

@@ -7,7 +7,7 @@ package mount
 import (
 	"log"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 )
 
 const (

@@ -4,7 +4,7 @@
 
 package sonobuoy
 
-import "github.com/talos-systems/talos/pkg/version"
+import "github.com/siderolabs/talos/pkg/version"
 
 type product struct {
 	Vendor           string `yaml:"vendor"`

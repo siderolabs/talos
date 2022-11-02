@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 // Hostname implements the machine.MachineServer interface.

@@ -6,8 +6,8 @@
 package images
 
 import (
-	"github.com/talos-systems/talos/pkg/machinery/gendata"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/gendata"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 var (

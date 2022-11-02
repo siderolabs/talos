@@ -10,7 +10,7 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch"
 
-	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 )
 
 const dummyConfig = `machine:

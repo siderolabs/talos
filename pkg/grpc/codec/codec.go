@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/encoding/proto"
 
-	talosproto "github.com/talos-systems/talos/pkg/machinery/proto"
+	talosproto "github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
 // gogoMessage is the interface for gogoproto additions.

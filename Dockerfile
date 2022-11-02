@@ -122,16 +122,16 @@ RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulnche
     && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
 RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@v1.10.0 \
     && mv /go/bin/prototool /toolchain/go/bin/prototool
-COPY ./hack/docgen /go/src/github.com/talos-systems/talos-hack-docgen
-RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/talos-hack-docgen \
+COPY ./hack/docgen /go/src/github.com/siderolabs/talos-hack-docgen
+RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/talos-hack-docgen \
     && go build -o docgen . \
     && mv docgen /toolchain/go/bin/
-COPY ./hack/gotagsrewrite /go/src/github.com/talos-systems/gotagsrewrite
-RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/gotagsrewrite \
+COPY ./hack/gotagsrewrite /go/src/github.com/siderolabs/gotagsrewrite
+RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/gotagsrewrite \
     && go build -o gotagsrewrite . \
     && mv gotagsrewrite /toolchain/go/bin/
-COPY ./hack/structprotogen /go/src/github.com/talos-systems/structprotogen
-RUN --mount=type=cache,target=/.cache cd /go/src/github.com/talos-systems/structprotogen \
+COPY ./hack/structprotogen /go/src/github.com/siderolabs/structprotogen
+RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/structprotogen \
     && go build -o structprotogen . \
     && mv structprotogen /toolchain/go/bin/
 COPY --from=importvet /importvet /toolchain/go/bin/importvet
@@ -190,17 +190,17 @@ FROM build-go AS go-generate
 COPY ./pkg ./pkg
 COPY ./hack/boilerplate.txt ./hack/boilerplate.txt
 RUN --mount=type=cache,target=/.cache go generate ./pkg/...
-RUN goimports -w -local github.com/talos-systems/talos ./pkg/
+RUN goimports -w -local github.com/siderolabs/talos ./pkg/
 RUN gofumpt -w ./pkg/
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache go generate ./...
 RUN gotagsrewrite .
-RUN goimports -w -local github.com/talos-systems/talos ./
+RUN goimports -w -local github.com/siderolabs/talos ./
 RUN gofumpt -w ./
 
 FROM go-generate AS gen-proto-go
 WORKDIR /src/
-RUN structprotogen github.com/talos-systems/talos/pkg/machinery/... /api/resource/definitions/
+RUN structprotogen github.com/siderolabs/talos/pkg/machinery/... /api/resource/definitions/
 
 # compile protobuf service definitions
 FROM build AS generate-build
@@ -230,7 +230,7 @@ RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_o
 COPY --from=gen-proto-go /api/resource/definitions/ /api/resource/definitions/
 RUN find /api/resource/definitions/ -type f -name "*.proto" | xargs -I {} /bin/sh -c 'protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size {} && mkdir -p /api/resource/definitions_go/$(basename {} .proto) && mv /api/resource/definitions/$(basename {} .proto)/*.go /api/resource/definitions_go/$(basename {} .proto)'
 # Goimports and gofumpt generated files to adjust import order
-RUN goimports -w -local github.com/talos-systems/talos /api/
+RUN goimports -w -local github.com/siderolabs/talos /api/
 RUN gofumpt -w /api/
 
 FROM build AS embed-generate
@@ -767,7 +767,7 @@ RUN --mount=type=cache,target=/.cache golangci-lint run --config .golangci.yml
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
-RUN --mount=type=cache,target=/.cache importvet github.com/talos-systems/talos/...
+RUN --mount=type=cache,target=/.cache importvet github.com/siderolabs/talos/...
 
 # The protolint target performs linting on protobuf files.
 

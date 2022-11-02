@@ -20,9 +20,9 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/perf"
-	"github.com/talos-systems/talos/pkg/logging"
-	perfresource "github.com/talos-systems/talos/pkg/machinery/resources/perf"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/perf"
+	"github.com/siderolabs/talos/pkg/logging"
+	perfresource "github.com/siderolabs/talos/pkg/machinery/resources/perf"
 )
 
 type PerfSuite struct {

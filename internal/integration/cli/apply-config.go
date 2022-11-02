@@ -15,7 +15,7 @@ import (
 
 	"github.com/siderolabs/go-retry/retry"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // ApplyConfigSuite verifies dmesg command.

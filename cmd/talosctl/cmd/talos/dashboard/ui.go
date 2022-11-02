@@ -9,8 +9,8 @@ import (
 
 	ui "github.com/gizak/termui/v3"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/components"
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/components"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
 )
 
 // DataWidget is a widget which consumes Data to draw itself.

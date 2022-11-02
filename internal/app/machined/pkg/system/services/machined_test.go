@@ -13,12 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/pkg/machinery/api/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/api/inspect"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/api/resource"
-	"github.com/talos-systems/talos/pkg/machinery/api/storage"
-	"github.com/talos-systems/talos/pkg/machinery/api/time"
+	"github.com/siderolabs/talos/pkg/machinery/api/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/api/inspect"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/resource"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
+	"github.com/siderolabs/talos/pkg/machinery/api/time"
 )
 
 func collectMethods(t *testing.T) map[string]struct{} {

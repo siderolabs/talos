@@ -22,11 +22,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
-	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/argsbuilder"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/kubelet"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/argsbuilder"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/kubelet"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 // KubeletSpecController renders manifests based on templates and config/secrets.

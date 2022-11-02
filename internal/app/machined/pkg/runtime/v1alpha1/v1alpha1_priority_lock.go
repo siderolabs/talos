@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 )
 
 // Priority describes the running priority of a process.

@@ -14,10 +14,10 @@ import (
 	"github.com/siderolabs/go-smbios/smbios"
 	"go.uber.org/zap"
 
-	hwadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/hardware"
-	runtimetalos "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	pkgSMBIOS "github.com/talos-systems/talos/internal/pkg/smbios"
-	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
+	hwadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/hardware"
+	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	pkgSMBIOS "github.com/siderolabs/talos/internal/pkg/smbios"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 // SystemInfoController populates CPU information of the underlying hardware.

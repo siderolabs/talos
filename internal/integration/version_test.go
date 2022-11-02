@@ -10,7 +10,7 @@ package integration_test
 import (
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // VersionSuite.

@@ -8,7 +8,7 @@ package operator
 import (
 	"context"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // Operator describes common interface of the operators.

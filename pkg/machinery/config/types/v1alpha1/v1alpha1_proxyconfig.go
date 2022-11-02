@@ -9,7 +9,7 @@ import (
 
 	"github.com/siderolabs/go-pointer"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Enabled implements the config.Proxy interface.

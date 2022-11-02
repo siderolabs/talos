@@ -21,11 +21,11 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
-	networkadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/network"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/controllers/network/watch"
-	"github.com/talos-systems/talos/internal/pkg/pci"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/siderolabs/talos/internal/pkg/pci"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // LinkStatusController manages secrets.Etcd based on configuration.

@@ -15,11 +15,11 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
-	"github.com/talos-systems/talos/pkg/kubernetes/kubelet"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/secrets"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
+	"github.com/siderolabs/talos/pkg/kubernetes/kubelet"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // KubeletStaticPodController renders static pod definitions and manages k8s.StaticPodStatus.

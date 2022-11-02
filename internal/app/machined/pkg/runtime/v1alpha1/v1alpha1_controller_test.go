@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 
-	v1alpha1server "github.com/talos-systems/talos/internal/app/machined/internal/server/v1alpha1"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	v1alpha1server "github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 type mockSequencer struct {

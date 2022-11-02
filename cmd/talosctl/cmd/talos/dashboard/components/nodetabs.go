@@ -10,7 +10,7 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 	"github.com/siderolabs/gen/maps"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
 )
 
 // NodeTabs represents the bottom bar with node list.

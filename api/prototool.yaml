@@ -12,7 +12,7 @@ lint:
 
   rules:
     # The specific linters to add.
-    # TODO Enable more: https://github.com/talos-systems/talos/issues/2722.
+    # TODO Enable more: https://github.com/siderolabs/talos/issues/2722.
     add:
       # All rules except language-specific (C#, Java, Obj-C, PHP, Ruby, but not Go).
       # prototool lint --list-all-linters | grep -vE '(CSHARP|JAVA|OBJC|PHP|RUBY)'

@@ -18,12 +18,12 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/v1alpha2"
-	"github.com/talos-systems/talos/pkg/machinery/api/common"
-	"github.com/talos-systems/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha2"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 // Controller represents the controller responsible for managing the execution

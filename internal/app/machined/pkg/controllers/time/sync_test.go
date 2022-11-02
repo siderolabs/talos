@@ -23,15 +23,15 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
-	timectrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/time"
-	v1alpha1runtime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
-	timeresource "github.com/talos-systems/talos/pkg/machinery/resources/time"
-	v1alpha1resource "github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	timectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time"
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
+	v1alpha1resource "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type SyncSuite struct {

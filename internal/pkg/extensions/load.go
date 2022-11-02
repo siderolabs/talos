@@ -11,7 +11,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
 // Load extension from the filesystem.

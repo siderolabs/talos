@@ -72,8 +72,8 @@ linters-settings:
       - github.com/golang/protobuf/proto
       - google.golang.org/protobuf/proto
     packages-with-error-message:
-      - google.golang.org/protobuf/proto: Use "github.com/talos-systems/talos/pkg/machinery/proto" instead.
-        github.com/golang/protobuf/proto: Use "github.com/talos-systems/talos/pkg/machinery/proto" instead.
+      - google.golang.org/protobuf/proto: Use "github.com/siderolabs/talos/pkg/machinery/proto" instead.
+        github.com/golang/protobuf/proto: Use "github.com/siderolabs/talos/pkg/machinery/proto" instead.
   misspell:
     # Correct spellings using locale preferences for US or UK.
     # Default is to use a neutral variety of English.
@@ -123,7 +123,7 @@ linters-settings:
     sections:
       - standard # Captures all standard packages if they do not match another section.
       - default # Contains all imports that could not be matched to another section type.
-      - prefix(github.com/talos-systems/talos) # Groups all imports with the specified Prefix.
+      - prefix(github.com/siderolabs/talos) # Groups all imports with the specified Prefix.
   cyclop:
     # the maximal code complexity to report
     max-complexity: 20

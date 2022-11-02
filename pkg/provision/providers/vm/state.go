@@ -12,7 +12,7 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // State common state representation for vm provisioners.

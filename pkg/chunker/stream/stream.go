@@ -11,7 +11,7 @@ import (
 
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/pkg/chunker"
+	"github.com/siderolabs/talos/pkg/chunker"
 )
 
 // Options is the functional options struct.

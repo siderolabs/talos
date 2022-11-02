@@ -7,7 +7,7 @@ package hardware
 import (
 	"github.com/siderolabs/go-smbios/smbios"
 
-	"github.com/talos-systems/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 // Processor adapter provider conversion from smbios.SMBIOS.

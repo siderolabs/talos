@@ -12,8 +12,8 @@ import (
 	"github.com/siderolabs/gen/value"
 	"github.com/stretchr/testify/assert"
 
-	kubespanadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/kubespan"
-	"github.com/talos-systems/talos/pkg/machinery/resources/kubespan"
+	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
 func TestPeerStatus_PickNewEndpoint(t *testing.T) {

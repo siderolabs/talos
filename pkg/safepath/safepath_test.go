@@ -7,7 +7,7 @@ package safepath_test
 import (
 	"testing"
 
-	"github.com/talos-systems/talos/pkg/safepath"
+	"github.com/siderolabs/talos/pkg/safepath"
 )
 
 func TestCleanPath(t *testing.T) {

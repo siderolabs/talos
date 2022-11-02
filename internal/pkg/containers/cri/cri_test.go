@@ -19,14 +19,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime/logging"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/events"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner"
-	"github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/process"
-	ctrs "github.com/talos-systems/talos/internal/pkg/containers"
-	"github.com/talos-systems/talos/internal/pkg/containers/cri"
-	criclient "github.com/talos-systems/talos/internal/pkg/cri"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/process"
+	ctrs "github.com/siderolabs/talos/internal/pkg/containers"
+	"github.com/siderolabs/talos/internal/pkg/containers/cri"
+	criclient "github.com/siderolabs/talos/internal/pkg/cri"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const (

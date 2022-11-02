@@ -17,16 +17,16 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/internal/integration/api"
-	"github.com/talos-systems/talos/internal/integration/base"
-	"github.com/talos-systems/talos/internal/integration/cli"
-	"github.com/talos-systems/talos/internal/integration/k8s"
-	provision_test "github.com/talos-systems/talos/internal/integration/provision"
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/provision"
-	"github.com/talos-systems/talos/pkg/provision/providers"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/internal/integration/api"
+	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/cli"
+	"github.com/siderolabs/talos/internal/integration/k8s"
+	provision_test "github.com/siderolabs/talos/internal/integration/provision"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 // Accumulated list of all the suites to run.

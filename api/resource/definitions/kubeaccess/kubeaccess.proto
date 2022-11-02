@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package talos.resource.definitions.kubeaccess;
 
-option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/kubeaccess";
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/kubeaccess";
 
 // ConfigSpec describes KubeSpan configuration..
 message ConfigSpec {

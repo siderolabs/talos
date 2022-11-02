@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // interfacesCmd represents the net interfaces command.

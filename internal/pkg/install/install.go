@@ -23,15 +23,15 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
-	"github.com/talos-systems/talos/internal/pkg/capability"
-	"github.com/talos-systems/talos/internal/pkg/containers/image"
-	"github.com/talos-systems/talos/internal/pkg/extensions"
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
+	"github.com/siderolabs/talos/internal/pkg/capability"
+	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/extensions"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // RunInstallerContainer performs an installation via the installer container.

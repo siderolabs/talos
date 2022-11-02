@@ -23,11 +23,11 @@ import (
 	"github.com/siderolabs/siderolink/pkg/logreceiver"
 	"github.com/stretchr/testify/suite"
 
-	controllerruntime "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/runtime"
-	talosruntime "github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	controllerruntime "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type logHandler struct {

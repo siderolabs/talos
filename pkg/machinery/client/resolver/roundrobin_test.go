@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/pkg/machinery/client/resolver"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/client/resolver"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestEnsureEndpointsHavePorts(t *testing.T) {

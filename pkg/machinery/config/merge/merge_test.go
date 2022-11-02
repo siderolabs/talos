@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/talos-systems/talos/pkg/machinery/config/merge"
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
 
 type Config struct {

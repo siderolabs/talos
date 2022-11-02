@@ -14,10 +14,10 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc"
 
-	"github.com/talos-systems/talos/pkg/grpc/middleware/auth/basic"
-	securityapi "github.com/talos-systems/talos/pkg/machinery/api/security"
-	"github.com/talos-systems/talos/pkg/machinery/client/resolver"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/auth/basic"
+	securityapi "github.com/siderolabs/talos/pkg/machinery/api/security"
+	"github.com/siderolabs/talos/pkg/machinery/client/resolver"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // RemoteGenerator represents the OS identity generator.

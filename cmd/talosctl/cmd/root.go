@@ -12,10 +12,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/mgmt"
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos"
-	"github.com/talos-systems/talos/pkg/cli"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos"
+	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // rootCmd represents the base command when called without any subcommands.

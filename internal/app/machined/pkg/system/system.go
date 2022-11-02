@@ -16,8 +16,8 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/conditions"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/conditions"
 )
 
 // singleton the system services API interface.

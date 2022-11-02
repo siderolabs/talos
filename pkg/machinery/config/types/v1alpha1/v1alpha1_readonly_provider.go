@@ -7,8 +7,8 @@ package v1alpha1
 import (
 	"errors"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
 // ReadonlyProvider wraps the *v1alpha1.Config to make config read-only.

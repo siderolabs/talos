@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
-	"github.com/talos-systems/talos/pkg/grpc/proxy/backend"
-	"github.com/talos-systems/talos/pkg/machinery/role"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	"github.com/siderolabs/talos/pkg/grpc/proxy/backend"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 func TestLocalGetConnection(t *testing.T) {

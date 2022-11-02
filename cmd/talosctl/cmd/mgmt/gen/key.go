@@ -11,7 +11,7 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/cli"
 )
 
 var genKeyCmdFlags struct {

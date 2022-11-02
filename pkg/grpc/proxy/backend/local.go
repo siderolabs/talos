@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/talos-systems/talos/pkg/grpc/middleware/authz"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 )
 
 var _ proxy.Backend = (*Local)(nil)

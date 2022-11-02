@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/talos-systems/talos/pkg/provision/providers/vm"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 //nolint:gocyclo

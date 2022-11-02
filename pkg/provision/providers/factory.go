@@ -8,8 +8,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/provision"
-	"github.com/talos-systems/talos/pkg/provision/providers/docker"
+	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/docker"
 )
 
 // Factory instantiates provision provider by name.

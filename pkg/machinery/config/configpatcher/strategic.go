@@ -7,8 +7,8 @@ package configpatcher
 import (
 	"fmt"
 
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/config/merge"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
 
 // StrategicMergePatch is a strategic merge config patch.

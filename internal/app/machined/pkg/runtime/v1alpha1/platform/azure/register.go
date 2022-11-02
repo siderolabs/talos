@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/talos-systems/talos/pkg/download"
+	"github.com/siderolabs/talos/pkg/download"
 )
 
 // This should provide the bare minimum to trigger a node in ready condition to allow

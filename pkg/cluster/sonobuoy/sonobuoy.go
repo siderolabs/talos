@@ -23,8 +23,8 @@ import (
 	sonodynamic "github.com/vmware-tanzu/sonobuoy/pkg/dynamic"
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/talos-systems/talos/pkg/cluster"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Options for the tests.

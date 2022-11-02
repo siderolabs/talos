@@ -25,12 +25,12 @@ import (
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/api/core/v1"
 
-	k8sadapter "github.com/talos-systems/talos/internal/app/machined/pkg/adapters/k8s"
-	k8sctrl "github.com/talos-systems/talos/internal/app/machined/pkg/controllers/k8s"
-	"github.com/talos-systems/talos/pkg/logging"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/resources/k8s"
-	"github.com/talos-systems/talos/pkg/machinery/resources/v1alpha1"
+	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
+	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
+	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type ControlPlaneStaticPodSuite struct {

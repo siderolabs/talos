@@ -17,10 +17,10 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	talosconfig "github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/config"
-	"github.com/talos-systems/talos/pkg/machinery/resources/files"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // EtcFileController creates /etc/hostname and /etc/resolv.conf files based on finalized network configuration.

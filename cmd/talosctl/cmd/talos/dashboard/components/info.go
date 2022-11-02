@@ -10,7 +10,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gizak/termui/v3/widgets"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
 )
 
 // LoadAvgInfo represents the widget with load average info.

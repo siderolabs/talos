@@ -5,7 +5,7 @@
 // Package installer provides the installer implementation.
 package main
 
-import "github.com/talos-systems/talos/cmd/installer/cmd"
+import "github.com/siderolabs/talos/cmd/installer/cmd"
 
 func main() {
 	cmd.Execute()

@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/pkg/argsbuilder"
+	"github.com/siderolabs/talos/pkg/argsbuilder"
 )
 
 type ArgsbuilderSuite struct {

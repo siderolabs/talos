@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/talos-systems/talos/internal/integration/base"
+	"github.com/siderolabs/talos/internal/integration/base"
 )
 
 // DiskUsageSuite verifies dmesg command.

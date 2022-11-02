@@ -24,8 +24,8 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	_ "github.com/talos-systems/talos/pkg/grpc/codec" // register codec
-	grpclog "github.com/talos-systems/talos/pkg/grpc/middleware/log"
+	_ "github.com/siderolabs/talos/pkg/grpc/codec" // register codec
+	grpclog "github.com/siderolabs/talos/pkg/grpc/middleware/log"
 )
 
 // Registrator describes the set of methods required in order for a concrete

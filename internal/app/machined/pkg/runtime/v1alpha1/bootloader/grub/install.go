@@ -14,7 +14,7 @@ import (
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const (

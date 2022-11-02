@@ -22,11 +22,11 @@ import (
 	"golang.org/x/sys/unix"
 	"gopkg.in/freddierice/go-losetup.v1"
 
-	"github.com/talos-systems/talos/internal/pkg/mount"
-	"github.com/talos-systems/talos/internal/pkg/mount/switchroot"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/extensions"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/internal/pkg/mount/switchroot"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 func init() {

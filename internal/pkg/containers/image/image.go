@@ -16,9 +16,9 @@ import (
 	"github.com/containerd/containerd/pkg/kmutex"
 	"github.com/siderolabs/go-retry/retry"
 
-	containerdrunner "github.com/talos-systems/talos/internal/app/machined/pkg/system/runner/containerd"
-	"github.com/talos-systems/talos/pkg/machinery/config"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Image pull retry settings.

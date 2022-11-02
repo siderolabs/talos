@@ -17,8 +17,8 @@ import (
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 
-	"github.com/talos-systems/talos/cmd/installer/pkg"
-	"github.com/talos-systems/talos/cmd/installer/pkg/qemuimg"
+	"github.com/siderolabs/talos/cmd/installer/pkg"
+	"github.com/siderolabs/talos/cmd/installer/pkg/qemuimg"
 )
 
 const mfTpl = `SHA256({{ .VMDK }})= {{ .VMDKSHA }}

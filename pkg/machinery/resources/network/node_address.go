@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/talos-systems/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
 // NodeAddressType is type of NodeAddress resource.

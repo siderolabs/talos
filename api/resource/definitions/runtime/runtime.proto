@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package talos.resource.definitions.runtime;
 
-option go_package = "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/runtime";
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/runtime";
 
 import "resource/definitions/enums/enums.proto";
 

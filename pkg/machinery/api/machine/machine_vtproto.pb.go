@@ -17,7 +17,7 @@ import (
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
-	common "github.com/talos-systems/talos/pkg/machinery/api/common"
+	common "github.com/siderolabs/talos/pkg/machinery/api/common"
 )
 
 const (

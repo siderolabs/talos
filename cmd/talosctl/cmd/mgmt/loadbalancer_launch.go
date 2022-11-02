@@ -11,7 +11,7 @@ import (
 	"github.com/siderolabs/go-loadbalancer/loadbalancer"
 	"github.com/spf13/cobra"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var loadbalancerLaunchCmdFlags struct {

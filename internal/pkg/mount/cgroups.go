@@ -7,7 +7,7 @@ package mount
 import (
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // CGroupMountPoints returns the cgroup mount points.

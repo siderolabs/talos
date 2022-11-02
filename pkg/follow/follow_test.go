@@ -16,7 +16,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/talos-systems/talos/pkg/follow"
+	"github.com/siderolabs/talos/pkg/follow"
 )
 
 type FollowSuite struct {

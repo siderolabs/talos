@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/talos-systems/talos/internal/app/machined/pkg/runtime"
-	"github.com/talos-systems/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
 // Events represents the runtime event stream.

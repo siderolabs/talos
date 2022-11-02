@@ -14,8 +14,8 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 
-	common "github.com/talos-systems/talos/pkg/machinery/api/common"
-	enums "github.com/talos-systems/talos/pkg/machinery/api/resource/definitions/enums"
+	common "github.com/siderolabs/talos/pkg/machinery/api/common"
+	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 )
 
 const (

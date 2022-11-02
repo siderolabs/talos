@@ -9,7 +9,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
 )
 
 // Provisioner is an interface each provisioner should implement.

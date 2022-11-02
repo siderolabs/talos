@@ -14,13 +14,13 @@ import (
 	"github.com/rivo/tview"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/talos-systems/talos/internal/pkg/tui/components"
-	"github.com/talos-systems/talos/pkg/images"
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/machine"
-	"github.com/talos-systems/talos/pkg/machinery/constants"
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/internal/pkg/tui/components"
+	"github.com/siderolabs/talos/pkg/images"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 const canalCustomCNI = "canal"

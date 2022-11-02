@@ -5,7 +5,7 @@
 package generate
 
 import (
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
 
 // Talosconfig returns the talos admin Talos config.

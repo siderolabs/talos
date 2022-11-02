@@ -10,7 +10,7 @@ import (
 
 	"github.com/gizak/termui/v3/widgets"
 
-	"github.com/talos-systems/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
 )
 
 // TopLine represents the top bar with host info.

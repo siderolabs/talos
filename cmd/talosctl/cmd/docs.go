@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	v1alpha1 "github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1"
+	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 func frontmatter(title, description string) string {

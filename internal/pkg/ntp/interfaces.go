@@ -10,7 +10,7 @@ import (
 
 	"github.com/beevik/ntp"
 
-	"github.com/talos-systems/talos/internal/pkg/timex"
+	"github.com/siderolabs/talos/internal/pkg/timex"
 )
 
 // CurrentTimeFunc provides a function which returns current time.

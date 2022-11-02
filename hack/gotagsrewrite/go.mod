@@ -1,4 +1,4 @@
-module github.com/talos-systems/gotagsrewrite
+module github.com/siderolabs/gotagsrewrite
 
 go 1.19
 

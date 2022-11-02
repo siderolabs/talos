@@ -8,8 +8,8 @@ import (
 	"github.com/mdlayher/netlink"
 	"golang.org/x/sys/unix"
 
-	"github.com/talos-systems/talos/pkg/machinery/nethelpers"
-	"github.com/talos-systems/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // BondMasterSpec adapter provides encoding/decoding to netlink structures.

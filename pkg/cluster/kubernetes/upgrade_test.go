@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/talos-systems/talos/pkg/cluster/kubernetes"
+	"github.com/siderolabs/talos/pkg/cluster/kubernetes"
 )
 
 func TestPath(t *testing.T) {

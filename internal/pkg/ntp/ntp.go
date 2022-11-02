@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/talos-systems/talos/internal/pkg/timex"
+	"github.com/siderolabs/talos/internal/pkg/timex"
 )
 
 // Syncer performs time sync via NTP on schedule.

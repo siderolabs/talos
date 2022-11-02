@@ -14,10 +14,10 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"github.com/talos-systems/talos/internal/pkg/tui/components"
-	machineapi "github.com/talos-systems/talos/pkg/machinery/api/machine"
-	clientconfig "github.com/talos-systems/talos/pkg/machinery/client/config"
-	"github.com/talos-systems/talos/pkg/version"
+	"github.com/siderolabs/talos/internal/pkg/tui/components"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 // NewPage creates a new installer page.

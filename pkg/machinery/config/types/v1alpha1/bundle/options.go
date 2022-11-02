@@ -7,8 +7,8 @@ package bundle
 import (
 	jsonpatch "github.com/evanphx/json-patch"
 
-	"github.com/talos-systems/talos/pkg/machinery/config/configpatcher"
-	"github.com/talos-systems/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
 )
 
 // Option controls config options specific to config bundle generation.
