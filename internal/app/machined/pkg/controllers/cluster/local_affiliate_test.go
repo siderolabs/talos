@@ -56,6 +56,8 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	nonK8sAddresses.TypedSpec().Addresses = []netip.Prefix{
 		netip.MustParsePrefix("172.20.0.2/24"),
 		netip.MustParsePrefix("10.5.0.1/32"),
+		netip.MustParsePrefix("2001:123:4567::1/64"),
+		netip.MustParsePrefix("2001:123:4567::1/128"),
 		netip.MustParsePrefix("fdae:41e4:649b:9303:60be:7e36:c270:3238/128"), // SideroLink, should be ignored
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, nonK8sAddresses))
@@ -68,7 +70,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
 			spec := r.(*cluster.Affiliate).TypedSpec()
 
-			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("172.20.0.2"), netip.MustParseAddr("10.5.0.1")}, spec.Addresses)
+			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("172.20.0.2"), netip.MustParseAddr("10.5.0.1"), netip.MustParseAddr("2001:123:4567::1")}, spec.Addresses)
 			suite.Assert().Equal("example1", spec.Hostname)
 			suite.Assert().Equal("example1.com", spec.Nodename)
 			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)
@@ -104,11 +106,14 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
 			spec := r.(*cluster.Affiliate).TypedSpec()
 
-			if len(spec.Addresses) < 3 {
+			if len(spec.Addresses) < 4 {
 				return retry.ExpectedErrorf("not reconciled yet")
 			}
 
-			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("172.20.0.2"), netip.MustParseAddr("10.5.0.1"), ksIdentity.TypedSpec().Address.Addr()}, spec.Addresses)
+			suite.Assert().Equal([]netip.Addr{
+				netip.MustParseAddr("172.20.0.2"), netip.MustParseAddr("10.5.0.1"), netip.MustParseAddr("2001:123:4567::1"), ksIdentity.TypedSpec().Address.Addr(),
+			}, spec.Addresses)
+
 			suite.Assert().Equal("example1", spec.Hostname)
 			suite.Assert().Equal("example1.com", spec.Nodename)
 			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)
@@ -124,7 +129,9 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 			suite.Assert().Equal(ksIdentity.TypedSpec().Address.Addr(), spec.KubeSpan.Address)
 			suite.Assert().Equal(ksIdentity.TypedSpec().PublicKey, spec.KubeSpan.PublicKey)
 			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.244.1.0/24")}, spec.KubeSpan.AdditionalAddresses)
-			suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("172.20.0.2:51820"), netip.MustParseAddrPort("10.5.0.1:51820")}, spec.KubeSpan.Endpoints)
+			suite.Assert().Equal([]netip.AddrPort{
+				netip.MustParseAddrPort("172.20.0.2:51820"), netip.MustParseAddrPort("10.5.0.1:51820"), netip.MustParseAddrPort("[2001:123:4567::1]:51820"),
+			}, spec.KubeSpan.Endpoints)
 
 			return nil
 		}),

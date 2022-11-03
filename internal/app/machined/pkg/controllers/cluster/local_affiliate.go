@@ -193,7 +193,6 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					spec.OperatingSystem = fmt.Sprintf("%s (%s)", version.Name, version.Tag)
 
 					nodeIPs := addresses.(*network.NodeAddress).TypedSpec().IPs()
-
 					spec.Addresses = make([]netip.Addr, 0, len(nodeIPs))
 
 					for _, ip := range nodeIPs {
