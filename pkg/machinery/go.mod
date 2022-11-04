@@ -19,14 +19,14 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/gen v0.4.0
-	github.com/siderolabs/go-api-signature v0.1.0
-	github.com/siderolabs/go-blockdevice v0.4.0
+	github.com/siderolabs/go-api-signature v0.2.0
+	github.com/siderolabs/go-blockdevice v0.4.1
 	github.com/siderolabs/go-debug v0.2.2
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.0
 	github.com/stretchr/testify v1.8.1
-	google.golang.org/genproto v0.0.0-20221025140454-527a21cfbd71
+	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1

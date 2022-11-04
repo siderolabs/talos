@@ -17,20 +17,20 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.26.0-alpha.2
-	k8s.io/apimachinery v0.26.0-alpha.2
-	k8s.io/apiserver v0.26.0-alpha.2
-	k8s.io/client-go v0.26.0-alpha.2
-	k8s.io/component-base v0.26.0-alpha.2
-	k8s.io/cri-api v0.26.0-alpha.2
-	k8s.io/kubectl v0.26.0-alpha.2
-	k8s.io/kubelet v0.26.0-alpha.2
+	k8s.io/api v0.26.0-alpha.3
+	k8s.io/apimachinery v0.26.0-alpha.3
+	k8s.io/apiserver v0.26.0-alpha.3
+	k8s.io/client-go v0.26.0-alpha.3
+	k8s.io/component-base v0.26.0-alpha.3
+	k8s.io/cri-api v0.26.0-alpha.3
+	k8s.io/kubectl v0.26.0-alpha.3
+	k8s.io/kubelet v0.26.0-alpha.3
 )
 
 require (
-	cloud.google.com/go/compute v1.10.0
+	cloud.google.com/go/compute/metadata v0.2.1
 	github.com/BurntSushi/toml v1.2.1
-	github.com/aws/aws-sdk-go v1.44.122
+	github.com/aws/aws-sdk-go v1.44.130
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/containerd/cgroups v1.0.4
@@ -42,7 +42,7 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/cosi-project/runtime v0.2.0-alpha.3
 	github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker v20.10.20+incompatible
+	github.com/docker/docker v20.10.21+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/emicklei/dot v1.0.0
@@ -55,7 +55,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gopacket v1.1.19
-	github.com/google/nftables v0.0.0-20221015190445-4f5cd5826fbd
+	github.com/google/nftables v0.0.0-20221101202748-0dda43a5f98c
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -79,9 +79,9 @@ require (
 	github.com/packethost/packngo v0.28.1
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pin/tftp v2.1.0+incompatible
-	github.com/pmorjan/kmod v1.0.0
+	github.com/pmorjan/kmod v1.1.0
 	github.com/prometheus/procfs v0.8.0
-	github.com/rivo/tview v0.0.0-20220916081518-2e69b7385a37
+	github.com/rivo/tview v0.0.0-20221029100920-c4a7e501810d
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
@@ -113,7 +113,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/u-root/u-root v0.10.0
 	github.com/vishvananda/netlink v1.2.1-beta.2
-	github.com/vmware-tanzu/sonobuoy v0.56.10
+	github.com/vmware-tanzu/sonobuoy v0.56.11
 	github.com/vmware/govmomi v0.29.0
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
@@ -124,12 +124,12 @@ require (
 	go.uber.org/atomic v1.10.0
 	go.uber.org/zap v1.23.0
 	go4.org/netipx v0.0.0-20220925034521-797b0c90d8ab
-	golang.org/x/net v0.1.0
+	golang.org/x/net v0.1.1-0.20221027164007-c63010009c80
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.1.0
 	golang.org/x/term v0.1.0
 	golang.org/x/time v0.1.0
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20220916014741-473347a5e6e3
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20221104135756-97bc4ad4a1cb
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/freddierice/go-losetup.v1 v1.0.0-20170407175016-fc9adea44124
@@ -141,6 +141,7 @@ require (
 
 require (
 	cloud.google.com/go v0.105.0 // indirect
+	cloud.google.com/go/compute v1.12.1 // indirect
 	cloud.google.com/go/iam v0.6.0 // indirect
 	cloud.google.com/go/storage v1.27.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -251,7 +252,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/sethgrid/pester v0.0.0-20190127155807-68a33a018ad0 // indirect
-	github.com/siderolabs/go-api-signature v0.1.0 // indirect
+	github.com/siderolabs/go-api-signature v0.2.0 // indirect
 	github.com/siderolabs/protoenc v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
@@ -289,9 +290,9 @@ require (
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect
-	k8s.io/cli-runtime v0.26.0-alpha.2 // indirect
+	k8s.io/cli-runtime v0.26.0-alpha.3 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
+	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	k8s.io/utils v0.0.0-20220922133306-665eaaec4324 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.66 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect

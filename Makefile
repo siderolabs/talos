@@ -14,7 +14,7 @@ NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.3.0-alpha.0-21-ge8f92b3
-PKGS ?= v1.3.0-alpha.0-37-gb153ce6
+PKGS ?= v1.3.0-alpha.0-38-g8b975a7
 EXTRAS ?= v1.3.0-alpha.0-2-gb155fa0
 GO_VERSION ?= 1.19
 GOIMPORTS_VERSION ?= v0.1.11
@@ -30,7 +30,7 @@ OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
-KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.26.0-alpha.2/bin/$(OPERATING_SYSTEM)/amd64/kubectl
+KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.26.0-alpha.3/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/v0.4.34/kubestr_0.4.34_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-v3.9.2-linux-amd64.tar.gz
 CLUSTERCTL_VERSION ?= 1.1.3

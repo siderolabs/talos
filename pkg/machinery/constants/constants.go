@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "5.15.76-talos"
+	DefaultKernelVersion = "5.15.77-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -290,7 +290,7 @@ const (
 	SeccompProfilesDirectory = "/var/lib/kubelet/seccomp/profiles"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.26.0-alpha.2"
+	DefaultKubernetesVersion = "1.26.0-alpha.3"
 
 	// DefaultControlPlanePort is the default port to use for the control plane.
 	DefaultControlPlanePort = 6443

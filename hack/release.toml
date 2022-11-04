@@ -49,11 +49,11 @@ Refer to the docs at https://www.talos.dev/v1.3/talos-guides/install/single-boar
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Kubernetes: v1.26.0-alpha.2
-* Flannel: v0.20.0
+* Kubernetes: v1.26.0-alpha.3
+* Flannel: v0.20.1
 * CoreDNS: v1.10.0
 * etcd: v3.5.5
-* Linux: 5.15.76
+* Linux: 5.15.77
 * containerd: v1.6.9
 
 Talos is built with Go 1.19.3.
