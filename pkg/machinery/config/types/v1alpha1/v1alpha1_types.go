@@ -727,7 +727,7 @@ type MachineConfig struct {
 	//   description: |
 	//     Used to partition, format and mount additional disks.
 	//     Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.
-	//     Note that the partitioning and formating is done only once, if and only if no existing partitions are found.
+	//     Note that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.
 	//     If `size:` is omitted, the partition is sized to occupy the full disk.
 	//   examples:
 	//     - name: MachineDisks list example.

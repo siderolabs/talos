@@ -207,7 +207,7 @@ func init() {
 	MachineConfigDoc.Fields[8].Name = "disks"
 	MachineConfigDoc.Fields[8].Type = "[]MachineDisk"
 	MachineConfigDoc.Fields[8].Note = "Note: `size` is in units of bytes.\n"
-	MachineConfigDoc.Fields[8].Description = "Used to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.\nNote that the partitioning and formating is done only once, if and only if no existing partitions are found.\nIf `size:` is omitted, the partition is sized to occupy the full disk."
+	MachineConfigDoc.Fields[8].Description = "Used to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.\nNote that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.\nIf `size:` is omitted, the partition is sized to occupy the full disk."
 	MachineConfigDoc.Fields[8].Comments[encoder.LineComment] = "Used to partition, format and mount additional disks."
 
 	MachineConfigDoc.Fields[8].AddExample("MachineDisks list example.", machineDisksExample)

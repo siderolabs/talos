@@ -244,7 +244,7 @@ network:
     # kubespan:
     #     enabled: true # Enable the KubeSpan feature.
 {{< /highlight >}}</details> | |
-|`disks` |[]<a href="#machinedisk">MachineDisk</a> |<details><summary>Used to partition, format and mount additional disks.</summary>Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.<br />Note that the partitioning and formating is done only once, if and only if no existing partitions are found.<br />If `size:` is omitted, the partition is sized to occupy the full disk.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`disks` |[]<a href="#machinedisk">MachineDisk</a> |<details><summary>Used to partition, format and mount additional disks.</summary>Since the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.<br />Note that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.<br />If `size:` is omitted, the partition is sized to occupy the full disk.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 disks:
     - device: /dev/sdb # The name of the disk to use.
       # A list of partitions to create on the disk.
