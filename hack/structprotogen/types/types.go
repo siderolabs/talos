@@ -12,11 +12,10 @@ import (
 	"path"
 	"strings"
 
-	"golang.org/x/tools/go/packages"
-	"gopkg.in/typ.v4/slices"
-
 	"github.com/siderolabs/structprotogen/ast"
 	"github.com/siderolabs/structprotogen/sliceutil"
+	"golang.org/x/tools/go/packages"
+	"gopkg.in/typ.v4/slices"
 )
 
 // PkgDecl is a struct which contains package path and tagged struct declarations.

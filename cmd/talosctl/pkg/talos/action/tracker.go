@@ -11,10 +11,11 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/mattn/go-isatty"
+	"github.com/siderolabs/gen/containers"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-circular"
 	"golang.org/x/sync/errgroup"
@@ -64,10 +65,34 @@ type Tracker struct {
 	reporter                 *reporter.Reporter
 	nodeToLatestStatusUpdate map[string]reporter.Update
 	reportCh                 chan nodeUpdate
-	retryDuration            time.Duration
+	timeout                  time.Duration
 	isTerminal               bool
 	debug                    bool
 	cliContext               *global.Args
+}
+
+// TrackerOption is the functional option for the Tracker.
+type TrackerOption func(*Tracker)
+
+// WithTimeout sets the timeout for the tracker.
+func WithTimeout(timeout time.Duration) TrackerOption {
+	return func(t *Tracker) {
+		t.timeout = timeout
+	}
+}
+
+// WithPostCheck sets the post check function.
+func WithPostCheck(postCheckFn func(ctx context.Context, c *client.Client) error) TrackerOption {
+	return func(t *Tracker) {
+		t.postCheckFn = postCheckFn
+	}
+}
+
+// WithDebug enables debug mode.
+func WithDebug(debug bool) TrackerOption {
+	return func(t *Tracker) {
+		t.debug = debug
+	}
 }
 
 // NewTracker creates a new Tracker.
@@ -75,21 +100,23 @@ func NewTracker(
 	cliContext *global.Args,
 	expectedEventFn func(event client.EventResult) bool,
 	actionFn func(ctx context.Context, c *client.Client) (string, error),
-	postCheckFn func(ctx context.Context, c *client.Client) error,
-	debug bool,
+	opts ...TrackerOption,
 ) *Tracker {
-	return &Tracker{
+	tracker := Tracker{
 		expectedEventFn:          expectedEventFn,
 		actionFn:                 actionFn,
-		postCheckFn:              postCheckFn,
 		nodeToLatestStatusUpdate: make(map[string]reporter.Update, len(cliContext.Nodes)),
 		reporter:                 reporter.New(),
 		reportCh:                 make(chan nodeUpdate),
-		retryDuration:            15 * time.Minute,
 		isTerminal:               isatty.IsTerminal(os.Stderr.Fd()),
-		debug:                    debug,
 		cliContext:               cliContext,
 	}
+
+	for _, option := range opts {
+		option(&tracker)
+	}
+
+	return &tracker
 }
 
 // Run executes the action on nodes and tracks its progress by watching events with retries.
@@ -97,39 +124,14 @@ func NewTracker(
 //
 //nolint:gocyclo
 func (a *Tracker) Run() error {
-	var failedNodesToDmesgs sync.Map
+	var failedNodesToDmesgs containers.ConcurrentMap[string, io.Reader]
 
 	var eg errgroup.Group
 
-	defer func() {
-		eg.Wait() //nolint:errcheck
+	err := a.cliContext.WithClient(func(ctx context.Context, c *client.Client) error {
+		ctx, cancel := context.WithTimeout(ctx, a.timeout)
+		defer cancel()
 
-		var failedNodes []string
-
-		failedNodesToDmesgs.Range(func(key, value any) bool {
-			failedNodes = append(failedNodes, key.(string))
-
-			return true
-		})
-
-		if a.debug && len(failedNodes) > 0 {
-			sort.Strings(failedNodes)
-
-			fmt.Printf("console logs for nodes %v:\n", failedNodes)
-
-			for _, node := range failedNodes {
-				dmesgReaderRaw, _ := failedNodesToDmesgs.Load(node)
-				dmesgReader := dmesgReaderRaw.(io.Reader) //nolint:errcheck
-
-				_, err := io.Copy(os.Stdout, dmesgReader)
-				if err != nil {
-					fmt.Printf("%v: failed to print debug logs: %v\n", node, err)
-				}
-			}
-		}
-	}()
-
-	return a.cliContext.WithClient(func(ctx context.Context, c *client.Client) error {
 		if err := helpers.ClientVersionCheck(ctx, c); err != nil {
 			return err
 		}
@@ -170,7 +172,7 @@ func (a *Tracker) Run() error {
 			trackEg.Go(func() error {
 				if trackErr := tracker.run(); trackErr != nil {
 					if a.debug {
-						failedNodesToDmesgs.Store(node, dmesg.GetReader())
+						failedNodesToDmesgs.Set(node, dmesg.GetReader())
 					}
 
 					tracker.update(reporter.Update{
@@ -189,6 +191,35 @@ func (a *Tracker) Run() error {
 		Backoff:           backoff.Config{},
 		MinConnectTimeout: 20 * time.Second,
 	}))
+
+	err = multierror.Append(err, eg.Wait())
+
+	if !a.debug {
+		return err
+	}
+
+	var failedNodes []string
+
+	failedNodesToDmesgs.ForEach(func(key string, _ io.Reader) {
+		failedNodes = append(failedNodes, key)
+	})
+
+	if len(failedNodes) > 0 {
+		sort.Strings(failedNodes)
+
+		fmt.Printf("console logs for nodes %q:\n", failedNodes)
+
+		for _, node := range failedNodes {
+			dmesgReader, _ := failedNodesToDmesgs.Get(node)
+
+			_, copyErr := io.Copy(os.Stdout, dmesgReader)
+			if copyErr != nil {
+				fmt.Printf("%q: failed to print debug logs: %v\n", node, copyErr)
+			}
+		}
+	}
+
+	return err
 }
 
 // runReporter starts the (colored) stderr reporter.
@@ -217,7 +248,7 @@ func (a *Tracker) runReporter(ctx context.Context) error {
 
 		case update = <-a.reportCh:
 			if !a.isTerminal {
-				fmt.Printf("%v: %v\n", update.node, update.update.Message)
+				fmt.Printf("%q: %v\n", update.node, update.update.Message)
 
 				continue
 			}

@@ -17,11 +17,10 @@ import (
 )
 
 var resetCmdFlags struct {
+	trackableActionCmdFlags
 	graceful           bool
 	reboot             bool
 	systemLabelsToWipe []string
-	wait               bool
-	debug              bool
 }
 
 // resetCmd represents the reset command.
@@ -70,7 +69,14 @@ var resetCmd = &cobra.Command{
 
 		cmd.SilenceErrors = true
 
-		return action.NewTracker(&GlobalArgs, action.StopAllServicesEventFn, actionFn, postCheckFn, resetCmdFlags.debug).Run()
+		return action.NewTracker(
+			&GlobalArgs,
+			action.StopAllServicesEventFn,
+			actionFn,
+			action.WithPostCheck(postCheckFn),
+			action.WithDebug(resetCmdFlags.debug),
+			action.WithTimeout(resetCmdFlags.timeout),
+		).Run()
 	},
 }
 
@@ -108,7 +114,6 @@ func init() {
 	resetCmd.Flags().BoolVar(&resetCmdFlags.graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
 	resetCmd.Flags().BoolVar(&resetCmdFlags.reboot, "reboot", false, "if true, reboot the node after resetting instead of shutting down")
 	resetCmd.Flags().StringSliceVar(&resetCmdFlags.systemLabelsToWipe, "system-labels-to-wipe", nil, "if set, just wipe selected system disk partitions by label but keep other partitions intact")
-	resetCmd.Flags().BoolVar(&resetCmdFlags.wait, "wait", false, "wait for the operation to complete, tracking its progress. always set to true when --debug is set")
-	resetCmd.Flags().BoolVar(&resetCmdFlags.debug, "debug", false, "debug operation from kernel logs. --no-wait is set to false when this flag is set")
+	resetCmdFlags.addTrackActionFlags(resetCmd)
 	addCommand(resetCmd)
 }

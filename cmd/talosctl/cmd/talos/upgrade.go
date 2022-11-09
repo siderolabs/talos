@@ -22,12 +22,11 @@ import (
 )
 
 var upgradeCmdFlags struct {
+	trackableActionCmdFlags
 	upgradeImage string
 	preserve     bool
 	stage        bool
 	force        bool
-	wait         bool
-	debug        bool
 	insecure     bool
 }
 
@@ -58,7 +57,14 @@ var upgradeCmd = &cobra.Command{
 			return err
 		}
 
-		return action.NewTracker(&GlobalArgs, action.MachineReadyEventFn, upgradeGetActorID, postCheckFn, upgradeCmdFlags.debug).Run()
+		return action.NewTracker(
+			&GlobalArgs,
+			action.MachineReadyEventFn,
+			upgradeGetActorID,
+			action.WithPostCheck(postCheckFn),
+			action.WithDebug(upgradeCmdFlags.debug),
+			action.WithTimeout(upgradeCmdFlags.timeout),
+		).Run()
 	},
 }
 
@@ -136,8 +142,7 @@ func init() {
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.preserve, "preserve", "p", false, "preserve data")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.stage, "stage", "s", false, "stage the upgrade to perform it after a reboot")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
-	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.wait, "wait", false, "wait for the operation to complete, tracking its progress. always set to true when --debug is set")
-	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.debug, "debug", false, "debug operation from kernel logs. --no-wait is set to false when this flag is set")
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.insecure, "insecure", false, "upgrade using the insecure (encrypted with no auth) maintenance service")
+	upgradeCmdFlags.addTrackActionFlags(upgradeCmd)
 	addCommand(upgradeCmd)
 }

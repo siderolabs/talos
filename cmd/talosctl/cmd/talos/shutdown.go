@@ -16,9 +16,8 @@ import (
 )
 
 var shutdownCmdFlags struct {
+	trackableActionCmdFlags
 	force bool
-	wait  bool
-	debug bool
 }
 
 // shutdownCmd represents the shutdown command.
@@ -52,7 +51,13 @@ var shutdownCmd = &cobra.Command{
 
 		cmd.SilenceErrors = true
 
-		return action.NewTracker(&GlobalArgs, action.StopAllServicesEventFn, shutdownGetActorID, nil, shutdownCmdFlags.debug).Run()
+		return action.NewTracker(
+			&GlobalArgs,
+			action.StopAllServicesEventFn,
+			shutdownGetActorID,
+			action.WithDebug(shutdownCmdFlags.debug),
+			action.WithTimeout(shutdownCmdFlags.timeout),
+		).Run()
 	},
 }
 
@@ -71,7 +76,6 @@ func shutdownGetActorID(ctx context.Context, c *client.Client) (string, error) {
 
 func init() {
 	shutdownCmd.Flags().BoolVar(&shutdownCmdFlags.force, "force", false, "if true, force a node to shutdown without a cordon/drain")
-	shutdownCmd.Flags().BoolVar(&shutdownCmdFlags.wait, "wait", false, "wait for the operation to complete, tracking its progress. always set to true when --debug is set")
-	shutdownCmd.Flags().BoolVar(&shutdownCmdFlags.debug, "debug", false, "debug operation from kernel logs. --no-wait is set to false when this flag is set")
+	shutdownCmdFlags.addTrackActionFlags(shutdownCmd)
 	addCommand(shutdownCmd)
 }

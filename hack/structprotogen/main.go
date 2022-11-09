@@ -13,12 +13,11 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
-
 	"github.com/siderolabs/structprotogen/ast"
 	"github.com/siderolabs/structprotogen/loader"
 	"github.com/siderolabs/structprotogen/proto"
 	"github.com/siderolabs/structprotogen/types"
+	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands.

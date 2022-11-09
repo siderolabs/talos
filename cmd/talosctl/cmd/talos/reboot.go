@@ -16,9 +16,8 @@ import (
 )
 
 var rebootCmdFlags struct {
-	mode  string
-	wait  bool
-	debug bool
+	trackableActionCmdFlags
+	mode string
 }
 
 // rebootCmd represents the reboot command.
@@ -65,7 +64,14 @@ var rebootCmd = &cobra.Command{
 			return err
 		}
 
-		return action.NewTracker(&GlobalArgs, action.MachineReadyEventFn, rebootGetActorID, postCheckFn, rebootCmdFlags.debug).Run()
+		return action.NewTracker(
+			&GlobalArgs,
+			action.MachineReadyEventFn,
+			rebootGetActorID,
+			action.WithPostCheck(postCheckFn),
+			action.WithDebug(rebootCmdFlags.debug),
+			action.WithTimeout(rebootCmdFlags.timeout),
+		).Run()
 	},
 }
 
@@ -84,7 +90,6 @@ func rebootGetActorID(ctx context.Context, c *client.Client) (string, error) {
 
 func init() {
 	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercycle\" (skips kexec)")
-	rebootCmd.Flags().BoolVar(&rebootCmdFlags.wait, "wait", false, "wait for the operation to complete, tracking its progress. always set to true when --debug is set")
-	rebootCmd.Flags().BoolVar(&rebootCmdFlags.debug, "debug", false, "debug operation from kernel logs. --no-wait is set to false when this flag is set")
+	rebootCmdFlags.addTrackActionFlags(rebootCmd)
 	addCommand(rebootCmd)
 }

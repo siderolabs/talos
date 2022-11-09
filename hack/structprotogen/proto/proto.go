@@ -12,10 +12,9 @@ import (
 	"regexp"
 	"strings"
 
-	"gopkg.in/typ.v4/slices"
-
 	"github.com/siderolabs/structprotogen/sliceutil"
 	"github.com/siderolabs/structprotogen/types"
+	"gopkg.in/typ.v4/slices"
 )
 
 // Pkg represents a protobuf package.

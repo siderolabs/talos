@@ -34,9 +34,9 @@ type nodeTracker struct {
 
 // tailDebugLogs starts tailing the dmesg of the node.
 func (a *nodeTracker) tailDebugLogs() error {
-	return retry.Constant(a.tracker.retryDuration).Retry(func() error {
+	return retry.Constant(a.tracker.timeout).RetryWithContext(a.ctx, func(ctx context.Context) error {
 		err := func() error {
-			stream, err := a.cli.Dmesg(a.ctx, true, true)
+			stream, err := a.cli.Dmesg(ctx, true, true)
 			if err != nil {
 				return err
 			}
@@ -125,11 +125,11 @@ func (a *nodeTracker) trackEventsWithRetry(actorIDCh chan string) error {
 		waitForActorID = true
 	)
 
-	return retry.Constant(a.tracker.retryDuration).Retry(func() error {
+	return retry.Constant(a.tracker.timeout).RetryWithContext(a.ctx, func(ctx context.Context) error {
 		// retryable function
 		err := func() error {
 			eventCh := make(chan client.EventResult)
-			err := a.cli.EventsWatchV2(a.ctx, eventCh, client.WithTailEvents(tailEvents))
+			err := a.cli.EventsWatchV2(ctx, eventCh, client.WithTailEvents(tailEvents))
 			if err != nil {
 				return err
 			}
@@ -142,8 +142,8 @@ func (a *nodeTracker) trackEventsWithRetry(actorIDCh chan string) error {
 
 				select {
 				case actorID = <-actorIDCh:
-				case <-a.ctx.Done():
-					return a.ctx.Err()
+				case <-ctx.Done():
+					return ctx.Err()
 				}
 
 				a.update(reporter.Update{
@@ -188,10 +188,10 @@ func (a *nodeTracker) trackEventsWithRetry(actorIDCh chan string) error {
 }
 
 func (a *nodeTracker) runPostCheckWithRetry() error {
-	return retry.Constant(a.tracker.retryDuration).Retry(func() error {
+	return retry.Constant(a.tracker.timeout).RetryWithContext(a.ctx, func(ctx context.Context) error {
 		// retryable function
 		err := func() error {
-			err := a.tracker.postCheckFn(a.ctx, a.cli)
+			err := a.tracker.postCheckFn(ctx, a.cli)
 			if err != nil {
 				return err
 			}
