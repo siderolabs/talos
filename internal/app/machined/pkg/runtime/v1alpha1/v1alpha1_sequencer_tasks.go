@@ -151,7 +151,7 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 		if r.State().Platform().Mode() != runtime.ModeContainer {
 			// assert that cgroupsv2 is being used when running not in container mode,
 			// as Talos sets up cgroupsv2 on its own
-			if cgroups.Mode() != cgroups.Unified {
+			if cgroups.Mode() != cgroups.Unified && !mount.ForceGGroupsV1() {
 				return fmt.Errorf("cgroupsv2 should be used")
 			}
 		}

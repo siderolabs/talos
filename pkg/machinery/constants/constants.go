@@ -42,6 +42,10 @@ const (
 	// disk to wipe on the next boot and reboot.
 	KernelParamWipe = "talos.experimental.wipe"
 
+	// KernelParamCGroups is the kernel parameter name for specifying the
+	// cgroups version to use (default is cgroupsv2, setting this kernel arg to '0' forces cgroupsv1).
+	KernelParamCGroups = "talos.unified_cgroup_hierarchy"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 

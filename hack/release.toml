@@ -152,6 +152,65 @@ talosctl get etcdmember
 ```
 """
 
+    [notes.cgroupsv1]
+        title = "cgroups v1"
+        description = """\
+Talos defaults to using cgroups v2 when Talos doesn't run in a container (when running in a container
+Talos follows host cgroups mode).
+Talos can now be forced to use cgroups v1 by setting boot kernel argument `talos.unified_cgroup_hierarchy=0`:
+
+```yaml
+machine:
+  install:
+    extraKernelArgs:
+      - "talos.unified_cgroup_hierarchy=0"
+```
+
+Current cgroups mode can be checked with `talosctl ls /sys/fs/cgroup`:
+
+cgroups v1:
+
+```
+blkio
+cpu
+cpuacct
+cpuset
+devices
+freezer
+hugetlb
+memory
+net_cls
+net_prio
+perf_event
+pids
+```
+
+cgroups v2:
+
+```
+cgroup.controllers
+cgroup.max.depth
+cgroup.max.descendants
+cgroup.procs
+cgroup.stat
+cgroup.subtree_control
+cgroup.threads
+cpu.stat
+cpuset.cpus.effective
+cpuset.mems.effective
+init
+io.stat
+kubepods
+memory.numa_stat
+memory.stat
+podruntime
+system
+```
+
+> Note: `cgroupsv1` is deprecated and it should be used only for compatibility with workloads which don't support `cgroupsv2` yet.
+
+"""
+
 [make_deps]
 
     [make_deps.tools]

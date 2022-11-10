@@ -66,7 +66,7 @@ func WithInstallImage(imageRef string) GenOption {
 // WithInstallExtraKernelArgs specifies extra kernel arguments to pass to the installer.
 func WithInstallExtraKernelArgs(args []string) GenOption {
 	return func(o *GenOptions) error {
-		o.InstallExtraKernelArgs = args
+		o.InstallExtraKernelArgs = append(o.InstallExtraKernelArgs, args...)
 
 		return nil
 	}

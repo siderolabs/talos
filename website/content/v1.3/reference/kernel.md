@@ -190,3 +190,10 @@ Resets the disk before starting up the system.
 Valid options are:
 
 * `system` resets system disk.
+
+#### `talos.unified_cgroup_hierarchy`
+
+Talos defaults to always using the unified cgroup hierarchy (`cgroupsv2`), but `cgroupsv1`
+can be forced with `talos.unified_cgroup_hierarchy=0`.
+
+> Note: `cgroupsv1` is deprecated and it should be used only for compatibility with workloads which don't support `cgroupsv2` yet.
