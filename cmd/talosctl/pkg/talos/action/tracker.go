@@ -6,6 +6,7 @@ package action
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/mattn/go-isatty"
 	"github.com/siderolabs/gen/containers"
 	"github.com/siderolabs/gen/maps"
@@ -181,7 +181,7 @@ func (a *Tracker) Run() error {
 					})
 				}
 
-				return err
+				return nil
 			})
 		}
 
@@ -191,8 +191,11 @@ func (a *Tracker) Run() error {
 		Backoff:           backoff.Config{},
 		MinConnectTimeout: 20 * time.Second,
 	}))
+	if errors.Is(err, context.Canceled) {
+		err = nil
+	}
 
-	err = multierror.Append(err, eg.Wait())
+	eg.Wait() //nolint:errcheck
 
 	if !a.debug {
 		return err

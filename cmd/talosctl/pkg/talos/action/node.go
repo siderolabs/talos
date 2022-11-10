@@ -51,10 +51,6 @@ func (a *nodeTracker) tailDebugLogs() error {
 			return nil
 		}
 
-		if errors.Is(err, context.Canceled) {
-			return nil
-		}
-
 		if strings.Contains(err.Error(), "file already closed") {
 			return retry.ExpectedError(err)
 		}
@@ -159,10 +155,6 @@ func (a *nodeTracker) trackEventsWithRetry(actorIDCh chan string) error {
 
 		// handle retryable errors
 
-		if errors.Is(err, context.Canceled) {
-			return nil
-		}
-
 		statusCode := client.StatusCode(err)
 		if errors.Is(err, io.EOF) || statusCode == codes.Unavailable {
 			a.update(reporter.Update{
@@ -205,11 +197,6 @@ func (a *nodeTracker) runPostCheckWithRetry() error {
 		}()
 
 		// handle retryable errors
-
-		if errors.Is(err, context.Canceled) {
-			return nil
-		}
-
 		statusCode := client.StatusCode(err)
 		if errors.Is(err, io.EOF) || statusCode == codes.Unavailable {
 			a.update(reporter.Update{
