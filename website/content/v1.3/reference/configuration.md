@@ -2724,6 +2724,24 @@ enabled: true # Enable the KubeSpan feature.
 |`advertiseKubernetesNetworks` |bool |<details><summary>Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.</summary>If disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,<br />and KubeSpan handles the node-to-node traffic.<br />If enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.<br />When enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which<br />is not always the case with CNIs not relying on Kubernetes for IPAM.</details>  | |
 |`allowDownPeerBypass` |bool |<details><summary>Skip sending traffic via KubeSpan if the peer connection state is not up.</summary>This provides configurable choice between connectivity and security: either traffic is always<br />forced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly<br />to the peer if Wireguard connection can't be established.</details>  | |
 |`mtu` |uint32 |<details><summary>KubeSpan link MTU size.</summary>Default value is 1420.</details>  | |
+|`filters` |<a href="#kubespanfilters">KubeSpanFilters</a> |KubeSpan filters.  | |
+
+
+
+---
+## KubeSpanFilters
+KubeSpanFilters struct describes KubeSpan filters.
+
+Appears in:
+
+- <code><a href="#networkkubespan">NetworkKubeSpan</a>.filters</code>
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`endpoints` |[]string |KubeSpanFiltersEndpoints list allowed node' IPs to make p2p connections.  | |
 
 
 

@@ -2505,6 +2505,15 @@ type NetworkKubeSpan struct {
 	//   KubeSpan link MTU size.
 	//   Default value is 1420.
 	KubeSpanMTU *uint32 `yaml:"mtu,omitempty"`
+	// description: |
+	//   KubeSpan filters.
+	KubeSpanFilters *KubeSpanFilters `yaml:"filters,omitempty"`
+}
+
+// KubeSpanFilters struct describes KubeSpan filters.
+type KubeSpanFilters struct {
+	// description: KubeSpanFiltersEndpoints list allowed node' IPs to make p2p connections.
+	KubeSpanFiltersEndpoints []string `yaml:"endpoints,omitempty"`
 }
 
 // NetworkDeviceSelector struct describes network device selector.
