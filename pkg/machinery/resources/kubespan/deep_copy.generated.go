@@ -13,6 +13,10 @@ import (
 // DeepCopy generates a deep copy of ConfigSpec.
 func (o ConfigSpec) DeepCopy() ConfigSpec {
 	var cp ConfigSpec = o
+	if o.EndpointFilters != nil {
+		cp.EndpointFilters = make([]string, len(o.EndpointFilters))
+		copy(cp.EndpointFilters, o.EndpointFilters)
+	}
 	return cp
 }
 

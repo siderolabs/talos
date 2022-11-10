@@ -239,6 +239,14 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		if c.Cluster().Secret() == "" {
 			result = multierror.Append(result, fmt.Errorf(".cluster.secret should be set when .machine.network.kubespan is enabled"))
 		}
+
+		for _, cidr := range c.Machine().Network().KubeSpan().Filters().Endpoints() {
+			cidr = strings.TrimPrefix(cidr, "!")
+
+			if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {
+				result = multierror.Append(result, fmt.Errorf("KubeSpan endpoint filer is not valid: %q", cidr))
+			}
+		}
 	}
 
 	if c.MachineConfig.MachineLogging != nil {

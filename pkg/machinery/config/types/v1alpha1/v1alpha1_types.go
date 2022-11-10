@@ -2511,6 +2511,25 @@ type NetworkKubeSpan struct {
 	//   KubeSpan link MTU size.
 	//   Default value is 1420.
 	KubeSpanMTU *uint32 `yaml:"mtu,omitempty"`
+	// description: |
+	//   KubeSpan advanced filtering of network addresses .
+	//
+	//   Settings in this section are optional, and settings apply only to the node.
+	KubeSpanFilters *KubeSpanFilters `yaml:"filters,omitempty"`
+}
+
+// KubeSpanFilters struct describes KubeSpan advanced network addresses filtering.
+type KubeSpanFilters struct {
+	// description: |
+	//   Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.
+	//
+	//   By default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.
+	//
+	//   Default value: no filtering.
+	// examples:
+	//   - name: Exclude addresses in 192.168.0.0/16 subnet.
+	//     value: '[]string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"}'
+	KubeSpanFiltersEndpoints []string `yaml:"endpoints,omitempty"`
 }
 
 // NetworkDeviceSelector struct describes network device selector.

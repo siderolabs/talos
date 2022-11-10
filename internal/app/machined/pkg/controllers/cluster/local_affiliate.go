@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/net"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -227,35 +228,43 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 							spec.KubeSpan.AdditionalAddresses = nil
 						}
 
-						endpoints := make([]netip.AddrPort, 0, len(nodeIPs))
-
-						for _, ip := range nodeIPs {
+						endpointIPs := slices.Filter(nodeIPs, func(ip netip.Addr) bool {
 							if ip == spec.KubeSpan.Address {
 								// skip kubespan local address
-								continue
+								return false
 							}
 
 							if network.IsULA(ip, network.ULASideroLink) {
 								// ignore SideroLink addresses, as they are point-to-point addresses
-								continue
+								return false
 							}
 
-							endpoints = append(endpoints, netip.AddrPortFrom(ip, constants.KubeSpanDefaultPort))
-						}
+							return true
+						})
 
 						// mix in discovered public IPs
 						for iter := safe.IteratorFromList(discoveredPublicIPs); iter.Next(); {
 							addr := iter.Value().TypedSpec().Address.Addr()
 
-							if slices.Contains(nodeIPs, func(a netip.Addr) bool { return addr == a }) {
+							if slices.Contains(endpointIPs, func(a netip.Addr) bool { return addr == a }) {
 								// this address is already published
 								continue
 							}
 
-							endpoints = append(endpoints, netip.AddrPortFrom(addr, constants.KubeSpanDefaultPort))
+							endpointIPs = append(endpointIPs, addr)
 						}
 
-						spec.KubeSpan.Endpoints = endpoints
+						// filter endpoints if configured
+						if kubespanConfig.TypedSpec().EndpointFilters != nil {
+							endpointIPs, err = net.FilterIPs(endpointIPs, kubespanConfig.TypedSpec().EndpointFilters)
+							if err != nil {
+								return fmt.Errorf("error filtering KubeSpan endpoints: %w", err)
+							}
+						}
+
+						spec.KubeSpan.Endpoints = slices.Map(endpointIPs, func(addr netip.Addr) netip.AddrPort {
+							return netip.AddrPortFrom(addr, constants.KubeSpanDefaultPort)
+						})
 					}
 
 					return nil

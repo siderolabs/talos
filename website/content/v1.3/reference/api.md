@@ -2193,6 +2193,7 @@ ConfigSpec describes KubeSpan configuration..
 | force_routing | [bool](#bool) |  |  |
 | advertise_kubernetes_networks | [bool](#bool) |  |  |
 | mtu | [uint32](#uint32) |  |  |
+| endpoint_filters | [string](#string) | repeated |  |
 
 
 

@@ -74,6 +74,7 @@ var (
 	VolumeMountConfigDoc              encoder.Doc
 	ClusterInlineManifestDoc          encoder.Doc
 	NetworkKubeSpanDoc                encoder.Doc
+	KubeSpanFiltersDoc                encoder.Doc
 	NetworkDeviceSelectorDoc          encoder.Doc
 	ClusterDiscoveryConfigDoc         encoder.Doc
 	DiscoveryRegistriesConfigDoc      encoder.Doc
@@ -2475,7 +2476,7 @@ func init() {
 			FieldName: "kubespan",
 		},
 	}
-	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 4)
+	NetworkKubeSpanDoc.Fields = make([]encoder.Doc, 5)
 	NetworkKubeSpanDoc.Fields[0].Name = "enabled"
 	NetworkKubeSpanDoc.Fields[0].Type = "bool"
 	NetworkKubeSpanDoc.Fields[0].Note = ""
@@ -2496,6 +2497,29 @@ func init() {
 	NetworkKubeSpanDoc.Fields[3].Note = ""
 	NetworkKubeSpanDoc.Fields[3].Description = "KubeSpan link MTU size.\nDefault value is 1420."
 	NetworkKubeSpanDoc.Fields[3].Comments[encoder.LineComment] = "KubeSpan link MTU size."
+	NetworkKubeSpanDoc.Fields[4].Name = "filters"
+	NetworkKubeSpanDoc.Fields[4].Type = "KubeSpanFilters"
+	NetworkKubeSpanDoc.Fields[4].Note = ""
+	NetworkKubeSpanDoc.Fields[4].Description = "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node."
+	NetworkKubeSpanDoc.Fields[4].Comments[encoder.LineComment] = "KubeSpan advanced filtering of network addresses ."
+
+	KubeSpanFiltersDoc.Type = "KubeSpanFilters"
+	KubeSpanFiltersDoc.Comments[encoder.LineComment] = "KubeSpanFilters struct describes KubeSpan advanced network addresses filtering."
+	KubeSpanFiltersDoc.Description = "KubeSpanFilters struct describes KubeSpan advanced network addresses filtering."
+	KubeSpanFiltersDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "NetworkKubeSpan",
+			FieldName: "filters",
+		},
+	}
+	KubeSpanFiltersDoc.Fields = make([]encoder.Doc, 1)
+	KubeSpanFiltersDoc.Fields[0].Name = "endpoints"
+	KubeSpanFiltersDoc.Fields[0].Type = "[]string"
+	KubeSpanFiltersDoc.Fields[0].Note = ""
+	KubeSpanFiltersDoc.Fields[0].Description = "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering."
+	KubeSpanFiltersDoc.Fields[0].Comments[encoder.LineComment] = "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections."
+
+	KubeSpanFiltersDoc.Fields[0].AddExample("Exclude addresses in 192.168.0.0/16 subnet.", []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"})
 
 	NetworkDeviceSelectorDoc.Type = "NetworkDeviceSelector"
 	NetworkDeviceSelectorDoc.Comments[encoder.LineComment] = "NetworkDeviceSelector struct describes network device selector."
@@ -2959,6 +2983,10 @@ func (_ NetworkKubeSpan) Doc() *encoder.Doc {
 	return &NetworkKubeSpanDoc
 }
 
+func (_ KubeSpanFilters) Doc() *encoder.Doc {
+	return &KubeSpanFiltersDoc
+}
+
 func (_ NetworkDeviceSelector) Doc() *encoder.Doc {
 	return &NetworkDeviceSelectorDoc
 }
@@ -3065,6 +3093,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&VolumeMountConfigDoc,
 			&ClusterInlineManifestDoc,
 			&NetworkKubeSpanDoc,
+			&KubeSpanFiltersDoc,
 			&NetworkDeviceSelectorDoc,
 			&ClusterDiscoveryConfigDoc,
 			&DiscoveryRegistriesConfigDoc,

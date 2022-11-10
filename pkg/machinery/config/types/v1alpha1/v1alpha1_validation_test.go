@@ -1224,6 +1224,73 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* invalid machine node labels: 6 errors occurred:\n\t* prefix cannot be empty: \"/foo\"\n\t* prefix \"123@.dev\" is invalid: domain doesn't match required format: \"123@.dev\"\n\t* name \"@!\" is invalid\n\t* label value \"#$\" is invalid\n\t* invalid format: too many slashes: \"a/b/c\"\n\t* label value length exceeds limit of 63: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n\n\n\n", //nolint:lll
 		},
+		{
+			name: "GoodKubeSpanEndpointFilters",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
+							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
+								KubeSpanFiltersEndpoints: []string{
+									"0.0.0.0/0",
+									"::/0",
+									"!192.168.0.0/16",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterID:     "test",
+					ClusterSecret: "test",
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
+					},
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "BadKubeSpanEndpointFilters",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
+							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
+								KubeSpanFiltersEndpoints: []string{
+									"!10",
+									"123::/456",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterID:     "test",
+					ClusterSecret: "test",
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
+					},
+				},
+			},
+			expectedError: "2 errors occurred:\n\t* KubeSpan endpoint filer is not valid: \"10\"\n\t* KubeSpan endpoint filer is not valid: \"123::/456\"\n\n",
+		},
 	} {
 		test := test
 
