@@ -52,11 +52,11 @@ func (suite *RebootSuite) TestReboot() {
 		var err error
 
 		for _, node := range []string{controlPlaneNode, workerNode} {
-			if !strings.Contains(stdout, fmt.Sprintf("%v: events check condition met", node)) {
+			if !strings.Contains(stdout, fmt.Sprintf("%q: events check condition met", node)) {
 				err = multierror.Append(err, fmt.Errorf("events check condition not met on %v", node))
 			}
 
-			if !strings.Contains(stdout, fmt.Sprintf("%v: post check passed", node)) {
+			if !strings.Contains(stdout, fmt.Sprintf("%q: post check passed", node)) {
 				err = multierror.Append(err, fmt.Errorf("post check not passed on %v", node))
 			}
 		}
