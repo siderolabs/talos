@@ -17,14 +17,14 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.26.0-alpha.3
-	k8s.io/apimachinery v0.26.0-alpha.3
-	k8s.io/apiserver v0.26.0-alpha.3
-	k8s.io/client-go v0.26.0-alpha.3
-	k8s.io/component-base v0.26.0-alpha.3
-	k8s.io/cri-api v0.26.0-alpha.3
-	k8s.io/kubectl v0.26.0-alpha.3
-	k8s.io/kubelet v0.26.0-alpha.3
+	k8s.io/api v0.26.0-beta.0
+	k8s.io/apimachinery v0.26.0-beta.0
+	k8s.io/apiserver v0.26.0-beta.0
+	k8s.io/client-go v0.26.0-beta.0
+	k8s.io/component-base v0.26.0-beta.0
+	k8s.io/cri-api v0.26.0-beta.0
+	k8s.io/kubectl v0.26.0-beta.0
+	k8s.io/kubelet v0.26.0-beta.0
 )
 
 require (
@@ -231,7 +231,7 @@ require (
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/sys/mountinfo v0.5.0 // indirect
 	github.com/moby/sys/signal v0.6.0 // indirect
-	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
+	github.com/moby/term v0.0.0-20220808134915-39b0c02b01ae // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
@@ -244,8 +244,8 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.13.0 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/client_golang v1.14.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
 	github.com/rivo/uniseg v0.4.2 // indirect
@@ -290,10 +290,10 @@ require (
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect
-	k8s.io/cli-runtime v0.26.0-alpha.3 // indirect
+	k8s.io/cli-runtime v0.26.0-beta.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
-	k8s.io/utils v0.0.0-20220922133306-665eaaec4324 // indirect
+	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.66 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect

@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	ctrs "github.com/siderolabs/talos/internal/pkg/containers"
 	criclient "github.com/siderolabs/talos/internal/pkg/cri"

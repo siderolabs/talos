@@ -39,7 +39,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/sys/unix"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
 	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
