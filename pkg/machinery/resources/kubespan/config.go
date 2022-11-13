@@ -41,6 +41,8 @@ type ConfigSpec struct {
 	MTU uint32 `yaml:"mtu,omitempty" protobuf:"6"`
 	// Allowed list of node endpoints.
 	FilterEndpoints []string `yaml:"filterEndpoints,omitempty" protobuf:"7"`
+	// FilterNativeRoute skip destination CIDR list.
+	FilterNativeRoute []string `yaml:"filterNativeRoute,omitempty" protobuf:"8"`
 }
 
 // NewConfig initializes a Config resource.

@@ -1138,6 +1138,11 @@ func (in *KubeSpanFilters) DeepCopyInto(out *KubeSpanFilters) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.KubeSpanFiltersNativeRoute != nil {
+		in, out := &in.KubeSpanFiltersNativeRoute, &out.KubeSpanFiltersNativeRoute
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

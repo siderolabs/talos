@@ -17,6 +17,7 @@ message ConfigSpec {
   bool advertise_kubernetes_networks = 5;
   uint32 mtu = 6;
   repeated string filter_endpoints = 7;
+  repeated string filter_native_route = 8;
 }
 
 // EndpointSpec describes Endpoint state.

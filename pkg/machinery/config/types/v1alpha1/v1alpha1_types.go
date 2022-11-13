@@ -2512,8 +2512,19 @@ type NetworkKubeSpan struct {
 
 // KubeSpanFilters struct describes KubeSpan filters.
 type KubeSpanFilters struct {
-	// description: KubeSpanFiltersEndpoints list allowed node' IPs to make p2p connections.
+	// description: |
+	//   CIDR list of node IPs, which will use for p2p connections.
+	//   Default value: [0.0.0.0/0, ::/0]
+	// examples:
+	//   - name: Uncomment this to use only IPv4 stack.
+	//     value: '[]string{"0.0.0.0/0"}'
 	KubeSpanFiltersEndpoints []string `yaml:"endpoints,omitempty"`
+	// description: |
+	//   Skip sending traffic via KubeSpan if the destination in that CIDR list.
+	// examples:
+	//   - name: Do not use KubeSpan to route 10.0.0.0/8 subnet.
+	//     value: '[]string{"10.0.0.0/8"}'
+	KubeSpanFiltersNativeRoute []string `yaml:"nativeRoute,omitempty"`
 }
 
 // NetworkDeviceSelector struct describes network device selector.

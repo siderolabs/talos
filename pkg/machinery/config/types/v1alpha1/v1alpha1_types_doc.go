@@ -2505,12 +2505,21 @@ func init() {
 			FieldName: "filters",
 		},
 	}
-	KubeSpanFiltersDoc.Fields = make([]encoder.Doc, 1)
+	KubeSpanFiltersDoc.Fields = make([]encoder.Doc, 2)
 	KubeSpanFiltersDoc.Fields[0].Name = "endpoints"
 	KubeSpanFiltersDoc.Fields[0].Type = "[]string"
 	KubeSpanFiltersDoc.Fields[0].Note = ""
-	KubeSpanFiltersDoc.Fields[0].Description = "KubeSpanFiltersEndpoints list allowed node' IPs to make p2p connections."
-	KubeSpanFiltersDoc.Fields[0].Comments[encoder.LineComment] = "KubeSpanFiltersEndpoints list allowed node' IPs to make p2p connections."
+	KubeSpanFiltersDoc.Fields[0].Description = "CIDR list of node IPs, which will use for p2p connections.\nDefault value: [0.0.0.0/0, ::/0]"
+	KubeSpanFiltersDoc.Fields[0].Comments[encoder.LineComment] = "CIDR list of node IPs, which will use for p2p connections."
+
+	KubeSpanFiltersDoc.Fields[0].AddExample("Uncomment this to use only IPv4 stack.", []string{"0.0.0.0/0"})
+	KubeSpanFiltersDoc.Fields[1].Name = "nativeRoute"
+	KubeSpanFiltersDoc.Fields[1].Type = "[]string"
+	KubeSpanFiltersDoc.Fields[1].Note = ""
+	KubeSpanFiltersDoc.Fields[1].Description = "Skip sending traffic via KubeSpan if the destination in that CIDR list."
+	KubeSpanFiltersDoc.Fields[1].Comments[encoder.LineComment] = "Skip sending traffic via KubeSpan if the destination in that CIDR list."
+
+	KubeSpanFiltersDoc.Fields[1].AddExample("Do not use KubeSpan to route 10.0.0.0/8 subnet.", []string{"10.0.0.0/8"})
 
 	NetworkDeviceSelectorDoc.Type = "NetworkDeviceSelector"
 	NetworkDeviceSelectorDoc.Comments[encoder.LineComment] = "NetworkDeviceSelector struct describes network device selector."

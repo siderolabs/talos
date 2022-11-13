@@ -298,6 +298,7 @@ type KubeSpan interface {
 // KubeSpanFilters configures KubeSpan filters.
 type KubeSpanFilters interface {
 	Endpoints() []string
+	NativeRoute() []string
 }
 
 // NetworkDeviceSelector defines the set of fields that can be used to pick network a device.

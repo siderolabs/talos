@@ -17,6 +17,10 @@ func (o ConfigSpec) DeepCopy() ConfigSpec {
 		cp.FilterEndpoints = make([]string, len(o.FilterEndpoints))
 		copy(cp.FilterEndpoints, o.FilterEndpoints)
 	}
+	if o.FilterNativeRoute != nil {
+		cp.FilterNativeRoute = make([]string, len(o.FilterNativeRoute))
+		copy(cp.FilterNativeRoute, o.FilterNativeRoute)
+	}
 	return cp
 }
 

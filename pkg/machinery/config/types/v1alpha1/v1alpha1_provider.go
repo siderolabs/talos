@@ -1042,6 +1042,15 @@ func (k *KubeSpanFilters) Endpoints() []string {
 	return k.KubeSpanFiltersEndpoints
 }
 
+// NativeRoute implements the config.KubeSpanFilters interface.
+func (k *KubeSpanFilters) NativeRoute() []string {
+	if k.KubeSpanFiltersNativeRoute == nil {
+		return nil
+	}
+
+	return k.KubeSpanFiltersNativeRoute
+}
+
 // Disabled implements the config.Provider interface.
 func (t *TimeConfig) Disabled() bool {
 	return pointer.SafeDeref(t.TimeDisabled)

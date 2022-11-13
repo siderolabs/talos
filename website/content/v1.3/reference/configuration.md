@@ -2741,7 +2741,14 @@ Appears in:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`endpoints` |[]string |KubeSpanFiltersEndpoints list allowed node' IPs to make p2p connections.  | |
+|`endpoints` |[]string |<details><summary>CIDR list of node IPs, which will use for p2p connections.</summary>Default value: [0.0.0.0/0, ::/0]</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+endpoints:
+    - 0.0.0.0/0
+{{< /highlight >}}</details> | |
+|`nativeRoute` |[]string |Skip sending traffic via KubeSpan if the destination in that CIDR list. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+nativeRoute:
+    - 10.0.0.0/8
+{{< /highlight >}}</details> | |
 
 
 
