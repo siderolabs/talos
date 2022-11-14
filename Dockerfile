@@ -619,7 +619,7 @@ ARG TARGETARCH
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=${TARGETARCH} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /installer
 RUN chmod +x /installer
 
-FROM alpine:3.16.2 AS unicode-pf2
+FROM alpine:3.16.3 AS unicode-pf2
 RUN apk add --no-cache --update --no-scripts grub
 
 FROM scratch AS install-artifacts-amd64
@@ -646,7 +646,7 @@ FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
 COPY --from=pkg-grub / /
 COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 
-FROM alpine:3.16.2 AS installer
+FROM alpine:3.16.3 AS installer
 RUN apk add --no-cache --update --no-scripts \
     bash \
     cpio \
@@ -779,7 +779,7 @@ RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-pat
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:19.0.0-alpine AS lint-markdown
+FROM node:19.0.1-alpine AS lint-markdown
 RUN apk add --no-cache findutils
 RUN npm i -g markdownlint-cli@0.23.2
 RUN npm i -g textlint@11.7.6
