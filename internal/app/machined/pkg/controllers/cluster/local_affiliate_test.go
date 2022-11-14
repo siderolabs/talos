@@ -102,6 +102,16 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	onlyK8sAddresses.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("10.244.1.0/24")}
 	suite.Require().NoError(suite.state.Create(suite.ctx, onlyK8sAddresses))
 
+	// add discovered public IPs
+	for _, addr := range []netip.Addr{
+		netip.MustParseAddr("1.1.1.1"),
+		netip.MustParseAddr("2001:123:4567::1"), // duplicate, will be ignored
+	} {
+		discoveredAddr := network.NewAddressStatus(cluster.NamespaceName, addr.String())
+		discoveredAddr.TypedSpec().Address = netip.PrefixFrom(addr, addr.BitLen())
+		suite.Require().NoError(suite.state.Create(suite.ctx, discoveredAddr))
+	}
+
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
 			spec := r.(*cluster.Affiliate).TypedSpec()
@@ -130,7 +140,10 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 			suite.Assert().Equal(ksIdentity.TypedSpec().PublicKey, spec.KubeSpan.PublicKey)
 			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.244.1.0/24")}, spec.KubeSpan.AdditionalAddresses)
 			suite.Assert().Equal([]netip.AddrPort{
-				netip.MustParseAddrPort("172.20.0.2:51820"), netip.MustParseAddrPort("10.5.0.1:51820"), netip.MustParseAddrPort("[2001:123:4567::1]:51820"),
+				netip.MustParseAddrPort("172.20.0.2:51820"),
+				netip.MustParseAddrPort("10.5.0.1:51820"),
+				netip.MustParseAddrPort("[2001:123:4567::1]:51820"),
+				netip.MustParseAddrPort("1.1.1.1:51820"),
 			}, spec.KubeSpan.Endpoints)
 
 			return nil

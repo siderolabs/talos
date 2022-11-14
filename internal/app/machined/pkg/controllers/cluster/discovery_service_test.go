@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -199,6 +200,18 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 			suite.Assert().Equal("1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=", spec.KubeSpan.PublicKey)
 			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.244.4.1/24")}, spec.KubeSpan.AdditionalAddresses)
 			suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("192.168.3.5:51820")}, spec.KubeSpan.Endpoints)
+
+			return nil
+		}),
+	))
+
+	// controller should publish public IP
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(*network.NewAddressStatus(cluster.NamespaceName, "service").Metadata(), func(r resource.Resource) error {
+			spec := r.(*network.AddressStatus).TypedSpec()
+
+			suite.Assert().True(spec.Address.IsValid())
+			suite.Assert().True(spec.Address.IsSingleIP())
 
 			return nil
 		}),

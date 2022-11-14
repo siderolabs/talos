@@ -89,7 +89,7 @@ require (
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.10
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/discovery-api v0.1.1
-	github.com/siderolabs/discovery-client v0.1.2
+	github.com/siderolabs/discovery-client v0.1.3
 	github.com/siderolabs/gen v0.4.0
 	github.com/siderolabs/go-blockdevice v0.4.1
 	github.com/siderolabs/go-circular v0.1.0

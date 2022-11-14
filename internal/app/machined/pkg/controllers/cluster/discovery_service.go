@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/version"
 )
@@ -78,6 +79,10 @@ func (ctrl *DiscoveryServiceController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: cluster.AffiliateType,
+			Kind: controller.OutputShared,
+		},
+		{
+			Type: network.AddressStatusType,
 			Kind: controller.OutputShared,
 		},
 	}
@@ -276,6 +281,24 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			}
 		}
 
+		// discover public IP
+		if publicIP := client.GetPublicIP(); len(publicIP) > 0 {
+			if err = safe.WriterModify(ctx, r, network.NewAddressStatus(cluster.NamespaceName, "service"), func(address *network.AddressStatus) error {
+				var addr netip.Addr
+
+				if err = addr.UnmarshalBinary(publicIP); err != nil {
+					return fmt.Errorf("error unmarshaling public IP: %w", err)
+				}
+
+				address.TypedSpec().Address = netip.PrefixFrom(addr, addr.BitLen())
+
+				return nil
+			}); err != nil {
+				return err //nolint:govet
+			}
+		}
+
+		// discover other nodes (affiliates)
 		touchedIDs := make(map[resource.ID]struct{})
 
 		for _, discoveredAffiliate := range client.GetAffiliates() {

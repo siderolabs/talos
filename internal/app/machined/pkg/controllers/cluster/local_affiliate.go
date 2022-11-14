@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -81,6 +82,11 @@ func (ctrl *LocalAffiliateController) Inputs() []controller.Input {
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
 			ID:        pointer.To(config.MachineTypeID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: cluster.NamespaceName,
+			Type:      network.AddressStatusType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -178,6 +184,11 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				return fmt.Errorf("error getting kubespan additional addresses: %w", err)
 			}
 
+			discoveredPublicIPs, err := safe.ReaderList[*network.AddressStatus](ctx, r, resource.NewMetadata(cluster.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
+			if err != nil {
+				return fmt.Errorf("error getting discovered public IP: %w", err)
+			}
+
 			localID := identity.(*cluster.Identity).TypedSpec().NodeID
 
 			touchedIDs := make(map[resource.ID]struct{})
@@ -230,6 +241,18 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 							}
 
 							endpoints = append(endpoints, netip.AddrPortFrom(ip, constants.KubeSpanDefaultPort))
+						}
+
+						// mix in discovered public IPs
+						for iter := safe.IteratorFromList(discoveredPublicIPs); iter.Next(); {
+							addr := iter.Value().TypedSpec().Address.Addr()
+
+							if slices.Contains(nodeIPs, func(a netip.Addr) bool { return addr == a }) {
+								// this address is already published
+								continue
+							}
+
+							endpoints = append(endpoints, netip.AddrPortFrom(addr, constants.KubeSpanDefaultPort))
 						}
 
 						spec.KubeSpan.Endpoints = endpoints
