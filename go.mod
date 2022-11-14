@@ -63,7 +63,7 @@ require (
 	github.com/hashicorp/go-getter v1.6.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
-	github.com/hetznercloud/hcloud-go v1.35.3
+	github.com/hetznercloud/hcloud-go v1.37.0
 	github.com/insomniacslk/dhcp v0.0.0-20221001123530-5308ebe5334c
 	github.com/jsimonetti/rtnetlink v1.2.3
 	github.com/jxskiss/base62 v1.1.0
