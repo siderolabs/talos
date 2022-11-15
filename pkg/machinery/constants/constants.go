@@ -446,6 +446,9 @@ const (
 	// CRIRegistryConfigPart is the path to the CRI generated registry configuration relative to /etc.
 	CRIRegistryConfigPart = "cri/conf.d/01-registries.part"
 
+	// CRICustomizationConfigPart is the path to the CRI generated registry configuration relative to /etc.
+	CRICustomizationConfigPart = "cri/conf.d/20-customization.part"
+
 	// TalosConfigEnvVar is the environment variable for setting the Talos configuration file path.
 	TalosConfigEnvVar = "TALOSCONFIG"
 

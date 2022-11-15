@@ -7,15 +7,14 @@ package files
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/pkg/toml"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
@@ -37,7 +36,6 @@ func (ctrl *CRIConfigPartsController) Inputs() []controller.Input {
 		{
 			Namespace: files.NamespaceName,
 			Type:      files.EtcFileStatusType,
-			ID:        pointer.To(constants.CRIRegistryConfigPart), // watch only registry configuration which might be updated
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -74,24 +72,16 @@ func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runt
 
 		sort.Strings(parts)
 
-		var contents []byte
-
-		for _, part := range parts {
-			var partContents []byte
-
-			partContents, err = os.ReadFile(part)
-			if err != nil {
-				return err
-			}
-
-			contents = append(contents, append([]byte("\n## "+part+"\n\n"), partContents...)...)
+		out, err := toml.Merge(parts)
+		if err != nil {
+			return err
 		}
 
 		if err := r.Modify(ctx, files.NewEtcFileSpec(files.NamespaceName, constants.CRIConfig),
 			func(r resource.Resource) error {
 				spec := r.(*files.EtcFileSpec).TypedSpec()
 
-				spec.Contents = contents
+				spec.Contents = out
 				spec.Mode = 0o600
 
 				return nil

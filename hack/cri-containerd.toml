@@ -7,7 +7,6 @@ disabled_plugins = [
 
 imports = [
     "/etc/cri/conf.d/cri.toml",
-    "/var/cri/conf.d/*.toml", # deprecated
 ]
 
 [debug]

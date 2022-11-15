@@ -70,6 +70,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/version"
@@ -1066,6 +1067,15 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				continue
 			}
 
+			// CRI configuration customization
+			if f.Path() == filepath.Join("/etc", constants.CRICustomizationConfigPart) {
+				if err = injectCRIConfigPatch(ctx, r.State().V1Alpha2().Resources(), []byte(f.Content())); err != nil {
+					result = multierror.Append(result, err)
+				}
+
+				continue
+			}
+
 			// Determine if supplied path is in /var or not.
 			// If not, we'll write it to /var anyways and bind mount below
 			p := f.Path()
@@ -1113,6 +1123,56 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 		return result.ErrorOrNil()
 	}, "writeUserFiles"
+}
+
+func injectCRIConfigPatch(ctx context.Context, st state.State, content []byte) error {
+	// limit overall waiting time
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	ch := make(chan state.Event)
+
+	// wait for the CRI config to be created
+	if err := st.Watch(ctx, resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRIConfig).Metadata(), ch); err != nil {
+		return err
+	}
+
+	// first update should be received about the existing resource
+	select {
+	case <-ch:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	etcFileSpec := resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRICustomizationConfigPart)
+	etcFileSpec.TypedSpec().Mode = 0o600
+	etcFileSpec.TypedSpec().Contents = content
+
+	if err := st.Create(ctx, etcFileSpec); err != nil {
+		return err
+	}
+
+	// wait for the CRI config parts controller to generate the merged file
+	var version resource.Version
+
+	select {
+	case ev := <-ch:
+		version = ev.Resource.Metadata().Version()
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	// wait for the file to be rendered
+	_, err := st.WatchFor(ctx, resourcefiles.NewEtcFileStatus(resourcefiles.NamespaceName, constants.CRIConfig).Metadata(), state.WithCondition(func(r resource.Resource) (bool, error) {
+		fileStatus, ok := r.(*resourcefiles.EtcFileStatus)
+		if !ok {
+			return false, nil
+		}
+
+		return fileStatus.TypedSpec().SpecVersion == version.String(), nil
+	}))
+
+	return err
 }
 
 //nolint:deadcode,unused

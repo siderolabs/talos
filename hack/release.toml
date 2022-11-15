@@ -227,6 +227,14 @@ Changes to the node labels will be applied immediately without `kubelet` restart
 Talos keeps track of the owned node labels in the `talos.dev/owned-labels` annotation.
 """
 
+    [notes.criconfig]
+        title = "CRI Configuration Overrides"
+        description = """\
+Talos no longer supports CRI config overrides placed in `/var/cri/conf.d` directory.
+
+[New way](https://www.talos.dev/v1.3/talos-guides/configuration/containerd/) correctly handles merging of containerd/CRI plugin configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]
