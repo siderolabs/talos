@@ -109,7 +109,6 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 		expectedNodename := nodenameSpec.Nodename
 
 		args := argsbuilder.Args{
-			"container-runtime":          "remote",
 			"container-runtime-endpoint": "unix://" + constants.CRIContainerdAddress,
 			"config":                     "/etc/kubernetes/kubelet.yaml",
 

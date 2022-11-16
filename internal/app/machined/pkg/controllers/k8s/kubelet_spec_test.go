@@ -128,7 +128,6 @@ func (suite *KubeletSpecSuite) TestReconcileDefault() {
 						"--cert-dir=/var/lib/kubelet/pki",
 						"--cloud-provider=external",
 						"--config=/etc/kubernetes/kubelet.yaml",
-						"--container-runtime=remote",
 						"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
 						"--foo=bar",
 						"--hostname-override=example.com",
@@ -189,7 +188,6 @@ func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 						"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubeconfig",
 						"--cert-dir=/var/lib/kubelet/pki",
 						"--config=/etc/kubernetes/kubelet.yaml",
-						"--container-runtime=remote",
 						"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
 						"--hostname-override=example.com",
 						"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
@@ -320,7 +318,6 @@ func (suite *KubeletSpecSuite) TestReconcileWithSkipNodeRegistration() {
 				suite.Assert().Equal([]string{
 					"--cert-dir=/var/lib/kubelet/pki",
 					"--config=/etc/kubernetes/kubelet.yaml",
-					"--container-runtime=remote",
 					"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
 					"--hostname-override=foo.com",
 					"--node-ip=172.20.0.3",
