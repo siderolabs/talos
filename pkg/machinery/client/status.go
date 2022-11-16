@@ -11,25 +11,34 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Status returns the status if it is a Status error, nil otherwise.
+func Status(err error) *status.Status {
+	type grpcStatus interface {
+		GRPCStatus() *status.Status
+	}
+
+	// Don't use FromError to avoid allocation of OK status.
+	var st grpcStatus
+
+	if errors.As(err, &st) {
+		return st.GRPCStatus()
+	}
+
+	return nil
+}
+
 // StatusCode returns the Code of the error if it is a Status error, codes.OK if err
 // is nil, or codes.Unknown otherwise correctly unwrapping wrapped errors.
 //
 // StatusCode is mostly equivalent to grpc `status.Code` method, but it correctly unwraps wrapped errors
 // including `multierror.Error` used when parsing multi-node responses.
 func StatusCode(err error) codes.Code {
-	type grpcStatus interface {
-		GRPCStatus() *status.Status
-	}
-
-	// Don't use FromError to avoid allocation of OK status.
 	if err == nil {
 		return codes.OK
 	}
 
-	var se grpcStatus
-
-	if errors.As(err, &se) {
-		return se.GRPCStatus().Code()
+	if st := Status(err); st != nil {
+		return st.Code()
 	}
 
 	return codes.Unknown
