@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	pb "github.com/siderolabs/siderolink/api/siderolink"
+	"github.com/siderolabs/siderolink/pkg/wireguard"
 	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc"
@@ -206,6 +207,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec.Kind = "wireguard"
 				spec.Up = true
 				spec.Logical = true
+				spec.MTU = wireguard.LinkMTU
 
 				spec.Wireguard = network.WireguardSpec{
 					PrivateKey: ctrl.nodeKey.String(),
