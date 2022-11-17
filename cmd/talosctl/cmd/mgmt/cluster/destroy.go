@@ -10,8 +10,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers"
 )
+
+var destroyCmdFlags struct {
+	forceDelete bool
+}
 
 // destroyCmd represents the cluster destroy command.
 var destroyCmd = &cobra.Command{
@@ -37,9 +42,11 @@ func destroy(ctx context.Context) error {
 		return err
 	}
 
-	return provisioner.Destroy(ctx, cluster)
+	return provisioner.Destroy(ctx, cluster, provision.WithDeleteOnErr(destroyCmdFlags.forceDelete))
 }
 
 func init() {
+	destroyCmd.PersistentFlags().BoolVarP(&destroyCmdFlags.forceDelete, "force", "f", false, "force deletion of cluster directory if there were errors")
+
 	Cmd.AddCommand(destroyCmd)
 }

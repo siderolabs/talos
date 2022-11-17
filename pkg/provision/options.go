@@ -106,6 +106,15 @@ func WithDockerPortsHostIP(hostIP string) Option {
 	}
 }
 
+// WithDeleteOnErr informs the provisioner to delete cluster state folder on error.
+func WithDeleteOnErr(v bool) Option {
+	return func(o *Options) error {
+		o.DeleteStateOnErr = v
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter     io.Writer
@@ -125,6 +134,7 @@ type Options struct {
 	// Expose ports to worker machines in docker provisioner
 	DockerPorts       []string
 	DockerPortsHostIP string
+	DeleteStateOnErr  bool
 }
 
 // DefaultOptions returns default options.

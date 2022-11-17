@@ -14,6 +14,8 @@ import (
 )
 
 // Destroy Talos cluster as set of qemu VMs.
+//
+//nolint:gocyclo
 func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
 	options := provision.DefaultOptions()
 
@@ -22,6 +24,24 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 			return err
 		}
 	}
+
+	complete := false
+	deleteStateDirectory := func(shouldDelete bool) error {
+		if complete || !shouldDelete {
+			return nil
+		}
+
+		complete = true
+
+		stateDirectoryPath, err := cluster.StatePath()
+		if err != nil {
+			return err
+		}
+
+		return os.RemoveAll(stateDirectoryPath)
+	}
+
+	defer deleteStateDirectory(options.DeleteStateOnErr) //nolint:errcheck
 
 	fmt.Fprintln(options.LogWriter, "stopping VMs")
 
@@ -54,10 +74,5 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 
 	fmt.Fprintln(options.LogWriter, "removing state directory")
 
-	stateDirectoryPath, err := cluster.StatePath()
-	if err != nil {
-		return err
-	}
-
-	return os.RemoveAll(stateDirectoryPath)
+	return deleteStateDirectory(true)
 }
