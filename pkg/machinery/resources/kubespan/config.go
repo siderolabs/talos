@@ -39,6 +39,10 @@ type ConfigSpec struct {
 	AdvertiseKubernetesNetworks bool `yaml:"advertiseKubernetesNetworks" protobuf:"5"`
 	// Force kubeSpan MTU size.
 	MTU uint32 `yaml:"mtu,omitempty" protobuf:"6"`
+	// Allowed list of node endpoints.
+	FilterEndpoints []string `yaml:"filterEndpoints,omitempty" protobuf:"7"`
+	// FilterNativeRoute skip destination CIDR list.
+	FilterNativeRoute []string `yaml:"filterNativeRoute,omitempty" protobuf:"8"`
 }
 
 // NewConfig initializes a Config resource.

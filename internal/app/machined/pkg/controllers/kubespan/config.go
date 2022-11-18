@@ -76,6 +76,8 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 					res.(*kubespan.Config).TypedSpec().ForceRouting = c.Machine().Network().KubeSpan().ForceRouting()
 					res.(*kubespan.Config).TypedSpec().AdvertiseKubernetesNetworks = c.Machine().Network().KubeSpan().AdvertiseKubernetesNetworks()
 					res.(*kubespan.Config).TypedSpec().MTU = c.Machine().Network().KubeSpan().MTU()
+					res.(*kubespan.Config).TypedSpec().FilterEndpoints = c.Machine().Network().KubeSpan().Filters().Endpoints()
+					res.(*kubespan.Config).TypedSpec().FilterNativeRoute = c.Machine().Network().KubeSpan().Filters().NativeRoute()
 
 					return nil
 				}); err != nil {

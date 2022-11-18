@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/net"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -227,9 +228,18 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 							spec.KubeSpan.AdditionalAddresses = nil
 						}
 
-						endpoints := make([]netip.AddrPort, 0, len(nodeIPs))
+						endpointsIP := nodeIPs
 
-						for _, ip := range nodeIPs {
+						if len(kubespanConfig.TypedSpec().FilterEndpoints) > 0 {
+							endpointsIP, err = net.FilterIPs(nodeIPs, kubespanConfig.TypedSpec().FilterEndpoints)
+							if err != nil {
+								return fmt.Errorf("error filtering KubeSpanEndpoints IPs: %w", err)
+							}
+						}
+
+						endpoints := make([]netip.AddrPort, 0, len(endpointsIP))
+
+						for _, ip := range endpointsIP {
 							if ip == spec.KubeSpan.Address {
 								// skip kubespan local address
 								continue

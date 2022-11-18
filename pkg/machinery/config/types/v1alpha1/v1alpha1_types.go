@@ -2511,6 +2511,26 @@ type NetworkKubeSpan struct {
 	//   KubeSpan link MTU size.
 	//   Default value is 1420.
 	KubeSpanMTU *uint32 `yaml:"mtu,omitempty"`
+	// description: |
+	//   KubeSpan filters.
+	KubeSpanFilters *KubeSpanFilters `yaml:"filters,omitempty"`
+}
+
+// KubeSpanFilters struct describes KubeSpan filters.
+type KubeSpanFilters struct {
+	// description: |
+	//   CIDR list of node IPs, which will use for p2p connections.
+	//   Default value: [0.0.0.0/0, ::/0]
+	// examples:
+	//   - name: Uncomment this to use only IPv4 stack.
+	//     value: '[]string{"0.0.0.0/0"}'
+	KubeSpanFiltersEndpoints []string `yaml:"endpoints,omitempty"`
+	// description: |
+	//   Skip sending traffic via KubeSpan if the destination in that CIDR list.
+	// examples:
+	//   - name: Do not use KubeSpan to route 10.0.0.0/8 subnet.
+	//     value: '[]string{"10.0.0.0/8"}'
+	KubeSpanFiltersNativeRoute []string `yaml:"nativeRoute,omitempty"`
 }
 
 // NetworkDeviceSelector struct describes network device selector.

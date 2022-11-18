@@ -1029,6 +1029,33 @@ func (k *NetworkKubeSpan) MTU() uint32 {
 	return pointer.SafeDeref(k.KubeSpanMTU)
 }
 
+// Filters implements the KubeSpan interface.
+func (k *NetworkKubeSpan) Filters() config.KubeSpanFilters {
+	if k.KubeSpanFilters == nil {
+		return &KubeSpanFilters{}
+	}
+
+	return k.KubeSpanFilters
+}
+
+// Endpoints implements the config.KubeSpanFilters interface.
+func (k *KubeSpanFilters) Endpoints() []string {
+	if k.KubeSpanFiltersEndpoints == nil {
+		return []string{"0.0.0.0/0", "::/0"}
+	}
+
+	return k.KubeSpanFiltersEndpoints
+}
+
+// NativeRoute implements the config.KubeSpanFilters interface.
+func (k *KubeSpanFilters) NativeRoute() []string {
+	if k.KubeSpanFiltersNativeRoute == nil {
+		return nil
+	}
+
+	return k.KubeSpanFiltersNativeRoute
+}
+
 // Disabled implements the config.Provider interface.
 func (t *TimeConfig) Disabled() bool {
 	return pointer.SafeDeref(t.TimeDisabled)

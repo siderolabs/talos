@@ -296,6 +296,13 @@ type KubeSpan interface {
 	ForceRouting() bool
 	AdvertiseKubernetesNetworks() bool
 	MTU() uint32
+	Filters() KubeSpanFilters
+}
+
+// KubeSpanFilters configures KubeSpan filters.
+type KubeSpanFilters interface {
+	Endpoints() []string
+	NativeRoute() []string
 }
 
 // NetworkDeviceSelector defines the set of fields that can be used to pick network a device.
