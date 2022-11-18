@@ -52,8 +52,8 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	nodename.TypedSpec().Nodename = "example1.com"
 	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
 
-	nonK8sAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s))
-	nonK8sAddresses.TypedSpec().Addresses = []netip.Prefix{
+	nonK8sCurrentAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s))
+	nonK8sCurrentAddresses.TypedSpec().Addresses = []netip.Prefix{
 		netip.MustParsePrefix("172.20.0.2/24"),
 		netip.MustParsePrefix("10.5.0.1/32"),
 		netip.MustParsePrefix("192.168.192.168/24"),
@@ -61,7 +61,17 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 		netip.MustParsePrefix("2001:123:4567::1/128"),
 		netip.MustParsePrefix("fdae:41e4:649b:9303:60be:7e36:c270:3238/128"), // SideroLink, should be ignored
 	}
-	suite.Require().NoError(suite.state.Create(suite.ctx, nonK8sAddresses))
+	suite.Require().NoError(suite.state.Create(suite.ctx, nonK8sCurrentAddresses))
+
+	nonK8sRoutedAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s))
+	nonK8sRoutedAddresses.TypedSpec().Addresses = []netip.Prefix{ // routed node addresses don't contain SideroLink addresses
+		netip.MustParsePrefix("172.20.0.2/24"),
+		netip.MustParsePrefix("10.5.0.1/32"),
+		netip.MustParsePrefix("192.168.192.168/24"),
+		netip.MustParsePrefix("2001:123:4567::1/64"),
+		netip.MustParsePrefix("2001:123:4567::1/128"),
+	}
+	suite.Require().NoError(suite.state.Create(suite.ctx, nonK8sRoutedAddresses))
 
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeWorker)
@@ -102,8 +112,8 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, ksConfig))
 
 	// add KS address to the list of node addresses, it should be ignored in the endpoints
-	nonK8sAddresses.TypedSpec().Addresses = append(nonK8sAddresses.TypedSpec().Addresses, ksIdentity.TypedSpec().Address)
-	suite.Require().NoError(suite.state.Update(suite.ctx, nonK8sAddresses))
+	nonK8sRoutedAddresses.TypedSpec().Addresses = append(nonK8sRoutedAddresses.TypedSpec().Addresses, ksIdentity.TypedSpec().Address)
+	suite.Require().NoError(suite.state.Update(suite.ctx, nonK8sRoutedAddresses))
 
 	onlyK8sAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterOnlyK8s))
 	onlyK8sAddresses.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("10.244.1.0/24")}

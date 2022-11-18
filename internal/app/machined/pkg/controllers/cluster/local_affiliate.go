@@ -149,7 +149,17 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			addresses, err := r.Get(ctx,
+			routedAddresses, err := r.Get(ctx,
+				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
+			if err != nil {
+				if !state.IsNotFoundError(err) {
+					return fmt.Errorf("error getting addresses: %w", err)
+				}
+
+				continue
+			}
+
+			currentAddresses, err := r.Get(ctx,
 				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
 			if err != nil {
 				if !state.IsNotFoundError(err) {
@@ -204,17 +214,10 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					spec.MachineType = machineType.(*config.MachineType).MachineType()
 					spec.OperatingSystem = fmt.Sprintf("%s (%s)", version.Name, version.Tag)
 
-					nodeIPs := addresses.(*network.NodeAddress).TypedSpec().IPs()
-					spec.Addresses = make([]netip.Addr, 0, len(nodeIPs))
+					routedNodeIPs := routedAddresses.(*network.NodeAddress).TypedSpec().IPs()
+					currentNodeIPs := currentAddresses.(*network.NodeAddress).TypedSpec().IPs()
 
-					for _, ip := range nodeIPs {
-						if network.IsULA(ip, network.ULASideroLink) {
-							// ignore SideroLink addresses, as they are point-to-point addresses
-							continue
-						}
-
-						spec.Addresses = append(spec.Addresses, ip)
-					}
+					spec.Addresses = routedNodeIPs
 
 					spec.KubeSpan = cluster.KubeSpanAffiliateSpec{}
 
@@ -228,7 +231,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 							spec.KubeSpan.AdditionalAddresses = nil
 						}
 
-						endpointIPs := slices.Filter(nodeIPs, func(ip netip.Addr) bool {
+						endpointIPs := slices.Filter(currentNodeIPs, func(ip netip.Addr) bool {
 							if ip == spec.KubeSpan.Address {
 								// skip kubespan local address
 								return false
