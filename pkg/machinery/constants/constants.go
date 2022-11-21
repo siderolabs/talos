@@ -351,7 +351,7 @@ const (
 	KubeletSystemReservedEphemeralStorage = "256Mi"
 
 	// DefaultEtcdVersion is the default target version of etcd.
-	DefaultEtcdVersion = "v3.5.5"
+	DefaultEtcdVersion = "v3.5.6"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
