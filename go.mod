@@ -45,7 +45,7 @@ require (
 	github.com/docker/docker v20.10.21+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.0
-	github.com/emicklei/dot v1.1.0
+	github.com/emicklei/dot v1.2.0
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gdamore/tcell/v2 v2.5.3
