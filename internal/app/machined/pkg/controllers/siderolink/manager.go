@@ -206,6 +206,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec.Kind = "wireguard"
 				spec.Up = true
 				spec.Logical = true
+				spec.MTU = 1280 // hardcode the value here to avoid pulling in siderolabs/siderolink with new package path
 
 				spec.Wireguard = network.WireguardSpec{
 					PrivateKey: ctrl.nodeKey.String(),
