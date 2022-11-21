@@ -22,7 +22,7 @@ require (
 	k8s.io/apiserver v0.26.0-rc.0
 	k8s.io/client-go v0.26.0-rc.0
 	k8s.io/component-base v0.26.0-rc.0
-	k8s.io/cri-api v0.26.0-rc.0
+	k8s.io/cri-api v0.27.0-alpha.0
 	k8s.io/kubectl v0.26.0-rc.0
 	k8s.io/kubelet v0.26.0-rc.0
 )
