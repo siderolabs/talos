@@ -7,32 +7,21 @@ package hcloud
 import (
 	"context"
 	stderrors "errors"
-	"log"
+	"fmt"
+	"strings"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/pkg/download"
 )
 
 const (
-	// HCloudExternalIPEndpoint is the local hcloud endpoint for the external IP.
-	HCloudExternalIPEndpoint = "http://169.254.169.254/hetzner/v1/metadata/public-ipv4"
+	// HCloudMetadataEndpoint is the local HCloud metadata endpoint.
+	HCloudMetadataEndpoint = "http://169.254.169.254/hetzner/v1/metadata"
 
-	// HCloudNetworkEndpoint is the local hcloud endpoint for the network-config.
+	// HCloudNetworkEndpoint is the local HCloud metadata endpoint for the network-config.
 	HCloudNetworkEndpoint = "http://169.254.169.254/hetzner/v1/metadata/network-config"
 
-	// HCloudHostnameEndpoint is the local hcloud endpoint for the hostname.
-	HCloudHostnameEndpoint = "http://169.254.169.254/hetzner/v1/metadata/hostname"
-
-	// HCloudInstanceIDEndpoint is the local hcloud endpoint for the instance-id.
-	HCloudInstanceIDEndpoint = "http://169.254.169.254/hetzner/v1/metadata/instance-id"
-
-	// HCloudRegionEndpoint is the local hcloud endpoint for the region.
-	HCloudRegionEndpoint = "http://169.254.169.254/hetzner/v1/metadata/region"
-
-	// HCloudZoneEndpoint is the local hcloud endpoint for the zone.
-	HCloudZoneEndpoint = "http://169.254.169.254/hetzner/v1/metadata/availability-zone"
-
-	// HCloudUserDataEndpoint is the local hcloud endpoint for the config.
+	// HCloudUserDataEndpoint is the local HCloud metadata endpoint for the config.
 	HCloudUserDataEndpoint = "http://169.254.169.254/hetzner/v1/userdata"
 )
 
@@ -40,7 +29,7 @@ const (
 type MetadataConfig struct {
 	Hostname         string `yaml:"hostname,omitempty"`
 	Region           string `yaml:"region,omitempty"`
-	AvailabilityZone string `json:"availability-zone,omitempty"`
+	AvailabilityZone string `yaml:"availability-zone,omitempty"`
 	InstanceID       string `yaml:"instance-id,omitempty"`
 	PublicIPv4       string `yaml:"public-ipv4,omitempty"`
 }
@@ -63,37 +52,40 @@ type NetworkConfig struct {
 	} `yaml:"config"`
 }
 
-func (h *Hcloud) getMetadata(ctx context.Context) (*MetadataConfig, error) {
-	log.Printf("fetching hostname from: %q", HCloudHostnameEndpoint)
+func (h *Hcloud) getMetadata(ctx context.Context) (metadata *MetadataConfig, err error) {
+	getMetadataKey := func(key string) (string, error) {
+		res, metaerr := download.Download(ctx, fmt.Sprintf("%s/%s", HCloudMetadataEndpoint, key),
+			download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+			download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+		if metaerr != nil && !stderrors.Is(metaerr, errors.ErrNoConfigSource) {
+			return "", fmt.Errorf("failed to fetch %q from IMDS: %w", key, metaerr)
+		}
 
-	host, err := download.Download(ctx, HCloudHostnameEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil && !stderrors.Is(err, errors.ErrNoHostname) {
+		return string(res), nil
+	}
+
+	metadata = &MetadataConfig{}
+
+	if metadata.Hostname, err = getMetadataKey("hostname"); err != nil {
 		return nil, err
 	}
 
-	log.Printf("fetching instance-id from: %q", HCloudInstanceIDEndpoint)
-
-	instanceID, err := download.Download(ctx, HCloudInstanceIDEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoHostname),
-		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))
-	if err != nil && !stderrors.Is(err, errors.ErrNoHostname) {
+	if metadata.InstanceID, err = getMetadataKey("instance-id"); err != nil {
 		return nil, err
 	}
 
-	log.Printf("fetching externalIP from: %q", HCloudExternalIPEndpoint)
-
-	extIP, err := download.Download(ctx, HCloudExternalIPEndpoint,
-		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
-		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
-	if err != nil && !stderrors.Is(err, errors.ErrNoExternalIPs) {
+	if metadata.AvailabilityZone, err = getMetadataKey("availability-zone"); err != nil {
 		return nil, err
 	}
 
-	return &MetadataConfig{
-		Hostname:   string(host),
-		InstanceID: string(instanceID),
-		PublicIPv4: string(extIP),
-	}, nil
+	// Original CCM/CSI uses first part of availability-zone to define region name.
+	// But metadata has different value.
+	// We will follow official behavior.
+	metadata.Region = strings.SplitN(metadata.AvailabilityZone, "-", 2)[0]
+
+	if metadata.PublicIPv4, err = getMetadataKey("public-ipv4"); err != nil {
+		return nil, err
+	}
+
+	return metadata, nil
 }

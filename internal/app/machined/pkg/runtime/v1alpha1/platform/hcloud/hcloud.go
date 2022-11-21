@@ -136,6 +136,8 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadat
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:   h.Name(),
 		Hostname:   metadata.Hostname,
+		Region:     metadata.Region,
+		Zone:       metadata.AvailabilityZone,
 		InstanceID: metadata.InstanceID,
 		ProviderID: fmt.Sprintf("hcloud://%s", metadata.InstanceID),
 	}

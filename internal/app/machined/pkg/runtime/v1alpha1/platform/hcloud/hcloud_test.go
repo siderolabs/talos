@@ -25,9 +25,11 @@ func TestParseMetadata(t *testing.T) {
 	h := &hcloud.Hcloud{}
 
 	metadata := &hcloud.MetadataConfig{
-		Hostname:   "talos.fqdn",
-		PublicIPv4: "1.2.3.4",
-		InstanceID: "0",
+		Hostname:         "talos.fqdn",
+		PublicIPv4:       "1.2.3.4",
+		InstanceID:       "0",
+		Region:           "hel1",
+		AvailabilityZone: "hel1-dc2",
 	}
 
 	var m hcloud.NetworkConfig
