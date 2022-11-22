@@ -53,3 +53,8 @@ func (b *FormLabel) SetFinishedFunc(handler func(key tcell.Key)) tview.FormItem 
 func (b *FormLabel) GetLabel() string {
 	return ""
 }
+
+// GetFieldHeight implements tview.FormItem.
+func (b *FormLabel) GetFieldHeight() int {
+	return 1
+}

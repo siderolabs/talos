@@ -64,6 +64,11 @@ func (b *FormModalButton) GetFieldWidth() int {
 	return 0
 }
 
+// GetFieldHeight implements tview.FormItem.
+func (b *FormModalButton) GetFieldHeight() int {
+	return 1
+}
+
 // SetFinishedFunc implements tview.FormItem.
 func (b *FormModalButton) SetFinishedFunc(handler func(key tcell.Key)) tview.FormItem {
 	return b
