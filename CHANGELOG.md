@@ -1,3 +1,55 @@
+## [Talos 1.2.7](https://github.com/siderolabs/talos/releases/tag/v1.2.7) (2022-11-22)
+
+Welcome to the v1.2.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Kubernetes: v1.25.4
+* Linux: 5.15.79
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>5 commits</summary>
+<p>
+
+* [`54f1b0e19`](https://github.com/siderolabs/talos/commit/54f1b0e1978355d897837f9ba784a87cca963bfd) fix: limit SideroLink Wireguard link MTU to 1280
+* [`bd8ca9da4`](https://github.com/siderolabs/talos/commit/bd8ca9da42b2f2076a2eed154544e5cbf7b347cf) fix: generate correct Flannel config for IPv6-only clusters
+* [`f9b5cd822`](https://github.com/siderolabs/talos/commit/f9b5cd82290193a20bca79000fd8f072a81bf073) chore: introduce a healthcheck for `machined` service
+* [`e29f306cf`](https://github.com/siderolabs/talos/commit/e29f306cf0adb04ee19efb2fb1b9c37789bff3bb) feat: update Linux to 5.15.79
+* [`4361c14bd`](https://github.com/siderolabs/talos/commit/4361c14bd47ed1df31ad287df88b6e0d3d82a06e) feat: update Kubernetes to v1.25.4
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`23c0dfd`](https://github.com/siderolabs/pkgs/commit/23c0dfd5badf4b4f60a5db37ec881e9d22dcc162) feat: update Linux to 5.15.79
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.2.0-19-gf3dfac7 -> v1.2.0-20-g23c0dfd
+* **k8s.io/api**                  v0.25.3 -> v0.25.4
+* **k8s.io/apimachinery**         v0.25.3 -> v0.25.4
+* **k8s.io/apiserver**            v0.25.3 -> v0.25.4
+* **k8s.io/client-go**            v0.25.3 -> v0.25.4
+* **k8s.io/component-base**       v0.25.3 -> v0.25.4
+* **k8s.io/kubectl**              v0.25.3 -> v0.25.4
+* **k8s.io/kubelet**              v0.25.3 -> v0.25.4
+
+Previous release can be found at [v1.2.6](https://github.com/siderolabs/talos/releases/tag/v1.2.6)
+
 ## [Talos 1.2.6](https://github.com/siderolabs/talos/releases/tag/v1.2.6) (2022-10-26)
 
 Welcome to the v1.2.6 release of Talos!
