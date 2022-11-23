@@ -41,7 +41,7 @@ worker.yaml is valid for metal mode
 #### Publishing the Machine Configuration Files
 
 In bare-metal setups it is up to the user to provide the configuration files over HTTP(S).
-A special kernel parameter (`talos.config`) must be used to inform Talos about _where_ it should retreive its' configuration file.
+A special kernel parameter (`talos.config`) must be used to inform Talos about _where_ it should retrieve its configuration file.
 To keep things simple we will place `controlplane.yaml`, and `worker.yaml` into Matchbox's `assets` directory.
 This directory is automatically served by Matchbox.
 
@@ -149,8 +149,8 @@ Now, create the following groups, and ensure that the `selector`s are accurate f
 
 ### Boot the Machines
 
-Now that we have our configuraton files in place, boot all the machines.
-Talos will come up on each machine, grab its' configuration file, and bootstrap itself.
+Now that we have our configuration files in place, boot all the machines.
+Talos will come up on each machine, grab its configuration file, and bootstrap itself.
 
 ### Bootstrap Etcd
 
