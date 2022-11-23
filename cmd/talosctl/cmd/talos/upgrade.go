@@ -82,7 +82,7 @@ func runUpgradeNoWait() error {
 			upgradeCmdFlags.upgradeImage,
 			upgradeCmdFlags.preserve,
 			upgradeCmdFlags.stage,
-			force,
+			upgradeCmdFlags.force,
 			grpc.Peer(&remotePeer),
 		)
 		if err != nil {
@@ -124,7 +124,7 @@ func upgradeGetActorID(ctx context.Context, c *client.Client) (string, error) {
 		upgradeCmdFlags.upgradeImage,
 		upgradeCmdFlags.preserve,
 		upgradeCmdFlags.stage,
-		force,
+		upgradeCmdFlags.force,
 	)
 	if err != nil {
 		return "", err
