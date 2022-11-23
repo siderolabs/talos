@@ -22,11 +22,11 @@ import (
 	"github.com/talos-systems/talos/pkg/machinery/client"
 )
 
-var (
+var kubeconfigFlags struct {
 	force            bool
 	forceContextName string
 	merge            bool
-)
+}
 
 // kubeconfigCmd represents the kubeconfig command.
 var kubeconfigCmd = &cobra.Command{
@@ -48,7 +48,7 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 				// no path given, use defaults
 				var err error
 
-				if merge {
+				if kubeconfigFlags.merge {
 					localPath, err = kubeconfig.SinglePath()
 					if err != nil {
 						return err
@@ -81,12 +81,12 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 			}
 
 			_, err = os.Stat(localPath)
-			if err == nil && !(force || merge) {
+			if err == nil && !(kubeconfigFlags.force || kubeconfigFlags.merge) {
 				return fmt.Errorf("kubeconfig file already exists, use --force to overwrite: %q", localPath)
 			} else if err != nil {
 				if os.IsNotExist(err) {
 					// merge doesn't make sense if target path doesn't exist
-					merge = false
+					kubeconfigFlags.merge = false
 				} else {
 					return fmt.Errorf("error checking path %q: %w", localPath, err)
 				}
@@ -115,7 +115,7 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 				return err
 			}
 
-			if merge {
+			if kubeconfigFlags.merge {
 				return extractAndMerge(data, localPath)
 			}
 
@@ -139,10 +139,10 @@ func extractAndMerge(data []byte, localPath string) error {
 
 	err = merger.Merge(config, kubeconfig.MergeOptions{
 		ActivateContext:  true,
-		ForceContextName: forceContextName,
+		ForceContextName: kubeconfigFlags.forceContextName,
 		OutputWriter:     os.Stdout,
 		ConflictHandler: func(component kubeconfig.ConfigComponent, name string) (kubeconfig.ConflictDecision, error) {
-			if force {
+			if kubeconfigFlags.force {
 				return kubeconfig.OverwriteDecision, nil
 			}
 
@@ -182,8 +182,8 @@ func askOverwriteOrRename(prompt string) (kubeconfig.ConflictDecision, error) {
 }
 
 func init() {
-	kubeconfigCmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite of kubeconfig if already present, force overwrite on kubeconfig merge")
-	kubeconfigCmd.Flags().StringVar(&forceContextName, "force-context-name", "", "Force context name for kubeconfig merge")
-	kubeconfigCmd.Flags().BoolVarP(&merge, "merge", "m", true, "Merge with existing kubeconfig")
+	kubeconfigCmd.Flags().BoolVarP(&kubeconfigFlags.force, "force", "f", false, "Force overwrite of kubeconfig if already present, force overwrite on kubeconfig merge")
+	kubeconfigCmd.Flags().StringVar(&kubeconfigFlags.forceContextName, "force-context-name", "", "Force context name for kubeconfig merge")
+	kubeconfigCmd.Flags().BoolVarP(&kubeconfigFlags.merge, "merge", "m", true, "Merge with existing kubeconfig")
 	addCommand(kubeconfigCmd)
 }
