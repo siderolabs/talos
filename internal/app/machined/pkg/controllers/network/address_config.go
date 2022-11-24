@@ -100,8 +100,8 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 		}
 
 		// parse kernel cmdline for the address
-		cmdlineAddress := ctrl.parseCmdline(logger)
-		if !value.IsZero(cmdlineAddress.Address) {
+		cmdlineAddresses := ctrl.parseCmdline(logger)
+		for _, cmdlineAddress := range cmdlineAddresses {
 			if _, ignored := ignoredInterfaces[cmdlineAddress.LinkName]; !ignored {
 				var ids []string
 
@@ -197,7 +197,7 @@ func (ctrl *AddressConfigController) loopbackDefaults() []network.AddressSpecSpe
 	}
 }
 
-func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address network.AddressSpecSpec) {
+func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (addresses []network.AddressSpecSpec) {
 	if ctrl.Cmdline == nil {
 		return
 	}
@@ -209,23 +209,29 @@ func (ctrl *AddressConfigController) parseCmdline(logger *zap.Logger) (address n
 		return
 	}
 
-	if value.IsZero(settings.Address) {
-		return
+	for _, linkConfig := range settings.LinkConfigs {
+		if value.IsZero(linkConfig.Address) {
+			continue
+		}
+
+		var address network.AddressSpecSpec
+
+		address.Address = linkConfig.Address
+		if address.Address.Addr().Is6() {
+			address.Family = nethelpers.FamilyInet6
+		} else {
+			address.Family = nethelpers.FamilyInet4
+		}
+
+		address.Scope = nethelpers.ScopeGlobal
+		address.Flags = nethelpers.AddressFlags(nethelpers.AddressPermanent)
+		address.ConfigLayer = network.ConfigCmdline
+		address.LinkName = linkConfig.LinkName
+
+		addresses = append(addresses, address)
 	}
 
-	address.Address = settings.Address
-	if address.Address.Addr().Is6() {
-		address.Family = nethelpers.FamilyInet6
-	} else {
-		address.Family = nethelpers.FamilyInet4
-	}
-
-	address.Scope = nethelpers.ScopeGlobal
-	address.Flags = nethelpers.AddressFlags(nethelpers.AddressPermanent)
-	address.ConfigLayer = network.ConfigCmdline
-	address.LinkName = settings.LinkName
-
-	return address
+	return addresses
 }
 
 func parseIPOrIPPrefix(address string) (netip.Prefix, error) {

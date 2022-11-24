@@ -131,7 +131,7 @@ func (suite *AddressConfigSuite) TestCmdline() {
 	suite.Require().NoError(
 		suite.runtime.RegisterController(
 			&netctrl.AddressConfigController{
-				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::"),
+				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1::::: ip=eth3:dhcp ip=10.3.5.7::10.3.5.1:255.255.255.0::eth4"),
 			},
 		),
 	)
@@ -144,8 +144,14 @@ func (suite *AddressConfigSuite) TestCmdline() {
 				return suite.assertAddresses(
 					[]string{
 						"cmdline/eth1/172.20.0.2/24",
+						"cmdline/eth4/10.3.5.7/24",
 					}, func(r *network.AddressSpec) error {
-						suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
+						switch r.Metadata().ID() {
+						case "cmdline/eth1/172.20.0.2/24":
+							suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
+						case "cmdline/eth4/10.3.5.7/24":
+							suite.Assert().Equal("eth4", r.TypedSpec().LinkName)
+						}
 
 						return nil
 					},

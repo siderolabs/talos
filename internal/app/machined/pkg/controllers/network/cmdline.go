@@ -24,15 +24,44 @@ import (
 
 // CmdlineNetworking contains parsed cmdline networking settings.
 type CmdlineNetworking struct {
-	DHCP             bool
-	Address          netip.Prefix
-	Gateway          netip.Addr
+	LinkConfigs      []CmdlineLinkConfig
 	Hostname         string
-	LinkName         string
 	DNSAddresses     []netip.Addr
 	NTPAddresses     []netip.Addr
 	IgnoreInterfaces []string
 	NetworkLinkSpecs []network.LinkSpecSpec
+}
+
+// CmdlineLinkConfig contains parsed cmdline networking settings for a single link.
+type CmdlineLinkConfig struct {
+	LinkName string
+	Address  netip.Prefix
+	Gateway  netip.Addr
+	DHCP     bool
+}
+
+func (linkConfig *CmdlineLinkConfig) resolveLinkName() error {
+	if !strings.HasPrefix(linkConfig.LinkName, "enx") {
+		return nil
+	}
+
+	ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
+	mac := strings.ToLower(strings.TrimPrefix(linkConfig.LinkName, "enx"))
+
+	for _, iface := range ifaces {
+		ifaceMAC := strings.ReplaceAll(iface.HardwareAddr.String(), ":", "")
+		if ifaceMAC == mac {
+			linkConfig.LinkName = iface.Name
+
+			break
+		}
+	}
+
+	if strings.HasPrefix(linkConfig.LinkName, "enx") {
+		return fmt.Errorf("cmdline device parse failure: interface by MAC not found %s", linkConfig.LinkName)
+	}
+
+	return nil
 }
 
 // splitIPArgument splits the `ip=` kernel argument honoring the IPv6 addresses in square brackets.
@@ -63,6 +92,8 @@ func splitIPArgument(val string) []string {
 	return parts
 }
 
+const autoconfDHCP = "dhcp"
+
 // ParseCmdlineNetwork parses `ip=` and Talos specific kernel cmdline argument producing all the available configuration options.
 //
 //nolint:gocyclo,cyclop
@@ -85,24 +116,42 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 	}
 
 	// standard ip=
-	ipSettings := cmdline.Get("ip").First()
+	ipSettings := cmdline.Get("ip")
 
-	// dracut bond=
-	// ref: https://man7.org/linux/man-pages/man7/dracut.cmdline.7.html
-	bondSettings := cmdline.Get(constants.KernelParamBonding).First()
-
-	if ipSettings != nil {
+	for idx := 0; ipSettings.Get(idx) != nil; idx++ {
 		// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
-		// ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>
-		fields := splitIPArgument(*ipSettings)
+		// https://man7.org/linux/man-pages/man7/dracut.cmdline.7.html
+		//
+		// supported formats:
+		//   ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>
+		//   ip=dhcp (ignored)
+		//   ip=<device>:dhcp
+		fields := splitIPArgument(*ipSettings.Get(idx))
 
-		// If dhcp is specified, we'll handle it as a normal discovered
-		// interface
-		if len(fields) == 1 && fields[0] == "dhcp" {
-			settings.DHCP = true
-		}
+		switch {
+		case len(fields) == 1 && fields[0] == autoconfDHCP:
+			// ignore
+		case len(fields) == 2 && fields[1] == autoconfDHCP:
+			// ip=<device>:dhcp
+			linkConfig := CmdlineLinkConfig{
+				LinkName: fields[0],
+				DHCP:     true,
+			}
 
-		if !settings.DHCP {
+			if err = linkConfig.resolveLinkName(); err != nil {
+				return settings, err
+			}
+
+			linkSpecSpecs = append(linkSpecSpecs, network.LinkSpecSpec{
+				Name:        linkConfig.LinkName,
+				Up:          true,
+				ConfigLayer: network.ConfigCmdline,
+			})
+
+			settings.LinkConfigs = append(settings.LinkConfigs, linkConfig)
+		default:
+			linkConfig := CmdlineLinkConfig{}
+
 			for i := range fields {
 				if fields[i] == "" {
 					continue
@@ -118,9 +167,9 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 					}
 
 					// default is to have complete address masked
-					settings.Address = netip.PrefixFrom(ip, ip.BitLen())
+					linkConfig.Address = netip.PrefixFrom(ip, ip.BitLen())
 				case 2:
-					settings.Gateway, err = netip.ParseAddr(fields[2])
+					linkConfig.Gateway, err = netip.ParseAddr(fields[2])
 					if err != nil {
 						return settings, fmt.Errorf("cmdline gateway parse failure: %s", err)
 					}
@@ -134,13 +183,17 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 
 					ones, _ := net.IPMask(netmask.AsSlice()).Size()
 
-					settings.Address = netip.PrefixFrom(settings.Address.Addr(), ones)
+					linkConfig.Address = netip.PrefixFrom(linkConfig.Address.Addr(), ones)
 				case 4:
 					if settings.Hostname == "" {
 						settings.Hostname = fields[4]
 					}
 				case 5:
-					settings.LinkName = fields[5]
+					linkConfig.LinkName = fields[5]
+				case 6:
+					if fields[6] == autoconfDHCP {
+						linkConfig.DHCP = true
+					}
 				case 7, 8:
 					var dnsIP netip.Addr
 
@@ -161,50 +214,42 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 					settings.NTPAddresses = append(settings.NTPAddresses, ntpIP)
 				}
 			}
-		}
 
-		// resolve enx* (with MAC address) to the actual interface name
-		if strings.HasPrefix(settings.LinkName, "enx") {
-			ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
-			mac := strings.ToLower(strings.TrimPrefix(settings.LinkName, "enx"))
+			// resolve enx* (with MAC address) to the actual interface name
+			if err = linkConfig.resolveLinkName(); err != nil {
+				return settings, err
+			}
 
-			for _, iface := range ifaces {
-				ifaceMAC := strings.ReplaceAll(iface.HardwareAddr.String(), ":", "")
-				if ifaceMAC == mac {
-					settings.LinkName = iface.Name
+			// if interface name is not set, pick the first non-loopback interface
+			if linkConfig.LinkName == "" {
+				ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
+
+				sort.Slice(ifaces, func(i, j int) bool { return ifaces[i].Name < ifaces[j].Name })
+
+				for _, iface := range ifaces {
+					if iface.Flags&net.FlagLoopback != 0 {
+						continue
+					}
+
+					linkConfig.LinkName = iface.Name
 
 					break
 				}
 			}
 
-			if strings.HasPrefix(settings.LinkName, "enx") {
-				return settings, fmt.Errorf("cmdline device parse failure: interface by MAC not found %s", settings.LinkName)
-			}
+			linkSpecSpecs = append(linkSpecSpecs, network.LinkSpecSpec{
+				Name:        linkConfig.LinkName,
+				Up:          true,
+				ConfigLayer: network.ConfigCmdline,
+			})
+
+			settings.LinkConfigs = append(settings.LinkConfigs, linkConfig)
 		}
-
-		// if interface name is not set, pick the first non-loopback interface
-		if settings.LinkName == "" {
-			ifaces, _ := net.Interfaces() //nolint:errcheck // ignoring error here as ifaces will be empty
-
-			sort.Slice(ifaces, func(i, j int) bool { return ifaces[i].Name < ifaces[j].Name })
-
-			for _, iface := range ifaces {
-				if iface.Flags&net.FlagLoopback != 0 {
-					continue
-				}
-
-				settings.LinkName = iface.Name
-
-				break
-			}
-		}
-
-		linkSpecSpecs = append(linkSpecSpecs, network.LinkSpecSpec{
-			Name:        settings.LinkName,
-			Up:          true,
-			ConfigLayer: network.ConfigCmdline,
-		})
 	}
+
+	// dracut bond=
+	// ref: https://man7.org/linux/man-pages/man7/dracut.cmdline.7.html
+	bondSettings := cmdline.Get(constants.KernelParamBonding).First()
 
 	if bondSettings != nil {
 		var (

@@ -107,7 +107,7 @@ func (suite *RouteConfigSuite) TestCmdline() {
 	suite.Require().NoError(
 		suite.runtime.RegisterController(
 			&netctrl.RouteConfigController{
-				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::"),
+				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1::::: ip=eth3:dhcp ip=10.3.5.7::10.3.5.1:255.255.255.0::eth4"),
 			},
 		),
 	)
@@ -120,11 +120,19 @@ func (suite *RouteConfigSuite) TestCmdline() {
 				return suite.assertRoutes(
 					[]string{
 						"cmdline/inet4/172.20.0.1//1024",
+						"cmdline/inet4/10.3.5.1//1026",
 					}, func(r *network.RouteSpec) error {
-						suite.Assert().Equal("eth1", r.TypedSpec().OutLinkName)
 						suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
 						suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
-						suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+
+						switch r.Metadata().ID() {
+						case "cmdline/inet4/172.20.0.1//1024":
+							suite.Assert().Equal("eth1", r.TypedSpec().OutLinkName)
+							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+						case "cmdline/inet4/10.3.5.1//1025":
+							suite.Assert().Equal("eth4", r.TypedSpec().OutLinkName)
+							suite.Assert().EqualValues(netctrl.DefaultRouteMetric+2, r.TypedSpec().Priority)
+						}
 
 						return nil
 					},

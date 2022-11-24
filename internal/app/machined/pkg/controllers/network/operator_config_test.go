@@ -177,7 +177,7 @@ func (suite *OperatorConfigSuite) TestDefaultDHCPCmdline() {
 	suite.Require().NoError(
 		suite.runtime.RegisterController(
 			&netctrl.OperatorConfigController{
-				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::"),
+				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1::::: ip=eth3:dhcp"),
 			},
 		),
 	)
@@ -199,6 +199,7 @@ func (suite *OperatorConfigSuite) TestDefaultDHCPCmdline() {
 					[]string{
 						"default/dhcp4/eth0",
 						"default/dhcp4/eth2",
+						"cmdline/dhcp4/eth3",
 					}, func(r *network.OperatorSpec) error {
 						suite.Assert().Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
 						suite.Assert().True(r.TypedSpec().RequireUp)
@@ -209,6 +210,8 @@ func (suite *OperatorConfigSuite) TestDefaultDHCPCmdline() {
 							suite.Assert().Equal("eth0", r.TypedSpec().LinkName)
 						case "default/dhcp4/eth2":
 							suite.Assert().Equal("eth2", r.TypedSpec().LinkName)
+						case "cmdline/dhcp4/eth3":
+							suite.Assert().Equal("eth3", r.TypedSpec().LinkName)
 						}
 
 						return nil

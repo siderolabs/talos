@@ -95,8 +95,8 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		// parse kernel cmdline for the default gateway
-		cmdlineRoute := ctrl.parseCmdline(logger)
-		if !value.IsZero(cmdlineRoute.Gateway) {
+		cmdlineRoutes := ctrl.parseCmdline(logger)
+		for _, cmdlineRoute := range cmdlineRoutes {
 			if _, ignored := ignoredInterfaces[cmdlineRoute.OutLinkName]; !ignored {
 				var ids []string
 
@@ -173,7 +173,7 @@ func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runti
 	return ids, nil
 }
 
-func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route network.RouteSpecSpec) {
+func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (routes []network.RouteSpecSpec) {
 	if ctrl.Cmdline == nil {
 		return
 	}
@@ -185,29 +185,35 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (route netwo
 		return
 	}
 
-	if value.IsZero(settings.Gateway) {
-		return
+	for idx, linkConfig := range settings.LinkConfigs {
+		if value.IsZero(linkConfig.Gateway) {
+			continue
+		}
+
+		var route network.RouteSpecSpec
+
+		route.Gateway = linkConfig.Gateway
+
+		if route.Gateway.Is6() {
+			route.Family = nethelpers.FamilyInet6
+		} else {
+			route.Family = nethelpers.FamilyInet4
+		}
+
+		route.Scope = nethelpers.ScopeGlobal
+		route.Table = nethelpers.TableMain
+		route.Priority = DefaultRouteMetric + uint32(idx) // set different priorities to avoid a conflict
+		route.Protocol = nethelpers.ProtocolBoot
+		route.Type = nethelpers.TypeUnicast
+		route.OutLinkName = linkConfig.LinkName
+		route.ConfigLayer = network.ConfigCmdline
+
+		route.Normalize()
+
+		routes = append(routes, route)
 	}
 
-	route.Gateway = settings.Gateway
-
-	if route.Gateway.Is6() {
-		route.Family = nethelpers.FamilyInet6
-	} else {
-		route.Family = nethelpers.FamilyInet4
-	}
-
-	route.Scope = nethelpers.ScopeGlobal
-	route.Table = nethelpers.TableMain
-	route.Priority = DefaultRouteMetric
-	route.Protocol = nethelpers.ProtocolBoot
-	route.Type = nethelpers.TypeUnicast
-	route.OutLinkName = settings.LinkName
-	route.ConfigLayer = network.ConfigCmdline
-
-	route.Normalize()
-
-	return route
+	return routes
 }
 
 //nolint:gocyclo,cyclop

@@ -81,6 +81,11 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
+		var (
+			specs      []network.OperatorSpecSpec
+			specErrors *multierror.Error
+		)
+
 		ignoredInterfaces := map[string]struct{}{}
 
 		if ctrl.Cmdline != nil {
@@ -94,12 +99,23 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 			for _, link := range settings.IgnoreInterfaces {
 				ignoredInterfaces[link] = struct{}{}
 			}
-		}
 
-		var (
-			specs      []network.OperatorSpecSpec
-			specErrors *multierror.Error
-		)
+			for _, linkConfig := range settings.LinkConfigs {
+				if !linkConfig.DHCP {
+					continue
+				}
+
+				specs = append(specs, network.OperatorSpecSpec{
+					Operator:  network.OperatorDHCP4,
+					LinkName:  linkConfig.LinkName,
+					RequireUp: true,
+					DHCP4: network.DHCP4OperatorSpec{
+						RouteMetric: DefaultRouteMetric,
+					},
+					ConfigLayer: network.ConfigCmdline,
+				})
+			}
+		}
 
 		devices := slices.Map(items.Items, func(item resource.Resource) talosconfig.Device {
 			return item.(*network.DeviceConfigSpec).TypedSpec().Device

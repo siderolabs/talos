@@ -97,9 +97,13 @@ func (suite *CmdlineSuite) TestParse() {
 			cmdline: "ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1:::::",
 
 			expectedSettings: network.CmdlineNetworking{
-				Address:  netip.MustParsePrefix("172.20.0.2/24"),
-				Gateway:  netip.MustParseAddr("172.20.0.1"),
-				LinkName: "eth1",
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("172.20.0.2/24"),
+						Gateway:  netip.MustParseAddr("172.20.0.1"),
+						LinkName: "eth1",
+					},
+				},
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
 						Name:        "eth1",
@@ -114,9 +118,13 @@ func (suite *CmdlineSuite) TestParse() {
 			cmdline: "ip=172.20.0.2::172.20.0.1",
 
 			expectedSettings: network.CmdlineNetworking{
-				Address:  netip.MustParsePrefix("172.20.0.2/32"),
-				Gateway:  netip.MustParseAddr("172.20.0.1"),
-				LinkName: defaultIfaceName,
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("172.20.0.2/32"),
+						Gateway:  netip.MustParseAddr("172.20.0.1"),
+						LinkName: defaultIfaceName,
+					},
+				},
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
 						Name:        defaultIfaceName,
@@ -137,10 +145,14 @@ func (suite *CmdlineSuite) TestParse() {
 			cmdline: "ip=172.20.0.2:172.21.0.1:172.20.0.1:255.255.255.0:master1:eth1::10.0.0.1:10.0.0.2:10.0.0.1",
 
 			expectedSettings: network.CmdlineNetworking{
-				Address:      netip.MustParsePrefix("172.20.0.2/24"),
-				Gateway:      netip.MustParseAddr("172.20.0.1"),
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("172.20.0.2/24"),
+						Gateway:  netip.MustParseAddr("172.20.0.1"),
+						LinkName: "eth1",
+					},
+				},
 				Hostname:     "master1",
-				LinkName:     "eth1",
 				DNSAddresses: []netip.Addr{netip.MustParseAddr("10.0.0.1"), netip.MustParseAddr("10.0.0.2")},
 				NTPAddresses: []netip.Addr{netip.MustParseAddr("10.0.0.1")},
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
@@ -156,10 +168,14 @@ func (suite *CmdlineSuite) TestParse() {
 			name:    "ipv6",
 			cmdline: "ip=[2001:db8::a]:[2001:db8::b]:[fe80::1]::master1:eth1::[2001:4860:4860::6464]:[2001:4860:4860::64]:[2001:4860:4806::]",
 			expectedSettings: network.CmdlineNetworking{
-				Address:      netip.MustParsePrefix("2001:db8::a/128"),
-				Gateway:      netip.MustParseAddr("fe80::1"),
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("2001:db8::a/128"),
+						Gateway:  netip.MustParseAddr("fe80::1"),
+						LinkName: "eth1",
+					},
+				},
 				Hostname:     "master1",
-				LinkName:     "eth1",
 				DNSAddresses: []netip.Addr{netip.MustParseAddr("2001:4860:4860::6464"), netip.MustParseAddr("2001:4860:4860::64")},
 				NTPAddresses: []netip.Addr{netip.MustParseAddr("2001:4860:4806::")},
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
@@ -182,8 +198,12 @@ func (suite *CmdlineSuite) TestParse() {
 			cmdline: "ip=::::master1:eth1 talos.hostname=master2",
 
 			expectedSettings: network.CmdlineNetworking{
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						LinkName: "eth1",
+					},
+				},
 				Hostname: "master2",
-				LinkName: "eth1",
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
 						Name:        "eth1",
@@ -321,9 +341,13 @@ func (suite *CmdlineSuite) TestParse() {
 			name:    "vlan configuration",
 			cmdline: "vlan=eth1.169:eth1 ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1.169:::::",
 			expectedSettings: network.CmdlineNetworking{
-				Address:  netip.MustParsePrefix("172.20.0.2/24"),
-				Gateway:  netip.MustParseAddr("172.20.0.1"),
-				LinkName: "eth1.169",
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("172.20.0.2/24"),
+						Gateway:  netip.MustParseAddr("172.20.0.1"),
+						LinkName: "eth1.169",
+					},
+				},
 				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
 					{
 						Name:        "eth1.169",
@@ -358,6 +382,45 @@ func (suite *CmdlineSuite) TestParse() {
 							VID:      5,
 							Protocol: nethelpers.VLANProtocol8021Q,
 						},
+					},
+				},
+			},
+		},
+		{
+			name:    "multiple ip configurations",
+			cmdline: "ip=172.20.0.2::172.20.0.1:255.255.255.0::eth1::::: ip=eth3:dhcp ip=:::::eth4:dhcp::::",
+
+			expectedSettings: network.CmdlineNetworking{
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("172.20.0.2/24"),
+						Gateway:  netip.MustParseAddr("172.20.0.1"),
+						LinkName: "eth1",
+					},
+					{
+						LinkName: "eth3",
+						DHCP:     true,
+					},
+					{
+						LinkName: "eth4",
+						DHCP:     true,
+					},
+				},
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth1",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+					{
+						Name:        "eth3",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+					{
+						Name:        "eth4",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
 					},
 				},
 			},
