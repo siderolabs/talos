@@ -267,7 +267,7 @@ local push_latest = {
 
 local save_artifacts = {
   name: 'save-artifacts',
-  image: 'docker.io/d3fk/s3cmd:latest',
+  image: 'autonomy/build-container:latest',
   pull: 'always',
   environment: {
     AWS_ACCESS_KEY_ID: { from_secret: 'rook_access_key_id' },
@@ -284,7 +284,7 @@ local save_artifacts = {
 
 local load_artifacts = {
   name: 'load-artifacts',
-  image: 'docker.io/d3fk/s3cmd:latest',
+  image: 'autonomy/build-container:latest',
   pull: 'always',
   environment: {
     AWS_ACCESS_KEY_ID: { from_secret: 'rook_access_key_id' },
