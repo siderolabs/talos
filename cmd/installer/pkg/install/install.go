@@ -179,6 +179,8 @@ func (i *Installer) probeBootPartition() error {
 //
 //nolint:gocyclo,cyclop
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
+	errataBTF()
+
 	if err = i.installExtensions(); err != nil {
 		return err
 	}
