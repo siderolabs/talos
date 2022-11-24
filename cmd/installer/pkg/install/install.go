@@ -5,6 +5,7 @@
 package install
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -181,6 +182,10 @@ func (i *Installer) probeBootPartition() error {
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	errataBTF()
 
+	if err = i.runPreflightChecks(seq); err != nil {
+		return err
+	}
+
 	if err = i.installExtensions(); err != nil {
 		return err
 	}
@@ -337,4 +342,23 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	}
 
 	return nil
+}
+
+func (i *Installer) runPreflightChecks(seq runtime.Sequence) error {
+	if seq != runtime.SequenceUpgrade {
+		// pre-flight checks only apply to upgrades
+		return nil
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	checks, err := NewPreflightChecks(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing pre-flight checks: %w", err)
+	}
+
+	defer checks.Close() //nolint:errcheck
+
+	return checks.Run(ctx)
 }

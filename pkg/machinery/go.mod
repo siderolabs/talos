@@ -13,6 +13,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hashicorp/go-version v1.6.0
 	github.com/jsimonetti/rtnetlink v1.2.3
 	github.com/mdlayher/ethtool v0.0.0-20220830195143-0e16326d06d1
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417

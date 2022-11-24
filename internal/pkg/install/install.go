@@ -128,6 +128,13 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 		{Type: "bind", Destination: constants.SystemExtensionsPath, Source: constants.SystemExtensionsPath, Options: []string{"rbind", "rshared", "ro"}},
 	}
 
+	// mount the machined socket into the container for upgrade pre-checks if the socket exists
+	if _, err = os.Stat(constants.MachineSocketPath); err == nil {
+		mounts = append(mounts,
+			specs.Mount{Type: "bind", Destination: constants.MachineSocketPath, Source: constants.MachineSocketPath, Options: []string{"rbind", "rshared", "ro"}},
+		)
+	}
+
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
 	config := constants.ConfigNone
