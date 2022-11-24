@@ -100,7 +100,7 @@ A value of `0` disables automatic rebooting entirely.
 
 #### `talos.config`
 
-The URL at which the machine configuration data may be found.
+The URL at which the machine configuration data may be found (only for `metal` platform, with the kernel parameter `talos.platform=metal`).
 
 This parameter supports variable substitution inside URL query values for the following case-insensitive placeholders:
 
@@ -119,6 +119,19 @@ may translate to
 
 For backwards compatibility we insert the system UUID into the query parameter `uuid` if its value is empty. As in
 `http://example.com/metadata?uuid=` => `http://example.com/metadata?uuid=40dcbd19-3b10-444e-bfff-aaee44a51fda`
+
+##### `metal-iso`
+
+When the kernel parameter `talos.config=metal-iso` is set, Talos will attempt to load the machine configuration from any block device with a filesystem label of `metal-iso`.
+Talos will look for a file named `config.yaml` in the root of the filesystem.
+
+For example, such ISO filesystem can be created with:
+
+```sh
+mkdir iso/
+cp config.yaml iso/
+mkisofs -joliet -rock -volid 'metal-iso' -output config.iso iso/
+```
 
 #### `talos.platform`
 
