@@ -171,9 +171,9 @@ In any case, the status of the control plane components on each control plane no
 
 ```bash
 $ talosctl -n <IP> containers --kubernetes
-NODE         NAMESPACE   ID                                                                                            IMAGE                                              PID    STATUS
-172.20.0.2   k8s.io      kube-system/kube-apiserver-talos-default-controlplane-1                                       k8s.gcr.io/pause:3.2                               2539   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-controlplane-1:kube-apiserver                     k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}     2572   CONTAINER_RUNNING
+NODE         NAMESPACE   ID                                                                                            IMAGE                                               PID    STATUS
+172.20.0.2   k8s.io      kube-system/kube-apiserver-talos-default-controlplane-1                                       registry.k8s.io/pause:3.2                                2539   SANDBOX_READY
+172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-controlplane-1:kube-apiserver                     registry.k8s.io/kube-apiserver:v{{< k8s_release >}} 2572   CONTAINER_RUNNING
 ```
 
 If `kube-apiserver` shows as `CONTAINER_EXITED`, it might have exited due to configuration error.
@@ -273,10 +273,10 @@ If the control plane endpoint is not yet up, the container status of the control
 $ talosctl -n <IP> c -k
 NODE         NAMESPACE   ID                                                                                            IMAGE                                        PID    STATUS
 ...
-172.20.0.2   k8s.io      kube-system/kube-controller-manager-talos-default-controlplane-1                              k8s.gcr.io/pause:3.2                         2547   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-controlplane-1:kube-controller-manager   k8s.gcr.io/kube-controller-manager:v{{< k8s_release >}}   2580   CONTAINER_RUNNING
-172.20.0.2   k8s.io      kube-system/kube-scheduler-talos-default-controlplane-1                                       k8s.gcr.io/pause:3.2                         2638   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-controlplane-1:kube-scheduler                     k8s.gcr.io/kube-scheduler:v{{< k8s_release >}}            2670   CONTAINER_RUNNING
+172.20.0.2   k8s.io      kube-system/kube-controller-manager-talos-default-controlplane-1                              registry.k8s.io/pause:3.2                         2547   SANDBOX_READY
+172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-controlplane-1:kube-controller-manager   registry.k8s.io/kube-controller-manager:v{{< k8s_release >}}   2580   CONTAINER_RUNNING
+172.20.0.2   k8s.io      kube-system/kube-scheduler-talos-default-controlplane-1                                       registry.k8s.io/pause:3.2                         2638   SANDBOX_READY
+172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-controlplane-1:kube-scheduler                     registry.k8s.io/kube-scheduler:v{{< k8s_release >}}            2670   CONTAINER_RUNNING
 ...
 ```
 

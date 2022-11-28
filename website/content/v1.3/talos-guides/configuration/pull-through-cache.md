@@ -27,7 +27,7 @@ The follow are requirements for creating the set of caching proxies:
 
 ## Launch the Caching Docker Registry Proxies
 
-Talos pulls from `docker.io`, `k8s.gcr.io`, `quay.io`, `gcr.io`, and `ghcr.io` by default.
+Talos pulls from `docker.io`, `registry.k8s.io`, `quay.io`, `gcr.io`, and `ghcr.io` by default.
 If your configuration is different, you might need to modify the commands below:
 
 ```bash
@@ -37,9 +37,9 @@ docker run -d -p 5000:5000 \
     --name registry-docker.io registry:2
 
 docker run -d -p 5001:5000 \
-    -e REGISTRY_PROXY_REMOTEURL=https://k8s.gcr.io \
+    -e REGISTRY_PROXY_REMOTEURL=https://registry.k8s.io \
     --restart always \
-    --name registry-k8s.gcr.io registry:2
+    --name registry-registry.k8s.io registry:2
 
 docker run -d -p 5002:5000 \
     -e REGISTRY_PROXY_REMOTEURL=https://quay.io \
@@ -71,7 +71,7 @@ As registry containers expose their ports on the host, we can use bridge IP to d
 ```bash
 sudo talosctl cluster create --provisioner qemu \
     --registry-mirror docker.io=http://10.5.0.1:5000 \
-    --registry-mirror k8s.gcr.io=http://10.5.0.1:5001 \
+    --registry-mirror registry.k8s.io=http://10.5.0.1:5001 \
     --registry-mirror quay.io=http://10.5.0.1:5002 \
     --registry-mirror gcr.io=http://10.5.0.1:5003 \
     --registry-mirror ghcr.io=http://10.5.0.1:5004
@@ -91,7 +91,7 @@ On Linux, the docker bridge address can be inspected with `ip addr show docker0`
 ```bash
 talosctl cluster create --provisioner docker \
     --registry-mirror docker.io=http://172.17.0.1:5000 \
-    --registry-mirror k8s.gcr.io=http://172.17.0.1:5001 \
+    --registry-mirror registry.k8s.io=http://172.17.0.1:5001 \
     --registry-mirror quay.io=http://172.17.0.1:5002 \
     --registry-mirror gcr.io=http://172.17.0.1:5003 \
     --registry-mirror ghcr.io=http://172.17.0.1:5004
@@ -103,7 +103,7 @@ To cleanup, run:
 
 ```bash
 docker rm -f registry-docker.io
-docker rm -f registry-k8s.gcr.io
+docker rm -f registry-registry.k8s.io
 docker rm -f registry-quay.io
 docker rm -f registry-gcr.io
 docker rm -f registry-ghcr.io

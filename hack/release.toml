@@ -235,6 +235,16 @@ Talos no longer supports CRI config overrides placed in `/var/cri/conf.d` direct
 [New way](https://www.talos.dev/v1.3/talos-guides/configuration/containerd/) correctly handles merging of containerd/CRI plugin configuration.
 """
 
+    [notes.registry_k8s_io]
+        title = "registry.k8s.io"
+        description = """\
+Talos now uses `registry.k8s.io` instead of `k8s.gcr.io` for Kubernetes container images.
+
+See [Kubernetes documentation](https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga/) for additional details.
+
+If using registry mirrors, or in air-gapped installations you may need to update your configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]

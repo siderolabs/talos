@@ -303,19 +303,19 @@ const (
 	KubeletImage = "ghcr.io/siderolabs/kubelet"
 
 	// KubeProxyImage is the enforced kube-proxy image to use for the control plane.
-	KubeProxyImage = "k8s.gcr.io/kube-proxy"
+	KubeProxyImage = "registry.k8s.io/kube-proxy"
 
 	// KubernetesAPIServerImage is the enforced apiserver image to use for the control plane.
-	KubernetesAPIServerImage = "k8s.gcr.io/kube-apiserver"
+	KubernetesAPIServerImage = "registry.k8s.io/kube-apiserver"
 
 	// KubernetesControllerManagerImage is the enforced controllermanager image to use for the control plane.
-	KubernetesControllerManagerImage = "k8s.gcr.io/kube-controller-manager"
+	KubernetesControllerManagerImage = "registry.k8s.io/kube-controller-manager"
 
 	// KubernetesProxyImage is the enforced proxy image to use for the control plane.
-	KubernetesProxyImage = "k8s.gcr.io/kube-proxy"
+	KubernetesProxyImage = "registry.k8s.io/kube-proxy"
 
 	// KubernetesSchedulerImage is the enforced scheduler image to use for the control plane.
-	KubernetesSchedulerImage = "k8s.gcr.io/kube-scheduler"
+	KubernetesSchedulerImage = "registry.k8s.io/kube-scheduler"
 
 	// CoreDNSImage is the enforced CoreDNS image to use.
 	CoreDNSImage = "docker.io/coredns/coredns"

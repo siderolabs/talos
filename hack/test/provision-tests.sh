@@ -6,7 +6,7 @@ case "${CI:-false}" in
   true)
     mirror_flag=""
 
-    for registry in docker.io k8s.gcr.io quay.io gcr.io ghcr.io registry.dev.talos-systems.io; do
+    for registry in docker.io k8s.gcr.io registry.k8s.io quay.io gcr.io ghcr.io registry.dev.talos-systems.io; do
       service="registry-${registry//./-}.ci.svc"
       addr=`python3 -c "import socket; print(socket.gethostbyname('${service}'))"`
 

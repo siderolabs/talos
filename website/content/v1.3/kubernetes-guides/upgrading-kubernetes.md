@@ -120,7 +120,7 @@ talosctl --nodes <controlplane node> kubeconfig
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "registry.k8s.io/kube-apiserver:v{{< k8s_release >}}"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -140,7 +140,7 @@ metadata:
     version: 5
     phase: running
 spec:
-    image: k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}
+    image: registry.k8s.io/kube-apiserver:v{{< k8s_release >}}
     cloudProvider: ""
     controlPlaneEndpoint: https://172.20.0.1:6443
     etcdServers:
@@ -174,7 +174,7 @@ Repeat this process for every control plane node, verifying that state got propa
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/controllerManager/image", "value": "k8s.gcr.io/kube-controller-manager:v{{< k8s_release >}}"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/controllerManager/image", "value": "registry.k8s.io/kube-controller-manager:v{{< k8s_release >}}"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -192,7 +192,7 @@ metadata:
     version: 3
     phase: running
 spec:
-    image: k8s.gcr.io/kube-controller-manager:v{{< k8s_release >}}
+    image: registry.k8s.io/kube-controller-manager:v{{< k8s_release >}}
     cloudProvider: ""
     podCIDR: 10.244.0.0/16
     serviceCIDR: 10.96.0.0/12
@@ -223,7 +223,7 @@ Repeat this process for every control plane node, verifying that state propagate
 Patch machine configuration using `talosctl patch` command:
 
 ```bash
-$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/scheduler/image", "value": "k8s.gcr.io/kube-scheduler:v{{< k8s_release >}}"}]'
+$ talosctl -n <CONTROL_PLANE_IP_1> patch mc --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/scheduler/image", "value": "registry.k8s.io/kube-scheduler:v{{< k8s_release >}}"}]'
 patched mc at the node 172.20.0.2
 ```
 
@@ -241,7 +241,7 @@ metadata:
     version: 3
     phase: running
 spec:
-    image: k8s.gcr.io/kube-scheduler:v{{< k8s_release >}}
+    image: registry.k8s.io/kube-scheduler:v{{< k8s_release >}}
     extraArgs: {}
     extraVolumes: []
 ```
@@ -278,7 +278,7 @@ spec:
     spec:
       containers:
         - name: kube-proxy
-          image: k8s.gcr.io/kube-proxy:v{{< k8s_release >}}
+          image: registry.k8s.io/kube-proxy:v{{< k8s_release >}}
       tolerations:
         - ...
 ```
@@ -295,7 +295,7 @@ spec:
     spec:
       containers:
         - name: kube-proxy
-          image: k8s.gcr.io/kube-proxy:v{{< k8s_release >}}
+          image: registry.k8s.io/kube-proxy:v{{< k8s_release >}}
       tolerations:
         - ...
         - key: node-role.kubernetes.io/control-plane

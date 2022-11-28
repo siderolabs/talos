@@ -103,7 +103,7 @@ Identify all registry prefixes from `talosctl images`, for example:
 - `docker.io`
 - `gcr.io`
 - `ghcr.io`
-- `k8s.gcr.io`
+- `registry.k8s.io`
 - `quay.io`
 
 The `talosctl cluster create` command provides conveniences for common configuration options.
@@ -116,7 +116,7 @@ $ sudo --preserve-env=HOME talosctl cluster create --provisioner=qemu --install-
   --registry-mirror docker.io=http://10.5.0.1:6000 \
   --registry-mirror gcr.io=http://10.5.0.1:6000 \
   --registry-mirror ghcr.io=http://10.5.0.1:6000 \
-  --registry-mirror k8s.gcr.io=http://10.5.0.1:6000 \
+  --registry-mirror registry.k8s.io=http://10.5.0.1:6000 \
   --registry-mirror quay.io=http://10.5.0.1:6000
 validating CIDR and reserving IPs
 generating PKI and tokens
@@ -154,7 +154,7 @@ machine:
         ghcr.io:
           endpoints:
           - http://10.5.0.1:6000/
-        k8s.gcr.io:
+        registry.k8s.io:
           endpoints:
           - http://10.5.0.1:6000/
         quay.io:

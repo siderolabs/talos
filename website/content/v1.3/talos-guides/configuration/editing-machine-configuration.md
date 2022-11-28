@@ -124,7 +124,7 @@ patched mc at the node <IP>
 Updating kube-apiserver version in immediate mode (without a reboot):
 
 ```bash
-$ talosctl -n <IP> patch machineconfig --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "k8s.gcr.io/kube-apiserver:v{{< k8s_release >}}"}]'
+$ talosctl -n <IP> patch machineconfig --mode=no-reboot -p '[{"op": "replace", "path": "/cluster/apiServer/image", "value": "registry.k8s.io/kube-apiserver:v{{< k8s_release >}}"}]'
 patched mc at the node <IP>
 ```
 

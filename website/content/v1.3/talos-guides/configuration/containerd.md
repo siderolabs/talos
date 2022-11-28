@@ -61,5 +61,5 @@ NODE         NAMESPACE   ID                                                 IMAG
 172.20.0.5   k8s.io      └─ kube-system/kube-flannel-6hfck:install-config   ghcr.io/siderolabs/flannel:v0.20.1                         0      CONTAINER_EXITED
 172.20.0.5   k8s.io      └─ kube-system/kube-flannel-6hfck:kube-flannel     ghcr.io/siderolabs/flannel:v0.20.1                         2092   CONTAINER_RUNNING
 172.20.0.5   k8s.io      kube-system/kube-proxy-xp7jq                       registry.k8s.io/pause:3.8                                  1780   SANDBOX_READY
-172.20.0.5   k8s.io      └─ kube-system/kube-proxy-xp7jq:kube-proxy         k8s.gcr.io/kube-proxy:v1.26.0-alpha.3                      1843   CONTAINER_RUNNING
+172.20.0.5   k8s.io      └─ kube-system/kube-proxy-xp7jq:kube-proxy         registry.k8s.io/kube-proxy:v1.26.0-alpha.3                 1843   CONTAINER_RUNNING
 ```

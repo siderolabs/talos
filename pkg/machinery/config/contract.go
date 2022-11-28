@@ -125,7 +125,7 @@ func (contract *VersionContract) KubeletDefaultRuntimeSeccompProfileEnabled() bo
 // KubernetesAlternateImageRegistries returns true if alternate image registries should be enabled by default.
 // https://github.com/kubernetes/kubernetes/pull/109938
 func (contract *VersionContract) KubernetesAlternateImageRegistries() bool {
-	return contract.Greater(TalosVersion1_1)
+	return contract.Greater(TalosVersion1_1) && !contract.Greater(TalosVersion1_2)
 }
 
 // KubernetesAllowSchedulingOnControlPlanes returns true if scheduling on control planes should be enabled by default.

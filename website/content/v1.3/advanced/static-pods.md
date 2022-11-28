@@ -49,7 +49,7 @@ If the API server is not available, status of the static pod can also be inspect
 ```bash
 $ talosctl containers --kubernetes
 NODE         NAMESPACE   ID                                                                                      IMAGE                                                         PID    STATUS
-172.20.0.3   k8s.io      default/nginx-talos-default-controlplane-2                                                    k8s.gcr.io/pause:3.6                                          4886   SANDBOX_READY
+172.20.0.3   k8s.io      default/nginx-talos-default-controlplane-2                                                    registry.k8s.io/pause:3.6                               4886   SANDBOX_READY
 172.20.0.3   k8s.io      └─ default/nginx-talos-default-controlplane-2:nginx                                           docker.io/library/nginx:latest
 ...
 ```
