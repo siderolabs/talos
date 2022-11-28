@@ -65,7 +65,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hetznercloud/hcloud-go v1.37.0
 	github.com/insomniacslk/dhcp v0.0.0-20221001123530-5308ebe5334c
-	github.com/jsimonetti/rtnetlink v1.2.3
+	github.com/jsimonetti/rtnetlink v1.3.0
 	github.com/jxskiss/base62 v1.1.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.16
