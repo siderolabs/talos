@@ -275,6 +275,10 @@ func (s *Server) Watch(in *resourceapi.WatchRequest, srv resourceapi.ResourceSer
 			resp.EventType = resourceapi.EventType_UPDATED
 		case state.Destroyed:
 			resp.EventType = resourceapi.EventType_DESTROYED
+		case state.Bootstrapped:
+			// ignore
+		case state.Errored:
+			return fmt.Errorf("error watching resource: %w", event.Error)
 		}
 
 		if err = srv.Send(resp); err != nil {

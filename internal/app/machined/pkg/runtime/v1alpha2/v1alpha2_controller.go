@@ -288,7 +288,7 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 		var cfg talosconfig.Provider
 		select {
 		case event := <-watchCh:
-			if event.Type == state.Destroyed {
+			if event.Type != state.Created && event.Type != state.Updated {
 				continue
 			}
 

@@ -25,6 +25,8 @@ type TLSConfig struct {
 }
 
 // NewTLSConfig builds provider from configuration and endpoints.
+//
+//nolint:gocyclo
 func NewTLSConfig(resources state.State) (*TLSConfig, error) {
 	watchCh := make(chan state.Event)
 
@@ -37,8 +39,15 @@ func NewTLSConfig(resources state.State) (*TLSConfig, error) {
 
 	for {
 		event := <-watchCh
-		if event.Type == state.Destroyed {
+
+		switch event.Type {
+		case state.Created, state.Updated:
+			// expected
+		case state.Destroyed, state.Bootstrapped:
+			// ignore, we'll get another event
 			continue
+		case state.Errored:
+			return nil, fmt.Errorf("error watching for API certificates: %w", event.Error)
 		}
 
 		apiCerts := event.Resource.(*secrets.API) //nolint:errcheck,forcetypeassert
@@ -53,7 +62,16 @@ func NewTLSConfig(resources state.State) (*TLSConfig, error) {
 	go func() {
 		for {
 			event := <-watchCh
-			if event.Type == state.Destroyed {
+
+			switch event.Type {
+			case state.Created, state.Updated:
+				// expected
+			case state.Destroyed, state.Bootstrapped:
+				// ignore, we'll get another event
+				continue
+			case state.Errored:
+				log.Printf("error watching for API certificates: %s", event.Error)
+
 				continue
 			}
 

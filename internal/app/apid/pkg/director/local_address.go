@@ -48,8 +48,11 @@ func NewLocalAddressProvider(st state.State) (LocalAddressProvider, error) {
 
 func (p *localAddressProvider) watch(evCh <-chan state.Event) {
 	for ev := range evCh {
-		if ev.Type == state.Destroyed {
-			// shouldn't happen
+		switch ev.Type {
+		case state.Created, state.Updated:
+			// expected
+		case state.Destroyed, state.Bootstrapped, state.Errored:
+			// shouldn't happen, ignore
 			continue
 		}
 

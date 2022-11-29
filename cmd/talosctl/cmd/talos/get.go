@@ -155,6 +155,20 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 					return nil
 				}
 
+				if nev.ev.Type == state.Errored {
+					return fmt.Errorf("error watching resource: %w", nev.ev.Error)
+				}
+
+				if nev.ev.Type == state.Bootstrapped {
+					// TODO: in Talos 1.4, use Bootstrapped event to determine whether it's time to flush the first line
+					continue
+				}
+
+				if nev.ev.Resource == nil {
+					// new event type without resource, skip it
+					continue
+				}
+
 				if err = out.WriteResource(nev.node, nev.ev.Resource, nev.ev.Type); err != nil {
 					return err
 				}

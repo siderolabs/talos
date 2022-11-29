@@ -290,8 +290,10 @@ campaignLoop:
 			}
 
 			// break the loop if the kubelet lifecycle is entering teardown phase
-			if event.Resource.Metadata().Type() == kubeletLifecycle.Type() && event.Resource.Metadata().ID() == kubeletLifecycle.ID() && event.Resource.Metadata().Phase() == resource.PhaseTearingDown {
-				return nil
+			if event.Resource != nil {
+				if event.Resource.Metadata().Type() == kubeletLifecycle.Type() && event.Resource.Metadata().ID() == kubeletLifecycle.ID() && event.Resource.Metadata().Phase() == resource.PhaseTearingDown {
+					return nil
+				}
 			}
 		}
 	}
@@ -348,8 +350,10 @@ observeLoop:
 			}
 
 			// break the loop if the kubelet lifecycle is entering teardown phase
-			if event.Resource.Metadata().Type() == kubeletLifecycle.Type() && event.Resource.Metadata().ID() == kubeletLifecycle.ID() && event.Resource.Metadata().Phase() == resource.PhaseTearingDown {
-				break observeLoop
+			if event.Resource != nil {
+				if event.Resource.Metadata().Type() == kubeletLifecycle.Type() && event.Resource.Metadata().ID() == kubeletLifecycle.ID() && event.Resource.Metadata().Phase() == resource.PhaseTearingDown {
+					break observeLoop
+				}
 			}
 		}
 	}
