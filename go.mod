@@ -30,7 +30,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.2.1
 	github.com/BurntSushi/toml v1.2.1
-	github.com/aws/aws-sdk-go v1.44.143
+	github.com/aws/aws-sdk-go v1.44.147
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/containerd/cgroups v1.0.4
@@ -64,8 +64,8 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hetznercloud/hcloud-go v1.37.0
-	github.com/insomniacslk/dhcp v0.0.0-20221001123530-5308ebe5334c
-	github.com/jsimonetti/rtnetlink v1.2.3
+	github.com/insomniacslk/dhcp v0.0.0-20221128164207-f26e6d78f622
+	github.com/jsimonetti/rtnetlink v1.3.0
 	github.com/jxskiss/base62 v1.1.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.16
@@ -81,7 +81,7 @@ require (
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.1.0
 	github.com/prometheus/procfs v0.8.0
-	github.com/rivo/tview v0.0.0-20221117065207-09f052e6ca98
+	github.com/rivo/tview v0.0.0-20221128165837-db36428c92d9
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
@@ -90,7 +90,7 @@ require (
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/discovery-api v0.1.1
 	github.com/siderolabs/discovery-client v0.1.3
-	github.com/siderolabs/gen v0.4.0
+	github.com/siderolabs/gen v0.4.1
 	github.com/siderolabs/go-blockdevice v0.4.1
 	github.com/siderolabs/go-circular v0.1.0
 	github.com/siderolabs/go-cmd v0.1.1

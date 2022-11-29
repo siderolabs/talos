@@ -14,12 +14,12 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
-	github.com/jsimonetti/rtnetlink v1.2.3
+	github.com/jsimonetti/rtnetlink v1.3.0
 	github.com/mdlayher/ethtool v0.0.0-20220830195143-0e16326d06d1
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/siderolabs/crypto v0.4.0
-	github.com/siderolabs/gen v0.4.0
+	github.com/siderolabs/gen v0.4.1
 	github.com/siderolabs/go-api-signature v0.2.2
 	github.com/siderolabs/go-blockdevice v0.4.1
 	github.com/siderolabs/go-debug v0.2.2
@@ -48,8 +48,8 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/josharian/native v1.0.0 // indirect
 	github.com/mdlayher/genetlink v1.2.0 // indirect
-	github.com/mdlayher/netlink v1.6.2 // indirect
-	github.com/mdlayher/socket v0.2.3 // indirect
+	github.com/mdlayher/netlink v1.7.0 // indirect
+	github.com/mdlayher/socket v0.4.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
 	github.com/onsi/gomega v1.20.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -60,9 +60,9 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
