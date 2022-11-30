@@ -37,7 +37,7 @@ func List(config config.Provider) Versions {
 
 	images.Etcd = config.Cluster().Etcd().Image()
 	images.CoreDNS = config.Cluster().CoreDNS().Image()
-	images.Flannel = "ghcr.io/siderolabs/flannel:v0.20.1" // mirrored from docker.io/flannelcni/flannel
+	images.Flannel = "ghcr.io/siderolabs/flannel:v0.20.2" // mirrored from docker.io/flannelcni/flannel
 	images.FlannelCNI = fmt.Sprintf("ghcr.io/siderolabs/install-cni:%s", version.ExtrasVersion)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()
