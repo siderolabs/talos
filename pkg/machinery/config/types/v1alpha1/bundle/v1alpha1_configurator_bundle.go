@@ -54,34 +54,12 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 		name := strings.ToLower(t.String()) + ".yaml"
 		fullFilePath := filepath.Join(outputDir, name)
 
-		var (
-			configString string
-			err          error
-		)
-
-		switch t {
-		case machine.TypeInit:
-			configString, err = c.Init().EncodeString(encoder.WithComments(commentsFlags))
-			if err != nil {
-				return err
-			}
-		case machine.TypeControlPlane:
-			configString, err = c.ControlPlane().EncodeString(encoder.WithComments(commentsFlags))
-			if err != nil {
-				return err
-			}
-		case machine.TypeWorker:
-			configString, err = c.Worker().EncodeString(encoder.WithComments(commentsFlags))
-			if err != nil {
-				return err
-			}
-		case machine.TypeUnknown:
-			fallthrough
-		default:
-			return fmt.Errorf("unexpected machine type %v", t)
+		bytes, err := c.Serialize(commentsFlags, t)
+		if err != nil {
+			return err
 		}
 
-		if err = os.WriteFile(fullFilePath, []byte(configString), 0o644); err != nil {
+		if err = os.WriteFile(fullFilePath, bytes, 0o644); err != nil {
 			return err
 		}
 
@@ -89,6 +67,22 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 	}
 
 	return nil
+}
+
+// Serialize returns the config for the provided machine type as bytes.
+func (c *ConfigBundle) Serialize(commentsFlags encoder.CommentsFlags, machineType machine.Type) ([]byte, error) {
+	switch machineType {
+	case machine.TypeInit:
+		return c.Init().EncodeBytes(encoder.WithComments(commentsFlags))
+	case machine.TypeControlPlane:
+		return c.ControlPlane().EncodeBytes(encoder.WithComments(commentsFlags))
+	case machine.TypeWorker:
+		return c.Worker().EncodeBytes(encoder.WithComments(commentsFlags))
+	case machine.TypeUnknown:
+		fallthrough
+	default:
+		return nil, fmt.Errorf("unexpected machine type %v", machineType)
+	}
 }
 
 // ApplyPatches patches every config type with a patch.
