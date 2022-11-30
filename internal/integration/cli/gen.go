@@ -8,8 +8,11 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -277,6 +280,170 @@ func (suite *GenSuite) TestConfigWithSecrets() {
 
 	suite.Assert().NoError(err)
 	suite.Assert().YAMLEq(string(secretsYaml), string(configSecretsBundleBytes))
+}
+
+// TestGenConfigWithDeprecatedOutputDirFlag tests that gen config command still works with the deprecated --output-dir flag.
+func (suite *GenSuite) TestGenConfigWithDeprecatedOutputDirFlag() {
+	tempDir := suite.T().TempDir()
+
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-dir", tempDir,
+	})
+
+	suite.Assert().FileExists(filepath.Join(tempDir, "controlplane.yaml"))
+	suite.Assert().FileExists(filepath.Join(tempDir, "worker.yaml"))
+	suite.Assert().FileExists(filepath.Join(tempDir, "talosconfig"))
+}
+
+// TestGenConfigToStdoutControlPlane tests that the gen config command can output a control plane config to stdout.
+func (suite *GenSuite) TestGenConfigToStdoutControlPlane() {
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "controlplane",
+		"--output", "-",
+	}, base.StdoutMatchFunc(func(output string) error {
+		expected := "type: controlplane"
+		if !strings.Contains(output, expected) {
+			return fmt.Errorf("stdout does not contain %q: %q", expected, output)
+		}
+
+		return nil
+	}))
+}
+
+// TestGenConfigToStdoutWorker tests that the gen config command can output a worker config to stdout.
+func (suite *GenSuite) TestGenConfigToStdoutWorker() {
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "worker",
+		"--output", "-",
+	}, base.StdoutMatchFunc(func(output string) error {
+		expected := "type: worker"
+		if !strings.Contains(output, expected) {
+			return fmt.Errorf("stdout does not contain %q: %q", expected, output)
+		}
+
+		return nil
+	}))
+}
+
+// TestGenConfigToStdoutTalosconfig tests that the gen config command can output a talosconfig to stdout.
+func (suite *GenSuite) TestGenConfigToStdoutTalosconfig() {
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "talosconfig",
+		"--output", "-",
+	}, base.StdoutMatchFunc(func(output string) error {
+		expected := "context: foo"
+		if !strings.Contains(output, expected) {
+			return fmt.Errorf("stdout does not contain %q: %q", expected, output)
+		}
+
+		return nil
+	}))
+}
+
+// TestGenConfigToStdoutMultipleTypesError tests that the gen config command fails when
+// multiple output types are specified and output target is stdout.
+func (suite *GenSuite) TestGenConfigToStdoutMultipleTypesError() {
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "controlplane,worker",
+		"--output", "-",
+	}, base.StdoutEmpty(), base.ShouldFail(), base.StderrMatchFunc(func(output string) error {
+		expected := "can't use multiple output types with stdout"
+		if !strings.Contains(output, expected) {
+			return fmt.Errorf("stderr does not contain %q: %q", expected, output)
+		}
+
+		return nil
+	}))
+}
+
+// TestGenConfigMultipleTypesToDirectory tests that the gen config command works as expected
+// when some output types are specified and output target is a directory.
+func (suite *GenSuite) TestGenConfigMultipleTypesToDirectory() {
+	tempDir := filepath.Join(suite.T().TempDir(), "inner")
+
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "controlplane,worker",
+		"--output", tempDir,
+	})
+
+	suite.Assert().FileExists(filepath.Join(tempDir, "controlplane.yaml"))
+	suite.Assert().FileExists(filepath.Join(tempDir, "worker.yaml"))
+	suite.Assert().NoFileExists(filepath.Join(tempDir, "talosconfig"))
+}
+
+// TestGenConfigSingleTypeToFile tests that the gen config command treats
+// the output flag as a file path and not as a directory when a single output type is requested.
+func (suite *GenSuite) TestGenConfigSingleTypeToFile() {
+	tempFile := filepath.Join(suite.T().TempDir(), "worker-conf.yaml")
+
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "worker",
+		"--output", tempFile,
+	})
+
+	suite.Assert().FileExists(tempFile)
+}
+
+// TestGenConfigSingleTypeWithDeprecatedOutputDirFlagToDirectory tests that the gen config command treats
+// the output flag still as a directory when the deprecated --output-dir flag is used.
+func (suite *GenSuite) TestGenConfigSingleTypeWithDeprecatedOutputDirFlagToDirectory() {
+	tempDir := filepath.Join(suite.T().TempDir(), "inner")
+
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "worker",
+		"--output-dir", tempDir,
+	})
+
+	suite.Assert().FileExists(filepath.Join(tempDir, "worker.yaml"))
+}
+
+// TestGenConfigInvalidOutputType tests that the gen config command fails when
+// and invalid output type is requested.
+func (suite *GenSuite) TestGenConfigInvalidOutputType() {
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "worker,foobar",
+	}, base.StdoutEmpty(), base.ShouldFail(), base.StderrMatchFunc(func(output string) error {
+		expected := "invalid output type"
+		if !strings.Contains(output, expected) {
+			return fmt.Errorf("stderr does not contain %q: %q", expected, output)
+		}
+
+		return nil
+	}))
+}
+
+// TestGenConfigNoOutputType tests that the gen config command fails when an empty list of output types is requested.
+func (suite *GenSuite) TestGenConfigNoOutputType() {
+	suite.RunCLI([]string{
+		"gen", "config",
+		"foo", "https://192.168.0.1:6443",
+		"--output-types", "",
+	}, base.StdoutEmpty(), base.ShouldFail(), base.StderrMatchFunc(func(output string) error {
+		expected := "at least one output type must be specified"
+		if !strings.Contains(output, expected) {
+			return fmt.Errorf("stderr does not contain %q: %q", expected, output)
+		}
+
+		return nil
+	}))
 }
 
 func init() {

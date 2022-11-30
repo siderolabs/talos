@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/slices"
 	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -27,15 +29,38 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
+const (
+	controlPlaneOutputType = "controlplane"
+	workerOutputType       = "worker"
+	talosconfigOutputType  = "talosconfig"
+
+	stdoutOutput = "-"
+)
+
+var allOutputTypes = []string{
+	controlPlaneOutputType,
+	workerOutputType,
+	talosconfigOutputType,
+}
+
+type configOutputPaths struct {
+	controlPlane, worker, talosconfig string
+}
+
 var genConfigCmdFlags struct {
-	additionalSANs          []string
-	configVersion           string
-	dnsDomain               string
-	kubernetesVersion       string
-	talosVersion            string
-	installDisk             string
-	installImage            string
-	outputDir               string
+	additionalSANs    []string
+	configVersion     string
+	dnsDomain         string
+	kubernetesVersion string
+	talosVersion      string
+	installDisk       string
+	installImage      string
+
+	// outputDir is a hidden flag kept for backwards compatibility
+	outputDir string
+
+	output                  string
+	outputTypes             []string
 	configPatch             []string
 	configPatchControlPlane []string
 	configPatchWorker       []string
@@ -146,18 +171,13 @@ func V1Alpha1Config(genOptions []generate.GenOption,
 
 //nolint:gocyclo
 func writeV1Alpha1Config(args []string) error {
-	// If output dir isn't specified, set to the current working dir
-	var err error
-	if genConfigCmdFlags.outputDir == "" {
-		genConfigCmdFlags.outputDir, err = os.Getwd()
-		if err != nil {
-			return fmt.Errorf("failed to get working dir: %w", err)
-		}
+	if err := validateFlags(); err != nil {
+		return err
 	}
 
-	// Create dir path, ignoring "already exists" messages
-	if err = os.MkdirAll(genConfigCmdFlags.outputDir, os.ModePerm); err != nil && !os.IsExist(err) {
-		return fmt.Errorf("failed to create output dir: %w", err)
+	paths, err := outputPaths()
+	if err != nil {
+		return err
 	}
 
 	var genOptions []generate.GenOption //nolint:prealloc
@@ -224,24 +244,137 @@ func writeV1Alpha1Config(args []string) error {
 		return err
 	}
 
-	if err = configBundle.Write(genConfigCmdFlags.outputDir, commentsFlags, machine.TypeControlPlane, machine.TypeWorker); err != nil {
+	return writeConfigBundle(configBundle, paths, commentsFlags)
+}
+
+func validateFlags() error {
+	if len(genConfigCmdFlags.outputTypes) == 0 {
+		return fmt.Errorf("at least one output type must be specified")
+	}
+
+	if len(genConfigCmdFlags.outputTypes) > 1 && genConfigCmdFlags.output == stdoutOutput {
+		return fmt.Errorf("can't use multiple output types with stdout")
+	}
+
+	if genConfigCmdFlags.outputDir != "" && genConfigCmdFlags.output != "" {
+		return fmt.Errorf("can't use both output-dir and output")
+	}
+
+	if genConfigCmdFlags.outputDir != "" {
+		genConfigCmdFlags.output = genConfigCmdFlags.outputDir
+	}
+
+	var err error
+
+	for _, outputType := range genConfigCmdFlags.outputTypes {
+		if !slices.Contains(allOutputTypes, func(t string) bool {
+			return t == outputType
+		}) {
+			err = multierror.Append(err, fmt.Errorf("invalid output type: %q", outputType))
+		}
+	}
+
+	return err
+}
+
+func writeConfigBundle(configBundle *bundle.ConfigBundle, outputPaths configOutputPaths, commentsFlags encoder.CommentsFlags) error {
+	outputTypesSet := slices.ToSet(genConfigCmdFlags.outputTypes)
+
+	if _, ok := outputTypesSet[controlPlaneOutputType]; ok {
+		data, err := configBundle.Serialize(commentsFlags, machine.TypeControlPlane)
+		if err != nil {
+			return err
+		}
+
+		if err = writeToDestination(data, outputPaths.controlPlane, 0o644); err != nil {
+			return err
+		}
+	}
+
+	if _, ok := outputTypesSet[workerOutputType]; ok {
+		data, err := configBundle.Serialize(commentsFlags, machine.TypeWorker)
+		if err != nil {
+			return err
+		}
+
+		if err = writeToDestination(data, outputPaths.worker, 0o644); err != nil {
+			return err
+		}
+	}
+
+	if _, ok := outputTypesSet[talosconfigOutputType]; ok {
+		data, err := yaml.Marshal(configBundle.TalosConfig())
+		if err != nil {
+			return fmt.Errorf("failed to marshal config: %+v", err)
+		}
+
+		if err = writeToDestination(data, outputPaths.talosconfig, 0o644); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func writeToDestination(data []byte, destination string, permissions os.FileMode) error {
+	if destination == stdoutOutput {
+		_, err := os.Stdout.Write(data)
+
 		return err
 	}
 
-	data, err := yaml.Marshal(configBundle.TalosConfig())
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %+v", err)
+	parentDir := filepath.Dir(destination)
+
+	// Create dir path, ignoring "already exists" messages
+	if err := os.MkdirAll(parentDir, os.ModePerm); err != nil && !os.IsExist(err) {
+		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
-	fullFilePath := filepath.Join(genConfigCmdFlags.outputDir, "talosconfig")
+	err := os.WriteFile(destination, data, permissions)
 
-	if err = os.WriteFile(fullFilePath, data, 0o644); err != nil {
-		return fmt.Errorf("%w", err)
+	fmt.Printf("Created %s\n", destination)
+
+	return err
+}
+
+func outputPaths() (configOutputPaths, error) {
+	// output to stdout
+	if genConfigCmdFlags.output == stdoutOutput {
+		return configOutputPaths{controlPlane: stdoutOutput, worker: stdoutOutput, talosconfig: stdoutOutput}, nil
 	}
 
-	fmt.Printf("created %s\n", fullFilePath)
+	// output is not specified - use current working directory as the default
+	if genConfigCmdFlags.output == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return configOutputPaths{}, err
+		}
 
-	return nil
+		controlPlane := filepath.Join(cwd, machine.TypeControlPlane.String()+".yaml")
+		worker := filepath.Join(cwd, machine.TypeWorker.String()+".yaml")
+		talosconfig := filepath.Join(cwd, "talosconfig")
+
+		return configOutputPaths{controlPlane: controlPlane, worker: worker, talosconfig: talosconfig}, nil
+	}
+
+	// output is specified
+
+	// if a single output type is specified, treat --output as a file path and not a directory
+	// except when the deprecated flag of --output-dir is specified - it is always treated as a directory
+	if len(genConfigCmdFlags.outputTypes) == 1 && genConfigCmdFlags.outputDir == "" { // specified output is a file
+		return configOutputPaths{
+			controlPlane: genConfigCmdFlags.output,
+			worker:       genConfigCmdFlags.output,
+			talosconfig:  genConfigCmdFlags.output,
+		}, nil
+	}
+
+	// treat --output as a directory
+	controlPlane := filepath.Join(genConfigCmdFlags.output, machine.TypeControlPlane.String()+".yaml")
+	worker := filepath.Join(genConfigCmdFlags.output, machine.TypeWorker.String()+".yaml")
+	talosconfig := filepath.Join(genConfigCmdFlags.output, "talosconfig")
+
+	return configOutputPaths{controlPlane: controlPlane, worker: worker, talosconfig: talosconfig}, nil
 }
 
 func validateClusterEndpoint(endpoint string) error {
@@ -285,7 +418,6 @@ func init() {
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.configVersion, "version", "v1alpha1", "the desired machine config version to generate")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.talosVersion, "talos-version", "", "the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.kubernetesVersion, "kubernetes-version", constants.DefaultKubernetesVersion, "desired kubernetes version to run")
-	genConfigCmd.Flags().StringVarP(&genConfigCmdFlags.outputDir, "output-dir", "o", "", "destination to output generated files")
 	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatch, "config-patch", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
 	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatchControlPlane, "config-patch-control-plane", nil, "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
 	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
@@ -296,6 +428,12 @@ func init() {
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withClusterDiscovery, "with-cluster-discovery", "", true, "enable cluster discovery feature")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withKubeSpan, "with-kubespan", "", false, "enable KubeSpan feature")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.withSecrets, "with-secrets", "", "use a secrets file generated using 'gen secrets'")
+
+	genConfigCmd.Flags().StringSliceVarP(&genConfigCmdFlags.outputTypes, "output-types", "t", allOutputTypes, fmt.Sprintf("types of outputs to be generated. valid types are: %q", allOutputTypes))
+	genConfigCmd.Flags().StringVarP(&genConfigCmdFlags.output, "output", "o", "",
+		`destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout`)
+	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.outputDir, "output-dir", "", "destination to output generated files") // kept for backwards compatibility
+	genConfigCmd.Flags().MarkHidden("output-dir")                                                                           //nolint:errcheck
 
 	Cmd.AddCommand(genConfigCmd)
 }
