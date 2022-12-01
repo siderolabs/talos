@@ -73,28 +73,30 @@ var genConfigCmdFlags struct {
 	withSecrets             string
 }
 
-// genConfigCmd represents the `gen config` command.
-var genConfigCmd = &cobra.Command{
-	Use:   "config <cluster name> <cluster endpoint>",
-	Short: "Generates a set of configuration files for Talos cluster",
-	Long: `The cluster endpoint is the URL for the Kubernetes API. If you decide to use
+// NewConfigCmd builds the config generation subcommand with the given name.
+func NewConfigCmd(name string) *cobra.Command {
+	return &cobra.Command{
+		Use:   fmt.Sprintf("%s <cluster name> <cluster endpoint>", name),
+		Short: "Generates a set of configuration files for Talos cluster",
+		Long: `The cluster endpoint is the URL for the Kubernetes API. If you decide to use
 a control plane node, common in a single node control plane setup, use port 6443 as
 this is the port that the API server binds to on every control plane node. For an HA
 setup, usually involving a load balancer, use the IP and port of the load balancer.`,
-	Args: cobra.ExactArgs(2),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		err := validateClusterEndpoint(args[1])
-		if err != nil {
-			return err
-		}
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := validateClusterEndpoint(args[1])
+			if err != nil {
+				return err
+			}
 
-		switch genConfigCmdFlags.configVersion {
-		case "v1alpha1":
-			return writeV1Alpha1Config(args)
-		}
-
-		return nil
-	},
+			switch genConfigCmdFlags.configVersion {
+			case "v1alpha1":
+				return writeV1Alpha1Config(args)
+			default:
+				return fmt.Errorf("unknown config version: %q", genConfigCmdFlags.configVersion)
+			}
+		},
+	}
 }
 
 func fixControlPlaneEndpoint(u *url.URL) *url.URL {
@@ -411,6 +413,8 @@ func validateClusterEndpoint(endpoint string) error {
 }
 
 func init() {
+	genConfigCmd := NewConfigCmd("config")
+
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.installDisk, "install-disk", "/dev/sda", "the disk to install to")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.installImage, "install-image", helpers.DefaultImage(images.DefaultInstallerImageRepository), "the image used to perform an installation")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")

@@ -11,6 +11,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/debug"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/gen"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/inject"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/machineconfig"
 )
 
 // Commands is a list of commands published by the package.
@@ -30,4 +31,5 @@ func init() {
 	addCommand(gen.Cmd)
 	addCommand(debug.Cmd)
 	addCommand(inject.Cmd)
+	addCommand(machineconfig.Cmd)
 }

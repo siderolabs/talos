@@ -1681,6 +1681,97 @@ talosctl logs <service name> [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl machineconfig gen
+
+Generates a set of configuration files for Talos cluster
+
+### Synopsis
+
+The cluster endpoint is the URL for the Kubernetes API. If you decide to use
+a control plane node, common in a single node control plane setup, use port 6443 as
+this is the port that the API server binds to on every control plane node. For an HA
+setup, usually involving a load balancer, use the IP and port of the load balancer.
+
+```
+talosctl machineconfig gen <cluster name> <cluster endpoint> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for gen
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
+
+## talosctl machineconfig patch
+
+Patch a machine config
+
+```
+talosctl machineconfig patch <machineconfig-file> [flags]
+```
+
+### Options
+
+```
+  -h, --help                help for patch
+  -o, --output string       output destination. if not specified, output will be printed to stdout
+  -p, --patch stringArray   patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
+
+## talosctl machineconfig
+
+Machine config related commands
+
+### Options
+
+```
+  -h, --help   help for machineconfig
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl machineconfig gen](#talosctl-machineconfig-gen)	 - Generates a set of configuration files for Talos cluster
+* [talosctl machineconfig patch](#talosctl-machineconfig-patch)	 - Patch a machine config
+
 ## talosctl memory
 
 Show memory usage
@@ -2399,6 +2490,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node
 * [talosctl list](#talosctl-list)	 - Retrieve a directory listing
 * [talosctl logs](#talosctl-logs)	 - Retrieve logs for a service
+* [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
 * [talosctl memory](#talosctl-memory)	 - Show memory usage
 * [talosctl mounts](#talosctl-mounts)	 - List mounts
 * [talosctl patch](#talosctl-patch)	 - Update field(s) of a resource using a JSON patch.
