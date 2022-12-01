@@ -21,7 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
 )
 
-// GenSuite verifies dmesg command.
+// GenSuite verifies gen command.
 type GenSuite struct {
 	base.CLISuite
 

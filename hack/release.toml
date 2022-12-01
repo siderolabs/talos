@@ -245,6 +245,26 @@ See [Kubernetes documentation](https://kubernetes.io/blog/2022/11/28/registry-k8
 If using registry mirrors, or in air-gapped installations you may need to update your configuration.
 """
 
+    [notes.talosctl_machineconfig_patch]
+        title = "talosctl machineconfig patch"
+        description = """\
+A new subcommand, `machineconfig patch` is added to `talosctl` to allow patching of machine configuration.
+
+It accepts a machineconfig file and a list of patches as input and outputs the patched machine configuration.
+
+Patches can be sourced from the command line or from a file. Output can be written to a file or to stdout.
+
+Example:
+
+```bash
+talosctl machineconfig patch controlplane.yaml \
+  --patch '[{"op":"replace","path":"/cluster/clusterName","value":"patch1"}]' \
+  --patch @/path/to/patch2.json
+```
+
+Additionally, `talosctl machineconfig gen` subcommand is introduced as an alias to `talosctl gen config`.
+"""
+
 [make_deps]
 
     [make_deps.tools]
