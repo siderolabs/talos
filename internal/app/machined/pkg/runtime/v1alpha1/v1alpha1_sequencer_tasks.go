@@ -341,6 +341,20 @@ var rules = []string{
 	"dont_measure fsmagic=0xde5e81e4", // EFIVARFS_MAGIC
 	"dont_measure fsmagic=0x58465342", // XFS_MAGIC
 	"dont_measure fsmagic=0x794c7630", // OVERLAYFS_SUPER_MAGIC
+	"dont_measure fsmagic=0x9123683e", // BTRFS_SUPER_MAGIC
+	"dont_measure fsmagic=0x72b6",     // JFFS2_SUPER_MAGIC
+	"dont_measure fsmagic=0x4d44",     // MSDOS_SUPER_MAGIC
+	"dont_measure fsmagic=0x2011bab0", // EXFAT_SUPER_MAGIC
+	"dont_measure fsmagic=0x6969",     // NFS_SUPER_MAGIC
+	"dont_measure fsmagic=0x5346544e", // NTFS_SB_MAGIC
+	"dont_measure fsmagic=0x9660",     // ISOFS_SUPER_MAGIC
+	"dont_measure fsmagic=0x15013346", // UDF_SUPER_MAGIC
+	"dont_measure fsmagic=0x52654973", // REISERFS_SUPER_MAGIC
+	"dont_measure fsmagic=0x137d",     // EXT_SUPER_MAGIC
+	"dont_measure fsmagic=0xef51",     // EXT2_OLD_SUPER_MAGIC
+	"dont_measure fsmagic=0xef53",     // EXT2_SUPER_MAGIC / EXT3_SUPER_MAGIC / EXT4_SUPER_MAGIC
+	"dont_measure fsmagic=0x00c36400", // CEPH_SUPER_MAGIC
+	"dont_measure fsmagic=0x65735543", // FUSE_CTL_SUPER_MAGIC
 	"measure func=MMAP_CHECK mask=MAY_EXEC",
 	"measure func=BPRM_CHECK mask=MAY_EXEC",
 	"measure func=FILE_CHECK mask=^MAY_READ euid=0",
