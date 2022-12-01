@@ -99,6 +99,7 @@ func PopulateURLParameters(ctx context.Context, downloadURL string, r state.Stat
 	return u.String(), nil
 }
 
+//nolint:gocyclo
 func getResource[T resource.Resource](ctx context.Context, r state.State, namespace, typ, valName string, isReadyFunc func(T) bool, checkAndGetFunc func(T) string) (string, error) {
 	metadata := resource.NewMetadata(namespace, typ, "", resource.VersionUndefined)
 
@@ -122,6 +123,15 @@ func getResource[T resource.Resource](ctx context.Context, r state.State, namesp
 
 			return "", err
 		case event := <-events:
+			switch event.Type() {
+			case state.Created, state.Updated:
+				// ok, proceed
+			case state.Destroyed, state.Bootstrapped:
+				// ignore
+			case state.Errored:
+				return "", event.Error()
+			}
+
 			eventResource, err := event.Resource()
 			if err != nil {
 				watchErr = fmt.Errorf("%s; invalid resource in wrapped event: %w", watchErr.Error(), err)
