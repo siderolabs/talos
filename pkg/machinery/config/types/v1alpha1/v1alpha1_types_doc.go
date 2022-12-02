@@ -2219,12 +2219,17 @@ func init() {
 			FieldName: "mirrors",
 		},
 	}
-	RegistryMirrorConfigDoc.Fields = make([]encoder.Doc, 1)
+	RegistryMirrorConfigDoc.Fields = make([]encoder.Doc, 2)
 	RegistryMirrorConfigDoc.Fields[0].Name = "endpoints"
 	RegistryMirrorConfigDoc.Fields[0].Type = "[]string"
 	RegistryMirrorConfigDoc.Fields[0].Note = ""
 	RegistryMirrorConfigDoc.Fields[0].Description = "List of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to `/v2`)."
 	RegistryMirrorConfigDoc.Fields[0].Comments[encoder.LineComment] = "List of endpoints (URLs) for registry mirrors to use."
+	RegistryMirrorConfigDoc.Fields[1].Name = "overridePath"
+	RegistryMirrorConfigDoc.Fields[1].Type = "bool"
+	RegistryMirrorConfigDoc.Fields[1].Note = ""
+	RegistryMirrorConfigDoc.Fields[1].Description = "Use the exact path specified for the endpoint (don't append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry."
+	RegistryMirrorConfigDoc.Fields[1].Comments[encoder.LineComment] = "Use the exact path specified for the endpoint (don't append /v2/)."
 
 	RegistryConfigDoc.Type = "RegistryConfig"
 	RegistryConfigDoc.Comments[encoder.LineComment] = "RegistryConfig specifies auth & TLS config per registry."

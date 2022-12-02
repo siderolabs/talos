@@ -47,24 +47,24 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 		Directories: map[string]*HostsDirectory{},
 	}
 
-	configureTLS := func(host string, directoryName string, hostToml *HostToml, directory *HostsDirectory) {
-		tlsConfig, ok := cfg.Config()[host]
+	configureEndpoint := func(host string, directoryName string, hostToml *HostToml, directory *HostsDirectory) {
+		endpointConfig, ok := cfg.Config()[host]
 		if !ok {
 			return
 		}
 
-		if tlsConfig.TLS() != nil {
-			if tlsConfig.TLS().InsecureSkipVerify() {
+		if endpointConfig.TLS() != nil {
+			if endpointConfig.TLS().InsecureSkipVerify() {
 				hostToml.SkipVerify = true
 			}
 
-			if tlsConfig.TLS().CA() != nil {
+			if endpointConfig.TLS().CA() != nil {
 				relPath := fmt.Sprintf("%s-ca.crt", host)
 
 				directory.Files = append(directory.Files,
 					&HostsFile{
 						Name:     relPath,
-						Contents: tlsConfig.TLS().CA(),
+						Contents: endpointConfig.TLS().CA(),
 						Mode:     0o600,
 					},
 				)
@@ -72,19 +72,19 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 				hostToml.CACert = filepath.Join(basePath, directoryName, relPath)
 			}
 
-			if tlsConfig.TLS().ClientIdentity() != nil {
+			if endpointConfig.TLS().ClientIdentity() != nil {
 				relPathCrt := fmt.Sprintf("%s-client.crt", host)
 				relPathKey := fmt.Sprintf("%s-client.key", host)
 
 				directory.Files = append(directory.Files,
 					&HostsFile{
 						Name:     relPathCrt,
-						Contents: tlsConfig.TLS().ClientIdentity().Crt,
+						Contents: endpointConfig.TLS().ClientIdentity().Crt,
 						Mode:     0o600,
 					},
 					&HostsFile{
 						Name:     relPathKey,
-						Contents: tlsConfig.TLS().ClientIdentity().Key,
+						Contents: endpointConfig.TLS().ClientIdentity().Key,
 						Mode:     0o600,
 					},
 				)
@@ -122,9 +122,10 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 			hostsToml.HostConfigs[endpoint] = &HostToml{
 				Capabilities: []string{"pull", "resolve"}, // TODO: we should make it configurable eventually
+				OverridePath: endpoints.OverridePath(),
 			}
 
-			configureTLS(u.Host, directoryName, hostsToml.HostConfigs[endpoint], directory)
+			configureEndpoint(u.Host, directoryName, hostsToml.HostConfigs[endpoint], directory)
 
 			tomlBytes, err := toml.Marshal(hostsToml)
 			if err != nil {
@@ -192,13 +193,12 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 		defaultHost = "https://" + defaultHost
 
 		hostsToml := HostsToml{
-			Server: defaultHost,
 			HostConfigs: map[string]*HostToml{
 				defaultHost: {},
 			},
 		}
 
-		configureTLS(hostname, directoryName, hostsToml.HostConfigs[defaultHost], directory)
+		configureEndpoint(hostname, directoryName, hostsToml.HostConfigs[defaultHost], directory)
 
 		marshaled, err := toml.Marshal(hostsToml)
 		if err != nil {
@@ -238,6 +238,7 @@ type HostsToml struct {
 // HostToml is a single entry in `hosts.toml`.
 type HostToml struct {
 	Capabilities []string    `toml:"capabilities,omitempty"`
+	OverridePath bool        `toml:"override_path,omitempty"`
 	CACert       string      `toml:"ca,omitempty"`
 	Client       [][2]string `toml:"client,omitempty"`
 	SkipVerify   bool        `toml:"skip_verify,omitempty"`

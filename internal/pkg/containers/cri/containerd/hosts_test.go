@@ -17,8 +17,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-func TestGenerateHosts(t *testing.T) {
-	cfgWithTLS := &mockConfig{
+func TestGenerateHostsWithTLS(t *testing.T) {
+	cfg := &mockConfig{
 		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
 				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
@@ -49,7 +49,7 @@ func TestGenerateHosts(t *testing.T) {
 		},
 	}
 
-	resultWithTLS, err := containerd.GenerateHosts(cfgWithTLS, "/etc/cri/conf.d/hosts")
+	result, err := containerd.GenerateHosts(cfg, "/etc/cri/conf.d/hosts")
 	require.NoError(t, err)
 
 	assert.Equal(t, &containerd.HostsConfig{
@@ -83,7 +83,7 @@ func TestGenerateHosts(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("server = \"https://some.host:123\"\n\n[host]\n\n  [host.\"https://some.host:123\"]\n    ca = \"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-ca.crt\"\n    client = [[\"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-client.crt\", \"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-client.key\"]]\n    skip_verify = true\n"), //nolint:lll
+						Contents: []byte("\n[host]\n\n  [host.\"https://some.host:123\"]\n    ca = \"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-ca.crt\"\n    client = [[\"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-client.crt\", \"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-client.key\"]]\n    skip_verify = true\n"), //nolint:lll
 					},
 				},
 			},
@@ -92,14 +92,16 @@ func TestGenerateHosts(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("server = \"https://registry-2.docker.io\"\n\n[host]\n\n  [host.\"https://registry-2.docker.io\"]\n    skip_verify = true\n"),
+						Contents: []byte("\n[host]\n\n  [host.\"https://registry-2.docker.io\"]\n    skip_verify = true\n"),
 					},
 				},
 			},
 		},
-	}, resultWithTLS)
+	}, result)
+}
 
-	cfgWithoutTLS := &mockConfig{
+func TestGenerateHostsWithoutTLS(t *testing.T) {
+	cfg := &mockConfig{
 		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 			"docker.io": {
 				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
@@ -117,7 +119,7 @@ func TestGenerateHosts(t *testing.T) {
 		},
 	}
 
-	resultWithoutTLS, err := containerd.GenerateHosts(cfgWithoutTLS, "/etc/cri/conf.d/hosts")
+	result, err := containerd.GenerateHosts(cfg, "/etc/cri/conf.d/hosts")
 	require.NoError(t, err)
 
 	assert.Equal(t, &containerd.HostsConfig{
@@ -136,10 +138,78 @@ func TestGenerateHosts(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("server = \"https://some.host:123\"\n\n[host]\n\n  [host.\"https://some.host:123\"]\n"),
+						Contents: []byte("\n[host]\n\n  [host.\"https://some.host:123\"]\n"),
 					},
 				},
 			},
 		},
-	}, resultWithoutTLS)
+	}, result)
+}
+
+func TestGenerateHostsWithHarbor(t *testing.T) {
+	cfg := &mockConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+			"docker.io": {
+				MirrorEndpoints:    []string{"https://harbor/v2/mirrors/proxy.docker.io"},
+				MirrorOverridePath: pointer.To(true),
+			},
+			"ghcr.io": {
+				MirrorEndpoints:    []string{"https://harbor/v2/mirrors/proxy.ghcr.io"},
+				MirrorOverridePath: pointer.To(true),
+			},
+		},
+		config: map[string]*v1alpha1.RegistryConfig{
+			"harbor": {
+				RegistryAuth: &v1alpha1.RegistryAuthConfig{
+					RegistryUsername:      "root",
+					RegistryPassword:      "secret",
+					RegistryAuth:          "auth",
+					RegistryIdentityToken: "token",
+				},
+				RegistryTLS: &v1alpha1.RegistryTLSConfig{
+					TLSInsecureSkipVerify: pointer.To(true),
+				},
+			},
+		},
+	}
+
+	result, err := containerd.GenerateHosts(cfg, "/etc/cri/conf.d/hosts")
+	require.NoError(t, err)
+
+	t.Logf(
+		"config %q",
+		string(result.Directories["harbor"].Files[0].Contents),
+	)
+
+	assert.Equal(t, &containerd.HostsConfig{
+		Directories: map[string]*containerd.HostsDirectory{
+			"docker.io": {
+				Files: []*containerd.HostsFile{
+					{
+						Name:     "hosts.toml",
+						Mode:     0o600,
+						Contents: []byte("\n[host]\n\n  [host.\"https://harbor/v2/mirrors/proxy.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n    override_path = true\n    skip_verify = true\n"),
+					},
+				},
+			},
+			"ghcr.io": {
+				Files: []*containerd.HostsFile{
+					{
+						Name:     "hosts.toml",
+						Mode:     0o600,
+						Contents: []byte("\n[host]\n\n  [host.\"https://harbor/v2/mirrors/proxy.ghcr.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n    override_path = true\n    skip_verify = true\n"),
+					},
+				},
+			},
+			"harbor": {
+				Files: []*containerd.HostsFile{
+					{
+						Name:     "hosts.toml",
+						Mode:     0o600,
+						Contents: []byte("\n[host]\n\n  [host.\"https://harbor\"]\n    skip_verify = true\n"),
+					},
+				},
+			},
+		},
+	}, result)
 }

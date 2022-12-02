@@ -265,6 +265,36 @@ talosctl machineconfig patch controlplane.yaml \
 Additionally, `talosctl machineconfig gen` subcommand is introduced as an alias to `talosctl gen config`.
 """
 
+    [notes.registry-mirrors]
+        title = "Registry Mirrors"
+        description = """\
+Talos had an inconsistency in the way registry mirror endpoints are handled when compared with `containerd` implementation:
+
+```yaml
+machine:
+    registries:
+        mirrors:
+            docker.io:
+                endpoints:
+                    - "https://mirror-registry/v2/mirror.docker.io"
+```
+
+Talos would use endpoint `https://mirror-registry/v2/mirror.docker.io`, while `containerd` would use `https://mirror-registry/v2/mirror.docker.io/v2`.
+This inconsistency is now fixed, and Talos uses same endpoint as `containerd`.
+
+New `overridePath` configuration is introduced to skip appending `/v2` both on Talos and containerd side:
+
+```yaml
+machine:
+    registries:
+        mirrors:
+            docker.io:
+                endpoints:
+                    - "https://mirror-registry/v2/mirror.docker.io"
+                overridePath: true
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]
