@@ -2348,6 +2348,11 @@ type RegistryMirrorConfig struct {
 	//     Endpoint configures HTTP/HTTPS access mode, host name,
 	//     port and path (if path is not set, it defaults to `/v2`).
 	MirrorEndpoints []string `yaml:"endpoints"`
+	//   description: |
+	//     Use the exact path specified for the endpoint (don't append /v2/).
+	//     This setting is often required for setting up multiple mirrors
+	//     on a single instance of a registry.
+	MirrorOverridePath *bool `yaml:"overridePath,omitempty"`
 }
 
 // RegistryConfig specifies auth & TLS config per registry.

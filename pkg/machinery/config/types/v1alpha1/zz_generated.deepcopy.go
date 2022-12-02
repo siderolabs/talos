@@ -1876,6 +1876,11 @@ func (in *RegistryMirrorConfig) DeepCopyInto(out *RegistryMirrorConfig) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.MirrorOverridePath != nil {
+		in, out := &in.MirrorOverridePath, &out.MirrorOverridePath
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

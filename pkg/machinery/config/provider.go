@@ -351,6 +351,7 @@ type Registries interface {
 // RegistryMirrorConfig represents mirror configuration for a registry.
 type RegistryMirrorConfig interface {
 	Endpoints() []string
+	OverridePath() bool
 }
 
 // RegistryConfig specifies auth & TLS config per registry.

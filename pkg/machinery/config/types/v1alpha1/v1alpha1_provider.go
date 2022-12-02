@@ -1197,6 +1197,11 @@ func (r *RegistryMirrorConfig) Endpoints() []string {
 	return r.MirrorEndpoints
 }
 
+// OverridePath implements the Registries interface.
+func (r *RegistryMirrorConfig) OverridePath() bool {
+	return pointer.SafeDeref(r.MirrorOverridePath)
+}
+
 // Content implements the config.Provider interface.
 func (f *MachineFile) Content() string {
 	return f.FileContent

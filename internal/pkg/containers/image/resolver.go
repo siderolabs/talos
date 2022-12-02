@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/containerd/containerd/remotes"
@@ -33,7 +34,7 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 	return func(host string) ([]docker.RegistryHost, error) {
 		var registries []docker.RegistryHost
 
-		endpoints, err := RegistryEndpoints(reg, host)
+		endpoints, overridePath, err := RegistryEndpoints(reg, host)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +62,15 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 			}
 
 			if u.Path == "" {
-				u.Path = "/v2"
+				if !overridePath {
+					u.Path = "/v2"
+				}
+			} else {
+				u.Path = path.Clean(u.Path)
+
+				if !strings.HasSuffix(u.Path, "/v2") && !overridePath {
+					u.Path += "/v2"
+				}
 			}
 
 			uu := u
@@ -89,30 +98,24 @@ func RegistryHosts(reg config.Registries) docker.RegistryHosts {
 }
 
 // RegistryEndpoints returns registry endpoints per host using reg.
-func RegistryEndpoints(reg config.Registries, host string) ([]string, error) {
-	var endpoints []string
-
+func RegistryEndpoints(reg config.Registries, host string) (endpoints []string, overridePath bool, err error) {
+	// direct hit by host
 	if hostConfig, ok := reg.Mirrors()[host]; ok {
-		endpoints = hostConfig.Endpoints()
+		return hostConfig.Endpoints(), hostConfig.OverridePath(), nil
 	}
 
-	if endpoints == nil {
-		if catchAllConfig, ok := reg.Mirrors()["*"]; ok {
-			endpoints = catchAllConfig.Endpoints()
-		}
+	// '*'
+	if catchAllConfig, ok := reg.Mirrors()["*"]; ok {
+		return catchAllConfig.Endpoints(), catchAllConfig.OverridePath(), nil
 	}
 
-	if len(endpoints) == 0 {
-		// still no endpoints, use default
-		defaultHost, err := docker.DefaultHost(host)
-		if err != nil {
-			return nil, fmt.Errorf("error getting default host for %q: %w", host, err)
-		}
-
-		endpoints = append(endpoints, "https://"+defaultHost)
+	// still no endpoints, use default
+	defaultHost, err := docker.DefaultHost(host)
+	if err != nil {
+		return nil, false, fmt.Errorf("error getting default host for %q: %w", host, err)
 	}
 
-	return endpoints, nil
+	return []string{"https://" + defaultHost}, false, nil
 }
 
 // PrepareAuth returns authentication info in the format expected by containerd.

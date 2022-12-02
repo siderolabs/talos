@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
@@ -51,51 +52,127 @@ type ResolverSuite struct {
 }
 
 func (suite *ResolverSuite) TestRegistryEndpoints() {
-	// defaults
-	endpoints, err := image.RegistryEndpoints(&mockConfig{}, "docker.io")
-	suite.Assert().NoError(err)
-	suite.Assert().Equal([]string{"https://registry-1.docker.io"}, endpoints)
+	type request struct {
+		host string
 
-	endpoints, err = image.RegistryEndpoints(&mockConfig{}, "quay.io")
-	suite.Assert().NoError(err)
-	suite.Assert().Equal([]string{"https://quay.io"}, endpoints)
-
-	// overrides without catch-all
-	cfg := &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
-			"docker.io": {
-				MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
-			},
-		},
+		expectedEndpoints    []string
+		expectedOverridePath bool
 	}
 
-	endpoints, err = image.RegistryEndpoints(cfg, "docker.io")
-	suite.Assert().NoError(err)
-	suite.Assert().Equal([]string{"http://127.0.0.1:5000", "https://some.host"}, endpoints)
+	for _, tt := range []struct {
+		name   string
+		config *mockConfig
 
-	endpoints, err = image.RegistryEndpoints(cfg, "quay.io")
-	suite.Assert().NoError(err)
-	suite.Assert().Equal([]string{"https://quay.io"}, endpoints)
-
-	// overrides with catch-all
-	cfg = &mockConfig{
-		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
-			"docker.io": {
-				MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
-			},
-			"*": {
-				MirrorEndpoints: []string{"http://127.0.0.1:5001"},
+		requests []request
+	}{
+		{
+			name:   "no config",
+			config: &mockConfig{},
+			requests: []request{
+				{
+					host:              "docker.io",
+					expectedEndpoints: []string{"https://registry-1.docker.io"},
+				},
+				{
+					host:              "quay.io",
+					expectedEndpoints: []string{"https://quay.io"},
+				},
 			},
 		},
+		{
+			name: "config with mirror",
+			config: &mockConfig{
+				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+					"docker.io": {
+						MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+					},
+				},
+			},
+
+			requests: []request{
+				{
+					host:              "docker.io",
+					expectedEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+				},
+				{
+					host:              "quay.io",
+					expectedEndpoints: []string{"https://quay.io"},
+				},
+			},
+		},
+		{
+			name: "config with catch-all",
+			config: &mockConfig{
+				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+					"docker.io": {
+						MirrorEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+					},
+					"*": {
+						MirrorEndpoints: []string{"http://127.0.0.1:5001"},
+					},
+				},
+			},
+
+			requests: []request{
+				{
+					host:              "docker.io",
+					expectedEndpoints: []string{"http://127.0.0.1:5000", "https://some.host"},
+				},
+				{
+					host:              "quay.io",
+					expectedEndpoints: []string{"http://127.0.0.1:5001"},
+				},
+			},
+		},
+		{
+			name: "config with override path",
+			config: &mockConfig{
+				mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+					"docker.io": {
+						MirrorEndpoints:    []string{"https://harbor/v2/registry.docker.io"},
+						MirrorOverridePath: pointer.To(true),
+					},
+					"ghcr.io": {
+						MirrorEndpoints:    []string{"https://harbor/v2/registry.ghcr.io"},
+						MirrorOverridePath: pointer.To(true),
+					},
+				},
+			},
+
+			requests: []request{
+				{
+					host:                 "docker.io",
+					expectedEndpoints:    []string{"https://harbor/v2/registry.docker.io"},
+					expectedOverridePath: true,
+				},
+				{
+					host:                 "ghcr.io",
+					expectedEndpoints:    []string{"https://harbor/v2/registry.ghcr.io"},
+					expectedOverridePath: true,
+				},
+				{
+					host:              "quay.io",
+					expectedEndpoints: []string{"https://quay.io"},
+				},
+			},
+		},
+	} {
+		tt := tt
+
+		suite.Run(tt.name, func() {
+			for _, req := range tt.requests {
+				req := req
+
+				suite.Run(req.host, func() {
+					endpoints, overridePath, err := image.RegistryEndpoints(tt.config, req.host)
+
+					suite.Assert().NoError(err)
+					suite.Assert().Equal(req.expectedEndpoints, endpoints)
+					suite.Assert().Equal(req.expectedOverridePath, overridePath)
+				})
+			}
+		})
 	}
-
-	endpoints, err = image.RegistryEndpoints(cfg, "docker.io")
-	suite.Assert().NoError(err)
-	suite.Assert().Equal([]string{"http://127.0.0.1:5000", "https://some.host"}, endpoints)
-
-	endpoints, err = image.RegistryEndpoints(cfg, "quay.io")
-	suite.Assert().NoError(err)
-	suite.Assert().Equal([]string{"http://127.0.0.1:5001"}, endpoints)
 }
 
 func (suite *ResolverSuite) TestPrepareAuth() {
@@ -152,6 +229,10 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 			"docker.io": {
 				MirrorEndpoints: []string{"http://127.0.0.1:5000/docker.io", "https://some.host"},
 			},
+			"ghcr.io": {
+				MirrorEndpoints:    []string{"https://harbor/v2/registry.ghcr.io"},
+				MirrorOverridePath: pointer.To(true),
+			},
 		},
 	}
 
@@ -160,12 +241,19 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Len(registryHosts, 2)
 	suite.Assert().Equal("http", registryHosts[0].Scheme)
 	suite.Assert().Equal("127.0.0.1:5000", registryHosts[0].Host)
-	suite.Assert().Equal("/docker.io", registryHosts[0].Path)
+	suite.Assert().Equal("/docker.io/v2", registryHosts[0].Path)
 	suite.Assert().Nil(registryHosts[0].Client.Transport.(*http.Transport).TLSClientConfig.Certificates)
 	suite.Assert().Equal("https", registryHosts[1].Scheme)
 	suite.Assert().Equal("some.host", registryHosts[1].Host)
 	suite.Assert().Equal("/v2", registryHosts[1].Path)
 	suite.Assert().Nil(registryHosts[1].Client.Transport.(*http.Transport).TLSClientConfig.Certificates)
+
+	registryHosts, err = image.RegistryHosts(cfg)("ghcr.io")
+	suite.Require().NoError(err)
+	suite.Assert().Len(registryHosts, 1)
+	suite.Assert().Equal("https", registryHosts[0].Scheme)
+	suite.Assert().Equal("harbor", registryHosts[0].Host)
+	suite.Assert().Equal("/v2/registry.ghcr.io", registryHosts[0].Path)
 
 	cfg = &mockConfig{
 		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
