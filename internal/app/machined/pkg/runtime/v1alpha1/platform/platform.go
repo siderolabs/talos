@@ -39,6 +39,7 @@ import (
 type Event struct {
 	Type    string
 	Message string
+	Error   error
 }
 
 // nb: these events currently map to those expected by
@@ -133,10 +134,16 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 func FireEvent(ctx context.Context, p runtime.Platform, e Event) {
 	switch platType := p.(type) {
 	case *equinixmetal.EquinixMetal:
-		eventErr := platType.FireEvent(ctx, equinixmetal.Event{
+		emEvent := equinixmetal.Event{
 			Type:    e.Type,
 			Message: e.Message,
-		})
+		}
+
+		if e.Error != nil {
+			emEvent.Message = fmt.Sprintf("%s: %s", e.Message, e.Error)
+		}
+
+		eventErr := platType.FireEvent(ctx, emEvent)
 
 		if eventErr != nil {
 			log.Printf("failed sending event: %s", eventErr)

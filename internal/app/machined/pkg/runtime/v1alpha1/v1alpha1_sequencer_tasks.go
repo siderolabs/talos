@@ -515,6 +515,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 					platform.Event{
 						Type:    platform.EventTypeFailure,
 						Message: "Error fetching Talos machine config.",
+						Error:   e,
 					},
 				)
 
@@ -535,6 +536,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 					platform.Event{
 						Type:    platform.EventTypeFailure,
 						Message: "Error loading and validating Talos machine config.",
+						Error:   e,
 					},
 				)
 
@@ -1927,6 +1929,7 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 					platform.Event{
 						Type:    platform.EventTypeFailure,
 						Message: "Talos install failed.",
+						Error:   err,
 					},
 				)
 
@@ -1967,7 +1970,8 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 					r.State().Platform(),
 					platform.Event{
 						Type:    platform.EventTypeFailure,
-						Message: "Talos install failed.",
+						Message: "Talos staged upgrade failed.",
+						Error:   err,
 					},
 				)
 
