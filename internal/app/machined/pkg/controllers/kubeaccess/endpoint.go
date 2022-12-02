@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -76,35 +77,37 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			return nil
 		}
 
-		kubeaccessConfig, err := r.Get(ctx, kubeaccess.NewConfig(config.NamespaceName, kubeaccess.ConfigID).Metadata())
+		kubeaccessConfig, err := safe.ReaderGet[*kubeaccess.Config](ctx, r, kubeaccess.NewConfig(config.NamespaceName, kubeaccess.ConfigID).Metadata())
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error fetching kubeaccess config: %w", err)
 			}
 		}
 
-		if kubeaccessConfig == nil || !kubeaccessConfig.(*kubeaccess.Config).TypedSpec().Enabled {
+		if kubeaccessConfig == nil || !kubeaccessConfig.TypedSpec().Enabled {
 			// disabled, do not do anything
 			continue
 		}
 
-		endpointResources, err := r.List(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, "", resource.VersionUndefined))
+		// use only api-server endpoints to leave only kubelet node IPs
+		endpointResource, err := safe.ReaderGet[*k8s.Endpoint](ctx, r, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, k8s.ControlPlaneAPIServerEndpointsID, resource.VersionUndefined))
 		if err != nil {
-			return fmt.Errorf("error getting endpoints resources: %w", err)
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting endpoints resources: %w", err)
+			}
 		}
 
 		var endpointAddrs k8s.EndpointList
 
-		// merge all endpoints into a single list
-		for _, res := range endpointResources.Items {
-			endpointAddrs = endpointAddrs.Merge(res.(*k8s.Endpoint))
+		if endpointResource != nil {
+			endpointAddrs = endpointAddrs.Merge(endpointResource)
 		}
 
 		if len(endpointAddrs) == 0 {
 			continue
 		}
 
-		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
+		secretsResources, err := safe.ReaderGet[*secrets.Kubernetes](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -113,7 +116,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Kubernetes).TypedSpec()
+		secrets := secretsResources.TypedSpec()
 
 		kubeconfig, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
 			return clientcmd.Load([]byte(secrets.LocalhostAdminKubeconfig))
