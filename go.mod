@@ -123,7 +123,7 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.6
 	go.uber.org/atomic v1.10.0
 	go.uber.org/multierr v1.8.0
-	go.uber.org/zap v1.23.0
+	go.uber.org/zap v1.24.0
 	go4.org/netipx v0.0.0-20220925034521-797b0c90d8ab
 	golang.org/x/net v0.2.0
 	golang.org/x/sync v0.1.0
