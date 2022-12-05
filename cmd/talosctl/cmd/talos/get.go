@@ -37,7 +37,7 @@ var getCmd = &cobra.Command{
 	Use:        "get <type> [<id>]",
 	Aliases:    []string{"g"},
 	SuggestFor: []string{},
-	Short:      "Get a specific resource or list of resources.",
+	Short:      "Get a specific resource or list of resources (use 'talosctl get rd' to see all available resource types).",
 	Long: `Similar to 'kubectl get', 'talosctl get' returns a set of resources from the OS.
 To get a list of all available resource definitions, issue 'talosctl get rd'`,
 	Example: "",
