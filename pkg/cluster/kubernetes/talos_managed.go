@@ -126,6 +126,20 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 
 	options.Log("discovered controlplane nodes %q", options.controlPlaneNodes)
 
+	talosClient, err := cluster.Client()
+	if err != nil {
+		return err
+	}
+
+	upgradeChecks, err := NewK8sUpgradeChecks(talosClient.COSI, options, options.controlPlaneNodes)
+	if err != nil {
+		return err
+	}
+
+	if err = upgradeChecks.Run(ctx); err != nil {
+		return err
+	}
+
 	if options.UpgradeKubelet {
 		options.workerNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeWorker)
 		if err != nil {
