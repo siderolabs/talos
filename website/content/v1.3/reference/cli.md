@@ -1350,7 +1350,7 @@ Generate CAs, certificates, and private keys
 
 ## talosctl get
 
-Get a specific resource or list of resources.
+Get a specific resource or list of resources (use 'talosctl get rd' to see all available resource types).
 
 ### Synopsis
 
@@ -2482,7 +2482,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 * [talosctl events](#talosctl-events)	 - Stream runtime events
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
-* [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources.
+* [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources (use 'talosctl get rd' to see all available resource types).
 * [talosctl health](#talosctl-health)	 - Check cluster health
 * [talosctl images](#talosctl-images)	 - List the default images used by Talos
 * [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
