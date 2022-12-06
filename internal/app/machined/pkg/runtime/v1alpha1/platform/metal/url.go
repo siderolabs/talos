@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	hardwareResource "github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -119,7 +120,9 @@ func getResource[T resource.Resource](ctx context.Context, r state.State, namesp
 		select {
 		case <-watchCtx.Done():
 			err := fmt.Errorf("failed to determine %s of %s: %w", valName, typ, watchCtx.Err())
-			err = fmt.Errorf("%s; %w", err.Error(), watchErr)
+			if watchErr != nil {
+				err = multierror.Append(watchErr, err)
+			}
 
 			return "", err
 		case event := <-events:
@@ -134,7 +137,9 @@ func getResource[T resource.Resource](ctx context.Context, r state.State, namesp
 
 			eventResource, err := event.Resource()
 			if err != nil {
-				watchErr = fmt.Errorf("%s; invalid resource in wrapped event: %w", watchErr.Error(), err)
+				watchErr = multierror.Append(watchErr, fmt.Errorf("invalid resource in wrapped event: %w", err))
+
+				continue
 			}
 
 			if !isReadyFunc(eventResource) {
