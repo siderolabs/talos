@@ -112,5 +112,7 @@ func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.R
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

@@ -163,6 +163,8 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 		}); err != nil {
 			return fmt.Errorf("error sending logs: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

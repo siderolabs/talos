@@ -315,5 +315,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

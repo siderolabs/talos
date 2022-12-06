@@ -116,6 +116,8 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 		if err = ctrl.reconcile(ctx, r, logger, conn, ethClient, ethIoctlClient, wgClient); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

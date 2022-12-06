@@ -142,6 +142,8 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

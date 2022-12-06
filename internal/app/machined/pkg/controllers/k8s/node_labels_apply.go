@@ -86,6 +86,8 @@ func (ctrl *NodeLabelsApplyController) Run(ctx context.Context, r controller.Run
 		if err := ctrl.reconcileWithK8s(ctx, r, logger); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

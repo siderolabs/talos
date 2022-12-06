@@ -109,6 +109,8 @@ func (ctrl *AdvertisedPeerController) Run(ctx context.Context, r controller.Runt
 		if err = ctrl.updateAdvertisedPeers(ctx, logger, etcdSpec.TypedSpec().AdvertisedAddresses); err != nil {
 			return fmt.Errorf("error updating advertised peers: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

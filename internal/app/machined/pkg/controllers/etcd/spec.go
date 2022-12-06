@@ -192,5 +192,7 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 		}); err != nil {
 			return fmt.Errorf("error updating Spec status: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

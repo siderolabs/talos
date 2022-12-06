@@ -88,5 +88,7 @@ func (ctrl *CRIConfigPartsController) Run(ctx context.Context, r controller.Runt
 			}); err != nil {
 			return fmt.Errorf("error modifying resource: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

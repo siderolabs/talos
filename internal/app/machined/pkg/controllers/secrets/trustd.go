@@ -114,6 +114,8 @@ func (ctrl *TrustdController) Run(ctx context.Context, r controller.Runtime, log
 				return err
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

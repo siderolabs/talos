@@ -106,5 +106,7 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, l
 		); err != nil {
 			return fmt.Errorf("error modifying nodename resource: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

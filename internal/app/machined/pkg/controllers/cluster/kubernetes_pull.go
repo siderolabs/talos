@@ -171,5 +171,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 		if err := cleanupAffiliates(ctx, ctrl, r, touchedIDs); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

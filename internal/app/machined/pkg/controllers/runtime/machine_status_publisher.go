@@ -78,5 +78,7 @@ func (ctrl *MachineStatusPublisherController) Run(ctx context.Context, r control
 					}),
 			},
 		})
+
+		r.ResetRestartBackoff()
 	}
 }

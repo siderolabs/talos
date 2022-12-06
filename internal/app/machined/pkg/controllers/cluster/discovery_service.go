@@ -320,6 +320,8 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 		if err := cleanupAffiliates(ctx, ctrl, r, touchedIDs); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

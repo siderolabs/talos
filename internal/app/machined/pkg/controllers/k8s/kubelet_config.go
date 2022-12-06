@@ -96,6 +96,8 @@ func (ctrl *KubeletConfigController) Run(ctx context.Context, r controller.Runti
 		); err != nil {
 			return fmt.Errorf("error modifying KubeletConfig resource: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

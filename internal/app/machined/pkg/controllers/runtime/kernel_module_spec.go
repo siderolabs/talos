@@ -76,5 +76,7 @@ func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Ru
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

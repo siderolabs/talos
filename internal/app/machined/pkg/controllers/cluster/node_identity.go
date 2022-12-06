@@ -125,5 +125,7 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 
 			ctrl.identityEstablished = true
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

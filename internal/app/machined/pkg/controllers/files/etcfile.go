@@ -161,6 +161,8 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

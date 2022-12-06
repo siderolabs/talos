@@ -127,6 +127,8 @@ func (ctrl *ResolverConfigController) Run(ctx context.Context, r controller.Runt
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

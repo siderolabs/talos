@@ -131,6 +131,8 @@ func (ctrl *APICertSANsController) Run(ctx context.Context, r controller.Runtime
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

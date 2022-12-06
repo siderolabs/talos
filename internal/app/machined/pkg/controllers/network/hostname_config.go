@@ -170,6 +170,8 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

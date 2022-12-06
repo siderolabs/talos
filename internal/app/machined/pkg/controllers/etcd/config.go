@@ -118,6 +118,8 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 		}); err != nil {
 			return fmt.Errorf("error updating Config status: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

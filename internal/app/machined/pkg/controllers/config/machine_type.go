@@ -75,5 +75,7 @@ func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime
 		}); err != nil {
 			return fmt.Errorf("error updating objects: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

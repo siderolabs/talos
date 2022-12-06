@@ -116,5 +116,7 @@ func (ctrl *HostnameSpecController) Run(ctx context.Context, r controller.Runtim
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

@@ -149,6 +149,8 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 				return fmt.Errorf("error modifying resolv.conf: %w", err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

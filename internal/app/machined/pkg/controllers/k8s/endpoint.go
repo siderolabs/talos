@@ -101,6 +101,8 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 				return err
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

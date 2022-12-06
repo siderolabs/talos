@@ -126,6 +126,8 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 		if err = ctrl.teardownAll(ctx, r); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

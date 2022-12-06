@@ -144,6 +144,8 @@ func (ctrl *ControlPlaneController) Run(ctx context.Context, r controller.Runtim
 				return fmt.Errorf("error updating objects: %w", err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

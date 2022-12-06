@@ -141,6 +141,8 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 				return fmt.Errorf("error cleaning up manifests: %w", err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

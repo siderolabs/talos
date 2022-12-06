@@ -77,6 +77,8 @@ func (ctrl *StatsController) Run(ctx context.Context, r controller.Runtime, logg
 		if err := ctrl.updateCPU(ctx, r, &fs); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

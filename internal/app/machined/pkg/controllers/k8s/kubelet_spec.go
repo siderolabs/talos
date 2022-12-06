@@ -199,6 +199,8 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 		); err != nil {
 			return fmt.Errorf("error modifying KubeletSpec resource: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

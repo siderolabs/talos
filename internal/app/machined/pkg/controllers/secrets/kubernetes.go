@@ -173,6 +173,8 @@ func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime,
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

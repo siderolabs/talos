@@ -78,6 +78,8 @@ func (ctrl *KubeletController) Run(ctx context.Context, r controller.Runtime, lo
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

@@ -177,6 +177,8 @@ func (ctrl *CRDController) Run(ctx context.Context, r controller.Runtime, logger
 				logger,
 			)
 		}()
+
+		r.ResetRestartBackoff()
 	}
 }
 

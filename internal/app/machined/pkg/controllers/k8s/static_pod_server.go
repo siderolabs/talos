@@ -93,6 +93,8 @@ func (ctrl *StaticPodServerController) Run(ctx context.Context, r controller.Run
 			ctrl.podList = staticPodList
 			ctrl.podListMu.Unlock()
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

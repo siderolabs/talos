@@ -126,6 +126,8 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 		if err = multiErr.ErrorOrNil(); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

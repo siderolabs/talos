@@ -137,5 +137,7 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

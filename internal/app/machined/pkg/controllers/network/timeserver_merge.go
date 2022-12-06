@@ -126,5 +126,7 @@ func (ctrl *TimeServerMergeController) Run(ctx context.Context, r controller.Run
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

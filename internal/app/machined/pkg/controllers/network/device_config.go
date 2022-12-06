@@ -151,6 +151,8 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

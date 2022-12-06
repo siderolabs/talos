@@ -116,6 +116,8 @@ func (ctrl *NodeIPConfigController) Run(ctx context.Context, r controller.Runtim
 		); err != nil {
 			return fmt.Errorf("error modifying NodeIPConfig resource: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

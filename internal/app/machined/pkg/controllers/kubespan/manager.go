@@ -389,6 +389,8 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 
 		if !updateSpecs {
 			// micro-optimization: skip updating specs if there are no changes to the incoming resources and no endpoint changes
+			r.ResetRestartBackoff()
+
 			continue
 		}
 
@@ -500,6 +502,8 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		if err = nfTablesMgr.Update(allowedIPsSet); err != nil {
 			return fmt.Errorf("failed updating nftables: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

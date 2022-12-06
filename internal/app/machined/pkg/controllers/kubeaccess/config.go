@@ -109,5 +109,7 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

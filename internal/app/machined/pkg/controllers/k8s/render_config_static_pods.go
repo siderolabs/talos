@@ -166,6 +166,8 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

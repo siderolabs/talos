@@ -130,6 +130,8 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

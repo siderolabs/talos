@@ -148,6 +148,8 @@ func (ctrl *KernelParamSpecController) Run(ctx context.Context, r controller.Run
 				return errs
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

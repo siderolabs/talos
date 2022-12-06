@@ -165,6 +165,8 @@ func (ctrl *SeccompProfileFileController) Run(ctx context.Context, r controller.
 		}); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

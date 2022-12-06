@@ -144,5 +144,7 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, logger
 		}); err != nil {
 			return fmt.Errorf("error updating PKI status: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

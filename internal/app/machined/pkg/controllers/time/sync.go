@@ -237,5 +237,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		}); err != nil {
 			return fmt.Errorf("error updating objects: %w", err) //nolint:govet
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

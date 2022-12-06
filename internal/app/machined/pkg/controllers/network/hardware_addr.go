@@ -102,5 +102,7 @@ func (ctrl *HardwareAddrController) Run(ctx context.Context, r controller.Runtim
 				return fmt.Errorf("error deleting resource %q: %w", id, err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

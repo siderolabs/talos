@@ -126,6 +126,8 @@ func (ctrl *TimeServerConfigController) Run(ctx context.Context, r controller.Ru
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

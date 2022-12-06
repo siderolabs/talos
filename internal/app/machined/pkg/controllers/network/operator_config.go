@@ -290,6 +290,8 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 		if err = specErrors.ErrorOrNil(); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

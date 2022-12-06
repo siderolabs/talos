@@ -134,5 +134,7 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 		if conflictsDetected > 0 {
 			return fmt.Errorf("%d conflict(s) detected", conflictsDetected)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

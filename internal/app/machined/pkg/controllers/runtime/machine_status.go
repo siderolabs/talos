@@ -151,6 +151,8 @@ func (ctrl *MachineStatusController) Run(ctx context.Context, r controller.Runti
 		}); err != nil {
 			return fmt.Errorf("error updating machine status: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

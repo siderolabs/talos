@@ -101,5 +101,7 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

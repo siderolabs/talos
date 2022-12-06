@@ -178,6 +178,8 @@ func (ctrl *OperatorSpecController) Run(ctx context.Context, r controller.Runtim
 				return err
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

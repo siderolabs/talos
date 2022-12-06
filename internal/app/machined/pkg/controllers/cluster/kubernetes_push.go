@@ -140,5 +140,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				return fmt.Errorf("error pushing to Kubernetes registry: %w", err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

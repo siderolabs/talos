@@ -163,6 +163,8 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 		if err = specErrors.ErrorOrNil(); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

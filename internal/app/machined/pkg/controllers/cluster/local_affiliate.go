@@ -296,5 +296,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

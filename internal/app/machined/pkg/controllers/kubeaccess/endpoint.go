@@ -128,6 +128,8 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		if err = ctrl.updateTalosEndpoints(ctx, logger, kubeconfig, endpointAddrs); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

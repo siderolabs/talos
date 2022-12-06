@@ -94,6 +94,8 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, log
 				return fmt.Errorf("error destroying etcd member resource: %w", err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

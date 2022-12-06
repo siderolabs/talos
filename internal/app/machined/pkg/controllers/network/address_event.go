@@ -110,5 +110,7 @@ func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtim
 			Hostname:  hostname,
 			Addresses: addresses,
 		})
+
+		r.ResetRestartBackoff()
 	}
 }

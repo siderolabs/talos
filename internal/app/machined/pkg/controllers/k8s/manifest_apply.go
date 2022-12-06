@@ -173,6 +173,8 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 		}); err != nil {
 			return fmt.Errorf("error updating manifest status: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

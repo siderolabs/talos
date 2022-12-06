@@ -150,6 +150,8 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

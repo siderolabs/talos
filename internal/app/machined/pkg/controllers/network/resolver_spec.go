@@ -103,5 +103,7 @@ func (ctrl *ResolverSpecController) Run(ctx context.Context, r controller.Runtim
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

@@ -243,6 +243,8 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

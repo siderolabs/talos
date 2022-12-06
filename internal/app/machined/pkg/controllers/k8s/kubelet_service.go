@@ -205,6 +205,8 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 		if err = ctrl.V1Alpha1Services.Start("kubelet"); err != nil {
 			return fmt.Errorf("error starting kubelet service: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

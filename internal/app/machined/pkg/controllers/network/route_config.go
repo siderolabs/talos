@@ -145,6 +145,8 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

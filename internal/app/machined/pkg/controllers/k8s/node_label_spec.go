@@ -99,5 +99,7 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error destroying node label spec: %w", err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

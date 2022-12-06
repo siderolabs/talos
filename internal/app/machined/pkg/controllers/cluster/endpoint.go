@@ -91,5 +91,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		); err != nil {
 			return fmt.Errorf("error updating endpoints: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

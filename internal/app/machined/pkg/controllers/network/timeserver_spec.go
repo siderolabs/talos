@@ -108,5 +108,7 @@ func (ctrl *TimeServerSpecController) Run(ctx context.Context, r controller.Runt
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

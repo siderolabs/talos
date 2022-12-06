@@ -127,5 +127,7 @@ func (ctrl *StaticPodConfigController) Run(ctx context.Context, r controller.Run
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

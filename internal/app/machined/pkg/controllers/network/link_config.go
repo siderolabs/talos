@@ -227,6 +227,8 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

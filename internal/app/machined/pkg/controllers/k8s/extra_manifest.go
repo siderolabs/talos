@@ -138,6 +138,8 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

@@ -207,6 +207,8 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

@@ -136,5 +136,7 @@ func (ctrl *OperatorMergeController) Run(ctx context.Context, r controller.Runti
 		if conflictsDetected > 0 {
 			return fmt.Errorf("%d conflict(s) detected", conflictsDetected)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

@@ -192,6 +192,8 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

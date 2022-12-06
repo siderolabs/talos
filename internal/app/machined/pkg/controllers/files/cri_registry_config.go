@@ -127,6 +127,8 @@ func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.R
 		if err := ctrl.syncHosts(shadowPath, criHosts); err != nil {
 			return fmt.Errorf("error syncing hosts: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

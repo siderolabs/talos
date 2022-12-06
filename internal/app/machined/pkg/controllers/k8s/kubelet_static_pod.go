@@ -159,6 +159,8 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 		if err != nil {
 			return fmt.Errorf("error building kubelet client: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

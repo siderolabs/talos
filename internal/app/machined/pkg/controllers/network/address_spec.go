@@ -112,6 +112,8 @@ func (ctrl *AddressSpecController) Run(ctx context.Context, r controller.Runtime
 				return err
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

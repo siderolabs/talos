@@ -136,5 +136,7 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, log
 			}); err != nil {
 			return fmt.Errorf("error modifying output status: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

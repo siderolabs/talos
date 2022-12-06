@@ -115,6 +115,8 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 		if err = multiErr.ErrorOrNil(); err != nil {
 			return err
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

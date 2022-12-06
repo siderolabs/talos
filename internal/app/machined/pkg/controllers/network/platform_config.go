@@ -197,6 +197,8 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 				return err
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

@@ -141,5 +141,7 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 				return fmt.Errorf("error deleting route status %q: %w", id, err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

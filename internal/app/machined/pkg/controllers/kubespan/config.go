@@ -104,5 +104,7 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

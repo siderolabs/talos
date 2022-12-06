@@ -149,5 +149,7 @@ func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, l
 				}
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }

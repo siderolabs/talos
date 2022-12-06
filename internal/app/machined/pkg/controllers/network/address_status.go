@@ -142,5 +142,7 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error deleting address status %s: %w", res, err)
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
