@@ -26,8 +26,10 @@ import (
 	cgroupsv2 "github.com/containerd/cgroups/v2"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	multierror "github.com/hashicorp/go-multierror"
+	"github.com/dustin/go-humanize"
+	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	pprocfs "github.com/prometheus/procfs"
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util"
@@ -73,6 +75,7 @@ import (
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/minimal"
 	"github.com/siderolabs/talos/pkg/version"
 )
 
@@ -679,6 +682,82 @@ func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 		return err
 	}, "validateConfig"
+}
+
+// MemorySizeCheck represents the MemorySizeCheck task.
+func MemorySizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if r.State().Platform().Mode() == runtime.ModeContainer {
+			log.Println("skipping memory size check in the container")
+
+			return nil
+		}
+
+		pc, err := pprocfs.NewDefaultFS()
+		if err != nil {
+			return fmt.Errorf("failed to open procfs: %w", err)
+		}
+
+		info, err := pc.Meminfo()
+		if err != nil {
+			return fmt.Errorf("failed to read meminfo: %w", err)
+		}
+
+		minimum, recommended, err := minimal.Memory(r.Config().Machine().Type())
+		if err != nil {
+			return err
+		}
+
+		switch memTotal := pointer.SafeDeref(info.MemTotal) * humanize.KiByte; {
+		case memTotal < minimum:
+			log.Println("WARNING: memory size is less than recommended")
+			log.Println("WARNING: Talos may not work properly")
+			log.Println("WARNING: minimum memory size is", minimum/humanize.MiByte, "MiB")
+			log.Println("WARNING: recommended memory size is", recommended/humanize.MiByte, "MiB")
+			log.Println("WARNING: current total memory size is", memTotal/humanize.MiByte, "MiB")
+		case memTotal < recommended:
+			log.Println("NOTE: recommended memory size is", recommended/humanize.MiByte, "MiB")
+			log.Println("NOTE: current total memory size is", memTotal/humanize.MiByte, "MiB")
+		default:
+			log.Println("memory size is OK")
+			log.Println("memory size is", memTotal/humanize.MiByte, "MiB")
+		}
+
+		return nil
+	}, "memorySizeCheck"
+}
+
+// DiskSizeCheck represents the DiskSizeCheck task.
+func DiskSizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if r.State().Platform().Mode() == runtime.ModeContainer {
+			log.Println("skipping disk size check in the container")
+
+			return nil
+		}
+
+		disk := r.State().Machine().Disk() // get ephemeral disk state
+		if disk == nil {
+			return fmt.Errorf("failed to get ephemeral disk state")
+		}
+
+		diskSize, err := disk.Size()
+		if err != nil {
+			return fmt.Errorf("failed to get ephemeral disk size: %w", err)
+		}
+
+		if minimum := minimal.DiskSize(); diskSize < minimum {
+			log.Println("WARNING: disk size is less than recommended")
+			log.Println("WARNING: Talos may not work properly")
+			log.Println("WARNING: minimum recommended disk size is", minimum/humanize.MiByte, "MiB")
+			log.Println("WARNING: current total disk size is", diskSize/humanize.MiByte, "MiB")
+		} else {
+			log.Println("disk size is OK")
+			log.Println("disk size is", diskSize/humanize.MiByte, "MiB")
+		}
+
+		return nil
+	}, "diskSizeCheck"
 }
 
 // SetUserEnvVars represents the SetUserEnvVars task.
