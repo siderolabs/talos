@@ -197,7 +197,7 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
-		err = updateKubeconfig(secretSpec.Endpoint)
+		err = updateKubeconfig(logger, secretSpec.Endpoint)
 		if err != nil {
 			return err
 		}
@@ -291,7 +291,7 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 }
 
 // updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.
-func updateKubeconfig(newEndpoint *url.URL) error {
+func updateKubeconfig(logger *zap.Logger, newEndpoint *url.URL) error {
 	config, err := clientcmd.LoadFromFile(constants.KubeletKubeconfig)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -301,7 +301,23 @@ func updateKubeconfig(newEndpoint *url.URL) error {
 		return err
 	}
 
-	cluster := config.Clusters[config.Contexts[config.CurrentContext].Cluster]
+	context := config.Contexts[config.CurrentContext]
+	if context == nil {
+		// this should never happen, but we can't fix kubeconfig if it is malformed
+		logger.Error("kubeconfig is missing current context", zap.String("context", config.CurrentContext))
+
+		return nil
+	}
+
+	cluster := config.Clusters[context.Cluster]
+
+	if cluster == nil {
+		// this should never happen, but we can't fix kubeconfig if it is malformed
+		logger.Error("kubeconfig is missing cluster", zap.String("context", config.CurrentContext), zap.String("cluster", context.Cluster))
+
+		return nil
+	}
+
 	if cluster.Server == newEndpoint.String() {
 		return nil
 	}
