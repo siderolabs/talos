@@ -187,6 +187,12 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"saveConfig",
 		SaveConfig,
 	).Append(
+		"memorySizeCheck",
+		MemorySizeCheck,
+	).Append(
+		"diskSizeCheck",
+		DiskSizeCheck,
+	).Append(
 		"env",
 		SetUserEnvVars,
 	).Append(

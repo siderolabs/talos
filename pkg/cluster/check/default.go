@@ -43,6 +43,20 @@ func DefaultClusterChecks() []ClusterCheck {
 			}, 5*time.Minute, 5*time.Second)
 		},
 
+		// wait for all nodes to report their memory size
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("all nodes memory sizes", func(ctx context.Context) error {
+				return AllNodesMemorySizes(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
+
+		// wait for all nodes to report their disk size
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("all nodes disk sizes", func(ctx context.Context) error {
+				return AllNodesDiskSizes(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
+
 		// wait for kubelet to be healthy on all
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("kubelet to be healthy", func(ctx context.Context) error {
