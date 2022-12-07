@@ -34,7 +34,7 @@ require (
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/containerd/cgroups v1.0.4
-	github.com/containerd/containerd v1.6.10
+	github.com/containerd/containerd v1.6.11
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.1.2
 	github.com/containernetworking/plugins v1.1.1
@@ -124,10 +124,10 @@ require (
 	go.uber.org/atomic v1.10.0
 	go.uber.org/zap v1.23.0
 	go4.org/netipx v0.0.0-20220925034521-797b0c90d8ab
-	golang.org/x/net v0.2.0
+	golang.org/x/net v0.4.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.2.0
-	golang.org/x/term v0.2.0
+	golang.org/x/sys v0.3.0
+	golang.org/x/term v0.3.0
 	golang.org/x/time v0.2.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20221104135756-97bc4ad4a1cb
 	google.golang.org/grpc v1.51.0
@@ -219,7 +219,7 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/packet v1.1.0 // indirect
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 // indirect
@@ -280,7 +280,7 @@ require (
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
