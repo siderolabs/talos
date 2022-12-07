@@ -102,6 +102,55 @@ func (c *Config) Bytes() ([]byte, error) {
 	return c.EncodeBytes()
 }
 
+// RedactSecrets implements the config.Provider interface.
+func (c *Config) RedactSecrets(replacement string) config.Provider {
+	if c == nil {
+		return nil
+	}
+
+	redactBytes := func(b []byte) []byte {
+		if len(b) == 0 {
+			return b
+		}
+
+		return []byte(replacement)
+	}
+
+	redactStr := func(s string) string {
+		return string(redactBytes([]byte(s)))
+	}
+
+	clone := c.DeepCopy()
+
+	if clone.MachineConfig != nil {
+		clone.MachineConfig.MachineToken = redactStr(clone.MachineConfig.MachineToken)
+		if clone.MachineConfig.MachineCA != nil {
+			clone.MachineConfig.MachineCA.Key = redactBytes(clone.MachineConfig.MachineCA.Key)
+		}
+	}
+
+	if clone.ClusterConfig != nil {
+		clone.ClusterConfig.ClusterSecret = redactStr(clone.ClusterConfig.ClusterSecret)
+		clone.ClusterConfig.BootstrapToken = redactStr(clone.ClusterConfig.BootstrapToken)
+		clone.ClusterConfig.ClusterAESCBCEncryptionSecret = redactStr(clone.ClusterConfig.ClusterAESCBCEncryptionSecret)
+		clone.ClusterConfig.ClusterSecretboxEncryptionSecret = redactStr(clone.ClusterConfig.ClusterSecretboxEncryptionSecret)
+
+		if clone.ClusterConfig.ClusterCA != nil {
+			clone.ClusterConfig.ClusterCA.Key = redactBytes(clone.ClusterConfig.ClusterCA.Key)
+		}
+
+		if clone.ClusterConfig.ClusterAggregatorCA != nil {
+			clone.ClusterConfig.ClusterAggregatorCA.Key = redactBytes(clone.ClusterConfig.ClusterAggregatorCA.Key)
+		}
+
+		if clone.ClusterConfig.EtcdConfig != nil && clone.ClusterConfig.EtcdConfig.RootCA != nil {
+			clone.ClusterConfig.EtcdConfig.RootCA.Key = redactBytes(clone.ClusterConfig.EtcdConfig.RootCA.Key)
+		}
+	}
+
+	return clone
+}
+
 // Raw implements the config.Provider interface.
 func (c *Config) Raw() interface{} {
 	return c
