@@ -66,6 +66,11 @@ func (r *ReadonlyProvider) Bytes() ([]byte, error) {
 	return r.bytes, nil
 }
 
+// RedactSecrets implements the config.Provider interface.
+func (r *ReadonlyProvider) RedactSecrets(replacement string) config.Provider {
+	return r.cfg.RedactSecrets(replacement)
+}
+
 // EncodeString implements the config.Provider interface.
 func (r *ReadonlyProvider) EncodeString(encoderOptions ...encoder.Option) (string, error) {
 	return r.cfg.EncodeString(encoderOptions...)

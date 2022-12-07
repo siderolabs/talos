@@ -19,6 +19,8 @@ import (
 )
 
 // Provider defines the configuration consumption interface.
+//
+//nolint:interfacebloat
 type Provider interface {
 	// Config parts accessor.
 	Version() string
@@ -32,6 +34,9 @@ type Provider interface {
 
 	// Bytes returns source YAML representation (if available) or does default encoding.
 	Bytes() ([]byte, error)
+
+	// RedactSecrets returns a copy of the Provider with all secrets replaced with the given string.
+	RedactSecrets(string) Provider
 
 	// Encode configuration to YAML using the provided options.
 	EncodeString(encoderOptions ...encoder.Option) (string, error)
