@@ -118,7 +118,8 @@ RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepc
 ARG VTPROTOBUF_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
     && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
-RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
+# fix vulncheck at a previous version, as it seems to break in the latest commits
+RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@05fb7250142cc6010c39968839f2f3710afdd918 \
     && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
 RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@v1.10.0 \
     && mv /go/bin/prototool /toolchain/go/bin/prototool

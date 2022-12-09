@@ -34,7 +34,7 @@ require (
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/containerd/cgroups v1.0.4
-	github.com/containerd/containerd v1.6.10
+	github.com/containerd/containerd v1.6.11
 	github.com/containerd/typeurl v1.0.2
 	github.com/containernetworking/cni v1.1.2
 	github.com/containernetworking/plugins v1.1.1
@@ -220,7 +220,7 @@ require (
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.2 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/packet v1.1.0 // indirect
 	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 // indirect
