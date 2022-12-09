@@ -17,14 +17,14 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.26.0-rc.1
-	k8s.io/apimachinery v0.26.0-rc.1
-	k8s.io/apiserver v0.26.0-rc.1
-	k8s.io/client-go v0.26.0-rc.1
-	k8s.io/component-base v0.26.0-rc.1
-	k8s.io/cri-api v0.26.0-rc.1
-	k8s.io/kubectl v0.26.0-rc.1
-	k8s.io/kubelet v0.26.0-rc.1
+	k8s.io/api v0.26.0
+	k8s.io/apimachinery v0.26.0
+	k8s.io/apiserver v0.26.0
+	k8s.io/client-go v0.26.0
+	k8s.io/component-base v0.26.0
+	k8s.io/cri-api v0.26.0
+	k8s.io/kubectl v0.26.0
+	k8s.io/kubelet v0.26.0
 )
 
 require (
@@ -279,7 +279,7 @@ require (
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/oauth2 v0.1.0 // indirect
+	golang.org/x/oauth2 v0.2.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
@@ -292,7 +292,7 @@ require (
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect
-	k8s.io/cli-runtime v0.26.0-rc.1 // indirect
+	k8s.io/cli-runtime v0.26.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
