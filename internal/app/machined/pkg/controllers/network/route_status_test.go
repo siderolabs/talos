@@ -106,7 +106,6 @@ func (suite *RouteStatusSuite) TestRoutes() {
 				return suite.assertRoutes(
 					[]string{"local/inet4//127.0.0.0/8/0"}, func(r *network.RouteStatus) error {
 						suite.Assert().True(r.TypedSpec().Source.IsLoopback())
-						suite.Assert().Equal("lo", r.TypedSpec().OutLinkName)
 						suite.Assert().Equal(nethelpers.TableLocal, r.TypedSpec().Table)
 						suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
 						suite.Assert().Equal(nethelpers.TypeLocal, r.TypedSpec().Type)

@@ -68,18 +68,6 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 		case <-r.EventCh():
 		}
 
-		// build links lookup table
-		links, err := conn.Link.List()
-		if err != nil {
-			return fmt.Errorf("error listing links: %w", err)
-		}
-
-		linkLookup := make(map[uint32]string, len(links))
-
-		for _, link := range links {
-			linkLookup[link.Index] = link.Attributes.Name
-		}
-
 		// list resources for cleanup
 		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.RouteStatusType, "", resource.VersionUndefined))
 		if err != nil {
@@ -113,8 +101,6 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 				status.Destination = dstPrefix
 				status.Source = srcAddr
 				status.Gateway = gatewayAddr
-				status.OutLinkIndex = route.Attributes.OutIface
-				status.OutLinkName = linkLookup[route.Attributes.OutIface]
 				status.Priority = route.Attributes.Priority
 				status.Table = nethelpers.RoutingTable(route.Table)
 				status.Scope = nethelpers.Scope(route.Scope)
