@@ -225,7 +225,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 						spec.KubeSpan.Address = kubespanIdentity.(*kubespan.Identity).TypedSpec().Address.Addr()
 						spec.KubeSpan.PublicKey = kubespanIdentity.(*kubespan.Identity).TypedSpec().PublicKey
 
-						if kubespanConfig.TypedSpec().AdvertiseKubernetesNetworks {
+						if kubespanConfig.TypedSpec().AdvertiseKubernetesNetworks && ksAdditionalAddresses != nil {
 							spec.KubeSpan.AdditionalAddresses = append([]netip.Prefix(nil), ksAdditionalAddresses.(*network.NodeAddress).TypedSpec().Addresses...)
 						} else {
 							spec.KubeSpan.AdditionalAddresses = nil
