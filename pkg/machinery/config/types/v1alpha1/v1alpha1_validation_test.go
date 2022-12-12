@@ -325,6 +325,23 @@ func TestValidate(t *testing.T) {
 			expectedError: "2 errors occurred:\n\t* inline manifest name can't be empty\n\t* inline manifest name \"foo\" is duplicate\n\n",
 		},
 		{
+			name: "DNSDomainEmpty",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
+				},
+			},
+		},
+		{
 			name: "DeviceCIDRInvalid",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
