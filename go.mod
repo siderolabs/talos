@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute/metadata v0.2.1
+	cloud.google.com/go/compute/metadata v0.2.2
 	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.44.147
 	github.com/beevik/ntp v0.3.0
