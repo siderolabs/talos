@@ -53,7 +53,7 @@ Refer to the docs at https://www.talos.dev/v1.3/talos-guides/install/single-boar
 * Flannel: v0.20.2
 * CoreDNS: v1.10.0
 * etcd: v3.5.6
-* Linux: 5.15.81
+* Linux: 5.15.82
 * containerd: v1.6.12
 
 Talos is built with Go 1.19.4.
