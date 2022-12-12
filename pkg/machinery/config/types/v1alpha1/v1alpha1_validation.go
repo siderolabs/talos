@@ -317,7 +317,7 @@ func (c *ClusterConfig) Validate() error {
 		result = multierror.Append(result, fmt.Errorf("invalid controlplane endpoint: %w", err))
 	}
 
-	if c.ClusterNetwork != nil && !isValidDNSName(c.ClusterNetwork.DNSDomain) {
+	if c.ClusterNetwork != nil && c.ClusterNetwork.DNSDomain != "" && !isValidDNSName(c.ClusterNetwork.DNSDomain) {
 		result = multierror.Append(result, fmt.Errorf("%q is not a valid DNS name", c.ClusterNetwork.DNSDomain))
 	}
 
