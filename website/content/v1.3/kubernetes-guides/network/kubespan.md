@@ -31,72 +31,27 @@ To generate configuration files for a new cluster, we can use the `--with-kubesp
 This will enable peer discovery and KubeSpan.
 
 ```yaml
-...
-    # Provides machine specific network configuration options.
+machine:
     network:
-        # Configures KubeSpan feature.
         kubespan:
             enabled: true # Enable the KubeSpan feature.
-...
-    # Configures cluster member discovery.
+cluster:
     discovery:
-        enabled: true # Enable the cluster membership discovery feature.
+        enabled: true
         # Configure registries used for cluster member discovery.
         registries:
-            # Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
-            kubernetes: {}
-            # Service registry is using an external service to push and pull information about cluster members.
+            kubernetes: # Kubernetes registry is problematic with KubeSpan, if the control plane endpoint is routeable itself via KubeSpan.
+              disabled: true
             service: {}
-...
-# Provides cluster specific configuration options.
-cluster:
-    id: yui150Ogam0pdQoNZS2lZR-ihi8EWxNM17bZPktJKKE= # Globally unique identifier for this cluster.
-    secret: dAmFcyNmDXusqnTSkPJrsgLJ38W8oEEXGZKM0x6Orpc= # Shared secret of cluster.
 ```
 
 > The default discovery service is an external service hosted for free by Sidero Labs.
 > The default value is `https://discovery.talos.dev/`.
 > Contact Sidero Labs if you need to run this service privately.
 
-### Upgrading an Existing Cluster
+### Enabling for an Existing Cluster
 
-In order to enable KubeSpan for an existing cluster, upgrade to the latest version of Talos ({{< release >}}).
-Once your cluster is upgraded, the configuration of each node must contain the globally unique identifier, the shared secret for the cluster, and have KubeSpan and discovery enabled.
-
-> Note: Discovery can be used without KubeSpan, but KubeSpan requires at least one discovery registry.
-
-#### Talos v0.11 or Less
-
-If you are migrating from Talos v0.11 or less, we need to generate a cluster ID and secret.
-
-To generate an `id`:
-
-```sh
-$ openssl rand -base64 32
-EUsCYz+oHNuBppS51P9aKSIOyYvIPmbZK944PWgiyMQ=
-```
-
-To generate a `secret`:
-
-```sh
-$ openssl rand -base64 32
-AbdsWjY9i797kGglghKvtGdxCsdllX9CemLq+WGVeaw=
-```
-
-Now, update the configuration of each node with the cluster with the generated `id` and `secret`.
-You should end up with the addition of something like this (your `id` and `secret` should be different):
-
-```yaml
-cluster:
-  id: EUsCYz+oHNuBppS51P9aKSIOyYvIPmbZK944PWgiyMQ=
-  secret: AbdsWjY9i797kGglghKvtGdxCsdllX9CemLq+WGVeaw=
-```
-
-> Note: This can be applied in immediate mode (no reboot required).
-
-#### Talos v0.12 or More
-
-Enable `kubespan` and `discovery`.
+In order to enable KubeSpan for an existing cluster, enable `kubespan` and `discovery` settings in the machine config for each machine in the cluster (`discovery` is enabled by default):
 
 ```yaml
 machine:
@@ -107,6 +62,42 @@ cluster:
   discovery:
     enabled: true
 ```
+
+## Configuration
+
+KubeSpan will automatically discovery all cluster members, exchange Wireguard public keys and establish a full mesh network.
+
+There are a few configuration options available to fine-tune the feature:
+
+```yaml
+machine:
+  network:
+    kubespan:
+      enabled: false
+      advertiseKubernetesNetworks: false
+      allowDownPeerBypass: false
+      mtu: 1420
+      filters:
+        endpoints:
+          - 0.0.0.0/0
+          - ::/0
+```
+
+The setting `advertiseKubernetesNetworks` controls whether the node will advertise Kubernetes service and pod networks to other nodes in the cluster over KubeSpan.
+It defaults to being disabled, which means KubeSpan only controls the node-to-node traffic, while pod-to-pod traffic is routed and encapsulated by CNI.
+This setting should not be enabled with Calico and Cilium CNI plugins, as they do their own pod IP allocation which is not visible to KubeSpan.
+
+The setting `allowDownPeerBypass` controls whether the node will allow traffic to bypass WireGuard if the destination is not connected over KubeSpan.
+If enabled, there is a risk that traffic will be routed unencrypted if the destination is not connected over KubeSpan, but it allows a workaround
+for the case where a node is not connected to the KubeSpan network, but still needs to access the cluster.
+
+The `mtu` setting configures the Wireguard MTU, which defaults to 1420.
+This default value of 1420 is safe to use when the underlying network MTU is 1500, but if the underlying network MTU is smaller, the KubeSpanMTU should be adjusted accordingly:
+`KubeSpanMTU = UnderlyingMTU - 80`.
+
+The `filters` setting allows to hide some endpoints from being advertised over KubeSpan.
+This is useful when some endpoints are known to be unreachable between the nodes, so that KubeSpan doesn't try to establish a connection to them.
+Another use-case is hiding some endpoints if nodes can connect on multiple networks, and some of the networks are more preferable than others.
 
 ## Resource Definitions
 

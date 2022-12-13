@@ -311,10 +311,16 @@ talosctl ... --patch '[{"op": "add", "path": "/machine/network/hostname", "value
 If multiple config patches are specified, they are applied in the order of appearance.
 The format of the patch (JSON patch or strategic merge patch) is detected automatically.
 
-Generated machine configuration can be patched with `talosctl gen config`:
+Talos machine configuration can be patched at the moment of generation with `talosctl gen config`:
 
 ```shell
 talosctl gen config test-cluster https://172.20.0.1:6443 --config-patch @all.yaml --config-patch-control-plane @cp.yaml --config-patch-worker @worker.yaml
+```
+
+Generated machine configuration can also be patched after the fact with `talosctl machineconfig patch`
+
+```shell
+talosctl machineconfig patch worker.yaml --patch @patch.yaml -o worker1.yaml
 ```
 
 Machine configuration on the running Talos node can be patched with `talosctl patch`:

@@ -104,7 +104,6 @@ Identify all registry prefixes from `talosctl images`, for example:
 - `gcr.io`
 - `ghcr.io`
 - `registry.k8s.io`
-- `quay.io`
 
 The `talosctl cluster create` command provides conveniences for common configuration options.
 The only required flag for this guide is `--registry-mirror <endpoint>=http://10.5.0.1:6000` which redirects every pull request to the internal registry, this flag
@@ -117,7 +116,6 @@ $ sudo --preserve-env=HOME talosctl cluster create --provisioner=qemu --install-
   --registry-mirror gcr.io=http://10.5.0.1:6000 \
   --registry-mirror ghcr.io=http://10.5.0.1:6000 \
   --registry-mirror registry.k8s.io=http://10.5.0.1:6000 \
-  --registry-mirror quay.io=http://10.5.0.1:6000
 validating CIDR and reserving IPs
 generating PKI and tokens
 creating state directory in "/home/user/.talos/clusters/talos-default"
@@ -157,11 +155,10 @@ machine:
         registry.k8s.io:
           endpoints:
           - http://10.5.0.1:6000/
-        quay.io:
-          endpoints:
-          - http://10.5.0.1:6000/
 ...
 ```
 
 Other implementations of Docker registry can be used in place of the Docker `registry` image used above to run the registry.
 If required, auth can be configured for the internal registry (and custom TLS certificates if needed).
+
+Please see [pull-through cache guide]({{< relref "../talos-guides/configuration/pull-through-cache" >}}) for an example using Harbor container registry with Talos.

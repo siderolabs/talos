@@ -67,7 +67,6 @@ sudo --preserve-env=HOME _out/talosctl-linux-amd64 cluster create \
     --cidr=172.20.0.0/24 \
     --registry-mirror docker.io=http://172.20.0.1:5000 \
     --registry-mirror kregistry.k8s.io=http://172.20.0.1:5001  \
-    --registry-mirror quay.io=http://172.20.0.1:5002 \
     --registry-mirror gcr.io=http://172.20.0.1:5003 \
     --registry-mirror ghcr.io=http://172.20.0.1:5004 \
     --registry-mirror 127.0.0.1:5005=http://172.20.0.1:5005 \

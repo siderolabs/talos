@@ -1,15 +1,46 @@
 ---
-title: "Managing PKI"
+title: "Managing Talos PKI"
 description: "How to manage Public Key Infrastructure"
 aliases:
   - ../../guides/managing-pki
 ---
 
-## Generating an Administrator Key Pair
+## Generating New Client Configuration
 
-In order to create a key pair, you will need the root CA.
+### Using Controlplane Node
 
-Save the the CA public key, and CA private key as `ca.crt`, and `ca.key` respectively.
+If you have a valid (not expired) `talosconfig` with `os:admin` role,
+a new client configuration file can be generated with `talosctl config new` against
+any controlplane node:
+
+```shell
+talosctl -n CP1 config new talosconfig-reader --roles os:reader --crt-ttl 24h
+```
+
+A specific [role]({{< relref "rbac" >}}) and certificate lifetime can be specified.
+
+### From Secrets Bundle
+
+If a secrets bundle (`secrets.yaml` from `talosctl gen secrets`) was saved while
+[generating machine configuration]({{< relref "../../introduction/getting-started/#configure-talos ">}}):
+
+```shell
+talosctl gen config --with-secrets secrets.yaml --output-types talosconfig -o talosconfig <cluster-name> https://<cluster-endpoint>
+```
+
+> Note: `<cluster-name>` and `<cluster-endpoint>` arguments don't matter, as they are not used for `talosconfig`.
+
+### From Control Plane Machine Configuration
+
+In order to create a new key pair for client configuration, you will need the root Talos API CA.
+The base64 encoded CA can be found in the control plane node's configuration file.
+Save the the CA public key, and CA private key as `ca.crt`, and `ca.key` respectively:
+
+```shell
+yq eval .machine.ca.crt controlplane.yaml | base64 -d > ca.crt
+yq eval .machine.ca.key controlplane.yaml | base64 -d > ca.key
+```
+
 Now, run the following commands to generate a certificate:
 
 ```bash
@@ -18,34 +49,24 @@ talosctl gen csr --key admin.key --ip 127.0.0.1
 talosctl gen crt --ca ca --csr admin.csr --name admin
 ```
 
-Now, base64 encode `admin.crt`, and `admin.key`:
+Put the base64-encoded files to the respective location to the `talosconfig`:
 
-```bash
-cat admin.crt | base64
-cat admin.key | base64
+```yaml
+context: mycluster
+contexts:
+    mycluster:
+        endpoints:
+            - CP1
+            - CP2
+        ca: <base64-encoded ca.crt>
+        crt: <base64-encoded admin.crt>
+        key: <base64-encoded admin.key>
 ```
-
-You can now set the `crt` and `key` fields in the `talosconfig` to the base64 encoded strings.
 
 ## Renewing an Expired Administrator Certificate
 
-In order to renew the certificate, you will need the root CA, and the admin private key.
-The base64 encoded key can be found in any one of the control plane node's configuration file.
-Where it is exactly will depend on the specific version of the configuration file you are using.
+By default admin `talosconfig` certificate is valid for 365 days, while cluster CAs are valid for 10 years.
+In order to prevent admin `talosconfig` from expiring, renew the client config before expiration using `talosctl config new` command described above.
 
-Save the the CA public key, CA private key, and admin private key as `ca.crt`, `ca.key`, and `admin.key` respectively.
-Now, run the following commands to generate a certificate:
-
-```bash
-talosctl gen csr --key admin.key --ip 127.0.0.1
-talosctl gen crt --ca ca --csr admin.csr --name admin
-```
-
-You should see `admin.crt` in your current directory.
-Now, base64 encode `admin.crt`:
-
-```bash
-cat admin.crt | base64
-```
-
-You can now set the certificate in the `talosconfig` to the base64 encoded string.
+If the `talosconfig` is expired or lost, you can still generate a new one using either the `secrets.yaml`
+secrets bundle or the control plane node's configuration file using methods described above.

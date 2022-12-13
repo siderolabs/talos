@@ -167,10 +167,18 @@ kernel commandline parameters.
 See [required kernel parameters]({{< relref "../reference/kernel" >}}).
 If creating [EC2 kubernetes clusters]({{< relref "../talos-guides/install/cloud-platforms/aws/" >}}), the configuration file can be passed in as `--user-data` to the `aws ec2 run-instances` command.
 
-In any case, we need to generate the configuration which is to be provided:
+In any case, we need to generate the configuration which is to be provided.
+We start with generating a secrets bundle which should be saved in a secure location and used
+to generate machine or client configuration at any time:
 
 ```sh
-  talosctl gen config cluster-name cluster-endpoint
+talosctl gen secrets -o secrets.yaml
+```
+
+Now, we can generate the machine configuration for each node:
+
+```sh
+talosctl gen config --with-secrets secrets.yaml <cluster-name> <cluster-endpoint>
 ```
 
 Here, `cluster-name` is an arbitrary name for the cluster, used
@@ -185,7 +193,7 @@ and port.
 For example:
 
 ```sh
- talosctl gen config my-cluster https://192.168.64.15:6443
+$ talosctl gen config --with-secrets secrets.yaml my-cluster https://192.168.64.15:6443
 generating PKI and tokens
 created /Users/taloswork/controlplane.yaml
 created /Users/taloswork/worker.yaml
@@ -225,7 +233,7 @@ A common example is needing to change the default installation disk.
 If you try to to apply the machine config to a node, and get an error like the below, you need to specify a different installation disk:
 
 ```sh
-talosctl apply-config --insecure -n 192.168.64.8 --file controlplane.yaml
+$ talosctl apply-config --insecure -n 192.168.64.8 --file controlplane.yaml
 error applying new configuration: rpc error: code = InvalidArgument desc = configuration validation failed: 1 error occurred:
     * specified install disk does not exist: "/dev/sda"
 ```
@@ -237,7 +245,7 @@ You can verify which disks your nodes have by using the `talosctl disks --insecu
 For example:
 
 ```sh
-talosctl -n 192.168.64.8 disks --insecure
+$ talosctl -n 192.168.64.8 disks --insecure
 DEV        MODEL   SERIAL   TYPE   UUID   WWID   MODALIAS                    NAME   SIZE    BUS_PATH
 /dev/vda   -       -        HDD    -      -      virtio:d00000002v00001AF4   -      69 GB   /pci0000:00/0000:00:06.0/virtio2/
 ```
@@ -251,28 +259,60 @@ install:
 
 to reflect `vda` instead of `sda`.
 
+### Customizing Machine Configuration
+
+The generated machine configuration provides sane defaults for most cases, but machine configuration
+can be modified to fit specific needs.
+
+Some machine configuration options are available as flags for the `talosctl gen config` command,
+for example setting a specific Kubernetes version:
+
+```sh
+talosctl gen config --with-secrets secrets.yaml --kubernetes-version 1.25.4 my-cluster https://192.168.64.15:6443
+```
+
+Other modifications are done with [machine configuration patches]({{< relref "../talos-guides/configuration/patching" >}}).
+Machine configuration patches can be applied with `talosctl gen config` command:
+
+```sh
+talosctl gen config --with-secrets secrets.yaml --config-patch-control-plane @cni.patch my-cluster https://192.168.64.15:6443
+```
+
+> Note: `@cni.patch` means that the patch is read from a file named `cni.patch`.
+
 #### Machine Configs as Templates
 
 Individual machines may need different settings: for instance, each may have a
 different [static IP address]({{< relref "../advanced/advanced-networking/#static-addressing" >}}).
 
-When different files are needed for machines of the same type, simply
-copy the source template (`controlplane.yaml` or `worker.yaml`) and make whatever
-modifications are needed.
+When different files are needed for machines of the same type, there are two supported flows:
 
-For instance, if you had three control plane nodes and three worker nodes, you
-may do something like this:
+1. Use the `talosctl gen config` command to generate a template, and then patch
+   the template for each machine with `talosctl machineconfig patch`.
+2. Generate each machine configuration file separately with `talosctl gen config` while applying patches.
 
-```bash
-for i in $(seq 0 2); do
-  cp controlplane.yaml cp$i.yaml
-end
-for i in $(seq 0 2); do
-  cp worker.yaml w$i.yaml
-end
+For example, given a machine configuration patch which sets the static machine hostname:
+
+```yaml
+# worker1.patch
+machine:
+  network:
+    hostname: worker1
 ```
 
-Then modify each file as needed.
+Either of the following commands will generate a worker machine configuration file with the hostname set to `worker1`:
+
+```bash
+$ talosctl gen config --with-secrets secrets.yaml my-cluster https://192.168.64.15:6443
+created /Users/taloswork/controlplane.yaml
+created /Users/taloswork/worker.yaml
+created /Users/taloswork/talosconfig
+$ talosctl machineconfig patch worker.yaml --patch @worker1.patch --output worker1.yaml
+```
+
+```sh
+talosctl gen config --with-secrets secrets.yaml --config-patch-worker @worker1.patch --output-types worker -o worker1.yaml my-cluster https://192.168.64.15:6443
+```
 
 ### Apply Configuration
 

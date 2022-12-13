@@ -12,18 +12,21 @@ description: "Hardware requirements for running Talos Linux."
       <th class="px-4 py-2">Role</th>
       <th class="px-4 py-2">Memory</th>
       <th class="px-4 py-2">Cores</th>
+      <th class="px-4 py-2">System Disk</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td class="border px-4 py-2">Control Plane</td>
-      <td class="border px-4 py-2">2GB</td>
+      <td class="border px-4 py-2">2 GiB</td>
       <td class="border px-4 py-2">2</td>
+      <td class="border px-4 py-2">10 GiB</td>
     </tr>
     <tr class="bg-gray-100">
       <td class="border px-4 py-2">Worker</td>
-      <td class="border px-4 py-2">1GB</td>
+      <td class="border px-4 py-2">1 GiB</td>
       <td class="border px-4 py-2">1</td>
+      <td class="border px-4 py-2">10 GiB</td>
     </tr>
   </tbody>
 </table>
@@ -36,18 +39,21 @@ description: "Hardware requirements for running Talos Linux."
       <th class="px-4 py-2">Role</th>
       <th class="px-4 py-2">Memory</th>
       <th class="px-4 py-2">Cores</th>
+      <th class="px-4 py-2">System Disk</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td class="border px-4 py-2">Control Plane</td>
-      <td class="border px-4 py-2">4GB</td>
+      <td class="border px-4 py-2">4 GiB</td>
       <td class="border px-4 py-2">4</td>
+      <td class="border px-4 py-2">100 GiB</td>
     </tr>
     <tr class="bg-gray-100">
       <td class="border px-4 py-2">Worker</td>
-      <td class="border px-4 py-2">2GB</td>
+      <td class="border px-4 py-2">2 GiB</td>
       <td class="border px-4 py-2">2</td>
+      <td class="border px-4 py-2">100 GiB</td>
     </tr>
   </tbody>
 </table>

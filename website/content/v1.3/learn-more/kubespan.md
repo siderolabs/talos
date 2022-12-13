@@ -191,7 +191,7 @@ KubeSpan is using only two bits of the firewall mark with the mask `0x00000060`.
 >
 > At the moment of the writing, it was confirmed that Calico CNI is using bits `0xffff0000` and
 > Cilium CNI is using bits `0xf00`, so KubeSpan is compatible with both.
-> Flannel CNI doesn't use firewall mark at all.
+> Flannel CNI uses `0x4000` mask, so it is also compatible.
 
 In the routing rules table, we match on the mark `0x40` with the mask `0x60`:
 

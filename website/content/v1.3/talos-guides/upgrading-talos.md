@@ -32,11 +32,24 @@ For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade
 
 * upgrade from 1.0 to latest patch of 1.0 - to v1.0.6
 * upgrade from v1.0.6 to latest patch of 1.1 - to v1.1.2
-* upgrade from v1.1.2 to latest patch of 1.2 - to v1.2.4
+* upgrade from v1.1.2 to v1.2.4
 
 ## Before Upgrade to {{% release %}}
 
-TBD
+### Custom CRI Configuration
+
+If you were using a custom CRI configuration placed under `/var/cri/conf.d` with `.machine.files` setting, this will stop working after an upgrade to Talos 1.3.
+Talos 1.3 fixes the way CRI configuration is merged, and introduces a [new location for custom CRI configuration]({{< relref "configuration/containerd" >}}).
+The new location under `/etc/cri/conf.d` will not be accepted by Talos 1.2 and earlier, so if CRI configuration overrides are critical to boot Talos, the following upgrade flow can be used:
+
+1. Update machine configuration before upgrade in `--mode=staged` (using `talosctl apply-config`, `talosctl patch mc` or `talosctl edit mc`).
+   The new machine configuration will be only applied after the reboot (upgrade).
+2. Perform an upgrade, after the upgrade Talos will pick up new CRI configuration.
+
+### Reboot after Upgrade
+
+The new Talos 1.3.0 kernel has BTF debugging information, so `kexec` support will be disabled on upgrade preventing a `kexec` failure.
+After an upgrade `kexec` support will work again (if not disabled).
 
 ## Video Walkthrough
 
@@ -93,7 +106,17 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+All changes to Talos machine configuration are backwards compatible, so you can upgrade Talos and then optionally update the machine configuration to use new features.
+
+* `.machine.nodeLabels` can be used to control user-defined Kubernetes node labels
+* `.cluster.secretboxEncryptionSecret` can be set to encrypt Kubernetes secrets with `secretbox` algorithm (see [What's New]({{< relref "../introduction/what-is-new" >}}) for details)
+* `.machine.kubelet.disableManifestsDirectory` can be enabled to disable kubelet static pods support from `/etc/kubernetes/manifests` directory
+* `.cluster.apiServer.auditPolicy` configures custom `kube-apiserver` audit policy
+* `mtu` setting of the network route can be used to control route-specific MTU
+* `overridePath` can be used on `machine.registries.endpoints` to skip appending `/v2` (see [Pull-Through Cache]({{< relref "configuration/pull-through-cache" >}}))
+* `.machine.features.apidCheckExtKeyUsage` can be enabled after an upgrade to 1.3 to perform more strict checks on node-to-node Talos apid communication (see [CVE-2022-36103](https://github.com/siderolabs/talos/security/advisories/GHSA-7hgc-php5-77qq))
+* `.machine.kubespan` provdes new settings for [KubeSpan]({{< relref "../kubernetes-guides/network/kubespan" >}}) support
+* `.machine.kernel.modules` provides support to pass parameters to kernel modules on load
 
 ## Upgrade Sequence
 

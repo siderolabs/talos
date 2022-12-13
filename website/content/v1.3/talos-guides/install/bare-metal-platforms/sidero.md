@@ -1,7 +1,7 @@
 ---
-title: "Sidero"
-description: "Sidero is a project created by the Talos team that has native support for Talos."
-aliases: 
+title: "Sidero Metal"
+description: "Sidero Metal is a project created by the Talos team that has native support for Talos."
+aliases:
   - ../../../bare-metal-platforms/sidero
 ---
 
