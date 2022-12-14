@@ -1217,6 +1217,37 @@ func TestValidate(t *testing.T) {
 			expectedError: "1 error occurred:\n\t* feature Kubernetes Talos API Access can only be enabled on control plane machines\n\n",
 		},
 		{
+			name: "TalosAPIAccessInvalidRole",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineFeatures: &v1alpha1.FeaturesConfig{
+						RBAC: pointer.To(true),
+						KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
+							AccessEnabled: pointer.To(true),
+							AccessAllowedRoles: []string{
+								"os:reader",
+								"invalid:role1",
+								"os:etcd:backup",
+								"invalid:role2",
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "2 errors occurred:\n\t* invalid role \"invalid:role1\" in allowed roles for " +
+				"Kubernetes Talos API Access\n\t* invalid role \"invalid:role2\" in allowed roles for " +
+				"Kubernetes Talos API Access\n\n",
+		},
+		{
 			name: "NodeLabels",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
