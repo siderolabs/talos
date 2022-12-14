@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 	"github.com/siderolabs/talos/pkg/machinery/labels"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 var (
@@ -270,12 +271,20 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 		result = multierror.Append(result, fmt.Errorf("invalid machine node labels: %w", err))
 	}
 
-	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() && !c.Machine().Features().RBACEnabled() {
-		result = multierror.Append(result, fmt.Errorf("feature API RBAC should be enabled when Kubernetes Talos API Access feature is enabled"))
-	}
+	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() {
+		if !c.Machine().Features().RBACEnabled() {
+			result = multierror.Append(result, fmt.Errorf("feature API RBAC should be enabled when Kubernetes Talos API Access feature is enabled"))
+		}
 
-	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() && !c.Machine().Type().IsControlPlane() {
-		result = multierror.Append(result, fmt.Errorf("feature Kubernetes Talos API Access can only be enabled on control plane machines"))
+		if !c.Machine().Type().IsControlPlane() {
+			result = multierror.Append(result, fmt.Errorf("feature Kubernetes Talos API Access can only be enabled on control plane machines"))
+		}
+
+		for _, r := range c.Machine().Features().KubernetesTalosAPIAccess().AllowedRoles() {
+			if !role.All.Includes(role.Role(r)) {
+				result = multierror.Append(result, fmt.Errorf("invalid role %q in allowed roles for Kubernetes Talos API Access", r))
+			}
+		}
 	}
 
 	if opts.Strict {
