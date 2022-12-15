@@ -15,3 +15,5 @@ arm_boost=1
 enable_uart=1
 # Disable Bluetooth.
 dtoverlay=disable-bt
+# Disable Wireless Lan.
+dtoverlay=disable-wifi
