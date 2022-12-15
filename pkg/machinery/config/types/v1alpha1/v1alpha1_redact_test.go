@@ -34,6 +34,7 @@ func TestRedactSecrets(t *testing.T) {
 	require.NotEmpty(t, config.ClusterConfig.ClusterSecretboxEncryptionSecret)
 	require.NotEmpty(t, config.ClusterConfig.ClusterCA.Key)
 	require.NotEmpty(t, config.ClusterConfig.EtcdConfig.RootCA.Key)
+	require.NotEmpty(t, config.ClusterConfig.ClusterServiceAccount.Key)
 
 	replacement := "**.***"
 
@@ -55,4 +56,5 @@ func TestRedactSecrets(t *testing.T) {
 	require.Equal(t, replacement, redacted.Cluster().SecretboxEncryptionSecret())
 	require.Equal(t, replacement, string(redacted.Cluster().CA().Key))
 	require.Equal(t, replacement, string(redacted.Cluster().Etcd().CA().Key))
+	require.Equal(t, replacement, string(redacted.Cluster().ServiceAccount().Key))
 }

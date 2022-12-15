@@ -103,6 +103,8 @@ func (c *Config) Bytes() ([]byte, error) {
 }
 
 // RedactSecrets implements the config.Provider interface.
+//
+//nolint:gocyclo
 func (c *Config) RedactSecrets(replacement string) config.Provider {
 	if c == nil {
 		return nil
@@ -134,6 +136,10 @@ func (c *Config) RedactSecrets(replacement string) config.Provider {
 		clone.ClusterConfig.BootstrapToken = redactStr(clone.ClusterConfig.BootstrapToken)
 		clone.ClusterConfig.ClusterAESCBCEncryptionSecret = redactStr(clone.ClusterConfig.ClusterAESCBCEncryptionSecret)
 		clone.ClusterConfig.ClusterSecretboxEncryptionSecret = redactStr(clone.ClusterConfig.ClusterSecretboxEncryptionSecret)
+
+		if clone.ClusterConfig.ClusterServiceAccount != nil {
+			clone.ClusterConfig.ClusterServiceAccount.Key = redactBytes(clone.ClusterConfig.ClusterServiceAccount.Key)
+		}
 
 		if clone.ClusterConfig.ClusterCA != nil {
 			clone.ClusterConfig.ClusterCA.Key = redactBytes(clone.ClusterConfig.ClusterCA.Key)
