@@ -11,7 +11,6 @@ theilaRelease: "v0.2.1"
 nvidiaContainerToolkitRelease: "v1.10.0"
 nvidiaDriverRelease: "515.65.01"
 iscsiToolsRelease: "v0.1.1"
-menu: main
 ---
 
 ## Welcome
