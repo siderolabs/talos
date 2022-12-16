@@ -25,20 +25,8 @@ an easy manner.
 
 Install `talosctl` before continuing:
 
-#### `amd64`
-
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
-chmod +x /usr/local/bin/talosctl
-```
-
-#### `arm64`
-
-For `linux` and `darwin` operating systems `talosctl` is also available for the `arm64` architecture.
-
-```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-arm64
-chmod +x /usr/local/bin/talosctl
+curl -sL https://talos.dev/install | sh
 ```
 
 ## Acquire the installation image
@@ -120,8 +108,7 @@ For more information about using a shared IP, see the related
 
 ### DNS records
 
-If neither of the other methods work for you, you can use DNS records to
-provide a measure of redundancy.
+You can use DNS records to provide a measure of redundancy.
 In this case, you would add multiple A or AAAA records (one for each control plane node) to a DNS name.
 
 For instance, you could add:
@@ -142,11 +129,11 @@ https://kube.cluster1.mydomain.com:6443
 
 Many administrative tasks are performed by calling the Talos API on Talos Linux control plane nodes.
 
-We recommend accessing the control plane nodes directly from the `talosctl` client, if possible (i.e. set your `endpoints` to the IP addresses of the control plane nodes).
+We recommend directly accessing the control plane nodes from the `talosctl` client, if possible (i.e. set your `endpoints` to the IP addresses of the control plane nodes).
 This requires your control plane nodes to be reachable from the client IP.
 
 If the control plane nodes are not directly reachable from the workstation where you run `talosctl`, then configure a load balancer for TCP port 50000 to be forwarded to the control plane nodes.
-Do not use Talos Linux's built in VIP support for accessing the Talos API, as it will not function in the event of an etcd failure, and you will not be able to access the Talos API to fix things.
+Do not use Talos Linux's built in VIP support for accessing the Talos API, as it will not function in the event of an `etcd` failure, and you will not be able to access the Talos API to fix things.
 
 If you create a load balancer to forward the Talos API calls, make a note of the IP or
 hostname so that you can configure your `talosctl` tool's `endpoints` below.

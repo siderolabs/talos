@@ -23,18 +23,9 @@ Visit the [Proxmox](https://www.proxmox.com/en/downloads) downloads page if nece
 ### Install talosctl
 
 You can download `talosctl` via
-[github.com/siderolabs/talos/releases](https://github.com/siderolabs/talos/releases)
 
 ```bash
-curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
-```
-
-For example version `{{< release >}}` for `linux` platform:
-
-```bash
-curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-linux-amd64 -L -o talosctl
-sudo cp talosctl /usr/local/bin
-sudo chmod +x /usr/local/bin/talosctl
+curl -sL https://talos.dev/install | sh
 ```
 
 ### Download ISO Image

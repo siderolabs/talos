@@ -27,23 +27,14 @@ apt install virtualbox
 ### Install talosctl
 
 You can download `talosctl` via
-[github.com/siderolabs/talos/releases](https://github.com/siderolabs/talos/releases)
 
 ```bash
-curl https://github.com/siderolabs/talos/releases/download/<version>/talosctl-<platform>-<arch> -L -o talosctl
-```
-
-For example version `{{< release >}}` for `linux` platform:
-
-```bash
-curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-linux-amd64 -L -o talosctl
-sudo cp talosctl /usr/local/bin
-sudo chmod +x /usr/local/bin/talosctl
+curl -sL https://talos.dev/install | sh
 ```
 
 ### Download ISO Image
 
-In order to install Talos in VirtualBox, you will need the ISO image from the Talos release page.
+Download the ISO image from the Talos release page.
 You can download `talos-amd64.iso` via
 [github.com/siderolabs/talos/releases](https://github.com/siderolabs/talos/releases)
 
