@@ -16,6 +16,7 @@ type product struct {
 	ProductLogoURL   string `yaml:"product_logo_url"`
 	Type             string `yaml:"type"`
 	Description      string `yaml:"description"`
+	ContactEmail     string `yaml:"contact_email_address"`
 }
 
 var talos = product{
@@ -28,4 +29,5 @@ var talos = product{
 	ProductLogoURL:   "https://www.talos.dev/images/Sidero_stacked_darkbkgd_RGB.svg",
 	Type:             "installer",
 	Description:      "Talos Linux is Linux designed for Kubernetes - secure, immutable, and minimal.",
+	ContactEmail:     "developers@siderolabs.com",
 }
