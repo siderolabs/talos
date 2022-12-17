@@ -1339,6 +1339,34 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "2 errors occurred:\n\t* KubeSpan endpoint filer is not valid: \"10\"\n\t* KubeSpan endpoint filer is not valid: \"123::/456\"\n\n",
 		},
+		{
+			name: "KubeSpanSmallMTU",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
+							KubeSpanMTU:     pointer.To(uint32(576)),
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterID:     "test",
+					ClusterSecret: "test",
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* kubespan link MTU must be at least 1280\n\n",
+		},
 	} {
 		test := test
 

@@ -11,11 +11,12 @@ import (
 	"github.com/google/nftables/binaryutil"
 	"github.com/google/nftables/expr"
 	"go4.org/netipx"
+	"golang.org/x/sys/unix"
 )
 
 // NfTablesManager manages nftables outside of controllers/resources scope.
 type NfTablesManager interface {
-	Update(*netipx.IPSet) error
+	Update(ips *netipx.IPSet, mtu uint32) error
 	Cleanup() error
 }
 
@@ -54,6 +55,7 @@ type nfTablesManager struct {
 	MarkMask     uint32
 
 	currentSet *netipx.IPSet
+	currentMTU uint32
 
 	// nfTable is a handle for the KubeSpan root table
 	nfTable *nftables.Table
@@ -66,16 +68,17 @@ type nfTablesManager struct {
 }
 
 // Update the nftables rules based on the IPSet.
-func (m *nfTablesManager) Update(desired *netipx.IPSet) error {
-	if m.currentSet != nil && m.currentSet.Equal(desired) {
+func (m *nfTablesManager) Update(desired *netipx.IPSet, mtu uint32) error {
+	if m.currentSet != nil && m.currentSet.Equal(desired) && m.currentMTU == mtu {
 		return nil
 	}
 
-	if err := m.setNFTable(desired); err != nil {
+	if err := m.setNFTable(desired, mtu); err != nil {
 		return fmt.Errorf("failed to update IP sets: %w", err)
 	}
 
 	m.currentSet = desired
+	m.currentMTU = mtu
 
 	return nil
 }
@@ -129,7 +132,7 @@ func (m *nfTablesManager) tableExists() (bool, error) {
 	return foundExisting, nil
 }
 
-func (m *nfTablesManager) setNFTable(ips *netipx.IPSet) error {
+func (m *nfTablesManager) setNFTable(ips *netipx.IPSet, mtu uint32) error {
 	c := &nftables.Conn{}
 
 	// NB: sets should be flushed before new members because nftables will fail
@@ -173,6 +176,22 @@ func (m *nfTablesManager) setNFTable(ips *netipx.IPSet) error {
 
 	if err := c.AddSet(m.targetSet6, setElements6); err != nil {
 		return fmt.Errorf("failed to add IPv6 set: %w", err)
+	}
+
+	// meta ifname "lo" accept
+	ruleLo := []expr.Any{
+		// [ meta load oifname => reg 1 ]
+		&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
+		// [ cmp eq reg 1 lo ]
+		&expr.Cmp{
+			Op:       expr.CmpOpEq,
+			Register: 1,
+			Data:     ifname("lo"),
+		},
+		// Accept the packet to stop the ruleset processing
+		&expr.Verdict{
+			Kind: expr.VerdictAccept,
+		},
 	}
 
 	// meta mark & 0x00000060 == 0x00000020 accept
@@ -219,6 +238,14 @@ func (m *nfTablesManager) setNFTable(ips *netipx.IPSet) error {
 		Exprs: ruleExpr,
 	})
 
+	// match lo interface
+	// accept and return without modifying the table or mark
+	c.AddRule(&nftables.Rule{
+		Table: m.nfTable,
+		Chain: outChain,
+		Exprs: ruleLo,
+	})
+
 	c.AddRule(&nftables.Rule{
 		Table: m.nfTable,
 		Chain: preChain,
@@ -234,7 +261,19 @@ func (m *nfTablesManager) setNFTable(ips *netipx.IPSet) error {
 	c.AddRule(&nftables.Rule{
 		Table: m.nfTable,
 		Chain: outChain,
+		Exprs: matchIPSetMSS(m.targetSet4, mtu, nftables.TableFamilyIPv4),
+	})
+
+	c.AddRule(&nftables.Rule{
+		Table: m.nfTable,
+		Chain: outChain,
 		Exprs: matchIPv4Set(m.targetSet4, m.InternalMark, m.MarkMask),
+	})
+
+	c.AddRule(&nftables.Rule{
+		Table: m.nfTable,
+		Chain: outChain,
+		Exprs: matchIPSetMSS(m.targetSet6, mtu, nftables.TableFamilyIPv6),
 	})
 
 	c.AddRule(&nftables.Rule{
@@ -258,16 +297,23 @@ func matchIPv6Set(set *nftables.Set, mark, mask uint32) []expr.Any {
 	return matchIPSet(set, mark, mask, nftables.TableFamilyIPv6)
 }
 
-func matchIPSet(set *nftables.Set, mark, mask uint32, family nftables.TableFamily) []expr.Any {
-	var (
-		offset uint32 = 16
-		length uint32 = 4
-	)
-
-	if family == nftables.TableFamilyIPv6 {
+func ipOffsetLength(family nftables.TableFamily) (offset uint32, length uint32) {
+	switch family { //nolint:exhaustive
+	case nftables.TableFamilyIPv4:
+		offset = 16
+		length = 4
+	case nftables.TableFamilyIPv6:
 		offset = 24
 		length = 16
+	default:
+		panic("unexpected IP family")
 	}
+
+	return offset, length
+}
+
+func matchIPSet(set *nftables.Set, mark, mask uint32, family nftables.TableFamily) []expr.Any {
+	offset, length := ipOffsetLength(family)
 
 	// ip daddr @kubespan_targets_ipv4 meta mark set meta mark & 0xffffffdf | 0x00000040 accept
 	return []expr.Any{
@@ -322,6 +368,119 @@ func matchIPSet(set *nftables.Set, mark, mask uint32, family nftables.TableFamil
 			Kind: expr.VerdictAccept,
 		},
 	}
+}
+
+func matchIPSetMSS(set *nftables.Set, mtu uint32, family nftables.TableFamily) []expr.Any {
+	offset, length := ipOffsetLength(family)
+
+	var mss uint16
+
+	switch family { //nolint:exhaustive
+	case nftables.TableFamilyIPv4:
+		mss = uint16(mtu) - 40 // TCP + IPv4 overhead
+	case nftables.TableFamilyIPv6:
+		mss = uint16(mtu) - 60 // TCP + IPv6 overhead
+	default:
+		panic("unexpected IP family")
+	}
+
+	// ip daddr @kubespan_targets_ipv4 tcp flags & (syn|rst) == syn tcp option maxseg size > $MSS tcp option maxseg size set $MSS
+	return []expr.Any{
+		// Store protocol type to register 1
+		&expr.Meta{
+			Key:      expr.MetaKeyNFPROTO,
+			Register: 1,
+		},
+		// Match IP Family
+		&expr.Cmp{
+			Op:       expr.CmpOpEq,
+			Register: 1,
+			Data:     []byte{byte(family)},
+		},
+
+		// Store the destination IP address to register 1
+		&expr.Payload{
+			DestRegister: 1,
+			Base:         expr.PayloadBaseNetworkHeader,
+			Offset:       offset,
+			Len:          length,
+		},
+		// Match from target set
+		&expr.Lookup{
+			SourceRegister: 1,
+			SetName:        set.Name,
+			SetID:          set.ID,
+		},
+
+		// Load the current packet mark into register 1
+		&expr.Meta{
+			Key:      expr.MetaKeyL4PROTO,
+			Register: 1,
+		},
+		// Match TCP Family
+		&expr.Cmp{
+			Op:       expr.CmpOpEq,
+			Register: 1,
+			Data:     []byte{unix.IPPROTO_TCP},
+		},
+
+		// [ payload load 1b @ transport header + 13 => reg 1 ]
+		&expr.Payload{
+			DestRegister: 1,
+			Base:         expr.PayloadBaseTransportHeader,
+			Offset:       13,
+			Len:          1,
+		},
+		// [ bitwise reg 1 = ( reg 1 & 0x00000006 ) ^ 0x00000000 ]
+		&expr.Bitwise{
+			DestRegister:   1,
+			SourceRegister: 1,
+			Len:            1,
+			Mask:           []byte{0x02 | 0x04},
+			Xor:            []byte{0x00},
+		},
+		// [ cmp eq reg 1 0x00000002 ]
+		&expr.Cmp{
+			Op:       expr.CmpOpEq,
+			Register: 1,
+			Data:     []byte{0x02},
+		},
+
+		// [ exthdr load tcpopt 2b @ 2 + 2 => reg 1 ]
+		&expr.Exthdr{
+			DestRegister: 1,
+			Type:         2,
+			Offset:       2,
+			Len:          2,
+			Op:           expr.ExthdrOpTcpopt,
+		},
+		// [ cmp gte reg 1 MTU ]
+		&expr.Cmp{
+			Op:       expr.CmpOpGt,
+			Register: 1,
+			Data:     binaryutil.BigEndian.PutUint16(mss),
+		},
+		// [ immediate reg 1 MTU ]
+		&expr.Immediate{
+			Register: 1,
+			Data:     binaryutil.BigEndian.PutUint16(mss),
+		},
+		// [ exthdr write tcpopt reg 1 => 2b @ 2 + 2 ]
+		&expr.Exthdr{
+			SourceRegister: 1,
+			Type:           2,
+			Offset:         2,
+			Len:            2,
+			Op:             expr.ExthdrOpTcpopt,
+		},
+	}
+}
+
+func ifname(name string) []byte {
+	b := make([]byte, 16)
+	copy(b, []byte(name))
+
+	return b
 }
 
 func (m *nfTablesManager) setElements(ips *netipx.IPSet) (setElements4, setElements6 []nftables.SetElement) {

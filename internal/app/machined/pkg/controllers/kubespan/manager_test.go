@@ -92,7 +92,7 @@ type mockNftablesManager struct {
 	ipSet *netipx.IPSet
 }
 
-func (mock *mockNftablesManager) Update(ipSet *netipx.IPSet) error {
+func (mock *mockNftablesManager) Update(ipSet *netipx.IPSet, mtu uint32) error {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
 

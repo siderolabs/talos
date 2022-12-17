@@ -1081,7 +1081,12 @@ func (k *NetworkKubeSpan) AdvertiseKubernetesNetworks() bool {
 
 // MTU implements the KubeSpan interface.
 func (k *NetworkKubeSpan) MTU() uint32 {
-	return pointer.SafeDeref(k.KubeSpanMTU)
+	mtu := pointer.SafeDeref(k.KubeSpanMTU)
+	if mtu == 0 {
+		mtu = constants.KubeSpanLinkMTU
+	}
+
+	return mtu
 }
 
 // Filters implements the KubeSpan interface.
