@@ -188,6 +188,12 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 			warnings = append(warnings, warn...)
 			result = multierror.Append(result, err)
 		}
+
+		if c.Machine().Network().KubeSpan().Enabled() {
+			if c.Machine().Network().KubeSpan().MTU() < constants.KubeSpanLinkMinimumMTU {
+				result = multierror.Append(result, fmt.Errorf("kubespan link MTU must be at least %d", constants.KubeSpanLinkMinimumMTU))
+			}
+		}
 	}
 
 	if c.MachineConfig.MachineDisks != nil {

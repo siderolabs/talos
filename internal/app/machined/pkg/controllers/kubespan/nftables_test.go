@@ -17,7 +17,11 @@ import (
 
 func TestNfTables(t *testing.T) {
 	// use a different mark to avoid conflicts with running kubespan
-	mgr := kubespan.NewNfTablesManager(constants.KubeSpanDefaultFirewallMark+10, constants.KubeSpanDefaultForceFirewallMark<<1, constants.KubeSpanDefaultFirewallMask<<1)
+	mgr := kubespan.NewNfTablesManager(
+		constants.KubeSpanDefaultFirewallMark<<1,
+		constants.KubeSpanDefaultForceFirewallMark<<1,
+		constants.KubeSpanDefaultFirewallMask<<1,
+	)
 
 	// cleanup should be fine if nothing is installed
 	assert.NoError(t, mgr.Cleanup())
@@ -32,14 +36,14 @@ func TestNfTables(t *testing.T) {
 	ipSet, err := builder.IPSet()
 	require.NoError(t, err)
 
-	assert.NoError(t, mgr.Update(ipSet))
+	assert.NoError(t, mgr.Update(ipSet, constants.KubeSpanLinkMTU))
 
 	builder.AddPrefix(netip.MustParsePrefix("10.0.0.0/8"))
 
 	ipSet, err = builder.IPSet()
 	require.NoError(t, err)
 
-	assert.NoError(t, mgr.Update(ipSet))
+	assert.NoError(t, mgr.Update(ipSet, constants.KubeSpanLinkMTU))
 
 	assert.NoError(t, mgr.Cleanup())
 }

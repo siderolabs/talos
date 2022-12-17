@@ -230,11 +230,11 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		}
 
+		cfgSpec := cfg.(*kubespan.Config).TypedSpec()
+
 		if nfTablesMgr == nil {
 			nfTablesMgr = ctrl.NfTablesManagerFactory(constants.KubeSpanDefaultFirewallMark, constants.KubeSpanDefaultForceFirewallMark, constants.KubeSpanDefaultFirewallMask)
 		}
-
-		cfgSpec := cfg.(*kubespan.Config).TypedSpec()
 
 		localIdentity, err := r.Get(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.IdentityType, kubespan.LocalIdentity, resource.VersionUndefined))
 		if err != nil {
@@ -416,9 +416,6 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		}
 
 		mtu := cfgSpec.MTU
-		if mtu == 0 {
-			mtu = constants.KubeSpanLinkMTU
-		}
 
 		for _, spec := range []network.RouteSpecSpec{
 			{
@@ -499,7 +496,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error modifying link spec: %w", err)
 		}
 
-		if err = nfTablesMgr.Update(allowedIPsSet); err != nil {
+		if err = nfTablesMgr.Update(allowedIPsSet, mtu); err != nil {
 			return fmt.Errorf("failed updating nftables: %w", err)
 		}
 

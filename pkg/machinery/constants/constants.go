@@ -686,8 +686,14 @@ const (
 	// KubeSpanLinkName is the link name for the KubeSpan Wireguard interface.
 	KubeSpanLinkName = "kubespan"
 
-	// KubeSpanLinkMTU is the default link mtu size for the KubeSpan Wireguard interface.
+	// KubeSpanLinkMTU is the default link MTU size for the KubeSpan Wireguard interface.
 	KubeSpanLinkMTU = 1420
+
+	// KubeSpanLinkMinimumMTU is the minimum link MTU size for the KubeSpan Wireguard interface.
+	//
+	// This is the minimum MTU size for the Wireguard interface with IPv6 enabled.
+	// See: https://lore.kernel.org/wireguard/20190321033638.1ff82682@natsu/t/
+	KubeSpanLinkMinimumMTU = 1280
 
 	// UdevRulesPath rules file path.
 	UdevRulesPath = "/usr/etc/udev/rules.d/99-talos.rules"
