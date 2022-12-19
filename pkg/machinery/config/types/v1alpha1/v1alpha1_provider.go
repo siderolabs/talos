@@ -1247,6 +1247,11 @@ func (a *AdminKubeconfigConfig) CommonName() string {
 	return constants.KubernetesAdminCertCommonName
 }
 
+// CertOrganization implements the config.Provider interface.
+func (a *AdminKubeconfigConfig) CertOrganization() string {
+	return constants.KubernetesAdminCertOrganization
+}
+
 // Endpoints implements the config.Provider interface.
 func (r *RegistryMirrorConfig) Endpoints() []string {
 	return r.MirrorEndpoints

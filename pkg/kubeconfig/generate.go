@@ -16,7 +16,6 @@ import (
 	"github.com/siderolabs/crypto/x509"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const kubeConfigTemplate = `apiVersion: v1
@@ -59,7 +58,7 @@ func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
 			CertificateLifetime: config.AdminKubeconfig().CertLifetime(),
 
 			CommonName:   config.AdminKubeconfig().CommonName(),
-			Organization: constants.KubernetesAdminCertOrganization,
+			Organization: config.AdminKubeconfig().CertOrganization(),
 
 			Endpoint:    config.Endpoint().String(),
 			Username:    "admin",
