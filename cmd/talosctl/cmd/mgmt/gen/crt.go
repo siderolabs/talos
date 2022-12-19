@@ -76,7 +76,11 @@ var genCrtCmd = &cobra.Command{
 			return fmt.Errorf("error parsing CSR: %s", err)
 		}
 
-		signedCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr, x509.NotAfter(time.Now().Add(time.Duration(genCrtCmdFlags.hours)*time.Hour)))
+		signedCrt, err := x509.NewCertificateFromCSR(caCrt, caKey, ccsr,
+			x509.NotAfter(time.Now().Add(time.Duration(genCrtCmdFlags.hours)*time.Hour)),
+			x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature),
+			x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth}),
+		)
 		if err != nil {
 			return fmt.Errorf("error signing certificate: %s", err)
 		}
