@@ -349,3 +349,7 @@ func (adapter *generateAdminAdapter) CertLifetime() time.Duration {
 func (adapter *generateAdminAdapter) CommonName() string {
 	return constants.KubernetesTalosAdminCertCommonName
 }
+
+func (adapter *generateAdminAdapter) CertOrganization() string {
+	return constants.KubernetesAdminCertOrganization
+}
