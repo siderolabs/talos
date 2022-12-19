@@ -23,8 +23,8 @@ Using the VIP chosen in the prereq steps, we will now generate the base configur
 This can be done with the `talosctl gen config ...` command.
 Take note that we will also use a JSON6902 patch when creating the configs so that the control plane nodes get some special information about the VIP we chose earlier, as well as a daemonset to install vmware tools on talos nodes.
 
-First, download `the cp.patch` to your local machine and edit the VIP to match your chosen IP.
-You can do this by issuing `https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/virtualized-platforms/vmware/cp.patch.yaml`.
+First, download `cp.patch.yaml` to your local machine and edit the VIP to match your chosen IP.
+You can do this by issuing: `curl -fsSLO https://raw.githubusercontent.com/siderolabs/talos/master/website/content/{{< version >}}/talos-guides/install/virtualized-platforms/vmware/cp.patch.yaml`.
 It's contents should look like the following:
 
 ```yaml
@@ -101,7 +101,7 @@ This script has default variables for things like Talos version and cluster name
 To create a content library and import the Talos OVA corresponding to the mentioned Talos version, simply issue:
 
 ```bash
-./vsphere.sh upload_ova
+./vmware.sh upload_ova
 ```
 
 #### Create Cluster
@@ -109,7 +109,7 @@ To create a content library and import the Talos OVA corresponding to the mentio
 With the OVA uploaded to the content library, you can create a 5 node (by default) cluster with 3 control plane and 2 worker nodes:
 
 ```bash
-./vsphere.sh create
+./vmware.sh create
 ```
 
 This step will create a VM from the OVA, edit the settings based on the env variables used for VM size/specs, then power on the VMs.

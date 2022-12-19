@@ -101,7 +101,7 @@ This script has default variables for things like Talos version and cluster name
 To create a content library and import the Talos OVA corresponding to the mentioned Talos version, simply issue:
 
 ```bash
-./vsphere.sh upload_ova
+./vmware.sh upload_ova
 ```
 
 #### Create Cluster
@@ -109,7 +109,7 @@ To create a content library and import the Talos OVA corresponding to the mentio
 With the OVA uploaded to the content library, you can create a 5 node (by default) cluster with 3 control plane and 2 worker nodes:
 
 ```bash
-./vsphere.sh create
+./vmware.sh create
 ```
 
 This step will create a VM from the OVA, edit the settings based on the env variables used for VM size/specs, then power on the VMs.
