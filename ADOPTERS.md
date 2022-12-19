@@ -12,6 +12,9 @@ A list of adopters of Talos Linux, and the use
 * **[Nedap Security Atlas](https://nedapsecurityatlas.com)**  
   Nedap Security Atlas does all on-premise development, unit and integration testing in Gitlab running on Talos clusters.
 
+* **[SCHULZ Systemtechnik GmbH](https://schulz.st/en/page/schulz-systemtechnik)**  
+  SCHULZ is a provider of integrated automation solutions for a wide range of industries. We use Talos as a base for our edge devices that run IoT and ML applications.
+
 * **[SenseLabs](https://senselabs.de)**  
   SenseLabs offers custom cloud-native geo applications and uses Talos-backed clusters for development and testing.
   
@@ -23,7 +26,7 @@ A list of adopters of Talos Linux, and the use
 
 ## Contributing
 
-If you use Talos Linux and want to add your organization to this list, simply [edit](https://github.com/siderolabs/talos/edit/master/ADOPTERS.md) this file using the template below, then submit the changes in a pull request!
+If you use Talos Linux and want to add your organization to this list, simply [edit](https://github.com/siderolabs/talos/edit/main/ADOPTERS.md) this file using the template below, then submit the changes in a pull request!
 
 ### Template
 
