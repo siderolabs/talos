@@ -7,7 +7,6 @@ package talos
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -44,14 +43,9 @@ To get a list of all available resource definitions, issue 'talosctl get rd'`,
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		switch len(args) {
 		case 0:
-			if toComplete == "" {
-				return completeResource(meta.ResourceDefinitionType, true, false), cobra.ShellCompDirectiveNoFileComp
-			}
-
-			return completeResource(meta.ResourceDefinitionType, true, true), cobra.ShellCompDirectiveNoFileComp
+			return completeResourceDefinition(toComplete != "")
 		case 1:
-
-			return completeResource(args[0], false, true), cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveNoSpace
+			return completeResourceID(args[0], getCmdFlags.namespace)
 		}
 
 		return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
@@ -230,45 +224,61 @@ func aggregateEvents(ctx context.Context, outCh chan<- nodeAndEvent, watchCh <-c
 	}
 }
 
-// completeResource represents tab complete options for `get` and `get *` commands.
-//
-//nolint:gocyclo
-func completeResource(resourceType string, hasAliases bool, completeDot bool) []string {
-	var resourceOptions []string
+// completeResourceDefinition represents tab complete options for `get` and `get *` commands.
+func completeResourceDefinition(withAliases bool) ([]string, cobra.ShellCompDirective) {
+	var result []string
 
-	callbackResource := func(_ context.Context, _ string, r resource.Resource, callError error) error {
-		if callError != nil {
-			return callError
+	if WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
+		items, err := safe.StateList[*meta.ResourceDefinition](ctx, c.COSI, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
+		if err != nil {
+			return err
 		}
 
-		if completeDot {
-			resourceOptions = append(resourceOptions, r.Metadata().ID())
-		}
-
-		if !hasAliases {
-			return nil
-		}
-
-		if definition, ok := r.(*meta.ResourceDefinition); ok {
-			for _, alias := range definition.TypedSpec().Aliases {
-				if !completeDot && strings.Contains(alias, ".") {
-					continue
-				}
-
-				resourceOptions = append(resourceOptions, alias)
+		for iter := safe.IteratorFromList(items); iter.Next(); {
+			if withAliases {
+				result = append(result, iter.Value().TypedSpec().Aliases...)
 			}
+
+			result = append(result, iter.Value().Metadata().ID())
 		}
 
 		return nil
-	}
-
-	if WithClient(func(ctx context.Context, c *client.Client) error {
-		return helpers.ForEachResource(ctx, c, nil, callbackResource, "", resourceType)
 	}) != nil {
-		return nil
+		return nil, cobra.ShellCompDirectiveError
 	}
 
-	return resourceOptions
+	return result, cobra.ShellCompDirectiveNoFileComp
+}
+
+// completeResourceID represents tab complete options for `get` and `get *` commands.
+func completeResourceID(resourceType, namespace string) ([]string, cobra.ShellCompDirective) {
+	var result []string
+
+	if WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
+		if len(GlobalArgs.Nodes) > 0 {
+			ctx = client.WithNode(ctx, GlobalArgs.Nodes[0])
+		}
+
+		rd, err := c.ResolveResourceKind(ctx, &namespace, resourceType)
+		if err != nil {
+			return err
+		}
+
+		items, err := c.COSI.List(ctx, resource.NewMetadata(namespace, rd.TypedSpec().Type, "", resource.VersionUndefined))
+		if err != nil {
+			return err
+		}
+
+		for _, item := range items.Items {
+			result = append(result, item.Metadata().ID())
+		}
+
+		return nil
+	}) != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	return result, cobra.ShellCompDirectiveNoFileComp
 }
 
 // CompleteNodes represents tab completion for `--nodes` argument.
