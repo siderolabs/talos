@@ -30,7 +30,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.2.1
 	github.com/BurntSushi/toml v1.2.1
-	github.com/aws/aws-sdk-go v1.44.147
+	github.com/aws/aws-sdk-go v1.44.162
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/containerd/cgroups v1.0.4
