@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute/metadata v0.2.1
+	cloud.google.com/go/compute/metadata v0.2.3
 	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.44.147
 	github.com/beevik/ntp v0.3.0
@@ -142,7 +142,7 @@ require (
 
 require (
 	cloud.google.com/go v0.105.0 // indirect
-	cloud.google.com/go/compute v1.12.1 // indirect
+	cloud.google.com/go/compute v1.14.0 // indirect
 	cloud.google.com/go/iam v0.7.0 // indirect
 	cloud.google.com/go/storage v1.27.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -195,7 +195,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
-	github.com/googleapis/gax-go/v2 v2.6.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.7.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
@@ -272,7 +272,7 @@ require (
 	go.etcd.io/etcd/pkg/v3 v3.5.6 // indirect
 	go.etcd.io/etcd/raft/v3 v3.5.6 // indirect
 	go.etcd.io/etcd/server/v3 v3.5.6 // indirect
-	go.opencensus.io v0.23.0 // indirect
+	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.35.0 // indirect
 	go.opentelemetry.io/otel v1.10.0 // indirect
 	go.opentelemetry.io/otel/trace v1.10.0 // indirect
@@ -285,9 +285,9 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20211104114900-415007cec224 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20220920152132-bb719d3a6e2c // indirect
-	google.golang.org/api v0.102.0 // indirect
+	google.golang.org/api v0.103.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
+	google.golang.org/genproto v0.0.0-20221202195650-67e5cbc046fd // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
