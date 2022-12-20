@@ -1,3 +1,75 @@
+## [Talos 1.2.8](https://github.com/siderolabs/talos/releases/tag/v1.2.8) (2022-12-20)
+
+Welcome to the v1.2.8 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Kubernetes: v1.25.5
+* Linux: 5.15.83
+* containerd: 1.6.12
+
+Talos is built with Go 1.19.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Alexandre Mclean
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`426fd28aa`](https://github.com/siderolabs/talos/commit/426fd28aac7aafc8720b3668cc39005090fcacdf) fix: workaround panic in the kubelet service controller
+* [`05430b987`](https://github.com/siderolabs/talos/commit/05430b987029e9f1e1f241f26496f3dd59df6c43) fix: ignore many more filesystems in IMA
+* [`4af93c3b6`](https://github.com/siderolabs/talos/commit/4af93c3b6296b46da77a331da4a9d3fea712fef9) fix: parse correctly upgrade cmd force flag
+* [`0c637ab0d`](https://github.com/siderolabs/talos/commit/0c637ab0d60d8e9969be59550b097d4ed39f4be6) chore: use build-container image for s3cmd
+* [`bf0840da0`](https://github.com/siderolabs/talos/commit/bf0840da01af1ef198902aebb5fbc1f5e1534122) feat: update Kubernetes to 1.25.5
+* [`4b1aa1061`](https://github.com/siderolabs/talos/commit/4b1aa10615aa87edca9a0a91b0e0f271ad09ae2f) chore: update pkgs with latest releases
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`3903d18`](https://github.com/siderolabs/pkgs/commit/3903d18acc0604a04cc388fdc4e82133a0c83f3e) fix: use proper containerd version tag
+* [`623561a`](https://github.com/siderolabs/pkgs/commit/623561a4ad1c0412ded3fc73576558bed8b4f3e9) feat: update Go 1.19.4, Linux 5.15.83, containerd 1.6.12
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`81b11c8`](https://github.com/siderolabs/tools/commit/81b11c83173cebe146553e223cb8fb9df5625ed5) feat: update Go to 1.19.4
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**  v1.6.8 -> v1.6.12
+* **github.com/siderolabs/pkgs**        v1.2.0-20-g23c0dfd -> v1.2.0-22-g3903d18
+* **github.com/siderolabs/tools**       v1.2.0-2-gdcbd748 -> v1.2.0-3-g81b11c8
+* **golang.org/x/net**                  bea034e7d591 -> 1e63c2f08a10
+* **golang.org/x/sys**                  f11e5e49a4ec -> v0.3.0
+* **golang.org/x/term**                 a9ba230a4035 -> v0.3.0
+* **k8s.io/api**                        v0.25.4 -> v0.25.5
+* **k8s.io/apimachinery**               v0.25.4 -> v0.25.5
+* **k8s.io/apiserver**                  v0.25.4 -> v0.25.5
+* **k8s.io/client-go**                  v0.25.4 -> v0.25.5
+* **k8s.io/component-base**             v0.25.4 -> v0.25.5
+* **k8s.io/cri-api**                    v0.25.4 -> v0.25.5
+* **k8s.io/kubectl**                    v0.25.4 -> v0.25.5
+* **k8s.io/kubelet**                    v0.25.4 -> v0.25.5
+
+Previous release can be found at [v1.2.7](https://github.com/siderolabs/talos/releases/tag/v1.2.7)
+
 ## [Talos 1.2.7](https://github.com/siderolabs/talos/releases/tag/v1.2.7) (2022-11-22)
 
 Welcome to the v1.2.7 release of Talos!
