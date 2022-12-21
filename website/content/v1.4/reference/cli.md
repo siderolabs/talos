@@ -571,6 +571,36 @@ talosctl config node <endpoint>... [flags]
 
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
+## talosctl config remove
+
+Remove contexts
+
+```
+talosctl config remove <context> [flags]
+```
+
+### Options
+
+```
+      --dry-run     dry run
+  -h, --help        help for remove
+  -y, --noconfirm   do not ask for confirmation
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
+
 ## talosctl config
 
 Manage the client configuration file (talosconfig)
@@ -602,6 +632,7 @@ Manage the client configuration file (talosconfig)
 * [talosctl config merge](#talosctl-config-merge)	 - Merge additional contexts from another client configuration file
 * [talosctl config new](#talosctl-config-new)	 - Generate a new client configuration file
 * [talosctl config node](#talosctl-config-node)	 - Set the node(s) for the current context
+* [talosctl config remove](#talosctl-config-remove)	 - Remove contexts
 
 ## talosctl conformance kubernetes
 

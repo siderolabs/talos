@@ -10,6 +10,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -19,6 +20,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/ryanuber/go-glob"
 	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -184,6 +186,89 @@ var configAddCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+// configRemoveCmdFlags represents the `config remove` command flags.
+var configRemoveCmdFlags struct {
+	noconfirm bool
+	dry       bool
+}
+
+// configRemoveCmd represents the `config remove` command.
+var configRemoveCmd = &cobra.Command{
+	Use:   "remove <context>",
+	Short: "Remove contexts",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		pattern := args[0]
+		if pattern == "" {
+			return fmt.Errorf("no context specified")
+		}
+
+		c, err := clientconfig.Open(GlobalArgs.Talosconfig)
+		if err != nil {
+			return fmt.Errorf("error reading config: %w", err)
+		}
+
+		if len(c.Contexts) == 0 {
+			return errors.New("no contexts defined")
+		}
+
+		matches := sortInPlace(maps.Keys(
+			maps.Filter(c.Contexts, func(context string, _ *clientconfig.Context) bool {
+				return glob.Glob(pattern, context)
+			}),
+		))
+		if len(matches) == 0 {
+			return fmt.Errorf("no contexts matched %q", pattern)
+		}
+
+		// we want to prevent file updates in case there were no changes
+		noChanges := true
+
+		for _, match := range matches {
+			if match == c.Context {
+				fmt.Fprintf(
+					os.Stderr,
+					"skipping removal of current context %q, please change it to another before removing\n",
+					match,
+				)
+
+				continue
+			}
+
+			if !configRemoveCmdFlags.noconfirm {
+				prompt := fmt.Sprintf("remove context %q", match)
+
+				if !helpers.Confirm(prompt + "?") {
+					continue
+				}
+			} else {
+				fmt.Fprintf(os.Stderr, "removing context %q\n", match)
+			}
+
+			noChanges = false
+			delete(c.Contexts, match)
+		}
+
+		if configRemoveCmdFlags.dry || noChanges {
+			return nil
+		}
+
+		err = c.Save(GlobalArgs.Talosconfig)
+		if err != nil {
+			return fmt.Errorf("error writing config: %w", err)
+		}
+
+		return nil
+	},
+	ValidArgsFunction: CompleteConfigContext,
+}
+
+func sortInPlace(slc []string) []string {
+	sort.Slice(slc, func(i, j int) bool { return slc[i] < slc[j] })
+
+	return slc
 }
 
 func checkAndSetCrtAndKey(configContext *clientconfig.Context) error {
@@ -430,7 +515,8 @@ var configInfoCmd = &cobra.Command{
 	},
 }
 
-// CompleteConfigContext represents tab completion for `--context` argument and `config context` command.
+// CompleteConfigContext represents tab completion for `--context`
+// argument and `config [context|remove]` command.
 func CompleteConfigContext(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 	if err != nil {
@@ -449,6 +535,7 @@ func init() {
 		configNodeCmd,
 		configContextCmd,
 		configAddCmd,
+		configRemoveCmd,
 		configGetContextsCmd,
 		configMergeCmd,
 		configNewCmd,
@@ -458,6 +545,14 @@ func init() {
 	configAddCmd.Flags().StringVar(&configAddCmdFlags.ca, "ca", "", "the path to the CA certificate")
 	configAddCmd.Flags().StringVar(&configAddCmdFlags.crt, "crt", "", "the path to the certificate")
 	configAddCmd.Flags().StringVar(&configAddCmdFlags.key, "key", "", "the path to the key")
+
+	configRemoveCmd.Flags().BoolVarP(
+		&configRemoveCmdFlags.noconfirm, "noconfirm", "y", false,
+		"do not ask for confirmation",
+	)
+	configRemoveCmd.Flags().BoolVar(
+		&configRemoveCmdFlags.dry, "dry-run", false, "dry run",
+	)
 
 	configNewCmd.Flags().StringSliceVar(&configNewCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
 	configNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", 87600*time.Hour, "certificate TTL")
