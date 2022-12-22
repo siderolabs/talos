@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -245,7 +246,13 @@ func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logg
 		}
 
 		var dr dynamic.ResourceInterface
+
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+			// default the namespace if it's not set in the manifest
+			if obj.GetNamespace() == "" {
+				obj.SetNamespace(corev1.NamespaceDefault)
+			}
+
 			// namespaced resources should specify the namespace
 			dr = dyn.Resource(mapping.Resource).Namespace(obj.GetNamespace())
 		} else {
