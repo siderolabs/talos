@@ -24,6 +24,9 @@ A list of adopters of Talos Linux, and the use
 * **[Tremor Video](https://www.tremorvideo.com)**  
   Tremor Video helps advertisers deliver impactful brand stories across all screens through the power of innovative video technology combined with advanced audience data and captivating creative.
 
+* **[Vandebron](https://www.vandebron.nl)**  
+  Vandebron is a Dutch green-tech energy company on a mission to accelerate the transition towards 100% sustainable energy, 100% of the time. We use TalosOS on our edge devices contributing to stabilize the Dutch energy grid with curtailment and flexibility services.
+
 ## Contributing
 
 If you use Talos Linux and want to add your organization to this list, simply [edit](https://github.com/siderolabs/talos/edit/main/ADOPTERS.md) this file using the template below, then submit the changes in a pull request!
