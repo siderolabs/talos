@@ -459,7 +459,7 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 	if err != nil {
 		logLevel = zapcore.WarnLevel
 
-		fmt.Println(&buf, ", error was %s", err)
+		fmt.Fprintf(&buf, ", error was %s", err)
 	}
 
 	if syncer.firstSync && logLevel == zapcore.DebugLevel {

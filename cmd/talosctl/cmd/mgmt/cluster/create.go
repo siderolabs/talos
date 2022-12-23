@@ -183,7 +183,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 	workerMemory := int64(workersMemory) * 1024 * 1024
 
 	// Validate CIDR range and allocate IPs
-	fmt.Println("validating CIDR and reserving IPs")
+	fmt.Fprintln(os.Stderr, "validating CIDR and reserving IPs")
 
 	cidr4, err := netip.ParsePrefix(networkCIDR)
 	if err != nil {
@@ -714,7 +714,7 @@ func saveConfig(talosConfigObj *clientconfig.Config) (err error) {
 
 	renames := c.Merge(talosConfigObj)
 	for _, rename := range renames {
-		fmt.Printf("renamed talosconfig context %s\n", rename.String())
+		fmt.Fprintf(os.Stderr, "renamed talosconfig context %s\n", rename.String())
 	}
 
 	return c.Save(talosconfig)
@@ -726,7 +726,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 		return err
 	}
 
-	fmt.Printf("\nmerging kubeconfig into %q\n", kubeconfigPath)
+	fmt.Fprintf(os.Stderr, "\nmerging kubeconfig into %q\n", kubeconfigPath)
 
 	k8sconfig, err := clusterAccess.Kubeconfig(ctx)
 	if err != nil {

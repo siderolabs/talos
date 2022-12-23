@@ -186,7 +186,10 @@ func (suite *GenSuite) testGenConfigPatch(patch []byte) {
 		tt := tt
 
 		suite.Run(tt.flag, func() {
-			suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--" + tt.flag, string(patch)})
+			suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--" + tt.flag, string(patch)},
+				base.StdoutEmpty(),
+				base.StderrNotEmpty(),
+				base.StderrShouldMatch(regexp.MustCompile("generating PKI and tokens")))
 
 			for _, configName := range []string{"controlplane.yaml", "worker.yaml"} {
 				cfg, err := configloader.NewFromFile(configName)
@@ -270,7 +273,10 @@ func (suite *GenSuite) TestConfigWithSecrets() {
 	secretsYaml, err := os.ReadFile("secrets.yaml")
 	suite.Assert().NoError(err)
 
-	suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--with-secrets", "secrets.yaml"})
+	suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--with-secrets", "secrets.yaml"},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+	)
 
 	config, err := configloader.NewFromFile("controlplane.yaml")
 	suite.Assert().NoError(err)
@@ -290,7 +296,10 @@ func (suite *GenSuite) TestGenConfigWithDeprecatedOutputDirFlag() {
 		"gen", "config",
 		"foo", "https://192.168.0.1:6443",
 		"--output-dir", tempDir,
-	})
+	},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+	)
 
 	suite.Assert().FileExists(filepath.Join(tempDir, "controlplane.yaml"))
 	suite.Assert().FileExists(filepath.Join(tempDir, "worker.yaml"))
@@ -304,7 +313,7 @@ func (suite *GenSuite) TestGenConfigToStdoutControlPlane() {
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "controlplane",
 		"--output", "-",
-	}, base.StdoutMatchFunc(func(output string) error {
+	}, base.StderrNotEmpty(), base.StdoutMatchFunc(func(output string) error {
 		expected := "type: controlplane"
 		if !strings.Contains(output, expected) {
 			return fmt.Errorf("stdout does not contain %q: %q", expected, output)
@@ -321,7 +330,7 @@ func (suite *GenSuite) TestGenConfigToStdoutWorker() {
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "worker",
 		"--output", "-",
-	}, base.StdoutMatchFunc(func(output string) error {
+	}, base.StderrNotEmpty(), base.StdoutMatchFunc(func(output string) error {
 		expected := "type: worker"
 		if !strings.Contains(output, expected) {
 			return fmt.Errorf("stdout does not contain %q: %q", expected, output)
@@ -338,7 +347,7 @@ func (suite *GenSuite) TestGenConfigToStdoutTalosconfig() {
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "talosconfig",
 		"--output", "-",
-	}, base.StdoutMatchFunc(func(output string) error {
+	}, base.StderrNotEmpty(), base.StdoutMatchFunc(func(output string) error {
 		expected := "context: foo"
 		if !strings.Contains(output, expected) {
 			return fmt.Errorf("stdout does not contain %q: %q", expected, output)
@@ -376,7 +385,10 @@ func (suite *GenSuite) TestGenConfigMultipleTypesToDirectory() {
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "controlplane,worker",
 		"--output", tempDir,
-	})
+	},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+	)
 
 	suite.Assert().FileExists(filepath.Join(tempDir, "controlplane.yaml"))
 	suite.Assert().FileExists(filepath.Join(tempDir, "worker.yaml"))
@@ -393,7 +405,10 @@ func (suite *GenSuite) TestGenConfigSingleTypeToFile() {
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "worker",
 		"--output", tempFile,
-	})
+	},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+	)
 
 	suite.Assert().FileExists(tempFile)
 }
@@ -408,7 +423,10 @@ func (suite *GenSuite) TestGenConfigSingleTypeWithDeprecatedOutputDirFlagToDirec
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "worker",
 		"--output-dir", tempDir,
-	})
+	},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+	)
 
 	suite.Assert().FileExists(filepath.Join(tempDir, "worker.yaml"))
 }

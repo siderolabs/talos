@@ -53,7 +53,7 @@ func (suite *MachineConfigSuite) TestGen() {
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "controlplane",
 		"--output", "-",
-	}, base.StdoutMatchFunc(func(output string) error {
+	}, base.StderrNotEmpty(), base.StdoutMatchFunc(func(output string) error {
 		expected := "type: controlplane"
 		if !strings.Contains(output, expected) {
 			return fmt.Errorf("stdout does not contain %q: %q", expected, output)
@@ -96,7 +96,10 @@ func (suite *MachineConfigSuite) TestPatchPrintStdout() {
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "controlplane",
 		"--output", mc,
-	})
+	},
+		base.StderrNotEmpty(),
+		base.StdoutEmpty(),
+	)
 
 	suite.RunCLI([]string{
 		"machineconfig", "patch", mc, "--patch", string(patch1), "-p", "@" + patch2Path,
@@ -133,7 +136,10 @@ func (suite *MachineConfigSuite) TestPatchWriteToFile() {
 		"foo", "https://192.168.0.1:6443",
 		"--output-types", "controlplane",
 		"--output", mc,
-	})
+	},
+		base.StderrNotEmpty(),
+		base.StdoutEmpty(),
+	)
 
 	outputFile := filepath.Join(suite.T().TempDir(), "inner", "output.yaml")
 

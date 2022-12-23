@@ -49,7 +49,11 @@ machine:
 
 	suite.Require().NoError(os.WriteFile(configPath, []byte(data), 0o777))
 
-	suite.RunCLI([]string{"apply-config", "--nodes", node, "--config-patch", fmt.Sprintf("@%s", patchPath), "-f", configPath})
+	suite.RunCLI([]string{"apply-config", "--nodes", node, "--config-patch", fmt.Sprintf("@%s", patchPath), "-f", configPath},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile("Applied configuration without a reboot")),
+	)
 
 	suite.RunCLI([]string{"get", "--nodes", node, "links"},
 		base.StdoutShouldMatch(regexp.MustCompile("dummy-ap-patch")),

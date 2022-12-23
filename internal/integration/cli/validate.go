@@ -46,7 +46,10 @@ func (suite *ValidateSuite) TearDownTest() {
 
 // TestValidate generates config and validates it for all the modes.
 func (suite *ValidateSuite) TestValidate() {
-	suite.RunCLI([]string{"gen", "config", "foobar", "https://10.0.0.1"})
+	suite.RunCLI([]string{"gen", "config", "foobar", "https://10.0.0.1"},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+	)
 
 	for _, configFile := range []string{"controlplane.yaml", "worker.yaml"} {
 		configFile := configFile

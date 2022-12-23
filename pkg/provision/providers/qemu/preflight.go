@@ -111,7 +111,7 @@ func (check *preflightCheckContext) cniDirectories(ctx context.Context) error {
 				return fmt.Errorf("error checking CNI directory %q: %w", cniDir, err)
 			}
 
-			fmt.Printf("creating %q\n", cniDir)
+			fmt.Fprintf(os.Stderr, "creating %q\n", cniDir)
 
 			err = os.MkdirAll(cniDir, 0o777)
 			if err != nil {
@@ -173,7 +173,7 @@ func (check *preflightCheckContext) cniBundle(ctx context.Context) error {
 		Mode: getter.ClientModeDir,
 	}
 
-	fmt.Printf("downloading CNI bundle from %q to %q\n", client.Src, client.Dst)
+	fmt.Fprintf(os.Stderr, "downloading CNI bundle from %q to %q\n", client.Src, client.Dst)
 
 	return client.Get()
 }

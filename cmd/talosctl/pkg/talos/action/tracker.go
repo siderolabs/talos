@@ -210,14 +210,14 @@ func (a *Tracker) Run() error {
 	if len(failedNodes) > 0 {
 		sort.Strings(failedNodes)
 
-		fmt.Printf("console logs for nodes %q:\n", failedNodes)
+		fmt.Fprintf(os.Stderr, "console logs for nodes %q:\n", failedNodes)
 
 		for _, node := range failedNodes {
 			dmesgReader, _ := failedNodesToDmesgs.Get(node)
 
-			_, copyErr := io.Copy(os.Stdout, dmesgReader)
+			_, copyErr := io.Copy(os.Stderr, dmesgReader)
 			if copyErr != nil {
-				fmt.Printf("%q: failed to print debug logs: %v\n", node, copyErr)
+				fmt.Fprintf(os.Stderr, "%q: failed to print debug logs: %v\n", node, copyErr)
 			}
 		}
 	}
@@ -251,7 +251,7 @@ func (a *Tracker) runReporter(ctx context.Context) error {
 
 		case update = <-a.reportCh:
 			if !a.isTerminal {
-				fmt.Printf("%q: %v\n", update.node, update.update.Message)
+				fmt.Fprintf(os.Stderr, "%q: %v\n", update.node, update.update.Message)
 
 				continue
 			}

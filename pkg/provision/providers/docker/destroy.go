@@ -7,6 +7,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -27,7 +28,7 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
-	fmt.Println("destroying network", cluster.Info().Network.Name)
+	fmt.Fprintln(os.Stderr, "destroying network", cluster.Info().Network.Name)
 
 	return p.destroyNetwork(ctx, cluster.Info().Network.Name)
 }

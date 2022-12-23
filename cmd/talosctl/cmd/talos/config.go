@@ -280,7 +280,7 @@ var configMergeCmd = &cobra.Command{
 
 		renames := c.Merge(secondConfig)
 		for _, rename := range renames {
-			fmt.Printf("renamed talosconfig context %s\n", rename.String())
+			fmt.Fprintf(os.Stderr, "renamed talosconfig context %s\n", rename.String())
 		}
 
 		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
