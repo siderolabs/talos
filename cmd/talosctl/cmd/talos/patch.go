@@ -62,8 +62,6 @@ func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Conte
 		resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
 			Data:           patched,
 			Mode:           patchCmdFlags.Mode.Mode,
-			OnReboot:       patchCmdFlags.OnReboot,
-			Immediate:      patchCmdFlags.Immediate,
 			DryRun:         patchCmdFlags.dryRun,
 			TryModeTimeout: durationpb.New(patchCmdFlags.configTryTimeout),
 		})

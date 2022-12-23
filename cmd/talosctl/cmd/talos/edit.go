@@ -135,8 +135,6 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 			resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
 				Data:           edited,
 				Mode:           editCmdFlags.Mode.Mode,
-				OnReboot:       editCmdFlags.OnReboot,
-				Immediate:      editCmdFlags.Immediate,
 				DryRun:         editCmdFlags.dryRun,
 				TryModeTimeout: durationpb.New(editCmdFlags.configTryTimeout),
 			})

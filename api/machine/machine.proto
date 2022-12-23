@@ -94,16 +94,6 @@ message ApplyConfigurationRequest {
     TRY = 4;
   }
   bytes data = 1;
-  // replaced by mode
-  bool on_reboot = 2 [
-    (common.remove_deprecated_field) = "v1.4",
-    deprecated = true
-  ];
-  // replaced by mode
-  bool immediate = 3 [
-    (common.remove_deprecated_field) = "v1.4",
-    deprecated = true
-  ];
   Mode mode = 4;
   bool dry_run = 5;
   google.protobuf.Duration try_mode_timeout = 6;

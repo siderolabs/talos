@@ -23,11 +23,8 @@ const InteractiveMode machine.ApplyConfigurationRequest_Mode = -1
 
 // Mode apply, patch, edit config update mode.
 type Mode struct {
-	options     map[string]machine.ApplyConfigurationRequest_Mode
-	Mode        machine.ApplyConfigurationRequest_Mode
-	Immediate   bool
-	Interactive bool
-	OnReboot    bool
+	options map[string]machine.ApplyConfigurationRequest_Mode
+	Mode    machine.ApplyConfigurationRequest_Mode
 }
 
 func (m Mode) String() string {
@@ -57,16 +54,6 @@ func (m *Mode) Set(value string) error {
 	}
 
 	m.Mode = mode
-
-	//nolint:exhaustive
-	switch m.Mode {
-	case machine.ApplyConfigurationRequest_STAGED:
-		m.OnReboot = true
-	case machine.ApplyConfigurationRequest_NO_REBOOT:
-		m.Immediate = true
-	case InteractiveMode:
-		m.Interactive = true
-	}
 
 	return nil
 }
@@ -98,18 +85,7 @@ func AddModeFlags(mode *Mode, command *cobra.Command) {
 		modeTry:      machine.ApplyConfigurationRequest_TRY,
 	}
 
-	deprecatedFlag := func(dest *bool, flag, usage, deprecationWarning string) {
-		command.Flags().BoolVar(dest, flag, false, fmt.Sprintf("%s (deprecated, replaced with --mode)", usage))
-		command.Flags().MarkDeprecated(flag, deprecationWarning) //nolint:errcheck
-	}
-
-	// TODO: remove in v1.1
-	deprecatedFlag(&mode.OnReboot, "on-reboot", "apply the config on reboot", "Use --mode=staged instead")
-	deprecatedFlag(&mode.Immediate, "immediate", "apply the config immediately (without a reboot)", "Use --mode=no-reboot instead")
-
 	if command.Use == "apply-config" {
-		deprecatedFlag(&mode.Interactive, "interactive", "apply the config using text based interactive mode", "Use --mode=interactive instead")
-
 		modes[modeInteractive] = InteractiveMode
 	}
 

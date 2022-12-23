@@ -162,14 +162,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	modeDetails := "Applied configuration with a reboot"
 	modeErr := ""
 
-	// TODO: remove in v1.1
-	switch {
-	case in.Immediate: //nolint:staticcheck
-		in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
-	case in.OnReboot: //nolint:staticcheck
-		in.Mode = machine.ApplyConfigurationRequest_STAGED
-	}
-
 	if in.Mode != machine.ApplyConfigurationRequest_TRY {
 		s.Controller.Runtime().CancelConfigRollbackTimeout()
 	}

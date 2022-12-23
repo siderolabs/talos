@@ -88,7 +88,7 @@ var applyConfigCmd = &cobra.Command{
 					return e
 				}
 			}
-		} else if !applyConfigCmdFlags.Interactive {
+		} else if applyConfigCmdFlags.Mode.Mode != helpers.InteractiveMode {
 			return fmt.Errorf("no filename supplied for configuration")
 		}
 
@@ -101,7 +101,7 @@ var applyConfigCmd = &cobra.Command{
 		}
 
 		return withClient(func(ctx context.Context, c *client.Client) error {
-			if applyConfigCmdFlags.Interactive {
+			if applyConfigCmdFlags.Mode.Mode == helpers.InteractiveMode {
 				install := installer.NewInstaller()
 				node := GlobalArgs.Nodes[0]
 
@@ -140,8 +140,6 @@ var applyConfigCmd = &cobra.Command{
 			resp, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
 				Data:           cfgBytes,
 				Mode:           applyConfigCmdFlags.Mode.Mode,
-				OnReboot:       applyConfigCmdFlags.OnReboot,
-				Immediate:      applyConfigCmdFlags.Immediate,
 				DryRun:         applyConfigCmdFlags.dryRun,
 				TryModeTimeout: durationpb.New(applyConfigCmdFlags.configTryTimeout),
 			})
