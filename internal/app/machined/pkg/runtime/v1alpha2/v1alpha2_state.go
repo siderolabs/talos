@@ -45,7 +45,15 @@ func NewState() (*State, error) {
 
 	ctx := context.TODO()
 
-	s.resources = state.WrapCore(namespaced.NewState(inmem.Build))
+	s.resources = state.WrapCore(namespaced.NewState(
+		func(ns string) state.CoreState {
+			return inmem.NewStateWithOptions(
+				inmem.WithHistoryInitialCapacity(8),
+				inmem.WithHistoryMaxCapacity(1024),
+				inmem.WithHistoryGap(4),
+			)(ns)
+		},
+	))
 	s.namespaceRegistry = registry.NewNamespaceRegistry(s.resources)
 	s.resourceRegistry = registry.NewResourceRegistry(s.resources)
 

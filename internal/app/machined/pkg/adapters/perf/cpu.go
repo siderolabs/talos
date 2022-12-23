@@ -6,7 +6,6 @@ package perf
 
 import (
 	"github.com/prometheus/procfs"
-	"github.com/siderolabs/gen/slices"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/perf"
 )
@@ -41,8 +40,22 @@ func (a cpu) Update(stat *procfs.Stat) {
 		}
 	}
 
-	translateListOfCPUStat := func(in []procfs.CPUStat) []perf.CPUStat {
-		return slices.Map(in, translateCPUStat)
+	translateListOfCPUStat := func(in map[int64]procfs.CPUStat) []perf.CPUStat {
+		maxCore := int64(-1)
+
+		for core := range in {
+			if core > maxCore {
+				maxCore = core
+			}
+		}
+
+		slc := make([]perf.CPUStat, maxCore+1)
+
+		for core, stat := range in {
+			slc[core] = translateCPUStat(stat)
+		}
+
+		return slc
 	}
 
 	*a.CPU.TypedSpec() = perf.CPUSpec{

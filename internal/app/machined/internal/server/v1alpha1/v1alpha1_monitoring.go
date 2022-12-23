@@ -89,8 +89,22 @@ func (s *Server) SystemStat(ctx context.Context, in *emptypb.Empty) (*machine.Sy
 		}
 	}
 
-	translateListOfCPUStat := func(in []procfs.CPUStat) []*machine.CPUStat {
-		return slices.Map(in, translateCPUStat)
+	translateListOfCPUStat := func(in map[int64]procfs.CPUStat) []*machine.CPUStat {
+		maxCore := int64(-1)
+
+		for core := range in {
+			if core > maxCore {
+				maxCore = core
+			}
+		}
+
+		slc := make([]*machine.CPUStat, maxCore+1)
+
+		for core, stat := range in {
+			slc[core] = translateCPUStat(stat)
+		}
+
+		return slc
 	}
 
 	translateSoftIRQ := func(in procfs.SoftIRQStat) *machine.SoftIRQStat {

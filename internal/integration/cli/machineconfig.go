@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go.uber.org/multierr"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 )
@@ -104,17 +104,17 @@ func (suite *MachineConfigSuite) TestPatchPrintStdout() {
 	suite.RunCLI([]string{
 		"machineconfig", "patch", mc, "--patch", string(patch1), "-p", "@" + patch2Path,
 	}, base.StdoutMatchFunc(func(output string) error {
-		var matchErr error
+		var matchErr *multierror.Error
 
 		if !strings.Contains(output, "clusterName: replaced") {
-			matchErr = multierr.Append(matchErr, fmt.Errorf("clusterName not replaced"))
+			matchErr = multierror.Append(matchErr, fmt.Errorf("clusterName not replaced"))
 		}
 
 		if !strings.Contains(output, "endpoint: replaced") {
-			matchErr = multierr.Append(matchErr, fmt.Errorf("endpoint not replaced"))
+			matchErr = multierror.Append(matchErr, fmt.Errorf("endpoint not replaced"))
 		}
 
-		return matchErr
+		return matchErr.ErrorOrNil()
 	}))
 }
 

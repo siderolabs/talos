@@ -8,26 +8,26 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 
 require (
 	github.com/containerd/go-cni v1.1.7
-	github.com/cosi-project/runtime v0.3.0-alpha.0
+	github.com/cosi-project/runtime v0.3.0-alpha.2
 	github.com/dustin/go-humanize v1.0.0
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/jsimonetti/rtnetlink v1.3.0
-	github.com/mdlayher/ethtool v0.0.0-20220830195143-0e16326d06d1
+	github.com/mdlayher/ethtool v0.0.0-20221212131811-ba3b4bc2e02c
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/gen v0.4.2
 	github.com/siderolabs/go-api-signature v0.2.2
-	github.com/siderolabs/go-blockdevice v0.4.1
+	github.com/siderolabs/go-blockdevice v0.4.2
 	github.com/siderolabs/go-debug v0.2.2
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.0
 	github.com/stretchr/testify v1.8.1
-	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
+	google.golang.org/genproto v0.0.0-20221207170731-23e4bf6bdc37
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -47,8 +47,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/josharian/native v1.0.0 // indirect
-	github.com/mdlayher/genetlink v1.2.0 // indirect
-	github.com/mdlayher/netlink v1.7.0 // indirect
+	github.com/mdlayher/genetlink v1.3.1 // indirect
+	github.com/mdlayher/netlink v1.7.1 // indirect
 	github.com/mdlayher/socket v0.4.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
 	github.com/onsi/gomega v1.20.1 // indirect
@@ -60,10 +60,10 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/net v0.2.0 // indirect
+	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
