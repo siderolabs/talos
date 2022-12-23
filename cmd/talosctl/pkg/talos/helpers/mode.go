@@ -6,6 +6,7 @@ package helpers
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -126,7 +127,7 @@ func PrintApplyResults(resp *machine.ApplyConfigurationResponse) {
 		}
 
 		if m.ModeDetails != "" {
-			fmt.Println(m.ModeDetails)
+			fmt.Fprintln(os.Stderr, m.ModeDetails)
 		}
 	}
 }

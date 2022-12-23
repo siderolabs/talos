@@ -63,7 +63,7 @@ func (c *ConfigBundle) Write(outputDir string, commentsFlags encoder.CommentsFla
 			return err
 		}
 
-		fmt.Printf("created %s\n", fullFilePath)
+		fmt.Fprintf(os.Stderr, "created %s\n", fullFilePath)
 	}
 
 	return nil

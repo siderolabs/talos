@@ -334,7 +334,7 @@ func writeToDestination(data []byte, destination string, permissions os.FileMode
 
 	err := os.WriteFile(destination, data, permissions)
 
-	fmt.Printf("Created %s\n", destination)
+	fmt.Fprintf(os.Stderr, "Created %s\n", destination)
 
 	return err
 }

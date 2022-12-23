@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -71,12 +72,12 @@ func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Conte
 			bytes.TrimSpace(cmdutil.StripComments(patched)),
 			bytes.TrimSpace(cmdutil.StripComments(body)),
 		) {
-			fmt.Println("Apply was skipped: no changes detected.")
+			fmt.Fprintln(os.Stderr, "Apply was skipped: no changes detected.")
 
 			return nil
 		}
 
-		fmt.Printf("patched %s/%s at the node %s\n",
+		fmt.Fprintf(os.Stderr, "patched %s/%s at the node %s\n",
 			mc.Metadata().Type(),
 			mc.Metadata().ID(),
 			node,

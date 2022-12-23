@@ -39,7 +39,10 @@ func (suite *TalosconfigSuite) TestList() {
 func (suite *TalosconfigSuite) TestMerge() {
 	tempDir := suite.T().TempDir()
 
-	suite.RunCLI([]string{"gen", "config", "-o", tempDir, "foo", "https://192.168.0.1:6443"})
+	suite.RunCLI([]string{"gen", "config", "-o", tempDir, "foo", "https://192.168.0.1:6443"},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+	)
 
 	talosconfigPath := filepath.Join(tempDir, "talosconfig")
 
@@ -58,7 +61,10 @@ func (suite *TalosconfigSuite) TestMerge() {
 	suite.Require().NotNil(c.Contexts["foo"])
 
 	suite.RunCLI([]string{"config", "merge", "--talosconfig", path, talosconfigPath},
-		base.StdoutShouldMatch(regexp.MustCompile(`renamed`)))
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(`renamed`)),
+	)
 
 	c, err = clientconfig.Open(path)
 	suite.Require().NoError(err)

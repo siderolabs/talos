@@ -79,7 +79,7 @@ func (c *authInterceptorConfig) authenticate(ctx context.Context, cc *grpc.Clien
 
 	err = browser.OpenURL(loginURL)
 	if err != nil {
-		fmt.Printf("Please visit this page to authenticate: %s\n", loginURL)
+		fmt.Fprintf(os.Stderr, "Please visit this page to authenticate: %s\n", loginURL)
 	}
 
 	publicKeyID := pgpKey.Key.Fingerprint()
@@ -89,9 +89,9 @@ func (c *authInterceptorConfig) authenticate(ctx context.Context, cc *grpc.Clien
 		return nil, err
 	}
 
-	fmt.Printf("Public key %s is now registered for user %s\n", publicKeyID, c.identity)
+	fmt.Fprintf(os.Stderr, "Public key %s is now registered for user %s\n", publicKeyID, c.identity)
 
-	fmt.Printf("PGP key saved to %s\n", savePath)
+	fmt.Fprintf(os.Stderr, "PGP key saved to %s\n", savePath)
 
 	return pgpKey, nil
 }

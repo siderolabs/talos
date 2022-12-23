@@ -104,7 +104,7 @@ var supportCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Printf("Support bundle is written to %s\n", supportCmdFlags.output)
+		fmt.Fprintf(os.Stderr, "Support bundle is written to %s\n", supportCmdFlags.output)
 
 		if err = archive.Archive.Close(); err != nil {
 			return err
@@ -234,7 +234,7 @@ func printErrors(err error) error {
 	var errs *multierror.Error
 
 	if !errors.As(err, &errs) {
-		fmt.Printf("Processed with errors:\n%s\n", color.RedString(err.Error()))
+		fmt.Fprintf(os.Stderr, "Processed with errors:\n%s\n", color.RedString(err.Error()))
 
 		return nil
 	}
@@ -243,7 +243,7 @@ func printErrors(err error) error {
 		if !wroteHeader {
 			wroteHeader = true
 
-			fmt.Println("Processed with errors:")
+			fmt.Fprintln(os.Stderr, "Processed with errors:")
 			fmt.Fprintln(w, "\tSOURCE\tERROR")
 		}
 

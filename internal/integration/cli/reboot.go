@@ -44,25 +44,28 @@ func (suite *RebootSuite) TestReboot() {
 
 	suite.T().Logf("rebooting nodes %s via the CLI", nodes)
 
-	suite.RunCLI([]string{"reboot", "-n", nodes, "--debug"}, base.StdoutMatchFunc(func(stdout string) error {
-		if strings.Contains(stdout, "method is not supported") {
-			suite.T().Skip("reboot is not supported")
-		}
-
-		var err error
-
-		for _, node := range []string{controlPlaneNode, workerNode} {
-			if !strings.Contains(stdout, fmt.Sprintf("%q: events check condition met", node)) {
-				err = multierror.Append(err, fmt.Errorf("events check condition not met on %v", node))
+	suite.RunCLI([]string{"reboot", "-n", nodes, "--debug"},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrMatchFunc(func(stdout string) error {
+			if strings.Contains(stdout, "method is not supported") {
+				suite.T().Skip("reboot is not supported")
 			}
 
-			if !strings.Contains(stdout, fmt.Sprintf("%q: post check passed", node)) {
-				err = multierror.Append(err, fmt.Errorf("post check not passed on %v", node))
-			}
-		}
+			var err error
 
-		return err
-	}))
+			for _, node := range []string{controlPlaneNode, workerNode} {
+				if !strings.Contains(stdout, fmt.Sprintf("%q: events check condition met", node)) {
+					err = multierror.Append(err, fmt.Errorf("events check condition not met on %v", node))
+				}
+
+				if !strings.Contains(stdout, fmt.Sprintf("%q: post check passed", node)) {
+					err = multierror.Append(err, fmt.Errorf("post check not passed on %v", node))
+				}
+			}
+
+			return err
+		}))
 
 	suite.T().Logf("running the cluster health check")
 

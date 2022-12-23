@@ -121,13 +121,13 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 			}
 
 			if len(bytes.TrimSpace(bytes.TrimSpace(cmdutil.StripComments(edited)))) == 0 {
-				fmt.Println("Apply was skipped: empty file.")
+				fmt.Fprintln(os.Stderr, "Apply was skipped: empty file.")
 
 				break
 			}
 
 			if bytes.Equal(edited, body) {
-				fmt.Println("Apply was skipped: no changes detected.")
+				fmt.Fprintln(os.Stderr, "Apply was skipped: no changes detected.")
 
 				break
 			}
