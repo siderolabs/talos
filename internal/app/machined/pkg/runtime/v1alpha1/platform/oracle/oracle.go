@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/netip"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/state"
@@ -73,17 +74,29 @@ func (o *Oracle) ParseMetadata(interfaceAddresses []NetworkConfig, metadata *Met
 		}
 	}
 
+	dns, _ := netip.ParseAddr(oracleResolverServer) //nolint:errcheck
+
+	networkConfig.Resolvers = append(networkConfig.Resolvers, network.ResolverSpecSpec{
+		DNSServers:  []netip.Addr{dns},
+		ConfigLayer: network.ConfigPlatform,
+	})
+
+	networkConfig.TimeServers = append(networkConfig.TimeServers, network.TimeServerSpecSpec{
+		NTPServers:  []string{oracleTimeServer},
+		ConfigLayer: network.ConfigPlatform,
+	})
+
 	zone := metadata.AvailabilityDomain
 
 	if idx := strings.LastIndex(zone, ":"); idx != -1 {
-		zone = zone[:idx]
+		zone = zone[idx+1:]
 	}
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:     o.Name(),
 		Hostname:     metadata.Hostname,
-		Region:       strings.ToLower(metadata.Region),
-		Zone:         strings.ToLower(zone),
+		Region:       metadata.Region,
+		Zone:         zone,
 		InstanceType: metadata.Shape,
 		InstanceID:   metadata.ID,
 		ProviderID:   fmt.Sprintf("oci://%s", metadata.ID),

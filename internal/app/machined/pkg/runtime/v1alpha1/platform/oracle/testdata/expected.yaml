@@ -5,8 +5,14 @@ hostnames:
     - hostname: talos
       domainname: ""
       layer: platform
-resolvers: []
-timeServers: []
+resolvers:
+    - dnsServers:
+        - 169.254.169.254
+      layer: platform
+timeServers:
+    - timeServers:
+        - 169.254.169.254
+      layer: platform
 operators:
     - operator: dhcp6
       linkName: eth0
@@ -19,7 +25,7 @@ metadata:
     platform: oracle
     hostname: talos
     region: phx
-    zone: emir
+    zone: PHX-AD-1
     instanceType: VM.Standard.E3.Flex
     instanceId: ocid1.instance.oc1.phx.exampleuniqueID
     providerId: oci://ocid1.instance.oc1.phx.exampleuniqueID
