@@ -21,6 +21,9 @@ const (
 	OracleUserDataEndpoint = "http://169.254.169.254/opc/v2/instance/metadata/user_data"
 	// OracleNetworkEndpoint is the local network metadata endpoint inside of Oracle Cloud.
 	OracleNetworkEndpoint = "http://169.254.169.254/opc/v2/vnics/"
+
+	oracleResolverServer = "169.254.169.254"
+	oracleTimeServer     = "169.254.169.254"
 )
 
 // MetadataConfig represents a metadata Oracle instance.
