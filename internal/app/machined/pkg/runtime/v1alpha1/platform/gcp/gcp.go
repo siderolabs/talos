@@ -19,6 +19,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -32,7 +33,9 @@ func (g *GCP) Name() string {
 }
 
 // ParseMetadata converts GCP platform metadata into platform network config.
-func (g *GCP) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
+//
+//nolint:gocyclo
+func (g *GCP) ParseMetadata(metadata *MetadataConfig, interfaces []NetworkInterfaceConfig) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if metadata.Hostname != "" {
@@ -45,12 +48,6 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		}
 
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
-	}
-
-	publicIPs := []string{}
-
-	if metadata.PublicIPv4 != "" {
-		publicIPs = append(publicIPs, metadata.PublicIPv4)
 	}
 
 	dns, _ := netip.ParseAddr(gcpResolverServer) //nolint:errcheck
@@ -71,9 +68,75 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		region = region[:idx]
 	}
 
-	for _, ipStr := range publicIPs {
-		if ip, err := netip.ParseAddr(ipStr); err == nil {
-			networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+	for idx, iface := range interfaces {
+		ifname := fmt.Sprintf("eth%d", idx)
+
+		networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
+			Name:        ifname,
+			Up:          true,
+			MTU:         uint32(iface.MTU),
+			ConfigLayer: network.ConfigPlatform,
+		})
+
+		networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+			Operator: network.OperatorDHCP4,
+			LinkName: ifname,
+			DHCP4: network.DHCP4OperatorSpec{
+				RouteMetric: 1024,
+			},
+			RequireUp:   true,
+			ConfigLayer: network.ConfigPlatform,
+		})
+
+		for _, ipv6addr := range iface.IPv6 {
+			if ipv6addr == "" || iface.GatewayIPv6 == "" {
+				continue
+			}
+
+			ipPrefix, err := netip.ParsePrefix(ipv6addr)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse ip address: %w", err)
+			}
+
+			networkConfig.Addresses = append(networkConfig.Addresses,
+				network.AddressSpecSpec{
+					ConfigLayer: network.ConfigPlatform,
+					LinkName:    ifname,
+					Address:     ipPrefix,
+					Scope:       nethelpers.ScopeGlobal,
+					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+					Family:      nethelpers.FamilyInet6,
+				},
+			)
+
+			gw, err := netip.ParseAddr(iface.GatewayIPv6)
+			if err != nil {
+				return nil, err
+			}
+
+			route := network.RouteSpecSpec{
+				ConfigLayer: network.ConfigPlatform,
+				Gateway:     gw,
+				OutLinkName: ifname,
+				Table:       nethelpers.TableMain,
+				Protocol:    nethelpers.ProtocolStatic,
+				Type:        nethelpers.TypeUnicast,
+				Family:      nethelpers.FamilyInet6,
+			}
+
+			route.Normalize()
+
+			networkConfig.Routes = append(networkConfig.Routes, route)
+		}
+	}
+
+	for _, iface := range interfaces {
+		for _, ipStr := range iface.AccessConfigs {
+			if ipStr.Type == "ONE_TO_ONE_NAT" {
+				if ip, err := netip.ParseAddr(ipStr.ExternalIP); err == nil {
+					networkConfig.ExternalIPs = append(networkConfig.ExternalIPs, ip)
+				}
+			}
 		}
 	}
 
@@ -132,7 +195,12 @@ func (g *GCP) NetworkConfiguration(ctx context.Context, st state.State, ch chan<
 		return fmt.Errorf("failed to receive GCP metadata: %w", err)
 	}
 
-	networkConfig, err := g.ParseMetadata(metadata)
+	network, err := g.getNetworkMetadata(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to receive GCP network metadata: %w", err)
+	}
+
+	networkConfig, err := g.ParseMetadata(metadata, network)
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,32 @@
+[
+    {
+        "accessConfigs": [
+            {
+                "externalIp": "35.1.2.3",
+                "type": "ONE_TO_ONE_NAT"
+            }
+        ],
+        "dhcpv6Refresh": "2219726792944608985",
+        "dnsServers": [
+            "169.254.169.254"
+        ],
+        "forwardedIps": [
+            "172.16.0.230"
+        ],
+        "gateway": "172.16.0.1",
+        "gatewayIpv6": "fe80::4001:acff:fe10:1",
+        "ip": "172.16.0.4",
+        "ipAliases": [],
+        "ipv6": [
+            "fd20:172:1610:7003:0:1::/96"
+        ],
+        "ipv6s": [
+            "fd20:172:1610:7003:0:1:0:0"
+        ],
+        "mac": "42:01:ac:10:00:04",
+        "mtu": 1500,
+        "network": "projects/123/networks/main",
+        "subnetmask": "255.255.255.0",
+        "targetInstanceIps": []
+    }
+]

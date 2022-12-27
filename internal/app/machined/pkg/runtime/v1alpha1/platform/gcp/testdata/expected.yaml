@@ -1,6 +1,30 @@
-addresses: []
-links: []
-routes: []
+addresses:
+    - address: fd20:172:1610:7003:0:1::/96
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 1500
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::4001:acff:fe10:1
+      outLinkName: eth0
+      table: main
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
 hostnames:
     - hostname: talos
       domainname: ""
@@ -13,8 +37,15 @@ timeServers:
     - timeServers:
         - metadata.google.internal
       layer: platform
-operators: []
-externalIPs: []
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+externalIPs:
+    - 35.1.2.3
 metadata:
     platform: gcp
     hostname: talos

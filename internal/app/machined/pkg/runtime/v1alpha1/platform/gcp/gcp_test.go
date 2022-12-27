@@ -19,17 +19,24 @@ import (
 //go:embed testdata/metadata.json
 var rawMetadata []byte
 
+//go:embed testdata/interfaces.json
+var rawInterfaces []byte
+
 //go:embed testdata/expected.yaml
 var expectedNetworkConfig string
 
 func TestParseMetadata(t *testing.T) {
 	p := &gcp.GCP{}
 
-	var metadata gcp.MetadataConfig
+	var (
+		metadata   gcp.MetadataConfig
+		interfaces []gcp.NetworkInterfaceConfig
+	)
 
 	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
+	require.NoError(t, json.Unmarshal(rawInterfaces, &interfaces))
 
-	networkConfig, err := p.ParseMetadata(&metadata)
+	networkConfig, err := p.ParseMetadata(&metadata, interfaces)
 	require.NoError(t, err)
 
 	marshaled, err := yaml.Marshal(networkConfig)

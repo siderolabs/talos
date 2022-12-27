@@ -6,6 +6,7 @@ package gcp
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"cloud.google.com/go/compute/metadata"
@@ -24,8 +25,20 @@ type MetadataConfig struct {
 	Zone         string `json:"zone,omitempty"`
 	InstanceType string `json:"machine-type"`
 	InstanceID   string `json:"id"`
-	PublicIPv4   string `json:"external-ip"`
 	Preempted    string `json:"preempted"`
+}
+
+// NetworkInterfaceConfig holds network meta info.
+type NetworkInterfaceConfig struct {
+	AccessConfigs []struct {
+		ExternalIP string `json:"externalIp,omitempty"`
+		Type       string `json:"type,omitempty"`
+	} `json:"accessConfigs,omitempty"`
+	GatewayIPv4 string   `json:"gateway,omitempty"`
+	GatewayIPv6 string   `json:"gatewayIpv6,omitempty"`
+	IPv4        string   `json:"ip,omitempty"`
+	IPv6        []string `json:"ipv6,omitempty"`
+	MTU         int      `json:"mtu,omitempty"`
 }
 
 func (g *GCP) getMetadata(context.Context) (*MetadataConfig, error) {
@@ -61,16 +74,25 @@ func (g *GCP) getMetadata(context.Context) (*MetadataConfig, error) {
 		return nil, err
 	}
 
-	if meta.PublicIPv4, err = metadata.ExternalIP(); err != nil {
-		if _, ok := err.(metadata.NotDefinedError); !ok {
-			return nil, err
-		}
-	}
-
 	meta.Preempted, err = metadata.Get("instance/scheduling/preemptible")
 	if err != nil {
 		return nil, err
 	}
 
 	return &meta, nil
+}
+
+func (g *GCP) getNetworkMetadata(context.Context) ([]NetworkInterfaceConfig, error) {
+	metadataNetworkConfigDl, err := metadata.Get("instance/network-interfaces/?recursive=true&alt=json")
+	if err != nil {
+		return nil, err
+	}
+
+	var unmarshalledNetworkConfig []NetworkInterfaceConfig
+
+	if err = json.Unmarshal([]byte(metadataNetworkConfigDl), &unmarshalledNetworkConfig); err != nil {
+		return nil, err
+	}
+
+	return unmarshalledNetworkConfig, nil
 }
