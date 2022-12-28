@@ -26,6 +26,9 @@ const ControlPlaneAPIServerEndpointsID = resource.ID("kube-apiserver")
 // ControlPlaneDiscoveredEndpointsID is resource ID for cluster discovery based Endpoints.
 const ControlPlaneDiscoveredEndpointsID = resource.ID("discovery")
 
+// ControlPlaneKubernetesEndpointsID is resource ID for control plane endpoint-based Endpoints.
+const ControlPlaneKubernetesEndpointsID = resource.ID("controlplane")
+
 // Endpoint resource holds definition of rendered secrets.
 type Endpoint = typed.Resource[EndpointSpec, EndpointRD]
 

@@ -139,6 +139,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.NodenameController{},
 		&k8s.RenderConfigsStaticPodController{},
 		&k8s.RenderSecretsStaticPodController{},
+		&k8s.StaticEndpointController{},
 		&k8s.StaticPodConfigController{},
 		&k8s.StaticPodServerController{},
 		&kubeaccess.ConfigController{},

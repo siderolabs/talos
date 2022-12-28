@@ -271,6 +271,8 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 				return err
 			}
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 
@@ -356,7 +358,32 @@ func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runt
 
 	var ca []byte
 
-	ca, serverCert.Crt, err = remoteGen.IdentityContext(ctx, serverCSR)
+	// run the CSR generation in a goroutine, so we can abort the request if the inputs change
+	errCh := make(chan error)
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	go func() {
+		ca, serverCert.Crt, err = remoteGen.IdentityContext(ctx, serverCSR)
+		errCh <- err
+	}()
+
+	select {
+	case <-r.EventCh():
+		// there's an update to the inputs, terminate the attempt, and let the controller handle the retry
+		cancel()
+
+		// re-queue the reconcile event, so that controller retries with new inputs
+		r.QueueReconcile()
+
+		// wait for the goroutine to finish, ignoring the error (should be context.Canceled)
+		<-errCh
+
+		return nil
+	case err = <-errCh:
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to sign API server CSR: %w", err)
 	}
