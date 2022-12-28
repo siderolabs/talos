@@ -11,6 +11,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos13"
+	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos14"
 )
 
 // TalosVersion embeds Talos version.
@@ -38,24 +39,35 @@ func (v *TalosVersion) String() string {
 
 // UpgradeableFrom checks if the current version of Talos can be used as an upgrade for the given host version.
 func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
+	var (
+		minHostUpgradeVersion, maxHostDowngradeVersion *version.Version
+		deniedHostUpgradeVersions                      []*version.Version
+	)
+
 	switch v.majorMinor {
 	case talos13.MajorMinor: // upgrades to 1.3.x
-		if host.version.Core().LessThan(talos13.MinimumHostUpgradeVersion) {
-			return fmt.Errorf("host version %s is too old to upgrade to Talos %s", host.version.String(), v.version.String())
-		}
-
-		if host.version.Core().GreaterThanOrEqual(talos13.MaximumHostDowngradeVersion) {
-			return fmt.Errorf("host version %s is too new to downgrade to Talos %s", host.version.String(), v.version.String())
-		}
-
-		for _, blacklisted := range talos13.DeniedHostUpgradeVersions {
-			if host.version.Equal(blacklisted) {
-				return fmt.Errorf("host version %s is blacklisted for upgrade to Talos %s", host.version.String(), v.version.String())
-			}
-		}
-
-		return nil
+		minHostUpgradeVersion, maxHostDowngradeVersion = talos13.MinimumHostUpgradeVersion, talos13.MaximumHostDowngradeVersion
+		deniedHostUpgradeVersions = talos13.DeniedHostUpgradeVersions
+	case talos14.MajorMinor: // upgrades to 1.4.x
+		minHostUpgradeVersion, maxHostDowngradeVersion = talos14.MinimumHostUpgradeVersion, talos14.MaximumHostDowngradeVersion
+		deniedHostUpgradeVersions = talos14.DeniedHostUpgradeVersions
 	default:
 		return fmt.Errorf("upgrades to version %s are not supported", v.version.String())
 	}
+
+	if host.version.Core().LessThan(minHostUpgradeVersion) {
+		return fmt.Errorf("host version %s is too old to upgrade to Talos %s", host.version.String(), v.version.String())
+	}
+
+	if host.version.Core().GreaterThanOrEqual(maxHostDowngradeVersion) {
+		return fmt.Errorf("host version %s is too new to downgrade to Talos %s", host.version.String(), v.version.String())
+	}
+
+	for _, denied := range deniedHostUpgradeVersions {
+		if host.version.Equal(denied) {
+			return fmt.Errorf("host version %s is denied for upgrade to Talos %s", host.version.String(), v.version.String())
+		}
+	}
+
+	return nil
 }

@@ -81,12 +81,58 @@ func TestTalosUpgradeCompatibility13(t *testing.T) {
 	}
 }
 
+func TestTalosUpgradeCompatibility14(t *testing.T) {
+	for _, tt := range []talosVersionTest{
+		{
+			host:   "1.3.0",
+			target: "1.4.0",
+		},
+		{
+			host:   "1.0.0-alpha.0",
+			target: "1.4.0",
+		},
+		{
+			host:   "1.2.0-alpha.0",
+			target: "1.4.0-alpha.0",
+		},
+		{
+			host:   "1.4.0",
+			target: "1.4.1",
+		},
+		{
+			host:   "1.4.0-beta.0",
+			target: "1.4.0",
+		},
+		{
+			host:   "1.5.5",
+			target: "1.4.3",
+		},
+		{
+			host:          "0.14.3",
+			target:        "1.4.0",
+			expectedError: `host version 0.14.3 is too old to upgrade to Talos 1.4.0`,
+		},
+		{
+			host:          "1.6.0-alpha.0",
+			target:        "1.4.0",
+			expectedError: `host version 1.6.0-alpha.0 is too new to downgrade to Talos 1.4.0`,
+		},
+	} {
+		runTalosVersionTest(t, tt)
+	}
+}
+
 func TestTalosUpgradeCompatibilityUnsupported(t *testing.T) {
 	for _, tt := range []talosVersionTest{
 		{
 			host:          "1.3.0",
-			target:        "1.4.0-alpha.0",
-			expectedError: `upgrades to version 1.4.0-alpha.0 are not supported`,
+			target:        "1.5.0-alpha.0",
+			expectedError: `upgrades to version 1.5.0-alpha.0 are not supported`,
+		},
+		{
+			host:          "1.4.0",
+			target:        "1.6.0-alpha.0",
+			expectedError: `upgrades to version 1.6.0-alpha.0 are not supported`,
 		},
 	} {
 		runTalosVersionTest(t, tt)
