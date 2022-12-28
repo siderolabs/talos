@@ -1,3 +1,55 @@
+## [Talos 1.3.1](https://github.com/siderolabs/talos/releases/tag/v1.3.1) (2022-12-28)
+
+Welcome to the v1.3.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.85
+* containerd: v1.6.14
+
+
+### Contributors
+
+* Andrey Smirnov
+* Utku Ozdemir
+* Serge Logvinov
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`0d11741b9`](https://github.com/siderolabs/talos/commit/0d11741b90c558d2a97fcd3584c42ca0ed06ce26) fix: oralce cloud zone
+* [`8a9ff259e`](https://github.com/siderolabs/talos/commit/8a9ff259e0b3055430babb029cdadb83848da438) fix: send diagnostic output to stderr consistently
+* [`8700457e5`](https://github.com/siderolabs/talos/commit/8700457e5ed18dfc8bc7061e09388b9cd546402e) fix: default the manifest namespace if not set
+* [`10d54686c`](https://github.com/siderolabs/talos/commit/10d54686c25ef9517825f63d25f6b6c626ddc3d0) fix: improve talosctl completion
+* [`ab52ab135`](https://github.com/siderolabs/talos/commit/ab52ab13574955e794664049143f4b6ba7e5db19) fix: use proper key usage for apid client certificate
+* [`e20e66a19`](https://github.com/siderolabs/talos/commit/e20e66a190a49973d94f8d8f0678bb9fe9cb9a4e) fix: redact service account key in config in RedactSecrets method
+* [`42b04e38b`](https://github.com/siderolabs/talos/commit/42b04e38bf634b99216c7aa840eb53817a3a2e8a) feat: validate Talos API access roles in machine config
+* [`0dbaf01e3`](https://github.com/siderolabs/talos/commit/0dbaf01e3df13e71dec19604850072f5801a77da) feat: linux 5.15.85, containerd 1.6.14
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`9931288`](https://github.com/siderolabs/pkgs/commit/99312883ef1fb574c97938e4024fa938c795de4f) feat: linux 5.15.85, containerd 1.6.14
+* [`5a39853`](https://github.com/siderolabs/pkgs/commit/5a39853823255f3715857fb4907bca13573e76d0) fix: patch ipmitool IANA URL
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**  v1.6.12 -> v1.6.14
+* **github.com/siderolabs/pkgs**        v1.3.0-5-g6509d23 -> v1.3.0-7-g9931288
+
+Previous release can be found at [v1.3.0](https://github.com/siderolabs/talos/releases/tag/v1.3.0)
+
 ## [Talos 1.3.0](https://github.com/siderolabs/talos/releases/tag/v1.3.0) (2022-12-15)
 
 Welcome to the v1.3.0 release of Talos!
