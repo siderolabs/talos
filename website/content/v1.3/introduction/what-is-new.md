@@ -26,7 +26,7 @@ Talos now supports setting custom audit policy for `kube-apiserver` in the machi
 ```yaml
 cluster:
   apiServer:
-    auditPolicy: |
+    auditPolicy:
       apiVersion: audit.k8s.io/v1
       kind: Policy
       rules:
