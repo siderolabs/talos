@@ -63,6 +63,25 @@ type MachineServiceClient interface {
 	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdSnapshot(ctx context.Context, in *EtcdSnapshotRequest, opts ...grpc.CallOption) (MachineService_EtcdSnapshotClient, error)
+	// EtcdAlarmList lists etcd alarms for the current node.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdAlarmList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdAlarmListResponse, error)
+	// EtcdAlarmDisarm disarms etcd alarms for the current node.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdAlarmDisarm(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdAlarmDisarmResponse, error)
+	// EtcdDefragment defragments etcd data directory for the current node.
+	//
+	// Defragmentation is a resource-heavy operation, so it should only run on a specific
+	// node.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdDefragment(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdDefragmentResponse, error)
+	// EtcdStatus returns etcd status for the current member.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdStatusResponse, error)
 	GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error)
 	Hostname(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HostnameResponse, error)
 	Kubeconfig(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (MachineService_KubeconfigClient, error)
@@ -353,6 +372,42 @@ func (x *machineServiceEtcdSnapshotClient) Recv() (*common.Data, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+func (c *machineServiceClient) EtcdAlarmList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdAlarmListResponse, error) {
+	out := new(EtcdAlarmListResponse)
+	err := c.cc.Invoke(ctx, "/machine.MachineService/EtcdAlarmList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *machineServiceClient) EtcdAlarmDisarm(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdAlarmDisarmResponse, error) {
+	out := new(EtcdAlarmDisarmResponse)
+	err := c.cc.Invoke(ctx, "/machine.MachineService/EtcdAlarmDisarm", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *machineServiceClient) EtcdDefragment(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdDefragmentResponse, error) {
+	out := new(EtcdDefragmentResponse)
+	err := c.cc.Invoke(ctx, "/machine.MachineService/EtcdDefragment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *machineServiceClient) EtcdStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdStatusResponse, error) {
+	out := new(EtcdStatusResponse)
+	err := c.cc.Invoke(ctx, "/machine.MachineService/EtcdStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *machineServiceClient) GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error) {
@@ -777,6 +832,25 @@ type MachineServiceServer interface {
 	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdSnapshot(*EtcdSnapshotRequest, MachineService_EtcdSnapshotServer) error
+	// EtcdAlarmList lists etcd alarms for the current node.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdAlarmList(context.Context, *emptypb.Empty) (*EtcdAlarmListResponse, error)
+	// EtcdAlarmDisarm disarms etcd alarms for the current node.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdAlarmDisarm(context.Context, *emptypb.Empty) (*EtcdAlarmDisarmResponse, error)
+	// EtcdDefragment defragments etcd data directory for the current node.
+	//
+	// Defragmentation is a resource-heavy operation, so it should only run on a specific
+	// node.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdDefragment(context.Context, *emptypb.Empty) (*EtcdDefragmentResponse, error)
+	// EtcdStatus returns etcd status for the current member.
+	//
+	// This method is available only on control plane nodes (which run etcd).
+	EtcdStatus(context.Context, *emptypb.Empty) (*EtcdStatusResponse, error)
 	GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error)
 	Hostname(context.Context, *emptypb.Empty) (*HostnameResponse, error)
 	Kubeconfig(*emptypb.Empty, MachineService_KubeconfigServer) error
@@ -857,6 +931,18 @@ func (UnimplementedMachineServiceServer) EtcdRecover(MachineService_EtcdRecoverS
 }
 func (UnimplementedMachineServiceServer) EtcdSnapshot(*EtcdSnapshotRequest, MachineService_EtcdSnapshotServer) error {
 	return status.Errorf(codes.Unimplemented, "method EtcdSnapshot not implemented")
+}
+func (UnimplementedMachineServiceServer) EtcdAlarmList(context.Context, *emptypb.Empty) (*EtcdAlarmListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EtcdAlarmList not implemented")
+}
+func (UnimplementedMachineServiceServer) EtcdAlarmDisarm(context.Context, *emptypb.Empty) (*EtcdAlarmDisarmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EtcdAlarmDisarm not implemented")
+}
+func (UnimplementedMachineServiceServer) EtcdDefragment(context.Context, *emptypb.Empty) (*EtcdDefragmentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EtcdDefragment not implemented")
+}
+func (UnimplementedMachineServiceServer) EtcdStatus(context.Context, *emptypb.Empty) (*EtcdStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EtcdStatus not implemented")
 }
 func (UnimplementedMachineServiceServer) GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateConfiguration not implemented")
@@ -1240,6 +1326,78 @@ type machineServiceEtcdSnapshotServer struct {
 
 func (x *machineServiceEtcdSnapshotServer) Send(m *common.Data) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func _MachineService_EtcdAlarmList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).EtcdAlarmList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/machine.MachineService/EtcdAlarmList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).EtcdAlarmList(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MachineService_EtcdAlarmDisarm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).EtcdAlarmDisarm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/machine.MachineService/EtcdAlarmDisarm",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).EtcdAlarmDisarm(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MachineService_EtcdDefragment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).EtcdDefragment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/machine.MachineService/EtcdDefragment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).EtcdDefragment(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MachineService_EtcdStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).EtcdStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/machine.MachineService/EtcdStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).EtcdStatus(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _MachineService_GenerateConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1792,6 +1950,22 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EtcdForfeitLeadership",
 			Handler:    _MachineService_EtcdForfeitLeadership_Handler,
+		},
+		{
+			MethodName: "EtcdAlarmList",
+			Handler:    _MachineService_EtcdAlarmList_Handler,
+		},
+		{
+			MethodName: "EtcdAlarmDisarm",
+			Handler:    _MachineService_EtcdAlarmDisarm_Handler,
+		},
+		{
+			MethodName: "EtcdDefragment",
+			Handler:    _MachineService_EtcdDefragment_Handler,
+		},
+		{
+			MethodName: "EtcdStatus",
+			Handler:    _MachineService_EtcdStatus_Handler,
 		},
 		{
 			MethodName: "GenerateConfiguration",

@@ -235,6 +235,12 @@ description: Talos gRPC API reference.
     - [DiskUsageInfo](#machine.DiskUsageInfo)
     - [DiskUsageRequest](#machine.DiskUsageRequest)
     - [DmesgRequest](#machine.DmesgRequest)
+    - [EtcdAlarm](#machine.EtcdAlarm)
+    - [EtcdAlarmDisarm](#machine.EtcdAlarmDisarm)
+    - [EtcdAlarmDisarmResponse](#machine.EtcdAlarmDisarmResponse)
+    - [EtcdAlarmListResponse](#machine.EtcdAlarmListResponse)
+    - [EtcdDefragment](#machine.EtcdDefragment)
+    - [EtcdDefragmentResponse](#machine.EtcdDefragmentResponse)
     - [EtcdForfeitLeadership](#machine.EtcdForfeitLeadership)
     - [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest)
     - [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse)
@@ -242,8 +248,10 @@ description: Talos gRPC API reference.
     - [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest)
     - [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse)
     - [EtcdMember](#machine.EtcdMember)
+    - [EtcdMemberAlarm](#machine.EtcdMemberAlarm)
     - [EtcdMemberListRequest](#machine.EtcdMemberListRequest)
     - [EtcdMemberListResponse](#machine.EtcdMemberListResponse)
+    - [EtcdMemberStatus](#machine.EtcdMemberStatus)
     - [EtcdMembers](#machine.EtcdMembers)
     - [EtcdRecover](#machine.EtcdRecover)
     - [EtcdRecoverResponse](#machine.EtcdRecoverResponse)
@@ -254,6 +262,8 @@ description: Talos gRPC API reference.
     - [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest)
     - [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse)
     - [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest)
+    - [EtcdStatus](#machine.EtcdStatus)
+    - [EtcdStatusResponse](#machine.EtcdStatusResponse)
     - [Event](#machine.Event)
     - [EventsRequest](#machine.EventsRequest)
     - [FeaturesInfo](#machine.FeaturesInfo)
@@ -344,6 +354,7 @@ description: Talos gRPC API reference.
     - [VersionResponse](#machine.VersionResponse)
   
     - [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode)
+    - [EtcdMemberAlarm.AlarmType](#machine.EtcdMemberAlarm.AlarmType)
     - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
     - [MachineStatusEvent.MachineStage](#machine.MachineStatusEvent.MachineStage)
@@ -4109,6 +4120,98 @@ dmesg
 
 
 
+<a name="machine.EtcdAlarm"></a>
+
+### EtcdAlarm
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| member_alarms | [EtcdMemberAlarm](#machine.EtcdMemberAlarm) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdAlarmDisarm"></a>
+
+### EtcdAlarmDisarm
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| member_alarms | [EtcdMemberAlarm](#machine.EtcdMemberAlarm) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdAlarmDisarmResponse"></a>
+
+### EtcdAlarmDisarmResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdAlarmDisarm](#machine.EtcdAlarmDisarm) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdAlarmListResponse"></a>
+
+### EtcdAlarmListResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdAlarm](#machine.EtcdAlarm) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdDefragment"></a>
+
+### EtcdDefragment
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdDefragmentResponse"></a>
+
+### EtcdDefragmentResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdDefragment](#machine.EtcdDefragment) | repeated |  |
+
+
+
+
+
+
 <a name="machine.EtcdForfeitLeadership"></a>
 
 ### EtcdForfeitLeadership
@@ -4209,6 +4312,22 @@ EtcdMember describes a single etcd member.
 
 
 
+<a name="machine.EtcdMemberAlarm"></a>
+
+### EtcdMemberAlarm
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| member_id | [uint64](#uint64) |  |  |
+| alarm | [EtcdMemberAlarm.AlarmType](#machine.EtcdMemberAlarm.AlarmType) |  |  |
+
+
+
+
+
+
 <a name="machine.EtcdMemberListRequest"></a>
 
 ### EtcdMemberListRequest
@@ -4233,6 +4352,30 @@ EtcdMember describes a single etcd member.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [EtcdMembers](#machine.EtcdMembers) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EtcdMemberStatus"></a>
+
+### EtcdMemberStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| member_id | [uint64](#uint64) |  |  |
+| protocol_version | [string](#string) |  |  |
+| db_size | [int64](#int64) |  |  |
+| db_size_in_use | [int64](#int64) |  |  |
+| leader | [uint64](#uint64) |  |  |
+| raft_index | [uint64](#uint64) |  |  |
+| raft_term | [uint64](#uint64) |  |  |
+| raft_applied_index | [uint64](#uint64) |  |  |
+| errors | [string](#string) | repeated |  |
+| is_learner | [bool](#bool) |  |  |
 
 
 
@@ -4380,6 +4523,37 @@ EtcdMembers contains the list of members registered on the host.
 
 ### EtcdSnapshotRequest
 
+
+
+
+
+
+
+<a name="machine.EtcdStatus"></a>
+
+### EtcdStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| member_status | [EtcdMemberStatus](#machine.EtcdMemberStatus) |  |  |
+
+
+
+
+
+
+<a name="machine.EtcdStatusResponse"></a>
+
+### EtcdStatusResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EtcdStatus](#machine.EtcdStatus) | repeated |  |
 
 
 
@@ -5926,6 +6100,19 @@ rpc upgrade
 
 
 
+<a name="machine.EtcdMemberAlarm.AlarmType"></a>
+
+### EtcdMemberAlarm.AlarmType
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NONE | 0 |  |
+| NOSPACE | 1 |  |
+| CORRUPT | 2 |  |
+
+
+
 <a name="machine.ListRequest.Type"></a>
 
 ### ListRequest.Type
@@ -6075,6 +6262,20 @@ This API should be used to remove members which don't have an associated Talos n
 
 Snapshot can be later used to recover the cluster via Bootstrap method. |
 | EtcdSnapshot | [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest) | [.common.Data](#common.Data) stream | EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance and streams it back to the client.
+
+This method is available only on control plane nodes (which run etcd). |
+| EtcdAlarmList | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdAlarmListResponse](#machine.EtcdAlarmListResponse) | EtcdAlarmList lists etcd alarms for the current node.
+
+This method is available only on control plane nodes (which run etcd). |
+| EtcdAlarmDisarm | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdAlarmDisarmResponse](#machine.EtcdAlarmDisarmResponse) | EtcdAlarmDisarm disarms etcd alarms for the current node.
+
+This method is available only on control plane nodes (which run etcd). |
+| EtcdDefragment | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdDefragmentResponse](#machine.EtcdDefragmentResponse) | EtcdDefragment defragments etcd data directory for the current node.
+
+Defragmentation is a resource-heavy operation, so it should only run on a specific node.
+
+This method is available only on control plane nodes (which run etcd). |
+| EtcdStatus | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdStatusResponse](#machine.EtcdStatusResponse) | EtcdStatus returns etcd status for the current member.
 
 This method is available only on control plane nodes (which run etcd). |
 | GenerateConfiguration | [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest) | [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse) |  |

@@ -14,6 +14,8 @@ import (
 	"sync"
 	"text/tabwriter"
 
+	"github.com/dustin/go-humanize"
+	"github.com/siderolabs/gen/slices"
 	"github.com/spf13/cobra"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 	"google.golang.org/grpc/codes"
@@ -21,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
@@ -33,12 +36,127 @@ var etcdCmd = &cobra.Command{
 	Long:  ``,
 }
 
+// etcdAlarmCmd represents the etcd alarm command.
+var etcdAlarmCmd = &cobra.Command{
+	Use:   "alarm",
+	Short: "Manage etcd alarms",
+	Long:  ``,
+}
+
+type alarmMessage interface {
+	GetMetadata() *common.Metadata
+	GetMemberAlarms() []*machine.EtcdMemberAlarm
+}
+
+func displayAlarms(messages []alarmMessage) error {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	node := ""
+	pattern := "%s\t%s\n"
+	header := "MEMBER\tALARM"
+
+	for i, message := range messages {
+		if message.GetMetadata() != nil && message.GetMetadata().GetHostname() != "" {
+			node = message.GetMetadata().GetHostname()
+		}
+
+		for j, alarm := range message.GetMemberAlarms() {
+			if i == 0 && j == 0 {
+				if node != "" {
+					header = "NODE\t" + header
+					pattern = "%s\t" + pattern
+				}
+
+				fmt.Fprintln(w, header)
+			}
+
+			args := []interface{}{
+				etcdresource.FormatMemberID(alarm.GetMemberId()),
+				alarm.GetAlarm().String(),
+			}
+			if node != "" {
+				args = append([]interface{}{node}, args...)
+			}
+
+			fmt.Fprintf(w, pattern, args...)
+		}
+	}
+
+	return w.Flush()
+}
+
+// etcdAlarmListCmd represents the etcd alarm list command.
+var etcdAlarmListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List the etcd alarms for the node.",
+	Long:  ``,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			response, err := c.EtcdAlarmList(ctx)
+			if err != nil {
+				if response == nil {
+					return fmt.Errorf("error getting alarms: %w", err)
+				}
+				cli.Warning("%s", err)
+			}
+
+			return displayAlarms(slices.Map(response.Messages, func(v *machine.EtcdAlarm) alarmMessage {
+				return v
+			}))
+		})
+	},
+}
+
+// etcdAlarmDisarmCmd represents the etcd alarm disarm command.
+var etcdAlarmDisarmCmd = &cobra.Command{
+	Use:   "disarm",
+	Short: "Disarm the etcd alarms for the node.",
+	Long:  ``,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			response, err := c.EtcdAlarmDisarm(ctx)
+			if err != nil {
+				if response == nil {
+					return fmt.Errorf("error disarming alarms: %w", err)
+				}
+				cli.Warning("%s", err)
+			}
+
+			return displayAlarms(slices.Map(response.Messages, func(v *machine.EtcdAlarmDisarm) alarmMessage {
+				return v
+			}))
+		})
+	},
+}
+
+// etcdDefragCmd represents the etcd defrag command.
+var etcdDefragCmd = &cobra.Command{
+	Use:   "defrag",
+	Short: "Defragment etcd database on the node",
+	Long: `Defragmentation is a maintenance operation that releases unused space from the etcd database file.
+Defragmentation is a resource heavy operation and should be performed only when necessary on a single node at a time.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "etcd defrag"); err != nil {
+				return err
+			}
+
+			_, err := c.EtcdDefragment(ctx)
+
+			return err
+		})
+	},
+}
+
 var etcdLeaveCmd = &cobra.Command{
 	Use:   "leave",
 	Short: "Tell nodes to leave etcd cluster",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.FailIfMultiNodes(ctx, "etcd leave"); err != nil {
+				return err
+			}
+
 			return c.EtcdLeaveCluster(ctx, &machine.EtcdLeaveClusterRequest{})
 		})
 	},
@@ -146,6 +264,69 @@ var etcdMemberListCmd = &cobra.Command{
 	},
 }
 
+var etcdStatusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Get the status of etcd cluster member",
+	Long:  `Returns the status of etcd member on the node, use multiple nodes to get status of all members.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			response, err := c.EtcdStatus(ctx)
+			if err != nil {
+				if response == nil {
+					return fmt.Errorf("error getting status: %w", err)
+				}
+				cli.Warning("%s", err)
+			}
+
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			node := ""
+			pattern := "%s\t%s\t%s (%.2f%%)\t%s\t%d\t%d\t%d\t%v\t%s\n"
+			header := "MEMBER\tDB SIZE\tIN USE\tLEADER\tRAFT INDEX\tRAFT TERM\tRAFT APPLIED INDEX\tLEARNER\tERRORS"
+
+			for i, message := range response.Messages {
+				if message.Metadata != nil && message.Metadata.Hostname != "" {
+					node = message.Metadata.Hostname
+				}
+
+				if i == 0 {
+					if node != "" {
+						header = "NODE\t" + header
+						pattern = "%s\t" + pattern
+					}
+
+					fmt.Fprintln(w, header)
+				}
+
+				var ratio float64
+
+				if message.GetMemberStatus().GetDbSize() > 0 {
+					ratio = float64(message.GetMemberStatus().GetDbSizeInUse()) / float64(message.GetMemberStatus().GetDbSize()) * 100.0
+				}
+
+				args := []interface{}{
+					etcdresource.FormatMemberID(message.GetMemberStatus().GetMemberId()),
+					humanize.Bytes(uint64(message.GetMemberStatus().GetDbSize())),
+					humanize.Bytes(uint64(message.GetMemberStatus().GetDbSizeInUse())),
+					ratio,
+					etcdresource.FormatMemberID(message.GetMemberStatus().GetLeader()),
+					message.GetMemberStatus().GetRaftIndex(),
+					message.GetMemberStatus().GetRaftTerm(),
+					message.GetMemberStatus().GetRaftAppliedIndex(),
+					message.GetMemberStatus().GetIsLearner(),
+					strings.Join(message.GetMemberStatus().GetErrors(), ", "),
+				}
+				if node != "" {
+					args = append([]interface{}{node}, args...)
+				}
+
+				fmt.Fprintf(w, pattern, args...)
+			}
+
+			return w.Flush()
+		})
+	},
+}
+
 var etcdSnapshotCmd = &cobra.Command{
 	Use:   "snapshot <path>",
 	Short: "Stream snapshot of the etcd node to the path.",
@@ -228,6 +409,21 @@ var etcdSnapshotCmd = &cobra.Command{
 }
 
 func init() {
-	etcdCmd.AddCommand(etcdLeaveCmd, etcdForfeitLeadershipCmd, etcdMemberListCmd, etcdMemberRemoveCmd, etcdSnapshotCmd)
+	etcdAlarmCmd.AddCommand(
+		etcdAlarmListCmd,
+		etcdAlarmDisarmCmd,
+	)
+
+	etcdCmd.AddCommand(
+		etcdAlarmCmd,
+		etcdDefragCmd,
+		etcdForfeitLeadershipCmd,
+		etcdLeaveCmd,
+		etcdMemberListCmd,
+		etcdMemberRemoveCmd,
+		etcdSnapshotCmd,
+		etcdStatusCmd,
+	)
+
 	addCommand(etcdCmd)
 }

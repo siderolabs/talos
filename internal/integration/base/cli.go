@@ -50,6 +50,13 @@ func (cliSuite *CLISuite) DiscoverNodeInternalIPs(ctx context.Context) []string 
 	return mapNodeInfosToInternalIPs(nodes.Nodes())
 }
 
+// DiscoverNodeInternalIPsByType provides list of Talos node internal IPs in the cluster for given machine type.
+func (cliSuite *CLISuite) DiscoverNodeInternalIPsByType(ctx context.Context, machineType machine.Type) []string {
+	nodesByType := cliSuite.DiscoverNodes(ctx).NodesByType(machineType)
+
+	return mapNodeInfosToInternalIPs(nodesByType)
+}
+
 // RandomDiscoveredNodeInternalIP returns the internal IP a random node of the specified type (or any type if no types are specified).
 //
 //nolint:dupl

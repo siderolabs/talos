@@ -839,6 +839,61 @@ func (c *Client) EtcdRecover(ctx context.Context, snapshot io.Reader, callOption
 	return resp, err
 }
 
+// EtcdAlarmList lists etcd alarms for the current node.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (c *Client) EtcdAlarmList(ctx context.Context, opts ...grpc.CallOption) (*machineapi.EtcdAlarmListResponse, error) {
+	resp, err := c.MachineClient.EtcdAlarmList(ctx, &emptypb.Empty{}, opts...)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.EtcdAlarmListResponse) //nolint:errcheck
+
+	return resp, err
+}
+
+// EtcdAlarmDisarm disarms etcd alarms for the current node.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (c *Client) EtcdAlarmDisarm(ctx context.Context, opts ...grpc.CallOption) (*machineapi.EtcdAlarmDisarmResponse, error) {
+	resp, err := c.MachineClient.EtcdAlarmDisarm(ctx, &emptypb.Empty{}, opts...)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.EtcdAlarmDisarmResponse) //nolint:errcheck
+
+	return resp, err
+}
+
+// EtcdDefragment defragments etcd data directory for the current node.
+//
+// Defragmentation is a resource-heavy operation, so it should only run on a specific
+// node.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (c *Client) EtcdDefragment(ctx context.Context, opts ...grpc.CallOption) (*machineapi.EtcdDefragmentResponse, error) {
+	resp, err := c.MachineClient.EtcdDefragment(ctx, &emptypb.Empty{}, opts...)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.EtcdDefragmentResponse) //nolint:errcheck
+
+	return resp, err
+}
+
+// EtcdStatus returns etcd status for the current member.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (c *Client) EtcdStatus(ctx context.Context, opts ...grpc.CallOption) (*machineapi.EtcdStatusResponse, error) {
+	resp, err := c.MachineClient.EtcdStatus(ctx, &emptypb.Empty{}, opts...)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.EtcdStatusResponse) //nolint:errcheck
+
+	return resp, err
+}
+
 // GenerateClientConfiguration implements proto.MachineServiceClient interface.
 func (c *Client) GenerateClientConfiguration(ctx context.Context, req *machineapi.GenerateClientConfigurationRequest, callOptions ...grpc.CallOption) (resp *machineapi.GenerateClientConfigurationResponse, err error) { //nolint:lll
 	resp, err = c.MachineClient.GenerateClientConfiguration(ctx, req, callOptions...)

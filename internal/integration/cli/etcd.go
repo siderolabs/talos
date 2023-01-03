@@ -10,6 +10,7 @@ import (
 	"context"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -28,6 +29,21 @@ func (suite *EtcdSuite) SuiteName() string {
 // TestMembers etcd members should have some output.
 func (suite *EtcdSuite) TestMembers() {
 	suite.RunCLI([]string{"etcd", "members", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)}) // default checks for stdout not empty
+}
+
+// TestStatus etcd status should have some output.
+func (suite *EtcdSuite) TestStatus() {
+	cpNodes := suite.DiscoverNodeInternalIPsByType(context.TODO(), machine.TypeControlPlane)
+
+	suite.RunCLI([]string{"etcd", "status", "--nodes", strings.Join(cpNodes, ",")}) // default checks for stdout not empty
+}
+
+// TestAlarm etcd alarm should have no output.
+func (suite *EtcdSuite) TestAlarm() {
+	cpNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	suite.RunCLI([]string{"etcd", "alarm", "list", "--nodes", cpNode}, base.StdoutEmpty())
+	suite.RunCLI([]string{"etcd", "alarm", "disarm", "--nodes", cpNode}, base.StdoutEmpty())
 }
 
 // TestForfeitLeadership etcd forfeit-leadership check.

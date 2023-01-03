@@ -51,6 +51,25 @@ service MachineService {
   //
   // This method is available only on control plane nodes (which run etcd).
   rpc EtcdSnapshot(EtcdSnapshotRequest) returns (stream common.Data);
+  // EtcdAlarmList lists etcd alarms for the current node.
+  //
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdAlarmList(google.protobuf.Empty) returns (EtcdAlarmListResponse);
+  // EtcdAlarmDisarm disarms etcd alarms for the current node.
+  //
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdAlarmDisarm(google.protobuf.Empty) returns (EtcdAlarmDisarmResponse);
+  // EtcdDefragment defragments etcd data directory for the current node.
+  //
+  // Defragmentation is a resource-heavy operation, so it should only run on a specific
+  // node.
+  //
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdDefragment(google.protobuf.Empty) returns (EtcdDefragmentResponse);
+  // EtcdStatus returns etcd status for the current member.
+  //
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdStatus(google.protobuf.Empty) returns (EtcdStatusResponse);
   rpc GenerateConfiguration(GenerateConfigurationRequest) returns (GenerateConfigurationResponse);
   rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
   rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
@@ -980,6 +999,64 @@ message EtcdRecover {
 
 message EtcdRecoverResponse {
   repeated EtcdRecover messages = 1;
+}
+
+message EtcdAlarmListResponse {
+  repeated EtcdAlarm messages = 1;
+}
+
+message EtcdAlarm {
+  common.Metadata metadata = 1;
+  repeated EtcdMemberAlarm member_alarms = 2;
+}
+
+message EtcdMemberAlarm {
+  enum AlarmType {
+    NONE = 0;
+    NOSPACE = 1;
+    CORRUPT = 2;
+  }
+  uint64 member_id = 1;
+  AlarmType alarm = 2;
+}
+
+message EtcdAlarmDisarmResponse {
+  repeated EtcdAlarmDisarm messages = 1;
+}
+
+message EtcdAlarmDisarm {
+  common.Metadata metadata = 1;
+  repeated EtcdMemberAlarm member_alarms = 2;
+}
+
+message EtcdDefragmentResponse {
+  repeated EtcdDefragment messages = 1;
+}
+
+message EtcdDefragment {
+  common.Metadata metadata = 1;
+}
+
+message EtcdStatusResponse {
+  repeated EtcdStatus messages = 1;
+}
+
+message EtcdStatus {
+  common.Metadata metadata = 1;
+  EtcdMemberStatus member_status = 2;
+}
+
+message EtcdMemberStatus {
+  uint64 member_id = 10;
+  string protocol_version = 1;
+  int64 db_size = 2;
+  int64 db_size_in_use = 3;
+  uint64 leader = 4;
+  uint64 raft_index = 5;
+  uint64 raft_term = 6;
+  uint64 raft_applied_index = 7;
+  repeated string errors = 8;
+  bool is_learner = 9;
 }
 
 // rpc generateConfiguration

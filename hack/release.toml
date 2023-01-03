@@ -24,6 +24,19 @@ preface = """\
 Talos is built with Go 1.19.4.
 """
 
+    [notes.etcd]
+        title = "etcd Maintenance"
+        description="""\
+Talos adds new APIs to make it easier to perform etcd maintenance operations.
+
+These APIs are available via new `talosctl etcd` sub-commands:
+
+* `talosctl etcd alarm list|disarm`
+* `talosctl etcd defrag`
+* `talosctl etcd status`
+
+See also [etcd maintenance guide](https://talos.dev/v1.4/advanced/etcd-maintenance/).
+"""
 
 [make_deps]
 

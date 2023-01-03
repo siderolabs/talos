@@ -901,6 +901,121 @@ talosctl edit <type> [<id>] [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl etcd alarm disarm
+
+Disarm the etcd alarms for the node.
+
+```
+talosctl etcd alarm disarm [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for disarm
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd alarm](#talosctl-etcd-alarm)	 - Manage etcd alarms
+
+## talosctl etcd alarm list
+
+List the etcd alarms for the node.
+
+```
+talosctl etcd alarm list [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for list
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd alarm](#talosctl-etcd-alarm)	 - Manage etcd alarms
+
+## talosctl etcd alarm
+
+Manage etcd alarms
+
+### Options
+
+```
+  -h, --help   help for alarm
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+* [talosctl etcd alarm disarm](#talosctl-etcd-alarm-disarm)	 - Disarm the etcd alarms for the node.
+* [talosctl etcd alarm list](#talosctl-etcd-alarm-list)	 - List the etcd alarms for the node.
+
+## talosctl etcd defrag
+
+Defragment etcd database on the node
+
+### Synopsis
+
+Defragmentation is a maintenance operation that releases unused space from the etcd database file.
+Defragmentation is a resource heavy operation and should be performed only when necessary on a single node at a time.
+
+```
+talosctl etcd defrag [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for defrag
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
 ## talosctl etcd forfeit-leadership
 
 Tell node to forfeit etcd cluster leadership
@@ -1048,6 +1163,38 @@ talosctl etcd snapshot <path> [flags]
 
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 
+## talosctl etcd status
+
+Get the status of etcd cluster member
+
+### Synopsis
+
+Returns the status of etcd member on the node, use multiple nodes to get status of all members.
+
+```
+talosctl etcd status [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for status
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl etcd](#talosctl-etcd)	 - Manage etcd
+
 ## talosctl etcd
 
 Manage etcd
@@ -1071,11 +1218,14 @@ Manage etcd
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl etcd alarm](#talosctl-etcd-alarm)	 - Manage etcd alarms
+* [talosctl etcd defrag](#talosctl-etcd-defrag)	 - Defragment etcd database on the node
 * [talosctl etcd forfeit-leadership](#talosctl-etcd-forfeit-leadership)	 - Tell node to forfeit etcd cluster leadership
 * [talosctl etcd leave](#talosctl-etcd-leave)	 - Tell nodes to leave etcd cluster
 * [talosctl etcd members](#talosctl-etcd-members)	 - Get the list of etcd cluster members
 * [talosctl etcd remove-member](#talosctl-etcd-remove-member)	 - Remove the node from etcd cluster
 * [talosctl etcd snapshot](#talosctl-etcd-snapshot)	 - Stream snapshot of the etcd node to the path.
+* [talosctl etcd status](#talosctl-etcd-status)	 - Get the status of etcd cluster member
 
 ## talosctl events
 

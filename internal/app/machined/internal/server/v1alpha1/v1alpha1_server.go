@@ -1952,6 +1952,160 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 	})
 }
 
+func mapAlarms(alarms []*etcdserverpb.AlarmMember) []*machine.EtcdMemberAlarm {
+	mapAlarmType := func(alarmType etcdserverpb.AlarmType) machine.EtcdMemberAlarm_AlarmType {
+		switch alarmType {
+		case etcdserverpb.AlarmType_NOSPACE:
+			return machine.EtcdMemberAlarm_NOSPACE
+		case etcdserverpb.AlarmType_CORRUPT:
+			return machine.EtcdMemberAlarm_CORRUPT
+		case etcdserverpb.AlarmType_NONE:
+			return machine.EtcdMemberAlarm_NONE
+		default:
+			return machine.EtcdMemberAlarm_NONE
+		}
+	}
+
+	return slices.Map(alarms, func(alarm *etcdserverpb.AlarmMember) *machine.EtcdMemberAlarm {
+		return &machine.EtcdMemberAlarm{
+			MemberId: alarm.MemberID,
+			Alarm:    mapAlarmType(alarm.Alarm),
+		}
+	})
+}
+
+// EtcdAlarmList lists etcd alarms for the current node.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (s *Server) EtcdAlarmList(ctx context.Context, in *emptypb.Empty) (*machine.EtcdAlarmListResponse, error) {
+	if err := s.checkControlplane("etcd alarm list"); err != nil {
+		return nil, err
+	}
+
+	client, err := etcd.NewLocalClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	//nolint:errcheck
+	defer client.Close()
+
+	resp, err := client.AlarmList(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list etcd alarms: %w", err)
+	}
+
+	return &machine.EtcdAlarmListResponse{
+		Messages: []*machine.EtcdAlarm{
+			{
+				MemberAlarms: mapAlarms(resp.Alarms),
+			},
+		},
+	}, nil
+}
+
+// EtcdAlarmDisarm disarms etcd alarms for the current node.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (s *Server) EtcdAlarmDisarm(ctx context.Context, in *emptypb.Empty) (*machine.EtcdAlarmDisarmResponse, error) {
+	if err := s.checkControlplane("etcd alarm list"); err != nil {
+		return nil, err
+	}
+
+	client, err := etcd.NewLocalClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	//nolint:errcheck
+	defer client.Close()
+
+	resp, err := client.AlarmDisarm(ctx, &clientv3.AlarmMember{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to disarm etcd alarm: %w", err)
+	}
+
+	return &machine.EtcdAlarmDisarmResponse{
+		Messages: []*machine.EtcdAlarmDisarm{
+			{
+				MemberAlarms: mapAlarms(resp.Alarms),
+			},
+		},
+	}, nil
+}
+
+// EtcdDefragment defragments etcd data directory for the current node.
+//
+// Defragmentation is a resource-heavy operation, so it should only run on a specific
+// node.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (s *Server) EtcdDefragment(ctx context.Context, in *emptypb.Empty) (*machine.EtcdDefragmentResponse, error) {
+	if err := s.checkControlplane("etcd defragment"); err != nil {
+		return nil, err
+	}
+
+	client, err := etcd.NewLocalClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	//nolint:errcheck
+	defer client.Close()
+
+	_, err = client.Defragment(ctx, nethelpers.JoinHostPort("localhost", constants.EtcdClientPort))
+	if err != nil {
+		return nil, fmt.Errorf("failed to defragment etcd: %w", err)
+	}
+
+	return &machine.EtcdDefragmentResponse{
+		Messages: []*machine.EtcdDefragment{
+			{},
+		},
+	}, nil
+}
+
+// EtcdStatus returns etcd status for the member of the cluster.
+//
+// This method is available only on control plane nodes (which run etcd).
+func (s *Server) EtcdStatus(ctx context.Context, in *emptypb.Empty) (*machine.EtcdStatusResponse, error) {
+	if err := s.checkControlplane("etcd status"); err != nil {
+		return nil, err
+	}
+
+	client, err := etcd.NewLocalClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create etcd client: %w", err)
+	}
+
+	//nolint:errcheck
+	defer client.Close()
+
+	resp, err := client.Status(ctx, nethelpers.JoinHostPort("localhost", constants.EtcdClientPort))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query etcd status: %w", err)
+	}
+
+	return &machine.EtcdStatusResponse{
+		Messages: []*machine.EtcdStatus{
+			{
+				MemberStatus: &machine.EtcdMemberStatus{
+					MemberId:         resp.Header.MemberId,
+					ProtocolVersion:  resp.Version,
+					DbSize:           resp.DbSize,
+					DbSizeInUse:      resp.DbSizeInUse,
+					Leader:           resp.Leader,
+					RaftIndex:        resp.RaftIndex,
+					RaftTerm:         resp.RaftTerm,
+					RaftAppliedIndex: resp.RaftAppliedIndex,
+					Errors:           resp.Errors,
+					IsLearner:        resp.IsLearner,
+				},
+			},
+		},
+	}, nil
+}
+
 // GenerateClientConfiguration implements the machine.MachineServer interface.
 func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
 	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
