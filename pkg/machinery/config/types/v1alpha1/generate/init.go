@@ -184,9 +184,8 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 
 	if in.VersionContract.SecretboxEncryptionSupported() {
 		cluster.ClusterSecretboxEncryptionSecret = in.Secrets.SecretboxEncryptionSecret
-	} else {
-		cluster.ClusterAESCBCEncryptionSecret = in.Secrets.AESCBCEncryptionSecret
 	}
+	cluster.ClusterAESCBCEncryptionSecret = in.Secrets.AESCBCEncryptionSecret
 
 	if machine.MachineRegistries.RegistryMirrors == nil {
 		machine.MachineRegistries.RegistryMirrors = map[string]*v1alpha1.RegistryMirrorConfig{}
