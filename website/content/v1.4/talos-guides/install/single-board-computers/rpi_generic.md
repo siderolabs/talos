@@ -56,7 +56,7 @@ xz -d metal-rpi_generic-arm64.img.xz
 Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-rpi_4-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
+sudo dd if=metal-rpi_generic-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
 ## Bootstrapping the Node
