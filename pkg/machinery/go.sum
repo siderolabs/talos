@@ -109,8 +109,8 @@ github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkB
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
 github.com/siderolabs/crypto v0.4.0 h1:o1KIR1KyevUcY9nbJlSyQAj7+p+rveGGF8LjAAFMtjc=
 github.com/siderolabs/crypto v0.4.0/go.mod h1:itZpBsJ9i0aH8jiHAuSlKCal7hni7X1aDYo6vGVl5LY=
-github.com/siderolabs/gen v0.4.2 h1:25z0dRKymC8uFxHfOWc3GKTCpK058u4FvOYLmfeQTfw=
-github.com/siderolabs/gen v0.4.2/go.mod h1:wS8tFq7sn5vqKAuyS30vJUig3tX5v6q79VG4KfUnILM=
+github.com/siderolabs/gen v0.4.3 h1:V3UsZ2KrsryaTMZGZUHAr1CFdPc2/R1lM6lA4a4zCDo=
+github.com/siderolabs/gen v0.4.3/go.mod h1:wS8tFq7sn5vqKAuyS30vJUig3tX5v6q79VG4KfUnILM=
 github.com/siderolabs/go-api-signature v0.2.2 h1:C5tUzuFsJYidpYyVfJGYpgQwETglA8B62ET4obkLDGE=
 github.com/siderolabs/go-api-signature v0.2.2/go.mod h1:9jSRiJsuKyf6b/hyKcBgCZXvu7xGJ+RiCQQAVraGdN0=
 github.com/siderolabs/go-blockdevice v0.4.2 h1:ZA8rds0Ge/7ScNCAchK/wVJs0mmdphu4OZncirYaFyk=
