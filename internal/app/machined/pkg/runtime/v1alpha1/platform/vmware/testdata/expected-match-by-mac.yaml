@@ -1,0 +1,36 @@
+addresses:
+    - address: 192.168.0.230/24
+      linkName: eth2
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth2
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 192.168.0.1
+      outLinkName: eth2
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: vmware-test-controlplane-zhnhr
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs: []

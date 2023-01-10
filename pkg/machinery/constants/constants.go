@@ -407,6 +407,9 @@ const (
 	// VMwareGuestInfoFallbackKey is the fallback guestinfo key used to provide a config file.
 	VMwareGuestInfoFallbackKey = "userdata"
 
+	// VMwareGuestInfoMetadataKey is the guestinfo key used to provide metadata.
+	VMwareGuestInfoMetadataKey = "metadata"
+
 	// VMwareGuestInfoOvfEnvKey is the guestinfo key used to provide the OVF environment.
 	VMwareGuestInfoOvfEnvKey = "ovfenv"
 

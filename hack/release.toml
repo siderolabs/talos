@@ -131,6 +131,14 @@ Talos API was extended to support retrieving a list of network connections (sock
 `talosctl netstat` command was added to retrieve the list of network connections.
 """
 
+    [notes.vmware]
+        title = "VMware Platform"
+        description="""\
+Talos now supports loading network configuration on VMWare platform from the `metadata` key.
+See [CAPV IPAM Support](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/main/docs/proposal/20220929-ipam-support.md) and
+[Talos issue 6708](https://github.com/siderolabs/talos/issues/6708) for details.
+"""
+
 [make_deps]
 
     [make_deps.tools]

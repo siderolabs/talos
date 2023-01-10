@@ -20,6 +20,7 @@ import (
 	"github.com/vmware/govmomi/ovf"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	platformerrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -43,7 +44,7 @@ func readConfigFromExtraConfig(extraConfig *rpcvmx.Config, key string) ([]byte, 
 	}
 
 	if val == "" { // not present
-		log.Printf("Empty (thus absent) %s", key)
+		log.Printf("empty (thus absent) %s", key)
 
 		return nil, nil
 	}
@@ -201,10 +202,58 @@ func (v *VMware) KernelArgs() procfs.Parameters {
 	}
 }
 
+// Read VMware GuestInfo metadata if available.
+func (v *VMware) readMetadata(extraConfig *rpcvmx.Config) ([]byte, error) {
+	guestInfoMetadata, err := readConfigFromExtraConfig(extraConfig, constants.VMwareGuestInfoMetadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if guestInfoMetadata == nil {
+		guestInfoMetadata, err = readConfigFromOvf(extraConfig, constants.VMwareGuestInfoMetadataKey)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return guestInfoMetadata, nil
+}
+
 // NetworkConfiguration implements the runtime.Platform interface.
-func (v *VMware) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (v *VMware) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	extraConfig := rpcvmx.NewConfig()
+
+	guestInfoMetadata, err := v.readMetadata(extraConfig)
+	if err != nil {
+		return fmt.Errorf("failed to read GuestInfo: %w", err)
+	}
+
 	networkConfig := &runtime.PlatformNetworkConfig{
 		Metadata: &runtimeres.PlatformMetadataSpec{Platform: v.Name()},
+	}
+
+	if guestInfoMetadata != nil {
+		var unmarshalledNetworkConfig NetworkConfig
+		if err = yaml.Unmarshal(guestInfoMetadata, &unmarshalledNetworkConfig); err != nil {
+			return fmt.Errorf("failed to unmarshall metadata '%s'. Error '%w'", guestInfoMetadata, err)
+		}
+
+		switch unmarshalledNetworkConfig.Network.Version {
+		case 2:
+			err := v.ApplyNetworkConfigV2(ctx, st, &unmarshalledNetworkConfig, networkConfig)
+			if err != nil {
+				return fmt.Errorf("failed to apply metadata '%s'. Error '%w'", guestInfoMetadata, err)
+			}
+
+			networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
+				Platform:   v.Name(),
+				Hostname:   unmarshalledNetworkConfig.LocalHostname,
+				InstanceID: unmarshalledNetworkConfig.InstanceID,
+			}
+		default:
+			return fmt.Errorf("GuestInfo version=%d is not supported. GuestInfo: %s", unmarshalledNetworkConfig.Network.Version, guestInfoMetadata)
+		}
 	}
 
 	select {

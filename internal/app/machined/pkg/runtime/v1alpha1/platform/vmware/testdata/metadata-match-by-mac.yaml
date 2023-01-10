@@ -1,0 +1,16 @@
+instance-id: "1"
+local-hostname: "vmware-test-controlplane-zhnhr"
+wait-on-network:
+  ipv4: false
+  ipv6: false
+network:
+  version: 2
+  ethernets:
+    id0:
+      match:
+        macaddress: "68:05:ca:b8:f1:f9"
+      set-name: "eth0"
+      wakeonlan: true
+      addresses:
+      - "192.168.0.230/24"
+      gateway4: "192.168.0.1"
