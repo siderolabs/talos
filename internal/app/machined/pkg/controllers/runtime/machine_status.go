@@ -20,6 +20,7 @@ import (
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -363,6 +364,10 @@ func (ctrl *MachineStatusController) watchEvents() {
 						newStage = runtime.MachineStageRebooting
 					}
 				case machineapi.SequenceEvent_NOOP:
+					if event.Error != nil && event.Error.Code == common.Code_FATAL {
+						// fatal errors lead to reboot
+						newStage = runtime.MachineStageRebooting
+					}
 				case machineapi.SequenceEvent_STOP:
 					if event.Sequence == v1alpha1runtime.SequenceBoot.String() && event.Error == nil {
 						newStage = runtime.MachineStageRunning
