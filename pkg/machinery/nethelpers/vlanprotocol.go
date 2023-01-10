@@ -10,6 +10,8 @@ package nethelpers
 type VLANProtocol uint16
 
 // VLANProtocol constants.
+//
+//structprotogen:gen_enum
 const (
 	VLANProtocol8021Q  VLANProtocol = 33024 // 802.1q
 	VLANProtocol8021AD VLANProtocol = 34984 // 802.1ad

@@ -12,6 +12,8 @@ import "fmt"
 type FailOverMAC uint8
 
 // FailOverMAC constants.
+//
+//structprotogen:gen_enum
 const (
 	FailOverMACNone   FailOverMAC = iota // none
 	FailOverMACActive                    // active

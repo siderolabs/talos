@@ -10,6 +10,8 @@ package network
 type Operator int
 
 // Operator list.
+//
+//structprotogen:gen_enum
 const (
 	OperatorDHCP4 Operator = iota // dhcp4
 	OperatorDHCP6                 // dhcp6

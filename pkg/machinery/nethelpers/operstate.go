@@ -14,6 +14,8 @@ import (
 type OperationalState uint8
 
 // Constants copied from rtnetlink to provide Stringer interface.
+//
+//structprotogen:gen_enum
 const (
 	OperStateUnknown        OperationalState = OperationalState(rtnetlink.OperStateUnknown)        // unknown
 	OperStateNotPresent     OperationalState = OperationalState(rtnetlink.OperStateNotPresent)     // notPresent

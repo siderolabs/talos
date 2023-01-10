@@ -10,6 +10,8 @@ package network
 type ConfigLayer int
 
 // Configuration layers.
+//
+//structprotogen:gen_enum
 const (
 	ConfigDefault              ConfigLayer = iota // default
 	ConfigCmdline                                 // cmdline

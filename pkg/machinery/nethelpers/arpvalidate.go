@@ -12,6 +12,8 @@ import "fmt"
 type ARPValidate uint32
 
 // ARPValidate constants.
+//
+//structprotogen:gen_enum
 const (
 	ARPValidateNone   ARPValidate = iota // none
 	ARPValidateActive                    // active

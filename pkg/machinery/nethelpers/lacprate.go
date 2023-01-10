@@ -12,6 +12,8 @@ import "fmt"
 type LACPRate uint8
 
 // LACP rate constants.
+//
+//structprotogen:gen_enum
 const (
 	LACPRateSlow LACPRate = iota // slow
 	LACPRateFast                 // fast

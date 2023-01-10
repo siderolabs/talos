@@ -10,6 +10,8 @@ package nethelpers
 type LinkType uint16
 
 // LinkType constants.
+//
+//structprotogen:gen_enum
 const (
 	LinkNetrom            LinkType = 0                 // netrom
 	LinkEther             LinkType = 1                 // ether

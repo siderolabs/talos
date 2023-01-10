@@ -12,10 +12,11 @@ import (
 	"path"
 	"strings"
 
-	"github.com/siderolabs/structprotogen/ast"
-	"github.com/siderolabs/structprotogen/sliceutil"
 	"golang.org/x/tools/go/packages"
 	"gopkg.in/typ.v4/slices"
+
+	"github.com/siderolabs/structprotogen/ast"
+	"github.com/siderolabs/structprotogen/sliceutil"
 )
 
 // PkgDecl is a struct which contains package path and tagged struct declarations.
@@ -45,7 +46,7 @@ func FindPkgDecls(taggedStructs ast.TaggedStructs, loadedPkgs []*packages.Packag
 		return slices.Sorted[*PkgDecl]{}, fmt.Errorf("no definitions found")
 	}
 
-	return result, error(nil)
+	return result, nil
 }
 
 func forEachTaggedStruct(taggedStructs ast.TaggedStructs, pkg *packages.Package, f func(decl types.Object)) {

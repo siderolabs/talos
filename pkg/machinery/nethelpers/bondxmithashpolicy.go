@@ -12,6 +12,8 @@ import "fmt"
 type BondXmitHashPolicy uint8
 
 // Bond hash policy constants.
+//
+//structprotogen:gen_enum
 const (
 	BondXmitPolicyLayer2  BondXmitHashPolicy = iota // layer2
 	BondXmitPolicyLayer34                           // layer3+4

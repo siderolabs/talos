@@ -12,6 +12,8 @@ import "fmt"
 type PrimaryReselect uint8
 
 // PrimaryReslect constants.
+//
+//structprotogen:gen_enum
 const (
 	PrimaryReselectAlways  PrimaryReselect = iota // always
 	PrimaryReselectBetter                         // better

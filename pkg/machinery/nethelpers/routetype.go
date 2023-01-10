@@ -10,6 +10,8 @@ package nethelpers
 type RouteType uint8
 
 // RouteType constants.
+//
+//structprotogen:gen_enum
 const (
 	TypeUnspec      RouteType = iota // unspec
 	TypeUnicast                      // unicast

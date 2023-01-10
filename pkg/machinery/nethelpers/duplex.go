@@ -12,6 +12,8 @@ import "github.com/mdlayher/ethtool"
 type Duplex ethtool.Duplex
 
 // Possible Duplex type values.
+//
+//structprotogen:gen_enum
 const (
 	Half    Duplex = Duplex(ethtool.Half)
 	Full    Duplex = Duplex(ethtool.Full)

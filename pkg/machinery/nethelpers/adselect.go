@@ -12,6 +12,8 @@ import "fmt"
 type ADSelect uint8
 
 // ADSelect constants.
+//
+//structprotogen:gen_enum
 const (
 	ADSelectStable    ADSelect = iota // stable
 	ADSelectBandwidth                 // bandwidth

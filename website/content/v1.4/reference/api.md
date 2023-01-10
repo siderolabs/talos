@@ -40,6 +40,7 @@ description: Talos gRPC API reference.
     - [NethelpersADSelect](#talos.resource.definitions.enums.NethelpersADSelect)
     - [NethelpersARPAllTargets](#talos.resource.definitions.enums.NethelpersARPAllTargets)
     - [NethelpersARPValidate](#talos.resource.definitions.enums.NethelpersARPValidate)
+    - [NethelpersAddressFlag](#talos.resource.definitions.enums.NethelpersAddressFlag)
     - [NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode)
     - [NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy)
     - [NethelpersDuplex](#talos.resource.definitions.enums.NethelpersDuplex)
@@ -50,6 +51,7 @@ description: Talos gRPC API reference.
     - [NethelpersOperationalState](#talos.resource.definitions.enums.NethelpersOperationalState)
     - [NethelpersPort](#talos.resource.definitions.enums.NethelpersPort)
     - [NethelpersPrimaryReselect](#talos.resource.definitions.enums.NethelpersPrimaryReselect)
+    - [NethelpersRouteFlag](#talos.resource.definitions.enums.NethelpersRouteFlag)
     - [NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol)
     - [NethelpersRouteType](#talos.resource.definitions.enums.NethelpersRouteType)
     - [NethelpersRoutingTable](#talos.resource.definitions.enums.NethelpersRoutingTable)
@@ -872,6 +874,29 @@ NethelpersARPValidate is an ARP Validation mode.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersAddressFlag"></a>
+
+### NethelpersAddressFlag
+NethelpersAddressFlag wraps IFF_* constants.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_ADDRESSFLAG_UNSPECIFIED | 0 |  |
+| ADDRESS_TEMPORARY | 1 |  |
+| ADDRESS_NO_DAD | 2 |  |
+| ADDRESS_OPTIMISTIC | 4 |  |
+| ADDRESS_DAD_FAILED | 8 |  |
+| ADDRESS_HOME | 16 |  |
+| ADDRESS_DEPRECATED | 32 |  |
+| ADDRESS_TENTATIVE | 64 |  |
+| ADDRESS_PERMANENT | 128 |  |
+| ADDRESS_MANAGEMENT_TEMP | 256 |  |
+| ADDRESS_NO_PREFIX_ROUTE | 512 |  |
+| ADDRESS_MC_AUTO_JOIN | 1024 |  |
+| ADDRESS_STABLE_PRIVACY | 2048 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersBondMode"></a>
 
 ### NethelpersBondMode
@@ -896,11 +921,11 @@ NethelpersBondXmitHashPolicy is a bond hash policy.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| BOND_XMIT_POLICY_LAYER2 | 0 | layer2 |
-| BOND_XMIT_POLICY_LAYER34 | 1 | layer3+4 |
-| BOND_XMIT_POLICY_LAYER23 | 2 | layer2+3 |
-| BOND_XMIT_POLICY_ENCAP23 | 3 | encap2+3 |
-| BOND_XMIT_POLICY_ENCAP34 | 4 | encap3+4 |
+| BOND_XMIT_POLICY_LAYER2 | 0 |  |
+| BOND_XMIT_POLICY_LAYER34 | 1 |  |
+| BOND_XMIT_POLICY_LAYER23 | 2 |  |
+| BOND_XMIT_POLICY_ENCAP23 | 3 |  |
+| BOND_XMIT_POLICY_ENCAP34 | 4 |  |
 
 
 
@@ -937,8 +962,9 @@ NethelpersFamily is a network family.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| FAMILY_INET_4 | 0 |  |
-| FAMILY_INET_6 | 1 |  |
+| NETHELPERS_FAMILY_UNSPECIFIED | 0 |  |
+| FAMILY_INET4 | 2 |  |
+| FAMILY_INET6 | 10 |  |
 
 
 
@@ -987,7 +1013,8 @@ NethelpersLinkType is a link type.
 | LINK_HWX25 | 272 |  |
 | LINK_CAN | 280 |  |
 | LINK_PPP | 512 |  |
-| LINK_CISCO_HDLC | 513 |  |
+| LINK_CISCO | 513 |  |
+| LINK_HDLC | 513 |  |
 | LINK_LAPB | 516 |  |
 | LINK_DDCMP | 517 |  |
 | LINK_RAWHDLC | 518 |  |
@@ -1023,16 +1050,16 @@ NethelpersLinkType is a link type.
 | LINK_FCFABRIC10 | 797 |  |
 | LINK_FCFABRIC11 | 798 |  |
 | LINK_FCFABRIC12 | 799 |  |
-| LINK_IEE802_TR | 800 |  |
+| LINK_IEE802TR | 800 |  |
 | LINK_IEE80211 | 801 |  |
-| LINK_IEE80211_PRISM | 802 |  |
+| LINK_IEE80211PRISM | 802 |  |
 | LINK_IEE80211_RADIOTAP | 803 |  |
 | LINK_IEE8021154 | 804 |  |
-| LINK_IEE8021154_MONITOR | 805 |  |
+| LINK_IEE8021154MONITOR | 805 |  |
 | LINK_PHONET | 820 |  |
 | LINK_PHONETPIPE | 821 |  |
 | LINK_CAIF | 822 |  |
-| LINK_IP6_GRE | 823 |  |
+| LINK_IP6GRE | 823 |  |
 | LINK_NETLINK | 824 |  |
 | LINK6_LOWPAN | 825 |  |
 | LINK_VOID | 65535 |  |
@@ -1085,6 +1112,25 @@ NethelpersPrimaryReselect is an ARP targets mode.
 | PRIMARY_RESELECT_ALWAYS | 0 |  |
 | PRIMARY_RESELECT_BETTER | 1 |  |
 | PRIMARY_RESELECT_FAILURE | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersRouteFlag"></a>
+
+### NethelpersRouteFlag
+NethelpersRouteFlag wraps RTM_F_* constants.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_ROUTEFLAG_UNSPECIFIED | 0 |  |
+| ROUTE_NOTIFY | 256 |  |
+| ROUTE_CLONED | 512 |  |
+| ROUTE_EQUALIZE | 1024 |  |
+| ROUTE_PREFIX | 2048 |  |
+| ROUTE_LOOKUP_TABLE | 4096 |  |
+| ROUTE_FIB_MATCH | 8192 |  |
+| ROUTE_OFFLOAD | 16384 |  |
+| ROUTE_TRAP | 32768 |  |
 
 
 
@@ -1178,8 +1224,9 @@ NethelpersVLANProtocol is a VLAN protocol.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| VLAN_PROTOCOL8021_Q | 0 |  |
-| VLAN_PROTOCOL8021_AD | 1 |  |
+| NETHELPERS_VLANPROTOCOL_UNSPECIFIED | 0 |  |
+| VLAN_PROTOCOL8021_Q | 33024 |  |
+| VLAN_PROTOCOL8021_AD | 34984 |  |
 
 
 
@@ -1205,8 +1252,8 @@ NetworkOperator enumerates Talos network operators.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| OPERATOR_DHCP_4 | 0 |  |
-| OPERATOR_DHCP_6 | 1 |  |
+| OPERATOR_DHCP4 | 0 |  |
+| OPERATOR_DHCP6 | 1 |  |
 | OPERATOR_VIP | 2 |  |
 
 

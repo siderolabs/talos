@@ -12,6 +12,8 @@ import "github.com/mdlayher/ethtool"
 type Port ethtool.Port
 
 // Possible Port type values.
+//
+//structprotogen:gen_enum
 const (
 	TwistedPair  Port = Port(ethtool.TwistedPair)
 	AUI          Port = Port(ethtool.AUI)

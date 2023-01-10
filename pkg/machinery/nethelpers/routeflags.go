@@ -68,6 +68,8 @@ func (flags *RouteFlags) UnmarshalText(b []byte) error {
 type RouteFlag uint32
 
 // RouteFlag constants.
+//
+//structprotogen:gen_enum
 const (
 	RouteNotify      RouteFlag = 256 << iota // notify
 	RouteCloned                              // cloned

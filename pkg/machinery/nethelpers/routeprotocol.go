@@ -10,6 +10,8 @@ package nethelpers
 type RouteProtocol uint8
 
 // RouteType constants.
+//
+//structprotogen:gen_enum
 const (
 	ProtocolUnspec     RouteProtocol = 0   // unspec
 	ProtocolRedirect   RouteProtocol = 1   // redirect

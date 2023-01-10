@@ -10,6 +10,8 @@ package runtime
 type MachineStage int
 
 // Machine stages.
+//
+//structprotogen:gen_enum
 const (
 	MachineStageUnknown      MachineStage = iota // unknown
 	MachineStageBooting                          // booting

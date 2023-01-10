@@ -59,6 +59,8 @@ func (flags *AddressFlags) UnmarshalText(b []byte) error {
 type AddressFlag uint32
 
 // AddressFlag constants.
+//
+//structprotogen:gen_enum
 const (
 	AddressTemporary      AddressFlag = 1 << iota // temporary
 	AddressNoDAD                                  // nodad

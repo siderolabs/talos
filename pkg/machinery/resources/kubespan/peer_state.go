@@ -33,6 +33,8 @@ func (v *PeerState) UnmarshalText(b []byte) error {
 }
 
 // PeerState constants.
+//
+//structprotogen:gen_enum
 const (
 	PeerStateUnknown PeerState = iota // unknown
 	PeerStateUp                       // up

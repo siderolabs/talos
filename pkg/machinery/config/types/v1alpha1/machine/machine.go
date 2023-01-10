@@ -13,6 +13,7 @@ import (
 // Type represents a machine type.
 type Type int
 
+//structprotogen:gen_enum
 const (
 	// TypeUnknown represents undefined node type, when there is no machine configuration yet.
 	TypeUnknown Type = iota // unknown

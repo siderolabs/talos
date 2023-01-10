@@ -12,6 +12,8 @@ import "fmt"
 type ARPAllTargets uint32
 
 // ARPAllTargets contants.
+//
+//structprotogen:gen_enum
 const (
 	ARPAllTargetsAny ARPAllTargets = iota // any
 	ARPAllTargetsAll                      // all

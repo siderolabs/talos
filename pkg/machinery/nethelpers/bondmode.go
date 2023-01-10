@@ -14,6 +14,8 @@ type BondMode uint8
 // BondMode constants.
 //
 // See linux/if_bonding.h.
+//
+//structprotogen:gen_enum
 const (
 	BondModeRoundrobin   BondMode = iota // balance-rr
 	BondModeActiveBackup                 // active-backup

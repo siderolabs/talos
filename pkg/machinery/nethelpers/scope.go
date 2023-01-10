@@ -10,6 +10,8 @@ package nethelpers
 type Scope uint8
 
 // Scope constants.
+//
+//structprotogen:gen_enum
 const (
 	ScopeGlobal  Scope = 0   // global
 	ScopeSite    Scope = 200 // site

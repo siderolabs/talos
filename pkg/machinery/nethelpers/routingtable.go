@@ -10,6 +10,8 @@ package nethelpers
 type RoutingTable uint32
 
 // RoutingTable constants.
+//
+//structprotogen:gen_enum
 const (
 	TableUnspec  RoutingTable = 0   // unspec
 	TableDefault RoutingTable = 253 // default

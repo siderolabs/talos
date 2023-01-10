@@ -10,6 +10,8 @@ package nethelpers
 type Family uint8
 
 // Family constants.
+//
+//structprotogen:gen_enum
 const (
 	FamilyInet4 Family = 2  // inet4
 	FamilyInet6 Family = 10 // inet6
