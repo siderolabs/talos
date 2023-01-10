@@ -1441,7 +1441,11 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 
 		if err = retry.Constant(5*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx,
 			func(ctx context.Context) error {
-				kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig()
+				if r.Config().Machine().Type().IsControlPlane() {
+					kubeHelper, err = kubernetes.NewTemporaryClientControlPlane(ctx, r.State().V1Alpha2().Resources())
+				} else {
+					kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig()
+				}
 
 				return retry.ExpectedError(err)
 			}); err != nil {
@@ -1750,7 +1754,7 @@ func LabelNodeAsControlPlane(seq runtime.Sequence, data interface{}) (runtime.Ta
 		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 			var h *kubernetes.Client
 
-			h, err = kubernetes.NewTemporaryClientFromPKI(r.Config().Cluster().CA(), r.Config().Cluster().Endpoint())
+			h, err = kubernetes.NewTemporaryClientControlPlane(ctx, r.State().V1Alpha2().Resources())
 			if err != nil {
 				return err
 			}

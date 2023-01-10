@@ -14,6 +14,10 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
@@ -32,6 +36,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 const (
@@ -133,6 +138,25 @@ func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (client *Client, e
 		Clientset: clientset,
 		dialer:    dialer,
 	}, nil
+}
+
+// NewTemporaryClientControlPlane initializes a Kubernetes client for a controlplane node
+// using PKI information.
+//
+// The client uses "localhost" endpoint, so it doesn't depend on the loadbalancer to be ready.
+func NewTemporaryClientControlPlane(ctx context.Context, r controller.Reader) (client *Client, err error) {
+	k8sRoot, err := safe.ReaderGet[*secrets.KubernetesRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to get kubernetes config: %w", err)
+	}
+
+	k8sRootSpec := k8sRoot.TypedSpec()
+
+	return NewTemporaryClientFromPKI(k8sRootSpec.CA, k8sRootSpec.LocalEndpoint)
 }
 
 // NewTemporaryClientFromPKI initializes a Kubernetes client using a certificate
