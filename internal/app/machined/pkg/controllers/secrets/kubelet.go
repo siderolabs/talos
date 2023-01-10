@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -84,7 +85,18 @@ func (ctrl *KubeletController) Run(ctx context.Context, r controller.Runtime, lo
 }
 
 func (ctrl *KubeletController) updateKubeletSecrets(cfgProvider talosconfig.Provider, kubeletSecrets *secrets.KubeletSpec) error {
-	kubeletSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
+	if cfgProvider.Machine().Type().IsControlPlane() {
+		// use localhost endpoint for controlplane nodes
+		localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
+		if err != nil {
+			return err
+		}
+
+		kubeletSecrets.Endpoint = localEndpoint
+	} else {
+		// use cluster endpoint for workers
+		kubeletSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
+	}
 
 	kubeletSecrets.CA = cfgProvider.Cluster().CA()
 

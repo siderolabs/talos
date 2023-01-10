@@ -113,18 +113,7 @@ func (ctrl *NodeLabelsApplyController) getK8sClient(ctx context.Context, r contr
 	}
 
 	if machineType.MachineType().IsControlPlane() {
-		k8sRoot, err := safe.ReaderGet[*secrets.KubernetesRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				return nil, nil
-			}
-
-			return nil, fmt.Errorf("failed to get kubernetes config: %w", err)
-		}
-
-		k8sRootSpec := k8sRoot.TypedSpec()
-
-		return kubernetes.NewTemporaryClientFromPKI(k8sRootSpec.CA, k8sRootSpec.Endpoint)
+		return kubernetes.NewTemporaryClientControlPlane(ctx, r)
 	}
 
 	logger.Debug("waiting for kubelet client config", zap.String("file", constants.KubeletKubeconfig))
