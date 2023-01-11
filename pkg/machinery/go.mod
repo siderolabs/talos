@@ -19,7 +19,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/siderolabs/crypto v0.4.0
-	github.com/siderolabs/gen v0.4.2
+	github.com/siderolabs/gen v0.4.3
 	github.com/siderolabs/go-api-signature v0.2.2
 	github.com/siderolabs/go-blockdevice v0.4.2
 	github.com/siderolabs/go-debug v0.2.2
@@ -27,8 +27,8 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.0
 	github.com/stretchr/testify v1.8.1
-	google.golang.org/genproto v0.0.0-20221207170731-23e4bf6bdc37
-	google.golang.org/grpc v1.51.0
+	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f
+	google.golang.org/grpc v1.52.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 )
