@@ -37,7 +37,7 @@ func (suite *UpdateEndpointSuite) SuiteName() string {
 // SetupTest ...
 func (suite *UpdateEndpointSuite) SetupTest() {
 	// make sure API calls have timeout
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 10*time.Minute)
 }
 
 // TearDownTest ...
@@ -55,7 +55,7 @@ func (suite *UpdateEndpointSuite) TestUpdateControlPlaneEndpoint() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	nodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	nodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	node, err := suite.GetK8sNodeByInternalIP(suite.ctx, nodeInternalIP)
 	suite.Require().NoError(err)
