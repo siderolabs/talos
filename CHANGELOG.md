@@ -1,3 +1,50 @@
+## [Talos 1.3.2](https://github.com/siderolabs/talos/releases/tag/v1.3.2) (2023-01-12)
+
+Welcome to the v1.3.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.86
+* containerd: v1.6.15
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>5 commits</summary>
+<p>
+
+* [`3249ad7ff`](https://github.com/siderolabs/talos/commit/3249ad7ffb3b9056817c035b855a229a1e91cfa9) feat: use 'localhost' endpoint for controlplane nodes
+* [`c9e6c61fa`](https://github.com/siderolabs/talos/commit/c9e6c61fa65a18021a5c4691db4a7f73ec6df070) feat: add ISO wipe GRUB boot option
+* [`c6fb80aa8`](https://github.com/siderolabs/talos/commit/c6fb80aa806e4a30e816b059f4ef6c4b341766b4) fix: report fatal sequence errors as reboots
+* [`a2f790116`](https://github.com/siderolabs/talos/commit/a2f7901166398fcfbfa69b971a7a9205b6835fec) feat: include Kubernetes controlplane endpoint as one of the endpoints
+* [`9fc9372e5`](https://github.com/siderolabs/talos/commit/9fc9372e5baa0b3143d74fa250503e71b9ccfb6a) feat: linux 5.15.86, containerd 1.6.15
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`9543590`](https://github.com/siderolabs/pkgs/commit/9543590bc110d14b09de62cee35b3008a39e603b) chore: disable provenance in buildx
+* [`782bbdd`](https://github.com/siderolabs/pkgs/commit/782bbdd2c07020e2ede570ffc726e0452b754540) feat: linux 5.15.86, containerd 1.6.15
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**  v1.6.14 -> v1.6.15
+* **github.com/siderolabs/pkgs**        v1.3.0-7-g9931288 -> v1.3.0-9-g9543590
+
+Previous release can be found at [v1.3.1](https://github.com/siderolabs/talos/releases/tag/v1.3.1)
+
 ## [Talos 1.3.1](https://github.com/siderolabs/talos/releases/tag/v1.3.1) (2022-12-28)
 
 Welcome to the v1.3.1 release of Talos!
