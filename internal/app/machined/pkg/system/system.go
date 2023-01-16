@@ -6,9 +6,11 @@ package system
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/pkg/conditions"
 )
 
@@ -162,14 +165,30 @@ func (s *singleton) Start(serviceIDs ...string) error {
 		s.wg.Add(1)
 
 		go func(id string, svcrunner *ServiceRunner) {
-			defer func() {
-				s.runningMu.Lock()
-				delete(s.running, id)
-				s.runningMu.Unlock()
-			}()
-			defer s.wg.Done()
+			err := func() error {
+				defer func() {
+					s.runningMu.Lock()
+					delete(s.running, id)
+					s.runningMu.Unlock()
+				}()
+				defer s.wg.Done()
 
-			svcrunner.Start()
+				return svcrunner.Run()
+			}()
+
+			switch {
+			case err == nil:
+				svcrunner.UpdateState(context.Background(), events.StateFinished, "Service finished successfully")
+			case errors.Is(err, ErrSkip):
+				svcrunner.UpdateState(context.Background(), events.StateSkipped, "Service skipped")
+			default:
+				msg := err.Error()
+				if len(msg) > 0 {
+					msg = strings.ToUpper(msg[:1]) + msg[1:]
+				}
+
+				svcrunner.UpdateState(context.Background(), events.StateFailed, msg)
+			}
 		}(id, svcrunner)
 	}
 

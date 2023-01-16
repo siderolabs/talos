@@ -6,6 +6,7 @@ package system
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -182,12 +183,17 @@ func (svcrunner *ServiceRunner) waitFor(ctx context.Context, condition condition
 	}
 }
 
-// Start initializes the service and runs it
+// ErrSkip is returned by Run when service is skipped.
+var ErrSkip = errors.New("service skipped")
+
+// Run initializes the service and runs it.
 //
-// Start should be run in a goroutine.
+// Run returns an error when a service stops.
+//
+// Run should be run in a goroutine.
 //
 //nolint:gocyclo
-func (svcrunner *ServiceRunner) Start() {
+func (svcrunner *ServiceRunner) Run() error {
 	defer func() {
 		// reset context for the next run
 		svcrunner.ctxMu.Lock()
@@ -215,27 +221,21 @@ func (svcrunner *ServiceRunner) Start() {
 
 	if condition != nil {
 		if err := svcrunner.waitFor(ctx, condition); err != nil {
-			svcrunner.UpdateState(ctx, events.StateFailed, "Condition failed: %v", err)
-
-			return
+			return fmt.Errorf("condition failed: %w", err)
 		}
 	}
 
 	svcrunner.UpdateState(ctx, events.StatePreparing, "Running pre state")
 
 	if err := svcrunner.service.PreFunc(ctx, svcrunner.runtime); err != nil {
-		svcrunner.UpdateState(ctx, events.StateFailed, "Failed to run pre stage: %v", err)
-
-		return
+		return fmt.Errorf("failed to run pre stage: %w", err)
 	}
 
 	svcrunner.UpdateState(ctx, events.StatePreparing, "Creating service runner")
 
 	runnr, err := svcrunner.service.Runner(svcrunner.runtime)
 	if err != nil {
-		svcrunner.UpdateState(ctx, events.StateFailed, "Failed to create runner: %v", err)
-
-		return
+		return fmt.Errorf("failed to create runner: %w", err)
 	}
 
 	defer func() {
@@ -248,16 +248,14 @@ func (svcrunner *ServiceRunner) Start() {
 	}()
 
 	if runnr == nil {
-		svcrunner.UpdateState(ctx, events.StateSkipped, "Service skipped")
-
-		return
+		return ErrSkip
 	}
 
 	if err := svcrunner.run(ctx, runnr); err != nil {
-		svcrunner.UpdateState(ctx, events.StateFailed, "Failed running service: %v", err)
-	} else {
-		svcrunner.UpdateState(ctx, events.StateFinished, "Service finished successfully")
+		return fmt.Errorf("failed running service: %w", err)
 	}
+
+	return nil
 }
 
 //nolint:gocyclo

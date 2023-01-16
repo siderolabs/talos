@@ -36,11 +36,10 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 		condition: conditions.None(),
 	}, nil)
 
-	finished := make(chan struct{})
+	errCh := make(chan error)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
@@ -53,38 +52,36 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 	}))
 
 	select {
-	case <-finished:
+	case <-errCh:
 		suite.Require().Fail("service running should be still running")
 	default:
 	}
 
 	sr.Shutdown()
 
-	<-finished
+	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
-		events.StateFinished,
 	}, sr)
 
 	protoService := sr.AsProto()
 	suite.Assert().Equal("MockRunner", protoService.Id)
-	suite.Assert().Equal("Finished", protoService.State)
+	suite.Assert().Equal("Running", protoService.State)
 	suite.Assert().True(protoService.Health.Unknown)
-	suite.Assert().Len(protoService.Events.Events, 5)
+	suite.Assert().Len(protoService.Events.Events, 4)
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 	sr := system.NewServiceRunner(&MockHealthcheckedService{}, nil)
 
-	finished := make(chan struct{})
+	errCh := make(chan error)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
@@ -97,21 +94,20 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 	}))
 
 	select {
-	case <-finished:
+	case <-errCh:
 		suite.Require().Fail("service running should be still running")
 	default:
 	}
 
 	sr.Shutdown()
 
-	<-finished
+	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
 		events.StateRunning, // one more notification when service is healthy
-		events.StateFinished,
 	}, sr)
 }
 
@@ -123,11 +119,10 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 	}
 	sr := system.NewServiceRunner(&m, nil)
 
-	finished := make(chan struct{})
+	errCh := make(chan error)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
@@ -163,7 +158,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 
 	sr.Shutdown()
 
-	<-finished
+	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StateWaiting,
@@ -173,7 +168,6 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 		events.StateRunning, // initial: healthy
 		events.StateRunning, // not healthy
 		events.StateRunning, // once again healthy
-		events.StateFinished,
 	}, sr)
 }
 
@@ -191,11 +185,10 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 		condition: conditions.WaitForAll(cond1, cond2),
 	}, nil)
 
-	finished := make(chan struct{})
+	errCh := make(chan error)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
@@ -208,7 +201,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 	}))
 
 	select {
-	case <-finished:
+	case <-errCh:
 		suite.Require().Fail("service running should be still running")
 	default:
 	}
@@ -226,7 +219,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 	}))
 
 	select {
-	case <-finished:
+	case <-errCh:
 		suite.Require().Fail("service running should be still running")
 	default:
 	}
@@ -244,7 +237,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 
 	sr.Shutdown()
 
-	<-finished
+	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StateWaiting,
@@ -252,7 +245,6 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
-		events.StateFinished,
 	}, sr)
 
 	events := sr.GetEventHistory(10000)
@@ -265,12 +257,12 @@ func (suite *ServiceRunnerSuite) TestPreStageFail() {
 		preError: errors.New("pre failed"),
 	}
 	sr := system.NewServiceRunner(svc, nil)
-	sr.Start()
+	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StatePreparing,
-		events.StateFailed,
 	}, sr)
+	suite.Assert().EqualError(err, "failed to run pre stage: pre failed")
 }
 
 func (suite *ServiceRunnerSuite) TestRunnerStageFail() {
@@ -278,13 +270,13 @@ func (suite *ServiceRunnerSuite) TestRunnerStageFail() {
 		runnerError: errors.New("runner failed"),
 	}
 	sr := system.NewServiceRunner(svc, nil)
-	sr.Start()
+	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StatePreparing,
 		events.StatePreparing,
-		events.StateFailed,
 	}, sr)
+	suite.Assert().EqualError(err, "failed to create runner: runner failed")
 }
 
 func (suite *ServiceRunnerSuite) TestRunnerStageSkipped() {
@@ -292,13 +284,13 @@ func (suite *ServiceRunnerSuite) TestRunnerStageSkipped() {
 		nilRunner: true,
 	}
 	sr := system.NewServiceRunner(svc, nil)
-	sr.Start()
+	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StatePreparing,
 		events.StatePreparing,
-		events.StateSkipped,
 	}, sr)
+	suite.Assert().ErrorIs(err, system.ErrSkip)
 }
 
 func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
@@ -307,11 +299,10 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 	}
 	sr := system.NewServiceRunner(svc, nil)
 
-	finished := make(chan struct{})
+	errCh := make(chan error)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
@@ -324,18 +315,17 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 	}))
 
 	select {
-	case <-finished:
+	case <-errCh:
 		suite.Require().Fail("service running should be still running")
 	default:
 	}
 
 	sr.Shutdown()
 
-	<-finished
+	suite.Assert().EqualError(<-errCh, "condition failed: context canceled")
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StateWaiting,
-		events.StateFailed,
 	}, sr)
 }
 
@@ -346,23 +336,21 @@ func (suite *ServiceRunnerSuite) TestPostStateFail() {
 	}
 	sr := system.NewServiceRunner(svc, nil)
 
-	finished := make(chan struct{})
+	errCh := make(chan error)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	sr.Shutdown()
 
-	<-finished
+	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
-		events.StateFinished,
 		events.StateFailed,
 	}, sr)
 }
@@ -372,22 +360,20 @@ func (suite *ServiceRunnerSuite) TestRunFail() {
 	svc := &MockService{runner: runner}
 	sr := system.NewServiceRunner(svc, nil)
 
-	finished := make(chan struct{})
+	errCh := make(chan error)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	runner.exitCh <- errors.New("run failed")
 
-	<-finished
+	suite.Assert().EqualError(<-errCh, "failed running service: error running service: run failed")
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
-		events.StateFailed,
 	}, sr)
 }
 
@@ -396,11 +382,10 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 		condition: conditions.None(),
 	}, nil)
 
-	finished := make(chan struct{})
+	errCh := make(chan error)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
@@ -413,20 +398,17 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 	}))
 
 	select {
-	case <-finished:
+	case <-errCh:
 		suite.Require().Fail("service running should be still running")
 	default:
 	}
 
 	sr.Shutdown()
 
-	<-finished
-
-	finished = make(chan struct{})
+	suite.Assert().NoError(<-errCh)
 
 	go func() {
-		defer close(finished)
-		sr.Start()
+		errCh <- sr.Run()
 	}()
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
@@ -439,26 +421,24 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 	}))
 
 	select {
-	case <-finished:
+	case <-errCh:
 		suite.Require().Fail("service running should be still running")
 	default:
 	}
 
 	sr.Shutdown()
 
-	<-finished
+	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
-		events.StateFinished,
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
-		events.StateFinished,
 	}, sr)
 }
 
