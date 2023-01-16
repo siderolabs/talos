@@ -44,7 +44,7 @@ require (
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.22+incompatible
 	github.com/docker/go-connections v0.4.0
-	github.com/dustin/go-humanize v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.2.0
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.6.0
