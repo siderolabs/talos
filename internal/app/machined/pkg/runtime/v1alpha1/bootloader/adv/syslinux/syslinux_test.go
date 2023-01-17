@@ -324,3 +324,31 @@ func TestADV_tail(t *testing.T) {
 		})
 	}
 }
+
+func TestADV_overwrite(t *testing.T) {
+	buf := make([]byte, 2*AdvSize)
+
+	a, err := NewADV(bytes.NewReader(buf))
+	if err != nil {
+		t.Errorf("NewADV() failed: %s", err)
+	}
+
+	for i := 0; i < 1024; i++ {
+		if !a.SetTag(adv.Bootonce, "yes") {
+			t.Errorf("SetTag() failed")
+		}
+	}
+}
+
+func TestADV_many_tags(t *testing.T) {
+	buf := make([]byte, 2*AdvSize)
+
+	a, err := NewADV(bytes.NewReader(buf))
+	if err != nil {
+		t.Errorf("NewADV() failed: %s", err)
+	}
+
+	for i := uint8(1); i < 255; i++ {
+		a.SetTag(i, "xa")
+	}
+}

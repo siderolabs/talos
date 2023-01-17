@@ -101,6 +101,9 @@ func (a ADV) SetTagBytes(t uint8, val []byte) (ok bool) {
 		return false
 	}
 
+	// delete the tag if it exists
+	a.DeleteTag(t)
+
 	// Header is in first 8 bytes.
 	i := 8
 
@@ -116,13 +119,17 @@ func (a ADV) SetTagBytes(t uint8, val []byte) (ok bool) {
 			continue
 		}
 
+		// overflow check
+		if i+2+len(val) > AdvSize-4-2 {
+			return false
+		}
+
 		length := uint8(len(val))
 
 		a[i] = t
-
 		a[i+1] = length
 
-		copy(a[i+2:uint8(i+2)+length], val)
+		copy(a[i+2:i+2+int(length)], val)
 
 		ok = true
 
