@@ -18,7 +18,7 @@ import (
 	"strings"
 	"text/template"
 
-	yaml "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 	"mvdan.cc/gofumpt/format"
 )
 
@@ -142,10 +142,11 @@ type Field struct {
 }
 
 type Text struct {
-	Comment     string     `json:"-"`
-	Description string     `json:"description"`
-	Examples    []*Example `json:"examples"`
-	Values      []string   `json:"values"`
+	Comment     string         `json:"-"`
+	Description string         `json:"description"`
+	Examples    []*Example     `json:"examples"`
+	Values      []string       `json:"values"`
+	Schema      *SchemaWrapper `json:"schema"`
 }
 
 func in(p string) (string, error) {
@@ -402,28 +403,29 @@ func render(doc *Doc, dest string) {
 
 	err := t.Execute(&buf, doc)
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to render template: %v", err)
 	}
 
 	formatted, err := format.Source(buf.Bytes(), format.Options{})
 	if err != nil {
 		log.Printf("data: %s", buf.Bytes())
-		panic(err)
+		log.Fatalf("failed to format source: %v", err)
 	}
 
 	out, err := out(dest)
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to create output file: %v", err)
 	}
 	defer out.Close()
+
 	_, err = out.Write(formatted)
 
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to write output file: %v", err)
 	}
 }
 
-func processFile(inputFile, outputFile, typeName string) {
+func processFile(inputFile, outputFile, schemaOutputFile, versionTagFile, typeName string) {
 	abs, err := in(inputFile)
 	if err != nil {
 		log.Fatal(err)
@@ -511,18 +513,24 @@ func processFile(inputFile, outputFile, typeName string) {
 
 	doc.File = outputFile
 	render(doc, outputFile)
+
+	if schemaOutputFile != "" {
+		renderSchema(doc, schemaOutputFile, versionTagFile)
+	}
 }
 
 func main() {
 	flag.Parse()
 
-	if flag.NArg() != 3 {
-		log.Fatalf("expected 3 args, got %d", flag.NArg())
+	if flag.NArg() != 3 && flag.NArg() != 5 {
+		log.Fatalf("unexpected number of args: %d", flag.NArg())
 	}
 
 	inputFile := flag.Arg(0)
 	outputFile := flag.Arg(1)
 	typeName := flag.Arg(2)
+	jsonSchemaOutputFile := flag.Arg(3)
+	versionTagFile := flag.Arg(4)
 
-	processFile(inputFile, outputFile, typeName)
+	processFile(inputFile, outputFile, jsonSchemaOutputFile, versionTagFile, typeName)
 }

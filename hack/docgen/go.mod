@@ -7,7 +7,11 @@ go 1.19
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20210315173758-8fb30b8e5a5b
 
 require (
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0
+	github.com/invopop/jsonschema v0.7.0
+	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1
+	github.com/siderolabs/gen v0.4.3
+	gopkg.in/yaml.v3 v3.0.1
 	mvdan.cc/gofumpt v0.4.0
 )
 

@@ -818,6 +818,7 @@ WORKDIR /src
 COPY --from=talosctl-linux /talosctl-linux-amd64 /bin/talosctl
 RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp \
     && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
+COPY ./pkg/machinery/config/types/v1alpha1/schemas/ /tmp/schemas/
 
 FROM pseudomuto/protoc-gen-doc as proto-docs-build
 COPY --from=generate-build /api /protos
@@ -847,6 +848,7 @@ RUN protoc \
 FROM scratch AS docs
 COPY --from=docs-build /tmp/configuration.md /website/content/v1.4/reference/
 COPY --from=docs-build /tmp/cli.md /website/content/v1.4/reference/
+COPY --from=docs-build /tmp/schemas /website/content/v1.4/schemas/
 COPY --from=proto-docs-build /tmp/api.md /website/content/v1.4/reference/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.

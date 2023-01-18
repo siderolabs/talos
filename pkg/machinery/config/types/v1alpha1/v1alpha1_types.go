@@ -13,7 +13,7 @@ This will generate a machine config for each node type, and a talosconfig for th
 */
 package v1alpha1
 
-//go:generate docgen ./v1alpha1_types.go ./v1alpha1_types_doc.go Configuration
+//go:generate docgen ./v1alpha1_types.go ./v1alpha1_types_doc.go Configuration ./schemas/v1alpha1_config.schema.json ../../../gendata/data/tag
 
 //go:generate deepcopy-gen --input-dirs ../v1alpha1/ --go-header-file ../../../../../hack/boilerplate.txt --bounding-dirs ../v1alpha1 -O zz_generated.deepcopy
 
@@ -26,12 +26,12 @@ import (
 	"strings"
 	"time"
 
-	humanize "github.com/dustin/go-humanize"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/dustin/go-humanize"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/siderolabs/go-pointer"
-	yaml "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
@@ -686,6 +686,14 @@ type MachineConfig struct {
 	//   examples:
 	//     - value: pemEncodedCertificateExample
 	//       name: machine CA example
+	//   schema:
+	//     type: object
+	//     additionalProperties: false
+	//     properties:
+	//       crt:
+	//         type: string
+	//       key:
+	//         type: string
 	MachineCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
 	//   description: |
 	//     Extra certificate subject alternative names for the machine's certificate.
@@ -717,6 +725,10 @@ type MachineConfig struct {
 	//   examples:
 	//     - name: nginx static pod.
 	//       value: machinePodsExample
+	//   schema:
+	//     type: array
+	//     items:
+	//       type: object
 	MachinePods []Unstructured `yaml:"pods,omitempty"`
 	//   description: |
 	//     Provides machine specific network configuration options.
@@ -764,6 +776,11 @@ type MachineConfig struct {
 	//       value: machineEnvExamples[0]
 	//     - value: machineEnvExamples[1]
 	//     - value: machineEnvExamples[2]
+	//   schema:
+	//     type: object
+	//     patternProperties:
+	//       ".*":
+	//         type: string
 	MachineEnv Env `yaml:"env,omitempty"`
 	//   description: |
 	//     Used to configure the machine's time settings.
@@ -845,6 +862,8 @@ type MachineSeccompProfile struct {
 	MachineSeccompProfileName string `yaml:"name"`
 	// description: |
 	//   The `value` field is used to provide the seccomp profile.
+	// schema:
+	//   type: object
 	MachineSeccompProfileValue Unstructured `yaml:"value"`
 }
 
@@ -907,6 +926,14 @@ type ClusterConfig struct {
 	//   examples:
 	//     - name: ClusterCA example.
 	//       value: pemEncodedCertificateExample
+	//   schema:
+	//     type: object
+	//     additionalProperties: false
+	//     properties:
+	//       crt:
+	//         type: string
+	//       key:
+	//         type: string
 	ClusterCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
 	//   description: |
 	//     The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.
@@ -915,12 +942,27 @@ type ClusterConfig struct {
 	//   examples:
 	//     - name: AggregatorCA example.
 	//       value: pemEncodedCertificateExample
+	//   schema:
+	//     type: object
+	//     additionalProperties: false
+	//     properties:
+	//       crt:
+	//         type: string
+	//       key:
+	//         type: string
 	ClusterAggregatorCA *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA,omitempty"`
 	//   description: |
 	//     The base64 encoded private key for service account token generation.
 	//   examples:
 	//     - name: AggregatorCA example.
 	//       value: pemEncodedKeyExample
+	//   schema:
+	//     type: object
+	//     additionalProperties: false
+	//     properties:
+	//       key:
+	//         type: string
+	//         additionalProperties: false
 	ClusterServiceAccount *x509.PEMEncodedKey `yaml:"serviceAccount,omitempty"`
 	//   description: |
 	//     API server specific configuration options.
@@ -986,6 +1028,10 @@ type ClusterConfig struct {
 	//     These will get automatically deployed as part of the bootstrap.
 	//   examples:
 	//     - value: clusterInlineManifestsExample
+	//   schema:
+	//     type: array
+	//     items:
+	//       $ref: "#/$defs/ClusterInlineManifest"
 	ClusterInlineManifests ClusterInlineManifests `yaml:"inlineManifests,omitempty" talos:"omitonlyifnil"`
 	//   description: |
 	//     Settings for admin kubeconfig generation.
@@ -1086,6 +1132,8 @@ type KubeletConfig struct {
 	//     configuration, ports, etc.
 	//   examples:
 	//     - value: kubeletExtraConfigExample
+	//   schema:
+	//     type: object
 	KubeletExtraConfig Unstructured `yaml:"extraConfig,omitempty"`
 	//  description: |
 	//    Enable container runtime default Seccomp profile.
@@ -1377,7 +1425,7 @@ func (it InstallDiskType) MarshalYAML() (interface{}, error) {
 	return disk.Type(it).String(), nil
 }
 
-// UnmarshalYAML is a custom unmarshaller for `Endpoint`.
+// UnmarshalYAML is a custom unmarshaler for `InstallDiskType`.
 func (it *InstallDiskType) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var (
 		t   string
@@ -1407,6 +1455,8 @@ type InstallDiskSelector struct {
 	//       value: machineInstallDiskSizeMatcherExamples[1]
 	//     - name: Select a disk which size is less or equal than 2TB.
 	//       value: machineInstallDiskSizeMatcherExamples[2]
+	//   schema:
+	//     type: string
 	Size *InstallDiskSizeMatcher `yaml:"size,omitempty"`
 	//   description: Disk name `/sys/block/<dev>/device/name`.
 	Name string `yaml:"name,omitempty"`
@@ -1454,6 +1504,9 @@ type TimeConfig struct {
 	//     Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
 	//     NTP sync will be still running in the background.
 	//     Defaults to "infinity" (waiting forever for time sync)
+	//   schema:
+	//     type: string
+	//     pattern: ^[-+]?(((\d+(\.\d*)?|\d*(\.\d+)+)([nuµm]?s|m|h))|0)+$
 	TimeBootTimeout time.Duration `yaml:"bootTimeout,omitempty"`
 }
 
@@ -1556,6 +1609,10 @@ type ControlPlaneConfig struct {
 	//   examples:
 	//     - value: clusterEndpointExample1
 	//     - value: clusterEndpointExample2
+	//   schema:
+	//     type: string
+	//     format: uri
+	//     pattern: "^https://"
 	Endpoint *Endpoint `yaml:"endpoint"`
 	//   description: |
 	//     The port that the API server listens on internally.
@@ -1581,6 +1638,11 @@ type APIServerConfig struct {
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
 	//   description: |
 	//     The `env` field allows for the addition of environment variables for the control plane component.
+	//   schema:
+	//     type: object
+	//     patternProperties:
+	//       ".*":
+	//         type: string
 	EnvConfig Env `yaml:"env,omitempty"`
 	//   description: |
 	//     Extra certificate subject alternative names for the API server's certificate.
@@ -1597,6 +1659,8 @@ type APIServerConfig struct {
 	//     Configure the API server audit policy.
 	//   examples:
 	//     - value: APIServerDefaultAuditPolicy
+	//   schema:
+	//     type: object
 	AuditPolicyConfig Unstructured `yaml:"auditPolicy,omitempty"`
 }
 
@@ -1650,6 +1714,8 @@ type AdmissionPluginConfig struct {
 	//   description: |
 	//     Configuration is an embedded configuration object to be used as the plugin's
 	//     configuration.
+	//   schema:
+	//     type: object
 	PluginConfiguration Unstructured `yaml:"configuration"`
 }
 
@@ -1670,6 +1736,11 @@ type ControllerManagerConfig struct {
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
 	//   description: |
 	//     The `env` field allows for the addition of environment variables for the control plane component.
+	//   schema:
+	//     type: object
+	//     patternProperties:
+	//       ".*":
+	//         type: string
 	EnvConfig Env `yaml:"env,omitempty"`
 }
 
@@ -1711,6 +1782,11 @@ type SchedulerConfig struct {
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
 	//   description: |
 	//     The `env` field allows for the addition of environment variables for the control plane component.
+	//   schema:
+	//     type: object
+	//     patternProperties:
+	//       ".*":
+	//         type: string
 	EnvConfig Env `yaml:"env,omitempty"`
 }
 
@@ -1728,6 +1804,14 @@ type EtcdConfig struct {
 	//     It is composed of a base64 encoded `crt` and `key`.
 	//   examples:
 	//     - value: pemEncodedCertificateExample
+	//   schema:
+	//     type: object
+	//     additionalProperties: false
+	//     properties:
+	//       crt:
+	//         type: string
+	//       key:
+	//         type: string
 	RootCA *x509.PEMEncodedCertificateAndKey `yaml:"ca"`
 	//   description: |
 	//     Extra arguments to supply to etcd.
@@ -1856,6 +1940,9 @@ type AdminKubeconfigConfig struct {
 	//   description: |
 	//     Admin kubeconfig certificate lifetime (default is 1 year).
 	//     Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
+	//   schema:
+	//     type: string
+	//     pattern: ^[-+]?(((\d+(\.\d*)?|\d*(\.\d+)+)([nuµm]?s|m|h))|0)+$
 	AdminKubeconfigCertLifetime time.Duration `yaml:"certLifetime,omitempty"`
 }
 
@@ -1914,6 +2001,8 @@ type DiskPartition struct {
 	//       value: DiskSize(100000000)
 	//     - name: Precise value in bytes.
 	//       value: 1024 * 1024 * 1024
+	//   schema:
+	//     type: integer
 	DiskSize DiskSize `yaml:"size,omitempty"`
 	//   description:
 	//     Where to mount the partition.
@@ -2008,6 +2097,8 @@ type MachineFile struct {
 	//   description: The contents of the file.
 	FileContent string `yaml:"content"`
 	//   description: The file's permissions in octal.
+	//   schema:
+	//     type: integer
 	FilePermissions FileMode `yaml:"permissions"`
 	//   description: The path of the file.
 	FilePath string `yaml:"path"`
@@ -2150,6 +2241,9 @@ type DeviceWireguardPeer struct {
 	//   description: |
 	//     Specifies the persistent keepalive interval for this peer.
 	//     Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
+	//   schema:
+	//     type: string
+	//     pattern: ^[-+]?(((\d+(\.\d*)?|\d*(\.\d+)+)([nuµm]?s|m|h))|0)+$
 	WireguardPersistentKeepaliveInterval time.Duration `yaml:"persistentKeepaliveInterval,omitempty"`
 	//   description: AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
 	WireguardAllowedIPs []string `yaml:"allowedIPs,omitempty"`
@@ -2398,10 +2492,20 @@ type RegistryTLSConfig struct {
 	//     Client certificate and key should be base64-encoded.
 	//   examples:
 	//     - value: pemEncodedCertificateExample
+	//   schema:
+	//     type: object
+	//     additionalProperties: false
+	//     properties:
+	//       crt:
+	//         type: string
+	//       key:
+	//         type: string
 	TLSClientIdentity *x509.PEMEncodedCertificateAndKey `yaml:"clientIdentity,omitempty"`
 	//   description: |
 	//     CA registry certificate to add the list of trusted certificates.
 	//     Certificate should be base64-encoded.
+	//   schema:
+	//     type: string
 	TLSCA Base64Bytes `yaml:"ca,omitempty"`
 	//   description: |
 	//     Skip TLS server certificate verification (not recommended).

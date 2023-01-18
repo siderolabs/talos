@@ -1,0 +1,2144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://talos.dev/v1.4/schemas/v1alpha1_config.schema.json",
+  "$ref": "#/$defs/Config",
+  "$defs": {
+    "APIServerConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the API server manifest."
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to the API server."
+        },
+        "extraVolumes": {
+          "items": {
+            "$ref": "#/$defs/VolumeMountConfig"
+          },
+          "type": "array",
+          "title": "extraVolumes",
+          "description": "Extra volumes to mount to the API server static pod."
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The `env` field allows for the addition of environment variables for the control plane component."
+        },
+        "certSANs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "certSANs",
+          "description": "Extra certificate subject alternative names for the API server's certificate."
+        },
+        "disablePodSecurityPolicy": {
+          "type": "boolean",
+          "title": "disablePodSecurityPolicy",
+          "description": "Disable PodSecurityPolicy in the API server and default manifests."
+        },
+        "admissionControl": {
+          "items": {
+            "$ref": "#/$defs/AdmissionPluginConfig"
+          },
+          "type": "array",
+          "title": "admissionControl",
+          "description": "Configure the API server admission plugins."
+        },
+        "auditPolicy": {
+          "type": "object",
+          "title": "auditPolicy",
+          "description": "Configure the API server audit policy."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "AdminKubeconfigConfig": {
+      "properties": {
+        "certLifetime": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "certLifetime",
+          "description": "Admin kubeconfig certificate lifetime (default is 1 year).\nField format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes)."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "AdmissionPluginConfig": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name is the name of the admission controller.\nIt must match the registered admission plugin name."
+        },
+        "configuration": {
+          "type": "object",
+          "title": "configuration",
+          "description": "Configuration is an embedded configuration object to be used as the plugin's\nconfiguration."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Bond": {
+      "properties": {
+        "interfaces": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "interfaces",
+          "description": "The interfaces that make up the bond."
+        },
+        "arpIPTarget": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "arpIPTarget",
+          "description": "A bond option.\nPlease see the official kernel documentation.\nNot supported at the moment."
+        },
+        "mode": {
+          "type": "string",
+          "title": "mode",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "xmitHashPolicy": {
+          "type": "string",
+          "title": "xmitHashPolicy",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "lacpRate": {
+          "type": "string",
+          "title": "lacpRate",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "adActorSystem": {
+          "type": "string",
+          "title": "adActorSystem",
+          "description": "A bond option.\nPlease see the official kernel documentation.\nNot supported at the moment."
+        },
+        "arpValidate": {
+          "type": "string",
+          "title": "arpValidate",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "arpAllTargets": {
+          "type": "string",
+          "title": "arpAllTargets",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "primary": {
+          "type": "string",
+          "title": "primary",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "primaryReselect": {
+          "type": "string",
+          "title": "primaryReselect",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "failOverMac": {
+          "type": "string",
+          "title": "failOverMac",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "adSelect": {
+          "type": "string",
+          "title": "adSelect",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "miimon": {
+          "type": "integer",
+          "title": "miimon",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "updelay": {
+          "type": "integer",
+          "title": "updelay",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "downdelay": {
+          "type": "integer",
+          "title": "downdelay",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "arpInterval": {
+          "type": "integer",
+          "title": "arpInterval",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "resendIgmp": {
+          "type": "integer",
+          "title": "resendIgmp",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "minLinks": {
+          "type": "integer",
+          "title": "minLinks",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "lpInterval": {
+          "type": "integer",
+          "title": "lpInterval",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "packetsPerSlave": {
+          "type": "integer",
+          "title": "packetsPerSlave",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "numPeerNotif": {
+          "type": "integer",
+          "title": "numPeerNotif",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "tlbDynamicLb": {
+          "type": "integer",
+          "title": "tlbDynamicLb",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "allSlavesActive": {
+          "type": "integer",
+          "title": "allSlavesActive",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "useCarrier": {
+          "type": "boolean",
+          "title": "useCarrier",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "adActorSysPrio": {
+          "type": "integer",
+          "title": "adActorSysPrio",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "adUserPortKey": {
+          "type": "integer",
+          "title": "adUserPortKey",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        },
+        "peerNotifyDelay": {
+          "type": "integer",
+          "title": "peerNotifyDelay",
+          "description": "A bond option.\nPlease see the official kernel documentation."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Bridge": {
+      "properties": {
+        "interfaces": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "interfaces",
+          "description": "The interfaces that make up the bridge."
+        },
+        "stp": {
+          "$ref": "#/$defs/STP",
+          "title": "stp",
+          "description": "A bridge option.\nPlease see the official kernel documentation."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "CNIConfig": {
+      "properties": {
+        "name": {
+          "enum": [
+            "flannel",
+            "custom",
+            "none"
+          ],
+          "title": "name",
+          "description": "Name of CNI to use."
+        },
+        "urls": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "urls",
+          "description": "URLs containing manifests to apply for the CNI.\nShould be present for \"custom\", must be empty for \"flannel\" and \"none\"."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ClusterConfig": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "id",
+          "description": "Globally unique identifier for this cluster (base64 encoded random 32 bytes)."
+        },
+        "secret": {
+          "type": "string",
+          "title": "secret",
+          "description": "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network."
+        },
+        "controlPlane": {
+          "$ref": "#/$defs/ControlPlaneConfig",
+          "title": "controlPlane",
+          "description": "Provides control plane specific configuration options."
+        },
+        "clusterName": {
+          "type": "string",
+          "title": "clusterName",
+          "description": "Configures the cluster's name."
+        },
+        "network": {
+          "$ref": "#/$defs/ClusterNetworkConfig",
+          "title": "network",
+          "description": "Provides cluster specific network configuration options."
+        },
+        "token": {
+          "type": "string",
+          "title": "token",
+          "description": "The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster."
+        },
+        "aescbcEncryptionSecret": {
+          "type": "string",
+          "title": "aescbcEncryptionSecret",
+          "description": "description: |\n    A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).\n  examples:\n    - name: Decryption secret example (do not use in production!).\n    Enables encryption with AESCBC.\n      value: '\"z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=\"'"
+        },
+        "secretboxEncryptionSecret": {
+          "type": "string",
+          "title": "secretboxEncryptionSecret",
+          "description": "A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).\nEnables encryption with secretbox.\nSecretbox has precedence over AESCBC."
+        },
+        "ca": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "ca",
+          "description": "The base64 encoded root certificate authority used by Kubernetes."
+        },
+        "aggregatorCA": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "aggregatorCA",
+          "description": "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\n\nThis CA can be self-signed."
+        },
+        "serviceAccount": {
+          "properties": {
+            "key": {
+              "additionalProperties": false,
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "serviceAccount",
+          "description": "The base64 encoded private key for service account token generation."
+        },
+        "apiServer": {
+          "$ref": "#/$defs/APIServerConfig",
+          "title": "apiServer",
+          "description": "API server specific configuration options."
+        },
+        "controllerManager": {
+          "$ref": "#/$defs/ControllerManagerConfig",
+          "title": "controllerManager",
+          "description": "Controller manager server specific configuration options."
+        },
+        "proxy": {
+          "$ref": "#/$defs/ProxyConfig",
+          "title": "proxy",
+          "description": "Kube-proxy server-specific configuration options"
+        },
+        "scheduler": {
+          "$ref": "#/$defs/SchedulerConfig",
+          "title": "scheduler",
+          "description": "Scheduler server specific configuration options."
+        },
+        "discovery": {
+          "$ref": "#/$defs/ClusterDiscoveryConfig",
+          "title": "discovery",
+          "description": "Configures cluster member discovery."
+        },
+        "etcd": {
+          "$ref": "#/$defs/EtcdConfig",
+          "title": "etcd",
+          "description": "Etcd specific configuration options."
+        },
+        "coreDNS": {
+          "$ref": "#/$defs/CoreDNS",
+          "title": "coreDNS",
+          "description": "Core DNS specific configuration options."
+        },
+        "externalCloudProvider": {
+          "$ref": "#/$defs/ExternalCloudProviderConfig",
+          "title": "externalCloudProvider",
+          "description": "External cloud provider configuration."
+        },
+        "extraManifests": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "extraManifests",
+          "description": "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap."
+        },
+        "extraManifestHeaders": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraManifestHeaders",
+          "description": "A map of key value pairs that will be added while fetching the extraManifests."
+        },
+        "inlineManifests": {
+          "items": {
+            "$ref": "#/$defs/ClusterInlineManifest"
+          },
+          "type": "array",
+          "title": "inlineManifests",
+          "description": "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap."
+        },
+        "adminKubeconfig": {
+          "$ref": "#/$defs/AdminKubeconfigConfig",
+          "title": "adminKubeconfig",
+          "description": "Settings for admin kubeconfig generation.\nCertificate lifetime can be configured."
+        },
+        "allowSchedulingOnControlPlanes": {
+          "type": "boolean",
+          "title": "allowSchedulingOnControlPlanes",
+          "description": "Allows running workload on control-plane nodes."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ClusterDiscoveryConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field."
+        },
+        "registries": {
+          "$ref": "#/$defs/DiscoveryRegistriesConfig",
+          "title": "registries",
+          "description": "Configure registries used for cluster member discovery."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ClusterInlineManifest": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the manifest.\nName should be unique."
+        },
+        "contents": {
+          "type": "string",
+          "title": "contents",
+          "description": "Manifest contents as a string."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ClusterNetworkConfig": {
+      "properties": {
+        "cni": {
+          "$ref": "#/$defs/CNIConfig",
+          "title": "cni",
+          "description": "The CNI used.\nComposed of \"name\" and \"urls\".\nThe \"name\" key supports the following options: \"flannel\", \"custom\", and \"none\".\n\"flannel\" uses Talos-managed Flannel CNI, and that's the default option.\n\"custom\" uses custom manifests that should be provided in \"urls\".\n\"none\" indicates that Talos will not manage any CNI installation."
+        },
+        "dnsDomain": {
+          "type": "string",
+          "title": "dnsDomain",
+          "description": "The domain used by Kubernetes DNS.\nThe default is `cluster.local`"
+        },
+        "podSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "podSubnets",
+          "description": "The pod subnet CIDR."
+        },
+        "serviceSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "serviceSubnets",
+          "description": "The service subnet CIDR."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Config": {
+      "properties": {
+        "version": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "version",
+          "description": "Indicates the schema used to decode the contents."
+        },
+        "debug": {
+          "type": "boolean",
+          "title": "debug",
+          "description": "Enable verbose logging to the console.\nAll system containers logs will flow into serial console.\n\n**Note:** To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput."
+        },
+        "persist": {
+          "type": "boolean",
+          "title": "persist",
+          "description": "Indicates whether to pull the machine config upon every boot."
+        },
+        "machine": {
+          "$ref": "#/$defs/MachineConfig",
+          "title": "machine",
+          "description": "Provides machine specific configuration options."
+        },
+        "cluster": {
+          "$ref": "#/$defs/ClusterConfig",
+          "title": "cluster",
+          "description": "Provides cluster specific configuration options."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ControlPlaneConfig": {
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "pattern": "^https://",
+          "format": "uri",
+          "title": "endpoint",
+          "description": "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number."
+        },
+        "localAPIServerPort": {
+          "type": "integer",
+          "title": "localAPIServerPort",
+          "description": "The port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is `6443`."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ControllerManagerConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the controller manager manifest."
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to the controller manager."
+        },
+        "extraVolumes": {
+          "items": {
+            "$ref": "#/$defs/VolumeMountConfig"
+          },
+          "type": "array",
+          "title": "extraVolumes",
+          "description": "Extra volumes to mount to the controller manager static pod."
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The `env` field allows for the addition of environment variables for the control plane component."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "CoreDNS": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable coredns deployment on cluster bootstrap."
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The `image` field is an override to the default coredns image."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DHCPOptions": {
+      "properties": {
+        "routeMetric": {
+          "type": "integer",
+          "title": "routeMetric",
+          "description": "The priority of all routes received via DHCP."
+        },
+        "ipv4": {
+          "type": "boolean",
+          "title": "ipv4",
+          "description": "Enables DHCPv4 protocol for the interface (default is enabled)."
+        },
+        "ipv6": {
+          "type": "boolean",
+          "title": "ipv6",
+          "description": "Enables DHCPv6 protocol for the interface (default is disabled)."
+        },
+        "duidv6": {
+          "type": "string",
+          "title": "duidv6",
+          "description": "Set client DUID (hex string)."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Device": {
+      "properties": {
+        "interface": {
+          "type": "string",
+          "title": "interface",
+          "description": "The interface name.\nMutually exclusive with `deviceSelector`."
+        },
+        "deviceSelector": {
+          "$ref": "#/$defs/NetworkDeviceSelector",
+          "title": "deviceSelector",
+          "description": "Picks a network device using the selector.\nMutually exclusive with `interface`.\nSupports partial match using wildcard syntax."
+        },
+        "addresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "Assigns static IP addresses to the interface.\nAn address can be specified either in proper CIDR notation or as a standalone address (netmask of all ones is assumed)."
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/Route"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "A list of routes associated with the interface.\nIf used in combination with DHCP, these routes will be appended to routes returned by DHCP server."
+        },
+        "bond": {
+          "$ref": "#/$defs/Bond",
+          "title": "bond",
+          "description": "Bond specific options."
+        },
+        "bridge": {
+          "$ref": "#/$defs/Bridge",
+          "title": "bridge",
+          "description": "Bridge specific options."
+        },
+        "vlans": {
+          "items": {
+            "$ref": "#/$defs/Vlan"
+          },
+          "type": "array",
+          "title": "vlans",
+          "description": "VLAN specific options."
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "The interface's MTU.\nIf used in combination with DHCP, this will override any MTU settings returned from DHCP server."
+        },
+        "dhcp": {
+          "type": "boolean",
+          "title": "dhcp",
+          "description": "Indicates if DHCP should be used to configure the interface.\nThe following DHCP options are supported:\n\n- `OptionClasslessStaticRoute`\n- `OptionDomainNameServer`\n- `OptionDNSDomainSearchList`\n- `OptionHostName`"
+        },
+        "ignore": {
+          "type": "boolean",
+          "title": "ignore",
+          "description": "Indicates if the interface should be ignored (skips configuration)."
+        },
+        "dummy": {
+          "type": "boolean",
+          "title": "dummy",
+          "description": "Indicates if the interface is a dummy interface.\n`dummy` is used to specify that this interface should be a virtual-only, dummy interface."
+        },
+        "dhcpOptions": {
+          "$ref": "#/$defs/DHCPOptions",
+          "title": "dhcpOptions",
+          "description": "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
+        },
+        "wireguard": {
+          "$ref": "#/$defs/DeviceWireguardConfig",
+          "title": "wireguard",
+          "description": "Wireguard specific configuration.\nIncludes things like private key, listen port, peers."
+        },
+        "vip": {
+          "$ref": "#/$defs/DeviceVIPConfig",
+          "title": "vip",
+          "description": "Virtual (shared) IP address configuration."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DeviceVIPConfig": {
+      "properties": {
+        "ip": {
+          "type": "string",
+          "title": "ip",
+          "description": "Specifies the IP address to be used."
+        },
+        "equinixMetal": {
+          "$ref": "#/$defs/VIPEquinixMetalConfig",
+          "title": "equinixMetal",
+          "description": "Specifies the Equinix Metal API settings to assign VIP to the node."
+        },
+        "hcloud": {
+          "$ref": "#/$defs/VIPHCloudConfig",
+          "title": "hcloud",
+          "description": "Specifies the Hetzner Cloud API settings to assign VIP to the node."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DeviceWireguardConfig": {
+      "properties": {
+        "privateKey": {
+          "type": "string",
+          "title": "privateKey",
+          "description": "Specifies a private key configuration (base64 encoded).\nCan be generated by `wg genkey`."
+        },
+        "listenPort": {
+          "type": "integer",
+          "title": "listenPort",
+          "description": "Specifies a device's listening port."
+        },
+        "firewallMark": {
+          "type": "integer",
+          "title": "firewallMark",
+          "description": "Specifies a device's firewall mark."
+        },
+        "peers": {
+          "items": {
+            "$ref": "#/$defs/DeviceWireguardPeer"
+          },
+          "type": "array",
+          "title": "peers",
+          "description": "Specifies a list of peer configurations to apply to a device."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DeviceWireguardPeer": {
+      "properties": {
+        "publicKey": {
+          "type": "string",
+          "title": "publicKey",
+          "description": "Specifies the public key of this peer.\nCan be extracted from private key by running `wg pubkey \u003c private.key \u003e public.key \u0026\u0026 cat public.key`."
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint",
+          "description": "Specifies the endpoint of this peer entry."
+        },
+        "persistentKeepaliveInterval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "persistentKeepaliveInterval",
+          "description": "Specifies the persistent keepalive interval for this peer.\nField format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes)."
+        },
+        "allowedIPs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "allowedIPs",
+          "description": "AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DiscoveryRegistriesConfig": {
+      "properties": {
+        "kubernetes": {
+          "$ref": "#/$defs/RegistryKubernetesConfig",
+          "title": "kubernetes",
+          "description": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources."
+        },
+        "service": {
+          "$ref": "#/$defs/RegistryServiceConfig",
+          "title": "service",
+          "description": "Service registry is using an external service to push and pull information about cluster members."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "DiskPartition": {
+      "properties": {
+        "size": {
+          "type": "integer",
+          "title": "size",
+          "description": "The size of partition: either bytes or human readable representation. If `size:` is omitted, the partition is sized to occupy the full disk."
+        },
+        "mountpoint": {
+          "type": "string",
+          "title": "mountpoint",
+          "description": "Where to mount the partition."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionConfig": {
+      "properties": {
+        "provider": {
+          "type": "string",
+          "title": "provider",
+          "description": "Encryption provider to use for the encryption."
+        },
+        "keys": {
+          "items": {
+            "$ref": "#/$defs/EncryptionKey"
+          },
+          "type": "array",
+          "title": "keys",
+          "description": "Defines the encryption keys generation and storage method."
+        },
+        "cipher": {
+          "enum": [
+            "aes-xts-plain64",
+            "xchacha12,aes-adiantum-plain64",
+            "xchacha20,aes-adiantum-plain64"
+          ],
+          "title": "cipher",
+          "description": "Cipher kind to use for the encryption. Depends on the encryption provider."
+        },
+        "keySize": {
+          "type": "integer",
+          "title": "keySize",
+          "description": "Defines the encryption key length."
+        },
+        "blockSize": {
+          "type": "integer",
+          "title": "blockSize",
+          "description": "Defines the encryption sector size."
+        },
+        "options": {
+          "enum": [
+            "no_read_workqueue",
+            "no_write_workqueue",
+            "same_cpu_crypt"
+          ],
+          "title": "options",
+          "description": "Additional --perf parameters for the LUKS2 encryption."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKey": {
+      "properties": {
+        "static": {
+          "$ref": "#/$defs/EncryptionKeyStatic",
+          "title": "static",
+          "description": "Key which value is stored in the configuration file."
+        },
+        "nodeID": {
+          "$ref": "#/$defs/EncryptionKeyNodeID",
+          "title": "nodeID",
+          "description": "Deterministically generated key from the node UUID and PartitionLabel."
+        },
+        "slot": {
+          "type": "integer",
+          "title": "slot",
+          "description": "Key slot number for LUKS2 encryption."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKeyNodeID": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKeyStatic": {
+      "properties": {
+        "passphrase": {
+          "type": "string",
+          "title": "passphrase",
+          "description": "Defines the static passphrase value."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Endpoint": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EtcdConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used to create the etcd service."
+        },
+        "ca": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "ca",
+          "description": "The `ca` is the root certificate authority of the PKI.\nIt is composed of a base64 encoded `crt` and `key`."
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n- `name`\n- `data-dir`\n- `initial-cluster-state`\n- `listen-peer-urls`\n- `listen-client-urls`\n- `cert-file`\n- `key-file`\n- `trusted-ca-file`\n- `peer-client-cert-auth`\n- `peer-cert-file`\n- `peer-trusted-ca-file`\n- `peer-key-file`"
+        },
+        "advertisedSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "advertisedSubnets",
+          "description": "The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node."
+        },
+        "listenSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "listenSubnets",
+          "description": "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.\n\nIf `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to\n`advertisedSubnets`.\n\nIf neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ExternalCloudProviderConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable external cloud provider."
+        },
+        "manifests": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "manifests",
+          "description": "A list of urls that point to additional manifests for an external cloud provider.\nThese will get automatically deployed as part of the bootstrap."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ExtraHost": {
+      "properties": {
+        "ip": {
+          "type": "string",
+          "title": "ip",
+          "description": "The IP of the host."
+        },
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "aliases",
+          "description": "The host alias."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ExtraMount": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "FeaturesConfig": {
+      "properties": {
+        "rbac": {
+          "type": "boolean",
+          "title": "rbac",
+          "description": "Enable role-based access control (RBAC)."
+        },
+        "stableHostname": {
+          "type": "boolean",
+          "title": "stableHostname",
+          "description": "Enable stable default hostname."
+        },
+        "kubernetesTalosAPIAccess": {
+          "$ref": "#/$defs/KubernetesTalosAPIAccessConfig",
+          "title": "kubernetesTalosAPIAccess",
+          "description": "Configure Talos API access from Kubernetes pods.\n\nThis feature is disabled if the feature config is not specified."
+        },
+        "apidCheckExtKeyUsage": {
+          "type": "boolean",
+          "title": "apidCheckExtKeyUsage",
+          "description": "Enable checks for extended key usage of client certificates in apid."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "InstallConfig": {
+      "properties": {
+        "disk": {
+          "type": "string",
+          "title": "disk",
+          "description": "The disk used for installations."
+        },
+        "diskSelector": {
+          "$ref": "#/$defs/InstallDiskSelector",
+          "title": "diskSelector",
+          "description": "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over `disk`."
+        },
+        "extraKernelArgs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "extraKernelArgs",
+          "description": "Allows for supplying extra kernel args via the bootloader."
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases)."
+        },
+        "extensions": {
+          "items": {
+            "$ref": "#/$defs/InstallExtensionConfig"
+          },
+          "type": "array",
+          "title": "extensions",
+          "description": "Allows for supplying additional system extension images to install on top of base Talos image."
+        },
+        "bootloader": {
+          "type": "boolean",
+          "title": "bootloader",
+          "description": "Indicates if a bootloader should be installed."
+        },
+        "wipe": {
+          "type": "boolean",
+          "title": "wipe",
+          "description": "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`."
+        },
+        "legacyBIOSSupport": {
+          "type": "boolean",
+          "title": "legacyBIOSSupport",
+          "description": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "InstallDiskSelector": {
+      "properties": {
+        "size": {
+          "type": "string",
+          "title": "size",
+          "description": "Disk size."
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Disk name `/sys/block/\u003cdev\u003e/device/name`."
+        },
+        "model": {
+          "type": "string",
+          "title": "model",
+          "description": "Disk model `/sys/block/\u003cdev\u003e/device/model`."
+        },
+        "serial": {
+          "type": "string",
+          "title": "serial",
+          "description": "Disk serial number `/sys/block/\u003cdev\u003e/serial`."
+        },
+        "modalias": {
+          "type": "string",
+          "title": "modalias",
+          "description": "Disk modalias `/sys/block/\u003cdev\u003e/device/modalias`."
+        },
+        "uuid": {
+          "type": "string",
+          "title": "uuid",
+          "description": "Disk UUID `/sys/block/\u003cdev\u003e/uuid`."
+        },
+        "wwid": {
+          "type": "string",
+          "title": "wwid",
+          "description": "Disk WWID `/sys/block/\u003cdev\u003e/wwid`."
+        },
+        "type": {
+          "enum": [
+            "ssd",
+            "hdd",
+            "nvme",
+            "sd"
+          ],
+          "title": "type",
+          "description": "Disk Type."
+        },
+        "busPath": {
+          "type": "string",
+          "title": "busPath",
+          "description": "Disk bus path."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "InstallExtensionConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "System extension image."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KernelConfig": {
+      "properties": {
+        "modules": {
+          "items": {
+            "$ref": "#/$defs/KernelModuleConfig"
+          },
+          "type": "array",
+          "title": "modules",
+          "description": "Kernel modules to load."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KernelModuleConfig": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Module name."
+        },
+        "parameters": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "parameters",
+          "description": "Module parameters, changes applied after reboot."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubeSpanFilters": {
+      "properties": {
+        "endpoints": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "endpoints",
+          "description": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubeletConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The `image` field is an optional reference to an alternative kubelet image."
+        },
+        "clusterDNS": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "clusterDNS",
+          "description": "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list."
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "The `extraArgs` field is used to provide additional flags to the kubelet."
+        },
+        "extraMounts": {
+          "items": {
+            "$ref": "#/$defs/ExtraMount"
+          },
+          "type": "array",
+          "title": "extraMounts",
+          "description": "The `extraMounts` field is used to add additional mounts to the kubelet container.\nNote that either `bind` or `rbind` are required in the `options`."
+        },
+        "extraConfig": {
+          "type": "object",
+          "title": "extraConfig",
+          "description": "The `extraConfig` field is used to provide kubelet configuration overrides.\n\nSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc."
+        },
+        "defaultRuntimeSeccompProfileEnabled": {
+          "type": "boolean",
+          "title": "defaultRuntimeSeccompProfileEnabled",
+          "description": "Enable container runtime default Seccomp profile."
+        },
+        "registerWithFQDN": {
+          "type": "boolean",
+          "title": "registerWithFQDN",
+          "description": "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS."
+        },
+        "nodeIP": {
+          "$ref": "#/$defs/KubeletNodeIPConfig",
+          "title": "nodeIP",
+          "description": "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from."
+        },
+        "skipNodeRegistration": {
+          "type": "boolean",
+          "title": "skipNodeRegistration",
+          "description": "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods."
+        },
+        "disableManifestsDirectory": {
+          "type": "boolean",
+          "title": "disableManifestsDirectory",
+          "description": "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt's recommended to configure static pods with the \"pods\" key instead."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubeletNodeIPConfig": {
+      "properties": {
+        "validSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "validSubnets",
+          "description": "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubernetesTalosAPIAccessConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable Talos API access from Kubernetes pods."
+        },
+        "allowedRoles": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "allowedRoles",
+          "description": "The list of Talos API roles which can be granted for access from Kubernetes pods.\n\nEmpty list means that no roles can be granted, so access is blocked."
+        },
+        "allowedKubernetesNamespaces": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "allowedKubernetesNamespaces",
+          "description": "The list of Kubernetes namespaces Talos API access is available from."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LoggingConfig": {
+      "properties": {
+        "destinations": {
+          "items": {
+            "$ref": "#/$defs/LoggingDestination"
+          },
+          "type": "array",
+          "title": "destinations",
+          "description": "Logging destination."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LoggingDestination": {
+      "properties": {
+        "endpoint": {
+          "$ref": "#/$defs/Endpoint",
+          "title": "endpoint",
+          "description": "Where to send logs. Supported protocols are \"tcp\" and \"udp\"."
+        },
+        "format": {
+          "enum": [
+            "json_lines"
+          ],
+          "title": "format",
+          "description": "Logs format."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineConfig": {
+      "properties": {
+        "type": {
+          "enum": [
+            "controlplane",
+            "worker"
+          ],
+          "title": "type",
+          "description": "Defines the role of the machine within the cluster.\n\n**Control Plane**\n\nControl Plane node type designates the node as a control plane member.\nThis means it will host etcd along with the Kubernetes controlplane components such as API Server, Controller Manager, Scheduler.\n\n**Worker**\n\nWorker node type designates the node as a worker node.\nThis means it will be an available compute node for scheduling workloads.\n\nThis node type was previously known as \"join\"; that value is still supported but deprecated."
+        },
+        "token": {
+          "type": "string",
+          "title": "token",
+          "description": "The `token` is used by a machine to join the PKI of the cluster.\nUsing this token, a machine will create a certificate signing request (CSR), and request a certificate that will be used as its' identity."
+        },
+        "ca": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "ca",
+          "description": "The root certificate authority of the PKI.\nIt is composed of a base64 encoded `crt` and `key`."
+        },
+        "certSANs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "certSANs",
+          "description": "Extra certificate subject alternative names for the machine's certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate's SANs."
+        },
+        "controlPlane": {
+          "$ref": "#/$defs/MachineControlPlaneConfig",
+          "title": "controlPlane",
+          "description": "Provides machine specific control plane configuration options."
+        },
+        "kubelet": {
+          "$ref": "#/$defs/KubeletConfig",
+          "title": "kubelet",
+          "description": "Used to provide additional options to the kubelet."
+        },
+        "pods": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array",
+          "title": "pods",
+          "description": "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/."
+        },
+        "network": {
+          "$ref": "#/$defs/NetworkConfig",
+          "title": "network",
+          "description": "Provides machine specific network configuration options."
+        },
+        "disks": {
+          "items": {
+            "$ref": "#/$defs/MachineDisk"
+          },
+          "type": "array",
+          "title": "disks",
+          "description": "Used to partition, format and mount additional disks.\nSince the rootfs is read only with the exception of `/var`, mounts are only valid if they are under `/var`.\nNote that the partitioning and formatting is done only once, if and only if no existing XFS partitions are found.\nIf `size:` is omitted, the partition is sized to occupy the full disk."
+        },
+        "install": {
+          "$ref": "#/$defs/InstallConfig",
+          "title": "install",
+          "description": "Used to provide instructions for installations."
+        },
+        "files": {
+          "items": {
+            "$ref": "#/$defs/MachineFile"
+          },
+          "type": "array",
+          "title": "files",
+          "description": "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded."
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The `env` field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service."
+        },
+        "time": {
+          "$ref": "#/$defs/TimeConfig",
+          "title": "time",
+          "description": "Used to configure the machine's time settings."
+        },
+        "sysctls": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "sysctls",
+          "description": "Used to configure the machine's sysctls."
+        },
+        "sysfs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "sysfs",
+          "description": "Used to configure the machine's sysfs."
+        },
+        "registries": {
+          "$ref": "#/$defs/RegistriesConfig",
+          "title": "registries",
+          "description": "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in `.docker/config.json`.\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md)."
+        },
+        "systemDiskEncryption": {
+          "$ref": "#/$defs/SystemDiskEncryptionConfig",
+          "title": "systemDiskEncryption",
+          "description": "Machine system disk encryption configuration.\nDefines each system partition encryption parameters."
+        },
+        "features": {
+          "$ref": "#/$defs/FeaturesConfig",
+          "title": "features",
+          "description": "Features describe individual Talos features that can be switched on or off."
+        },
+        "udev": {
+          "$ref": "#/$defs/UdevConfig",
+          "title": "udev",
+          "description": "Configures the udev system."
+        },
+        "logging": {
+          "$ref": "#/$defs/LoggingConfig",
+          "title": "logging",
+          "description": "Configures the logging system."
+        },
+        "kernel": {
+          "$ref": "#/$defs/KernelConfig",
+          "title": "kernel",
+          "description": "Configures the kernel."
+        },
+        "seccompProfiles": {
+          "items": {
+            "$ref": "#/$defs/MachineSeccompProfile"
+          },
+          "type": "array",
+          "title": "seccompProfiles",
+          "description": "Configures the seccomp profiles for the machine."
+        },
+        "nodeLabels": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "nodeLabels",
+          "description": "Configures the node labels for the machine."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineControlPlaneConfig": {
+      "properties": {
+        "controllerManager": {
+          "$ref": "#/$defs/MachineControllerManagerConfig",
+          "title": "controllerManager",
+          "description": "Controller manager machine specific configuration options."
+        },
+        "scheduler": {
+          "$ref": "#/$defs/MachineSchedulerConfig",
+          "title": "scheduler",
+          "description": "Scheduler machine specific configuration options."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineControllerManagerConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable kube-controller-manager on the node."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineDisk": {
+      "properties": {
+        "device": {
+          "type": "string",
+          "title": "device",
+          "description": "The name of the disk to use."
+        },
+        "partitions": {
+          "items": {
+            "$ref": "#/$defs/DiskPartition"
+          },
+          "type": "array",
+          "title": "partitions",
+          "description": "A list of partitions to create on the disk."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineFile": {
+      "properties": {
+        "content": {
+          "type": "string",
+          "title": "content",
+          "description": "The contents of the file."
+        },
+        "permissions": {
+          "type": "integer",
+          "title": "permissions",
+          "description": "The file's permissions in octal."
+        },
+        "path": {
+          "type": "string",
+          "title": "path",
+          "description": "The path of the file."
+        },
+        "op": {
+          "enum": [
+            "create",
+            "append",
+            "overwrite"
+          ],
+          "title": "op",
+          "description": "The operation to use"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineSchedulerConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable kube-scheduler on the node."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "MachineSeccompProfile": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "The `name` field is used to provide the file name of the seccomp profile."
+        },
+        "value": {
+          "type": "object",
+          "title": "value",
+          "description": "The `value` field is used to provide the seccomp profile."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "NetworkConfig": {
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "title": "hostname",
+          "description": "Used to statically set the hostname for the machine."
+        },
+        "interfaces": {
+          "items": {
+            "$ref": "#/$defs/Device"
+          },
+          "type": "array",
+          "title": "interfaces",
+          "description": "`interfaces` is used to define the network interface configuration.\nBy default all network interfaces will attempt a DHCP discovery.\nThis can be further tuned through this configuration parameter."
+        },
+        "nameservers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "nameservers",
+          "description": "Used to statically set the nameservers for the machine.\nDefaults to `1.1.1.1` and `8.8.8.8`"
+        },
+        "extraHostEntries": {
+          "items": {
+            "$ref": "#/$defs/ExtraHost"
+          },
+          "type": "array",
+          "title": "extraHostEntries",
+          "description": "Allows for extra entries to be added to the `/etc/hosts` file"
+        },
+        "kubespan": {
+          "$ref": "#/$defs/NetworkKubeSpan",
+          "title": "kubespan",
+          "description": "Configures KubeSpan feature."
+        },
+        "disableSearchDomain": {
+          "type": "boolean",
+          "title": "disableSearchDomain",
+          "description": "Disable generating a default search domain in /etc/resolv.conf\nbased on the machine hostname.\nDefaults to `false`."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "NetworkDeviceSelector": {
+      "properties": {
+        "busPath": {
+          "type": "string",
+          "title": "busPath",
+          "description": "PCI, USB bus prefix, supports matching by wildcard."
+        },
+        "hardwareAddr": {
+          "type": "string",
+          "title": "hardwareAddr",
+          "description": "Device hardware address, supports matching by wildcard."
+        },
+        "pciID": {
+          "type": "string",
+          "title": "pciID",
+          "description": "PCI ID (vendor ID, product ID), supports matching by wildcard."
+        },
+        "driver": {
+          "type": "string",
+          "title": "driver",
+          "description": "Kernel driver, supports matching by wildcard."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "NetworkKubeSpan": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable the KubeSpan feature.\nCluster discovery should be enabled with .cluster.discovery.enabled for KubeSpan to be enabled."
+        },
+        "advertiseKubernetesNetworks": {
+          "type": "boolean",
+          "title": "advertiseKubernetesNetworks",
+          "description": "Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.\nIf disabled, CNI handles encapsulating pod-to-pod traffic into some node-to-node tunnel,\nand KubeSpan handles the node-to-node traffic.\nIf enabled, KubeSpan will take over pod-to-pod traffic and send it over KubeSpan directly.\nWhen enabled, KubeSpan should have a way to detect complete pod CIDRs of the node which\nis not always the case with CNIs not relying on Kubernetes for IPAM."
+        },
+        "allowDownPeerBypass": {
+          "type": "boolean",
+          "title": "allowDownPeerBypass",
+          "description": "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established."
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "KubeSpan link MTU size.\nDefault value is 1420."
+        },
+        "filters": {
+          "$ref": "#/$defs/KubeSpanFilters",
+          "title": "filters",
+          "description": "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "PodCheckpointer": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The `image` field is an override to the default pod-checkpointer image."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ProxyConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable kube-proxy deployment on cluster bootstrap."
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the kube-proxy manifest."
+        },
+        "mode": {
+          "type": "string",
+          "title": "mode",
+          "description": "proxy mode of kube-proxy.\nThe default is 'iptables'."
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to kube-proxy."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistriesConfig": {
+      "properties": {
+        "mirrors": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/RegistryMirrorConfig"
+            }
+          },
+          "type": "object",
+          "title": "mirrors",
+          "description": "Specifies mirror configuration for each registry.\nThis setting allows to use local pull-through caching registires,\nair-gapped installations, etc.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one."
+        },
+        "config": {
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/$defs/RegistryConfig"
+            }
+          },
+          "type": "object",
+          "title": "config",
+          "description": "Specifies TLS \u0026 auth configuration for HTTPS image registries.\nMutual TLS can be enabled with 'clientIdentity' option.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryAuthConfig": {
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "username",
+          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json."
+        },
+        "password": {
+          "type": "string",
+          "title": "password",
+          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json."
+        },
+        "auth": {
+          "type": "string",
+          "title": "auth",
+          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json."
+        },
+        "identityToken": {
+          "type": "string",
+          "title": "identityToken",
+          "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryConfig": {
+      "properties": {
+        "tls": {
+          "$ref": "#/$defs/RegistryTLSConfig",
+          "title": "tls",
+          "description": "The TLS configuration for the registry."
+        },
+        "auth": {
+          "$ref": "#/$defs/RegistryAuthConfig",
+          "title": "auth",
+          "description": "The auth configuration for this registry.\nNote: changes to the registry auth will not be picked up by the CRI containerd plugin without a reboot."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryKubernetesConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable Kubernetes discovery registry."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryMirrorConfig": {
+      "properties": {
+        "endpoints": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "endpoints",
+          "description": "List of endpoints (URLs) for registry mirrors to use.\nEndpoint configures HTTP/HTTPS access mode, host name,\nport and path (if path is not set, it defaults to `/v2`)."
+        },
+        "overridePath": {
+          "type": "boolean",
+          "title": "overridePath",
+          "description": "Use the exact path specified for the endpoint (don't append /v2/).\nThis setting is often required for setting up multiple mirrors\non a single instance of a registry."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryServiceConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Disable external service discovery registry."
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint",
+          "description": "External service endpoint."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryTLSConfig": {
+      "properties": {
+        "clientIdentity": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "clientIdentity",
+          "description": "Enable mutual TLS authentication with the registry.\nClient certificate and key should be base64-encoded."
+        },
+        "ca": {
+          "type": "string",
+          "title": "ca",
+          "description": "CA registry certificate to add the list of trusted certificates.\nCertificate should be base64-encoded."
+        },
+        "insecureSkipVerify": {
+          "type": "boolean",
+          "title": "insecureSkipVerify",
+          "description": "Skip TLS server certificate verification (not recommended)."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Route": {
+      "properties": {
+        "network": {
+          "type": "string",
+          "title": "network",
+          "description": "The route's network (destination)."
+        },
+        "gateway": {
+          "type": "string",
+          "title": "gateway",
+          "description": "The route's gateway (if empty, creates link scope route)."
+        },
+        "source": {
+          "type": "string",
+          "title": "source",
+          "description": "The route's source address (optional)."
+        },
+        "metric": {
+          "type": "integer",
+          "title": "metric",
+          "description": "The optional metric for the route."
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "The optional MTU for the route."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "STP": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Whether Spanning Tree Protocol (STP) is enabled."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "SchedulerConfig": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the scheduler manifest."
+        },
+        "extraArgs": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to the scheduler."
+        },
+        "extraVolumes": {
+          "items": {
+            "$ref": "#/$defs/VolumeMountConfig"
+          },
+          "type": "array",
+          "title": "extraVolumes",
+          "description": "Extra volumes to mount to the scheduler static pod."
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The `env` field allows for the addition of environment variables for the control plane component."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "SystemDiskEncryptionConfig": {
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/EncryptionConfig",
+          "title": "state",
+          "description": "State partition encryption."
+        },
+        "ephemeral": {
+          "$ref": "#/$defs/EncryptionConfig",
+          "title": "ephemeral",
+          "description": "Ephemeral partition encryption."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "TimeConfig": {
+      "properties": {
+        "disabled": {
+          "type": "boolean",
+          "title": "disabled",
+          "description": "Indicates if the time service is disabled for the machine.\nDefaults to `false`."
+        },
+        "servers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "servers",
+          "description": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `pool.ntp.org`"
+        },
+        "bootTimeout": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "bootTimeout",
+          "description": "Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.\nNTP sync will be still running in the background.\nDefaults to \"infinity\" (waiting forever for time sync)"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "UdevConfig": {
+      "properties": {
+        "rules": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "rules",
+          "description": "List of udev rules to apply to the udev system"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "VIPEquinixMetalConfig": {
+      "properties": {
+        "apiToken": {
+          "type": "string",
+          "title": "apiToken",
+          "description": "Specifies the Equinix Metal API Token."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "VIPHCloudConfig": {
+      "properties": {
+        "apiToken": {
+          "type": "string",
+          "title": "apiToken",
+          "description": "Specifies the Hetzner Cloud API Token."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Vlan": {
+      "properties": {
+        "addresses": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "The addresses in CIDR notation or as plain IPs to use."
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/Route"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "A list of routes associated with the VLAN."
+        },
+        "dhcp": {
+          "type": "boolean",
+          "title": "dhcp",
+          "description": "Indicates if DHCP should be used."
+        },
+        "vlanId": {
+          "type": "integer",
+          "title": "vlanId",
+          "description": "The VLAN's ID."
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "The VLAN's MTU."
+        },
+        "vip": {
+          "$ref": "#/$defs/DeviceVIPConfig",
+          "title": "vip",
+          "description": "The VLAN's virtual IP address configuration."
+        },
+        "dhcpOptions": {
+          "$ref": "#/$defs/DHCPOptions",
+          "title": "dhcpOptions",
+          "description": "DHCP specific options.\n`dhcp` *must* be set to true for these to take effect."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "VolumeMountConfig": {
+      "properties": {
+        "hostPath": {
+          "type": "string",
+          "title": "hostPath",
+          "description": "Path on the host."
+        },
+        "mountPath": {
+          "type": "string",
+          "title": "mountPath",
+          "description": "Path in the container."
+        },
+        "readonly": {
+          "type": "boolean",
+          "title": "readonly",
+          "description": "Mount the volume read only."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}
