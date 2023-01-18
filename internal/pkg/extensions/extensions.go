@@ -6,6 +6,8 @@
 package extensions
 
 import (
+	"path/filepath"
+
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
@@ -15,4 +17,17 @@ type Extension struct {
 
 	directory  string
 	rootfsPath string
+}
+
+func newExtension(rootfsPath, directory string) *Extension {
+	extension := &Extension{
+		rootfsPath: rootfsPath,
+		directory:  directory,
+	}
+
+	if extension.directory == "" {
+		extension.directory = filepath.Base(rootfsPath)
+	}
+
+	return extension
 }

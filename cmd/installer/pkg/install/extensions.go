@@ -20,22 +20,34 @@ import (
 	extinterface "github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
+// nolint:gocyclo
 func (i *Installer) installExtensions() error {
-	extensions, err := extensions.List(constants.SystemExtensionsPath)
+	extensionsList, err := extensions.List(constants.SystemExtensionsPath)
 	if err != nil {
 		return fmt.Errorf("error listing extensions: %w", err)
 	}
 
-	if len(extensions) == 0 {
+	if len(extensionsList) == 0 {
 		return nil
 	}
 
-	if err = printExtensions(extensions); err != nil {
+	if err = printExtensions(extensionsList); err != nil {
 		return err
 	}
 
-	if err = validateExtensions(extensions); err != nil {
+	if err = validateExtensions(extensionsList); err != nil {
 		return err
+	}
+
+	extensionsPathWithKernelModules := findExtensionsWithKernelModules(extensionsList)
+
+	if len(extensionsPathWithKernelModules) > 0 {
+		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules, i.options.Arch)
+		if genErr != nil {
+			return genErr
+		}
+
+		extensionsList = append(extensionsList, kernelModuleDepExtension)
 	}
 
 	tempDir, err := os.MkdirTemp("", "ext")
@@ -47,7 +59,7 @@ func (i *Installer) installExtensions() error {
 
 	var cfg *extinterface.Config
 
-	if cfg, err = compressExtensions(extensions, tempDir); err != nil {
+	if cfg, err = compressExtensions(extensionsList, tempDir); err != nil {
 		return err
 	}
 
@@ -121,6 +133,18 @@ func compressExtensions(extensions []*extensions.Extension, tempDir string) (*ex
 	}
 
 	return cfg, nil
+}
+
+func findExtensionsWithKernelModules(extensions []*extensions.Extension) []string {
+	var modulesPath []string
+
+	for _, ext := range extensions {
+		if ext.ProvidesKernelModules() {
+			modulesPath = append(modulesPath, ext.KernelModuleDirectory())
+		}
+	}
+
+	return modulesPath
 }
 
 func buildContents(path string) (io.Reader, error) {

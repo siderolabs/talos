@@ -652,6 +652,7 @@ RUN apk add --no-cache --update --no-scripts \
     bash \
     cpio \
     efibootmgr \
+    kmod \
     mtools \
     qemu-img \
     squashfs-tools \
@@ -663,6 +664,7 @@ ARG TARGETARCH
 ENV TARGETARCH ${TARGETARCH}
 COPY --from=install-artifacts / /
 COPY --from=installer-build /installer /bin/installer
+COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
 RUN ln -s /bin/installer /bin/talosctl
 ARG TAG
 ENV VERSION ${TAG}
