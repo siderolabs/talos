@@ -7,6 +7,7 @@ package vm
 import (
 	"fmt"
 	"os"
+	"syscall"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -44,20 +45,25 @@ func (p *Provisioner) CreateDisks(state *State, nodeReq provision.NodeRequest) (
 
 		diskF, err = os.Create(diskPath)
 		if err != nil {
-			return
+			return nil, err
 		}
 
 		defer diskF.Close() //nolint:errcheck
 
-		err = diskF.Truncate(int64(disk.Size))
+		if err = diskF.Truncate(int64(disk.Size)); err != nil {
+			return nil, err
+		}
+
+		if err = syscall.Fallocate(int(diskF.Fd()), 0, 0, int64(disk.Size)); err != nil {
+			fmt.Fprintf(os.Stderr, "WARNING: failed to preallocate disk space for %q (size %d): %s", diskPath, disk.Size, err)
+		}
+
 		diskPaths[i] = diskPath
 	}
 
 	if len(diskPaths) == 0 {
-		err = fmt.Errorf("node request must have at least one disk defined to be used as primary disk")
-
-		return
+		return nil, fmt.Errorf("node request must have at least one disk defined to be used as primary disk")
 	}
 
-	return
+	return diskPaths, nil
 }
