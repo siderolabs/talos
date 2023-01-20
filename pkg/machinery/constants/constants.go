@@ -294,7 +294,7 @@ const (
 	SeccompProfilesDirectory = "/var/lib/kubelet/seccomp/profiles"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
-	DefaultKubernetesVersion = "1.26.0"
+	DefaultKubernetesVersion = "1.26.1"
 
 	// DefaultControlPlanePort is the default port to use for the control plane.
 	DefaultControlPlanePort = 6443
@@ -351,7 +351,7 @@ const (
 	KubeletSystemReservedEphemeralStorage = "256Mi"
 
 	// DefaultEtcdVersion is the default target version of etcd.
-	DefaultEtcdVersion = "v3.5.6"
+	DefaultEtcdVersion = "v3.5.7"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"

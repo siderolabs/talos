@@ -19,6 +19,8 @@ preface = """\
         title = "Component Updates"
         description="""\
 * Linux: 5.15.89
+* Kubernetes: v1.26.1
+* etcd: v3.5.7
 """
 
 [make_deps]
