@@ -429,7 +429,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 		}
 
 		if ok {
-			initialCluster := fmt.Sprintf("%s=%s", spec.Name, formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
+			initialCluster := formatClusterURLs(spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 
 			if upgraded {
 				denyListArgs.Set("initial-cluster-state", "existing")
@@ -519,7 +519,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 			var initialCluster string
 
 			if e.Bootstrap {
-				initialCluster = fmt.Sprintf("%s=%s", spec.Name, formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
+				initialCluster = formatClusterURLs(spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 			} else {
 				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 				if err != nil {
@@ -713,4 +713,10 @@ func getEtcdURLs(addrs []netip.Addr, port int) []string {
 
 func formatEtcdURLs(addrs []netip.Addr, port int) string {
 	return strings.Join(getEtcdURLs(addrs, port), ",")
+}
+
+func formatClusterURLs(name string, urls []string) string {
+	return strings.Join(slices.Map(urls, func(url string) string {
+		return fmt.Sprintf("%s=%s", name, url)
+	}), ",")
 }
