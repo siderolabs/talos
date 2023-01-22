@@ -17,6 +17,7 @@ import (
 	jetsonnano "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/jetson_nano"
 	libretechallh3cch5 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/libretech_all_h3_cc_h5"
 	nanopir4s "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/nanopi_r4s"
+	odroidhc4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/odroid_hc4"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/pine64"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock64"
 	rockpi4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4"
@@ -70,6 +71,8 @@ func newBoard(board string) (b runtime.Board, err error) {
 		b = &jetsonnano.JetsonNano{}
 	case constants.BoardNanoPiR4S:
 		b = &nanopir4s.NanoPiR4S{}
+	case constants.BoardODroidHC4:
+		b = &odroidhc4.ODroidHC4{}
 	default:
 		return nil, fmt.Errorf("unsupported board: %q", board)
 	}
