@@ -25,13 +25,13 @@ GOFUMPT_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
 GOLANGCILINT_VERSION ?= v1.50.1
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.1.12
+STRINGER_VERSION ?= v0.5.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.21.3
+DEEPCOPY_GEN_VERSION ?= v0.26.1
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
-VTPROTOBUF_VERSION ?= v0.2.0
+VTPROTOBUF_VERSION ?= v0.3.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
 DEEPCOPY_VERSION ?= v0.5.5
 IMPORTVET ?= ghcr.io/siderolabs/importvet:1549a5c
@@ -42,11 +42,11 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.26.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
-KUBESTR_VERSION ?= v0.4.34
+KUBESTR_VERSION ?= v0.4.36
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.9.2
+HELM_VERSION ?= v3.11.0
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.1.3
+CLUSTERCTL_VERSION ?= 1.3.2
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz

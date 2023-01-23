@@ -17,10 +17,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/freddierice/go-losetup/v2"
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
-	"gopkg.in/freddierice/go-losetup.v1"
 
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/mount/switchroot"

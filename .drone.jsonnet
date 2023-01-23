@@ -326,6 +326,12 @@ local default_trigger = {
         'cron',
       ],
     },
+    branch: {
+      exclude: [
+        'renovate/*',
+        'dependabot/*',
+      ],
+    }
   },
 };
 
@@ -686,6 +692,12 @@ local notify_trigger = {
   trigger: {
     status: ['success', 'failure'],
   },
+  branch: {
+      exclude: [
+        'renovate/*',
+        'dependabot/*',
+      ],
+    }
 };
 
 local notify_pipeline = Pipeline('notify', notify_steps, [default_pipeline, release_pipeline] + integration_pipelines + e2e_pipelines + conformance_pipelines, false, true) + notify_trigger;

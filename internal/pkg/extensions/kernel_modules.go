@@ -16,10 +16,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/freddierice/go-losetup/v2"
 	"github.com/u-root/u-root/pkg/cpio"
 	"github.com/ulikunitz/xz"
 	"golang.org/x/sys/unix"
-	"gopkg.in/freddierice/go-losetup.v1"
 
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/machinery/constants"

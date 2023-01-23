@@ -5,8 +5,8 @@
 package mount
 
 import (
+	"github.com/freddierice/go-losetup/v2"
 	"golang.org/x/sys/unix"
-	"gopkg.in/freddierice/go-losetup.v1"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
