@@ -16,24 +16,40 @@ ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-alpha.0-5-g763c1d9
 PKGS ?= v1.4.0-alpha.0-11-ge561dcb
 EXTRAS ?= v1.4.0-alpha.0-2-g8cb4792
+# renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.19
+# renovate: datasource=go depName=golang.org/x/tools
 GOIMPORTS_VERSION ?= v0.5.0
+# renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.4.0
+# renovate: datasource=go depName=github.com/golangci/golangci-lint
 GOLANGCILINT_VERSION ?= v1.50.1
+# renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.1.12
+# renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
+# renovate: datasource=go depName=k8s.io/code-generator
 DEEPCOPY_GEN_VERSION ?= v0.21.3
+# renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.2.0
+# renovate: datasource=go depName=github.com/siderolabs/deep-copy
 DEEPCOPY_VERSION ?= v0.5.5
 IMPORTVET ?= ghcr.io/siderolabs/importvet:1549a5c
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
-KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/v1.26.1/bin/$(OPERATING_SYSTEM)/amd64/kubectl
-KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/v0.4.34/kubestr_0.4.34_Linux_amd64.tar.gz
-HELM_URL ?= https://get.helm.sh/helm-v3.9.2-linux-amd64.tar.gz
+# renovate: datasource=github-releases depName=kubernetes/kubernetes
+KUBECTL_VERSION ?= v1.26.1
+# renovate: datasource=github-releases depName=kastenhq/kubestr
+KUBESTR_VERSION ?= v0.4.34
+# renovate: datasource=github-releases depName=helm/helm
+HELM_VERSION ?= v3.9.2
+# renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.1.3
+KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
+KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
+HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
 TESTPKGS ?= github.com/siderolabs/talos/...
 RELEASES ?= v1.1.2 v1.2.6

@@ -297,6 +297,7 @@ const (
 	SeccompProfilesDirectory = "/var/lib/kubelet/seccomp/profiles"
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
+	// renovate: datasource=github-releases depName=kubernetes/kubernetes
 	DefaultKubernetesVersion = "1.26.1"
 
 	// DefaultControlPlanePort is the default port to use for the control plane.
@@ -324,6 +325,7 @@ const (
 	CoreDNSImage = "docker.io/coredns/coredns"
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
+	// renovate: datasource=github-releases depName=coredns/coredns
 	DefaultCoreDNSVersion = "1.10.0"
 
 	// LabelNodeRoleMaster is the node label required by a control plane node.
@@ -354,6 +356,7 @@ const (
 	KubeletSystemReservedEphemeralStorage = "256Mi"
 
 	// DefaultEtcdVersion is the default target version of etcd.
+	// renovate: datasource=github-releases depName=etcd-io/etcd
 	DefaultEtcdVersion = "v3.5.7"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
