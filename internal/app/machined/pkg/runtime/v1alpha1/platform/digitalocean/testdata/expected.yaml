@@ -14,7 +14,7 @@ addresses:
     - address: 10.18.0.5/16
       linkName: eth0
       family: inet4
-      scope: global
+      scope: link
       flags: permanent
       layer: platform
     - address: 10.133.0.2/16
