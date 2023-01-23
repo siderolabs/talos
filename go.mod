@@ -86,7 +86,7 @@ require (
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.2.0
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.10
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.12
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/discovery-api v0.1.1
 	github.com/siderolabs/discovery-client v0.1.3
