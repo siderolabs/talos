@@ -11,9 +11,9 @@ import (
 
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
+	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -111,7 +111,7 @@ func (c *Client) StopAndRemovePodSandboxes(ctx context.Context, stopAction StopA
 		g.Go(func() error {
 			status, _, e := c.PodSandboxStatus(ctx, pod.GetId())
 			if e != nil {
-				if grpcstatus.Code(e) == codes.NotFound {
+				if talosclient.StatusCode(e) == codes.NotFound {
 					return nil
 				}
 
@@ -165,7 +165,7 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 
 	containers, err := client.ListContainers(ctx, filter)
 	if err != nil {
-		if grpcstatus.Code(err) == codes.NotFound {
+		if talosclient.StatusCode(err) == codes.NotFound {
 			return nil
 		}
 
@@ -183,7 +183,7 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 				log.Printf("stopping container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
 
 				if criErr := client.StopContainer(ctx, container.Id, int64(constants.KubeletShutdownGracePeriod.Seconds())); criErr != nil {
-					if grpcstatus.Code(criErr) == codes.NotFound {
+					if talosclient.StatusCode(criErr) == codes.NotFound {
 						return nil
 					}
 
@@ -195,7 +195,7 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 				log.Printf("removing container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
 
 				if criErr := client.RemoveContainer(ctx, container.Id); criErr != nil {
-					if grpcstatus.Code(criErr) == codes.NotFound {
+					if talosclient.StatusCode(criErr) == codes.NotFound {
 						return nil
 					}
 
@@ -215,7 +215,7 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 
 	if pod.State == runtimeapi.PodSandboxState_SANDBOX_READY {
 		if err = client.StopPodSandbox(ctx, pod.Id); err != nil {
-			if grpcstatus.Code(err) == codes.NotFound {
+			if talosclient.StatusCode(err) == codes.NotFound {
 				return nil
 			}
 
@@ -227,7 +227,7 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 
 	if stopAction == StopAndRemove {
 		if err = client.RemovePodSandbox(ctx, pod.Id); err != nil {
-			if grpcstatus.Code(err) == codes.NotFound {
+			if talosclient.StatusCode(err) == codes.NotFound {
 				return nil
 			}
 
