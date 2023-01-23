@@ -182,7 +182,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 					ConfigLayer: network.ConfigPlatform,
 					LinkName:    "eth0",
 					Address:     ifAddr,
-					Scope:       nethelpers.ScopeGlobal,
+					Scope:       nethelpers.ScopeLink,
 					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 					Family:      nethelpers.FamilyInet4,
 				},
