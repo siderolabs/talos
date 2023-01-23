@@ -27,6 +27,9 @@
             "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
         },
         {
+            "fileMatch": [
+                "Makefile"
+            ],
             "datasourceTemplate": "github-tags",
             "depNameTemplate": "golang/go",
             "extractVersionTemplate": "^go(?<version>.*)$"
@@ -55,7 +58,7 @@
             "matchPackageNames": [
                 "golang/go"
             ],
-            "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.?(?<patch>\\d+)?$",
+            "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.?(?<patch>\\d+)?$"
         },
         {
             "matchPackagePatterns": [
