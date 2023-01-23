@@ -396,8 +396,10 @@ func init() {
 	ClusterConfigDoc.Fields[6].Name = "aescbcEncryptionSecret"
 	ClusterConfigDoc.Fields[6].Type = "string"
 	ClusterConfigDoc.Fields[6].Note = ""
-	ClusterConfigDoc.Fields[6].Description = "description: |\n    A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).\n  examples:\n    - name: Decryption secret example (do not use in production!).\n    Enables encryption with AESCBC.\n      value: '\"z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=\"'\n"
-	ClusterConfigDoc.Fields[6].Comments[encoder.LineComment] = "description: |"
+	ClusterConfigDoc.Fields[6].Description = "A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).\nEnables encryption with AESCBC."
+	ClusterConfigDoc.Fields[6].Comments[encoder.LineComment] = "A key used for the [encryption of secret data at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)."
+
+	ClusterConfigDoc.Fields[6].AddExample("Decryption secret example (do not use in production!).", "z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=")
 	ClusterConfigDoc.Fields[7].Name = "secretboxEncryptionSecret"
 	ClusterConfigDoc.Fields[7].Type = "string"
 	ClusterConfigDoc.Fields[7].Note = ""

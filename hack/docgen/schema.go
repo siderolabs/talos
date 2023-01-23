@@ -11,8 +11,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
 	"github.com/iancoleman/orderedmap"
 	"github.com/invopop/jsonschema"
+	"github.com/microcosm-cc/bluemonday"
 	validatejsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/siderolabs/gen/slices"
 )
@@ -132,10 +135,7 @@ func fieldToSchema(field *Field) *jsonschema.Schema {
 			schema.Title = strings.ReplaceAll(field.Tag, "\\n", "\n")
 		}
 
-		// if no description is provided on the explicit schema, grab it from the comment
-		if schema.Description == "" {
-			schema.Description = normalizeDescription(field.Text.Description)
-		}
+		populateDescriptionFields(field, &schema)
 
 		// if an explicit schema was provided, return it
 		if field.Text.Schema != nil {
@@ -170,6 +170,39 @@ func fieldToSchema(field *Field) *jsonschema.Schema {
 	}
 
 	return &schema
+}
+
+func populateDescriptionFields(field *Field, schema *jsonschema.Schema) {
+	if schema.Extras == nil {
+		schema.Extras = make(map[string]any)
+	}
+
+	markdownDescription := normalizeDescription(field.Text.Description)
+
+	htmlFlags := html.CommonFlags | html.HrefTargetBlank
+	opts := html.RendererOptions{Flags: htmlFlags}
+	renderer := html.NewRenderer(opts)
+
+	htmlDescription := string(markdown.ToHTML([]byte(markdownDescription), nil, renderer))
+
+	policy := bluemonday.StrictPolicy()
+
+	plaintextDescription := policy.Sanitize(htmlDescription)
+
+	// set description
+	if schema.Description == "" {
+		schema.Description = plaintextDescription
+	}
+
+	// set markdownDescription for vscode/monaco editor
+	if schema.Extras["markdownDescription"] == nil {
+		schema.Extras["markdownDescription"] = markdownDescription
+	}
+
+	// set htmlDescription for Jetbrains IDEs
+	if schema.Extras["x-intellij-html-description"] == nil {
+		schema.Extras["x-intellij-html-description"] = htmlDescription
+	}
 }
 
 func structToSchema(st *Struct) *jsonschema.Schema {
