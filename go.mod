@@ -46,7 +46,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.2.0
-	github.com/fatih/color v1.13.0
+	github.com/fatih/color v1.14.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gdamore/tcell/v2 v2.5.4
 	github.com/gertd/go-pluralize v0.2.1
