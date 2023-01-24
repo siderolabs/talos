@@ -13,7 +13,7 @@
                 "Makefile"
             ],
             "matchStrings": [
-                "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.+?)\\s.*_VERSION\\s+\\?=\\s+(?<currentValue>.+)"
+                "# renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?\\s+depName=(?<depName>.+?)\\s.*_VERSION\\s+\\?=\\s+(?<currentValue>.+)"
             ],
             "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
         },
@@ -25,14 +25,6 @@
                 "\\/\\/\\s+renovate: datasource=(?<datasource>.*?)(?:\\s+extractVersion=(?<extractVersion>.+?))?(?:\\s+versioning=(?<versioning>.+?))?\\s+depName=(?<depName>.+?)?\\s.*Version\\s+=\\s+\\\"(?<currentValue>.+?)\\\""
             ],
             "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
-        },
-        {
-            "fileMatch": [
-                "Makefile"
-            ],
-            "datasourceTemplate": "github-tags",
-            "depNameTemplate": "golang/go",
-            "extractVersionTemplate": "^go(?<version>.*)$"
         }
     ],
     "packageRules": [
@@ -58,7 +50,7 @@
             "matchPackageNames": [
                 "golang/go"
             ],
-            "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.?(?<patch>\\d+)?$"
+            "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)"
         },
         {
             "matchPackagePatterns": [
