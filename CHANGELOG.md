@@ -1,3 +1,68 @@
+## [Talos 1.3.3](https://github.com/siderolabs/talos/releases/tag/v1.3.3) (2023-01-24)
+
+Welcome to the v1.3.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.89
+* Kubernetes: v1.26.1
+* etcd: v3.5.7
+
+
+### Contributors
+
+* Andrey Smirnov
+* Serge Logvinov
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`921c91dd8`](https://github.com/siderolabs/talos/commit/921c91dd8c77e124a38af4d8ae99118b08d72c26) fix: mark DigitalOcean anchor IP as scope link
+* [`66725d5cd`](https://github.com/siderolabs/talos/commit/66725d5cd43d9d91c7d36599810bfa09fca25e85) fix: unwrap gRPC errors on stop/remove pods check
+* [`1508d4232`](https://github.com/siderolabs/talos/commit/1508d4232d2583dd42e22260da62f7015a75b08a) fix: build correctly etcd initial cluster URL
+* [`0a841b7b7`](https://github.com/siderolabs/talos/commit/0a841b7b722b4319b1839fc3d87aa7b3f3f6735a) feat: update Kubernetes to 1.26.1, etcd to 3.5.7
+* [`e2dbc2119`](https://github.com/siderolabs/talos/commit/e2dbc2119e3f7eccc0e7fb805940f0c271378a83) chore: preallocate disk images for QEMU VMs
+* [`2c171a33c`](https://github.com/siderolabs/talos/commit/2c171a33c1886516b315c01fd4205aa1cd89d9a6) fix: bump COSI runtime with the panic controller restart fix
+* [`db04c33a4`](https://github.com/siderolabs/talos/commit/db04c33a43da46dc2bf35487b27a4a8274e5a97a) fix: handle overwriting tags in syslinux ADV
+* [`2782efbf2`](https://github.com/siderolabs/talos/commit/2782efbf2df179a23c0ca0060709d0948ddb9f52) fix: kubespan MSS clamping
+* [`f9353c779`](https://github.com/siderolabs/talos/commit/f9353c779f347f138bbf45fa075cd3be27640a41) fix: service restart (including extension services)
+* [`e04bd3b00`](https://github.com/siderolabs/talos/commit/e04bd3b007ba9d679094a0c7df027dcb04d29647) test: fix integration test on cp endpoint update
+* [`2aae885c6`](https://github.com/siderolabs/talos/commit/2aae885c69cf2a537e2d6ef39fa58ef7f8353d92) feat: update Linux 5.15.89
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`6f6a030`](https://github.com/siderolabs/pkgs/commit/6f6a0309eb0e60bf039bac60d8206515e341af4f) feat: update Linux to 5.15.89
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/cosi-project/runtime**  v0.2.0 -> v0.2.1
+* **github.com/siderolabs/pkgs**       v1.3.0-9-g9543590 -> v1.3.0-10-g6f6a030
+* **go.etcd.io/etcd/api/v3**           v3.5.6 -> v3.5.7
+* **go.etcd.io/etcd/client/pkg/v3**    v3.5.6 -> v3.5.7
+* **go.etcd.io/etcd/client/v3**        v3.5.6 -> v3.5.7
+* **go.etcd.io/etcd/etcdutl/v3**       v3.5.6 -> v3.5.7
+* **k8s.io/api**                       v0.26.0 -> v0.26.1
+* **k8s.io/apimachinery**              v0.26.0 -> v0.26.1
+* **k8s.io/apiserver**                 v0.26.0 -> v0.26.1
+* **k8s.io/client-go**                 v0.26.0 -> v0.26.1
+* **k8s.io/component-base**            v0.26.0 -> v0.26.1
+* **k8s.io/kubectl**                   v0.26.0 -> v0.26.1
+* **k8s.io/kubelet**                   v0.26.0 -> v0.26.1
+
+Previous release can be found at [v1.3.2](https://github.com/siderolabs/talos/releases/tag/v1.3.2)
+
 ## [Talos 1.3.2](https://github.com/siderolabs/talos/releases/tag/v1.3.2) (2023-01-12)
 
 Welcome to the v1.3.2 release of Talos!
