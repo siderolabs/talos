@@ -5,25 +5,32 @@ aliases:
   - ../../../cloud-platforms/digitalocean
 ---
 
-## Creating a Cluster via the CLI
+## Creating a Talos Linux Cluster on Digital Ocean via the CLI
 
-In this guide we will create an HA Kubernetes cluster with 1 worker node.
+In this guide we will create an HA Kubernetes cluster with 1 worker node, in the NYC region.
 We assume an existing [Space](https://www.digitalocean.com/docs/spaces/), and some familiarity with DigitalOcean.
 If you need more information on DigitalOcean specifics, please see the [official DigitalOcean documentation](https://www.digitalocean.com/docs/).
 
 ### Create the Image
 
-First, download the DigitalOcean image from a Talos release.
-Extract the archive to get the `disk.raw` file, compress it using `gzip` to `disk.raw.gz`.
+Download the DigitalOcean image `digital-ocean-amd64.raw.gz` from the [latest Talos release](https://github.com/siderolabs/talos/releases/latest/).
+
+>Note: the minimum version of Talos required to support Digital Ocean is v1.3.3.
 
 Using an upload method of your choice (`doctl` does not have Spaces support), upload the image to a space.
+(It's easy to drag the image file to the space using DigitalOcean's web console.)
+
+*Note:* Make sure you upload the file as `public`.
+
 Now, create an image using the URL of the uploaded image:
 
 ```bash
+export REGION=nyc3
+
 doctl compute image create \
     --region $REGION \
     --image-description talos-digital-ocean-tutorial \
-    --image-url https://talos-tutorial.$REGION.digitaloceanspaces.com/disk.raw.gz \
+    --image-url https://$SPACENAME.$REGION.digitaloceanspaces.com/digital-ocean-amd64.raw.gz \
     Talos
 ```
 
@@ -41,6 +48,8 @@ doctl compute load-balancer create \
     --forwarding-rules entry_protocol:tcp,entry_port:443,target_protocol:tcp,target_port:6443
 ```
 
+Note the returned ID of the load balancer.
+
 We will need the IP of the load balancer.
 Using the ID of the load balancer, run:
 
@@ -48,38 +57,37 @@ Using the ID of the load balancer, run:
 doctl compute load-balancer get --format IP <load balancer ID>
 ```
 
-Save it, as we will need it in the next step.
+Note that it may take a few minutes before the load balancer is provisioned, so repeat this command until it returns with the IP address.
 
 ### Create the Machine Configuration Files
 
-#### Generating Base Configurations
-
-Using the DNS name of the loadbalancer created earlier, generate the base configuration files for the Talos machines:
+Using the IP address (or DNS name, if you have created one) of the loadbalancer, generate the base configuration files for the Talos machines.
+Also note that the load balancer forwards port 443 to port 6443 on the associated nodes, so we should use 443 as the port in the config definition:
 
 ```bash
-$ talosctl gen config talos-k8s-digital-ocean-tutorial https://<load balancer IP or DNS>:<port>
+$ talosctl gen config talos-k8s-digital-ocean-tutorial https://<load balancer IP or DNS>:443
 created controlplane.yaml
 created worker.yaml
 created talosconfig
 ```
 
-At this point, you can modify the generated configs to your liking.
-Optionally, you can specify `--config-patch` with RFC6902 jsonpatch which will be applied during the config generation.
+### Create the Droplets
 
-#### Validate the Configuration Files
+#### Create a dummy SSH key
+
+> Although SSH is not used by Talos, DigitalOcean requires that an SSH key be associated with a droplet during creation.
+> We will create a dummy key that can be used to satisfy this requirement.
 
 ```bash
-$ talosctl validate --config controlplane.yaml --mode cloud
-controlplane.yaml is valid for cloud mode
-$ talosctl validate --config worker.yaml --mode cloud
-worker.yaml is valid for cloud mode
+doctl compute ssh-key create --public-key "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDbl0I1s/yOETIKjFr7mDLp8LmJn6OIZ68ILjVCkoN6lzKmvZEqEm1YYeWoI0xgb80hQ1fKkl0usW6MkSqwrijoUENhGFd6L16WFL53va4aeJjj2pxrjOr3uBFm/4ATvIfFTNVs+VUzFZ0eGzTgu1yXydX8lZMWnT4JpsMraHD3/qPP+pgyNuI51LjOCG0gVCzjl8NoGaQuKnl8KqbSCARIpETg1mMw+tuYgaKcbqYCMbxggaEKA0ixJ2MpFC/kwm3PcksTGqVBzp3+iE5AlRe1tnbr6GhgT839KLhOB03j7lFl1K9j1bMTOEj5Io8z7xo/XeF2ZQKHFWygAJiAhmKJ dummy@dummy.local" dummy
+
 ```
 
-### Create the Droplets
+Note the ssh key ID that is returned - we will use it in creating the droplets.
 
 #### Create the Control Plane Nodes
 
-Run the following commands, to give ourselves three total control plane nodes:
+Run the following commands to create three control plane nodes:
 
 ```bash
 doctl compute droplet create \
@@ -89,7 +97,7 @@ doctl compute droplet create \
     --enable-private-networking \
     --tag-names talos-digital-ocean-tutorial-control-plane \
     --user-data-file controlplane.yaml \
-    --ssh-keys <ssh key fingerprint> \
+    --ssh-keys <ssh key ID> \
     talos-control-plane-1
 doctl compute droplet create \
     --region $REGION \
@@ -98,7 +106,7 @@ doctl compute droplet create \
     --enable-private-networking \
     --tag-names talos-digital-ocean-tutorial-control-plane \
     --user-data-file controlplane.yaml \
-    --ssh-keys <ssh key fingerprint> \
+    --ssh-keys <ssh key ID> \
     talos-control-plane-2
 doctl compute droplet create \
     --region $REGION \
@@ -107,12 +115,11 @@ doctl compute droplet create \
     --enable-private-networking \
     --tag-names talos-digital-ocean-tutorial-control-plane \
     --user-data-file controlplane.yaml \
-    --ssh-keys <ssh key fingerprint> \
+    --ssh-keys <ssh key ID> \
     talos-control-plane-3
 ```
 
-> Note: Although SSH is not used by Talos, DigitalOcean still requires that an SSH key be associated with the droplet.
-> Create a dummy key that can be used to satisfy this requirement.
+Note the droplet ID returned for the first control plane node.
 
 #### Create the Worker Nodes
 
@@ -125,7 +132,7 @@ doctl compute droplet create \
     --size s-2vcpu-4gb \
     --enable-private-networking \
     --user-data-file worker.yaml \
-    --ssh-keys <ssh key fingerprint> \
+    --ssh-keys <ssh key ID>  \
     talos-worker-1
 ```
 
@@ -156,4 +163,10 @@ At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl --talosconfig talosconfig kubeconfig .
+```
+
+We can also watch the cluster bootstrap via:
+
+```bash
+talosctl --talosconfig talosconfig health
 ```
