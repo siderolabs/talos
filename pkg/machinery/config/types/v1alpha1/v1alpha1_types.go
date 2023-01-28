@@ -810,7 +810,7 @@ type MachineConfig struct {
 	//
 	//     The `config` section provides a way to authenticate to the registry with TLS client
 	//     identity, provide registry CA, or authentication information.
-	//     Authentication information has same meaning with the corresponding field in `.docker/config.json`.
+	//     Authentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).
 	//
 	//     See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).
 	//   examples:
@@ -2469,19 +2469,19 @@ type RegistryConfig struct {
 type RegistryAuthConfig struct {
 	//   description: |
 	//     Optional registry authentication.
-	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	//     The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).
 	RegistryUsername string `yaml:"username,omitempty"`
 	//   description: |
 	//     Optional registry authentication.
-	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	//     The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).
 	RegistryPassword string `yaml:"password,omitempty"`
 	//   description: |
 	//     Optional registry authentication.
-	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	//     The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).
 	RegistryAuth string `yaml:"auth,omitempty"`
 	//   description: |
 	//     Optional registry authentication.
-	//     The meaning of each field is the same with the corresponding field in .docker/config.json.
+	//     The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).
 	RegistryIdentityToken string `yaml:"identityToken,omitempty"`
 }
 

@@ -1869,8 +1869,8 @@
           "$ref": "#/$defs/RegistriesConfig",
           "title": "registries",
           "description": "Used to configure the machine’s container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe mirrors section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe config section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in .docker/config.json.\n\nSee also matching configuration for CRI containerd plugin.\n",
-          "markdownDescription": "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in `.docker/config.json`.\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).",
-          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s container image registry mirrors.\u003c/p\u003e\n\n\u003cp\u003eAutomatically generates matching CRI configuration for registry mirrors.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003emirrors\u003c/code\u003e section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003econfig\u003c/code\u003e section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in \u003ccode\u003e.docker/config.json\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eSee also matching configuration for \u003ca href=\"https://github.com/containerd/cri/blob/master/docs/registry.md\" target=\"_blank\"\u003eCRI containerd plugin\u003c/a\u003e.\u003c/p\u003e\n"
+          "markdownDescription": "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).",
+          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s container image registry mirrors.\u003c/p\u003e\n\n\u003cp\u003eAutomatically generates matching CRI configuration for registry mirrors.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003emirrors\u003c/code\u003e section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003econfig\u003c/code\u003e section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n\n\u003cp\u003eSee also matching configuration for \u003ca href=\"https://github.com/containerd/cri/blob/master/docs/registry.md\" target=\"_blank\"\u003eCRI containerd plugin\u003c/a\u003e.\u003c/p\u003e\n"
         },
         "systemDiskEncryption": {
           "$ref": "#/$defs/SystemDiskEncryptionConfig",
@@ -2280,29 +2280,29 @@
           "type": "string",
           "title": "username",
           "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
-          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.",
-          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\u003c/p\u003e\n"
+          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
+          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
         },
         "password": {
           "type": "string",
           "title": "password",
           "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
-          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.",
-          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\u003c/p\u003e\n"
+          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
+          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
         },
         "auth": {
           "type": "string",
           "title": "auth",
           "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
-          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.",
-          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\u003c/p\u003e\n"
+          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
+          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
         },
         "identityToken": {
           "type": "string",
           "title": "identityToken",
           "description": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\n",
-          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.",
-          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in .docker/config.json.\u003c/p\u003e\n"
+          "markdownDescription": "Optional registry authentication.\nThe meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).",
+          "x-intellij-html-description": "\u003cp\u003eOptional registry authentication.\nThe meaning of each field is the same with the corresponding field in \u003ca href=\"https://docs.docker.com/engine/api/v1.41/#section/Authentication\" target=\"_blank\"\u003e\u003ccode\u003e.docker/config.json\u003c/code\u003e\u003c/a\u003e.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

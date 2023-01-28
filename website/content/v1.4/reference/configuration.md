@@ -316,7 +316,7 @@ sysctls:
 sysfs:
     devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
 {{< /highlight >}}</details> | |
-|`registries` |<a href="#registriesconfig">RegistriesConfig</a> |<details><summary>Used to configure the machine's container image registry mirrors.</summary><br />Automatically generates matching CRI configuration for registry mirrors.<br /><br />The `mirrors` section allows to redirect requests for images to non-default registry,<br />which might be local registry or caching mirror.<br /><br />The `config` section provides a way to authenticate to the registry with TLS client<br />identity, provide registry CA, or authentication information.<br />Authentication information has same meaning with the corresponding field in `.docker/config.json`.<br /><br />See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`registries` |<a href="#registriesconfig">RegistriesConfig</a> |<details><summary>Used to configure the machine's container image registry mirrors.</summary><br />Automatically generates matching CRI configuration for registry mirrors.<br /><br />The `mirrors` section allows to redirect requests for images to non-default registry,<br />which might be local registry or caching mirror.<br /><br />The `config` section provides a way to authenticate to the registry with TLS client<br />identity, provide registry CA, or authentication information.<br />Authentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).<br /><br />See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 registries:
     # Specifies mirror configuration for each registry.
     mirrors:
@@ -2506,10 +2506,10 @@ password: password # Optional registry authentication.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`username` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in .docker/config.json.</details>  | |
-|`password` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in .docker/config.json.</details>  | |
-|`auth` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in .docker/config.json.</details>  | |
-|`identityToken` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in .docker/config.json.</details>  | |
+|`username` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).</details>  | |
+|`password` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).</details>  | |
+|`auth` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).</details>  | |
+|`identityToken` |string |<details><summary>Optional registry authentication.</summary>The meaning of each field is the same with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).</details>  | |
 
 
 
