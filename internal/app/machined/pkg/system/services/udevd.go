@@ -92,6 +92,20 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 // HealthFunc implements the HealthcheckedService interface.
 func (c *Udevd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
+		// checking for the existence of the udev control socket is a faster way to check
+		// that udevd is running, but not a complete check since the socket can persist if the process
+		// was not gracefully stopped
+		if err := conditions.WaitForFileToExist("/run/udev/control").Wait(ctx); err != nil {
+			return err
+		}
+
+		// udevadm trigger returns with an exit code of 0 even if udevd is not fully running,
+		// so running `udevadm control --start-exec-queue` to ensure that udevd is fully initialized
+		// which returns an exit code of 2 if udevd is not running. This complementes the previous check
+		if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "control", "--start-exec-queue"); err != nil {
+			return err
+		}
+
 		if !c.triggered {
 			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=devices", "--action=add"); err != nil {
 				return err
