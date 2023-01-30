@@ -15,7 +15,6 @@ machine:
             - interface: eth0
               addresses:
                 - 10.3.5.7/24
-              mtu: 0
               dhcp: false
     install:
         disk: /dev/sda

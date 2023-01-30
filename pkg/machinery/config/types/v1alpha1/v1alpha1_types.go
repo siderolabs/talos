@@ -2163,7 +2163,7 @@ type Device struct {
 	//   description: |
 	//     The interface's MTU.
 	//     If used in combination with DHCP, this will override any MTU settings returned from DHCP server.
-	DeviceMTU int `yaml:"mtu"`
+	DeviceMTU int `yaml:"mtu,omitempty"`
 	//   description: |
 	//     Indicates if DHCP should be used to configure the interface.
 	//     The following DHCP options are supported:

@@ -9,7 +9,6 @@ machine:
             - interface: eth0
               addresses:
                 - 10.1.2.3/24
-              mtu: 0
               dhcp: false
               vip:
                 ip: 10.3.5.6
