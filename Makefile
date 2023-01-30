@@ -31,7 +31,7 @@ ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
 DEEPCOPY_GEN_VERSION ?= v0.26.1
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
-VTPROTOBUF_VERSION ?= v0.3.0
+VTPROTOBUF_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
 DEEPCOPY_VERSION ?= v0.5.5
 IMPORTVET ?= ghcr.io/siderolabs/importvet:1549a5c

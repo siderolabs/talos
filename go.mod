@@ -89,8 +89,8 @@ require (
 	github.com/safchain/ethtool v0.2.0
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.12
 	github.com/siderolabs/crypto v0.4.0
-	github.com/siderolabs/discovery-api v0.1.1
-	github.com/siderolabs/discovery-client v0.1.3
+	github.com/siderolabs/discovery-api v0.1.2
+	github.com/siderolabs/discovery-client v0.1.4
 	github.com/siderolabs/gen v0.4.3
 	github.com/siderolabs/go-blockdevice v0.4.2
 	github.com/siderolabs/go-circular v0.1.0
@@ -131,7 +131,7 @@ require (
 	golang.org/x/term v0.4.0
 	golang.org/x/time v0.3.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20221104135756-97bc4ad4a1cb
-	google.golang.org/grpc v1.52.0
+	google.golang.org/grpc v1.52.3
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.90.0

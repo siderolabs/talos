@@ -24,8 +24,16 @@ type Message = proto.Message
 // UnmarshalOptions is alias for [proto.UnmarshalOptions].
 type UnmarshalOptions = proto.UnmarshalOptions
 
+type vtprotoEqual interface {
+	EqualMessageVT(proto.Message) bool
+}
+
 // Equal reports whether two messages are equal.
 func Equal(a, b Message) bool {
+	if vm, ok := a.(vtprotoEqual); ok {
+		return vm.EqualMessageVT(b)
+	}
+
 	return proto.Equal(a, b)
 }
 
