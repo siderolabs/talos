@@ -42,7 +42,6 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"kernel.org/pub/linux/libs/security/libcap/cap"
 
 	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -293,39 +292,6 @@ func SetRLimit(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 		// TODO(andrewrynhard): Should we read limit from /proc/sys/fs/nr_open?
 		return unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576})
 	}, "setRLimit"
-}
-
-// DropCapabilities drops some capabilities so that they can't be restored by child processes.
-func DropCapabilities(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		prop, err := krnl.ReadParam(&kernel.Param{Key: "proc.sys.kernel.kexec_load_disabled"})
-		if v := strings.TrimSpace(string(prop)); err == nil && v != "0" {
-			logger.Printf("kernel.kexec_load_disabled is %v, skipping dropping capabilities", v)
-
-			return nil
-		}
-
-		// Drop capabilities from the bounding set effectively disabling it for all forked processes,
-		// but keep them for PID 1.
-		droppedCapabilities := []cap.Value{
-			cap.SYS_BOOT,
-			cap.SYS_MODULE,
-		}
-
-		iab := cap.IABGetProc()
-
-		for _, val := range droppedCapabilities {
-			if err := iab.SetVector(cap.Bound, true, val); err != nil {
-				return fmt.Errorf("error removing %s from the bounding set: %w", val, err)
-			}
-		}
-
-		if err := iab.SetProc(); err != nil {
-			return fmt.Errorf("error applying caps: %w", err)
-		}
-
-		return nil
-	}, "dropCapabilities"
 }
 
 // See https://www.kernel.org/doc/Documentation/ABI/testing/ima_policy
@@ -810,6 +776,13 @@ func WriteUdevRules(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 // StartUdevd represents the task to start udevd.
 func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		mp := mount.NewMountPoints()
+		mp.Set("udev-data", mount.NewMountPoint("", "/usr/etc/udev", "", unix.MS_I_VERSION, "", mount.WithFlags(mount.Overlay|mount.SystemOverlay|mount.Shared)))
+
+		if err = mount.Mount(mp); err != nil {
+			return err
+		}
+
 		svc := &services.Udevd{}
 
 		system.Services(r).LoadAndStart(svc)
@@ -1268,20 +1241,6 @@ func injectCRIConfigPatch(ctx context.Context, st state.State, content []byte) e
 	}))
 
 	return err
-}
-
-//nolint:deadcode,unused
-func doesNotExists(p string) (err error) {
-	_, err = os.Stat(p)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-
-		return err
-	}
-
-	return fmt.Errorf("file exists")
 }
 
 func existsAndIsFile(p string) (err error) {

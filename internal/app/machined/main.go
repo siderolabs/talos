@@ -32,6 +32,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/maintenance"
 	"github.com/siderolabs/talos/internal/app/poweroff"
 	"github.com/siderolabs/talos/internal/app/trustd"
+	"github.com/siderolabs/talos/internal/app/wrapperd"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -306,6 +307,10 @@ func main() {
 	// Azure uses the hv_utils kernel module to shutdown the node in hyper-v by calling perform_shutdown which will call orderly_poweroff which will call /sbin/poweroff.
 	case "/sbin/poweroff":
 		poweroff.Main()
+
+		return
+	case "/sbin/wrapperd":
+		wrapperd.Main()
 
 		return
 	default:

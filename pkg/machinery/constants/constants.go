@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.7-talos"
+	DefaultKernelVersion = "6.1.8-talos"
 
 	// DefaultKernelModulesPath is the default path to the kernel modules.
 	DefaultKernelModulesPath = "/lib/modules" + "/" + DefaultKernelVersion
@@ -814,6 +814,16 @@ var Overlays = []string{
 	"/etc/cni",
 	"/etc/kubernetes",
 	"/usr/libexec/kubernetes",
-	"/usr/etc/udev",
 	"/opt",
+}
+
+// DefaultDroppedCapabilities is the default set of capabilities to drop.
+var DefaultDroppedCapabilities = []string{
+	"cap_sys_boot",
+	"cap_sys_module",
+}
+
+// UdevdDroppedCapabilities is the set of capabilities to drop for udevd.
+var UdevdDroppedCapabilities = []string{
+	"cap_sys_boot",
 }

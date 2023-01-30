@@ -13,8 +13,9 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
+PKGS_PREFIX ?= ghcr.io/siderolabs
 TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-alpha.0-11-g28d4a57
-PKGS ?= v1.4.0-alpha.0-18-g987d24a
+PKGS ?= v1.4.0-alpha.0-21-g1fae0b2
 EXTRAS ?= v1.4.0-alpha.0-2-g8cb4792
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.19
@@ -91,6 +92,7 @@ COMMON_ARGS += --progress=$(PROGRESS)
 COMMON_ARGS += --platform=$(PLATFORM)
 COMMON_ARGS += --push=$(PUSH)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
+COMMON_ARGS += --build-arg=PKGS_PREFIX=$(PKGS_PREFIX)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
 COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)

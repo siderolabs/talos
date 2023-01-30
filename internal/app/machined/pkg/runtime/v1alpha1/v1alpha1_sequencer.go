@@ -81,7 +81,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			MountCgroups,
 			MountPseudoFilesystems,
 			SetRLimit,
-			DropCapabilities,
 		).Append(
 			"integrity",
 			WriteIMAPolicy,
@@ -89,6 +88,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"etc",
 			CreateSystemCgroups,
 			CreateOSReleaseFile,
+		).Append(
+			"udev",
+			StartUdevd,
 		).AppendWhen(
 			r.State().Machine().Installed(),
 			"mountSystem",
@@ -219,13 +221,10 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"legacyCleanup",
 		CleanupLegacyStaticPodFiles,
-	).Append(
-		"udevSetup",
-		WriteUdevRules,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
-		"udevd",
-		StartUdevd,
+		"udevSetup",
+		WriteUdevRules,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"userDisks",

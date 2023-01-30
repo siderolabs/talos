@@ -4,82 +4,83 @@
 
 ARG TOOLS
 ARG IMPORTVET
+ARG PKGS_PREFIX
 ARG PKGS
 ARG EXTRAS
 ARG INSTALLER_ARCH
 
 # Resolve package images using ${PKGS} to be used later in COPY --from=.
 
-FROM ghcr.io/siderolabs/fhs:${PKGS} AS pkg-fhs
-FROM ghcr.io/siderolabs/ca-certificates:${PKGS} AS pkg-ca-certificates
+FROM ${PKGS_PREFIX}/fhs:${PKGS} AS pkg-fhs
+FROM ${PKGS_PREFIX}/ca-certificates:${PKGS} AS pkg-ca-certificates
 
-FROM --platform=amd64 ghcr.io/siderolabs/cryptsetup:${PKGS} AS pkg-cryptsetup-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/cryptsetup:${PKGS} AS pkg-cryptsetup-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/cryptsetup:${PKGS} AS pkg-cryptsetup-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/cryptsetup:${PKGS} AS pkg-cryptsetup-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/containerd:${PKGS} AS pkg-containerd-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/containerd:${PKGS} AS pkg-containerd-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/containerd:${PKGS} AS pkg-containerd-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/containerd:${PKGS} AS pkg-containerd-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/dosfstools:${PKGS} AS pkg-dosfstools-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/dosfstools:${PKGS} AS pkg-dosfstools-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/dosfstools:${PKGS} AS pkg-dosfstools-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/dosfstools:${PKGS} AS pkg-dosfstools-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/eudev:${PKGS} AS pkg-eudev-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/eudev:${PKGS} AS pkg-eudev-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/eudev:${PKGS} AS pkg-eudev-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/eudev:${PKGS} AS pkg-eudev-arm64
 
-FROM ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub
-FROM --platform=amd64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-arm64
+FROM ${PKGS_PREFIX}/grub:${PKGS} AS pkg-grub
+FROM --platform=amd64 ${PKGS_PREFIX}/grub:${PKGS} AS pkg-grub-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/grub:${PKGS} AS pkg-grub-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/iptables:${PKGS} AS pkg-iptables-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/iptables:${PKGS} AS pkg-iptables-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/libinih:${PKGS} AS pkg-libinih-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/libinih:${PKGS} AS pkg-libinih-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/libinih:${PKGS} AS pkg-libinih-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/libinih:${PKGS} AS pkg-libinih-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/libjson-c:${PKGS} AS pkg-libjson-c-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/libjson-c:${PKGS} AS pkg-libjson-c-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/libjson-c:${PKGS} AS pkg-libjson-c-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/libjson-c:${PKGS} AS pkg-libjson-c-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/libpopt:${PKGS} AS pkg-libpopt-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/libpopt:${PKGS} AS pkg-libpopt-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/libpopt:${PKGS} AS pkg-libpopt-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/libpopt:${PKGS} AS pkg-libpopt-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/liburcu:${PKGS} AS pkg-liburcu-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/liburcu:${PKGS} AS pkg-liburcu-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/liburcu:${PKGS} AS pkg-liburcu-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/liburcu:${PKGS} AS pkg-liburcu-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/openssl:${PKGS} AS pkg-openssl-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/openssl:${PKGS} AS pkg-openssl-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/openssl:${PKGS} AS pkg-openssl-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/openssl:${PKGS} AS pkg-openssl-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/libseccomp:${PKGS} AS pkg-libseccomp-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/libseccomp:${PKGS} AS pkg-libseccomp-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/libseccomp:${PKGS} AS pkg-libseccomp-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/libseccomp:${PKGS} AS pkg-libseccomp-arm64
 
 # linux-firmware is not arch-specific
-FROM --platform=amd64 ghcr.io/siderolabs/linux-firmware:${PKGS} AS pkg-linux-firmware
+FROM --platform=amd64 ${PKGS_PREFIX}/linux-firmware:${PKGS} AS pkg-linux-firmware
 
-FROM --platform=amd64 ghcr.io/siderolabs/lvm2:${PKGS} AS pkg-lvm2-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/lvm2:${PKGS} AS pkg-lvm2-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/lvm2:${PKGS} AS pkg-lvm2-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/lvm2:${PKGS} AS pkg-lvm2-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/libaio:${PKGS} AS pkg-libaio-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/libaio:${PKGS} AS pkg-libaio-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/libaio:${PKGS} AS pkg-libaio-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/libaio:${PKGS} AS pkg-libaio-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/musl:${PKGS} AS pkg-musl-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/musl:${PKGS} AS pkg-musl-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/musl:${PKGS} AS pkg-musl-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/musl:${PKGS} AS pkg-musl-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/runc:${PKGS} AS pkg-runc-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/runc:${PKGS} AS pkg-runc-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/runc:${PKGS} AS pkg-runc-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/runc:${PKGS} AS pkg-runc-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/xfsprogs:${PKGS} AS pkg-xfsprogs-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/xfsprogs:${PKGS} AS pkg-xfsprogs-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/xfsprogs:${PKGS} AS pkg-xfsprogs-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/xfsprogs:${PKGS} AS pkg-xfsprogs-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/util-linux:${PKGS} AS pkg-util-linux-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/util-linux:${PKGS} AS pkg-util-linux-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/util-linux:${PKGS} AS pkg-util-linux-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/util-linux:${PKGS} AS pkg-util-linux-arm64
 
-FROM --platform=amd64 ghcr.io/siderolabs/kmod:${PKGS} AS pkg-kmod-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/kmod:${PKGS} AS pkg-kmod-arm64
+FROM --platform=amd64 ${PKGS_PREFIX}/kmod:${PKGS} AS pkg-kmod-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/kmod:${PKGS} AS pkg-kmod-arm64
 
-FROM ghcr.io/siderolabs/kernel:${PKGS} AS pkg-kernel
-FROM --platform=amd64 ghcr.io/siderolabs/kernel:${PKGS} AS pkg-kernel-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/kernel:${PKGS} AS pkg-kernel-arm64
+FROM ${PKGS_PREFIX}/kernel:${PKGS} AS pkg-kernel
+FROM --platform=amd64 ${PKGS_PREFIX}/kernel:${PKGS} AS pkg-kernel-amd64
+FROM --platform=arm64 ${PKGS_PREFIX}/kernel:${PKGS} AS pkg-kernel-arm64
 
-FROM --platform=arm64 ghcr.io/siderolabs/u-boot:${PKGS} AS pkg-u-boot-arm64
-FROM --platform=arm64 ghcr.io/siderolabs/raspberrypi-firmware:${PKGS} AS pkg-raspberrypi-firmware-arm64
+FROM --platform=arm64 ${PKGS_PREFIX}/u-boot:${PKGS} AS pkg-u-boot-arm64
+FROM --platform=arm64 ${PKGS_PREFIX}/raspberrypi-firmware:${PKGS} AS pkg-raspberrypi-firmware-arm64
 
 # Resolve package images using ${EXTRAS} to be used later in COPY --from=.
 
@@ -468,6 +469,8 @@ COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
 RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
 RUN chmod +x /rootfs/sbin/poweroff
+RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
+RUN chmod +x /rootfs/sbin/wrapperd
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
@@ -515,6 +518,8 @@ COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
 RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
 RUN chmod +x /rootfs/sbin/poweroff
+RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
+RUN chmod +x /rootfs/sbin/wrapperd
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh

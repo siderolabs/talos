@@ -5,17 +5,14 @@
 package process
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/containerd/cgroups"
-	cgroupsv2 "github.com/containerd/cgroups/v2"
-	"github.com/containerd/containerd/sys"
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
@@ -80,7 +77,15 @@ func (p *processRunner) Close() error {
 }
 
 func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) {
-	cmd = exec.Command(p.args.ProcessArgs[0], p.args.ProcessArgs[1:]...)
+	args := []string{
+		fmt.Sprintf("-name=%s", p.args.ID),
+		fmt.Sprintf("-dropped-caps=%s", strings.Join(p.opts.DroppedCapabilities, ",")),
+		fmt.Sprintf("-cgroup-path=%s", p.opts.CgroupPath),
+		fmt.Sprintf("-oom-score=%d", p.opts.OOMScoreAdj),
+	}
+	args = append(args, p.args.ProcessArgs...)
+
+	cmd = exec.Command("/sbin/wrapperd", args...)
 
 	// Set the environment for the service.
 	cmd.Env = append([]string{fmt.Sprintf("PATH=%s", constants.PATH)}, p.opts.Env...)
@@ -122,50 +127,8 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		defer reaper.Stop(notifyCh)
 	}
 
-	var (
-		cgv1 cgroups.Cgroup
-		cgv2 *cgroupsv2.Manager
-	)
-
-	// load the cgroup before starting the process, as once process is started,
-	// it's not easy to fail (as the process has to be cleaned up)
-	if p.opts.CgroupPath != "" {
-		if cgroups.Mode() == cgroups.Unified {
-			cgv2, err = cgroupsv2.LoadManager(constants.CgroupMountPath, p.opts.CgroupPath)
-			if err != nil {
-				return fmt.Errorf("failed to load cgroup %s: %w", p.opts.CgroupPath, err)
-			}
-		} else {
-			cgv1, err = cgroups.Load(cgroups.V1, cgroups.StaticPath(p.opts.CgroupPath))
-			if err != nil {
-				return fmt.Errorf("failed to load cgroup %s: %w", p.opts.CgroupPath, err)
-			}
-		}
-	}
-
 	if err = cmd.Start(); err != nil {
 		return fmt.Errorf("error starting process: %w", err)
-	}
-
-	if p.opts.OOMScoreAdj != 0 {
-		if err = sys.AdjustOOMScore(cmd.Process.Pid, p.opts.OOMScoreAdj); err != nil {
-			eventSink(events.StateRunning, "Failed to change OOMScoreAdj to process %s", p)
-		}
-	}
-
-	if p.opts.CgroupPath != "" {
-		// put the process into the cgroup and record failure (if any)
-		if cgroups.Mode() == cgroups.Unified {
-			if err = cgv2.AddProc(uint64(cmd.Process.Pid)); err != nil && !errors.Is(err, syscall.ESRCH) { // ignore "no such process" error
-				eventSink(events.StateRunning, "Failed to move process %s to cgroup: %s", p, err)
-			}
-		} else {
-			if err = cgv1.Add(cgroups.Process{
-				Pid: cmd.Process.Pid,
-			}); err != nil && !errors.Is(err, syscall.ESRCH) { // ignore "no such process" error
-				eventSink(events.StateRunning, "Failed to move process %s to cgroup: %s", p, err)
-			}
-		}
 	}
 
 	eventSink(events.StateRunning, "Process %s started with PID %d", p, cmd.Process.Pid)
