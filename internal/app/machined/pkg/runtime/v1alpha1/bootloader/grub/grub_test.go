@@ -52,6 +52,22 @@ func TestDecode(t *testing.T) {
 	assert.True(t, strings.HasPrefix(b.Initrd, "/B/"))
 }
 
+func TestEncodeDecode(t *testing.T) {
+	config := grub.NewConfig("talos.platform=metal talos.config=https://my-metadata.server/talos/config?hostname=${hostname}&mac=${mac}")
+	require.NoError(t, config.Put(grub.BootB, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?uuid=${uuid}"))
+
+	var b bytes.Buffer
+
+	require.NoError(t, config.Encode(&b))
+
+	t.Logf("config encoded to:\n%s", b.String())
+
+	config2, err := grub.Decode(b.Bytes())
+	require.NoError(t, err)
+
+	assert.Equal(t, config, config2)
+}
+
 func TestParseBootLabel(t *testing.T) {
 	label, err := grub.ParseBootLabel("A - v1")
 	assert.NoError(t, err)

@@ -14,7 +14,7 @@ import (
 var (
 	defaultEntryRegex  = regexp.MustCompile(`(?m)^\s*set default="(.*)"\s*$`)
 	fallbackEntryRegex = regexp.MustCompile(`(?m)^\s*set fallback="(.*)"\s*$`)
-	menuEntryRegex     = regexp.MustCompile(`(?m)^menuentry "(.+)" {([^}]+)}`)
+	menuEntryRegex     = regexp.MustCompile(`(?ms)^menuentry\s+"(.+?)" {(.+?)[^\\]}`)
 	linuxRegex         = regexp.MustCompile(`(?m)^\s*linux\s+(.+?)\s+(.*)$`)
 	initrdRegex        = regexp.MustCompile(`(?m)^\s*initrd\s+(.+)$`)
 )
@@ -61,7 +61,7 @@ func Decode(c []byte) (*Config, error) {
 	}
 
 	if len(defaultEntryMatches[0]) != 2 {
-		return nil, fmt.Errorf("expected 2 matches, got %d", len(defaultEntryMatches[0]))
+		return nil, fmt.Errorf("default entry: expected 2 matches, got %d", len(defaultEntryMatches[0]))
 	}
 
 	defaultEntry, err := ParseBootLabel(string(defaultEntryMatches[0][1]))
@@ -89,7 +89,7 @@ func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
 	matches := menuEntryRegex.FindAllSubmatch(conf, -1)
 	for _, m := range matches {
 		if len(m) != 3 {
-			return nil, fmt.Errorf("expected 3 matches, got %d", len(m))
+			return nil, fmt.Errorf("conf block: expected 3 matches, got %d", len(m))
 		}
 
 		confBlock := m[2]
@@ -118,15 +118,17 @@ func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
 }
 
 func parseConfBlock(block []byte) (linux, cmdline, initrd string, err error) {
+	block = []byte(unquote(string(block)))
+
 	linuxMatches := linuxRegex.FindAllSubmatch(block, -1)
 	if len(linuxMatches) != 1 {
 		return "", "", "",
-			fmt.Errorf("expected 1 match, got %d", len(linuxMatches))
+			fmt.Errorf("linux: expected 1 match, got %d", len(linuxMatches))
 	}
 
 	if len(linuxMatches[0]) != 3 {
 		return "", "", "",
-			fmt.Errorf("expected 3 matches, got %d", len(linuxMatches[0]))
+			fmt.Errorf("linux: expected 3 matches, got %d", len(linuxMatches[0]))
 	}
 
 	linux = string(linuxMatches[0][1])
@@ -135,12 +137,12 @@ func parseConfBlock(block []byte) (linux, cmdline, initrd string, err error) {
 	initrdMatches := initrdRegex.FindAllSubmatch(block, -1)
 	if len(initrdMatches) != 1 {
 		return "", "", "",
-			fmt.Errorf("expected 1 match, got %d", len(initrdMatches))
+			fmt.Errorf("initrd: expected 1 match, got %d: %s", len(initrdMatches), string(block))
 	}
 
 	if len(initrdMatches[0]) != 2 {
 		return "", "", "",
-			fmt.Errorf("expected 2 matches, got %d", len(initrdMatches[0]))
+			fmt.Errorf("initrd: expected 2 matches, got %d", len(initrdMatches[0]))
 	}
 
 	initrd = string(initrdMatches[0][1])
