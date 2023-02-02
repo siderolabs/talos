@@ -103,13 +103,12 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 
 	dlOpts.Endpoint = endpoint
 
-	err = retry.Exponential(180*time.Second, retry.WithUnits(time.Second), retry.WithJitter(time.Second), retry.WithErrorLogging(true)).Retry(func() error {
-		select {
-		case <-ctx.Done():
-			return context.Canceled
-		default:
-		}
-
+	err = retry.Exponential(
+		180*time.Second,
+		retry.WithUnits(time.Second),
+		retry.WithJitter(time.Second),
+		retry.WithErrorLogging(true),
+	).RetryWithContext(ctx, func(ctx context.Context) error {
 		dlOpts = downloadDefaults()
 
 		dlOpts.Endpoint = endpoint
