@@ -28,7 +28,7 @@ terminal_output console
 menuentry "{{ $entry.Name }}" {
   set gfxmode=auto
   set gfxpayload=text
-  linux {{ $entry.Linux }} {{ $entry.Cmdline }}
+  linux {{ $entry.Linux }} {{ quote $entry.Cmdline }}
   initrd {{ $entry.Initrd }}
 }
 {{ end -}}
@@ -59,7 +59,9 @@ func (c *Config) Encode(wr io.Writer) error {
 		return err
 	}
 
-	t := template.Must(template.New("grub").Parse(confTemplate))
+	t := template.Must(template.New("grub").Funcs(template.FuncMap{
+		"quote": quote,
+	}).Parse(confTemplate))
 
 	return t.Execute(wr, c)
 }
