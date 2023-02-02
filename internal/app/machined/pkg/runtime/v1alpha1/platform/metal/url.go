@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	hardwareResource "github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -78,25 +79,27 @@ func PopulateURLParameters(ctx context.Context, downloadURL string, r state.Stat
 		return nil
 	}
 
+	var multiErr *multierror.Error
+
 	if err := substitute(constants.UUIDKey, getSystemUUID); err != nil {
-		return "", err
+		multiErr = multierror.Append(multiErr, err)
 	}
 
 	if err := substitute(constants.SerialNumberKey, getSystemSerialNumber); err != nil {
-		return "", err
+		multiErr = multierror.Append(multiErr, err)
 	}
 
 	if err := substitute(constants.MacKey, getMACAddress); err != nil {
-		return "", err
+		multiErr = multierror.Append(multiErr, err)
 	}
 
 	if err := substitute(constants.HostnameKey, getHostname); err != nil {
-		return "", err
+		multiErr = multierror.Append(multiErr, err)
 	}
 
 	u.RawQuery = values.Encode()
 
-	return u.String(), nil
+	return u.String(), multiErr.ErrorOrNil()
 }
 
 //nolint:gocyclo
@@ -123,6 +126,7 @@ func getResource[T resource.Resource](ctx context.Context, r state.State, namesp
 				// ok, proceed
 			case state.Destroyed, state.Bootstrapped:
 				// ignore
+				continue
 			case state.Errored:
 				return "", event.Error()
 			}
