@@ -51,7 +51,7 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 	getURL := func() string {
 		downloadEndpoint, err := PopulateURLParameters(ctx, *option, r)
 		if err != nil {
-			log.Fatalf("failed to populate talos.config fetch URL: %q ; %s", *option, err.Error())
+			log.Printf("failed to populate talos.config fetch URL: %q ; %s", *option, err.Error())
 		}
 
 		log.Printf("fetching machine config from: %q", downloadEndpoint)
