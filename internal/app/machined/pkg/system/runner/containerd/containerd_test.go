@@ -74,16 +74,14 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.Require().NoError(os.Mkdir(rootDir, 0o777))
 
 	if cgroups.Mode() == cgroups.Unified {
-		var (
-			groupPath string
-			manager   *cgroupsv2.Manager
-		)
+		var manager *cgroupsv2.Manager
 
-		groupPath, err = cgroupsv2.NestedGroupPath(suite.tmpDir)
+		manager, err = cgroupsv2.NewManager(constants.CgroupMountPath, "/"+suite.T().Name(), &cgroupsv2.Resources{})
 		suite.Require().NoError(err)
 
-		manager, err = cgroupsv2.NewManager(constants.CgroupMountPath, groupPath, &cgroupsv2.Resources{})
-		suite.Require().NoError(err)
+		// when using buildkit runner, parent `cgroup.type` is set to `domain threaded`, so child cgroups have to explicitly specify
+		// `cgroup.type` to "threaded" https://www.kernel.org/doc/html/v5.0/admin-guide/cgroup-v2.html#threads
+		suite.Require().NoError(os.WriteFile(filepath.Join(constants.CgroupMountPath, suite.T().Name(), "cgroup.type"), []byte("threaded"), 0o644))
 
 		defer manager.Delete() //nolint:errcheck
 	} else {
@@ -113,7 +111,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		args,
 		runner.WithLoggingManager(suite.loggingManager),
 		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
-		runner.WithCgroupPath(suite.tmpDir),
+		runner.WithCgroupPath("/"+suite.T().Name()),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open())
 	suite.containerdWg.Add(1)

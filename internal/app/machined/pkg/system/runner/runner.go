@@ -63,6 +63,8 @@ type Options struct {
 	CgroupPath string
 	// OverrideSeccompProfile default Linux seccomp profile.
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
+	// DroppedCapabilities is the list of capabilities to drop.
+	DroppedCapabilities []string
 }
 
 // Option is the functional option func.
@@ -162,5 +164,12 @@ func WithCgroupPath(path string) Option {
 func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
 	return func(args *Options) {
 		args.OverrideSeccompProfile = override
+	}
+}
+
+// WithBoundedCapabilities sets the list of capabilities to drop.
+func WithBoundedCapabilities(caps []string) Option {
+	return func(args *Options) {
+		args.DroppedCapabilities = caps
 	}
 }

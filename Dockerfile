@@ -468,6 +468,8 @@ COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
 RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
 RUN chmod +x /rootfs/sbin/poweroff
+RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
+RUN chmod +x /rootfs/sbin/wrapperd
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
@@ -515,6 +517,8 @@ COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
 RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
 RUN chmod +x /rootfs/sbin/poweroff
+RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
+RUN chmod +x /rootfs/sbin/wrapperd
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
