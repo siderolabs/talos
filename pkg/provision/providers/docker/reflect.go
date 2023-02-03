@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
+//nolint:gocyclo
 func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory string) (provision.Cluster, error) {
 	res := &result{
 		clusterInfo: provision.ClusterInfo{
@@ -67,9 +68,15 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 			return nil, err
 		}
 
-		addr, err := netip.ParseAddr(node.NetworkSettings.Networks[res.clusterInfo.Network.Name].IPAddress)
-		if err != nil {
-			return nil, err
+		var ips []netip.Addr
+
+		if network, ok := node.NetworkSettings.Networks[res.clusterInfo.Network.Name]; ok {
+			addr, err := netip.ParseAddr(network.IPAddress)
+			if err != nil {
+				return nil, err
+			}
+
+			ips = append(ips, addr)
 		}
 
 		res.clusterInfo.Nodes = append(res.clusterInfo.Nodes,
@@ -78,7 +85,7 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 				Name: strings.TrimLeft(node.Names[0], "/"),
 				Type: t,
 
-				IPs: []netip.Addr{addr},
+				IPs: ips,
 			})
 	}
 
