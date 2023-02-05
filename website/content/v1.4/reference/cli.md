@@ -2175,7 +2175,7 @@ talosctl reboot [flags]
 ### Options
 
 ```
-      --debug              debug operation from kernel logs. --no-wait is set to false when this flag is set
+      --debug              debug operation from kernel logs. --wait is set to true when this flag is set
   -h, --help               help for reboot
   -m, --mode string        select the reboot mode: "default", "powercycle" (skips kexec) (default "default")
       --timeout duration   time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
@@ -2207,7 +2207,7 @@ talosctl reset [flags]
 ### Options
 
 ```
-      --debug                           debug operation from kernel logs. --no-wait is set to false when this flag is set
+      --debug                           debug operation from kernel logs. --wait is set to true when this flag is set
       --graceful                        if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
   -h, --help                            help for reset
       --reboot                          if true, reboot the node after resetting instead of shutting down
@@ -2332,7 +2332,7 @@ talosctl shutdown [flags]
 ### Options
 
 ```
-      --debug              debug operation from kernel logs. --no-wait is set to false when this flag is set
+      --debug              debug operation from kernel logs. --wait is set to true when this flag is set
       --force              if true, force a node to shutdown without a cordon/drain
   -h, --help               help for shutdown
       --timeout duration   time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
@@ -2475,7 +2475,7 @@ talosctl upgrade [flags]
 ### Options
 
 ```
-      --debug              debug operation from kernel logs. --no-wait is set to false when this flag is set
+      --debug              debug operation from kernel logs. --wait is set to true when this flag is set
   -f, --force              force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help               help for upgrade
   -i, --image string       the container image to use for performing the install

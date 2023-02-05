@@ -18,6 +18,6 @@ type trackableActionCmdFlags struct {
 
 func (f *trackableActionCmdFlags) addTrackActionFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&f.wait, "wait", true, "wait for the operation to complete, tracking its progress. always set to true when --debug is set")
-	cmd.Flags().BoolVar(&f.debug, "debug", false, "debug operation from kernel logs. --no-wait is set to false when this flag is set")
+	cmd.Flags().BoolVar(&f.debug, "debug", false, "debug operation from kernel logs. --wait is set to true when this flag is set")
 	cmd.Flags().DurationVar(&f.timeout, "timeout", 30*time.Minute, "time to wait for the operation is complete if --debug or --wait is set")
 }
