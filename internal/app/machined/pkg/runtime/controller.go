@@ -21,8 +21,9 @@ type TaskExecutionFunc func(context.Context, *log.Logger, Runtime) error
 
 // Phase represents a collection of tasks to be performed concurrently.
 type Phase struct {
-	Name  string
-	Tasks []TaskSetupFunc
+	Name      string
+	Tasks     []TaskSetupFunc
+	CheckFunc func() bool
 }
 
 // LockOptions represents the options for a controller.

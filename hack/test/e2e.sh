@@ -242,3 +242,7 @@ function run_csi_tests {
   # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
   KUBERNETES_SERVICE_HOST= KUBECONFIG="${TMP}/kubeconfig" ${KUBESTR} fio --storageclass ceph-block --size 10G
 }
+
+function validate_virtio_modules {
+  ${TALOSCTL} read /proc/modules | grep -q virtio
+}

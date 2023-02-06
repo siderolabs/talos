@@ -6,7 +6,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -73,18 +72,18 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		},
 	}
 
-	env := []string{}
-	for key, val := range r.Config().Machine().Env() {
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
+	debug := false
+
+	if r.Config() != nil {
+		debug = r.Config().Debug()
 	}
 
 	return restart.New(process.NewRunner(
-		r.Config().Debug(),
+		debug,
 		args,
 		runner.WithLoggingManager(r.Logging()),
-		runner.WithEnv(env),
 		runner.WithCgroupPath(constants.CgroupSystemRuntime),
-		runner.WithDroppedCapabilities(constants.DefaultDroppedCapabilities),
+		runner.WithDroppedCapabilities(constants.UdevdDroppedCapabilities),
 	),
 		restart.WithType(restart.Forever),
 	), nil

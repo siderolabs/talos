@@ -18,12 +18,28 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 6.1.7
-* containerd: v1.6.15
+* Linux: 6.1.8
+* containerd: v1.6.16
 * Kubernetes: v1.26.1
 * etcd: v3.5.7
 
 Talos is built with Go 1.19.5.
+"""
+
+    [notes.kernel-modules]
+        title = "Kernel Modules"
+        description="""\
+Talos now supports automatically loading kernel drivers built as modules.
+If any system extensions or the Talos base kernel build provides kernel modules and if they matches the system hardware (via PCI IDs), they will be loaded automatically.
+Modules can still be loaded explicitly by defining it in [machine configuration](https://www.talos.dev/v1.4/reference/configuration/#kernelconfig).
+"""
+
+    [notes.kernel-modules-tree]
+        title = "Kernel Modules Tree"
+        description="""\
+Talos now supports re-building the kernel modules dependency tree information on upgrades.
+This allows modules of same name to co-exist as in-tree and external modules.
+System Extensions can provide modules installed into `extras` directory and when loading it'll take precendence over the in-tree module.
 """
 
     [notes.etcd]

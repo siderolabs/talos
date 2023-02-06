@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.7-talos"
+	DefaultKernelVersion = "6.1.8-talos"
 
 	// DefaultKernelModulesPath is the default path to the kernel modules.
 	DefaultKernelModulesPath = "/lib/modules" + "/" + DefaultKernelVersion
@@ -429,7 +429,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.6.15"
+	DefaultContainerdVersion = "1.6.16"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
@@ -704,8 +704,11 @@ const (
 	// See: https://lore.kernel.org/wireguard/20190321033638.1ff82682@natsu/t/
 	KubeSpanLinkMinimumMTU = 1280
 
+	// UdevDir is the path to the udev directory.
+	UdevDir = "/usr/etc/udev"
+
 	// UdevRulesPath rules file path.
-	UdevRulesPath = "/usr/etc/udev/rules.d/99-talos.rules"
+	UdevRulesPath = UdevDir + "/" + "rules.d/99-talos.rules"
 
 	// LoggingFormatJSONLines represents "JSON lines" logging format.
 	LoggingFormatJSONLines = "json_lines"
@@ -817,7 +820,6 @@ var Overlays = []string{
 	"/etc/cni",
 	"/etc/kubernetes",
 	"/usr/libexec/kubernetes",
-	"/usr/etc/udev",
 	"/opt",
 }
 
@@ -825,4 +827,9 @@ var Overlays = []string{
 var DefaultDroppedCapabilities = map[string]struct{}{
 	"cap_sys_boot":   {},
 	"cap_sys_module": {},
+}
+
+// UdevdDroppedCapabilities is the set of capabilities to drop for udevd.
+var UdevdDroppedCapabilities = map[string]struct{}{
+	"cap_sys_boot": {},
 }

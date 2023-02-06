@@ -43,6 +43,17 @@ func (p PhaseList) AppendWhen(when bool, name string, tasks ...runtime.TaskSetup
 	return p
 }
 
+// AppendWithDeferredCheck appends a task to the phase list but skips the sequence if `check func()` returns `true` during execution.
+func (p PhaseList) AppendWithDeferredCheck(check func() bool, name string, tasks ...runtime.TaskSetupFunc) PhaseList {
+	p = append(p, runtime.Phase{
+		Name:      name,
+		Tasks:     tasks,
+		CheckFunc: check,
+	})
+
+	return p
+}
+
 // AppendList appends an additional PhaseList to the existing one.
 func (p PhaseList) AppendList(list PhaseList) PhaseList {
 	return append(p, list...)
@@ -88,15 +99,22 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"etc",
 			CreateSystemCgroups,
 			CreateOSReleaseFile,
-		).AppendWhen(
-			r.State().Machine().Installed(),
+		).Append(
+			"udevd",
+			StartUdevd,
+		).AppendWithDeferredCheck(
+			func() bool {
+				return r.State().Machine().Installed()
+			},
 			"mountSystem",
 			MountStatePartition,
 		).Append(
 			"config",
 			LoadConfig,
-		).AppendWhen(
-			r.State().Machine().Installed(),
+		).AppendWithDeferredCheck(
+			func() bool {
+				return r.State().Machine().Installed()
+			},
 			"unmountSystem",
 			UnmountStatePartition,
 		)
@@ -218,13 +236,10 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"legacyCleanup",
 		CleanupLegacyStaticPodFiles,
-	).Append(
-		"udevSetup",
-		WriteUdevRules,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
-		"udevd",
-		StartUdevd,
+		"udevSetup",
+		WriteUdevRules,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"userDisks",

@@ -221,6 +221,10 @@ func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []run
 	}()
 
 	for number, phase = range phases {
+		if phase.CheckFunc != nil && !phase.CheckFunc() {
+			continue
+		}
+
 		// Make the phase number human friendly.
 		number++
 

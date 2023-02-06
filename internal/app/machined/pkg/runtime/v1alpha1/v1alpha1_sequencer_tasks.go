@@ -776,6 +776,13 @@ func WriteUdevRules(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 // StartUdevd represents the task to start udevd.
 func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		mp := mount.NewMountPoints()
+		mp.Set("udev-data", mount.NewMountPoint("", constants.UdevDir, "", unix.MS_I_VERSION, "", mount.WithFlags(mount.Overlay|mount.SystemOverlay|mount.Shared)))
+
+		if err = mount.Mount(mp); err != nil {
+			return err
+		}
+
 		svc := &services.Udevd{}
 
 		system.Services(r).LoadAndStart(svc)
