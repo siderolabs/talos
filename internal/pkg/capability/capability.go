@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"kernel.org/pub/linux/libs/security/libcap/cap"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // AllGrantableCapabilities returns list of capabilities that can be granted to the container based on
@@ -18,6 +20,10 @@ func AllGrantableCapabilities() []string {
 
 	for v := cap.Value(0); v < cap.MaxBits(); v++ {
 		if set, _ := cap.GetBound(v); set { //nolint:errcheck
+			if _, ok := constants.DefaultDroppedCapabilities[v.String()]; ok {
+				continue
+			}
+
 			capabilities = append(capabilities, strings.ToUpper(v.String()))
 		}
 	}

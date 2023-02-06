@@ -13,6 +13,7 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/gen/maps"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
@@ -167,9 +168,9 @@ func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
 	}
 }
 
-// WithBoundedCapabilities sets the list of capabilities to drop.
-func WithBoundedCapabilities(caps []string) Option {
+// WithDroppedCapabilities sets the list of capabilities to drop.
+func WithDroppedCapabilities(caps map[string]struct{}) Option {
 	return func(args *Options) {
-		args.DroppedCapabilities = caps
+		args.DroppedCapabilities = maps.Keys(caps)
 	}
 }

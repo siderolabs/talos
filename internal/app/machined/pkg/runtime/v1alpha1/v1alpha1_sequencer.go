@@ -81,7 +81,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			MountCgroups,
 			MountPseudoFilesystems,
 			SetRLimit,
-			DropCapabilities,
 		).Append(
 			"integrity",
 			WriteIMAPolicy,

@@ -114,6 +114,7 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithEnv(env),
 		runner.WithOOMScoreAdj(-999),
 		runner.WithCgroupPath(constants.CgroupSystemRuntime),
+		runner.WithDroppedCapabilities(constants.DefaultDroppedCapabilities),
 	),
 		restart.WithType(restart.Forever),
 	), nil

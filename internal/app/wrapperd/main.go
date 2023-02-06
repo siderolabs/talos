@@ -18,7 +18,9 @@ import (
 	"golang.org/x/sys/unix"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
+	krnl "github.com/siderolabs/talos/pkg/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
 var (
@@ -70,7 +72,10 @@ func Main() {
 		}
 	}
 
-	if droppedCaps != "" {
+	prop, err := krnl.ReadParam(&kernel.Param{Key: "proc.sys.kernel.kexec_load_disabled"})
+	if v := strings.TrimSpace(string(prop)); err == nil && v != "0" {
+		log.Printf("kernel.kexec_load_disabled is %v, skipping dropping capabilities", v)
+	} else if droppedCaps != "" {
 		caps := strings.Split(droppedCaps, ",")
 		dropCaps := slices.Map(caps, func(c string) cap.Value {
 			capability, err := cap.FromName(c)
