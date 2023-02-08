@@ -236,7 +236,7 @@ func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 
 				suite.Assert().Equal("kubelet", spec.Image)
 				suite.Assert().Equal([]string{"10.96.0.10"}, spec.ClusterDNS)
-				suite.Assert().Equal("", spec.ClusterDomain)
+				suite.Assert().Equal(constants.DefaultDNSDomain, spec.ClusterDomain)
 				suite.Assert().Empty(spec.ExtraArgs)
 				suite.Assert().Empty(spec.ExtraMounts)
 				suite.Assert().False(spec.CloudProviderExternal)

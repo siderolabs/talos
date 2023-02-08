@@ -237,7 +237,7 @@ func (c *ClusterConfig) ServiceCIDRs() []string {
 
 // DNSDomain implements the config.ClusterNetwork interface.
 func (c *ClusterConfig) DNSDomain() string {
-	if c.ClusterNetwork == nil {
+	if c.ClusterNetwork == nil || c.ClusterNetwork.DNSDomain == "" {
 		return constants.DefaultDNSDomain
 	}
 
