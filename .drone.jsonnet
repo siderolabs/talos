@@ -372,7 +372,7 @@ local integration_cilium = Step("e2e-cilium-1.9.10", target="e2e-qemu", privileg
 });
 local integration_canal_reset = Step("e2e-canal-reset", target="e2e-qemu", privileged=true, depends_on=[integration_cilium], environment={
         "INTEGRATION_TEST_RUN": "TestIntegration/api.ResetSuite/TestResetWithSpec",
-        "CUSTOM_CNI_URL": "https://docs.projectcalico.org/manifests/canal.yaml",
+        "CUSTOM_CNI_URL": "https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml",
         "REGISTRY": local_registry,
 });
 local integration_bios_cgroupsv1 = Step("e2e-bios-cgroupsv1", target="e2e-qemu", privileged=true, depends_on=[integration_canal_reset], environment={
