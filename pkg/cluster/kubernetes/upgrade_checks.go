@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"text/tabwriter"
 
@@ -16,6 +17,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -24,6 +30,7 @@ import (
 // K8sUpgradeChecks is a set of checks to run before upgrading k8s components.
 type K8sUpgradeChecks struct {
 	state             state.State
+	k8sConfig         *rest.Config
 	controlPlaneNodes []string
 	log               func(string, ...interface{})
 
@@ -36,6 +43,7 @@ type K8sComponentRemovedItemsError struct {
 	AdmissionFlags []K8sComponentItem
 	CLIFlags       []K8sComponentItem
 	FeatureGates   []K8sComponentItem
+	APIResources   map[string]int
 }
 
 // K8sComponentItem represents a component item.
@@ -70,35 +78,18 @@ type k8sComponentCheck struct {
 }
 
 // NewK8sUpgradeChecks initializes and returns K8sUpgradeChecks.
-func NewK8sUpgradeChecks(state state.State, options UpgradeOptions, controlPlaneNodes []string) (*K8sUpgradeChecks, error) {
-	checks := &K8sUpgradeChecks{
+func NewK8sUpgradeChecks(state state.State, k8sConfig *rest.Config, options UpgradeOptions, controlPlaneNodes []string) (*K8sUpgradeChecks, error) {
+	return &K8sUpgradeChecks{
+		state:             state,
+		k8sConfig:         k8sConfig,
 		log:               options.Log,
 		upgradePath:       options.Path(),
 		controlPlaneNodes: controlPlaneNodes,
 		upgradeVersionCheck: map[string]componentChecks{
-			"1.21->1.22": {
-				kubeAPIServerChecks: apiServerCheck{
-					removedAPIResources: []string{
-						"validatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io",
-						"mutatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io",
-						"customresourcedefinitions.v1beta1.apiextensions.k8s.io",
-						"apiservices.v1beta1.apiregistration.k8s.io",
-						"leases.v1beta1.coordination.k8s.io",
-						"ingresses.v1beta1.extensions",
-						"ingresses.v1beta1.networking.k8s.io",
-					},
-				},
-			},
 			"1.24->1.25": {
 				kubeAPIServerChecks: apiServerCheck{
 					removedAPIResources: []string{
-						"cronjobs.v1beta1.batch",
-						"endpointslices.v1beta1.discovery.k8s.io",
-						"events.v1beta1.events.k8s.io",
-						"horizontalpodautoscalers.v2beta1.autoscaling",
-						"poddisruptionbudgets.v1beta1.policy",
 						"podsecuritypolicies.v1beta1.policy",
-						"runtimeclasses.v1beta1.node.k8s.io",
 					},
 					k8sComponentCheck: k8sComponentCheck{
 						removedFlags: []string{
@@ -125,23 +116,12 @@ func NewK8sUpgradeChecks(state state.State, options UpgradeOptions, controlPlane
 				},
 			},
 			"1.25->1.26": {
-				kubeAPIServerChecks: apiServerCheck{
-					removedAPIResources: []string{
-						"flowschemas.v1beta1.flowcontrol.apiserver.k8s.io",
-						"prioritylevelconfigurations.v1beta1.flowcontrol.apiserver.k8s.io",
-						"horizontalpodautoscalers.v2beta2.autoscaling",
-					},
-				},
 				removedFeatureGates: []string{
 					"DynamicKubeletConfig",
 				},
 			},
 		},
-	}
-
-	checks.state = state
-
-	return checks, nil
+	}, nil
 }
 
 // Run executes the checks.
@@ -149,15 +129,19 @@ func NewK8sUpgradeChecks(state state.State, options UpgradeOptions, controlPlane
 func (checks *K8sUpgradeChecks) Run(ctx context.Context) error {
 	var k8sComponentCheck K8sComponentRemovedItemsError
 
-	checks.log("Checking for removed Kubernetes component flags")
-
 	if k8sComponentChecks, ok := checks.upgradeVersionCheck[checks.upgradePath]; ok {
+		checks.log("checking for removed Kubernetes component flags")
+
 		for _, node := range checks.controlPlaneNodes {
 			ctx = client.WithNode(ctx, node)
 
 			for _, id := range []string{k8s.APIServerID, k8s.ControllerManagerID, k8s.SchedulerID} {
 				staticPod, err := safe.StateGet[*k8s.StaticPod](ctx, checks.state, k8s.NewStaticPod(k8s.NamespaceName, id).Metadata())
 				if err != nil {
+					if state.IsNotFoundError(err) {
+						continue
+					}
+
 					return err
 				}
 
@@ -178,6 +162,12 @@ func (checks *K8sUpgradeChecks) Run(ctx context.Context) error {
 
 				k8sComponentCheck.PopulateRemovedFeatureGates(node, id, pod.Spec.Containers[0].Command, k8sComponentChecks.removedFeatureGates)
 			}
+		}
+
+		checks.log("checking for removed Kubernetes API resource versions")
+
+		if err := k8sComponentCheck.PopulateRemovedAPIResources(ctx, checks.k8sConfig, k8sComponentChecks.kubeAPIServerChecks.removedAPIResources); err != nil {
+			return err
 		}
 	}
 
@@ -245,6 +235,51 @@ func (e *K8sComponentRemovedItemsError) PopulateRemovedAdmissionPlugins(node, co
 	}
 }
 
+// PopulateRemovedAPIResources populates the removed API resources.
+func (e *K8sComponentRemovedItemsError) PopulateRemovedAPIResources(ctx context.Context, k8sConfig *rest.Config, removedAPIResources []string) error {
+	if len(removedAPIResources) == 0 || k8sConfig == nil {
+		return nil
+	}
+
+	// copy the config to avoid mutating input argument
+	k8sConfigCopy := *k8sConfig
+	k8sConfigCopy.WarningHandler = rest.NewWarningWriter(io.Discard, rest.WarningWriterOptions{})
+
+	k8sClient, err := dynamic.NewForConfig(&k8sConfigCopy)
+	if err != nil {
+		return fmt.Errorf("error building kubernetes client: %w", err)
+	}
+
+	for _, resource := range removedAPIResources {
+		gvr, _ := schema.ParseResourceArg(resource)
+
+		if gvr == nil {
+			return fmt.Errorf("failed to parse group version resource %s", resource)
+		}
+
+		res, err := k8sClient.Resource(*gvr).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+
+			return err
+		}
+
+		count := len(res.Items)
+
+		if count > 0 {
+			if e.APIResources == nil {
+				e.APIResources = make(map[string]int)
+			}
+
+			e.APIResources[resource] = count
+		}
+	}
+
+	return nil
+}
+
 func staticPodTypedResourceToK8sPodSpec(staticPod *k8s.StaticPod) (*v1.Pod, error) {
 	var spec v1.Pod
 
@@ -285,6 +320,14 @@ func (e K8sComponentRemovedItemsError) Error() string {
 
 		for _, item := range e.CLIFlags {
 			fmt.Fprintf(w, "%s\t%s\t%s\n", item.Node, item.Component, item.Value)
+		}
+	}
+
+	if len(e.APIResources) > 0 {
+		fmt.Fprintf(w, "\nREMOVED RESOURCE\tCOUNT\t\n")
+
+		for apiVersion, count := range e.APIResources {
+			fmt.Fprintf(w, "%s\t%d\t\n", apiVersion, count)
 		}
 	}
 

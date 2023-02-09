@@ -5,20 +5,16 @@
 package kubernetes
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/go-cmp/cmp"
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/metadata"
 	v1 "k8s.io/api/core/v1"
@@ -26,11 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 	k8syaml "sigs.k8s.io/yaml"
 
@@ -47,33 +41,6 @@ import (
 type UpgradeProvider interface {
 	cluster.ClientProvider
 	cluster.K8sProvider
-}
-
-var deprecations = map[string][]string{
-	// https://kubernetes.io/docs/reference/using-api/deprecation-guide/
-	"1.21->1.22": {
-		"validatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io",
-		"mutatingwebhookconfigurations.v1beta1.admissionregistration.k8s.io",
-		"customresourcedefinitions.v1beta1.apiextensions.k8s.io",
-		"apiservices.v1beta1.apiregistration.k8s.io",
-		"leases.v1beta1.coordination.k8s.io",
-		"ingresses.v1beta1.extensions",
-		"ingresses.v1beta1.networking.k8s.io",
-	},
-	"1.24->1.25": {
-		"cronjobs.v1beta1.batch",
-		"endpointslices.v1beta1.discovery.k8s.io",
-		"events.v1beta1.events.k8s.io",
-		"horizontalpodautoscalers.v2beta1.autoscaling",
-		"poddisruptionbudgets.v1beta1.policy",
-		"podsecuritypolicies.v1beta1.policy",
-		"runtimeclasses.v1beta1.node.k8s.io",
-	},
-	"1.25->1.26": {
-		"flowschemas.v1beta1.flowcontrol.apiserver.k8s.io",
-		"prioritylevelconfigurations.v1beta1.flowcontrol.apiserver.k8s.io",
-		"horizontalpodautoscalers.v2beta2.autoscaling",
-	},
 }
 
 // UpgradeTalosManaged the Kubernetes control plane.
@@ -106,10 +73,6 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		return fmt.Errorf("unsupported upgrade path %q (from %q to %q)", path, options.FromVersion, options.ToVersion)
 	}
 
-	if err := checkDeprecated(ctx, cluster, options); err != nil {
-		return err
-	}
-
 	k8sClient, err := cluster.K8sHelper(ctx)
 	if err != nil {
 		return fmt.Errorf("error building kubernetes client: %w", err)
@@ -131,7 +94,12 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		return err
 	}
 
-	upgradeChecks, err := NewK8sUpgradeChecks(talosClient.COSI, options, options.controlPlaneNodes)
+	k8sConfig, err := cluster.K8sRestConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	upgradeChecks, err := NewK8sUpgradeChecks(talosClient.COSI, k8sConfig, options, options.controlPlaneNodes)
 	if err != nil {
 		return err
 	}
@@ -679,136 +647,6 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, service, node,
 
 	if !podFound {
 		return retry.ExpectedError(fmt.Errorf("pod not found in the API server state"))
-	}
-
-	return nil
-}
-
-//nolint:gocyclo,cyclop
-func checkDeprecated(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
-	options.Log("checking for resource APIs to be deprecated in version %s", options.ToVersion)
-
-	config, err := cluster.K8sRestConfig(ctx)
-	if err != nil {
-		return err
-	}
-
-	config.WarningHandler = rest.NewWarningWriter(io.Discard, rest.WarningWriterOptions{})
-
-	k8sClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return fmt.Errorf("error building kubernetes client: %w", err)
-	}
-
-	staticClient, err := cluster.K8sHelper(ctx)
-	if err != nil {
-		return fmt.Errorf("error building kubernetes client: %s", err)
-	}
-
-	hasDeprecated := false
-
-	warnings := bytes.NewBuffer([]byte{})
-
-	w := tabwriter.NewWriter(warnings, 0, 0, 3, ' ', 0)
-
-	resources, ok := deprecations[options.Path()]
-	if !ok {
-		return nil
-	}
-
-	var namespaces *v1.NamespaceList
-
-	namespaces, err = staticClient.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return err
-	}
-
-	dc, err := discovery.NewDiscoveryClientForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	serverResources, err := dc.ServerPreferredNamespacedResources()
-	if err != nil {
-		return err
-	}
-
-	namespacedResources := map[string]struct{}{}
-
-	for _, list := range serverResources {
-		for _, resource := range list.APIResources {
-			namespacedResources[resource.Name] = struct{}{}
-		}
-	}
-
-	for _, resource := range resources {
-		gvr, _ := schema.ParseResourceArg(resource)
-
-		if gvr == nil {
-			return fmt.Errorf("failed to parse group version resource %s", resource)
-		}
-
-		var res *unstructured.UnstructuredList
-
-		count := 0
-
-		probeResources := func(namespaces ...v1.Namespace) error {
-			r := k8sClient.Resource(*gvr)
-
-			namespaceNames := slices.Map(namespaces, func(ns v1.Namespace) string { return ns.Name })
-
-			if len(namespaceNames) == 0 {
-				namespaceNames = append(namespaceNames, "default")
-			}
-
-			for _, ns := range namespaceNames {
-				if ns != "default" {
-					r.Namespace(ns)
-				}
-
-				res, err = r.List(ctx, metav1.ListOptions{})
-				if err != nil {
-					if apierrors.IsNotFound(err) {
-						return nil
-					}
-
-					return err
-				}
-
-				count += len(res.Items)
-			}
-
-			return nil
-		}
-
-		checkNamespaces := []v1.Namespace{}
-
-		if _, ok := namespacedResources[gvr.Resource]; ok {
-			checkNamespaces = namespaces.Items
-		}
-
-		if err = probeResources(checkNamespaces...); err != nil {
-			return err
-		}
-
-		if count > 0 {
-			if !hasDeprecated {
-				fmt.Fprintf(w, "RESOURCE\tCOUNT\n")
-			}
-
-			hasDeprecated = true
-
-			fmt.Fprintf(w, "%s\t%d\n", resource, len(res.Items))
-		}
-	}
-
-	if hasDeprecated {
-		if err = w.Flush(); err != nil {
-			return err
-		}
-
-		options.Log("WARNING: found resources which are going to be deprecated/migrated in the version %s", options.ToVersion)
-		options.Log(warnings.String())
 	}
 
 	return nil

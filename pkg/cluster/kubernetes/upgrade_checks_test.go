@@ -55,7 +55,7 @@ func (suite *UpgradeCheckSuite) TestK8sComponentRemovedItemsNoError() {
 		ToVersion:   "1.25.0",
 	}
 
-	checks, err := kubernetes.NewK8sUpgradeChecks(resourceState, upgradeOptions, []string{"10.5.0.2"})
+	checks, err := kubernetes.NewK8sUpgradeChecks(resourceState, nil, upgradeOptions, []string{"10.5.0.2"})
 	suite.Require().NoError(err)
 
 	checkErrors := checks.Run(ctx)
@@ -159,7 +159,7 @@ func (suite *UpgradeCheckSuite) TestK8sComponentRemovedItemsWithError() {
 		ToVersion:   "1.25.0",
 	}
 
-	checks, err := kubernetes.NewK8sUpgradeChecks(resourceState, upgradeOptions, []string{"10.5.0.2"})
+	checks, err := kubernetes.NewK8sUpgradeChecks(resourceState, nil, upgradeOptions, []string{"10.5.0.2"})
 	suite.Require().NoError(err)
 
 	checkErrors := checks.Run(ctx)
