@@ -17,7 +17,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/utils"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/address"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -75,7 +76,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 
 	for _, iface := range metadata.Interfaces["public"] {
 		if iface.IPv4 != nil {
-			ifAddr, err := utils.IPPrefixFrom(iface.IPv4.IPAddress, iface.IPv4.Netmask)
+			ifAddr, err := address.IPPrefixFrom(iface.IPv4.IPAddress, iface.IPv4.Netmask)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse ip address: %w", err)
 			}
@@ -131,7 +132,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 		}
 
 		if iface.IPv6 != nil {
-			ifAddr, err := utils.IPPrefixFrom(iface.IPv6.IPAddress, strconv.Itoa(iface.IPv6.CIDR))
+			ifAddr, err := address.IPPrefixFrom(iface.IPv6.IPAddress, strconv.Itoa(iface.IPv6.CIDR))
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse ip address: %w", err)
 			}
@@ -172,7 +173,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 		}
 
 		if iface.AnchorIPv4 != nil {
-			ifAddr, err := utils.IPPrefixFrom(iface.AnchorIPv4.IPAddress, iface.AnchorIPv4.Netmask)
+			ifAddr, err := address.IPPrefixFrom(iface.AnchorIPv4.IPAddress, iface.AnchorIPv4.Netmask)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse ip address: %w", err)
 			}
@@ -200,7 +201,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 		})
 
 		if iface.IPv4 != nil {
-			ifAddr, err := utils.IPPrefixFrom(iface.IPv4.IPAddress, iface.IPv4.Netmask)
+			ifAddr, err := address.IPPrefixFrom(iface.IPv4.IPAddress, iface.IPv4.Netmask)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse ip address: %w", err)
 			}
@@ -237,6 +238,10 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 
 // Configuration implements the platform.Platform interface.
 func (d *DigitalOcean) Configuration(ctx context.Context, r state.State) ([]byte, error) {
+	if err := netutils.Wait(ctx, r); err != nil {
+		return nil, err
+	}
+
 	log.Printf("fetching machine config from: %q", DigitalOceanUserDataEndpoint)
 
 	return download.Download(ctx, DigitalOceanUserDataEndpoint,

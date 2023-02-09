@@ -72,7 +72,7 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metada
 
 // Configuration implements the runtime.Platform interface.
 func (n *Nocloud) Configuration(ctx context.Context, r state.State) ([]byte, error) {
-	_, _, machineConfigDl, _, err := n.acquireConfig(ctx) //nolint:dogsled
+	_, _, machineConfigDl, _, err := n.acquireConfig(ctx, r) //nolint:dogsled
 	if err != nil {
 		return nil, err
 	}
@@ -99,8 +99,8 @@ func (n *Nocloud) KernelArgs() procfs.Parameters {
 // NetworkConfiguration implements the runtime.Platform interface.
 //
 //nolint:gocyclo
-func (n *Nocloud) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	metadataConfigDl, metadataNetworkConfigDl, _, metadata, err := n.acquireConfig(ctx)
+func (n *Nocloud) NetworkConfiguration(ctx context.Context, r state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	metadataConfigDl, metadataNetworkConfigDl, _, metadata, err := n.acquireConfig(ctx, r)
 	if stderrors.Is(err, errors.ErrNoConfigSource) {
 		err = nil
 	}

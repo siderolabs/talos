@@ -69,6 +69,10 @@ func setup(ctx context.Context, t *testing.T, st state.State, mockUUID, mockSeri
 	linkStatusSpec.TypedSpec().HardwareAddr = nethelpers.HardwareAddr(parsedMockMAC)
 	linkStatusSpec.TypedSpec().LinkState = true
 	assert.NoError(t, createOrUpdate(ctx, st, linkStatusSpec))
+
+	netStatus := network.NewStatus(network.NamespaceName, network.StatusID)
+	netStatus.TypedSpec().AddressReady = true
+	assert.NoError(t, createOrUpdate(ctx, st, netStatus))
 }
 
 func TestPopulateURLParameters(t *testing.T) {

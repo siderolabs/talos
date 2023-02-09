@@ -20,9 +20,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
+	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -101,17 +103,15 @@ func (a *AWS) Name() string {
 
 // Configuration implements the runtime.Platform interface.
 func (a *AWS) Configuration(ctx context.Context, r state.State) ([]byte, error) {
+	if err := netutils.Wait(ctx, r); err != nil {
+		return nil, err
+	}
+
 	log.Printf("fetching machine config from AWS")
 
-	userdata, err := a.metadataClient.GetUserDataWithContext(ctx)
+	userdata, err := netutils.RetryFetch(ctx, a.fetchConfiguration)
 	if err != nil {
-		if awsErr, ok := err.(awserr.RequestFailure); ok {
-			if awsErr.StatusCode() == http.StatusNotFound {
-				return nil, errors.ErrNoConfigSource
-			}
-		}
-
-		return nil, fmt.Errorf("failed to fetch EC2 userdata: %w", err)
+		return nil, err
 	}
 
 	if strings.TrimSpace(userdata) == "" {
@@ -119,6 +119,21 @@ func (a *AWS) Configuration(ctx context.Context, r state.State) ([]byte, error) 
 	}
 
 	return []byte(userdata), nil
+}
+
+func (a *AWS) fetchConfiguration(ctx context.Context) (string, error) {
+	userdata, err := a.metadataClient.GetUserDataWithContext(ctx)
+	if err != nil {
+		if awsErr, ok := err.(awserr.RequestFailure); ok {
+			if awsErr.StatusCode() == http.StatusNotFound {
+				return "", errors.ErrNoConfigSource
+			}
+		}
+
+		return "", retry.ExpectedErrorf("failed to fetch EC2 userdata: %w", err)
+	}
+
+	return userdata, nil
 }
 
 // Mode implements the runtime.Platform interface.

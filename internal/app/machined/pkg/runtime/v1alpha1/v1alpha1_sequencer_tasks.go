@@ -448,7 +448,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 		download := func() error {
 			var b []byte
 
-			fetchCtx, ctxCancel := context.WithTimeout(ctx, 70*time.Second)
+			fetchCtx, ctxCancel := context.WithTimeout(ctx, constants.ConfigLoadTimeout)
 			defer ctxCancel()
 
 			b, e := fetchConfig(fetchCtx, r)

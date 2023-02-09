@@ -17,6 +17,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -67,6 +68,10 @@ func (e *Exoscale) Name() string {
 
 // Configuration implements the runtime.Platform interface.
 func (e *Exoscale) Configuration(ctx context.Context, r state.State) ([]byte, error) {
+	if err := netutils.Wait(ctx, r); err != nil {
+		return nil, err
+	}
+
 	log.Printf("fetching machine config from %q", ExoscaleUserDataEndpoint)
 
 	return download.Download(ctx, ExoscaleUserDataEndpoint,

@@ -582,6 +582,9 @@ const (
 	// DefaultDNSDomain is the default DNS domain.
 	DefaultDNSDomain = "cluster.local"
 
+	// ConfigLoadTimeout is the timeout to wait for the config to be loaded from an external source.
+	ConfigLoadTimeout = 3 * time.Minute
+
 	// BootTimeout is the timeout to run all services.
 	BootTimeout = 70 * time.Minute
 

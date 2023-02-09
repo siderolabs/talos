@@ -26,6 +26,7 @@ import (
 	networkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -88,6 +89,10 @@ func (p *EquinixMetal) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (p *EquinixMetal) Configuration(ctx context.Context, r state.State) ([]byte, error) {
+	if err := netutils.Wait(ctx, r); err != nil {
+		return nil, err
+	}
+
 	log.Printf("fetching machine config from: %q", EquinixMetalUserDataEndpoint)
 
 	return download.Download(ctx, EquinixMetalUserDataEndpoint,

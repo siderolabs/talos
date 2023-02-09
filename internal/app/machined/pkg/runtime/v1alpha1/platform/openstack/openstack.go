@@ -23,7 +23,8 @@ import (
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/utils"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/address"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -224,7 +225,7 @@ func (o *Openstack) ParseMetadata(
 		}
 
 		if ntwrk.Address != "" {
-			ipPrefix, err := utils.IPPrefixFrom(ntwrk.Address, ntwrk.Netmask)
+			ipPrefix, err := address.IPPrefixFrom(ntwrk.Address, ntwrk.Netmask)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse ip address: %w", err)
 			}
@@ -274,7 +275,7 @@ func (o *Openstack) ParseMetadata(
 				return nil, fmt.Errorf("failed to parse route gateway: %w", err)
 			}
 
-			dest, err := utils.IPPrefixFrom(route.Network, route.Netmask)
+			dest, err := address.IPPrefixFrom(route.Network, route.Netmask)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse route network: %w", err)
 			}
@@ -318,6 +319,10 @@ func (o *Openstack) ParseMetadata(
 func (o *Openstack) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
 	_, _, machineConfig, err = o.configFromCD()
 	if err != nil {
+		if err = netutils.Wait(ctx, r); err != nil {
+			return nil, err
+		}
+
 		_, _, machineConfig, err = o.configFromNetwork(ctx)
 		if err != nil {
 			return nil, err

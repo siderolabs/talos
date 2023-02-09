@@ -201,7 +201,7 @@ RUN gofumpt -w ./
 
 FROM go-generate AS gen-proto-go
 WORKDIR /src/
-RUN structprotogen github.com/siderolabs/talos/pkg/machinery/... /api/resource/definitions/
+RUN --mount=type=cache,target=/.cache structprotogen github.com/siderolabs/talos/pkg/machinery/... /api/resource/definitions/
 
 # compile protobuf service definitions
 FROM build AS generate-build

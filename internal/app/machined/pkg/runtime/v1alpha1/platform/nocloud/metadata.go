@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 	"golang.org/x/sys/unix"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -100,8 +102,12 @@ type MetadataConfig struct {
 	Zone         string `yaml:"zone,omitempty"`
 }
 
-func (n *Nocloud) configFromNetwork(ctx context.Context, metaBaseURL string) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+func (n *Nocloud) configFromNetwork(ctx context.Context, metaBaseURL string, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
 	log.Printf("fetching meta config from: %q", metaBaseURL+configMetaDataPath)
+
+	if err = netutils.Wait(ctx, r); err != nil {
+		return nil, nil, nil, err
+	}
 
 	metaConfig, err = download.Download(ctx, metaBaseURL+configMetaDataPath)
 	if err != nil {
@@ -184,7 +190,7 @@ func (n *Nocloud) configFromCD() (metaConfig []byte, networkConfig []byte, machi
 }
 
 //nolint:gocyclo
-func (n *Nocloud) acquireConfig(ctx context.Context) (metadataConfigDl, metadataNetworkConfigDl, machineConfigDl []byte, metadata *MetadataConfig, err error) {
+func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataConfigDl, metadataNetworkConfigDl, machineConfigDl []byte, metadata *MetadataConfig, err error) {
 	s, err := smbios.GetSMBIOSInfo()
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -222,7 +228,7 @@ func (n *Nocloud) acquireConfig(ctx context.Context) (metadataConfigDl, metadata
 	}
 
 	if networkSource && metaBaseURL != "" {
-		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromNetwork(ctx, metaBaseURL)
+		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromNetwork(ctx, metaBaseURL, r)
 	} else {
 		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromCD()
 	}

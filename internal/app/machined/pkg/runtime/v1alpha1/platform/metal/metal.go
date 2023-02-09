@@ -20,6 +20,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -63,6 +64,10 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 	case constants.MetalConfigISOLabel:
 		return readConfigFromISO()
 	default:
+		if err := netutils.Wait(ctx, r); err != nil {
+			return nil, err
+		}
+
 		return download.Download(ctx, *option, download.WithEndpointFunc(getURL))
 	}
 }

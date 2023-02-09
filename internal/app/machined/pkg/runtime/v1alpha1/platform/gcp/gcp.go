@@ -16,9 +16,11 @@ import (
 	"cloud.google.com/go/compute/metadata"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
+	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -158,12 +160,14 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig, interfaces []NetworkInterf
 
 // Configuration implements the platform.Platform interface.
 func (g *GCP) Configuration(ctx context.Context, r state.State) ([]byte, error) {
-	userdata, err := metadata.InstanceAttributeValue("user-data")
-	if err != nil {
-		if _, ok := err.(metadata.NotDefinedError); ok {
-			return nil, errors.ErrNoConfigSource
-		}
+	if err := netutils.Wait(ctx, r); err != nil {
+		return nil, err
+	}
 
+	log.Printf("fetching machine config from AWS")
+
+	userdata, err := netutils.RetryFetch(ctx, g.fetchConfiguration)
+	if err != nil {
 		return nil, err
 	}
 
@@ -172,6 +176,19 @@ func (g *GCP) Configuration(ctx context.Context, r state.State) ([]byte, error) 
 	}
 
 	return []byte(userdata), nil
+}
+
+func (g *GCP) fetchConfiguration(_ context.Context) (string, error) {
+	userdata, err := metadata.InstanceAttributeValue("user-data")
+	if err != nil {
+		if _, ok := err.(metadata.NotDefinedError); ok {
+			return "", errors.ErrNoConfigSource
+		}
+
+		return "", retry.ExpectedError(err)
+	}
+
+	return userdata, nil
 }
 
 // Mode implements the platform.Platform interface.
