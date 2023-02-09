@@ -1,3 +1,62 @@
+## [Talos 1.3.4](https://github.com/siderolabs/talos/releases/tag/v1.3.4) (2023-02-09)
+
+Welcome to the v1.3.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.92
+* containerd: 1.6.16
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`521d00f9f`](https://github.com/siderolabs/talos/commit/521d00f9f885b1e6e4a5d09d4d5ccb1963bb2e0d) test: update Canal CNI manifest URL
+* [`a10316e1a`](https://github.com/siderolabs/talos/commit/a10316e1ae5ee1389ac461990dab5bf5bdfa4b6a) fix: default dns domain to 'cluster.local' in local case
+* [`db3086ddd`](https://github.com/siderolabs/talos/commit/db3086ddda5b35172226636a6a6ccc35d8243a27) fix: panic in talosctl cluster show
+* [`37d8d80ca`](https://github.com/siderolabs/talos/commit/37d8d80cac3494454b04f1047333adc6a3b093f7) fix: return proper error if download attempts time out
+* [`75c1f5c9a`](https://github.com/siderolabs/talos/commit/75c1f5c9ac9d3f6a2cbf4c4bac4db8b1e54c63a7) fix: correctly expand parameters in the URL
+* [`7f171014b`](https://github.com/siderolabs/talos/commit/7f171014b5744f7d799cd7b9f6ae9bac1626902d) fix: correctly quote and unquote strings in GRUB config
+* [`0a587cb29`](https://github.com/siderolabs/talos/commit/0a587cb2952a4343151f3e341ea6458d9eff6d8a) fix: udevd healthcheck
+* [`a5537025a`](https://github.com/siderolabs/talos/commit/a5537025a1b5b8002229ddde93ef94e71204fb98) feat: linux 5.15.92, containerd 1.6.16
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`78b971c`](https://github.com/siderolabs/extras/commit/78b971c0cb6e674704fbd0718308161220e7f69c) chore: update packages
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`ffdc9f1`](https://github.com/siderolabs/pkgs/commit/ffdc9f1fdc9492a5214718de8b3a715b453911f6) feat: linux 5.15.92, containerd 1.6.16
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**  v1.6.15 -> v1.6.16
+* **github.com/siderolabs/extras**      v1.3.0-1-g3773d71 -> v1.3.0-2-g78b971c
+* **github.com/siderolabs/pkgs**        v1.3.0-10-g6f6a030 -> v1.3.0-11-gffdc9f1
+
+Previous release can be found at [v1.3.3](https://github.com/siderolabs/talos/releases/tag/v1.3.3)
+
 ## [Talos 1.3.3](https://github.com/siderolabs/talos/releases/tag/v1.3.3) (2023-01-24)
 
 Welcome to the v1.3.3 release of Talos!
