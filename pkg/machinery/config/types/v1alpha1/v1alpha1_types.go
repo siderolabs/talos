@@ -461,7 +461,7 @@ var (
 		WireguardPeers: []*DeviceWireguardPeer{
 			{
 				WireguardPublicKey:                   "ABCDEF...",
-				WireguardEndpoint:                    "192.168.1.2",
+				WireguardEndpoint:                    "192.168.1.2:51822",
 				WireguardPersistentKeepaliveInterval: time.Second * 10,
 				WireguardAllowedIPs:                  []string{"192.168.1.0/24"},
 			},

@@ -216,7 +216,7 @@ network:
           #     # Specifies a list of peer configurations to apply to a device.
           #     peers:
           #         - publicKey: ABCDEF... # Specifies the public key of this peer.
-          #           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+          #           endpoint: 192.168.1.2:51822 # Specifies the endpoint of this peer entry.
           #           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
           #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
           #           allowedIPs:
@@ -915,7 +915,7 @@ interfaces:
       #     # Specifies a list of peer configurations to apply to a device.
       #     peers:
       #         - publicKey: ABCDEF... # Specifies the public key of this peer.
-      #           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+      #           endpoint: 192.168.1.2:51822 # Specifies the endpoint of this peer entry.
       #           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
       #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
       #           allowedIPs:
@@ -1016,7 +1016,7 @@ interfaces:
       #     # Specifies a list of peer configurations to apply to a device.
       #     peers:
       #         - publicKey: ABCDEF... # Specifies the public key of this peer.
-      #           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+      #           endpoint: 192.168.1.2:51822 # Specifies the endpoint of this peer entry.
       #           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
       #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
       #           allowedIPs:
@@ -2014,7 +2014,7 @@ Appears in:
   #     # Specifies a list of peer configurations to apply to a device.
   #     peers:
   #         - publicKey: ABCDEF... # Specifies the public key of this peer.
-  #           endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+  #           endpoint: 192.168.1.2:51822 # Specifies the endpoint of this peer entry.
   #           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
   #           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
   #           allowedIPs:
@@ -2100,7 +2100,7 @@ wireguard:
     # Specifies a list of peer configurations to apply to a device.
     peers:
         - publicKey: ABCDEF... # Specifies the public key of this peer.
-          endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+          endpoint: 192.168.1.2:51822 # Specifies the endpoint of this peer entry.
           persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
           # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
           allowedIPs:
@@ -2165,7 +2165,7 @@ privateKey: ABCDEF... # Specifies a private key configuration (base64 encoded).
 # Specifies a list of peer configurations to apply to a device.
 peers:
     - publicKey: ABCDEF... # Specifies the public key of this peer.
-      endpoint: 192.168.1.2 # Specifies the endpoint of this peer entry.
+      endpoint: 192.168.1.2:51822 # Specifies the endpoint of this peer entry.
       persistentKeepaliveInterval: 10s # Specifies the persistent keepalive interval for this peer.
       # AllowedIPs specifies a list of allowed IP addresses in CIDR notation for this peer.
       allowedIPs:
