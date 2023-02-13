@@ -75,6 +75,10 @@ func (dbus *DBusState) Stop() error {
 
 // WaitShutdown signals the shutdown over the D-Bus and waits for the inhibit lock to be released.
 func (dbus *DBusState) WaitShutdown(ctx context.Context) error {
+	if dbus.logindMock == nil {
+		return nil
+	}
+
 	if err := dbus.logindMock.EmitShutdown(); err != nil {
 		return err
 	}
