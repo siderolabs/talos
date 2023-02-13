@@ -21,7 +21,7 @@ require (
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/gen v0.4.1
 	github.com/siderolabs/go-api-signature v0.2.2
-	github.com/siderolabs/go-blockdevice v0.4.1
+	github.com/siderolabs/go-blockdevice v0.4.3
 	github.com/siderolabs/go-debug v0.2.2
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0
@@ -62,8 +62,8 @@ require (
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
