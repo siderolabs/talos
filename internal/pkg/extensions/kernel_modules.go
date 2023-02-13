@@ -115,11 +115,13 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 	// writable overlayfs mount inside a container required a tmpfs mount
 	overlays.Set("overlays-tmpfs", mount.NewMountPoint("tmpfs", constants.VarSystemOverlaysPath, "tmpfs", unix.MS_I_VERSION, ""))
 
+	rootfsKernelModulesPath := filepath.Join(rootfsMountPath, constants.DefaultKernelModulesPath)
+
 	// append the rootfs mount point
-	extensionsPathWithKernelModules = append(extensionsPathWithKernelModules, filepath.Join(rootfsMountPath, constants.DefaultKernelModulesPath))
+	extensionsPathWithKernelModules = append(extensionsPathWithKernelModules, rootfsKernelModulesPath)
 
 	// create the overlayfs mount point as read write
-	mp := mount.NewMountPoint("", strings.Join(extensionsPathWithKernelModules, ":"), "", unix.MS_I_VERSION, "", mount.WithFlags(mount.Overlay|mount.Shared))
+	mp := mount.NewMountPoint(strings.Join(extensionsPathWithKernelModules, ":"), rootfsKernelModulesPath, "", unix.MS_I_VERSION, "", mount.WithFlags(mount.Overlay|mount.Shared))
 	overlays.Set("overlays-mnt", mp)
 
 	if err = mount.Mount(overlays); err != nil {
@@ -168,7 +170,7 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 
 func logErr(f func() error) {
 	// if file is already closed, ignore the error
-	if err := f(); !errors.Is(err, os.ErrClosed) {
+	if err := f(); err != nil && !errors.Is(err, os.ErrClosed) {
 		log.Println(err)
 	}
 }

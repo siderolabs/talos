@@ -444,7 +444,12 @@ func overlay(p *Point) error {
 		}
 	}
 
-	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", p.target, diff, workdir)
+	lowerDir := p.target
+	if p.source != "" {
+		lowerDir = p.source
+	}
+
+	opts := fmt.Sprintf("lowerdir=%s,upperdir=%s,workdir=%s", lowerDir, diff, workdir)
 	if err := unix.Mount("overlay", p.target, "overlay", 0, opts); err != nil {
 		return fmt.Errorf("error creating overlay mount to %s: %w", p.target, err)
 	}
