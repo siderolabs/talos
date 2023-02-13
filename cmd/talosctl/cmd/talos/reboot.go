@@ -67,7 +67,7 @@ var rebootCmd = &cobra.Command{
 		return action.NewTracker(
 			&GlobalArgs,
 			action.MachineReadyEventFn,
-			rebootGetActorID,
+			rebootGetActorID(opts...),
 			action.WithPostCheck(postCheckFn),
 			action.WithDebug(rebootCmdFlags.debug),
 			action.WithTimeout(rebootCmdFlags.timeout),
@@ -75,17 +75,19 @@ var rebootCmd = &cobra.Command{
 	},
 }
 
-func rebootGetActorID(ctx context.Context, c *client.Client) (string, error) {
-	resp, err := c.RebootWithResponse(ctx)
-	if err != nil {
-		return "", err
-	}
+func rebootGetActorID(opts ...client.RebootMode) func(ctx context.Context, c *client.Client) (string, error) {
+	return func(ctx context.Context, c *client.Client) (string, error) {
+		resp, err := c.RebootWithResponse(ctx, opts...)
+		if err != nil {
+			return "", err
+		}
 
-	if len(resp.GetMessages()) == 0 {
-		return "", fmt.Errorf("no messages returned from action run")
-	}
+		if len(resp.GetMessages()) == 0 {
+			return "", fmt.Errorf("no messages returned from action run")
+		}
 
-	return resp.GetMessages()[0].GetActorId(), nil
+		return resp.GetMessages()[0].GetActorId(), nil
+	}
 }
 
 func init() {
