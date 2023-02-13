@@ -12,7 +12,7 @@ import (
 //
 // See https://www.gnu.org/software/grub/manual/grub/html_node/Shell_002dlike-scripting.html
 func quote(s string) string {
-	for _, c := range `\{}$|;<>"` {
+	for _, c := range `\{}&$|;<>"` {
 		s = strings.ReplaceAll(s, string(c), `\`+string(c))
 	}
 
@@ -21,7 +21,7 @@ func quote(s string) string {
 
 // unquote according to (incomplete) GRUB quoting rules.
 func unquote(s string) string {
-	for _, c := range `{}$|;<>\"` {
+	for _, c := range `{}&$|;<>\"` {
 		s = strings.ReplaceAll(s, `\`+string(c), string(c))
 	}
 

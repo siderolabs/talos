@@ -39,6 +39,11 @@ func TestQuote(t *testing.T) {
 			input:    `foo\$`,
 			expected: `foo\\\$`,
 		},
+		{
+			name:     "url",
+			input:    "http://my-host/config.yaml?uuid=${uuid}&serial=${serial}&mac=${mac}&hostname=${hostname}",
+			expected: "http://my-host/config.yaml?uuid=\\$\\{uuid\\}\\&serial=\\$\\{serial\\}\\&mac=\\$\\{mac\\}\\&hostname=\\$\\{hostname\\}",
+		},
 	} {
 		test := test
 
@@ -82,6 +87,11 @@ func TestUnquote(t *testing.T) {
 			name:     "escaped backslash",
 			input:    `foo\\\$`,
 			expected: `foo\$`,
+		},
+		{
+			name:     "url",
+			input:    "http://my-host/config.yaml?uuid=\\$\\{uuid\\}\\&serial=\\$\\{serial\\}\\&mac=\\$\\{mac\\}\\&hostname=\\$\\{hostname\\}",
+			expected: "http://my-host/config.yaml?uuid=${uuid}&serial=${serial}&mac=${mac}&hostname=${hostname}",
 		},
 	} {
 		test := test
