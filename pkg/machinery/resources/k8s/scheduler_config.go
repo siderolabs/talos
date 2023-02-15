@@ -47,7 +47,7 @@ func NewSchedulerConfig() *SchedulerConfig {
 type SchedulerConfigRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (SchedulerConfigRD) ResourceDefinition(_ resource.Metadata, _ SchedulerConfigSpec) meta.ResourceDefinitionSpec {
+func (SchedulerConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SchedulerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

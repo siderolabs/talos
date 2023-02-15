@@ -64,7 +64,7 @@ func NewNodeAddress(namespace resource.Namespace, id resource.ID) *NodeAddress {
 type NodeAddressRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodeAddressRD) ResourceDefinition(resource.Metadata, NodeAddressSpec) meta.ResourceDefinitionSpec {
+func (NodeAddressRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeAddressType,
 		Aliases:          []resource.Type{},

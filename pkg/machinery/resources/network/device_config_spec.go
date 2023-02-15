@@ -50,7 +50,7 @@ func (spec DeviceConfigSpecSpec) DeepCopy() DeviceConfigSpecSpec {
 type DeviceConfigSpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (DeviceConfigSpecRD) ResourceDefinition(resource.Metadata, DeviceConfigSpecSpec) meta.ResourceDefinitionSpec {
+func (DeviceConfigSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             DeviceConfigSpecType,
 		Aliases:          []resource.Type{},

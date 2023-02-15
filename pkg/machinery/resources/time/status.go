@@ -52,7 +52,7 @@ func NewStatus() *Status {
 type StatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r StatusRD) ResourceDefinition(resource.Metadata, StatusSpec) meta.ResourceDefinitionSpec {
+func (r StatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StatusType,
 		Aliases:          []resource.Type{},

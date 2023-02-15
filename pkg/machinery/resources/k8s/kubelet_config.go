@@ -52,7 +52,7 @@ func NewKubeletConfig(namespace resource.Namespace, id resource.ID) *KubeletConf
 type KubeletConfigRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (KubeletConfigRD) ResourceDefinition(resource.Metadata, KubeletConfigSpec) meta.ResourceDefinitionSpec {
+func (KubeletConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletConfigType,
 		Aliases:          []resource.Type{},

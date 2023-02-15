@@ -51,7 +51,7 @@ func NewKernelParamSpec(namespace resource.Namespace, id resource.ID) *KernelPar
 type KernelParamSpecRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KernelParamSpecRD) ResourceDefinition(resource.Metadata, KernelParamSpecSpec) meta.ResourceDefinitionSpec {
+func (KernelParamSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamSpecType,
 		Aliases:          []resource.Type{},
@@ -78,7 +78,7 @@ func NewKernelParamDefaultSpec(namespace resource.Namespace, id resource.ID) *Ke
 type KernelParamDefaultSpecRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KernelParamDefaultSpecRD) ResourceDefinition(resource.Metadata, KernelParamDefaultSpecSpec) meta.ResourceDefinitionSpec {
+func (KernelParamDefaultSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamDefaultSpecType,
 		Aliases:          []resource.Type{},

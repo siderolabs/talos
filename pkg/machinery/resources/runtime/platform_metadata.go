@@ -48,7 +48,7 @@ func NewPlatformMetadataSpec(namespace resource.Namespace, id resource.ID) *Plat
 type PlatformMetadataRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (PlatformMetadataRD) ResourceDefinition(resource.Metadata, PlatformMetadataSpec) meta.ResourceDefinitionSpec {
+func (PlatformMetadataRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PlatformMetadataType,
 		DefaultNamespace: NamespaceName,

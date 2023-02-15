@@ -50,7 +50,7 @@ func NewAddressStatus(namespace resource.Namespace, id resource.ID) *AddressStat
 type AddressStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (AddressStatusRD) ResourceDefinition(resource.Metadata, AddressStatusSpec) meta.ResourceDefinitionSpec {
+func (AddressStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AddressStatusType,
 		Aliases:          []resource.Type{"address", "addresses"},

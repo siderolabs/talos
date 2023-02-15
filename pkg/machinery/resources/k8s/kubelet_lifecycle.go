@@ -43,7 +43,7 @@ func NewKubeletLifecycle(namespace resource.Namespace, id resource.ID) *KubeletL
 type KubeletLifecycleRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (KubeletLifecycleRD) ResourceDefinition(resource.Metadata, KubeletLifecycleSpec) meta.ResourceDefinitionSpec {
+func (KubeletLifecycleRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletLifecycleType,
 		Aliases:          []resource.Type{},

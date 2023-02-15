@@ -51,7 +51,7 @@ func NewIdentity(namespace resource.Namespace, id resource.ID) *Identity {
 type IdentityRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (IdentityRD) ResourceDefinition(resource.Metadata, IdentitySpec) meta.ResourceDefinitionSpec {
+func (IdentityRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             IdentityType,
 		Aliases:          []resource.Type{},

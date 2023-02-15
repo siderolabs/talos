@@ -63,7 +63,7 @@ func NewAPIServerConfig() *APIServerConfig {
 type APIServerConfigRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (APIServerConfigRD) ResourceDefinition(_ resource.Metadata, _ APIServerConfigSpec) meta.ResourceDefinitionSpec {
+func (APIServerConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             APIServerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

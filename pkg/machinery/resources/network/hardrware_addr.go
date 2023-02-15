@@ -46,7 +46,7 @@ func NewHardwareAddr(namespace resource.Namespace, id resource.ID) *HardwareAddr
 type HardwareAddrRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (HardwareAddrRD) ResourceDefinition(resource.Metadata, HardwareAddrSpec) meta.ResourceDefinitionSpec {
+func (HardwareAddrRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             HardwareAddrType,
 		Aliases:          []resource.Type{},

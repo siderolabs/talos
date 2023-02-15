@@ -40,7 +40,7 @@ func NewKernelParamStatus(namespace resource.Namespace, id resource.ID) *KernelP
 type KernelParamStatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KernelParamStatusRD) ResourceDefinition(resource.Metadata, KernelParamStatusSpec) meta.ResourceDefinitionSpec {
+func (KernelParamStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamStatusType,
 		Aliases:          []resource.Type{"sysctls", "kernelparameters", "kernelparams"},

@@ -48,7 +48,7 @@ func NewSpec(namespace resource.Namespace, id resource.ID) *Spec {
 type SpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (SpecRD) ResourceDefinition(resource.Metadata, SpecSpec) meta.ResourceDefinitionSpec {
+func (SpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SpecType,
 		Aliases:          []resource.Type{},

@@ -42,7 +42,7 @@ func NewSeccompProfile(id string) *SeccompProfile {
 type SeccompProfileRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (SeccompProfileRD) ResourceDefinition(resource.Metadata, SeccompProfileSpec) meta.ResourceDefinitionSpec {
+func (SeccompProfileRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SeccompProfileType,
 		Aliases:          []resource.Type{},

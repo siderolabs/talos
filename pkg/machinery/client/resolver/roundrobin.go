@@ -69,7 +69,7 @@ func (r *roundRobinResolver) start() error {
 	var addrs []resolver.Address //nolint:prealloc
 
 	//nolint:staticcheck
-	endpoints := strings.Split(r.target.Endpoint, ",")
+	endpoints := strings.Split(r.target.Endpoint(), ",")
 
 	for _, addr := range endpoints {
 		serverName := addr

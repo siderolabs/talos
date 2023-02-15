@@ -51,7 +51,7 @@ func NewAdmissionControlConfig() *AdmissionControlConfig {
 type AdmissionControlConfigRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (AdmissionControlConfigRD) ResourceDefinition(_ resource.Metadata, _ AdmissionControlConfigSpec) meta.ResourceDefinitionSpec {
+func (AdmissionControlConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AdmissionControlConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

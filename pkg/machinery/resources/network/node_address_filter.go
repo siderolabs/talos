@@ -43,7 +43,7 @@ func NewNodeAddressFilter(namespace resource.Namespace, id resource.ID) *NodeAdd
 type NodeAddressFilterRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodeAddressFilterRD) ResourceDefinition(resource.Metadata, NodeAddressFilterSpec) meta.ResourceDefinitionSpec {
+func (NodeAddressFilterRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeAddressFilterType,
 		Aliases:          []resource.Type{},

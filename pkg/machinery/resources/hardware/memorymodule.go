@@ -45,7 +45,7 @@ func NewMemoryModuleInfo(id string) *MemoryModule {
 type MemoryModuleRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (c MemoryModuleRD) ResourceDefinition(resource.Metadata, MemoryModuleSpec) meta.ResourceDefinitionSpec {
+func (c MemoryModuleRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type: MemoryModuleType,
 		Aliases: []resource.Type{

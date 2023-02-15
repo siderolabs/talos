@@ -84,7 +84,7 @@ func NewRouteSpec(namespace resource.Namespace, id resource.ID) *RouteSpec {
 type RouteSpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (RouteSpecRD) ResourceDefinition(resource.Metadata, RouteSpecSpec) meta.ResourceDefinitionSpec {
+func (RouteSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             RouteSpecType,
 		Aliases:          []resource.Type{},

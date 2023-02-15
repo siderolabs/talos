@@ -43,7 +43,7 @@ func NewEndpoint(namespace resource.Namespace, id resource.ID) *Endpoint {
 type EndpointRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (EndpointRD) ResourceDefinition(resource.Metadata, EndpointSpec) meta.ResourceDefinitionSpec {
+func (EndpointRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EndpointType,
 		Aliases:          []resource.Type{},

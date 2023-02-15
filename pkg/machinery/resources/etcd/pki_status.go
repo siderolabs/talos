@@ -42,7 +42,7 @@ func NewPKIStatus(namespace resource.Namespace, id resource.ID) *PKIStatus {
 type PKIStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (PKIStatusRD) ResourceDefinition(resource.Metadata, PKIStatusSpec) meta.ResourceDefinitionSpec {
+func (PKIStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PKIStatusType,
 		Aliases:          []resource.Type{},

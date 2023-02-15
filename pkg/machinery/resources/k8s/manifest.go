@@ -50,7 +50,7 @@ func NewManifest(namespace resource.Namespace, id resource.ID) *Manifest {
 type ManifestRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (ManifestRD) ResourceDefinition(resource.Metadata, ManifestSpec) meta.ResourceDefinitionSpec {
+func (ManifestRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ManifestType,
 		Aliases:          []resource.Type{},

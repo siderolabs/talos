@@ -45,7 +45,7 @@ func NewSecretsStatus(namespace resource.Namespace, id resource.ID) *SecretsStat
 type SecretsStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (SecretsStatusRD) ResourceDefinition(resource.Metadata, SecretsStatusSpec) meta.ResourceDefinitionSpec {
+func (SecretsStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SecretsStatusType,
 		Aliases:          []resource.Type{},

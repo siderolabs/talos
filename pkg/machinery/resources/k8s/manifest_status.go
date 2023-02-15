@@ -41,7 +41,7 @@ func NewManifestStatus(namespace resource.Namespace) *ManifestStatus {
 type ManifestStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (ManifestStatusRD) ResourceDefinition(resource.Metadata, ManifestStatusSpec) meta.ResourceDefinitionSpec {
+func (ManifestStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ManifestStatusType,
 		Aliases:          []resource.Type{},

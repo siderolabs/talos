@@ -53,7 +53,7 @@ func NewRouteStatus(namespace resource.Namespace, id resource.ID) *RouteStatus {
 type RouteStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (RouteStatusRD) ResourceDefinition(resource.Metadata, RouteStatusSpec) meta.ResourceDefinitionSpec {
+func (RouteStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             RouteStatusType,
 		Aliases:          []resource.Type{"route", "routes"},

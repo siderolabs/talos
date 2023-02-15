@@ -56,7 +56,7 @@ func NewPeerStatus(namespace resource.Namespace, id resource.ID) *PeerStatus {
 type PeerStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (PeerStatusRD) ResourceDefinition(resource.Metadata, PeerStatusSpec) meta.ResourceDefinitionSpec {
+func (PeerStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PeerStatusType,
 		Aliases:          []resource.Type{},

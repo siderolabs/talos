@@ -67,7 +67,7 @@ func NewCPU() *CPU {
 type CPURD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (CPURD) ResourceDefinition(resource.Metadata, CPUSpec) meta.ResourceDefinitionSpec {
+func (CPURD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             CPUType,
 		Aliases:          []resource.Type{},

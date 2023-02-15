@@ -38,7 +38,7 @@ func NewEtcFileStatus(namespace resource.Namespace, id resource.ID) *EtcFileStat
 type EtcFileStatusMD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (EtcFileStatusMD) ResourceDefinition(resource.Metadata, EtcFileStatusSpec) meta.ResourceDefinitionSpec {
+func (EtcFileStatusMD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcFileStatusType,
 		Aliases:          []resource.Type{},

@@ -7,8 +7,8 @@ go 1.19
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 
 require (
-	github.com/containerd/go-cni v1.1.7
-	github.com/cosi-project/runtime v0.3.0-alpha.4
+	github.com/containerd/go-cni v1.1.8
+	github.com/cosi-project/runtime v0.3.0-alpha.5
 	github.com/dustin/go-humanize v1.0.1
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -18,7 +18,7 @@ require (
 	github.com/mdlayher/ethtool v0.0.0-20221212131811-ba3b4bc2e02c
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
-	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1
+	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/gen v0.4.3
 	github.com/siderolabs/go-api-signature v0.2.2
@@ -28,16 +28,16 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.0
 	github.com/stretchr/testify v1.8.1
-	google.golang.org/genproto v0.0.0-20230119192704-9d59e20e5cd1
-	google.golang.org/grpc v1.52.0
+	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc
+	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20221026131551-cf6655e29de4 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230124153114-0acdc8ae009b // indirect
 	github.com/ProtonMail/go-mime v0.0.0-20221031134845-8fd9bc37cf08 // indirect
-	github.com/ProtonMail/gopenpgp/v2 v2.5.0 // indirect
+	github.com/ProtonMail/gopenpgp/v2 v2.5.2 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/containernetworking/cni v1.1.2 // indirect
@@ -60,7 +60,7 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect

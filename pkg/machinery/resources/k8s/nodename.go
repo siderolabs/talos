@@ -42,7 +42,7 @@ func NewNodename(namespace resource.Namespace, id resource.ID) *Nodename {
 type NodenameRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodenameRD) ResourceDefinition(resource.Metadata, NodenameSpec) meta.ResourceDefinitionSpec {
+func (NodenameRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodenameType,
 		Aliases:          []resource.Type{},

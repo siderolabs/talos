@@ -44,7 +44,7 @@ func NewAPI() *API {
 type APIRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (APIRD) ResourceDefinition(resource.Metadata, APICertsSpec) meta.ResourceDefinitionSpec {
+func (APIRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             APIType,
 		Aliases:          []resource.Type{},

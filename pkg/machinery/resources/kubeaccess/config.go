@@ -61,7 +61,7 @@ func NewConfig(namespace resource.Namespace, id resource.ID) *Config {
 type ConfigRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (c ConfigRD) ResourceDefinition(resource.Metadata, ConfigSpec) meta.ResourceDefinitionSpec {
+func (c ConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ConfigType,
 		Aliases:          []resource.Type{},

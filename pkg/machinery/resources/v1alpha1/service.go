@@ -43,7 +43,7 @@ func NewService(id resource.ID) *Service {
 type ServiceRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ServiceRD) ResourceDefinition(resource.Metadata, ServiceSpec) meta.ResourceDefinitionSpec {
+func (ServiceRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ServiceType,
 		Aliases:          []resource.Type{"svc"},

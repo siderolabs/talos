@@ -48,7 +48,7 @@ func NewOSRoot(id resource.ID) *OSRoot {
 type OSRootRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (OSRootRD) ResourceDefinition(resource.Metadata, OSRootSpec) meta.ResourceDefinitionSpec {
+func (OSRootRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             OSRootType,
 		Aliases:          []resource.Type{},

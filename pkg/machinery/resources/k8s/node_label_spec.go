@@ -50,7 +50,7 @@ func NewPopulatedNodeLabelSpec(id resource.ID, key, value string, createdByTalos
 type NodeLabelSpecRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (NodeLabelSpecRD) ResourceDefinition(resource.Metadata, NodeLabelSpecSpec) meta.ResourceDefinitionSpec {
+func (NodeLabelSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeLabelSpecType,
 		Aliases:          []resource.Type{},

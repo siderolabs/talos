@@ -43,7 +43,7 @@ func NewAuditPolicyConfig() *AuditPolicyConfig {
 type AuditPolicyConfigRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (AuditPolicyConfigRD) ResourceDefinition(_ resource.Metadata, _ AuditPolicyConfigSpec) meta.ResourceDefinitionSpec {
+func (AuditPolicyConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AuditPolicyConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

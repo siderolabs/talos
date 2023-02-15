@@ -51,7 +51,7 @@ func NewKubernetes() *Kubernetes {
 type KubernetesRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KubernetesRD) ResourceDefinition(resource.Metadata, KubernetesCertsSpec) meta.ResourceDefinitionSpec {
+func (KubernetesRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubernetesType,
 		Aliases:          []resource.Type{},

@@ -43,7 +43,7 @@ func NewEtcFileSpec(namespace resource.Namespace, id resource.ID) *EtcFileSpec {
 type EtcFileSpecMD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (EtcFileSpecMD) ResourceDefinition(resource.Metadata, EtcFileSpecSpec) meta.ResourceDefinitionSpec {
+func (EtcFileSpecMD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcFileSpecType,
 		Aliases:          []resource.Type{},

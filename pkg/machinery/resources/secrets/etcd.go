@@ -45,7 +45,7 @@ func NewEtcd() *Etcd {
 type EtcdRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (EtcdRD) ResourceDefinition(resource.Metadata, EtcdCertsSpec) meta.ResourceDefinitionSpec {
+func (EtcdRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcdType,
 		Aliases:          []resource.Type{},

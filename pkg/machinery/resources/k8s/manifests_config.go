@@ -64,7 +64,7 @@ func NewBootstrapManifestsConfig() *BootstrapManifestsConfig {
 type BootstrapManifestsConfigRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (BootstrapManifestsConfigRD) ResourceDefinition(_ resource.Metadata, _ BootstrapManifestsConfigSpec) meta.ResourceDefinitionSpec {
+func (BootstrapManifestsConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             BootstrapManifestsConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

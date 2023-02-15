@@ -38,7 +38,7 @@ func NewTimeServerStatus(namespace resource.Namespace, id resource.ID) *TimeServ
 type TimeServerStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (TimeServerStatusRD) ResourceDefinition(resource.Metadata, TimeServerStatusSpec) meta.ResourceDefinitionSpec {
+func (TimeServerStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             TimeServerStatusType,
 		Aliases:          []resource.Type{"timeserver", "timeservers"},

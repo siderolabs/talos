@@ -50,7 +50,7 @@ func NewControllerManagerConfig() *ControllerManagerConfig {
 type ControllerManagerConfigRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ControllerManagerConfigRD) ResourceDefinition(_ resource.Metadata, _ ControllerManagerConfigSpec) meta.ResourceDefinitionSpec {
+func (ControllerManagerConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ControllerManagerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

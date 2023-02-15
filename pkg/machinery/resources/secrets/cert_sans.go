@@ -51,7 +51,7 @@ func NewCertSAN(namespace resource.Namespace, id resource.ID) *CertSAN {
 type CertSANRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (CertSANRD) ResourceDefinition(resource.Metadata, CertSANSpec) meta.ResourceDefinitionSpec {
+func (CertSANRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             CertSANType,
 		Aliases:          []resource.Type{},

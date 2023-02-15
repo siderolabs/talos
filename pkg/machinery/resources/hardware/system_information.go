@@ -44,7 +44,7 @@ func NewSystemInformation(id string) *SystemInformation {
 type SystemInformationRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (c SystemInformationRD) ResourceDefinition(resource.Metadata, SystemInformationSpec) meta.ResourceDefinitionSpec {
+func (c SystemInformationRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type: SystemInformationType,
 		Aliases: []resource.Type{

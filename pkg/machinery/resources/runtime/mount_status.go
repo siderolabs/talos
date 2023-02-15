@@ -41,7 +41,7 @@ func NewMountStatus(namespace resource.Namespace, id resource.ID) *MountStatus {
 type MountStatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (MountStatusRD) ResourceDefinition(resource.Metadata, MountStatusSpec) meta.ResourceDefinitionSpec {
+func (MountStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MountStatusType,
 		Aliases:          []resource.Type{"mounts"},

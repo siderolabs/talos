@@ -49,7 +49,7 @@ func NewLinkRefresh(namespace resource.Namespace, id resource.ID) *LinkRefresh {
 type LinkRefreshRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (LinkRefreshRD) ResourceDefinition(resource.Metadata, LinkRefreshSpec) meta.ResourceDefinitionSpec {
+func (LinkRefreshRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkRefreshType,
 		Aliases:          []resource.Type{},

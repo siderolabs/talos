@@ -40,7 +40,7 @@ func NewResolverStatus(namespace resource.Namespace, id resource.ID) *ResolverSt
 type ResolverStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (ResolverStatusRD) ResourceDefinition(resource.Metadata, ResolverStatusSpec) meta.ResourceDefinitionSpec {
+func (ResolverStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ResolverStatusType,
 		Aliases:          []resource.Type{"resolvers"},

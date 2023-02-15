@@ -42,7 +42,7 @@ func NewEtcdRoot(id resource.ID) *EtcdRoot {
 type EtcdRootRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (EtcdRootRD) ResourceDefinition(resource.Metadata, EtcdRootSpec) meta.ResourceDefinitionSpec {
+func (EtcdRootRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcdRootType,
 		Aliases:          []resource.Type{},

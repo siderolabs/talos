@@ -45,7 +45,7 @@ func NewPeerSpec(namespace resource.Namespace, id resource.ID) *PeerSpec {
 type PeerSpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (PeerSpecRD) ResourceDefinition(resource.Metadata, PeerSpecSpec) meta.ResourceDefinitionSpec {
+func (PeerSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PeerSpecType,
 		Aliases:          []resource.Type{},

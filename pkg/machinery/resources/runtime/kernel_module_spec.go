@@ -40,7 +40,7 @@ func NewKernelModuleSpec(namespace resource.Namespace, id resource.ID) *KernelMo
 type KernelModuleSpecRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KernelModuleSpecRD) ResourceDefinition(resource.Metadata, KernelModuleSpecSpec) meta.ResourceDefinitionSpec {
+func (KernelModuleSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelModuleSpecType,
 		Aliases:          []resource.Type{"modules"},

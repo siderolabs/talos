@@ -43,7 +43,7 @@ func NewTrustd() *Trustd {
 type TrustdRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (TrustdRD) ResourceDefinition(resource.Metadata, TrustdCertsSpec) meta.ResourceDefinitionSpec {
+func (TrustdRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             TrustdType,
 		Aliases:          []resource.Type{},

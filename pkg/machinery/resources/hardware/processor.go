@@ -51,7 +51,7 @@ func NewProcessorInfo(id string) *Processor {
 type ProcessorRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (c ProcessorRD) ResourceDefinition(resource.Metadata, ProcessorSpec) meta.ResourceDefinitionSpec {
+func (c ProcessorRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type: ProcessorType,
 		Aliases: []resource.Type{

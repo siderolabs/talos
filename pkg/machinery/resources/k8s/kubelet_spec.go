@@ -43,7 +43,7 @@ func NewKubeletSpec(namespace resource.Namespace, id resource.ID) *KubeletSpec {
 type KubeletSpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (KubeletSpecRD) ResourceDefinition(resource.Metadata, KubeletSpecSpec) meta.ResourceDefinitionSpec {
+func (KubeletSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletSpecType,
 		Aliases:          []resource.Type{},

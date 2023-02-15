@@ -44,7 +44,7 @@ func NewResolverSpec(namespace resource.Namespace, id resource.ID) *ResolverSpec
 type ResolverSpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (ResolverSpecRD) ResourceDefinition(resource.Metadata, ResolverSpecSpec) meta.ResourceDefinitionSpec {
+func (ResolverSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ResolverSpecType,
 		Aliases:          []resource.Type{},

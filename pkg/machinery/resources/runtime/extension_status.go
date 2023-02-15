@@ -35,7 +35,7 @@ func NewExtensionStatus(namespace resource.Namespace, id resource.ID) *Extension
 type ExtensionStatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ExtensionStatusRD) ResourceDefinition(resource.Metadata, ExtensionStatusSpec) meta.ResourceDefinitionSpec {
+func (ExtensionStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ExtensionStatusType,
 		Aliases:          []resource.Type{"extensions"},

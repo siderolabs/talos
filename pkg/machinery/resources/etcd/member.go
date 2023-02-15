@@ -41,7 +41,7 @@ func NewMember(namespace resource.Namespace, id resource.ID) *Member {
 type MemberRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (MemberRD) ResourceDefinition(resource.Metadata, MemberSpec) meta.ResourceDefinitionSpec {
+func (MemberRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MemberType,
 		Aliases:          []resource.Type{},

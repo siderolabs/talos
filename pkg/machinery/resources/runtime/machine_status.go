@@ -58,7 +58,7 @@ func NewMachineStatus() *MachineStatus {
 type MachineStatusRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (MachineStatusRD) ResourceDefinition(resource.Metadata, MachineStatusSpec) meta.ResourceDefinitionSpec {
+func (MachineStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MachineStatusType,
 		Aliases:          []resource.Type{},

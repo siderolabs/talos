@@ -131,7 +131,7 @@ func NewLinkSpec(namespace resource.Namespace, id resource.ID) *LinkSpec {
 type LinkSpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (LinkSpecRD) ResourceDefinition(resource.Metadata, LinkSpecSpec) meta.ResourceDefinitionSpec {
+func (LinkSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkSpecType,
 		Aliases:          []resource.Type{},

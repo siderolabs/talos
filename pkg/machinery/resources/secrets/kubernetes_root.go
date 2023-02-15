@@ -61,7 +61,7 @@ func NewKubernetesRoot(id resource.ID) *KubernetesRoot {
 type KubernetesRootRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KubernetesRootRD) ResourceDefinition(resource.Metadata, KubernetesRootSpec) meta.ResourceDefinitionSpec {
+func (KubernetesRootRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubernetesRootType,
 		Aliases:          []resource.Type{},

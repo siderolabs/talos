@@ -88,7 +88,7 @@ func NewMemory() *Memory {
 type MemoryRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (MemoryRD) ResourceDefinition(resource.Metadata, MemorySpec) meta.ResourceDefinitionSpec {
+func (MemoryRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MemoryType,
 		Aliases:          []resource.Type{},

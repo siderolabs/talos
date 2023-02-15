@@ -49,7 +49,7 @@ func NewAffiliate(namespace resource.Namespace, id resource.ID) *Affiliate {
 type AffiliateRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (r AffiliateRD) ResourceDefinition(resource.Metadata, AffiliateSpec) meta.ResourceDefinitionSpec {
+func (r AffiliateRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AffiliateType,
 		Aliases:          []resource.Type{},

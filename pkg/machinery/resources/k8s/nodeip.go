@@ -40,7 +40,7 @@ func NewNodeIP(namespace resource.Namespace, id resource.ID) *NodeIP {
 type NodeIPRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodeIPRD) ResourceDefinition(resource.Metadata, NodeIPSpec) meta.ResourceDefinitionSpec {
+func (NodeIPRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeIPType,
 		Aliases:          []resource.Type{},

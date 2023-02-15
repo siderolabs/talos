@@ -54,7 +54,7 @@ func NewExtraManifestsConfig() *ExtraManifestsConfig {
 type ExtraManifestsConfigRD struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ExtraManifestsConfigRD) ResourceDefinition(_ resource.Metadata, _ ExtraManifestsConfigSpec) meta.ResourceDefinitionSpec {
+func (ExtraManifestsConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ExtraManifestsConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

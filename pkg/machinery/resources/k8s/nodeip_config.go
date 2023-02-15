@@ -39,7 +39,7 @@ func NewNodeIPConfig(namespace resource.Namespace, id resource.ID) *NodeIPConfig
 type NodeIPConfigRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodeIPConfigRD) ResourceDefinition(resource.Metadata, NodeIPConfigSpec) meta.ResourceDefinitionSpec {
+func (NodeIPConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeIPConfigType,
 		Aliases:          []resource.Type{},

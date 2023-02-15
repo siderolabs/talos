@@ -76,7 +76,7 @@ func NewLinkStatus(namespace resource.Namespace, id resource.ID) *LinkStatus {
 type LinkStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (LinkStatusRD) ResourceDefinition(resource.Metadata, LinkStatusSpec) meta.ResourceDefinitionSpec {
+func (LinkStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkStatusType,
 		Aliases:          []resource.Type{"link", "links"},

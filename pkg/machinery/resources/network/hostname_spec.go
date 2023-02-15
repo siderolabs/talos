@@ -83,7 +83,7 @@ func NewHostnameSpec(namespace resource.Namespace, id resource.ID) *HostnameSpec
 type HostnameSpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (HostnameSpecRD) ResourceDefinition(resource.Metadata, HostnameSpecSpec) meta.ResourceDefinitionSpec {
+func (HostnameSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             HostnameSpecType,
 		Aliases:          []resource.Type{},

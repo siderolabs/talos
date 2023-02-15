@@ -94,7 +94,7 @@ func NewOperatorSpec(namespace resource.Namespace, id resource.ID) *OperatorSpec
 type OperatorSpecRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (OperatorSpecRD) ResourceDefinition(resource.Metadata, OperatorSpecSpec) meta.ResourceDefinitionSpec {
+func (OperatorSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             OperatorSpecType,
 		Aliases:          []resource.Type{},

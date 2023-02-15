@@ -44,7 +44,7 @@ func NewStatus(namespace resource.Namespace, id resource.ID) *Status {
 type StatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (StatusRD) ResourceDefinition(resource.Metadata, StatusSpec) meta.ResourceDefinitionSpec {
+func (StatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StatusType,
 		Aliases:          []resource.Type{"netstatus", "netstatuses"},

@@ -43,7 +43,7 @@ func NewStaticPodStatus(namespace resource.Namespace, id resource.ID) *StaticPod
 type StaticPodStatusRD struct{}
 
 // ResourceDefinition implements typed.ResourceDefinition interface.
-func (StaticPodStatusRD) ResourceDefinition(resource.Metadata, StaticPodStatusSpec) meta.ResourceDefinitionSpec {
+func (StaticPodStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StaticPodStatusType,
 		Aliases:          []resource.Type{"podstatus"},
