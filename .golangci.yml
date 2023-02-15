@@ -168,12 +168,16 @@ linters:
     - wrapcheck
     - contextcheck # enable once golangci-lint 1.50.1 or 1.51 lands
     - dupword # too annoying
+    - musttag # too annoying
 
     # abandoned linters for which golangci shows the warning that the repo is archived by the owner
     - golint
     - interfacer
     - maligned
     - scopelint
+    - varcheck
+    - structcheck
+    - deadcode
 
   disable-all: false
   fast: false
@@ -434,6 +438,11 @@ issues:
     - path: config/types/v1alpha1
       linters:
         - dupl # some interfaces and implementation are nearly identical (e.g. APIServer, ControllerManager, and Scheduler)
+
+    # unused going into opencontainers repo (?)
+    - path: specs-go/config.go
+      linters:
+        - unused
 
   # Independently from option `exclude` we use default exclude patterns,
   # it can be disabled by this option. To list all

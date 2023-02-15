@@ -10,8 +10,8 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20221013030248-663e2500819c
 	github.com/iancoleman/orderedmap v0.2.0
 	github.com/invopop/jsonschema v0.7.0
-	github.com/microcosm-cc/bluemonday v1.0.21
-	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1
+	github.com/microcosm-cc/bluemonday v1.0.22
+	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
 	github.com/siderolabs/gen v0.4.3
 	gopkg.in/yaml.v3 v3.0.1
 	mvdan.cc/gofumpt v0.4.0

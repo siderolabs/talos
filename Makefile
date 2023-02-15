@@ -19,13 +19,13 @@ EXTRAS ?= v1.4.0-alpha.0-2-g8cb4792
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.19
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.5.0
+GOIMPORTS_VERSION ?= v0.6.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.50.1
+GOLANGCILINT_VERSION ?= v1.51.1
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.5.0
+STRINGER_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
@@ -44,9 +44,9 @@ KUBECTL_VERSION ?= v1.26.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.36
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.11.0
+HELM_VERSION ?= v3.11.1
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.3.2
+CLUSTERCTL_VERSION ?= 1.3.3
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz

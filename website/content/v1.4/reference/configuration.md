@@ -601,7 +601,7 @@ etcd:
 {{< /highlight >}}</details> | |
 |`coreDNS` |<a href="#coredns">CoreDNS</a> |Core DNS specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 coreDNS:
-    image: docker.io/coredns/coredns:1.10.0 # The `image` field is an override to the default coredns image.
+    image: docker.io/coredns/coredns:1.10.1 # The `image` field is an override to the default coredns image.
 {{< /highlight >}}</details> | |
 |`externalCloudProvider` |<a href="#externalcloudproviderconfig">ExternalCloudProviderConfig</a> |External cloud provider configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 externalCloudProvider:
@@ -1289,7 +1289,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-image: docker.io/coredns/coredns:1.10.0 # The `image` field is an override to the default coredns image.
+image: docker.io/coredns/coredns:1.10.1 # The `image` field is an override to the default coredns image.
 {{< /highlight >}}
 
 
