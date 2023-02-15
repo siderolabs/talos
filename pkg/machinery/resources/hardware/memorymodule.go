@@ -17,7 +17,7 @@ import (
 const MemoryModuleType = resource.Type("MemoryModules.hardware.talos.dev")
 
 // MemoryModule resource holds node MemoryModule information.
-type MemoryModule = typed.Resource[MemoryModuleSpec, MemoryModuleRD]
+type MemoryModule = typed.Resource[MemoryModuleSpec, MemoryModuleExtension]
 
 // MemoryModuleSpec represents a single Memory.
 //
@@ -35,17 +35,17 @@ type MemoryModuleSpec struct {
 
 // NewMemoryModuleInfo initializes a MemoryModuleInfo resource.
 func NewMemoryModuleInfo(id string) *MemoryModule {
-	return typed.NewResource[MemoryModuleSpec, MemoryModuleRD](
+	return typed.NewResource[MemoryModuleSpec, MemoryModuleExtension](
 		resource.NewMetadata(NamespaceName, MemoryModuleType, id, resource.VersionUndefined),
 		MemoryModuleSpec{},
 	)
 }
 
-// MemoryModuleRD provides auxiliary methods for Memory info.
-type MemoryModuleRD struct{}
+// MemoryModuleExtension provides auxiliary methods for Memory info.
+type MemoryModuleExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (c MemoryModuleRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (MemoryModuleExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type: MemoryModuleType,
 		Aliases: []resource.Type{

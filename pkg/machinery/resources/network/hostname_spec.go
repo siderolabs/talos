@@ -20,7 +20,7 @@ import (
 const HostnameSpecType = resource.Type("HostnameSpecs.net.talos.dev")
 
 // HostnameSpec resource holds node hostname.
-type HostnameSpec = typed.Resource[HostnameSpecSpec, HostnameSpecRD]
+type HostnameSpec = typed.Resource[HostnameSpecSpec, HostnameSpecExtension]
 
 // HostnameID is the ID of the singleton instance.
 const HostnameID resource.ID = "hostname"
@@ -73,17 +73,17 @@ func (spec *HostnameSpecSpec) ParseFQDN(fqdn string) error {
 
 // NewHostnameSpec initializes a HostnameSpec resource.
 func NewHostnameSpec(namespace resource.Namespace, id resource.ID) *HostnameSpec {
-	return typed.NewResource[HostnameSpecSpec, HostnameSpecRD](
+	return typed.NewResource[HostnameSpecSpec, HostnameSpecExtension](
 		resource.NewMetadata(namespace, HostnameSpecType, id, resource.VersionUndefined),
 		HostnameSpecSpec{},
 	)
 }
 
-// HostnameSpecRD provides auxiliary methods for HostnameSpec.
-type HostnameSpecRD struct{}
+// HostnameSpecExtension provides auxiliary methods for HostnameSpec.
+type HostnameSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (HostnameSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (HostnameSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             HostnameSpecType,
 		Aliases:          []resource.Type{},

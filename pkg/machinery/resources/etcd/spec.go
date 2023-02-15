@@ -22,7 +22,7 @@ const SpecType = resource.Type("EtcdSpecs.etcd.talos.dev")
 const SpecID = resource.ID("etcd")
 
 // Spec resource holds status of rendered secrets.
-type Spec = typed.Resource[SpecSpec, SpecRD]
+type Spec = typed.Resource[SpecSpec, SpecExtension]
 
 // SpecSpec describes (some) Specuration settings of etcd.
 //
@@ -38,17 +38,17 @@ type SpecSpec struct {
 
 // NewSpec initializes a Spec resource.
 func NewSpec(namespace resource.Namespace, id resource.ID) *Spec {
-	return typed.NewResource[SpecSpec, SpecRD](
+	return typed.NewResource[SpecSpec, SpecExtension](
 		resource.NewMetadata(namespace, SpecType, id, resource.VersionUndefined),
 		SpecSpec{},
 	)
 }
 
-// SpecRD provides auxiliary methods for Spec.
-type SpecRD struct{}
+// SpecExtension provides auxiliary methods for Spec.
+type SpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (SpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (SpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SpecType,
 		Aliases:          []resource.Type{},

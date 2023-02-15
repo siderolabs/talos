@@ -17,7 +17,7 @@ import (
 const HostnameStatusType = resource.Type("HostnameStatuses.net.talos.dev")
 
 // HostnameStatus resource holds node hostname.
-type HostnameStatus = typed.Resource[HostnameStatusSpec, HostnameStatusRD]
+type HostnameStatus = typed.Resource[HostnameStatusSpec, HostnameStatusExtension]
 
 // HostnameStatusSpec describes node nostname.
 //
@@ -49,17 +49,17 @@ func (spec *HostnameStatusSpec) DNSNames() []string {
 
 // NewHostnameStatus initializes a HostnameStatus resource.
 func NewHostnameStatus(namespace resource.Namespace, id resource.ID) *HostnameStatus {
-	return typed.NewResource[HostnameStatusSpec, HostnameStatusRD](
+	return typed.NewResource[HostnameStatusSpec, HostnameStatusExtension](
 		resource.NewMetadata(namespace, HostnameStatusType, id, resource.VersionUndefined),
 		HostnameStatusSpec{},
 	)
 }
 
-// HostnameStatusRD provides auxiliary methods for HostnameStatus.
-type HostnameStatusRD struct{}
+// HostnameStatusExtension provides auxiliary methods for HostnameStatus.
+type HostnameStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (HostnameStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (HostnameStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             HostnameStatusType,
 		Aliases:          []resource.Type{"hostname"},

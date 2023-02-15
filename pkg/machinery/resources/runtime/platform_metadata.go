@@ -20,7 +20,7 @@ const PlatformMetadataType = resource.Type("PlatformMetadatas.talos.dev")
 const PlatformMetadataID resource.ID = "platformmetadata"
 
 // PlatformMetadata resource holds.
-type PlatformMetadata = typed.Resource[PlatformMetadataSpec, PlatformMetadataRD]
+type PlatformMetadata = typed.Resource[PlatformMetadataSpec, PlatformMetadataExtension]
 
 // PlatformMetadataSpec describes platform metadata properties.
 //
@@ -37,18 +37,18 @@ type PlatformMetadataSpec struct {
 }
 
 // NewPlatformMetadataSpec initializes a MetadataSpec resource.
-func NewPlatformMetadataSpec(namespace resource.Namespace, id resource.ID) *PlatformMetadata {
-	return typed.NewResource[PlatformMetadataSpec, PlatformMetadataRD](
+func NewPlatformMetadataSpec(namespace resource.Namespace, _ resource.ID) *PlatformMetadata {
+	return typed.NewResource[PlatformMetadataSpec, PlatformMetadataExtension](
 		resource.NewMetadata(namespace, PlatformMetadataType, PlatformMetadataID, resource.VersionUndefined),
 		PlatformMetadataSpec{},
 	)
 }
 
-// PlatformMetadataRD provides auxiliary methods for PlatformMetadata.
-type PlatformMetadataRD struct{}
+// PlatformMetadataExtension provides auxiliary methods for PlatformMetadata.
+type PlatformMetadataExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (PlatformMetadataRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (PlatformMetadataExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PlatformMetadataType,
 		DefaultNamespace: NamespaceName,

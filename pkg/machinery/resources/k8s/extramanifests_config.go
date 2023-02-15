@@ -23,7 +23,7 @@ const ExtraManifestsConfigType = resource.Type("ExtraManifestsConfigs.kubernetes
 const ExtraManifestsConfigID = resource.ID("extra-manifests")
 
 // ExtraManifestsConfig represents configuration for extra bootstrap manifests.
-type ExtraManifestsConfig = typed.Resource[ExtraManifestsConfigSpec, ExtraManifestsConfigRD]
+type ExtraManifestsConfig = typed.Resource[ExtraManifestsConfigSpec, ExtraManifestsConfigExtension]
 
 // ExtraManifestsConfigSpec is configuration for extra bootstrap manifests.
 //
@@ -45,16 +45,16 @@ type ExtraManifest struct {
 
 // NewExtraManifestsConfig returns new ExtraManifestsConfig resource.
 func NewExtraManifestsConfig() *ExtraManifestsConfig {
-	return typed.NewResource[ExtraManifestsConfigSpec, ExtraManifestsConfigRD](
+	return typed.NewResource[ExtraManifestsConfigSpec, ExtraManifestsConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, ExtraManifestsConfigType, ExtraManifestsConfigID, resource.VersionUndefined),
 		ExtraManifestsConfigSpec{})
 }
 
-// ExtraManifestsConfigRD defines ExtraManifestsConfig resource definition.
-type ExtraManifestsConfigRD struct{}
+// ExtraManifestsConfigExtension defines ExtraManifestsConfig resource definition.
+type ExtraManifestsConfigExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ExtraManifestsConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (ExtraManifestsConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ExtraManifestsConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

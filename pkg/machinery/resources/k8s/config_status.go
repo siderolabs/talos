@@ -23,7 +23,7 @@ const ConfigStatusType = resource.Type("ConfigStatuses.kubernetes.talos.dev")
 const ConfigStatusStaticPodID = resource.ID("static-pods")
 
 // ConfigStatus resource holds definition of rendered secrets.
-type ConfigStatus = typed.Resource[ConfigStatusSpec, ConfigStatusRD]
+type ConfigStatus = typed.Resource[ConfigStatusSpec, ConfigStatusExtension]
 
 // ConfigStatusSpec describes status of rendered secrets.
 //
@@ -35,17 +35,17 @@ type ConfigStatusSpec struct {
 
 // NewConfigStatus initializes a ConfigStatus resource.
 func NewConfigStatus(namespace resource.Namespace, id resource.ID) *ConfigStatus {
-	return typed.NewResource[ConfigStatusSpec, ConfigStatusRD](
+	return typed.NewResource[ConfigStatusSpec, ConfigStatusExtension](
 		resource.NewMetadata(namespace, ConfigStatusType, id, resource.VersionUndefined),
 		ConfigStatusSpec{},
 	)
 }
 
-// ConfigStatusRD provides auxiliary methods for ConfigStatus.
-type ConfigStatusRD struct{}
+// ConfigStatusExtension provides auxiliary methods for ConfigStatus.
+type ConfigStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (ConfigStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (ConfigStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ConfigStatusType,
 		Aliases:          []resource.Type{},

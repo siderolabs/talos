@@ -21,7 +21,7 @@ const APIType = resource.Type("ApiCertificates.secrets.talos.dev")
 const APIID = resource.ID("api")
 
 // API contains apid generated secrets.
-type API = typed.Resource[APICertsSpec, APIRD]
+type API = typed.Resource[APICertsSpec, APIExtension]
 
 // APICertsSpec describes etcd certs secrets.
 //
@@ -34,17 +34,17 @@ type APICertsSpec struct {
 
 // NewAPI initializes an API resource.
 func NewAPI() *API {
-	return typed.NewResource[APICertsSpec, APIRD](
+	return typed.NewResource[APICertsSpec, APIExtension](
 		resource.NewMetadata(NamespaceName, APIType, APIID, resource.VersionUndefined),
 		APICertsSpec{},
 	)
 }
 
-// APIRD provides auxiliary methods for API.
-type APIRD struct{}
+// APIExtension provides auxiliary methods for API.
+type APIExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (APIRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (APIExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             APIType,
 		Aliases:          []resource.Type{},

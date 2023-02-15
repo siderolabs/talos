@@ -29,7 +29,7 @@ type KernelParam interface {
 }
 
 // KernelParamSpec resource holds sysctl flags to define.
-type KernelParamSpec = typed.Resource[KernelParamSpecSpec, KernelParamSpecRD]
+type KernelParamSpec = typed.Resource[KernelParamSpecSpec, KernelParamSpecExtension]
 
 // KernelParamSpecSpec describes status of the defined sysctls.
 //
@@ -41,17 +41,17 @@ type KernelParamSpecSpec struct {
 
 // NewKernelParamSpec initializes a KernelParamSpec resource.
 func NewKernelParamSpec(namespace resource.Namespace, id resource.ID) *KernelParamSpec {
-	return typed.NewResource[KernelParamSpecSpec, KernelParamSpecRD](
+	return typed.NewResource[KernelParamSpecSpec, KernelParamSpecExtension](
 		resource.NewMetadata(namespace, KernelParamSpecType, id, resource.VersionUndefined),
 		KernelParamSpecSpec{},
 	)
 }
 
-// KernelParamSpecRD is the ResourceDefinition for KernelParamSpec.
-type KernelParamSpecRD struct{}
+// KernelParamSpecExtension is the typed.Extension for KernelParamSpec.
+type KernelParamSpecExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KernelParamSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KernelParamSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamSpecType,
 		Aliases:          []resource.Type{},
@@ -61,24 +61,24 @@ func (KernelParamSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
 }
 
 // KernelParamDefaultSpec implements meta.ResourceDefinitionProvider interface.
-type KernelParamDefaultSpec = typed.Resource[KernelParamDefaultSpecSpec, KernelParamDefaultSpecRD]
+type KernelParamDefaultSpec = typed.Resource[KernelParamDefaultSpecSpec, KernelParamDefaultSpecExtension]
 
 // KernelParamDefaultSpecSpec is same as KernelParamSpecSpec.
 type KernelParamDefaultSpecSpec = KernelParamSpecSpec
 
 // NewKernelParamDefaultSpec initializes a KernelParamDefaultSpec resource.
 func NewKernelParamDefaultSpec(namespace resource.Namespace, id resource.ID) *KernelParamDefaultSpec {
-	return typed.NewResource[KernelParamDefaultSpecSpec, KernelParamDefaultSpecRD](
+	return typed.NewResource[KernelParamDefaultSpecSpec, KernelParamDefaultSpecExtension](
 		resource.NewMetadata(namespace, KernelParamDefaultSpecType, id, resource.VersionUndefined),
 		KernelParamSpecSpec{},
 	)
 }
 
-// KernelParamDefaultSpecRD is the ResourceDefinition for KernelParamDefaultSpec.
-type KernelParamDefaultSpecRD struct{}
+// KernelParamDefaultSpecExtension is the typed.Extension for KernelParamDefaultSpec.
+type KernelParamDefaultSpecExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KernelParamDefaultSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KernelParamDefaultSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamDefaultSpecType,
 		Aliases:          []resource.Type{},

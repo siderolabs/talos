@@ -37,7 +37,7 @@ func NewEtcFileStatus(namespace resource.Namespace, id resource.ID) *EtcFileStat
 // EtcFileStatusMD provides auxiliary methods for EtcFileStatus.
 type EtcFileStatusMD struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
+// ResourceDefinition implements [typed.Extension] interface.
 func (EtcFileStatusMD) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcFileStatusType,

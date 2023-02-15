@@ -20,7 +20,7 @@ import (
 const AddressStatusType = resource.Type("AddressStatuses.net.talos.dev")
 
 // AddressStatus resource holds physical network link status.
-type AddressStatus = typed.Resource[AddressStatusSpec, AddressStatusRD]
+type AddressStatus = typed.Resource[AddressStatusSpec, AddressStatusExtension]
 
 // AddressStatusSpec describes status of rendered secrets.
 //
@@ -40,17 +40,17 @@ type AddressStatusSpec struct {
 
 // NewAddressStatus initializes a AddressStatus resource.
 func NewAddressStatus(namespace resource.Namespace, id resource.ID) *AddressStatus {
-	return typed.NewResource[AddressStatusSpec, AddressStatusRD](
+	return typed.NewResource[AddressStatusSpec, AddressStatusExtension](
 		resource.NewMetadata(namespace, AddressStatusType, id, resource.VersionUndefined),
 		AddressStatusSpec{},
 	)
 }
 
-// AddressStatusRD provides auxiliary methods for AddressStatus.
-type AddressStatusRD struct{}
+// AddressStatusExtension provides auxiliary methods for AddressStatus.
+type AddressStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (AddressStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (AddressStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AddressStatusType,
 		Aliases:          []resource.Type{"address", "addresses"},

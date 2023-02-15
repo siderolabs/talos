@@ -21,7 +21,7 @@ import (
 const NodeAddressType = resource.Type("NodeAddresses.net.talos.dev")
 
 // NodeAddress resource holds physical network link status.
-type NodeAddress = typed.Resource[NodeAddressSpec, NodeAddressRD]
+type NodeAddress = typed.Resource[NodeAddressSpec, NodeAddressExtension]
 
 // NodeAddress well-known IDs.
 const (
@@ -54,17 +54,17 @@ type NodeAddressSpec struct {
 
 // NewNodeAddress initializes a NodeAddress resource.
 func NewNodeAddress(namespace resource.Namespace, id resource.ID) *NodeAddress {
-	return typed.NewResource[NodeAddressSpec, NodeAddressRD](
+	return typed.NewResource[NodeAddressSpec, NodeAddressExtension](
 		resource.NewMetadata(namespace, NodeAddressType, id, resource.VersionUndefined),
 		NodeAddressSpec{},
 	)
 }
 
-// NodeAddressRD provides auxiliary methods for NodeAddress.
-type NodeAddressRD struct{}
+// NodeAddressExtension provides auxiliary methods for NodeAddress.
+type NodeAddressExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodeAddressRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (NodeAddressExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeAddressType,
 		Aliases:          []resource.Type{},

@@ -20,7 +20,7 @@ const NodenameType = resource.Type("Nodenames.kubernetes.talos.dev")
 const NodenameID = resource.ID("nodename")
 
 // Nodename resource holds Kubernetes nodename.
-type Nodename = typed.Resource[NodenameSpec, NodenameRD]
+type Nodename = typed.Resource[NodenameSpec, NodenameExtension]
 
 // NodenameSpec describes Kubernetes nodename.
 //
@@ -32,17 +32,17 @@ type NodenameSpec struct {
 
 // NewNodename initializes a Nodename resource.
 func NewNodename(namespace resource.Namespace, id resource.ID) *Nodename {
-	return typed.NewResource[NodenameSpec, NodenameRD](
+	return typed.NewResource[NodenameSpec, NodenameExtension](
 		resource.NewMetadata(namespace, NodenameType, id, resource.VersionUndefined),
 		NodenameSpec{},
 	)
 }
 
-// NodenameRD provides auxiliary methods for Nodename.
-type NodenameRD struct{}
+// NodenameExtension provides auxiliary methods for Nodename.
+type NodenameExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodenameRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (NodenameExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodenameType,
 		Aliases:          []resource.Type{},

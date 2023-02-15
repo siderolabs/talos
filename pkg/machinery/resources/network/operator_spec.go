@@ -19,7 +19,7 @@ import (
 const OperatorSpecType = resource.Type("OperatorSpecs.net.talos.dev")
 
 // OperatorSpec resource holds DNS resolver info.
-type OperatorSpec = typed.Resource[OperatorSpecSpec, OperatorSpecRD]
+type OperatorSpec = typed.Resource[OperatorSpecSpec, OperatorSpecExtension]
 
 // OperatorSpecSpec describes DNS resolvers.
 //
@@ -84,17 +84,17 @@ type VIPHCloudSpec struct {
 
 // NewOperatorSpec initializes a OperatorSpec resource.
 func NewOperatorSpec(namespace resource.Namespace, id resource.ID) *OperatorSpec {
-	return typed.NewResource[OperatorSpecSpec, OperatorSpecRD](
+	return typed.NewResource[OperatorSpecSpec, OperatorSpecExtension](
 		resource.NewMetadata(namespace, OperatorSpecType, id, resource.VersionUndefined),
 		OperatorSpecSpec{},
 	)
 }
 
-// OperatorSpecRD provides auxiliary methods for OperatorSpec.
-type OperatorSpecRD struct{}
+// OperatorSpecExtension provides auxiliary methods for OperatorSpec.
+type OperatorSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (OperatorSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (OperatorSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             OperatorSpecType,
 		Aliases:          []resource.Type{},

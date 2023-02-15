@@ -23,7 +23,7 @@ const CPUType = resource.Type("CPUStats.perf.talos.dev")
 const CPUID = resource.ID("latest")
 
 // CPU represents the last CPU stats snapshot.
-type CPU = typed.Resource[CPUSpec, CPURD]
+type CPU = typed.Resource[CPUSpec, CPUExtension]
 
 // CPUSpec represents the last CPU stats snapshot.
 //
@@ -57,17 +57,17 @@ type CPUStat struct {
 
 // NewCPU creates new default CPU stats object.
 func NewCPU() *CPU {
-	return typed.NewResource[CPUSpec, CPURD](
+	return typed.NewResource[CPUSpec, CPUExtension](
 		resource.NewMetadata(NamespaceName, CPUType, CPUID, resource.VersionUndefined),
 		CPUSpec{},
 	)
 }
 
-// CPURD is an auxiliary type for CPU resource.
-type CPURD struct{}
+// CPUExtension is an auxiliary type for CPU resource.
+type CPUExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (CPURD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (CPUExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             CPUType,
 		Aliases:          []resource.Type{},

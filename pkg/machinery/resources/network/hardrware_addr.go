@@ -21,7 +21,7 @@ const HardwareAddrType = resource.Type("HardwareAddresses.net.talos.dev")
 const FirstHardwareAddr = resource.ID("first")
 
 // HardwareAddr resource describes hardware address of the physical links.
-type HardwareAddr = typed.Resource[HardwareAddrSpec, HardwareAddrRD]
+type HardwareAddr = typed.Resource[HardwareAddrSpec, HardwareAddrExtension]
 
 // HardwareAddrSpec describes spec for the link.
 //
@@ -36,17 +36,17 @@ type HardwareAddrSpec struct {
 
 // NewHardwareAddr initializes a HardwareAddr resource.
 func NewHardwareAddr(namespace resource.Namespace, id resource.ID) *HardwareAddr {
-	return typed.NewResource[HardwareAddrSpec, HardwareAddrRD](
+	return typed.NewResource[HardwareAddrSpec, HardwareAddrExtension](
 		resource.NewMetadata(namespace, HardwareAddrType, id, resource.VersionUndefined),
 		HardwareAddrSpec{},
 	)
 }
 
-// HardwareAddrRD provides auxiliary methods for HardwareAddr.
-type HardwareAddrRD struct{}
+// HardwareAddrExtension provides auxiliary methods for HardwareAddr.
+type HardwareAddrExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (HardwareAddrRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (HardwareAddrExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             HardwareAddrType,
 		Aliases:          []resource.Type{},

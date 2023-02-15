@@ -22,7 +22,7 @@ const PeerStatusType = resource.Type("KubeSpanPeerStatuses.kubespan.talos.dev")
 // PeerStatus the Wireguard peer state for KubeSpan.
 //
 // PeerStatus is identified by the public key.
-type PeerStatus = typed.Resource[PeerStatusSpec, PeerStatusRD]
+type PeerStatus = typed.Resource[PeerStatusSpec, PeerStatusExtension]
 
 // PeerStatusSpec describes PeerStatus state.
 //
@@ -46,17 +46,17 @@ type PeerStatusSpec struct {
 
 // NewPeerStatus initializes a PeerStatus resource.
 func NewPeerStatus(namespace resource.Namespace, id resource.ID) *PeerStatus {
-	return typed.NewResource[PeerStatusSpec, PeerStatusRD](
+	return typed.NewResource[PeerStatusSpec, PeerStatusExtension](
 		resource.NewMetadata(namespace, PeerStatusType, id, resource.VersionUndefined),
 		PeerStatusSpec{},
 	)
 }
 
-// PeerStatusRD provides auxiliary methods for PeerStatus.
-type PeerStatusRD struct{}
+// PeerStatusExtension provides auxiliary methods for PeerStatus.
+type PeerStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (PeerStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (PeerStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PeerStatusType,
 		Aliases:          []resource.Type{},

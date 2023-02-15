@@ -21,7 +21,7 @@ import (
 const EtcFileSpecType = resource.Type("EtcFileSpecs.files.talos.dev")
 
 // EtcFileSpec resource holds contents of the file which should be put to `/etc` directory.
-type EtcFileSpec = typed.Resource[EtcFileSpecSpec, EtcFileSpecMD]
+type EtcFileSpec = typed.Resource[EtcFileSpecSpec, EtcFileSpecExtension]
 
 // EtcFileSpecSpec describes status of rendered secrets.
 //
@@ -33,17 +33,17 @@ type EtcFileSpecSpec struct {
 
 // NewEtcFileSpec initializes a EtcFileSpec resource.
 func NewEtcFileSpec(namespace resource.Namespace, id resource.ID) *EtcFileSpec {
-	return typed.NewResource[EtcFileSpecSpec, EtcFileSpecMD](
+	return typed.NewResource[EtcFileSpecSpec, EtcFileSpecExtension](
 		resource.NewMetadata(namespace, EtcFileSpecType, id, resource.VersionUndefined),
 		EtcFileSpecSpec{},
 	)
 }
 
-// EtcFileSpecMD provides auxiliary methods for EtcFileSpec.
-type EtcFileSpecMD struct{}
+// EtcFileSpecExtension provides auxiliary methods for EtcFileSpec.
+type EtcFileSpecExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (EtcFileSpecMD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (EtcFileSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcFileSpecType,
 		Aliases:          []resource.Type{},

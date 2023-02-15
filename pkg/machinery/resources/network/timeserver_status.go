@@ -17,7 +17,7 @@ import (
 const TimeServerStatusType = resource.Type("TimeServerStatuses.net.talos.dev")
 
 // TimeServerStatus resource holds NTP server info.
-type TimeServerStatus = typed.Resource[TimeServerStatusSpec, TimeServerStatusRD]
+type TimeServerStatus = typed.Resource[TimeServerStatusSpec, TimeServerStatusExtension]
 
 // TimeServerStatusSpec describes NTP servers.
 //
@@ -28,17 +28,17 @@ type TimeServerStatusSpec struct {
 
 // NewTimeServerStatus initializes a TimeServerStatus resource.
 func NewTimeServerStatus(namespace resource.Namespace, id resource.ID) *TimeServerStatus {
-	return typed.NewResource[TimeServerStatusSpec, TimeServerStatusRD](
+	return typed.NewResource[TimeServerStatusSpec, TimeServerStatusExtension](
 		resource.NewMetadata(namespace, TimeServerStatusType, id, resource.VersionUndefined),
 		TimeServerStatusSpec{},
 	)
 }
 
-// TimeServerStatusRD provides auxiliary methods for TimeServerStatus.
-type TimeServerStatusRD struct{}
+// TimeServerStatusExtension provides auxiliary methods for TimeServerStatus.
+type TimeServerStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (TimeServerStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (TimeServerStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             TimeServerStatusType,
 		Aliases:          []resource.Type{"timeserver", "timeservers"},

@@ -21,7 +21,7 @@ const EndpointType = resource.Type("KubeSpanEndpoints.kubespan.talos.dev")
 // Endpoint is produced from KubeSpanPeerStatuses by mapping back discovered endpoints to the affiliates.
 //
 // Endpoint is identified by the public key of the peer.
-type Endpoint = typed.Resource[EndpointSpec, EndpointRD]
+type Endpoint = typed.Resource[EndpointSpec, EndpointExtension]
 
 // EndpointSpec describes Endpoint state.
 //
@@ -33,17 +33,17 @@ type EndpointSpec struct {
 
 // NewEndpoint initializes a Endpoint resource.
 func NewEndpoint(namespace resource.Namespace, id resource.ID) *Endpoint {
-	return typed.NewResource[EndpointSpec, EndpointRD](
+	return typed.NewResource[EndpointSpec, EndpointExtension](
 		resource.NewMetadata(namespace, EndpointType, id, resource.VersionUndefined),
 		EndpointSpec{},
 	)
 }
 
-// EndpointRD provides auxiliary methods for Endpoint.
-type EndpointRD struct{}
+// EndpointExtension provides auxiliary methods for Endpoint.
+type EndpointExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (EndpointRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (EndpointExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EndpointType,
 		Aliases:          []resource.Type{},

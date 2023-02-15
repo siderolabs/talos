@@ -17,7 +17,7 @@ import (
 const StaticPodStatusType = resource.Type("StaticPodStatuses.kubernetes.talos.dev")
 
 // StaticPodStatus resource holds definition of kubelet static pod.
-type StaticPodStatus = typed.Resource[StaticPodStatusSpec, StaticPodStatusRD]
+type StaticPodStatus = typed.Resource[StaticPodStatusSpec, StaticPodStatusExtension]
 
 // StaticPodStatusSpec describes kubelet static pod status.
 //
@@ -33,17 +33,17 @@ func (spec StaticPodStatusSpec) MarshalYAML() (interface{}, error) {
 
 // NewStaticPodStatus initializes a StaticPodStatus resource.
 func NewStaticPodStatus(namespace resource.Namespace, id resource.ID) *StaticPodStatus {
-	return typed.NewResource[StaticPodStatusSpec, StaticPodStatusRD](
+	return typed.NewResource[StaticPodStatusSpec, StaticPodStatusExtension](
 		resource.NewMetadata(namespace, StaticPodStatusType, id, resource.VersionUndefined),
 		StaticPodStatusSpec{},
 	)
 }
 
-// StaticPodStatusRD provides auxiliary methods for StaticPodStatus.
-type StaticPodStatusRD struct{}
+// StaticPodStatusExtension provides auxiliary methods for StaticPodStatus.
+type StaticPodStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (StaticPodStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (StaticPodStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StaticPodStatusType,
 		Aliases:          []resource.Type{"podstatus"},

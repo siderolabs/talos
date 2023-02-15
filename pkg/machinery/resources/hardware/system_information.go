@@ -17,7 +17,7 @@ import (
 const SystemInformationType = resource.Type("SystemInformations.hardware.talos.dev")
 
 // SystemInformation resource holds node SystemInformation information.
-type SystemInformation = typed.Resource[SystemInformationSpec, SystemInformationRD]
+type SystemInformation = typed.Resource[SystemInformationSpec, SystemInformationExtension]
 
 // SystemInformationSpec represents the system information obtained from smbios.
 //
@@ -34,17 +34,17 @@ type SystemInformationSpec struct {
 
 // NewSystemInformation initializes a SystemInformationInfo resource.
 func NewSystemInformation(id string) *SystemInformation {
-	return typed.NewResource[SystemInformationSpec, SystemInformationRD](
+	return typed.NewResource[SystemInformationSpec, SystemInformationExtension](
 		resource.NewMetadata(NamespaceName, SystemInformationType, id, resource.VersionUndefined),
 		SystemInformationSpec{},
 	)
 }
 
-// SystemInformationRD provides auxiliary methods for SystemInformation.
-type SystemInformationRD struct{}
+// SystemInformationExtension provides auxiliary methods for SystemInformation.
+type SystemInformationExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (c SystemInformationRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (SystemInformationExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type: SystemInformationType,
 		Aliases: []resource.Type{

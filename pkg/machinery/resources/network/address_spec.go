@@ -23,7 +23,7 @@ import (
 const AddressSpecType = resource.Type("AddressSpecs.net.talos.dev")
 
 // AddressSpec resource holds physical network link status.
-type AddressSpec = typed.Resource[AddressSpecSpec, AddressSpecRD]
+type AddressSpec = typed.Resource[AddressSpecSpec, AddressSpecExtension]
 
 // AddressSpecSpec describes status of rendered secrets.
 //
@@ -40,17 +40,17 @@ type AddressSpecSpec struct {
 
 // NewAddressSpec initializes a AddressSpec resource.
 func NewAddressSpec(namespace resource.Namespace, id resource.ID) *AddressSpec {
-	return typed.NewResource[AddressSpecSpec, AddressSpecRD](
+	return typed.NewResource[AddressSpecSpec, AddressSpecExtension](
 		resource.NewMetadata(namespace, AddressSpecType, id, resource.VersionUndefined),
 		AddressSpecSpec{},
 	)
 }
 
-// AddressSpecRD provides auxiliary methods for AddressSpec.
-type AddressSpecRD struct{}
+// AddressSpecExtension provides auxiliary methods for AddressSpec.
+type AddressSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (AddressSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (AddressSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AddressSpecType,
 		Aliases:          []resource.Type{},

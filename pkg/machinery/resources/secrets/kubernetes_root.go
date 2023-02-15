@@ -24,7 +24,7 @@ const KubernetesRootType = resource.Type("KubernetesRootSecrets.secrets.talos.de
 const KubernetesRootID = resource.ID("k8s")
 
 // KubernetesRoot contains root (not generated) secrets.
-type KubernetesRoot = typed.Resource[KubernetesRootSpec, KubernetesRootRD]
+type KubernetesRoot = typed.Resource[KubernetesRootSpec, KubernetesRootExtension]
 
 // KubernetesRootSpec describes root Kubernetes secrets.
 //
@@ -51,17 +51,17 @@ type KubernetesRootSpec struct {
 
 // NewKubernetesRoot initializes a KubernetesRoot resource.
 func NewKubernetesRoot(id resource.ID) *KubernetesRoot {
-	return typed.NewResource[KubernetesRootSpec, KubernetesRootRD](
+	return typed.NewResource[KubernetesRootSpec, KubernetesRootExtension](
 		resource.NewMetadata(NamespaceName, KubernetesRootType, id, resource.VersionUndefined),
 		KubernetesRootSpec{},
 	)
 }
 
-// KubernetesRootRD provides auxiliary methods for KubernetesRoot.
-type KubernetesRootRD struct{}
+// KubernetesRootExtension provides auxiliary methods for KubernetesRoot.
+type KubernetesRootExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KubernetesRootRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KubernetesRootExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubernetesRootType,
 		Aliases:          []resource.Type{},

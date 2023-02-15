@@ -18,24 +18,24 @@ import (
 const ExtensionStatusType = resource.Type("ExtensionStatuses.runtime.talos.dev")
 
 // ExtensionStatus resource holds status of installed system extensions.
-type ExtensionStatus = typed.Resource[ExtensionStatusSpec, ExtensionStatusRD]
+type ExtensionStatus = typed.Resource[ExtensionStatusSpec, ExtensionStatusExtension]
 
 // ExtensionStatusSpec is the spec for system extensions.
 type ExtensionStatusSpec = extensions.Layer
 
 // NewExtensionStatus initializes a ExtensionStatus resource.
 func NewExtensionStatus(namespace resource.Namespace, id resource.ID) *ExtensionStatus {
-	return typed.NewResource[ExtensionStatusSpec, ExtensionStatusRD](
+	return typed.NewResource[ExtensionStatusSpec, ExtensionStatusExtension](
 		resource.NewMetadata(namespace, ExtensionStatusType, id, resource.VersionUndefined),
 		ExtensionStatusSpec{},
 	)
 }
 
-// ExtensionStatusRD is auxiliary resource data for ExtensionStatus.
-type ExtensionStatusRD struct{}
+// ExtensionStatusExtension is auxiliary resource data for ExtensionStatus.
+type ExtensionStatusExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ExtensionStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (ExtensionStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ExtensionStatusType,
 		Aliases:          []resource.Type{"extensions"},

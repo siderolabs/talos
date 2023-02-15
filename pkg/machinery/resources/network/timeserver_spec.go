@@ -17,7 +17,7 @@ import (
 const TimeServerSpecType = resource.Type("TimeServerSpecs.net.talos.dev")
 
 // TimeServerSpec resource holds NTP server info.
-type TimeServerSpec = typed.Resource[TimeServerSpecSpec, TimeServerSpecRD]
+type TimeServerSpec = typed.Resource[TimeServerSpecSpec, TimeServerSpecExtension]
 
 // TimeServerID is the ID of the singleton instance.
 const TimeServerID resource.ID = "timeservers"
@@ -32,17 +32,17 @@ type TimeServerSpecSpec struct {
 
 // NewTimeServerSpec initializes a TimeServerSpec resource.
 func NewTimeServerSpec(namespace resource.Namespace, id resource.ID) *TimeServerSpec {
-	return typed.NewResource[TimeServerSpecSpec, TimeServerSpecRD](
+	return typed.NewResource[TimeServerSpecSpec, TimeServerSpecExtension](
 		resource.NewMetadata(namespace, TimeServerSpecType, id, resource.VersionUndefined),
 		TimeServerSpecSpec{},
 	)
 }
 
-// TimeServerSpecRD provides auxiliary methods for TimeServerSpec.
-type TimeServerSpecRD struct{}
+// TimeServerSpecExtension provides auxiliary methods for TimeServerSpec.
+type TimeServerSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (TimeServerSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (TimeServerSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             TimeServerSpecType,
 		Aliases:          []resource.Type{},

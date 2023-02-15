@@ -17,7 +17,7 @@ import (
 const NodeIPConfigType = resource.Type("NodeIPConfigs.kubernetes.talos.dev")
 
 // NodeIPConfig resource holds definition of Node IP specification.
-type NodeIPConfig = typed.Resource[NodeIPConfigSpec, NodeIPConfigRD]
+type NodeIPConfig = typed.Resource[NodeIPConfigSpec, NodeIPConfigExtension]
 
 // NodeIPConfigSpec holds the Node IP specification.
 //
@@ -29,17 +29,17 @@ type NodeIPConfigSpec struct {
 
 // NewNodeIPConfig initializes an empty NodeIPConfig resource.
 func NewNodeIPConfig(namespace resource.Namespace, id resource.ID) *NodeIPConfig {
-	return typed.NewResource[NodeIPConfigSpec, NodeIPConfigRD](
+	return typed.NewResource[NodeIPConfigSpec, NodeIPConfigExtension](
 		resource.NewMetadata(namespace, NodeIPConfigType, id, resource.VersionUndefined),
 		NodeIPConfigSpec{},
 	)
 }
 
-// NodeIPConfigRD provides auxiliary methods for NodeIPConfig.
-type NodeIPConfigRD struct{}
+// NodeIPConfigExtension provides auxiliary methods for NodeIPConfig.
+type NodeIPConfigExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodeIPConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (NodeIPConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeIPConfigType,
 		Aliases:          []resource.Type{},

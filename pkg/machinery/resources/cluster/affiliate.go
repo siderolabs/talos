@@ -25,7 +25,7 @@ const AffiliateType = resource.Type("Affiliates.cluster.talos.dev")
 // Affiliate resource holds information about cluster affiliate: it is discovered potential cluster member and/or KubeSpan peer.
 //
 // Controller builds local Affiliate structure for the node itself, other Affiliates are pulled from the registry during the discovery process.
-type Affiliate = typed.Resource[AffiliateSpec, AffiliateRD]
+type Affiliate = typed.Resource[AffiliateSpec, AffiliateExtension]
 
 // KubeSpanAffiliateSpec describes additional information specific for the KubeSpan.
 //
@@ -39,17 +39,17 @@ type KubeSpanAffiliateSpec struct {
 
 // NewAffiliate initializes the Affiliate resource.
 func NewAffiliate(namespace resource.Namespace, id resource.ID) *Affiliate {
-	return typed.NewResource[AffiliateSpec, AffiliateRD](
+	return typed.NewResource[AffiliateSpec, AffiliateExtension](
 		resource.NewMetadata(namespace, AffiliateType, id, resource.VersionUndefined),
 		AffiliateSpec{},
 	)
 }
 
-// AffiliateRD provides auxiliary methods for Affiliate.
-type AffiliateRD struct{}
+// AffiliateExtension provides auxiliary methods for Affiliate.
+type AffiliateExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (r AffiliateRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (r AffiliateExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AffiliateType,
 		Aliases:          []resource.Type{},

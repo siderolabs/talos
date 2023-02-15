@@ -24,7 +24,7 @@ const StatusType = resource.Type("TimeStatuses.v1alpha1.talos.dev")
 const StatusID = resource.ID("node")
 
 // Status describes running current time sync status.
-type Status = typed.Resource[StatusSpec, StatusRD]
+type Status = typed.Resource[StatusSpec, StatusExtension]
 
 // StatusSpec describes time sync state.
 //
@@ -42,17 +42,17 @@ type StatusSpec struct {
 
 // NewStatus initializes a TimeSync resource.
 func NewStatus() *Status {
-	return typed.NewResource[StatusSpec, StatusRD](
+	return typed.NewResource[StatusSpec, StatusExtension](
 		resource.NewMetadata(v1alpha1.NamespaceName, StatusType, StatusID, resource.VersionUndefined),
 		StatusSpec{},
 	)
 }
 
-// StatusRD provides auxiliary methods for Status.
-type StatusRD struct{}
+// StatusExtension provides auxiliary methods for Status.
+type StatusExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (r StatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (StatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StatusType,
 		Aliases:          []resource.Type{},

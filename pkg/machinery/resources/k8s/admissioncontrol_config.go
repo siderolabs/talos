@@ -23,7 +23,7 @@ const AdmissionControlConfigType = resource.Type("AdmissionControlConfigs.kubern
 const AdmissionControlConfigID = resource.ID("admission-control")
 
 // AdmissionControlConfig represents configuration for kube-apiserver Admission Control plugins.
-type AdmissionControlConfig = typed.Resource[AdmissionControlConfigSpec, AdmissionControlConfigRD]
+type AdmissionControlConfig = typed.Resource[AdmissionControlConfigSpec, AdmissionControlConfigExtension]
 
 // AdmissionControlConfigSpec is configuration for kube-apiserver.
 //
@@ -42,16 +42,16 @@ type AdmissionPluginSpec struct {
 
 // NewAdmissionControlConfig returns new AdmissionControlConfig resource.
 func NewAdmissionControlConfig() *AdmissionControlConfig {
-	return typed.NewResource[AdmissionControlConfigSpec, AdmissionControlConfigRD](
+	return typed.NewResource[AdmissionControlConfigSpec, AdmissionControlConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, AdmissionControlConfigType, AdmissionControlConfigID, resource.VersionUndefined),
 		AdmissionControlConfigSpec{})
 }
 
-// AdmissionControlConfigRD defines AdmissionControlConfig resource definition.
-type AdmissionControlConfigRD struct{}
+// AdmissionControlConfigExtension defines AdmissionControlConfig resource definition.
+type AdmissionControlConfigExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (AdmissionControlConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (AdmissionControlConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AdmissionControlConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

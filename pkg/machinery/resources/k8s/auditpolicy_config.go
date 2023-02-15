@@ -23,7 +23,7 @@ const AuditPolicyConfigType = resource.Type("AuditPolicyConfigs.kubernetes.talos
 const AuditPolicyConfigID = resource.ID("audit-policy")
 
 // AuditPolicyConfig represents configuration for kube-apiserver audit policy.
-type AuditPolicyConfig = typed.Resource[AuditPolicyConfigSpec, AuditPolicyConfigRD]
+type AuditPolicyConfig = typed.Resource[AuditPolicyConfigSpec, AuditPolicyConfigExtension]
 
 // AuditPolicyConfigSpec is audit policy configuration for kube-apiserver.
 //
@@ -34,16 +34,16 @@ type AuditPolicyConfigSpec struct {
 
 // NewAuditPolicyConfig returns new AuditPolicyConfig resource.
 func NewAuditPolicyConfig() *AuditPolicyConfig {
-	return typed.NewResource[AuditPolicyConfigSpec, AuditPolicyConfigRD](
+	return typed.NewResource[AuditPolicyConfigSpec, AuditPolicyConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, AuditPolicyConfigType, AuditPolicyConfigID, resource.VersionUndefined),
 		AuditPolicyConfigSpec{})
 }
 
-// AuditPolicyConfigRD defines AuditPolicyConfig resource definition.
-type AuditPolicyConfigRD struct{}
+// AuditPolicyConfigExtension defines AuditPolicyConfig resource definition.
+type AuditPolicyConfigExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (AuditPolicyConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (AuditPolicyConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             AuditPolicyConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

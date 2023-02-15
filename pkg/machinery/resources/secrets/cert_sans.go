@@ -28,7 +28,7 @@ const CertSANAPIID = resource.ID("api")
 const CertSANKubernetesID = resource.ID("k8s")
 
 // CertSAN contains certficiate subject alternative names.
-type CertSAN = typed.Resource[CertSANSpec, CertSANRD]
+type CertSAN = typed.Resource[CertSANSpec, CertSANExtension]
 
 // CertSANSpec describes fields of the cert SANs.
 //
@@ -41,17 +41,17 @@ type CertSANSpec struct {
 
 // NewCertSAN initializes a Etc resource.
 func NewCertSAN(namespace resource.Namespace, id resource.ID) *CertSAN {
-	return typed.NewResource[CertSANSpec, CertSANRD](
+	return typed.NewResource[CertSANSpec, CertSANExtension](
 		resource.NewMetadata(namespace, CertSANType, id, resource.VersionUndefined),
 		CertSANSpec{},
 	)
 }
 
-// CertSANRD is a resource data of CertSAN.
-type CertSANRD struct{}
+// CertSANExtension is a resource data of CertSAN.
+type CertSANExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (CertSANRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (CertSANExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             CertSANType,
 		Aliases:          []resource.Type{},

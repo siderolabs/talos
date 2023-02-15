@@ -20,7 +20,7 @@ import (
 const RouteStatusType = resource.Type("RouteStatuses.net.talos.dev")
 
 // RouteStatus resource holds physical network link status.
-type RouteStatus = typed.Resource[RouteStatusSpec, RouteStatusRD]
+type RouteStatus = typed.Resource[RouteStatusSpec, RouteStatusExtension]
 
 // RouteStatusSpec describes status of rendered secrets.
 //
@@ -43,17 +43,17 @@ type RouteStatusSpec struct {
 
 // NewRouteStatus initializes a RouteStatus resource.
 func NewRouteStatus(namespace resource.Namespace, id resource.ID) *RouteStatus {
-	return typed.NewResource[RouteStatusSpec, RouteStatusRD](
+	return typed.NewResource[RouteStatusSpec, RouteStatusExtension](
 		resource.NewMetadata(namespace, RouteStatusType, id, resource.VersionUndefined),
 		RouteStatusSpec{},
 	)
 }
 
-// RouteStatusRD provides auxiliary methods for RouteStatus.
-type RouteStatusRD struct{}
+// RouteStatusExtension provides auxiliary methods for RouteStatus.
+type RouteStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (RouteStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (RouteStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             RouteStatusType,
 		Aliases:          []resource.Type{"route", "routes"},

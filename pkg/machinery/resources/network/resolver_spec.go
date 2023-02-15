@@ -19,7 +19,7 @@ import (
 const ResolverSpecType = resource.Type("ResolverSpecs.net.talos.dev")
 
 // ResolverSpec resource holds DNS resolver info.
-type ResolverSpec = typed.Resource[ResolverSpecSpec, ResolverSpecRD]
+type ResolverSpec = typed.Resource[ResolverSpecSpec, ResolverSpecExtension]
 
 // ResolverID is the ID of the singleton instance.
 const ResolverID resource.ID = "resolvers"
@@ -34,17 +34,17 @@ type ResolverSpecSpec struct {
 
 // NewResolverSpec initializes a ResolverSpec resource.
 func NewResolverSpec(namespace resource.Namespace, id resource.ID) *ResolverSpec {
-	return typed.NewResource[ResolverSpecSpec, ResolverSpecRD](
+	return typed.NewResource[ResolverSpecSpec, ResolverSpecExtension](
 		resource.NewMetadata(namespace, ResolverSpecType, id, resource.VersionUndefined),
 		ResolverSpecSpec{},
 	)
 }
 
-// ResolverSpecRD provides auxiliary methods for ResolverSpec.
-type ResolverSpecRD struct{}
+// ResolverSpecExtension provides auxiliary methods for ResolverSpec.
+type ResolverSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (ResolverSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (ResolverSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ResolverSpecType,
 		Aliases:          []resource.Type{},

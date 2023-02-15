@@ -20,7 +20,7 @@ const MemoryType = resource.Type("MemoryStats.perf.talos.dev")
 const MemoryID = resource.ID("latest")
 
 // Memory represents the last Memory stats snapshot.
-type Memory = typed.Resource[MemorySpec, MemoryRD]
+type Memory = typed.Resource[MemorySpec, MemoryExtension]
 
 // MemorySpec represents the last Memory stats snapshot.
 //
@@ -78,17 +78,17 @@ type MemorySpec struct {
 
 // NewMemory creates new default Memory stats object.
 func NewMemory() *Memory {
-	return typed.NewResource[MemorySpec, MemoryRD](
+	return typed.NewResource[MemorySpec, MemoryExtension](
 		resource.NewMetadata(NamespaceName, MemoryType, MemoryID, resource.VersionUndefined),
 		MemorySpec{},
 	)
 }
 
-// MemoryRD is an auxiliary type for Memory resource.
-type MemoryRD struct{}
+// MemoryExtension is an auxiliary type for Memory resource.
+type MemoryExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (MemoryRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (MemoryExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MemoryType,
 		Aliases:          []resource.Type{},

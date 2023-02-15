@@ -18,7 +18,7 @@ import (
 const KubeletSpecType = resource.Type("KubeletSpecs.kubernetes.talos.dev")
 
 // KubeletSpec resource holds final definition of kubelet runtime configuration.
-type KubeletSpec = typed.Resource[KubeletSpecSpec, KubeletSpecRD]
+type KubeletSpec = typed.Resource[KubeletSpecSpec, KubeletSpecExtension]
 
 // KubeletSpecSpec holds the source of kubelet configuration.
 //
@@ -33,17 +33,17 @@ type KubeletSpecSpec struct {
 
 // NewKubeletSpec initializes an empty KubeletSpec resource.
 func NewKubeletSpec(namespace resource.Namespace, id resource.ID) *KubeletSpec {
-	return typed.NewResource[KubeletSpecSpec, KubeletSpecRD](
+	return typed.NewResource[KubeletSpecSpec, KubeletSpecExtension](
 		resource.NewMetadata(namespace, KubeletSpecType, id, resource.VersionUndefined),
 		KubeletSpecSpec{},
 	)
 }
 
-// KubeletSpecRD provides auxiliary methods for KubeletSpec.
-type KubeletSpecRD struct{}
+// KubeletSpecExtension provides auxiliary methods for KubeletSpec.
+type KubeletSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (KubeletSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (KubeletSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletSpecType,
 		Aliases:          []resource.Type{},

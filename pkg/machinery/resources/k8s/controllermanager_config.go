@@ -23,7 +23,7 @@ const ControllerManagerConfigType = resource.Type("ControllerManagerConfigs.kube
 const ControllerManagerConfigID = resource.ID(ControllerManagerID)
 
 // ControllerManagerConfig represents configuration for kube-controller-manager.
-type ControllerManagerConfig = typed.Resource[ControllerManagerConfigSpec, ControllerManagerConfigRD]
+type ControllerManagerConfig = typed.Resource[ControllerManagerConfigSpec, ControllerManagerConfigExtension]
 
 // ControllerManagerConfigSpec is configuration for kube-controller-manager.
 //
@@ -41,16 +41,16 @@ type ControllerManagerConfigSpec struct {
 
 // NewControllerManagerConfig returns new ControllerManagerConfig resource.
 func NewControllerManagerConfig() *ControllerManagerConfig {
-	return typed.NewResource[ControllerManagerConfigSpec, ControllerManagerConfigRD](
+	return typed.NewResource[ControllerManagerConfigSpec, ControllerManagerConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, ControllerManagerConfigType, ControllerManagerConfigID, resource.VersionUndefined),
 		ControllerManagerConfigSpec{})
 }
 
-// ControllerManagerConfigRD defines ControllerManagerConfig resource definition.
-type ControllerManagerConfigRD struct{}
+// ControllerManagerConfigExtension defines ControllerManagerConfig resource definition.
+type ControllerManagerConfigExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ControllerManagerConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (ControllerManagerConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ControllerManagerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

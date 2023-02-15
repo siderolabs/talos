@@ -20,7 +20,7 @@ const IdentityType = resource.Type("Identities.cluster.talos.dev")
 const LocalIdentity = resource.ID("local")
 
 // Identity resource holds node identity (as a member of the cluster).
-type Identity = typed.Resource[IdentitySpec, IdentityRD]
+type Identity = typed.Resource[IdentitySpec, IdentityExtension]
 
 // IdentitySpec describes status of rendered secrets.
 //
@@ -36,17 +36,17 @@ type IdentitySpec struct {
 
 // NewIdentity initializes a Identity resource.
 func NewIdentity(namespace resource.Namespace, id resource.ID) *Identity {
-	return typed.NewResource[IdentitySpec, IdentityRD](
+	return typed.NewResource[IdentitySpec, IdentityExtension](
 		resource.NewMetadata(namespace, IdentityType, id, resource.VersionUndefined),
 		IdentitySpec{},
 	)
 }
 
-// IdentityRD provides auxiliary methods for Identity.
-type IdentityRD struct{}
+// IdentityExtension provides auxiliary methods for Identity.
+type IdentityExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (c IdentityRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (IdentityExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             IdentityType,
 		Aliases:          []resource.Type{},

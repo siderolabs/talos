@@ -17,7 +17,7 @@ import (
 const StatusType = resource.Type("NetworkStatuses.net.talos.dev")
 
 // Status resource holds status of networking setup.
-type Status = typed.Resource[StatusSpec, StatusRD]
+type Status = typed.Resource[StatusSpec, StatusExtension]
 
 // StatusSpec describes network state.
 //
@@ -34,17 +34,17 @@ const StatusID resource.ID = "status"
 
 // NewStatus initializes a Status resource.
 func NewStatus(namespace resource.Namespace, id resource.ID) *Status {
-	return typed.NewResource[StatusSpec, StatusRD](
+	return typed.NewResource[StatusSpec, StatusExtension](
 		resource.NewMetadata(namespace, StatusType, id, resource.VersionUndefined),
 		StatusSpec{},
 	)
 }
 
-// StatusRD provides auxiliary methods for Status.
-type StatusRD struct{}
+// StatusExtension provides auxiliary methods for Status.
+type StatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (StatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (StatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             StatusType,
 		Aliases:          []resource.Type{"netstatus", "netstatuses"},

@@ -23,7 +23,7 @@ const SchedulerConfigType = resource.Type("SchedulerConfigs.kubernetes.talos.dev
 const SchedulerConfigID = resource.ID(SchedulerID)
 
 // SchedulerConfig represents configuration for kube-scheduler.
-type SchedulerConfig = typed.Resource[SchedulerConfigSpec, SchedulerConfigRD]
+type SchedulerConfig = typed.Resource[SchedulerConfigSpec, SchedulerConfigExtension]
 
 // SchedulerConfigSpec is configuration for kube-scheduler.
 //
@@ -38,16 +38,16 @@ type SchedulerConfigSpec struct {
 
 // NewSchedulerConfig returns new SchedulerConfig resource.
 func NewSchedulerConfig() *SchedulerConfig {
-	return typed.NewResource[SchedulerConfigSpec, SchedulerConfigRD](
+	return typed.NewResource[SchedulerConfigSpec, SchedulerConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, SchedulerConfigType, SchedulerConfigID, resource.VersionUndefined),
 		SchedulerConfigSpec{})
 }
 
-// SchedulerConfigRD defines SchedulerConfig resource definition.
-type SchedulerConfigRD struct{}
+// SchedulerConfigExtension defines SchedulerConfig resource definition.
+type SchedulerConfigExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (SchedulerConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (SchedulerConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SchedulerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

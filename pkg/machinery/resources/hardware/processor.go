@@ -17,7 +17,7 @@ import (
 const ProcessorType = resource.Type("Processors.hardware.talos.dev")
 
 // Processor resource holds node Processor information.
-type Processor = typed.Resource[ProcessorSpec, ProcessorRD]
+type Processor = typed.Resource[ProcessorSpec, ProcessorExtension]
 
 // ProcessorSpec represents a single processor.
 //
@@ -41,17 +41,17 @@ type ProcessorSpec struct {
 
 // NewProcessorInfo initializes a ProcessorInfo resource.
 func NewProcessorInfo(id string) *Processor {
-	return typed.NewResource[ProcessorSpec, ProcessorRD](
+	return typed.NewResource[ProcessorSpec, ProcessorExtension](
 		resource.NewMetadata(NamespaceName, ProcessorType, id, resource.VersionUndefined),
 		ProcessorSpec{},
 	)
 }
 
-// ProcessorRD provides auxiliary methods for Processor info.
-type ProcessorRD struct{}
+// ProcessorExtension provides auxiliary methods for Processor info.
+type ProcessorExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (c ProcessorRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (ProcessorExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type: ProcessorType,
 		Aliases: []resource.Type{

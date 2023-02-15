@@ -20,7 +20,7 @@ const MachineStatusType = resource.Type("MachineStatuses.runtime.talos.dev")
 const MachineStatusID = resource.ID("machine")
 
 // MachineStatus resource holds information about aggregated machine status.
-type MachineStatus = typed.Resource[MachineStatusSpec, MachineStatusRD]
+type MachineStatus = typed.Resource[MachineStatusSpec, MachineStatusExtension]
 
 // MachineStatusSpec describes status of the defined sysctls.
 //
@@ -48,17 +48,17 @@ type UnmetCondition struct {
 
 // NewMachineStatus initializes a MachineStatus resource.
 func NewMachineStatus() *MachineStatus {
-	return typed.NewResource[MachineStatusSpec, MachineStatusRD](
+	return typed.NewResource[MachineStatusSpec, MachineStatusExtension](
 		resource.NewMetadata(NamespaceName, MachineStatusType, MachineStatusID, resource.VersionUndefined),
 		MachineStatusSpec{},
 	)
 }
 
-// MachineStatusRD is auxiliary resource data for MachineStatus.
-type MachineStatusRD struct{}
+// MachineStatusExtension is auxiliary resource data for MachineStatus.
+type MachineStatusExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (MachineStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (MachineStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MachineStatusType,
 		Aliases:          []resource.Type{},

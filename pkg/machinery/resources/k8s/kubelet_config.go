@@ -21,7 +21,7 @@ const KubeletConfigType = resource.Type("KubeletConfigs.kubernetes.talos.dev")
 const KubeletID = resource.ID("kubelet")
 
 // KubeletConfig resource holds source of kubelet configuration.
-type KubeletConfig = typed.Resource[KubeletConfigSpec, KubeletConfigRD]
+type KubeletConfig = typed.Resource[KubeletConfigSpec, KubeletConfigExtension]
 
 // KubeletConfigSpec holds the source of kubelet configuration.
 //
@@ -42,17 +42,17 @@ type KubeletConfigSpec struct {
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.
 func NewKubeletConfig(namespace resource.Namespace, id resource.ID) *KubeletConfig {
-	return typed.NewResource[KubeletConfigSpec, KubeletConfigRD](
+	return typed.NewResource[KubeletConfigSpec, KubeletConfigExtension](
 		resource.NewMetadata(namespace, KubeletConfigType, id, resource.VersionUndefined),
 		KubeletConfigSpec{},
 	)
 }
 
-// KubeletConfigRD provides auxiliary methods for KubeletConfig.
-type KubeletConfigRD struct{}
+// KubeletConfigExtension provides auxiliary methods for KubeletConfig.
+type KubeletConfigExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (KubeletConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (KubeletConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletConfigType,
 		Aliases:          []resource.Type{},

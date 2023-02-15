@@ -20,7 +20,7 @@ const PKIStatusType = resource.Type("PKIStatuses.etcd.talos.dev")
 const PKIID = resource.ID("etcd")
 
 // PKIStatus resource holds status of rendered secrets.
-type PKIStatus = typed.Resource[PKIStatusSpec, PKIStatusRD]
+type PKIStatus = typed.Resource[PKIStatusSpec, PKIStatusExtension]
 
 // PKIStatusSpec describes status of rendered secrets.
 //
@@ -32,17 +32,17 @@ type PKIStatusSpec struct {
 
 // NewPKIStatus initializes a PKIStatus resource.
 func NewPKIStatus(namespace resource.Namespace, id resource.ID) *PKIStatus {
-	return typed.NewResource[PKIStatusSpec, PKIStatusRD](
+	return typed.NewResource[PKIStatusSpec, PKIStatusExtension](
 		resource.NewMetadata(namespace, PKIStatusType, id, resource.VersionUndefined),
 		PKIStatusSpec{},
 	)
 }
 
-// PKIStatusRD provides auxiliary methods for PKIStatus.
-type PKIStatusRD struct{}
+// PKIStatusExtension provides auxiliary methods for PKIStatus.
+type PKIStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (PKIStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (PKIStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PKIStatusType,
 		Aliases:          []resource.Type{},

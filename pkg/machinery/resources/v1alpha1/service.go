@@ -20,7 +20,7 @@ import (
 const ServiceType = resource.Type("Services.v1alpha1.talos.dev")
 
 // Service describes running service state.
-type Service = typed.Resource[ServiceSpec, ServiceRD]
+type Service = typed.Resource[ServiceSpec, ServiceExtension]
 
 // ServiceSpec describe service state.
 //
@@ -33,17 +33,17 @@ type ServiceSpec struct {
 
 // NewService initializes a Service resource.
 func NewService(id resource.ID) *Service {
-	return typed.NewResource[ServiceSpec, ServiceRD](
+	return typed.NewResource[ServiceSpec, ServiceExtension](
 		resource.NewMetadata(NamespaceName, ServiceType, id, resource.VersionUndefined),
 		ServiceSpec{},
 	)
 }
 
-// ServiceRD provides auxiliary methods for Service.
-type ServiceRD struct{}
+// ServiceExtension provides auxiliary methods for Service.
+type ServiceExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ServiceRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (ServiceExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ServiceType,
 		Aliases:          []resource.Type{"svc"},

@@ -23,7 +23,7 @@ const LinkRefreshType = resource.Type("LinkRefreshes.net.talos.dev")
 //
 // Whenever Wireguard interface is updated, LinkRefresh resource is modified to trigger a reconcile
 // loop in the LinkStatusController.
-type LinkRefresh = typed.Resource[LinkRefreshSpec, LinkRefreshRD]
+type LinkRefresh = typed.Resource[LinkRefreshSpec, LinkRefreshExtension]
 
 // LinkRefreshSpec describes status of rendered secrets.
 //
@@ -39,17 +39,17 @@ func (s *LinkRefreshSpec) Bump() {
 
 // NewLinkRefresh initializes a LinkRefresh resource.
 func NewLinkRefresh(namespace resource.Namespace, id resource.ID) *LinkRefresh {
-	return typed.NewResource[LinkRefreshSpec, LinkRefreshRD](
+	return typed.NewResource[LinkRefreshSpec, LinkRefreshExtension](
 		resource.NewMetadata(namespace, LinkRefreshType, id, resource.VersionUndefined),
 		LinkRefreshSpec{},
 	)
 }
 
-// LinkRefreshRD provides auxiliary methods for LinkRefresh.
-type LinkRefreshRD struct{}
+// LinkRefreshExtension provides auxiliary methods for LinkRefresh.
+type LinkRefreshExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (LinkRefreshRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (LinkRefreshExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkRefreshType,
 		Aliases:          []resource.Type{},

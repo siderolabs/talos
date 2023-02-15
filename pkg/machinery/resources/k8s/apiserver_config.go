@@ -23,7 +23,7 @@ const APIServerConfigType = resource.Type("APIServerConfigs.kubernetes.talos.dev
 const APIServerConfigID = resource.ID(APIServerID)
 
 // APIServerConfig represents configuration for kube-apiserver.
-type APIServerConfig = typed.Resource[APIServerConfigSpec, APIServerConfigRD]
+type APIServerConfig = typed.Resource[APIServerConfigSpec, APIServerConfigExtension]
 
 // ExtraVolume is a configuration of extra volume.
 //
@@ -54,16 +54,16 @@ type APIServerConfigSpec struct {
 
 // NewAPIServerConfig returns new APIServerConfig resource.
 func NewAPIServerConfig() *APIServerConfig {
-	return typed.NewResource[APIServerConfigSpec, APIServerConfigRD](
+	return typed.NewResource[APIServerConfigSpec, APIServerConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, APIServerConfigType, APIServerConfigID, resource.VersionUndefined),
 		APIServerConfigSpec{})
 }
 
-// APIServerConfigRD defines APIServerConfig resource definition.
-type APIServerConfigRD struct{}
+// APIServerConfigExtension defines APIServerConfig resource definition.
+type APIServerConfigExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (APIServerConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (APIServerConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             APIServerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

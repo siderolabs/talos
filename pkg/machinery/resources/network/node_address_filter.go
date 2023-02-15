@@ -19,7 +19,7 @@ import (
 const NodeAddressFilterType = resource.Type("NodeAddressFilters.net.talos.dev")
 
 // NodeAddressFilter resource holds filter for NodeAddress resources.
-type NodeAddressFilter = typed.Resource[NodeAddressFilterSpec, NodeAddressFilterRD]
+type NodeAddressFilter = typed.Resource[NodeAddressFilterSpec, NodeAddressFilterExtension]
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.
 //
@@ -33,17 +33,17 @@ type NodeAddressFilterSpec struct {
 
 // NewNodeAddressFilter initializes a NodeAddressFilter resource.
 func NewNodeAddressFilter(namespace resource.Namespace, id resource.ID) *NodeAddressFilter {
-	return typed.NewResource[NodeAddressFilterSpec, NodeAddressFilterRD](
+	return typed.NewResource[NodeAddressFilterSpec, NodeAddressFilterExtension](
 		resource.NewMetadata(namespace, NodeAddressFilterType, id, resource.VersionUndefined),
 		NodeAddressFilterSpec{},
 	)
 }
 
-// NodeAddressFilterRD provides auxiliary methods for NodeAddressFilter.
-type NodeAddressFilterRD struct{}
+// NodeAddressFilterExtension provides auxiliary methods for NodeAddressFilter.
+type NodeAddressFilterExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (NodeAddressFilterRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (NodeAddressFilterExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeAddressFilterType,
 		Aliases:          []resource.Type{},

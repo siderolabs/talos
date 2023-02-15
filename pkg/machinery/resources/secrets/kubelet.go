@@ -23,7 +23,7 @@ const KubeletType = resource.Type("KubeletSecrets.secrets.talos.dev")
 const KubeletID = resource.ID("kubelet")
 
 // Kubelet contains root (not generated) secrets.
-type Kubelet = typed.Resource[KubeletSpec, KubeletRD]
+type Kubelet = typed.Resource[KubeletSpec, KubeletExtension]
 
 // KubeletSpec describes root Kubernetes secrets.
 //
@@ -39,17 +39,17 @@ type KubeletSpec struct {
 
 // NewKubelet initializes a Kubelet resource.
 func NewKubelet(id resource.ID) *Kubelet {
-	return typed.NewResource[KubeletSpec, KubeletRD](
+	return typed.NewResource[KubeletSpec, KubeletExtension](
 		resource.NewMetadata(NamespaceName, KubeletType, id, resource.VersionUndefined),
 		KubeletSpec{},
 	)
 }
 
-// KubeletRD provides auxiliary methods for Kubelet.
-type KubeletRD struct{}
+// KubeletExtension provides auxiliary methods for Kubelet.
+type KubeletExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KubeletRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KubeletExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletType,
 		Aliases:          []resource.Type{},

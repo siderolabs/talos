@@ -18,7 +18,7 @@ import (
 const LinkStatusType = resource.Type("LinkStatuses.net.talos.dev")
 
 // LinkStatus resource holds physical network link status.
-type LinkStatus = typed.Resource[LinkStatusSpec, LinkStatusRD]
+type LinkStatus = typed.Resource[LinkStatusSpec, LinkStatusExtension]
 
 // LinkStatusSpec describes status of rendered secrets.
 //
@@ -66,17 +66,17 @@ func (s LinkStatusSpec) Physical() bool {
 
 // NewLinkStatus initializes a LinkStatus resource.
 func NewLinkStatus(namespace resource.Namespace, id resource.ID) *LinkStatus {
-	return typed.NewResource[LinkStatusSpec, LinkStatusRD](
+	return typed.NewResource[LinkStatusSpec, LinkStatusExtension](
 		resource.NewMetadata(namespace, LinkStatusType, id, resource.VersionUndefined),
 		LinkStatusSpec{},
 	)
 }
 
-// LinkStatusRD provides auxiliary methods for LinkStatus.
-type LinkStatusRD struct{}
+// LinkStatusExtension provides auxiliary methods for LinkStatus.
+type LinkStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (LinkStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (LinkStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkStatusType,
 		Aliases:          []resource.Type{"link", "links"},

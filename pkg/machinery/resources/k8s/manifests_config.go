@@ -23,7 +23,7 @@ const BootstrapManifestsConfigType = resource.Type("BootstrapManifestsConfigs.ku
 const BootstrapManifestsConfigID = resource.ID("manifests")
 
 // BootstrapManifestsConfig represents configuration for bootstrap manifests.
-type BootstrapManifestsConfig = typed.Resource[BootstrapManifestsConfigSpec, BootstrapManifestsConfigRD]
+type BootstrapManifestsConfig = typed.Resource[BootstrapManifestsConfigSpec, BootstrapManifestsConfigExtension]
 
 // BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 //
@@ -55,16 +55,16 @@ type BootstrapManifestsConfigSpec struct {
 
 // NewBootstrapManifestsConfig returns new BootstrapManifestsConfig resource.
 func NewBootstrapManifestsConfig() *BootstrapManifestsConfig {
-	return typed.NewResource[BootstrapManifestsConfigSpec, BootstrapManifestsConfigRD](
+	return typed.NewResource[BootstrapManifestsConfigSpec, BootstrapManifestsConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, BootstrapManifestsConfigType, BootstrapManifestsConfigID, resource.VersionUndefined),
 		BootstrapManifestsConfigSpec{})
 }
 
-// BootstrapManifestsConfigRD defines BootstrapManifestsConfig resource definition.
-type BootstrapManifestsConfigRD struct{}
+// BootstrapManifestsConfigExtension defines BootstrapManifestsConfig resource definition.
+type BootstrapManifestsConfigExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (BootstrapManifestsConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (BootstrapManifestsConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             BootstrapManifestsConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,

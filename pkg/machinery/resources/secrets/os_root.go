@@ -23,7 +23,7 @@ const OSRootType = resource.Type("OSRootSecrets.secrets.talos.dev")
 const OSRootID = resource.ID("os")
 
 // OSRoot contains root (not generated) secrets.
-type OSRoot = typed.Resource[OSRootSpec, OSRootRD]
+type OSRoot = typed.Resource[OSRootSpec, OSRootExtension]
 
 // OSRootSpec describes operating system CA.
 //
@@ -38,17 +38,17 @@ type OSRootSpec struct {
 
 // NewOSRoot initializes a OSRoot resource.
 func NewOSRoot(id resource.ID) *OSRoot {
-	return typed.NewResource[OSRootSpec, OSRootRD](
+	return typed.NewResource[OSRootSpec, OSRootExtension](
 		resource.NewMetadata(NamespaceName, OSRootType, id, resource.VersionUndefined),
 		OSRootSpec{},
 	)
 }
 
-// OSRootRD provides auxiliary methods for OSRoot.
-type OSRootRD struct{}
+// OSRootExtension provides auxiliary methods for OSRoot.
+type OSRootExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (OSRootRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (OSRootExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             OSRootType,
 		Aliases:          []resource.Type{},

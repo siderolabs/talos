@@ -21,7 +21,7 @@ const EtcdRootType = resource.Type("EtcdRootSecrets.secrets.talos.dev")
 const EtcdRootID = resource.ID("etcd")
 
 // EtcdRoot contains root (not generated) secrets.
-type EtcdRoot = typed.Resource[EtcdRootSpec, EtcdRootRD]
+type EtcdRoot = typed.Resource[EtcdRootSpec, EtcdRootExtension]
 
 // EtcdRootSpec describes etcd CA secrets.
 //
@@ -32,17 +32,17 @@ type EtcdRootSpec struct {
 
 // NewEtcdRoot initializes a EtcdRoot resource.
 func NewEtcdRoot(id resource.ID) *EtcdRoot {
-	return typed.NewResource[EtcdRootSpec, EtcdRootRD](
+	return typed.NewResource[EtcdRootSpec, EtcdRootExtension](
 		resource.NewMetadata(NamespaceName, EtcdRootType, id, resource.VersionUndefined),
 		EtcdRootSpec{},
 	)
 }
 
-// EtcdRootRD provides auxiliary methods for EtcdRoot.
-type EtcdRootRD struct{}
+// EtcdRootExtension provides auxiliary methods for EtcdRoot.
+type EtcdRootExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (EtcdRootRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (EtcdRootExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             EtcdRootType,
 		Aliases:          []resource.Type{},

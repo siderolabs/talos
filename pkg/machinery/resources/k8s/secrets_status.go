@@ -23,7 +23,7 @@ const SecretsStatusType = resource.Type("SecretStatuses.kubernetes.talos.dev")
 const StaticPodSecretsStaticPodID = resource.ID("static-pods")
 
 // SecretsStatus resource holds definition of rendered secrets.
-type SecretsStatus = typed.Resource[SecretsStatusSpec, SecretsStatusRD]
+type SecretsStatus = typed.Resource[SecretsStatusSpec, SecretsStatusExtension]
 
 // SecretsStatusSpec describes status of rendered secrets.
 //
@@ -35,17 +35,17 @@ type SecretsStatusSpec struct {
 
 // NewSecretsStatus initializes a SecretsStatus resource.
 func NewSecretsStatus(namespace resource.Namespace, id resource.ID) *SecretsStatus {
-	return typed.NewResource[SecretsStatusSpec, SecretsStatusRD](
+	return typed.NewResource[SecretsStatusSpec, SecretsStatusExtension](
 		resource.NewMetadata(namespace, SecretsStatusType, id, resource.VersionUndefined),
 		SecretsStatusSpec{},
 	)
 }
 
-// SecretsStatusRD provides auxiliary methods for SecretsStatus.
-type SecretsStatusRD struct{}
+// SecretsStatusExtension provides auxiliary methods for SecretsStatus.
+type SecretsStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (SecretsStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (SecretsStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SecretsStatusType,
 		Aliases:          []resource.Type{},

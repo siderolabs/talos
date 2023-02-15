@@ -20,7 +20,7 @@ import (
 const SeccompProfileType = resource.Type("SeccompProfiles.cri.talos.dev")
 
 // SeccompProfile represents SeccompProfile typed resource.
-type SeccompProfile = typed.Resource[SeccompProfileSpec, SeccompProfileRD]
+type SeccompProfile = typed.Resource[SeccompProfileSpec, SeccompProfileExtension]
 
 // SeccompProfileSpec represents the SeccompProfile.
 //
@@ -32,17 +32,17 @@ type SeccompProfileSpec struct {
 
 // NewSeccompProfile creates new SeccompProfile object.
 func NewSeccompProfile(id string) *SeccompProfile {
-	return typed.NewResource[SeccompProfileSpec, SeccompProfileRD](
+	return typed.NewResource[SeccompProfileSpec, SeccompProfileExtension](
 		resource.NewMetadata(NamespaceName, SeccompProfileType, id, resource.VersionUndefined),
 		SeccompProfileSpec{},
 	)
 }
 
-// SeccompProfileRD is an auxiliary type for SeccompProfile resource.
-type SeccompProfileRD struct{}
+// SeccompProfileExtension is an auxiliary type for SeccompProfile resource.
+type SeccompProfileExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (SeccompProfileRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (SeccompProfileExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             SeccompProfileType,
 		Aliases:          []resource.Type{},

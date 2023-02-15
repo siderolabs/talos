@@ -21,7 +21,7 @@ import (
 const DeviceConfigSpecType = resource.Type("DeviceConfigSpecs.net.talos.dev")
 
 // DeviceConfigSpec resource holds network interface configs.
-type DeviceConfigSpec = typed.Resource[DeviceConfigSpecSpec, DeviceConfigSpecRD]
+type DeviceConfigSpec = typed.Resource[DeviceConfigSpecSpec, DeviceConfigSpecExtension]
 
 // DeviceConfigSpecSpec contains the spec of a device config.
 //
@@ -32,7 +32,7 @@ type DeviceConfigSpecSpec struct {
 
 // NewDeviceConfig creates new interface config.
 func NewDeviceConfig(id resource.ID, device config.Device) *DeviceConfigSpec {
-	return typed.NewResource[DeviceConfigSpecSpec, DeviceConfigSpecRD](
+	return typed.NewResource[DeviceConfigSpecSpec, DeviceConfigSpecExtension](
 		resource.NewMetadata(NamespaceName, DeviceConfigSpecType, id, resource.VersionUndefined),
 		DeviceConfigSpecSpec{Device: device},
 	)
@@ -46,11 +46,11 @@ func (spec DeviceConfigSpecSpec) DeepCopy() DeviceConfigSpecSpec {
 	return cp
 }
 
-// DeviceConfigSpecRD providers auxiliary methods for DeviceConfigSpec.
-type DeviceConfigSpecRD struct{}
+// DeviceConfigSpecExtension providers auxiliary methods for DeviceConfigSpec.
+type DeviceConfigSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (DeviceConfigSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (DeviceConfigSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             DeviceConfigSpecType,
 		Aliases:          []resource.Type{},

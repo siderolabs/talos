@@ -20,7 +20,7 @@ const ManifestStatusType = resource.Type("ManifestStatuses.kubernetes.talos.dev"
 const ManifestStatusID = resource.ID("manifests")
 
 // ManifestStatus resource holds definition of kubelet static pod.
-type ManifestStatus = typed.Resource[ManifestStatusSpec, ManifestStatusRD]
+type ManifestStatus = typed.Resource[ManifestStatusSpec, ManifestStatusExtension]
 
 // ManifestStatusSpec describes manifest application status.
 //
@@ -31,17 +31,17 @@ type ManifestStatusSpec struct {
 
 // NewManifestStatus initializes an empty ManifestStatus resource.
 func NewManifestStatus(namespace resource.Namespace) *ManifestStatus {
-	return typed.NewResource[ManifestStatusSpec, ManifestStatusRD](
+	return typed.NewResource[ManifestStatusSpec, ManifestStatusExtension](
 		resource.NewMetadata(namespace, ManifestStatusType, ManifestStatusID, resource.VersionUndefined),
 		ManifestStatusSpec{},
 	)
 }
 
-// ManifestStatusRD provides auxiliary methods for ManifestStatus.
-type ManifestStatusRD struct{}
+// ManifestStatusExtension provides auxiliary methods for ManifestStatus.
+type ManifestStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (ManifestStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (ManifestStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ManifestStatusType,
 		Aliases:          []resource.Type{},

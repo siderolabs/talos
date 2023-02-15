@@ -20,7 +20,7 @@ const MemberType = resource.Type("EtcdMembers.etcd.talos.dev")
 const LocalMemberID = resource.ID("local")
 
 // Member resource holds status of rendered secrets.
-type Member = typed.Resource[MemberSpec, MemberRD]
+type Member = typed.Resource[MemberSpec, MemberExtension]
 
 // MemberSpec holds information about an etcd member.
 //
@@ -31,17 +31,17 @@ type MemberSpec struct {
 
 // NewMember initializes a Member resource.
 func NewMember(namespace resource.Namespace, id resource.ID) *Member {
-	return typed.NewResource[MemberSpec, MemberRD](
+	return typed.NewResource[MemberSpec, MemberExtension](
 		resource.NewMetadata(namespace, MemberType, id, resource.VersionUndefined),
 		MemberSpec{},
 	)
 }
 
-// MemberRD provides auxiliary methods for Member.
-type MemberRD struct{}
+// MemberExtension provides auxiliary methods for Member.
+type MemberExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (MemberRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (MemberExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MemberType,
 		Aliases:          []resource.Type{},

@@ -17,7 +17,7 @@ import (
 const ManifestType = resource.Type("Manifests.kubernetes.talos.dev")
 
 // Manifest resource holds definition of kubelet static pod.
-type Manifest = typed.Resource[ManifestSpec, ManifestRD]
+type Manifest = typed.Resource[ManifestSpec, ManifestExtension]
 
 // ManifestSpec holds the Kubernetes resources spec.
 //
@@ -40,17 +40,17 @@ func (spec ManifestSpec) MarshalYAML() (interface{}, error) {
 
 // NewManifest initializes an empty Manifest resource.
 func NewManifest(namespace resource.Namespace, id resource.ID) *Manifest {
-	return typed.NewResource[ManifestSpec, ManifestRD](
+	return typed.NewResource[ManifestSpec, ManifestExtension](
 		resource.NewMetadata(namespace, ManifestType, id, resource.VersionUndefined),
 		ManifestSpec{},
 	)
 }
 
-// ManifestRD provides auxiliary methods for Manifest.
-type ManifestRD struct{}
+// ManifestExtension provides auxiliary methods for Manifest.
+type ManifestExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (ManifestRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (ManifestExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ManifestType,
 		Aliases:          []resource.Type{},

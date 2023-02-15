@@ -21,7 +21,7 @@ const ConfigType = resource.Type("DiscoveryConfigs.cluster.talos.dev")
 const ConfigID = resource.ID("cluster")
 
 // Config resource holds KubeSpan configuration.
-type Config = typed.Resource[ConfigSpec, ConfigRD]
+type Config = typed.Resource[ConfigSpec, ConfigExtension]
 
 // ConfigSpec describes KubeSpan configuration.
 //
@@ -38,17 +38,17 @@ type ConfigSpec struct {
 
 // NewConfig initializes a Config resource.
 func NewConfig(namespace resource.Namespace, id resource.ID) *Config {
-	return typed.NewResource[ConfigSpec, ConfigRD](
+	return typed.NewResource[ConfigSpec, ConfigExtension](
 		resource.NewMetadata(namespace, ConfigType, id, resource.VersionUndefined),
 		ConfigSpec{},
 	)
 }
 
-// ConfigRD provides auxiliary methods for Config.
-type ConfigRD struct{}
+// ConfigExtension provides auxiliary methods for Config.
+type ConfigExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (c ConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (ConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ConfigType,
 		Aliases:          []resource.Type{},

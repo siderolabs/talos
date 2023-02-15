@@ -25,32 +25,21 @@ type NodeLabelSpecSpec struct {
 }
 
 // NodeLabelSpec ...
-type NodeLabelSpec = typed.Resource[NodeLabelSpecSpec, NodeLabelSpecRD]
+type NodeLabelSpec = typed.Resource[NodeLabelSpecSpec, NodeLabelSpecExtension]
 
 // NewNodeLabelSpec initializes a NodeLabel resource.
 func NewNodeLabelSpec(id resource.ID) *NodeLabelSpec {
-	return typed.NewResource[NodeLabelSpecSpec, NodeLabelSpecRD](
+	return typed.NewResource[NodeLabelSpecSpec, NodeLabelSpecExtension](
 		resource.NewMetadata(NamespaceName, NodeLabelSpecType, id, resource.VersionUndefined),
 		NodeLabelSpecSpec{},
 	)
 }
 
-// NewPopulatedNodeLabelSpec initializes a NodeLabel resource and populates it.
-func NewPopulatedNodeLabelSpec(id resource.ID, key, value string, createdByTalos bool) *NodeLabelSpec {
-	return typed.NewResource[NodeLabelSpecSpec, NodeLabelSpecRD](
-		resource.NewMetadata(NamespaceName, NodeLabelSpecType, id, resource.VersionUndefined),
-		NodeLabelSpecSpec{
-			Key:   key,
-			Value: value,
-		},
-	)
-}
-
-// NodeLabelSpecRD provides auxiliary methods for NodeLabel.
-type NodeLabelSpecRD struct{}
+// NodeLabelSpecExtension provides auxiliary methods for NodeLabel.
+type NodeLabelSpecExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (NodeLabelSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (NodeLabelSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             NodeLabelSpecType,
 		Aliases:          []resource.Type{},

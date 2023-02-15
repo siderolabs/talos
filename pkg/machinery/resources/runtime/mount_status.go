@@ -17,7 +17,7 @@ import (
 const MountStatusType = resource.Type("MountStatuses.runtime.talos.dev")
 
 // MountStatus resource holds defined sysctl flags status.
-type MountStatus = typed.Resource[MountStatusSpec, MountStatusRD]
+type MountStatus = typed.Resource[MountStatusSpec, MountStatusExtension]
 
 // MountStatusSpec describes status of the defined sysctls.
 //
@@ -31,17 +31,17 @@ type MountStatusSpec struct {
 
 // NewMountStatus initializes a MountStatus resource.
 func NewMountStatus(namespace resource.Namespace, id resource.ID) *MountStatus {
-	return typed.NewResource[MountStatusSpec, MountStatusRD](
+	return typed.NewResource[MountStatusSpec, MountStatusExtension](
 		resource.NewMetadata(namespace, MountStatusType, id, resource.VersionUndefined),
 		MountStatusSpec{},
 	)
 }
 
-// MountStatusRD is auxiliary resource data for MountStatus.
-type MountStatusRD struct{}
+// MountStatusExtension is auxiliary resource data for MountStatus.
+type MountStatusExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (MountStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (MountStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MountStatusType,
 		Aliases:          []resource.Type{"mounts"},

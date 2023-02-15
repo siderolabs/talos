@@ -21,7 +21,7 @@ import (
 const RouteSpecType = resource.Type("RouteSpecs.net.talos.dev")
 
 // RouteSpec resource holds route specification to be applied to the kernel.
-type RouteSpec = typed.Resource[RouteSpecSpec, RouteSpecRD]
+type RouteSpec = typed.Resource[RouteSpecSpec, RouteSpecExtension]
 
 // RouteSpecSpec describes the route.
 //
@@ -74,17 +74,17 @@ func (route *RouteSpecSpec) Normalize() {
 
 // NewRouteSpec initializes a RouteSpec resource.
 func NewRouteSpec(namespace resource.Namespace, id resource.ID) *RouteSpec {
-	return typed.NewResource[RouteSpecSpec, RouteSpecRD](
+	return typed.NewResource[RouteSpecSpec, RouteSpecExtension](
 		resource.NewMetadata(namespace, RouteSpecType, id, resource.VersionUndefined),
 		RouteSpecSpec{},
 	)
 }
 
-// RouteSpecRD provides auxiliary methods for RouteSpec.
-type RouteSpecRD struct{}
+// RouteSpecExtension provides auxiliary methods for RouteSpec.
+type RouteSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (RouteSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (RouteSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             RouteSpecType,
 		Aliases:          []resource.Type{},

@@ -21,7 +21,7 @@ const KubernetesType = resource.Type("KubernetesSecrets.secrets.talos.dev")
 const KubernetesID = resource.ID("k8s-certs")
 
 // Kubernetes contains K8s generated secrets.
-type Kubernetes = typed.Resource[KubernetesCertsSpec, KubernetesRD]
+type Kubernetes = typed.Resource[KubernetesCertsSpec, KubernetesExtension]
 
 // KubernetesCertsSpec describes generated Kubernetes certificates.
 //
@@ -41,17 +41,17 @@ type KubernetesCertsSpec struct {
 
 // NewKubernetes initializes a Kubernetes resource.
 func NewKubernetes() *Kubernetes {
-	return typed.NewResource[KubernetesCertsSpec, KubernetesRD](
+	return typed.NewResource[KubernetesCertsSpec, KubernetesExtension](
 		resource.NewMetadata(NamespaceName, KubernetesType, KubernetesID, resource.VersionUndefined),
 		KubernetesCertsSpec{},
 	)
 }
 
-// KubernetesRD provides auxiliary methods for Kubernetes.
-type KubernetesRD struct{}
+// KubernetesExtension provides auxiliary methods for Kubernetes.
+type KubernetesExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KubernetesRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KubernetesExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubernetesType,
 		Aliases:          []resource.Type{},

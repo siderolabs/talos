@@ -18,7 +18,7 @@ import (
 const LinkSpecType = resource.Type("LinkSpecs.net.talos.dev")
 
 // LinkSpec resource describes desired state of the link (network interface).
-type LinkSpec = typed.Resource[LinkSpecSpec, LinkSpecRD]
+type LinkSpec = typed.Resource[LinkSpecSpec, LinkSpecExtension]
 
 // LinkSpecSpec describes spec for the link.
 //
@@ -121,17 +121,17 @@ func updateIfNotZero[T comparable](target *T, source T) {
 
 // NewLinkSpec initializes a LinkSpec resource.
 func NewLinkSpec(namespace resource.Namespace, id resource.ID) *LinkSpec {
-	return typed.NewResource[LinkSpecSpec, LinkSpecRD](
+	return typed.NewResource[LinkSpecSpec, LinkSpecExtension](
 		resource.NewMetadata(namespace, LinkSpecType, id, resource.VersionUndefined),
 		LinkSpecSpec{},
 	)
 }
 
-// LinkSpecRD provides auxiliary methods for LinkSpec.
-type LinkSpecRD struct{}
+// LinkSpecExtension provides auxiliary methods for LinkSpec.
+type LinkSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (LinkSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (LinkSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LinkSpecType,
 		Aliases:          []resource.Type{},

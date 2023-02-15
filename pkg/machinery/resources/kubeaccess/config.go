@@ -21,7 +21,7 @@ const ConfigType = resource.Type("KubernetesAccessConfigs.cluster.talos.dev")
 const ConfigID = resource.ID("config")
 
 // Config resource holds KubeSpan configuration.
-type Config = typed.Resource[ConfigSpec, ConfigRD]
+type Config = typed.Resource[ConfigSpec, ConfigExtension]
 
 // ConfigSpec describes KubeSpan configuration..
 //
@@ -51,17 +51,17 @@ func (cs ConfigSpec) DeepCopy() ConfigSpec {
 
 // NewConfig initializes a Config resource.
 func NewConfig(namespace resource.Namespace, id resource.ID) *Config {
-	return typed.NewResource[ConfigSpec, ConfigRD](
+	return typed.NewResource[ConfigSpec, ConfigExtension](
 		resource.NewMetadata(namespace, ConfigType, id, resource.VersionUndefined),
 		ConfigSpec{},
 	)
 }
 
-// ConfigRD provides auxiliary methods for Config.
-type ConfigRD struct{}
+// ConfigExtension provides auxiliary methods for Config.
+type ConfigExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (c ConfigRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (c ConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ConfigType,
 		Aliases:          []resource.Type{},

@@ -21,7 +21,7 @@ const PeerSpecType = resource.Type("KubeSpanPeerSpecs.kubespan.talos.dev")
 // PeerSpec is produced from cluster.Affiliate which has KubeSpan information attached.
 //
 // PeerSpec is identified by the public key.
-type PeerSpec = typed.Resource[PeerSpecSpec, PeerSpecRD]
+type PeerSpec = typed.Resource[PeerSpecSpec, PeerSpecExtension]
 
 // PeerSpecSpec describes PeerSpec state.
 //
@@ -35,17 +35,17 @@ type PeerSpecSpec struct {
 
 // NewPeerSpec initializes a PeerSpec resource.
 func NewPeerSpec(namespace resource.Namespace, id resource.ID) *PeerSpec {
-	return typed.NewResource[PeerSpecSpec, PeerSpecRD](
+	return typed.NewResource[PeerSpecSpec, PeerSpecExtension](
 		resource.NewMetadata(namespace, PeerSpecType, id, resource.VersionUndefined),
 		PeerSpecSpec{},
 	)
 }
 
-// PeerSpecRD provides auxiliary methods for PeerSpec.
-type PeerSpecRD struct{}
+// PeerSpecExtension provides auxiliary methods for PeerSpec.
+type PeerSpecExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (PeerSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (PeerSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             PeerSpecType,
 		Aliases:          []resource.Type{},

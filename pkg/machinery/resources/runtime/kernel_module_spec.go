@@ -17,7 +17,7 @@ import (
 const KernelModuleSpecType = resource.Type("KernelModuleSpecs.runtime.talos.dev")
 
 // KernelModuleSpec resource holds information about Linux kernel module to load.
-type KernelModuleSpec = typed.Resource[KernelModuleSpecSpec, KernelModuleSpecRD]
+type KernelModuleSpec = typed.Resource[KernelModuleSpecSpec, KernelModuleSpecExtension]
 
 // KernelModuleSpecSpec describes Linux kernel module to load.
 //
@@ -30,17 +30,17 @@ type KernelModuleSpecSpec struct {
 
 // NewKernelModuleSpec initializes a KernelModuleSpec resource.
 func NewKernelModuleSpec(namespace resource.Namespace, id resource.ID) *KernelModuleSpec {
-	return typed.NewResource[KernelModuleSpecSpec, KernelModuleSpecRD](
+	return typed.NewResource[KernelModuleSpecSpec, KernelModuleSpecExtension](
 		resource.NewMetadata(namespace, KernelModuleSpecType, id, resource.VersionUndefined),
 		KernelModuleSpecSpec{},
 	)
 }
 
-// KernelModuleSpecRD is auxiliary resource data for KernelModuleSpec.
-type KernelModuleSpecRD struct{}
+// KernelModuleSpecExtension is auxiliary resource data for KernelModuleSpec.
+type KernelModuleSpecExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KernelModuleSpecRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KernelModuleSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelModuleSpecType,
 		Aliases:          []resource.Type{"modules"},

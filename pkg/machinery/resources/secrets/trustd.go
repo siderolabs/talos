@@ -21,7 +21,7 @@ const TrustdType = resource.Type("TrustdCertificates.secrets.talos.dev")
 const TrustdID = resource.ID("trustd")
 
 // Trustd contains trustd generated secrets.
-type Trustd = typed.Resource[TrustdCertsSpec, TrustdRD]
+type Trustd = typed.Resource[TrustdCertsSpec, TrustdExtension]
 
 // TrustdCertsSpec describes etcd certs secrets.
 //
@@ -33,17 +33,17 @@ type TrustdCertsSpec struct {
 
 // NewTrustd initializes a Trustd resource.
 func NewTrustd() *Trustd {
-	return typed.NewResource[TrustdCertsSpec, TrustdRD](
+	return typed.NewResource[TrustdCertsSpec, TrustdExtension](
 		resource.NewMetadata(NamespaceName, TrustdType, TrustdID, resource.VersionUndefined),
 		TrustdCertsSpec{},
 	)
 }
 
-// TrustdRD provides auxiliary methods for Trustd.
-type TrustdRD struct{}
+// TrustdExtension provides auxiliary methods for Trustd.
+type TrustdExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (TrustdRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (TrustdExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             TrustdType,
 		Aliases:          []resource.Type{},

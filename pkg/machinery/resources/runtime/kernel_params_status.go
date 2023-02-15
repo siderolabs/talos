@@ -17,7 +17,7 @@ import (
 const KernelParamStatusType = resource.Type("KernelParamStatuses.runtime.talos.dev")
 
 // KernelParamStatus resource holds defined sysctl flags status.
-type KernelParamStatus = typed.Resource[KernelParamStatusSpec, KernelParamStatusRD]
+type KernelParamStatus = typed.Resource[KernelParamStatusSpec, KernelParamStatusExtension]
 
 // KernelParamStatusSpec describes status of the defined sysctls.
 //
@@ -30,17 +30,17 @@ type KernelParamStatusSpec struct {
 
 // NewKernelParamStatus initializes a KernelParamStatus resource.
 func NewKernelParamStatus(namespace resource.Namespace, id resource.ID) *KernelParamStatus {
-	return typed.NewResource[KernelParamStatusSpec, KernelParamStatusRD](
+	return typed.NewResource[KernelParamStatusSpec, KernelParamStatusExtension](
 		resource.NewMetadata(namespace, KernelParamStatusType, id, resource.VersionUndefined),
 		KernelParamStatusSpec{},
 	)
 }
 
-// KernelParamStatusRD is auxiliary resource data for KernelParamStatus.
-type KernelParamStatusRD struct{}
+// KernelParamStatusExtension is auxiliary resource data for KernelParamStatus.
+type KernelParamStatusExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (KernelParamStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (KernelParamStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KernelParamStatusType,
 		Aliases:          []resource.Type{"sysctls", "kernelparameters", "kernelparams"},

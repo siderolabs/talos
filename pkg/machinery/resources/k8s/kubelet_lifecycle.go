@@ -26,24 +26,24 @@ const KubeletLifecycleID = resource.ID("kubelet")
 //
 // KubeletLifecycle is mostly about status of the workloads kubelet is running vs.
 // the actual status of the kubelet service itself.
-type KubeletLifecycle = typed.Resource[KubeletLifecycleSpec, KubeletLifecycleRD]
+type KubeletLifecycle = typed.Resource[KubeletLifecycleSpec, KubeletLifecycleExtension]
 
 // KubeletLifecycleSpec is empty.
 type KubeletLifecycleSpec struct{}
 
 // NewKubeletLifecycle initializes an empty KubeletLifecycle resource.
 func NewKubeletLifecycle(namespace resource.Namespace, id resource.ID) *KubeletLifecycle {
-	return typed.NewResource[KubeletLifecycleSpec, KubeletLifecycleRD](
+	return typed.NewResource[KubeletLifecycleSpec, KubeletLifecycleExtension](
 		resource.NewMetadata(namespace, KubeletLifecycleType, id, resource.VersionUndefined),
 		KubeletLifecycleSpec{},
 	)
 }
 
-// KubeletLifecycleRD provides auxiliary methods for KubeletLifecycle.
-type KubeletLifecycleRD struct{}
+// KubeletLifecycleExtension provides auxiliary methods for KubeletLifecycle.
+type KubeletLifecycleExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (KubeletLifecycleRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (KubeletLifecycleExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             KubeletLifecycleType,
 		Aliases:          []resource.Type{},

@@ -19,7 +19,7 @@ import (
 const ResolverStatusType = resource.Type("ResolverStatuses.net.talos.dev")
 
 // ResolverStatus resource holds DNS resolver info.
-type ResolverStatus = typed.Resource[ResolverStatusSpec, ResolverStatusRD]
+type ResolverStatus = typed.Resource[ResolverStatusSpec, ResolverStatusExtension]
 
 // ResolverStatusSpec describes DNS resolvers.
 //
@@ -30,17 +30,17 @@ type ResolverStatusSpec struct {
 
 // NewResolverStatus initializes a ResolverStatus resource.
 func NewResolverStatus(namespace resource.Namespace, id resource.ID) *ResolverStatus {
-	return typed.NewResource[ResolverStatusSpec, ResolverStatusRD](
+	return typed.NewResource[ResolverStatusSpec, ResolverStatusExtension](
 		resource.NewMetadata(namespace, ResolverStatusType, id, resource.VersionUndefined),
 		ResolverStatusSpec{},
 	)
 }
 
-// ResolverStatusRD provides auxiliary methods for ResolverStatus.
-type ResolverStatusRD struct{}
+// ResolverStatusExtension provides auxiliary methods for ResolverStatus.
+type ResolverStatusExtension struct{}
 
-// ResourceDefinition implements typed.ResourceDefinition interface.
-func (ResolverStatusRD) ResourceDefinition() meta.ResourceDefinitionSpec {
+// ResourceDefinition implements [typed.Extension] interface.
+func (ResolverStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             ResolverStatusType,
 		Aliases:          []resource.Type{"resolvers"},
