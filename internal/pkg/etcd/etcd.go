@@ -98,7 +98,7 @@ func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Provider,
 
 	if !preserve {
 		if len(resp.Members) == 1 {
-			return fmt.Errorf("only 1 etcd member found. assuming this is not an HA setup and refusing to upgrade")
+			return fmt.Errorf("only 1 etcd member found; assuming this is not an HA setup and refusing to upgrade; if this is a single-node cluster, use --preserve to upgrade")
 		}
 	}
 
