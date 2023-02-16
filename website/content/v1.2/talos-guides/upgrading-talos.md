@@ -123,7 +123,7 @@ If `preserve` is not enabled, Talos will leave etcd membership.
 Once all the processes are stopped and the services are shut down, the filesystems will be unmounted.
 This allows Talos to produce a very clean upgrade, as close as possible to a pristine system.
 We verify the disk and then perform the actual image upgrade.
-We set the bootloader to boot _once_ with the new kernel and OS image, then we reboot.
+We set the bootloader to boot *once* with the new kernel and OS image, then we reboot.
 
 After the node comes back up and Talos verifies itself, it will make
 the bootloader change permanent, rejoin the cluster, and finally uncordon itself to receive new workloads.

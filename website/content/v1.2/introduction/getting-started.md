@@ -356,7 +356,7 @@ We would set those in the `talosconfig` with:
 
 The node is the target you wish to perform the API call on.
 
-> When specifying nodes, their IPs and/or hostnames are *as seen by the endpoint servers*, not as from the client.
+> When specifying nodes, their IPs and/or hostnames are _as seen by the endpoint servers_, not as from the client.
 > This is because all connections are proxied through the endpoints.
 
 You may provide `-n` or `--nodes` to any `talosctl` command to supply the node or (comma-separated) nodes on which you wish to perform the operation.
@@ -367,7 +367,7 @@ For example, to see the containers running on node 192.168.0.200:
 talosctl -n 192.168.0.200 containers
 ```
 
-To see the etcd logs on *both* nodes 192.168.0.10 and 192.168.0.11:
+To see the etcd logs on _both_ nodes 192.168.0.10 and 192.168.0.11:
 
 ```bash
 talosctl -n 192.168.0.10,192.168.0.11 logs etcd

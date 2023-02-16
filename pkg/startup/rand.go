@@ -18,6 +18,7 @@ func RandSeed() error {
 		return fmt.Errorf("error seeding rand: %w", err)
 	}
 
+	// nolint:staticcheck
 	rand.Seed(int64(binary.LittleEndian.Uint64(seed)))
 
 	return nil

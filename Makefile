@@ -13,11 +13,11 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-alpha.0-11-g28d4a57
-PKGS ?= v1.4.0-alpha.0-21-g1fae0b2
-EXTRAS ?= v1.4.0-alpha.0-2-g8cb4792
+TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-alpha.0-17-gcd9687b
+PKGS ?= v1.4.0-alpha.0-26-g185f482
+EXTRAS ?= v1.4.0-alpha.0-5-g8b28b6b
 # renovate: datasource=github-tags depName=golang/go
-GO_VERSION ?= 1.19
+GO_VERSION ?= 1.20
 # renovate: datasource=go depName=golang.org/x/tools
 GOIMPORTS_VERSION ?= v0.6.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
@@ -34,7 +34,15 @@ DEEPCOPY_GEN_VERSION ?= v0.26.1
 VTPROTOBUF_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
 DEEPCOPY_VERSION ?= v0.5.5
-IMPORTVET ?= ghcr.io/siderolabs/importvet:1549a5c
+IMPORTVET ?= ghcr.io/siderolabs/importvet:2260533
+# renovate: datasource=npm depName=markdownlint-cli
+MARKDOWNLINTCLI_VERSION ?= 0.33.0
+# renovate: datasource=npm depName=textlint
+TEXTLINT_VERSION ?= 13.3.0
+# renovate: datasource=npm depName=textlint-filter-rule-comments
+TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
+# renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
+TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
@@ -42,7 +50,7 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.26.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
-KUBESTR_VERSION ?= v0.4.36
+KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.11.1
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
@@ -101,6 +109,10 @@ COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
 COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
 COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION=$(GOLANGCILINT_VERSION)
 COMMON_ARGS += --build-arg=DEEPCOPY_VERSION=$(DEEPCOPY_VERSION)
+COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
+COMMON_ARGS += --build-arg=TEXTLINT_VERSION=$(TEXTLINT_VERSION)
+COMMON_ARGS += --build-arg=TEXTLINT_FILTER_RULE_COMMENTS_VERSION=$(TEXTLINT_FILTER_RULE_COMMENTS_VERSION)
+COMMON_ARGS += --build-arg=TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION=$(TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
 COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
@@ -424,7 +436,7 @@ release-artifacts:
 
 .PHONY: conformance
 conformance: ## Performs policy checks against the commit and source code.
-	docker run --rm -it -v $(PWD):/src -w /src ghcr.io/siderolabs/conform:v0.1.0-alpha.22 enforce
+	docker run --rm -it -v $(PWD):/src -w /src ghcr.io/siderolabs/conform:latest enforce
 
 .PHONY: release-notes
 release-notes:

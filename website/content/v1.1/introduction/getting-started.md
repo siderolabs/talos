@@ -352,7 +352,7 @@ We would set those in the `talosconfig` with:
 
 The node is the target node on which you wish to perform the API call.
 
-Keep in mind, when specifying nodes, their IPs and/or hostnames are *as seen by the endpoint servers*, not as from the client.
+Keep in mind, when specifying nodes, their IPs and/or hostnames are _as seen by the endpoint servers_, not as from the client.
 This is because all connections are proxied through the endpoints.
 
 Some people also like to set a default set of nodes in the `talosconfig`.

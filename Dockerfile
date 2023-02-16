@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:1.2.0-labs
+# syntax = docker/dockerfile-upstream:1.5.2-labs
 
 # Meta args applied to stage base names.
 
@@ -87,7 +87,7 @@ FROM ghcr.io/siderolabs/talosctl-cni-bundle-install:${EXTRAS} AS extras-talosctl
 
 # The tools target provides base toolchain for the build.
 
-FROM $IMPORTVET as importvet
+FROM --platform=${BUILDPLATFORM} $IMPORTVET as importvet
 
 FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
 ENV PATH /toolchain/bin:/toolchain/go/bin
@@ -787,11 +787,15 @@ RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-pat
 # The markdownlint target performs linting on Markdown files.
 
 FROM node:19.6.0-alpine AS lint-markdown
+ARG MARKDOWNLINTCLI_VERSION
+ARG TEXTLINT_VERSION
+ARG TEXTLINT_FILTER_RULE_COMMENTS_VERSION
+ARG TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION
 RUN apk add --no-cache findutils
-RUN npm i -g markdownlint-cli@0.23.2
-RUN npm i -g textlint@11.7.6
-RUN npm i -g textlint-filter-rule-comments@1.2.2
-RUN npm i -g textlint-rule-one-sentence-per-line@1.0.2
+RUN npm i -g markdownlint-cli@${MARKDOWNLINTCLI_VERSION}
+RUN npm i -g textlint@${TEXTLINT_VERSION}
+RUN npm i -g textlint-filter-rule-comments@${TEXTLINT_FILTER_RULE_COMMENTS_VERSION}
+RUN npm i -g textlint-rule-one-sentence-per-line@${TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION}
 WORKDIR /src
 COPY . .
 RUN markdownlint \
