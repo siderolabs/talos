@@ -316,9 +316,9 @@ sysctls:
 sysfs:
     devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
 {{< /highlight >}}</details> | |
-|`registries` |<a href="#registriesconfig">RegistriesConfig</a> |<details><summary>Used to configure the machine's container image registry mirrors.</summary><br />Automatically generates matching CRI configuration for registry mirrors.<br /><br />The `mirrors` section allows to redirect requests for images to non-default registry,<br />which might be local registry or caching mirror.<br /><br />The `config` section provides a way to authenticate to the registry with TLS client<br />identity, provide registry CA, or authentication information.<br />Authentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).<br /><br />See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`registries` |<a href="#registriesconfig">RegistriesConfig</a> |<details><summary>Used to configure the machine's container image registry mirrors.</summary><br />Automatically generates matching CRI configuration for registry mirrors.<br /><br />The `mirrors` section allows to redirect requests for images to a non-default registry,<br />which might be a local registry or a caching mirror.<br /><br />The `config` section provides a way to authenticate to the registry with TLS client<br />identity, provide registry CA, or authentication information.<br />Authentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).<br /><br />See also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 registries:
-    # Specifies mirror configuration for each registry.
+    # Specifies mirror configuration for each registry host namespace.
     mirrors:
         docker.io:
             # List of endpoints (URLs) for registry mirrors to use.
@@ -1212,7 +1212,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-# Specifies mirror configuration for each registry.
+# Specifies mirror configuration for each registry host namespace.
 mirrors:
     docker.io:
         # List of endpoints (URLs) for registry mirrors to use.
@@ -1236,7 +1236,7 @@ config:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`mirrors` |map[string]<a href="#registrymirrorconfig">RegistryMirrorConfig</a> |<details><summary>Specifies mirror configuration for each registry.</summary>This setting allows to use local pull-through caching registires,<br />air-gapped installations, etc.<br /><br />Registry name is the first segment of image identifier, with 'docker.io'<br />being default one.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`mirrors` |map[string]<a href="#registrymirrorconfig">RegistryMirrorConfig</a> |<details><summary>Specifies mirror configuration for each registry host namespace.</summary>This setting allows to configure local pull-through caching registires,<br />air-gapped installations, etc.<br /><br />For example, when pulling an image with the reference `example.com:123/image:v1`,<br />the `example.com:123` key will be used to lookup the mirror configuration.<br /><br />Optionally the `*` key can be used to configure a fallback mirror.<br /><br />Registry name is the first segment of image identifier, with 'docker.io'<br />being default one.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 mirrors:
     ghcr.io:
         # List of endpoints (URLs) for registry mirrors to use.
@@ -1244,7 +1244,7 @@ mirrors:
             - https://registry.insecure
             - https://ghcr.io/v2/
 {{< /highlight >}}</details> | |
-|`config` |map[string]<a href="#registryconfig">RegistryConfig</a> |<details><summary>Specifies TLS & auth configuration for HTTPS image registries.</summary>Mutual TLS can be enabled with 'clientIdentity' option.<br /><br />TLS configuration can be skipped if registry has trusted<br />server certificate.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`config` |map[string]<a href="#registryconfig">RegistryConfig</a> |<details><summary>Specifies TLS & auth configuration for HTTPS image registries.</summary>Mutual TLS can be enabled with 'clientIdentity' option.<br /><br />The full hostname and port (if not using a default port 443)<br />should be used as the key.<br />The fallback key `*` can't be used for TLS configuration.<br /><br />TLS configuration can be skipped if registry has trusted<br />server certificate.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 config:
     registry.insecure:
         # The TLS configuration for the registry.

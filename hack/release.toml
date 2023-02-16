@@ -57,6 +57,22 @@ These APIs are available via new `talosctl etcd` sub-commands:
 See also [etcd maintenance guide](https://talos.dev/v1.4/advanced/etcd-maintenance/).
 """
 
+    [notes.crihosts]
+        title = "Registry Mirror Catch-All Option"
+        description="""\
+Talos now supports a catch-all option for registry mirrors:
+
+```yaml
+machine:
+    registries:
+        mirrors:
+            docker.io:
+                - https://registry-1.docker.io/
+            "*":
+                - https://my-registry.example.com/
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

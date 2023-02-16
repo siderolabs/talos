@@ -805,8 +805,8 @@ type MachineConfig struct {
 	//
 	//     Automatically generates matching CRI configuration for registry mirrors.
 	//
-	//     The `mirrors` section allows to redirect requests for images to non-default registry,
-	//     which might be local registry or caching mirror.
+	//     The `mirrors` section allows to redirect requests for images to a non-default registry,
+	//     which might be a local registry or a caching mirror.
 	//
 	//     The `config` section provides a way to authenticate to the registry with TLS client
 	//     identity, provide registry CA, or authentication information.
@@ -1513,9 +1513,14 @@ type TimeConfig struct {
 // RegistriesConfig represents the image pull options.
 type RegistriesConfig struct {
 	//   description: |
-	//     Specifies mirror configuration for each registry.
-	//     This setting allows to use local pull-through caching registires,
+	//     Specifies mirror configuration for each registry host namespace.
+	//     This setting allows to configure local pull-through caching registires,
 	//     air-gapped installations, etc.
+	//
+	//     For example, when pulling an image with the reference `example.com:123/image:v1`,
+	//     the `example.com:123` key will be used to lookup the mirror configuration.
+	//
+	//     Optionally the `*` key can be used to configure a fallback mirror.
 	//
 	//     Registry name is the first segment of image identifier, with 'docker.io'
 	//     being default one.
@@ -1525,6 +1530,10 @@ type RegistriesConfig struct {
 	//   description: |
 	//     Specifies TLS & auth configuration for HTTPS image registries.
 	//     Mutual TLS can be enabled with 'clientIdentity' option.
+	//
+	//     The full hostname and port (if not using a default port 443)
+	//     should be used as the key.
+	//     The fallback key `*` can't be used for TLS configuration.
 	//
 	//     TLS configuration can be skipped if registry has trusted
 	//     server certificate.

@@ -106,6 +106,9 @@ func TestGenerateHostsWithoutTLS(t *testing.T) {
 			"docker.io": {
 				MirrorEndpoints: []string{"https://registry-1.docker.io", "https://registry-2.docker.io"},
 			},
+			"*": {
+				MirrorEndpoints: []string{"https://my-registry"},
+			},
 		},
 		config: map[string]*v1alpha1.RegistryConfig{
 			"some.host:123": {
@@ -139,6 +142,84 @@ func TestGenerateHostsWithoutTLS(t *testing.T) {
 						Name:     "hosts.toml",
 						Mode:     0o600,
 						Contents: []byte("\n[host]\n\n  [host.\"https://some.host:123\"]\n"),
+					},
+				},
+			},
+			"_default": {
+				Files: []*containerd.HostsFile{
+					{
+						Name:     "hosts.toml",
+						Mode:     0o600,
+						Contents: []byte("\n[host]\n\n  [host.\"https://my-registry\"]\n    capabilities = [\"pull\", \"resolve\"]\n"),
+					},
+				},
+			},
+		},
+	}, result)
+}
+
+func TestGenerateHostsTLSWildcardWrong(t *testing.T) {
+	cfg := &mockConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{},
+		config: map[string]*v1alpha1.RegistryConfig{
+			"*": {
+				RegistryTLS: &v1alpha1.RegistryTLSConfig{
+					TLSCA: []byte("allcert"),
+				},
+			},
+		},
+	}
+
+	_, err := containerd.GenerateHosts(cfg, "/etc/cri/conf.d/hosts")
+	assert.EqualError(t, err, "wildcard host TLS configuration is not supported")
+}
+
+func TestGenerateHostsTLSWildcard(t *testing.T) {
+	cfg := &mockConfig{
+		mirrors: map[string]*v1alpha1.RegistryMirrorConfig{
+			"*": {
+				MirrorEndpoints: []string{"https://my-registry1", "https://my-registry2"},
+			},
+		},
+		config: map[string]*v1alpha1.RegistryConfig{
+			"my-registry1": {
+				RegistryTLS: &v1alpha1.RegistryTLSConfig{
+					TLSCA: []byte("allcert"),
+				},
+			},
+		},
+	}
+
+	result, err := containerd.GenerateHosts(cfg, "/etc/cri/conf.d/hosts")
+	require.NoError(t, err)
+
+	assert.Equal(t, &containerd.HostsConfig{
+		Directories: map[string]*containerd.HostsDirectory{
+			"_default": {
+				Files: []*containerd.HostsFile{
+					{
+						Name:     "my-registry1-ca.crt",
+						Mode:     0o600,
+						Contents: []byte("allcert"),
+					},
+					{
+						Name:     "hosts.toml",
+						Mode:     0o600,
+						Contents: []byte("\n[host]\n\n  [host.\"https://my-registry1\"]\n    ca = \"/etc/cri/conf.d/hosts/_default/my-registry1-ca.crt\"\n    capabilities = [\"pull\", \"resolve\"]\n\n  [host.\"https://my-registry2\"]\n    capabilities = [\"pull\", \"resolve\"]\n"), //nolint:lll
+					},
+				},
+			},
+			"my-registry1": {
+				Files: []*containerd.HostsFile{
+					{
+						Name:     "my-registry1-ca.crt",
+						Mode:     0o600,
+						Contents: []byte("allcert"),
+					},
+					{
+						Name:     "hosts.toml",
+						Mode:     0o600,
+						Contents: []byte("\n[host]\n\n  [host.\"https://my-registry1\"]\n    ca = \"/etc/cri/conf.d/hosts/my-registry1/my-registry1-ca.crt\"\n"),
 					},
 				},
 			},

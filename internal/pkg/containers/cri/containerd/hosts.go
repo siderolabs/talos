@@ -41,7 +41,7 @@ type HostsFile struct {
 
 // GenerateHosts generates a structure describing contents of the containerd hosts configuration.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error) {
 	config := &HostsConfig{
 		Directories: map[string]*HostsDirectory{},
@@ -183,6 +183,11 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 			}
 		}
 
+		if hostname == "*" {
+			// no way to generate TLS config for wildcard host
+			return nil, fmt.Errorf("wildcard host TLS configuration is not supported")
+		}
+
 		directory := &HostsDirectory{}
 
 		defaultHost, err := docker.DefaultHost(hostname)
@@ -221,6 +226,10 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 // hostDirectory converts ":port" to "_port_" in directory names.
 func hostDirectory(host string) string {
+	if host == "*" {
+		return "_default"
+	}
+
 	idx := strings.LastIndex(host, ":")
 	if idx > 0 {
 		return host[:idx] + "_" + host[idx+1:] + "_"

@@ -268,7 +268,7 @@ func init() {
 	MachineConfigDoc.Fields[15].Name = "registries"
 	MachineConfigDoc.Fields[15].Type = "RegistriesConfig"
 	MachineConfigDoc.Fields[15].Note = ""
-	MachineConfigDoc.Fields[15].Description = "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to non-default registry,\nwhich might be local registry or caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md)."
+	MachineConfigDoc.Fields[15].Description = "Used to configure the machine's container image registry mirrors.\n\nAutomatically generates matching CRI configuration for registry mirrors.\n\nThe `mirrors` section allows to redirect requests for images to a non-default registry,\nwhich might be a local registry or a caching mirror.\n\nThe `config` section provides a way to authenticate to the registry with TLS client\nidentity, provide registry CA, or authentication information.\nAuthentication information has same meaning with the corresponding field in [`.docker/config.json`](https://docs.docker.com/engine/api/v1.41/#section/Authentication).\n\nSee also matching configuration for [CRI containerd plugin](https://github.com/containerd/cri/blob/master/docs/registry.md)."
 	MachineConfigDoc.Fields[15].Comments[encoder.LineComment] = "Used to configure the machine's container image registry mirrors."
 
 	MachineConfigDoc.Fields[15].AddExample("", machineConfigRegistriesExample)
@@ -986,14 +986,14 @@ func init() {
 	RegistriesConfigDoc.Fields[0].Name = "mirrors"
 	RegistriesConfigDoc.Fields[0].Type = "map[string]RegistryMirrorConfig"
 	RegistriesConfigDoc.Fields[0].Note = ""
-	RegistriesConfigDoc.Fields[0].Description = "Specifies mirror configuration for each registry.\nThis setting allows to use local pull-through caching registires,\nair-gapped installations, etc.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one."
-	RegistriesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies mirror configuration for each registry."
+	RegistriesConfigDoc.Fields[0].Description = "Specifies mirror configuration for each registry host namespace.\nThis setting allows to configure local pull-through caching registires,\nair-gapped installations, etc.\n\nFor example, when pulling an image with the reference `example.com:123/image:v1`,\nthe `example.com:123` key will be used to lookup the mirror configuration.\n\nOptionally the `*` key can be used to configure a fallback mirror.\n\nRegistry name is the first segment of image identifier, with 'docker.io'\nbeing default one."
+	RegistriesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Specifies mirror configuration for each registry host namespace."
 
 	RegistriesConfigDoc.Fields[0].AddExample("", machineConfigRegistryMirrorsExample)
 	RegistriesConfigDoc.Fields[1].Name = "config"
 	RegistriesConfigDoc.Fields[1].Type = "map[string]RegistryConfig"
 	RegistriesConfigDoc.Fields[1].Note = ""
-	RegistriesConfigDoc.Fields[1].Description = "Specifies TLS & auth configuration for HTTPS image registries.\nMutual TLS can be enabled with 'clientIdentity' option.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate."
+	RegistriesConfigDoc.Fields[1].Description = "Specifies TLS & auth configuration for HTTPS image registries.\nMutual TLS can be enabled with 'clientIdentity' option.\n\nThe full hostname and port (if not using a default port 443)\nshould be used as the key.\nThe fallback key `*` can't be used for TLS configuration.\n\nTLS configuration can be skipped if registry has trusted\nserver certificate."
 	RegistriesConfigDoc.Fields[1].Comments[encoder.LineComment] = "Specifies TLS & auth configuration for HTTPS image registries."
 
 	RegistriesConfigDoc.Fields[1].AddExample("", machineConfigRegistryConfigExample)
