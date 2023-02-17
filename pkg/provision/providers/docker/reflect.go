@@ -71,7 +71,12 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 		var ips []netip.Addr
 
 		if network, ok := node.NetworkSettings.Networks[res.clusterInfo.Network.Name]; ok {
-			addr, err := netip.ParseAddr(network.IPAddress)
+			ip := network.IPAddress
+			if ip == "" && network.IPAMConfig != nil {
+				ip = network.IPAMConfig.IPv4Address
+			}
+
+			addr, err := netip.ParseAddr(ip)
 			if err != nil {
 				return nil, err
 			}
