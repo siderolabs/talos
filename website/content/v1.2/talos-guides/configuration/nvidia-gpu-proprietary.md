@@ -25,6 +25,7 @@ Set the local registry and username environment variables:
 ```bash
 export USERNAME=<username>
 export REGISTRY=<registry>
+export TAG={{< release >}}-nvidia
 ```
 
 For eg:

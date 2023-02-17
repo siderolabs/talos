@@ -117,7 +117,7 @@ Install the NVIDIA device plugin:
 ```bash
 helm repo add nvdp https://nvidia.github.io/k8s-device-plugin
 helm repo update
-helm install nvidia-device-plugin nvdp/nvidia-device-plugin --version=0.11.0 --set=runtimeClassName=nvidia
+helm install nvidia-device-plugin nvdp/nvidia-device-plugin --version=0.13.0 --set=runtimeClassName=nvidia
 ```
 
 Apply the following manifest to run CUDA pod via nvidia runtime:

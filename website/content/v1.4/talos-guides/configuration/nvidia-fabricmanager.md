@@ -22,7 +22,7 @@ In addition to the patch defined in the [NVIDIA drivers]({{< relref "nvidia-gpu"
   value:
     - image: ghcr.io/siderolabs/nvidia-open-gpu-kernel-modules:{{< nvidia_driver_release >}}-{{< release >}}
     - image: ghcr.io/siderolabs/nvidia-container-toolkit:{{< nvidia_driver_release >}}-{{< nvidia_container_toolkit_release >}}
-    - image: ghcr.io/siderolabs/nvidia-fabricmanager:{{< nvidia_driver_release >}}
+    - image: ghcr.io/siderolabs/nvidia-fabricmanager:525.85.12
 - op: add
   path: /machine/kernel
   value:
