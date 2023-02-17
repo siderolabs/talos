@@ -252,9 +252,14 @@ RUN mkdir -p pkg/machinery/gendata/data && \
     echo -n ${PKGS} > pkg/machinery/gendata/data/pkgs && \
     echo -n ${TAG} > pkg/machinery/gendata/data/tag && \
     echo -n ${ARTIFACTS} > pkg/machinery/gendata/data/artifacts
+RUN mkdir -p _out && \
+    echo PKGS=${PKGS} >> _out/talos-metadata && \
+    echo TAG=${TAG} >> _out/talos-metadata && \
+    echo EXTRAS=${EXTRAS} >> _out/talos-metadata
 
 FROM scratch AS embed
 COPY --from=embed-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
+COPY --from=embed-generate /src/_out/talos-metadata /_out/talos-metadata
 
 FROM embed-generate AS embed-abbrev-generate
 ARG ABBREV_TAG
@@ -263,6 +268,7 @@ RUN echo -n "undefined" > pkg/machinery/gendata/data/sha && \
 
 FROM scratch AS embed-abbrev
 COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
+COPY --from=embed-abbrev-generate /src/_out/talos-metadata /_out/talos-metadata
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/

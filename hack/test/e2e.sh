@@ -213,16 +213,44 @@ function build_registry_mirrors {
 }
 
 function run_extensions_test {
+  # e2e-qemu creates 3 controlplanes
+  # use a worker node to test extensions
+  "${TALOSCTL}" config node 172.20.1.5
+
+  echo "Testing firmware extensions..."
+  ${TALOSCTL} ls /lib/firmware | grep amd-ucode
+  ${TALOSCTL} ls /lib/firmware | grep bnx2x
+  ${TALOSCTL} ls /lib/firmware | grep i915
+  ${TALOSCTL} ls /lib/firmware | grep intel-ucode
+
+  echo "Testing kernel modules tree extension..."
+  ${TALOSCTL} get extensions modules.dep
+  KERNEL_VERSION=$(${TALOSCTL} get extensions modules.dep -o json | jq -r '.spec.metadata.version')
+  ${TALOSCTL} ls /lib/modules/${KERNEL_VERSION}/extras/ | grep gasket
+  ${TALOSCTL} read /lib/modules/${KERNEL_VERSION}/modules.dep | grep -E gasket
+  ${TALOSCTL} ls /lib/modules/${KERNEL_VERSION}/extras/ | grep drbd
+  ${TALOSCTL} read /lib/modules/${KERNEL_VERSION}/modules.dep | grep -E drbd
+
+  echo "Testing iscsi-tools extensions service..."
+  ${TALOSCTL} services ext-iscsid | grep -E "STATE\s+Running"
+  ${TALOSCTL} services ext-tgtd | grep -E "STATE\s+Running"
+
   echo "Testing gVsisor..."
   ${KUBECTL} apply -f ${PWD}/hack/test/gvisor/manifest.yaml
   sleep 10
-  ${KUBECTL} wait --for=condition=ready pod nginx-gvisor --timeout=1m
+  ${TALOSCTL} read /proc/sys/user/max_user_namespaces
+  ${TALOSCTL} get extensions
+  ${TALOSCTL} get mc -o yaml
+  ${KUBECTL} get pods
+  ${KUBECTL} describe pod nginx-gvisor
+  ${KUBECTL} wait --for=condition=ready pod nginx-gvisor --timeout=2m
 
-  echo "Testing firmware extension..."
-  ${TALOSCTL} ls -lr /lib/firmware | grep intel-ucode
+  echo "Testing hello-world extension service..."
+  ${TALOSCTL} services ext-hello-world | grep -E "STATE\s+Running"
+  curl http://172.20.1.5/ | grep Hello
 
-  echo "Testing extension service..."
-  curl http://172.20.1.2/ | grep Hello
+  # set talosctl config back to the first controlplane
+  "${TALOSCTL}" config node 172.20.1.2
 }
 
 function run_csi_tests {

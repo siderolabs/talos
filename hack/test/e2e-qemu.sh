@@ -109,6 +109,26 @@ case "${WITH_CONFIG_PATCH:-false}" in
     ;;
 esac
 
+case "${WITH_CONFIG_PATCH_FILE:-false}" in
+  # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH_FILE
+  false)
+     CONFIG_PATCH_FLAG=()
+    ;;
+  *)
+    CONFIG_PATCH_FLAG=(--config-patch "@${WITH_CONFIG_PATCH_FILE}")
+    ;;
+esac
+
+case "${WITH_CONFIG_PATCH_FILE_WORKER:-false}" in
+  # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH_FILE
+  false)
+     CONFIG_PATCH_FLAG=()
+    ;;
+  *)
+    CONFIG_PATCH_FLAG=(--config-patch-worker "@${WITH_CONFIG_PATCH_FILE_WORKER}")
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 
