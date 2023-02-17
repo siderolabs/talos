@@ -182,9 +182,19 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	}
 
 	// Get the container's IP address.
-	addr, err := netip.ParseAddr(info.NetworkSettings.Networks[clusterReq.Network.Name].IPAddress)
-	if err != nil {
-		return provision.NodeInfo{}, err
+	var addr netip.Addr
+
+	if network, ok := info.NetworkSettings.Networks[clusterReq.Network.Name]; ok {
+		ip := network.IPAddress
+
+		if ip == "" && network.IPAMConfig != nil {
+			ip = network.IPAMConfig.IPv4Address
+		}
+
+		addr, err = netip.ParseAddr(ip)
+		if err != nil {
+			return provision.NodeInfo{}, err
+		}
 	}
 
 	nodeInfo := provision.NodeInfo{
