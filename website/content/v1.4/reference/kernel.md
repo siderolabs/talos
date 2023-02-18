@@ -38,6 +38,8 @@ Partial configuration can be applied as well, e.g. `ip=:::::::<dns0-ip>:<dns1-ip
 
 IPv6 addresses can be specified by enclosing them in the square brackets, e.g. `ip=[2001:db8::a]:[2001:db8::b]:[fe80::1]::controlplane1:eth1::[2001:4860:4860::6464]:[2001:4860:4860::64]:[2001:4860:4806::]`.
 
+`<netmask>` can use either an IP address notation (IPv4: `255.255.255.0`, IPv6: `[ffff:ffff:ffff:ffff::0]`), or simply a number of one bits in the netmask (`24`).
+
 `<device>` can be traditional interface naming scheme `eth0, eth1` or `enx<MAC>`, example: `enx78e7d1ea46da`
 
 DCHP can be enabled by setting `<autoconf>` to `dhcp`, example: `ip=:::::eth0.3:dhcp`.

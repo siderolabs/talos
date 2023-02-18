@@ -188,6 +188,52 @@ func (suite *CmdlineSuite) TestParse() {
 			},
 		},
 		{
+			name:    "ipv6-mask",
+			cmdline: "ip=[2a03:1:2::12]::[2a03:1:2::11]:[ffff:ffff:ffff:ffff:ffff:ffff:ffff:fff8]:master:eth0:off:[2001:4860:4860::8888]:[2606:4700::1111]:[2606:4700:f1::1]",
+			expectedSettings: network.CmdlineNetworking{
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("2a03:1:2::12/125"),
+						Gateway:  netip.MustParseAddr("2a03:1:2::11"),
+						LinkName: "eth0",
+					},
+				},
+				Hostname:     "master",
+				DNSAddresses: []netip.Addr{netip.MustParseAddr("2001:4860:4860::8888"), netip.MustParseAddr("2606:4700::1111")},
+				NTPAddresses: []netip.Addr{netip.MustParseAddr("2606:4700:f1::1")},
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth0",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
+			},
+		},
+		{
+			name:    "ipv6-mask-number",
+			cmdline: "ip=[2a03:1:2::12]::[2a03:1:2::11]:125:master:eth0:off:[2001:4860:4860::8888]:[2606:4700::1111]:[2606:4700:f1::1]",
+			expectedSettings: network.CmdlineNetworking{
+				LinkConfigs: []network.CmdlineLinkConfig{
+					{
+						Address:  netip.MustParsePrefix("2a03:1:2::12/125"),
+						Gateway:  netip.MustParseAddr("2a03:1:2::11"),
+						LinkName: "eth0",
+					},
+				},
+				Hostname:     "master",
+				DNSAddresses: []netip.Addr{netip.MustParseAddr("2001:4860:4860::8888"), netip.MustParseAddr("2606:4700::1111")},
+				NTPAddresses: []netip.Addr{netip.MustParseAddr("2606:4700:f1::1")},
+				NetworkLinkSpecs: []netconfig.LinkSpecSpec{
+					{
+						Name:        "eth0",
+						Up:          true,
+						ConfigLayer: netconfig.ConfigCmdline,
+					},
+				},
+			},
+		},
+		{
 			name:    "unparseable IP",
 			cmdline: "ip=xyz:",
 

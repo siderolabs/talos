@@ -174,14 +174,20 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 						return settings, fmt.Errorf("cmdline gateway parse failure: %s", err)
 					}
 				case 3:
-					var netmask netip.Addr
+					var (
+						netmask netip.Addr
+						ones    int
+					)
 
-					netmask, err = netip.ParseAddr(fields[3])
+					ones, err = strconv.Atoi(fields[3])
 					if err != nil {
-						return settings, fmt.Errorf("cmdline netmask parse failure: %s", err)
-					}
+						netmask, err = netip.ParseAddr(fields[3])
+						if err != nil {
+							return settings, fmt.Errorf("cmdline netmask parse failure: %s", err)
+						}
 
-					ones, _ := net.IPMask(netmask.AsSlice()).Size()
+						ones, _ = net.IPMask(netmask.AsSlice()).Size()
+					}
 
 					linkConfig.Address = netip.PrefixFrom(linkConfig.Address.Addr(), ones)
 				case 4:
