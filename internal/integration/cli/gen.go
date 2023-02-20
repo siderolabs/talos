@@ -186,7 +186,7 @@ func (suite *GenSuite) testGenConfigPatch(patch []byte) {
 		tt := tt
 
 		suite.Run(tt.flag, func() {
-			suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443", "--" + tt.flag, string(patch)},
+			suite.RunCLI([]string{"gen", "config", "--force", "foo", "https://192.168.0.1:6443", "--" + tt.flag, string(patch)},
 				base.StdoutEmpty(),
 				base.StderrNotEmpty(),
 				base.StderrShouldMatch(regexp.MustCompile("generating PKI and tokens")))

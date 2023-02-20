@@ -1313,6 +1313,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
       --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
       --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
+      --force                                    "gen" will overwrite existing files
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/siderolabs/installer:latest")

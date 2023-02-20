@@ -70,6 +70,7 @@ var genConfigCmdFlags struct {
 	withDocs                bool
 	withClusterDiscovery    bool
 	withKubeSpan            bool
+	force                   bool
 	withSecrets             string
 }
 
@@ -325,6 +326,12 @@ func writeToDestination(data []byte, destination string, permissions os.FileMode
 		return err
 	}
 
+	if !genConfigCmdFlags.force {
+		if _, err := os.Stat(destination); err == nil {
+			return fmt.Errorf("%s already exists, use --force to overwrite", destination)
+		}
+	}
+
 	parentDir := filepath.Dir(destination)
 
 	// Create dir path, ignoring "already exists" messages
@@ -431,6 +438,7 @@ func init() {
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withClusterDiscovery, "with-cluster-discovery", "", true, "enable cluster discovery feature")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withKubeSpan, "with-kubespan", "", false, "enable KubeSpan feature")
+	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.force, "force", "", false, "\"gen\" will overwrite existing files")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.withSecrets, "with-secrets", "", "use a secrets file generated using 'gen secrets'")
 
 	genConfigCmd.Flags().StringSliceVarP(&genConfigCmdFlags.outputTypes, "output-types", "t", allOutputTypes, fmt.Sprintf("types of outputs to be generated. valid types are: %q", allOutputTypes))
