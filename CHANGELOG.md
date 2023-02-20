@@ -1,3 +1,87 @@
+## [Talos 1.3.5](https://github.com/siderolabs/talos/releases/tag/v1.3.5) (2023-02-20)
+
+Welcome to the v1.3.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.94
+* containerd: 1.6.18
+
+Talos is built with Go 1.19.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>7 commits</summary>
+<p>
+
+* [`6a3c9d0fa`](https://github.com/siderolabs/talos/commit/6a3c9d0fa00bbc9c5388173c5508ac0e39ae57f1) feat: update containerd 1.6.18
+* [`fbd3d8ec4`](https://github.com/siderolabs/talos/commit/fbd3d8ec4297280f2fd8783895e8d76c48af8a58) fix: docker talosctl cluster create provisioner
+* [`4580b06b8`](https://github.com/siderolabs/talos/commit/4580b06b88078300cf4905696309b0c16b4ad1a0) fix: dbus shutdown when it's not initialized
+* [`1ad06f47b`](https://github.com/siderolabs/talos/commit/1ad06f47b367d14d846ce72c98c91d423cdf1a5a) fix: quote the ampersand character in GRUB config
+* [`97c8e2417`](https://github.com/siderolabs/talos/commit/97c8e2417166c5280118cf60f685f3b21228012d) fix: display correct blockdevice size
+* [`b682cf48b`](https://github.com/siderolabs/talos/commit/b682cf48b32a53443cbee3103e102197d866bd7f) fix: talosctl reboot command passing mode in wait mode
+* [`81bf60f3a`](https://github.com/siderolabs/talos/commit/81bf60f3a53fc14c8d5c3e68a332b83d5828d762) chore: bump go+kernel
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`527b5f7`](https://github.com/siderolabs/extras/commit/527b5f73d131edb3c946f385585de8ed42b7e269) chore: bump go
+</p>
+</details>
+
+### Changes from siderolabs/go-blockdevice
+<details><summary>1 commit</summary>
+<p>
+
+* [`8c7ea19`](https://github.com/siderolabs/go-blockdevice/commit/8c7ea1910b27e0660e3e1a6f98b9f7e24bc11ff0) fix: blockdevice size is reported by Linux in 512 blocks always
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`ee0d97b`](https://github.com/siderolabs/pkgs/commit/ee0d97bb26ed22623e69b570e9998e91d2989080) feat: update containerd to 1.6.18
+* [`3a737ef`](https://github.com/siderolabs/pkgs/commit/3a737efc7d89f26fe636c4d97b27bf9ef3dc9552) chore: bump go+kernel
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`5cc0a25`](https://github.com/siderolabs/tools/commit/5cc0a25615fd66be7f7ebf01133b29b737f70c6c) chore: bump Go to 1.19.6
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**      v1.6.16 -> v1.6.18
+* **github.com/hashicorp/go-getter**        v1.6.2 -> v1.7.0
+* **github.com/siderolabs/extras**          v1.3.0-2-g78b971c -> v1.3.0-3-g527b5f7
+* **github.com/siderolabs/go-blockdevice**  v0.4.2 -> v0.4.3
+* **github.com/siderolabs/pkgs**            v1.3.0-11-gffdc9f1 -> v1.3.0-13-gee0d97b
+* **github.com/siderolabs/tools**           v1.3.0-1-g712379c -> v1.3.0-2-g5cc0a25
+* **golang.org/x/net**                      v0.4.0 -> v0.7.0
+* **golang.org/x/sys**                      v0.3.0 -> v0.5.0
+* **golang.org/x/term**                     v0.3.0 -> v0.5.0
+* **golang.org/x/time**                     v0.2.0 -> v0.3.0
+
+Previous release can be found at [v1.3.4](https://github.com/siderolabs/talos/releases/tag/v1.3.4)
+
 ## [Talos 1.3.4](https://github.com/siderolabs/talos/releases/tag/v1.3.4) (2023-02-09)
 
 Welcome to the v1.3.4 release of Talos!
