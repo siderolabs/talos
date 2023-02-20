@@ -35,7 +35,7 @@ func upgradeKubelet(ctx context.Context, cluster UpgradeProvider, options Upgrad
 		return nil
 	}
 
-	options.Log("updating kubelet to version %q", options.ToVersion)
+	options.Log("updating kubelet to version %q", options.Path.ToVersion())
 
 	for _, node := range append(append([]string(nil), options.controlPlaneNodes...), options.workerNodes...) {
 		if err := upgradeKubeletOnNode(ctx, cluster, options, node); err != nil {
@@ -155,7 +155,7 @@ func upgradeKubeletOnNode(ctx context.Context, cluster UpgradeProvider, options 
 
 	if err = retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second)).Retry(
 		func() error {
-			return checkNodeKubeletVersion(ctx, cluster, node, "v"+options.ToVersion)
+			return checkNodeKubeletVersion(ctx, cluster, node, "v"+options.Path.ToVersion())
 		},
 	); err != nil {
 		return err
@@ -183,7 +183,7 @@ func upgradeKubeletPatcher(
 
 		logUpdate := func(oldImage string) {
 			parts := strings.Split(oldImage, ":")
-			version := options.FromVersion
+			version := options.Path.FromVersion()
 
 			if len(parts) > 1 {
 				version = parts[1]
@@ -191,14 +191,14 @@ func upgradeKubeletPatcher(
 
 			version = strings.TrimLeft(version, "v")
 
-			options.Log(" > update %s: %s -> %s", kubelet, version, options.ToVersion)
+			options.Log(" > update %s: %s -> %s", kubelet, version, options.Path.ToVersion())
 
 			if options.DryRun {
 				options.Log(" > skipped in dry-run")
 			}
 		}
 
-		image := fmt.Sprintf("%s:v%s", constants.KubeletImage, options.ToVersion)
+		image := fmt.Sprintf("%s:v%s", constants.KubeletImage, options.Path.ToVersion())
 
 		if oldImage == image {
 			return errUpdateSkipped

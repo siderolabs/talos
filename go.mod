@@ -98,6 +98,7 @@ require (
 	github.com/siderolabs/go-debug v0.2.2
 	github.com/siderolabs/go-kmsg v0.1.2
 	github.com/siderolabs/go-kubeconfig v0.1.0
+	github.com/siderolabs/go-kubernetes v0.1.0
 	github.com/siderolabs/go-loadbalancer v0.2.1
 	github.com/siderolabs/go-pcidb v0.1.0
 	github.com/siderolabs/go-pointer v1.0.0
@@ -136,7 +137,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.90.0
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.67
-	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -204,6 +204,7 @@ require (
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -302,4 +303,5 @@ require (
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
+	sigs.k8s.io/yaml v1.3.0 // indirect
 )

@@ -88,7 +88,7 @@ func updateDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds st
 }
 
 func upgradeDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds string, options UpgradeOptions) error {
-	options.Log("updating daemonset %q to version %q", ds, options.ToVersion)
+	options.Log("updating daemonset %q to version %q", ds, options.Path.ToVersion())
 
 	if options.DryRun {
 		options.Log("skipped in dry-run")
@@ -103,7 +103,7 @@ func upgradeDaemonset(ctx context.Context, clientset *kubernetes.Clientset, ds s
 
 		switch ds {
 		case kubeProxy:
-			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesProxyImage, options.ToVersion)
+			daemonset.Spec.Template.Spec.Containers[0].Image = fmt.Sprintf("%s:v%s", constants.KubernetesProxyImage, options.Path.ToVersion())
 		default:
 			return fmt.Errorf("failed to build new image spec")
 		}

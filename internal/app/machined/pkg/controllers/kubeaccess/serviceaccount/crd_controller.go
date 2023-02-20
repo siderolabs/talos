@@ -19,6 +19,7 @@ import (
 
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/slices"
+	taloskubernetes "github.com/siderolabs/go-kubernetes/kubernetes"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -41,7 +42,6 @@ import (
 	"k8s.io/client-go/util/connrotation"
 	"k8s.io/client-go/util/workqueue"
 
-	taloskubernetes "github.com/siderolabs/talos/pkg/kubernetes"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/siderolabs/talos/pkg/machinery/constants"

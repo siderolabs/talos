@@ -18,6 +18,7 @@ import (
 
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
+	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/siderolabs/go-retry/retry"
 	sideronet "github.com/siderolabs/net"
 	"github.com/stretchr/testify/suite"
@@ -650,9 +651,11 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string, skip
 
 	suite.T().Logf("upgrading Kubernetes: %q -> %q", fromVersion, toVersion)
 
+	path, err := upgrade.NewPath(fromVersion, toVersion)
+	suite.Require().NoError(err)
+
 	options := kubernetes.UpgradeOptions{
-		FromVersion: fromVersion,
-		ToVersion:   toVersion,
+		Path: path,
 
 		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
 

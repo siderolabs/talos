@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
@@ -31,9 +32,14 @@ var upgradeK8sCmd = &cobra.Command{
 
 var upgradeOptions k8s.UpgradeOptions
 
+var upgradeK8sCmdFlags struct {
+	FromVersion string
+	ToVersion   string
+}
+
 func init() {
-	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
-	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
+	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
+	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false, "skip the actual upgrade and show the upgrade plan instead")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.UpgradeKubelet, "upgrade-kubelet", true, "upgrade kubelet service")
@@ -64,13 +70,18 @@ func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 
 	var err error
 
-	if upgradeOptions.FromVersion == "" {
-		upgradeOptions.FromVersion, err = k8s.DetectLowestVersion(ctx, &state, upgradeOptions)
+	if upgradeK8sCmdFlags.FromVersion == "" {
+		upgradeK8sCmdFlags.FromVersion, err = k8s.DetectLowestVersion(ctx, &state, upgradeOptions)
 		if err != nil {
 			return fmt.Errorf("error detecting the lowest Kubernetes version %w", err)
 		}
 
-		upgradeOptions.Log("automatically detected the lowest Kubernetes version %s", upgradeOptions.FromVersion)
+		upgradeOptions.Log("automatically detected the lowest Kubernetes version %s", upgradeK8sCmdFlags.FromVersion)
+	}
+
+	upgradeOptions.Path, err = upgrade.NewPath(upgradeK8sCmdFlags.FromVersion, upgradeK8sCmdFlags.ToVersion)
+	if err != nil {
+		return fmt.Errorf("error creating upgrade path %w", err)
 	}
 
 	return k8s.UpgradeTalosManaged(ctx, &state, upgradeOptions)

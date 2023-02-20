@@ -12,21 +12,15 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/google/go-cmp/cmp"
+	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
+	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/metadata"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/restmapper"
-	k8syaml "sigs.k8s.io/yaml"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/kubernetes"
@@ -47,30 +41,8 @@ type UpgradeProvider interface {
 //
 //nolint:gocyclo,cyclop
 func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
-	// strip leading `v` from Kubernetes version
-	options.FromVersion = strings.TrimLeft(options.FromVersion, "v")
-	options.ToVersion = strings.TrimLeft(options.ToVersion, "v")
-
-	switch path := options.Path(); path {
-	// nothing for all those
-	case "1.19->1.19":
-	case "1.19->1.20":
-	case "1.20->1.20":
-	case "1.20->1.21":
-	case "1.21->1.21":
-	case "1.21->1.22":
-	case "1.22->1.22":
-	case "1.22->1.23":
-	case "1.23->1.23":
-	case "1.23->1.24":
-	case "1.24->1.24":
-	case "1.24->1.25":
-	case "1.25->1.25":
-	case "1.25->1.26":
-	case "1.26->1.26":
-
-	default:
-		return fmt.Errorf("unsupported upgrade path %q (from %q to %q)", path, options.FromVersion, options.ToVersion)
+	if !options.Path.IsSupported() {
+		return fmt.Errorf("unsupported upgrade path %s (from %q to %q)", options.Path, options.Path.FromVersion(), options.Path.ToVersion())
 	}
 
 	k8sClient, err := cluster.K8sHelper(ctx)
@@ -99,7 +71,7 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		return err
 	}
 
-	upgradeChecks, err := NewK8sUpgradeChecks(talosClient.COSI, k8sConfig, options, options.controlPlaneNodes)
+	upgradeChecks, err := upgrade.NewChecks(options.Path, talosClient.COSI, k8sConfig, options.controlPlaneNodes, options.Log)
 	if err != nil {
 		return err
 	}
@@ -144,7 +116,7 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 }
 
 func upgradeStaticPod(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service string) error {
-	options.Log("updating %q to version %q", service, options.ToVersion)
+	options.Log("updating %q to version %q", service, options.Path.ToVersion())
 
 	for _, node := range options.controlPlaneNodes {
 		if err := upgradeStaticPodOnNode(ctx, cluster, options, service, node); err != nil {
@@ -271,17 +243,17 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 
 		logUpdate := func(oldImage string) {
 			parts := strings.Split(oldImage, ":")
-			version := options.FromVersion
+			version := options.Path.FromVersion()
 
 			if oldImage == "" {
-				version = options.FromVersion
+				version = options.Path.FromVersion()
 			}
 
 			if len(parts) > 1 {
 				version = parts[1]
 			}
 
-			options.Log(" > update %s: %s -> %s", service, version, options.ToVersion)
+			options.Log(" > update %s: %s -> %s", service, version, options.Path.ToVersion())
 
 			if options.DryRun {
 				options.Log(" > skipped in dry-run")
@@ -294,7 +266,7 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 				config.ClusterConfig.APIServerConfig = &v1alpha1config.APIServerConfig{}
 			}
 
-			image := fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, options.ToVersion)
+			image := fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, options.Path.ToVersion())
 
 			if config.ClusterConfig.APIServerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
@@ -312,7 +284,7 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 				config.ClusterConfig.ControllerManagerConfig = &v1alpha1config.ControllerManagerConfig{}
 			}
 
-			image := fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, options.ToVersion)
+			image := fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, options.Path.ToVersion())
 
 			if config.ClusterConfig.ControllerManagerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
@@ -330,7 +302,7 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 				config.ClusterConfig.SchedulerConfig = &v1alpha1config.SchedulerConfig{}
 			}
 
-			image := fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, options.ToVersion)
+			image := fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, options.Path.ToVersion())
 
 			if config.ClusterConfig.SchedulerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
@@ -365,83 +337,14 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 		ctx = client.WithNode(ctx, nodes[0])
 	}
 
-	items, err := safe.StateList[*k8s.Manifest](ctx, talosclient.COSI, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ManifestType, "", resource.VersionUndefined))
-	if err != nil {
-		return nil, err
-	}
-
-	it := safe.IteratorFromList(items)
-
-	objects := []*unstructured.Unstructured{}
-
-	for it.Next() {
-		for _, o := range it.Value().TypedSpec().Items {
-			obj := &unstructured.Unstructured{Object: o.Object}
-
-			// kubeproxy daemon set is updated as part of a different flow
-			if obj.GetName() == kubeProxy && obj.GetKind() == "DaemonSet" {
-				continue
-			}
-
-			objects = append(objects, obj)
-		}
-	}
-
-	return objects, nil
-}
-
-func updateManifest(
-	ctx context.Context,
-	mapper *restmapper.DeferredDiscoveryRESTMapper,
-	k8sClient dynamic.Interface,
-	obj *unstructured.Unstructured,
-	dryRun bool,
-) (
-	resp *unstructured.Unstructured,
-	diff string,
-	skipped bool,
-	err error,
-) {
-	mapping, err := mapper.RESTMapping(obj.GroupVersionKind().GroupKind(), obj.GroupVersionKind().Version)
-	if err != nil {
-		err = fmt.Errorf("error creating mapping for object %s: %w", obj.GetName(), err)
-
-		return nil, "", false, err
-	}
-
-	var dr dynamic.ResourceInterface
-	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		// namespaced resources should specify the namespace
-		dr = k8sClient.Resource(mapping.Resource).Namespace(obj.GetNamespace())
-	} else {
-		// for cluster-wide resources
-		dr = k8sClient.Resource(mapping.Resource)
-	}
-
-	exists := true
-
-	diff, err = getResourceDiff(ctx, dr, obj)
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return nil, "", false, err
+	return manifests.GetBootstrapManifests(ctx, talosclient.COSI, func(obj manifests.Manifest) bool {
+		// kubeproxy daemon set is updated as part of a different flow
+		if obj.GetName() == kubeProxy && obj.GetKind() == "DaemonSet" {
+			return false
 		}
 
-		exists = false
-		diff = "resource is going to be created"
-	}
-
-	switch {
-	case dryRun:
-		return nil, diff, exists, nil
-	case !exists:
-		resp, err = dr.Create(ctx, obj, metav1.CreateOptions{})
-	case diff != "":
-		resp, err = dr.Update(ctx, obj, metav1.UpdateOptions{})
-	default:
-		skipped = true
-	}
-
-	return resp, diff, skipped, err
+		return true
+	})
 }
 
 //nolint:gocyclo
@@ -451,146 +354,7 @@ func syncManifests(ctx context.Context, objects []*unstructured.Unstructured, cl
 		return err
 	}
 
-	dialer := kubernetes.NewDialer()
-	config.Dial = dialer.DialContext
-
-	defer dialer.CloseAll()
-
-	k8sClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	dc, err := discovery.NewDiscoveryClientForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
-
-	// list of deployments to wait for to become ready after update
-	var deployments []*unstructured.Unstructured
-
-	options.Log("updating manifests")
-
-	for _, obj := range objects {
-		options.Log(" > processing manifest %s %s", obj.GetKind(), obj.GetName())
-
-		var (
-			resp    *unstructured.Unstructured
-			diff    string
-			skipped bool
-		)
-
-		err = retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
-			resp, diff, skipped, err = updateManifest(ctx, mapper, k8sClient, obj, options.DryRun)
-			if kubernetes.IsRetryableError(err) || apierrors.IsConflict(err) {
-				return retry.ExpectedError(err)
-			}
-
-			return err
-		})
-
-		if err != nil {
-			return err
-		}
-
-		switch {
-		case options.DryRun:
-			var diffInfo string
-			if diff != "" {
-				diffInfo = fmt.Sprintf(", diff:\n%s", diff)
-			}
-
-			options.Log(" < apply skipped in dry run%s", diffInfo)
-
-			continue
-		case skipped:
-			options.Log(" < apply skipped: nothing to update")
-
-			continue
-		}
-
-		if resp.GetKind() == "Deployment" {
-			deployments = append(deployments, resp)
-		}
-
-		options.Log(" < update applied, diff:\n%s", diff)
-	}
-
-	if len(deployments) == 0 {
-		return nil
-	}
-
-	clientset, err := cluster.K8sHelper(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer clientset.Close() //nolint:errcheck
-
-	for _, obj := range deployments {
-		obj := obj
-
-		err := retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
-			deployment, err := clientset.AppsV1().Deployments(obj.GetNamespace()).Get(ctx, obj.GetName(), metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-
-			if deployment.Status.ReadyReplicas != deployment.Status.Replicas || deployment.Status.UpdatedReplicas != deployment.Status.Replicas {
-				return retry.ExpectedErrorf("deployment %s ready replicas %d != replicas %d", deployment.Name, deployment.Status.ReadyReplicas, deployment.Status.Replicas)
-			}
-
-			options.Log(" > updated %s", deployment.GetName())
-
-			return nil
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func getResourceDiff(ctx context.Context, dr dynamic.ResourceInterface, obj *unstructured.Unstructured) (string, error) {
-	current, err := dr.Get(ctx, obj.GetName(), metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-
-	obj.SetResourceVersion(current.GetResourceVersion())
-
-	resp, err := dr.Update(ctx, obj, metav1.UpdateOptions{
-		DryRun: []string{"All"},
-	})
-	if err != nil {
-		return "", err
-	}
-
-	ignoreKey := func(key string) {
-		delete(current.Object, key)
-		delete(resp.Object, key)
-	}
-
-	ignoreKey("metadata") // contains lots of dynamic data generated by kubernetes
-
-	if resp.GetKind() == "ServiceAccount" {
-		ignoreKey("secrets") // injected by Kubernetes in ServiceAccount objects
-	}
-
-	x, err := k8syaml.Marshal(current)
-	if err != nil {
-		return "", err
-	}
-
-	y, err := k8syaml.Marshal(resp)
-	if err != nil {
-		return "", err
-	}
-
-	return cmp.Diff(string(x), string(y)), nil
+	return manifests.Sync(ctx, objects, config, options.DryRun, options.Log)
 }
 
 //nolint:gocyclo
