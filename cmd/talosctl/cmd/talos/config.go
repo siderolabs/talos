@@ -77,7 +77,12 @@ var configEndpointCmd = &cobra.Command{
 			args[i] = strings.TrimSpace(args[i])
 		}
 
-		c.Contexts[c.Context].Endpoints = args
+		ctxData, err := getContextData(c)
+		if err != nil {
+			return err
+		}
+
+		ctxData.Endpoints = args
 		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %w", err)
 		}
@@ -103,7 +108,12 @@ var configNodeCmd = &cobra.Command{
 			args[i] = strings.TrimSpace(args[i])
 		}
 
-		c.Contexts[c.Context].Nodes = args
+		ctxData, err := getContextData(c)
+		if err != nil {
+			return err
+		}
+
+		ctxData.Nodes = args
 		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %w", err)
 		}
@@ -446,9 +456,12 @@ Certificate expires: {{ .CertTTL }} ({{ .CertNotAfter }})
 //
 //nolint:goconst
 func configInfoCommand(config *clientconfig.Config, now time.Time) (string, error) {
-	context := config.Contexts[config.Context]
+	cfgContext, err := getContextData(config)
+	if err != nil {
+		return "", err
+	}
 
-	b, err := base64.StdEncoding.DecodeString(context.Crt)
+	b, err := base64.StdEncoding.DecodeString(cfgContext.Crt)
 	if err != nil {
 		return "", err
 	}
@@ -466,13 +479,13 @@ func configInfoCommand(config *clientconfig.Config, now time.Time) (string, erro
 	roles, _ := role.Parse(crt.Subject.Organization)
 
 	nodesS := "not defined"
-	if len(context.Nodes) > 0 {
-		nodesS = strings.Join(context.Nodes, ", ")
+	if len(cfgContext.Nodes) > 0 {
+		nodesS = strings.Join(cfgContext.Nodes, ", ")
 	}
 
 	endpointsS := "not defined"
-	if len(context.Endpoints) > 0 {
-		endpointsS = strings.Join(context.Endpoints, ", ")
+	if len(cfgContext.Endpoints) > 0 {
+		endpointsS = strings.Join(cfgContext.Endpoints, ", ")
 	}
 
 	rolesS := "not defined"
@@ -517,7 +530,7 @@ var configInfoCmd = &cobra.Command{
 
 // CompleteConfigContext represents tab completion for `--context`
 // argument and `config [context|remove]` command.
-func CompleteConfigContext(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func CompleteConfigContext(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveError
@@ -558,4 +571,19 @@ func init() {
 	configNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", 87600*time.Hour, "certificate TTL")
 
 	addCommand(configCmd)
+}
+
+func getContextData(c *clientconfig.Config) (*clientconfig.Context, error) {
+	contextName := c.Context
+
+	if GlobalArgs.CmdContext != "" {
+		contextName = GlobalArgs.CmdContext
+	}
+
+	ctxData, ok := c.Contexts[contextName]
+	if !ok {
+		return nil, fmt.Errorf("context %q is not defined", contextName)
+	}
+
+	return ctxData, nil
 }

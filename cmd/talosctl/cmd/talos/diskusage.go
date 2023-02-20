@@ -10,7 +10,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	humanize "github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
