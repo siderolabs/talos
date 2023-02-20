@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	stdlibruntime "runtime"
 	"sync"
 
@@ -90,9 +89,9 @@ func (r *goroutineRunner) wrappedMain() (err error) {
 	defer w.Close()
 
 	var writer io.Writer
-	if r.runtime.Config().Debug() {
+	/*if r.runtime.Config().Debug() {
 		writer = io.MultiWriter(w, os.Stdout)
-	} else {
+	} else*/{
 		writer = w
 	}
 

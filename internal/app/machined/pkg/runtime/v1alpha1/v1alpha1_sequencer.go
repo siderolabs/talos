@@ -97,11 +97,16 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			WriteIMAPolicy,
 		).Append(
 			"etc",
+			InitializeConsoles,
 			CreateSystemCgroups,
 			CreateOSReleaseFile,
 		).Append(
-			"udevd",
+			"earlyServices",
 			StartUdevd,
+			StartMachined,
+		).Append(
+			"dashboard",
+			StartDashboard,
 		).AppendWithDeferredCheck(
 			func() bool {
 				return r.State().Machine().Installed()

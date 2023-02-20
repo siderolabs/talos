@@ -790,6 +790,9 @@ const (
 	// TrustdMaxProcs is the maximum number of GOMAXPROCS for trustd.
 	TrustdMaxProcs = 2
 
+	// DashboardMaxProcs is the maximum number of GOMAXPROCS for dashboard.
+	DashboardMaxProcs = 2
+
 	// APIAuthzRoleMetadataKey is the gRPC metadata key used to submit a role with os:impersonator.
 	APIAuthzRoleMetadataKey = "talos-role"
 )

@@ -16,11 +16,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"text/template"
 	"time"
+	"unsafe"
 
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
@@ -113,6 +116,50 @@ func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 
 		return nil
 	}, "setupLogger"
+}
+
+func InitializeConsoles(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		for i := 0; i < 4; i++ {
+			f, err := os.OpenFile(fmt.Sprintf("/dev/tty%d", i), os.O_RDWR, 0)
+			if err != nil {
+				return err
+			}
+
+			f.WriteString("!!!!! Hello from Talos on tty" + strconv.Itoa(i) + "\n")
+			f.Close()
+		}
+
+		// change the console output to the tty1 (not the active vty)
+		f, err := os.OpenFile("/dev/tty1", os.O_RDWR, 0)
+		if err != nil {
+			return err
+		}
+
+		args := [2]byte{11 /* TIOCL_SETKMSGREDIRECT */, 1 /* tty1 */}
+
+		if _, _, errno := syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), syscall.TIOCLINUX, uintptr(unsafe.Pointer(&args))); errno != 0 {
+			return fmt.Errorf("failed to set console: %w", errno)
+		}
+
+		f.Close()
+
+		log.Printf("Hello from talos on the console")
+
+		// activate vty3
+		f, err = os.OpenFile("/dev/tty0", os.O_RDWR, 0)
+		if err != nil {
+			return err
+		}
+
+		if _, _, errno := syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), 0x5606 /* VT_ACTIVATE */, 3 /* tty number */); errno != 0 {
+			return fmt.Errorf("failed to activate console: %w", errno)
+		}
+
+		f.Close()
+
+		return nil
+	}, "initializeConsoles"
 }
 
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
@@ -771,6 +818,18 @@ func WriteUdevRules(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 
 		return nil
 	}, "writeUdevRules"
+}
+
+// StartMachined represents the task to start machined.
+func StartMachined(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		system.Services(r).Start("machined")
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventUp, "machined").Wait(ctx)
+	}, "startMachined"
 }
 
 // StartUdevd represents the task to start udevd.
@@ -2253,4 +2312,36 @@ func logError(err error, logger *log.Logger) error {
 	logger.Printf("WARNING: task failed: %s", err)
 
 	return nil
+}
+
+func StartDashboard(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		cmd := exec.Command("/sbin/dashboard")
+
+		ttyR, err := os.OpenFile("/dev/tty3", os.O_RDONLY, 0)
+		if err != nil {
+			return fmt.Errorf("error opening tty3: %w", err)
+		}
+
+		ttyW, err := os.OpenFile("/dev/tty3", os.O_WRONLY, 0)
+		if err != nil {
+			return fmt.Errorf("error opening tty3: %w", err)
+		}
+
+		defer ttyR.Close()
+		defer ttyW.Close()
+
+		cmd.Stdin = ttyR
+		cmd.Stdout = ttyW
+		cmd.Stderr = ttyW
+		cmd.Env = append(os.Environ(), "TERM=linux")
+
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setctty: true,
+			Setsid:  true,
+			Ctty:    1,
+		}
+
+		return cmd.Start()
+	}, "startDashboard"
 }

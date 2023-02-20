@@ -24,6 +24,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/apid"
+	"github.com/siderolabs/talos/internal/app/dashboard"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -232,6 +233,10 @@ func run() error {
 	// Inject controller into maintenance service.
 	maintenance.InjectController(c)
 
+	system.Services(c.Runtime()).Load(
+		&services.Machined{Controller: c},
+	)
+
 	initializeCanceled := false
 
 	// Initialize the machine.
@@ -252,7 +257,6 @@ func run() error {
 
 		// Start the machine API.
 		system.Services(c.Runtime()).LoadAndStart(
-			&services.Machined{Controller: c},
 			&services.APID{},
 		)
 
@@ -311,6 +315,10 @@ func main() {
 		return
 	case "/sbin/wrapperd":
 		wrapperd.Main()
+
+		return
+	case "/sbin/dashboard":
+		dashboard.Main()
 
 		return
 	default:
