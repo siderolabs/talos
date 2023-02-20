@@ -63,7 +63,7 @@ func trustdMain() error {
 
 	go runDebugServer(ctx)
 
-	startup.LimitMaxProcs(constants.ApidMaxProcs)
+	startup.LimitMaxProcs(constants.TrustdMaxProcs)
 
 	var err error
 

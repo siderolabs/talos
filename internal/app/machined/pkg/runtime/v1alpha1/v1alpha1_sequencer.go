@@ -77,6 +77,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			CreateSystemCgroups,
 			CreateOSReleaseFile,
 		).Append(
+			"machined",
+			StartMachined,
+		).Append(
 			"config",
 			LoadConfig,
 		)
@@ -100,8 +103,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			CreateSystemCgroups,
 			CreateOSReleaseFile,
 		).Append(
-			"udevd",
+			"earlyServices",
 			StartUdevd,
+			StartMachined,
 		).AppendWithDeferredCheck(
 			func() bool {
 				return r.State().Machine().Installed()

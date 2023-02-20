@@ -232,6 +232,11 @@ func run() error {
 	// Inject controller into maintenance service.
 	maintenance.InjectController(c)
 
+	// Load machined service.
+	system.Services(c.Runtime()).Load(
+		&services.Machined{Controller: c},
+	)
+
 	initializeCanceled := false
 
 	// Initialize the machine.
@@ -252,7 +257,6 @@ func run() error {
 
 		// Start the machine API.
 		system.Services(c.Runtime()).LoadAndStart(
-			&services.Machined{Controller: c},
 			&services.APID{},
 		)
 

@@ -773,6 +773,25 @@ func WriteUdevRules(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 	}, "writeUdevRules"
 }
 
+// StartMachined represents the task to start machined.
+func StartMachined(_ runtime.Sequence, _ interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		svc := &services.Machined{}
+
+		id := svc.ID(r)
+
+		err := system.Services(r).Start(id)
+		if err != nil {
+			return fmt.Errorf("failed to start machined service: %w", err)
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventUp, id).Wait(ctx)
+	}, "startMachined"
+}
+
 // StartUdevd represents the task to start udevd.
 func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
