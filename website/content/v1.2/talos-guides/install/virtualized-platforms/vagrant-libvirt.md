@@ -1,6 +1,6 @@
 ---
 title: "Vagrant & Libvirt"
-aliases: 
+aliases:
   - ../../../virtualized-platforms/vagrant-libvirt
 ---
 
@@ -205,11 +205,11 @@ You can tail the logs of the node:
 sudo tail -f /tmp/control-plane-node-1.log
 ```
 
-Set up your shell to use the generated talosconfig and configure its endpoints:
+Set up your shell to use the generated talosconfig and configure its endpoints (use the IPs of the control plane nodes):
 
 ```bash
 export TALOSCONFIG=$(realpath ./talosconfig)
-talosctl config endpoint 192.168.121.203 192.168.121.119 192.168.121.125 192.168.121.69
+talosctl config endpoint 192.168.121.203 192.168.121.119 192.168.121.125
 ```
 
 Bootstrap the Kubernetes cluster from the initial control plane node:
