@@ -86,6 +86,7 @@ func (r *Rockpi4c) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyS2,1500000n8"),
 		procfs.NewParameter("sysctl.kernel.kexec_load_disabled").Append("1"),
+		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
 	}
 }
 

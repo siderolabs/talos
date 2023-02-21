@@ -92,6 +92,7 @@ func (b Pine64) Install(disk string) (err error) {
 func (b Pine64) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyS0,115200"),
+		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
 	}
 }
 

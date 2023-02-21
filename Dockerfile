@@ -476,6 +476,8 @@ RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
 RUN chmod +x /rootfs/sbin/poweroff
 RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
 RUN chmod +x /rootfs/sbin/wrapperd
+RUN ln /rootfs/sbin/init /rootfs/sbin/dashboard
+RUN chmod +x /rootfs/sbin/dashboard
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
@@ -525,6 +527,8 @@ RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
 RUN chmod +x /rootfs/sbin/poweroff
 RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
 RUN chmod +x /rootfs/sbin/wrapperd
+RUN ln /rootfs/sbin/init /rootfs/sbin/dashboard
+RUN chmod +x /rootfs/sbin/dashboard
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh

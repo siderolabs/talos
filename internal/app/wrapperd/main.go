@@ -28,15 +28,18 @@ var (
 	droppedCaps string
 	cgroupPath  string
 	oomScore    int
+	uid         int
 )
 
 // Main is the entrypoint into /sbin/wrapperd.
-// nolint: gocyclo
+//
+//nolint:gocyclo
 func Main() {
 	flag.StringVar(&name, "name", "", "process name")
 	flag.StringVar(&droppedCaps, "dropped-caps", "", "comma-separated list of capabilities to drop")
 	flag.StringVar(&cgroupPath, "cgroup-path", "", "cgroup path to use")
 	flag.IntVar(&oomScore, "oom-score", 0, "oom score to set")
+	flag.IntVar(&uid, "uid", 0, "uid to set for the process")
 	flag.Parse()
 
 	currentPid := os.Getpid()
@@ -78,9 +81,9 @@ func Main() {
 	} else if droppedCaps != "" {
 		caps := strings.Split(droppedCaps, ",")
 		dropCaps := slices.Map(caps, func(c string) cap.Value {
-			capability, err := cap.FromName(c)
-			if err != nil {
-				log.Fatalf("failed to parse capability: %v", err)
+			capability, capErr := cap.FromName(c)
+			if capErr != nil {
+				log.Fatalf("failed to parse capability: %v", capErr)
 			}
 
 			return capability
@@ -88,12 +91,19 @@ func Main() {
 
 		// drop capabilities
 		iab := cap.IABGetProc()
-		if err := iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
+		if err = iab.SetVector(cap.Bound, true, dropCaps...); err != nil {
 			log.Fatalf("failed to set capabilities: %v", err)
 		}
 
-		if err := iab.SetProc(); err != nil {
+		if err = iab.SetProc(); err != nil {
 			log.Fatalf("failed to apply capabilities: %v", err)
+		}
+	}
+
+	if uid > 0 {
+		err = unix.Setuid(uid)
+		if err != nil {
+			log.Fatalf("failed to setuid: %v", err)
 		}
 	}
 

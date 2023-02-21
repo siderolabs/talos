@@ -214,3 +214,13 @@ Talos defaults to always using the unified cgroup hierarchy (`cgroupsv2`), but `
 can be forced with `talos.unified_cgroup_hierarchy=0`.
 
 > Note: `cgroupsv1` is deprecated and it should be used only for compatibility with workloads which don't support `cgroupsv2` yet.
+
+#### `talos.dashboard.disabled`
+
+By default, Talos redirects kernel logs to virtual console `/dev/tty1` and starts the dashboard on `/dev/tty2`,
+then switches to the dashboard tty.
+
+If you set `talos.dashboard.disabled=1`, this behavior will be disabled.
+Kernel logs will be sent to the currently active console and the dashboard will not be started.
+
+It is set to be `1` by default on SBCs.

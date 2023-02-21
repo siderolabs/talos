@@ -49,6 +49,7 @@ func (r *RPiGeneric) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyAMA0,115200"),
 		procfs.NewParameter("sysctl.kernel.kexec_load_disabled").Append("1"),
+		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
 	}
 }
 

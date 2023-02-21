@@ -9,8 +9,8 @@ import (
 
 	ui "github.com/gizak/termui/v3"
 
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/components"
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/components"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
 )
 
 // DataWidget is a widget which consumes Data to draw itself.
@@ -49,7 +49,7 @@ type UI struct {
 // Main is the UI entrypoint.
 //
 //nolint:gocyclo
-func (u *UI) Main(ctx context.Context, dataCh <-chan *data.Data) error {
+func (u *UI) Main(ctx context.Context, dataCh <-chan *data.Data, allowExitKeys bool) error {
 	if err := ui.Init(); err != nil {
 		return err
 	}
@@ -131,7 +131,9 @@ func (u *UI) Main(ctx context.Context, dataCh <-chan *data.Data) error {
 		case e := <-uiEvents:
 			switch e.ID {
 			case "q", "<C-c>":
-				return nil
+				if allowExitKeys {
+					return nil
+				}
 			case "<Resize>":
 				payload := e.Payload.(ui.Resize) //nolint:errcheck,forcetypeassert
 

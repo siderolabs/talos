@@ -79,6 +79,19 @@ machine:
 Strategic merge config patches correctly support merging `.vlans` sections of the network interface.
 """
 
+    [notes.dashboard]
+        title = "Talos Dashboard on TTY2"
+        description="""\
+Talos now starts a text-based UI dashboard on virtual console `/dev/tty2` and switches to it by default upon boot.
+Kernel logs remain available on `/dev/tty1`.
+
+To switch TTYs, use the `Alt+F1` through `Alt+F2` keys.
+
+You can disable this behavior by setting the kernel parameter `talos.dashboard.disabled=1`.
+
+This behavior is disabled by default on SBCs.
+"""
+
 [make_deps]
 
     [make_deps.tools]

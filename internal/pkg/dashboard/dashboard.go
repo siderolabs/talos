@@ -12,8 +12,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// Main is the entrypoint into talosctl dashboard command.
-func Main(ctx context.Context, c *client.Client, interval time.Duration) error {
+// Main is the entrypoint into the dashboard.
+func Main(ctx context.Context, c *client.Client, interval time.Duration, allowExitKeys bool) error {
 	ui := &UI{}
 
 	source := &APISource{
@@ -24,5 +24,5 @@ func Main(ctx context.Context, c *client.Client, interval time.Duration) error {
 	dataCh := source.Run(ctx)
 	defer source.Stop()
 
-	return ui.Main(ctx, dataCh)
+	return ui.Main(ctx, dataCh, allowExitKeys)
 }

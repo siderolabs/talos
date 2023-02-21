@@ -54,6 +54,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/app/maintenance"
+	"github.com/siderolabs/talos/internal/pkg/console"
 	"github.com/siderolabs/talos/internal/pkg/cri"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
@@ -200,6 +201,15 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 					Memory: &cgroupsv2.Memory{
 						Min: pointer.To[int64](constants.CgroupKubeletReservedMemory),
 						Low: pointer.To[int64](constants.CgroupKubeletReservedMemory * 2),
+					},
+				},
+			},
+			{
+				name: constants.CgroupDashboard,
+				resources: &cgroupsv2.Resources{
+					Memory: &cgroupsv2.Memory{
+						Min: pointer.To[int64](constants.CgroupDashboardReservedMemory),
+						Low: pointer.To[int64](constants.CgroupDashboardLowMemory),
 					},
 				},
 			},
@@ -790,6 +800,19 @@ func StartMachined(_ runtime.Sequence, _ interface{}) (runtime.TaskExecutionFunc
 
 		return system.WaitForService(system.StateEventUp, id).Wait(ctx)
 	}, "startMachined"
+}
+
+// StartDashboard represents the task to start dashboard.
+func StartDashboard(_ runtime.Sequence, _ interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
+		ttyNumber := constants.DashboardTTY
+
+		system.Services(r).LoadAndStart(&services.Dashboard{
+			TTYNumber: ttyNumber,
+		})
+
+		return console.Switch(ttyNumber)
+	}, "startDashboard"
 }
 
 // StartUdevd represents the task to start udevd.

@@ -5,6 +5,9 @@
 package v1alpha1
 
 import (
+	"strconv"
+
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -106,6 +109,15 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"earlyServices",
 			StartUdevd,
 			StartMachined,
+		).AppendWithDeferredCheck(
+			func() bool {
+				disabledStr := procfs.ProcCmdline().Get(constants.KernelParamDashboardDisabled).First()
+				disabled, _ := strconv.ParseBool(pointer.SafeDeref(disabledStr)) //nolint:errcheck
+
+				return !disabled
+			},
+			"dashboard",
+			StartDashboard,
 		).AppendWithDeferredCheck(
 			func() bool {
 				return r.State().Machine().Installed()

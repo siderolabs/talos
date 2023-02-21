@@ -91,6 +91,7 @@ func (l *LibretechAllH3CCH5) Install(disk string) (err error) {
 func (l *LibretechAllH3CCH5) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyS0,115200"),
+		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
 	}
 }
 

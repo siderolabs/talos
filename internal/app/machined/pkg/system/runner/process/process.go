@@ -76,16 +76,25 @@ func (p *processRunner) Close() error {
 	return nil
 }
 
-func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) {
+type commandWrapper struct {
+	cmd              *exec.Cmd
+	afterStart       func()
+	afterTermination func() error
+}
+
+//nolint:gocyclo
+func (p *processRunner) build() (commandWrapper, error) {
 	args := []string{
 		fmt.Sprintf("-name=%s", p.args.ID),
 		fmt.Sprintf("-dropped-caps=%s", strings.Join(p.opts.DroppedCapabilities, ",")),
 		fmt.Sprintf("-cgroup-path=%s", p.opts.CgroupPath),
 		fmt.Sprintf("-oom-score=%d", p.opts.OOMScoreAdj),
+		fmt.Sprintf("-uid=%d", p.opts.UID),
 	}
+
 	args = append(args, p.args.ProcessArgs...)
 
-	cmd = exec.Command("/sbin/wrapperd", args...)
+	cmd := exec.Command("/sbin/wrapperd", args...)
 
 	// Set the environment for the service.
 	cmd.Env = append([]string{fmt.Sprintf("PATH=%s", constants.PATH)}, p.opts.Env...)
@@ -93,9 +102,7 @@ func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) 
 	// Setup logging.
 	w, err := p.opts.LoggingManager.ServiceLog(p.args.ID).Writer()
 	if err != nil {
-		err = fmt.Errorf("service log handler: %w", err)
-
-		return
+		return commandWrapper{}, fmt.Errorf("service log handler: %w", err)
 	}
 
 	var writer io.Writer
@@ -105,20 +112,92 @@ func (p *processRunner) build() (cmd *exec.Cmd, logCloser io.Closer, err error) 
 		writer = w
 	}
 
-	cmd.Stdout = writer
-	cmd.Stderr = writer
+	// close the writer if we exit early due to an error
+	closeWriter := true
 
-	return cmd, w, nil
+	defer func() {
+		if closeWriter {
+			w.Close() //nolint:errcheck
+		}
+	}()
+
+	var afterStartFuncs []func()
+
+	if p.opts.StdinFile != "" {
+		stdin, err := os.Open(p.opts.StdinFile)
+		if err != nil {
+			return commandWrapper{}, err
+		}
+
+		cmd.Stdin = stdin
+
+		afterStartFuncs = append(afterStartFuncs, func() {
+			stdin.Close() //nolint:errcheck
+		})
+	}
+
+	if p.opts.StdoutFile != "" {
+		stdout, err := os.OpenFile(p.opts.StdoutFile, os.O_WRONLY, 0)
+		if err != nil {
+			return commandWrapper{}, err
+		}
+
+		cmd.Stdout = stdout
+
+		afterStartFuncs = append(afterStartFuncs, func() {
+			stdout.Close() //nolint:errcheck
+		})
+	} else {
+		cmd.Stdout = writer
+	}
+
+	if p.opts.StderrFile != "" {
+		stderr, err := os.OpenFile(p.opts.StderrFile, os.O_WRONLY, 0)
+		if err != nil {
+			return commandWrapper{}, err
+		}
+
+		cmd.Stderr = stderr
+
+		afterStartFuncs = append(afterStartFuncs, func() {
+			stderr.Close() //nolint:errcheck
+		})
+	} else {
+		cmd.Stderr = writer
+	}
+
+	ctty, cttySet := p.opts.Ctty.Get()
+	if cttySet {
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setsid:  true,
+			Setctty: true,
+			Ctty:    ctty,
+		}
+	}
+
+	closeWriter = false
+
+	return commandWrapper{
+		cmd: cmd,
+		afterStart: func() {
+			for _, f := range afterStartFuncs {
+				f()
+			}
+		},
+		afterTermination: func() error {
+			return w.Close()
+		},
+	}, nil
 }
 
 //nolint:gocyclo
 func (p *processRunner) run(eventSink events.Recorder) error {
-	cmd, logCloser, err := p.build()
+	cmdWrapper, err := p.build()
 	if err != nil {
 		return fmt.Errorf("error building command: %w", err)
 	}
 
-	defer logCloser.Close() //nolint:errcheck
+	defer cmdWrapper.afterTermination() //nolint:errcheck
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
 
@@ -127,16 +206,20 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		defer reaper.Stop(notifyCh)
 	}
 
-	if err = cmd.Start(); err != nil {
+	err = cmdWrapper.cmd.Start()
+
+	cmdWrapper.afterStart()
+
+	if err != nil {
 		return fmt.Errorf("error starting process: %w", err)
 	}
 
-	eventSink(events.StateRunning, "Process %s started with PID %d", p, cmd.Process.Pid)
+	eventSink(events.StateRunning, "Process %s started with PID %d", p, cmdWrapper.cmd.Process.Pid)
 
 	waitCh := make(chan error)
 
 	go func() {
-		waitCh <- reaper.WaitWrapper(usingReaper, notifyCh, cmd)
+		waitCh <- reaper.WaitWrapper(usingReaper, notifyCh, cmdWrapper.cmd)
 	}()
 
 	select {
@@ -148,7 +231,7 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		eventSink(events.StateStopping, "Sending SIGTERM to %s", p)
 
 		//nolint:errcheck
-		_ = cmd.Process.Signal(syscall.SIGTERM)
+		_ = cmdWrapper.cmd.Process.Signal(syscall.SIGTERM)
 	}
 
 	select {
@@ -160,13 +243,13 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 		eventSink(events.StateStopping, "Sending SIGKILL to %s", p)
 
 		//nolint:errcheck
-		_ = cmd.Process.Signal(syscall.SIGKILL)
+		_ = cmdWrapper.cmd.Process.Signal(syscall.SIGKILL)
 	}
 
 	// wait for process to terminate
 	<-waitCh
 
-	return logCloser.Close()
+	return cmdWrapper.afterTermination()
 }
 
 func (p *processRunner) String() string {

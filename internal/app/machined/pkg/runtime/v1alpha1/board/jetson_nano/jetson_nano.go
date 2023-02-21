@@ -80,6 +80,7 @@ func (b JetsonNano) KernelArgs() procfs.Parameters {
 		// trying to kexec. Seems the drivers state is not reset properly.
 		// disabling kexec until we have further knowledge on this
 		procfs.NewParameter("sysctl.kernel.kexec_load_disabled").Append("1"),
+		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
 	}
 }
 

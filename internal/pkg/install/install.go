@@ -181,6 +181,10 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamEquinixMetalEvents, *c))
 	}
 
+	if c := procfs.ProcCmdline().Get(constants.KernelParamDashboardDisabled).First(); c != nil {
+		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamDashboardDisabled, *c))
+	}
+
 	specOpts := []oci.SpecOpts{
 		oci.WithImageConfig(img),
 		oci.WithProcessArgs(args...),

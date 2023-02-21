@@ -49,6 +49,9 @@ const (
 	// cgroups version to use (default is cgroupsv2, setting this kernel arg to '0' forces cgroupsv1).
 	KernelParamCGroups = "talos.unified_cgroup_hierarchy"
 
+	// KernelParamDashboardDisabled is the kernel parameter name for disabling the dashboard.
+	KernelParamDashboardDisabled = "talos.dashboard.disabled"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 
@@ -422,6 +425,10 @@ const (
 	// ApidUserID is the user ID for apid.
 	ApidUserID = 50
 
+	// DashboardUserID is the user ID for dashboard.
+	// We use the same user ID as apid so that the dashboard can write to the machined unix socket.
+	DashboardUserID = ApidUserID
+
 	// TrustdPort is the port for the trustd service.
 	TrustdPort = 50001
 
@@ -546,6 +553,9 @@ const (
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
 
+	// CgroupDashboard is the cgroup name for dashboard process.
+	CgroupDashboard = CgroupSystem + "/dashboard"
+
 	// CgroupPodRuntime is the cgroup name for kubernetes containerd runtime processes.
 	CgroupPodRuntime = "/podruntime/runtime"
 
@@ -557,6 +567,12 @@ const (
 
 	// CgroupKubeletReservedMemory is the hard memory protection for the kubelet processes.
 	CgroupKubeletReservedMemory = 64 * 1024 * 1024
+
+	// CgroupDashboardReservedMemory is the hard memory protection for the dashboard process.
+	CgroupDashboardReservedMemory = 85 * 1024 * 1024
+
+	// CgroupDashboardLowMemory is the low memory value for the dashboard process.
+	CgroupDashboardLowMemory = 100 * 1024 * 1024
 
 	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
 	FlannelCNI = "flannel"
@@ -790,8 +806,14 @@ const (
 	// TrustdMaxProcs is the maximum number of GOMAXPROCS for trustd.
 	TrustdMaxProcs = 2
 
+	// DashboardMaxProcs is the maximum number of GOMAXPROCS for dashboard.
+	DashboardMaxProcs = 2
+
 	// APIAuthzRoleMetadataKey is the gRPC metadata key used to submit a role with os:impersonator.
 	APIAuthzRoleMetadataKey = "talos-role"
+
+	// DashboardTTY is the number of the TTY device (/dev/ttyN) for dashboard.
+	DashboardTTY = 2
 )
 
 // See https://linux.die.net/man/3/klogctl

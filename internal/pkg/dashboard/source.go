@@ -12,7 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 

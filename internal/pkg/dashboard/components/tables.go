@@ -15,7 +15,7 @@ import (
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
 )
 
 // ProcessTable represents the widget with process info.

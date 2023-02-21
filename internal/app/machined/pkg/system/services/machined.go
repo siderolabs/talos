@@ -27,6 +27,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
+const machinedServiceID = "machined"
+
 var rules = map[string]role.Set{
 	"/cluster.ClusterService/HealthCheck": role.MakeSet(role.Admin, role.Reader),
 
@@ -132,12 +134,12 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 	)
 
 	// ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.MachineSocketPath), 0o750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.MachineSocketPath), 0o770); err != nil {
 		return err
 	}
 
 	// set the final leaf to be world-executable to make apid connect to the socket
-	if err := os.Chmod(filepath.Dir(constants.MachineSocketPath), 0o751); err != nil {
+	if err := os.Chmod(filepath.Dir(constants.MachineSocketPath), 0o771); err != nil {
 		return err
 	}
 
@@ -176,7 +178,7 @@ type Machined struct {
 
 // ID implements the Service interface.
 func (m *Machined) ID(r runtime.Runtime) string {
-	return "machined"
+	return machinedServiceID
 }
 
 // PreFunc implements the Service interface.
@@ -203,7 +205,7 @@ func (m *Machined) DependsOn(r runtime.Runtime) []string {
 func (m *Machined) Runner(r runtime.Runtime) (runner.Runner, error) {
 	svc := &machinedService{m.Controller}
 
-	return goroutine.NewRunner(r, "machined", svc.Main, runner.WithLoggingManager(r.Logging())), nil
+	return goroutine.NewRunner(r, machinedServiceID, svc.Main, runner.WithLoggingManager(r.Logging())), nil
 }
 
 // HealthFunc implements the HealthcheckedService interface.

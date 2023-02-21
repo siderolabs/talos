@@ -91,6 +91,7 @@ func (r *Rock64) Install(disk string) (err error) {
 func (r *Rock64) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyS2,115200n8"),
+		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
 	}
 }
 

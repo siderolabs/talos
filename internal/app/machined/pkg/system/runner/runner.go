@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/containerd/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
@@ -66,6 +67,16 @@ type Options struct {
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
 	// DroppedCapabilities is the list of capabilities to drop.
 	DroppedCapabilities []string
+	// StdinFile is the path to the file to use as stdin.
+	StdinFile string
+	// StdoutFile is the path to the file to use as stdout.
+	StdoutFile string
+	// StderrFile is the path to the file to use as stderr.
+	StderrFile string
+	// Ctty is the controlling tty.
+	Ctty optional.Optional[int]
+	// UID is the user id of the process.
+	UID uint32
 }
 
 // Option is the functional option func.
@@ -172,5 +183,40 @@ func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
 func WithDroppedCapabilities(caps map[string]struct{}) Option {
 	return func(args *Options) {
 		args.DroppedCapabilities = maps.Keys(caps)
+	}
+}
+
+// WithStdinFile sets the path to the file to use as stdin.
+func WithStdinFile(path string) Option {
+	return func(args *Options) {
+		args.StdinFile = path
+	}
+}
+
+// WithStdoutFile sets the path to the file to use as stdout.
+func WithStdoutFile(path string) Option {
+	return func(args *Options) {
+		args.StdoutFile = path
+	}
+}
+
+// WithStderrFile sets the path to the file to use as stderr.
+func WithStderrFile(path string) Option {
+	return func(args *Options) {
+		args.StdoutFile = path
+	}
+}
+
+// WithCtty sets the controlling tty.
+func WithCtty(ctty int) Option {
+	return func(args *Options) {
+		args.Ctty = optional.Some(ctty)
+	}
+}
+
+// WithUID sets the user id of the process.
+func WithUID(uid uint32) Option {
+	return func(args *Options) {
+		args.UID = uid
 	}
 }

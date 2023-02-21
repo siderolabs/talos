@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/dashboard"
+	"github.com/siderolabs/talos/internal/pkg/dashboard"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
@@ -38,7 +38,7 @@ Keyboard shortcuts:
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			return dashboard.Main(ctx, c, dashboardCmdFlags.interval)
+			return dashboard.Main(ctx, c, dashboardCmdFlags.interval, true)
 		})
 	},
 }
