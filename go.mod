@@ -102,7 +102,7 @@ require (
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/go-procfs v0.1.1
 	github.com/siderolabs/go-retry v0.3.2
-	github.com/siderolabs/go-smbios v0.3.1
+	github.com/siderolabs/go-smbios v0.3.2
 	github.com/siderolabs/go-tail v0.1.0
 	github.com/siderolabs/grpc-proxy v0.4.0
 	github.com/siderolabs/net v0.4.0
@@ -170,7 +170,6 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/digitalocean/go-smbios v0.0.0-20180907143718-390a4f403a8e // indirect
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emicklei/go-restful v2.16.0+incompatible // indirect
