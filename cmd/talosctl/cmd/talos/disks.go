@@ -61,6 +61,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 			"NAME",
 			"SIZE",
 			"BUS_PATH",
+			"SYSTEM_DISK",
 		}, "\t")
 
 	getWithPlaceholder := func(in string) string {
@@ -95,6 +96,12 @@ func printDisks(ctx context.Context, c *client.Client) error {
 				args = append(args, node)
 			}
 
+			isSystemDisk := ""
+
+			if disk.SystemDisk {
+				isSystemDisk = "*"
+			}
+
 			args = append(args, []interface{}{
 				getWithPlaceholder(disk.DeviceName),
 				getWithPlaceholder(disk.Model),
@@ -106,6 +113,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 				getWithPlaceholder(disk.Name),
 				humanize.Bytes(disk.Size),
 				getWithPlaceholder(disk.BusPath),
+				isSystemDisk,
 			}...)
 
 			pattern := strings.Repeat("%s\t", len(args))

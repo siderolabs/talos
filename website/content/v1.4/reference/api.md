@@ -362,6 +362,7 @@ description: Talos gRPC API reference.
     - [MachineStatusEvent.MachineStage](#machine.MachineStatusEvent.MachineStage)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
     - [RebootRequest.Mode](#machine.RebootRequest.Mode)
+    - [ResetRequest.WipeMode](#machine.ResetRequest.WipeMode)
     - [SequenceEvent.Action](#machine.SequenceEvent.Action)
     - [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action)
     - [TaskEvent.Action](#machine.TaskEvent.Action)
@@ -5419,6 +5420,8 @@ rpc reset
 | graceful | [bool](#bool) |  | Graceful indicates whether node should leave etcd before the upgrade, it also enforces etcd checks before leaving. |
 | reboot | [bool](#bool) |  | Reboot indicates whether node should reboot or halt after resetting. |
 | system_partitions_to_wipe | [ResetPartitionSpec](#machine.ResetPartitionSpec) | repeated | System_partitions_to_wipe lists specific system disk partitions to be reset (wiped). If system_partitions_to_wipe is empty, all the partitions are erased. |
+| user_disks_to_wipe | [string](#string) | repeated | UserDisksToWipe lists specific connected block devices to be reset (wiped). |
+| mode | [ResetRequest.WipeMode](#machine.ResetRequest.WipeMode) |  | WipeMode defines which devices should be wiped. |
 
 
 
@@ -6230,6 +6233,19 @@ File type.
 
 
 
+<a name="machine.ResetRequest.WipeMode"></a>
+
+### ResetRequest.WipeMode
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ALL | 0 |  |
+| SYSTEM_DISK | 1 |  |
+| USER_DISKS | 2 |  |
+
+
+
 <a name="machine.SequenceEvent.Action"></a>
 
 ### SequenceEvent.Action
@@ -6690,6 +6706,7 @@ Disk represents a disk.
 | wwid | [string](#string) |  | Wwid as in `/sys/block/<dev>/device/wwid`. |
 | type | [Disk.DiskType](#storage.Disk.DiskType) |  | Type is a type of the disk: nvme, ssd, hdd, sd card. |
 | bus_path | [string](#string) |  | BusPath is the bus path of the disk. |
+| system_disk | [bool](#bool) |  | SystemDisk indicates that the disk is used as Talos system disk. |
 
 
 

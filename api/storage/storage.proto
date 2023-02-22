@@ -41,6 +41,8 @@ message Disk {
   DiskType type = 9;
   // BusPath is the bus path of the disk.
   string bus_path = 10;
+  // SystemDisk indicates that the disk is used as Talos system disk.
+  bool system_disk = 11;
 }
 
 // DisksResponse represents the response of the `Disks` RPC.

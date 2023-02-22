@@ -2208,13 +2208,16 @@ talosctl reset [flags]
 ### Options
 
 ```
-      --debug                           debug operation from kernel logs. --wait is set to true when this flag is set
-      --graceful                        if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
-  -h, --help                            help for reset
-      --reboot                          if true, reboot the node after resetting instead of shutting down
-      --system-labels-to-wipe strings   if set, just wipe selected system disk partitions by label but keep other partitions intact
-      --timeout duration                time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
-      --wait                            wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
+      --debug                                    debug operation from kernel logs. --wait is set to true when this flag is set
+      --graceful                                 if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
+  -h, --help                                     help for reset
+      --insecure                                 reset using the insecure (encrypted with no auth) maintenance service
+      --reboot                                   if true, reboot the node after resetting instead of shutting down
+      --system-labels-to-wipe strings            if set, just wipe selected system disk partitions by label but keep other partitions intact
+      --timeout duration                         time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
+      --user-disks-to-wipe strings               if set, wipes defined devices in the list
+      --wait                                     wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
+      --wipe-mode all, system-disk, user-disks   disk reset mode (default all)
 ```
 
 ### Options inherited from parent commands

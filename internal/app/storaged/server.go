@@ -9,9 +9,10 @@ import (
 	"context"
 
 	"github.com/siderolabs/gen/slices"
-	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
+	bddisk "github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 )
 
@@ -19,16 +20,19 @@ import (
 // TODO: this is not a full blown service yet, it's used as the common base in the machine and the maintenance services.
 type Server struct {
 	storage.UnimplementedStorageServiceServer
+	Controller runtime.Controller
 }
 
 // Disks implements storage.StorageService.
 func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.DisksResponse, err error) {
-	disks, err := disk.List()
+	disks, err := bddisk.List()
 	if err != nil {
 		return nil, err
 	}
 
-	diskConv := func(d *disk.Disk) *storage.Disk {
+	systemDisk := s.Controller.Runtime().State().Machine().Disk()
+
+	diskConv := func(d *bddisk.Disk) *storage.Disk {
 		return &storage.Disk{
 			DeviceName: d.DeviceName,
 			Model:      d.Model,
@@ -38,6 +42,7 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 			Modalias:   d.Modalias,
 			Type:       storage.Disk_DiskType(d.Type),
 			BusPath:    d.BusPath,
+			SystemDisk: systemDisk != nil && d.DeviceName == systemDisk.Device().Name(),
 		}
 	}
 

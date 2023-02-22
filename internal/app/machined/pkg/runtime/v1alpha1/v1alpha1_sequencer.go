@@ -303,6 +303,8 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 }
 
 // Reset is the reset sequence.
+//
+//nolint:gocyclo,cyclop
 func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Phase {
 	phases := PhaseList{}
 
@@ -310,6 +312,21 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 	withKexec := false
 	if len(in.GetSystemDiskTargets()) > 0 {
 		withKexec = !bootPartitionInTargets(in.GetSystemDiskTargets())
+	}
+
+	var (
+		resetUserDisks  bool
+		resetSystemDisk bool
+	)
+
+	switch in.GetMode() {
+	case machineapi.ResetRequest_ALL:
+		resetUserDisks = true
+		resetSystemDisk = true
+	case machineapi.ResetRequest_USER_DISKS:
+		resetUserDisks = true
+	case machineapi.ResetRequest_SYSTEM_DISK:
+		resetSystemDisk = true
 	}
 
 	switch r.State().Platform().Mode() { //nolint:exhaustive
@@ -345,13 +362,17 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			"forceCleanup",
 			ForceCleanup,
 		).AppendWhen(
-			len(in.GetSystemDiskTargets()) == 0,
+			len(in.GetSystemDiskTargets()) == 0 && resetSystemDisk,
 			"reset",
 			ResetSystemDisk,
 		).AppendWhen(
-			len(in.GetSystemDiskTargets()) > 0,
+			len(in.GetSystemDiskTargets()) > 0 && resetSystemDisk,
 			"resetSpec",
 			ResetSystemDiskSpec,
+		).AppendWhen(
+			len(in.GetUserDisksToWipe()) > 0 && resetUserDisks,
+			"resetUserDisks",
+			ResetUserDisks,
 		).AppendWhen(
 			in.GetReboot(),
 			"reboot",

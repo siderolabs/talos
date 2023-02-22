@@ -109,6 +109,8 @@ func ParseSequence(s string) (seq Sequence, err error) {
 		seq = SequenceUpgrade
 	case stageUpgrade:
 		seq = SequenceStageUpgrade
+	case maintenanceUpgrade:
+		seq = SequenceMaintenanceUpgrade
 	case reset:
 		seq = SequenceReset
 	case reboot:
@@ -126,6 +128,8 @@ func ParseSequence(s string) (seq Sequence, err error) {
 type ResetOptions interface {
 	GetGraceful() bool
 	GetReboot() bool
+	GetMode() machine.ResetRequest_WipeMode
+	GetUserDisksToWipe() []string
 	GetSystemDiskTargets() []PartitionTarget
 }
 

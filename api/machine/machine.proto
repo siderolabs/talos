@@ -286,6 +286,11 @@ message ResetPartitionSpec {
 }
 
 message ResetRequest {
+  enum WipeMode {
+    ALL = 0;
+    SYSTEM_DISK = 1;
+    USER_DISKS = 2;
+  }
   // Graceful indicates whether node should leave etcd before the upgrade, it also
   // enforces etcd checks before leaving.
   bool graceful = 1;
@@ -294,6 +299,10 @@ message ResetRequest {
   // System_partitions_to_wipe lists specific system disk partitions to be reset (wiped).
   // If system_partitions_to_wipe is empty, all the partitions are erased.
   repeated ResetPartitionSpec system_partitions_to_wipe = 3;
+  // UserDisksToWipe lists specific connected block devices to be reset (wiped).
+  repeated string user_disks_to_wipe = 4;
+  // WipeMode defines which devices should be wiped.
+  WipeMode mode = 5;
 }
 
 // The reset message containing the restart status.

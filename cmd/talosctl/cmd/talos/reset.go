@@ -7,7 +7,10 @@ package talos
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 
+	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
@@ -16,10 +19,61 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
+var wipeOptions = map[string]machineapi.ResetRequest_WipeMode{
+	wipeModeAll:        machineapi.ResetRequest_ALL,
+	wipeModeSystemDisk: machineapi.ResetRequest_SYSTEM_DISK,
+	wipeModeUserDisks:  machineapi.ResetRequest_USER_DISKS,
+}
+
+// WipeMode apply, patch, edit config update mode.
+type WipeMode machineapi.ResetRequest_WipeMode
+
+const (
+	wipeModeAll        = "all"
+	wipeModeSystemDisk = "system-disk"
+	wipeModeUserDisks  = "user-disks"
+)
+
+func (m WipeMode) String() string {
+	switch machineapi.ResetRequest_WipeMode(m) {
+	case machineapi.ResetRequest_ALL:
+		return wipeModeAll
+	case machineapi.ResetRequest_SYSTEM_DISK:
+		return wipeModeSystemDisk
+	case machineapi.ResetRequest_USER_DISKS:
+		return wipeModeUserDisks
+	}
+
+	return wipeModeAll
+}
+
+// Set implements Flag interface.
+func (m *WipeMode) Set(value string) error {
+	mode, ok := wipeOptions[value]
+	if !ok {
+		return fmt.Errorf("possible options are: %s", m.Type())
+	}
+
+	*m = WipeMode(mode)
+
+	return nil
+}
+
+// Type implements Flag interface.
+func (m *WipeMode) Type() string {
+	options := maps.Keys(wipeOptions)
+	sort.Strings(options)
+
+	return strings.Join(options, ", ")
+}
+
 var resetCmdFlags struct {
 	trackableActionCmdFlags
 	graceful           bool
 	reboot             bool
+	insecure           bool
+	wipeMode           WipeMode
+	userDisksToWipe    []string
 	systemLabelsToWipe []string
 }
 
@@ -36,8 +90,12 @@ var resetCmd = &cobra.Command{
 
 		resetRequest := buildResetRequest()
 
+		if resetCmdFlags.wait && resetCmdFlags.insecure {
+			return fmt.Errorf("cannot use --wait and --insecure together")
+		}
+
 		if !resetCmdFlags.wait {
-			return WithClient(func(ctx context.Context, c *client.Client) error {
+			resetNoWait := func(ctx context.Context, c *client.Client) error {
 				if err := helpers.ClientVersionCheck(ctx, c); err != nil {
 					return err
 				}
@@ -47,7 +105,13 @@ var resetCmd = &cobra.Command{
 				}
 
 				return nil
-			})
+			}
+
+			if resetCmdFlags.insecure {
+				return WithClientMaintenance(nil, resetNoWait)
+			}
+
+			return WithClient(resetNoWait)
 		}
 
 		actionFn := func(ctx context.Context, c *client.Client) (string, error) {
@@ -93,6 +157,8 @@ func buildResetRequest() *machineapi.ResetRequest {
 	return &machineapi.ResetRequest{
 		Graceful:               resetCmdFlags.graceful,
 		Reboot:                 resetCmdFlags.reboot,
+		UserDisksToWipe:        resetCmdFlags.userDisksToWipe,
+		Mode:                   machineapi.ResetRequest_WipeMode(resetCmdFlags.wipeMode),
 		SystemPartitionsToWipe: systemPartitionsToWipe,
 	}
 }
@@ -113,6 +179,9 @@ func resetGetActorID(ctx context.Context, c *client.Client, req *machineapi.Rese
 func init() {
 	resetCmd.Flags().BoolVar(&resetCmdFlags.graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
 	resetCmd.Flags().BoolVar(&resetCmdFlags.reboot, "reboot", false, "if true, reboot the node after resetting instead of shutting down")
+	resetCmd.Flags().BoolVar(&resetCmdFlags.insecure, "insecure", false, "reset using the insecure (encrypted with no auth) maintenance service")
+	resetCmd.Flags().Var(&resetCmdFlags.wipeMode, "wipe-mode", "disk reset mode")
+	resetCmd.Flags().StringSliceVar(&resetCmdFlags.userDisksToWipe, "user-disks-to-wipe", nil, "if set, wipes defined devices in the list")
 	resetCmd.Flags().StringSliceVar(&resetCmdFlags.systemLabelsToWipe, "system-labels-to-wipe", nil, "if set, just wipe selected system disk partitions by label but keep other partitions intact")
 	resetCmdFlags.addTrackActionFlags(resetCmd)
 	addCommand(resetCmd)

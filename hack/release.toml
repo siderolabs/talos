@@ -92,6 +92,15 @@ You can disable this behavior by setting the kernel parameter `talos.dashboard.d
 This behavior is disabled by default on SBCs.
 """
 
+    [notes.reset]
+        title = "Reset API Enhancements"
+        description="""\
+Talos now supports resetting user disks through the Reset API,
+the list of disks to wipe is set using the `--user-disks-to-wipe` parameter in `talosctl`.
+Additionally, the Reset API can now function in maintenance mode
+and has the capability to wipe the node's system disk (partial wipe is not supported).
+"""
+
 [make_deps]
 
     [make_deps.tools]

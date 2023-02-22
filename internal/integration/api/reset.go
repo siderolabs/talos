@@ -12,10 +12,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -217,6 +219,19 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 	preReset, err := suite.HashKubeletCert(suite.ctx, node)
 	suite.Require().NoError(err)
 
+	disks, err := suite.Client.Disks(client.WithNodes(suite.ctx, node))
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(disks.Messages)
+
+	userDisksToWipe := slices.Map(
+		slices.Filter(disks.Messages[0].Disks, func(disk *storage.Disk) bool {
+			return !disk.SystemDisk
+		}),
+		func(disk *storage.Disk) string {
+			return disk.DeviceName
+		},
+	)
+
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
 			// force reboot after reset, as this is the only mode we can test
@@ -231,6 +246,7 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 								Wipe:  true,
 							},
 						},
+						UserDisksToWipe: userDisksToWipe,
 					},
 				),
 			)

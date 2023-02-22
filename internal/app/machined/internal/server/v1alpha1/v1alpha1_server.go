@@ -37,6 +37,7 @@ import (
 	"github.com/rs/xid"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
+	bddisk "github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-pointer"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
@@ -150,7 +151,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: resourceState}) //nolint:staticcheck
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
-	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
+	storage.RegisterStorageServiceServer(obj, &storaged.Server{Controller: s.Controller})
 	timeapi.RegisterTimeServiceServer(obj, &TimeServer{ConfigProvider: s.Controller.Runtime()})
 }
 
@@ -600,7 +601,7 @@ func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
 
 // Reset resets the node.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
 	actorID := uuid.New().String()
 
@@ -610,7 +611,46 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 		ResetRequest: in,
 	}
 
+	if len(in.GetUserDisksToWipe()) > 0 {
+		if in.Mode == machine.ResetRequest_SYSTEM_DISK {
+			return nil, fmt.Errorf("reset failed: invalid input, wipe mode SYSTEM_DISK doesn't support UserDisksToWipe parameter")
+		}
+
+		var diskList []*bddisk.Disk
+
+		diskList, err = bddisk.List()
+		if err != nil {
+			return nil, err
+		}
+
+		disks := slices.ToMap(diskList, func(disk *bddisk.Disk) (string, *bddisk.Disk) {
+			return disk.DeviceName, disk
+		})
+
+		systemDisk := s.Controller.Runtime().State().Machine().Disk()
+
+		// validate input
+		for _, deviceName := range in.GetUserDisksToWipe() {
+			disk, ok := disks[deviceName]
+			if !ok {
+				return nil, fmt.Errorf("reset user disk failed: device %s wasn't found", deviceName)
+			}
+
+			if disk.ReadOnly {
+				return nil, fmt.Errorf("reset user disk failed: device %s is readonly", deviceName)
+			}
+
+			if systemDisk != nil && deviceName == systemDisk.Device().Name() {
+				return nil, fmt.Errorf("reset user disk failed: device %s is the system disk", deviceName)
+			}
+		}
+	}
+
 	if len(in.GetSystemPartitionsToWipe()) > 0 {
+		if in.Mode == machine.ResetRequest_USER_DISKS {
+			return nil, fmt.Errorf("reset failed: invalid input, wipe mode USER_DISKS doesn't support SystemPartitionsToWipe parameter")
+		}
+
 		bd := s.Controller.Runtime().State().Machine().Disk().BlockDevice
 
 		var pt *gpt.GPT

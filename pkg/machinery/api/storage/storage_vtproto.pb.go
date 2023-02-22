@@ -52,6 +52,16 @@ func (m *Disk) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.SystemDisk {
+		i--
+		if m.SystemDisk {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x58
+	}
 	if len(m.BusPath) > 0 {
 		i -= len(m.BusPath)
 		copy(dAtA[i:], m.BusPath)
@@ -287,6 +297,9 @@ func (m *Disk) SizeVT() (n int) {
 	l = len(m.BusPath)
 	if l > 0 {
 		n += 1 + l + sov(uint64(l))
+	}
+	if m.SystemDisk {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -663,6 +676,26 @@ func (m *Disk) UnmarshalVT(dAtA []byte) error {
 			}
 			m.BusPath = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SystemDisk", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.SystemDisk = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

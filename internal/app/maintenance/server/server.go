@@ -14,12 +14,14 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	"github.com/google/uuid"
+	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/siderolabs/talos/internal/app/resources"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
 	"github.com/siderolabs/talos/internal/pkg/configuration"
@@ -28,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/version"
 )
 
@@ -58,7 +61,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	resourceState := s.controller.Runtime().State().V1Alpha2().Resources()
 	resourceState = state.WrapCore(state.Filter(resourceState, resources.AccessPolicy(resourceState)))
 
-	storage.RegisterStorageServiceServer(obj, &storaged.Server{})
+	storage.RegisterStorageServiceServer(obj, &storaged.Server{Controller: s.controller})
 	machine.RegisterMachineServiceServer(obj, s)
 	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: resourceState}) //nolint:staticcheck
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
@@ -194,6 +197,91 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		Messages: []*machine.Upgrade{
 			{
 				Ack:     "Upgrade request received",
+				ActorId: actorID,
+			},
+		},
+	}
+
+	return reply, nil
+}
+
+// Reset resets the node.
+//
+//nolint:gocyclo
+func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
+	if err = assertPeerSideroLink(ctx); err != nil {
+		return nil, err
+	}
+
+	if in.UserDisksToWipe != nil && in.Mode == machine.ResetRequest_SYSTEM_DISK {
+		return nil, fmt.Errorf("reset failed: invalid input, wipe mode SYSTEM_DISK doesn't support UserDisksToWipe parameter")
+	}
+
+	actorID := uuid.New().String()
+
+	log.Printf("reset request received. actorID: %s", actorID)
+
+	if len(in.GetSystemPartitionsToWipe()) > 0 {
+		return nil, fmt.Errorf("system partitions to wipe params is not supported in the maintenance mode")
+	}
+
+	var dev *blockdevice.BlockDevice
+
+	disk := s.controller.Runtime().State().Machine().Disk(disk.WithPartitionLabel(constants.BootPartitionLabel))
+
+	if disk == nil {
+		return nil, fmt.Errorf("reset failed: Talos is not installed")
+	}
+
+	dev, err = blockdevice.Open(disk.Device().Name())
+	if err != nil {
+		return nil, err
+	}
+
+	defer dev.Close() //nolint:errcheck
+
+	if err = dev.Reset(); err != nil {
+		return nil, err
+	}
+
+	resetCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
+
+	if in.Mode != machine.ResetRequest_SYSTEM_DISK {
+		for _, deviceName := range in.UserDisksToWipe {
+			var dev *blockdevice.BlockDevice
+
+			dev, err = blockdevice.Open(deviceName)
+			if err != nil {
+				return nil, err
+			}
+
+			defer dev.Close() //nolint:errcheck
+
+			log.Printf("wiping user disk %s", deviceName)
+
+			err = dev.FastWipe()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	go func() {
+		sequence := runtime.SequenceShutdown
+		if in.Reboot {
+			sequence = runtime.SequenceReboot
+		}
+
+		if err := s.controller.Run(resetCtx, sequence, in); err != nil {
+			if !runtime.IsRebootError(err) {
+				log.Println("reset failed:", err)
+			}
+		}
+	}()
+
+	reply = &machine.ResetResponse{
+		Messages: []*machine.Reset{
+			{
 				ActorId: actorID,
 			},
 		},
