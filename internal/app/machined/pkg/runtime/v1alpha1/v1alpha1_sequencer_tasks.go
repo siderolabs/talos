@@ -30,6 +30,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	pprocfs "github.com/prometheus/procfs"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util"
@@ -80,7 +81,7 @@ import (
 )
 
 // SetupLogger represents the SetupLogger task.
-func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SetupLogger(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		machinedLog, err := r.Logging().ServiceLog("machined").Writer()
 		if err != nil {
@@ -117,7 +118,7 @@ func SetupLogger(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionF
 }
 
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
-func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func EnforceKSPPRequirements(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		if err = resourceruntime.NewKernelParamsSetCondition(r.State().V1Alpha2().Resources(), kspp.GetKernelParams()...).Wait(ctx); err != nil {
 			return err
@@ -128,7 +129,7 @@ func EnforceKSPPRequirements(seq runtime.Sequence, data interface{}) (runtime.Ta
 }
 
 // SetupSystemDirectory represents the SetupSystemDirectory task.
-func SetupSystemDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SetupSystemDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		for _, p := range []string{constants.SystemEtcPath, constants.SystemVarPath, constants.StateMountPoint} {
 			if err = os.MkdirAll(p, 0o700); err != nil {
@@ -149,7 +150,7 @@ func SetupSystemDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskE
 // CreateSystemCgroups represents the CreateSystemCgroups task.
 //
 //nolint:gocyclo
-func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// in container mode cgroups mode depends on cgroups provided by the container runtime
 		if r.State().Platform().Mode() != runtime.ModeContainer {
@@ -255,7 +256,7 @@ func CreateSystemCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 }
 
 // MountBPFFS represents the MountBPFFS task.
-func MountBPFFS(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountBPFFS(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var mountpoints *mount.Points
 
@@ -269,7 +270,7 @@ func MountBPFFS(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 }
 
 // MountCgroups represents the MountCgroups task.
-func MountCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var mountpoints *mount.Points
 
@@ -283,7 +284,7 @@ func MountCgroups(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 }
 
 // MountPseudoFilesystems represents the MountPseudoFilesystems task.
-func MountPseudoFilesystems(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountPseudoFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var mountpoints *mount.Points
 
@@ -297,7 +298,7 @@ func MountPseudoFilesystems(seq runtime.Sequence, data interface{}) (runtime.Tas
 }
 
 // SetRLimit represents the SetRLimit task.
-func SetRLimit(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SetRLimit(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// TODO(andrewrynhard): Should we read limit from /proc/sys/fs/nr_open?
 		return unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Cur: 1048576, Max: 1048576})
@@ -345,7 +346,7 @@ var rules = []string{
 }
 
 // WriteIMAPolicy represents the WriteIMAPolicy task.
-func WriteIMAPolicy(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func WriteIMAPolicy(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		if _, err = os.Stat("/sys/kernel/security/ima/policy"); os.IsNotExist(err) {
 			return fmt.Errorf("policy file does not exist: %w", err)
@@ -445,7 +446,7 @@ func createBindMount(src, dst string) (err error) {
 }
 
 // CreateOSReleaseFile represents the CreateOSReleaseFile task.
-func CreateOSReleaseFile(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func CreateOSReleaseFile(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// Create /etc/os-release.
 		return OSRelease()
@@ -453,7 +454,7 @@ func CreateOSReleaseFile(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 }
 
 // LoadConfig represents the LoadConfig task.
-func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func LoadConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		download := func() error {
 			var b []byte
@@ -563,7 +564,7 @@ func LoadConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 }
 
 // SaveConfig represents the SaveConfig task.
-func SaveConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SaveConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var b []byte
 
@@ -649,7 +650,7 @@ func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger,
 }
 
 // ValidateConfig validates the config.
-func ValidateConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func ValidateConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		warnings, err := r.Config().Validate(r.State().Platform().Mode())
 		for _, w := range warnings {
@@ -737,7 +738,7 @@ func DiskSizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 }
 
 // SetUserEnvVars represents the SetUserEnvVars task.
-func SetUserEnvVars(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SetUserEnvVars(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		for key, val := range r.Config().Machine().Env() {
 			if err = os.Setenv(key, val); err != nil {
@@ -750,7 +751,7 @@ func SetUserEnvVars(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 }
 
 // StartContainerd represents the task to start containerd.
-func StartContainerd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func StartContainerd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		svc := &services.Containerd{}
 
@@ -764,7 +765,7 @@ func StartContainerd(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 }
 
 // WriteUdevRules is the task that writes udev rules to a udev rules file.
-func WriteUdevRules(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		rules := r.Config().Machine().Udev().Rules()
 
@@ -784,7 +785,7 @@ func WriteUdevRules(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 }
 
 // StartMachined represents the task to start machined.
-func StartMachined(_ runtime.Sequence, _ interface{}) (runtime.TaskExecutionFunc, string) {
+func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		svc := &services.Machined{}
 
@@ -816,7 +817,7 @@ func StartDashboard(_ runtime.Sequence, _ interface{}) (runtime.TaskExecutionFun
 }
 
 // StartUdevd represents the task to start udevd.
-func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		mp := mount.NewMountPoints()
 		mp.Set("udev-data", mount.NewMountPoint("", constants.UdevDir, "", unix.MS_I_VERSION, "", mount.WithFlags(mount.Overlay|mount.SystemOverlay|mount.Shared)))
@@ -837,7 +838,7 @@ func StartUdevd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFu
 }
 
 // StartAllServices represents the task to start the system services.
-func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// nb: Treating the beginning of "service starts" as the activate event for a normal
 		// non-maintenance mode boot. At this point, we'd expect the user to
@@ -920,7 +921,7 @@ func StartAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 }
 
 // StopServicesEphemeral represents the StopServicesEphemeral task.
-func StopServicesEphemeral(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func StopServicesEphemeral(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// stopping 'cri' service stops everything which depends on it (kubelet, etcd, ...)
 		return system.Services(nil).StopWithRevDepenencies(ctx, "cri", "udevd", "trustd")
@@ -928,7 +929,7 @@ func StopServicesEphemeral(seq runtime.Sequence, data interface{}) (runtime.Task
 }
 
 // StopAllServices represents the StopAllServices task.
-func StopAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func StopAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		system.Services(nil).Shutdown(ctx)
 
@@ -937,7 +938,7 @@ func StopAllServices(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 }
 
 // MountOverlayFilesystems represents the MountOverlayFilesystems task.
-func MountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var mountpoints *mount.Points
 
@@ -951,7 +952,7 @@ func MountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.Ta
 }
 
 // SetupSharedFilesystems represents the SetupSharedFilesystems task.
-func SetupSharedFilesystems(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SetupSharedFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		targets := []string{"/", "/var", "/etc/cni", "/run"}
 		for _, t := range targets {
@@ -965,7 +966,7 @@ func SetupSharedFilesystems(seq runtime.Sequence, data interface{}) (runtime.Tas
 }
 
 // SetupVarDirectory represents the SetupVarDirectory task.
-func SetupVarDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		for _, p := range []string{"/var/log/audit", "/var/log/containers", "/var/log/pods", "/var/lib/kubelet", "/var/run/lock", constants.SeccompProfilesDirectory} {
 			if err = os.MkdirAll(p, 0o700); err != nil {
@@ -989,7 +990,7 @@ func SetupVarDirectory(seq runtime.Sequence, data interface{}) (runtime.TaskExec
 }
 
 // MountUserDisks represents the MountUserDisks task.
-func MountUserDisks(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		if err = partitionAndFormatDisks(logger, r); err != nil {
 			return err
@@ -1117,7 +1118,7 @@ func unmountDisks(r runtime.Runtime) (err error) {
 // WriteUserFiles represents the WriteUserFiles task.
 //
 //nolint:gocyclo,cyclop
-func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func WriteUserFiles(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var result *multierror.Error
 
@@ -1305,7 +1306,7 @@ func existsAndIsFile(p string) (err error) {
 }
 
 // UnmountOverlayFilesystems represents the UnmountOverlayFilesystems task.
-func UnmountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UnmountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var mountpoints *mount.Points
 
@@ -1319,14 +1320,14 @@ func UnmountOverlayFilesystems(seq runtime.Sequence, data interface{}) (runtime.
 }
 
 // UnmountUserDisks represents the UnmountUserDisks task.
-func UnmountUserDisks(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UnmountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		return unmountDisks(r)
 	}, "unmountUserDisks"
 }
 
 // UnmountPodMounts represents the UnmountPodMounts task.
-func UnmountPodMounts(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var b []byte
 
@@ -1363,7 +1364,7 @@ func UnmountPodMounts(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 }
 
 // UnmountSystemDiskBindMounts represents the UnmountSystemDiskBindMounts task.
-func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UnmountSystemDiskBindMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		devname := r.State().Machine().Disk().BlockDevice.Device().Name()
 
@@ -1404,7 +1405,7 @@ func UnmountSystemDiskBindMounts(seq runtime.Sequence, data interface{}) (runtim
 
 // CordonAndDrainNode represents the task for stop all containerd tasks in the
 // k8s.io namespace.
-func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func CordonAndDrainNode(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// skip not exist error as it means that the node hasn't fully joined yet
 		if _, err = os.Stat("/var/lib/kubelet/pki/kubelet-client-current.pem"); err != nil {
@@ -1436,7 +1437,7 @@ func CordonAndDrainNode(seq runtime.Sequence, data interface{}) (runtime.TaskExe
 // UncordonNode represents the task for mark node as scheduling enabled.
 //
 // This action undoes the CordonAndDrainNode task.
-func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UncordonNode(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var kubeHelper *kubernetes.Client
 
@@ -1472,7 +1473,7 @@ func UncordonNode(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 // LeaveEtcd represents the task for removing a control plane node from etcd.
 //
 //nolint:gocyclo
-func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func LeaveEtcd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		_, err = os.Stat(filepath.Join(constants.EtcdDataPath, "/member"))
 		if err != nil {
@@ -1530,12 +1531,12 @@ func LeaveEtcd(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFun
 }
 
 // RemoveAllPods represents the task for stopping and removing all pods.
-func RemoveAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func RemoveAllPods(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return stopAndRemoveAllPods(cri.StopAndRemove), "removeAllPods"
 }
 
 // StopAllPods represents the task for stopping all pods.
-func StopAllPods(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func StopAllPods(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return stopAndRemoveAllPods(cri.StopOnly), "stopAllPods"
 }
 
@@ -1611,8 +1612,70 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 	}
 }
 
+// ResetSystemDiskPartitions represents the task for wiping the system disk partitions.
+func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
+	wipeStr := procfs.ProcCmdline().Get(constants.KernelParamWipe).First()
+	reboot, _ := Reboot(seq, nil)
+
+	if pointer.SafeDeref(wipeStr) == "" {
+		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+			return errors.New("no wipe target specified")
+		}, "wipeSystemDisk"
+	}
+
+	if *wipeStr == "system" {
+		resetSystemDisk, _ := ResetSystemDisk(seq, nil)
+
+		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+			logger.Printf("resetting system disks")
+
+			err := resetSystemDisk(ctx, logger, r)
+			if err != nil {
+				logger.Printf("resetting system disks failed")
+
+				return err
+			}
+
+			logger.Printf("finished resetting system disks")
+
+			return reboot(ctx, logger, r) // only reboot when we wiped boot partition
+		}, "wipeSystemDisk"
+	}
+
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		targets, err := parseTargets(r, *wipeStr)
+		if err != nil {
+			return err
+		}
+
+		fn, _ := ResetSystemDiskSpec(seq, targets)
+		diskTargets := targets.GetSystemDiskTargets()
+
+		logger.Printf("resetting system disks %s", diskTargets)
+
+		err = fn(ctx, logger, r)
+		if err != nil {
+			logger.Printf("resetting system disks %s failed", diskTargets)
+
+			return err
+		}
+
+		logger.Printf("finished resetting system disks %s", diskTargets)
+
+		bootWiped := slices.Contains(diskTargets, func(t runtime.PartitionTarget) bool {
+			return t.GetLabel() == constants.BootPartitionLabel
+		})
+
+		if bootWiped {
+			return reboot(ctx, logger, r) // only reboot when we wiped boot partition
+		}
+
+		return nil
+	}, "wipeSystemDiskPartitions"
+}
+
 // ResetSystemDisk represents the task to reset the system disk.
-func ResetSystemDisk(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func ResetSystemDisk(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var dev *blockdevice.BlockDevice
 
@@ -1672,10 +1735,60 @@ func ResetUserDisks(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, st
 	}, "resetUserDisks"
 }
 
+type targets struct {
+	systemDiskTargets []*installer.Target
+}
+
+func (opt targets) GetSystemDiskTargets() []runtime.PartitionTarget {
+	return slices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
+}
+
+func parseTargets(r runtime.Runtime, wipeStr string) (targets, error) {
+	after, found := strings.CutPrefix(wipeStr, "system:")
+	if !found {
+		return targets{}, fmt.Errorf("invalid wipe labels string: %q", wipeStr)
+	}
+
+	var result []*installer.Target //nolint:prealloc
+
+	for _, part := range strings.Split(after, ",") {
+		bd := r.State().Machine().Disk().BlockDevice
+
+		target, err := installer.ParseTarget(part, bd.Device().Name())
+		if err != nil {
+			return targets{}, fmt.Errorf("error parsing target label %q: %w", part, err)
+		}
+
+		pt, err := bd.PartitionTable()
+		if err != nil {
+			return targets{}, fmt.Errorf("error reading partition table: %w", err)
+		}
+
+		_, err = target.Locate(pt)
+		if err != nil {
+			return targets{}, fmt.Errorf("error locating partition %q: %w", part, err)
+		}
+
+		result = append(result, target)
+	}
+
+	if len(result) == 0 {
+		return targets{}, fmt.Errorf("no wipe labels specified")
+	}
+
+	return targets{systemDiskTargets: result}, nil
+}
+
+// SystemDiskTargets represents the interface for getting the system disk targets.
+// It's a subset of [runtime.ResetOptions].
+type SystemDiskTargets interface {
+	GetSystemDiskTargets() []runtime.PartitionTarget
+}
+
 // ResetSystemDiskSpec represents the task to reset the system disk by spec.
-func ResetSystemDiskSpec(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func ResetSystemDiskSpec(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		in, ok := data.(runtime.ResetOptions)
+		in, ok := data.(SystemDiskTargets)
 		if !ok {
 			return fmt.Errorf("unexpected runtime data")
 		}
@@ -1694,7 +1807,7 @@ func ResetSystemDiskSpec(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 
 // VerifyDiskAvailability represents the task for verifying that the system
 // disk is not in use.
-func VerifyDiskAvailability(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func VerifyDiskAvailability(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		devname := r.State().Machine().Disk().BlockDevice.Device().Name()
 
@@ -1763,7 +1876,7 @@ func dumpMounts(logger *log.Logger) {
 }
 
 // Upgrade represents the task for performing an upgrade.
-func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func Upgrade(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// This should be checked by the gRPC server, but we double check here just
 		// to be safe.
@@ -1795,7 +1908,7 @@ func Upgrade(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 }
 
 // LabelNodeAsControlPlane represents the LabelNodeAsControlPlane task.
-func LabelNodeAsControlPlane(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func LabelNodeAsControlPlane(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 			var h *kubernetes.Client
@@ -1829,7 +1942,7 @@ func LabelNodeAsControlPlane(seq runtime.Sequence, data interface{}) (runtime.Ta
 }
 
 // UpdateBootloader represents the UpdateBootloader task.
-func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UpdateBootloader(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		meta, err := bootloader.NewMeta()
 		if err != nil {
@@ -1851,7 +1964,7 @@ func UpdateBootloader(seq runtime.Sequence, data interface{}) (runtime.TaskExecu
 }
 
 // Reboot represents the Reboot task.
-func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func Reboot(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		rebootCmd := unix.LINUX_REBOOT_CMD_RESTART
 
@@ -1877,7 +1990,7 @@ func Reboot(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, 
 }
 
 // Shutdown represents the Shutdown task.
-func Shutdown(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func Shutdown(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		cmd := unix.LINUX_REBOOT_CMD_POWER_OFF
 
@@ -1896,7 +2009,7 @@ func Shutdown(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc
 }
 
 // SaveStateEncryptionConfig saves state partition encryption info in the meta partition.
-func SaveStateEncryptionConfig(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func SaveStateEncryptionConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		config := r.Config()
 		if config == nil {
@@ -1930,35 +2043,35 @@ func SaveStateEncryptionConfig(seq runtime.Sequence, data interface{}) (runtime.
 }
 
 // MountBootPartition mounts the boot partition.
-func MountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountBootPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		return mount.SystemPartitionMount(r, logger, constants.BootPartitionLabel)
 	}, "mountBootPartition"
 }
 
 // UnmountBootPartition unmounts the boot partition.
-func UnmountBootPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UnmountBootPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		return mount.SystemPartitionUnmount(r, logger, constants.BootPartitionLabel)
 	}, "unmountBootPartition"
 }
 
 // MountEFIPartition mounts the EFI partition.
-func MountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountEFIPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		return mount.SystemPartitionMount(r, logger, constants.EFIPartitionLabel)
 	}, "mountEFIPartition"
 }
 
 // UnmountEFIPartition unmounts the EFI partition.
-func UnmountEFIPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UnmountEFIPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		return mount.SystemPartitionUnmount(r, logger, constants.EFIPartitionLabel)
 	}, "unmountEFIPartition"
 }
 
 // MountStatePartition mounts the system partition.
-func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountStatePartition(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		meta, err := bootloader.NewMeta()
 		if err != nil {
@@ -2005,28 +2118,28 @@ func MountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskEx
 }
 
 // UnmountStatePartition unmounts the system partition.
-func UnmountStatePartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UnmountStatePartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		return mount.SystemPartitionUnmount(r, logger, constants.StatePartitionLabel)
 	}, "unmountStatePartition"
 }
 
 // MountEphemeralPartition mounts the ephemeral partition.
-func MountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		return mount.SystemPartitionMount(r, logger, constants.EphemeralPartitionLabel, mount.WithFlags(mount.Resize))
 	}, "mountEphemeralPartition"
 }
 
 // UnmountEphemeralPartition unmounts the ephemeral partition.
-func UnmountEphemeralPartition(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func UnmountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		return mount.SystemPartitionUnmount(r, logger, constants.EphemeralPartitionLabel)
 	}, "unmountEphemeralPartition"
 }
 
 // Install mounts or installs the system partitions.
-func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		switch {
 		case !r.State().Machine().Installed():
@@ -2130,7 +2243,7 @@ func Install(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc,
 }
 
 // ActivateLogicalVolumes represents the task for activating logical volumes.
-func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func ActivateLogicalVolumes(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		if _, err = cmd.Run("/sbin/lvm", "vgchange", "-ay"); err != nil {
 			return fmt.Errorf("failed to activate logical volumes: %w", err)
@@ -2143,7 +2256,7 @@ func ActivateLogicalVolumes(seq runtime.Sequence, data interface{}) (runtime.Tas
 // KexecPrepare loads next boot kernel via kexec_file_load.
 //
 //nolint:gocyclo
-func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		if req, ok := data.(*machineapi.RebootRequest); ok {
 			if req.Mode == machineapi.RebootRequest_POWERCYCLE {
@@ -2218,14 +2331,14 @@ func KexecPrepare(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 }
 
 // StartDBus starts the D-Bus mock.
-func StartDBus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func StartDBus(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		return r.State().Machine().DBus().Start()
 	}, "startDBus"
 }
 
 // StopDBus stops the D-Bus mock.
-func StopDBus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func StopDBus(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		if err := r.State().Machine().DBus().Stop(); err != nil {
 			logger.Printf("error stopping D-Bus: %s, ignored", err)
@@ -2236,7 +2349,7 @@ func StopDBus(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc
 }
 
 // ForceCleanup kills remaining procs and forces partitions unmount.
-func ForceCleanup(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func ForceCleanup(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		if err := proc.KillAll(); err != nil {
 			logger.Printf("error killing all procs: %s", err)
@@ -2253,7 +2366,7 @@ func ForceCleanup(seq runtime.Sequence, data interface{}) (runtime.TaskExecution
 // CleanupLegacyStaticPodFiles removes legacy static pod files in the manifests directory.
 //
 // This part of transition to Talos 1.3.0, as Talos 1.3.0 serves static pods from internal web server.
-func CleanupLegacyStaticPodFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func CleanupLegacyStaticPodFiles(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		manifestDir, err := os.Open(constants.ManifestsDirectory)
 		if err != nil {
@@ -2286,10 +2399,10 @@ func CleanupLegacyStaticPodFiles(seq runtime.Sequence, data interface{}) (runtim
 	}, "cleanupLegacyStaticPodFiles"
 }
 
-func pauseOnFailure(callback func(runtime.Sequence, interface{}) (runtime.TaskExecutionFunc, string),
+func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),
 	timeout time.Duration,
-) func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+) func(seq runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
+	return func(seq runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 		f, name := callback(seq, data)
 
 		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
@@ -2312,7 +2425,7 @@ func pauseOnFailure(callback func(runtime.Sequence, interface{}) (runtime.TaskEx
 }
 
 func taskErrorHandler(handler func(error, *log.Logger) error, task runtime.TaskSetupFunc) runtime.TaskSetupFunc {
-	return func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+	return func(seq runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 		f, name := task(seq, data)
 
 		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {

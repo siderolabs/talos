@@ -46,7 +46,7 @@ func (p PhaseList) AppendWhen(when bool, name string, tasks ...runtime.TaskSetup
 	return p
 }
 
-// AppendWithDeferredCheck appends a task to the phase list but skips the sequence if `check func()` returns `true` during execution.
+// AppendWithDeferredCheck appends a task to the phase list but skips the sequence if `check func()` returns `false` during execution.
 func (p PhaseList) AppendWithDeferredCheck(check func() bool, name string, tasks ...runtime.TaskSetupFunc) PhaseList {
 	p = append(p, runtime.Phase{
 		Name:      name,
@@ -118,6 +118,14 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			},
 			"dashboard",
 			StartDashboard,
+		).AppendWithDeferredCheck(
+			func() bool {
+				wipe := procfs.ProcCmdline().Get(constants.KernelParamWipe).First()
+
+				return pointer.SafeDeref(wipe) != ""
+			},
+			"wipeDisks",
+			ResetSystemDiskPartitions,
 		).AppendWithDeferredCheck(
 			func() bool {
 				return r.State().Machine().Installed()
@@ -199,11 +207,6 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 // This sequence should never be reached if an installation is not found.
 func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
-
-	wipe := procfs.ProcCmdline().Get(constants.KernelParamWipe).First()
-	if wipe != nil && *wipe == "system" {
-		return phases.Append("wipeSystemDisk", ResetSystemDisk).Append("reboot", Reboot)
-	}
 
 	phases = phases.AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
@@ -436,7 +439,7 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 }
 
 // MaintenanceUpgrade is the upgrade sequence in maintenance mode.
-func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
+func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, _ *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
 	switch r.State().Platform().Mode() { //nolint:exhaustive

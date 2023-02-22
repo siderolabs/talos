@@ -75,6 +75,26 @@ var NoFilesystem = &Target{
 	},
 }
 
+// ParseTarget parses the target from the label and creates a required target.
+func ParseTarget(label, deviceName string) (*Target, error) {
+	switch label {
+	case constants.EFIPartitionLabel:
+		return EFITarget(deviceName, nil), nil
+	case constants.BIOSGrubPartitionLabel:
+		return BIOSTarget(deviceName, nil), nil
+	case constants.BootPartitionLabel:
+		return BootTarget(deviceName, nil), nil
+	case constants.MetaPartitionLabel:
+		return MetaTarget(deviceName, nil), nil
+	case constants.StatePartitionLabel:
+		return StateTarget(deviceName, NoFilesystem), nil
+	case constants.EphemeralPartitionLabel:
+		return EphemeralTarget(deviceName, NoFilesystem), nil
+	default:
+		return nil, fmt.Errorf("label %q is not supported", label)
+	}
+}
+
 // EFITarget builds the default EFI target.
 func EFITarget(device string, extra *Target) *Target {
 	target := &Target{

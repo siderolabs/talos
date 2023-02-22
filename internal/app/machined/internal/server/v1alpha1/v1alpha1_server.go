@@ -661,23 +661,9 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 		}
 
 		for _, spec := range in.GetSystemPartitionsToWipe() {
-			var target *installer.Target
-
-			switch spec.Label {
-			case constants.EFIPartitionLabel:
-				target = installer.EFITarget(bd.Device().Name(), nil)
-			case constants.BIOSGrubPartitionLabel:
-				target = installer.BIOSTarget(bd.Device().Name(), nil)
-			case constants.BootPartitionLabel:
-				target = installer.BootTarget(bd.Device().Name(), nil)
-			case constants.MetaPartitionLabel:
-				target = installer.MetaTarget(bd.Device().Name(), nil)
-			case constants.StatePartitionLabel:
-				target = installer.StateTarget(bd.Device().Name(), installer.NoFilesystem)
-			case constants.EphemeralPartitionLabel:
-				target = installer.EphemeralTarget(bd.Device().Name(), installer.NoFilesystem)
-			default:
-				return nil, fmt.Errorf("label %q is not supported", spec.Label)
+			target, err := installer.ParseTarget(spec.Label, bd.Device().Name())
+			if err != nil {
+				return nil, err
 			}
 
 			_, err = target.Locate(pt)

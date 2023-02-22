@@ -207,6 +207,7 @@ Resets the disk before starting up the system.
 Valid options are:
 
 * `system` resets system disk.
+* `system:EPHEMERAL,STATE` resets ephemeral and state partitions. Doing this reverts Talos into maintenance mode.
 
 #### `talos.unified_cgroup_hierarchy`
 

@@ -13,7 +13,7 @@ import (
 
 // TaskSetupFunc defines the function that a task will execute for a specific runtime
 // mode.
-type TaskSetupFunc func(seq Sequence, data interface{}) (TaskExecutionFunc, string)
+type TaskSetupFunc func(seq Sequence, data any) (TaskExecutionFunc, string)
 
 // TaskExecutionFunc defines the function that a task will execute for a specific runtime
 // mode.

@@ -43,6 +43,14 @@ This allows modules of same name to co-exist as in-tree and external modules.
 System Extensions can provide modules installed into `extras` directory and when loading it'll take precendence over the in-tree module.
 """
 
+    [notes.kernel-reset-argument]
+        title = "Kernel Reset Argument"
+        description="""\
+Talos now supports `talos.experimental.wipe=system:EPHEMERAL,STATE` kernel argument.
+Talos now also supports the new GRUB boot option - "Reset Talos installation and return to maintenance mode".
+Both of this options will reset EPHEMERAL and STATE partitions and will return Talos into maintenance mode after the reboot.
+"""
+
     [notes.etcd]
         title = "etcd Maintenance"
         description="""\
