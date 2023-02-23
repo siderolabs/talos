@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-version"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos12"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos13"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos14"
 )
@@ -45,6 +46,9 @@ func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 	)
 
 	switch v.majorMinor {
+	case talos12.MajorMinor: // upgrades to 1.2.x
+		minHostUpgradeVersion, maxHostDowngradeVersion = talos12.MinimumHostUpgradeVersion, talos12.MaximumHostDowngradeVersion
+		deniedHostUpgradeVersions = talos12.DeniedHostUpgradeVersions
 	case talos13.MajorMinor: // upgrades to 1.3.x
 		minHostUpgradeVersion, maxHostDowngradeVersion = talos13.MinimumHostUpgradeVersion, talos13.MaximumHostDowngradeVersion
 		deniedHostUpgradeVersions = talos13.DeniedHostUpgradeVersions

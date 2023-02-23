@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 
+	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos12"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos13"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos14"
 )
@@ -39,6 +40,8 @@ func (v *KubernetesVersion) SupportedWith(target *TalosVersion) error {
 	var minK8sVersion, maxK8sVersion *version.Version
 
 	switch target.majorMinor {
+	case talos12.MajorMinor: // upgrades to 1.2.x
+		minK8sVersion, maxK8sVersion = talos12.MinimumKubernetesVersion, talos12.MaximumKubernetesVersion
 	case talos13.MajorMinor: // upgrades to 1.3.x
 		minK8sVersion, maxK8sVersion = talos13.MinimumKubernetesVersion, talos13.MaximumKubernetesVersion
 	case talos14.MajorMinor: // upgrades to 1.4.x

@@ -20,7 +20,7 @@ var MaximumHostDowngradeVersion = version.Must(version.NewVersion("1.6.0"))
 var DeniedHostUpgradeVersions = []*version.Version{}
 
 // MinimumKubernetesVersion is the minimum version of Kubernetes is supported with 1.4.
-var MinimumKubernetesVersion = version.Must(version.NewVersion("1.24.0"))
+var MinimumKubernetesVersion = version.Must(version.NewVersion("1.25.0"))
 
 // MaximumKubernetesVersion is the maximum version of Kubernetes is supported with 1.4.
-var MaximumKubernetesVersion = version.Must(version.NewVersion("1.26.99"))
+var MaximumKubernetesVersion = version.Must(version.NewVersion("1.27.99"))

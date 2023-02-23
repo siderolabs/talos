@@ -38,6 +38,35 @@ func runKubernetesVersionTest(t *testing.T, tt kubernetesVersionTest) {
 	})
 }
 
+func TestKubernetesCompatibility12(t *testing.T) {
+	for _, tt := range []kubernetesVersionTest{
+		{
+			kubernetesVersion: "1.23.1",
+			target:            "1.2.0",
+		},
+		{
+			kubernetesVersion: "1.24.3",
+			target:            "1.2.0-beta.0",
+		},
+		{
+			kubernetesVersion: "1.25.0-rc.0",
+			target:            "1.2.7",
+		},
+		{
+			kubernetesVersion: "1.26.0-alpha.0",
+			target:            "1.2.0",
+			expectedError:     "version of Kubernetes 1.26.0-alpha.0 is too new to be used with Talos 1.2.0",
+		},
+		{
+			kubernetesVersion: "1.22.4",
+			target:            "1.2.0",
+			expectedError:     "version of Kubernetes 1.22.4 is too old to be used with Talos 1.2.0",
+		},
+	} {
+		runKubernetesVersionTest(t, tt)
+	}
+}
+
 func TestKubernetesCompatibility13(t *testing.T) {
 	for _, tt := range []kubernetesVersionTest{
 		{
@@ -70,26 +99,26 @@ func TestKubernetesCompatibility13(t *testing.T) {
 func TestKubernetesCompatibility14(t *testing.T) {
 	for _, tt := range []kubernetesVersionTest{
 		{
-			kubernetesVersion: "1.24.1",
+			kubernetesVersion: "1.25.1",
 			target:            "1.4.0",
 		},
 		{
-			kubernetesVersion: "1.25.3",
+			kubernetesVersion: "1.26.3",
 			target:            "1.4.0-beta.0",
 		},
 		{
-			kubernetesVersion: "1.26.0-rc.0",
+			kubernetesVersion: "1.27.0-rc.0",
 			target:            "1.4.7",
 		},
 		{
-			kubernetesVersion: "1.27.0-alpha.0",
+			kubernetesVersion: "1.28.0-alpha.0",
 			target:            "1.4.0",
-			expectedError:     "version of Kubernetes 1.27.0-alpha.0 is too new to be used with Talos 1.4.0",
+			expectedError:     "version of Kubernetes 1.28.0-alpha.0 is too new to be used with Talos 1.4.0",
 		},
 		{
-			kubernetesVersion: "1.23.4",
+			kubernetesVersion: "1.24.1",
 			target:            "1.4.0",
-			expectedError:     "version of Kubernetes 1.23.4 is too old to be used with Talos 1.4.0",
+			expectedError:     "version of Kubernetes 1.24.1 is too old to be used with Talos 1.4.0",
 		},
 	} {
 		runKubernetesVersionTest(t, tt)
@@ -105,8 +134,8 @@ func TestKubernetesCompatibilityUnsupported(t *testing.T) {
 		},
 		{
 			kubernetesVersion: "1.25.0",
-			target:            "1.2.0",
-			expectedError:     "compatibility with version 1.2.0 is not supported",
+			target:            "1.1.0",
+			expectedError:     "compatibility with version 1.1.0 is not supported",
 		},
 	} {
 		runKubernetesVersionTest(t, tt)
