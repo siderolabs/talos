@@ -235,11 +235,11 @@ func (d *DHCP6) renew(ctx context.Context) (time.Duration, error) {
 	var modifiers []dhcpv6.Modifier
 
 	if len(d.duid) > 0 {
-		duid, derr := dhcpv6.DuidFromBytes(d.duid)
+		duid, derr := dhcpv6.DUIDFromBytes(d.duid)
 		if derr != nil {
 			d.logger.Error("failed to parse DUID, ignored", zap.String("link", d.linkName))
 		} else {
-			modifiers = []dhcpv6.Modifier{dhcpv6.WithClientID(*duid)}
+			modifiers = []dhcpv6.Modifier{dhcpv6.WithClientID(duid)}
 		}
 	}
 

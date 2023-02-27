@@ -168,9 +168,8 @@ func handlerDHCP6(serverHwAddr net.HardwareAddr, statePath string) server6.Handl
 				PreferredLifetime: 5 * time.Minute,
 				ValidLifetime:     5 * time.Minute,
 			}),
-			dhcpv6.WithServerID(dhcpv6.Duid{
-				Type:          dhcpv6.DUID_LLT,
-				HwType:        iana.HWTypeEthernet,
+			dhcpv6.WithServerID(&dhcpv6.DUIDLLT{
+				HWType:        iana.HWTypeEthernet,
 				Time:          dhcpv6.GetTime(),
 				LinkLayerAddr: serverHwAddr,
 			}),
