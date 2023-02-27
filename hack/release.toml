@@ -73,6 +73,12 @@ machine:
 ```
 """
 
+    [notes.machineconfig]
+        title = "Machine Configuration"
+        description="""\
+Strategic merge config patches correctly support merging `.vlans` sections of the network interface.
+"""
+
 [make_deps]
 
     [make_deps.tools]

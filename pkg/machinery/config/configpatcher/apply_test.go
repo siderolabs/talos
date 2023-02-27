@@ -27,6 +27,7 @@ func TestApply(t *testing.T) {
 		"@testdata/apply/jsonpatch1.yaml",
 		"@testdata/apply/jsonpatch2.yaml",
 		"@testdata/apply/strategic2.yaml",
+		"@testdata/apply/strategic3.yaml",
 	})
 	require.NoError(t, err)
 

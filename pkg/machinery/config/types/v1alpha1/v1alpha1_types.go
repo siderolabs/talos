@@ -2168,7 +2168,7 @@ type Device struct {
 	//     - value: networkConfigBridgeExample
 	DeviceBridge *Bridge `yaml:"bridge,omitempty"`
 	//   description: VLAN specific options.
-	DeviceVlans []*Vlan `yaml:"vlans,omitempty"`
+	DeviceVlans VlanList `yaml:"vlans,omitempty"`
 	//   description: |
 	//     The interface's MTU.
 	//     If used in combination with DHCP, this will override any MTU settings returned from DHCP server.
@@ -2406,6 +2406,47 @@ type Bridge struct {
 	//     A bridge option.
 	//     Please see the official kernel documentation.
 	BridgeSTP *STP `yaml:"stp,omitempty"`
+}
+
+// VlanList is a list of *Vlan structures with overridden merge process.
+//
+//docgen:alias
+type VlanList []*Vlan
+
+// Merge the network interface configuration intelligently.
+func (vlans *VlanList) Merge(other interface{}) error {
+	otherVlans, ok := other.(VlanList)
+	if !ok {
+		return fmt.Errorf("unexpected type for vlan merge %T", other)
+	}
+
+	for _, vlan := range otherVlans {
+		if err := vlans.mergeVlan(vlan); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (vlans *VlanList) mergeVlan(vlan *Vlan) error {
+	var existing *Vlan
+
+	for _, v := range *vlans {
+		if v.VlanID == vlan.VlanID {
+			existing = v
+
+			break
+		}
+	}
+
+	if existing != nil {
+		return merge.Merge(existing, vlan)
+	}
+
+	*vlans = append(*vlans, vlan)
+
+	return nil
 }
 
 // Vlan represents vlan settings for a device.

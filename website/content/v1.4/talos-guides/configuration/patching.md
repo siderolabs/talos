@@ -45,6 +45,7 @@ There are some special rules:
 - If the field value is a list, the patch value is appended to the list, with the following exceptions:
   - values of the fields `cluster.network.podSubnets` and `cluster.network.serviceSubnets` are overwritten on merge
   - `network.interfaces` section is merged with the value in the machine config if there is a match on `interface:` or `deviceSelector:` keys
+  - `network.interfaces.vlans` section is merged with the value in the machine config if there is a match on the `vlanId:` key
 
 ### RFC6902 (JSON Patches)
 
