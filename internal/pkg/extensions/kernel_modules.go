@@ -144,6 +144,11 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 		return nil, err
 	}
 
+	// we want to make sure the root directory has the right permissions.
+	if err := os.Chmod(kernelModulesDependencyTreeStagingDir, 0o755); err != nil {
+		return nil, err
+	}
+
 	kernelModulesDepenencyTreeDirectory := filepath.Join(kernelModulesDependencyTreeStagingDir, constants.DefaultKernelModulesPath)
 
 	if err := os.MkdirAll(kernelModulesDepenencyTreeDirectory, 0o755); err != nil {
