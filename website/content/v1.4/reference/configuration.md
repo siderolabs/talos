@@ -258,7 +258,7 @@ disks:
           # # Precise value in bytes.
           # size: 1073741824
 {{< /highlight >}}</details> | |
-|`install` |<a href="#installconfig">InstallConfig</a> |Used to provide instructions for installations. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`install` |<a href="#installconfig">InstallConfig</a> |<details><summary>Used to provide instructions for installations.</summary><br />Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br />To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 install:
     disk: /dev/sda # The disk used for installations.
     # Allows for supplying extra kernel args via the bootloader.

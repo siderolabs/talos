@@ -747,6 +747,9 @@ type MachineConfig struct {
 	MachineDisks []*MachineDisk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
 	//   description: |
 	//     Used to provide instructions for installations.
+	//
+	//     Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.
+	//     To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.
 	//   examples:
 	//     - name: MachineInstall config usage example.
 	//       value: machineInstallExample

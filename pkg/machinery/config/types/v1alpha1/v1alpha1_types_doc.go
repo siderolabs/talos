@@ -215,7 +215,7 @@ func init() {
 	MachineConfigDoc.Fields[9].Name = "install"
 	MachineConfigDoc.Fields[9].Type = "InstallConfig"
 	MachineConfigDoc.Fields[9].Note = ""
-	MachineConfigDoc.Fields[9].Description = "Used to provide instructions for installations."
+	MachineConfigDoc.Fields[9].Description = "Used to provide instructions for installations.\n\nNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted."
 	MachineConfigDoc.Fields[9].Comments[encoder.LineComment] = "Used to provide instructions for installations."
 
 	MachineConfigDoc.Fields[9].AddExample("MachineInstall config usage example.", machineInstallExample)
