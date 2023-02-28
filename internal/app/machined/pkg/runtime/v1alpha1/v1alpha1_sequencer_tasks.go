@@ -1634,27 +1634,36 @@ func ResetSystemDisk(seq runtime.Sequence, data interface{}) (runtime.TaskExecut
 }
 
 // ResetUserDisks represents the task to reset the user disks.
-func ResetUserDisks(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func ResetUserDisks(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		in, ok := data.(runtime.ResetOptions)
 		if !ok {
 			return fmt.Errorf("unexpected runtime data")
 		}
 
-		for _, deviceName := range in.GetUserDisksToWipe() {
-			var dev *blockdevice.BlockDevice
-
-			dev, err = blockdevice.Open(deviceName)
+		wipeDevice := func(deviceName string) error {
+			dev, err := blockdevice.Open(deviceName)
 			if err != nil {
 				return err
 			}
 
-			defer dev.Close() //nolint:errcheck
+			defer func() {
+				if closeErr := dev.Close(); closeErr != nil {
+					logger.Printf("failed to close device %s: %s", deviceName, closeErr)
+				}
+			}()
 
 			logger.Printf("wiping user disk %s", deviceName)
 
-			err = dev.FastWipe()
-			if err != nil {
+			if err = dev.FastWipe(); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		for _, deviceName := range in.GetUserDisksToWipe() {
+			if err := wipeDevice(deviceName); err != nil {
 				return err
 			}
 		}
