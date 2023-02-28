@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-retry/retry"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -155,7 +156,19 @@ func (c *Client) LeaveCluster(ctx context.Context, st state.State) error {
 		return err
 	}
 
-	if err := c.RemoveMemberByMemberID(ctx, memberID); err != nil {
+	if err := retry.Constant(5*time.Minute, retry.WithUnits(10*time.Second)).RetryWithContext(ctx, func(ctx context.Context) error {
+		err := c.RemoveMemberByMemberID(ctx, memberID)
+		if err == nil {
+			return nil
+		}
+
+		if errors.Is(err, rpctypes.ErrUnhealthy) {
+			// unhealthy is returned when the member hasn't established connections with quorum other members
+			return retry.ExpectedError(err)
+		}
+
+		return err
+	}); err != nil {
 		return err
 	}
 

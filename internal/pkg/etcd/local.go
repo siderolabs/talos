@@ -7,6 +7,7 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -16,10 +17,14 @@ import (
 
 // GetLocalMemberID gets the etcd member id of the local node via resources.
 func GetLocalMemberID(ctx context.Context, s state.State) (uint64, error) {
-	member, err := safe.ReaderGet[*etcd.Member](
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
+	defer cancel()
+
+	member, err := safe.StateWatchFor[*etcd.Member](
 		ctx,
 		s,
 		etcd.NewMember(etcd.NamespaceName, etcd.LocalMemberID).Metadata(),
+		state.WithEventTypes(state.Created),
 	)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get local etcd member ID: %w", err)
