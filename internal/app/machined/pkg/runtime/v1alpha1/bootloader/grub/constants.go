@@ -13,6 +13,9 @@ const (
 	// BootB is a bootloader label.
 	BootB BootLabel = "B"
 
+	// BootReset is a bootloader label.
+	BootReset BootLabel = "Reset"
+
 	// ConfigPath is the path to the grub config.
 	ConfigPath = constants.BootMountPoint + "/grub/grub.cfg"
 )

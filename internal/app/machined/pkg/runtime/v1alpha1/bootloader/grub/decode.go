@@ -106,6 +106,10 @@ func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
 			return nil, err
 		}
 
+		if bootEntry == BootReset {
+			continue
+		}
+
 		entries[bootEntry] = MenuEntry{
 			Name:    name,
 			Linux:   linux,

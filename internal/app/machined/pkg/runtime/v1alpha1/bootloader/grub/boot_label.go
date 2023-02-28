@@ -19,6 +19,8 @@ func FlipBootLabel(e BootLabel) (BootLabel, error) {
 		return BootB, nil
 	case BootB:
 		return BootA, nil
+	case BootReset:
+		fallthrough
 	default:
 		return "", fmt.Errorf("invalid entry: %s", e)
 	}
@@ -26,13 +28,14 @@ func FlipBootLabel(e BootLabel) (BootLabel, error) {
 
 // ParseBootLabel parses the given human-readable boot label to a grub.BootLabel.
 func ParseBootLabel(name string) (BootLabel, error) {
-	if strings.HasPrefix(name, string(BootA)) {
+	switch {
+	case strings.HasPrefix(name, string(BootA)):
 		return BootA, nil
-	}
-
-	if strings.HasPrefix(name, string(BootB)) {
+	case strings.HasPrefix(name, string(BootB)):
 		return BootB, nil
+	case strings.HasPrefix(name, "Reset"):
+		return BootReset, nil
+	default:
+		return "", fmt.Errorf("could not parse boot entry from name: %s", name)
 	}
-
-	return "", fmt.Errorf("could not parse boot entry from name: %s", name)
 }
