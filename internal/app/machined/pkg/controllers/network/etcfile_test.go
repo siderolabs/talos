@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/netip"
 	"net/url"
@@ -21,7 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -119,57 +118,12 @@ func (suite *EtcFileConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *EtcFileConfigSuite) assertEtcFiles(requiredIDs []string, check func(*files.EtcFileSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(files.NamespaceName, files.EtcFileSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*files.EtcFileSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *EtcFileConfigSuite) assertEtcFiles(requiredIDs []string, check func(*files.EtcFileSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
 }
 
-func (suite *EtcFileConfigSuite) assertNoEtcFile(id string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(files.NamespaceName, files.EtcFileSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("spec %q is still there", id))
-		}
-	}
-
-	return nil
+func (suite *EtcFileConfigSuite) assertNoEtcFile(id string) {
+	assertNoResource[*files.EtcFileSpec](suite.ctx, suite.T(), suite.state, id)
 }
 
 func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, resolvConf, hosts string) {
@@ -191,36 +145,22 @@ func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, resolv
 		unexpectedIds = append(unexpectedIds, "hosts")
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertEtcFiles(
-					expectedIds,
-					func(r *files.EtcFileSpec) error {
-						switch r.Metadata().ID() {
-						case "hosts":
-							suite.Assert().Equal(hosts, string(r.TypedSpec().Contents))
-						case "resolv.conf":
-							suite.Assert().Equal(resolvConf, string(r.TypedSpec().Contents))
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertEtcFiles(
+		expectedIds,
+		func(r *files.EtcFileSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "hosts":
+				asrt.Equal(hosts, string(r.TypedSpec().Contents))
+			case "resolv.conf":
+				asrt.Equal(resolvConf, string(r.TypedSpec().Contents))
+			}
+		},
 	)
 
 	for _, id := range unexpectedIds {
 		id := id
 
-		suite.Assert().NoError(
-			retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				func() error {
-					return suite.assertNoEtcFile(id)
-				},
-			),
-		)
+		suite.assertNoEtcFile(id)
 	}
 }
 

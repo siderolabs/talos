@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 	"testing"
@@ -18,7 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -63,39 +62,8 @@ func (suite *HostnameMergeSuite) startRuntime() {
 	}()
 }
 
-func (suite *HostnameMergeSuite) assertHostnames(requiredIDs []string, check func(*network.HostnameSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.HostnameSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.HostnameSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *HostnameMergeSuite) assertHostnames(requiredIDs []string, check func(*network.HostnameSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
 }
 
 func (suite *HostnameMergeSuite) TestMerge() {
@@ -129,42 +97,24 @@ func (suite *HostnameMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHostnames(
-					[]string{
-						"hostname",
-					}, func(r *network.HostnameSpec) error {
-						suite.Assert().Equal("bar.com", r.TypedSpec().FQDN())
-						suite.Assert().Equal("bar", r.TypedSpec().Hostname)
-						suite.Assert().Equal("com", r.TypedSpec().Domainname)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertHostnames(
+		[]string{
+			"hostname",
+		}, func(r *network.HostnameSpec, asrt *assert.Assertions) {
+			asrt.Equal("bar.com", r.TypedSpec().FQDN())
+			asrt.Equal("bar", r.TypedSpec().Hostname)
+			asrt.Equal("com", r.TypedSpec().Domainname)
+		},
 	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHostnames(
-					[]string{
-						"hostname",
-					}, func(r *network.HostnameSpec) error {
-						if r.TypedSpec().FQDN() != "eth-0" {
-							return retry.ExpectedErrorf("unexpected hostname %q", r.TypedSpec().FQDN())
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertHostnames(
+		[]string{
+			"hostname",
+		}, func(r *network.HostnameSpec, asrt *assert.Assertions) {
+			asrt.Equal("eth-0", r.TypedSpec().FQDN())
+		},
 	)
 }
 

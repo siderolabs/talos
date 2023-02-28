@@ -17,13 +17,13 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -69,39 +69,8 @@ func (suite *AddressConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *AddressConfigSuite) assertAddresses(requiredIDs []string, check func(*network.AddressSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.AddressSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.AddressSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *AddressConfigSuite) assertAddresses(requiredIDs []string, check func(*network.AddressSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *AddressConfigSuite) TestLoopback() {
@@ -109,21 +78,13 @@ func (suite *AddressConfigSuite) TestLoopback() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertAddresses(
-					[]string{
-						"default/lo/127.0.0.1/8",
-					}, func(r *network.AddressSpec) error {
-						suite.Assert().Equal("lo", r.TypedSpec().LinkName)
-						suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertAddresses(
+		[]string{
+			"default/lo/127.0.0.1/8",
+		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+			asrt.Equal("lo", r.TypedSpec().LinkName)
+			asrt.Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
+		},
 	)
 }
 
@@ -138,26 +99,18 @@ func (suite *AddressConfigSuite) TestCmdline() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertAddresses(
-					[]string{
-						"cmdline/eth1/172.20.0.2/24",
-						"cmdline/eth4/10.3.5.7/24",
-					}, func(r *network.AddressSpec) error {
-						switch r.Metadata().ID() {
-						case "cmdline/eth1/172.20.0.2/24":
-							suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
-						case "cmdline/eth4/10.3.5.7/24":
-							suite.Assert().Equal("eth4", r.TypedSpec().LinkName)
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertAddresses(
+		[]string{
+			"cmdline/eth1/172.20.0.2/24",
+			"cmdline/eth4/10.3.5.7/24",
+		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "cmdline/eth1/172.20.0.2/24":
+				asrt.Equal("eth1", r.TypedSpec().LinkName)
+			case "cmdline/eth4/10.3.5.7/24":
+				asrt.Equal("eth4", r.TypedSpec().LinkName)
+			}
+		},
 	)
 }
 
@@ -190,21 +143,13 @@ func (suite *AddressConfigSuite) TestCmdlineNoNetmask() {
 
 	suite.Assert().NotEmpty(ifaceName)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertAddresses(
-					[]string{
-						fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
-					}, func(r *network.AddressSpec) error {
-						suite.Assert().Equal(ifaceName, r.TypedSpec().LinkName)
-						suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertAddresses(
+		[]string{
+			fmt.Sprintf("cmdline/%s/172.20.0.2/32", ifaceName),
+		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+			asrt.Equal(ifaceName, r.TypedSpec().LinkName)
+			asrt.Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
+		},
 	)
 }
 
@@ -276,24 +221,16 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertAddresses(
-					[]string{
-						"configuration/eth2/2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
-						"configuration/eth3/192.168.0.24/28",
-						"configuration/eth5/10.5.0.7/32",
-						"configuration/eth6/10.5.0.8/32",
-						"configuration/eth6/2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
-						"configuration/eth0.24/10.0.0.1/8",
-						"configuration/eth0.25/11.0.0.1/8",
-					}, func(r *network.AddressSpec) error {
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertAddresses(
+		[]string{
+			"configuration/eth2/2001:470:6d:30e:8ed2:b60c:9d2f:803a/64",
+			"configuration/eth3/192.168.0.24/28",
+			"configuration/eth5/10.5.0.7/32",
+			"configuration/eth6/10.5.0.8/32",
+			"configuration/eth6/2001:470:6d:30e:8ed2:b60c:9d2f:803b/64",
+			"configuration/eth0.24/10.0.0.1/8",
+			"configuration/eth0.25/11.0.0.1/8",
+		}, func(r *network.AddressSpec, asrt *assert.Assertions) {},
 	)
 }
 

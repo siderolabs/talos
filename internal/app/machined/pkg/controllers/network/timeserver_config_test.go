@@ -16,11 +16,13 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -66,40 +68,9 @@ func (suite *TimeServerConfigSuite) startRuntime() {
 
 func (suite *TimeServerConfigSuite) assertTimeServers(
 	requiredIDs []string,
-	check func(*network.TimeServerSpec) error,
-) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.TimeServerSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.TimeServerSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+	check func(*network.TimeServerSpec, *assert.Assertions),
+) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *TimeServerConfigSuite) assertNoTimeServer(id string) error {
@@ -125,21 +96,13 @@ func (suite *TimeServerConfigSuite) TestDefaults() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertTimeServers(
-					[]string{
-						"default/timeservers",
-					}, func(r *network.TimeServerSpec) error {
-						suite.Assert().Equal([]string{constants.DefaultNTPServer}, r.TypedSpec().NTPServers)
-						suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertTimeServers(
+		[]string{
+			"default/timeservers",
+		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
+			asrt.Equal([]string{constants.DefaultNTPServer}, r.TypedSpec().NTPServers)
+			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+		},
 	)
 }
 
@@ -154,20 +117,12 @@ func (suite *TimeServerConfigSuite) TestCmdline() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertTimeServers(
-					[]string{
-						"cmdline/timeservers",
-					}, func(r *network.TimeServerSpec) error {
-						suite.Assert().Equal([]string{"10.0.0.1"}, r.TypedSpec().NTPServers)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertTimeServers(
+		[]string{
+			"cmdline/timeservers",
+		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
+			asrt.Equal([]string{"10.0.0.1"}, r.TypedSpec().NTPServers)
+		},
 	)
 }
 
@@ -199,20 +154,12 @@ func (suite *TimeServerConfigSuite) TestMachineConfiguration() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertTimeServers(
-					[]string{
-						"configuration/timeservers",
-					}, func(r *network.TimeServerSpec) error {
-						suite.Assert().Equal([]string{"za.pool.ntp.org", "pool.ntp.org"}, r.TypedSpec().NTPServers)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertTimeServers(
+		[]string{
+			"configuration/timeservers",
+		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
+			asrt.Equal([]string{"za.pool.ntp.org", "pool.ntp.org"}, r.TypedSpec().NTPServers)
+		},
 	)
 
 	_, err = suite.state.UpdateWithConflicts(

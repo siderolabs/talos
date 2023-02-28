@@ -20,6 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -65,39 +66,8 @@ func (suite *HardwareAddrSuite) startRuntime() {
 	}()
 }
 
-func (suite *HardwareAddrSuite) assertHWAddr(requiredIDs []string, check func(*network.HardwareAddr) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.HardwareAddr)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *HardwareAddrSuite) assertHWAddr(requiredIDs []string, check func(*network.HardwareAddr, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
 }
 
 func (suite *HardwareAddrSuite) assertNoHWAddr(id string) error {
@@ -142,38 +112,20 @@ func (suite *HardwareAddrSuite) TestFirst() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, bond0))
 	suite.Require().NoError(suite.state.Create(suite.ctx, eth1))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHWAddr(
-					[]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr) error {
-						if r.TypedSpec().Name != eth1.Metadata().ID() && net.HardwareAddr(r.TypedSpec().HardwareAddr).String() != "6a:2b:bd:b2:fc:e0" {
-							return retry.ExpectedErrorf("should be eth1")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertHWAddr(
+		[]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr, asrt *assert.Assertions) {
+			asrt.Equal(eth1.Metadata().ID(), r.TypedSpec().Name)
+			asrt.Equal("6a:2b:bd:b2:fc:e0", net.HardwareAddr(r.TypedSpec().HardwareAddr).String())
+		},
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, eth0))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHWAddr(
-					[]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr) error {
-						if r.TypedSpec().Name != eth0.Metadata().ID() && net.HardwareAddr(r.TypedSpec().HardwareAddr).String() != "56:a0:a0:87:1c:fa" {
-							return retry.ExpectedErrorf("should be eth0")
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertHWAddr(
+		[]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr, asrt *assert.Assertions) {
+			asrt.Equal(eth0.Metadata().ID(), r.TypedSpec().Name)
+			asrt.Equal("56:a0:a0:87:1c:fa", net.HardwareAddr(r.TypedSpec().HardwareAddr).String())
+		},
 	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, eth0.Metadata()))

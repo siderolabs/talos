@@ -19,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
@@ -65,39 +66,8 @@ func (suite *LinkMergeSuite) startRuntime() {
 	}()
 }
 
-func (suite *LinkMergeSuite) assertLinks(requiredIDs []string, check func(*network.LinkSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.LinkSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *LinkMergeSuite) assertLinks(requiredIDs []string, check func(*network.LinkSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
 }
 
 func (suite *LinkMergeSuite) assertNoLinks(id string) error {
@@ -146,53 +116,35 @@ func (suite *LinkMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"lo",
-						"eth0",
-					}, func(r *network.LinkSpec) error {
-						switch r.Metadata().ID() {
-						case "lo":
-							suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
-						case "eth0":
-							suite.Assert().EqualValues(1500, r.TypedSpec().MTU) // static should override dhcp
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertLinks(
+		[]string{
+			"lo",
+			"eth0",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "lo":
+				asrt.Equal(*loopback.TypedSpec(), *r.TypedSpec())
+			case "eth0":
+				asrt.EqualValues(1500, r.TypedSpec().MTU) // static should override dhcp
+			}
+		},
 	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"lo",
-						"eth0",
-					}, func(r *network.LinkSpec) error {
-						switch r.Metadata().ID() {
-						case "lo":
-							suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
-						case "eth0":
-							// reconcile happens eventually, so give it some time
-							if r.TypedSpec().MTU != 1450 {
-								return retry.ExpectedErrorf("MTU %d != 1450", r.TypedSpec().MTU)
-							}
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertLinks(
+		[]string{
+			"lo",
+			"eth0",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "lo":
+				asrt.Equal(*loopback.TypedSpec(), *r.TypedSpec())
+			case "eth0":
+				// reconcile happens eventually, so give it some time
+				asrt.EqualValues(1450, r.TypedSpec().MTU)
+			}
+		},
 	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, loopback.Metadata()))
@@ -230,25 +182,13 @@ func (suite *LinkMergeSuite) TestMergeLogicalLink() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"bond0",
-					}, func(r *network.LinkSpec) error {
-						if r.TypedSpec().MTU != 1450 {
-							return retry.ExpectedErrorf("not merged yet")
-						}
-
-						suite.Assert().True(r.TypedSpec().Logical)
-						suite.Assert().EqualValues(1450, r.TypedSpec().MTU)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertLinks(
+		[]string{
+			"bond0",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.True(r.TypedSpec().Logical)
+			asrt.EqualValues(1450, r.TypedSpec().MTU)
+		},
 	)
 }
 
@@ -342,26 +282,13 @@ func (suite *LinkMergeSuite) TestMergeFlapping() {
 
 	suite.Require().NoError(eg.Wait())
 
-	suite.Assert().NoError(
-		retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"eth0",
-					}, func(r *network.LinkSpec) error {
-						if r.Metadata().Phase() != resource.PhaseRunning {
-							return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
-						}
-
-						if r.TypedSpec().MTU != 1500 {
-							return retry.ExpectedErrorf("MTU %d != 1500", r.TypedSpec().MTU)
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertLinks(
+		[]string{
+			"eth0",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.EqualValues(1500, r.TypedSpec().MTU)
+			asrt.EqualValues(resource.PhaseRunning, r.Metadata().Phase())
+		},
 	)
 }
 
@@ -401,41 +328,33 @@ func (suite *LinkMergeSuite) TestMergeWireguard() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"kubespan",
-					}, func(r *network.LinkSpec) error {
-						suite.Assert().Equal(
-							"IG9MqCII7z54Ysof1fQ9a7WcMNG+qNJRMyRCQz3JTUY=",
-							r.TypedSpec().Wireguard.PrivateKey,
-						)
-						suite.Assert().Equal(1234, r.TypedSpec().Wireguard.ListenPort)
-						suite.Assert().Len(r.TypedSpec().Wireguard.Peers, 2)
+	suite.assertLinks(
+		[]string{
+			"kubespan",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(
+				"IG9MqCII7z54Ysof1fQ9a7WcMNG+qNJRMyRCQz3JTUY=",
+				r.TypedSpec().Wireguard.PrivateKey,
+			)
+			asrt.Equal(1234, r.TypedSpec().Wireguard.ListenPort)
+			asrt.Len(r.TypedSpec().Wireguard.Peers, 2)
 
-						suite.Assert().Equal(
-							network.WireguardPeer{
-								PublicKey: "RXdQkMTD1Jcxd/Wizr9k8syw8ANs57l5jTormDVHAVs=",
-								Endpoint:  "127.0.0.1:1234",
-							},
-							r.TypedSpec().Wireguard.Peers[0],
-						)
+			asrt.Equal(
+				network.WireguardPeer{
+					PublicKey: "RXdQkMTD1Jcxd/Wizr9k8syw8ANs57l5jTormDVHAVs=",
+					Endpoint:  "127.0.0.1:1234",
+				},
+				r.TypedSpec().Wireguard.Peers[0],
+			)
 
-						suite.Assert().Equal(
-							network.WireguardPeer{
-								PublicKey: "bGsc2rOpl6JHd/Pm4fYrIkEABL0ZxW7IlaSyh77IMhw=",
-								Endpoint:  "127.0.0.1:9999",
-							},
-							r.TypedSpec().Wireguard.Peers[1],
-						)
-
-						return nil
-					},
-				)
-			},
-		),
+			asrt.Equal(
+				network.WireguardPeer{
+					PublicKey: "bGsc2rOpl6JHd/Pm4fYrIkEABL0ZxW7IlaSyh77IMhw=",
+					Endpoint:  "127.0.0.1:9999",
+				},
+				r.TypedSpec().Wireguard.Peers[1],
+			)
+		},
 	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, kubespanOperator.Metadata()))

@@ -18,12 +18,14 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -67,39 +69,8 @@ func (suite *HostnameConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *HostnameConfigSuite) assertHostnames(requiredIDs []string, check func(*network.HostnameSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.HostnameSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.HostnameSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *HostnameConfigSuite) assertHostnames(requiredIDs []string, check func(*network.HostnameSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *HostnameConfigSuite) assertNoHostname(id string) error {
@@ -130,18 +101,9 @@ func (suite *HostnameConfigSuite) TestNoDefaultWithoutMachineConfig() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, defaultAddress))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHostnames(nil, func(r *network.HostnameSpec) error {
-					suite.Assert().NotEqual("default/hostname", r.Metadata().ID(), "default hostname is still there")
-
-					return nil
-				},
-				)
-			},
-		),
-	)
+	suite.assertHostnames(nil, func(r *network.HostnameSpec, asrt *assert.Assertions) {
+		asrt.NotEqual("default/hostname", r.Metadata().ID(), "default hostname is still there")
+	})
 }
 
 func (suite *HostnameConfigSuite) TestDefaultIPBasedHostname() {
@@ -157,22 +119,14 @@ func (suite *HostnameConfigSuite) TestDefaultIPBasedHostname() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, defaultAddress))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHostnames(
-					[]string{
-						"default/hostname",
-					}, func(r *network.HostnameSpec) error {
-						suite.Assert().Equal("talos-33-11-22-44", r.TypedSpec().Hostname)
-						suite.Assert().Equal("", r.TypedSpec().Domainname)
-						suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertHostnames(
+		[]string{
+			"default/hostname",
+		}, func(r *network.HostnameSpec, asrt *assert.Assertions) {
+			asrt.Equal("talos-33-11-22-44", r.TypedSpec().Hostname)
+			asrt.Equal("", r.TypedSpec().Domainname)
+			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+		},
 	)
 }
 
@@ -199,20 +153,12 @@ func (suite *HostnameConfigSuite) TestDefaultStableHostname() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, id))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHostnames(
-					[]string{
-						"default/hostname",
-					}, func(r *network.HostnameSpec) error {
-						suite.Assert().Equal("talos-hwz-sw5", r.TypedSpec().Hostname)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertHostnames(
+		[]string{
+			"default/hostname",
+		}, func(r *network.HostnameSpec, asrt *assert.Assertions) {
+			asrt.Equal("talos-hwz-sw5", r.TypedSpec().Hostname)
+		},
 	)
 }
 
@@ -227,22 +173,14 @@ func (suite *HostnameConfigSuite) TestCmdline() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHostnames(
-					[]string{
-						"cmdline/hostname",
-					}, func(r *network.HostnameSpec) error {
-						suite.Assert().Equal("master1", r.TypedSpec().Hostname)
-						suite.Assert().Equal("domain.tld", r.TypedSpec().Domainname)
-						suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertHostnames(
+		[]string{
+			"cmdline/hostname",
+		}, func(r *network.HostnameSpec, asrt *assert.Assertions) {
+			asrt.Equal("master1", r.TypedSpec().Hostname)
+			asrt.Equal("domain.tld", r.TypedSpec().Domainname)
+			asrt.Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
+		},
 	)
 }
 
@@ -274,22 +212,14 @@ func (suite *HostnameConfigSuite) TestMachineConfiguration() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertHostnames(
-					[]string{
-						"configuration/hostname",
-					}, func(r *network.HostnameSpec) error {
-						suite.Assert().Equal("foo", r.TypedSpec().Hostname)
-						suite.Assert().Equal("", r.TypedSpec().Domainname)
-						suite.Assert().Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertHostnames(
+		[]string{
+			"configuration/hostname",
+		}, func(r *network.HostnameSpec, asrt *assert.Assertions) {
+			asrt.Equal("foo", r.TypedSpec().Hostname)
+			asrt.Equal("", r.TypedSpec().Domainname)
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+		},
 	)
 
 	_, err = suite.state.UpdateWithConflicts(

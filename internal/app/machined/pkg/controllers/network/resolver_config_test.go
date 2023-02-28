@@ -17,11 +17,13 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -65,39 +67,8 @@ func (suite *ResolverConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *ResolverConfigSuite) assertResolvers(requiredIDs []string, check func(*network.ResolverSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.ResolverSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.ResolverSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *ResolverConfigSuite) assertResolvers(requiredIDs []string, check func(*network.ResolverSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *ResolverConfigSuite) assertNoResolver(id string) error {
@@ -123,26 +94,18 @@ func (suite *ResolverConfigSuite) TestDefaults() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResolvers(
-					[]string{
-						"default/resolvers",
-					}, func(r *network.ResolverSpec) error {
-						suite.Assert().Equal(
-							[]netip.Addr{
-								netip.MustParseAddr(constants.DefaultPrimaryResolver),
-								netip.MustParseAddr(constants.DefaultSecondaryResolver),
-							}, r.TypedSpec().DNSServers,
-						)
-						suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertResolvers(
+		[]string{
+			"default/resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Equal(
+				[]netip.Addr{
+					netip.MustParseAddr(constants.DefaultPrimaryResolver),
+					netip.MustParseAddr(constants.DefaultSecondaryResolver),
+				}, r.TypedSpec().DNSServers,
+			)
+			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+		},
 	)
 }
 
@@ -157,25 +120,17 @@ func (suite *ResolverConfigSuite) TestCmdline() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResolvers(
-					[]string{
-						"cmdline/resolvers",
-					}, func(r *network.ResolverSpec) error {
-						suite.Assert().Equal(
-							[]netip.Addr{
-								netip.MustParseAddr("10.0.0.1"),
-								netip.MustParseAddr("10.0.0.2"),
-							}, r.TypedSpec().DNSServers,
-						)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertResolvers(
+		[]string{
+			"cmdline/resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Equal(
+				[]netip.Addr{
+					netip.MustParseAddr("10.0.0.1"),
+					netip.MustParseAddr("10.0.0.2"),
+				}, r.TypedSpec().DNSServers,
+			)
+		},
 	)
 }
 
@@ -207,25 +162,17 @@ func (suite *ResolverConfigSuite) TestMachineConfiguration() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertResolvers(
-					[]string{
-						"configuration/resolvers",
-					}, func(r *network.ResolverSpec) error {
-						suite.Assert().Equal(
-							[]netip.Addr{
-								netip.MustParseAddr("2.2.2.2"),
-								netip.MustParseAddr("3.3.3.3"),
-							}, r.TypedSpec().DNSServers,
-						)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertResolvers(
+		[]string{
+			"configuration/resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Equal(
+				[]netip.Addr{
+					netip.MustParseAddr("2.2.2.2"),
+					netip.MustParseAddr("3.3.3.3"),
+				}, r.TypedSpec().DNSServers,
+			)
+		},
 	)
 
 	_, err = suite.state.UpdateWithConflicts(

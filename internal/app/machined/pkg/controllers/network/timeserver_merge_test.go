@@ -7,9 +7,7 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -19,7 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -67,40 +65,9 @@ func (suite *TimeServerMergeSuite) startRuntime() {
 
 func (suite *TimeServerMergeSuite) assertTimeServers(
 	requiredIDs []string,
-	check func(*network.TimeServerSpec) error,
-) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.TimeServerSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.TimeServerSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+	check func(*network.TimeServerSpec, *assert.Assertions),
+) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
 }
 
 func (suite *TimeServerMergeSuite) TestMerge() {
@@ -132,40 +99,22 @@ func (suite *TimeServerMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertTimeServers(
-					[]string{
-						"timeservers",
-					}, func(r *network.TimeServerSpec) error {
-						suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertTimeServers(
+		[]string{
+			"timeservers",
+		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
+			asrt.Equal(*static.TypedSpec(), *r.TypedSpec())
+		},
 	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertTimeServers(
-					[]string{
-						"timeservers",
-					}, func(r *network.TimeServerSpec) error {
-						if !reflect.DeepEqual(r.TypedSpec().NTPServers, []string{"ntp.eth0", "ntp.eth1"}) {
-							return retry.ExpectedErrorf("unexpected servers %q", r.TypedSpec().NTPServers)
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertTimeServers(
+		[]string{
+			"timeservers",
+		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
+			asrt.Equal([]string{"ntp.eth0", "ntp.eth1"}, r.TypedSpec().NTPServers)
+		},
 	)
 }
 

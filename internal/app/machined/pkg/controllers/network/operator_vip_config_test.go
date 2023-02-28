@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/netip"
 	"net/url"
@@ -16,12 +15,12 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -68,40 +67,9 @@ func (suite *OperatorVIPConfigSuite) startRuntime() {
 
 func (suite *OperatorVIPConfigSuite) assertOperators(
 	requiredIDs []string,
-	check func(*network.OperatorSpec) error,
-) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.OperatorSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+	check func(*network.OperatorSpec, *assert.Assertions),
+) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
@@ -159,38 +127,30 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertOperators(
-					[]string{
-						"configuration/vip/eth1",
-						"configuration/vip/eth2",
-						"configuration/vip/eth3.26",
-					}, func(r *network.OperatorSpec) error {
-						suite.Assert().Equal(network.OperatorVIP, r.TypedSpec().Operator)
-						suite.Assert().True(r.TypedSpec().RequireUp)
+	suite.assertOperators(
+		[]string{
+			"configuration/vip/eth1",
+			"configuration/vip/eth2",
+			"configuration/vip/eth3.26",
+		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.OperatorVIP, r.TypedSpec().Operator)
+			asrt.True(r.TypedSpec().RequireUp)
 
-						switch r.Metadata().ID() {
-						case "configuration/vip/eth1":
-							suite.Assert().Equal("eth1", r.TypedSpec().LinkName)
-							suite.Assert().EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
-						case "configuration/vip/eth2":
-							suite.Assert().Equal("eth2", r.TypedSpec().LinkName)
-							suite.Assert().EqualValues(
-								netip.MustParseAddr("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"),
-								r.TypedSpec().VIP.IP,
-							)
-						case "configuration/vip/eth3.26":
-							suite.Assert().Equal("eth3.26", r.TypedSpec().LinkName)
-							suite.Assert().EqualValues(netip.MustParseAddr("5.5.4.4"), r.TypedSpec().VIP.IP)
-						}
-
-						return nil
-					},
+			switch r.Metadata().ID() {
+			case "configuration/vip/eth1":
+				asrt.Equal("eth1", r.TypedSpec().LinkName)
+				asrt.EqualValues(netip.MustParseAddr("2.3.4.5"), r.TypedSpec().VIP.IP)
+			case "configuration/vip/eth2":
+				asrt.Equal("eth2", r.TypedSpec().LinkName)
+				asrt.EqualValues(
+					netip.MustParseAddr("fd7a:115c:a1e0:ab12:4843:cd96:6277:2302"),
+					r.TypedSpec().VIP.IP,
 				)
-			},
-		),
+			case "configuration/vip/eth3.26":
+				asrt.Equal("eth3.26", r.TypedSpec().LinkName)
+				asrt.EqualValues(netip.MustParseAddr("5.5.4.4"), r.TypedSpec().VIP.IP)
+			}
+		},
 	)
 }
 

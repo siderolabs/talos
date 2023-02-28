@@ -7,18 +7,16 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -64,60 +62,21 @@ func (suite *RouteStatusSuite) startRuntime() {
 	}()
 }
 
-func (suite *RouteStatusSuite) assertRoutes(requiredIDs []string, check func(*network.RouteStatus) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.RouteStatusType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.RouteStatus)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *RouteStatusSuite) assertRoutes(requiredIDs []string, check func(*network.RouteStatus, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
 }
 
 func (suite *RouteStatusSuite) TestRoutes() {
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertRoutes(
-					[]string{"local/inet4//127.0.0.0/8/0"}, func(r *network.RouteStatus) error {
-						suite.Assert().True(r.TypedSpec().Source.IsLoopback())
-						suite.Assert().Equal("lo", r.TypedSpec().OutLinkName)
-						suite.Assert().Equal(nethelpers.TableLocal, r.TypedSpec().Table)
-						suite.Assert().Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
-						suite.Assert().Equal(nethelpers.TypeLocal, r.TypedSpec().Type)
-						suite.Assert().Equal(nethelpers.ProtocolKernel, r.TypedSpec().Protocol)
-						suite.Assert().EqualValues(0, r.TypedSpec().MTU)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertRoutes(
+		[]string{"local/inet4//127.0.0.0/8/0"}, func(r *network.RouteStatus, asrt *assert.Assertions) {
+			asrt.True(r.TypedSpec().Source.IsLoopback())
+			asrt.Equal("lo", r.TypedSpec().OutLinkName)
+			asrt.Equal(nethelpers.TableLocal, r.TypedSpec().Table)
+			asrt.Equal(nethelpers.ScopeHost, r.TypedSpec().Scope)
+			asrt.Equal(nethelpers.TypeLocal, r.TypedSpec().Type)
+			asrt.Equal(nethelpers.ProtocolKernel, r.TypedSpec().Protocol)
+			asrt.EqualValues(0, r.TypedSpec().MTU)
+		},
 	)
 }
 

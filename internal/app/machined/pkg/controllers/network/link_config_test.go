@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/netip"
 	"net/url"
@@ -17,12 +16,14 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -68,39 +69,8 @@ func (suite *LinkConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *LinkConfigSuite) assertLinks(requiredIDs []string, check func(*network.LinkSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.LinkSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *LinkConfigSuite) assertLinks(requiredIDs []string, check func(*network.LinkSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *LinkConfigSuite) assertNoLinks(unexpectedIDs []string) error {
@@ -133,23 +103,15 @@ func (suite *LinkConfigSuite) TestLoopback() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"default/lo",
-					}, func(r *network.LinkSpec) error {
-						suite.Assert().Equal("lo", r.TypedSpec().Name)
-						suite.Assert().True(r.TypedSpec().Up)
-						suite.Assert().False(r.TypedSpec().Logical)
-						suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertLinks(
+		[]string{
+			"default/lo",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal("lo", r.TypedSpec().Name)
+			asrt.True(r.TypedSpec().Up)
+			asrt.False(r.TypedSpec().Logical)
+			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+		},
 	)
 }
 
@@ -164,23 +126,15 @@ func (suite *LinkConfigSuite) TestCmdline() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"cmdline/eth1",
-					}, func(r *network.LinkSpec) error {
-						suite.Assert().Equal("eth1", r.TypedSpec().Name)
-						suite.Assert().True(r.TypedSpec().Up)
-						suite.Assert().False(r.TypedSpec().Logical)
-						suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertLinks(
+		[]string{
+			"cmdline/eth1",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal("eth1", r.TypedSpec().Name)
+			asrt.True(r.TypedSpec().Up)
+			asrt.False(r.TypedSpec().Logical)
+			asrt.Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
+		},
 	)
 }
 
@@ -299,97 +253,89 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"configuration/eth0",
-						"configuration/eth0.24",
-						"configuration/eth0.48",
-						"configuration/eth1",
-						"configuration/eth2",
-						"configuration/eth3",
-						"configuration/bond0",
-						"configuration/br0",
-						"configuration/dummy0",
-						"configuration/wireguard0",
-					}, func(r *network.LinkSpec) error {
-						suite.Assert().Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0",
+			"configuration/eth0.24",
+			"configuration/eth0.48",
+			"configuration/eth1",
+			"configuration/eth2",
+			"configuration/eth3",
+			"configuration/bond0",
+			"configuration/br0",
+			"configuration/dummy0",
+			"configuration/wireguard0",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
 
-						switch r.TypedSpec().Name {
-						case "eth0", "eth1":
-							suite.Assert().True(r.TypedSpec().Up)
-							suite.Assert().False(r.TypedSpec().Logical)
+			switch r.TypedSpec().Name {
+			case "eth0", "eth1":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
 
-							if r.TypedSpec().Name == "eth0" {
-								suite.Assert().EqualValues(0, r.TypedSpec().MTU)
-							} else {
-								suite.Assert().EqualValues(9001, r.TypedSpec().MTU)
-							}
-						case "eth0.24", "eth0.48":
-							suite.Assert().True(r.TypedSpec().Up)
-							suite.Assert().True(r.TypedSpec().Logical)
-							suite.Assert().Equal(nethelpers.LinkEther, r.TypedSpec().Type)
-							suite.Assert().Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
-							suite.Assert().Equal("eth0", r.TypedSpec().ParentName)
-							suite.Assert().Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
+				if r.TypedSpec().Name == "eth0" {
+					asrt.EqualValues(0, r.TypedSpec().MTU)
+				} else {
+					asrt.EqualValues(9001, r.TypedSpec().MTU)
+				}
+			case "eth0.24", "eth0.48":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindVLAN, r.TypedSpec().Kind)
+				asrt.Equal("eth0", r.TypedSpec().ParentName)
+				asrt.Equal(nethelpers.VLANProtocol8021Q, r.TypedSpec().VLAN.Protocol)
 
-							if r.TypedSpec().Name == "eth0.24" {
-								suite.Assert().EqualValues(24, r.TypedSpec().VLAN.VID)
-								suite.Assert().EqualValues(1000, r.TypedSpec().MTU)
-							} else {
-								suite.Assert().EqualValues(48, r.TypedSpec().VLAN.VID)
-								suite.Assert().EqualValues(0, r.TypedSpec().MTU)
-							}
-						case "eth2", "eth3":
-							suite.Assert().True(r.TypedSpec().Up)
-							suite.Assert().False(r.TypedSpec().Logical)
-							suite.Assert().Equal("bond0", r.TypedSpec().BondSlave.MasterName)
-						case "bond0":
-							suite.Assert().True(r.TypedSpec().Up)
-							suite.Assert().True(r.TypedSpec().Logical)
-							suite.Assert().Equal(nethelpers.LinkEther, r.TypedSpec().Type)
-							suite.Assert().Equal(network.LinkKindBond, r.TypedSpec().Kind)
-							suite.Assert().Equal(nethelpers.BondModeXOR, r.TypedSpec().BondMaster.Mode)
-							suite.Assert().True(r.TypedSpec().BondMaster.UseCarrier)
-						case "eth4", "eth5":
-							suite.Assert().True(r.TypedSpec().Up)
-							suite.Assert().False(r.TypedSpec().Logical)
-							suite.Assert().Equal("br0", r.TypedSpec().BridgeSlave.MasterName)
-						case "br0":
-							suite.Assert().True(r.TypedSpec().Up)
-							suite.Assert().True(r.TypedSpec().Logical)
-							suite.Assert().Equal(nethelpers.LinkEther, r.TypedSpec().Type)
-							suite.Assert().Equal(network.LinkKindBridge, r.TypedSpec().Kind)
-							suite.Assert().Equal(true, r.TypedSpec().BridgeMaster.STP.Enabled)
-						case "wireguard0":
-							suite.Assert().True(r.TypedSpec().Up)
-							suite.Assert().True(r.TypedSpec().Logical)
-							suite.Assert().Equal(nethelpers.LinkNone, r.TypedSpec().Type)
-							suite.Assert().Equal(network.LinkKindWireguard, r.TypedSpec().Kind)
-							suite.Assert().Equal(
-								network.WireguardSpec{
-									PrivateKey: "ABC",
-									Peers: []network.WireguardPeer{
-										{
-											PublicKey: "DEF",
-											Endpoint:  "10.0.0.1:3000",
-											AllowedIPs: []netip.Prefix{
-												netip.MustParsePrefix("10.2.3.0/24"),
-												netip.MustParsePrefix("10.2.4.0/24"),
-											},
-										},
-									},
-								}, r.TypedSpec().Wireguard,
-							)
-						}
-
-						return nil
-					},
+				if r.TypedSpec().Name == "eth0.24" {
+					asrt.EqualValues(24, r.TypedSpec().VLAN.VID)
+					asrt.EqualValues(1000, r.TypedSpec().MTU)
+				} else {
+					asrt.EqualValues(48, r.TypedSpec().VLAN.VID)
+					asrt.EqualValues(0, r.TypedSpec().MTU)
+				}
+			case "eth2", "eth3":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
+				asrt.Equal("bond0", r.TypedSpec().BondSlave.MasterName)
+			case "bond0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+				asrt.Equal(nethelpers.BondModeXOR, r.TypedSpec().BondMaster.Mode)
+				asrt.True(r.TypedSpec().BondMaster.UseCarrier)
+			case "eth4", "eth5":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
+				asrt.Equal("br0", r.TypedSpec().BridgeSlave.MasterName)
+			case "br0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
+				asrt.Equal(true, r.TypedSpec().BridgeMaster.STP.Enabled)
+			case "wireguard0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkNone, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindWireguard, r.TypedSpec().Kind)
+				asrt.Equal(
+					network.WireguardSpec{
+						PrivateKey: "ABC",
+						Peers: []network.WireguardPeer{
+							{
+								PublicKey: "DEF",
+								Endpoint:  "10.0.0.1:3000",
+								AllowedIPs: []netip.Prefix{
+									netip.MustParsePrefix("10.2.3.0/24"),
+									netip.MustParsePrefix("10.2.4.0/24"),
+								},
+							},
+						},
+					}, r.TypedSpec().Wireguard,
 				)
-			},
-		),
+			}
+		},
 	)
 }
 
@@ -462,21 +408,13 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertLinks(
-					[]string{
-						"default/eth1",
-					}, func(r *network.LinkSpec) error {
-						suite.Assert().Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
-						suite.Assert().True(r.TypedSpec().Up)
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertLinks(
+		[]string{
+			"default/eth1",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+			asrt.True(r.TypedSpec().Up)
+		},
 	)
 
 	suite.Assert().NoError(

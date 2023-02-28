@@ -16,10 +16,13 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
@@ -66,39 +69,8 @@ func (suite *AddressMergeSuite) startRuntime() {
 	}()
 }
 
-func (suite *AddressMergeSuite) assertAddresses(requiredIDs []string, check func(*network.AddressSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.AddressSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.AddressSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *AddressMergeSuite) assertAddresses(requiredIDs []string, check func(*network.AddressSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
 }
 
 func (suite *AddressMergeSuite) assertNoAddress(id string) error {
@@ -160,46 +132,30 @@ func (suite *AddressMergeSuite) TestMerge() {
 		suite.Require().NoError(suite.state.Create(suite.ctx, res), "%v", res.Spec())
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertAddresses(
-					[]string{
-						"lo/127.0.0.1/8",
-						"eth0/10.0.0.1/8",
-						"eth0/10.0.0.35/32",
-					}, func(r *network.AddressSpec) error {
-						switch r.Metadata().ID() {
-						case "lo/127.0.0.1/8":
-							suite.Assert().Equal(*loopback.TypedSpec(), *r.TypedSpec())
-						case "eth0/10.0.0.1/8":
-							suite.Assert().Equal(*override.TypedSpec(), *r.TypedSpec())
-						case "eth0/10.0.0.35/32":
-							suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertAddresses(
+		[]string{
+			"lo/127.0.0.1/8",
+			"eth0/10.0.0.1/8",
+			"eth0/10.0.0.35/32",
+		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "lo/127.0.0.1/8":
+				asrt.Equal(*loopback.TypedSpec(), *r.TypedSpec())
+			case "eth0/10.0.0.1/8":
+				asrt.Equal(*override.TypedSpec(), *r.TypedSpec())
+			case "eth0/10.0.0.35/32":
+				asrt.Equal(*static.TypedSpec(), *r.TypedSpec())
+			}
+		},
 	)
 
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, static.Metadata()))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertAddresses(
-					[]string{
-						"lo/127.0.0.1/8",
-						"eth0/10.0.0.35/32",
-					}, func(r *network.AddressSpec) error {
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertAddresses(
+		[]string{
+			"lo/127.0.0.1/8",
+			"eth0/10.0.0.35/32",
+		}, func(*network.AddressSpec, *assert.Assertions) {},
 	)
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -302,27 +258,13 @@ func (suite *AddressMergeSuite) TestMergeFlapping() {
 
 	suite.Require().NoError(eg.Wait())
 
-	suite.Assert().NoError(
-		retry.Constant(15*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertAddresses(
-					[]string{
-						"eth0/10.0.0.1/8",
-					}, func(r *network.AddressSpec) error {
-						if r.Metadata().Phase() != resource.PhaseRunning {
-							return retry.ExpectedErrorf("resource phase is %s", r.Metadata().Phase())
-						}
-
-						if *override.TypedSpec() != *r.TypedSpec() {
-							// using retry here, as it might not be reconciled immediately
-							return retry.ExpectedError(fmt.Errorf("not equal yet"))
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertAddresses(
+		[]string{
+			"eth0/10.0.0.1/8",
+		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+			asrt.Equal(r.Metadata().Phase(), resource.PhaseRunning, "resource phase is %s", r.Metadata().Phase())
+			asrt.Equal(*override.TypedSpec(), *r.TypedSpec())
+		},
 	)
 }
 
@@ -344,4 +286,42 @@ func (suite *AddressMergeSuite) TearDownTest() {
 
 func TestAddressMergeSuite(t *testing.T) {
 	suite.Run(t, new(AddressMergeSuite))
+}
+
+func assertResources[R rtestutils.ResourceWithRD](
+	ctx context.Context,
+	t *testing.T,
+	state state.State,
+	requiredIDs []string,
+	check func(R, *assert.Assertions),
+	opts ...rtestutils.Option,
+) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	rtestutils.AssertResources(
+		ctx,
+		t,
+		state,
+		slices.Map(requiredIDs, func(id string) resource.ID { return id }),
+		check,
+		opts...,
+	)
+}
+
+func assertNoResource[R rtestutils.ResourceWithRD](
+	ctx context.Context,
+	t *testing.T,
+	state state.State,
+	id string,
+) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	rtestutils.AssertNoResource[R](
+		ctx,
+		t,
+		state,
+		id,
+	)
 }

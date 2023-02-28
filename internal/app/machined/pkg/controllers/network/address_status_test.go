@@ -7,18 +7,16 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -63,52 +61,13 @@ func (suite *AddressStatusSuite) startRuntime() {
 	}()
 }
 
-func (suite *AddressStatusSuite) assertAddresses(requiredIDs []string, check func(*network.AddressStatus) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.AddressStatus)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *AddressStatusSuite) assertAddresses(requiredIDs []string, check func(*network.AddressStatus, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
 }
 
 func (suite *AddressStatusSuite) TestLoopback() {
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertAddresses(
-					[]string{"lo/127.0.0.1/8"}, func(r *network.AddressStatus) error {
-						return nil
-					},
-				)
-			},
-		),
+	suite.assertAddresses(
+		[]string{"lo/127.0.0.1/8"}, func(r *network.AddressStatus, asrt *assert.Assertions) {},
 	)
 }
 

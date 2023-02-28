@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/netip"
 	"net/url"
@@ -16,13 +15,13 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -68,39 +67,8 @@ func (suite *RouteConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *RouteConfigSuite) assertRoutes(requiredIDs []string, check func(*network.RouteSpec) error) error {
-	missingIDs := make(map[string]struct{}, len(requiredIDs))
-
-	for _, id := range requiredIDs {
-		missingIDs[id] = struct{}{}
-	}
-
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.ConfigNamespaceName, network.RouteSpecType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		_, required := missingIDs[res.Metadata().ID()]
-		if !required {
-			continue
-		}
-
-		delete(missingIDs, res.Metadata().ID())
-
-		if err = check(res.(*network.RouteSpec)); err != nil {
-			return retry.ExpectedError(err)
-		}
-	}
-
-	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
-	}
-
-	return nil
+func (suite *RouteConfigSuite) assertRoutes(requiredIDs []string, check func(*network.RouteSpec, *assert.Assertions)) {
+	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *RouteConfigSuite) TestCmdline() {
@@ -114,31 +82,23 @@ func (suite *RouteConfigSuite) TestCmdline() {
 
 	suite.startRuntime()
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertRoutes(
-					[]string{
-						"cmdline/inet4/172.20.0.1//1024",
-						"cmdline/inet4/10.3.5.1//1026",
-					}, func(r *network.RouteSpec) error {
-						suite.Assert().Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
-						suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+	suite.assertRoutes(
+		[]string{
+			"cmdline/inet4/172.20.0.1//1024",
+			"cmdline/inet4/10.3.5.1//1026",
+		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
+			asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 
-						switch r.Metadata().ID() {
-						case "cmdline/inet4/172.20.0.1//1024":
-							suite.Assert().Equal("eth1", r.TypedSpec().OutLinkName)
-							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
-						case "cmdline/inet4/10.3.5.1//1025":
-							suite.Assert().Equal("eth4", r.TypedSpec().OutLinkName)
-							suite.Assert().EqualValues(netctrl.DefaultRouteMetric+2, r.TypedSpec().Priority)
-						}
-
-						return nil
-					},
-				)
-			},
-		),
+			switch r.Metadata().ID() {
+			case "cmdline/inet4/172.20.0.1//1024":
+				asrt.Equal("eth1", r.TypedSpec().OutLinkName)
+				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+			case "cmdline/inet4/10.3.5.1//1025":
+				asrt.Equal("eth4", r.TypedSpec().OutLinkName)
+				asrt.EqualValues(netctrl.DefaultRouteMetric+2, r.TypedSpec().Priority)
+			}
+		},
 	)
 }
 
@@ -233,50 +193,42 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertRoutes(
-					[]string{
-						"configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024",
-						"configuration/inet4/10.0.3.1/10.0.3.0/24/1024",
-						"configuration/inet4/192.168.0.25/192.168.0.0/18/25",
-						"configuration/inet4/192.244.0.1/192.244.0.0/24/1024",
-						"configuration/inet4//169.254.254.254/32/1024",
-					}, func(r *network.RouteSpec) error {
-						switch r.Metadata().ID() {
-						case "configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024":
-							suite.Assert().Equal("eth2", r.TypedSpec().OutLinkName)
-							suite.Assert().Equal(nethelpers.FamilyInet6, r.TypedSpec().Family)
-							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
-						case "configuration/inet4/10.0.3.1/10.0.3.0/24/1024":
-							suite.Assert().Equal("eth0.24", r.TypedSpec().OutLinkName)
-							suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
-							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
-						case "configuration/inet4/192.168.0.25/192.168.0.0/18/25":
-							suite.Assert().Equal("eth3", r.TypedSpec().OutLinkName)
-							suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
-							suite.Assert().EqualValues(25, r.TypedSpec().Priority)
-						case "configuration/inet4/192.244.0.1/192.244.0.0/24/1024":
-							suite.Assert().Equal("eth1", r.TypedSpec().OutLinkName)
-							suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
-							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
-							suite.Assert().EqualValues(netip.MustParseAddr("192.244.0.10"), r.TypedSpec().Source)
-						case "configuration/inet4//169.254.254.254/32/1024":
-							suite.Assert().Equal("eth3", r.TypedSpec().OutLinkName)
-							suite.Assert().Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
-							suite.Assert().EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
-							suite.Assert().Equal(nethelpers.ScopeLink, r.TypedSpec().Scope)
-							suite.Assert().Equal("169.254.254.254/32", r.TypedSpec().Destination.String())
-						}
+	suite.assertRoutes(
+		[]string{
+			"configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024",
+			"configuration/inet4/10.0.3.1/10.0.3.0/24/1024",
+			"configuration/inet4/192.168.0.25/192.168.0.0/18/25",
+			"configuration/inet4/192.244.0.1/192.244.0.0/24/1024",
+			"configuration/inet4//169.254.254.254/32/1024",
+		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024":
+				asrt.Equal("eth2", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet6, r.TypedSpec().Family)
+				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+			case "configuration/inet4/10.0.3.1/10.0.3.0/24/1024":
+				asrt.Equal("eth0.24", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+			case "configuration/inet4/192.168.0.25/192.168.0.0/18/25":
+				asrt.Equal("eth3", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				asrt.EqualValues(25, r.TypedSpec().Priority)
+			case "configuration/inet4/192.244.0.1/192.244.0.0/24/1024":
+				asrt.Equal("eth1", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(netip.MustParseAddr("192.244.0.10"), r.TypedSpec().Source)
+			case "configuration/inet4//169.254.254.254/32/1024":
+				asrt.Equal("eth3", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.Equal(nethelpers.ScopeLink, r.TypedSpec().Scope)
+				asrt.Equal("169.254.254.254/32", r.TypedSpec().Destination.String())
+			}
 
-						suite.Assert().Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
-
-						return nil
-					},
-				)
-			},
-		),
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+		},
 	)
 }
 
