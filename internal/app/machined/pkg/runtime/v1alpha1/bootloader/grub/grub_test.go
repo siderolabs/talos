@@ -77,6 +77,10 @@ func TestParseBootLabel(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, grub.BootB, label)
 
+	label, err = grub.ParseBootLabel("Reset Talos installation and return to maintenance mode\n")
+	assert.NoError(t, err)
+	assert.Equal(t, grub.BootReset, label)
+
 	_, err = grub.ParseBootLabel("C - v3")
 	assert.Error(t, err)
 }
@@ -94,7 +98,7 @@ func TestWrite(t *testing.T) {
 
 	tempFile, _ := os.CreateTemp("", "talos-test-grub-*.cfg")
 
-	defer os.Remove(tempFile.Name())
+	t.Cleanup(func() { require.NoError(t, os.Remove(tempFile.Name())) })
 
 	config := grub.NewConfig("cmdline A")
 
