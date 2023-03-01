@@ -12,6 +12,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/kubernetes/inject"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 var serviceAccountCmdFlags struct {
@@ -62,7 +63,7 @@ cat deployment.yaml | talosctl inject %[1]s --roles="os:admin" -f - > deployment
 func init() {
 	serviceAccountCmd.Flags().StringVarP(&serviceAccountCmdFlags.file, "file", "f", "",
 		fmt.Sprintf("file with Kubernetes manifests to be injected with %s", constants.ServiceAccountResourceKind))
-	serviceAccountCmd.Flags().StringSliceVarP(&serviceAccountCmdFlags.roles, "roles", "r", []string{"os:reader"},
+	serviceAccountCmd.Flags().StringSliceVarP(&serviceAccountCmdFlags.roles, "roles", "r", []string{string(role.Reader)},
 		fmt.Sprintf("roles to add to the generated %s manifests", constants.ServiceAccountResourceKind))
 	Cmd.AddCommand(serviceAccountCmd)
 }

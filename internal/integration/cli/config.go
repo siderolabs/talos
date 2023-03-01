@@ -86,11 +86,15 @@ func (suite *TalosconfigSuite) TestNew() {
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
-	readerConfig := filepath.Join(tempDir, "talosconfig")
+	readerConfig := filepath.Join(tempDir, "readerconfig")
 	suite.RunCLI([]string{"--nodes", node, "config", "new", "--roles", "os:reader", readerConfig},
 		base.StdoutEmpty())
 
-	// commands that work for both admin and reader, with and without RBAC
+	operatorConfig := filepath.Join(tempDir, "operatorconfig")
+	suite.RunCLI([]string{"--nodes", node, "config", "new", "--roles", "os:operator", operatorConfig},
+		base.StdoutEmpty())
+
+	// commands that work for admin, operator and reader, with and without RBAC
 	for _, tt := range []struct {
 		args []string
 		opts []base.RunOption
@@ -105,24 +109,26 @@ func (suite *TalosconfigSuite) TestNew() {
 		suite.Run(name, func() {
 			suite.T().Parallel()
 
-			args := append([]string{"--nodes", node}, tt.args...)
-			suite.RunCLI(args, tt.opts...)
+			for _, config := range []string{readerConfig, operatorConfig} {
+				args := append([]string{"--nodes", node}, tt.args...)
+				suite.RunCLI(args, tt.opts...)
 
-			args = append([]string{"--talosconfig", readerConfig}, args...)
-			suite.RunCLI(args, tt.opts...)
+				args = append([]string{"--talosconfig", config}, args...)
+				suite.RunCLI(args, tt.opts...)
+			}
 		})
 	}
 
-	// commands that work for admin, but not for reader (when RBAC is enabled)
+	// commands that work for admin, but not for reader&operator (when RBAC is enabled)
 	for _, tt := range []struct {
-		args       []string
-		adminOpts  []base.RunOption
-		readerOpts []base.RunOption
+		args        []string
+		adminOpts   []base.RunOption
+		nonprivOpts []base.RunOption
 	}{
 		{
 			args:      []string{"read", "/etc/hosts"},
 			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`localhost`))},
-			readerOpts: []base.RunOption{
+			nonprivOpts: []base.RunOption{
 				base.StdoutEmpty(),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
 				base.ShouldFail(),
@@ -131,7 +137,7 @@ func (suite *TalosconfigSuite) TestNew() {
 		{
 			args:      []string{"get", "mc"},
 			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`MachineConfig`))},
-			readerOpts: []base.RunOption{
+			nonprivOpts: []base.RunOption{
 				base.ShouldFail(),
 				base.StdoutShouldMatch(regexp.MustCompile(`\QNODE   NAMESPACE   TYPE   ID   VERSION`)),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
@@ -140,7 +146,7 @@ func (suite *TalosconfigSuite) TestNew() {
 		{
 			args:      []string{"get", "osrootsecret"},
 			adminOpts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`OSRootSecret`))},
-			readerOpts: []base.RunOption{
+			nonprivOpts: []base.RunOption{
 				base.ShouldFail(),
 				base.StdoutShouldMatch(regexp.MustCompile(`\QNODE   NAMESPACE   TYPE   ID   VERSION`)),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
@@ -149,7 +155,7 @@ func (suite *TalosconfigSuite) TestNew() {
 		{
 			args:      []string{"kubeconfig", "--force", tempDir},
 			adminOpts: []base.RunOption{base.StdoutEmpty()},
-			readerOpts: []base.RunOption{
+			nonprivOpts: []base.RunOption{
 				base.ShouldFail(),
 				base.StdoutEmpty(),
 				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
@@ -164,12 +170,50 @@ func (suite *TalosconfigSuite) TestNew() {
 			args := append([]string{"--nodes", node}, tt.args...)
 			suite.RunCLI(args, tt.adminOpts...)
 
-			args = append([]string{"--talosconfig", readerConfig}, args...)
+			for _, config := range []string{readerConfig, operatorConfig} {
+				if rbacEnabled {
+					suite.RunCLI(append([]string{"--talosconfig", config}, args...), tt.nonprivOpts...)
+				} else {
+					// check that it works the same way as for admin with reader's config
+					suite.RunCLI(append([]string{"--talosconfig", config}, args...), tt.adminOpts...)
+				}
+			}
+		})
+	}
+
+	// commands which work for operator, but not reader (when RBAC is enabled)
+	for _, tt := range []struct {
+		args        []string
+		privOpts    []base.RunOption
+		nonprivOpts []base.RunOption
+	}{
+		{
+			args: []string{"etcd", "alarm", "list"},
+			privOpts: []base.RunOption{
+				base.StdoutEmpty(),
+			},
+			nonprivOpts: []base.RunOption{
+				base.StdoutEmpty(),
+				base.StderrShouldMatch(regexp.MustCompile(`\Qrpc error: code = PermissionDenied desc = not authorized`)),
+				base.ShouldFail(),
+			},
+		},
+	} {
+		tt := tt
+		name := strings.Join(tt.args, "_")
+		suite.Run(name, func() {
+			suite.T().Parallel()
+
+			args := append([]string{"--nodes", node}, tt.args...)
+			suite.RunCLI(args, tt.privOpts...)
+
+			suite.RunCLI(append([]string{"--talosconfig", operatorConfig}, args...), tt.privOpts...)
+
 			if rbacEnabled {
-				suite.RunCLI(args, tt.readerOpts...)
+				suite.RunCLI(append([]string{"--talosconfig", readerConfig}, args...), tt.nonprivOpts...)
 			} else {
 				// check that it works the same way as for admin with reader's config
-				suite.RunCLI(args, tt.adminOpts...)
+				suite.RunCLI(append([]string{"--talosconfig", readerConfig}, args...), tt.privOpts...)
 			}
 		})
 	}

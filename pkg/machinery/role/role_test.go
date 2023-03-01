@@ -15,11 +15,11 @@ import (
 func TestSet(t *testing.T) {
 	t.Parallel()
 
-	roles, unknownRoles := role.Parse([]string{"os:admin", "os:reader", "os:future", "os:impersonator", "", " "})
+	roles, unknownRoles := role.Parse([]string{"os:admin", "os:operator", "os:reader", "os:future", "os:impersonator", "", " "})
 	assert.Equal(t, []string{"os:future"}, unknownRoles)
-	assert.Equal(t, role.MakeSet(role.Admin, role.Reader, role.Role("os:future"), role.Impersonator), roles)
+	assert.Equal(t, role.MakeSet(role.Admin, role.Operator, role.Reader, role.Role("os:future"), role.Impersonator), roles)
 
-	assert.Equal(t, []string{"os:admin", "os:future", "os:impersonator", "os:reader"}, roles.Strings())
+	assert.Equal(t, []string{"os:admin", "os:future", "os:impersonator", "os:operator", "os:reader"}, roles.Strings())
 	assert.Equal(t, []string(nil), role.MakeSet().Strings())
 
 	assert.True(t, roles.Includes(role.Admin))

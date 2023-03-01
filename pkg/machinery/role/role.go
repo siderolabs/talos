@@ -20,8 +20,11 @@ const (
 	// Prefix for all built-in roles.
 	Prefix = string("os:")
 
-	// Admin defines Talos role for admins.
+	// Admin defines Talos role for admins (every API is available).
 	Admin = Role(Prefix + "admin")
+
+	// Operator defines Talos role for operators (Reader + management APIs which do not allow secret access, e.g. rebooting a node).
+	Operator = Role(Prefix + "operator")
 
 	// Reader defines Talos role for readers who can access read-only APIs that do not expose secrets.
 	Reader = Role(Prefix + "reader")
@@ -41,7 +44,7 @@ type Set struct {
 
 var (
 	// All roles that can be granted to users.
-	All = MakeSet(Admin, Reader, EtcdBackup, Impersonator)
+	All = MakeSet(Admin, Operator, Reader, EtcdBackup, Impersonator)
 
 	// Zero is an empty set of roles.
 	Zero = MakeSet()

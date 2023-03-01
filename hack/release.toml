@@ -101,6 +101,14 @@ Additionally, the Reset API can now function in maintenance mode
 and has the capability to wipe the node's system disk (partial wipe is not supported).
 """
 
+    [notes.roles]
+        title = "New Talos API os:operator role"
+        description="""\
+Talos now supports a new `os:operator` role for the Talos API.
+This role allows everything `os:reader` role allows plus access to maintenance APIs:
+rebooting, shutting down a node, accessing packet capture, etcd alarm APIs, etcd backup, etc.
+"""
+
 [make_deps]
 
     [make_deps.tools]

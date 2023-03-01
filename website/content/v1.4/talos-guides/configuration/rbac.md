@@ -15,6 +15,7 @@ The certificate subject's organization field is used to encode user roles.
 There is a set of predefined roles that allow access to different [API methods]({{< relref "../../reference/api" >}}):
 
 * `os:admin` grants access to all methods;
+* `os:operator` grants everything `os:reader` role does, plus additional methods: rebooting, shutting down, etcd backup, etcd alarm management, and so on;
 * `os:reader` grants access to "safe" methods (for example, that includes the ability to list files, but does not include the ability to read files content);
 * `os:etcd:backup` grants access to [`/machine.MachineService/EtcdSnapshot`]({{< relref "../../reference/api#machine.EtcdSnapshotRequest" >}}) method.
 
