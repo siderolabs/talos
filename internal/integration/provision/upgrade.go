@@ -662,7 +662,7 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string, skip
 		UpgradeKubelet: !skipKubeletUpgrade,
 	}
 
-	suite.Require().NoError(kubernetes.UpgradeTalosManaged(suite.ctx, suite.clusterAccess, options))
+	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, options))
 }
 
 func (suite *UpgradeSuite) untaint(name string) {

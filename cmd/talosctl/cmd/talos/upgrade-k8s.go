@@ -84,5 +84,5 @@ func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 		return fmt.Errorf("error creating upgrade path %w", err)
 	}
 
-	return k8s.UpgradeTalosManaged(ctx, &state, upgradeOptions)
+	return k8s.Upgrade(ctx, &state, upgradeOptions)
 }

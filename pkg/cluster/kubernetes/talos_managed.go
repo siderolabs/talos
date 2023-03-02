@@ -18,7 +18,6 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/metadata"
 	v1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -37,10 +36,10 @@ type UpgradeProvider interface {
 	cluster.K8sProvider
 }
 
-// UpgradeTalosManaged the Kubernetes control plane.
+// Upgrade the Kubernetes control plane components, manifests, kubelets.
 //
 //nolint:gocyclo,cyclop
-func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
+func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
 	if !options.Path.IsSupported() {
 		return fmt.Errorf("unsupported upgrade path %s (from %q to %q)", options.Path, options.Path.FromVersion(), options.Path.ToVersion())
 	}
@@ -95,12 +94,8 @@ func UpgradeTalosManaged(ctx context.Context, cluster UpgradeProvider, options U
 		}
 	}
 
-	if err = upgradeDaemonset(ctx, k8sClient.Clientset, kubeProxy, options); err != nil {
-		if apierrors.IsNotFound(err) {
-			options.Log("kube-proxy skipped as DaemonSet was not found")
-		} else {
-			return fmt.Errorf("error updating kube-proxy: %w", err)
-		}
+	if err = upgradeKubeProxy(ctx, cluster, options); err != nil {
+		return fmt.Errorf("failed updating kube-proxy: %w", err)
 	}
 
 	if err = upgradeKubelet(ctx, cluster, options); err != nil {
@@ -125,6 +120,34 @@ func upgradeStaticPod(ctx context.Context, cluster UpgradeProvider, options Upgr
 	}
 
 	return nil
+}
+
+func upgradeKubeProxy(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
+	options.Log("updating kube-proxy to version %q", options.Path.ToVersion())
+
+	for _, node := range options.controlPlaneNodes {
+		if err := patchNodeConfig(ctx, cluster, node, patchKubeProxy(options)); err != nil {
+			return fmt.Errorf("error updating node %q: %w", node, err)
+		}
+	}
+
+	return nil
+}
+
+func patchKubeProxy(options UpgradeOptions) func(config *v1alpha1config.Config) error {
+	return func(config *v1alpha1config.Config) error {
+		if config.ClusterConfig == nil {
+			config.ClusterConfig = &v1alpha1config.ClusterConfig{}
+		}
+
+		if config.ClusterConfig.ProxyConfig == nil {
+			config.ClusterConfig.ProxyConfig = &v1alpha1config.ProxyConfig{}
+		}
+
+		config.ClusterConfig.ProxyConfig.ContainerImage = fmt.Sprintf("%s:v%s", constants.KubeProxyImage, options.Path.ToVersion())
+
+		return nil
+	}
 }
 
 func controlplaneConfigResourceType(service string) resource.Type {
@@ -337,14 +360,7 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 		ctx = client.WithNode(ctx, nodes[0])
 	}
 
-	return manifests.GetBootstrapManifests(ctx, talosclient.COSI, func(obj manifests.Manifest) bool {
-		// kubeproxy daemon set is updated as part of a different flow
-		if obj.GetName() == kubeProxy && obj.GetKind() == "DaemonSet" {
-			return false
-		}
-
-		return true
-	})
+	return manifests.GetBootstrapManifests(ctx, talosclient.COSI, nil)
 }
 
 //nolint:gocyclo
@@ -354,7 +370,7 @@ func syncManifests(ctx context.Context, objects []*unstructured.Unstructured, cl
 		return err
 	}
 
-	return manifests.Sync(ctx, objects, config, options.DryRun, options.Log)
+	return manifests.SyncWithLog(ctx, objects, config, options.DryRun, options.Log)
 }
 
 //nolint:gocyclo

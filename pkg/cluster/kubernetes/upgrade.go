@@ -9,7 +9,6 @@ import (
 	"io"
 
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
-	appsv1 "k8s.io/api/apps/v1"
 )
 
 const (
@@ -18,7 +17,6 @@ const (
 	kubeAPIServer         = "kube-apiserver"
 	kubeControllerManager = "kube-controller-manager"
 	kubeScheduler         = "kube-scheduler"
-	kubeProxy             = "kube-proxy"
 )
 
 // UpgradeOptions represents Kubernetes control plane upgrade settings.
@@ -30,7 +28,6 @@ type UpgradeOptions struct {
 	UpgradeKubelet       bool
 	DryRun               bool
 
-	extraUpdaters     []daemonsetUpdater
 	controlPlaneNodes []string
 	workerNodes       []string
 }
@@ -45,5 +42,3 @@ func (options *UpgradeOptions) Log(line string, args ...interface{}) {
 
 	fmt.Printf(line+"\n", args...)
 }
-
-type daemonsetUpdater func(ds string, daemonset *appsv1.DaemonSet) error
