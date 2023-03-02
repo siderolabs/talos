@@ -14,56 +14,7 @@ import (
 
 // DefaultClusterChecks returns a set of default Talos cluster readiness checks.
 func DefaultClusterChecks() []ClusterCheck {
-	return []ClusterCheck{
-		// wait for etcd to be healthy on all control plane nodes
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("etcd to be healthy", func(ctx context.Context) error {
-				return ServiceHealthAssertion(ctx, cluster, "etcd", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
-			}, 5*time.Minute, 5*time.Second)
-		},
-
-		// wait for etcd members to be consistent across nodes
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("etcd members to be consistent across nodes", func(ctx context.Context) error {
-				return EtcdConsistentAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
-		},
-
-		// wait for etcd members to be the control plane nodes
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("etcd members to be control plane nodes", func(ctx context.Context) error {
-				return EtcdControlPlaneNodesAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
-		},
-
-		// wait for apid to be ready on all the nodes
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("apid to be ready", func(ctx context.Context) error {
-				return ApidReadyAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
-		},
-
-		// wait for all nodes to report their memory size
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("all nodes memory sizes", func(ctx context.Context) error {
-				return AllNodesMemorySizes(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
-		},
-
-		// wait for all nodes to report their disk size
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("all nodes disk sizes", func(ctx context.Context) error {
-				return AllNodesDiskSizes(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
-		},
-
-		// wait for kubelet to be healthy on all
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("kubelet to be healthy", func(ctx context.Context) error {
-				return ServiceHealthAssertion(ctx, cluster, "kubelet", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
-			}, 5*time.Minute, 5*time.Second)
-		},
-
+	return append(PreBootSequenceChecks(), []ClusterCheck{
 		// wait for all nodes to finish booting
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all nodes to finish boot sequence", func(ctx context.Context) error {
@@ -137,7 +88,7 @@ func DefaultClusterChecks() []ClusterCheck {
 				return K8sAllNodesSchedulableAssertion(ctx, cluster)
 			}, 5*time.Minute, 5*time.Second)
 		},
-	}
+	}...)
 }
 
 // ExtraClusterChecks returns a set of additional Talos cluster readiness checks which work only for newer versions of Talos.
@@ -145,4 +96,58 @@ func DefaultClusterChecks() []ClusterCheck {
 // ExtraClusterChecks can't be used reliably in upgrade tests, as older versions might not pass the checks.
 func ExtraClusterChecks() []ClusterCheck {
 	return []ClusterCheck{}
+}
+
+// PreBootSequenceChecks returns a set of Talos cluster readiness checks which are run before boot sequence.
+func PreBootSequenceChecks() []ClusterCheck {
+	return []ClusterCheck{
+		// wait for etcd to be healthy on all control plane nodes
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("etcd to be healthy", func(ctx context.Context) error {
+				return ServiceHealthAssertion(ctx, cluster, "etcd", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
+			}, 5*time.Minute, 5*time.Second)
+		},
+
+		// wait for etcd members to be consistent across nodes
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("etcd members to be consistent across nodes", func(ctx context.Context) error {
+				return EtcdConsistentAssertion(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
+
+		// wait for etcd members to be the control plane nodes
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("etcd members to be control plane nodes", func(ctx context.Context) error {
+				return EtcdControlPlaneNodesAssertion(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
+
+		// wait for apid to be ready on all the nodes
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("apid to be ready", func(ctx context.Context) error {
+				return ApidReadyAssertion(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
+
+		// wait for all nodes to report their memory size
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("all nodes memory sizes", func(ctx context.Context) error {
+				return AllNodesMemorySizes(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
+
+		// wait for all nodes to report their disk size
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("all nodes disk sizes", func(ctx context.Context) error {
+				return AllNodesDiskSizes(ctx, cluster)
+			}, 5*time.Minute, 5*time.Second)
+		},
+
+		// wait for kubelet to be healthy on all
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("kubelet to be healthy", func(ctx context.Context) error {
+				return ServiceHealthAssertion(ctx, cluster, "kubelet", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
+			}, 5*time.Minute, 5*time.Second)
+		},
+	}
 }

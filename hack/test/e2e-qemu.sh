@@ -102,31 +102,30 @@ esac
 case "${WITH_CONFIG_PATCH:-false}" in
   # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH
   false)
-     CONFIG_PATCH_FLAG=()
-    ;;
+      CONFIG_PATCH_FLAG=()
+      ;;
   *)
-    CONFIG_PATCH_FLAG=(--config-patch "${WITH_CONFIG_PATCH}")
-    ;;
+      CONFIG_PATCH_FLAG=(--config-patch "${WITH_CONFIG_PATCH}")
+      ;;
 esac
 
-case "${WITH_CONFIG_PATCH_FILE:-false}" in
-  # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH_FILE
+case "${WITH_CONFIG_PATCH_WORKER:-false}" in
+  # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH_WORKER
   false)
-     CONFIG_PATCH_FLAG=()
-    ;;
+      CONFIG_PATCH_FLAG=()
+      ;;
   *)
-    CONFIG_PATCH_FLAG=(--config-patch "@${WITH_CONFIG_PATCH_FILE}")
-    ;;
+      CONFIG_PATCH_FLAG=(--config-patch-worker "${WITH_CONFIG_PATCH_FILE}")
+      ;;
 esac
 
-case "${WITH_CONFIG_PATCH_FILE_WORKER:-false}" in
-  # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH_FILE
-  false)
-     CONFIG_PATCH_FLAG=()
-    ;;
+case "${WITH_SKIP_BOOT_PHASE_FINISHED_CHECK:-no}" in
+  yes|true|y)
+      SKIP_BOOT_PHASE_FINISHED_CHECK_FLAG="--skip-boot-phase-finished-check=true"
+      ;;
   *)
-    CONFIG_PATCH_FLAG=(--config-patch-worker "@${WITH_CONFIG_PATCH_FILE_WORKER}")
-    ;;
+      SKIP_BOOT_PHASE_FINISHED_CHECK_FLAG="--skip-boot-phase-finished-check=false"
+      ;;
 esac
 
 function create_cluster {
@@ -158,7 +157,8 @@ function create_cluster {
     ${REGISTRY_MIRROR_FLAGS} \
     ${QEMU_FLAGS} \
     ${CUSTOM_CNI_FLAG} \
-    "${CONFIG_PATCH_FLAG[@]}"
+    "${CONFIG_PATCH_FLAG[@]}" \
+    "${SKIP_BOOT_PHASE_FINISHED_CHECK_FLAG}"
 
   "${TALOSCTL}" config node 172.20.1.2
 }
@@ -168,6 +168,14 @@ function destroy_cluster() {
 }
 
 create_cluster
+
+case "${CUSTOM_CNI_NAME:-none}" in
+  cilium)
+    install_and_run_cilium_cni_tests
+    ;;
+  *)
+    ;;
+esac
 
 case "${TEST_MODE:-default}" in
   fast-conformance)

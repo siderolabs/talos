@@ -4,14 +4,20 @@
 #  - PLATFORM
 #  - TAG
 #  - SHA
+#  - REGISTRY
+#  - IMAGE
+#  - INSTALLER_IMAGE
 #  - ARTIFACTS
 #  - TALOSCTL
 #  - INTEGRATION_TEST
-#  - KUBECTL
 #  - SHORT_INTEGRATION_TEST
 #  - CUSTOM_CNI_URL
-#  - IMAGE
-#  - INSTALLER_IMAGE
+#  - KUBECTL
+#  - KUBESTR
+#  - HELM
+#  - CLUSTERCTL
+#  - CILIUM_CLI
+
 #
 # Some environment variables set in this file (e. g. TALOS_VERSION and KUBERNETES_VERSION)
 # are referenced by https://github.com/siderolabs/cluster-api-templates.
@@ -273,4 +279,40 @@ function run_csi_tests {
 
 function validate_virtio_modules {
   ${TALOSCTL} read /proc/modules | grep -q virtio
+}
+
+function install_and_run_cilium_cni_tests {
+  get_kubeconfig
+
+  case "${CILIUM_INSTALL_TYPE:-none}" in
+    strict)
+      ${CILIUM_CLI} install \
+        --helm-set=ipam.mode=kubernetes \
+        --helm-set=kubeProxyReplacement=strict \
+        --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+        --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+        --helm-set=cgroup.autoMount.enabled=false \
+        --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
+        --helm-set=k8sServiceHost=172.20.1.1 \
+        --helm-set=k8sServicePort=6443 \
+        --wait-duration=10m
+      ;;
+    *)
+      # explicitly setting kubeProxyReplacement=disabled since by the time cilium cli runs talos
+      # has not yet applied the kube-proxy manifests
+      ${CILIUM_CLI} install \
+        --helm-set=ipam.mode=kubernetes \
+        --helm-set=kubeProxyReplacement=disabled \
+        --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+        --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+        --helm-set=cgroup.autoMount.enabled=false \
+        --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
+        --wait-duration=10m
+      ;;
+  esac
+
+  ${CILIUM_CLI} status
+
+  # use kube-system namespace since it doesn't have a PSS restriction
+  ${CILIUM_CLI} connectivity test --test-namespace kube-system
 }

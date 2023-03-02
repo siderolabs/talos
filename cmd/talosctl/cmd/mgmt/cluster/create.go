@@ -85,69 +85,70 @@ const (
 )
 
 var (
-	talosconfig               string
-	nodeImage                 string
-	nodeInstallImage          string
-	registryMirrors           []string
-	registryInsecure          []string
-	kubernetesVersion         string
-	nodeVmlinuzPath           string
-	nodeInitramfsPath         string
-	nodeISOPath               string
-	nodeDiskImagePath         string
-	applyConfigEnabled        bool
-	bootloaderEnabled         bool
-	uefiEnabled               bool
-	extraUEFISearchPaths      []string
-	configDebug               bool
-	networkCIDR               string
-	networkMTU                int
-	networkIPv4               bool
-	networkIPv6               bool
-	wireguardCIDR             string
-	nameservers               []string
-	dnsDomain                 string
-	workers                   int
-	controlplanes             int
-	controlPlaneCpus          string
-	workersCpus               string
-	controlPlaneMemory        int
-	workersMemory             int
-	clusterDiskSize           int
-	clusterDisks              []string
-	extraDisks                int
-	extraDiskSize             int
-	targetArch                string
-	clusterWait               bool
-	clusterWaitTimeout        time.Duration
-	forceInitNodeAsEndpoint   bool
-	forceEndpoint             string
-	inputDir                  string
-	cniBinPath                []string
-	cniConfDir                string
-	cniCacheDir               string
-	cniBundleURL              string
-	ports                     string
-	dockerHostIP              string
-	withInitNode              bool
-	customCNIUrl              string
-	crashdumpOnFailure        bool
-	skipKubeconfig            bool
-	skipInjectingConfig       bool
-	talosVersion              string
-	encryptStatePartition     bool
-	encryptEphemeralPartition bool
-	useVIP                    bool
-	enableKubeSpan            bool
-	enableClusterDiscovery    bool
-	configPatch               []string
-	configPatchControlPlane   []string
-	configPatchWorker         []string
-	badRTC                    bool
-	extraBootKernelArgs       string
-	dockerDisableIPv6         bool
-	controlPlanePort          int
-	dhcpSkipHostname          bool
+	talosconfig                string
+	nodeImage                  string
+	nodeInstallImage           string
+	registryMirrors            []string
+	registryInsecure           []string
+	kubernetesVersion          string
+	nodeVmlinuzPath            string
+	nodeInitramfsPath          string
+	nodeISOPath                string
+	nodeDiskImagePath          string
+	applyConfigEnabled         bool
+	bootloaderEnabled          bool
+	uefiEnabled                bool
+	extraUEFISearchPaths       []string
+	configDebug                bool
+	networkCIDR                string
+	networkMTU                 int
+	networkIPv4                bool
+	networkIPv6                bool
+	wireguardCIDR              string
+	nameservers                []string
+	dnsDomain                  string
+	workers                    int
+	controlplanes              int
+	controlPlaneCpus           string
+	workersCpus                string
+	controlPlaneMemory         int
+	workersMemory              int
+	clusterDiskSize            int
+	clusterDisks               []string
+	extraDisks                 int
+	extraDiskSize              int
+	targetArch                 string
+	clusterWait                bool
+	clusterWaitTimeout         time.Duration
+	forceInitNodeAsEndpoint    bool
+	forceEndpoint              string
+	inputDir                   string
+	cniBinPath                 []string
+	cniConfDir                 string
+	cniCacheDir                string
+	cniBundleURL               string
+	ports                      string
+	dockerHostIP               string
+	withInitNode               bool
+	customCNIUrl               string
+	crashdumpOnFailure         bool
+	skipKubeconfig             bool
+	skipInjectingConfig        bool
+	talosVersion               string
+	encryptStatePartition      bool
+	encryptEphemeralPartition  bool
+	useVIP                     bool
+	enableKubeSpan             bool
+	enableClusterDiscovery     bool
+	configPatch                []string
+	configPatchControlPlane    []string
+	configPatchWorker          []string
+	badRTC                     bool
+	extraBootKernelArgs        string
+	dockerDisableIPv6          bool
+	controlPlanePort           int
+	dhcpSkipHostname           bool
+	skipBootPhaseFinishedCheck bool
 )
 
 // createCmd represents the cluster up command.
@@ -693,7 +694,15 @@ func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
 	checkCtx, checkCtxCancel := context.WithTimeout(ctx, clusterWaitTimeout)
 	defer checkCtxCancel()
 
-	if err := check.Wait(checkCtx, clusterAccess, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter()); err != nil {
+	checks := check.DefaultClusterChecks()
+
+	if skipBootPhaseFinishedCheck {
+		checks = check.PreBootSequenceChecks()
+	}
+
+	checks = append(checks, check.ExtraClusterChecks()...)
+
+	if err := check.Wait(checkCtx, clusterAccess, checks, check.StderrReporter()); err != nil {
 		return err
 	}
 
@@ -929,6 +938,7 @@ func init() {
 	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
 	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
 	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
+	createCmd.Flags().BoolVar(&skipBootPhaseFinishedCheck, "skip-boot-phase-finished-check", false, "skip waiting for node to finish boot phase")
 
 	Cmd.AddCommand(createCmd)
 }

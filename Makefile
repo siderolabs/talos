@@ -55,10 +55,13 @@ KUBESTR_VERSION ?= v0.4.37
 HELM_VERSION ?= v3.11.1
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.3.3
+# renovate: datasource=github-releases depName=cilium/cilium-cli
+CILIUM_CLI_VERSION ?= v0.13.0
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
+CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 TESTPKGS ?= github.com/siderolabs/talos/...
 RELEASES ?= v1.1.2 v1.2.6
 SHORT_INTEGRATION_TEST ?=
@@ -372,7 +375,12 @@ $(ARTIFACTS)/clusterctl:
 	@curl -L -o $(ARTIFACTS)/clusterctl "$(CLUSTERCTL_URL)"
 	@chmod +x $(ARTIFACTS)/clusterctl
 
-e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm ## Runs the E2E test for the specified platform (e.g. e2e-docker).
+$(ARTIFACTS)/cilium:
+	@mkdir -p $(ARTIFACTS)
+	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
+	@chmod +x $(ARTIFACTS)/cilium
+
+e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
 		PLATFORM=$* \
 		TAG=$(TAG) \
@@ -388,7 +396,8 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/kubect
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \
 		HELM=$(PWD)/$(ARTIFACTS)/helm \
-		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl
+		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl \
+		CILIUM_CLI=$(PWD)/$(ARTIFACTS)/cilium
 
 provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
 

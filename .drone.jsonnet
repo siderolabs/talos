@@ -416,17 +416,28 @@ local integration_provision_tests_track_2 = Step('provision-tests-track-2', priv
 local integration_extensions = Step('e2e-extensions', target='e2e-qemu', privileged=true, depends_on=[extensions_patch_manifest], environment={
   SHORT_INTEGRATION_TEST: 'yes',
   QEMU_MEMORY_WORKERS: '3072',
-  WITH_CONFIG_PATCH_FILE_WORKER: '_out/extensions-patch.json',
+  WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.json',
   WITH_TEST: 'run_extensions_test',
   IMAGE_REGISTRY: local_registry,
 });
-local integration_cilium = Step('e2e-cilium-1.9.10', target='e2e-qemu', privileged=true, depends_on=[integration_extensions], environment={
+local integration_cilium = Step('e2e-cilium', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
   SHORT_INTEGRATION_TEST: 'yes',
-  CUSTOM_CNI_URL: 'https://raw.githubusercontent.com/cilium/cilium/v1.9.10/install/kubernetes/quick-install.yaml',
-  WITH_CONFIG_PATCH: '[{"op": "replace", "path": "/cluster/network/podSubnets", "value": ["10.0.0.0/8"]}]',  // use Pod CIDRs as hardcoded in Cilium's quick-install
+  WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: 'yes',
+  CUSTOM_CNI_NAME: 'cilium',
+  QEMU_WORKERS: '2',
+  WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}]',
   IMAGE_REGISTRY: local_registry,
 });
-local integration_canal_reset = Step('e2e-canal-reset', target='e2e-qemu', privileged=true, depends_on=[integration_cilium], environment={
+local integration_cilium_strict = Step('e2e-cilium-strict', target='e2e-qemu', privileged=true, depends_on=[integration_cilium], environment={
+  SHORT_INTEGRATION_TEST: 'yes',
+  WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: 'yes',
+  CUSTOM_CNI_NAME: 'cilium',
+  QEMU_WORKERS: '2',
+  CILIUM_INSTALL_TYPE: 'strict',
+  WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]',
+  IMAGE_REGISTRY: local_registry,
+});
+local integration_canal_reset = Step('e2e-canal-reset', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
   INTEGRATION_TEST_RUN: 'TestIntegration/api.ResetSuite/TestResetWithSpec',
   CUSTOM_CNI_URL: 'https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml',
   REGISTRY: local_registry,
@@ -522,7 +533,6 @@ local integration_pipelines = [
   Pipeline('integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + integration_trigger(['integration-provision', 'integration-provision-1']),
   Pipeline('integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2]) + integration_trigger(['integration-provision', 'integration-provision-2']),
   Pipeline('integration-misc', default_pipeline_steps + [
-    integration_cilium,
     integration_canal_reset,
     integration_bios_cgroupsv1,
     integration_disk_image,
@@ -532,6 +542,7 @@ local integration_pipelines = [
     integration_default_hostname,
   ]) + integration_trigger(['integration-misc']),
   Pipeline('integration-extensions', default_pipeline_steps + [extensions_build, extensions_artifacts, extensions_patch_manifest, integration_extensions]) + integration_trigger(['integration-extensions']),
+  Pipeline('integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict]) + integration_trigger(['integration-cilium']),
   Pipeline('integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip]) + integration_trigger(['integration-qemu-encrypted-vip']),
   Pipeline('integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race]) + integration_trigger(['integration-qemu-race']),
   Pipeline('integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi]) + integration_trigger(['integration-qemu-csi']),
@@ -543,11 +554,6 @@ local integration_pipelines = [
   Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-misc', default_pipeline_steps + [
-    extensions_build,
-    extensions_artifacts,
-    extensions_patch_manifest,
-    integration_extensions,
-    integration_cilium,
     integration_canal_reset,
     integration_bios_cgroupsv1,
     integration_disk_image,
@@ -556,6 +562,8 @@ local integration_pipelines = [
     integration_kubespan,
     integration_default_hostname,
   ], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-integration-extensions', default_pipeline_steps + [extensions_build, extensions_artifacts, extensions_patch_manifest, integration_extensions], [default_cron_pipeline]) + cron_trigger(['nightly']),
+  Pipeline('cron-integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi], [default_cron_pipeline]) + cron_trigger(['nightly']),
