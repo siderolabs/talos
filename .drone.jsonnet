@@ -270,13 +270,16 @@ local save_artifacts = {
   image: 'autonomy/build-container:latest',
   pull: 'always',
   environment: {
-    AWS_ACCESS_KEY_ID: { from_secret: 'rook_access_key_id' },
-    AWS_SECRET_ACCESS_KEY: { from_secret: 'rook_secret_access_key' },
+    AZURE_STORAGE_ACCOUNT: { from_secret: 'az_storage_account' },
+    AZURE_STORAGE_USER: { from_secret: 'az_storage_user' },
+    AZURE_STORAGE_PASS: { from_secret: 'az_storage_pass' },
+    AZURE_TENANT: { from_secret: 'az_tenant' },
   },
   commands: [
-    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl mb s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl expire s3://${CI_COMMIT_SHA}${DRONE_TAG//./-} --expiry-days=3',
-    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync _out s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
+    'az storage container create -n ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    'az storage container immutability-policy create --account-name $${AZURE_STORAGE_ACCOUNT} --period 3 -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    'az storage blob upload-batch -s _out -d  ${CI_COMMIT_SHA}${DRONE_TAG//./-}'
   ],
   volumes: volumes.ForStep(),
   depends_on: [build.name, images_essential.name, iso.name, talosctl_cni_bundle.name],
@@ -287,11 +290,15 @@ local load_artifacts = {
   image: 'autonomy/build-container:latest',
   pull: 'always',
   environment: {
-    AWS_ACCESS_KEY_ID: { from_secret: 'rook_access_key_id' },
-    AWS_SECRET_ACCESS_KEY: { from_secret: 'rook_secret_access_key' },
+    AZURE_STORAGE_ACCOUNT: { from_secret: 'az_storage_account' },
+    AZURE_STORAGE_USER: { from_secret: 'az_storage_user' },
+    AZURE_STORAGE_PASS: { from_secret: 'az_storage_pass' },
+    AZURE_TENANT: { from_secret: 'az_tenant' },
   },
   commands: [
-    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync s3://${CI_COMMIT_SHA}${DRONE_TAG//./-} .',
+    'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
+    'az storage blob download-batch --overwrite true -d _out -s ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    'chmod +x _out/clusterctl _out/integration-test-linux-amd64 _out/kubectl _out/kubestr _out/talosctl*'
   ],
   volumes: volumes.ForStep(),
   depends_on: [setup_ci.name],
@@ -326,7 +333,8 @@ local extensions_build = {
 local extensions_artifacts = load_artifacts {
   name: 'extensions-artifacts',
   commands: [
-    's3cmd --host=rook-ceph-rgw-ci-store.rook-ceph.svc --host-bucket=rook-ceph-rgw-ci-store.rook-ceph.svc --no-ssl --stats sync s3://${CI_COMMIT_SHA}${DRONE_TAG//./-}/_out/extensions-metadata _out/extensions-metadata',
+    'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
+    'az storage blob download -f _out/extensions-metadata -n extensions-metadata -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
   ],
   depends_on: [setup_ci.name, extensions_build.name],
 };
