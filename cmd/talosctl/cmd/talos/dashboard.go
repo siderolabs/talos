@@ -21,24 +21,33 @@ var dashboardCmdFlags struct {
 // dashboardCmd represents the monitor command.
 var dashboardCmd = &cobra.Command{
 	Use:   "dashboard",
-	Short: "Cluster dashboard with real-time metrics",
-	Long: `Provide quick UI to navigate through node real-time metrics.
+	Short: "Cluster dashboard with node overview, logs and real-time metrics",
+	Long: `Provide a text-based UI to navigate node overview, logs and real-time metrics.
 
 Keyboard shortcuts:
 
  - h, <Left>: switch one node to the left
  - l, <Right>: switch one node to the right
- - j, <Down>: scroll process list down
- - k, <Up>: scroll process list up
- - <C-d>: scroll process list half page down
- - <C-u>: scroll process list half page up
- - <C-f>: scroll process list one page down
- - <C-b>: scroll process list one page up
+ - j, <Down>: scroll logs/process list down
+ - k, <Up>: scroll logs/process list up
+ - <C-d>: scroll logs/process list half page down
+ - <C-u>: scroll logs/process list half page up
+ - <C-f>: scroll logs/process list one page down
+ - <C-b>: scroll logs/process list one page up
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			return dashboard.Main(ctx, c, dashboardCmdFlags.interval, true)
+			d, err := dashboard.New(c,
+				dashboard.WithInterval(dashboardCmdFlags.interval),
+				dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor),
+				dashboard.WithAllowExitKeys(true),
+			)
+			if err != nil {
+				return err
+			}
+
+			return d.Run(ctx)
 		})
 	},
 }

@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -45,5 +44,13 @@ func dashboardMain() error {
 		return fmt.Errorf("error connecting to the machine service: %w", err)
 	}
 
-	return dashboard.Main(adminCtx, c, 5*time.Second, false)
+	// TODO(dashboard): enable the network config screen once it's ready (remove the screens override option)
+	d, err := dashboard.New(c, dashboard.WithAllowExitKeys(false),
+		dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor),
+	)
+	if err != nil {
+		return err
+	}
+
+	return d.Run(adminCtx)
 }

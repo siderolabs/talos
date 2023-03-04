@@ -759,22 +759,22 @@ talosctl copy <src-path> -|<local-path> [flags]
 
 ## talosctl dashboard
 
-Cluster dashboard with real-time metrics
+Cluster dashboard with node overview, logs and real-time metrics
 
 ### Synopsis
 
-Provide quick UI to navigate through node real-time metrics.
+Provide a text-based UI to navigate node overview, logs and real-time metrics.
 
 Keyboard shortcuts:
 
  - h, <Left>: switch one node to the left
  - l, <Right>: switch one node to the right
- - j, <Down>: scroll process list down
- - k, <Up>: scroll process list up
- - <C-d>: scroll process list half page down
- - <C-u>: scroll process list half page up
- - <C-f>: scroll process list one page down
- - <C-b>: scroll process list one page up
+ - j, <Down>: scroll logs/process list down
+ - k, <Up>: scroll logs/process list up
+ - <C-d>: scroll logs/process list half page down
+ - <C-u>: scroll logs/process list half page up
+ - <C-f>: scroll logs/process list one page down
+ - <C-b>: scroll logs/process list one page up
 
 
 ```
@@ -2701,7 +2701,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
-* [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with real-time metrics
+* [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, logs and real-time metrics
 * [talosctl disks](#talosctl-disks)	 - Get the list of disks from /sys/block on the machine
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
 * [talosctl edit](#talosctl-edit)	 - Edit a resource from the default editor.

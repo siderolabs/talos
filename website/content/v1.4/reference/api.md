@@ -28,6 +28,7 @@ description: Talos gRPC API reference.
     - [AffiliateSpec](#talos.resource.definitions.cluster.AffiliateSpec)
     - [ConfigSpec](#talos.resource.definitions.cluster.ConfigSpec)
     - [IdentitySpec](#talos.resource.definitions.cluster.IdentitySpec)
+    - [InfoSpec](#talos.resource.definitions.cluster.InfoSpec)
     - [KubeSpanAffiliateSpec](#talos.resource.definitions.cluster.KubeSpanAffiliateSpec)
     - [MemberSpec](#talos.resource.definitions.cluster.MemberSpec)
   
@@ -727,6 +728,22 @@ so YAML serialization should be kept backwards compatible.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | node_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cluster.InfoSpec"></a>
+
+### InfoSpec
+InfoSpec describes cluster information.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cluster_id | [string](#string) |  |  |
+| cluster_name | [string](#string) |  |  |
 
 
 

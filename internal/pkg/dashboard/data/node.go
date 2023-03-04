@@ -8,6 +8,12 @@ import (
 	"github.com/siderolabs/gen/slices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // Node represents data gathered from a single node.
@@ -22,6 +28,7 @@ type Node struct {
 	NetDevStats *machine.NetworkDeviceStats
 	DiskStats   *machine.DiskStats
 	Processes   *machine.Process
+	ServiceList *machine.ServiceList
 
 	// These fields are calculated as diff with Node data from previous pol.
 	SystemStatDiff  *machine.SystemStat
@@ -31,6 +38,18 @@ type Node struct {
 
 	// Time-series data.
 	Series map[string][]float64
+
+	MachineStatus     *runtime.MachineStatus
+	MachineType       *config.MachineType
+	KubeletSpec       *k8s.KubeletSpec
+	ResolverStatus    *network.ResolverStatus
+	TimeServerStatus  *network.TimeServerStatus
+	SystemInformation *hardware.SystemInformation
+	ClusterInfo       *cluster.Info
+	StaticPodStatuses []*k8s.StaticPodStatus
+	RouteStatuses     []*network.RouteStatus
+	LinkStatuses      []*network.LinkStatus
+	Members           []*cluster.Member
 }
 
 // MemUsage as used/total.
@@ -173,28 +192,36 @@ func (node *Node) UpdateSeries(old *Node) {
 
 // UpdateDiff calculates diff with node data from previous iteration.
 func (node *Node) UpdateDiff(old *Node) {
-	node.SystemStatDiff = &machine.SystemStat{
-		// TODO: support other fields
-		CpuTotal:        cpuInfoDiff(old.SystemStat.GetCpuTotal(), node.SystemStat.GetCpuTotal()),
-		ContextSwitches: node.SystemStat.ContextSwitches - old.SystemStat.ContextSwitches,
-		ProcessCreated:  node.SystemStat.ProcessCreated - old.SystemStat.ProcessCreated,
+	if old.SystemStat != nil {
+		node.SystemStatDiff = &machine.SystemStat{
+			// TODO: support other fields
+			CpuTotal:        cpuInfoDiff(old.SystemStat.GetCpuTotal(), node.SystemStat.GetCpuTotal()),
+			ContextSwitches: node.SystemStat.ContextSwitches - old.SystemStat.ContextSwitches,
+			ProcessCreated:  node.SystemStat.ProcessCreated - old.SystemStat.ProcessCreated,
+		}
 	}
 
-	node.NetDevStatsDiff = &machine.NetworkDeviceStats{
-		// TODO: support other fields
-		Total: netDevDiff(old.NetDevStats.GetTotal(), node.NetDevStats.GetTotal()),
+	if old.NetDevStats != nil {
+		node.NetDevStatsDiff = &machine.NetworkDeviceStats{
+			// TODO: support other fields
+			Total: netDevDiff(old.NetDevStats.GetTotal(), node.NetDevStats.GetTotal()),
+		}
 	}
 
-	node.DiskStatsDiff = &machine.DiskStats{
-		// TODO: support other fields
-		Total: diskStatDiff(old.DiskStats.GetTotal(), node.DiskStats.GetTotal()),
+	if old.DiskStats != nil {
+		node.DiskStatsDiff = &machine.DiskStats{
+			// TODO: support other fields
+			Total: diskStatDiff(old.DiskStats.GetTotal(), node.DiskStats.GetTotal()),
+		}
 	}
 
-	index := slices.ToMap(old.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
-		return proc.Pid, proc
-	})
+	if old.Processes != nil {
+		index := slices.ToMap(old.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
+			return proc.Pid, proc
+		})
 
-	node.ProcsDiff = slices.ToMap(node.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
-		return proc.Pid, procDiff(index[proc.Pid], proc)
-	})
+		node.ProcsDiff = slices.ToMap(node.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
+			return proc.Pid, procDiff(index[proc.Pid], proc)
+		})
+	}
 }

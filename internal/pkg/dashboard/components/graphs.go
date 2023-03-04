@@ -53,8 +53,19 @@ func (widget *BaseGraph) Update(node string, data *data.Data) {
 			width = len(series)
 		}
 
-		widget.Data[i] = series[len(series)-width:]
+		widget.Data[i] = widget.leftPadSeries(series[len(series)-width:], 2)
 	}
+}
+
+func (widget *BaseGraph) leftPadSeries(series []float64, size int) []float64 {
+	if len(series) >= size {
+		return series
+	}
+
+	padded := make([]float64, size)
+	copy(padded[size-len(series):], series)
+
+	return padded
 }
 
 // NewCPUGraph creates CPU usage graph.

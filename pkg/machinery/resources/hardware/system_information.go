@@ -16,6 +16,9 @@ import (
 // SystemInformationType is type of SystemInformation resource.
 const SystemInformationType = resource.Type("SystemInformations.hardware.talos.dev")
 
+// SystemInformationID is the ID of the SystemInformation resource.
+const SystemInformationID = resource.ID("systeminformation")
+
 // SystemInformation resource holds node SystemInformation information.
 type SystemInformation = typed.Resource[SystemInformationSpec, SystemInformationExtension]
 

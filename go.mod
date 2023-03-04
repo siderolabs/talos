@@ -83,7 +83,7 @@ require (
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.1.0
 	github.com/prometheus/procfs v0.9.0
-	github.com/rivo/tview v0.0.0-20230226195229-47e7db7885b4
+	github.com/rivo/tview v0.0.0-20230307144320-cc10b288e304
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
@@ -138,6 +138,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.90.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.67
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -252,7 +253,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
-	github.com/rivo/uniseg v0.4.3 // indirect
+	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/sethgrid/pester v1.2.0 // indirect
@@ -304,5 +305,4 @@ require (
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )

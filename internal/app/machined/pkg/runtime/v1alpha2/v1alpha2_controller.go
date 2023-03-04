@@ -89,6 +89,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&cluster.ConfigController{},
 		&cluster.DiscoveryServiceController{},
 		&cluster.EndpointController{},
+		&cluster.InfoController{},
 		&cluster.KubernetesPullController{},
 		&cluster.KubernetesPushController{},
 		&cluster.LocalAffiliateController{},

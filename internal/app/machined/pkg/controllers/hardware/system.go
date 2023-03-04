@@ -78,8 +78,7 @@ func (ctrl *SystemInfoController) Run(ctx context.Context, r controller.Runtime,
 		ctrl.SMBIOS = s
 	}
 
-	const systemInfoID = "systeminformation"
-	if err := r.Modify(ctx, hardware.NewSystemInformation(systemInfoID), func(res resource.Resource) error {
+	if err := r.Modify(ctx, hardware.NewSystemInformation(hardware.SystemInformationID), func(res resource.Resource) error {
 		hwadapter.SystemInformation(res.(*hardware.SystemInformation)).Update(&ctrl.SMBIOS.SystemInformation)
 
 		return nil

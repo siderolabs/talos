@@ -37,6 +37,12 @@ message IdentitySpec {
   string node_id = 1;
 }
 
+// InfoSpec describes cluster information.
+message InfoSpec {
+  string cluster_id = 1;
+  string cluster_name = 2;
+}
+
 // KubeSpanAffiliateSpec describes additional information specific for the KubeSpan.
 message KubeSpanAffiliateSpec {
   string public_key = 1;

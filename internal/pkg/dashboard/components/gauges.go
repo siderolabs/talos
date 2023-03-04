@@ -16,24 +16,33 @@ import (
 
 // SystemGauges quickly show CPU/mem load.
 type SystemGauges struct {
-	ui.Block
+	*TermUIWrapper
 
-	cpuGauge *widgets.Gauge
-	memGauge *widgets.Gauge
+	inner *systemGaugesInner
 }
 
 // NewSystemGauges creates SystemGauges.
 func NewSystemGauges() *SystemGauges {
-	widget := &SystemGauges{
+	inner := systemGaugesInner{
 		Block: *ui.NewBlock(),
 	}
 
-	widget.cpuGauge = widgets.NewGauge()
-	widget.cpuGauge.Border = false
-	widget.cpuGauge.Title = "CPU"
-	widget.memGauge = widgets.NewGauge()
-	widget.memGauge.Title = "MEM"
-	widget.memGauge.Border = false
+	inner.cpuGauge = widgets.NewGauge()
+	inner.cpuGauge.Border = false
+	inner.cpuGauge.Title = "CPU"
+
+	inner.memGauge = widgets.NewGauge()
+	inner.memGauge.Title = "MEM"
+	inner.memGauge.Border = false
+
+	wrapper := NewTermUIWrapper(&inner)
+
+	widget := &SystemGauges{
+		TermUIWrapper: wrapper,
+		inner:         &inner,
+	}
+
+	widget.SetBorderPadding(1, 0, 0, 0)
 
 	return widget
 }
@@ -43,25 +52,32 @@ func (widget *SystemGauges) Update(node string, data *data.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {
-		widget.cpuGauge.Label = noData
-		widget.cpuGauge.Percent = 0
-		widget.memGauge.Label = noData
-		widget.memGauge.Percent = 0
+		widget.inner.cpuGauge.Label = noData
+		widget.inner.cpuGauge.Percent = 0
+		widget.inner.memGauge.Label = noData
+		widget.inner.memGauge.Percent = 0
 	} else {
 		memUsed := nodeData.MemUsage()
 
-		widget.memGauge.Percent = int(math.Round(memUsed * 100.0))
-		widget.memGauge.Label = fmt.Sprintf("%.1f%%", memUsed*100.0)
+		widget.inner.memGauge.Percent = int(math.Round(memUsed * 100.0))
+		widget.inner.memGauge.Label = fmt.Sprintf("%.1f%%", memUsed*100.0)
 
 		cpuUsed := nodeData.CPUUsageByName("usage")
 
-		widget.cpuGauge.Percent = int(math.Round(cpuUsed * 100.0))
-		widget.cpuGauge.Label = fmt.Sprintf("%.1f%%", cpuUsed*100.0)
+		widget.inner.cpuGauge.Percent = int(math.Round(cpuUsed * 100.0))
+		widget.inner.cpuGauge.Label = fmt.Sprintf("%.1f%%", cpuUsed*100.0)
 	}
 }
 
+type systemGaugesInner struct {
+	ui.Block
+
+	cpuGauge *widgets.Gauge
+	memGauge *widgets.Gauge
+}
+
 // Draw implements io.Drawable.
-func (widget *SystemGauges) Draw(buf *ui.Buffer) {
+func (widget *systemGaugesInner) Draw(buf *ui.Buffer) {
 	width := widget.Dx()
 	height := widget.Dy()
 

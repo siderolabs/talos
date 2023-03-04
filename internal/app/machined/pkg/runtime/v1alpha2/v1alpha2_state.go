@@ -97,6 +97,7 @@ func NewState() (*State, error) {
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},
+		&cluster.Info{},
 		&cluster.Member{},
 		&config.MachineConfig{},
 		&config.MachineType{},
