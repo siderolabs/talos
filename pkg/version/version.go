@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"runtime"
 	"text/template"
 
@@ -86,4 +87,9 @@ func PrintShortVersion() {
 // Short returns the short version string consist of name, tag and SHA.
 func Short() string {
 	return fmt.Sprintf("%s %s", Name, Tag)
+}
+
+// Trim removes anything extra after semantic version core, `v0.3.2-1-abcd` -> `v0.3.2`.
+func Trim(version string) string {
+	return regexp.MustCompile(`(-\d+(-g[0-9a-f]+)?(-dirty)?)$`).ReplaceAllString(version, "")
 }

@@ -12,7 +12,6 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
-	"regexp"
 	stdruntime "runtime"
 	"strconv"
 	"strings"
@@ -852,11 +851,6 @@ func getDisks() ([]*provision.Disk, error) {
 	return disks, nil
 }
 
-func trimVersion(version string) string {
-	// remove anything extra after semantic version core, `v0.3.2-1-abcd` -> `v0.3.2`
-	return regexp.MustCompile(`(-\d+(-g[0-9a-f]+)?(-dirty)?)$`).ReplaceAllString(version, "")
-}
-
 func init() {
 	createCmd.Flags().StringVar(
 		&talosconfig,
@@ -910,7 +904,7 @@ func init() {
 	createCmd.Flags().StringVar(&cniConfDir, "cni-conf-dir", filepath.Join(defaultCNIDir, "conf.d"), "CNI config directory path (VM only)")
 	createCmd.Flags().StringVar(&cniCacheDir, "cni-cache-dir", filepath.Join(defaultCNIDir, "cache"), "CNI cache directory path (VM only)")
 	createCmd.Flags().StringVar(&cniBundleURL, "cni-bundle-url", fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
-		images.Username, trimVersion(version.Tag), constants.ArchVariable), "URL to download CNI bundle from (VM only)")
+		images.Username, version.Trim(version.Tag), constants.ArchVariable), "URL to download CNI bundle from (VM only)")
 	createCmd.Flags().StringVarP(&ports,
 		"exposed-ports",
 		"p",

@@ -2483,7 +2483,7 @@ talosctl upgrade [flags]
       --debug              debug operation from kernel logs. --wait is set to true when this flag is set
   -f, --force              force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help               help for upgrade
-  -i, --image string       the container image to use for performing the install
+  -i, --image string       the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.4.0-alpha.2")
       --insecure           upgrade using the insecure (encrypted with no auth) maintenance service
   -p, --preserve           preserve data
   -s, --stage              stage the upgrade to perform it after a reboot
