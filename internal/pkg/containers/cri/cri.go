@@ -8,6 +8,7 @@ package cri
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -156,6 +157,11 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 	if len(containers) == 0 {
 		return nil, nil
 	}
+
+	// We want to grab latest container, regardless of its state, even if you have multiple containers in EXITED state.
+	sort.Slice(containers, func(i, j int) bool {
+		return containers[i].CreatedAt > containers[j].CreatedAt
+	})
 
 	return i.buildContainer(containers[0])
 }
@@ -330,13 +336,13 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 }
 
 // GetProcessStderr returns process stderr.
-func (i *inspector) GetProcessStderr(id string) (string, error) {
+func (i *inspector) GetProcessStderr(string) (string, error) {
 	// CRI doesn't seem to have an easy way to do that
 	return "", nil
 }
 
 // Kill sends signal to container task.
-func (i *inspector) Kill(id string, isPodSandbox bool, signal syscall.Signal) error {
+func (i *inspector) Kill(id string, isPodSandbox bool, _ syscall.Signal) error {
 	if isPodSandbox {
 		return i.client.StopPodSandbox(i.ctx, id)
 	}
