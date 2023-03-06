@@ -7,8 +7,8 @@ go 1.20
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 
 require (
-	github.com/containerd/go-cni v1.1.8
-	github.com/cosi-project/runtime v0.3.0-alpha.7
+	github.com/containerd/go-cni v1.1.9
+	github.com/cosi-project/runtime v0.3.0-alpha.8
 	github.com/dustin/go-humanize v1.0.1
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -28,7 +28,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.0
 	github.com/stretchr/testify v1.8.2
-	google.golang.org/genproto v0.0.0-20230223222841-637eb2293923
+	google.golang.org/genproto v0.0.0-20230303212802-e74f57abe488
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -45,7 +45,7 @@ require (
 	github.com/gertd/go-pluralize v0.2.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/josharian/native v1.0.0 // indirect
 	github.com/mdlayher/genetlink v1.3.1 // indirect

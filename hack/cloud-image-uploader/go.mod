@@ -3,7 +3,7 @@ module github.com/siderolabs/cloud-image-uploader
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.44.209
+	github.com/aws/aws-sdk-go v1.44.214
 	github.com/google/uuid v1.3.0
 	github.com/siderolabs/go-retry v0.3.2
 	github.com/spf13/pflag v1.0.5
