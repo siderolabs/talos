@@ -63,19 +63,25 @@ func (c *Udevd) DependsOn(r runtime.Runtime) []string {
 
 // Runner implements the Service interface.
 func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
-	// Set the process arguments.
-	args := &runner.Args{
-		ID: c.ID(r),
-		ProcessArgs: []string{
-			"/sbin/udevd",
-			"--resolve-names=never",
-		},
-	}
-
 	debug := false
 
 	if r.Config() != nil {
 		debug = r.Config().Debug()
+	}
+
+	processArgs := []string{
+		"/sbin/udevd",
+		"--resolve-names=never",
+	}
+
+	if debug {
+		processArgs = append(processArgs, "--debug")
+	}
+
+	// Set the process arguments.
+	args := &runner.Args{
+		ID:          c.ID(r),
+		ProcessArgs: processArgs,
 	}
 
 	return restart.New(process.NewRunner(
