@@ -964,3 +964,18 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 
 	return pr, errCh, stream.CloseSend()
 }
+
+// Netstat lists the network sockets on the current node.
+func (c *Client) Netstat(ctx context.Context, req *machineapi.NetstatRequest, callOptions ...grpc.CallOption) (*machineapi.NetstatResponse, error) {
+	resp, err := c.MachineClient.Netstat(
+		ctx,
+		req,
+		callOptions...,
+	)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.NetstatResponse) //nolint:errcheck
+
+	return resp, err
+}

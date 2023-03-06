@@ -99,6 +99,7 @@ service MachineService {
   rpc GenerateClientConfiguration(GenerateClientConfigurationRequest) returns (GenerateClientConfigurationResponse);
   // PacketCapture performs packet capture and streams back pcap file.
   rpc PacketCapture(PacketCaptureRequest) returns (stream common.Data);
+  rpc Netstat(NetstatRequest) returns (NetstatResponse);
 }
 
 // rpc applyConfiguration
@@ -1193,4 +1194,82 @@ message BPFInstruction {
   uint32 jt = 2;
   uint32 jf = 3;
   uint32 k = 4;
+}
+
+message NetstatRequest {
+  enum Filter {
+    ALL = 0;
+    CONNECTED = 1;
+    LISTENING = 2;
+  }
+  Filter filter = 1;
+  message Feature {
+    bool pid = 1;
+  }
+  Feature feature = 2;
+  message L4proto {
+    bool tcp = 1;
+    bool tcp6 = 2;
+    bool udp = 3;
+    bool udp6 = 4;
+    bool udplite = 5;
+    bool udplite6 = 6;
+    bool raw = 7;
+    bool raw6 = 8;
+  }
+  L4proto l4proto = 3;
+}
+
+message ConnectRecord {
+  string l4proto = 1;
+  string localip = 2;
+  uint32 localport = 3;
+  string remoteip = 4;
+  uint32 remoteport = 5;
+  enum State {
+    RESERVED = 0;
+    ESTABLISHED = 1;
+    SYN_SENT = 2;
+    SYN_RECV = 3;
+    FIN_WAIT1 = 4;
+    FIN_WAIT2 = 5;
+    TIME_WAIT = 6;
+    CLOSE = 7;
+    CLOSEWAIT = 8;
+    LASTACK = 9;
+    LISTEN = 10;
+    CLOSING = 11;
+  }
+  State state = 6;
+  uint64 txqueue = 7;
+  uint64 rxqueue = 8;
+  enum TimerActive {
+    OFF = 0;
+    ON = 1;
+    KEEPALIVE = 2;
+    TIMEWAIT = 3;
+    PROBE = 4;
+  }
+  TimerActive tr = 9;
+  uint64 timerwhen = 10;
+  uint64 retrnsmt = 11;
+  uint32 uid = 12;
+  uint64 timeout = 13;
+  uint64 inode = 14;
+  uint64 ref = 15;
+  uint64 pointer = 16;
+  message Process {
+    uint32 pid = 1;
+    string name = 2;
+  }
+  Process process = 17;
+}
+
+message Netstat {
+  common.Metadata metadata = 1;
+  repeated ConnectRecord connectrecord = 2;
+}
+
+message NetstatResponse {
+  repeated Netstat messages = 1;
 }

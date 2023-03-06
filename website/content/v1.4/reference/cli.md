@@ -2012,6 +2012,46 @@ talosctl mounts [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl netstat
+
+Retrieve a socket listing of connections
+
+```
+talosctl netstat [flags]
+```
+
+### Options
+
+```
+  -a, --all         display all sockets states (default: connected)
+  -x, --extend      show detailed socket information
+  -h, --help        help for netstat
+  -4, --ipv4        display only ipv4 sockets
+  -6, --ipv6        display only ipv6 sockets
+  -l, --listening   display listening server sockets
+  -p, --programs    show process using socket
+  -w, --raw         display only RAW sockets
+  -t, --tcp         display only TCP sockets
+  -o, --timers      display timers
+  -u, --udp         display only UDP sockets
+  -U, --udplite     display only UDPLite sockets
+  -v, --verbose     display sockets of all supported transport protocols
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl patch
 
 Update field(s) of a resource using a JSON patch.
@@ -2679,6 +2719,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
 * [talosctl memory](#talosctl-memory)	 - Show memory usage
 * [talosctl mounts](#talosctl-mounts)	 - List mounts
+* [talosctl netstat](#talosctl-netstat)	 - Retrieve a socket listing of connections
 * [talosctl patch](#talosctl-patch)	 - Update field(s) of a resource using a JSON patch.
 * [talosctl pcap](#talosctl-pcap)	 - Capture the network packets from the node.
 * [talosctl processes](#talosctl-processes)	 - List running processes

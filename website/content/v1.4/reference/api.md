@@ -224,6 +224,8 @@ description: Talos gRPC API reference.
     - [ClusterNetworkConfig](#machine.ClusterNetworkConfig)
     - [ConfigLoadErrorEvent](#machine.ConfigLoadErrorEvent)
     - [ConfigValidationErrorEvent](#machine.ConfigValidationErrorEvent)
+    - [ConnectRecord](#machine.ConnectRecord)
+    - [ConnectRecord.Process](#machine.ConnectRecord.Process)
     - [Container](#machine.Container)
     - [ContainerInfo](#machine.ContainerInfo)
     - [ContainersRequest](#machine.ContainersRequest)
@@ -294,6 +296,11 @@ description: Talos gRPC API reference.
     - [Mounts](#machine.Mounts)
     - [MountsResponse](#machine.MountsResponse)
     - [NetDev](#machine.NetDev)
+    - [Netstat](#machine.Netstat)
+    - [NetstatRequest](#machine.NetstatRequest)
+    - [NetstatRequest.Feature](#machine.NetstatRequest.Feature)
+    - [NetstatRequest.L4proto](#machine.NetstatRequest.L4proto)
+    - [NetstatResponse](#machine.NetstatResponse)
     - [NetworkConfig](#machine.NetworkConfig)
     - [NetworkDeviceConfig](#machine.NetworkDeviceConfig)
     - [NetworkDeviceStats](#machine.NetworkDeviceStats)
@@ -356,10 +363,13 @@ description: Talos gRPC API reference.
     - [VersionResponse](#machine.VersionResponse)
   
     - [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode)
+    - [ConnectRecord.State](#machine.ConnectRecord.State)
+    - [ConnectRecord.TimerActive](#machine.ConnectRecord.TimerActive)
     - [EtcdMemberAlarm.AlarmType](#machine.EtcdMemberAlarm.AlarmType)
     - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
     - [MachineStatusEvent.MachineStage](#machine.MachineStatusEvent.MachineStage)
+    - [NetstatRequest.Filter](#machine.NetstatRequest.Filter)
     - [PhaseEvent.Action](#machine.PhaseEvent.Action)
     - [RebootRequest.Mode](#machine.RebootRequest.Mode)
     - [ResetRequest.WipeMode](#machine.ResetRequest.WipeMode)
@@ -3938,6 +3948,53 @@ ConfigValidationErrorEvent is reported when config validation has failed.
 
 
 
+<a name="machine.ConnectRecord"></a>
+
+### ConnectRecord
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| l4proto | [string](#string) |  |  |
+| localip | [string](#string) |  |  |
+| localport | [uint32](#uint32) |  |  |
+| remoteip | [string](#string) |  |  |
+| remoteport | [uint32](#uint32) |  |  |
+| state | [ConnectRecord.State](#machine.ConnectRecord.State) |  |  |
+| txqueue | [uint64](#uint64) |  |  |
+| rxqueue | [uint64](#uint64) |  |  |
+| tr | [ConnectRecord.TimerActive](#machine.ConnectRecord.TimerActive) |  |  |
+| timerwhen | [uint64](#uint64) |  |  |
+| retrnsmt | [uint64](#uint64) |  |  |
+| uid | [uint32](#uint32) |  |  |
+| timeout | [uint64](#uint64) |  |  |
+| inode | [uint64](#uint64) |  |  |
+| ref | [uint64](#uint64) |  |  |
+| pointer | [uint64](#uint64) |  |  |
+| process | [ConnectRecord.Process](#machine.ConnectRecord.Process) |  |  |
+
+
+
+
+
+
+<a name="machine.ConnectRecord.Process"></a>
+
+### ConnectRecord.Process
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pid | [uint32](#uint32) |  |  |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="machine.Container"></a>
 
 ### Container
@@ -5142,6 +5199,91 @@ The messages message containing the requested df stats.
 
 
 
+<a name="machine.Netstat"></a>
+
+### Netstat
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| connectrecord | [ConnectRecord](#machine.ConnectRecord) | repeated |  |
+
+
+
+
+
+
+<a name="machine.NetstatRequest"></a>
+
+### NetstatRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filter | [NetstatRequest.Filter](#machine.NetstatRequest.Filter) |  |  |
+| feature | [NetstatRequest.Feature](#machine.NetstatRequest.Feature) |  |  |
+| l4proto | [NetstatRequest.L4proto](#machine.NetstatRequest.L4proto) |  |  |
+
+
+
+
+
+
+<a name="machine.NetstatRequest.Feature"></a>
+
+### NetstatRequest.Feature
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pid | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.NetstatRequest.L4proto"></a>
+
+### NetstatRequest.L4proto
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| tcp | [bool](#bool) |  |  |
+| tcp6 | [bool](#bool) |  |  |
+| udp | [bool](#bool) |  |  |
+| udp6 | [bool](#bool) |  |  |
+| udplite | [bool](#bool) |  |  |
+| udplite6 | [bool](#bool) |  |  |
+| raw | [bool](#bool) |  |  |
+| raw6 | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.NetstatResponse"></a>
+
+### NetstatResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [Netstat](#machine.Netstat) | repeated |  |
+
+
+
+
+
+
 <a name="machine.NetworkConfig"></a>
 
 ### NetworkConfig
@@ -6150,6 +6292,43 @@ rpc upgrade
 
 
 
+<a name="machine.ConnectRecord.State"></a>
+
+### ConnectRecord.State
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| RESERVED | 0 |  |
+| ESTABLISHED | 1 |  |
+| SYN_SENT | 2 |  |
+| SYN_RECV | 3 |  |
+| FIN_WAIT1 | 4 |  |
+| FIN_WAIT2 | 5 |  |
+| TIME_WAIT | 6 |  |
+| CLOSE | 7 |  |
+| CLOSEWAIT | 8 |  |
+| LASTACK | 9 |  |
+| LISTEN | 10 |  |
+| CLOSING | 11 |  |
+
+
+
+<a name="machine.ConnectRecord.TimerActive"></a>
+
+### ConnectRecord.TimerActive
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| OFF | 0 |  |
+| ON | 1 |  |
+| KEEPALIVE | 2 |  |
+| TIMEWAIT | 3 |  |
+| PROBE | 4 |  |
+
+
+
 <a name="machine.EtcdMemberAlarm.AlarmType"></a>
 
 ### EtcdMemberAlarm.AlarmType
@@ -6206,6 +6385,19 @@ File type.
 | SHUTTING_DOWN | 6 |  |
 | RESETTING | 7 |  |
 | UPGRADING | 8 |  |
+
+
+
+<a name="machine.NetstatRequest.Filter"></a>
+
+### NetstatRequest.Filter
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ALL | 0 |  |
+| CONNECTED | 1 |  |
+| LISTENING | 2 |  |
 
 
 
@@ -6368,6 +6560,7 @@ This method is available only on control plane nodes (which run etcd). |
 | Version | [.google.protobuf.Empty](#google.protobuf.Empty) | [VersionResponse](#machine.VersionResponse) |  |
 | GenerateClientConfiguration | [GenerateClientConfigurationRequest](#machine.GenerateClientConfigurationRequest) | [GenerateClientConfigurationResponse](#machine.GenerateClientConfigurationResponse) | GenerateClientConfiguration generates talosctl client configuration (talosconfig). |
 | PacketCapture | [PacketCaptureRequest](#machine.PacketCaptureRequest) | [.common.Data](#common.Data) stream | PacketCapture performs packet capture and streams back pcap file. |
+| Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) |  |
 
  <!-- end services -->
 

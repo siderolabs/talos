@@ -33,6 +33,7 @@ import (
 	"github.com/google/gopacket/pcapgo"
 	"github.com/google/uuid"
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/nberlee/go-netstat/netstat"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
 	"github.com/siderolabs/gen/slices"
@@ -2343,4 +2344,83 @@ func upgradeMutex(c *etcd.Client) (*concurrency.Mutex, error) {
 	mu := concurrency.NewMutex(sess, constants.EtcdTalosEtcdUpgradeMutex)
 
 	return mu, nil
+}
+
+// Netstat implements the machine.MachineServer interface.
+func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*machine.NetstatResponse, error) {
+	if req == nil {
+		req = new(machine.NetstatRequest)
+	}
+
+	features := netstat.EnableFeatures{
+		TCP:      req.L4Proto.Tcp,
+		TCP6:     req.L4Proto.Tcp6,
+		UDP:      req.L4Proto.Udp,
+		UDP6:     req.L4Proto.Udp6,
+		UDPLite:  req.L4Proto.Udplite,
+		UDPLite6: req.L4Proto.Udplite6,
+		Raw:      req.L4Proto.Raw,
+		Raw6:     req.L4Proto.Raw6,
+		PID:      req.Feature.Pid,
+	}
+
+	var fn netstat.AcceptFn
+
+	switch req.Filter {
+	case machine.NetstatRequest_ALL:
+		fn = func(*netstat.SockTabEntry) bool { return true }
+	case machine.NetstatRequest_LISTENING:
+		fn = func(s *netstat.SockTabEntry) bool {
+			return s.State == netstat.Listen
+		}
+	case machine.NetstatRequest_CONNECTED:
+		fn = func(s *netstat.SockTabEntry) bool {
+			return s.State != netstat.Listen
+		}
+	}
+
+	netstatResp, err := netstat.Netstat(ctx, features, fn)
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]*machine.ConnectRecord, len(netstatResp))
+
+	for i, entry := range netstatResp {
+		records[i] = &machine.ConnectRecord{
+			L4Proto:    entry.Transport,
+			Localip:    entry.LocalEndpoint.IP.String(),
+			Localport:  uint32(entry.LocalEndpoint.Port),
+			Remoteip:   entry.RemoteEndpoint.IP.String(),
+			Remoteport: uint32(entry.RemoteEndpoint.Port),
+			State:      machine.ConnectRecord_State(entry.State),
+			Txqueue:    entry.TxQueue,
+			Rxqueue:    entry.RxQueue,
+			Tr:         machine.ConnectRecord_TimerActive(entry.Tr),
+			Timerwhen:  entry.TimerWhen,
+			Retrnsmt:   entry.Retrnsmt,
+			Uid:        entry.UID,
+			Timeout:    entry.Timeout,
+			Inode:      entry.Inode,
+			Ref:        entry.Ref,
+			Pointer:    entry.Pointer,
+			Process:    &machine.ConnectRecord_Process{},
+		}
+		if entry.Process != nil {
+			records[i].Process = &machine.ConnectRecord_Process{
+				Pid:  uint32(entry.Process.Pid),
+				Name: entry.Process.Name,
+			}
+		}
+	}
+
+	reply := &machine.NetstatResponse{
+		Messages: []*machine.Netstat{
+			{
+				Connectrecord: records,
+			},
+		},
+	}
+
+	return reply, err
 }

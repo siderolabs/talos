@@ -111,6 +111,7 @@ type MachineServiceClient interface {
 	GenerateClientConfiguration(ctx context.Context, in *GenerateClientConfigurationRequest, opts ...grpc.CallOption) (*GenerateClientConfigurationResponse, error)
 	// PacketCapture performs packet capture and streams back pcap file.
 	PacketCapture(ctx context.Context, in *PacketCaptureRequest, opts ...grpc.CallOption) (MachineService_PacketCaptureClient, error)
+	Netstat(ctx context.Context, in *NetstatRequest, opts ...grpc.CallOption) (*NetstatResponse, error)
 }
 
 type machineServiceClient struct {
@@ -791,6 +792,15 @@ func (x *machineServicePacketCaptureClient) Recv() (*common.Data, error) {
 	return m, nil
 }
 
+func (c *machineServiceClient) Netstat(ctx context.Context, in *NetstatRequest, opts ...grpc.CallOption) (*NetstatResponse, error) {
+	out := new(NetstatResponse)
+	err := c.cc.Invoke(ctx, "/machine.MachineService/Netstat", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MachineServiceServer is the server API for MachineService service.
 // All implementations must embed UnimplementedMachineServiceServer
 // for forward compatibility
@@ -880,6 +890,7 @@ type MachineServiceServer interface {
 	GenerateClientConfiguration(context.Context, *GenerateClientConfigurationRequest) (*GenerateClientConfigurationResponse, error)
 	// PacketCapture performs packet capture and streams back pcap file.
 	PacketCapture(*PacketCaptureRequest, MachineService_PacketCaptureServer) error
+	Netstat(context.Context, *NetstatRequest) (*NetstatResponse, error)
 	mustEmbedUnimplementedMachineServiceServer()
 }
 
@@ -1024,6 +1035,9 @@ func (UnimplementedMachineServiceServer) GenerateClientConfiguration(context.Con
 }
 func (UnimplementedMachineServiceServer) PacketCapture(*PacketCaptureRequest, MachineService_PacketCaptureServer) error {
 	return status.Errorf(codes.Unimplemented, "method PacketCapture not implemented")
+}
+func (UnimplementedMachineServiceServer) Netstat(context.Context, *NetstatRequest) (*NetstatResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Netstat not implemented")
 }
 func (UnimplementedMachineServiceServer) mustEmbedUnimplementedMachineServiceServer() {}
 
@@ -1904,6 +1918,24 @@ func (x *machineServicePacketCaptureServer) Send(m *common.Data) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _MachineService_Netstat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NetstatRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).Netstat(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/machine.MachineService/Netstat",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).Netstat(ctx, req.(*NetstatRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MachineService_ServiceDesc is the grpc.ServiceDesc for MachineService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2050,6 +2082,10 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenerateClientConfiguration",
 			Handler:    _MachineService_GenerateClientConfiguration_Handler,
+		},
+		{
+			MethodName: "Netstat",
+			Handler:    _MachineService_Netstat_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

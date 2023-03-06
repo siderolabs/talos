@@ -118,10 +118,17 @@ rebooting, shutting down a node, accessing packet capture, etcd alarm APIs, etcd
 """
 
     [notes.containers-output]
-        title = "Talosctl containers"
+        title = "talosctl containers"
         description="""\
 `talosctl logs -k` and `talosctl containers -k` now support and output container display names with their ids.
 This allows to distinguish between containers with the same name.
+"""
+
+    [notes.netstat]
+        title = "talosctl netstat"
+        description="""\
+Talos API was extended to support retrieving a list of network connections (sockets) from the node.
+`talosctl netstat` command was added to retrieve the list of network connections.
 """
 
 [make_deps]

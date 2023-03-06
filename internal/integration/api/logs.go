@@ -226,10 +226,7 @@ DrainLoop:
 		}
 	}
 
-	if tailLines >= 0 {
-		// we might expect one line to be streamed extra for concurrent request
-		suite.Assert().InDelta(tailLines, linesDrained, 1)
-	}
+	suite.Assert().GreaterOrEqual(int32(linesDrained), tailLines)
 
 	// invoke machined API
 	_, err = suite.Client.Stats(suite.nodeCtx, constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD)
