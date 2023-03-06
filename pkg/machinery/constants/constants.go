@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.12-talos"
+	DefaultKernelVersion = "6.1.14-talos"
 
 	// DefaultKernelModulesPath is the default path to the kernel modules.
 	DefaultKernelModulesPath = "/lib/modules" + "/" + DefaultKernelVersion
@@ -436,7 +436,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.6.18"
+	DefaultContainerdVersion = "1.6.19"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
