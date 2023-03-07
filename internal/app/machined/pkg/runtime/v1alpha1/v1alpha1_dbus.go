@@ -55,7 +55,15 @@ func (dbus *DBusState) Start() error {
 
 // Stop the D-Bus broker and logind mock.
 func (dbus *DBusState) Stop() error {
+	if dbus.cancel == nil {
+		return nil
+	}
+
 	dbus.cancel()
+
+	if dbus.logindMock == nil || dbus.broker == nil {
+		return nil
+	}
 
 	if err := dbus.logindMock.Close(); err != nil {
 		return err
