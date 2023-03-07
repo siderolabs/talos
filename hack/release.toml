@@ -117,6 +117,13 @@ This role allows everything `os:reader` role allows plus access to maintenance A
 rebooting, shutting down a node, accessing packet capture, etcd alarm APIs, etcd backup, etc.
 """
 
+    [notes.containers-output]
+        title = "Talosctl containers"
+        description="""\
+`talosctl logs -k` and `talosctl containers -k` now support and output container display names with their ids.
+This allows to distinguish between containers with the same name.
+"""
+
 [make_deps]
 
     [make_deps.tools]

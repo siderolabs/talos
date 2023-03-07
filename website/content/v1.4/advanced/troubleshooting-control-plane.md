@@ -173,14 +173,14 @@ In any case, the status of the control plane components on each control plane no
 $ talosctl -n <IP> containers --kubernetes
 NODE         NAMESPACE   ID                                                                                            IMAGE                                               PID    STATUS
 172.20.0.2   k8s.io      kube-system/kube-apiserver-talos-default-controlplane-1                                       registry.k8s.io/pause:3.2                                2539   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-controlplane-1:kube-apiserver                     registry.k8s.io/kube-apiserver:v{{< k8s_release >}} 2572   CONTAINER_RUNNING
+172.20.0.2   k8s.io      └─ kube-system/kube-apiserver-talos-default-controlplane-1:kube-apiserver:51c3aad7a271        registry.k8s.io/kube-apiserver:v{{< k8s_release >}} 2572   CONTAINER_RUNNING
 ```
 
 If `kube-apiserver` shows as `CONTAINER_EXITED`, it might have exited due to configuration error.
 Logs can be checked with `taloctl logs --kubernetes` (or with `-k` as a shorthand):
 
 ```bash
-$ talosctl -n <IP> logs -k kube-system/kube-apiserver-talos-default-controlplane-1:kube-apiserver
+$ talosctl -n <IP> logs -k kube-system/kube-apiserver-talos-default-controlplane-1:kube-apiserver:51c3aad7a271
 172.20.0.2: 2021-03-05T20:46:13.133902064Z stderr F 2021/03/05 20:46:13 Running command:
 172.20.0.2: 2021-03-05T20:46:13.133933824Z stderr F Command env: (log-file=, also-stdout=false, redirect-stderr=true)
 172.20.0.2: 2021-03-05T20:46:13.133938524Z stderr F Run from directory:
@@ -271,12 +271,12 @@ If the control plane endpoint is not yet up, the container status of the control
 
 ```bash
 $ talosctl -n <IP> c -k
-NODE         NAMESPACE   ID                                                                                            IMAGE                                        PID    STATUS
+NODE         NAMESPACE   ID                                                                                                         IMAGE                                        PID    STATUS
 ...
-172.20.0.2   k8s.io      kube-system/kube-controller-manager-talos-default-controlplane-1                              registry.k8s.io/pause:3.2                         2547   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-controlplane-1:kube-controller-manager   registry.k8s.io/kube-controller-manager:v{{< k8s_release >}}   2580   CONTAINER_RUNNING
-172.20.0.2   k8s.io      kube-system/kube-scheduler-talos-default-controlplane-1                                       registry.k8s.io/pause:3.2                         2638   SANDBOX_READY
-172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-controlplane-1:kube-scheduler                     registry.k8s.io/kube-scheduler:v{{< k8s_release >}}            2670   CONTAINER_RUNNING
+172.20.0.2   k8s.io      kube-system/kube-controller-manager-talos-default-controlplane-1                                           registry.k8s.io/pause:3.2                         2547   SANDBOX_READY
+172.20.0.2   k8s.io      └─ kube-system/kube-controller-manager-talos-default-controlplane-1:kube-controller-manager:84fc77c59e17   registry.k8s.io/kube-controller-manager:v{{< k8s_release >}}   2580   CONTAINER_RUNNING
+172.20.0.2   k8s.io      kube-system/kube-scheduler-talos-default-controlplane-1                                                    registry.k8s.io/pause:3.2                         2638   SANDBOX_READY
+172.20.0.2   k8s.io      └─ kube-system/kube-scheduler-talos-default-controlplane-1:kube-scheduler:4182a7d7f779                     registry.k8s.io/kube-scheduler:v{{< k8s_release >}}            2670   CONTAINER_RUNNING
 ...
 ```
 
@@ -285,7 +285,7 @@ Otherwise the process might crashing.
 The logs can be checked with `talosctl logs --kubernetes <containerID>`:
 
 ```bash
-$ talosctl -n <IP> logs -k kube-system/kube-controller-manager-talos-default-controlplane-1:kube-controller-manager
+$ talosctl -n <IP> logs -k kube-system/kube-controller-manager-talos-default-controlplane-1:kube-controller-manager:84fc77c59e17
 172.20.0.3: 2021-03-09T13:59:34.291667526Z stderr F 2021/03/09 13:59:34 Running command:
 172.20.0.3: 2021-03-09T13:59:34.291702262Z stderr F Command env: (log-file=, also-stdout=false, redirect-stderr=true)
 172.20.0.3: 2021-03-09T13:59:34.291707121Z stderr F Run from directory:

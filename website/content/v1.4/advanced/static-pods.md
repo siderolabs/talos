@@ -48,16 +48,16 @@ If the API server is not available, status of the static pod can also be inspect
 
 ```bash
 $ talosctl containers --kubernetes
-NODE         NAMESPACE   ID                                                                                      IMAGE                                                         PID    STATUS
-172.20.0.3   k8s.io      default/nginx-talos-default-controlplane-2                                                    registry.k8s.io/pause:3.6                               4886   SANDBOX_READY
-172.20.0.3   k8s.io      └─ default/nginx-talos-default-controlplane-2:nginx                                           docker.io/library/nginx:latest
+NODE         NAMESPACE   ID                                                                                      IMAGE                                                   PID    STATUS
+172.20.0.3   k8s.io      default/nginx-talos-default-controlplane-2                                              registry.k8s.io/pause:3.6                               4886   SANDBOX_READY
+172.20.0.3   k8s.io      └─ default/nginx-talos-default-controlplane-2:nginx:4183a7d7a771                        docker.io/library/nginx:latest
 ...
 ```
 
 Logs of static pods can be retrieved with `talosctl logs --kubernetes`:
 
 ```bash
-$ talosctl logs --kubernetes default/nginx-talos-default-controlplane-2:nginx
+$ talosctl logs --kubernetes default/nginx-talos-default-controlplane-2:nginx:4183a7d7a771
 172.20.0.3: 2022-02-10T15:26:01.289208227Z stderr F 2022/02/10 15:26:01 [notice] 1#1: using the "epoll" event method
 172.20.0.3: 2022-02-10T15:26:01.2892466Z stderr F 2022/02/10 15:26:01 [notice] 1#1: nginx/1.21.6
 172.20.0.3: 2022-02-10T15:26:01.28925723Z stderr F 2022/02/10 15:26:01 [notice] 1#1: built by gcc 10.2.1 20210110 (Debian 10.2.1-6)

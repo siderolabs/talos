@@ -42,15 +42,15 @@ Container logs for Kubernetes pods can be retrieved with `talosctl logs -k` comm
 
 ```sh
 $ talosctl -n 172.20.1.2 containers -k
-NODE         NAMESPACE   ID                                                 IMAGE                                                         PID    STATUS
-172.20.1.2   k8s.io      kube-system/kube-flannel-dk6d5                     registry.k8s.io/pause:3.6                                     1329   SANDBOX_READY
-172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-cni      ghcr.io/siderolabs/install-cni:v0.7.0-alpha.0-1-g2bb2efc      0      CONTAINER_EXITED
-172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-config   quay.io/coreos/flannel:v0.13.0                                0      CONTAINER_EXITED
-172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:kube-flannel     quay.io/coreos/flannel:v0.13.0                                1610   CONTAINER_RUNNING
-172.20.1.2   k8s.io      kube-system/kube-proxy-gfkqj                       registry.k8s.io/pause:3.5                                     1311   SANDBOX_READY
-172.20.1.2   k8s.io      └─ kube-system/kube-proxy-gfkqj:kube-proxy         registry.k8s.io/kube-proxy:v{{< k8s_release >}}                            1379   CONTAINER_RUNNING
+NODE         NAMESPACE   ID                                                              IMAGE                                                         PID    STATUS
+172.20.1.2   k8s.io      kube-system/kube-flannel-dk6d5                                  registry.k8s.io/pause:3.6                                     1329   SANDBOX_READY
+172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-cni:f1d4cf68feb9      ghcr.io/siderolabs/install-cni:v0.7.0-alpha.0-1-g2bb2efc      0      CONTAINER_EXITED
+172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:install-config:bc39fec3cbac   quay.io/coreos/flannel:v0.13.0                                0      CONTAINER_EXITED
+172.20.1.2   k8s.io      └─ kube-system/kube-flannel-dk6d5:kube-flannel:5c3989353b98     quay.io/coreos/flannel:v0.13.0                                1610   CONTAINER_RUNNING
+172.20.1.2   k8s.io      kube-system/kube-proxy-gfkqj                                    registry.k8s.io/pause:3.5                                     1311   SANDBOX_READY
+172.20.1.2   k8s.io      └─ kube-system/kube-proxy-gfkqj:kube-proxy:ad5e8ddc7e7f         registry.k8s.io/kube-proxy:v{{< k8s_release >}}                            1379   CONTAINER_RUNNING
 
-$ talosctl -n 172.20.1.2 logs -k kube-system/kube-proxy-gfkqj:kube-proxy
+$ talosctl -n 172.20.1.2 logs -k kube-system/kube-proxy-gfkqj:kube-proxy:ad5e8ddc7e7f
 172.20.1.2: 2021-11-30T19:13:20.567825192Z stderr F I1130 19:13:20.567737       1 server_others.go:138] "Detected node IP" address="172.20.0.3"
 172.20.1.2: 2021-11-30T19:13:20.599684397Z stderr F I1130 19:13:20.599613       1 server_others.go:206] "Using iptables Proxier"
 [...]

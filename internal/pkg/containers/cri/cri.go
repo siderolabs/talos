@@ -8,6 +8,7 @@ package cri
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"syscall"
 	"time"
@@ -85,28 +86,30 @@ func (i *inspector) Images() (map[string]string, error) {
 	return result, nil
 }
 
-func parseContainerDisplay(id string) (namespace, pod, name string) {
-	slashIdx := strings.Index(id, "/")
-	if slashIdx > 0 {
-		namespace, pod = id[:slashIdx], id[slashIdx+1:]
-		semicolonIdx := strings.LastIndex(pod, ":")
-
-		if semicolonIdx > 0 {
-			name = pod[semicolonIdx+1:]
-			pod = pod[:semicolonIdx]
-		}
-	} else {
-		name = id
+func parseContainerDisplay(id string) (namespace, pod, name, containerID string) {
+	namespace, pod, ok := strings.Cut(id, "/")
+	if !ok {
+		return "", "", id, ""
 	}
 
-	return
+	pod, name, ok = strings.Cut(pod, ":")
+	if !ok {
+		return namespace, pod, "", ""
+	}
+
+	name, containerID, ok = strings.Cut(name, ":")
+	if !ok {
+		return namespace, pod, name, ""
+	}
+
+	return namespace, pod, name, containerID
 }
 
 // Container returns info about a single container.
 //
 // If container is not found, Container returns nil.
 func (i *inspector) Container(id string) (*ctrs.Container, error) {
-	namespace, pod, name := parseContainerDisplay(id)
+	namespace, pod, name, cntID := parseContainerDisplay(id)
 	if pod == "" {
 		return nil, nil
 	}
@@ -157,7 +160,28 @@ func (i *inspector) Container(id string) (*ctrs.Container, error) {
 		return nil, nil
 	}
 
+	if cntID != "" {
+		cnt, ok := findContainer(cntID, containers)
+		if !ok {
+			return nil, fmt.Errorf("container %q not found", id)
+		}
+
+		return i.buildContainer(cnt)
+	}
+
 	return i.buildContainer(containers[0])
+}
+
+func findContainer(cntID string, containers []*runtimeapi.Container) (*runtimeapi.Container, bool) {
+	// I'm sure that we can proabably find container using CRI labels, but
+	// I'm not sure if it will work with partial IDs.
+	for _, cnt := range containers {
+		if strings.Contains(cnt.Id, cntID) {
+			return cnt, true
+		}
+	}
+
+	return nil, false
 }
 
 func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) {
@@ -214,9 +238,10 @@ func (i *inspector) buildContainer(container *runtimeapi.Container) (*ctrs.Conta
 	}
 
 	podName := container.Labels["io.kubernetes.pod.namespace"] + "/" + container.Labels["io.kubernetes.pod.name"]
+
 	ctr := &ctrs.Container{
 		Inspector:    i,
-		Display:      podName + ":" + container.Metadata.Name,
+		Display:      podName + ":" + container.Metadata.Name + ":" + safeCut(container.Id, 12),
 		Name:         container.Metadata.Name,
 		ID:           container.Id,
 		Digest:       container.ImageRef,
@@ -240,6 +265,14 @@ func (i *inspector) buildContainer(container *runtimeapi.Container) (*ctrs.Conta
 	}
 
 	return ctr, nil
+}
+
+func safeCut(id string, i int) string {
+	if len(id) > i {
+		return id[:i]
+	}
+
+	return id
 }
 
 // Pods collects information about running pods & containers.
@@ -330,13 +363,13 @@ func (i *inspector) Pods() ([]*ctrs.Pod, error) {
 }
 
 // GetProcessStderr returns process stderr.
-func (i *inspector) GetProcessStderr(id string) (string, error) {
+func (i *inspector) GetProcessStderr(string) (string, error) {
 	// CRI doesn't seem to have an easy way to do that
 	return "", nil
 }
 
 // Kill sends signal to container task.
-func (i *inspector) Kill(id string, isPodSandbox bool, signal syscall.Signal) error {
+func (i *inspector) Kill(id string, isPodSandbox bool, _ syscall.Signal) error {
 	if isPodSandbox {
 		return i.client.StopPodSandbox(i.ctx, id)
 	}
