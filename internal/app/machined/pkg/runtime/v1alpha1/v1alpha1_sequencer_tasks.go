@@ -1096,25 +1096,6 @@ func mountDisks(r runtime.Runtime) (err error) {
 	return mount.Mount(mountpoints)
 }
 
-func unmountDisks(r runtime.Runtime) (err error) {
-	mountpoints := mount.NewMountPoints()
-
-	for _, disk := range r.Config().Machine().Disks() {
-		for i, part := range disk.Partitions() {
-			var partname string
-
-			partname, err = util.PartPath(disk.Device(), i+1)
-			if err != nil {
-				return err
-			}
-
-			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, ""))
-		}
-	}
-
-	return mount.Unmount(mountpoints)
-}
-
 // WriteUserFiles represents the WriteUserFiles task.
 //
 //nolint:gocyclo,cyclop
@@ -1322,7 +1303,26 @@ func UnmountOverlayFilesystems(runtime.Sequence, any) (runtime.TaskExecutionFunc
 // UnmountUserDisks represents the UnmountUserDisks task.
 func UnmountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return unmountDisks(r)
+		if r.Config() == nil {
+			return nil
+		}
+
+		mountpoints := mount.NewMountPoints()
+
+		for _, disk := range r.Config().Machine().Disks() {
+			for i, part := range disk.Partitions() {
+				var partname string
+
+				partname, err = util.PartPath(disk.Device(), i+1)
+				if err != nil {
+					return err
+				}
+
+				mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, ""))
+			}
+		}
+
+		return mount.Unmount(mountpoints)
 	}, "unmountUserDisks"
 }
 
@@ -1366,7 +1366,12 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 // UnmountSystemDiskBindMounts represents the UnmountSystemDiskBindMounts task.
 func UnmountSystemDiskBindMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		devname := r.State().Machine().Disk().BlockDevice.Device().Name()
+		systemDisk := r.State().Machine().Disk()
+		if systemDisk == nil {
+			return nil
+		}
+
+		devname := systemDisk.BlockDevice.Device().Name()
 
 		f, err := os.Open("/proc/mounts")
 		if err != nil {
@@ -1584,6 +1589,11 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 
 		if err = system.Services(nil).Stop(ctx, "kubelet"); err != nil {
 			return err
+		}
+
+		// check that the CRI is running and the socket is available, if not, skip the rest
+		if _, err = os.Stat(constants.CRIContainerdAddress); os.IsNotExist(err) {
+			return nil
 		}
 
 		client, err := cri.NewClient("unix://"+constants.CRIContainerdAddress, 10*time.Second)
