@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/cluster"
 	k8s "github.com/siderolabs/talos/pkg/cluster/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -43,7 +42,6 @@ func init() {
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false, "skip the actual upgrade and show the upgrade plan instead")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.UpgradeKubelet, "upgrade-kubelet", true, "upgrade kubelet service")
-	cli.Should(upgradeK8sCmd.MarkFlagRequired("to"))
 	addCommand(upgradeK8sCmd)
 }
 
