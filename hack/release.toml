@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.2.7"
+previous = "v1.2.8"
 
 pre_release = false
 
@@ -16,13 +16,10 @@ preface = """\
 [notes]
 
     [notes.updates]
-        title = "Component Updates"
+        title = "CRI Custom Config"
         description="""\
-* Kubernetes: v1.25.5
-* Linux: 5.15.83
-* containerd: 1.6.12
-
-Talos is built with Go 1.19.4.
+Talos 1.2.9 provides easier upgrade path to Talos 1.3.x for users
+of CRI custom configuration by allowing Talos 1.3-style config to be accepted before an ugprade.
 """
 
 [make_deps]

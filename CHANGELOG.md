@@ -1,3 +1,36 @@
+## [Talos 1.2.9](https://github.com/siderolabs/talos/releases/tag/v1.2.9) (2023-03-10)
+
+Welcome to the v1.2.9 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### CRI Custom Config
+
+Talos 1.2.9 provides easier upgrade path to Talos 1.3.x for users
+of CRI custom configuration by allowing Talos 1.3-style config to be accepted before an ugprade.
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>1 commit</summary>
+<p>
+
+* [`346a1e28e`](https://github.com/siderolabs/talos/commit/346a1e28eda8e6a1e9c1b9c54cfde58085667901) fix: easier upgrade to Talos 1.3 with custom CRI config
+</p>
+</details>
+
+### Dependency Changes
+
+This release has no dependency changes
+
+Previous release can be found at [v1.2.8](https://github.com/siderolabs/talos/releases/tag/v1.2.8)
+
 ## [Talos 1.2.8](https://github.com/siderolabs/talos/releases/tag/v1.2.8) (2022-12-20)
 
 Welcome to the v1.2.8 release of Talos!
