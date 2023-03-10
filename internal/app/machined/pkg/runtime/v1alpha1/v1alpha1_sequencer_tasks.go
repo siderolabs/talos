@@ -1080,6 +1080,10 @@ func WriteUserFiles(seq runtime.Sequence, data interface{}) (runtime.TaskExecuti
 				continue
 			}
 
+			if f.Path() == filepath.Join("/etc", constants.CRICustomizationConfigPart) {
+				continue
+			}
+
 			// Determine if supplied path is in /var or not.
 			// If not, we'll write it to /var anyways and bind mount below
 			p := f.Path()
