@@ -345,8 +345,9 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-        - key: "CriticalAddonsOnly"
-          operator: "Exists"
+        - key: node.cloudprovider.kubernetes.io/uninitialized
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: coredns
           image: {{ .CoreDNSImage }}
