@@ -3,7 +3,7 @@ title: "Nocloud"
 description: "Creating a cluster via the CLI using qemu."
 ---
 
-Talos supports [nocloud](https://cloudinit.readthedocs.io/en/latest/topics/datasources/nocloud.html) data source implementation.
+Talos supports [nocloud](https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html) data source implementation.
 
 There are two ways to configure Talos server with `nocloud` platform:
 
