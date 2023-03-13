@@ -1,7 +1,7 @@
 ---
 title: "Hetzner"
 description: "Creating a cluster via the CLI (hcloud) on Hetzner."
-aliases: 
+aliases:
   - ../../../cloud-platforms/hetzner
 ---
 
@@ -37,7 +37,7 @@ df
 
 # Download the Talos image
 cd /tmp
-wget -O /tmp/talos.raw.xz https://github.com/siderolabs/talos/releases/download/v0.13.0/hcloud-amd64.raw.xz
+wget -O /tmp/talos.raw.xz https://github.com/siderolabs/talos/releases/download/{{< release >}}/hcloud-amd64.raw.xz
 # Replace system
 xz -d -c /tmp/talos.raw.xz | dd of=/dev/sda && sync
 # shutdown the instance
@@ -68,7 +68,7 @@ packer {
 
 variable "talos_version" {
   type    = string
-  default = "v0.13.0"
+  default = "{{< release >}}"
 }
 
 locals {
