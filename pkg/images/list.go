@@ -10,6 +10,7 @@ import (
 	criconfig "github.com/containerd/containerd/pkg/cri/config"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/version"
 )
 
@@ -37,7 +38,7 @@ func List(config config.Provider) Versions {
 
 	images.Etcd = config.Cluster().Etcd().Image()
 	images.CoreDNS = config.Cluster().CoreDNS().Image()
-	images.Flannel = "ghcr.io/siderolabs/flannel:v0.20.2" // mirrored from docker.io/flannelcni/flannel
+	images.Flannel = fmt.Sprintf("ghcr.io/siderolabs/flannel:%s", constants.FlannelVersion) // mirrored from docker.io/flannelcni/flannel
 	images.FlannelCNI = fmt.Sprintf("ghcr.io/siderolabs/install-cni:%s", version.ExtrasVersion)
 	images.Kubelet = config.Machine().Kubelet().Image()
 	images.KubeAPIServer = config.Cluster().APIServer().Image()

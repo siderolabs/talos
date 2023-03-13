@@ -817,6 +817,9 @@ const (
 
 	// DashboardTTY is the number of the TTY device (/dev/ttyN) for dashboard.
 	DashboardTTY = 2
+
+	// FlannelVersion is the version of flannel to use.
+	FlannelVersion = "v0.20.2"
 )
 
 // See https://linux.die.net/man/3/klogctl

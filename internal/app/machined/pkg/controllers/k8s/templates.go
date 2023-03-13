@@ -4,6 +4,8 @@
 
 package k8s
 
+import "github.com/siderolabs/talos/pkg/flannel"
+
 // kube-apiserver configuration:
 
 var kubeSystemEncryptionConfigTemplate = []byte(`apiVersion: v1
@@ -452,195 +454,6 @@ spec:
       protocol: TCP
 `)
 
-var flannelTemplate = []byte(`apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: flannel
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-    verbs:
-      - get
-  - apiGroups:
-      - ""
-    resources:
-      - nodes
-    verbs:
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - nodes/status
-    verbs:
-      - patch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: flannel
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: flannel
-subjects:
-- kind: ServiceAccount
-  name: flannel
-  namespace: kube-system
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: flannel
-  namespace: kube-system
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kube-flannel-cfg
-  namespace: kube-system
-  labels:
-    tier: node
-    k8s-app: flannel
-data:
-  cni-conf.json: |
-    {
-      "name": "cbr0",
-      "cniVersion": "1.0.0",
-      "plugins": [
-        {
-          "type": "flannel",
-          "delegate": {
-            "hairpinMode": true,
-            "isDefaultGateway": true
-          }
-        },
-        {
-          "type": "portmap",
-          "capabilities": {
-            "portMappings": true
-          }
-        }
-      ]
-    }
-  net-conf.json: |
-    {
-      {{- $hasIPv4 := false }}
-      {{- range $cidr := .PodCIDRs }}
-        {{- if contains $cidr "." }}
-        {{- $hasIPv4 = true }}
-      "Network": "{{ $cidr }}",
-        {{- else }}
-      "IPv6Network": "{{ $cidr }}",
-      "EnableIPv6": true,
-        {{- end }}
-      {{- end }}
-      {{- if not $hasIPv4 }}
-      "EnableIPv4": false,
-      {{- end }}
-      "Backend": {
-        "Type": "vxlan",
-        "Port": 4789
-      }
-    }
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: kube-flannel
-  namespace: kube-system
-  labels:
-    tier: node
-    k8s-app: flannel
-spec:
-  selector:
-    matchLabels:
-      tier: node
-      k8s-app: flannel
-  template:
-    metadata:
-      labels:
-        tier: node
-        k8s-app: flannel
-    spec:
-      serviceAccountName: flannel
-      initContainers:
-      - name: install-config
-        image: {{ .FlannelImage }}
-        command:
-        - cp
-        args:
-        - -f
-        - /etc/kube-flannel/cni-conf.json
-        - /etc/cni/net.d/10-flannel.conflist
-        volumeMounts:
-        - name: cni
-          mountPath: /etc/cni/net.d
-        - name: flannel-cfg
-          mountPath: /etc/kube-flannel/
-      - name: install-cni
-        image: {{ .FlannelCNIImage }}
-        command: ["/install-cni.sh"]
-        volumeMounts:
-        - name: host-cni-bin
-          mountPath: /host/opt/cni/bin/
-      containers:
-      - name: kube-flannel
-        image: {{ .FlannelImage }}
-        command:
-        - /opt/bin/flanneld
-        args:
-        - --ip-masq
-        - --kube-subnet-mgr
-        securityContext:
-          privileged: true
-          capabilities:
-            add: ["NET_ADMIN", "NET_RAW"]
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        volumeMounts:
-        - name: run
-          mountPath: /run/flannel
-        - name: flannel-cfg
-          mountPath: /etc/kube-flannel/
-      hostNetwork: true
-      tolerations:
-      - effect: NoSchedule
-        operator: Exists
-      - effect: NoExecute
-        operator: Exists
-      volumes:
-        - name: run
-          hostPath:
-            path: /run/flannel
-        - name: cni
-          hostPath:
-            path: /etc/cni/net.d
-        - name: flannel-cfg
-          configMap:
-            name: kube-flannel-cfg
-        - name: host-cni-bin
-          hostPath:
-            path: /opt/cni/bin
-  updateStrategy:
-    rollingUpdate:
-      maxUnavailable: 1
-    type: RollingUpdate
-`)
-
 // podSecurityPolicy is the default PSP.
 var podSecurityPolicy = []byte(`kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -716,6 +529,8 @@ spec:
     protocol: TCP
     targetPort: {{ .ApidPort }}
 `)
+
+var flannelTemplate = flannel.Template
 
 // talosServiceAccountCRDTemplate is the template of the CRD which
 // allows injecting Talos with credentials into the Kubernetes cluster.
