@@ -277,9 +277,8 @@ local save_artifacts = {
   },
   commands: [
     'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
-    'az storage container create -n ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    'az storage container immutability-policy create --account-name $${AZURE_STORAGE_ACCOUNT} --period 3 -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    'az storage blob upload-batch -s _out -d  ${CI_COMMIT_SHA}${DRONE_TAG//./-}'
+    'az storage container create --metadata ci=true -n ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    'az storage blob upload-batch --overwrite -s _out -d  ${CI_COMMIT_SHA}${DRONE_TAG//./-}'
   ],
   volumes: volumes.ForStep(),
   depends_on: [build.name, images_essential.name, iso.name, talosctl_cni_bundle.name],
