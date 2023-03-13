@@ -819,7 +819,7 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.20.2"
+	FlannelVersion = "v0.21.3"
 )
 
 // See https://linux.die.net/man/3/klogctl

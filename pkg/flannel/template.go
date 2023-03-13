@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Code generated from the manifest https://raw.githubusercontent.com/flannel-io/flannel/v0.20.2/Documentation/kube-flannel.yml DO NOT EDIT
+// Code generated from the manifest https://raw.githubusercontent.com/flannel-io/flannel/v0.21.3/Documentation/kube-flannel.yml DO NOT EDIT
 
 package flannel
 
@@ -32,6 +32,13 @@ rules:
   - nodes/status
   verbs:
   - patch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - clustercidrs
+  verbs:
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -150,9 +157,6 @@ spec:
         image: '{{ .FlannelImage }}'
         name: kube-flannel
         resources:
-          limits:
-            cpu: 100m
-            memory: 50Mi
           requests:
             cpu: 100m
             memory: 50Mi
