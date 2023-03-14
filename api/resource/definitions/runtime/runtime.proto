@@ -37,6 +37,11 @@ message MachineStatusStatus {
   repeated UnmetCondition unmet_conditions = 2;
 }
 
+// MetaKeySpec describes status of the defined sysctls.
+message MetaKeySpec {
+  string value = 1;
+}
+
 // MountStatusSpec describes status of the defined sysctls.
 message MountStatusSpec {
   string source = 1;

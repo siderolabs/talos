@@ -12,28 +12,19 @@ type ADV interface {
 	SetTag(t uint8, val string) (ok bool)
 	SetTagBytes(t uint8, val []byte) (ok bool)
 	DeleteTag(t uint8) (ok bool)
+	ListTags() (tags []uint8)
 	Bytes() ([]byte, error)
 }
 
 const (
 	// End is the noop tag.
 	End = iota
-	// Bootonce is the bootonce tag.
-	Bootonce
-	// Menusave is the menusave tag.
-	Menusave
+	_
+	_
 	// Reserved1 is a reserved tag.
 	Reserved1
 	// Reserved2 is a reserved tag.
 	Reserved2
 	// Reserved3 is a reserved tag.
 	Reserved3
-	// Upgrade is the upgrade tag.
-	Upgrade
-	// StagedUpgradeImageRef stores image reference for staged upgrade.
-	StagedUpgradeImageRef
-	// StagedUpgradeInstallOptions stores JSON-serialized install.Options.
-	StagedUpgradeInstallOptions
-	// StateEncryptionConfig stores JSON-serialized v1alpha1.Encryption.
-	StateEncryptionConfig
 )

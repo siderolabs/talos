@@ -30,8 +30,6 @@ import (
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
@@ -40,6 +38,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
+	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/filetree"
@@ -377,20 +376,7 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, pe
 func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdresource.SpecSpec) error {
 	var upgraded bool
 
-	if r.State().Platform().Mode() != runtime.ModeContainer {
-		var (
-			meta *bootloader.Meta
-			err  error
-		)
-
-		if meta, err = bootloader.NewMeta(); err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer meta.Close()
-
-		_, upgraded = meta.LegacyADV.ReadTag(adv.Upgrade)
-	}
+	_, upgraded = r.State().Machine().Meta().ReadTag(meta.Upgrade)
 
 	denyListArgs := argsbuilder.Args{
 		"name":                               spec.Name,

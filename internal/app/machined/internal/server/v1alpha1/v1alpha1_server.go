@@ -55,8 +55,6 @@ import (
 	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/resources"
@@ -67,6 +65,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/containers/cri"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
+	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/miniprocfs"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/archiver"
@@ -474,14 +473,14 @@ func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (rep
 // Upgrade initiates an upgrade.
 //
 //nolint:gocyclo,cyclop
-func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
+func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*machine.UpgradeResponse, error) {
 	actorID := uuid.New().String()
 
 	var mu *concurrency.Mutex
 
 	ctx = context.WithValue(ctx, runtime.ActorIDCtxKey{}, actorID)
 
-	if err = s.checkSupported(runtime.Upgrade); err != nil {
+	if err := s.checkSupported(runtime.Upgrade); err != nil {
 		return nil, err
 	}
 
@@ -489,7 +488,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 
 	log.Printf("validating %q", in.GetImage())
 
-	if err = install.PullAndValidateInstallerImage(ctx, s.Controller.Runtime().Config().Machine().Registries(), in.GetImage()); err != nil {
+	if err := install.PullAndValidateInstallerImage(ctx, s.Controller.Runtime().Config().Machine().Registries(), in.GetImage()); err != nil {
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
@@ -518,19 +517,12 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 	runCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
 
 	if in.GetStage() {
-		meta, err := bootloader.NewMeta()
-		if err != nil {
-			return nil, fmt.Errorf("error reading meta: %w", err)
-		}
-		//nolint:errcheck
-		defer meta.Close()
-
-		if !meta.ADV.SetTag(adv.StagedUpgradeImageRef, in.GetImage()) {
-			return nil, fmt.Errorf("error adding staged upgrade image ref tag")
+		if ok, err := s.Controller.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedUpgradeImageRef, in.GetImage()); !ok || err != nil {
+			return nil, fmt.Errorf("error adding staged upgrade image ref tag: %w", err)
 		}
 
 		opts := install.DefaultInstallOptions()
-		if err = opts.Apply(install.OptionsFromUpgradeRequest(s.Controller.Runtime(), in)...); err != nil {
+		if err := opts.Apply(install.OptionsFromUpgradeRequest(s.Controller.Runtime(), in)...); err != nil {
 			return nil, fmt.Errorf("error applying install options: %w", err)
 		}
 
@@ -539,11 +531,13 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 			return nil, fmt.Errorf("error serializing install options: %s", err)
 		}
 
-		if !meta.ADV.SetTag(adv.StagedUpgradeInstallOptions, string(serialized)) {
-			return nil, fmt.Errorf("error adding staged upgrade install options tag")
+		var ok bool
+
+		if ok, err = s.Controller.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedUpgradeInstallOptions, string(serialized)); !ok || err != nil {
+			return nil, fmt.Errorf("error adding staged upgrade install options tag: %w", err)
 		}
 
-		if err = meta.Write(); err != nil {
+		if err = s.Controller.Runtime().State().Machine().Meta().Flush(); err != nil {
 			return nil, fmt.Errorf("error writing meta: %w", err)
 		}
 
@@ -572,16 +566,14 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 		}()
 	}
 
-	reply = &machine.UpgradeResponse{
+	return &machine.UpgradeResponse{
 		Messages: []*machine.Upgrade{
 			{
 				Ack:     "Upgrade request received",
 				ActorId: actorID,
 			},
 		},
-	}
-
-	return reply, nil
+	}, nil
 }
 
 // ResetOptions implements runtime.ResetOptions interface.

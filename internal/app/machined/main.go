@@ -27,7 +27,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/dashboard"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/app/maintenance"
@@ -58,19 +57,6 @@ func recovery() {
 		if ok {
 			handle(err)
 		}
-	}
-}
-
-func revertBootloader() {
-	if meta, err := bootloader.NewMeta(); err == nil {
-		if err = meta.Revert(); err != nil {
-			log.Printf("failed to revert upgrade: %v", err)
-		}
-
-		//nolint:errcheck
-		meta.Close()
-	} else {
-		log.Printf("failed to open meta: %v", err)
 	}
 }
 

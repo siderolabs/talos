@@ -16,8 +16,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
@@ -323,20 +323,19 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	}
 
 	if seq == runtime.SequenceUpgrade {
-		var meta *bootloader.Meta
+		var metaState *meta.Meta
 
-		if meta, err = bootloader.NewMeta(); err != nil {
+		if metaState, err = meta.New(context.Background(), nil); err != nil {
 			return err
 		}
 
-		//nolint:errcheck
-		defer meta.Close()
+		var ok bool
 
-		if ok := meta.LegacyADV.SetTag(adv.Upgrade, string(i.Current)); !ok {
+		if ok, err = metaState.SetTag(context.Background(), meta.Upgrade, string(i.Current)); !ok || err != nil {
 			return fmt.Errorf("failed to set upgrade tag: %q", i.Current)
 		}
 
-		if err = meta.Write(); err != nil {
+		if err = metaState.Flush(); err != nil {
 			return err
 		}
 	}

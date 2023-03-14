@@ -40,6 +40,18 @@ type MachineState interface {
 	KexecPrepared(bool)
 	IsKexecPrepared() bool
 	DBus() DBusState
+	Meta() Meta
+}
+
+// Meta defines the access to META partition.
+type Meta interface {
+	ReadTag(t uint8) (val string, ok bool)
+	ReadTagBytes(t uint8) (val []byte, ok bool)
+	SetTag(ctx context.Context, t uint8, val string) (bool, error)
+	SetTagBytes(ctx context.Context, t uint8, val []byte) (bool, error)
+	DeleteTag(ctx context.Context, t uint8) (bool, error)
+	Reload(ctx context.Context) error
+	Flush() error
 }
 
 // ClusterState defines the cluster state.

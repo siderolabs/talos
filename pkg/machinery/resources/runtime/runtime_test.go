@@ -30,6 +30,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.KernelParamSpec{},
 		&runtime.KernelParamStatus{},
 		&runtime.MachineStatus{},
+		&runtime.MetaKey{},
 		&runtime.MountStatus{},
 		&runtime.PlatformMetadata{},
 	} {

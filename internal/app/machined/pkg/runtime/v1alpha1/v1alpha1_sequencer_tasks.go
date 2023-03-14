@@ -46,8 +46,6 @@ import (
 
 	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	perrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -59,6 +57,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/cri"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
+	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/conditions"
@@ -1954,17 +1953,15 @@ func LabelNodeAsControlPlane(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 // UpdateBootloader represents the UpdateBootloader task.
 func UpdateBootloader(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		meta, err := bootloader.NewMeta()
+		ok, err := r.State().Machine().Meta().DeleteTag(ctx, meta.Upgrade)
 		if err != nil {
 			return err
 		}
-		//nolint:errcheck
-		defer meta.Close()
 
-		if ok := meta.LegacyADV.DeleteTag(adv.Upgrade); ok {
+		if ok {
 			logger.Println("removing fallback")
 
-			if err = meta.Write(); err != nil {
+			if err = r.State().Machine().Meta().Flush(); err != nil {
 				return err
 			}
 		}
@@ -2031,24 +2028,22 @@ func SaveStateEncryptionConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc
 			return nil
 		}
 
-		meta, err := bootloader.NewMeta()
-		if err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer meta.Close()
-
 		var data []byte
 
 		if data, err = json.Marshal(encryption); err != nil {
 			return err
 		}
 
-		if !meta.ADV.SetTagBytes(adv.StateEncryptionConfig, data) {
+		ok, err := r.State().Machine().Meta().SetTagBytes(ctx, meta.StateEncryptionConfig, data)
+		if err != nil {
+			return err
+		}
+
+		if !ok {
 			return fmt.Errorf("failed to save state encryption config in the META partition")
 		}
 
-		return meta.Write()
+		return r.State().Machine().Meta().Flush()
 	}, "SaveStateEncryptionConfig"
 }
 
@@ -2083,13 +2078,6 @@ func UnmountEFIPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 // MountStatePartition mounts the system partition.
 func MountStatePartition(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		meta, err := bootloader.NewMeta()
-		if err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer meta.Close()
-
 		flags := mount.SkipIfMounted
 
 		if seq == runtime.SequenceInitialize {
@@ -2109,7 +2097,7 @@ func MountStatePartition(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc
 		if encryption == nil {
 			var encryptionFromMeta *v1alpha1.EncryptionConfig
 
-			data, ok := meta.ADV.ReadTagBytes(adv.StateEncryptionConfig)
+			data, ok := r.State().Machine().Meta().ReadTagBytes(meta.StateEncryptionConfig)
 			if ok {
 				if err = json.Unmarshal(data, &encryptionFromMeta); err != nil {
 					return err
@@ -2407,6 +2395,25 @@ func CleanupLegacyStaticPodFiles(runtime.Sequence, any) (runtime.TaskExecutionFu
 
 		return nil
 	}, "cleanupLegacyStaticPodFiles"
+}
+
+// ReloadMeta reloads META partition after disk mount, installer run, etc.
+func ReloadMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		err := r.State().Machine().Meta().Reload(ctx)
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
+		return nil
+	}, "reloadMeta"
+}
+
+// FlushMeta flushes META partition after install run.
+func FlushMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		return r.State().Machine().Meta().Flush()
+	}, "flushMeta"
 }
 
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),

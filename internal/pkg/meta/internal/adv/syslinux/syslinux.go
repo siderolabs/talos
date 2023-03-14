@@ -9,7 +9,7 @@ import (
 	"encoding/binary"
 	"io"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
+	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv"
 )
 
 const (
@@ -30,12 +30,16 @@ type ADV []byte
 
 // NewADV returns the Auxiliary Data Vector.
 func NewADV(r io.ReadSeeker) (adv ADV, err error) {
+	b := make([]byte, 2*AdvSize)
+
+	if r == nil {
+		return b, nil
+	}
+
 	_, err = r.Seek(-2*AdvSize, io.SeekEnd)
 	if err != nil {
 		return nil, err
 	}
-
-	b := make([]byte, 2*AdvSize)
 
 	_, err = io.ReadFull(r, b)
 	if err != nil {
@@ -88,6 +92,31 @@ func (a ADV) ReadTagBytes(t uint8) (val []byte, ok bool) {
 	}
 
 	return val, ok
+}
+
+// ListTags returns a list of tags in the ADV.
+func (a ADV) ListTags() []uint8 {
+	// Header is in first 8 bytes.
+	i := 8
+
+	var tags []uint8
+
+	// End at tail plus two bytes required for successful next tag.
+	for i < AdvSize-4-2 {
+		tag := a[i]
+		size := int(a[i+1])
+
+		if tag == adv.End {
+			break
+		}
+
+		tags = append(tags, tag)
+
+		// Jump to the next tag.
+		i += 2 + size
+	}
+
+	return tags
 }
 
 // SetTag sets a tag in the ADV.

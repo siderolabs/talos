@@ -109,6 +109,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"earlyServices",
 			StartUdevd,
 			StartMachined,
+		).Append(
+			"meta",
+			ReloadMeta,
 		).AppendWithDeferredCheck(
 			func() bool {
 				disabledStr := procfs.ProcCmdline().Get(constants.KernelParamDashboardDisabled).First()
@@ -168,6 +171,12 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 			).Append(
 				"install",
 				Install,
+			).Append(
+				"meta",
+				ReloadMeta,
+			).Append(
+				"saveMeta", // saving META here to merge in-memory changes with the on-disk ones from the installer
+				FlushMeta,
 			).Append(
 				"saveStateEncryptionConfig",
 				SaveStateEncryptionConfig,
@@ -456,6 +465,9 @@ func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, _ *machineapi.UpgradeReq
 			"upgrade",
 			Upgrade,
 		).Append(
+			"meta",
+			ReloadMeta,
+		).Append(
 			"mountBoot",
 			MountBootPartition,
 		).Append(
@@ -526,6 +538,9 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 		).Append(
 			"upgrade",
 			Upgrade,
+		).Append(
+			"meta",
+			ReloadMeta,
 		).Append(
 			"mountBoot",
 			MountBootPartition,

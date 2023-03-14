@@ -165,6 +165,7 @@ func NewState() (*State, error) {
 		&runtime.KernelParamDefaultSpec{},
 		&runtime.KernelParamStatus{},
 		&runtime.MachineStatus{},
+		&runtime.MetaKey{},
 		&runtime.MountStatus{},
 		&runtime.PlatformMetadata{},
 		&secrets.API{},

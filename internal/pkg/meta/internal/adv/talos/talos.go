@@ -12,7 +12,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
+	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
+
+	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv"
 )
 
 // Basic constants configuring the ADV.
@@ -57,6 +60,10 @@ type ADV struct {
 func NewADV(r io.Reader) (*ADV, error) {
 	a := &ADV{
 		Tags: make(map[Tag]Value),
+	}
+
+	if r == nil {
+		return a, nil
 	}
 
 	buf := make([]byte, Length)
@@ -179,6 +186,11 @@ func (a *ADV) ReadTagBytes(t uint8) (val []byte, ok bool) {
 	val, ok = a.Tags[Tag(t)]
 
 	return
+}
+
+// ListTags to get list of tags.
+func (a *ADV) ListTags() (tags []uint8) {
+	return slices.Map(maps.Keys(a.Tags), func(t Tag) uint8 { return uint8(t) })
 }
 
 // SetTag to set tag value.

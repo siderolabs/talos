@@ -6,13 +6,14 @@ package talos_test
 
 import (
 	"bytes"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/adv/talos"
+	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv"
+	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv/talos"
 )
 
 func TestMarshalUnmarshal(t *testing.T) {
@@ -82,5 +83,9 @@ func TestMarshalUnmarshal(t *testing.T) {
 		val, ok = a.ReadTag(adv.Reserved3)
 		assert.True(t, ok)
 		assert.Equal(t, val3, val)
+
+		tags := a.ListTags()
+		sort.Slice(tags, func(i, j int) bool { return tags[i] < tags[j] })
+		assert.Equal(t, []uint8{adv.Reserved1, adv.Reserved2, adv.Reserved3}, tags)
 	}
 }

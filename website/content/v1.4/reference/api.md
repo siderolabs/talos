@@ -176,6 +176,7 @@ description: Talos gRPC API reference.
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
     - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
+    - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
@@ -3216,6 +3217,21 @@ MachineStatusStatus describes machine current status at the stage.
 | ----- | ---- | ----- | ----------- |
 | ready | [bool](#bool) |  |  |
 | unmet_conditions | [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.MetaKeySpec"></a>
+
+### MetaKeySpec
+MetaKeySpec describes status of the defined sysctls.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| value | [string](#string) |  |  |
 
 
 
