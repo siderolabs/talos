@@ -1,3 +1,90 @@
+## [Talos 1.3.6](https://github.com/siderolabs/talos/releases/tag/v1.3.6) (2023-03-14)
+
+Welcome to the v1.3.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.102
+* Kubernetes: v1.26.2
+
+Talos is built with Go 1.19.7.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Tim Jones
+
+### Changes
+<details><summary>7 commits</summary>
+<p>
+
+* [`4776c433c`](https://github.com/siderolabs/talos/commit/4776c433caac3bf8b984de56686249ae39132b05) fix: successful ACPI shutdown in maintenance mode
+* [`042adbf8a`](https://github.com/siderolabs/talos/commit/042adbf8a3bf8bc71b106c89f4176685b0c81e50) feat: update Kubernetes to v1.26.2
+* [`dacbee43d`](https://github.com/siderolabs/talos/commit/dacbee43d2fc2f16c2d617efebfae49b8dc6a216) fix: improve etcd leave on reset process
+* [`eee9f5d43`](https://github.com/siderolabs/talos/commit/eee9f5d439be50338c5e93afabb5925823a7edca) chore: handle grub option - "wipe"
+* [`7f2d04336`](https://github.com/siderolabs/talos/commit/7f2d04336e538936a449001330a98ad76d7c769c) fix: update go-smbios library with Hyper-V data fix
+* [`59b705b01`](https://github.com/siderolabs/talos/commit/59b705b011eec23c60c1b6f75080eadc0c0d58c1) feat: update Linux to 5.15.102
+* [`c0e349f1c`](https://github.com/siderolabs/talos/commit/c0e349f1c6793b2f5e5a5de85aa2afad698d20ac) chore: update Go to 1.19.7
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`cb97438`](https://github.com/siderolabs/extras/commit/cb9743896f0553ec9f58ea0eb4e9dee2020cef9f) feat: update Go to 1.19.7
+</p>
+</details>
+
+### Changes from siderolabs/go-smbios
+<details><summary>1 commit</summary>
+<p>
+
+* [`c526764`](https://github.com/siderolabs/go-smbios/commit/c5267640be317efd9cbbe936ab78b2a49c757edf) feat: fix reading "broken" Hyper-V DMI data
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`3b37079`](https://github.com/siderolabs/pkgs/commit/3b370795ab66a61862722d75e995aa15b3d10714) feat: update Linux to 5.15.102
+* [`07c9331`](https://github.com/siderolabs/pkgs/commit/07c9331dff65f7435cf94bd492c57d5417e86df3) feat: update to Go 1.19.7
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`e225a7e`](https://github.com/siderolabs/tools/commit/e225a7e6d784718a4a8660dcd76b837c94c1470b) feat: update Go to 1.19.7
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**     v1.3.0-3-g527b5f7 -> v1.3.0-4-gcb97438
+* **github.com/siderolabs/go-smbios**  v0.3.1 -> v0.3.2
+* **github.com/siderolabs/pkgs**       v1.3.0-13-gee0d97b -> v1.3.0-15-g3b37079
+* **github.com/siderolabs/tools**      v1.3.0-2-g5cc0a25 -> v1.3.0-3-ge225a7e
+* **k8s.io/api**                       v0.26.1 -> v0.26.2
+* **k8s.io/apimachinery**              v0.26.1 -> v0.26.2
+* **k8s.io/apiserver**                 v0.26.1 -> v0.26.2
+* **k8s.io/client-go**                 v0.26.1 -> v0.26.2
+* **k8s.io/component-base**            v0.26.1 -> v0.26.2
+* **k8s.io/cri-api**                   v0.26.1 -> v0.26.2
+* **k8s.io/kubectl**                   v0.26.1 -> v0.26.2
+* **k8s.io/kubelet**                   v0.26.1 -> v0.26.2
+
+Previous release can be found at [v1.3.5](https://github.com/siderolabs/talos/releases/tag/v1.3.5)
+
 ## [Talos 1.3.5](https://github.com/siderolabs/talos/releases/tag/v1.3.5) (2023-02-20)
 
 Welcome to the v1.3.5 release of Talos!
