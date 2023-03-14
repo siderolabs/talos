@@ -118,6 +118,7 @@ type Install interface {
 	Zero() bool
 	LegacyBIOSSupport() bool
 	WithBootloader() bool
+	EphemeralSize() string
 }
 
 // Extension defines the system extension.

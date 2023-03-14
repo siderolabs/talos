@@ -14,6 +14,7 @@ type Options struct {
 	Upgrade         bool
 	Zero            bool
 	ExtraKernelArgs []string
+	EphemeralSize   string
 }
 
 // DefaultInstallOptions returns default options.

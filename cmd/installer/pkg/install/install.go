@@ -28,6 +28,7 @@ import (
 type Options struct {
 	ConfigSource      string
 	Disk              string
+	EphemeralSize     string
 	Platform          string
 	Arch              string
 	Board             string

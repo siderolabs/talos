@@ -1217,6 +1217,11 @@ func (i *InstallConfig) WithBootloader() bool {
 	return pointer.SafeDeref(i.InstallBootloader)
 }
 
+// EphemeralSize implements the config.Provider interface.
+func (i *InstallConfig) EphemeralSize() string {
+	return i.InstallEphemeralSize
+}
+
 // Image implements the config.Provider interface.
 func (i InstallExtensionConfig) Image() string {
 	return i.ExtensionImage

@@ -208,6 +208,7 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 
+	shouldEphemeralResize := r.Config().Machine().Install().EphemeralSize() == ""
 	phases = phases.AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"saveStateEncryptionConfig",
@@ -242,9 +243,13 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"sharedFilesystems",
 		SetupSharedFilesystems,
 	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
+		r.State().Platform().Mode() != runtime.ModeContainer && shouldEphemeralResize,
 		"ephemeral",
 		MountEphemeralPartition,
+	).AppendWhen(
+		r.State().Platform().Mode() != runtime.ModeContainer && !shouldEphemeralResize,
+		"ephemeral",
+		MountEphemeralPartitionWithoutResize,
 	).Append(
 		"var",
 		SetupVarDirectory,

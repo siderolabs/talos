@@ -81,6 +81,7 @@ type Input struct {
 
 	InstallDisk            string
 	InstallImage           string
+	InstallEphemeralSize   string
 	InstallExtraKernelArgs []string
 
 	NetworkConfigOptions []v1alpha1.NetworkConfigOption
@@ -671,6 +672,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		InstallDisk:                    options.InstallDisk,
 		InstallImage:                   options.InstallImage,
 		InstallExtraKernelArgs:         options.InstallExtraKernelArgs,
+		InstallEphemeralSize:           options.InstallEphemeralSize,
 		NetworkConfigOptions:           options.NetworkConfigOptions,
 		CNIConfig:                      options.CNIConfig,
 		RegistryMirrors:                options.RegistryMirrors,

@@ -72,6 +72,15 @@ func WithInstallExtraKernelArgs(args []string) GenOption {
 	}
 }
 
+// WithInstallEphemeralSize specifies the ephemeral size to use
+func WithInstallEphemeralSize(size string) GenOption {
+	return func(o *GenOptions) error {
+		o.InstallEphemeralSize = size
+
+		return nil
+	}
+}
+
 // WithNetworkOptions adds network config generation option.
 func WithNetworkOptions(opts ...v1alpha1.NetworkConfigOption) GenOption {
 	return func(o *GenOptions) error {
@@ -270,6 +279,7 @@ type GenOptions struct {
 	InstallDisk                    string
 	InstallImage                   string
 	InstallExtraKernelArgs         []string
+	InstallEphemeralSize           string
 	AdditionalSubjectAltNames      []string
 	NetworkConfigOptions           []v1alpha1.NetworkConfigOption
 	CNIConfig                      *v1alpha1.CNIConfig

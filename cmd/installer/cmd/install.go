@@ -78,6 +78,8 @@ func runInstallCmd() (err error) {
 		if config.Machine().Install().LegacyBIOSSupport() {
 			options.LegacyBIOSSupport = true
 		}
+
+		options.EphemeralSize = config.Machine().Install().EphemeralSize()
 	}
 
 	return install.Install(p, seq, options)

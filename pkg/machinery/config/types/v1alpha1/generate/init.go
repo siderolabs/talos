@@ -46,6 +46,7 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			InstallBootloader:      pointer.To(true),
 			InstallWipe:            pointer.To(false),
 			InstallExtraKernelArgs: in.InstallExtraKernelArgs,
+			InstallEphemeralSize:   in.InstallEphemeralSize,
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
 			RegistryMirrors: in.RegistryMirrors,

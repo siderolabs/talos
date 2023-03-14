@@ -1398,6 +1398,13 @@
           "description": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn’t support GPT partitioning scheme.\n",
           "markdownDescription": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.",
           "x-intellij-html-description": "\u003cp\u003eIndicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn\u0026rsquo;t support GPT partitioning scheme.\u003c/p\u003e\n"
+        },
+        "ephemeralSize": {
+          "type": "string",
+          "title": "ephemeralSize",
+          "description": "description: |\n    Configure ephemeral partition size.\n  examples:\n    - value: 15GB\n",
+          "markdownDescription": "description: |\n    Configure ephemeral partition size.\n  examples:\n    - value: 15GB",
+          "x-intellij-html-description": "\u003cp\u003edescription: |\n    Configure ephemeral partition size.\n  examples:\n    - value: 15GB\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/siderolabs/go-retry/retry"
@@ -148,6 +149,13 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 	})
 
 	ephemeralTarget := EphemeralTarget(opts.Disk, NoFilesystem)
+	if opts.EphemeralSize != "" {
+		size, err := humanize.ParseBytes(opts.EphemeralSize)
+		if err != nil {
+			return nil, err
+		}
+		ephemeralTarget.FormatOptions.Size = size
+	}
 
 	targets := []*Target{efiTarget, biosTarget, bootTarget, metaTarget, stateTarget, ephemeralTarget}
 
