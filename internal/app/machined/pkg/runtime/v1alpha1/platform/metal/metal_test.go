@@ -6,6 +6,7 @@ package metal_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -17,9 +18,12 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
+	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
+//nolint:gocyclo
 func TestNetworkConfig(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	t.Cleanup(cancel)
@@ -30,18 +34,86 @@ func TestNetworkConfig(t *testing.T) {
 
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
-	uuid := hardware.NewSystemInformation("test")
+	uuid := hardware.NewSystemInformation(hardware.SystemInformationID)
 	uuid.TypedSpec().UUID = "0123-4567-89ab-cdef"
 	require.NoError(t, st.Create(ctx, uuid))
 
-	err := p.NetworkConfiguration(ctx, st, ch)
-	require.NoError(t, err)
+	errCh := make(chan error)
+
+	go func() {
+		errCh <- p.NetworkConfiguration(ctx, st, ch)
+	}()
+
+	// platform might see updates coming in different order, so we need to wait a bit for the final state
+outerLoop:
+	for {
+		select {
+		case <-ctx.Done():
+			require.FailNow(t, "timed out waiting for network config")
+		case cfg := <-ch:
+			assert.Equal(t, "metal", cfg.Metadata.Platform)
+
+			if cfg.Metadata.InstanceID == "" {
+				continue
+			}
+
+			assert.Equal(t, uuid.TypedSpec().UUID, cfg.Metadata.InstanceID)
+
+			break outerLoop
+		}
+	}
+
+	metaKey := runtimeres.NewMetaKey(runtimeres.NamespaceName, runtimeres.MetaKeyTagToID(meta.MetalNetworkPlatformConfig))
+	metaKey.TypedSpec().Value = `{"externalIPs": ["1.2.3.4"]}`
+	require.NoError(t, st.Create(ctx, metaKey))
+
+	// platform might see updates coming in different order, so we need to wait a bit for the final state
+outerLoop2:
+	for {
+		select {
+		case <-ctx.Done():
+			require.FailNow(t, "timed out waiting for network config")
+		case cfg := <-ch:
+			assert.Equal(t, "metal", cfg.Metadata.Platform)
+			assert.Equal(t, uuid.TypedSpec().UUID, cfg.Metadata.InstanceID)
+
+			if len(cfg.ExternalIPs) == 0 {
+				continue
+			}
+
+			assert.Equal(t, "[1.2.3.4]", fmt.Sprintf("%v", cfg.ExternalIPs))
+
+			break outerLoop2
+		}
+	}
+
+	metaKey.TypedSpec().Value = `{"hostnames": [{"hostname": "talos", "domainname": "fqdn", "layer": "platform"}]}`
+	require.NoError(t, st.Update(ctx, metaKey))
 
 	select {
 	case <-ctx.Done():
-		t.Error("timeout")
+		require.FailNow(t, "timed out waiting for network config")
 	case cfg := <-ch:
 		assert.Equal(t, "metal", cfg.Metadata.Platform)
 		assert.Equal(t, uuid.TypedSpec().UUID, cfg.Metadata.InstanceID)
+
+		assert.Equal(t, "[]", fmt.Sprintf("%v", cfg.ExternalIPs))
+		assert.Equal(t, "[{talos fqdn platform}]", fmt.Sprintf("%v", cfg.Hostnames))
 	}
+
+	require.NoError(t, st.Destroy(ctx, metaKey.Metadata()))
+
+	select {
+	case <-ctx.Done():
+		require.FailNow(t, "timed out waiting for network config")
+	case cfg := <-ch:
+		assert.Equal(t, "metal", cfg.Metadata.Platform)
+		assert.Equal(t, uuid.TypedSpec().UUID, cfg.Metadata.InstanceID)
+
+		assert.Equal(t, "[]", fmt.Sprintf("%v", cfg.ExternalIPs))
+		assert.Equal(t, "[]", fmt.Sprintf("%v", cfg.Hostnames))
+	}
+
+	cancel()
+	require.ErrorIs(t, <-errCh, context.Canceled)
 }

@@ -148,7 +148,7 @@ func (meta *Meta) syncState(ctx context.Context) error {
 	existingTags := make(map[resource.ID]struct{})
 
 	for _, t := range meta.talos.ListTags() {
-		existingTags[tagToID(t)] = struct{}{}
+		existingTags[runtime.MetaKeyTagToID(t)] = struct{}{}
 		val, _ := meta.talos.ReadTag(t)
 
 		if err := updateTagResource(ctx, meta.state, t, val); err != nil {
@@ -303,7 +303,7 @@ func (meta *Meta) DeleteTag(ctx context.Context, t uint8) (bool, error) {
 		return ok, nil
 	}
 
-	err := meta.state.Destroy(ctx, runtime.NewMetaKey(runtime.NamespaceName, tagToID(t)).Metadata()) //nolint:errcheck
+	err := meta.state.Destroy(ctx, runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(t)).Metadata()) //nolint:errcheck
 	if state.IsNotFoundError(err) {
 		err = nil
 	}
@@ -311,16 +311,12 @@ func (meta *Meta) DeleteTag(ctx context.Context, t uint8) (bool, error) {
 	return ok, err
 }
 
-func tagToID(t uint8) resource.ID {
-	return fmt.Sprintf("0x%02x", t)
-}
-
 func updateTagResource(ctx context.Context, st state.State, t uint8, val string) error {
 	if st == nil {
 		return nil
 	}
 
-	_, err := safe.StateUpdateWithConflicts(ctx, st, runtime.NewMetaKey(runtime.NamespaceName, tagToID(t)).Metadata(), func(r *runtime.MetaKey) error {
+	_, err := safe.StateUpdateWithConflicts(ctx, st, runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(t)).Metadata(), func(r *runtime.MetaKey) error {
 		r.TypedSpec().Value = val
 
 		return nil
@@ -331,7 +327,7 @@ func updateTagResource(ctx context.Context, st state.State, t uint8, val string)
 	}
 
 	if state.IsNotFoundError(err) {
-		r := runtime.NewMetaKey(runtime.NamespaceName, tagToID(t))
+		r := runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(t))
 		r.TypedSpec().Value = val
 
 		return st.Create(ctx, r)

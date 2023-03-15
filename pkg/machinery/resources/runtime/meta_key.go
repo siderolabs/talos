@@ -5,6 +5,8 @@
 package runtime
 
 import (
+	"fmt"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -50,6 +52,11 @@ func (MetaKeyExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			},
 		},
 	}
+}
+
+// MetaKeyTagToID converts a tag to ID for MetaKey resource.
+func MetaKeyTagToID(t uint8) resource.ID {
+	return fmt.Sprintf("0x%02x", t)
 }
 
 func init() {

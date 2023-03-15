@@ -13,16 +13,20 @@ import (
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
+	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -119,28 +123,72 @@ func (m *Metal) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
+//
+//nolint:gocyclo
 func (m *Metal) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	var metadata runtimeres.PlatformMetadataSpec
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
+	watchCh := make(chan state.Event)
+
+	if err := st.Watch(ctx, hardware.NewSystemInformation(hardware.SystemInformationID).Metadata(), watchCh); err != nil {
+		return err
+	}
+
+	if err := st.Watch(ctx, runtimeres.NewMetaKey(runtimeres.NamespaceName, runtimeres.MetaKeyTagToID(meta.MetalNetworkPlatformConfig)).Metadata(), watchCh); err != nil {
+		return err
+	}
+
+	// network config from META partition
+	var metaCfg runtime.PlatformNetworkConfig
+
+	// fixed metadata filled by this function
+	metadata := &runtimeres.PlatformMetadataSpec{}
 	metadata.Platform = m.Name()
 
 	if option := procfs.ProcCmdline().Get(constants.KernelParamHostname).First(); option != nil {
 		metadata.Hostname = *option
 	}
 
-	if uuid, err := getSystemUUID(ctx, st); err == nil {
-		metadata.InstanceID = uuid
-	}
+	for {
+		var event state.Event
 
-	networkConfig := &runtime.PlatformNetworkConfig{
-		Metadata: &metadata,
-	}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event = <-watchCh:
+		}
 
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case ch <- networkConfig:
-	}
+		switch event.Type {
+		case state.Errored:
+			return fmt.Errorf("watch failed: %w", event.Error)
+		case state.Bootstrapped:
+			// ignored, should not happen
+		case state.Created, state.Updated:
+			switch r := event.Resource.(type) {
+			case *hardware.SystemInformation:
+				metadata.InstanceID = r.TypedSpec().UUID
+			case *runtimeres.MetaKey:
+				metaCfg = runtime.PlatformNetworkConfig{}
 
-	return nil
+				if err := yaml.Unmarshal([]byte(r.TypedSpec().Value), &metaCfg); err != nil {
+					return fmt.Errorf("failed to unmarshal metal network config from META: %w", err)
+				}
+			}
+		case state.Destroyed:
+			switch event.Resource.(type) {
+			case *hardware.SystemInformation:
+				metadata.InstanceID = ""
+			case *runtimeres.MetaKey:
+				metaCfg = runtime.PlatformNetworkConfig{}
+			}
+		}
+
+		cfg := metaCfg
+		cfg.Metadata = metadata
+
+		if !channel.SendWithContext(ctx, ch, &cfg) {
+			return ctx.Err()
+		}
+	}
 }

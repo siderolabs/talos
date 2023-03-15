@@ -13,4 +13,6 @@ const (
 	StagedUpgradeInstallOptions
 	// StateEncryptionConfig stores JSON-serialized v1alpha1.Encryption.
 	StateEncryptionConfig
+	// MetalNetworkPlatformConfig stores serialized NetworkPlatformConfig for the `metal` platform.
+	MetalNetworkPlatformConfig
 )

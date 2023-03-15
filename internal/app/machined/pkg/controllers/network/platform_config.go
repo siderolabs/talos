@@ -447,10 +447,6 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			},
 		},
 	} {
-		if specType.length == 0 {
-			continue
-		}
-
 		touchedIDs := make(map[resource.ID]struct{}, specType.length)
 
 		resourceEmpty := specType.resourceBuilder("")
