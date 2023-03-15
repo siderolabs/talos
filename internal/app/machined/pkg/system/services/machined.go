@@ -62,6 +62,8 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/LoadAvg":                     role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Logs":                        role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Memory":                      role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/machine.MachineService/MetaWrite":                   role.MakeSet(role.Admin),
+	"/machine.MachineService/MetaDelete":                  role.MakeSet(role.Admin),
 	"/machine.MachineService/Mounts":                      role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/NetworkDeviceStats":          role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Netstat":                     role.MakeSet(role.Admin, role.Operator, role.Reader),

@@ -979,3 +979,34 @@ func (c *Client) Netstat(ctx context.Context, req *machineapi.NetstatRequest, ca
 
 	return resp, err
 }
+
+// MetaWrite writes a key to META storage.
+func (c *Client) MetaWrite(ctx context.Context, key uint8, value []byte, callOptions ...grpc.CallOption) error {
+	resp, err := c.MachineClient.MetaWrite(
+		ctx,
+		&machineapi.MetaWriteRequest{
+			Key:   uint32(key),
+			Value: value,
+		},
+		callOptions...,
+	)
+
+	_, err = FilterMessages(resp, err)
+
+	return err
+}
+
+// MetaDelete deletes a key from META storage.
+func (c *Client) MetaDelete(ctx context.Context, key uint8, callOptions ...grpc.CallOption) error {
+	resp, err := c.MachineClient.MetaDelete(
+		ctx,
+		&machineapi.MetaDeleteRequest{
+			Key: uint32(key),
+		},
+		callOptions...,
+	)
+
+	_, err = FilterMessages(resp, err)
+
+	return err
+}

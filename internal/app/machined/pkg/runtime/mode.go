@@ -32,6 +32,8 @@ const (
 	Shutdown
 	// Upgrade node upgrade.
 	Upgrade
+	// MetaKV is META partition.
+	MetaKV
 )
 
 const (
@@ -78,7 +80,7 @@ func (m Mode) capabilities() uint64 {
 		// metal
 		all,
 		// container
-		all ^ uint64(Reboot|Shutdown|Upgrade|Rollback),
+		all ^ uint64(Reboot|Shutdown|Upgrade|Rollback|MetaKV),
 		// cloud
 		all,
 	}[m]

@@ -294,6 +294,12 @@ description: Talos gRPC API reference.
     - [MemInfo](#machine.MemInfo)
     - [Memory](#machine.Memory)
     - [MemoryResponse](#machine.MemoryResponse)
+    - [MetaDelete](#machine.MetaDelete)
+    - [MetaDeleteRequest](#machine.MetaDeleteRequest)
+    - [MetaDeleteResponse](#machine.MetaDeleteResponse)
+    - [MetaWrite](#machine.MetaWrite)
+    - [MetaWriteRequest](#machine.MetaWriteRequest)
+    - [MetaWriteResponse](#machine.MetaWriteResponse)
     - [MountStat](#machine.MountStat)
     - [Mounts](#machine.Mounts)
     - [MountsResponse](#machine.MountsResponse)
@@ -5152,6 +5158,97 @@ MachineStatusEvent reports changes to the MachineStatus resource.
 
 
 
+<a name="machine.MetaDelete"></a>
+
+### MetaDelete
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.MetaDeleteRequest"></a>
+
+### MetaDeleteRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="machine.MetaDeleteResponse"></a>
+
+### MetaDeleteResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [MetaDelete](#machine.MetaDelete) | repeated |  |
+
+
+
+
+
+
+<a name="machine.MetaWrite"></a>
+
+### MetaWrite
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.MetaWriteRequest"></a>
+
+### MetaWriteRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [uint32](#uint32) |  |  |
+| value | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="machine.MetaWriteResponse"></a>
+
+### MetaWriteResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [MetaWrite](#machine.MetaWrite) | repeated |  |
+
+
+
+
+
+
 <a name="machine.MountStat"></a>
 
 ### MountStat
@@ -6593,7 +6690,9 @@ This method is available only on control plane nodes (which run etcd). |
 | Version | [.google.protobuf.Empty](#google.protobuf.Empty) | [VersionResponse](#machine.VersionResponse) |  |
 | GenerateClientConfiguration | [GenerateClientConfigurationRequest](#machine.GenerateClientConfigurationRequest) | [GenerateClientConfigurationResponse](#machine.GenerateClientConfigurationResponse) | GenerateClientConfiguration generates talosctl client configuration (talosconfig). |
 | PacketCapture | [PacketCaptureRequest](#machine.PacketCaptureRequest) | [.common.Data](#common.Data) stream | PacketCapture performs packet capture and streams back pcap file. |
-| Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) |  |
+| Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) | Netstat provides information about network connections. |
+| MetaWrite | [MetaWriteRequest](#machine.MetaWriteRequest) | [MetaWriteResponse](#machine.MetaWriteResponse) | MetaWrite writes a META key-value pair. |
+| MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
 
  <!-- end services -->
 

@@ -99,7 +99,12 @@ service MachineService {
   rpc GenerateClientConfiguration(GenerateClientConfigurationRequest) returns (GenerateClientConfigurationResponse);
   // PacketCapture performs packet capture and streams back pcap file.
   rpc PacketCapture(PacketCaptureRequest) returns (stream common.Data);
+  // Netstat provides information about network connections.
   rpc Netstat(NetstatRequest) returns (NetstatResponse);
+  // MetaWrite writes a META key-value pair.
+  rpc MetaWrite(MetaWriteRequest) returns (MetaWriteResponse);
+  // MetaDelete deletes a META key.
+  rpc MetaDelete(MetaDeleteRequest) returns (MetaDeleteResponse);
 }
 
 // rpc applyConfiguration
@@ -1272,4 +1277,29 @@ message Netstat {
 
 message NetstatResponse {
   repeated Netstat messages = 1;
+}
+
+message MetaWriteRequest {
+  uint32 key = 1;
+  bytes value = 2;
+}
+
+message MetaWrite {
+  common.Metadata metadata = 1;
+}
+
+message MetaWriteResponse {
+  repeated MetaWrite messages = 1;
+}
+
+message MetaDeleteRequest {
+  uint32 key = 1;
+}
+
+message MetaDelete {
+  common.Metadata metadata = 1;
+}
+
+message MetaDeleteResponse {
+  repeated MetaDelete messages = 1;
 }

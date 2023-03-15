@@ -1984,6 +1984,88 @@ talosctl memory [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl meta delete
+
+Delete a key from the META partition.
+
+```
+talosctl meta delete key [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for delete
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
+
+## talosctl meta write
+
+Write a key-value pair to the META partition.
+
+```
+talosctl meta write key value [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for write
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
+
+## talosctl meta
+
+Write and delete keys in the META partition
+
+### Options
+
+```
+  -h, --help   help for meta
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl meta delete](#talosctl-meta-delete)	 - Delete a key from the META partition.
+* [talosctl meta write](#talosctl-meta-write)	 - Write a key-value pair to the META partition.
+
 ## talosctl mounts
 
 List mounts
@@ -2718,6 +2800,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl logs](#talosctl-logs)	 - Retrieve logs for a service
 * [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
 * [talosctl memory](#talosctl-memory)	 - Show memory usage
+* [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
 * [talosctl mounts](#talosctl-mounts)	 - List mounts
 * [talosctl netstat](#talosctl-netstat)	 - Retrieve a socket listing of connections
 * [talosctl patch](#talosctl-patch)	 - Update field(s) of a resource using a JSON patch.

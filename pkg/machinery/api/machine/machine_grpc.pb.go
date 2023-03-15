@@ -111,7 +111,12 @@ type MachineServiceClient interface {
 	GenerateClientConfiguration(ctx context.Context, in *GenerateClientConfigurationRequest, opts ...grpc.CallOption) (*GenerateClientConfigurationResponse, error)
 	// PacketCapture performs packet capture and streams back pcap file.
 	PacketCapture(ctx context.Context, in *PacketCaptureRequest, opts ...grpc.CallOption) (MachineService_PacketCaptureClient, error)
+	// Netstat provides information about network connections.
 	Netstat(ctx context.Context, in *NetstatRequest, opts ...grpc.CallOption) (*NetstatResponse, error)
+	// MetaWrite writes a META key-value pair.
+	MetaWrite(ctx context.Context, in *MetaWriteRequest, opts ...grpc.CallOption) (*MetaWriteResponse, error)
+	// MetaDelete deletes a META key.
+	MetaDelete(ctx context.Context, in *MetaDeleteRequest, opts ...grpc.CallOption) (*MetaDeleteResponse, error)
 }
 
 type machineServiceClient struct {
@@ -801,6 +806,24 @@ func (c *machineServiceClient) Netstat(ctx context.Context, in *NetstatRequest, 
 	return out, nil
 }
 
+func (c *machineServiceClient) MetaWrite(ctx context.Context, in *MetaWriteRequest, opts ...grpc.CallOption) (*MetaWriteResponse, error) {
+	out := new(MetaWriteResponse)
+	err := c.cc.Invoke(ctx, "/machine.MachineService/MetaWrite", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *machineServiceClient) MetaDelete(ctx context.Context, in *MetaDeleteRequest, opts ...grpc.CallOption) (*MetaDeleteResponse, error) {
+	out := new(MetaDeleteResponse)
+	err := c.cc.Invoke(ctx, "/machine.MachineService/MetaDelete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MachineServiceServer is the server API for MachineService service.
 // All implementations must embed UnimplementedMachineServiceServer
 // for forward compatibility
@@ -890,7 +913,12 @@ type MachineServiceServer interface {
 	GenerateClientConfiguration(context.Context, *GenerateClientConfigurationRequest) (*GenerateClientConfigurationResponse, error)
 	// PacketCapture performs packet capture and streams back pcap file.
 	PacketCapture(*PacketCaptureRequest, MachineService_PacketCaptureServer) error
+	// Netstat provides information about network connections.
 	Netstat(context.Context, *NetstatRequest) (*NetstatResponse, error)
+	// MetaWrite writes a META key-value pair.
+	MetaWrite(context.Context, *MetaWriteRequest) (*MetaWriteResponse, error)
+	// MetaDelete deletes a META key.
+	MetaDelete(context.Context, *MetaDeleteRequest) (*MetaDeleteResponse, error)
 	mustEmbedUnimplementedMachineServiceServer()
 }
 
@@ -1038,6 +1066,12 @@ func (UnimplementedMachineServiceServer) PacketCapture(*PacketCaptureRequest, Ma
 }
 func (UnimplementedMachineServiceServer) Netstat(context.Context, *NetstatRequest) (*NetstatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Netstat not implemented")
+}
+func (UnimplementedMachineServiceServer) MetaWrite(context.Context, *MetaWriteRequest) (*MetaWriteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MetaWrite not implemented")
+}
+func (UnimplementedMachineServiceServer) MetaDelete(context.Context, *MetaDeleteRequest) (*MetaDeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MetaDelete not implemented")
 }
 func (UnimplementedMachineServiceServer) mustEmbedUnimplementedMachineServiceServer() {}
 
@@ -1936,6 +1970,42 @@ func _MachineService_Netstat_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MachineService_MetaWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetaWriteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).MetaWrite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/machine.MachineService/MetaWrite",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).MetaWrite(ctx, req.(*MetaWriteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MachineService_MetaDelete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetaDeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).MetaDelete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/machine.MachineService/MetaDelete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).MetaDelete(ctx, req.(*MetaDeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MachineService_ServiceDesc is the grpc.ServiceDesc for MachineService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2086,6 +2156,14 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Netstat",
 			Handler:    _MachineService_Netstat_Handler,
+		},
+		{
+			MethodName: "MetaWrite",
+			Handler:    _MachineService_MetaWrite_Handler,
+		},
+		{
+			MethodName: "MetaDelete",
+			Handler:    _MachineService_MetaDelete_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
