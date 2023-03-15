@@ -213,6 +213,17 @@ func (suite *GenSuite) TestSecrets() {
 	suite.RunCLI([]string{"gen", "secrets"}, base.StdoutEmpty())
 	suite.Assert().FileExists("secrets.yaml")
 
+	suite.RunCLI([]string{"gen", "secrets"}, base.StdoutEmpty(), base.ShouldFail(), base.StderrMatchFunc(func(output string) error {
+		expected := "file \"secrets.yaml\" already exists, use --force to overwrite"
+		if !strings.Contains(output, expected) {
+			return fmt.Errorf("stdout does not contain %q: %q", expected, output)
+		}
+
+		return nil
+	}))
+
+	suite.RunCLI([]string{"gen", "secrets", "--force"}, base.StdoutEmpty())
+
 	defer os.Remove("secrets.yaml") //nolint:errcheck
 
 	suite.RunCLI([]string{"gen", "secrets", "--output-file", "/tmp/secrets2.yaml"}, base.StdoutEmpty())

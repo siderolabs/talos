@@ -30,7 +30,13 @@ var genKeyCmd = &cobra.Command{
 			return fmt.Errorf("error generating key: %w", err)
 		}
 
-		if err := os.WriteFile(genKeyCmdFlags.name+".key", key.PrivateKeyPEM, 0o600); err != nil {
+		keyFile := genKeyCmdFlags.name + ".key"
+
+		if err = validateFileExists(keyFile); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(keyFile, key.PrivateKeyPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing key: %w", err)
 		}
 

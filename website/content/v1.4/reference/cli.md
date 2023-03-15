@@ -1283,6 +1283,7 @@ talosctl gen ca [flags]
       --cluster string       Cluster to connect to if a proxy endpoint is used.
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
@@ -1314,7 +1315,6 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
       --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
       --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
-      --force                                    "gen" will overwrite existing files
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/siderolabs/installer:latest")
@@ -1338,6 +1338,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --cluster string       Cluster to connect to if a proxy endpoint is used.
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
@@ -1370,6 +1371,7 @@ talosctl gen crt [flags]
       --cluster string       Cluster to connect to if a proxy endpoint is used.
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
@@ -1401,6 +1403,7 @@ talosctl gen csr [flags]
       --cluster string       Cluster to connect to if a proxy endpoint is used.
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
@@ -1430,6 +1433,7 @@ talosctl gen key [flags]
       --cluster string       Cluster to connect to if a proxy endpoint is used.
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
@@ -1460,6 +1464,7 @@ talosctl gen keypair [flags]
       --cluster string       Cluster to connect to if a proxy endpoint is used.
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
@@ -1492,6 +1497,7 @@ talosctl gen secrets [flags]
       --cluster string       Cluster to connect to if a proxy endpoint is used.
       --context string       Context to be used in command
   -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
   -n, --nodes strings        target the specified nodes
       --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
 ```
@@ -1507,7 +1513,8 @@ Generate CAs, certificates, and private keys
 ### Options
 
 ```
-  -h, --help   help for gen
+  -f, --force   will overwrite existing files
+  -h, --help    help for gen
 ```
 
 ### Options inherited from parent commands

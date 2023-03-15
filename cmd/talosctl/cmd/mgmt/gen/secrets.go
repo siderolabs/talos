@@ -69,6 +69,10 @@ func writeSecretsBundleToFile(bundle *generate.SecretsBundle) error {
 		return err
 	}
 
+	if err = validateFileExists(genSecretsCmdFlags.outputFile); err != nil {
+		return err
+	}
+
 	return os.WriteFile(genSecretsCmdFlags.outputFile, bundleBytes, 0o600)
 }
 

@@ -41,15 +41,23 @@ var genCACmd = &cobra.Command{
 			return fmt.Errorf("error generating CA: %w", err)
 		}
 
-		if err := os.WriteFile(genCACmdFlags.organization+".crt", ca.CrtPEM, 0o600); err != nil {
+		caCertFile := genCACmdFlags.organization + ".crt"
+		caHashFile := genCACmdFlags.organization + ".sha256"
+		caKeyFile := genCACmdFlags.organization + ".key"
+
+		if err := validateFilesExists([]string{caCertFile, caHashFile, caKeyFile}); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(caCertFile, ca.CrtPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing CA certificate: %w", err)
 		}
 
-		if err := os.WriteFile(genCACmdFlags.organization+".sha256", []byte(x509.Hash(ca.Crt)), 0o600); err != nil {
+		if err := os.WriteFile(caHashFile, []byte(x509.Hash(ca.Crt)), 0o600); err != nil {
 			return fmt.Errorf("error writing certificate hash: %w", err)
 		}
 
-		if err := os.WriteFile(genCACmdFlags.organization+".key", ca.KeyPEM, 0o600); err != nil {
+		if err := os.WriteFile(caKeyFile, ca.KeyPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing key: %w", err)
 		}
 

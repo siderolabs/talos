@@ -85,7 +85,13 @@ var genCrtCmd = &cobra.Command{
 			return fmt.Errorf("error signing certificate: %s", err)
 		}
 
-		if err = os.WriteFile(genCrtCmdFlags.name+".crt", signedCrt.X509CertificatePEM, 0o600); err != nil {
+		certFile := genCrtCmdFlags.name + ".crt"
+
+		if err = validateFileExists(certFile); err != nil {
+			return err
+		}
+
+		if err = os.WriteFile(certFile, signedCrt.X509CertificatePEM, 0o600); err != nil {
 			return fmt.Errorf("error writing certificate: %s", err)
 		}
 

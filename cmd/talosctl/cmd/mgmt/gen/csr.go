@@ -69,7 +69,13 @@ var genCSRCmd = &cobra.Command{
 			return fmt.Errorf("error generating CSR: %s", err)
 		}
 
-		if err := os.WriteFile(strings.TrimSuffix(genCSRCmdFlags.key, path.Ext(genCSRCmdFlags.key))+".csr", csr.X509CertificateRequestPEM, 0o600); err != nil {
+		csrFile := strings.TrimSuffix(genCSRCmdFlags.key, path.Ext(genCSRCmdFlags.key)) + ".csr"
+
+		if err := validateFileExists(csrFile); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(csrFile, csr.X509CertificateRequestPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing CSR: %s", err)
 		}
 
