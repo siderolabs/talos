@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v3"
@@ -185,7 +186,7 @@ func (m *Metal) NetworkConfiguration(ctx context.Context, st state.State, ch cha
 		}
 
 		cfg := metaCfg
-		cfg.Metadata = metadata
+		cfg.Metadata = pointer.To(metadata.DeepCopy())
 
 		if !channel.SendWithContext(ctx, ch, &cfg) {
 			return ctx.Err()
