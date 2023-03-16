@@ -288,6 +288,7 @@ func (ctrl *LinkStatusController) reconcile(
 			status.DriverVersion = driverInfo.Version
 			status.FirmwareVersion = driverInfo.FwVersion
 
+			// link.Attributes.Info will be non-nil, because we set status.Kind above using link.Attributes.Info.Kind
 			switch status.Kind {
 			case network.LinkKindVLAN:
 				if err = networkadapter.VLANSpec(&status.VLAN).Decode(link.Attributes.Info.Data); err != nil {
