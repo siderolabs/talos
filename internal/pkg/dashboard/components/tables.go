@@ -15,7 +15,7 @@ import (
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // ProcessTable represents the widget with process info.
@@ -49,8 +49,8 @@ func NewProcessTable() *ProcessTable {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *ProcessTable) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *ProcessTable) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {

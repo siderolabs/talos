@@ -11,7 +11,7 @@ import (
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // SystemGauges quickly show CPU/mem load.
@@ -47,8 +47,8 @@ func NewSystemGauges() *SystemGauges {
 	return widget
 }
 
-// Update implements DataWidget interface.
-func (widget *SystemGauges) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *SystemGauges) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {

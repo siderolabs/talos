@@ -2,18 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package data
+package apidata
 
 import (
 	"github.com/siderolabs/gen/slices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
-	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
-	"github.com/siderolabs/talos/pkg/machinery/resources/network"
-	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // Node represents data gathered from a single node.
@@ -38,18 +32,6 @@ type Node struct {
 
 	// Time-series data.
 	Series map[string][]float64
-
-	MachineStatus     *runtime.MachineStatus
-	MachineType       *config.MachineType
-	KubeletSpec       *k8s.KubeletSpec
-	ResolverStatus    *network.ResolverStatus
-	TimeServerStatus  *network.TimeServerStatus
-	SystemInformation *hardware.SystemInformation
-	ClusterInfo       *cluster.Info
-	StaticPodStatuses []*k8s.StaticPodStatus
-	RouteStatuses     []*network.RouteStatus
-	LinkStatuses      []*network.LinkStatus
-	Members           []*cluster.Member
 }
 
 // MemUsage as used/total.

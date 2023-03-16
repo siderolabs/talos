@@ -8,8 +8,8 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/components"
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
 )
 
 // MonitorGrid represents the monitoring grid with a process table and various metrics.
@@ -18,7 +18,7 @@ type MonitorGrid struct {
 
 	app *tview.Application
 
-	dataWidgets []DataWidget
+	apiDataListeners []APIDataListener
 
 	processTableInner *components.ProcessTable
 	processTable      *components.TermUIWrapper
@@ -72,7 +72,7 @@ func NewMonitorGrid(app *tview.Application) *MonitorGrid {
 	widget.AddItem(graphGrid, 1, 0, 1, 1, 0, 0, false)
 	widget.AddItem(bottomGrid, 2, 0, 1, 1, 0, 0, false)
 
-	widget.dataWidgets = []DataWidget{
+	widget.apiDataListeners = []APIDataListener{
 		sysGauges,
 		cpuInfo,
 		loadAvgInfo,
@@ -89,10 +89,10 @@ func NewMonitorGrid(app *tview.Application) *MonitorGrid {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *MonitorGrid) Update(node string, data *data.Data) {
-	for _, dataWidget := range widget.dataWidgets {
-		dataWidget.Update(node, data)
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *MonitorGrid) OnAPIDataChange(node string, data *apidata.Data) {
+	for _, dataWidget := range widget.apiDataListeners {
+		dataWidget.OnAPIDataChange(node, data)
 	}
 }
 

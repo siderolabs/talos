@@ -10,7 +10,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/rivo/tview"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // LoadAvgInfo represents the widget with load average info.
@@ -31,8 +31,8 @@ func NewLoadAvgInfo() *LoadAvgInfo {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *LoadAvgInfo) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *LoadAvgInfo) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {
@@ -68,8 +68,8 @@ func NewProcsInfo() *ProcsInfo {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *ProcsInfo) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *ProcsInfo) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {
@@ -107,8 +107,8 @@ func NewMemInfo() *MemInfo {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *MemInfo) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *MemInfo) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {
@@ -149,8 +149,8 @@ func NewCPUInfo() *CPUInfo {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *CPUInfo) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *CPUInfo) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {

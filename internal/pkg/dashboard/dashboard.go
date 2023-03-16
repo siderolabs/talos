@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -18,9 +19,10 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/components"
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
-	"github.com/siderolabs/talos/internal/pkg/dashboard/datasource"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/logdata"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
@@ -46,14 +48,24 @@ const (
 	ScreenNetworkConfig Screen = "Network Config"
 )
 
-// DataWidget is a widget which consumes Data to draw itself.
-type DataWidget interface {
-	Update(node string, data *data.Data)
+// APIDataListener is a listener which is notified when API-sourced data is updated.
+type APIDataListener interface {
+	OnAPIDataChange(node string, data *apidata.Data)
 }
 
-// LogWidget is a widget which consumes logs and draws itself.
-type LogWidget interface {
-	UpdateLog(node string, logLine string)
+// ResourceDataListener is a listener which is notified when a resource is updated.
+type ResourceDataListener interface {
+	OnResourceDataChange(data resourcedata.Data)
+}
+
+// LogDataListener is a listener which is notified when a log line is received.
+type LogDataListener interface {
+	OnLogDataChange(node string, logLine string)
+}
+
+// NodeSetListener is a listener which is notified when the set of nodes changes.
+type NodeSetListener interface {
+	OnNodeSetChange(nodes []string)
 }
 
 // NodeSelectListener is a listener which is notified when a node is selected.
@@ -80,12 +92,15 @@ type Dashboard struct {
 	cli      *client.Client
 	interval time.Duration
 
-	apiDataSource  *datasource.API
-	logsDataSource *datasource.Logs
+	apiDataSource      *apidata.Source
+	resourceDataSource *resourcedata.Source
+	logDataSource      *logdata.Source
 
-	dataWidgets         []DataWidget
-	logWidgets          []LogWidget
-	nodeSelectListeners []NodeSelectListener
+	apiDataListeners       []APIDataListener
+	resourceDataListeners  []ResourceDataListener
+	logDataListeners       []LogDataListener
+	nodeSelectListeners    []NodeSelectListener
+	nodeSetChangeListeners []NodeSetListener
 
 	app *tview.Application
 
@@ -98,8 +113,12 @@ type Dashboard struct {
 	screenConfigs []screenConfig
 	footer        *components.Footer
 
-	initialDataReceived bool
-	data                *data.Data
+	data *apidata.Data
+
+	selectedNodeIndex int
+	selectedNode      string
+	nodeSet           map[string]struct{}
+	nodes             []string
 }
 
 // New initializes the summary dashboard.
@@ -114,6 +133,7 @@ func New(cli *client.Client, opts ...Option) (*Dashboard, error) {
 		cli:      cli,
 		interval: defOptions.interval,
 		app:      tview.NewApplication(),
+		nodeSet:  make(map[string]struct{}),
 	}
 
 	dashboard.mainGrid = tview.NewGrid().
@@ -149,11 +169,11 @@ func New(cli *client.Client, opts ...Option) (*Dashboard, error) {
 		case screenOk:
 			dashboard.selectScreen(screenName)
 		case event.Key() == tcell.KeyLeft, event.Rune() == 'h':
-			dashboard.selectNode(-1)
+			dashboard.selectNodeByIndex(dashboard.selectedNodeIndex - 1)
 
 			return nil
 		case event.Key() == tcell.KeyRight, event.Rune() == 'l':
-			dashboard.selectNode(+1)
+			dashboard.selectNodeByIndex(dashboard.selectedNodeIndex + 1)
 
 			return nil
 		case event.Key() == tcell.KeyCtrlC, event.Rune() == 'q':
@@ -169,27 +189,40 @@ func New(cli *client.Client, opts ...Option) (*Dashboard, error) {
 
 	dashboard.mainGrid.AddItem(dashboard.footer, 2, 0, 1, 1, 0, 0, false)
 
-	dashboard.dataWidgets = []DataWidget{
+	dashboard.apiDataListeners = []APIDataListener{
 		header,
 		dashboard.summaryGrid,
 		dashboard.monitorGrid,
+	}
+
+	dashboard.resourceDataListeners = []ResourceDataListener{
+		dashboard.summaryGrid,
 		dashboard.networkConfigGrid,
 	}
 
-	dashboard.logWidgets = []LogWidget{
+	dashboard.logDataListeners = []LogDataListener{
 		dashboard.summaryGrid,
 	}
 
 	dashboard.nodeSelectListeners = []NodeSelectListener{
 		dashboard.summaryGrid,
+		dashboard.footer,
 	}
 
-	dashboard.apiDataSource = &datasource.API{
+	dashboard.nodeSetChangeListeners = []NodeSetListener{
+		dashboard.footer,
+	}
+
+	dashboard.apiDataSource = &apidata.Source{
 		Client:   cli,
 		Interval: defOptions.interval,
 	}
 
-	dashboard.logsDataSource = datasource.NewLogSource(cli)
+	dashboard.resourceDataSource = &resourcedata.Source{
+		COSI: cli.COSI,
+	}
+
+	dashboard.logDataSource = logdata.NewSource(cli)
 
 	return dashboard, nil
 }
@@ -259,14 +292,20 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 	}
 
 	eg.Go(func() error {
+		// start API data source
 		dataCh := d.apiDataSource.Run(ctx)
 		defer d.apiDataSource.Stop()
 
-		if err := d.logsDataSource.Start(ctx); err != nil {
+		// start resources data source
+		d.resourceDataSource.Run(ctx)
+		defer d.resourceDataSource.Stop() //nolint:errcheck
+
+		// start logs data source
+		if err := d.logDataSource.Start(ctx); err != nil {
 			return err
 		}
 
-		defer d.logsDataSource.Stop() //nolint:errcheck
+		defer d.logDataSource.Stop() //nolint:errcheck
 
 		lastLogTime := time.Now()
 
@@ -274,21 +313,25 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-			case nodeLog := <-d.logsDataSource.LogCh:
+			case nodeLog := <-d.logDataSource.LogCh:
 				if time.Since(lastLogTime) < 50*time.Millisecond {
 					d.app.QueueUpdate(func() {
-						d.UpdateLogs(nodeLog.Node, nodeLog.Log)
+						d.processLog(nodeLog.Node, nodeLog.Log)
 					})
 				} else {
 					d.app.QueueUpdateDraw(func() {
-						d.UpdateLogs(nodeLog.Node, nodeLog.Log)
+						d.processLog(nodeLog.Node, nodeLog.Log)
 					})
 				}
 
 				lastLogTime = time.Now()
 			case d.data = <-dataCh:
 				d.app.QueueUpdateDraw(func() {
-					d.UpdateData()
+					d.processAPIData()
+				})
+			case nodeResource := <-d.resourceDataSource.NodeResourceCh:
+				d.app.QueueUpdateDraw(func() {
+					d.processNodeResource(nodeResource)
 				})
 			}
 		}
@@ -297,39 +340,78 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 	return stopFunc
 }
 
-func (d *Dashboard) selectNode(move int) {
-	node := d.footer.SelectNode(move)
+func (d *Dashboard) selectNodeByIndex(index int) {
+	if len(d.nodes) == 0 {
+		return
+	}
 
-	d.UpdateData()
+	if index < 0 {
+		index = 0
+	} else if index >= len(d.nodes) {
+		index = len(d.nodes) - 1
+	}
+
+	d.selectedNode = d.nodes[index]
+	d.selectedNodeIndex = index
+
+	d.processAPIData()
 
 	for _, listener := range d.nodeSelectListeners {
-		listener.OnNodeSelect(node)
+		listener.OnNodeSelect(d.selectedNode)
 	}
 }
 
-// UpdateData re-renders the widgets with new data.
-func (d *Dashboard) UpdateData() {
+// processAPIData re-renders the components with new API-sourced data.
+func (d *Dashboard) processAPIData() {
 	if d.data == nil {
 		return
 	}
 
-	selectedNode := d.footer.UpdateNodes(maps.Keys(d.data.Nodes))
-
-	for _, widget := range d.dataWidgets {
-		widget.Update(selectedNode, d.data)
+	for _, node := range maps.Keys(d.data.Nodes) {
+		d.processSeenNode(node)
 	}
 
-	if !d.initialDataReceived {
-		d.initialDataReceived = true
-		d.selectNode(0)
+	for _, component := range d.apiDataListeners {
+		component.OnAPIDataChange(d.selectedNode, d.data)
 	}
 }
 
-// UpdateLogs re-renders the log widgets with new log data.
-func (d *Dashboard) UpdateLogs(node, line string) {
-	for _, widget := range d.logWidgets {
-		widget.UpdateLog(node, line)
+// processNodeResource re-renders the components with new resource data.
+func (d *Dashboard) processNodeResource(nodeResource resourcedata.Data) {
+	d.processSeenNode(nodeResource.Node)
+
+	for _, component := range d.resourceDataListeners {
+		component.OnResourceDataChange(nodeResource)
 	}
+}
+
+// processLog re-renders the log components with new log data.
+func (d *Dashboard) processLog(node, line string) {
+	for _, component := range d.logDataListeners {
+		component.OnLogDataChange(node, line)
+	}
+}
+
+func (d *Dashboard) processSeenNode(node string) {
+	_, exists := d.nodeSet[node]
+	if exists {
+		return
+	}
+
+	d.nodeSet[node] = struct{}{}
+
+	nodes := maps.Keys(d.nodeSet)
+
+	sort.Strings(nodes)
+
+	d.nodes = nodes
+
+	for _, listener := range d.nodeSetChangeListeners {
+		listener.OnNodeSetChange(nodes)
+	}
+
+	// we received a new node, so we re-select the first node
+	d.selectNodeByIndex(0)
 }
 
 func (d *Dashboard) selectScreen(screen Screen) {

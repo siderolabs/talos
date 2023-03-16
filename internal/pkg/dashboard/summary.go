@@ -9,8 +9,9 @@ import (
 
 	"github.com/rivo/tview"
 
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/components"
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 )
 
 // SummaryGrid represents the summary grid with the basic node information and the logs.
@@ -19,7 +20,9 @@ type SummaryGrid struct {
 
 	app *tview.Application
 
-	dataWidgets []DataWidget
+	apiDataListeners    []APIDataListener
+	resourceListeners   []ResourceDataListener
+	nodeSelectListeners []NodeSelectListener
 
 	lock       sync.Mutex
 	active     bool
@@ -47,10 +50,20 @@ func NewSummaryGrid(app *tview.Application) *SummaryGrid {
 	networkInfo := components.NewNetworkInfo()
 	widget.AddItem(networkInfo, 0, 2, 1, 1, 0, 0, false)
 
-	widget.dataWidgets = []DataWidget{
-		talosInfo,
-		networkInfo,
+	widget.apiDataListeners = []APIDataListener{
 		kubernetesInfo,
+	}
+
+	widget.resourceListeners = []ResourceDataListener{
+		talosInfo,
+		kubernetesInfo,
+		networkInfo,
+	}
+
+	widget.nodeSelectListeners = []NodeSelectListener{
+		talosInfo,
+		kubernetesInfo,
+		networkInfo,
 	}
 
 	return widget
@@ -64,17 +77,28 @@ func (widget *SummaryGrid) OnNodeSelect(node string) {
 	widget.node = node
 
 	widget.updateLogViewer()
-}
 
-// Update implements the DataWidget interface.
-func (widget *SummaryGrid) Update(node string, data *data.Data) {
-	for _, dataWidget := range widget.dataWidgets {
-		dataWidget.Update(node, data)
+	for _, nodeSelectListener := range widget.nodeSelectListeners {
+		nodeSelectListener.OnNodeSelect(node)
 	}
 }
 
-// UpdateLog implements the LogWidget interface.
-func (widget *SummaryGrid) UpdateLog(node string, logLine string) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *SummaryGrid) OnAPIDataChange(node string, data *apidata.Data) {
+	for _, dataWidget := range widget.apiDataListeners {
+		dataWidget.OnAPIDataChange(node, data)
+	}
+}
+
+// OnResourceDataChange implements the ResourceDataListener interface.
+func (widget *SummaryGrid) OnResourceDataChange(nodeResource resourcedata.Data) {
+	for _, resourceListener := range widget.resourceListeners {
+		resourceListener.OnResourceDataChange(nodeResource)
+	}
+}
+
+// OnLogDataChange implements the LogDataListener interface.
+func (widget *SummaryGrid) OnLogDataChange(node string, logLine string) {
 	widget.lock.Lock()
 	defer widget.lock.Unlock()
 

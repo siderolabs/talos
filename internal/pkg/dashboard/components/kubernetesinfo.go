@@ -7,20 +7,42 @@ package components
 import (
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/rivo/tview"
+	"github.com/siderolabs/gen/maps"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
+
+type staticPodStatuses struct {
+	apiServer         string
+	controllerManager string
+	scheduler         string
+}
+
+type kubernetesInfoData struct {
+	kubernetesVersion string
+	kubeletStatus     string
+
+	podStatuses        staticPodStatuses
+	staticPodStatusMap map[resource.ID]*k8s.StaticPodStatus
+}
 
 // KubernetesInfo represents the kubernetes info widget.
 type KubernetesInfo struct {
 	tview.TextView
+
+	selectedNode string
+	nodeMap      map[string]*kubernetesInfoData
 }
 
 // NewKubernetesInfo initializes KubernetesInfo.
 func NewKubernetesInfo() *KubernetesInfo {
 	kubernetes := &KubernetesInfo{
 		TextView: *tview.NewTextView(),
+		nodeMap:  make(map[string]*kubernetesInfoData),
 	}
 
 	kubernetes.SetDynamicColors(true).
@@ -30,65 +52,117 @@ func NewKubernetesInfo() *KubernetesInfo {
 	return kubernetes
 }
 
-type staticPodStatuses struct {
-	apiServer         string
-	controllerManager string
-	scheduler         string
+// OnNodeSelect implements the NodeSelectListener interface.
+func (widget *KubernetesInfo) OnNodeSelect(node string) {
+	if node != widget.selectedNode {
+		widget.selectedNode = node
+
+		widget.redraw()
+	}
 }
 
-// Update implements the NodeDataComponent interface.
-// Update implements the DataWidget interface.
-func (widget *KubernetesInfo) Update(node string, data *data.Data) {
-	nodeData := data.Nodes[node]
-	if nodeData == nil {
-		widget.SetText(noData)
+// OnResourceDataChange implements the ResourceDataListener interface.
+func (widget *KubernetesInfo) OnResourceDataChange(data resourcedata.Data) {
+	widget.updateNodeData(data)
 
-		return
+	if data.Node != widget.selectedNode {
+		widget.redraw()
 	}
+}
 
-	podStatuses := widget.staticPodStatuses(nodeData)
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *KubernetesInfo) OnAPIDataChange(node string, data *apidata.Data) {
+	nodeAPIData := data.Nodes[node]
 
-	kubernetesVersion := notAvailable
-	kubeletStatus := notAvailable
+	widget.updateNodeAPIData(node, nodeAPIData)
 
-	if nodeData.KubeletSpec != nil {
-		imageParts := strings.Split(nodeData.KubeletSpec.TypedSpec().Image, ":")
-		if len(imageParts) > 0 {
-			kubernetesVersion = imageParts[len(imageParts)-1]
+	if node == widget.selectedNode {
+		widget.redraw()
+	}
+}
+
+func (widget *KubernetesInfo) updateNodeData(data resourcedata.Data) {
+	nodeData := widget.getOrCreateNodeData(data.Node)
+
+	switch res := data.Resource.(type) {
+	case *k8s.KubeletSpec:
+		if data.Deleted {
+			nodeData.kubernetesVersion = notAvailable
+		} else {
+			imageParts := strings.Split(res.TypedSpec().Image, ":")
+			if len(imageParts) > 0 {
+				nodeData.kubernetesVersion = imageParts[len(imageParts)-1]
+			}
 		}
-	}
+	case *k8s.StaticPodStatus:
+		if data.Deleted {
+			delete(nodeData.staticPodStatusMap, res.Metadata().ID())
+		} else {
+			nodeData.staticPodStatusMap[res.Metadata().ID()] = res
+		}
 
-	if nodeData.ServiceList != nil {
-		for _, info := range nodeData.ServiceList.GetServices() {
+		nodeData.podStatuses = widget.staticPodStatuses(maps.Values(nodeData.staticPodStatusMap))
+	}
+}
+
+func (widget *KubernetesInfo) updateNodeAPIData(node string, data *apidata.Node) {
+	nodeData := widget.getOrCreateNodeData(node)
+
+	if data != nil && data.ServiceList != nil {
+		for _, info := range data.ServiceList.GetServices() {
 			if info.Id == "kubelet" {
-				kubeletStatus = toHealthStatus(info.GetHealth().Healthy)
+				nodeData.kubeletStatus = toHealthStatus(info.GetHealth().Healthy)
 
 				break
 			}
 		}
 	}
+}
+
+func (widget *KubernetesInfo) getOrCreateNodeData(node string) *kubernetesInfoData {
+	nodeData, ok := widget.nodeMap[node]
+	if !ok {
+		nodeData = &kubernetesInfoData{
+			kubernetesVersion: notAvailable,
+			kubeletStatus:     notAvailable,
+			podStatuses: staticPodStatuses{
+				apiServer:         notAvailable,
+				controllerManager: notAvailable,
+				scheduler:         notAvailable,
+			},
+			staticPodStatusMap: make(map[resource.ID]*k8s.StaticPodStatus),
+		}
+
+		widget.nodeMap[node] = nodeData
+	}
+
+	return nodeData
+}
+
+func (widget *KubernetesInfo) redraw() {
+	data := widget.getOrCreateNodeData(widget.selectedNode)
 
 	fields := fieldGroup{
 		fields: []field{
 			{
 				Name:  "KUBERNETES",
-				Value: kubernetesVersion,
+				Value: data.kubernetesVersion,
 			},
 			{
 				Name:  "KUBELET",
-				Value: kubeletStatus,
+				Value: data.kubeletStatus,
 			},
 			{
 				Name:  "APISERVER",
-				Value: podStatuses.apiServer,
+				Value: data.podStatuses.apiServer,
 			},
 			{
 				Name:  "CONTROLLER-MANAGER",
-				Value: podStatuses.controllerManager,
+				Value: data.podStatuses.controllerManager,
 			},
 			{
 				Name:  "SCHEDULER",
-				Value: podStatuses.scheduler,
+				Value: data.podStatuses.scheduler,
 			},
 		},
 	}
@@ -96,8 +170,8 @@ func (widget *KubernetesInfo) Update(node string, data *data.Data) {
 	widget.SetText(fields.String())
 }
 
-func (widget *KubernetesInfo) staticPodStatuses(nodeData *data.Node) staticPodStatuses {
-	statuses := staticPodStatuses{
+func (widget *KubernetesInfo) staticPodStatuses(statuses []*k8s.StaticPodStatus) staticPodStatuses {
+	result := staticPodStatuses{
 		apiServer:         notAvailable,
 		controllerManager: notAvailable,
 		scheduler:         notAvailable,
@@ -128,18 +202,18 @@ func (widget *KubernetesInfo) staticPodStatuses(nodeData *data.Node) staticPodSt
 		return notAvailable
 	}
 
-	for _, status := range nodeData.StaticPodStatuses {
+	for _, status := range statuses {
 		podStatus := status.TypedSpec().PodStatus
 
 		switch {
 		case strings.Contains(status.Metadata().ID(), "kube-apiserver"):
-			statuses.apiServer = isReady(podStatus)
+			result.apiServer = isReady(podStatus)
 		case strings.Contains(status.Metadata().ID(), "kube-controller-manager"):
-			statuses.controllerManager = isReady(podStatus)
+			result.controllerManager = isReady(podStatus)
 		case strings.Contains(status.Metadata().ID(), "kube-scheduler"):
-			statuses.scheduler = isReady(podStatus)
+			result.scheduler = isReady(podStatus)
 		}
 	}
 
-	return statuses
+	return result
 }

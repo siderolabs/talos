@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -19,13 +18,12 @@ import (
 type Footer struct {
 	tview.TextView
 
-	nodes             []string
-	selectedNodeIndex int
+	selectedNode string
+	nodes        []string
 
 	screenKeyToName map[string]string
 
-	lock          sync.Mutex
-	currentScreen string
+	selectedScreen string
 }
 
 // NewFooter initializes Footer.
@@ -40,7 +38,7 @@ func NewFooter(screenKeyToName map[string]string) *Footer {
 	widget := &Footer{
 		TextView:        *tview.NewTextView(),
 		screenKeyToName: screenKeyToName,
-		currentScreen:   initialScreen,
+		selectedScreen:  initialScreen,
 	}
 
 	widget.SetDynamicColors(true)
@@ -62,81 +60,33 @@ func NewFooter(screenKeyToName map[string]string) *Footer {
 		return x, y, width, height
 	})
 
-	widget.Refresh()
+	widget.refresh()
 
 	return widget
 }
 
-// UpdateNodes updates the nodes list and returns the selected node.
-func (widget *Footer) UpdateNodes(nodes []string) string {
-	widget.lock.Lock()
-	defer widget.lock.Unlock()
-
-	sort.Strings(nodes)
-
+// OnNodeSetChange implements the NodeSetListener interface.
+func (widget *Footer) OnNodeSetChange(nodes []string) {
 	widget.nodes = nodes
 
 	widget.refresh()
-
-	return widget.selectedNode()
 }
 
-// SelectNode selects the node by moving the selected index by the given move.
-// Returns the selected node.
-func (widget *Footer) SelectNode(move int) string {
-	widget.lock.Lock()
-	defer widget.lock.Unlock()
-
-	widget.selectedNodeIndex += move
+// OnNodeSelect implements the NodeSelectListener interface.
+func (widget *Footer) OnNodeSelect(node string) {
+	widget.selectedNode = node
 
 	widget.refresh()
-
-	selectedNode := widget.selectedNode()
-
-	return selectedNode
-}
-
-// SelectedNode returns the selected node.
-func (widget *Footer) SelectedNode() string {
-	widget.lock.Lock()
-	defer widget.lock.Unlock()
-
-	return widget.selectedNode()
 }
 
 // SelectScreen refreshes the footer with the tabs and screens data.
 func (widget *Footer) SelectScreen(screen string) {
-	widget.lock.Lock()
-	defer widget.lock.Unlock()
-
-	widget.currentScreen = screen
+	widget.selectedScreen = screen
 
 	widget.refresh()
-}
-
-// Refresh refreshes the footer with the tabs and screens data.
-func (widget *Footer) Refresh() {
-	widget.lock.Lock()
-	defer widget.lock.Unlock()
-
-	widget.refresh()
-}
-
-func (widget *Footer) selectedNode() string {
-	if len(widget.nodes) == 0 {
-		return ""
-	}
-
-	return widget.nodes[widget.selectedNodeIndex]
 }
 
 func (widget *Footer) refresh() {
-	if len(widget.nodes) == 0 || widget.selectedNodeIndex < 0 {
-		widget.selectedNodeIndex = 0
-	} else if widget.selectedNodeIndex >= len(widget.nodes) {
-		widget.selectedNodeIndex = len(widget.nodes) - 1
-	}
-
 	widget.SetText(fmt.Sprintf(
 		"[%s] --- %s",
 		widget.nodesText(),
@@ -148,15 +98,16 @@ func (widget *Footer) nodesText() string {
 	nodesCopy := make([]string, 0, len(widget.nodes))
 
 	for _, node := range widget.nodes {
-		if node == "" {
-			nodesCopy = append(nodesCopy, "(local)")
+		if node == widget.selectedNode {
+			name := node
+			if name == "" {
+				name = "(local)"
+			}
+
+			nodesCopy = append(nodesCopy, fmt.Sprintf("[red]%s[-]", name))
 		} else {
 			nodesCopy = append(nodesCopy, node)
 		}
-	}
-
-	if len(nodesCopy) > widget.selectedNodeIndex {
-		nodesCopy[widget.selectedNodeIndex] = fmt.Sprintf("[red]%s[-]", nodesCopy[widget.selectedNodeIndex])
 	}
 
 	return strings.Join(nodesCopy, " | ")
@@ -171,7 +122,7 @@ func (widget *Footer) screensText() string {
 	for _, screenKey := range screenKeys {
 		screen := widget.screenKeyToName[screenKey]
 
-		if screen == widget.currentScreen {
+		if screen == widget.selectedScreen {
 			screenTexts = append(screenTexts, fmt.Sprintf("[[red]%s[-]]", screen))
 		} else {
 			screenTexts = append(screenTexts, fmt.Sprintf("[%s: %s]", screenKey, screen))

@@ -12,7 +12,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/rivo/tview"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // Header represents the top bar with host info.
@@ -31,8 +31,8 @@ func NewHeader() *Header {
 	return header
 }
 
-// Update implements the DataWidget interface.
-func (widget *Header) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *Header) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 	_ = nodeData
 

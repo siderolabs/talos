@@ -7,16 +7,16 @@ package components_test
 import (
 	"testing"
 
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/components"
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 func TestUpdate(t *testing.T) {
 	testProcessTable := components.NewProcessTable()
 
-	testData := &data.Data{
-		Nodes: map[string]*data.Node{
+	testData := &apidata.Data{
+		Nodes: map[string]*apidata.Node{
 			"node1": {
 				Processes: &machine.Process{
 					Processes: []*machine.ProcessInfo{},
@@ -33,7 +33,7 @@ func TestUpdate(t *testing.T) {
 			},
 		},
 	}
-	testProcessTable.Update("node1", testData)
+	testProcessTable.OnAPIDataChange("node1", testData)
 	// Node2 does not have processes, without the check it panics
-	testProcessTable.Update("node2", testData)
+	testProcessTable.OnAPIDataChange("node2", testData)
 }

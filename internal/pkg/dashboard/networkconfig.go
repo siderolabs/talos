@@ -5,17 +5,20 @@
 package dashboard
 
 import (
-	"reflect"
 	"sort"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+type networkConfigData struct {
+	linkSet map[string]struct{}
+}
 
 // NetworkConfigGrid represents the network configuration widget.
 type NetworkConfigGrid struct {
@@ -34,7 +37,8 @@ type NetworkConfigGrid struct {
 
 	infoView *tview.TextView
 
-	linkSet map[string]struct{}
+	selectedNode string
+	nodeMap      map[string]*networkConfigData
 }
 
 // NewNetworkConfigGrid initializes NetworkConfigGrid.
@@ -44,6 +48,7 @@ func NewNetworkConfigGrid(app *tview.Application) *NetworkConfigGrid {
 		app:        app,
 		configForm: tview.NewForm(),
 		infoView:   tview.NewTextView(),
+		nodeMap:    make(map[string]*networkConfigData),
 	}
 
 	widget.infoView.SetBorderPadding(1, 0, 1, 0)
@@ -135,60 +140,71 @@ func NewNetworkConfigGrid(app *tview.Application) *NetworkConfigGrid {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *NetworkConfigGrid) Update(node string, data *data.Data) {
-	nodeData := data.Nodes[node]
-	if nodeData == nil {
-		return
+// OnNodeSelect implements the NodeSelectListener interface.
+func (widget *NetworkConfigGrid) OnNodeSelect(node string) {
+	if node != widget.selectedNode {
+		widget.selectedNode = node
+
+		widget.redraw()
+	}
+}
+
+// OnResourceDataChange implements the ResourceDataListener interface.
+func (widget *NetworkConfigGrid) OnResourceDataChange(data resourcedata.Data) {
+	widget.updateNodeData(data)
+
+	if data.Node == widget.selectedNode {
+		widget.redraw()
+	}
+}
+
+func (widget *NetworkConfigGrid) redraw() {
+	// todo
+}
+
+func (widget *NetworkConfigGrid) updateNodeData(data resourcedata.Data) {
+	nodeData := widget.getOrCreateNodeData(data.Node)
+
+	//nolint:gocritic
+	switch res := data.Resource.(type) {
+	case *network.LinkStatus:
+		if data.Deleted {
+			delete(nodeData.linkSet, res.Metadata().ID())
+		} else {
+			if !res.TypedSpec().LinkState ||
+				res.TypedSpec().Type == nethelpers.LinkLoopbck ||
+				res.TypedSpec().Kind != "" {
+				return
+			}
+
+			nodeData.linkSet[res.Metadata().ID()] = struct{}{}
+		}
+
+		links := maps.Keys(nodeData.linkSet)
+
+		sort.Strings(links)
+
+		widget.interfaceDropdown.SetOptions(links, nil)
+	}
+}
+
+func (widget *NetworkConfigGrid) getOrCreateNodeData(node string) *networkConfigData {
+	nodeData, ok := widget.nodeMap[node]
+	if !ok {
+		nodeData = &networkConfigData{
+			linkSet: make(map[string]struct{}),
+		}
+
+		widget.nodeMap[node] = nodeData
 	}
 
-	widget.updateLinks(nodeData)
+	return nodeData
 }
 
 // OnScreenSelect implements the screenSelectListener interface.
 func (widget *NetworkConfigGrid) onScreenSelect(active bool) {
 	if active {
 		widget.app.SetFocus(widget.configForm)
-	}
-}
-
-func (widget *NetworkConfigGrid) updateLinks(nodeData *data.Node) {
-	linkSet := make(map[string]struct{}, len(nodeData.LinkStatuses))
-
-	for _, status := range nodeData.LinkStatuses {
-		if !status.TypedSpec().LinkState ||
-			status.TypedSpec().Type == nethelpers.LinkLoopbck ||
-			status.TypedSpec().Kind != "" {
-			continue
-		}
-
-		linkSet[status.Metadata().ID()] = struct{}{}
-	}
-
-	equal := reflect.DeepEqual(widget.linkSet, linkSet)
-	if !equal {
-		widget.linkSet = linkSet
-
-		links := maps.Keys(linkSet)
-		sort.Strings(links)
-
-		_, selected := widget.interfaceDropdown.GetCurrentOption()
-
-		widget.interfaceDropdown.SetOptions(links, nil)
-
-		if len(links) == 0 {
-			return
-		}
-
-		// if the interface is still present, select it
-		index := slices.IndexFunc(links, func(s string) bool { return s == selected })
-
-		// if the interface is not present, select the first option
-		if index == -1 {
-			index = 0
-		}
-
-		widget.interfaceDropdown.SetCurrentOption(index)
 	}
 }
 

@@ -8,7 +8,7 @@ import (
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // BaseSparklineGroup represents the widget with some sparklines.
@@ -40,8 +40,8 @@ func NewBaseSparklineGroup(title string, labels, dataLabels []string) *BaseSpark
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *BaseSparklineGroup) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *BaseSparklineGroup) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {

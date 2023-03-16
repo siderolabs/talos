@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package data implements types to handle monitoring data, calculate values from it, etc.
-package data
+// Package apidata implements types to handle monitoring data, calculate values from it, etc.
+package apidata
 
 import (
 	"time"

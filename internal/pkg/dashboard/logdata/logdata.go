@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package datasource
+// Package logdata implements the types and the data sources for the data sourced from the Talos dmesg API.
+package logdata
 
 import (
 	"context"
@@ -17,14 +18,14 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// NodeLog is a log line from a node.
-type NodeLog struct {
+// Data is a log line from a node.
+type Data struct {
 	Node string
 	Log  string
 }
 
-// Logs is a data source for Kernel (dmesg) logs.
-type Logs struct {
+// Source is a data source for Kernel (dmesg) logs.
+type Source struct {
 	client *client.Client
 
 	logCtxCancel context.CancelFunc
@@ -32,37 +33,44 @@ type Logs struct {
 	eg   errgroup.Group
 	once sync.Once
 
-	LogCh chan NodeLog
+	LogCh chan Data
 }
 
-// NewLogSource initializes and returns Logs data source.
-func NewLogSource(client *client.Client) *Logs {
-	return &Logs{
+// NewSource initializes and returns Source data source.
+func NewSource(client *client.Client) *Source {
+	return &Source{
 		client: client,
-		LogCh:  make(chan NodeLog),
+		LogCh:  make(chan Data),
 	}
 }
 
 // Start starts the data source.
-func (l *Logs) Start(ctx context.Context) error {
+func (source *Source) Start(ctx context.Context) error {
 	var err error
 
-	l.once.Do(func() {
-		err = l.start(ctx)
+	source.once.Do(func() {
+		err = source.start(ctx)
 	})
 
 	return err
 }
 
-func (l *Logs) start(ctx context.Context) error {
-	ctx, l.logCtxCancel = context.WithCancel(ctx)
+// Stop stops the data source.
+func (source *Source) Stop() error {
+	source.logCtxCancel()
 
-	dmesgStream, err := l.client.Dmesg(ctx, true, false)
+	return source.eg.Wait()
+}
+
+func (source *Source) start(ctx context.Context) error {
+	ctx, source.logCtxCancel = context.WithCancel(ctx)
+
+	dmesgStream, err := source.client.Dmesg(ctx, true, false)
 	if err != nil {
 		return err
 	}
 
-	l.eg.Go(func() error {
+	source.eg.Go(func() error {
 		return helpers.ReadGRPCStream(dmesgStream, func(data *common.Data, node string, multipleNodes bool) error {
 			if len(data.Bytes) == 0 {
 				return nil
@@ -80,7 +88,7 @@ func (l *Logs) start(ctx context.Context) error {
 				}
 
 				return ctx.Err()
-			case l.LogCh <- NodeLog{Node: node, Log: line}:
+			case source.LogCh <- Data{Node: node, Log: line}:
 			}
 
 			return nil
@@ -88,11 +96,4 @@ func (l *Logs) start(ctx context.Context) error {
 	})
 
 	return nil
-}
-
-// Stop stops the data source.
-func (l *Logs) Stop() error {
-	l.logCtxCancel()
-
-	return l.eg.Wait()
 }

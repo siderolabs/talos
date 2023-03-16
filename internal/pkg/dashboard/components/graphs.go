@@ -8,7 +8,7 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // BaseGraph represents the widget with some usage graph.
@@ -32,8 +32,8 @@ func NewBaseGraph(title string, labels []string) *BaseGraph {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *BaseGraph) Update(node string, data *data.Data) {
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *BaseGraph) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {

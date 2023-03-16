@@ -8,62 +8,144 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/rivo/tview"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/slices"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+type networkInfoData struct {
+	addresses   string
+	gateway     string
+	resolvers   string
+	timeservers string
+
+	routeStatusMap map[resource.ID]*network.RouteStatus
+	memberMap      map[resource.ID]*cluster.Member
+}
 
 // NetworkInfo represents the network info widget.
 type NetworkInfo struct {
 	tview.TextView
+
+	selectedNode string
+	nodeMap      map[string]*networkInfoData
 }
 
 // NewNetworkInfo initializes NetworkInfo.
 func NewNetworkInfo() *NetworkInfo {
-	network := &NetworkInfo{
+	component := &NetworkInfo{
 		TextView: *tview.NewTextView(),
+		nodeMap:  make(map[string]*networkInfoData),
 	}
 
-	network.SetDynamicColors(true).
+	component.SetDynamicColors(true).
 		SetText(noData).
 		SetBorderPadding(1, 0, 1, 0)
 
-	return network
+	return component
 }
 
-// Update implements the DataWidget interface.
-func (widget *NetworkInfo) Update(node string, data *data.Data) {
-	nodeData := data.Nodes[node]
-	if nodeData == nil {
-		widget.SetText(noData)
+// OnNodeSelect implements the NodeSelectListener interface.
+func (widget *NetworkInfo) OnNodeSelect(node string) {
+	if node != widget.selectedNode {
+		widget.selectedNode = node
 
-		return
+		widget.redraw()
 	}
+}
+
+// OnResourceDataChange implements the ResourceDataListener interface.
+func (widget *NetworkInfo) OnResourceDataChange(data resourcedata.Data) {
+	widget.updateNodeData(data)
+
+	if data.Node == widget.selectedNode {
+		widget.redraw()
+	}
+}
+
+func (widget *NetworkInfo) updateNodeData(data resourcedata.Data) {
+	nodeData := widget.getOrCreateNodeData(data.Node)
+
+	switch res := data.Resource.(type) {
+	case *network.ResolverStatus:
+		if data.Deleted {
+			nodeData.resolvers = notAvailable
+		} else {
+			nodeData.resolvers = widget.resolvers(res)
+		}
+	case *network.TimeServerStatus:
+		if data.Deleted {
+			nodeData.timeservers = notAvailable
+		} else {
+			nodeData.timeservers = widget.timeservers(res)
+		}
+	case *network.RouteStatus:
+		if data.Deleted {
+			delete(nodeData.routeStatusMap, res.Metadata().ID())
+		} else {
+			nodeData.routeStatusMap[res.Metadata().ID()] = res
+		}
+
+		nodeData.gateway = widget.gateway(maps.Values(nodeData.routeStatusMap))
+	case *cluster.Member:
+		if data.Deleted {
+			delete(nodeData.memberMap, res.Metadata().ID())
+		} else {
+			nodeData.memberMap[res.Metadata().ID()] = res
+		}
+
+		nodeData.addresses = widget.addresses(data.Node, maps.Values(nodeData.memberMap))
+	}
+}
+
+func (widget *NetworkInfo) getOrCreateNodeData(node string) *networkInfoData {
+	data, ok := widget.nodeMap[node]
+	if !ok {
+		data = &networkInfoData{
+			addresses:      notAvailable,
+			gateway:        notAvailable,
+			resolvers:      notAvailable,
+			timeservers:    notAvailable,
+			routeStatusMap: make(map[resource.ID]*network.RouteStatus),
+			memberMap:      make(map[resource.ID]*cluster.Member),
+		}
+
+		widget.nodeMap[node] = data
+	}
+
+	return data
+}
+
+func (widget *NetworkInfo) redraw() {
+	data := widget.getOrCreateNodeData(widget.selectedNode)
 
 	fields := fieldGroup{
 		fields: []field{
 			{
 				Name:  "IP",
-				Value: widget.addresses(node, nodeData),
+				Value: data.addresses,
 			},
 			{
 				Name:  "GW",
-				Value: widget.gateway(nodeData),
+				Value: data.gateway,
 			},
 			// TODO: enable when implemented
 			// {
 			// 	Name:  "OUTBOUND",
-			// 	Value: outbound,
+			// 	Value: data.outbound,
 			// },
 			{
 				Name:  "DNS",
-				Value: widget.resolvers(nodeData),
+				Value: data.resolvers,
 			},
 			{
 				Name:  "NTP",
-				Value: widget.timeservers(nodeData),
+				Value: data.timeservers,
 			},
 		},
 	}
@@ -71,10 +153,10 @@ func (widget *NetworkInfo) Update(node string, data *data.Data) {
 	widget.SetText(fields.String())
 }
 
-func (widget *NetworkInfo) addresses(node string, nodeData *data.Node) string {
+func (widget *NetworkInfo) addresses(node string, members []*cluster.Member) string {
 	var currentMember *cluster.Member
 
-	for _, member := range nodeData.Members {
+	for _, member := range members {
 		for _, address := range member.TypedSpec().Addresses {
 			if address.String() == node {
 				currentMember = member
@@ -95,30 +177,37 @@ func (widget *NetworkInfo) addresses(node string, nodeData *data.Node) string {
 	return strings.Join(ipStrs, ", ")
 }
 
-func (widget *NetworkInfo) gateway(nodeData *data.Node) string {
-	priority := uint32(0)
-	result := notAvailable
+func (widget *NetworkInfo) gateway(statuses []*network.RouteStatus) string {
+	resultV4 := notAvailable
+	resultV6 := notAvailable
 
-	for _, status := range nodeData.RouteStatuses {
-		if !status.TypedSpec().Gateway.IsValid() {
+	priorityV4 := uint32(0)
+	priorityV6 := uint32(0)
+
+	for _, status := range statuses {
+		gateway := status.TypedSpec().Gateway
+		if !gateway.IsValid() {
 			continue
 		}
 
-		if status.TypedSpec().Priority > priority {
-			result = status.TypedSpec().Gateway.String()
-			priority = status.TypedSpec().Priority
+		if gateway.Is4() && status.TypedSpec().Priority > priorityV4 {
+			resultV4 = gateway.String()
+			priorityV4 = status.TypedSpec().Priority
+		} else if gateway.Is6() && status.TypedSpec().Priority > priorityV6 {
+			resultV6 = gateway.String()
+			priorityV6 = status.TypedSpec().Priority
 		}
 	}
 
-	return result
-}
-
-func (widget *NetworkInfo) resolvers(nodeData *data.Node) string {
-	if nodeData.ResolverStatus == nil {
-		return notAvailable
+	if resultV4 == notAvailable {
+		return resultV6
 	}
 
-	strs := slices.Map(nodeData.ResolverStatus.TypedSpec().DNSServers, func(t netip.Addr) string {
+	return resultV4
+}
+
+func (widget *NetworkInfo) resolvers(status *network.ResolverStatus) string {
+	strs := slices.Map(status.TypedSpec().DNSServers, func(t netip.Addr) string {
 		return t.String()
 	})
 
@@ -129,14 +218,10 @@ func (widget *NetworkInfo) resolvers(nodeData *data.Node) string {
 	return strings.Join(strs, ", ")
 }
 
-func (widget *NetworkInfo) timeservers(nodeData *data.Node) string {
-	if nodeData.TimeServerStatus == nil {
-		return notAvailable
-	}
-
-	if len(nodeData.TimeServerStatus.TypedSpec().NTPServers) == 0 {
+func (widget *NetworkInfo) timeservers(status *network.TimeServerStatus) string {
+	if len(status.TypedSpec().NTPServers) == 0 {
 		return none
 	}
 
-	return strings.Join(nodeData.TimeServerStatus.TypedSpec().NTPServers, ", ")
+	return strings.Join(status.TypedSpec().NTPServers, ", ")
 }

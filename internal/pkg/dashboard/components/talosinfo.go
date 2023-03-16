@@ -9,18 +9,37 @@ import (
 
 	"github.com/rivo/tview"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/data"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
+
+type talosInfoData struct {
+	uuid           string
+	clusterName    string
+	stage          string
+	ready          string
+	typ            string
+	numMembersText string
+
+	numMembers int
+}
 
 // TalosInfo represents the Talos info widget.
 type TalosInfo struct {
 	tview.TextView
+
+	selectedNode string
+	nodeMap      map[string]*talosInfoData
 }
 
 // NewTalosInfo initializes TalosInfo.
 func NewTalosInfo() *TalosInfo {
 	widget := &TalosInfo{
 		TextView: *tview.NewTextView(),
+		nodeMap:  make(map[string]*talosInfoData),
 	}
 
 	widget.SetDynamicColors(true).
@@ -30,68 +49,112 @@ func NewTalosInfo() *TalosInfo {
 	return widget
 }
 
-// Update implements the DataWidget interface.
-func (widget *TalosInfo) Update(node string, data *data.Data) {
-	nodeData := data.Nodes[node]
-	if nodeData == nil {
-		widget.SetText(noData)
+// OnNodeSelect implements the NodeSelectListener interface.
+func (widget *TalosInfo) OnNodeSelect(node string) {
+	if node != widget.selectedNode {
+		widget.selectedNode = node
 
-		return
+		widget.redraw()
+	}
+}
+
+// OnResourceDataChange implements the ResourceDataListener interface.
+func (widget *TalosInfo) OnResourceDataChange(data resourcedata.Data) {
+	widget.updateNodeData(data)
+
+	if data.Node == widget.selectedNode {
+		widget.redraw()
+	}
+}
+
+//nolint:gocyclo
+func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
+	nodeData := widget.getOrCreateNodeData(data.Node)
+
+	switch res := data.Resource.(type) {
+	case *hardware.SystemInformation:
+		if data.Deleted {
+			nodeData.uuid = notAvailable
+		} else {
+			nodeData.uuid = res.TypedSpec().UUID
+		}
+	case *cluster.Info:
+		if data.Deleted {
+			nodeData.clusterName = notAvailable
+		} else {
+			nodeData.clusterName = res.TypedSpec().ClusterName
+		}
+	case *runtime.MachineStatus:
+		if data.Deleted {
+			nodeData.stage = notAvailable
+			nodeData.ready = notAvailable
+		} else {
+			nodeData.stage = formatStatus(res.TypedSpec().Stage.String())
+			nodeData.ready = formatStatus(res.TypedSpec().Status.Ready)
+		}
+	case *config.MachineType:
+		if data.Deleted {
+			nodeData.typ = notAvailable
+		} else {
+			nodeData.typ = res.MachineType().String()
+		}
+	case *cluster.Member:
+		if data.Deleted {
+			nodeData.numMembers--
+		} else {
+			nodeData.numMembers++
+		}
+
+		nodeData.numMembersText = strconv.Itoa(nodeData.numMembers)
+	}
+}
+
+func (widget *TalosInfo) getOrCreateNodeData(node string) *talosInfoData {
+	nodeData, ok := widget.nodeMap[node]
+	if !ok {
+		nodeData = &talosInfoData{
+			uuid:           notAvailable,
+			clusterName:    notAvailable,
+			stage:          notAvailable,
+			ready:          notAvailable,
+			typ:            notAvailable,
+			numMembersText: notAvailable,
+		}
+
+		widget.nodeMap[node] = nodeData
 	}
 
-	uuid := notAvailable
-	cluster := notAvailable
-	stage := notAvailable
-	ready := notAvailable
-	typ := notAvailable
-	numMembers := notAvailable
+	return nodeData
+}
 
-	if nodeData.SystemInformation != nil {
-		uuid = nodeData.SystemInformation.TypedSpec().UUID
-	}
-
-	if nodeData.ClusterInfo != nil && nodeData.ClusterInfo.TypedSpec().ClusterName != "" {
-		cluster = nodeData.ClusterInfo.TypedSpec().ClusterName
-	}
-
-	if nodeData.MachineStatus != nil {
-		stage = formatStatus(nodeData.MachineStatus.TypedSpec().Stage.String())
-		ready = formatStatus(nodeData.MachineStatus.TypedSpec().Status.Ready)
-	}
-
-	if nodeData.MachineType != nil {
-		typ = nodeData.MachineType.MachineType().String()
-	}
-
-	if len(nodeData.Members) > 0 {
-		numMembers = strconv.Itoa(len(nodeData.Members))
-	}
+func (widget *TalosInfo) redraw() {
+	data := widget.getOrCreateNodeData(widget.selectedNode)
 
 	fields := fieldGroup{
 		fields: []field{
 			{
 				Name:  "UUID",
-				Value: uuid,
+				Value: data.uuid,
 			},
 			{
 				Name:  "CLUSTER",
-				Value: cluster,
+				Value: data.clusterName,
 			},
 			{
 				Name:  "STAGE",
-				Value: stage,
+				Value: data.stage,
 			},
 			{
 				Name:  "READY",
-				Value: ready,
+				Value: data.ready,
 			},
 			{
 				Name:  "TYPE",
-				Value: typ,
+				Value: data.typ,
 			},
 			{
 				Name:  "MEMBERS",
-				Value: numMembers,
+				Value: data.numMembersText,
 			},
 		},
 	}
