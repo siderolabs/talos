@@ -38,6 +38,8 @@ func init() {
 type Screen string
 
 const (
+	pageMain = "main"
+
 	// ScreenSummary is the summary screen.
 	ScreenSummary Screen = "Summary"
 
@@ -74,10 +76,11 @@ type NodeSelectListener interface {
 }
 
 type screenConfig struct {
-	screenKey string
-	screen    Screen
-	keyCode   tcell.Key
-	primitive screenSelectListener
+	screenKey           string
+	screen              Screen
+	keyCode             tcell.Key
+	primitive           screenSelectListener
+	allowNodeNavigation bool
 }
 
 // screenSelectListener is a listener which is notified when a screen is selected.
@@ -106,12 +109,15 @@ type Dashboard struct {
 
 	mainGrid *tview.Grid
 
+	pages *tview.Pages
+
 	summaryGrid       *SummaryGrid
 	monitorGrid       *MonitorGrid
 	networkConfigGrid *NetworkConfigGrid
 
-	screenConfigs []screenConfig
-	footer        *components.Footer
+	selectedScreenConfig *screenConfig
+	screenConfigs        []screenConfig
+	footer               *components.Footer
 
 	data *apidata.Data
 
@@ -121,8 +127,10 @@ type Dashboard struct {
 	nodes             []string
 }
 
-// New initializes the summary dashboard.
-func New(cli *client.Client, opts ...Option) (*Dashboard, error) {
+// buildDashboard initializes the summary dashboard.
+//
+//nolint:gocyclo
+func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*Dashboard, error) {
 	defOptions := defaultOptions()
 
 	for _, opt := range opts {
@@ -140,12 +148,14 @@ func New(cli *client.Client, opts ...Option) (*Dashboard, error) {
 		SetRows(1, 0, 1).
 		SetColumns(0)
 
+	dashboard.pages = tview.NewPages().AddPage(pageMain, dashboard.mainGrid, true, true)
+
 	header := components.NewHeader()
 	dashboard.mainGrid.AddItem(header, 0, 0, 1, 1, 0, 0, false)
 
 	dashboard.summaryGrid = NewSummaryGrid(dashboard.app)
 	dashboard.monitorGrid = NewMonitorGrid(dashboard.app)
-	dashboard.networkConfigGrid = NewNetworkConfigGrid(dashboard.app)
+	dashboard.networkConfigGrid = NewNetworkConfigGrid(ctx, dashboard.app, dashboard.pages, cli)
 
 	err := dashboard.initScreenConfigs(defOptions.screens)
 	if err != nil {
@@ -156,27 +166,31 @@ func New(cli *client.Client, opts ...Option) (*Dashboard, error) {
 		return t.screenKey, string(t.screen)
 	})
 
-	screenKeyCodeToScreen := slices.ToMap(dashboard.screenConfigs, func(t screenConfig) (tcell.Key, Screen) {
-		return t.keyCode, t.screen
+	screenConfigByKeyCode := slices.ToMap(dashboard.screenConfigs, func(config screenConfig) (tcell.Key, screenConfig) {
+		return config.keyCode, config
 	})
 
 	dashboard.footer = components.NewFooter(screenKeyToName)
 
 	dashboard.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		screenName, screenOk := screenKeyCodeToScreen[event.Key()]
+		config, screenOk := screenConfigByKeyCode[event.Key()]
+
+		allowNodeNavigation := dashboard.selectedScreenConfig != nil && dashboard.selectedScreenConfig.allowNodeNavigation
 
 		switch {
 		case screenOk:
-			dashboard.selectScreen(screenName)
-		case event.Key() == tcell.KeyLeft, event.Rune() == 'h':
+			dashboard.selectScreen(config.screen)
+
+			return nil
+		case allowNodeNavigation && (event.Key() == tcell.KeyLeft || event.Rune() == 'h'):
 			dashboard.selectNodeByIndex(dashboard.selectedNodeIndex - 1)
 
 			return nil
-		case event.Key() == tcell.KeyRight, event.Rune() == 'l':
+		case allowNodeNavigation && (event.Key() == tcell.KeyRight || event.Rune() == 'l'):
 			dashboard.selectNodeByIndex(dashboard.selectedNodeIndex + 1)
 
 			return nil
-		case event.Key() == tcell.KeyCtrlC, event.Rune() == 'q':
+		case event.Key() == tcell.KeyCtrlC:
 			if defOptions.allowExitKeys {
 				dashboard.app.Stop()
 			}
@@ -206,6 +220,7 @@ func New(cli *client.Client, opts ...Option) (*Dashboard, error) {
 
 	dashboard.nodeSelectListeners = []NodeSelectListener{
 		dashboard.summaryGrid,
+		dashboard.networkConfigGrid,
 		dashboard.footer,
 	}
 
@@ -249,25 +264,40 @@ func (d *Dashboard) initScreenConfigs(screens []Screen) error {
 			return fmt.Errorf("unknown screen %s", screen)
 		}
 
-		d.screenConfigs = append(d.screenConfigs, screenConfig{
-			screenKey: fmt.Sprintf("F%d", i+1),
-			screen:    screen,
-			keyCode:   tcell.KeyF1 + tcell.Key(i),
-			primitive: primitive,
-		})
+		config := screenConfig{
+			screenKey:           fmt.Sprintf("F%d", i+1),
+			screen:              screen,
+			keyCode:             tcell.KeyF1 + tcell.Key(i),
+			primitive:           primitive,
+			allowNodeNavigation: true,
+		}
+
+		if screen == ScreenNetworkConfig {
+			config.allowNodeNavigation = false
+		}
+
+		d.screenConfigs = append(d.screenConfigs, config)
 	}
 
 	return nil
 }
 
 // Run starts the dashboard.
-func (d *Dashboard) Run(ctx context.Context) error {
-	d.selectScreen(ScreenSummary)
+func Run(ctx context.Context, cli *client.Client, opts ...Option) error {
+	dashboard, err := buildDashboard(ctx, cli, opts...)
+	if err != nil {
+		return err
+	}
 
-	stopFunc := d.startDataHandler(ctx)
+	dashboard.selectScreen(ScreenSummary)
+
+	stopFunc := dashboard.startDataHandler(ctx)
 	defer stopFunc() //nolint:errcheck
 
-	if err := d.app.SetRoot(d.mainGrid, true).SetFocus(d.mainGrid).Run(); err != nil {
+	if err = dashboard.app.
+		SetRoot(dashboard.pages, true).
+		SetFocus(dashboard.pages).
+		Run(); err != nil {
 		return err
 	}
 
@@ -416,7 +446,10 @@ func (d *Dashboard) processSeenNode(node string) {
 
 func (d *Dashboard) selectScreen(screen Screen) {
 	for _, info := range d.screenConfigs {
+		info := info
 		if info.screen == screen {
+			d.selectedScreenConfig = &info
+
 			d.mainGrid.AddItem(info.primitive, 1, 0, 1, 1, 0, 0, false)
 
 			info.primitive.onScreenSelect(true)

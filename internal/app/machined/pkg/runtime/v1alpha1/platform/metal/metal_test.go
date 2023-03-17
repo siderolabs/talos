@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/siderolabs/talos/internal/pkg/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -51,7 +52,7 @@ outerLoop:
 		case <-ctx.Done():
 			require.FailNow(t, "timed out waiting for network config")
 		case cfg := <-ch:
-			assert.Equal(t, "metal", cfg.Metadata.Platform)
+			assert.Equal(t, constants.PlatformMetal, cfg.Metadata.Platform)
 
 			if cfg.Metadata.InstanceID == "" {
 				continue
@@ -74,7 +75,7 @@ outerLoop2:
 		case <-ctx.Done():
 			require.FailNow(t, "timed out waiting for network config")
 		case cfg := <-ch:
-			assert.Equal(t, "metal", cfg.Metadata.Platform)
+			assert.Equal(t, constants.PlatformMetal, cfg.Metadata.Platform)
 			assert.Equal(t, uuid.TypedSpec().UUID, cfg.Metadata.InstanceID)
 
 			if len(cfg.ExternalIPs) == 0 {
@@ -94,7 +95,7 @@ outerLoop2:
 	case <-ctx.Done():
 		require.FailNow(t, "timed out waiting for network config")
 	case cfg := <-ch:
-		assert.Equal(t, "metal", cfg.Metadata.Platform)
+		assert.Equal(t, constants.PlatformMetal, cfg.Metadata.Platform)
 		assert.Equal(t, uuid.TypedSpec().UUID, cfg.Metadata.InstanceID)
 
 		assert.Equal(t, "[]", fmt.Sprintf("%v", cfg.ExternalIPs))
@@ -107,7 +108,7 @@ outerLoop2:
 	case <-ctx.Done():
 		require.FailNow(t, "timed out waiting for network config")
 	case cfg := <-ch:
-		assert.Equal(t, "metal", cfg.Metadata.Platform)
+		assert.Equal(t, constants.PlatformMetal, cfg.Metadata.Platform)
 		assert.Equal(t, uuid.TypedSpec().UUID, cfg.Metadata.InstanceID)
 
 		assert.Equal(t, "[]", fmt.Sprintf("%v", cfg.ExternalIPs))

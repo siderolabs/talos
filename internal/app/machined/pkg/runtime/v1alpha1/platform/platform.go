@@ -101,7 +101,7 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 		p = &gcp.GCP{}
 	case "hcloud":
 		p = &hcloud.Hcloud{}
-	case "metal":
+	case constants.PlatformMetal:
 		p = &metal.Metal{}
 	case "openstack":
 		p = &openstack.Openstack{}

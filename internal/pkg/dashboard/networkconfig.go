@@ -5,26 +5,54 @@
 package dashboard
 
 import (
+	"context"
+	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/go-pointer"
+	"google.golang.org/grpc/metadata"
+	"gopkg.in/yaml.v3"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
+	"github.com/siderolabs/talos/internal/pkg/meta"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+)
+
+const (
+	pageDeleteModal = "deleteModal"
+
+	formItemHostname    = "Hostname"
+	formItemDNSServers  = "DNS Servers"
+	formItemTimeServers = "Time Servers"
+	formItemInterface   = "Interface"
+	formItemMode        = "Mode"
+	formItemAddresses   = "Addresses"
+	formItemGateway     = "Gateway"
+
+	buttonConfirmDelete = "Delete"
 )
 
 type networkConfigData struct {
-	linkSet map[string]struct{}
+	existingConfig *runtime.PlatformNetworkConfig
+	newConfig      *runtime.PlatformNetworkConfig
+	newConfigError error
+	linkSet        map[string]struct{}
 }
 
 // NetworkConfigGrid represents the network configuration widget.
 type NetworkConfigGrid struct {
 	tview.Grid
 
-	app *tview.Application
+	app   *tview.Application
+	pages *tview.Pages
 
 	configForm        *tview.Form
 	hostnameField     *tview.InputField
@@ -35,39 +63,82 @@ type NetworkConfigGrid struct {
 	addressesField    *tview.InputField
 	gatewayField      *tview.InputField
 
-	infoView *tview.TextView
+	infoView           *tview.TextView
+	existingConfigView *tview.TextView
+	newConfigView      *tview.TextView
 
 	selectedNode string
 	nodeMap      map[string]*networkConfigData
+	client       *client.Client
 }
 
 // NewNetworkConfigGrid initializes NetworkConfigGrid.
-func NewNetworkConfigGrid(app *tview.Application) *NetworkConfigGrid {
+//
+//nolint:gocyclo
+func NewNetworkConfigGrid(ctx context.Context, app *tview.Application, pages *tview.Pages, cli *client.Client) *NetworkConfigGrid {
 	widget := &NetworkConfigGrid{
-		Grid:       *tview.NewGrid(),
-		app:        app,
-		configForm: tview.NewForm(),
-		infoView:   tview.NewTextView(),
-		nodeMap:    make(map[string]*networkConfigData),
+		Grid:               *tview.NewGrid(),
+		app:                app,
+		pages:              pages,
+		configForm:         tview.NewForm(),
+		infoView:           tview.NewTextView(),
+		existingConfigView: tview.NewTextView(),
+		newConfigView:      tview.NewTextView(),
+		nodeMap:            make(map[string]*networkConfigData),
+		client:             cli,
 	}
 
-	widget.infoView.SetBorderPadding(1, 0, 1, 0)
+	widget.configForm.SetBorder(true).SetTitle("Configure (Ctrl+Q)")
+	widget.SetRows(0, 3).SetColumns(0, 0, 0)
 
-	widget.configForm.SetBorder(true)
+	widget.infoView.
+		SetDynamicColors(true).
+		SetScrollable(true).
+		SetWrap(true)
+	widget.existingConfigView.
+		SetDynamicColors(true).
+		SetScrollable(true).
+		SetBorderPadding(0, 0, 1, 0).
+		SetBorder(true).
+		SetTitle("Existing Config (Ctrl+W)")
+	widget.newConfigView.
+		SetDynamicColors(true).
+		SetScrollable(true).
+		SetBorderPadding(0, 0, 1, 0).
+		SetBorder(true).
+		SetTitle("New Config (Ctrl+E)")
 
-	widget.SetRows(0).SetColumns(0, 0, 0)
+	widget.AddItem(widget.configForm, 0, 0, 1, 1, 0, 0, false)
+	widget.AddItem(widget.infoView, 1, 0, 1, 1, 0, 0, false)
+	widget.AddItem(widget.existingConfigView, 0, 1, 2, 1, 0, 0, false)
+	widget.AddItem(widget.newConfigView, 0, 2, 2, 1, 0, 0, false)
 
-	widget.AddItem(tview.NewBox(), 0, 0, 1, 1, 0, 0, false)
-	widget.AddItem(widget.configForm, 0, 1, 1, 1, 0, 0, false)
-	widget.AddItem(widget.infoView, 0, 2, 1, 1, 0, 0, false)
+	widget.hostnameField = tview.NewInputField().SetLabel(formItemHostname)
+	widget.hostnameField.SetBlurFunc(widget.formEdited)
 
-	widget.hostnameField = tview.NewInputField().SetLabel("Hostname")
-	widget.dnsServersField = tview.NewInputField().SetLabel("DNS Servers")
-	widget.timeServersField = tview.NewInputField().SetLabel("Time Servers")
-	widget.interfaceDropdown = tview.NewDropDown().SetLabel("Interface")
-	widget.modeDropdown = tview.NewDropDown().SetLabel("Mode")
-	widget.addressesField = tview.NewInputField().SetLabel("Addresses")
-	widget.gatewayField = tview.NewInputField().SetLabel("Gateway")
+	widget.dnsServersField = tview.NewInputField().SetLabel(formItemDNSServers)
+	widget.dnsServersField.SetBlurFunc(widget.formEdited)
+
+	widget.timeServersField = tview.NewInputField().SetLabel(formItemTimeServers)
+	widget.timeServersField.SetBlurFunc(widget.formEdited)
+
+	widget.interfaceDropdown = tview.NewDropDown().SetLabel(formItemInterface)
+	widget.interfaceDropdown.SetBlurFunc(widget.formEdited)
+	widget.interfaceDropdown.SetOptions([]string{interfaceNone}, func(_ string, _ int) {
+		widget.formEdited()
+	})
+
+	widget.modeDropdown = tview.NewDropDown().SetLabel(formItemMode)
+	widget.modeDropdown.SetBlurFunc(widget.formEdited)
+	widget.modeDropdown.SetOptions([]string{modeDHCP, modeStatic}, func(_ string, _ int) {
+		widget.formEdited()
+	})
+
+	widget.addressesField = tview.NewInputField().SetLabel(formItemAddresses)
+	widget.addressesField.SetBlurFunc(widget.formEdited)
+
+	widget.gatewayField = tview.NewInputField().SetLabel(formItemGateway)
+	widget.gatewayField.SetBlurFunc(widget.formEdited)
 
 	widget.configForm.AddFormItem(widget.hostnameField)
 	widget.configForm.AddFormItem(widget.dnsServersField)
@@ -76,66 +147,49 @@ func NewNetworkConfigGrid(app *tview.Application) *NetworkConfigGrid {
 	widget.configForm.AddFormItem(widget.modeDropdown)
 	widget.configForm.AddFormItem(widget.addressesField)
 	widget.configForm.AddFormItem(widget.gatewayField)
+
 	widget.configForm.AddButton("Save", func() {
-		widget.save()
+		widget.save(ctx)
 	})
 
-	widget.interfaceDropdown.SetSelectedFunc(func(text string, index int) {
-		// TODO(dashboard): Clear the form & load existing config for the selected interface.
+	saveButton := widget.configForm.GetButton(0)
+	saveButton.SetBlurFunc(widget.formEdited)
+
+	widget.configForm.AddButton("Delete", func() {
+		pages.SwitchToPage(pageDeleteModal)
 	})
 
-	widget.modeDropdown.SetOptions([]string{"No Config", "DHCP", "Static"}, func(text string, _ int) {
-		switch text {
-		case "Static":
-			if itemIndex := widget.configForm.GetFormItemIndex("Addresses"); itemIndex == -1 {
-				widget.configForm.AddFormItem(widget.addressesField)
+	deleteButton := widget.configForm.GetButton(1)
+	deleteButton.SetBlurFunc(widget.formEdited)
+
+	deleteModal := tview.NewModal().
+		SetText("Are you sure you want to delete the configuration?").
+		AddButtons([]string{buttonConfirmDelete, "Cancel"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == buttonConfirmDelete {
+				widget.delete(ctx)
 			}
 
-			if itemIndex := widget.configForm.GetFormItemIndex("Gateway"); itemIndex == -1 {
-				widget.configForm.AddFormItem(widget.gatewayField)
-			}
-		default:
-			if itemIndex := widget.configForm.GetFormItemIndex("Addresses"); itemIndex != -1 {
-				widget.configForm.RemoveFormItem(itemIndex)
-			}
+			pages.SwitchToPage(pageMain)
+			app.SetFocus(deleteButton)
+		})
 
-			if itemIndex := widget.configForm.GetFormItemIndex("Gateway"); itemIndex != -1 {
-				widget.configForm.RemoveFormItem(itemIndex)
-			}
-		}
-	})
+	pages.AddPage(pageDeleteModal, deleteModal, true, false)
 
-	widget.configForm.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		formItemIndex, buttonIndex := widget.configForm.GetFocusedItemIndex()
-
-		currIndex := formItemIndex
-		if formItemIndex == -1 {
-			currIndex = widget.configForm.GetFormItemCount() + buttonIndex
-		}
-
-		//nolint:exhaustive
-		switch event.Key() {
-		case tcell.KeyUp:
-			widget.configForm.SetFocus(currIndex - 1)
-
-			widget.app.SetFocus(widget.configForm)
-
+	inputCapture := func(event *tcell.EventKey) *tcell.EventKey {
+		if widget.handleFocusSwitch(event) {
 			return nil
-		case tcell.KeyDown:
-			// prevent jumping to the first field if we are at the end of the form
-			if currIndex < widget.configForm.GetFormItemCount()+widget.configForm.GetButtonCount()-1 {
-				widget.configForm.SetFocus(currIndex + 1)
-			}
-
-			widget.app.SetFocus(widget.configForm)
-
-			return nil
-		default:
-			return event
 		}
-	})
 
-	widget.AddItem(widget.configForm, 0, 1, 1, 1, 0, 0, false)
+		return event
+	}
+
+	widget.configForm.SetInputCapture(inputCapture)
+	widget.existingConfigView.SetInputCapture(inputCapture)
+	widget.newConfigView.SetInputCapture(inputCapture)
+
+	widget.interfaceDropdown.SetCurrentOption(0)
+	widget.modeDropdown.SetCurrentOption(0)
 
 	return widget
 }
@@ -144,6 +198,9 @@ func NewNetworkConfigGrid(app *tview.Application) *NetworkConfigGrid {
 func (widget *NetworkConfigGrid) OnNodeSelect(node string) {
 	if node != widget.selectedNode {
 		widget.selectedNode = node
+
+		widget.clearForm()
+		widget.formEdited()
 
 		widget.redraw()
 	}
@@ -158,8 +215,144 @@ func (widget *NetworkConfigGrid) OnResourceDataChange(data resourcedata.Data) {
 	}
 }
 
+//nolint:gocyclo
+func (widget *NetworkConfigGrid) formEdited() {
+	widget.infoView.SetText("")
+
+	resetInputField := func(field *tview.InputField) {
+		// avoid triggering another form edit if there is nothing to change
+		if field.GetText() != "" {
+			field.SetText("")
+		}
+	}
+
+	resetDropdown := func(dropdown *tview.DropDown) {
+		// avoid triggering another form edit if there is nothing to change
+		if currentIndex, _ := dropdown.GetCurrentOption(); currentIndex != 0 {
+			dropdown.SetCurrentOption(0)
+		}
+	}
+
+	_, currentInterface := widget.interfaceDropdown.GetCurrentOption()
+	_, currentMode := widget.modeDropdown.GetCurrentOption()
+
+	ifaceSelected := currentInterface != "" && currentInterface != interfaceNone
+	if ifaceSelected {
+		if itemIndex := widget.configForm.GetFormItemIndex(formItemMode); itemIndex == -1 {
+			widget.configForm.AddFormItem(widget.modeDropdown)
+		}
+
+		switch currentMode {
+		case modeDHCP:
+			resetInputField(widget.addressesField)
+			resetInputField(widget.gatewayField)
+
+			if itemIndex := widget.configForm.GetFormItemIndex(formItemAddresses); itemIndex != -1 {
+				widget.configForm.RemoveFormItem(itemIndex)
+			}
+
+			if itemIndex := widget.configForm.GetFormItemIndex(formItemGateway); itemIndex != -1 {
+				widget.configForm.RemoveFormItem(itemIndex)
+			}
+		case modeStatic:
+			if itemIndex := widget.configForm.GetFormItemIndex(formItemAddresses); itemIndex == -1 {
+				widget.configForm.AddFormItem(widget.addressesField)
+			}
+
+			if itemIndex := widget.configForm.GetFormItemIndex(formItemGateway); itemIndex == -1 {
+				widget.configForm.AddFormItem(widget.gatewayField)
+			}
+		}
+	} else {
+		resetDropdown(widget.modeDropdown)
+		resetInputField(widget.addressesField)
+		resetInputField(widget.gatewayField)
+
+		if itemIndex := widget.configForm.GetFormItemIndex(formItemMode); itemIndex != -1 {
+			widget.configForm.RemoveFormItem(itemIndex)
+		}
+
+		if itemIndex := widget.configForm.GetFormItemIndex(formItemAddresses); itemIndex != -1 {
+			widget.configForm.RemoveFormItem(itemIndex)
+		}
+
+		if itemIndex := widget.configForm.GetFormItemIndex(formItemGateway); itemIndex != -1 {
+			widget.configForm.RemoveFormItem(itemIndex)
+		}
+	}
+
+	data := widget.getOrCreateNodeData(widget.selectedNode)
+
+	formData := networkConfigFormData{
+		base:        pointer.SafeDeref(data.existingConfig),
+		hostname:    widget.hostnameField.GetText(),
+		dnsServers:  widget.dnsServersField.GetText(),
+		timeServers: widget.timeServersField.GetText(),
+		iface:       currentInterface,
+		mode:        currentMode,
+		addresses:   widget.addressesField.GetText(),
+		gateway:     widget.gatewayField.GetText(),
+	}
+
+	config, err := formData.toPlatformNetworkConfig()
+	if err != nil {
+		data.newConfig = nil
+		data.newConfigError = err
+	} else {
+		data.newConfig = config
+		data.newConfigError = nil
+	}
+
+	widget.redraw()
+}
+
 func (widget *NetworkConfigGrid) redraw() {
-	// todo
+	data := widget.getOrCreateNodeData(widget.selectedNode)
+
+	if data.existingConfig != nil {
+		var buf strings.Builder
+
+		encoder := yaml.NewEncoder(&buf)
+		encoder.SetIndent(2)
+
+		err := encoder.Encode(data.existingConfig)
+		if err != nil {
+			widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+		}
+
+		widget.existingConfigView.SetText(fmt.Sprintf("[lightblue]%s[-]", tview.Escape(buf.String())))
+	} else {
+		widget.existingConfigView.SetText("[gray]No Config[-]")
+	}
+
+	if data.newConfigError != nil {
+		widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", data.newConfigError))
+	} else if data.newConfig != nil {
+		var buf strings.Builder
+
+		encoder := yaml.NewEncoder(&buf)
+		encoder.SetIndent(2)
+
+		err := encoder.Encode(data.newConfig)
+		if err != nil {
+			widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+		}
+
+		widget.newConfigView.SetText(fmt.Sprintf("[green]%s[-]", tview.Escape(buf.String())))
+	}
+}
+
+func (widget *NetworkConfigGrid) clearForm() {
+	widget.hostnameField.SetText("")
+	widget.dnsServersField.SetText("")
+	widget.timeServersField.SetText("")
+	widget.interfaceDropdown.SetCurrentOption(0)
+	widget.modeDropdown.SetCurrentOption(0)
+	widget.addressesField.SetText("")
+	widget.gatewayField.SetText("")
+	widget.infoView.SetText("")
+
+	widget.formEdited()
 }
 
 func (widget *NetworkConfigGrid) updateNodeData(data resourcedata.Data) {
@@ -184,7 +377,27 @@ func (widget *NetworkConfigGrid) updateNodeData(data resourcedata.Data) {
 
 		sort.Strings(links)
 
-		widget.interfaceDropdown.SetOptions(links, nil)
+		allLinks := append([]string{interfaceNone}, links...)
+
+		widget.interfaceDropdown.SetOptions(allLinks, func(_ string, _ int) {
+			widget.formEdited()
+		})
+	case *runtimeres.MetaKey:
+		if data.Deleted {
+			nodeData.existingConfig = nil
+		} else {
+			cfg := runtime.PlatformNetworkConfig{}
+
+			if err := yaml.Unmarshal([]byte(res.TypedSpec().Value), &cfg); err != nil {
+				widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+
+				return
+			}
+
+			nodeData.existingConfig = &cfg
+
+			widget.formEdited()
+		}
 	}
 }
 
@@ -208,24 +421,81 @@ func (widget *NetworkConfigGrid) onScreenSelect(active bool) {
 	}
 }
 
-func (widget *NetworkConfigGrid) save() {
-	_, iface := widget.interfaceDropdown.GetCurrentOption()
-	_, mode := widget.modeDropdown.GetCurrentOption()
+func (widget *NetworkConfigGrid) save(ctx context.Context) {
+	nodeData := widget.getOrCreateNodeData(widget.selectedNode)
 
-	formData := networkConfigFormData{
-		hostname:    widget.hostnameField.GetText(),
-		dnsServers:  widget.dnsServersField.GetText(),
-		timeServers: widget.timeServersField.GetText(),
-		iface:       iface,
-		mode:        mode,
-		addresses:   widget.addressesField.GetText(),
-		gateway:     widget.gatewayField.GetText(),
-	}
+	if nodeData.newConfig == nil {
+		widget.infoView.SetText("[red]Error: nothing to save[-]")
 
-	platformNetworkConfig, err := formData.toPlatformNetworkConfig()
-	if err != nil { // TODO(dashboard): show error
 		return
 	}
 
-	_ = platformNetworkConfig // TODO(dashboard): save config
+	if nodeData.newConfigError != nil {
+		widget.infoView.SetText("[red]Error: cannot save, fix the errors and try again[-]")
+
+		return
+	}
+
+	configBytes, err := yaml.Marshal(nodeData.newConfig)
+	if err != nil {
+		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+
+		return
+	}
+
+	ctx = widget.nodeContext(ctx)
+
+	if err = widget.client.MetaWrite(ctx, meta.MetalNetworkPlatformConfig, configBytes); err != nil {
+		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+
+		return
+	}
+
+	widget.infoView.SetText("[green]Network config saved successfully[-]")
+}
+
+func (widget *NetworkConfigGrid) delete(ctx context.Context) {
+	ctx = widget.nodeContext(ctx)
+
+	if err := widget.client.MetaDelete(ctx, meta.MetalNetworkPlatformConfig); err != nil {
+		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+
+		return
+	}
+
+	widget.infoView.SetText("[green]Network config deleted successfully[-]")
+}
+
+func (widget *NetworkConfigGrid) nodeContext(ctx context.Context) context.Context {
+	md, mdOk := metadata.FromOutgoingContext(ctx)
+	if mdOk {
+		md.Delete("nodes")
+
+		ctx = metadata.NewOutgoingContext(ctx, md)
+	}
+
+	if widget.selectedNode != "" {
+		ctx = client.WithNode(ctx, widget.selectedNode)
+	}
+
+	return ctx
+}
+
+func (widget *NetworkConfigGrid) handleFocusSwitch(event *tcell.EventKey) bool {
+	switch event.Key() { //nolint:exhaustive
+	case tcell.KeyCtrlQ:
+		widget.app.SetFocus(widget.configForm)
+
+		return true
+	case tcell.KeyCtrlW:
+		widget.app.SetFocus(widget.existingConfigView)
+
+		return true
+	case tcell.KeyCtrlE:
+		widget.app.SetFocus(widget.newConfigView)
+
+		return true
+	default:
+		return false
+	}
 }

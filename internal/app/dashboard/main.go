@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/pkg/dashboard"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -44,13 +45,13 @@ func dashboardMain() error {
 		return fmt.Errorf("error connecting to the machine service: %w", err)
 	}
 
-	// TODO(dashboard): enable the network config screen once it's ready (remove the screens override option)
-	d, err := dashboard.New(c, dashboard.WithAllowExitKeys(false),
-		dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor),
-	)
-	if err != nil {
-		return err
+	screens := []dashboard.Screen{dashboard.ScreenSummary, dashboard.ScreenMonitor}
+
+	// activate the network config screen only on metal platform
+	currentPlatform, _ := platform.CurrentPlatform() //nolint:errcheck
+	if currentPlatform != nil && currentPlatform.Name() == constants.PlatformMetal {
+		screens = append(screens, dashboard.ScreenNetworkConfig)
 	}
 
-	return d.Run(adminCtx)
+	return dashboard.Run(adminCtx, c, dashboard.WithAllowExitKeys(false), dashboard.WithScreens(screens...))
 }

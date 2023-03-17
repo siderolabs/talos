@@ -18,7 +18,7 @@ import (
 	"syscall"
 
 	"github.com/google/uuid"
-	multierror "github.com/hashicorp/go-multierror"
+	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -79,7 +79,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	cmdline.Append("talos.shutdown", "halt")
 
 	// Talos config
-	cmdline.Append("talos.platform", "metal")
+	cmdline.Append("talos.platform", constants.PlatformMetal)
 
 	// add overrides
 	if nodeReq.ExtraKernelArgs != nil {
