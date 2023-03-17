@@ -297,7 +297,7 @@ local load_artifacts = {
   commands: [
     'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
     'az storage blob download-batch --overwrite true -d _out -s ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    'chmod +x _out/clusterctl _out/integration-test-linux-amd64 _out/kubectl _out/kubestr _out/talosctl*'
+    'chmod +x _out/clusterctl _out/integration-test-linux-amd64 _out/kubectl _out/kubestr _out/helm _out/cilium _out/talosctl*'
   ],
   volumes: volumes.ForStep(),
   depends_on: [setup_ci.name],
