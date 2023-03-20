@@ -118,7 +118,7 @@ func (ctrl *AdvertisedPeerController) updateAdvertisedPeers(ctx context.Context,
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	client, err := etcdcli.NewLocalClient()
+	client, err := etcdcli.NewLocalClient(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating etcd client: %w", err)
 	}

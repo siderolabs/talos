@@ -105,7 +105,7 @@ func (ctrl *MemberController) getLocalMemberID(ctx context.Context) (uint64, err
 		return ctrl.GetLocalMemberIDFunc(ctx)
 	}
 
-	client, err := pkgetcd.NewLocalClient()
+	client, err := pkgetcd.NewLocalClient(ctx)
 	if err != nil {
 		return 0, err
 	}

@@ -14,7 +14,7 @@ import (
 
 // WithLock executes the given function exclusively by acquiring an Etcd lock with the given key.
 func WithLock(ctx context.Context, key string, logger *zap.Logger, f func() error) error {
-	etcdClient, err := NewLocalClient()
+	etcdClient, err := NewLocalClient(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating etcd client: %w", err)
 	}

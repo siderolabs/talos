@@ -1720,7 +1720,7 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 	)
 
 	if in.QueryLocal {
-		client, err = etcd.NewLocalClient()
+		client, err = etcd.NewLocalClient(ctx)
 	} else {
 		client, err = etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
 	}
@@ -1879,7 +1879,10 @@ func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.Machi
 		return err
 	}
 
-	client, err := etcd.NewLocalClient()
+	ctx, cancel := context.WithCancel(srv.Context())
+	defer cancel()
+
+	client, err := etcd.NewLocalClient(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create etcd client: %w", err)
 	}
@@ -1891,9 +1894,6 @@ func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.Machi
 	if err != nil {
 		return fmt.Errorf("failed reading etcd snapshot: %w", err)
 	}
-
-	ctx, cancel := context.WithCancel(srv.Context())
-	defer cancel()
 
 	chunker := stream.NewChunker(ctx, rd)
 	chunkCh := chunker.Read()
@@ -2006,7 +2006,7 @@ func (s *Server) EtcdAlarmList(ctx context.Context, in *emptypb.Empty) (*machine
 		return nil, err
 	}
 
-	client, err := etcd.NewLocalClient()
+	client, err := etcd.NewLocalClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
@@ -2036,7 +2036,7 @@ func (s *Server) EtcdAlarmDisarm(ctx context.Context, in *emptypb.Empty) (*machi
 		return nil, err
 	}
 
-	client, err := etcd.NewLocalClient()
+	client, err := etcd.NewLocalClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
@@ -2069,7 +2069,7 @@ func (s *Server) EtcdDefragment(ctx context.Context, in *emptypb.Empty) (*machin
 		return nil, err
 	}
 
-	client, err := etcd.NewLocalClient()
+	client, err := etcd.NewLocalClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
@@ -2097,7 +2097,7 @@ func (s *Server) EtcdStatus(ctx context.Context, in *emptypb.Empty) (*machine.Et
 		return nil, err
 	}
 
-	client, err := etcd.NewLocalClient()
+	client, err := etcd.NewLocalClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create etcd client: %w", err)
 	}
