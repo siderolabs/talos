@@ -1438,13 +1438,14 @@ func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) 
 	for _, pod := range pods {
 		for _, container := range pod.Containers {
 			container := &machine.ContainerInfo{
-				Namespace: in.Namespace,
-				Id:        container.Display,
-				PodId:     pod.Name,
-				Name:      container.Name,
-				Image:     container.Image,
-				Pid:       container.Pid,
-				Status:    container.Status,
+				Namespace:   in.Namespace,
+				Id:          container.Display,
+				PodId:       pod.Name,
+				Name:        container.Name,
+				Image:       container.Image,
+				Pid:         container.Pid,
+				Status:      container.Status,
+				Hostnetwork: container.HostNetwork,
 			}
 			containers = append(containers, container)
 		}
@@ -2339,21 +2340,24 @@ func upgradeMutex(c *etcd.Client) (*concurrency.Mutex, error) {
 }
 
 // Netstat implements the machine.MachineServer interface.
+//
+//nolint:gocyclo
 func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*machine.NetstatResponse, error) {
 	if req == nil {
 		req = new(machine.NetstatRequest)
 	}
 
 	features := netstat.EnableFeatures{
-		TCP:      req.L4Proto.Tcp,
-		TCP6:     req.L4Proto.Tcp6,
-		UDP:      req.L4Proto.Udp,
-		UDP6:     req.L4Proto.Udp6,
-		UDPLite:  req.L4Proto.Udplite,
-		UDPLite6: req.L4Proto.Udplite6,
-		Raw:      req.L4Proto.Raw,
-		Raw6:     req.L4Proto.Raw6,
-		PID:      req.Feature.Pid,
+		TCP:           req.L4Proto.Tcp,
+		TCP6:          req.L4Proto.Tcp6,
+		UDP:           req.L4Proto.Udp,
+		UDP6:          req.L4Proto.Udp6,
+		UDPLite:       req.L4Proto.Udplite,
+		UDPLite6:      req.L4Proto.Udplite6,
+		Raw:           req.L4Proto.Raw,
+		Raw6:          req.L4Proto.Raw6,
+		PID:           req.Feature.Pid,
+		NoHostNetwork: !req.Netns.Hostnetwork,
 	}
 
 	var fn netstat.AcceptFn
@@ -2369,6 +2373,10 @@ func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*mac
 		fn = func(s *netstat.SockTabEntry) bool {
 			return s.State != netstat.Listen
 		}
+	}
+
+	if req.Netns.Podpids != nil {
+		features.NsPids = req.Netns.Podpids
 	}
 
 	netstatResp, err := netstat.Netstat(ctx, features, fn)
@@ -2396,8 +2404,10 @@ func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*mac
 			Inode:      entry.Inode,
 			Ref:        entry.Ref,
 			Pointer:    entry.Pointer,
+			Podpid:     entry.PodPid,
 			Process:    &machine.ConnectRecord_Process{},
 		}
+
 		if entry.Process != nil {
 			records[i].Process = &machine.ConnectRecord_Process{
 				Pid:  uint32(entry.Process.Pid),

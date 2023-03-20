@@ -38,6 +38,7 @@ type Container struct {
 	Metrics      *ContainerMetrics
 	Pid          uint32
 	IsPodSandbox bool // real container or just pod sandbox
+	HostNetwork  bool
 }
 
 // ContainerMetrics represents container cgroup stats.

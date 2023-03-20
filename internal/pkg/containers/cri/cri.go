@@ -202,6 +202,7 @@ func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) 
 				PodName:      podName,
 				Status:       sandboxStatus.State.String(),
 				IsPodSandbox: true,
+				HostNetwork:  sandboxStatus.Linux.Namespaces.Options.Network == runtimeapi.NamespaceMode_NODE,
 				Metrics:      &ctrs.ContainerMetrics{
 					// assume pod sandbox uses zero
 				},

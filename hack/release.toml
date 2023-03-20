@@ -128,7 +128,7 @@ This allows to distinguish between containers with the same name.
     [notes.netstat]
         title = "talosctl netstat"
         description="""\
-Talos API was extended to support retrieving a list of network connections (sockets) from the node.
+Talos API was extended to support retrieving a list of network connections (sockets) from the node and pods.
 `talosctl netstat` command was added to retrieve the list of network connections.
 """
 

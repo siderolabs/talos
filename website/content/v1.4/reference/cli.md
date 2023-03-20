@@ -2105,6 +2105,12 @@ talosctl mounts [flags]
 
 Retrieve a socket listing of connections
 
+### Synopsis
+
+Retrieve a socket listing of connections.
+	Optional argument can be passed to view a specific pod's connections. Format argument in the namespace/pod format.
+	If no argument is passed, host connections are shown.
+
 ```
 talosctl netstat [flags]
 ```
@@ -2118,6 +2124,7 @@ talosctl netstat [flags]
   -4, --ipv4        display only ipv4 sockets
   -6, --ipv6        display only ipv6 sockets
   -l, --listening   display listening server sockets
+  -k, --pods        show sockets used by kubernetes pods
   -p, --programs    show process using socket
   -w, --raw         display only RAW sockets
   -t, --tcp         display only TCP sockets
