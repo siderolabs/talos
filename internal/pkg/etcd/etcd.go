@@ -40,7 +40,7 @@ type Client struct {
 
 // NewClient initializes and returns an etcd client configured to talk to
 // a list of endpoints.
-func NewClient(endpoints []string) (client *Client, err error) {
+func NewClient(ctx context.Context, endpoints []string, dialOpts ...grpc.DialOption) (client *Client, err error) {
 	tlsInfo := transport.TLSInfo{
 		CertFile:      constants.EtcdAdminCert,
 		KeyFile:       constants.EtcdAdminKey,
@@ -55,7 +55,8 @@ func NewClient(endpoints []string) (client *Client, err error) {
 	c, err := clientv3.New(clientv3.Config{
 		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
-		DialOptions: []grpc.DialOption{grpc.WithBlock()},
+		Context:     ctx,
+		DialOptions: dialOpts,
 		TLS:         tlsConfig,
 		Logger:      zap.NewNop(),
 	})
@@ -67,13 +68,17 @@ func NewClient(endpoints []string) (client *Client, err error) {
 }
 
 // NewLocalClient initializes and returns etcd client configured to talk to localhost endpoint.
-func NewLocalClient() (client *Client, err error) {
-	return NewClient([]string{nethelpers.JoinHostPort("localhost", constants.EtcdClientPort)})
+func NewLocalClient(ctx context.Context, dialOpts ...grpc.DialOption) (client *Client, err error) {
+	return NewClient(
+		ctx,
+		[]string{nethelpers.JoinHostPort("localhost", constants.EtcdClientPort)},
+		append([]grpc.DialOption{grpc.WithBlock()}, dialOpts...)...,
+	)
 }
 
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
 // configured to talk to all members.
-func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State) (client *Client, err error) {
+func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State, dialOpts ...grpc.DialOption) (client *Client, err error) {
 	endpoints, err := GetEndpoints(ctx, resources)
 	if err != nil {
 		return nil, err
@@ -82,7 +87,7 @@ func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State) (c
 	// Shuffle endpoints to establish random order on each call to avoid patterns based on sorted IP list.
 	rand.Shuffle(len(endpoints), func(i, j int) { endpoints[i], endpoints[j] = endpoints[j], endpoints[i] })
 
-	return NewClient(endpoints)
+	return NewClient(ctx, endpoints, dialOpts...)
 }
 
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
@@ -141,7 +146,7 @@ func (c *Client) ValidateQuorum(ctx context.Context) (err error) {
 }
 
 func validateMemberHealth(ctx context.Context, memberURIs []string) (err error) {
-	c, err := NewClient(memberURIs)
+	c, err := NewClient(ctx, memberURIs)
 	if err != nil {
 		return fmt.Errorf("failed to create client to member: %w", err)
 	}

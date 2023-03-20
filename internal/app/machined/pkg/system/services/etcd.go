@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
+	"google.golang.org/grpc"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -235,7 +236,7 @@ func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 		if e.client == nil {
 			var err error
 
-			e.client, err = etcd.NewLocalClient()
+			e.client, err = etcd.NewLocalClient(ctx)
 			if err != nil {
 				return err
 			}
@@ -597,6 +598,7 @@ func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) erro
 
 	return retry.Constant(10*time.Minute,
 		retry.WithUnits(15*time.Second),
+		retry.WithAttemptTimeout(30*time.Second),
 		retry.WithJitter(time.Second),
 		retry.WithErrorLogging(true),
 	).RetryWithContext(ctx, func(ctx context.Context) error {
@@ -631,7 +633,7 @@ func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) erro
 }
 
 func attemptPromote(ctx context.Context, endpoint string, memberID uint64) error {
-	client, err := etcd.NewClient([]string{endpoint})
+	client, err := etcd.NewClient(ctx, []string{endpoint}, grpc.WithBlock())
 	if err != nil {
 		return err
 	}
