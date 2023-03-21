@@ -134,7 +134,7 @@ require (
 	golang.org/x/time v0.3.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230215201556-9c5414ab4bde
 	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.29.0
+	google.golang.org/protobuf v1.29.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.90.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.67
