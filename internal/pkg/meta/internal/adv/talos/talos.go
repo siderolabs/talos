@@ -27,8 +27,8 @@ const (
 
 // Magic constants.
 const (
-	Magic1 = 0x5a4b3c2d
-	Magic2 = 0xa5b4c3d2
+	Magic1 uint32 = 0x5a4b3c2d
+	Magic2 uint32 = 0xa5b4c3d2
 )
 
 // Tag is the key.
