@@ -60,6 +60,15 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 
 	options.Log("discovered controlplane nodes %q", options.controlPlaneNodes)
 
+	if options.UpgradeKubelet {
+		options.workerNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeWorker)
+		if err != nil {
+			return fmt.Errorf("error fetching worker nodes: %w", err)
+		}
+
+		options.Log("discovered worker nodes %q", options.workerNodes)
+	}
+
 	talosClient, err := cluster.Client()
 	if err != nil {
 		return err
@@ -70,22 +79,13 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 		return err
 	}
 
-	upgradeChecks, err := upgrade.NewChecks(options.Path, talosClient.COSI, k8sConfig, options.controlPlaneNodes, options.Log)
+	upgradeChecks, err := upgrade.NewChecks(options.Path, talosClient.COSI, k8sConfig, options.controlPlaneNodes, options.workerNodes, options.Log)
 	if err != nil {
 		return err
 	}
 
 	if err = upgradeChecks.Run(ctx); err != nil {
 		return err
-	}
-
-	if options.UpgradeKubelet {
-		options.workerNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeWorker)
-		if err != nil {
-			return fmt.Errorf("error fetching worker nodes: %w", err)
-		}
-
-		options.Log("discovered worker nodes %q", options.workerNodes)
 	}
 
 	for _, service := range []string{kubeAPIServer, kubeControllerManager, kubeScheduler} {
