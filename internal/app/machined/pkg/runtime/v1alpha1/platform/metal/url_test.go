@@ -6,11 +6,9 @@ package metal_test
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
@@ -52,146 +50,25 @@ func createOrUpdate(ctx context.Context, st state.State, r resource.Resource) er
 }
 
 func setup(ctx context.Context, t *testing.T, st state.State, mockUUID, mockSerialNumber, mockHostname, mockMAC string) {
-	testID := "testID"
-	sysInfo := hardware.NewSystemInformation(testID)
+	sysInfo := hardware.NewSystemInformation(hardware.SystemInformationID)
 	sysInfo.TypedSpec().UUID = mockUUID
 	sysInfo.TypedSpec().SerialNumber = mockSerialNumber
 	assert.NoError(t, createOrUpdate(ctx, st, sysInfo))
 
-	hostnameSpec := network.NewHostnameSpec(network.NamespaceName, testID)
+	hostnameSpec := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
 	hostnameSpec.TypedSpec().Hostname = mockHostname
 	assert.NoError(t, createOrUpdate(ctx, st, hostnameSpec))
 
-	linkStatusSpec := network.NewLinkStatus(network.NamespaceName, testID)
+	linkStatusSpec := network.NewHardwareAddr(network.NamespaceName, network.FirstHardwareAddr)
 	parsedMockMAC, err := net.ParseMAC(mockMAC)
 	assert.NoError(t, err)
 
 	linkStatusSpec.TypedSpec().HardwareAddr = nethelpers.HardwareAddr(parsedMockMAC)
-	linkStatusSpec.TypedSpec().LinkState = true
 	assert.NoError(t, createOrUpdate(ctx, st, linkStatusSpec))
 
 	netStatus := network.NewStatus(network.NamespaceName, network.StatusID)
 	netStatus.TypedSpec().AddressReady = true
 	assert.NoError(t, createOrUpdate(ctx, st, netStatus))
-}
-
-func TestPopulateURLParameters(t *testing.T) {
-	mockUUID := "40dcbd19-3b10-444e-bfff-aaee44a51fda"
-
-	mockMAC := "52:2f:fd:df:fc:c0"
-
-	mockSerialNumber := "0OCZJ19N65"
-
-	mockHostname := "myTestHostname"
-
-	for _, tt := range []struct {
-		name          string
-		url           string
-		expectedURL   string
-		expectedError string
-	}{
-		{
-			name:        "no uuid",
-			url:         "http://example.com/metadata",
-			expectedURL: "http://example.com/metadata",
-		},
-		{
-			name:        "empty uuid",
-			url:         "http://example.com/metadata?uuid=",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?uuid=%s", mockUUID),
-		},
-		{
-			name:        "uuid present",
-			url:         "http://example.com/metadata?uuid=xyz",
-			expectedURL: "http://example.com/metadata?uuid=xyz",
-		},
-		{
-			name:        "multiple uuids in one query parameter",
-			url:         "http://example.com/metadata?u=this-${uuid}-equals-${uuid}-exactly",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?u=this-%s-equals-%s-exactly", mockUUID, mockUUID),
-		},
-		{
-			name:        "uuid and mac in one query parameter",
-			url:         "http://example.com/metadata?u=this-${uuid}-and-${mac}-together",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?u=this-%s-and-%s-together", mockUUID, mockMAC),
-		},
-		{
-			name:        "other parameters",
-			url:         "http://example.com/metadata?foo=a",
-			expectedURL: "http://example.com/metadata?foo=a",
-		},
-		{
-			name:        "multiple uuids",
-			url:         "http://example.com/metadata?uuid=xyz&uuid=foo",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?uuid=%s", mockUUID),
-		},
-		{
-			name:        "single serial number",
-			url:         "http://example.com/metadata?serial=${serial}",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?serial=%s", mockSerialNumber),
-		},
-		{
-			name:        "single MAC",
-			url:         "http://example.com/metadata?mac=${mac}",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?mac=%s", mockMAC),
-		},
-		{
-			name:        "single hostname",
-			url:         "http://example.com/metadata?host=${hostname}",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?host=%s", mockHostname),
-		},
-		{
-			name:        "serial number, MAC and hostname",
-			url:         "http://example.com/metadata?h=${hostname}&m=${mac}&s=${serial}",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?h=%s&m=%s&s=%s", mockHostname, mockMAC, mockSerialNumber),
-		},
-		{
-			name:        "uuid, serial number, MAC and hostname; case-insensitive",
-			url:         "http://example.com/metadata?h=${HOSTname}&m=${mAC}&s=${SERIAL}&u=${uUid}",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?h=%s&m=%s&s=%s&u=%s", mockHostname, mockMAC, mockSerialNumber, mockUUID),
-		},
-		{
-			name:        "MAC and UUID without variable",
-			url:         "http://example.com/metadata?macaddr=${mac}&uuid=",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?macaddr=%s&uuid=%s", mockMAC, mockUUID),
-		},
-		{
-			name:        "serial number and UUID without variable, order is not preserved",
-			url:         "http://example.com/metadata?uuid=&ser=${serial}",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?ser=%s&uuid=%s", mockSerialNumber, mockUUID),
-		},
-		{
-			name:        "UUID variable",
-			url:         "http://example.com/metadata?uuid=${uuid}",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?uuid=%s", mockUUID),
-		},
-		{
-			name:        "serial number and UUID with variable, order is not preserved",
-			url:         "http://example.com/metadata?uuid=${uuid}&ser=${serial}",
-			expectedURL: fmt.Sprintf("http://example.com/metadata?ser=%s&uuid=%s", mockSerialNumber, mockUUID),
-		},
-	} {
-		tt := tt
-
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
-
-			setup(ctx, t, st, mockUUID, mockSerialNumber, mockHostname, mockMAC)
-
-			output, err := metal.PopulateURLParameters(ctx, tt.url, st)
-
-			if tt.expectedError != "" {
-				assert.EqualError(t, err, tt.expectedError)
-			} else {
-				u, err := url.Parse(tt.expectedURL)
-				assert.NoError(t, err)
-				u.RawQuery = u.Query().Encode()
-				assert.Equal(t, u.String(), output)
-			}
-		})
-	}
 }
 
 func TestRepopulateOnRetry(t *testing.T) {

@@ -602,7 +602,10 @@ const (
 	DefaultDNSDomain = "cluster.local"
 
 	// ConfigLoadTimeout is the timeout to wait for the config to be loaded from an external source.
-	ConfigLoadTimeout = 3 * time.Minute
+	ConfigLoadTimeout = 3 * time.Hour
+
+	// ConfigLoadAttemptTimeout is the timeout for a single attempt to download config.
+	ConfigLoadAttemptTimeout = 3 * time.Minute
 
 	// BootTimeout is the timeout to run all services.
 	BootTimeout = 70 * time.Minute
@@ -844,6 +847,7 @@ const (
 	SerialNumberKey = "serial"
 	HostnameKey     = "hostname"
 	MacKey          = "mac"
+	CodeKey         = "code"
 )
 
 // Overlays is the set of paths to create overlay mounts for.

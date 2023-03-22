@@ -18,12 +18,14 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
+	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/internal/url"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -54,15 +56,19 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 		return nil, errors.ErrNoConfigSource
 	}
 
-	getURL := func() string {
-		downloadEndpoint, err := PopulateURLParameters(ctx, *option, r)
+	getURL := func(ctx context.Context) (string, error) {
+		// give a shorter timeout to populate the URL, leave the rest of the time to the actual download
+		ctx, cancel := context.WithTimeout(ctx, constants.ConfigLoadAttemptTimeout/2)
+		defer cancel()
+
+		downloadEndpoint, err := url.Populate(ctx, *option, r)
 		if err != nil {
-			log.Printf("failed to populate talos.config fetch URL: %q ; %s", *option, err.Error())
+			log.Printf("failed to populate talos.config fetch URL %q: %s", *option, err.Error())
 		}
 
 		log.Printf("fetching machine config from: %q", downloadEndpoint)
 
-		return downloadEndpoint
+		return downloadEndpoint, nil
 	}
 
 	switch *option {
@@ -73,7 +79,16 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 			return nil, err
 		}
 
-		return download.Download(ctx, *option, download.WithEndpointFunc(getURL))
+		return download.Download(
+			ctx,
+			*option,
+			download.WithEndpointFunc(getURL),
+			download.WithTimeout(constants.ConfigLoadTimeout),
+			download.WithRetryOptions(
+				// give a timeout per attempt, max 50% of that is dedicated for URL interpolation, the rest is for the actual download
+				retry.WithAttemptTimeout(constants.ConfigLoadAttemptTimeout),
+			),
+		)
 	}
 }
 

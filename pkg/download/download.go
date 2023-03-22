@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package download provides a download with retries for machine configuration and userdata.
 package download
 
 import (
@@ -29,18 +30,26 @@ type downloadOptions struct {
 	Headers    map[string]string
 	Format     string
 	LowSrcPort bool
-	Endpoint   string
+
+	EndpointFunc func(context.Context) (string, error)
 
 	ErrorOnNotFound      error
 	ErrorOnEmptyResponse error
+
+	Timeout      time.Duration
+	RetryOptions []retry.Option
 }
 
 // Option configures the download options.
 type Option func(*downloadOptions)
 
-func downloadDefaults() *downloadOptions {
+func downloadDefaults(endpoint string) *downloadOptions {
 	return &downloadOptions{
+		EndpointFunc: func(context.Context) (string, error) {
+			return endpoint, nil
+		},
 		Headers: make(map[string]string),
+		Timeout: 3 * time.Minute,
 	}
 }
 
@@ -89,9 +98,23 @@ func WithErrorOnEmptyResponse(e error) Option {
 }
 
 // WithEndpointFunc provides a function that sets the endpoint of the download options.
-func WithEndpointFunc(endpointFunc func() string) Option {
+func WithEndpointFunc(endpointFunc func(context.Context) (string, error)) Option {
 	return func(d *downloadOptions) {
-		d.Endpoint = endpointFunc()
+		d.EndpointFunc = endpointFunc
+	}
+}
+
+// WithTimeout sets the timeout for the download.
+func WithTimeout(timeout time.Duration) Option {
+	return func(d *downloadOptions) {
+		d.Timeout = timeout
+	}
+}
+
+// WithRetryOptions sets the retry options for the download.
+func WithRetryOptions(opts ...retry.Option) Option {
+	return func(d *downloadOptions) {
+		d.RetryOptions = append(d.RetryOptions, opts...)
 	}
 }
 
@@ -99,61 +122,71 @@ func WithEndpointFunc(endpointFunc func() string) Option {
 //
 //nolint:gocyclo
 func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, err error) {
-	dlOpts := downloadDefaults()
+	options := downloadDefaults(endpoint)
 
-	dlOpts.Endpoint = endpoint
+	for _, opt := range opts {
+		opt(options)
+	}
 
 	err = retry.Exponential(
-		180*time.Second,
-		retry.WithUnits(time.Second),
-		retry.WithJitter(time.Second),
-		retry.WithErrorLogging(true),
+		options.Timeout,
+		append([]retry.Option{
+			retry.WithUnits(time.Second),
+			retry.WithJitter(time.Second),
+			retry.WithErrorLogging(true),
+		},
+			options.RetryOptions...,
+		)...,
 	).RetryWithContext(ctx, func(ctx context.Context) error {
-		dlOpts = downloadDefaults()
-
-		dlOpts.Endpoint = endpoint
-
-		for _, opt := range opts {
-			opt(dlOpts)
-		}
-
-		var u *url.URL
-		u, err = url.Parse(dlOpts.Endpoint)
+		var attemptEndpoint string
+		attemptEndpoint, err = options.EndpointFunc(ctx)
 		if err != nil {
 			return err
 		}
 
-		if u.Scheme == "file" {
-			var fileContent []byte
-			fileContent, err = os.ReadFile(u.Path)
+		if err = func() error {
+			var u *url.URL
+			u, err = url.Parse(attemptEndpoint)
 			if err != nil {
 				return err
 			}
 
-			b = fileContent
+			if u.Scheme == "file" {
+				var fileContent []byte
+				fileContent, err = os.ReadFile(u.Path)
+				if err != nil {
+					return err
+				}
 
-			return nil
-		}
+				b = fileContent
 
-		var req *http.Request
+				return nil
+			}
 
-		if req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil); err != nil {
+			var req *http.Request
+
+			if req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil); err != nil {
+				return err
+			}
+
+			for k, v := range options.Headers {
+				req.Header.Set(k, v)
+			}
+
+			b, err = download(req, options)
+
 			return err
+		}(); err != nil {
+			return fmt.Errorf("failed to download config from %q: %w", endpoint, err)
 		}
 
-		for k, v := range dlOpts.Headers {
-			req.Header.Set(k, v)
-		}
-
-		b, err = download(req, dlOpts)
-
-		return err
+		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to download config from %q: %w", dlOpts.Endpoint, err)
+		return nil, err
 	}
 
-	if dlOpts.Format == b64 {
+	if options.Format == b64 {
 		var b64 []byte
 
 		b64, err = base64.StdEncoding.DecodeString(string(b))
@@ -167,11 +200,11 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 	return b, nil
 }
 
-func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err error) {
+func download(req *http.Request, options *downloadOptions) (data []byte, err error) {
 	transport := httpdefaults.PatchTransport(cleanhttp.DefaultTransport())
 	transport.RegisterProtocol("tftp", NewTFTPTransport())
 
-	if dlOpts.LowSrcPort {
+	if options.LowSrcPort {
 		port := 100 + rand.Intn(512)
 
 		localTCPAddr, tcperr := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
@@ -200,8 +233,8 @@ func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err erro
 	//nolint:errcheck
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound && dlOpts.ErrorOnNotFound != nil {
-		return data, dlOpts.ErrorOnNotFound
+	if resp.StatusCode == http.StatusNotFound && options.ErrorOnNotFound != nil {
+		return data, options.ErrorOnNotFound
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -213,8 +246,8 @@ func download(req *http.Request, dlOpts *downloadOptions) (data []byte, err erro
 		return data, retry.ExpectedError(fmt.Errorf("read config: %s", err.Error()))
 	}
 
-	if len(data) == 0 && dlOpts.ErrorOnEmptyResponse != nil {
-		return data, dlOpts.ErrorOnEmptyResponse
+	if len(data) == 0 && options.ErrorOnEmptyResponse != nil {
+		return data, options.ErrorOnEmptyResponse
 	}
 
 	return data, nil

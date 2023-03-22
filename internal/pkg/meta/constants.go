@@ -15,4 +15,12 @@ const (
 	StateEncryptionConfig
 	// MetalNetworkPlatformConfig stores serialized NetworkPlatformConfig for the `metal` platform.
 	MetalNetworkPlatformConfig
+	// DownloadURLCode stores the value of the `${code}` variable in the download URL for talos.config= URL.
+	DownloadURLCode
+	// UserReserved1 is reserved for user-defined metadata.
+	UserReserved1
+	// UserReserved2 is reserved for user-defined metadata.
+	UserReserved2
+	// UserReserved3 is reserved for user-defined metadata.
+	UserReserved3
 )
