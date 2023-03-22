@@ -173,7 +173,7 @@ func (suite *NodeLabelsSuite) assertLabel(expectedLabel, oldValue, expectedValue
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				if err := suite.assertResource(
+				return suite.assertResource(
 					resource.NewMetadata(
 						k8s.NamespaceName,
 						k8s.NodeLabelSpecType,
@@ -199,11 +199,7 @@ func (suite *NodeLabelsSuite) assertLabel(expectedLabel, oldValue, expectedValue
 
 						return nil
 					},
-				)(); err != nil {
-					return err
-				}
-
-				return nil
+				)()
 			},
 		),
 	)

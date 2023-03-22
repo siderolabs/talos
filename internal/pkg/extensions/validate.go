@@ -23,11 +23,7 @@ func (ext *Extension) Validate() error {
 		return err
 	}
 
-	if err := ext.validateContents(); err != nil {
-		return err
-	}
-
-	return nil
+	return ext.validateContents()
 }
 
 func (ext *Extension) validateConstraints() error {

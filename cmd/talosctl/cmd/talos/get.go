@@ -184,11 +184,7 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 				return nil
 			}
 
-			if err := out.WriteResource(hostname, r, 0); err != nil {
-				return err
-			}
-
-			return nil
+			return out.WriteResource(hostname, r, 0)
 		}
 
 		callbackRD := func(definition *meta.ResourceDefinition) error {

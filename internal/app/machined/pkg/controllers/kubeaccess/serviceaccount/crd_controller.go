@@ -248,7 +248,7 @@ func (t *CRDController) Run(ctx context.Context, workers int) error {
 }
 
 func (t *CRDController) runWorker(ctx context.Context) {
-	for t.processNextWorkItem(ctx) {
+	for t.processNextWorkItem(ctx) { //nolint:revive
 	}
 }
 

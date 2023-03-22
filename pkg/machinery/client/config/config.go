@@ -182,11 +182,7 @@ func (c *Config) Save(path string) error {
 		return err
 	}
 
-	if err = os.WriteFile(c.path.Path, configBytes, 0o600); err != nil {
-		return err
-	}
-
-	return nil
+	return os.WriteFile(c.path.Path, configBytes, 0o600)
 }
 
 // Bytes gets yaml encoded config data.

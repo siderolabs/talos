@@ -21,11 +21,7 @@ import (
 func Wait(ctx context.Context, r state.State) error {
 	log.Printf("waiting for network to be ready")
 
-	if err := network.NewReadyCondition(r, network.AddressReady).Wait(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return network.NewReadyCondition(r, network.AddressReady).Wait(ctx)
 }
 
 // RetryFetch retries fetching from metadata service.

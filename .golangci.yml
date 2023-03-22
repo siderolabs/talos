@@ -190,6 +190,7 @@ issues:
   exclude:
     - package comment should be of the form "Package services ..." # revive
     - ^ST1000 # ST1000: at least one file in a package should have a package comment (stylecheck)
+    - parameter '\w+' seems to be unused, consider removing or renaming it as _ # noisy check, especially when the usage is an interface implementation
 
   exclude-rules:
     - path: cmd/talosctl/cmd

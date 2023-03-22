@@ -207,7 +207,7 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 	defer func() {
 		suite.ctxCancel()
 		// drain respCh
-		for range respCh {
+		for range respCh { //nolint:revive
 		}
 	}()
 

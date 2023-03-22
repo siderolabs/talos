@@ -67,11 +67,7 @@ func (i *Installer) installExtensions() error {
 		return err
 	}
 
-	if err = i.rebuildInitramfs(tempDir); err != nil {
-		return err
-	}
-
-	return nil
+	return i.rebuildInitramfs(tempDir)
 }
 
 func printExtensions(extensions []*extensions.Extension) error {

@@ -254,9 +254,8 @@ func (suite *LinkMergeSuite) TestMergeFlapping() {
 					}
 
 					continue
-				} else {
-					suite.T().Log("finalizer added")
 				}
+				suite.T().Log("finalizer added")
 
 				time.Sleep(10 * time.Millisecond)
 

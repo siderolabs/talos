@@ -239,11 +239,7 @@ func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) 
 		return err
 	}
 
-	if err := os.WriteFile(constants.KubernetesCACert, secretSpec.CA.Crt, 0o400); err != nil {
-		return err
-	}
-
-	return nil
+	return os.WriteFile(constants.KubernetesCACert, secretSpec.CA.Crt, 0o400)
 }
 
 var kubeletKubeConfigTemplate = []byte(`apiVersion: v1

@@ -183,7 +183,7 @@ func logErr(f func() error) {
 func extractRootfsFromInitramfs(input bytes.Buffer, rootfsFilePath string) error {
 	recReader := cpio.Newc.Reader(bytes.NewReader(input.Bytes()))
 
-	if err := cpio.ForEachRecord(recReader, func(r cpio.Record) error {
+	return cpio.ForEachRecord(recReader, func(r cpio.Record) error {
 		if r.Name != constants.RootfsAsset {
 			return nil
 		}
@@ -204,11 +204,7 @@ func extractRootfsFromInitramfs(input bytes.Buffer, rootfsFilePath string) error
 		}
 
 		return f.Close()
-	}); err != nil {
-		return err
-	}
-
-	return nil
+	})
 }
 
 func depmod(kernelModulesPath string) error {

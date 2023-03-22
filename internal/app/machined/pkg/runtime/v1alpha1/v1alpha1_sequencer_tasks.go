@@ -1727,11 +1727,7 @@ func ResetUserDisks(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, st
 
 			logger.Printf("wiping user disk %s", deviceName)
 
-			if err = dev.FastWipe(); err != nil {
-				return err
-			}
-
-			return nil
+			return dev.FastWipe()
 		}
 
 		for _, deviceName := range in.GetUserDisksToWipe() {

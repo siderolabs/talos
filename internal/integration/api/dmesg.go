@@ -95,7 +95,7 @@ func (suite *DmesgSuite) TestStreaming() {
 	defer func() {
 		suite.ctxCancel()
 		// drain respCh
-		for range respCh {
+		for range respCh { //nolint:revive
 		}
 	}()
 

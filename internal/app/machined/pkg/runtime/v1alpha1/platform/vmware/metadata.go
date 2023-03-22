@@ -115,9 +115,9 @@ func (v *VMware) ApplyNetworkConfigV2(ctx context.Context, st state.State, confi
 					macAddressMatched = true
 
 					break
-				} else {
-					availableMACAddresses = append(availableMACAddresses, macAddress)
 				}
+
+				availableMACAddresses = append(availableMACAddresses, macAddress)
 			}
 
 			if !macAddressMatched {

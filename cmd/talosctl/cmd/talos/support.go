@@ -81,7 +81,7 @@ var supportCmd = &cobra.Command{
 
 		eg.Go(func() error {
 			if supportCmdFlags.verbose {
-				for range progress {
+				for range progress { //nolint:revive
 				}
 			} else {
 				showProgress(progress)

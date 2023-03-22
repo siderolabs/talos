@@ -171,11 +171,7 @@ func mountRootFS() error {
 		return err
 	}
 
-	if err := unix.Mount(constants.ExtensionsConfigFile, filepath.Join(constants.NewRoot, constants.ExtensionsRuntimeConfigFile), "", unix.MS_BIND|unix.MS_RDONLY, ""); err != nil {
-		return err
-	}
-
-	return nil
+	return unix.Mount(constants.ExtensionsConfigFile, filepath.Join(constants.NewRoot, constants.ExtensionsRuntimeConfigFile), "", unix.MS_BIND|unix.MS_RDONLY, "")
 }
 
 func bindMountFirmware() error {

@@ -120,7 +120,8 @@ func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interf
 
 			switch typ.Kind() { //nolint:exhaustive
 			case reflect.Struct:
-				if fieldIndex, ok := availableKeys[key]; !ok {
+				fieldIndex, ok := availableKeys[key]
+				if !ok {
 					if unknown == nil {
 						unknown = map[string]interface{}{}
 					}
@@ -128,9 +129,9 @@ func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interf
 					unknown.(map[string]interface{})[key] = spec.Content[i+1]
 
 					continue
-				} else {
-					elemType = typ.FieldByIndex(fieldIndex).Type
 				}
+
+				elemType = typ.FieldByIndex(fieldIndex).Type
 			case reflect.Map:
 				elemType = typ.Elem()
 			}

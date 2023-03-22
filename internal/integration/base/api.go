@@ -459,7 +459,7 @@ func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) 
 		defer wg.Done()
 
 		// StreamReader is only singly-buffered, so we need to process any errors as we get them.
-		for chanErr = range errCh {
+		for chanErr = range errCh { //nolint:revive
 		}
 	}()
 
