@@ -30,7 +30,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	github.com/BurntSushi/toml v1.2.1
-	github.com/aws/aws-sdk-go v1.44.214
+	github.com/aws/aws-sdk-go v1.44.226
 	github.com/beevik/ntp v0.3.0
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/containerd/cgroups v1.1.0
@@ -46,7 +46,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.3.1
-	github.com/fatih/color v1.14.1
+	github.com/fatih/color v1.15.0
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gdamore/tcell/v2 v2.6.0
@@ -59,13 +59,13 @@ require (
 	github.com/google/nftables v0.1.0
 	github.com/google/uuid v1.3.0
 	github.com/gosuri/uiprogress v0.0.1
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
-	github.com/hashicorp/go-getter v1.7.0
+	github.com/hashicorp/go-getter v1.7.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hetznercloud/hcloud-go v1.41.0
-	github.com/insomniacslk/dhcp v0.0.0-20230301142404-3e45eea5edd7
+	github.com/insomniacslk/dhcp v0.0.0-20230307103557-e252950ab961
 	github.com/jsimonetti/rtnetlink v1.3.1
 	github.com/jxskiss/base62 v1.1.0
 	github.com/martinlindhe/base36 v1.1.1
@@ -75,7 +75,7 @@ require (
 	github.com/mdlayher/genetlink v1.3.1
 	github.com/mdlayher/netlink v1.7.1
 	github.com/mdlayher/netx v0.0.0-20220422152302-c711c2f8512f
-	github.com/nberlee/go-netstat v0.0.0-20230306184515-0b1bbade8369
+	github.com/nberlee/go-netstat v0.0.0-20230319161348-19cc338ee40a
 	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/packethost/packngo v0.29.0
@@ -83,12 +83,12 @@ require (
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.1.0
 	github.com/prometheus/procfs v0.9.0
-	github.com/rivo/tview v0.0.0-20230307144320-cc10b288e304
+	github.com/rivo/tview v0.0.0-20230320095235-84f9c0ff9de8
 	github.com/rs/xid v1.4.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/safchain/ethtool v0.2.0
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.13
+	github.com/safchain/ethtool v0.3.0
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.15
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/discovery-api v0.1.2
 	github.com/siderolabs/discovery-client v0.1.4
@@ -118,7 +118,7 @@ require (
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vmware-tanzu/sonobuoy v0.56.16
-	github.com/vmware/govmomi v0.30.2
+	github.com/vmware/govmomi v0.30.4
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
 	go.etcd.io/etcd/api/v3 v3.5.7
@@ -133,8 +133,8 @@ require (
 	golang.org/x/term v0.6.0
 	golang.org/x/time v0.3.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230215201556-9c5414ab4bde
-	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.29.0
+	google.golang.org/grpc v1.54.0
+	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.90.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.67
@@ -291,7 +291,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20220920152132-bb719d3a6e2c // indirect
 	google.golang.org/api v0.110.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230303212802-e74f57abe488 // indirect
+	google.golang.org/genproto v0.0.0-20230320184635-7606e756e683 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

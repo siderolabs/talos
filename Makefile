@@ -13,23 +13,23 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-alpha.0-23-ge6b2956
-PKGS ?= v1.4.0-alpha.0-32-g21e5a68
+TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-alpha.0-26-g2d710f9
+PKGS ?= v1.4.0-alpha.0-35-gc26b0b5
 EXTRAS ?= v1.4.0-alpha.0-7-g343956e
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.6.0
+GOIMPORTS_VERSION ?= v0.7.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
 GOLANGCILINT_VERSION ?= v1.51.2
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.6.0
+STRINGER_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.26.2
+DEEPCOPY_GEN_VERSION ?= v0.26.3
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -52,11 +52,11 @@ KUBECTL_VERSION ?= v1.27.0-beta.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.11.1
+HELM_VERSION ?= v3.11.2
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.3.5
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.13.1
+CILIUM_CLI_VERSION ?= v0.13.2
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
@@ -337,7 +337,7 @@ check-dirty: ## Verifies that source tree is not dirty
 	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; exit 1 ; fi
 
 go-mod-outdated: ## Runs the go-mod-oudated to show outdated dependencies.
-	@$(MAKE) target-go-mod-outdated PLATFORM=linux/amd64
+	@$(MAKE) target-go-mod-outdated PLATFORM=linux/amd64 PROGRESS=text
 
 # Tests
 

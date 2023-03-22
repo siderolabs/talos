@@ -74,6 +74,13 @@ func (b *FormModalButton) SetFinishedFunc(handler func(key tcell.Key)) tview.For
 	return b
 }
 
+// SetDisabled implements tview.FormItem.
+func (b *FormModalButton) SetDisabled(disabled bool) tview.FormItem {
+	b.button.SetDisabled(disabled)
+
+	return b
+}
+
 // GetLabel implements tview.FormItem.
 func (b *FormModalButton) GetLabel() string {
 	return b.label.GetText(true)

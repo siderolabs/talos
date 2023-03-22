@@ -797,7 +797,7 @@ RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-pat
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:19.7.0-alpine AS lint-markdown
+FROM node:19.8.1-alpine AS lint-markdown
 ARG MARKDOWNLINTCLI_VERSION
 ARG TEXTLINT_VERSION
 ARG TEXTLINT_FILTER_RULE_COMMENTS_VERSION
@@ -882,14 +882,21 @@ FROM base AS go-mod-outdated
 RUN --mount=type=cache,target=/.cache go install github.com/psampaz/go-mod-outdated@latest \
     && mv /go/bin/go-mod-outdated /toolchain/go/bin/go-mod-outdated
 COPY ./hack/cloud-image-uploader ./hack/cloud-image-uploader
+COPY ./hack/docgen ./hack/docgen
+COPY ./hack/gotagsrewrite ./hack/gotagsrewrite
+COPY ./hack/protoc-gen-doc ./hack/protoc-gen-doc
+COPY ./hack/structprotogen ./hack/structprotogen
 # fail always to get the output back
-RUN --mount=type=cache,target=/.cache cd pkg/machinery && \
+RUN --mount=type=cache,target=/.cache \
     echo -e "\n>>>> pkg/machinery:" && \
-    (go list -u -m -json all | go-mod-outdated -update -direct) && \
-    cd ../.. && \
+    (cd pkg/machinery && go list -u -m -json all | go-mod-outdated -update -direct) && \
     echo -e "\n>>>> .:" && \
     (go list -u -m -json all | go-mod-outdated -update -direct) && \
-    cd hack/cloud-image-uploader && \
     echo -e "\n>>>> hack/cloud-image-uploader:" && \
-    (go list -u -m -json all | go-mod-outdated -update -direct) && \
-    exit 1
+    (cd hack/cloud-image-uploader && go list -u -m -json all | go-mod-outdated -update -direct) && \
+    echo -e "\n>>>> hack/docgen:" && \
+    (cd hack/docgen && go list -u -m -json all | go-mod-outdated -update -direct) && \
+    echo -e "\n>>>> hack/gotagsrewrite:" && \
+    (cd hack/gotagsrewrite && go list -u -m -json all | go-mod-outdated -update -direct) && \
+    echo -e "\n>>>> hack/structprotogen:" && \
+    (cd hack/structprotogen && go list -u -m -json all | go-mod-outdated -update -direct)
