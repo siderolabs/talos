@@ -120,7 +120,12 @@ func Run(ctx context.Context, logger *log.Logger) ([]byte, error) {
 		return nil, err
 	}
 
-	defer server.GracefulStop()
+	defer func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 5*time.Second)
+		defer shutdownCancel()
+
+		factory.ServerGracefulStop(server, shutdownCtx)
+	}()
 
 	go func() {
 		//nolint:errcheck
@@ -156,12 +161,7 @@ func Run(ctx context.Context, logger *log.Logger) ([]byte, error) {
 
 	select {
 	case cfg := <-cfgCh:
-		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 5*time.Second)
-		defer shutdownCancel()
-
-		factory.ServerGracefulStop(server, shutdownCtx)
-
-		return cfg, err
+		return cfg, nil
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
