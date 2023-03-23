@@ -115,7 +115,7 @@ case "${WITH_CONFIG_PATCH_WORKER:-false}" in
       CONFIG_PATCH_FLAG=()
       ;;
   *)
-      CONFIG_PATCH_FLAG=(--config-patch-worker "${WITH_CONFIG_PATCH_FILE}")
+      CONFIG_PATCH_FLAG=(--config-patch-worker "${WITH_CONFIG_PATCH_WORKER}")
       ;;
 esac
 
