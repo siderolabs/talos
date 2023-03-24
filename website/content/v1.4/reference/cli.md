@@ -2103,7 +2103,16 @@ talosctl mounts [flags]
 
 ## talosctl netstat
 
-Retrieve a socket listing of connections
+Show network connections and sockets
+
+### Synopsis
+
+Show network connections and sockets.
+
+You can pass an optional argument to view a specific pod's connections.
+To do this, format the argument as "namespace/pod".
+Note that only pods with a pod network namespace are allowed.
+If you don't pass an argument, the command will show host connections.
 
 ```
 talosctl netstat [flags]
@@ -2118,6 +2127,7 @@ talosctl netstat [flags]
   -4, --ipv4        display only ipv4 sockets
   -6, --ipv6        display only ipv6 sockets
   -l, --listening   display listening server sockets
+  -k, --pods        show sockets used by Kubernetes pods
   -p, --programs    show process using socket
   -w, --raw         display only RAW sockets
   -t, --tcp         display only TCP sockets
@@ -2809,7 +2819,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl memory](#talosctl-memory)	 - Show memory usage
 * [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
 * [talosctl mounts](#talosctl-mounts)	 - List mounts
-* [talosctl netstat](#talosctl-netstat)	 - Retrieve a socket listing of connections
+* [talosctl netstat](#talosctl-netstat)	 - Show network connections and sockets
 * [talosctl patch](#talosctl-patch)	 - Update field(s) of a resource using a JSON patch.
 * [talosctl pcap](#talosctl-pcap)	 - Capture the network packets from the node.
 * [talosctl processes](#talosctl-processes)	 - List running processes

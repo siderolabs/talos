@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -184,6 +185,7 @@ func findContainer(cntID string, containers []*runtimeapi.Container) (*runtimeap
 	return nil, false
 }
 
+// nolint: gocyclo
 func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) {
 	sandboxStatus, sandboxInfo, err := i.client.PodSandboxStatus(i.ctx, sandbox.Id)
 	if err != nil {
@@ -210,7 +212,7 @@ func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) 
 	}
 
 	if info, ok := sandboxInfo["info"]; ok {
-		var verboseInfo map[string]interface{}
+		var verboseInfo map[string]any
 
 		if err := json.Unmarshal([]byte(info), &verboseInfo); err == nil {
 			if pid, ok := verboseInfo["pid"]; ok {
@@ -223,6 +225,22 @@ func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) 
 				if digest, ok := image.(string); ok {
 					pod.Containers[0].Image = digest
 					pod.Containers[0].Digest = digest
+				}
+			}
+
+			if runtimeSpec, ok := verboseInfo["runtimeSpec"].(map[string]any); ok {
+				if linuxSpec, ok := runtimeSpec["linux"].(map[string]any); ok {
+					if namespaces, ok := linuxSpec["namespaces"].([]any); ok {
+						for _, n := range namespaces {
+							if nt, ok := n.(map[string]any); ok && nt["type"] == "network" {
+								if netnsPath, ok := nt["path"].(string); ok {
+									pod.Containers[0].NetworkNamespace = path.Base(netnsPath)
+
+									break
+								}
+							}
+						}
+					}
 				}
 			}
 		}

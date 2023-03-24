@@ -608,6 +608,7 @@ message ContainerInfo {
   string status = 5;
   string pod_id = 6;
   string name = 7;
+  string network_namespace = 8;
 }
 
 // The messages message containing the requested containers.
@@ -1223,6 +1224,12 @@ message NetstatRequest {
     bool raw6 = 8;
   }
   L4proto l4proto = 3;
+  message NetNS {
+    bool hostnetwork = 1;
+    repeated string netns = 2;
+    bool allnetns = 3;
+  }
+  NetNS netns = 4;
 }
 
 message ConnectRecord {
@@ -1268,6 +1275,7 @@ message ConnectRecord {
     string name = 2;
   }
   Process process = 17;
+  string netns = 18;
 }
 
 message Netstat {

@@ -1438,13 +1438,14 @@ func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) 
 	for _, pod := range pods {
 		for _, container := range pod.Containers {
 			container := &machine.ContainerInfo{
-				Namespace: in.Namespace,
-				Id:        container.Display,
-				PodId:     pod.Name,
-				Name:      container.Name,
-				Image:     container.Image,
-				Pid:       container.Pid,
-				Status:    container.Status,
+				Namespace:        in.Namespace,
+				Id:               container.Display,
+				PodId:            pod.Name,
+				Name:             container.Name,
+				Image:            container.Image,
+				Pid:              container.Pid,
+				Status:           container.Status,
+				NetworkNamespace: container.NetworkNamespace,
 			}
 			containers = append(containers, container)
 		}
@@ -2345,15 +2346,18 @@ func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*mac
 	}
 
 	features := netstat.EnableFeatures{
-		TCP:      req.L4Proto.Tcp,
-		TCP6:     req.L4Proto.Tcp6,
-		UDP:      req.L4Proto.Udp,
-		UDP6:     req.L4Proto.Udp6,
-		UDPLite:  req.L4Proto.Udplite,
-		UDPLite6: req.L4Proto.Udplite6,
-		Raw:      req.L4Proto.Raw,
-		Raw6:     req.L4Proto.Raw6,
-		PID:      req.Feature.Pid,
+		TCP:           req.L4Proto.Tcp,
+		TCP6:          req.L4Proto.Tcp6,
+		UDP:           req.L4Proto.Udp,
+		UDP6:          req.L4Proto.Udp6,
+		UDPLite:       req.L4Proto.Udplite,
+		UDPLite6:      req.L4Proto.Udplite6,
+		Raw:           req.L4Proto.Raw,
+		Raw6:          req.L4Proto.Raw6,
+		PID:           req.Feature.Pid,
+		NoHostNetwork: !req.Netns.Hostnetwork,
+		AllNetNs:      req.Netns.Allnetns,
+		NetNsName:     req.Netns.Netns,
 	}
 
 	var fn netstat.AcceptFn
@@ -2363,11 +2367,11 @@ func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*mac
 		fn = func(*netstat.SockTabEntry) bool { return true }
 	case machine.NetstatRequest_LISTENING:
 		fn = func(s *netstat.SockTabEntry) bool {
-			return s.State == netstat.Listen
+			return s.RemoteEndpoint.IP.IsUnspecified() && s.RemoteEndpoint.Port == 0
 		}
 	case machine.NetstatRequest_CONNECTED:
 		fn = func(s *netstat.SockTabEntry) bool {
-			return s.State != netstat.Listen
+			return !s.RemoteEndpoint.IP.IsUnspecified() && s.RemoteEndpoint.Port != 0
 		}
 	}
 
@@ -2397,6 +2401,7 @@ func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*mac
 			Ref:        entry.Ref,
 			Pointer:    entry.Pointer,
 			Process:    &machine.ConnectRecord_Process{},
+			Netns:      entry.NetNS,
 		}
 		if entry.Process != nil {
 			records[i].Process = &machine.ConnectRecord_Process{

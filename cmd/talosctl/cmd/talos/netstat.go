@@ -12,9 +12,11 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
@@ -26,6 +28,7 @@ var netstatCmdFlags struct {
 	timers    bool
 	listening bool
 	all       bool
+	pods      bool
 	tcp       bool
 	udp       bool
 	udplite   bool
@@ -34,26 +37,102 @@ var netstatCmdFlags struct {
 	ipv6      bool
 }
 
-// netstatCmd represents the ls command.
+type netstat struct {
+	client        *client.Client
+	NodeNetNSPods map[string]map[string]string
+}
+
+// netstatCmd represents the netstat command.
 var netstatCmd = &cobra.Command{
 	Use:     "netstat",
 	Aliases: []string{"ss"},
-	Short:   "Retrieve a socket listing of connections",
-	Long:    ``,
-	Args:    cobra.NoArgs,
+	Short:   "Show network connections and sockets",
+	Long: `Show network connections and sockets.
+
+You can pass an optional argument to view a specific pod's connections.
+To do this, format the argument as "namespace/pod".
+Note that only pods with a pod network namespace are allowed.
+If you don't pass an argument, the command will show host connections.`,
+	Args: cobra.MaximumNArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) > 0 {
+			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+		}
+
+		var podList []string
+
+		if WithClient(func(ctx context.Context, c *client.Client) error {
+			n := netstat{
+				NodeNetNSPods: make(map[string]map[string]string),
+				client:        c,
+			}
+
+			err := n.getPodNetNsFromNode(ctx)
+			if err != nil {
+				return err
+			}
+
+			for _, netNsPods := range n.NodeNetNSPods {
+				for _, podName := range netNsPods {
+					podList = append(podList, podName)
+				}
+			}
+
+			return nil
+		}) != nil {
+			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return podList, cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			req := netstatFlagsToRequest()
+		req := netstatFlagsToRequest()
+
+		return WithClient(func(ctx context.Context, c *client.Client) (err error) {
+			if netstatCmdFlags.pods && len(args) > 0 {
+				return fmt.Errorf("cannot use --pods and specify a pod")
+			}
+
+			findThePod := len(args) > 0
+
+			n := netstat{
+				client: c,
+			}
+
+			n.NodeNetNSPods = make(map[string]map[string]string)
+
+			if findThePod || netstatCmdFlags.pods {
+				err = n.getPodNetNsFromNode(ctx)
+				if err != nil {
+					return err
+				}
+			}
+
+			if findThePod {
+				var foundNode, foundNetNs string
+
+				foundNode, foundNetNs = n.findPodNetNs(args[0])
+
+				if foundNetNs == "" {
+					cli.Fatalf("pod %s not found", args[0])
+				}
+
+				ctx = client.WithNode(ctx, foundNode)
+
+				req.Netns.Netns = []string{foundNetNs}
+				req.Netns.Hostnetwork = false
+			}
+
 			response, err := c.Netstat(ctx, req)
 			if err != nil {
 				if response == nil {
-					return fmt.Errorf("error getting netstat: %w", err)
+					return err
 				}
 
 				cli.Warning("%s", err)
 			}
 
-			err = printNetstat(response)
+			err = n.printNetstat(response)
 
 			return err
 		})
@@ -75,6 +154,10 @@ func netstatFlagsToRequest() *machine.NetstatRequest {
 			Udplite6: netstatCmdFlags.udplite,
 			Raw:      netstatCmdFlags.raw,
 			Raw6:     netstatCmdFlags.raw,
+		},
+		Netns: &machine.NetstatRequest_NetNS{
+			Allnetns:    netstatCmdFlags.pods,
+			Hostnetwork: true,
 		},
 	}
 
@@ -122,36 +205,60 @@ func netstatFlagsToRequest() *machine.NetstatRequest {
 	return &req
 }
 
+func (n *netstat) getPodNetNsFromNode(ctx context.Context) (err error) {
+	resp, err := n.client.Containers(ctx, criconstants.K8sContainerdNamespace, common.ContainerDriver_CRI)
+	if err != nil {
+		cli.Warning("error getting containers: %v", err)
+
+		return err
+	}
+
+	for _, msg := range resp.Messages {
+		for _, p := range msg.Containers {
+			if p.NetworkNamespace == "" {
+				continue
+			}
+
+			if p.Pid == 0 {
+				continue
+			}
+
+			if p.Id != p.PodId {
+				continue
+			}
+
+			if n.NodeNetNSPods[msg.Metadata.Hostname] == nil {
+				n.NodeNetNSPods[msg.Metadata.Hostname] = make(map[string]string)
+			}
+
+			n.NodeNetNSPods[msg.Metadata.Hostname][p.NetworkNamespace] = p.Id
+		}
+	}
+
+	return nil
+}
+
+func (n *netstat) findPodNetNs(findNamespaceAndPod string) (string, string) {
+	var foundNetNs, foundNode string
+
+	for node, netNSPods := range n.NodeNetNSPods {
+		for NetNs, podName := range netNSPods {
+			if podName == strings.ToLower(findNamespaceAndPod) {
+				foundNetNs = NetNs
+				foundNode = node
+
+				break
+			}
+		}
+	}
+
+	return foundNode, foundNetNs
+}
+
 //nolint:gocyclo
-func printNetstat(response *machine.NetstatResponse) error {
+func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	node := ""
-
-	labels := strings.Join(
-		[]string{
-			"Proto",
-			"Recv-Q",
-			"Send-Q",
-			"Local Address",
-			"Foreign Address",
-			"State",
-		}, "\t")
-
-	if netstatCmdFlags.extend {
-		labels += "\t" + strings.Join(
-			[]string{
-				"Uid",
-				"Inode",
-			}, "\t")
-	}
-
-	if netstatCmdFlags.pid {
-		labels += "\t" + "PID/Program name"
-	}
-
-	if netstatCmdFlags.timers {
-		labels += "\t" + "Timer"
-	}
 
 	for i, message := range response.Messages {
 		if message.Metadata != nil && message.Metadata.Hostname != "" {
@@ -164,6 +271,8 @@ func printNetstat(response *machine.NetstatResponse) error {
 
 		for j, record := range message.Connectrecord {
 			if i == 0 && j == 0 {
+				labels := netstatSummaryLabels()
+
 				if node != "" {
 					fmt.Fprintln(w, "NODE\t"+labels)
 				} else {
@@ -210,6 +319,18 @@ func printNetstat(response *machine.NetstatResponse) error {
 				}
 			}
 
+			if netstatCmdFlags.pods {
+				if record.Netns == "" || node == "" || n.NodeNetNSPods[node] == nil {
+					args = append(args, []interface{}{
+						"-",
+					}...)
+				} else {
+					args = append(args, []interface{}{
+						n.NodeNetNSPods[node][record.Netns],
+					}...)
+				}
+			}
+
 			if netstatCmdFlags.timers {
 				timerwhen := strconv.FormatFloat(float64(record.Timerwhen)/100, 'f', 2, 64)
 
@@ -228,6 +349,40 @@ func printNetstat(response *machine.NetstatResponse) error {
 	return w.Flush()
 }
 
+func netstatSummaryLabels() (labels string) {
+	labels = strings.Join(
+		[]string{
+			"Proto",
+			"Recv-Q",
+			"Send-Q",
+			"Local Address",
+			"Foreign Address",
+			"State",
+		}, "\t")
+
+	if netstatCmdFlags.extend {
+		labels += "\t" + strings.Join(
+			[]string{
+				"Uid",
+				"Inode",
+			}, "\t")
+	}
+
+	if netstatCmdFlags.pid {
+		labels += "\t" + "PID/Program name"
+	}
+
+	if netstatCmdFlags.pods {
+		labels += "\t" + "Pod"
+	}
+
+	if netstatCmdFlags.timers {
+		labels += "\t" + "Timer"
+	}
+
+	return labels
+}
+
 func wildcardIfZero(num uint32) string {
 	if num == 0 {
 		return "*"
@@ -244,12 +399,13 @@ func init() {
 	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.timers, "timers", "o", false, "display timers")
 	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.listening, "listening", "l", false, "display listening server sockets")
 	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.all, "all", "a", false, "display all sockets states (default: connected)")
+	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.pods, "pods", "k", false, "show sockets used by Kubernetes pods")
 	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.tcp, "tcp", "t", false, "display only TCP sockets")
 	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.udp, "udp", "u", false, "display only UDP sockets")
 	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.udplite, "udplite", "U", false, "display only UDPLite sockets")
 	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.raw, "raw", "w", false, "display only RAW sockets")
 	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.ipv4, "ipv4", "4", false, "display only ipv4 sockets")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.ipv4, "ipv6", "6", false, "display only ipv6 sockets")
+	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.ipv6, "ipv6", "6", false, "display only ipv6 sockets")
 
 	addCommand(netstatCmd)
 }

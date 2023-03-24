@@ -25,19 +25,20 @@ import (
 type Container struct {
 	Inspector Inspector
 
-	Display      string // Friendly Name
-	Name         string // container name
-	ID           string // container sha/id
-	Digest       string // Container Digest
-	Image        string
-	PodName      string
-	Sandbox      string
-	Status       string // Running state of container
-	RestartCount string
-	LogPath      string
-	Metrics      *ContainerMetrics
-	Pid          uint32
-	IsPodSandbox bool // real container or just pod sandbox
+	Display          string // Friendly Name
+	Name             string // container name
+	ID               string // container sha/id
+	Digest           string // Container Digest
+	Image            string
+	PodName          string
+	Sandbox          string
+	Status           string // Running state of container
+	RestartCount     string
+	LogPath          string
+	Metrics          *ContainerMetrics
+	Pid              uint32
+	IsPodSandbox     bool // real container or just pod sandbox
+	NetworkNamespace string
 }
 
 // ContainerMetrics represents container cgroup stats.

@@ -75,7 +75,7 @@ require (
 	github.com/mdlayher/genetlink v1.3.1
 	github.com/mdlayher/netlink v1.7.1
 	github.com/mdlayher/netx v0.0.0-20220422152302-c711c2f8512f
-	github.com/nberlee/go-netstat v0.0.0-20230319161348-19cc338ee40a
+	github.com/nberlee/go-netstat v0.1.1
 	github.com/opencontainers/image-spec v1.1.0-rc2
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/packethost/packngo v0.29.0

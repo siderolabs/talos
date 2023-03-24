@@ -7,12 +7,14 @@
 package cli
 
 import (
+	"context"
 	"regexp"
+	"strings"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 )
 
-// NetstatSuite verifies etcd command.
+// NetstatSuite verifies etcd command and coredns container.
 type NetstatSuite struct {
 	base.CLISuite
 }
@@ -26,6 +28,14 @@ func (suite *NetstatSuite) SuiteName() string {
 func (suite *NetstatSuite) TestListening() {
 	suite.RunCLI([]string{"netstat", "--listening", "--programs", "--tcp", "--extend", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
 		base.StdoutShouldMatch(regexp.MustCompile(`:::50000.+LISTEN.+/apid`)))
+}
+
+// TestContainers verifies that containers are listed.
+func (suite *NetstatSuite) TestContainers() {
+	nodes := suite.DiscoverNodeInternalIPs(context.TODO())
+
+	suite.RunCLI([]string{"netstat", "--listening", "--programs", "--udp", "--ipv6", "--pods", "--nodes", strings.Join(nodes, ",")},
+		base.StdoutShouldMatch(regexp.MustCompile(`:::53\s+:::\*.+/coredns\s+kube-system/coredns-`)))
 }
 
 func init() {

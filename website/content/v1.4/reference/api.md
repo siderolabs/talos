@@ -308,6 +308,7 @@ description: Talos gRPC API reference.
     - [NetstatRequest](#machine.NetstatRequest)
     - [NetstatRequest.Feature](#machine.NetstatRequest.Feature)
     - [NetstatRequest.L4proto](#machine.NetstatRequest.L4proto)
+    - [NetstatRequest.NetNS](#machine.NetstatRequest.NetNS)
     - [NetstatResponse](#machine.NetstatResponse)
     - [NetworkConfig](#machine.NetworkConfig)
     - [NetworkDeviceConfig](#machine.NetworkDeviceConfig)
@@ -4012,6 +4013,7 @@ ConfigValidationErrorEvent is reported when config validation has failed.
 | ref | [uint64](#uint64) |  |  |
 | pointer | [uint64](#uint64) |  |  |
 | process | [ConnectRecord.Process](#machine.ConnectRecord.Process) |  |  |
+| netns | [string](#string) |  |  |
 
 
 
@@ -4065,6 +4067,7 @@ The messages message containing the requested containers.
 | status | [string](#string) |  |  |
 | pod_id | [string](#string) |  |  |
 | name | [string](#string) |  |  |
+| network_namespace | [string](#string) |  |  |
 
 
 
@@ -5356,6 +5359,7 @@ The messages message containing the requested df stats.
 | filter | [NetstatRequest.Filter](#machine.NetstatRequest.Filter) |  |  |
 | feature | [NetstatRequest.Feature](#machine.NetstatRequest.Feature) |  |  |
 | l4proto | [NetstatRequest.L4proto](#machine.NetstatRequest.L4proto) |  |  |
+| netns | [NetstatRequest.NetNS](#machine.NetstatRequest.NetNS) |  |  |
 
 
 
@@ -5393,6 +5397,23 @@ The messages message containing the requested df stats.
 | udplite6 | [bool](#bool) |  |  |
 | raw | [bool](#bool) |  |  |
 | raw6 | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.NetstatRequest.NetNS"></a>
+
+### NetstatRequest.NetNS
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hostnetwork | [bool](#bool) |  |  |
+| netns | [string](#string) | repeated |  |
+| allnetns | [bool](#bool) |  |  |
 
 
 
