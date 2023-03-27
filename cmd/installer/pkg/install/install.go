@@ -37,6 +37,7 @@ type Options struct {
 	Force             bool
 	Zero              bool
 	LegacyBIOSSupport bool
+	MetaValues        MetaValues
 }
 
 // Install installs Talos.
@@ -322,7 +323,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		}
 	}
 
-	if seq == runtime.SequenceUpgrade {
+	if seq == runtime.SequenceUpgrade || len(i.options.MetaValues.values) > 0 {
 		var metaState *meta.Meta
 
 		if metaState, err = meta.New(context.Background(), nil); err != nil {
@@ -331,8 +332,16 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 
 		var ok bool
 
-		if ok, err = metaState.SetTag(context.Background(), meta.Upgrade, string(i.Current)); !ok || err != nil {
-			return fmt.Errorf("failed to set upgrade tag: %q", i.Current)
+		if seq == runtime.SequenceUpgrade {
+			if ok, err = metaState.SetTag(context.Background(), meta.Upgrade, string(i.Current)); !ok || err != nil {
+				return fmt.Errorf("failed to set upgrade tag: %q", i.Current)
+			}
+		}
+
+		for _, v := range i.options.MetaValues.values {
+			if ok, err = metaState.SetTag(context.Background(), v.Key, v.Value); !ok || err != nil {
+				return fmt.Errorf("failed to set meta tag: %q -> %q", v.Key, v.Value)
+			}
 		}
 
 		if err = metaState.Flush(); err != nil {

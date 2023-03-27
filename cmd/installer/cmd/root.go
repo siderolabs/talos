@@ -6,9 +6,11 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -23,9 +25,34 @@ var rootCmd = &cobra.Command{
 	Long:  ``,
 }
 
+const metaValueEnvVariable = "INSTALLER_META_BASE64"
+
+func setFlagsFromEnvironment() error {
+	if metaEnvBase64 := os.Getenv(metaValueEnvVariable); metaEnvBase64 != "" {
+		metaEnv, err := base64.StdEncoding.DecodeString(metaEnvBase64)
+		if err != nil {
+			return err
+		}
+
+		for _, val := range strings.Split(string(metaEnv), ";") {
+			if err := options.MetaValues.Set(val); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	// Set defaults for flags from the environment variables.
+	if err := setFlagsFromEnvironment(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -45,4 +72,5 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&options.Upgrade, "upgrade", false, "Indicates that the install is being performed by an upgrade")
 	rootCmd.PersistentFlags().BoolVar(&options.Force, "force", false, "Indicates that the install should forcefully format the partition")
 	rootCmd.PersistentFlags().BoolVar(&options.Zero, "zero", false, "Indicates that the install should write zeros to the disk before installing")
+	rootCmd.PersistentFlags().Var(&options.MetaValues, "meta", "A key/value pair for META")
 }

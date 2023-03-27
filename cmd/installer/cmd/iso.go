@@ -7,11 +7,13 @@ package cmd
 import (
 	"bytes"
 	_ "embed"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/siderolabs/go-procfs/procfs"
@@ -44,7 +46,7 @@ func init() {
 	rootCmd.AddCommand(isoCmd)
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func runISOCmd() error {
 	if err := os.MkdirAll(outputArg, 0o777); err != nil {
 		return err
@@ -99,6 +101,12 @@ func runISOCmd() error {
 
 	if err := cmdline.AppendAll(options.ExtraKernelArgs, procfs.WithOverwriteArgs("console")); err != nil {
 		return err
+	}
+
+	if metaValues := options.MetaValues.GetSlice(); len(metaValues) > 0 {
+		// pass META values as kernel talos.environment args which will be passed via the environment to the installer
+		metaBase64 := base64.StdEncoding.EncodeToString([]byte(strings.Join(metaValues, ";")))
+		cmdline.Append(constants.KernelParamEnvironment, metaValueEnvVariable+"="+metaBase64)
 	}
 
 	var grubCfg bytes.Buffer
