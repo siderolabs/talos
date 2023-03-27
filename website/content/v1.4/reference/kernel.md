@@ -225,3 +225,14 @@ If you set `talos.dashboard.disabled=1`, this behavior will be disabled.
 Kernel logs will be sent to the currently active console and the dashboard will not be started.
 
 It is set to be `1` by default on SBCs.
+
+#### `talos.environment`
+
+Each value of the argument sets a default environment variable.
+The expected format is `key=value`.
+
+Example:
+
+```text
+talos.environment=http_proxy=http://proxy.example.com:8080 talos.environment=https_proxy=http://proxy.example.com:8080
+```

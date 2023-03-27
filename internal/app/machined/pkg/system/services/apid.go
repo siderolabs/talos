@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -160,7 +161,9 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	env := []string{}
 
-	for key, val := range r.Config().Machine().Env() {
+	for _, value := range environment.Get(r.Config()) {
+		key, _, _ := strings.Cut(value, "=")
+
 		switch strings.ToLower(key) {
 		// explicitly exclude proxy variables from apid since this will
 		// negatively impact grpc connections.
@@ -170,7 +173,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		case "http_proxy":
 		case "https_proxy":
 		default:
-			env = append(env, fmt.Sprintf("%s=%s", key, val))
+			env = append(env, value)
 		}
 	}
 

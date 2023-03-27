@@ -55,6 +55,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/maintenance"
 	"github.com/siderolabs/talos/internal/pkg/console"
 	"github.com/siderolabs/talos/internal/pkg/cri"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/meta"
@@ -739,7 +740,9 @@ func DiskSizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // SetUserEnvVars represents the SetUserEnvVars task.
 func SetUserEnvVars(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		for key, val := range r.Config().Machine().Env() {
+		for _, env := range environment.Get(r.Config()) {
+			key, val, _ := strings.Cut(env, "=")
+
 			if err = os.Setenv(key, val); err != nil {
 				return fmt.Errorf("failed to set enivronment variable: %w", err)
 			}

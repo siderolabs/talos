@@ -7,7 +7,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/capability"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -150,11 +150,6 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		}
 	}
 
-	env := []string{}
-	for key, val := range r.Config().Machine().Env() {
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
-	}
-
 	var restartType restart.Type
 
 	switch svc.Spec.Restart {
@@ -172,7 +167,7 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
-		runner.WithEnv(env),
+		runner.WithEnv(environment.Get(r.Config())),
 		runner.WithOCISpecOpts(svc.getOCIOptions()...),
 		runner.WithOOMScoreAdj(-600),
 	),

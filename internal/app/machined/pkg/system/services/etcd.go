@@ -38,6 +38,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
@@ -185,10 +186,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: constants.EtcdDataPath, Source: constants.EtcdDataPath, Options: []string{"rbind", "rw"}},
 	}
 
-	env := []string{}
-	for key, val := range r.Config().Machine().Env() {
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
-	}
+	env := environment.Get(r.Config())
 
 	if goruntime.GOARCH == "arm64" {
 		env = append(env, "ETCD_UNSUPPORTED_ARCH=arm64")

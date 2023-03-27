@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -93,16 +94,11 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 		},
 	}
 
-	env := []string{}
-	for key, val := range r.Config().Machine().Env() {
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
-	}
-
 	return restart.New(process.NewRunner(
 		r.Config().Debug(),
 		args,
 		runner.WithLoggingManager(r.Logging()),
-		runner.WithEnv(env),
+		runner.WithEnv(environment.Get(r.Config())),
 		runner.WithOOMScoreAdj(-500),
 		runner.WithCgroupPath(constants.CgroupPodRuntime),
 		runner.WithDroppedCapabilities(constants.DefaultDroppedCapabilities),

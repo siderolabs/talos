@@ -52,6 +52,9 @@ const (
 	// KernelParamDashboardDisabled is the kernel parameter name for disabling the dashboard.
 	KernelParamDashboardDisabled = "talos.dashboard.disabled"
 
+	// KernelParamEnvironment is the kernel parameter name for passing process environment.
+	KernelParamEnvironment = "talos.environment"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 

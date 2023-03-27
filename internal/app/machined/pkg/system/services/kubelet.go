@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -141,18 +142,13 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		mounts = append(mounts, mount)
 	}
 
-	env := []string{}
-	for key, val := range r.Config().Machine().Env() {
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
-	}
-
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug() && r.Config().Machine().Type() == machine.TypeWorker, // enable debug logs only for the worker nodes
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(spec.Image),
-		runner.WithEnv(env),
+		runner.WithEnv(environment.Get(r.Config())),
 		runner.WithOCISpecOpts(
 			containerd.WithRootfsPropagation("shared"),
 			oci.WithCgroup(constants.CgroupKubelet),

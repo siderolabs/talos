@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -93,14 +94,6 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		},
 	}
 
-	env := []string{}
-
-	if r.Config() != nil {
-		for key, val := range r.Config().Machine().Env() {
-			env = append(env, fmt.Sprintf("%s=%s", key, val))
-		}
-	}
-
 	debug := false
 
 	if r.Config() != nil {
@@ -111,7 +104,7 @@ func (c *Containerd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		debug,
 		args,
 		runner.WithLoggingManager(r.Logging()),
-		runner.WithEnv(env),
+		runner.WithEnv(environment.Get(r.Config())),
 		runner.WithOOMScoreAdj(-999),
 		runner.WithCgroupPath(constants.CgroupSystemRuntime),
 		runner.WithDroppedCapabilities(constants.DefaultDroppedCapabilities),

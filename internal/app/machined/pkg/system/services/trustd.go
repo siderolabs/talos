@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -138,10 +139,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: filepath.Dir(constants.TrustdRuntimeSocketPath), Source: filepath.Dir(constants.TrustdRuntimeSocketPath), Options: []string{"rbind", "ro"}},
 	}
 
-	env := []string{}
-	for key, val := range r.Config().Machine().Env() {
-		env = append(env, fmt.Sprintf("%s=%s", key, val))
-	}
+	env := environment.Get(r.Config())
 
 	if debug.RaceEnabled {
 		env = append(env, "GORACE=halt_on_error=1")

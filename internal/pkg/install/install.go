@@ -27,6 +27,7 @@ import (
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/extensions"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -165,24 +166,16 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 		args = append(args, "--extra-kernel-arg", arg)
 	}
 
-	if c := procfs.ProcCmdline().Get(constants.KernelParamSideroLink).First(); c != nil {
-		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamSideroLink, *c))
-	}
-
-	if c := procfs.ProcCmdline().Get(constants.KernelParamEventsSink).First(); c != nil {
-		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamEventsSink, *c))
-	}
-
-	if c := procfs.ProcCmdline().Get(constants.KernelParamLoggingKernel).First(); c != nil {
-		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamLoggingKernel, *c))
-	}
-
-	if c := procfs.ProcCmdline().Get(constants.KernelParamEquinixMetalEvents).First(); c != nil {
-		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamEquinixMetalEvents, *c))
-	}
-
-	if c := procfs.ProcCmdline().Get(constants.KernelParamDashboardDisabled).First(); c != nil {
-		args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", constants.KernelParamDashboardDisabled, *c))
+	for _, preservedArg := range []string{
+		constants.KernelParamSideroLink,
+		constants.KernelParamEventsSink,
+		constants.KernelParamLoggingKernel,
+		constants.KernelParamEquinixMetalEvents,
+		constants.KernelParamDashboardDisabled,
+	} {
+		if c := procfs.ProcCmdline().Get(preservedArg).First(); c != nil {
+			args = append(args, "--extra-kernel-arg", fmt.Sprintf("%s=%s", preservedArg, *c))
+		}
 	}
 
 	specOpts := []oci.SpecOpts{
@@ -203,6 +196,7 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 		oci.WithApparmorProfile(""),
 		oci.WithSeccompUnconfined,
 		oci.WithAllDevicesAllowed,
+		oci.WithEnv(environment.Get(cfg)),
 	}
 
 	containerOpts := []containerd.NewContainerOpts{

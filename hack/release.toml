@@ -140,6 +140,18 @@ See [CAPV IPAM Support](https://github.com/kubernetes-sigs/cluster-api-provider-
 [Talos issue 6708](https://github.com/siderolabs/talos/issues/6708) for details.
 """
 
+    [notes.env]
+        title = "Kernel Argument `talos.environment`"
+        description="""\
+Talos now supports passing environment variables via `talos.environment` kernel argument.
+
+Example:
+
+```
+talos.environment=http_proxy=http://proxy.example.com:8080 talos.environment=https_proxy=http://proxy.example.com:8080
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]
