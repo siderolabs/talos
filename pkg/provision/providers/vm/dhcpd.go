@@ -30,7 +30,7 @@ import (
 //nolint:gocyclo
 func handlerDHCP4(serverIP net.IP, statePath string) server4.Handler {
 	return func(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
-		log.Printf("DHCPv6: got %s", m.Summary())
+		log.Printf("DHCPv4: got %s", m.Summary())
 
 		if m.OpCode != dhcpv4.OpcodeBootRequest {
 			return
@@ -62,15 +62,19 @@ func handlerDHCP4(serverIP net.IP, statePath string) server4.Handler {
 		}
 
 		modifiers := []dhcpv4.Modifier{
+			dhcpv4.WithServerIP(serverIP),
 			dhcpv4.WithNetmask(net.CIDRMask(int(match.Netmask), match.IP.BitLen())),
 			dhcpv4.WithYourIP(match.IP.AsSlice()),
-			dhcpv4.WithOption(dhcpv4.OptDNS(netipAddrsToIPs(match.Nameservers)...)),
 			dhcpv4.WithOption(dhcpv4.OptRouter(match.Gateway.AsSlice())),
 			dhcpv4.WithOption(dhcpv4.OptIPAddressLeaseTime(5 * time.Minute)),
 			dhcpv4.WithOption(dhcpv4.OptServerIdentifier(serverIP)),
 		}
 
-		if match.Hostname != "" {
+		if m.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
+			modifiers = append(modifiers, dhcpv4.WithOption(dhcpv4.OptDNS(netipAddrsToIPs(match.Nameservers)...)))
+		}
+
+		if match.Hostname != "" && m.IsOptionRequested(dhcpv4.OptionHostName) {
 			modifiers = append(modifiers,
 				dhcpv4.WithOption(dhcpv4.OptHostName(match.Hostname)),
 			)
@@ -97,12 +101,14 @@ func handlerDHCP4(serverIP net.IP, statePath string) server4.Handler {
 			}
 		}
 
-		resp.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionInterfaceMTU, dhcpv4.Uint16(match.MTU).ToBytes()))
+		if m.IsOptionRequested(dhcpv4.OptionInterfaceMTU) {
+			resp.UpdateOption(dhcpv4.OptGeneric(dhcpv4.OptionInterfaceMTU, dhcpv4.Uint16(match.MTU).ToBytes()))
+		}
 
 		switch mt := m.MessageType(); mt { //nolint:exhaustive
 		case dhcpv4.MessageTypeDiscover:
 			resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeOffer))
-		case dhcpv4.MessageTypeRequest:
+		case dhcpv4.MessageTypeRequest, dhcpv4.MessageTypeInform:
 			resp.UpdateOption(dhcpv4.OptMessageType(dhcpv4.MessageTypeAck))
 		default:
 			log.Printf("unhandled message type: %v", mt)

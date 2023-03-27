@@ -36,6 +36,14 @@ type OperatorSpecSpec struct {
 	ConfigLayer ConfigLayer `yaml:"layer" protobuf:"7"`
 }
 
+// Equal implements equality check for OperatorSpecSpec.
+func (spec OperatorSpecSpec) Equal(other OperatorSpecSpec) bool {
+	// config layer is not important for equality check
+	spec.ConfigLayer = other.ConfigLayer
+
+	return spec == other
+}
+
 // DHCP4OperatorSpec describes DHCP4 operator options.
 //
 //gotagsrewrite:gen

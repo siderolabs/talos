@@ -234,7 +234,7 @@ func (ctrl *OperatorSpecController) reconcileOperators(ctx context.Context, r co
 			// stop operator
 			ctrl.operators[id].Stop()
 			delete(ctrl.operators, id)
-		} else if *shouldRun[id] != ctrl.operators[id].Spec {
+		} else if !ctrl.operators[id].Spec.Equal(*shouldRun[id]) {
 			logger.Debug("replacing operator", zap.String("operator", id))
 
 			// stop operator
@@ -423,7 +423,7 @@ func (ctrl *OperatorSpecController) newOperator(logger *zap.Logger, spec *networ
 	case network.OperatorDHCP4:
 		logger = logger.With(zap.String("operator", "dhcp4"))
 
-		return operator.NewDHCP4(logger, spec.LinkName, spec.DHCP4, ctrl.V1alpha1Platform)
+		return operator.NewDHCP4(logger, spec.LinkName, spec.DHCP4, ctrl.V1alpha1Platform, ctrl.State)
 	case network.OperatorDHCP6:
 		logger = logger.With(zap.String("operator", "dhcp6"))
 

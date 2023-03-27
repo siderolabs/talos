@@ -2567,7 +2567,7 @@ HardwareAddrSpec describes spec for the link.
 <a name="talos.resource.definitions.network.HostnameSpecSpec"></a>
 
 ### HostnameSpecSpec
-HostnameSpecSpec describes node nostname.
+HostnameSpecSpec describes node hostname.
 
 
 | Field | Type | Label | Description |
@@ -2584,7 +2584,7 @@ HostnameSpecSpec describes node nostname.
 <a name="talos.resource.definitions.network.HostnameStatusSpec"></a>
 
 ### HostnameStatusSpec
-HostnameStatusSpec describes node nostname.
+HostnameStatusSpec describes node hostname.
 
 
 | Field | Type | Label | Description |

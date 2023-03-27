@@ -25,7 +25,7 @@ type HostnameSpec = typed.Resource[HostnameSpecSpec, HostnameSpecExtension]
 // HostnameID is the ID of the singleton instance.
 const HostnameID resource.ID = "hostname"
 
-// HostnameSpecSpec describes node nostname.
+// HostnameSpecSpec describes node hostname.
 //
 //gotagsrewrite:gen
 type HostnameSpecSpec struct {

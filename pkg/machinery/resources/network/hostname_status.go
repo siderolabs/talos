@@ -19,7 +19,7 @@ const HostnameStatusType = resource.Type("HostnameStatuses.net.talos.dev")
 // HostnameStatus resource holds node hostname.
 type HostnameStatus = typed.Resource[HostnameStatusSpec, HostnameStatusExtension]
 
-// HostnameStatusSpec describes node nostname.
+// HostnameStatusSpec describes node hostname.
 //
 //gotagsrewrite:gen
 type HostnameStatusSpec struct {

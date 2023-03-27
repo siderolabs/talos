@@ -96,14 +96,14 @@ message HardwareAddrSpec {
   bytes hardware_addr = 2;
 }
 
-// HostnameSpecSpec describes node nostname.
+// HostnameSpecSpec describes node hostname.
 message HostnameSpecSpec {
   string hostname = 1;
   string domainname = 2;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 3;
 }
 
-// HostnameStatusSpec describes node nostname.
+// HostnameStatusSpec describes node hostname.
 message HostnameStatusSpec {
   string hostname = 1;
   string domainname = 2;

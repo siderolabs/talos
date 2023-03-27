@@ -801,7 +801,7 @@ func (x *HardwareAddrSpec) GetHardwareAddr() []byte {
 	return nil
 }
 
-// HostnameSpecSpec describes node nostname.
+// HostnameSpecSpec describes node hostname.
 type HostnameSpecSpec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -865,7 +865,7 @@ func (x *HostnameSpecSpec) GetConfigLayer() enums.NetworkConfigLayer {
 	return enums.NetworkConfigLayer(0)
 }
 
-// HostnameStatusSpec describes node nostname.
+// HostnameStatusSpec describes node hostname.
 type HostnameStatusSpec struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

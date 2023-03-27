@@ -19,7 +19,7 @@ type ReadyCondition struct {
 	checks []StatusCheck
 }
 
-// NewReadyCondition builds a coondition which waits for the network to be ready.
+// NewReadyCondition builds a condition which waits for the network to be ready.
 func NewReadyCondition(state state.State, checks ...StatusCheck) *ReadyCondition {
 	return &ReadyCondition{
 		state:  state,

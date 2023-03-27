@@ -65,7 +65,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hetznercloud/hcloud-go v1.41.0
-	github.com/insomniacslk/dhcp v0.0.0-20230307103557-e252950ab961
+	github.com/insomniacslk/dhcp v0.0.0-20230327135226-74ae03f2425e
 	github.com/jsimonetti/rtnetlink v1.3.1
 	github.com/jxskiss/base62 v1.1.0
 	github.com/martinlindhe/base36 v1.1.1
