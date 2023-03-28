@@ -151,6 +151,8 @@ func NewState() (*State, error) {
 		&network.NodeAddress{},
 		&network.NodeAddressFilter{},
 		&network.OperatorSpec{},
+		&network.ProbeSpec{},
+		&network.ProbeStatus{},
 		&network.ResolverStatus{},
 		&network.ResolverSpec{},
 		&network.RouteStatus{},

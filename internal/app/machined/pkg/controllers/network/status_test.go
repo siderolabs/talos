@@ -6,184 +6,106 @@
 package network_test
 
 import (
-	"context"
-	"log"
 	"net/netip"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type StatusSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *StatusSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.StatusController{}))
-
-	suite.startRuntime()
-}
-
-func (suite *StatusSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *StatusSuite) assertStatus(expected network.StatusSpec) error {
-	status, err := suite.state.Get(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined),
-	)
-	if err != nil {
-		if !state.IsNotFoundError(err) {
-			suite.Require().NoError(err)
-		}
-
-		return retry.ExpectedError(err)
-	}
-
-	if *status.(*network.Status).TypedSpec() != expected {
-		return retry.ExpectedErrorf("status %+v != expected %+v", *status.(*network.Status).TypedSpec(), expected)
-	}
-
-	return nil
+	ctest.DefaultSuite
 }
 
 func (suite *StatusSuite) TestNone() {
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertStatus(network.StatusSpec{})
-			},
-		),
-	)
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{network.StatusID}, func(r *network.Status, assert *assert.Assertions) {
+		assert.Equal(network.StatusSpec{}, *r.TypedSpec())
+	})
 }
 
 func (suite *StatusSuite) TestAddresses() {
 	nodeAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressCurrentID)
 	nodeAddress.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("10.0.0.1/24")}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodeAddress))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeAddress))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertStatus(network.StatusSpec{AddressReady: true})
-			},
-		),
-	)
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{network.StatusID}, func(r *network.Status, assert *assert.Assertions) {
+		assert.Equal(network.StatusSpec{AddressReady: true}, *r.TypedSpec())
+	})
 }
 
 func (suite *StatusSuite) TestRoutes() {
 	route := network.NewRouteStatus(network.NamespaceName, "foo")
 	route.TypedSpec().Gateway = netip.MustParseAddr("10.0.0.1")
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, route))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), route))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertStatus(network.StatusSpec{ConnectivityReady: true})
-			},
-		),
-	)
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{network.StatusID}, func(r *network.Status, assert *assert.Assertions) {
+		assert.Equal(network.StatusSpec{ConnectivityReady: true}, *r.TypedSpec())
+	})
+}
+
+func (suite *StatusSuite) TestProbeStatuses() {
+	probeStatus := network.NewProbeStatus(network.NamespaceName, "foo")
+	probeStatus.TypedSpec().Success = true
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), probeStatus))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{network.StatusID}, func(r *network.Status, assert *assert.Assertions) {
+		assert.Equal(network.StatusSpec{ConnectivityReady: true}, *r.TypedSpec())
+	})
+
+	// failing probe make status not ready
+	route := network.NewRouteStatus(network.NamespaceName, "foo")
+	route.TypedSpec().Gateway = netip.MustParseAddr("10.0.0.1")
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), route))
+
+	probeStatusFail := network.NewProbeStatus(network.NamespaceName, "failing")
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), probeStatusFail))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{network.StatusID}, func(r *network.Status, assert *assert.Assertions) {
+		assert.Equal(network.StatusSpec{}, *r.TypedSpec())
+	})
 }
 
 func (suite *StatusSuite) TestHostname() {
 	hostname := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
 	hostname.TypedSpec().Hostname = "foo"
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, hostname))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), hostname))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertStatus(network.StatusSpec{HostnameReady: true})
-			},
-		),
-	)
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{network.StatusID}, func(r *network.Status, assert *assert.Assertions) {
+		assert.Equal(network.StatusSpec{HostnameReady: true}, *r.TypedSpec())
+	})
 }
 
 func (suite *StatusSuite) TestEtcFiles() {
 	hosts := files.NewEtcFileStatus(files.NamespaceName, "hosts")
 	resolv := files.NewEtcFileStatus(files.NamespaceName, "resolv.conf")
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, hosts))
-	suite.Require().NoError(suite.state.Create(suite.ctx, resolv))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), hosts))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), resolv))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertStatus(network.StatusSpec{EtcFilesReady: true})
-			},
-		),
-	)
-}
-
-func (suite *StatusSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewNodeAddress(network.NamespaceName, "bar"),
-		),
-	)
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewResolverStatus(network.NamespaceName, "bar"),
-		),
-	)
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewHostnameStatus(network.NamespaceName, "bar"),
-		),
-	)
-	suite.Assert().NoError(suite.state.Create(context.Background(), files.NewEtcFileStatus(files.NamespaceName, "bar")))
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{network.StatusID}, func(r *network.Status, assert *assert.Assertions) {
+		assert.Equal(network.StatusSpec{EtcFilesReady: true}, *r.TypedSpec())
+	})
 }
 
 func TestStatusSuite(t *testing.T) {
-	suite.Run(t, new(StatusSuite))
+	suite.Run(t, &StatusSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 3 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.StatusController{}))
+			},
+		},
+	})
 }

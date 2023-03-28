@@ -193,6 +193,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1alpha1Platform: ctrl.v1alpha1Runtime.State().Platform(),
 			PlatformState:    ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
 		},
+		&network.ProbeController{},
 		&network.ResolverConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},

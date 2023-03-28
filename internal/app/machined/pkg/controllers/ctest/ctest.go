@@ -39,11 +39,16 @@ type DefaultSuite struct { //nolint:govet
 
 	AfterSetup    func(suite *DefaultSuite)
 	AfterTearDown func(suite *DefaultSuite)
+	Timeout       time.Duration
 }
 
 // SetupTest is a function for setting up a test.
 func (suite *DefaultSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
+	if suite.Timeout == 0 {
+		suite.Timeout = 3 * time.Minute
+	}
+
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), suite.Timeout)
 
 	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
 
@@ -103,7 +108,7 @@ func (suite *DefaultSuite) TearDownTest() {
 	}
 }
 
-// Suite is a type which dectibes the suite type.
+// Suite is a type which describes the suite type.
 type Suite interface {
 	T() *testing.T
 	Require() *require.Assertions

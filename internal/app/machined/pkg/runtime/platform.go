@@ -57,5 +57,7 @@ type PlatformNetworkConfig struct {
 
 	ExternalIPs []netip.Addr `yaml:"externalIPs"`
 
+	Probes []network.ProbeSpecSpec `yaml:"probes,omitempty"`
+
 	Metadata *runtime.PlatformMetadataSpec `yaml:"metadata,omitempty"`
 }

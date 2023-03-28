@@ -93,6 +93,10 @@ func (ctrl *PlatformConfigController) Outputs() []controller.Output {
 			Kind: controller.OutputShared,
 		},
 		{
+			Type: network.ProbeSpecType,
+			Kind: controller.OutputShared,
+		},
+		{
 			Type: runtimeres.PlatformMetadataType,
 			Kind: controller.OutputExclusive,
 		},
@@ -214,7 +218,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 	for _, specType := range []struct {
 		length           int
 		getter           func(i int) interface{}
-		idBuilder        func(spec interface{}) resource.ID
+		idBuilder        func(spec interface{}) (resource.ID, error)
 		resourceBuilder  func(id string) resource.Resource
 		resourceModifier func(newSpec interface{}) func(r resource.Resource) error
 	}{
@@ -224,10 +228,10 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			getter: func(i int) interface{} {
 				return networkConfig.Addresses[i]
 			},
-			idBuilder: func(spec interface{}) resource.ID {
+			idBuilder: func(spec interface{}) (resource.ID, error) {
 				addressSpec := spec.(network.AddressSpecSpec) //nolint:errcheck,forcetypeassert
 
-				return network.LayeredID(network.ConfigPlatform, network.AddressID(addressSpec.LinkName, addressSpec.Address))
+				return network.LayeredID(network.ConfigPlatform, network.AddressID(addressSpec.LinkName, addressSpec.Address)), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewAddressSpec(network.ConfigNamespaceName, id)
@@ -249,10 +253,10 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			getter: func(i int) interface{} {
 				return networkConfig.Links[i]
 			},
-			idBuilder: func(spec interface{}) resource.ID {
+			idBuilder: func(spec interface{}) (resource.ID, error) {
 				linkSpec := spec.(network.LinkSpecSpec) //nolint:errcheck,forcetypeassert
 
-				return network.LayeredID(network.ConfigPlatform, network.LinkID(linkSpec.Name))
+				return network.LayeredID(network.ConfigPlatform, network.LinkID(linkSpec.Name)), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewLinkSpec(network.ConfigNamespaceName, id)
@@ -274,10 +278,10 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			getter: func(i int) interface{} {
 				return networkConfig.Routes[i]
 			},
-			idBuilder: func(spec interface{}) resource.ID {
+			idBuilder: func(spec interface{}) (resource.ID, error) {
 				routeSpec := spec.(network.RouteSpecSpec) //nolint:errcheck,forcetypeassert
 
-				return network.LayeredID(network.ConfigPlatform, network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority))
+				return network.LayeredID(network.ConfigPlatform, network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority)), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewRouteSpec(network.ConfigNamespaceName, id)
@@ -299,8 +303,8 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			getter: func(i int) interface{} {
 				return networkConfig.Hostnames[i]
 			},
-			idBuilder: func(spec interface{}) resource.ID {
-				return network.LayeredID(network.ConfigPlatform, network.HostnameID)
+			idBuilder: func(spec interface{}) (resource.ID, error) {
+				return network.LayeredID(network.ConfigPlatform, network.HostnameID), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewHostnameSpec(network.ConfigNamespaceName, id)
@@ -322,8 +326,8 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			getter: func(i int) interface{} {
 				return networkConfig.Resolvers[i]
 			},
-			idBuilder: func(spec interface{}) resource.ID {
-				return network.LayeredID(network.ConfigPlatform, network.ResolverID)
+			idBuilder: func(spec interface{}) (resource.ID, error) {
+				return network.LayeredID(network.ConfigPlatform, network.ResolverID), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewResolverSpec(network.ConfigNamespaceName, id)
@@ -345,8 +349,8 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			getter: func(i int) interface{} {
 				return networkConfig.TimeServers[i]
 			},
-			idBuilder: func(spec interface{}) resource.ID {
-				return network.LayeredID(network.ConfigPlatform, network.TimeServerID)
+			idBuilder: func(spec interface{}) (resource.ID, error) {
+				return network.LayeredID(network.ConfigPlatform, network.TimeServerID), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewTimeServerSpec(network.ConfigNamespaceName, id)
@@ -368,10 +372,10 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			getter: func(i int) interface{} {
 				return networkConfig.Operators[i]
 			},
-			idBuilder: func(spec interface{}) resource.ID {
+			idBuilder: func(spec interface{}) (resource.ID, error) {
 				operatorSpec := spec.(network.OperatorSpecSpec) //nolint:errcheck,forcetypeassert
 
-				return network.LayeredID(network.ConfigPlatform, network.OperatorID(operatorSpec.Operator, operatorSpec.LinkName))
+				return network.LayeredID(network.ConfigPlatform, network.OperatorID(operatorSpec.Operator, operatorSpec.LinkName)), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewOperatorSpec(network.ConfigNamespaceName, id)
@@ -393,11 +397,11 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			getter: func(i int) interface{} {
 				return networkConfig.ExternalIPs[i]
 			},
-			idBuilder: func(spec interface{}) resource.ID {
+			idBuilder: func(spec interface{}) (resource.ID, error) {
 				ipAddr := spec.(netip.Addr) //nolint:errcheck,forcetypeassert
 				ipPrefix := netip.PrefixFrom(ipAddr, ipAddr.BitLen())
 
-				return network.AddressID(externalLink, ipPrefix)
+				return network.AddressID(externalLink, ipPrefix), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewAddressStatus(network.NamespaceName, id)
@@ -424,14 +428,39 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 				}
 			},
 		},
+		// ProbeSpec
+		{
+			length: len(networkConfig.Probes),
+			getter: func(i int) interface{} {
+				return networkConfig.Probes[i]
+			},
+			idBuilder: func(spec interface{}) (resource.ID, error) {
+				probeSpec := spec.(network.ProbeSpecSpec) //nolint:errcheck,forcetypeassert
+
+				return probeSpec.ID()
+			},
+			resourceBuilder: func(id string) resource.Resource {
+				return network.NewProbeSpec(network.NamespaceName, id)
+			},
+			resourceModifier: func(newSpec interface{}) func(r resource.Resource) error {
+				return func(r resource.Resource) error {
+					spec := r.(*network.ProbeSpec).TypedSpec()
+
+					*spec = newSpec.(network.ProbeSpecSpec) //nolint:errcheck,forcetypeassert
+					spec.ConfigLayer = network.ConfigPlatform
+
+					return nil
+				}
+			},
+		},
 		// Platform metadata
 		{
 			length: metadataLength,
 			getter: func(i int) interface{} {
 				return networkConfig.Metadata
 			},
-			idBuilder: func(spec interface{}) resource.ID {
-				return runtimeres.PlatformMetadataID
+			idBuilder: func(spec interface{}) (resource.ID, error) {
+				return runtimeres.PlatformMetadataID, nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return runtimeres.NewPlatformMetadataSpec(runtimeres.NamespaceName, id)
@@ -455,9 +484,13 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 
 		for i := 0; i < specType.length; i++ {
 			spec := specType.getter(i)
-			id := specType.idBuilder(spec)
 
-			if err := r.Modify(ctx, specType.resourceBuilder(id), specType.resourceModifier(spec)); err != nil {
+			id, err := specType.idBuilder(spec)
+			if err != nil {
+				return fmt.Errorf("error building resource %s ID: %w", resourceType, err)
+			}
+
+			if err = r.Modify(ctx, specType.resourceBuilder(id), specType.resourceModifier(spec)); err != nil {
 				return fmt.Errorf("error modifying resource %s: %w", resourceType, err)
 			}
 

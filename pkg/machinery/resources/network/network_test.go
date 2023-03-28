@@ -36,6 +36,7 @@ func TestRegisterResource(t *testing.T) {
 		&network.NodeAddress{},
 		&network.NodeAddressFilter{},
 		&network.OperatorSpec{},
+		&network.ProbeSpec{},
 		&network.ResolverStatus{},
 		&network.ResolverSpec{},
 		&network.RouteStatus{},

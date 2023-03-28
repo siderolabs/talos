@@ -432,6 +432,42 @@ func (suite *PlatformConfigSuite) TestPlatformMockTimeServers() {
 	)
 }
 
+func (suite *PlatformConfigSuite) TestPlatformMockProbes() {
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&netctrl.PlatformConfigController{
+				V1alpha1Platform: &platformMock{
+					tcpProbes: []string{"example.com:80", "example.com:443"},
+				},
+				StatePath:     suite.statePath,
+				PlatformState: suite.state,
+			},
+		),
+	)
+
+	suite.startRuntime()
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertResources(
+					network.NamespaceName, network.ProbeSpecType, []string{
+						"tcp:example.com:80",
+						"tcp:example.com:443",
+					}, func(r resource.Resource) error {
+						spec := r.(*network.ProbeSpec).TypedSpec()
+
+						suite.Assert().Equal(time.Second, spec.Interval)
+						suite.Assert().Equal(network.ConfigPlatform, spec.ConfigLayer)
+
+						return nil
+					},
+				)
+			},
+		),
+	)
+}
+
 func (suite *PlatformConfigSuite) TestPlatformMockExternalIPs() {
 	suite.Require().NoError(
 		suite.runtime.RegisterController(
@@ -658,6 +694,7 @@ type platformMock struct {
 	resolvers     []netip.Addr
 	timeServers   []string
 	dhcp4Links    []string
+	tcpProbes     []string
 
 	metadata *runtimeres.PlatformMetadataSpec
 }
@@ -783,6 +820,18 @@ func (mock *platformMock) NetworkConfiguration(
 				DHCP4:       network.DHCP4OperatorSpec{},
 			},
 		)
+	}
+
+	for _, endpoint := range mock.tcpProbes {
+		networkConfig.Probes = append(
+			networkConfig.Probes, network.ProbeSpecSpec{
+				Interval: time.Second,
+				TCP: network.TCPProbeSpec{
+					Endpoint: endpoint,
+					Timeout:  time.Second,
+				},
+				ConfigLayer: network.ConfigPlatform,
+			})
 	}
 
 	networkConfig.Metadata = mock.metadata

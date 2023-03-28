@@ -188,6 +188,20 @@ message OperatorSpecSpec {
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 7;
 }
 
+// ProbeSpecSpec describes the Probe.
+message ProbeSpecSpec {
+  google.protobuf.Duration interval = 1;
+  int64 failure_threshold = 2;
+  TCPProbeSpec tcp = 3;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 4;
+}
+
+// ProbeStatusSpec describes the Probe.
+message ProbeStatusSpec {
+  bool success = 1;
+  string last_error = 2;
+}
+
 // ResolverSpecSpec describes DNS resolvers.
 message ResolverSpecSpec {
   repeated common.NetIP dns_servers = 1;
@@ -244,6 +258,12 @@ message StatusSpec {
   bool connectivity_ready = 2;
   bool hostname_ready = 3;
   bool etc_files_ready = 4;
+}
+
+// TCPProbeSpec describes the TCP Probe.
+message TCPProbeSpec {
+  string endpoint = 1;
+  google.protobuf.Duration timeout = 2;
 }
 
 // TimeServerSpecSpec describes NTP servers.

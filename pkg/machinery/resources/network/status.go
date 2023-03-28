@@ -49,7 +49,24 @@ func (StatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             StatusType,
 		Aliases:          []resource.Type{"netstatus", "netstatuses"},
 		DefaultNamespace: NamespaceName,
-		PrintColumns:     []meta.PrintColumn{},
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Address",
+				JSONPath: "{.addressReady}",
+			},
+			{
+				Name:     "Connectivity",
+				JSONPath: "{.connectivityReady}",
+			},
+			{
+				Name:     "Hostname",
+				JSONPath: "{.hostnameReady}",
+			},
+			{
+				Name:     "Etc",
+				JSONPath: "{.etcFilesReady}",
+			},
+		},
 	}
 }
 

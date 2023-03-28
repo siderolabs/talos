@@ -148,12 +148,15 @@ description: Talos gRPC API reference.
     - [NodeAddressFilterSpec](#talos.resource.definitions.network.NodeAddressFilterSpec)
     - [NodeAddressSpec](#talos.resource.definitions.network.NodeAddressSpec)
     - [OperatorSpecSpec](#talos.resource.definitions.network.OperatorSpecSpec)
+    - [ProbeSpecSpec](#talos.resource.definitions.network.ProbeSpecSpec)
+    - [ProbeStatusSpec](#talos.resource.definitions.network.ProbeStatusSpec)
     - [ResolverSpecSpec](#talos.resource.definitions.network.ResolverSpecSpec)
     - [ResolverStatusSpec](#talos.resource.definitions.network.ResolverStatusSpec)
     - [RouteSpecSpec](#talos.resource.definitions.network.RouteSpecSpec)
     - [RouteStatusSpec](#talos.resource.definitions.network.RouteStatusSpec)
     - [STPSpec](#talos.resource.definitions.network.STPSpec)
     - [StatusSpec](#talos.resource.definitions.network.StatusSpec)
+    - [TCPProbeSpec](#talos.resource.definitions.network.TCPProbeSpec)
     - [TimeServerSpecSpec](#talos.resource.definitions.network.TimeServerSpecSpec)
     - [TimeServerStatusSpec](#talos.resource.definitions.network.TimeServerStatusSpec)
     - [VIPEquinixMetalSpec](#talos.resource.definitions.network.VIPEquinixMetalSpec)
@@ -2737,6 +2740,40 @@ OperatorSpecSpec describes DNS resolvers.
 
 
 
+<a name="talos.resource.definitions.network.ProbeSpecSpec"></a>
+
+### ProbeSpecSpec
+ProbeSpecSpec describes the Probe.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| failure_threshold | [int64](#int64) |  |  |
+| tcp | [TCPProbeSpec](#talos.resource.definitions.network.TCPProbeSpec) |  |  |
+| config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.ProbeStatusSpec"></a>
+
+### ProbeStatusSpec
+ProbeStatusSpec describes the Probe.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| success | [bool](#bool) |  |  |
+| last_error | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.ResolverSpecSpec"></a>
 
 ### ResolverSpecSpec
@@ -2849,6 +2886,22 @@ StatusSpec describes network state.
 | connectivity_ready | [bool](#bool) |  |  |
 | hostname_ready | [bool](#bool) |  |  |
 | etc_files_ready | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.TCPProbeSpec"></a>
+
+### TCPProbeSpec
+TCPProbeSpec describes the TCP Probe.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  |  |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 
