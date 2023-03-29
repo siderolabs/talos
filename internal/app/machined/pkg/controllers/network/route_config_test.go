@@ -102,6 +102,39 @@ func (suite *RouteConfigSuite) TestCmdline() {
 	)
 }
 
+func (suite *RouteConfigSuite) TestCmdlineNotReachable() {
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&netctrl.RouteConfigController{
+				Cmdline: procfs.NewCmdline("ip=172.20.0.2::172.20.0.1:255.255.255.255::eth1:::::"),
+			},
+		),
+	)
+
+	suite.startRuntime()
+
+	suite.assertRoutes(
+		[]string{
+			"cmdline/inet4/172.20.0.1//1024",
+			"cmdline/inet4//172.20.0.1/32/1024",
+		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigCmdline, r.TypedSpec().ConfigLayer)
+			asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+
+			switch r.Metadata().ID() {
+			case "cmdline/inet4/172.20.0.1//1024":
+				asrt.Equal("eth1", r.TypedSpec().OutLinkName)
+				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+			case "cmdline/inet4//172.20.0.1/32/1024":
+				asrt.Equal("eth1", r.TypedSpec().OutLinkName)
+				asrt.Equal(netip.Addr{}, r.TypedSpec().Gateway)
+				asrt.Equal(netip.MustParsePrefix("172.20.0.1/32"), r.TypedSpec().Destination)
+				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+			}
+		},
+	)
+}
+
 func (suite *RouteConfigSuite) TestMachineConfiguration() {
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.RouteConfigController{}))
 

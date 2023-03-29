@@ -192,27 +192,43 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (routes []ne
 			continue
 		}
 
-		var route network.RouteSpecSpec
-
-		route.Gateway = linkConfig.Gateway
-
-		if route.Gateway.Is6() {
-			route.Family = nethelpers.FamilyInet6
-		} else {
-			route.Family = nethelpers.FamilyInet4
+		// add a default gateway route
+		defaultGatewayRoute := network.RouteSpecSpec{
+			Gateway:     linkConfig.Gateway,
+			Scope:       nethelpers.ScopeGlobal,
+			Table:       nethelpers.TableMain,
+			Priority:    DefaultRouteMetric + uint32(idx), // set different priorities to avoid a conflict
+			Protocol:    nethelpers.ProtocolBoot,
+			Type:        nethelpers.TypeUnicast,
+			OutLinkName: linkConfig.LinkName,
+			ConfigLayer: network.ConfigCmdline,
 		}
 
-		route.Scope = nethelpers.ScopeGlobal
-		route.Table = nethelpers.TableMain
-		route.Priority = DefaultRouteMetric + uint32(idx) // set different priorities to avoid a conflict
-		route.Protocol = nethelpers.ProtocolBoot
-		route.Type = nethelpers.TypeUnicast
-		route.OutLinkName = linkConfig.LinkName
-		route.ConfigLayer = network.ConfigCmdline
+		if defaultGatewayRoute.Gateway.Is6() {
+			defaultGatewayRoute.Family = nethelpers.FamilyInet6
+		} else {
+			defaultGatewayRoute.Family = nethelpers.FamilyInet4
+		}
 
-		route.Normalize()
+		defaultGatewayRoute.Normalize()
 
-		routes = append(routes, route)
+		routes = append(routes, defaultGatewayRoute)
+
+		// for IPv4, if the gateway is not directly reachable on the link, add a link-scope route for the gateway
+		if linkConfig.Gateway.Is4() && !linkConfig.Address.Contains(linkConfig.Gateway) {
+			routes = append(routes, network.RouteSpecSpec{
+				Family:      nethelpers.FamilyInet4,
+				Destination: netip.PrefixFrom(linkConfig.Gateway, linkConfig.Gateway.BitLen()),
+				Source:      linkConfig.Address.Addr(),
+				OutLinkName: linkConfig.LinkName,
+				Table:       nethelpers.TableMain,
+				Priority:    defaultGatewayRoute.Priority,
+				Scope:       nethelpers.ScopeLink,
+				Type:        nethelpers.TypeUnicast,
+				Protocol:    nethelpers.ProtocolBoot,
+				ConfigLayer: network.ConfigCmdline,
+			})
+		}
 	}
 
 	return routes
