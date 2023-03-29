@@ -92,27 +92,6 @@ func (source *Source) gather() *Data {
 
 	gatherFuncs := []func() error{
 		func() error {
-			resp, err := source.MachineClient.Hostname(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			resultLock.Lock()
-			defer resultLock.Unlock()
-
-			for _, msg := range resp.GetMessages() {
-				node := msg.GetMetadata().GetHostname()
-
-				if _, ok := result.Nodes[node]; !ok {
-					result.Nodes[node] = &Node{}
-				}
-
-				result.Nodes[node].Hostname = msg
-			}
-
-			return nil
-		},
-		func() error {
 			resp, err := source.MachineClient.LoadAvg(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err

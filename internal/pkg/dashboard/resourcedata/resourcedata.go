@@ -143,6 +143,14 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 		return err
 	}
 
+	if err := source.COSI.Watch(ctx, network.NewStatus(network.NamespaceName, network.StatusID).Metadata(), eventCh); err != nil {
+		return err
+	}
+
+	if err := source.COSI.Watch(ctx, network.NewHostnameStatus(network.NamespaceName, network.HostnameID).Metadata(), eventCh); err != nil {
+		return err
+	}
+
 	if err := source.COSI.WatchKind(ctx, k8s.NewStaticPodStatus(k8s.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
 		return err
 	}
@@ -156,6 +164,10 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 	}
 
 	if err := source.COSI.WatchKind(ctx, cluster.NewMember(cluster.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
+		return err
+	}
+
+	if err := source.COSI.WatchKind(ctx, network.NewNodeAddress(network.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
 		return err
 	}
 

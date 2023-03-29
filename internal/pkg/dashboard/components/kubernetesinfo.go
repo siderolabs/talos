@@ -65,7 +65,7 @@ func (widget *KubernetesInfo) OnNodeSelect(node string) {
 func (widget *KubernetesInfo) OnResourceDataChange(data resourcedata.Data) {
 	widget.updateNodeData(data)
 
-	if data.Node != widget.selectedNode {
+	if data.Node == widget.selectedNode {
 		widget.redraw()
 	}
 }

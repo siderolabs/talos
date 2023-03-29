@@ -6,6 +6,7 @@ package components
 
 import (
 	"net/netip"
+	"sort"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -14,18 +15,27 @@ import (
 	"github.com/siderolabs/gen/slices"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
-	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
+var (
+	zeroPrefix    = netip.Prefix{}
+	routedNoK8sID = network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s)
+)
+
 type networkInfoData struct {
-	addresses   string
+	hostname    string
 	gateway     string
+	outbound    string
 	resolvers   string
 	timeservers string
 
+	addresses              string
+	nodeAddressRouted      *network.NodeAddress
+	nodeAddressRoutedNoK8s *network.NodeAddress
+
 	routeStatusMap map[resource.ID]*network.RouteStatus
-	memberMap      map[resource.ID]*cluster.Member
 }
 
 // NetworkInfo represents the network info widget.
@@ -68,6 +78,7 @@ func (widget *NetworkInfo) OnResourceDataChange(data resourcedata.Data) {
 	}
 }
 
+//nolint:gocyclo
 func (widget *NetworkInfo) updateNodeData(data resourcedata.Data) {
 	nodeData := widget.getOrCreateNodeData(data.Node)
 
@@ -84,6 +95,18 @@ func (widget *NetworkInfo) updateNodeData(data resourcedata.Data) {
 		} else {
 			nodeData.timeservers = widget.timeservers(res)
 		}
+	case *network.Status:
+		if data.Deleted {
+			nodeData.outbound = notAvailable
+		} else {
+			nodeData.outbound = widget.outbound(res)
+		}
+	case *network.HostnameStatus:
+		if data.Deleted {
+			nodeData.hostname = notAvailable
+		} else {
+			nodeData.hostname = res.TypedSpec().Hostname
+		}
 	case *network.RouteStatus:
 		if data.Deleted {
 			delete(nodeData.routeStatusMap, res.Metadata().ID())
@@ -92,14 +115,8 @@ func (widget *NetworkInfo) updateNodeData(data resourcedata.Data) {
 		}
 
 		nodeData.gateway = widget.gateway(maps.Values(nodeData.routeStatusMap))
-	case *cluster.Member:
-		if data.Deleted {
-			delete(nodeData.memberMap, res.Metadata().ID())
-		} else {
-			nodeData.memberMap[res.Metadata().ID()] = res
-		}
-
-		nodeData.addresses = widget.addresses(data.Node, maps.Values(nodeData.memberMap))
+	case *network.NodeAddress:
+		widget.setAddresses(data, res)
 	}
 }
 
@@ -107,12 +124,13 @@ func (widget *NetworkInfo) getOrCreateNodeData(node string) *networkInfoData {
 	data, ok := widget.nodeMap[node]
 	if !ok {
 		data = &networkInfoData{
+			hostname:       notAvailable,
 			addresses:      notAvailable,
 			gateway:        notAvailable,
+			outbound:       notAvailable,
 			resolvers:      notAvailable,
 			timeservers:    notAvailable,
 			routeStatusMap: make(map[resource.ID]*network.RouteStatus),
-			memberMap:      make(map[resource.ID]*cluster.Member),
 		}
 
 		widget.nodeMap[node] = data
@@ -127,6 +145,10 @@ func (widget *NetworkInfo) redraw() {
 	fields := fieldGroup{
 		fields: []field{
 			{
+				Name:  "HOST",
+				Value: data.hostname,
+			},
+			{
 				Name:  "IP",
 				Value: data.addresses,
 			},
@@ -134,11 +156,10 @@ func (widget *NetworkInfo) redraw() {
 				Name:  "GW",
 				Value: data.gateway,
 			},
-			// TODO: enable when implemented
-			// {
-			// 	Name:  "OUTBOUND",
-			// 	Value: data.outbound,
-			// },
+			{
+				Name:  "OUTBOUND",
+				Value: data.outbound,
+			},
 			{
 				Name:  "DNS",
 				Value: data.resolvers,
@@ -153,57 +174,74 @@ func (widget *NetworkInfo) redraw() {
 	widget.SetText(fields.String())
 }
 
-func (widget *NetworkInfo) addresses(node string, members []*cluster.Member) string {
-	var currentMember *cluster.Member
+func (widget *NetworkInfo) setAddresses(data resourcedata.Data, nodeAddress *network.NodeAddress) {
+	nodeData := widget.getOrCreateNodeData(data.Node)
 
-	for _, member := range members {
-		for _, address := range member.TypedSpec().Addresses {
-			if address.String() == node {
-				currentMember = member
-
-				break
-			}
+	switch nodeAddress.Metadata().ID() {
+	case network.NodeAddressRoutedID:
+		if data.Deleted {
+			nodeData.nodeAddressRouted = nil
+		} else {
+			nodeData.nodeAddressRouted = nodeAddress
+		}
+	case routedNoK8sID:
+		if data.Deleted {
+			nodeData.nodeAddressRoutedNoK8s = nil
+		} else {
+			nodeData.nodeAddressRoutedNoK8s = nodeAddress
 		}
 	}
 
-	if currentMember == nil {
-		return notAvailable
+	formatIPs := func(res *network.NodeAddress) string {
+		if res == nil {
+			return notAvailable
+		}
+
+		strs := slices.Map(res.TypedSpec().Addresses, func(prefix netip.Prefix) string {
+			return prefix.String()
+		})
+
+		sort.Strings(strs)
+
+		return strings.Join(strs, ", ")
 	}
 
-	ipStrs := slices.Map(currentMember.TypedSpec().Addresses, func(t netip.Addr) string {
-		return t.String()
-	})
+	// if "routed-no-k8s" is available, use it
+	if nodeData.nodeAddressRoutedNoK8s != nil {
+		nodeData.addresses = formatIPs(nodeData.nodeAddressRoutedNoK8s)
 
-	return strings.Join(ipStrs, ", ")
+		return
+	}
+
+	// fallback to "routed"
+	nodeData.addresses = formatIPs(nodeData.nodeAddressRouted)
 }
 
 func (widget *NetworkInfo) gateway(statuses []*network.RouteStatus) string {
-	resultV4 := notAvailable
-	resultV6 := notAvailable
-
-	priorityV4 := uint32(0)
-	priorityV6 := uint32(0)
+	var gatewaysV4, gatewaysV6 []string
 
 	for _, status := range statuses {
 		gateway := status.TypedSpec().Gateway
-		if !gateway.IsValid() {
+		if !gateway.IsValid() ||
+			status.TypedSpec().Destination != zeroPrefix {
 			continue
 		}
 
-		if gateway.Is4() && status.TypedSpec().Priority > priorityV4 {
-			resultV4 = gateway.String()
-			priorityV4 = status.TypedSpec().Priority
-		} else if gateway.Is6() && status.TypedSpec().Priority > priorityV6 {
-			resultV6 = gateway.String()
-			priorityV6 = status.TypedSpec().Priority
+		if gateway.Is4() {
+			gatewaysV4 = append(gatewaysV4, gateway.String())
+		} else {
+			gatewaysV6 = append(gatewaysV6, gateway.String())
 		}
 	}
 
-	if resultV4 == notAvailable {
-		return resultV6
+	if len(gatewaysV4) == 0 && len(gatewaysV6) == 0 {
+		return notAvailable
 	}
 
-	return resultV4
+	sort.Strings(gatewaysV4)
+	sort.Strings(gatewaysV6)
+
+	return strings.Join(append(gatewaysV4, gatewaysV6...), ", ")
 }
 
 func (widget *NetworkInfo) resolvers(status *network.ResolverStatus) string {
@@ -224,4 +262,12 @@ func (widget *NetworkInfo) timeservers(status *network.TimeServerStatus) string 
 	}
 
 	return strings.Join(status.TypedSpec().NTPServers, ", ")
+}
+
+func (widget *NetworkInfo) outbound(status *network.Status) string {
+	if status.TypedSpec().ConnectivityReady {
+		return "[green]OK[-]"
+	}
+
+	return "[red]FAILED[-]"
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/netip"
 	"strings"
+	"unicode"
 
 	"github.com/hashicorp/go-multierror"
 
@@ -41,8 +42,8 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 	config := &formData.base
 
 	// zero-out the fields managed by the form
-	// config.Hostnames = nil
-	// config.Resolvers = nil
+	config.Hostnames = nil
+	config.Resolvers = nil
 	config.TimeServers = nil
 	config.Links = nil
 	config.Operators = nil
@@ -52,7 +53,8 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 	if formData.hostname != "" {
 		config.Hostnames = []network.HostnameSpecSpec{
 			{
-				Hostname: formData.hostname,
+				Hostname:    formData.hostname,
+				ConfigLayer: network.ConfigPlatform,
 			},
 		}
 	}
@@ -65,17 +67,19 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 	if len(dnsServers) > 0 {
 		config.Resolvers = []network.ResolverSpecSpec{
 			{
-				DNSServers: dnsServers,
+				DNSServers:  dnsServers,
+				ConfigLayer: network.ConfigPlatform,
 			},
 		}
 	}
 
-	timeServers := formData.parseHosts(formData.timeServers)
+	timeServers := formData.splitInputList(formData.timeServers)
 
 	if len(timeServers) > 0 {
 		config.TimeServers = []network.TimeServerSpecSpec{
 			{
-				NTPServers: timeServers,
+				NTPServers:  timeServers,
+				ConfigLayer: network.ConfigPlatform,
 			},
 		}
 	}
@@ -84,10 +88,11 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 	if ifaceSelected {
 		config.Links = []network.LinkSpecSpec{
 			{
-				Name:    formData.iface,
-				Logical: false,
-				Up:      true,
-				Type:    nethelpers.LinkEther,
+				Name:        formData.iface,
+				Logical:     false,
+				Up:          true,
+				Type:        nethelpers.LinkEther,
+				ConfigLayer: network.ConfigPlatform,
 			},
 		}
 
@@ -101,6 +106,7 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 					DHCP4: network.DHCP4OperatorSpec{
 						RouteMetric: 1024,
 					},
+					ConfigLayer: network.ConfigPlatform,
 				},
 			}
 		case modeStatic:
@@ -130,16 +136,11 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 func (formData *networkConfigFormData) parseAddresses(text string) ([]netip.Addr, error) {
 	var errs error
 
-	split := strings.Split(text, ",")
+	split := formData.splitInputList(text)
 	addresses := make([]netip.Addr, 0, len(split))
 
 	for _, address := range split {
-		trimmed := strings.TrimSpace(address)
-		if trimmed == "" {
-			continue
-		}
-
-		addr, err := netip.ParseAddr(trimmed)
+		addr, err := netip.ParseAddr(address)
 		if err != nil {
 			errs = multierror.Append(errs, fmt.Errorf("address: %w", err))
 
@@ -156,35 +157,14 @@ func (formData *networkConfigFormData) parseAddresses(text string) ([]netip.Addr
 	return addresses, nil
 }
 
-func (formData *networkConfigFormData) parseHosts(text string) []string {
-	split := strings.Split(text, ",")
-	hosts := make([]string, 0, len(split))
-
-	for _, host := range split {
-		trimmed := strings.TrimSpace(host)
-		if trimmed == "" {
-			continue
-		}
-
-		hosts = append(hosts, trimmed)
-	}
-
-	return hosts
-}
-
 func (formData *networkConfigFormData) buildAddresses(linkName string) ([]network.AddressSpecSpec, error) {
 	var errs error
 
-	addressesSplit := strings.Split(formData.addresses, ",")
+	addressesSplit := formData.splitInputList(formData.addresses)
 	addresses := make([]network.AddressSpecSpec, 0, len(addressesSplit))
 
 	for _, address := range addressesSplit {
-		trimmed := strings.TrimSpace(address)
-		if trimmed == "" {
-			continue
-		}
-
-		prefix, err := netip.ParsePrefix(trimmed)
+		prefix, err := netip.ParsePrefix(address)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 
@@ -197,11 +177,12 @@ func (formData *networkConfigFormData) buildAddresses(linkName string) ([]networ
 		}
 
 		addresses = append(addresses, network.AddressSpecSpec{
-			Address:  prefix,
-			LinkName: linkName,
-			Family:   ipFamily,
-			Scope:    nethelpers.ScopeGlobal,
-			Flags:    nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			Address:     prefix,
+			LinkName:    linkName,
+			Family:      ipFamily,
+			Scope:       nethelpers.ScopeGlobal,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			ConfigLayer: network.ConfigPlatform,
 		})
 	}
 
@@ -234,6 +215,25 @@ func (formData *networkConfigFormData) buildRoutes(linkName string) ([]network.R
 			Scope:       nethelpers.ScopeGlobal,
 			Type:        nethelpers.TypeUnicast,
 			Protocol:    nethelpers.ProtocolStatic,
+			ConfigLayer: network.ConfigPlatform,
 		},
 	}, nil
+}
+
+func (formData *networkConfigFormData) splitInputList(text string) []string {
+	parts := strings.FieldsFunc(text, func(r rune) bool {
+		return r == ',' || unicode.IsSpace(r)
+	})
+
+	result := make([]string, 0, len(parts))
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+
+		if trimmed != "" {
+			result = append(result, part)
+		}
+	}
+
+	return result
 }

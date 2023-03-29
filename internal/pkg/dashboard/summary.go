@@ -38,8 +38,7 @@ func NewSummaryGrid(app *tview.Application) *SummaryGrid {
 		logViewers: make(map[string]*components.LogViewer),
 	}
 
-	widget.SetRows(8, 0).
-		SetColumns(0, 0, 0)
+	widget.SetRows(8, 0).SetColumns(-3, -2, -3)
 
 	talosInfo := components.NewTalosInfo()
 	widget.AddItem(talosInfo, 0, 0, 1, 1, 0, 0, false)

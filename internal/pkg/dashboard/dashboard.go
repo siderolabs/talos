@@ -155,7 +155,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 
 	dashboard.summaryGrid = NewSummaryGrid(dashboard.app)
 	dashboard.monitorGrid = NewMonitorGrid(dashboard.app)
-	dashboard.networkConfigGrid = NewNetworkConfigGrid(ctx, dashboard.app, dashboard.pages, cli)
+	dashboard.networkConfigGrid = NewNetworkConfigGrid(ctx, dashboard)
 
 	err := dashboard.initScreenConfigs(defOptions.screens)
 	if err != nil {
@@ -210,6 +210,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	}
 
 	dashboard.resourceDataListeners = []ResourceDataListener{
+		header,
 		dashboard.summaryGrid,
 		dashboard.networkConfigGrid,
 	}
@@ -219,6 +220,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	}
 
 	dashboard.nodeSelectListeners = []NodeSelectListener{
+		header,
 		dashboard.summaryGrid,
 		dashboard.networkConfigGrid,
 		dashboard.footer,
