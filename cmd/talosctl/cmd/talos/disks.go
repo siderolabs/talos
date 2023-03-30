@@ -61,6 +61,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 			"NAME",
 			"SIZE",
 			"BUS_PATH",
+			"SUBSYSTEM",
 			"SYSTEM_DISK",
 		}, "\t")
 
@@ -113,6 +114,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 				getWithPlaceholder(disk.Name),
 				humanize.Bytes(disk.Size),
 				getWithPlaceholder(disk.BusPath),
+				getWithPlaceholder(disk.Subsystem),
 				isSystemDisk,
 			}...)
 

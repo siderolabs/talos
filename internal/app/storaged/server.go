@@ -43,6 +43,7 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 			Type:       storage.Disk_DiskType(d.Type),
 			BusPath:    d.BusPath,
 			SystemDisk: systemDisk != nil && d.DeviceName == systemDisk.Device().Name(),
+			Subsystem:  d.SubSystem,
 		}
 	}
 

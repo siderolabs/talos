@@ -43,6 +43,8 @@ message Disk {
   string bus_path = 10;
   // SystemDisk indicates that the disk is used as Talos system disk.
   bool system_disk = 11;
+  // Subsystem is the symlink path in the `/sys/block/<dev>/subsystem`.
+  string subsystem = 12;
 }
 
 // DisksResponse represents the response of the `Disks` RPC.
