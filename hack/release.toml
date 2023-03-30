@@ -20,7 +20,7 @@ preface = """\
         description="""\
 * Linux: 6.1.20
 * containerd: v1.6.19
-* Kubernetes: v1.27.0-rc.0
+* Kubernetes: v1.27.0-beta.0
 * etcd: v3.5.7
 * CoreDNS: v1.10.1
 * Flannel: v0.21.4

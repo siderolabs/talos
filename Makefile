@@ -48,7 +48,7 @@ TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.27.0-rc.0
+KUBECTL_VERSION ?= v1.27.0-beta.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm

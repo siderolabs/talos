@@ -5,7 +5,7 @@ linkTitle: "Documentation"
 cascade:
   type: docs
 lastRelease: v1.4.0-alpha.1
-kubernetesRelease: "1.27.0-rc.0"
+kubernetesRelease: "1.27.0-beta.0"
 prevKubernetesRelease: "1.26.0"
 theilaRelease: "v0.2.1"
 nvidiaContainerToolkitRelease: "v1.12.0"
