@@ -580,6 +580,14 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				Type:   existing.Type,
 				Index:  existing.Index,
 				Change: unix.IFF_UP,
+			}); err != nil {
+				return fmt.Errorf("error bring down link %q before enslaving under %q: %w", link.TypedSpec().Name, masterName, err)
+			}
+
+			if err := conn.Link.Set(&rtnetlink.LinkMessage{
+				Family: existing.Family,
+				Type:   existing.Type,
+				Index:  existing.Index,
 				Attributes: &rtnetlink.LinkAttributes{
 					Master: pointer.To(masterIndex),
 				},

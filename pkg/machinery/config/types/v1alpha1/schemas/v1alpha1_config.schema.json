@@ -130,6 +130,16 @@
           "markdownDescription": "The interfaces that make up the bond.",
           "x-intellij-html-description": "\u003cp\u003eThe interfaces that make up the bond.\u003c/p\u003e\n"
         },
+        "deviceSelectors": {
+          "items": {
+            "$ref": "#/$defs/NetworkDeviceSelector"
+          },
+          "type": "array",
+          "title": "deviceSelectors",
+          "description": "Picks a network device using the selector.\nMutually exclusive with interfaces.\nSupports partial match using wildcard syntax.\n",
+          "markdownDescription": "Picks a network device using the selector.\nMutually exclusive with `interfaces`.\nSupports partial match using wildcard syntax.",
+          "x-intellij-html-description": "\u003cp\u003ePicks a network device using the selector.\nMutually exclusive with \u003ccode\u003einterfaces\u003c/code\u003e.\nSupports partial match using wildcard syntax.\u003c/p\u003e\n"
+        },
         "arpIPTarget": {
           "items": {
             "type": "string"

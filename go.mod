@@ -32,6 +32,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.44.232
 	github.com/beevik/ntp v0.3.0
+	github.com/benbjohnson/clock v1.1.0
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/containerd/cgroups v1.1.0
 	github.com/containerd/containerd v1.6.19
@@ -40,7 +41,7 @@ require (
 	github.com/containernetworking/plugins v1.2.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.1
-	github.com/cosi-project/runtime v0.3.0-alpha.10
+	github.com/cosi-project/runtime v0.3.0
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v23.0.2+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -155,7 +156,6 @@ require (
 	github.com/ProtonMail/gopenpgp/v2 v2.5.2 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
-	github.com/benbjohnson/clock v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect

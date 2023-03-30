@@ -10,8 +10,10 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	glob "github.com/ryanuber/go-glob"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -79,7 +81,7 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 		case <-r.EventCh():
 		}
 
-		links, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+		links, err := safe.ReaderList[*network.LinkStatus](ctx, r, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
 		if err != nil {
 			return err
 		}
@@ -88,13 +90,13 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 
 		var cfgProvider talosconfig.Provider
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGet[*config.MachineConfig](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
 		} else {
-			cfgProvider = cfg.(*config.MachineConfig).Config()
+			cfgProvider = cfg.Config()
 		}
 
 		if cfgProvider != nil {
@@ -102,9 +104,10 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 
 			for index, device := range cfgProvider.Machine().Network().Devices() {
 				if device.Selector() != nil {
-					device = device.(*v1alpha1.Device).DeepCopy()
+					dev := device.(*v1alpha1.Device).DeepCopy()
+					device = dev
 
-					err = ctrl.getDeviceBySelector(device, links.Items)
+					err = ctrl.getDeviceBySelector(dev, links)
 					if err != nil {
 						logger.Warn("failed to select an interface for a device", zap.Error(err))
 
@@ -118,7 +121,19 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 					selectedInterfaces[device.Interface()] = struct{}{}
 				}
 
-				id := fmt.Sprintf("%s/%d", device.Interface(), index)
+				if device.Bond() != nil && len(device.Bond().Selectors()) > 0 {
+					dev := device.(*v1alpha1.Device).DeepCopy()
+					device = dev
+
+					err = ctrl.expandBondSelector(dev, links)
+					if err != nil {
+						logger.Warn("failed to select interfaces for a bond device", zap.Error(err))
+
+						continue
+					}
+				}
+
+				id := fmt.Sprintf("%s/%03d", device.Interface(), index)
 
 				touchedIDs[id] = struct{}{}
 
@@ -156,13 +171,58 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 	}
 }
 
-func (ctrl *DeviceConfigController) getDeviceBySelector(device talosconfig.Device, links []resource.Resource) error {
+func (ctrl *DeviceConfigController) getDeviceBySelector(device *v1alpha1.Device, links safe.List[*network.LinkStatus]) error {
 	selector := device.Selector()
 
-	for _, link := range links {
-		linkStatus := link.(*network.LinkStatus).TypedSpec() //nolint:forcetypeassert,errcheck
+	matches := ctrl.selectDevices(selector, links)
+	if len(matches) == 0 {
+		return fmt.Errorf("no matching network device for defined selector: %+v", selector)
+	}
 
-		matches := false
+	link := matches[0]
+
+	device.DeviceInterface = link.Metadata().ID()
+
+	return nil
+}
+
+func (ctrl *DeviceConfigController) expandBondSelector(device *v1alpha1.Device, links safe.List[*network.LinkStatus]) error {
+	var matches []*network.LinkStatus
+
+	for _, selector := range device.Bond().Selectors() {
+		matches = append(matches,
+			// filter out bond device itself, as it will inherit the MAC address of the first link
+			slices.Filter(
+				ctrl.selectDevices(selector, links),
+				func(link *network.LinkStatus) bool {
+					return link.Metadata().ID() != device.Interface()
+				})...)
+	}
+
+	device.DeviceBond.BondInterfaces = slices.Map(matches, func(link *network.LinkStatus) string { return link.Metadata().ID() })
+
+	if len(device.DeviceBond.BondInterfaces) == 0 {
+		return fmt.Errorf("no matching network device for defined bond selectors: %v",
+			slices.Map(device.Bond().Selectors(),
+				func(selector talosconfig.NetworkDeviceSelector) string {
+					return fmt.Sprintf("%+v", selector)
+				},
+			),
+		)
+	}
+
+	device.DeviceBond.BondDeviceSelectors = nil
+
+	return nil
+}
+
+func (ctrl *DeviceConfigController) selectDevices(selector talosconfig.NetworkDeviceSelector, links safe.List[*network.LinkStatus]) []*network.LinkStatus {
+	var result []*network.LinkStatus
+
+	for iter := safe.IteratorFromList(links); iter.Next(); {
+		linkStatus := iter.Value().TypedSpec()
+
+		match := false
 
 		for _, pair := range [][]string{
 			{selector.HardwareAddress(), linkStatus.HardwareAddr.String()},
@@ -175,21 +235,18 @@ func (ctrl *DeviceConfigController) getDeviceBySelector(device talosconfig.Devic
 			}
 
 			if !glob.Glob(pair[0], pair[1]) {
-				matches = false
+				match = false
 
 				break
 			}
 
-			matches = true
+			match = true
 		}
 
-		if matches {
-			dev := device.(*v1alpha1.Device) //nolint:errcheck,forcetypeassert
-			dev.DeviceInterface = link.Metadata().ID()
-
-			return nil
+		if match {
+			result = append(result, iter.Value())
 		}
 	}
 
-	return fmt.Errorf("no matching network device for defined selector: %v", selector)
+	return result
 }

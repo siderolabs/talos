@@ -153,6 +153,11 @@ func (in *Bond) DeepCopyInto(out *Bond) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.BondDeviceSelectors != nil {
+		in, out := &in.BondDeviceSelectors, &out.BondDeviceSelectors
+		*out = make([]NetworkDeviceSelector, len(*in))
+		copy(*out, *in)
+	}
 	if in.BondARPIPTarget != nil {
 		in, out := &in.BondARPIPTarget, &out.BondARPIPTarget
 		*out = make([]string, len(*in))

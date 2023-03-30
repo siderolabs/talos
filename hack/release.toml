@@ -153,6 +153,23 @@ talos.environment=http_proxy=http://proxy.example.com:8080 talos.environment=htt
 ```
 """
 
+    [notes.bonding]
+        title = "Bond Device Selectors"
+        description="""\
+Bond links can now be described using device selectors instead of explicit device names:
+
+```yaml
+machine:
+  network:
+    interfaces:
+      - interface: bond0
+        bond:
+          deviceSelectors:
+            - hardwareAddr: '00:50:56:*'
+            - hardwareAddr: '00:50:57:9c:2c:2d'
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

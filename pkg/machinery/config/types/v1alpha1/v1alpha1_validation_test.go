@@ -581,6 +581,41 @@ func TestValidate(t *testing.T) {
 			expectedError: "3 errors occurred:\n\t* invalid bond type roundrobin\n\t* bond.upDelay can't be set if miiMon is zero\n\t* bond.adActorSysPrio is only available in 802.3ad mode\n\n",
 		},
 		{
+			name: "BondInterfacesAndSelectors",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{
+										"eth0",
+										"eth1",
+									},
+									BondDeviceSelectors: []v1alpha1.NetworkDeviceSelector{
+										{
+											NetworkDeviceKernelDriver: "virtio",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* interface \"bond0\" has both interfaces and selectors set: config sections are mutually exclusive\n\n",
+		},
+		{
 			name: "BondDoubleBond",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",

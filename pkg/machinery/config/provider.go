@@ -236,6 +236,7 @@ type WireguardPeer interface {
 //nolint:interfacebloat
 type Bond interface {
 	Interfaces() []string
+	Selectors() []NetworkDeviceSelector
 	ARPIPTarget() []string
 	Mode() string
 	HashPolicy() string

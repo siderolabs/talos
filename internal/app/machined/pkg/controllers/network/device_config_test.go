@@ -6,63 +6,26 @@
 package network_test
 
 import (
-	"context"
 	"fmt"
-	"log"
-	"sync"
+	"net"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/siderolabs/gen/maps"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type DeviceConfigSpecSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *DeviceConfigSpecSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.DeviceConfigController{}))
-
-	suite.startRuntime()
-}
-
-func (suite *DeviceConfigSpecSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+	ctest.DefaultSuite
 }
 
 func (suite *DeviceConfigSpecSuite) TestDeviceConfigs() {
@@ -76,6 +39,18 @@ func (suite *DeviceConfigSpecSuite) TestDeviceConfigs() {
 						DeviceAddresses: []string{"192.168.2.0/24"},
 						DeviceMTU:       1500,
 					},
+					{
+						DeviceInterface: "bond0",
+						DeviceAddresses: []string{"192.168.2.0/24"},
+						DeviceBond: &v1alpha1.Bond{
+							BondMode:       "balance-rr",
+							BondInterfaces: []string{"eth1", "eth2"},
+						},
+					},
+					{
+						DeviceInterface: "eth0",
+						DeviceAddresses: []string{"192.168.3.0/24"},
+					},
 				},
 			},
 		},
@@ -85,39 +60,16 @@ func (suite *DeviceConfigSpecSuite) TestDeviceConfigs() {
 
 	devices := map[string]*v1alpha1.Device{}
 	for index, item := range cfgProvider.MachineConfig.MachineNetwork.NetworkInterfaces {
-		devices[fmt.Sprintf("%s/%d", item.DeviceInterface, index)] = item
+		devices[fmt.Sprintf("%s/%03d", item.DeviceInterface, index)] = item
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				list, err := suite.state.List(
-					suite.ctx,
-					resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined),
-				)
-				if err != nil {
-					return err
-				}
-
-				for _, device := range list.Items {
-					if _, ok := devices[device.Metadata().ID()]; !ok {
-						return retry.ExpectedErrorf("device with id '%s' wasn't found", device.Metadata().ID())
-					}
-
-					delete(devices, device.Metadata().ID())
-				}
-
-				if len(list.Items) == 0 {
-					return retry.ExpectedErrorf("no device configs were created yet")
-				}
-
-				return nil
-			},
-		))
-
-	suite.Assert().Len(devices, 0)
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), maps.Keys(devices),
+		func(r *network.DeviceConfigSpec, assert *assert.Assertions) {
+			assert.Equal(r.TypedSpec().Device, devices[r.Metadata().ID()])
+		},
+	)
 }
 
 func (suite *DeviceConfigSpecSuite) TestSelectors() {
@@ -141,48 +93,109 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 	}
 
 	cfg := config.NewMachineConfig(cfgProvider)
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
 	status := network.NewLinkStatus(network.NamespaceName, "eth0")
 	status.TypedSpec().Driver = kernelDriver
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, status))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), status))
 
 	status = network.NewLinkStatus(network.NamespaceName, "eth1")
-	suite.Require().NoError(suite.state.Create(suite.ctx, status))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), status))
 
-	var deviceConfig *network.DeviceConfigSpec
-
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				config, err := suite.state.Get(
-					suite.ctx,
-					resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "eth0/0", resource.VersionUndefined),
-				)
-				if err != nil {
-					return retry.ExpectedError(err)
-				}
-
-				deviceConfig = config.(*network.DeviceConfigSpec) //nolint:errcheck,forcetypeassert
-
-				return nil
-			},
-		))
-
-	suite.Assert().NotNil(deviceConfig)
-	suite.Assert().EqualValues(1500, deviceConfig.TypedSpec().Device.MTU())
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"eth0/000"},
+		func(r *network.DeviceConfigSpec, assert *assert.Assertions) {
+			assert.Equal(1500, r.TypedSpec().Device.MTU())
+			assert.Equal([]string{"192.168.2.0/24"}, r.TypedSpec().Device.Addresses())
+		},
+	)
 }
 
-func (suite *DeviceConfigSpecSuite) TearDownTest() {
-	suite.T().Log("tear down")
+func (suite *DeviceConfigSpecSuite) TestBondSelectors() {
+	cfgProvider := &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineNetwork: &v1alpha1.NetworkConfig{
+				NetworkInterfaces: []*v1alpha1.Device{
+					{
+						DeviceInterface: "bond0",
+						DeviceAddresses: []string{"192.168.2.0/24"},
+						DeviceMTU:       1500,
+						DeviceBond: &v1alpha1.Bond{
+							BondMode: "balance-rr",
+							BondDeviceSelectors: []v1alpha1.NetworkDeviceSelector{
+								{
+									NetworkDeviceHardwareAddress: "00:*",
+								},
+								{
+									NetworkDeviceHardwareAddress: "01:*",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
-	suite.ctxCancel()
+	cfg := config.NewMachineConfig(cfgProvider)
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
-	suite.wg.Wait()
+	for _, link := range []string{"eth0", "eth1"} {
+		status := network.NewLinkStatus(network.NamespaceName, link)
+		suite.Require().NoError(suite.State().Create(suite.Ctx(), status))
+	}
+
+	rtestutils.AssertNoResource[*network.DeviceConfigSpec](suite.Ctx(), suite.T(), suite.State(), "bond0/000")
+
+	for _, link := range []struct {
+		name   string
+		hwaddr string
+	}{
+		{
+			name:   "bond0",
+			hwaddr: "00:11:22:33:44:55", // bond0 will inherit MAC of the first link
+		},
+		{
+			name:   "eth3",
+			hwaddr: "00:11:22:33:44:55",
+		},
+		{
+			name:   "eth4",
+			hwaddr: "01:11:22:33:44:55",
+		},
+		{
+			name:   "eth5",
+			hwaddr: "01:11:22:33:44:ef",
+		},
+		{
+			name:   "eth6",
+			hwaddr: "02:11:22:33:44:55",
+		},
+	} {
+		hwaddr, err := net.ParseMAC(link.hwaddr)
+		suite.Require().NoError(err)
+
+		status := network.NewLinkStatus(network.NamespaceName, link.name)
+		status.TypedSpec().HardwareAddr = nethelpers.HardwareAddr(hwaddr)
+		suite.Require().NoError(suite.State().Create(suite.Ctx(), status))
+	}
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"bond0/000"},
+		func(r *network.DeviceConfigSpec, assert *assert.Assertions) {
+			assert.Equal(1500, r.TypedSpec().Device.MTU())
+			assert.Equal([]string{"192.168.2.0/24"}, r.TypedSpec().Device.Addresses())
+			assert.Equal([]string{"eth3", "eth4", "eth5"}, r.TypedSpec().Device.Bond().Interfaces())
+		},
+	)
 }
 
 func TestDeviceConfigSpecSuite(t *testing.T) {
-	suite.Run(t, new(DeviceConfigSpecSuite))
+	suite.Run(t, &DeviceConfigSpecSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 3 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
+			},
+		},
+	})
 }

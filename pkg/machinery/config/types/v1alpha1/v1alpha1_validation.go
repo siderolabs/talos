@@ -166,6 +166,10 @@ func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationO
 
 					bondedInterfaces[iface] = device.Interface()
 				}
+
+				if len(device.Bond().Interfaces()) > 0 && len(device.Bond().Selectors()) > 0 {
+					result = multierror.Append(result, fmt.Errorf("interface %q has both interfaces and selectors set: %w", device.Interface(), ErrMutuallyExclusive))
+				}
 			}
 
 			if device.Bridge() != nil {

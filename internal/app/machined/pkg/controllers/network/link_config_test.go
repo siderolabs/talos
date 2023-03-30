@@ -138,7 +138,10 @@ func (suite *LinkConfigSuite) TestCmdline() {
 	)
 }
 
+//nolint:gocyclo
 func (suite *LinkConfigSuite) TestMachineConfiguration() {
+	const kernelDriver = "somekerneldriver"
+
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkConfigController{}))
 
 	suite.startRuntime()
@@ -191,6 +194,15 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 							DeviceBond: &v1alpha1.Bond{
 								BondInterfaces: []string{"eth2", "eth3"},
 								BondMode:       "balance-xor",
+							},
+						},
+						{
+							DeviceInterface: "bond1",
+							DeviceBond: &v1alpha1.Bond{
+								BondDeviceSelectors: []v1alpha1.NetworkDeviceSelector{{
+									NetworkDeviceKernelDriver: kernelDriver,
+								}},
+								BondMode: "balance-xor",
 							},
 						},
 						{
@@ -253,6 +265,13 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
+	for _, name := range []string{"eth6", "eth7"} {
+		status := network.NewLinkStatus(network.NamespaceName, name)
+		status.TypedSpec().Driver = kernelDriver
+
+		suite.Require().NoError(suite.state.Create(suite.ctx, status))
+	}
+
 	suite.assertLinks(
 		[]string{
 			"configuration/eth0",
@@ -261,7 +280,10 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 			"configuration/eth1",
 			"configuration/eth2",
 			"configuration/eth3",
+			"configuration/eth6",
+			"configuration/eth7",
 			"configuration/bond0",
+			"configuration/bond1",
 			"configuration/br0",
 			"configuration/dummy0",
 			"configuration/wireguard0",
@@ -297,7 +319,18 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				asrt.True(r.TypedSpec().Up)
 				asrt.False(r.TypedSpec().Logical)
 				asrt.Equal("bond0", r.TypedSpec().BondSlave.MasterName)
+			case "eth6", "eth7":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
+				asrt.Equal("bond1", r.TypedSpec().BondSlave.MasterName)
 			case "bond0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+				asrt.Equal(nethelpers.BondModeXOR, r.TypedSpec().BondMaster.Mode)
+				asrt.True(r.TypedSpec().BondMaster.UseCarrier)
+			case "bond1":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)
 				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)

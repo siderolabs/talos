@@ -2288,6 +2288,14 @@ type Bond struct {
 	//   description: The interfaces that make up the bond.
 	BondInterfaces []string `yaml:"interfaces"`
 	//   description: |
+	//     Picks a network device using the selector.
+	//     Mutually exclusive with `interfaces`.
+	//     Supports partial match using wildcard syntax.
+	//   examples:
+	//     - name: select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+	//       value: networkDeviceSelectorExamples
+	BondDeviceSelectors []NetworkDeviceSelector `yaml:"deviceSelectors,omitempty"`
+	//   description: |
 	//     A bond option.
 	//     Please see the official kernel documentation.
 	//     Not supported at the moment.

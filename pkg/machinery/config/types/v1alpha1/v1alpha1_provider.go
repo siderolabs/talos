@@ -850,6 +850,15 @@ func (b *Bond) Interfaces() []string {
 	return b.BondInterfaces
 }
 
+// Selectors implements the Bond interface.
+func (b *Bond) Selectors() []config.NetworkDeviceSelector {
+	if b == nil || b.BondDeviceSelectors == nil {
+		return nil
+	}
+
+	return slices.Map(b.BondDeviceSelectors, func(d NetworkDeviceSelector) config.NetworkDeviceSelector { return &d })
+}
+
 // ARPIPTarget implements the MachineNetwork interface.
 func (b *Bond) ARPIPTarget() []string {
 	if b == nil {
