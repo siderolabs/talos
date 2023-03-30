@@ -38,7 +38,7 @@ IMPORTVET ?= ghcr.io/siderolabs/importvet:2260533
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.33.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 13.3.1
+TEXTLINT_VERSION ?= 13.3.2
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
