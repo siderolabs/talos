@@ -13,9 +13,9 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-alpha.0-26-g2d710f9
-PKGS ?= v1.4.0-alpha.0-36-g5d77814
-EXTRAS ?= v1.4.0-alpha.0-7-g343956e
+TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0
+PKGS ?= v1.4.0
+EXTRAS ?= v1.4.0
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
 # renovate: datasource=go depName=golang.org/x/tools
@@ -23,7 +23,7 @@ GOIMPORTS_VERSION ?= v0.7.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.52.1
+GOLANGCILINT_VERSION ?= v1.52.2
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.7.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
@@ -38,7 +38,7 @@ IMPORTVET ?= ghcr.io/siderolabs/importvet:2260533
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.33.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 13.3.1
+TEXTLINT_VERSION ?= 13.3.2
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -54,7 +54,7 @@ KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.11.2
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.3.5
+CLUSTERCTL_VERSION ?= 1.4.0
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.13.2
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
