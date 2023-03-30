@@ -28,27 +28,27 @@ type Variable struct {
 	r     *regexp.Regexp
 }
 
-// AllVariables is a list of all supported variables.
-func AllVariables() []*Variable {
-	return []*Variable{
-		{
+// AllVariables is a map of all supported variables.
+func AllVariables() map[string]*Variable {
+	return map[string]*Variable{
+		constants.UUIDKey: {
 			Key:        constants.UUIDKey,
 			MatchOnArg: true,
 			Value:      UUIDValue(),
 		},
-		{
+		constants.SerialNumberKey: {
 			Key:   constants.SerialNumberKey,
 			Value: SerialNumberValue(),
 		},
-		{
+		constants.MacKey: {
 			Key:   constants.MacKey,
 			Value: MACValue(),
 		},
-		{
+		constants.HostnameKey: {
 			Key:   constants.HostnameKey,
 			Value: HostnameValue(),
 		},
-		{
+		constants.CodeKey: {
 			Key:   constants.CodeKey,
 			Value: CodeValue(),
 		},

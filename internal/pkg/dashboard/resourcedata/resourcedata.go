@@ -18,7 +18,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -139,15 +138,15 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 		return err
 	}
 
-	if err := source.COSI.Watch(ctx, runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(meta.MetalNetworkPlatformConfig)).Metadata(), eventCh); err != nil {
-		return err
-	}
-
 	if err := source.COSI.Watch(ctx, network.NewStatus(network.NamespaceName, network.StatusID).Metadata(), eventCh); err != nil {
 		return err
 	}
 
 	if err := source.COSI.Watch(ctx, network.NewHostnameStatus(network.NamespaceName, network.HostnameID).Metadata(), eventCh); err != nil {
+		return err
+	}
+
+	if err := source.COSI.WatchKind(ctx, runtime.NewMetaKey(runtime.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
 		return err
 	}
 

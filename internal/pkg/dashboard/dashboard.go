@@ -48,6 +48,9 @@ const (
 
 	// ScreenNetworkConfig is the network configuration screen.
 	ScreenNetworkConfig Screen = "Network Config"
+
+	// ScreenConfigURL is the config URL screen.
+	ScreenConfigURL Screen = "Config URL"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -114,6 +117,7 @@ type Dashboard struct {
 	summaryGrid       *SummaryGrid
 	monitorGrid       *MonitorGrid
 	networkConfigGrid *NetworkConfigGrid
+	configURLGrid     *ConfigURLGrid
 
 	selectedScreenConfig *screenConfig
 	screenConfigs        []screenConfig
@@ -156,6 +160,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	dashboard.summaryGrid = NewSummaryGrid(dashboard.app)
 	dashboard.monitorGrid = NewMonitorGrid(dashboard.app)
 	dashboard.networkConfigGrid = NewNetworkConfigGrid(ctx, dashboard)
+	dashboard.configURLGrid = NewConfigURLGrid(ctx, dashboard)
 
 	err := dashboard.initScreenConfigs(defOptions.screens)
 	if err != nil {
@@ -213,6 +218,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		header,
 		dashboard.summaryGrid,
 		dashboard.networkConfigGrid,
+		dashboard.configURLGrid,
 	}
 
 	dashboard.logDataListeners = []LogDataListener{
@@ -223,6 +229,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		header,
 		dashboard.summaryGrid,
 		dashboard.networkConfigGrid,
+		dashboard.configURLGrid,
 		dashboard.footer,
 	}
 
@@ -253,6 +260,8 @@ func (d *Dashboard) initScreenConfigs(screens []Screen) error {
 			return d.monitorGrid
 		case ScreenNetworkConfig:
 			return d.networkConfigGrid
+		case ScreenConfigURL:
+			return d.configURLGrid
 		default:
 			return nil
 		}
@@ -274,7 +283,7 @@ func (d *Dashboard) initScreenConfigs(screens []Screen) error {
 			allowNodeNavigation: true,
 		}
 
-		if screen == ScreenNetworkConfig {
+		if screen == ScreenNetworkConfig || screen == ScreenConfigURL {
 			config.allowNodeNavigation = false
 		}
 

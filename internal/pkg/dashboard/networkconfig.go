@@ -14,20 +14,16 @@ import (
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-pointer"
-	"google.golang.org/grpc/metadata"
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/internal/pkg/meta"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 const (
-	pageDeleteModal = "deleteModal"
-
 	formItemHostname    = "Hostname"
 	formItemDNSServers  = "DNS Servers"
 	formItemTimeServers = "Time Servers"
@@ -35,8 +31,6 @@ const (
 	formItemMode        = "Mode"
 	formItemAddresses   = "Addresses"
 	formItemGateway     = "Gateway"
-
-	buttonConfirmDelete = "Delete"
 )
 
 type networkConfigData struct {
@@ -125,7 +119,7 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 
 	widget.modeDropdown = tview.NewDropDown().SetLabel(formItemMode)
 	widget.modeDropdown.SetBlurFunc(widget.formEdited)
-	widget.modeDropdown.SetOptions([]string{modeDHCP, modeStatic}, func(_ string, _ int) {
+	widget.modeDropdown.SetOptions([]string{ModeDHCP, ModeStatic}, func(_ string, _ int) {
 		widget.formEdited()
 	})
 
@@ -149,27 +143,6 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 
 	saveButton := widget.configForm.GetButton(0)
 	saveButton.SetBlurFunc(widget.formEdited)
-
-	widget.configForm.AddButton("Delete", func() {
-		widget.dashboard.pages.SwitchToPage(pageDeleteModal)
-	})
-
-	deleteButton := widget.configForm.GetButton(1)
-	deleteButton.SetBlurFunc(widget.formEdited)
-
-	deleteModal := tview.NewModal().
-		SetText("Are you sure you want to delete the configuration?").
-		AddButtons([]string{buttonConfirmDelete, "Cancel"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			if buttonLabel == buttonConfirmDelete {
-				widget.delete(ctx)
-			}
-
-			widget.dashboard.pages.SwitchToPage(pageMain)
-			widget.dashboard.app.SetFocus(deleteButton)
-		})
-
-	widget.dashboard.pages.AddPage(pageDeleteModal, deleteModal, true, false)
 
 	inputCapture := func(event *tcell.EventKey) *tcell.EventKey {
 		if widget.handleFocusSwitch(event) {
@@ -238,7 +211,7 @@ func (widget *NetworkConfigGrid) formEdited() {
 		}
 
 		switch currentMode {
-		case modeDHCP:
+		case ModeDHCP:
 			resetInputField(widget.addressesField)
 			resetInputField(widget.gatewayField)
 
@@ -249,7 +222,7 @@ func (widget *NetworkConfigGrid) formEdited() {
 			if itemIndex := widget.configForm.GetFormItemIndex(formItemGateway); itemIndex != -1 {
 				widget.configForm.RemoveFormItem(itemIndex)
 			}
-		case modeStatic:
+		case ModeStatic:
 			if itemIndex := widget.configForm.GetFormItemIndex(formItemAddresses); itemIndex == -1 {
 				widget.configForm.AddFormItem(widget.addressesField)
 			}
@@ -278,18 +251,18 @@ func (widget *NetworkConfigGrid) formEdited() {
 
 	data := widget.getOrCreateNodeData(widget.selectedNode)
 
-	formData := networkConfigFormData{
-		base:        pointer.SafeDeref(data.existingConfig),
-		hostname:    widget.hostnameField.GetText(),
-		dnsServers:  widget.dnsServersField.GetText(),
-		timeServers: widget.timeServersField.GetText(),
-		iface:       currentInterface,
-		mode:        currentMode,
-		addresses:   widget.addressesField.GetText(),
-		gateway:     widget.gatewayField.GetText(),
+	formData := NetworkConfigFormData{
+		Base:        pointer.SafeDeref(data.existingConfig),
+		Hostname:    widget.hostnameField.GetText(),
+		DNSServers:  widget.dnsServersField.GetText(),
+		TimeServers: widget.timeServersField.GetText(),
+		Iface:       currentInterface,
+		Mode:        currentMode,
+		Addresses:   widget.addressesField.GetText(),
+		Gateway:     widget.gatewayField.GetText(),
 	}
 
-	config, err := formData.toPlatformNetworkConfig()
+	config, err := formData.ToPlatformNetworkConfig()
 	if err != nil {
 		data.newConfig = nil
 		data.newConfigError = err
@@ -378,20 +351,22 @@ func (widget *NetworkConfigGrid) updateNodeData(data resourcedata.Data) {
 			widget.formEdited()
 		})
 	case *runtimeres.MetaKey:
-		if data.Deleted {
-			nodeData.existingConfig = nil
-		} else {
-			cfg := runtime.PlatformNetworkConfig{}
+		if res.Metadata().ID() == runtimeres.MetaKeyTagToID(meta.MetalNetworkPlatformConfig) {
+			if data.Deleted {
+				nodeData.existingConfig = nil
+			} else {
+				cfg := runtime.PlatformNetworkConfig{}
 
-			if err := yaml.Unmarshal([]byte(res.TypedSpec().Value), &cfg); err != nil {
-				widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+				if err := yaml.Unmarshal([]byte(res.TypedSpec().Value), &cfg); err != nil {
+					widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
 
-				return
+					return
+				}
+
+				nodeData.existingConfig = &cfg
+
+				widget.formEdited()
 			}
-
-			nodeData.existingConfig = &cfg
-
-			widget.formEdited()
 		}
 	}
 }
@@ -438,7 +413,7 @@ func (widget *NetworkConfigGrid) save(ctx context.Context) {
 		return
 	}
 
-	ctx = widget.nodeContext(ctx)
+	ctx = nodeContext(ctx, widget.selectedNode)
 
 	if err = widget.dashboard.cli.MetaWrite(ctx, meta.MetalNetworkPlatformConfig, configBytes); err != nil {
 		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
@@ -449,33 +424,6 @@ func (widget *NetworkConfigGrid) save(ctx context.Context) {
 	widget.infoView.SetText("[green]Network config saved successfully[-]")
 	widget.clearForm()
 	widget.dashboard.selectScreen(ScreenSummary)
-}
-
-func (widget *NetworkConfigGrid) delete(ctx context.Context) {
-	ctx = widget.nodeContext(ctx)
-
-	if err := widget.dashboard.cli.MetaDelete(ctx, meta.MetalNetworkPlatformConfig); err != nil {
-		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
-
-		return
-	}
-
-	widget.infoView.SetText("[green]Network config deleted successfully[-]")
-}
-
-func (widget *NetworkConfigGrid) nodeContext(ctx context.Context) context.Context {
-	md, mdOk := metadata.FromOutgoingContext(ctx)
-	if mdOk {
-		md.Delete("nodes")
-
-		ctx = metadata.NewOutgoingContext(ctx, md)
-	}
-
-	if widget.selectedNode != "" {
-		ctx = client.WithNode(ctx, widget.selectedNode)
-	}
-
-	return ctx
 }
 
 func (widget *NetworkConfigGrid) handleFocusSwitch(event *tcell.EventKey) bool {

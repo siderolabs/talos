@@ -25,7 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/internal/url"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/url"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"

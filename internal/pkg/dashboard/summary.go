@@ -5,8 +5,6 @@
 package dashboard
 
 import (
-	"sync"
-
 	"github.com/rivo/tview"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
@@ -24,7 +22,6 @@ type SummaryGrid struct {
 	resourceListeners   []ResourceDataListener
 	nodeSelectListeners []NodeSelectListener
 
-	lock       sync.Mutex
 	active     bool
 	node       string
 	logViewers map[string]*components.LogViewer
@@ -70,9 +67,6 @@ func NewSummaryGrid(app *tview.Application) *SummaryGrid {
 
 // OnNodeSelect implements the NodeSelectListener interface.
 func (widget *SummaryGrid) OnNodeSelect(node string) {
-	widget.lock.Lock()
-	defer widget.lock.Unlock()
-
 	widget.node = node
 
 	widget.updateLogViewer()
@@ -98,9 +92,6 @@ func (widget *SummaryGrid) OnResourceDataChange(nodeResource resourcedata.Data) 
 
 // OnLogDataChange implements the LogDataListener interface.
 func (widget *SummaryGrid) OnLogDataChange(node string, logLine string) {
-	widget.lock.Lock()
-	defer widget.lock.Unlock()
-
 	widget.logViewer(node).WriteLog(logLine)
 }
 
@@ -137,9 +128,6 @@ func (widget *SummaryGrid) logViewer(node string) *components.LogViewer {
 
 // OnScreenSelect implements the screenSelectListener interface.
 func (widget *SummaryGrid) onScreenSelect(active bool) {
-	widget.lock.Lock()
-	defer widget.lock.Unlock()
-
 	widget.active = active
 
 	widget.updateLogViewer()

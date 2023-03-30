@@ -18,7 +18,7 @@ import (
 
 // Populate populates the config download URL with values replacing variables.
 func Populate(ctx context.Context, downloadURL string, st state.State) (string, error) {
-	return PopulateVariables(ctx, downloadURL, st, AllVariables())
+	return PopulateVariables(ctx, downloadURL, st, maps.Values(AllVariables()))
 }
 
 // PopulateVariables populates the config download URL with values replacing variables.

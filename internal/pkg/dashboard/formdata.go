@@ -20,26 +20,32 @@ import (
 const (
 	interfaceNone = "(none)"
 
-	modeDHCP   = "DHCP"
-	modeStatic = "Static"
+	// ModeDHCP is the DHCP mode for the link.
+	ModeDHCP = "DHCP"
+
+	// ModeStatic is the static IP mode for the link.
+	ModeStatic = "Static"
 )
 
-type networkConfigFormData struct {
-	base        runtime.PlatformNetworkConfig
-	hostname    string
-	dnsServers  string
-	timeServers string
-	iface       string
-	mode        string
-	addresses   string
-	gateway     string
+// NetworkConfigFormData is the form data for the network config.
+type NetworkConfigFormData struct {
+	Base        runtime.PlatformNetworkConfig
+	Hostname    string
+	DNSServers  string
+	TimeServers string
+	Iface       string
+	Mode        string
+	Addresses   string
+	Gateway     string
 }
 
+// ToPlatformNetworkConfig converts the form data to a PlatformNetworkConfig.
+//
 //nolint:gocyclo
-func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.PlatformNetworkConfig, error) {
+func (formData *NetworkConfigFormData) ToPlatformNetworkConfig() (*runtime.PlatformNetworkConfig, error) {
 	var errs error
 
-	config := &formData.base
+	config := &formData.Base
 
 	// zero-out the fields managed by the form
 	config.Hostnames = nil
@@ -50,16 +56,16 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 	config.Addresses = nil
 	config.Routes = nil
 
-	if formData.hostname != "" {
+	if formData.Hostname != "" {
 		config.Hostnames = []network.HostnameSpecSpec{
 			{
-				Hostname:    formData.hostname,
+				Hostname:    formData.Hostname,
 				ConfigLayer: network.ConfigPlatform,
 			},
 		}
 	}
 
-	dnsServers, err := formData.parseAddresses(formData.dnsServers)
+	dnsServers, err := formData.parseAddresses(formData.DNSServers)
 	if err != nil {
 		errs = multierror.Append(errs, fmt.Errorf("failed to parse DNS servers: %w", err))
 	}
@@ -73,7 +79,7 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 		}
 	}
 
-	timeServers := formData.splitInputList(formData.timeServers)
+	timeServers := formData.splitInputList(formData.TimeServers)
 
 	if len(timeServers) > 0 {
 		config.TimeServers = []network.TimeServerSpecSpec{
@@ -84,11 +90,11 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 		}
 	}
 
-	ifaceSelected := formData.iface != "" && formData.iface != interfaceNone
+	ifaceSelected := formData.Iface != "" && formData.Iface != interfaceNone
 	if ifaceSelected {
 		config.Links = []network.LinkSpecSpec{
 			{
-				Name:        formData.iface,
+				Name:        formData.Iface,
 				Logical:     false,
 				Up:          true,
 				Type:        nethelpers.LinkEther,
@@ -96,12 +102,12 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 			},
 		}
 
-		switch formData.mode {
-		case modeDHCP:
+		switch formData.Mode {
+		case ModeDHCP:
 			config.Operators = []network.OperatorSpecSpec{
 				{
 					Operator:  network.OperatorDHCP4,
-					LinkName:  formData.iface,
+					LinkName:  formData.Iface,
 					RequireUp: true,
 					DHCP4: network.DHCP4OperatorSpec{
 						RouteMetric: 1024,
@@ -109,8 +115,8 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 					ConfigLayer: network.ConfigPlatform,
 				},
 			}
-		case modeStatic:
-			config.Addresses, err = formData.buildAddresses(formData.iface)
+		case ModeStatic:
+			config.Addresses, err = formData.buildAddresses(formData.Iface)
 			if err != nil {
 				errs = multierror.Append(errs, err)
 			}
@@ -119,7 +125,7 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 				errs = multierror.Append(errs, fmt.Errorf("no addresses specified"))
 			}
 
-			config.Routes, err = formData.buildRoutes(formData.iface)
+			config.Routes, err = formData.buildRoutes(formData.Iface)
 			if err != nil {
 				errs = multierror.Append(errs, err)
 			}
@@ -133,7 +139,7 @@ func (formData *networkConfigFormData) toPlatformNetworkConfig() (*runtime.Platf
 	return config, nil
 }
 
-func (formData *networkConfigFormData) parseAddresses(text string) ([]netip.Addr, error) {
+func (formData *NetworkConfigFormData) parseAddresses(text string) ([]netip.Addr, error) {
 	var errs error
 
 	split := formData.splitInputList(text)
@@ -157,10 +163,10 @@ func (formData *networkConfigFormData) parseAddresses(text string) ([]netip.Addr
 	return addresses, nil
 }
 
-func (formData *networkConfigFormData) buildAddresses(linkName string) ([]network.AddressSpecSpec, error) {
+func (formData *NetworkConfigFormData) buildAddresses(linkName string) ([]network.AddressSpecSpec, error) {
 	var errs error
 
-	addressesSplit := formData.splitInputList(formData.addresses)
+	addressesSplit := formData.splitInputList(formData.Addresses)
 	addresses := make([]network.AddressSpecSpec, 0, len(addressesSplit))
 
 	for _, address := range addressesSplit {
@@ -193,8 +199,8 @@ func (formData *networkConfigFormData) buildAddresses(linkName string) ([]networ
 	return addresses, nil
 }
 
-func (formData *networkConfigFormData) buildRoutes(linkName string) ([]network.RouteSpecSpec, error) {
-	gateway := strings.TrimSpace(formData.gateway)
+func (formData *NetworkConfigFormData) buildRoutes(linkName string) ([]network.RouteSpecSpec, error) {
+	gateway := strings.TrimSpace(formData.Gateway)
 
 	gatewayAddr, err := netip.ParseAddr(gateway)
 	if err != nil {
@@ -220,7 +226,7 @@ func (formData *networkConfigFormData) buildRoutes(linkName string) ([]network.R
 	}, nil
 }
 
-func (formData *networkConfigFormData) splitInputList(text string) []string {
+func (formData *NetworkConfigFormData) splitInputList(text string) []string {
 	parts := strings.FieldsFunc(text, func(r rune) bool {
 		return r == ',' || unicode.IsSpace(r)
 	})

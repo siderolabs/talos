@@ -9,12 +9,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 
+	"github.com/siderolabs/go-procfs/procfs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
+	metalurl "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/url"
 	"github.com/siderolabs/talos/internal/pkg/dashboard"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -51,7 +54,30 @@ func dashboardMain() error {
 	currentPlatform, _ := platform.CurrentPlatform() //nolint:errcheck
 	if currentPlatform != nil && currentPlatform.Name() == constants.PlatformMetal {
 		screens = append(screens, dashboard.ScreenNetworkConfig)
+
+		if showConfigURLTab() {
+			screens = append(screens, dashboard.ScreenConfigURL)
+		}
 	}
 
 	return dashboard.Run(adminCtx, c, dashboard.WithAllowExitKeys(false), dashboard.WithScreens(screens...))
+}
+
+func showConfigURLTab() bool {
+	option := procfs.ProcCmdline().Get(constants.KernelParamConfig).First()
+	if option == nil {
+		return false
+	}
+
+	parsedURL, err := url.Parse(*option)
+	if err != nil {
+		return false
+	}
+
+	codeVar := metalurl.AllVariables()[constants.CodeKey]
+	if codeVar == nil {
+		return false
+	}
+
+	return codeVar.Matches(parsedURL.Query())
 }
