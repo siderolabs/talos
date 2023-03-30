@@ -782,6 +782,14 @@ func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			return fmt.Errorf("failed writing custom udev rules: %w", err)
 		}
 
+		if len(rules) > 0 {
+			if err := system.Services(r).Stop(ctx, "udevd"); err != nil {
+				return err
+			}
+
+			return system.Services(r).Start("udevd")
+		}
+
 		return nil
 	}, "writeUdevRules"
 }

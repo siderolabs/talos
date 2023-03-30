@@ -164,7 +164,7 @@ func (g *GCP) Configuration(ctx context.Context, r state.State) ([]byte, error) 
 		return nil, err
 	}
 
-	log.Printf("fetching machine config from AWS")
+	log.Printf("fetching machine config from GCP metadata service")
 
 	userdata, err := netutils.RetryFetch(ctx, g.fetchConfiguration)
 	if err != nil {

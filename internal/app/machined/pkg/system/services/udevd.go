@@ -43,6 +43,8 @@ func (c *Udevd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		"--update",
 	)
 
+	c.triggered = false
+
 	return err
 }
 
