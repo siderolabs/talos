@@ -6,7 +6,7 @@ RELEASE_TOOL_IMAGE="ghcr.io/siderolabs/release-tool:latest"
 
 function release-tool {
   docker pull "${RELEASE_TOOL_IMAGE}" >/dev/null
-  docker run --rm -w /src -v "${PWD}":/src:ro "${RELEASE_TOOL_IMAGE}" -l -d -n ${2} -t "${1}" ./hack/release.toml
+  docker run --net=host --rm -w /src -v "${PWD}":/src:ro "${RELEASE_TOOL_IMAGE}" -l -d -n ${2} -t "${1}" ./hack/release.toml
 }
 
 function changelog {
