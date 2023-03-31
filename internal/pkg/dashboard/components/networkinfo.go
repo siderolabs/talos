@@ -25,11 +25,11 @@ var (
 )
 
 type networkInfoData struct {
-	hostname    string
-	gateway     string
-	outbound    string
-	resolvers   string
-	timeservers string
+	hostname     string
+	gateway      string
+	connectivity string
+	resolvers    string
+	timeservers  string
 
 	addresses              string
 	nodeAddressRouted      *network.NodeAddress
@@ -97,9 +97,9 @@ func (widget *NetworkInfo) updateNodeData(data resourcedata.Data) {
 		}
 	case *network.Status:
 		if data.Deleted {
-			nodeData.outbound = notAvailable
+			nodeData.connectivity = notAvailable
 		} else {
-			nodeData.outbound = widget.outbound(res)
+			nodeData.connectivity = widget.connectivity(res)
 		}
 	case *network.HostnameStatus:
 		if data.Deleted {
@@ -127,7 +127,7 @@ func (widget *NetworkInfo) getOrCreateNodeData(node string) *networkInfoData {
 			hostname:       notAvailable,
 			addresses:      notAvailable,
 			gateway:        notAvailable,
-			outbound:       notAvailable,
+			connectivity:   notAvailable,
 			resolvers:      notAvailable,
 			timeservers:    notAvailable,
 			routeStatusMap: make(map[resource.ID]*network.RouteStatus),
@@ -157,8 +157,8 @@ func (widget *NetworkInfo) redraw() {
 				Value: data.gateway,
 			},
 			{
-				Name:  "OUTBOUND",
-				Value: data.outbound,
+				Name:  "CONNECTIVITY",
+				Value: data.connectivity,
 			},
 			{
 				Name:  "DNS",
@@ -264,7 +264,7 @@ func (widget *NetworkInfo) timeservers(status *network.TimeServerStatus) string 
 	return strings.Join(status.TypedSpec().NTPServers, ", ")
 }
 
-func (widget *NetworkInfo) outbound(status *network.Status) string {
+func (widget *NetworkInfo) connectivity(status *network.Status) string {
 	if status.TypedSpec().ConnectivityReady {
 		return "[green]OK[-]"
 	}
