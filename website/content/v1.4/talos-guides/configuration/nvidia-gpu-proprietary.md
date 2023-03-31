@@ -6,7 +6,6 @@ aliases:
 ---
 
 > Enabling NVIDIA GPU support on Talos is bound by [NVIDIA EULA](https://www.nvidia.com/en-us/drivers/nvidia-license/).
-> Talos GPU support has been promoted to **beta**.
 
 These are the steps to enabling NVIDIA support in Talos.
 
@@ -171,51 +170,43 @@ helm repo update
 helm install nvidia-device-plugin nvdp/nvidia-device-plugin --version=0.13.0 --set=runtimeClassName=nvidia
 ```
 
-Apply the following manifest to run CUDA pod via nvidia runtime:
+## (Optional) Setting the default runtime class as `nvidia`
+
+> Do note that this will set the default runtime class to `nvidia` for all pods scheduled on the node.
+
+Create a patch yaml `nvidia-default-runtimeclass.yaml` to update the machine config similar to below:
+
+```yaml
+- op: add
+  path: /machine/files
+  value:
+    - content: |
+        [plugins]
+          [plugins."io.containerd.grpc.v1.cri"]
+            [plugins."io.containerd.grpc.v1.cri".containerd]
+              default_runtime_name = "nvidia"
+      path: /etc/cri/conf.d/20-customization.part
+      op: create
+```
+
+Now apply the patch to all Talos nodes in the cluster having NVIDIA GPU's installed:
 
 ```bash
-cat <<EOF | kubectl apply -f -
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-operator-test
-spec:
-  restartPolicy: OnFailure
-  runtimeClassName: nvidia
-  containers:
-  - name: cuda-vector-add
-    image: "nvidia/samples:vectoradd-cuda11.6.0"
-    resources:
-      limits:
-         nvidia.com/gpu: 1
-<<EOF
+talosctl patch mc --patch @nvidia-default-runtimeclass.yaml
 ```
 
-The status can be viewed by running:
+### Testing the runtime class
+
+> Note the `spec.runtimeClassName` being explicitly set to `nvidia` in the pod spec.
+
+Run the following command to test the runtime class:
 
 ```bash
-kubectl get pods
-```
-
-which should produce an output similar to below:
-
-```text
-NAME                READY   STATUS      RESTARTS   AGE
-gpu-operator-test   0/1     Completed   0          13s
-```
-
-```bash
-kubectl logs gpu-operator-test
-```
-
-which should produce an output similar to below:
-
-```text
-[Vector addition of 50000 elements]
-Copy input data from the host memory to the CUDA device
-CUDA kernel launch with 196 blocks of 256 threads
-Copy output data from the CUDA device to the host memory
-Test PASSED
-Done
+kubectl run \
+  nvidia-test \
+  --restart=Never \
+  -ti --rm \
+  --image nvcr.io/nvidia/cuda:12.1.0-base-ubuntu22.04 \
+  --overrides '{"spec": {"runtimeClassName": "nvidia"}}' \
+  nvidia-smi
 ```
