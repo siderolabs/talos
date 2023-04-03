@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -56,19 +57,13 @@ var rebootCmd = &cobra.Command{
 			})
 		}
 
-		cmd.SilenceErrors = true
-
-		postCheckFn := func(ctx context.Context, c *client.Client) error {
-			_, err := c.Disks(ctx)
-
-			return err
-		}
+		common.SuppressErrors = true
 
 		return action.NewTracker(
 			&GlobalArgs,
 			action.MachineReadyEventFn,
 			rebootGetActorID(opts...),
-			action.WithPostCheck(postCheckFn),
+			action.WithPostCheck(action.BootIDChangedPostCheckFn),
 			action.WithDebug(rebootCmdFlags.debug),
 			action.WithTimeout(rebootCmdFlags.timeout),
 		).Run()

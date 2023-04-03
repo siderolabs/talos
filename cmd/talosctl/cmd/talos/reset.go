@@ -13,6 +13,7 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -118,20 +119,28 @@ var resetCmd = &cobra.Command{
 			return resetGetActorID(ctx, c, resetRequest)
 		}
 
-		var postCheckFn func(context.Context, *client.Client) error
+		var postCheckFn func(context.Context, *client.Client, string) error
 
 		if resetCmdFlags.reboot {
-			postCheckFn = func(ctx context.Context, c *client.Client) error {
-				return WithClientMaintenance(nil,
+			postCheckFn = func(ctx context.Context, c *client.Client, preActionBootID string) error {
+				err := WithClientMaintenance(nil,
 					func(ctx context.Context, cli *client.Client) error {
 						_, err := cli.Disks(ctx)
 
 						return err
 					})
+
+				// if we can get into maintenance mode, reset has succeeded
+				if err == nil {
+					return nil
+				}
+
+				// try to get the boot ID in the normal mode to see if the node has rebooted
+				return action.BootIDChangedPostCheckFn(ctx, c, preActionBootID)
 			}
 		}
 
-		cmd.SilenceErrors = true
+		common.SuppressErrors = true
 
 		return action.NewTracker(
 			&GlobalArgs,

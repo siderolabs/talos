@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
@@ -51,19 +52,13 @@ var upgradeCmd = &cobra.Command{
 			return runUpgradeNoWait()
 		}
 
-		cmd.SilenceErrors = true
-
-		postCheckFn := func(ctx context.Context, c *client.Client) error {
-			_, err := c.Disks(ctx)
-
-			return err
-		}
+		common.SuppressErrors = true
 
 		return action.NewTracker(
 			&GlobalArgs,
 			action.MachineReadyEventFn,
 			upgradeGetActorID,
-			action.WithPostCheck(postCheckFn),
+			action.WithPostCheck(action.BootIDChangedPostCheckFn),
 			action.WithDebug(upgradeCmdFlags.debug),
 			action.WithTimeout(upgradeCmdFlags.timeout),
 		).Run()

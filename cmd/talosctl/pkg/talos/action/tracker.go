@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/gen/containers"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-circular"
+	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
@@ -50,6 +51,20 @@ var (
 
 		return taskEvent.GetTask() == "stopAllServices"
 	}
+
+	// BootIDChangedPostCheckFn is a post check function that returns nil if the boot ID has changed.
+	BootIDChangedPostCheckFn = func(ctx context.Context, c *client.Client, preActionBootID string) error {
+		currentBootID, err := getBootID(ctx, c)
+		if err != nil {
+			return err
+		}
+
+		if preActionBootID == currentBootID {
+			return retry.ExpectedErrorf("didn't reboot yet")
+		}
+
+		return nil
+	}
 )
 
 type nodeUpdate struct {
@@ -61,7 +76,7 @@ type nodeUpdate struct {
 type Tracker struct {
 	expectedEventFn          func(event client.EventResult) bool
 	actionFn                 func(ctx context.Context, c *client.Client) (string, error)
-	postCheckFn              func(ctx context.Context, c *client.Client) error
+	postCheckFn              func(ctx context.Context, c *client.Client, preActionBootID string) error
 	reporter                 *reporter.Reporter
 	nodeToLatestStatusUpdate map[string]reporter.Update
 	reportCh                 chan nodeUpdate
@@ -82,7 +97,7 @@ func WithTimeout(timeout time.Duration) TrackerOption {
 }
 
 // WithPostCheck sets the post check function.
-func WithPostCheck(postCheckFn func(ctx context.Context, c *client.Client) error) TrackerOption {
+func WithPostCheck(postCheckFn func(ctx context.Context, c *client.Client, preActionBootID string) error) TrackerOption {
 	return func(t *Tracker) {
 		t.postCheckFn = postCheckFn
 	}
@@ -170,7 +185,8 @@ func (a *Tracker) Run() error {
 			}
 
 			trackEg.Go(func() error {
-				if trackErr := tracker.run(); trackErr != nil {
+				trackErr := tracker.run()
+				if trackErr != nil {
 					if a.debug {
 						failedNodesToDmesgs.Set(node, dmesg.GetReader())
 					}
@@ -181,7 +197,7 @@ func (a *Tracker) Run() error {
 					})
 				}
 
-				return nil
+				return trackErr
 			})
 		}
 
@@ -299,4 +315,30 @@ func (a *Tracker) processNodeUpdate(update nodeUpdate) reporter.Update {
 		Message: combinedMessage,
 		Status:  combinedStatus,
 	}
+}
+
+// getBootID reads the boot ID from the node.
+// It returns the node as the first return value and the boot ID as the second.
+func getBootID(ctx context.Context, c *client.Client) (string, error) {
+	reader, errCh, err := c.Read(ctx, "/proc/sys/kernel/random/boot_id")
+	if err != nil {
+		return "", err
+	}
+
+	defer reader.Close() //nolint:errcheck
+
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+
+	bootID := strings.TrimSpace(string(body))
+
+	for err = range errCh {
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return bootID, reader.Close()
 }
