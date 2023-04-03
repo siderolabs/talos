@@ -66,8 +66,10 @@ func (a *nodeTracker) tailDebugLogs() error {
 
 func (a *nodeTracker) run() error {
 	var (
-		actorIDCh chan string
-		nodeEg    errgroup.Group
+		actorIDCh                chan string
+		nodeEg                   errgroup.Group
+		actorID, preActionBootID string
+		err                      error
 	)
 
 	actorIDCh = make(chan string)
@@ -76,10 +78,12 @@ func (a *nodeTracker) run() error {
 		return a.trackEventsWithRetry(actorIDCh)
 	})
 
-	var (
-		actorID string
-		err     error
-	)
+	if a.tracker.postCheckFn != nil {
+		preActionBootID, err = getBootID(a.ctx, a.cli)
+		if err != nil {
+			return err
+		}
+	}
 
 	actorID, err = a.tracker.actionFn(a.ctx, a.cli)
 	if err != nil {
@@ -101,7 +105,7 @@ func (a *nodeTracker) run() error {
 		return nil
 	}
 
-	return a.runPostCheckWithRetry()
+	return a.runPostCheckWithRetry(preActionBootID)
 }
 
 func (a *nodeTracker) update(update reporter.Update) {
@@ -179,11 +183,11 @@ func (a *nodeTracker) trackEventsWithRetry(actorIDCh chan string) error {
 	})
 }
 
-func (a *nodeTracker) runPostCheckWithRetry() error {
+func (a *nodeTracker) runPostCheckWithRetry(preActionBootID string) error {
 	return retry.Constant(a.tracker.timeout).RetryWithContext(a.ctx, func(ctx context.Context) error {
 		// retryable function
 		err := func() error {
-			err := a.tracker.postCheckFn(ctx, a.cli)
+			err := a.tracker.postCheckFn(ctx, a.cli, preActionBootID)
 			if err != nil {
 				return err
 			}

@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos"
 	"github.com/siderolabs/talos/pkg/cli"
@@ -48,8 +50,8 @@ func Execute() error {
 	cli.Should(rootCmd.RegisterFlagCompletionFunc("nodes", talos.CompleteNodes))
 	rootCmd.PersistentFlags().StringVar(&talos.GlobalArgs.Cluster, "cluster", "", "Cluster to connect to if a proxy endpoint is used.")
 
-	cmd, err := rootCmd.ExecuteC()
-	if err != nil {
+	cmd, err := rootCmd.ExecuteContextC(context.Background())
+	if err != nil && !common.SuppressErrors {
 		fmt.Fprintln(os.Stderr, err.Error())
 
 		errorString := err.Error()
