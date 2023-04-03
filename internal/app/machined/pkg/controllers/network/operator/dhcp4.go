@@ -79,7 +79,7 @@ func extractHostname(res resource.Resource) network.HostnameStatusSpec {
 }
 
 // setupHostnameWatch returns the initial hostname and a channel that outputs all events related to hostname changes.
-func (d *DHCP4) setupHostnameWatch(ctx context.Context) (network.HostnameStatusSpec, <-chan state.Event, error) {
+func (d *DHCP4) setupHostnameWatch(ctx context.Context) (<-chan state.Event, error) {
 	hostnameWatchCh := make(chan state.Event)
 	if err := d.state.Watch(ctx, resource.NewMetadata(
 		network.NamespaceName,
@@ -87,14 +87,17 @@ func (d *DHCP4) setupHostnameWatch(ctx context.Context) (network.HostnameStatusS
 		network.HostnameID,
 		resource.VersionUndefined,
 	), hostnameWatchCh); err != nil {
-		return network.HostnameStatusSpec{}, nil, err
+		return nil, err
 	}
 
-	return extractHostname((<-hostnameWatchCh).Resource), hostnameWatchCh, nil
+	return hostnameWatchCh, nil
 }
 
 // knownHostname checks if the given hostname has been defined by this operator.
 func (d *DHCP4) knownHostname(hostname network.HostnameStatusSpec) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	for i := range d.hostname {
 		if d.hostname[i].FQDN() == hostname.FQDN() {
 			return true
@@ -139,7 +142,12 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 
 	renewInterval := minRenewDuration
 
-	hostname, hostnameWatchCh, err := d.setupHostnameWatch(ctx)
+	// Never send the hostname on the first iteration, to have a chance to query the hostname from the DHCP server.
+	// If the DHCP server doesn't provide a hostname, or if the hostname is overridden e.g. via machine config.
+	// we'll restart the sequence and send the hostname.
+	var hostname network.HostnameStatusSpec
+
+	hostnameWatchCh, err := d.setupHostnameWatch(ctx)
 	if err != nil && !errors.Is(err, context.Canceled) {
 		d.logger.Warn("failed to watch for hostname changes", zap.Error(err))
 	}
@@ -154,45 +162,17 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 			d.logger.Warn("request/renew failed", zap.Error(err), zap.String("link", d.linkName))
 		}
 
-		if err == nil && newLease {
+		if err == nil {
 			// Notify the underlying controller about the new lease
 			if !channel.SendWithContext(ctx, notifyCh, struct{}{}) {
 				return
 			}
 
-			if !d.skipHostnameRequest {
+			if newLease {
 				// Wait for networking to be established before transitioning to unicast operations
 				if err = d.waitForNetworkReady(ctx); err != nil && !errors.Is(err, context.Canceled) {
 					d.logger.Warn("failed to wait for networking to become ready", zap.Error(err))
 				}
-			}
-		}
-
-		// DHCP hostname parroting protection: if, e.g., `dnsmasq` receives a request that both
-		// sends a hostname and requests one, it will "parrot" the sent hostname back if no other
-		// name has been defined for the requesting host. This causes update anomalies, since
-		// removing a hostname defined previously by, e.g., the configuration layer, causes a copy
-		// of that hostname to live on in a spec defined by this operator, even though it isn't
-		// sourced from DHCP.
-		//
-		// To avoid this issue, never send and request a hostname in the same operation. When
-		// negotiating a new lease, first send the current hostname when acquiring the lease, and
-		// then follow up with a dedicated INFORM request asking the server for a DHCP-defined
-		// hostname. When renewing a lease, we're free to always request a hostname with an INFORM
-		// (to detect server-side changes), since any changes to the node hostname will cause a
-		// lease invalidation and re-start the negotiation process. More details below.
-		if err == nil && !d.skipHostnameRequest {
-			// Request the node hostname from the DHCP server
-			err = d.requestHostname(ctx)
-			if err != nil && !errors.Is(err, context.Canceled) {
-				d.logger.Warn("hostname request failed", zap.Error(err), zap.String("link", d.linkName))
-			}
-		}
-
-		// Notify the underlying controller about the received hostname and/or renewed lease
-		if err == nil && (!d.skipHostnameRequest || !newLease) {
-			if !channel.SendWithContext(ctx, notifyCh, struct{}{}) {
-				return
 			}
 		}
 
@@ -316,31 +296,8 @@ func (d *DHCP4) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return d.timeservers
 }
 
-func (d *DHCP4) parseHostnameFromAck(ack *dhcpv4.DHCPv4) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	d.hostname = nil
-
-	if ack.HostName() != "" {
-		spec := network.HostnameSpecSpec{
-			ConfigLayer: network.ConfigOperator,
-		}
-
-		if err := spec.ParseFQDN(ack.HostName()); err == nil {
-			if ack.DomainName() != "" {
-				spec.Domainname = ack.DomainName()
-			}
-
-			d.hostname = []network.HostnameSpecSpec{
-				spec,
-			}
-		}
-	}
-}
-
 //nolint:gocyclo
-func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4) {
+func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -436,6 +393,26 @@ func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4) {
 		d.routes[i].Normalize()
 	}
 
+	if useHostname {
+		d.hostname = nil
+
+		if ack.HostName() != "" {
+			spec := network.HostnameSpecSpec{
+				ConfigLayer: network.ConfigOperator,
+			}
+
+			if err := spec.ParseFQDN(ack.HostName()); err == nil {
+				if ack.DomainName() != "" {
+					spec.Domainname = ack.DomainName()
+				}
+
+				d.hostname = []network.HostnameSpecSpec{
+					spec,
+				}
+			}
+		}
+	}
+
 	if len(ack.DNS()) > 0 {
 		convertIP := func(ip net.IP) netip.Addr {
 			result, _ := netipx.FromStdIP(ip)
@@ -497,38 +474,7 @@ func (d *DHCP4) newClient() (*nclient4.Client, error) {
 	return nclient4.New(d.linkName, clientOpts...)
 }
 
-// requestHostname uses an INFORM request to request a hostname from the DHCP server, as requesting
-// it during a DISCOVER, when simultaneously sending the local hostname, is not reliable (see above).
-func (d *DHCP4) requestHostname(ctx context.Context) error {
-	opts := []dhcpv4.OptionCode{
-		dhcpv4.OptionHostName,
-		dhcpv4.OptionDomainName,
-	}
-
-	client, err := d.newClient()
-	if err != nil {
-		return err
-	}
-
-	//nolint:errcheck
-	defer client.Close()
-
-	d.logger.Debug("DHCP INFORM", zap.String("link", d.linkName))
-
-	// Send an INFORM request for querying a hostname from the DHCP server
-	ack, err := client.Inform(ctx, d.lease.ACK.YourIPAddr, dhcpv4.WithRequestedOptions(opts...))
-	if err != nil {
-		return err
-	}
-
-	d.logger.Debug("DHCP ACK", zap.String("link", d.linkName), zap.String("dhcp", collapseSummary(ack.Summary())))
-
-	// Parse the hostname from the response
-	d.parseHostnameFromAck(ack)
-
-	return nil
-}
-
+//nolint:gocyclo
 func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatusSpec) (time.Duration, error) {
 	opts := []dhcpv4.OptionCode{
 		dhcpv4.OptionClasslessStaticRoute,
@@ -542,16 +488,42 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 		opts = append(opts, dhcpv4.OptionInterfaceMTU)
 	}
 
-	mods := []dhcpv4.Modifier{dhcpv4.WithRequestedOptions(opts...)}
-
-	// If the node has a hostname, always send it to the DHCP
-	// server with option 12 during lease acquisition and renewal
-	if len(hostname.Hostname) > 0 {
-		mods = append(mods, dhcpv4.WithOption(dhcpv4.OptHostName(hostname.Hostname)))
+	sendHostnameRequest := !d.skipHostnameRequest
+	if hostname.Hostname != "" && !d.knownHostname(hostname) {
+		// If we are supposed to publish a hostname, don't request one from the DHCP server.
+		//
+		// DHCP hostname parroting protection: if, e.g., `dnsmasq` receives a request that both
+		// sends a hostname and requests one, it will "parrot" the sent hostname back if no other
+		// name has been defined for the requesting host. This causes update anomalies, since
+		// removing a hostname defined previously by, e.g., the configuration layer, causes a copy
+		// of that hostname to live on in a spec defined by this operator, even though it isn't
+		// sourced from DHCP.
+		//
+		// To avoid this issue, never send and request a hostname in the same operation. When
+		// negotiating a new lease, first send the current hostname when acquiring the lease, and
+		// then follow up with a dedicated INFORM request asking the server for a DHCP-defined
+		// hostname. When renewing a lease, we're free to always request a hostname with an INFORM
+		// (to detect server-side changes), since any changes to the node hostname will cause a
+		// lease invalidation and re-start the negotiation process. More details below.
+		sendHostnameRequest = false
 	}
 
-	if len(hostname.Domainname) > 0 {
-		mods = append(mods, dhcpv4.WithOption(dhcpv4.OptDomainName(hostname.Domainname)))
+	if sendHostnameRequest {
+		opts = append(opts, dhcpv4.OptionHostName, dhcpv4.OptionDomainName)
+	}
+
+	mods := []dhcpv4.Modifier{dhcpv4.WithRequestedOptions(opts...)}
+
+	if !sendHostnameRequest {
+		// If the node has a hostname, always send it to the DHCP
+		// server with option 12 during lease acquisition and renewal
+		if len(hostname.Hostname) > 0 {
+			mods = append(mods, dhcpv4.WithOption(dhcpv4.OptHostName(hostname.Hostname)))
+		}
+
+		if len(hostname.Domainname) > 0 {
+			mods = append(mods, dhcpv4.WithOption(dhcpv4.OptDomainName(hostname.Domainname)))
+		}
 	}
 
 	client, err := d.newClient()
@@ -579,7 +551,7 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 
 	d.logger.Debug("DHCP ACK", zap.String("link", d.linkName), zap.String("dhcp", collapseSummary(d.lease.ACK.Summary())))
 
-	d.parseNetworkConfigFromAck(d.lease.ACK)
+	d.parseNetworkConfigFromAck(d.lease.ACK, sendHostnameRequest)
 
 	return d.lease.ACK.IPAddressLeaseTime(time.Minute * 30), nil
 }
