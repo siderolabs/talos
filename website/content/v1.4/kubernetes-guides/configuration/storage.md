@@ -5,7 +5,7 @@ aliases:
   - ../../guides/storage
 ---
 
-In Kubernetes, using storage in the right way is well-facilitated by the API.  
+In Kubernetes, using storage in the right way is well-facilitated by the API.
 However, unless you are running in a major public cloud, that API may not be hooked up to anything.
 This frequently sends users down a rabbit hole of researching all the various options for storage backends for their platform, for Kubernetes, and for their workloads.
 There are a _lot_ of options out there, and it can be fairly bewildering.
@@ -85,16 +85,29 @@ This can be done with `talosctl patch machineconfig` or via config patches durin
 
 Some examples are shown below: modify as needed.
 
+First create a config patch file named `mayastor-patch.yaml` with the following contents:
+
+```yaml
+- op: add
+  path: /machine/sysctls
+  value:
+    vm.nr_hugepages: "1024"
+- op: add
+  path: /machine/nodeLabels
+  value:
+    openebs.io/engine: mayastor
+```
+
 Using gen config
 
 ```bash
-talosctl gen config my-cluster https://mycluster.local:6443 --config-patch '[{"op": "add", "path": "/machine/sysctls", "value": {"vm.nr_hugepages": "1024"}}, {"op": "add", "path": "/machine/kubelet/extraArgs", "value": {"node-labels": "openebs.io/engine=mayastor"}}]'
+talosctl gen config my-cluster https://mycluster.local:6443 --config-patch @mayastor-patch.yaml
 ```
 
 Patching an existing node
 
 ```bash
-talosctl patch --mode=no-reboot machineconfig -n <node ip> --patch '[{"op": "add", "path": "/machine/sysctls", "value": {"vm.nr_hugepages": "1024"}}, {"op": "add", "path": "/machine/kubelet/extraArgs", "value": {"node-labels": "openebs.io/engine=mayastor"}}]'
+talosctl patch --mode=no-reboot machineconfig -n <node ip> --patch @mayastor-patch.yaml
 ```
 
 > Note: If you are adding/updating the `vm.nr_hugepages` on a node which already had the `openebs.io/engine=mayastor` label set, you'd need to restart kubelet so that it picks up the new value, by issuing the following command
