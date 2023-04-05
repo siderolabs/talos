@@ -286,6 +286,7 @@ func (ctrl *MachineStatusController) servicesCheck(requiredServices []string) fu
 	}
 }
 
+//nolint:gocyclo
 func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r controller.Runtime) error {
 	staticPodList, err := safe.ReaderList[*k8s.StaticPodStatus](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined))
 	if err != nil {
@@ -302,18 +303,26 @@ func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r cont
 			return err
 		}
 
-		ready := false
+		switch status.Phase {
+		case v1.PodPending, v1.PodFailed, v1.PodUnknown:
+			problems = append(problems, fmt.Sprintf("%s %s", it.Value().Metadata().ID(), strings.ToLower(string(status.Phase))))
+		case v1.PodSucceeded:
+			// do nothing, terminal phase
+		case v1.PodRunning:
+			// check readiness
+			ready := false
 
-		for _, condition := range status.Conditions {
-			if condition.Type == v1.PodReady {
-				ready = condition.Status == v1.ConditionTrue
+			for _, condition := range status.Conditions {
+				if condition.Type == v1.PodReady {
+					ready = condition.Status == v1.ConditionTrue
 
-				break
+					break
+				}
 			}
-		}
 
-		if !ready {
-			problems = append(problems, fmt.Sprintf("%s not ready", it.Value().Metadata().ID()))
+			if !ready {
+				problems = append(problems, fmt.Sprintf("%s not ready", it.Value().Metadata().ID()))
+			}
 		}
 	}
 
