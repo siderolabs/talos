@@ -8,10 +8,10 @@ import (
 	"strings"
 )
 
-// quote according to (incomplete) GRUB quoting rules.
+// Quote according to (incomplete) GRUB quoting rules.
 //
 // See https://www.gnu.org/software/grub/manual/grub/html_node/Shell_002dlike-scripting.html
-func quote(s string) string {
+func Quote(s string) string {
 	for _, c := range `\{}&$|;<>"` {
 		s = strings.ReplaceAll(s, string(c), `\`+string(c))
 	}
@@ -19,8 +19,8 @@ func quote(s string) string {
 	return s
 }
 
-// unquote according to (incomplete) GRUB quoting rules.
-func unquote(s string) string {
+// Unquote according to (incomplete) GRUB quoting rules.
+func Unquote(s string) string {
 	for _, c := range `{}&$|;<>\"` {
 		s = strings.ReplaceAll(s, `\`+string(c), string(c))
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
@@ -111,7 +112,11 @@ func runISOCmd() error {
 
 	var grubCfg bytes.Buffer
 
-	tmpl, err := template.New("grub.cfg").Parse(string(isoGrubCfg))
+	tmpl, err := template.New("grub.cfg").
+		Funcs(template.FuncMap{
+			"quote": grub.Quote,
+		}).
+		Parse(string(isoGrubCfg))
 	if err != nil {
 		return err
 	}

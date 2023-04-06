@@ -122,7 +122,7 @@ func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
 }
 
 func parseConfBlock(block []byte) (linux, cmdline, initrd string, err error) {
-	block = []byte(unquote(string(block)))
+	block = []byte(Unquote(string(block)))
 
 	linuxMatches := linuxRegex.FindAllSubmatch(block, -1)
 	if len(linuxMatches) != 1 {
