@@ -1,3 +1,80 @@
+## [Talos 1.3.7](https://github.com/siderolabs/talos/releases/tag/v1.3.7) (2023-04-06)
+
+Welcome to the v1.3.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 5.15.106
+* containerd: 1.6.20
+* runc: 1.1.5
+* Kubernetes: v1.26.3
+
+Talos is built with Go 1.19.8.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+
+### Changes
+<details><summary>7 commits</summary>
+<p>
+
+* [`fe76c56fe`](https://github.com/siderolabs/talos/commit/fe76c56fed281604b92db6bea4e6b203b32b81c0) fix: correctly parse static pod phase
+* [`dc001d28f`](https://github.com/siderolabs/talos/commit/dc001d28fc9c40d99ee55841ef8a502c3fdb90eb) fix: output of `talosctl logs` might be corruped
+* [`422e30a2f`](https://github.com/siderolabs/talos/commit/422e30a2fc90568f3d52145a0167b8bd33448c92) fix: always shutdown maintenance API service
+* [`19f7f7f39`](https://github.com/siderolabs/talos/commit/19f7f7f39f72adde694b78e8e7bb7535ae6be508) feat: update Kubernetes to 1.26.3
+* [`13456dab3`](https://github.com/siderolabs/talos/commit/13456dab3f4392eeff84a33025fc95fe34b4e6c6) fix: use 'no block' etcd dial with multiple endpoints
+* [`93dfa86d7`](https://github.com/siderolabs/talos/commit/93dfa86d773add8f2c9caa4ad426ad2afcf15270) fix: nil pointer exception in syncLink
+* [`34677b931`](https://github.com/siderolabs/talos/commit/34677b931fb3ad82f9bd6c87db3c2a068868e2d6) feat: update Go 1.19.8, Linux 5.15.106
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`75d687a`](https://github.com/siderolabs/extras/commit/75d687a3dfcd3ee5ea6e21fbf9e0d9bdd39b1b99) chore: update Go to 1.19.8
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`49b4ba8`](https://github.com/siderolabs/pkgs/commit/49b4ba862152a7c377cd7cb9bfdb8aa9cf3d0e21) feat: update Go 1.19.8, Linux 5.15.106
+* [`d1b0e28`](https://github.com/siderolabs/pkgs/commit/d1b0e28f933fa90279c9357b85985be502fa6009) feat: containerd 1.6.20, runc 1.1.5
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`9a1d3ec`](https://github.com/siderolabs/tools/commit/9a1d3ec1e272cec5c6a8a0153ea05ca71449080f) feat: update Go to 1.19.8
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**  v1.3.0-4-gcb97438 -> v1.3.0-5-g75d687a
+* **github.com/siderolabs/pkgs**    v1.3.0-15-g3b37079 -> v1.3.0-17-g49b4ba8
+* **github.com/siderolabs/tools**   v1.3.0-3-ge225a7e -> v1.3.0-4-g9a1d3ec
+* **k8s.io/api**                    v0.26.2 -> v0.26.3
+* **k8s.io/apiserver**              v0.26.2 -> v0.26.3
+* **k8s.io/client-go**              v0.26.2 -> v0.26.3
+* **k8s.io/component-base**         v0.26.2 -> v0.26.3
+* **k8s.io/kubectl**                v0.26.2 -> v0.26.3
+* **k8s.io/kubelet**                v0.26.2 -> v0.26.3
+
+Previous release can be found at [v1.3.6](https://github.com/siderolabs/talos/releases/tag/v1.3.6)
+
 ## [Talos 1.3.6](https://github.com/siderolabs/talos/releases/tag/v1.3.6) (2023-03-14)
 
 Welcome to the v1.3.6 release of Talos!
