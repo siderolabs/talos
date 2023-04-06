@@ -68,7 +68,7 @@ func (c *Config) Encode(wr io.Writer) error {
 	}
 
 	t := template.Must(template.New("grub").Funcs(template.FuncMap{
-		"quote": quote,
+		"quote": Quote,
 	}).Parse(confTemplate))
 
 	return t.Execute(wr, c)

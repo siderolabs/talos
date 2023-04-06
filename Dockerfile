@@ -662,7 +662,7 @@ FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
 COPY --from=pkg-grub / /
 COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 
-FROM alpine:3.17.2 AS installer
+FROM alpine:3.17.2 AS installer-image
 RUN apk add --no-cache --update --no-scripts \
     bash \
     cpio \
@@ -686,6 +686,8 @@ ENV VERSION ${TAG}
 LABEL "alpha.talos.dev/version"="${VERSION}"
 LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
+
+FROM installer-image AS installer
 ONBUILD RUN apk add --no-cache --update \
     cpio \
     squashfs-tools \
@@ -706,7 +708,7 @@ ONBUILD RUN find /rootfs \
     && rm -rf /initramfs
 ONBUILD WORKDIR /
 
-FROM installer AS imager
+FROM installer-image AS imager
 
 # The test target performs tests on the source code.
 
