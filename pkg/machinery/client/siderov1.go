@@ -77,9 +77,18 @@ func (c *authInterceptorConfig) authenticate(ctx context.Context, cc *grpc.Clien
 		return nil, err
 	}
 
-	err = browser.OpenURL(loginURL)
-	if err != nil {
+	printLoginDialog := func() {
 		fmt.Fprintf(os.Stderr, "Please visit this page to authenticate: %s\n", loginURL)
+	}
+
+	browserEnv := os.Getenv("BROWSER")
+	if browserEnv == "echo" {
+		printLoginDialog()
+	} else {
+		err = browser.OpenURL(loginURL)
+		if err != nil {
+			printLoginDialog()
+		}
 	}
 
 	publicKeyID := pgpKey.Key.Fingerprint()
