@@ -266,7 +266,7 @@ func (c *Controller) runPhase(ctx context.Context, phase runtime.Phase, seq runt
 
 	defer c.Runtime().Events().Publish(ctx, &machine.PhaseEvent{
 		Phase:  phase.Name,
-		Action: machine.PhaseEvent_START,
+		Action: machine.PhaseEvent_STOP,
 	})
 
 	eg, ctx := errgroup.WithContext(ctx)
