@@ -14,7 +14,7 @@ NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-1-g955aabc
-PKGS ?= v1.4.1-1-ga6e9ad5
+PKGS ?= v1.4.1-4-g62c50e2
 EXTRAS ?= v1.4.0-1-g9b07505
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
@@ -46,6 +46,7 @@ TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
+MODULE_SIG_VERIFY_DEFAULT_TARGET := module-sig-verify-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.27.0-rc.1
@@ -337,7 +338,7 @@ check-dirty: ## Verifies that source tree is not dirty
 	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; exit 1 ; fi
 
 go-mod-outdated: ## Runs the go-mod-oudated to show outdated dependencies.
-	@$(MAKE) target-go-mod-outdated PLATFORM=linux/amd64 PROGRESS=text
+	@$(MAKE) target-go-mod-outdated PLATFORM=linux/amd64
 
 # Tests
 
@@ -354,6 +355,9 @@ $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
 
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
+
+$(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64:
+	@$(MAKE) local-$(MODULE_SIG_VERIFY_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64
 
 $(ARTIFACTS)/kubectl:
 	@mkdir -p $(ARTIFACTS)
@@ -380,7 +384,7 @@ $(ARTIFACTS)/cilium:
 	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
 	@chmod +x $(ARTIFACTS)/cilium
 
-external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium
+external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium $(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64
 
 e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 external-artifacts ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
@@ -393,6 +397,8 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 external-artifacts 
 		ARTIFACTS=$(ARTIFACTS) \
 		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
+		MODULE_SIG_VERIFY=$(PWD)/$(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64 \
+		KERNEL_MODULE_SIGNING_PUBLIC_KEY=$(PWD)/$(ARTIFACTS)/signing_key.x509 \
 		SHORT_INTEGRATION_TEST=$(SHORT_INTEGRATION_TEST) \
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
