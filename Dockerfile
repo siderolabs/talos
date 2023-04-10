@@ -118,8 +118,7 @@ RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepc
 ARG VTPROTOBUF_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
     && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
-# fix vulncheck at a previous version, as it seems to break in the latest commits
-RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@05fb7250142cc6010c39968839f2f3710afdd918 \
+RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
     && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
 RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@v1.10.0 \
     && mv /go/bin/prototool /toolchain/go/bin/prototool
@@ -252,23 +251,24 @@ RUN mkdir -p pkg/machinery/gendata/data && \
     echo -n ${PKGS} > pkg/machinery/gendata/data/pkgs && \
     echo -n ${TAG} > pkg/machinery/gendata/data/tag && \
     echo -n ${ARTIFACTS} > pkg/machinery/gendata/data/artifacts
-RUN mkdir -p _out && \
-    echo PKGS=${PKGS} >> _out/talos-metadata && \
-    echo TAG=${TAG} >> _out/talos-metadata && \
-    echo EXTRAS=${EXTRAS} >> _out/talos-metadata
 
 FROM scratch AS embed
 COPY --from=embed-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
-COPY --from=embed-generate /src/_out/talos-metadata /_out/talos-metadata
 
 FROM embed-generate AS embed-abbrev-generate
 ARG ABBREV_TAG
 RUN echo -n "undefined" > pkg/machinery/gendata/data/sha && \
     echo -n ${ABBREV_TAG} > pkg/machinery/gendata/data/tag
+RUN mkdir -p _out && \
+    echo PKGS=${PKGS} >> _out/talos-metadata && \
+    echo TAG=${TAG} >> _out/talos-metadata && \
+    echo EXTRAS=${EXTRAS} >> _out/talos-metadata
+COPY --from=pkg-kernel /certs/signing_key.x509 _out/signing_key.x509
 
 FROM scratch AS embed-abbrev
 COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery/gendata/data
 COPY --from=embed-abbrev-generate /src/_out/talos-metadata /_out/talos-metadata
+COPY --from=embed-abbrev-generate /src/_out/signing_key.x509 /_out/signing_key.x509
 
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
@@ -777,6 +777,21 @@ RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64}
 FROM scratch AS integration-test-provision-linux
 COPY --from=integration-test-provision-linux-build /src/integration.test /integration-test-provision-linux-amd64
 
+# The module-sig-verify targets builds module-sig-verify binary.
+
+FROM build-go AS module-sig-verify-linux-build
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+ARG GOAMD64
+WORKDIR /src/module-sig-verify
+COPY ./hack/module-sig-verify/go.mod ./hack/module-sig-verify/go.sum .
+RUN --mount=type=cache,target=/.cache go mod download
+COPY ./hack/module-sig-verify/main.go .
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build -o module-sig-verify .
+
+FROM scratch AS module-sig-verify-linux
+COPY --from=module-sig-verify-linux-build /src/module-sig-verify/module-sig-verify /module-sig-verify-linux-amd64
+
 # The lint target performs linting on the source code.
 
 FROM base AS lint-go
@@ -886,19 +901,14 @@ RUN --mount=type=cache,target=/.cache go install github.com/psampaz/go-mod-outda
 COPY ./hack/cloud-image-uploader ./hack/cloud-image-uploader
 COPY ./hack/docgen ./hack/docgen
 COPY ./hack/gotagsrewrite ./hack/gotagsrewrite
-COPY ./hack/protoc-gen-doc ./hack/protoc-gen-doc
+COPY ./hack/module-sig-verify ./hack/module-sig-verify
 COPY ./hack/structprotogen ./hack/structprotogen
 # fail always to get the output back
-RUN --mount=type=cache,target=/.cache \
-    echo -e "\n>>>> pkg/machinery:" && \
-    (cd pkg/machinery && go list -u -m -json all | go-mod-outdated -update -direct) && \
-    echo -e "\n>>>> .:" && \
-    (go list -u -m -json all | go-mod-outdated -update -direct) && \
-    echo -e "\n>>>> hack/cloud-image-uploader:" && \
-    (cd hack/cloud-image-uploader && go list -u -m -json all | go-mod-outdated -update -direct) && \
-    echo -e "\n>>>> hack/docgen:" && \
-    (cd hack/docgen && go list -u -m -json all | go-mod-outdated -update -direct) && \
-    echo -e "\n>>>> hack/gotagsrewrite:" && \
-    (cd hack/gotagsrewrite && go list -u -m -json all | go-mod-outdated -update -direct) && \
-    echo -e "\n>>>> hack/structprotogen:" && \
-    (cd hack/structprotogen && go list -u -m -json all | go-mod-outdated -update -direct)
+RUN --mount=type=cache,target=/.cache <<EOF
+    for project in pkg/machinery . hack/cloud-image-uploader hack/docgen hack/gotagsrewrite hack/module-sig-verify hack/structprotogen; do
+        echo -e "\n>>>> ${project}:" && \
+        (cd "${project}" && go list -u -m -json all | go-mod-outdated -update -direct)
+    done
+
+    exit 1
+EOF

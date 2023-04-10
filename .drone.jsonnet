@@ -278,7 +278,7 @@ local save_artifacts = {
   commands: [
     'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
     'az storage container create --metadata ci=true -n ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    'az storage blob upload-batch --overwrite -s _out -d  ${CI_COMMIT_SHA}${DRONE_TAG//./-}'
+    'az storage blob upload-batch --overwrite -s _out -d  ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
   ],
   volumes: volumes.ForStep(),
   depends_on: [build.name, images_essential.name, iso.name, talosctl_cni_bundle.name],
@@ -297,7 +297,7 @@ local load_artifacts = {
   commands: [
     'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
     'az storage blob download-batch --overwrite true -d _out -s ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    'chmod +x _out/clusterctl _out/integration-test-linux-amd64 _out/kubectl _out/kubestr _out/helm _out/cilium _out/talosctl*'
+    'chmod +x _out/clusterctl _out/integration-test-linux-amd64 _out/module-sig-verify-linux-amd64 _out/kubectl _out/kubestr _out/helm _out/cilium _out/talosctl*',
   ],
   volumes: volumes.ForStep(),
   depends_on: [setup_ci.name],
@@ -347,7 +347,7 @@ local extensions_patch_manifest = {
     // create a patch file to pass to the downstream build
     // ignore nvidia extensions, testing nvidia extensions needs a machine with nvidia graphics card
     // ignore nut extensions, needs extra config files
-    'jq -R < _out/extensions-metadata | jq -s \'[{"op":"add","path":"/machine/install/extensions","value":[{"image": map(select(. | contains("nvidia") or contains("nut") | not)) | .[]}]},{"op":"add","path":"/machine/sysctls","value":{"user.max_user_namespaces": "11255"}}]\' > _out/extensions-patch.json',
+    'jq -R < _out/extensions-metadata | jq -s -f hack/test/extensions/extension-patch-filter.jq > _out/extensions-patch.json',
     'cat _out/extensions-patch.json',
   ],
   depends_on: [extensions_artifacts.name],

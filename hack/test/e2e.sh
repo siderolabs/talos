@@ -10,6 +10,8 @@
 #  - ARTIFACTS
 #  - TALOSCTL
 #  - INTEGRATION_TEST
+#  - MODULE_SIG_VERIFY
+#  - KERNEL_MODULE_SIGNING_PUBLIC_KEY
 #  - SHORT_INTEGRATION_TEST
 #  - CUSTOM_CNI_URL
 #  - KUBECTL
@@ -236,10 +238,24 @@ function run_extensions_test {
   ${TALOSCTL} read /lib/modules/${KERNEL_VERSION}/modules.dep | grep -E gasket
   ${TALOSCTL} ls /lib/modules/${KERNEL_VERSION}/extras/ | grep drbd
   ${TALOSCTL} read /lib/modules/${KERNEL_VERSION}/modules.dep | grep -E drbd
+  ${TALOSCTL} ls /lib/modules/${KERNEL_VERSION}/kernel/drivers/video/ | grep nvidia
+  ${TALOSCTL} read /lib/modules/${KERNEL_VERSION}/modules.dep | grep -E nvidia
+
+  echo "Testing drbd and gasket modules are loaded..."
+  ${TALOSCTL} read /proc/modules | grep -E drbd
+  ${TALOSCTL} read /proc/modules | grep -E gasket
+
+  echo "Testing kernel modules signature..."
+  ${TALOSCTL} read /lib/modules/${KERNEL_VERSION}/extras/drbd.ko | ${MODULE_SIG_VERIFY} -cert ${KERNEL_MODULE_SIGNING_PUBLIC_KEY} -module -
+  ${TALOSCTL} read /lib/modules/${KERNEL_VERSION}/extras/gasket.ko | ${MODULE_SIG_VERIFY} -cert ${KERNEL_MODULE_SIGNING_PUBLIC_KEY} -module -
+  ${TALOSCTL} read /lib/modules/${KERNEL_VERSION}/kernel/drivers/video/nvidia.ko | ${MODULE_SIG_VERIFY} -cert ${KERNEL_MODULE_SIGNING_PUBLIC_KEY} -module -
 
   echo "Testing iscsi-tools extensions service..."
   ${TALOSCTL} services ext-iscsid | grep -E "STATE\s+Running"
   ${TALOSCTL} services ext-tgtd | grep -E "STATE\s+Running"
+
+  echo "Testing nut-client extensions service..."
+  ${TALOSCTL} services ext-nut-client | grep -E "STATE\s+Running"
 
   echo "Testing gVsisor..."
   ${KUBECTL} apply -f ${PWD}/hack/test/gvisor/manifest.yaml
