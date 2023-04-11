@@ -1293,7 +1293,7 @@ Previous release can be found at [v1.3.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.4.0-alpha.3](https://github.com/siderolabs/talos/releases/tag/v1.4.0-alpha.3) (2023-03-23)
 
-Welcome to the v1.4.0-alpha.3 release of Talos!  
+Welcome to the v1.4.0-alpha.3 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -1921,7 +1921,7 @@ Previous release can be found at [v1.3.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.4.0-alpha.2](https://github.com/siderolabs/talos/releases/tag/v1.4.0-alpha.2) (2023-02-28)
 
-Welcome to the v1.4.0-alpha.2 release of Talos!  
+Welcome to the v1.4.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -2418,7 +2418,7 @@ Previous release can be found at [v1.3.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.4.0-alpha.1](https://github.com/siderolabs/talos/releases/tag/v1.4.0-alpha.1) (2023-01-25)
 
-Welcome to the v1.4.0-alpha.1 release of Talos!  
+Welcome to the v1.4.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -2724,7 +2724,7 @@ Previous release can be found at [v1.3.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.4.0-alpha.0](https://github.com/siderolabs/talos/releases/tag/v1.4.0-alpha.0) (2022-12-23)
 
-Welcome to the v1.4.0-alpha.0 release of Talos!  
+Welcome to the v1.4.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -2878,7 +2878,7 @@ Previous release can be found at [v1.3.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.3.0-alpha.2](https://github.com/siderolabs/talos/releases/tag/v1.3.0-alpha.2) (2022-11-16)
 
-Welcome to the v1.3.0-alpha.2 release of Talos!  
+Welcome to the v1.3.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -3871,7 +3871,7 @@ Previous release can be found at [v1.2.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.3.0-alpha.1](https://github.com/siderolabs/talos/releases/tag/v1.3.0-alpha.1) (2022-10-28)
 
-Welcome to the v1.3.0-alpha.1 release of Talos!  
+Welcome to the v1.3.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -4653,7 +4653,7 @@ Previous release can be found at [v1.2.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.3.0-alpha.0](https://github.com/siderolabs/talos/releases/tag/v1.3.0-alpha.0) (2022-09-28)
 
-Welcome to the v1.3.0-alpha.0 release of Talos!  
+Welcome to the v1.3.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -5080,7 +5080,7 @@ Previous release can be found at [v1.2.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.2.0-alpha.2](https://github.com/siderolabs/talos/releases/tag/v1.2.0-alpha.2) (2022-08-10)
 
-Welcome to the v1.2.0-alpha.2 release of Talos!  
+Welcome to the v1.2.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -5700,7 +5700,7 @@ Previous release can be found at [v1.1.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.2.0-alpha.1](https://github.com/siderolabs/talos/releases/tag/v1.2.0-alpha.1) (2022-07-28)
 
-Welcome to the v1.2.0-alpha.1 release of Talos!  
+Welcome to the v1.2.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -6201,7 +6201,7 @@ Previous release can be found at [v1.1.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.2.0-alpha.0](https://github.com/siderolabs/talos/releases/tag/v1.2.0-alpha.0) (2022-06-30)
 
-Welcome to the v1.2.0-alpha.0 release of Talos!  
+Welcome to the v1.2.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -6418,7 +6418,7 @@ Previous release can be found at [v1.1.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.1.0-alpha.2](https://github.com/siderolabs/talos/releases/tag/v1.1.0-alpha.2) (2022-05-12)
 
-Welcome to the v1.1.0-alpha.2 release of Talos!  
+Welcome to the v1.1.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -7001,7 +7001,7 @@ Previous release can be found at [v1.0.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.1.0-alpha.1](https://github.com/siderolabs/talos/releases/tag/v1.1.0-alpha.1) (2022-04-20)
 
-Welcome to the v1.1.0-alpha.1 release of Talos!  
+Welcome to the v1.1.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -7444,7 +7444,7 @@ Previous release can be found at [v1.0.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 1.1.0-alpha.0](https://github.com/siderolabs/talos/releases/tag/v1.1.0-alpha.0) (2022-04-01)
 
-Welcome to the v1.1.0-alpha.0 release of Talos!  
+Welcome to the v1.1.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -7660,7 +7660,7 @@ Previous release can be found at [v1.0.0](https://github.com/siderolabs/talos/re
 
 ## [Talos 0.15.0-alpha.2](https://github.com/talos-systems/talos/releases/tag/v0.15.0-alpha.2) (2022-02-11)
 
-Welcome to the v0.15.0-alpha.2 release of Talos!  
+Welcome to the v0.15.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -8112,7 +8112,7 @@ Previous release can be found at [v0.14.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.15.0-alpha.1](https://github.com/talos-systems/talos/releases/tag/v0.15.0-alpha.1) (2022-01-24)
 
-Welcome to the v0.15.0-alpha.1 release of Talos!  
+Welcome to the v0.15.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -8415,7 +8415,7 @@ Previous release can be found at [v0.14.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.15.0-alpha.0](https://github.com/talos-systems/talos/releases/tag/v0.15.0-alpha.0) (2021-12-30)
 
-Welcome to the v0.15.0-alpha.0 release of Talos!  
+Welcome to the v0.15.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -8569,7 +8569,7 @@ Previous release can be found at [v0.14.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.14.0-alpha.2](https://github.com/talos-systems/talos/releases/tag/v0.14.0-alpha.2) (2021-11-30)
 
-Welcome to the v0.14.0-alpha.2 release of Talos!  
+Welcome to the v0.14.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -9022,7 +9022,7 @@ Previous release can be found at [v0.13.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.14.0-alpha.1](https://github.com/talos-systems/talos/releases/tag/v0.14.0-alpha.1) (2021-11-15)
 
-Welcome to the v0.14.0-alpha.1 release of Talos!  
+Welcome to the v0.14.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -9391,7 +9391,7 @@ Previous release can be found at [v0.13.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.14.0-alpha.0](https://github.com/talos-systems/talos/releases/tag/v0.14.0-alpha.0) (2021-10-25)
 
-Welcome to the v0.14.0-alpha.0 release of Talos!  
+Welcome to the v0.14.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -9613,7 +9613,7 @@ Previous release can be found at [v0.13.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.13.0-alpha.3](https://github.com/talos-systems/talos/releases/tag/v0.13.0-alpha.3) (2021-09-29)
 
-Welcome to the v0.13.0-alpha.3 release of Talos!  
+Welcome to the v0.13.0-alpha.3 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -9928,7 +9928,7 @@ Previous release can be found at [v0.12.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.13.0-alpha.2](https://github.com/talos-systems/talos/releases/tag/v0.13.0-alpha.2) (2021-09-28)
 
-Welcome to the v0.13.0-alpha.2 release of Talos!  
+Welcome to the v0.13.0-alpha.2 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -10247,7 +10247,7 @@ Previous release can be found at [v0.12.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.13.0-alpha.1](https://github.com/talos-systems/talos/releases/tag/v0.13.0-alpha.1) (2021-09-20)
 
-Welcome to the v0.13.0-alpha.1 release of Talos!  
+Welcome to the v0.13.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -10510,7 +10510,7 @@ Previous release can be found at [v0.12.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.13.0-alpha.0](https://github.com/talos-systems/talos/releases/tag/v0.13.0-alpha.0) (2021-09-13)
 
-Welcome to the v0.13.0-alpha.0 release of Talos!  
+Welcome to the v0.13.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -10678,7 +10678,7 @@ Previous release can be found at [v0.12.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.12.0-alpha.1](https://github.com/talos-systems/talos/releases/tag/v0.12.0-alpha.1) (2021-08-13)
 
-Welcome to the v0.12.0-alpha.1 release of Talos!  
+Welcome to the v0.12.0-alpha.1 release of Talos!
 *This is a pre-release of Talos*
 
 
@@ -11025,7 +11025,7 @@ Previous release can be found at [v0.11.0](https://github.com/talos-systems/talo
 
 ## [Talos 0.12.0-alpha.0](https://github.com/talos-systems/talos/releases/tag/v0.12.0-alpha.0) (2021-08-11)
 
-Welcome to the v0.12.0-alpha.0 release of Talos!  
+Welcome to the v0.12.0-alpha.0 release of Talos!
 *This is a pre-release of Talos*
 
 
