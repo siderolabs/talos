@@ -21,7 +21,7 @@ preface = """\
 * Linux: 6.1.22
 * containerd: v1.6.20
 * runc: v1.1.5
-* Kubernetes: v1.27.0-rc.1
+* Kubernetes: v1.27.0
 * etcd: v3.5.7
 * CoreDNS: v1.10.1
 * Flannel: v0.21.4
