@@ -1,5 +1,5 @@
 ---
-title: What's New in Talos 1.3
+title: What's New in Talos 1.4
 weight: 50
 description: "List of new and shiny features in Talos Linux."
 ---
