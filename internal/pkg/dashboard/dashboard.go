@@ -195,10 +195,8 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 			dashboard.selectNodeByIndex(dashboard.selectedNodeIndex + 1)
 
 			return nil
-		case event.Key() == tcell.KeyCtrlC:
-			if defOptions.allowExitKeys {
-				dashboard.app.Stop()
-			}
+		case defOptions.allowExitKeys && (event.Key() == tcell.KeyCtrlC || event.Rune() == 'q'):
+			dashboard.app.Stop()
 
 			return nil
 		}

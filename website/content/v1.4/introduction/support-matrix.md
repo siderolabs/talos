@@ -6,10 +6,10 @@ description: "Table of supported Talos Linux versions and respective platforms."
 
 | Talos Version                                                                                                  | 1.4                                | 1.3                                |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
-| Release Date                                                                                                   | 2023-03-15                         | 2022-12-15 (1.3.0)                 |
-| End of Community Support                                                                                       | 1.5.0 release (2023-06-15, TBD)    | 1.3.0 release (2022-12-15)         |
+| Release Date                                                                                                   | 2023-04-18                         | 2022-12-15 (1.3.0)                 |
+| End of Community Support                                                                                       | 1.5.0 release (2023-08-15)         | 1.4.0 release (2023-04-18)         |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) |
-| Kubernetes                                                                                                     | 1.27, 1.26, 1.22                   | 1.26, 1.25, 1.24                   |
+| Kubernetes                                                                                                     | 1.27, 1.26, 1.25                   | 1.26, 1.25, 1.24                   |
 | Architecture                                                                                                   | amd64, arm64                       | amd64, arm64                       |
 | **Platforms**                                                                                                  |                                    |                                    |
 | - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Exoscale, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Exoscale, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud |
@@ -18,9 +18,9 @@ description: "Table of supported Talos Linux versions and respective platforms."
 | - SBCs                                                                                                         | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Nano Pi R4S, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B, Raspberry Pi Compute Module 4 | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Nano Pi R4S, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B, Raspberry Pi Compute Module 4 |
 | - local                                                                                                        | Docker, QEMU                       | Docker, QEMU                       |
 | **Cluster API**                                                                                                |                                    |                                    |
-| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.5.6                           | >= 0.5.6                           |
+| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.6.0                           | >= 0.5.6                           |
 | [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.4.10                          | >= 0.4.10                          |
-| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.5.7                           | >= 0.5.7                           |
+| [Sidero](https://www.sidero.dev/)                                                                              | >= 0.6.0                           | >= 0.5.7                           |
 
 ## Platform Tiers
 

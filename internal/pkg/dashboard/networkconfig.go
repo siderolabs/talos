@@ -116,12 +116,20 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 	widget.interfaceDropdown.SetOptions([]string{interfaceNone}, func(_ string, _ int) {
 		widget.formEdited()
 	})
+	widget.interfaceDropdown.SetListStyles(
+		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.MoreContrastBackgroundColor),
+		tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tview.Styles.PrimaryTextColor),
+	)
 
 	widget.modeDropdown = tview.NewDropDown().SetLabel(formItemMode)
 	widget.modeDropdown.SetBlurFunc(widget.formEdited)
 	widget.modeDropdown.SetOptions([]string{ModeDHCP, ModeStatic}, func(_ string, _ int) {
 		widget.formEdited()
 	})
+	widget.modeDropdown.SetListStyles(
+		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.MoreContrastBackgroundColor),
+		tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tview.Styles.PrimaryTextColor),
+	)
 
 	widget.addressesField = tview.NewInputField().SetLabel(formItemAddresses)
 	widget.addressesField.SetBlurFunc(widget.formEdited)
