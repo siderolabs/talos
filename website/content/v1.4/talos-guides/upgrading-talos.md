@@ -36,7 +36,7 @@ For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade
 
 ## Before Upgrade to {{% release %}}
 
-TBD
+There are no specific actions to be taken before an upgrade.
 
 ## Video Walkthrough
 
@@ -93,7 +93,7 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+* `.machine.network.interfaces.bond` now supports [network device selectors]({{< relref "network/device-selector" >}}) for picking up the devices to bond.
 
 ## Upgrade Sequence
 

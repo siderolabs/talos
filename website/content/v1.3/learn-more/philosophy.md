@@ -70,7 +70,6 @@ it forms.
 
 This is achievable because Talos is tightly focused to do one thing: run
 Kubernetes, in the easiest, most secure, most reliable way it can.
-/Users/stevefrancis/workspace/talos/website/content/v1.3/learn-more
 
 ## Not based on X distro
 
