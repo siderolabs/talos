@@ -122,38 +122,43 @@ func (widget *Header) redraw() {
 }
 
 func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
-	sss := widget.getOrCreateNodeData(node)
+	nodeData := widget.getOrCreateNodeData(node)
 
 	if data == nil {
 		return
 	}
 
-	sss.cpuUsagePercent = fmt.Sprintf("%.1f%%", data.CPUUsageByName("usage")*100.0)
-	sss.memUsagePercent = fmt.Sprintf("%.1f%%", data.MemUsage()*100.0)
+	nodeData.cpuUsagePercent = fmt.Sprintf("%.1f%%", data.CPUUsageByName("usage")*100.0)
+	nodeData.memUsagePercent = fmt.Sprintf("%.1f%%", data.MemUsage()*100.0)
 
 	if data.Hostname != nil {
-		sss.hostname = data.Hostname.GetHostname()
+		nodeData.hostname = data.Hostname.GetHostname()
 	}
 
 	if data.Version != nil {
-		sss.version = data.Version.GetVersion().GetTag()
+		nodeData.version = data.Version.GetVersion().GetTag()
 	}
 
 	if data.SystemStat != nil {
-		sss.uptime = time.Since(time.Unix(int64(data.SystemStat.GetBootTime()), 0)).Round(time.Second).String()
+		nodeData.uptime = time.Since(time.Unix(int64(data.SystemStat.GetBootTime()), 0)).Round(time.Second).String()
 	}
 
 	if data.CPUsInfo != nil {
-		sss.numCPUs = fmt.Sprintf("%d", len(data.CPUsInfo.GetCpuInfo()))
-		sss.cpuFreq = widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz())
+		numCPUs := len(data.CPUsInfo.GetCpuInfo())
+
+		nodeData.numCPUs = fmt.Sprintf("%d", numCPUs)
+
+		if numCPUs > 0 {
+			nodeData.cpuFreq = widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz())
+		}
 	}
 
 	if data.Processes != nil {
-		sss.numProcesses = fmt.Sprintf("%d", len(data.Processes.GetProcesses()))
+		nodeData.numProcesses = fmt.Sprintf("%d", len(data.Processes.GetProcesses()))
 	}
 
 	if data.Memory != nil {
-		sss.totalMem = humanize.IBytes(data.Memory.GetMeminfo().GetMemtotal() << 10)
+		nodeData.totalMem = humanize.IBytes(data.Memory.GetMeminfo().GetMemtotal() << 10)
 	}
 }
 
