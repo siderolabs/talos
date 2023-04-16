@@ -19,7 +19,7 @@ type KubernetesVersion struct {
 	version version.Version
 }
 
-// ParseKubernetesVersion parses Talos version.
+// ParseKubernetesVersion parses Kubernetes version.
 func ParseKubernetesVersion(v string) (*KubernetesVersion, error) {
 	parsed, err := version.NewVersion(v)
 	if err != nil {
