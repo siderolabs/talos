@@ -49,7 +49,7 @@ INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 MODULE_SIG_VERIFY_DEFAULT_TARGET := module-sig-verify-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.27.0
+KUBECTL_VERSION ?= v1.27.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm
