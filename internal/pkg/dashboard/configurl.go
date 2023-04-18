@@ -7,13 +7,16 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/rivo/tview"
+	"github.com/siderolabs/go-procfs/procfs"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/internal/pkg/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -31,6 +34,7 @@ type ConfigURLGrid struct {
 
 	form *tview.Form
 
+	template     *tview.TextView
 	existingCode *tview.TextView
 	newCodeField *tview.InputField
 	infoView     *tview.TextView
@@ -45,6 +49,7 @@ func NewConfigURLGrid(ctx context.Context, dashboard *Dashboard) *ConfigURLGrid 
 		Grid:         *tview.NewGrid(),
 		dashboard:    dashboard,
 		form:         tview.NewForm(),
+		template:     tview.NewTextView().SetDynamicColors(true).SetLabel("Template").SetScrollable(false),
 		existingCode: tview.NewTextView().SetDynamicColors(true).SetLabel("Existing Code").SetText(unset).SetSize(1, 0).SetScrollable(false),
 		newCodeField: tview.NewInputField().SetLabel("New Code"),
 		infoView:     tview.NewTextView().SetDynamicColors(true).SetSize(2, 0).SetScrollable(false),
@@ -52,9 +57,13 @@ func NewConfigURLGrid(ctx context.Context, dashboard *Dashboard) *ConfigURLGrid 
 		nodeMap: make(map[string]*configURLData),
 	}
 
-	grid.SetRows(-1, 12, -1).SetColumns(-1, 48, -1)
+	grid.template.SetText(grid.readTemplateFromKernelArgs())
+
+	grid.SetRows(-1, 18, -1).SetColumns(-1, 72, -1)
 
 	grid.form.SetBorder(true)
+
+	grid.form.AddFormItem(grid.template)
 	grid.form.AddFormItem(grid.existingCode)
 	grid.form.AddFormItem(grid.newCodeField)
 	grid.form.AddButton("Save", func() {
@@ -76,7 +85,6 @@ func NewConfigURLGrid(ctx context.Context, dashboard *Dashboard) *ConfigURLGrid 
 		}
 
 		grid.clearForm()
-		grid.infoView.SetText("[green]Saved successfully[-]")
 		grid.dashboard.selectScreen(ScreenSummary)
 	})
 	grid.form.AddButton("Delete", func() {
@@ -111,10 +119,23 @@ func NewConfigURLGrid(ctx context.Context, dashboard *Dashboard) *ConfigURLGrid 
 	return grid
 }
 
+func (widget *ConfigURLGrid) readTemplateFromKernelArgs() string {
+	option := procfs.ProcCmdline().Get(constants.KernelParamConfig).First()
+	if option == nil {
+		return unset
+	}
+
+	codeVar := fmt.Sprintf("${%s}", constants.CodeKey)
+
+	return strings.ReplaceAll(tview.Escape(*option), codeVar, fmt.Sprintf("[green]%s[-]", codeVar))
+}
+
 // OnScreenSelect implements the screenSelectListener interface.
 func (widget *ConfigURLGrid) onScreenSelect(active bool) {
 	if active {
 		widget.dashboard.app.SetFocus(widget.form)
+	} else {
+		widget.clearForm()
 	}
 }
 
