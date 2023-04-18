@@ -18,7 +18,7 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 6.1.23
+* Linux: 6.1.24
 * containerd: v1.6.20
 * runc: v1.1.5
 * Kubernetes: v1.27.0-rc.1

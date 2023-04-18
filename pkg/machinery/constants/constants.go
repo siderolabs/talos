@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.23-talos"
+	DefaultKernelVersion = "6.1.24-talos"
 
 	// DefaultKernelModulesPath is the default path to the kernel modules.
 	DefaultKernelModulesPath = "/lib/modules" + "/" + DefaultKernelVersion
