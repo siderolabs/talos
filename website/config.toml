@@ -137,11 +137,11 @@ prism_syntax_highlighting = false
 
 [[params.versions]]
 url = "/v1.4/"
-version = "v1.4 (pre-release)"
+version = "v1.4 (latest)"
 
 [[params.versions]]
 url = "/v1.3/"
-version = "v1.3 (latest)"
+version = "v1.3"
 
 [[params.versions]]
 url = "/v1.2/"
