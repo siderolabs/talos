@@ -12,6 +12,8 @@ There are two ways to configure Talos server with `nocloud` platform:
 * via SMBIOS "serial number" option
 * using CDROM or USB-flash filesystem
 
+> Note: This requires the nocloud image which can be found on the Github [Releases](https://github.com/siderolabs/talos/releases) page.
+
 ### SMBIOS Serial Number
 
 This method requires the network connection to be up (e.g. via DHCP).
