@@ -38,7 +38,7 @@ func CheckErrors[T interface{ GetMetadata() *common.Metadata }](messages ...T) e
 
 	for _, msg := range messages {
 		md := msg.GetMetadata()
-		if md.Error != "" {
+		if md != nil && md.Error != "" {
 			err = AppendErrors(err, fmt.Errorf(md.Error))
 		}
 	}
