@@ -192,8 +192,9 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	runConfig.DynamicPlugins = []string{"e2e"}
 	runConfig.PluginEnvOverrides = map[string]map[string]string{
 		"e2e": {
-			"E2E_FOCUS":    strings.Join(options.RunTests, "|"),
-			"E2E_PARALLEL": fmt.Sprintf("%v", options.Parallel),
+			"E2E_FOCUS":      strings.Join(options.RunTests, "|"),
+			"E2E_PARALLEL":   fmt.Sprintf("%v", options.Parallel),
+			"E2E_EXTRA_ARGS": "--ginkgo.v",
 		},
 	}
 	runConfig.KubeVersion = fmt.Sprintf("v%s", options.KubernetesVersion)
