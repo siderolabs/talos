@@ -364,6 +364,7 @@ ARG GO_LDFLAGS
 ARG GOAMD64
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-amd64
 RUN chmod +x /talosctl-linux-amd64
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-amd64
 
 FROM base AS talosctl-linux-arm64-build
 WORKDIR /src/cmd/talosctl
@@ -371,6 +372,7 @@ ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-arm64
 RUN chmod +x /talosctl-linux-arm64
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-arm64
 
 FROM base AS talosctl-linux-armv7-build
 WORKDIR /src/cmd/talosctl
@@ -378,6 +380,7 @@ ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm GOARM=7 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-linux-armv7
 RUN chmod +x /talosctl-linux-armv7
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-armv7
 
 FROM scratch AS talosctl-linux
 COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd64
@@ -400,6 +403,7 @@ ARG GO_LDFLAGS
 ARG GOAMD64
 RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-amd64
 RUN chmod +x /talosctl-darwin-amd64
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-darwin-amd64
 
 FROM base AS talosctl-darwin-arm64-build
 WORKDIR /src/cmd/talosctl
@@ -407,6 +411,7 @@ ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-darwin-arm64
 RUN chmod +x /talosctl-darwin-arm64
+RUN touch --date="@${SOURCE_DATE_EPOCH}" talosctl-darwin-arm64
 
 FROM scratch AS talosctl-darwin
 COPY --from=talosctl-darwin-amd64-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
@@ -418,6 +423,7 @@ ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 ARG GOAMD64
 RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-windows-amd64.exe
 
 FROM scratch AS talosctl-windows
 COPY --from=talosctl-windows-amd64-build /talosctl-windows-amd64.exe /talosctl-windows-amd64.exe
@@ -428,12 +434,14 @@ ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 ARG GOAMD64
 RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-amd64
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-freebsd-amd64
 
 FROM base AS talosctl-freebsd-arm64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-arm64
+RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-freebsd-arm64
 
 FROM scratch AS talosctl-freebsd
 COPY --from=talosctl-freebsd-amd64-build /talosctl-freebsd-amd64 /talosctl-freebsd-amd64
@@ -550,6 +558,8 @@ RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
 RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
+RUN find /rootfs -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
 FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
 RUN find /rootfs -print0 \
@@ -663,6 +673,8 @@ COPY --from=pkg-grub / /
 COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 
 FROM alpine:3.17.2 AS installer-image
+ARG SOURCE_DATE_EPOCH
+ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 RUN apk add --no-cache --update --no-scripts \
     bash \
     cpio \
@@ -681,13 +693,18 @@ COPY --from=install-artifacts / /
 COPY --from=installer-build /installer /bin/installer
 COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
 RUN ln -s /bin/installer /bin/talosctl
+RUN find /bin /etc /lib /usr /sbin | grep -Ev '/etc/hosts|/etc/resolv.conf' \
+    | xargs -r touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
+
+FROM scratch AS installer-image-squashed
+COPY --from=installer-image / /
 ARG TAG
 ENV VERSION ${TAG}
 LABEL "alpha.talos.dev/version"="${VERSION}"
 LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 
-FROM installer-image AS installer
+FROM installer-image-squashed AS installer
 ONBUILD RUN apk add --no-cache --update \
     cpio \
     squashfs-tools \
@@ -708,7 +725,7 @@ ONBUILD RUN find /rootfs \
     && rm -rf /initramfs
 ONBUILD WORKDIR /
 
-FROM installer-image AS imager
+FROM installer-image-squashed AS imager
 
 # The test target performs tests on the source code.
 
