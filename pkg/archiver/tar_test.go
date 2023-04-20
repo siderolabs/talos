@@ -111,6 +111,46 @@ func (suite *TarSuite) TestArchiveFile() {
 	}
 }
 
+func (suite *TarSuite) TestArchiveProcfs() {
+	ch, err := archiver.Walker(context.Background(), "/proc/self/", archiver.WithMaxRecurseDepth(0))
+	suite.Require().NoError(err)
+
+	var buf bytes.Buffer
+
+	// it's okay to have some errors here, as some files are not readable
+	archiver.Tar(context.Background(), ch, &buf) //nolint:errcheck
+
+	tr := tar.NewReader(&buf)
+
+	expectedNonZeroFiles := map[string]struct{}{
+		"cmdline": {},
+		"environ": {},
+		"limits":  {},
+		"io":      {},
+		"stat":    {},
+	}
+
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+
+		suite.Require().NoError(err)
+
+		if _, expected := expectedNonZeroFiles[hdr.Name]; !expected {
+			continue
+		}
+
+		suite.Assert().EqualValues(hdr.Typeflag, tar.TypeReg)
+		suite.Assert().NotZero(hdr.Size)
+
+		delete(expectedNonZeroFiles, hdr.Name)
+	}
+
+	suite.Assert().Empty(expectedNonZeroFiles)
+}
+
 func TestTarSuite(t *testing.T) {
 	suite.Run(t, new(TarSuite))
 }
