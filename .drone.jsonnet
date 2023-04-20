@@ -505,6 +505,8 @@ local integration_qemu_csi = Step('e2e-csi', target='e2e-qemu', privileged=true,
 local integration_images = Step('images', target='images', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
 local integration_sbcs = Step('sbcs', target='sbcs', depends_on=[integration_images], environment={ IMAGE_REGISTRY: local_registry });
 
+local integration_reproducibility_test = Step('reproducibility-test', target='reproducibility-test', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
+
 local push_edge = {
   name: 'push-edge',
   image: 'autonomy/build-container:latest',
@@ -554,6 +556,7 @@ local integration_pipelines = [
   Pipeline('integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race]) + integration_trigger(['integration-qemu-race']),
   Pipeline('integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi]) + integration_trigger(['integration-qemu-csi']),
   Pipeline('integration-images', default_pipeline_steps + [integration_images, integration_sbcs]) + integration_trigger(['integration-images']),
+  Pipeline('integration-reproducibility-test', default_pipeline_steps + [integration_reproducibility_test]) + integration_trigger(['integration-reproducibility']),
 
   // cron pipelines, triggered on schedule events
   Pipeline('cron-integration-qemu', default_pipeline_steps + [integration_qemu, push_edge], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
@@ -575,6 +578,7 @@ local integration_pipelines = [
   Pipeline('cron-integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-images', default_pipeline_steps + [integration_images, integration_sbcs], [default_cron_pipeline]) + cron_trigger(['nightly']),
+  Pipeline('cron-integration-reproducibility-test', default_pipeline_steps + [integration_reproducibility_test], [default_cron_pipeline]) + cron_trigger(['nightly']),
 ];
 
 

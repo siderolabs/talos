@@ -477,3 +477,33 @@ push-%: login ## Pushes the installer, imager, talos and talosctl images to the 
 .PHONY: clean
 clean: ## Cleans up all artifacts.
 	@-rm -rf $(ARTIFACTS)
+
+.PHONY: image-list
+image-list: ## Prints a list of all images built by this Makefile with digests.
+	@echo -n installer talos imager talosctl | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
+
+.PHONY: sign-images
+sign-images: ## Run cosign to sign all images built by this Makefile.
+	@$(MAKE) --quiet image-list | xargs -I{} sh -c 'cosign sign --yes {}'
+
+.PHONY: reproducibility-test
+reproducibility-test:
+	@$(MAKE) reproducibility-test-local-initramfs
+	@$(MAKE) reproducibility-test-docker-installer INSTALLER_ARCH=targetarch PLATFORM=linux/amd64
+	@$(MAKE) reproducibility-test-docker-talos reproducibility-test-docker-imager reproducibility-test-docker-talosctl PLATFORM=linux/amd64
+
+reproducibility-test-docker-%:
+	@rm -rf _out1/ _out2/
+	@mkdir -p _out1/ _out2/
+	@$(MAKE) docker-$* DEST=_out1/
+	@$(MAKE) docker-$* DEST=_out2/ TARGET_ARGS="--no-cache"
+	@find _out1/ -type f | xargs -IFILE diffoscope FILE `echo FILE | sed 's/_out1/_out2/'`
+	@rm -rf _out1/ _out2/
+
+reproducibility-test-local-%:
+	@rm -rf _out1/ _out2/
+	@mkdir -p _out1/ _out2/
+	@$(MAKE) local-$* DEST=_out1/
+	@$(MAKE) local-$* DEST=_out2/ TARGET_ARGS="--no-cache"
+	@find _out1/ -type f | xargs -IFILE diffoscope FILE `echo FILE | sed 's/_out1/_out2/'`
+	@rm -rf _out1/ _out2/
