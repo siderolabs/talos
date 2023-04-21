@@ -872,6 +872,7 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		serviceList := []system.Service{
 			&services.CRI{},
+			&services.Registryd{},
 		}
 
 		switch t := r.Config().Machine().Type(); t {
