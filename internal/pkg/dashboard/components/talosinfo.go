@@ -79,10 +79,11 @@ func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
 			nodeData.uuid = res.TypedSpec().UUID
 		}
 	case *cluster.Info:
-		if data.Deleted {
+		clusterName := res.TypedSpec().ClusterName
+		if data.Deleted || clusterName == "" {
 			nodeData.clusterName = notAvailable
 		} else {
-			nodeData.clusterName = res.TypedSpec().ClusterName
+			nodeData.clusterName = clusterName
 		}
 	case *runtime.MachineStatus:
 		if data.Deleted {

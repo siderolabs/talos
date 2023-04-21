@@ -13,6 +13,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
@@ -23,6 +25,7 @@ type staticPodStatuses struct {
 }
 
 type kubernetesInfoData struct {
+	isControlPlane    bool
 	kubernetesVersion string
 	kubeletStatus     string
 
@@ -102,6 +105,8 @@ func (widget *KubernetesInfo) updateNodeData(data resourcedata.Data) {
 		}
 
 		nodeData.podStatuses = widget.staticPodStatuses(maps.Values(nodeData.staticPodStatusMap))
+	case *config.MachineType:
+		nodeData.isControlPlane = !data.Deleted && res.MachineType() == machine.TypeControlPlane
 	}
 }
 
@@ -142,29 +147,36 @@ func (widget *KubernetesInfo) getOrCreateNodeData(node string) *kubernetesInfoDa
 func (widget *KubernetesInfo) redraw() {
 	data := widget.getOrCreateNodeData(widget.selectedNode)
 
-	fields := fieldGroup{
-		fields: []field{
-			{
-				Name:  "KUBERNETES",
-				Value: data.kubernetesVersion,
-			},
-			{
-				Name:  "KUBELET",
-				Value: data.kubeletStatus,
-			},
-			{
+	fieldList := make([]field, 0, 5)
+
+	fieldList = append(fieldList,
+		field{
+			Name:  "KUBERNETES",
+			Value: data.kubernetesVersion,
+		},
+		field{
+			Name:  "KUBELET",
+			Value: data.kubeletStatus,
+		})
+
+	if data.isControlPlane {
+		fieldList = append(fieldList,
+			field{
 				Name:  "APISERVER",
 				Value: data.podStatuses.apiServer,
 			},
-			{
+			field{
 				Name:  "CONTROLLER-MANAGER",
 				Value: data.podStatuses.controllerManager,
 			},
-			{
+			field{
 				Name:  "SCHEDULER",
 				Value: data.podStatuses.scheduler,
-			},
-		},
+			})
+	}
+
+	fields := fieldGroup{
+		fields: fieldList,
 	}
 
 	widget.SetText(fields.String())
