@@ -478,6 +478,7 @@ COPY --from=pkg-util-linux-amd64 /lib/libblkid.* /rootfs/lib/
 COPY --from=pkg-util-linux-amd64 /lib/libuuid.* /rootfs/lib/
 COPY --from=pkg-util-linux-amd64 /lib/libmount.* /rootfs/lib/
 COPY --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
+COPY --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/sbin/modprobe
 COPY --from=pkg-kernel-amd64 /lib/modules /rootfs/lib/modules
 COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
@@ -529,6 +530,7 @@ COPY --from=pkg-util-linux-arm64 /lib/libblkid.* /rootfs/lib/
 COPY --from=pkg-util-linux-arm64 /lib/libuuid.* /rootfs/lib/
 COPY --from=pkg-util-linux-arm64 /lib/libmount.* /rootfs/lib/
 COPY --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
+COPY --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
 COPY --from=pkg-kernel-arm64 /lib/modules /rootfs/lib/modules
 COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
