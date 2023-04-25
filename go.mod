@@ -89,6 +89,7 @@ require (
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.3.0
+	github.com/sashabaranov/go-openai v1.9.4
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.16
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/discovery-api v0.1.2
