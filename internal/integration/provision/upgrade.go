@@ -678,7 +678,7 @@ func (suite *UpgradeSuite) untaint(name string) {
 	k := 0
 
 	for _, taint := range n.Spec.Taints {
-		if taint.Key != constants.LabelNodeRoleMaster && taint.Key != constants.LabelNodeRoleControlPlane {
+		if taint.Key != constants.LabelNodeRoleControlPlane {
 			n.Spec.Taints[k] = taint
 			k++
 		}

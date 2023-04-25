@@ -247,10 +247,6 @@ func getDiscoveryMemberList(ctx context.Context, runtime runtime.Runtime) ([]*cl
 
 func isControlPlaneNode(node *corev1.Node) bool {
 	for key := range node.Labels {
-		if key == constants.LabelNodeRoleMaster {
-			return true
-		}
-
 		if key == constants.LabelNodeRoleControlPlane {
 			return true
 		}

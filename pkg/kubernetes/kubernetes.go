@@ -152,16 +152,15 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 	addrs = []string{}
 
 	for _, node := range resp.Items {
-		_, labelMaster := node.Labels[constants.LabelNodeRoleMaster]
 		_, labelControlPlane := node.Labels[constants.LabelNodeRoleControlPlane]
 
 		var skip bool
 
 		switch machineType {
 		case machine.TypeInit, machine.TypeControlPlane:
-			skip = !(labelMaster || labelControlPlane)
+			skip = !labelControlPlane
 		case machine.TypeWorker:
-			skip = labelMaster || labelControlPlane
+			skip = labelControlPlane
 		case machine.TypeUnknown:
 			fallthrough
 		default:
@@ -205,14 +204,11 @@ func (h *Client) LabelNodeAsControlPlane(ctx context.Context, name string, taint
 	}
 
 	n.Labels[constants.LabelNodeRoleControlPlane] = ""
-	// TODO: frezbo
-	// remove all references to `constants.LabelNodeRoleMaster` when Talos supports k8s v1.27
-	delete(n.Labels, constants.LabelNodeRoleMaster)
 
 	newTaints := make([]corev1.Taint, 0, len(n.Spec.Taints))
 
 	for _, taint := range n.Spec.Taints {
-		if taint.Key == constants.LabelNodeRoleMaster || taint.Key == constants.LabelNodeRoleControlPlane {
+		if taint.Key == constants.LabelNodeRoleControlPlane {
 			continue
 		}
 

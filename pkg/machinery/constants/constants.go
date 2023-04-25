@@ -334,9 +334,6 @@ const (
 	// renovate: datasource=github-releases depName=coredns/coredns
 	DefaultCoreDNSVersion = "1.10.1"
 
-	// LabelNodeRoleMaster is the node label required by a control plane node.
-	LabelNodeRoleMaster = "node-role.kubernetes.io/master"
-
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
 

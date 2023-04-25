@@ -97,7 +97,7 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
 
 	for _, node := range nodes.Items {
 		for label := range node.Labels {
-			if label == constants.LabelNodeRoleMaster || label == constants.LabelNodeRoleControlPlane {
+			if label == constants.LabelNodeRoleControlPlane {
 				var internalIP netip.Addr
 
 				var ips []netip.Addr

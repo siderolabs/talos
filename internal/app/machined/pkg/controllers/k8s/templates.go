@@ -341,9 +341,6 @@ spec:
       serviceAccountName: coredns
       priorityClassName: system-cluster-critical
       tolerations:
-        - key: node-role.kubernetes.io/master
-          operator: Exists
-          effect: NoSchedule
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
