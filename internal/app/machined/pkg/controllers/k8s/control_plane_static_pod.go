@@ -569,6 +569,20 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 								ReadOnly:  true,
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
+						StartupProbe: &v1.Probe{
+							ProbeHandler: v1.ProbeHandler{
+								HTTPGet: &v1.HTTPGetAction{
+									Path:   "/healthz",
+									Host:   "localhost",
+									Port:   intstr.FromInt(10257),
+									Scheme: v1.URISchemeHTTPS,
+								},
+							},
+							// Give 60 seconds for the container to start up
+							PeriodSeconds:                 5,
+							FailureThreshold:              12,
+							TerminationGracePeriodSeconds: nil,
+						},
 						LivenessProbe: &v1.Probe{
 							ProbeHandler: v1.ProbeHandler{
 								HTTPGet: &v1.HTTPGetAction{
@@ -578,8 +592,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 									Scheme: v1.URISchemeHTTPS,
 								},
 							},
-							InitialDelaySeconds: 15,
-							TimeoutSeconds:      15,
+							TimeoutSeconds: 15,
 						},
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{
@@ -689,6 +702,20 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 								ReadOnly:  true,
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
+						StartupProbe: &v1.Probe{
+							ProbeHandler: v1.ProbeHandler{
+								HTTPGet: &v1.HTTPGetAction{
+									Path:   "/healthz",
+									Host:   "localhost",
+									Port:   intstr.FromInt(10259),
+									Scheme: v1.URISchemeHTTPS,
+								},
+							},
+							// Give 60 seconds for the container to start up
+							PeriodSeconds:                 5,
+							FailureThreshold:              12,
+							TerminationGracePeriodSeconds: nil,
+						},
 						LivenessProbe: &v1.Probe{
 							ProbeHandler: v1.ProbeHandler{
 								HTTPGet: &v1.HTTPGetAction{
@@ -698,8 +725,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 									Scheme: v1.URISchemeHTTPS,
 								},
 							},
-							InitialDelaySeconds: 15,
-							TimeoutSeconds:      15,
+							TimeoutSeconds: 15,
 						},
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{
