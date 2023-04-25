@@ -212,6 +212,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.TimeServerMergeController{},
 		&network.TimeServerSpecController{},
 		&perf.StatsController{},
+		&runtimecontrollers.CRIImageGCController{},
 		&runtimecontrollers.EventsSinkController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 			Cmdline:        procfs.ProcCmdline(),
