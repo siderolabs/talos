@@ -17,14 +17,14 @@ import (
 )
 
 type talosInfoData struct {
-	uuid           string
-	clusterName    string
-	stage          string
-	ready          string
-	typ            string
-	numMembersText string
+	uuid            string
+	clusterName     string
+	stage           string
+	ready           string
+	typ             string
+	numMachinesText string
 
-	numMembers int
+	machineIDSet map[string]struct{}
 }
 
 // TalosInfo represents the Talos info widget.
@@ -101,12 +101,12 @@ func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
 		}
 	case *cluster.Member:
 		if data.Deleted {
-			nodeData.numMembers--
+			delete(nodeData.machineIDSet, res.Metadata().ID())
 		} else {
-			nodeData.numMembers++
+			nodeData.machineIDSet[res.Metadata().ID()] = struct{}{}
 		}
 
-		nodeData.numMembersText = strconv.Itoa(nodeData.numMembers)
+		nodeData.numMachinesText = strconv.Itoa(len(nodeData.machineIDSet))
 	}
 }
 
@@ -114,12 +114,13 @@ func (widget *TalosInfo) getOrCreateNodeData(node string) *talosInfoData {
 	nodeData, ok := widget.nodeMap[node]
 	if !ok {
 		nodeData = &talosInfoData{
-			uuid:           notAvailable,
-			clusterName:    notAvailable,
-			stage:          notAvailable,
-			ready:          notAvailable,
-			typ:            notAvailable,
-			numMembersText: notAvailable,
+			uuid:            notAvailable,
+			clusterName:     notAvailable,
+			stage:           notAvailable,
+			ready:           notAvailable,
+			typ:             notAvailable,
+			numMachinesText: notAvailable,
+			machineIDSet:    make(map[string]struct{}),
 		}
 
 		widget.nodeMap[node] = nodeData
@@ -154,8 +155,8 @@ func (widget *TalosInfo) redraw() {
 				Value: data.typ,
 			},
 			{
-				Name:  "MEMBERS",
-				Value: data.numMembersText,
+				Name:  "MACHINES",
+				Value: data.numMachinesText,
 			},
 		},
 	}
