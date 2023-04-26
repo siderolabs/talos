@@ -136,16 +136,24 @@ At this point, the other control plane nodes will start their `etcd` services, j
 
 ### Kubernetes static pod definitions are not generated
 
-Talos should write the static pod definitions for the Kubernetes control plane
-in `/etc/kubernetes/manifests`:
+Talos should generate the static pod definitions for the Kubernetes control plane
+as resources:
 
 ```bash
-$ talosctl -n <IP> ls /etc/kubernetes/manifests
-NODE         NAME
-172.20.0.2   .
-172.20.0.2   talos-kube-apiserver.yaml
-172.20.0.2   talos-kube-controller-manager.yaml
-172.20.0.2   talos-kube-scheduler.yaml
+$ talosctl -n <IP> get staticpods
+NODE         NAMESPACE   TYPE        ID                        VERSION
+172.20.0.2   k8s         StaticPod   kube-apiserver            1
+172.20.0.2   k8s         StaticPod   kube-controller-manager   1
+172.20.0.2   k8s         StaticPod   kube-scheduler            1
+```
+
+Talos should report that the static pod definitions are rendered for the `kubelet`:
+
+```bash
+$ talosctl -n <IP> dmesg | grep 'rendered new'
+172.20.0.2: user: warning: [2023-04-26T19:17:52.550527204Z]: [talos] rendered new static pod {"component": "controller-runtime", "controller": "k8s.StaticPodServerController", "id": "kube-apiserver"}
+172.20.0.2: user: warning: [2023-04-26T19:17:52.552186204Z]: [talos] rendered new static pod {"component": "controller-runtime", "controller": "k8s.StaticPodServerController", "id": "kube-controller-manager"}
+172.20.0.2: user: warning: [2023-04-26T19:17:52.554607204Z]: [talos] rendered new static pod {"component": "controller-runtime", "controller": "k8s.StaticPodServerController", "id": "kube-scheduler"}
 ```
 
 If the static pod definitions are not rendered, check `etcd` and `kubelet` service health (see above)
@@ -317,9 +325,7 @@ This is expected behavior.
 
 Things to look for:
 
-`v1alpha1.BootstrapStatusController: bootkube initialized status not found`: control plane is not self-hosted, running with static pods.
-
-`k8s.KubeletStaticPodController: writing static pod "/etc/kubernetes/manifests/talos-kube-apiserver.yaml"`: static pod definitions were rendered successfully.
+`k8s.KubeletStaticPodController: rendered new static pod`: static pod definitions were rendered successfully.
 
 `k8s.ManifestApplyController: controller failed: error creating mapping for object /v1/Secret/bootstrap-token-q9pyzr: an error on the server ("") has prevented the request from succeeding`: control plane endpoint is not up yet, bootstrap manifests can't be injected, controller is going to retry.
 
