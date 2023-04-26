@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.3.0"
+previous = "v1.4.0"
 
 pre_release = true
 
@@ -18,156 +18,9 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 6.1.24
-* containerd: v1.6.20
-* runc: v1.1.5
-* Kubernetes: v1.27.1
-* etcd: v3.5.8
-* CoreDNS: v1.10.1
-* Flannel: v0.21.4
+* Linux: 6.1.25
 
 Talos is built with Go 1.20.3.
-"""
-
-    [notes.kernel-modules]
-        title = "Kernel Modules"
-        description="""\
-Talos now supports automatically loading kernel drivers built as modules.
-If any system extensions or the Talos base kernel build provides kernel modules and if they matches the system hardware (via PCI IDs), they will be loaded automatically.
-Modules can still be loaded explicitly by defining it in [machine configuration](https://www.talos.dev/v1.4/reference/configuration/#kernelconfig).
-"""
-
-    [notes.kernel-modules-tree]
-        title = "Kernel Modules Tree"
-        description="""\
-Talos now supports re-building the kernel modules dependency tree information on upgrades.
-This allows modules of same name to co-exist as in-tree and external modules.
-System Extensions can provide modules installed into `extras` directory and when loading it'll take precendence over the in-tree module.
-"""
-
-    [notes.kernel-reset-argument]
-        title = "Kernel Reset Argument"
-        description="""\
-Talos now supports `talos.experimental.wipe=system:EPHEMERAL,STATE` kernel argument.
-Talos now also supports the new GRUB boot option - "Reset Talos installation and return to maintenance mode".
-Both of this options will reset EPHEMERAL and STATE partitions and will return Talos into maintenance mode after the reboot.
-"""
-
-    [notes.etcd]
-        title = "etcd Maintenance"
-        description="""\
-Talos adds new APIs to make it easier to perform etcd maintenance operations.
-
-These APIs are available via new `talosctl etcd` sub-commands:
-
-* `talosctl etcd alarm list|disarm`
-* `talosctl etcd defrag`
-* `talosctl etcd status`
-
-See also [etcd maintenance guide](https://talos.dev/v1.4/advanced/etcd-maintenance/).
-"""
-
-    [notes.crihosts]
-        title = "Registry Mirror Catch-All Option"
-        description="""\
-Talos now supports a catch-all option for registry mirrors:
-
-```yaml
-machine:
-    registries:
-        mirrors:
-            docker.io:
-                - https://registry-1.docker.io/
-            "*":
-                - https://my-registry.example.com/
-```
-"""
-
-    [notes.machineconfig]
-        title = "Machine Configuration"
-        description="""\
-Strategic merge config patches correctly support merging `.vlans` sections of the network interface.
-"""
-
-    [notes.dashboard]
-        title = "Talos Dashboard on TTY2"
-        description="""\
-Talos now starts a text-based UI dashboard on virtual console `/dev/tty2` and switches to it by default upon boot.
-Kernel logs remain available on `/dev/tty1`.
-
-To switch TTYs, use the `Alt+F1` through `Alt+F2` keys.
-
-You can disable this behavior by setting the kernel parameter `talos.dashboard.disabled=1`.
-
-This behavior is disabled by default on SBCs.
-"""
-
-    [notes.reset]
-        title = "Reset API Enhancements"
-        description="""\
-Talos now supports resetting user disks through the Reset API,
-the list of disks to wipe is set using the `--user-disks-to-wipe` parameter in `talosctl`.
-Additionally, the Reset API can now function in maintenance mode
-and has the capability to wipe the node's system disk (partial wipe is not supported).
-"""
-
-    [notes.roles]
-        title = "New Talos API os:operator role"
-        description="""\
-Talos now supports a new `os:operator` role for the Talos API.
-This role allows everything `os:reader` role allows plus access to maintenance APIs:
-rebooting, shutting down a node, accessing packet capture, etcd alarm APIs, etcd backup, etc.
-"""
-
-    [notes.containers-output]
-        title = "talosctl containers"
-        description="""\
-`talosctl logs -k` and `talosctl containers -k` now support and output container display names with their ids.
-This allows to distinguish between containers with the same name.
-"""
-
-    [notes.netstat]
-        title = "talosctl netstat"
-        description="""\
-Talos API was extended to support retrieving a list of network connections (sockets) from the node and pods.
-`talosctl netstat` command was added to retrieve the list of network connections.
-"""
-
-    [notes.vmware]
-        title = "VMware Platform"
-        description="""\
-Talos now supports loading network configuration on VMWare platform from the `metadata` key.
-See [CAPV IPAM Support](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/main/docs/proposal/20220929-ipam-support.md) and
-[Talos issue 6708](https://github.com/siderolabs/talos/issues/6708) for details.
-"""
-
-    [notes.env]
-        title = "Kernel Argument `talos.environment`"
-        description="""\
-Talos now supports passing environment variables via `talos.environment` kernel argument.
-
-Example:
-
-```
-talos.environment=http_proxy=http://proxy.example.com:8080 talos.environment=https_proxy=http://proxy.example.com:8080
-```
-"""
-
-    [notes.bonding]
-        title = "Bond Device Selectors"
-        description="""\
-Bond links can now be described using device selectors instead of explicit device names:
-
-```yaml
-machine:
-  network:
-    interfaces:
-      - interface: bond0
-        bond:
-          deviceSelectors:
-            - hardwareAddr: '00:50:56:*'
-            - hardwareAddr: '00:50:57:9c:2c:2d'
-```
 """
 
 [make_deps]
