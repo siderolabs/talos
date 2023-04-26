@@ -767,6 +767,7 @@ func StartContainerd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 }
 
 // WriteUdevRules is the task that writes udev rules to a udev rules file.
+// TODO: frezbo: move this to controller based since writing udev rules doesn't need a restart.
 func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		rules := r.Config().Machine().Udev().Rules()
@@ -783,11 +784,24 @@ func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 		}
 
 		if len(rules) > 0 {
-			if err := system.Services(r).Stop(ctx, "udevd"); err != nil {
+			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "control", "--reload"); err != nil {
 				return err
 			}
 
-			return system.Services(r).Start("udevd")
+			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=devices", "--action=add"); err != nil {
+				return err
+			}
+
+			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=subsystems", "--action=add"); err != nil {
+				return err
+			}
+
+			// This ensures that `udevd` finishes processing kernel events, triggered by
+			// `udevd trigger`, to prevent a race condition when a user specifies a path
+			// under `/dev/disk/*` in any disk definitions.
+			_, err := cmd.RunContext(ctx, "/sbin/udevadm", "settle", "--timeout=50")
+
+			return err
 		}
 
 		return nil

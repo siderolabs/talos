@@ -43,8 +43,6 @@ func (c *Udevd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		"--update",
 	)
 
-	c.triggered = false
-
 	return err
 }
 
@@ -102,9 +100,9 @@ func (c *Udevd) HealthFunc(runtime.Runtime) health.Check {
 		}
 
 		// udevadm trigger returns with an exit code of 0 even if udevd is not fully running,
-		// so running `udevadm control --start-exec-queue` to ensure that udevd is fully initialized
+		// so running `udevadm control --reload` to ensure that udevd is fully initialized
 		// which returns an exit code of 2 if udevd is not running. This complementes the previous check
-		if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "control", "--start-exec-queue"); err != nil {
+		if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "control", "--reload"); err != nil {
 			return err
 		}
 
