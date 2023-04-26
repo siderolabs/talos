@@ -22,7 +22,7 @@ require (
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/gen v0.4.3
 	github.com/siderolabs/go-api-signature v0.2.2
-	github.com/siderolabs/go-blockdevice v0.4.4
+	github.com/siderolabs/go-blockdevice v0.4.5
 	github.com/siderolabs/go-debug v0.2.2
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0

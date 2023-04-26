@@ -94,7 +94,7 @@ require (
 	github.com/siderolabs/discovery-api v0.1.2
 	github.com/siderolabs/discovery-client v0.1.4
 	github.com/siderolabs/gen v0.4.3
-	github.com/siderolabs/go-blockdevice v0.4.4
+	github.com/siderolabs/go-blockdevice v0.4.5
 	github.com/siderolabs/go-circular v0.1.0
 	github.com/siderolabs/go-cmd v0.1.1
 	github.com/siderolabs/go-debug v0.2.2
