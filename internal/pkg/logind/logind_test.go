@@ -49,7 +49,7 @@ func TestIntegration(t *testing.T) {
 	d, err := kubeletConn.CurrentInhibitDelay()
 	require.NoError(t, err)
 
-	assert.Equal(t, 2*constants.KubeletShutdownGracePeriod, d)
+	assert.Equal(t, 40*constants.KubeletShutdownGracePeriod, d)
 
 	t.Log("acquiring inhibit lock")
 
