@@ -1,3 +1,69 @@
+## [Talos 1.4.1](https://github.com/siderolabs/talos/releases/tag/v1.4.1) (2023-04-27)
+
+Welcome to the v1.4.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.1.25
+
+
+### Contributors
+
+* Andrey Smirnov
+* Utku Ozdemir
+* Noel Georgi
+* Nico Berlee
+
+### Changes
+<details><summary>13 commits</summary>
+<p>
+
+* [`726d8d984`](https://github.com/siderolabs/talos/commit/726d8d984060f18af94886c0239376bed5b1421f) feat: update Linux to 6.1.25, fix virtio on arm64
+* [`ab09baf3d`](https://github.com/siderolabs/talos/commit/ab09baf3d473e86abe93bfac00268047ddad908d) fix: bump max inhibit delay to 20 min
+* [`e94a19602`](https://github.com/siderolabs/talos/commit/e94a196028d945e7224bbee7bc50068b90b1534a) fix: udevd rules trigger
+* [`0cd177524`](https://github.com/siderolabs/talos/commit/0cd177524c66d8346c42fe2cad282a165bbe1983) fix: display correct number of machines on dashboard
+* [`6b6e6c9c7`](https://github.com/siderolabs/talos/commit/6b6e6c9c7988db3c899dec3f284900e60a263203) feat: clean up (garbage collect) system images which are not referenced
+* [`254086d6d`](https://github.com/siderolabs/talos/commit/254086d6d7a6f99cee4e40a194aaa50e06874f92) fix: support kernel userspace module loading
+* [`0ef60514e`](https://github.com/siderolabs/talos/commit/0ef60514e566df1b25ec4411dad5fa0f1209806c) feat: add startup probes to controller-manager and scheduler
+* [`9ce238794`](https://github.com/siderolabs/talos/commit/9ce2387941f92098ae837bb92c50e1a506ee11e7) fix: do not show control plane status for workers on dashboard
+* [`b92d9965f`](https://github.com/siderolabs/talos/commit/b92d9965fd7f3d8eaf5398d84ce031f324e19a42) fix: allow `talosctl cp` to handle special files in `/proc`
+* [`c003fce72`](https://github.com/siderolabs/talos/commit/c003fce72a40fa5f603dce56f84e186d6f6d081d) chore: fix container image reproducibility
+* [`0a00a4ea7`](https://github.com/siderolabs/talos/commit/0a00a4ea748e070d6f4b7942e5e9cbb01e412631) fix: parse errors correctly
+* [`447c73b05`](https://github.com/siderolabs/talos/commit/447c73b053735d6e6ae69db55d305c5a759594e2) test: submit verbose flag to e2e tests
+* [`bf1cfe9c8`](https://github.com/siderolabs/talos/commit/bf1cfe9c847d649cd4d3d441e6eb0f025715d7b1) feat: show template URL in dashboard config URL tab
+</p>
+</details>
+
+### Changes from siderolabs/go-blockdevice
+<details><summary>1 commit</summary>
+<p>
+
+* [`076874a`](https://github.com/siderolabs/go-blockdevice/commit/076874a155ad44d764d25081125f950e8194d023) chore: resolve blockdevice symlinks
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`0657493`](https://github.com/siderolabs/pkgs/commit/0657493fd0ac6f64cb3e0fac8bf08c13479420ff) chore: allow more than one commit per PR
+* [`6ddcc52`](https://github.com/siderolabs/pkgs/commit/6ddcc52e50c370f97cd0c9dae05b03d3eb090835) feat: update Linux to 6.1.25
+* [`a969180`](https://github.com/siderolabs/pkgs/commit/a96918065f3c7c95507294d63ad8aa830ca9ed0f) feat: add multi-gen LRU kernel support
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/go-blockdevice**  v0.4.4 -> v0.4.5
+* **github.com/siderolabs/pkgs**            v1.4.1-5-ga333a84 -> v1.4.1-8-g0657493
+
+Previous release can be found at [v1.4.0](https://github.com/siderolabs/talos/releases/tag/v1.4.0)
+
 ## [Talos 1.4.0](https://github.com/siderolabs/talos/releases/tag/v1.4.0) (2023-04-18)
 
 Welcome to the v1.4.0 release of Talos!
