@@ -14,7 +14,7 @@ NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-1-g955aabc
-PKGS ?= v1.4.1-5-ga333a84
+PKGS ?= v1.4.1-8-g0657493
 EXTRAS ?= v1.4.0-1-g9b07505
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
