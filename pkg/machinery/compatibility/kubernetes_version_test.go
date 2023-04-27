@@ -125,12 +125,41 @@ func TestKubernetesCompatibility14(t *testing.T) {
 	}
 }
 
+func TestKubernetesCompatibility15(t *testing.T) {
+	for _, tt := range []kubernetesVersionTest{
+		{
+			kubernetesVersion: "1.26.1",
+			target:            "1.5.0",
+		},
+		{
+			kubernetesVersion: "1.27.3",
+			target:            "1.5.0-beta.0",
+		},
+		{
+			kubernetesVersion: "1.28.0-rc.0",
+			target:            "1.5.7",
+		},
+		{
+			kubernetesVersion: "1.29.0-alpha.0",
+			target:            "1.5.0",
+			expectedError:     "version of Kubernetes 1.29.0-alpha.0 is too new to be used with Talos 1.5.0",
+		},
+		{
+			kubernetesVersion: "1.25.1",
+			target:            "1.5.0",
+			expectedError:     "version of Kubernetes 1.25.1 is too old to be used with Talos 1.5.0",
+		},
+	} {
+		runKubernetesVersionTest(t, tt)
+	}
+}
+
 func TestKubernetesCompatibilityUnsupported(t *testing.T) {
 	for _, tt := range []kubernetesVersionTest{
 		{
 			kubernetesVersion: "1.25.0",
-			target:            "1.5.0-alpha.0",
-			expectedError:     "compatibility with version 1.5.0-alpha.0 is not supported",
+			target:            "1.6.0-alpha.0",
+			expectedError:     "compatibility with version 1.6.0-alpha.0 is not supported",
 		},
 		{
 			kubernetesVersion: "1.25.0",

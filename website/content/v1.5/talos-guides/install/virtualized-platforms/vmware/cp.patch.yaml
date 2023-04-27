@@ -1,0 +1,12 @@
+- op: add
+  path: /machine/network
+  value:
+    interfaces:
+    - interface: eth0
+      dhcp: true
+      vip:
+        ip: <VIP>
+- op: replace
+  path: /cluster/extraManifests
+  value:
+    - "https://raw.githubusercontent.com/mologie/talos-vmtoolsd/master/deploy/unstable.yaml"

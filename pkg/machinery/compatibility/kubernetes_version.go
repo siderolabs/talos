@@ -12,6 +12,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos12"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos13"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos14"
+	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos15"
 )
 
 // KubernetesVersion embeds Kubernetes version.
@@ -46,6 +47,8 @@ func (v *KubernetesVersion) SupportedWith(target *TalosVersion) error {
 		minK8sVersion, maxK8sVersion = talos13.MinimumKubernetesVersion, talos13.MaximumKubernetesVersion
 	case talos14.MajorMinor: // upgrades to 1.4.x
 		minK8sVersion, maxK8sVersion = talos14.MinimumKubernetesVersion, talos14.MaximumKubernetesVersion
+	case talos15.MajorMinor: // upgrades to 1.5.x
+		minK8sVersion, maxK8sVersion = talos15.MinimumKubernetesVersion, talos15.MaximumKubernetesVersion
 	default:
 		return fmt.Errorf("compatibility with version %s is not supported", target.String())
 	}
