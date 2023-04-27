@@ -21,7 +21,7 @@ const (
 	logindObject    = dbus.ObjectPath("/org/freedesktop/login1")
 	logindInterface = "org.freedesktop.login1.Manager"
 
-	inhibitMaxDelay = 2 * constants.KubeletShutdownGracePeriod
+	inhibitMaxDelay = 40 * constants.KubeletShutdownGracePeriod
 )
 
 type logindMock struct {
