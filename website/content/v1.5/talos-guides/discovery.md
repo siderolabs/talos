@@ -42,9 +42,9 @@ cluster:
         disabled: true
 ```
 
-Disabling all registries effectively disables member discovery altogether.
+Disabling all registries effectively disables member discovery.
 
-> An enabled discovery service is required for [KubeSpan]({{< relref "../kubernetes-guides/network/kubespan/" >}}) to function correctly.
+> Note: An enabled discovery service is required for [KubeSpan]({{< relref "../talos-guides/network/kubespan/" >}}) to function correctly.
 
 The `Kubernetes` registry uses Kubernetes `Node` resource data and additional Talos annotations:
 
@@ -83,7 +83,7 @@ In order for nodes to communicate to the discovery service, they must be able to
 
 ## Resource Definitions
 
-Talos provides seven resources that can be used to introspect the new discovery and KubeSpan features.
+Talos provides resources that can be used to introspect the discovery and KubeSpan features.
 
 ### Discovery
 
@@ -107,7 +107,7 @@ Node identity is preserved across reboots and upgrades, but it is regenerated if
 
 #### Affiliates
 
-An affiliate is a proposed member attributed to the fact that the node has the same cluster ID and secret.
+An affiliate is a proposed member: the node has the same cluster ID and secret.
 
 ```sh
 $ talosctl get affiliates

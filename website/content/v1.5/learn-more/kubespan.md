@@ -12,29 +12,28 @@ The key pieces of information needed for WireGuard generally are:
 - an IP address and port of the host you wish to connect to
 
 The latter is really only required of _one_ side of the pair.
-Once traffic is received, that information is known and updated by WireGuard automatically and internally.
+Once traffic is received, that information is learned and updated by WireGuard automatically.
 
-For Kubernetes, though, this is not quite sufficient.
-Kubernetes also needs to know which traffic goes to which WireGuard peer.
-Because this information may be dynamic, we need a way to be able to constantly keep this information up to date.
+Kubernetes, though, also needs to know which traffic goes to which WireGuard peer.
+Because this information may be dynamic, we need a way to keep this information up to date.
 
-If we have a functional connection to Kubernetes otherwise, it's fairly easy: we can just keep that information in Kubernetes.
+If we already have a connection to Kubernetes, it's fairly easy: we can just keep that information in Kubernetes.
 Otherwise, we have to have some way to discover it.
 
-In our solution, we have a multi-tiered approach to gathering this information.
-Each tier can operate independently, but the amalgamation of the tiers produces a more robust set of connection criteria.
+Talos Linux implements a multi-tiered approach to gathering this information.
+Each tier can operate independently, but the amalgamation of the mechanisms produces a more robust set of connection criteria.
 
-For this discussion, we will point out two of these tiers:
+These mechanisms are:
 
 - an external service
 - a Kubernetes-based system
 
 See [discovery service]({{< relref "../talos-guides/discovery" >}}) to learn more about the external service.
 
-The Kubernetes-based system utilises annotations on Kubernetes Nodes which describe each node's public key and local addresses.
+The Kubernetes-based system utilizes annotations on Kubernetes Nodes which describe each node's public key and local addresses.
 
-On top of this, we also optionally route Pod subnets.
-This is often (maybe even usually) taken care of by the CNI, but there are many situations where the CNI fails to be able to do this itself, across networks.
+On top of this, KubeSpan can optionally route Pod subnets.
+This is usually taken care of by the CNI, but there are many situations where the CNI fails to be able to do this itself, across networks.
 
 ## NAT, Multiple Routes, Multiple IPs
 
@@ -44,13 +43,12 @@ For instance, a node sitting on the same network might see its peer as `192.168.
 We need to be able to handle any number of addresses and ports, and we also need to have a mechanism to _try_ them.
 WireGuard only allows us to select one at a time.
 
-For our implementation, then, we have built a controller which continuously discovers and rotates these IP:port pairs until a connection is established.
+KubeSpan implements a controller which continuously discovers and rotates these IP:port pairs until a connection is established.
 It then starts trying again if that connection ever fails.
 
 ## Packet Routing
 
-After we have established a WireGuard connection, our work is not done.
-We still have to make sure that the right packets get sent to the WireGuard interface.
+After we have established a WireGuard connection, we have to make sure that the right packets get sent to the WireGuard interface.
 
 WireGuard supplies a convenient facility for tagging packets which come from _it_, which is great.
 But in our case, we need to be able to allow traffic which both does _not_ come from WireGuard and _also_ is not destined for another Kubernetes node to flow through the normal mechanisms.
