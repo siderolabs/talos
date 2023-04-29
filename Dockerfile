@@ -707,6 +707,8 @@ LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 
 FROM installer-image-squashed AS installer
+ARG TARGETARCH
+ENV TARGETARCH ${TARGETARCH}
 ONBUILD RUN apk add --no-cache --update \
     cpio \
     squashfs-tools \
