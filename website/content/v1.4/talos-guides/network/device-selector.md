@@ -47,7 +47,7 @@ Device selectors can be used to configure bonded interfaces:
 machine:
   ...
   network:
-    intefaces:
+    interfaces:
       - interface: bond0
         bond:
           mode: balance-rr

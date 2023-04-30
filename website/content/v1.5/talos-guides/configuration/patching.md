@@ -81,7 +81,7 @@ Base machine configuration:
 machine:
   network:
     interfaces:
-      - inteface: eth0
+      - interface: eth0
         dhcp: false
         addresses:
           - 192.168.10.3/24
@@ -123,7 +123,7 @@ Patched machine configuration:
 machine:
   network:
     interfaces:
-      - inteface: eth0
+      - interface: eth0
         dhcp: false
         addresses:
           - 192.168.10.3/24

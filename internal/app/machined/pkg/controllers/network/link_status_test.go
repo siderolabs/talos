@@ -287,7 +287,7 @@ func (suite *LinkStatusSuite) TestDummyInterface() {
 }
 
 func (suite *LinkStatusSuite) TestBridgeInterface() {
-	bridgeInteface := suite.uniqueDummyInterface()
+	bridgeInterface := suite.uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -302,7 +302,7 @@ func (suite *LinkStatusSuite) TestBridgeInterface() {
 			&rtnetlink.LinkMessage{
 				Type: unix.ARPHRD_ETHER,
 				Attributes: &rtnetlink.LinkAttributes{
-					Name: bridgeInteface,
+					Name: bridgeInterface,
 					Info: &rtnetlink.LinkInfo{
 						Kind: "bridge",
 						Data: bridgeData,
@@ -312,7 +312,7 @@ func (suite *LinkStatusSuite) TestBridgeInterface() {
 		),
 	)
 
-	bridgeIface, err := net.InterfaceByName(bridgeInteface)
+	bridgeIface, err := net.InterfaceByName(bridgeInterface)
 	suite.Require().NoError(err)
 
 	defer conn.Link.Delete(uint32(bridgeIface.Index)) //nolint:errcheck
@@ -321,7 +321,7 @@ func (suite *LinkStatusSuite) TestBridgeInterface() {
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
 				return suite.assertInterfaces(
-					[]string{bridgeInteface}, func(r *network.LinkStatus) error {
+					[]string{bridgeInterface}, func(r *network.LinkStatus) error {
 						suite.Assert().Equal("ether", r.TypedSpec().Type.String())
 						suite.Assert().True(r.TypedSpec().BridgeMaster.STP.Enabled)
 
