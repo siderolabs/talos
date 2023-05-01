@@ -767,44 +767,38 @@ func StartContainerd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 }
 
 // WriteUdevRules is the task that writes udev rules to a udev rules file.
-// TODO: frezbo: move this to controller based since writing udev rules doesn't need a restart.
 func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		rules := r.Config().Machine().Udev().Rules()
+		// wait for the udev rules loaded status to appear
+		st := r.State().V1Alpha2().Resources()
 
-		var content strings.Builder
+		// limit overall waiting time
+		ctx, cancel := context.WithTimeout(ctx, time.Minute)
+		defer cancel()
 
-		for _, rule := range rules {
-			content.WriteString(strings.ReplaceAll(rule, "\n", "\\\n"))
-			content.WriteByte('\n')
+		ch := make(chan state.Event)
+		if err = st.Watch(ctx, resourcefiles.NewUdevRuleStatus("udev").Metadata(), ch); err != nil {
+			return fmt.Errorf("failed to watch udev rules status: %w", err)
 		}
 
-		if err = os.WriteFile(constants.UdevRulesPath, []byte(content.String()), 0o644); err != nil {
-			return fmt.Errorf("failed writing custom udev rules: %w", err)
+		// wait for the udev rules to be loaded
+
+		select {
+		case <-ch:
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 
-		if len(rules) > 0 {
-			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "control", "--reload"); err != nil {
-				return err
+		_, err = st.WatchFor(ctx, resourcefiles.NewUdevRuleStatus("udev").Metadata(), state.WithCondition(func(r resource.Resource) (bool, error) {
+			udevRuleStatus, ok := r.(*resourcefiles.UdevRuleStatus)
+			if !ok {
+				return false, nil
 			}
 
-			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=devices", "--action=add"); err != nil {
-				return err
-			}
+			return udevRuleStatus.TypedSpec().Active, nil
+		}))
 
-			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=subsystems", "--action=add"); err != nil {
-				return err
-			}
-
-			// This ensures that `udevd` finishes processing kernel events, triggered by
-			// `udevd trigger`, to prevent a race condition when a user specifies a path
-			// under `/dev/disk/*` in any disk definitions.
-			_, err := cmd.RunContext(ctx, "/sbin/udevadm", "settle", "--timeout=50")
-
-			return err
-		}
-
-		return nil
+		return err
 	}, "writeUdevRules"
 }
 

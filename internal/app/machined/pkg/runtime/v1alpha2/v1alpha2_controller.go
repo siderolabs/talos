@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -113,6 +114,12 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&files.EtcFileController{
 			EtcPath:    "/etc",
 			ShadowPath: constants.SystemEtcPath,
+		},
+		&files.UdevRuleController{},
+		&files.UdevRuleFileController{
+			V1Alpha1Mode:  ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			UdevRulesFile: constants.UdevRulesPath,
+			CommandRunner: cmd.RunContext,
 		},
 		&hardware.SystemInfoController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),

@@ -125,6 +125,102 @@ func (x *EtcFileStatusSpec) GetSpecVersion() string {
 	return ""
 }
 
+// UdevRuleSpec is the specification for UdevRule resource.
+type UdevRuleSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Rule string `protobuf:"bytes,1,opt,name=rule,proto3" json:"rule,omitempty"`
+}
+
+func (x *UdevRuleSpec) Reset() {
+	*x = UdevRuleSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_resource_definitions_files_files_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UdevRuleSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UdevRuleSpec) ProtoMessage() {}
+
+func (x *UdevRuleSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_files_files_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UdevRuleSpec.ProtoReflect.Descriptor instead.
+func (*UdevRuleSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_files_files_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *UdevRuleSpec) GetRule() string {
+	if x != nil {
+		return x.Rule
+	}
+	return ""
+}
+
+// UdevRuleStatusSpec is the specification for UdevRule resource.
+type UdevRuleStatusSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Active bool `protobuf:"varint,1,opt,name=active,proto3" json:"active,omitempty"`
+}
+
+func (x *UdevRuleStatusSpec) Reset() {
+	*x = UdevRuleStatusSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_resource_definitions_files_files_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UdevRuleStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UdevRuleStatusSpec) ProtoMessage() {}
+
+func (x *UdevRuleStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_files_files_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UdevRuleStatusSpec.ProtoReflect.Descriptor instead.
+func (*UdevRuleStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_files_files_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *UdevRuleStatusSpec) GetActive() bool {
+	if x != nil {
+		return x.Active
+	}
+	return false
+}
+
 var File_resource_definitions_files_files_proto protoreflect.FileDescriptor
 
 var file_resource_definitions_files_files_proto_rawDesc = []byte{
@@ -140,12 +236,17 @@ var file_resource_definitions_files_files_proto_rawDesc = []byte{
 	0x11, 0x45, 0x74, 0x63, 0x46, 0x69, 0x6c, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x53, 0x70,
 	0x65, 0x63, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x70, 0x65, 0x63, 0x5f, 0x76, 0x65, 0x72, 0x73, 0x69,
 	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x70, 0x65, 0x63, 0x56, 0x65,
-	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x42, 0x4a, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
-	0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x69, 0x64, 0x65, 0x72, 0x6f, 0x6c, 0x61, 0x62, 0x73, 0x2f, 0x74,
-	0x61, 0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x6d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65,
-	0x72, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2f,
-	0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x66, 0x69, 0x6c, 0x65,
-	0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x22, 0x0a, 0x0c, 0x55, 0x64, 0x65, 0x76, 0x52, 0x75, 0x6c,
+	0x65, 0x53, 0x70, 0x65, 0x63, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x75, 0x6c, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x75, 0x6c, 0x65, 0x22, 0x2c, 0x0a, 0x12, 0x55, 0x64, 0x65,
+	0x76, 0x52, 0x75, 0x6c, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x53, 0x70, 0x65, 0x63, 0x12,
+	0x16, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52,
+	0x06, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x42, 0x4a, 0x5a, 0x48, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x69, 0x64, 0x65, 0x72, 0x6f, 0x6c, 0x61, 0x62, 0x73,
+	0x2f, 0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x6d, 0x61, 0x63, 0x68, 0x69,
+	0x6e, 0x65, 0x72, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x66, 0x69,
+	0x6c, 0x65, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -160,10 +261,12 @@ func file_resource_definitions_files_files_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_files_files_proto_rawDescData
 }
 
-var file_resource_definitions_files_files_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_resource_definitions_files_files_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_resource_definitions_files_files_proto_goTypes = []interface{}{
-	(*EtcFileSpecSpec)(nil),   // 0: talos.resource.definitions.files.EtcFileSpecSpec
-	(*EtcFileStatusSpec)(nil), // 1: talos.resource.definitions.files.EtcFileStatusSpec
+	(*EtcFileSpecSpec)(nil),    // 0: talos.resource.definitions.files.EtcFileSpecSpec
+	(*EtcFileStatusSpec)(nil),  // 1: talos.resource.definitions.files.EtcFileStatusSpec
+	(*UdevRuleSpec)(nil),       // 2: talos.resource.definitions.files.UdevRuleSpec
+	(*UdevRuleStatusSpec)(nil), // 3: talos.resource.definitions.files.UdevRuleStatusSpec
 }
 var file_resource_definitions_files_files_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -203,6 +306,30 @@ func file_resource_definitions_files_files_proto_init() {
 				return nil
 			}
 		}
+		file_resource_definitions_files_files_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UdevRuleSpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_resource_definitions_files_files_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UdevRuleStatusSpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -210,7 +337,7 @@ func file_resource_definitions_files_files_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_resource_definitions_files_files_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

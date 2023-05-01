@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-//go:generate deep-copy -type EtcFileSpecSpec -type EtcFileStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type EtcFileSpecSpec -type EtcFileStatusSpec -type UdevRuleSpec -type UdevRuleStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // EtcFileSpecType is type of EtcFile resource.
 const EtcFileSpecType = resource.Type("EtcFileSpecs.files.talos.dev")

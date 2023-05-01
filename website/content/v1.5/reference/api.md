@@ -79,6 +79,8 @@ description: Talos gRPC API reference.
 - [resource/definitions/files/files.proto](#resource/definitions/files/files.proto)
     - [EtcFileSpecSpec](#talos.resource.definitions.files.EtcFileSpecSpec)
     - [EtcFileStatusSpec](#talos.resource.definitions.files.EtcFileStatusSpec)
+    - [UdevRuleSpec](#talos.resource.definitions.files.UdevRuleSpec)
+    - [UdevRuleStatusSpec](#talos.resource.definitions.files.UdevRuleStatusSpec)
   
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
     - [MemoryModuleSpec](#talos.resource.definitions.hardware.MemoryModuleSpec)
@@ -1555,6 +1557,36 @@ EtcFileStatusSpec describes status of rendered secrets.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | spec_version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.files.UdevRuleSpec"></a>
+
+### UdevRuleSpec
+UdevRuleSpec is the specification for UdevRule resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rule | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.files.UdevRuleStatusSpec"></a>
+
+### UdevRuleStatusSpec
+UdevRuleStatusSpec is the specification for UdevRule resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| active | [bool](#bool) |  |  |
 
 
 

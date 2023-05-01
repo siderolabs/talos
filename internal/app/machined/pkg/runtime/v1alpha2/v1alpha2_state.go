@@ -109,6 +109,8 @@ func NewState() (*State, error) {
 		&etcd.Member{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
+		&files.UdevRule{},
+		&files.UdevRuleStatus{},
 		&hardware.Processor{},
 		&hardware.MemoryModule{},
 		&hardware.SystemInformation{},
