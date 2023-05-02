@@ -187,7 +187,7 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 
 //nolint:gocyclo
 func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logger, imageService images.Store, expectedImages []string) error {
-	logger.Info("running image cleanup")
+	logger.Debug("running image cleanup")
 
 	ctx = namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
@@ -213,7 +213,7 @@ func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logge
 	for _, image := range actualImages {
 		imageRef, err := reference.ParseNamed(image.Name)
 		if err != nil {
-			logger.Info("failed to parse image name", zap.String("image", image.Name), zap.Error(err))
+			logger.Error("failed to parse image name", zap.String("image", image.Name), zap.Error(err))
 
 			continue
 		}

@@ -31,6 +31,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
+// systemCriticalPriority is copied from scheduling.SystemCriticalPriority in Kubernetes internals.
+const systemCriticalPriority int32 = 2000000000
+
 // ControlPlaneStaticPodController manages k8s.StaticPod based on control plane configuration.
 type ControlPlaneStaticPodController struct{}
 
@@ -387,6 +390,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				},
 			},
 			Spec: v1.PodSpec{
+				Priority:          pointer.To(systemCriticalPriority),
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
@@ -555,6 +559,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 				},
 			},
 			Spec: v1.PodSpec{
+				Priority:          pointer.To(systemCriticalPriority),
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
@@ -688,6 +693,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 				},
 			},
 			Spec: v1.PodSpec{
+				Priority:          pointer.To(systemCriticalPriority),
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
