@@ -158,6 +158,8 @@ func (ctrl *StaticPodServerController) createServer(ctx context.Context, r contr
 		staticPodList := ctrl.podList
 		ctrl.podListMu.Unlock()
 
+		logger.Debug("serving static pod manifests", zap.Int("size", len(staticPodList)))
+
 		if staticPodList == nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
