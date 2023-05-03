@@ -6,6 +6,7 @@ package mount
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -13,6 +14,24 @@ import (
 
 	"golang.org/x/sys/unix"
 )
+
+func unmountWithTimeout(target string, flags int, timeout time.Duration) error {
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- unix.Unmount(target, flags)
+	}()
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return fmt.Errorf("unmounting %s timed out after %s", target, timeout)
+	case err := <-errCh:
+		return err
+	}
+}
 
 // UnmountAll attempts to unmount all the mounted filesystems via "self" mountinfo.
 func UnmountAll() error {
@@ -36,7 +55,7 @@ func UnmountAll() error {
 			}
 
 			if strings.HasPrefix(mountInfo.MountSource, "/dev/") {
-				err = unix.Unmount(mountInfo.MountPoint, 0)
+				err = unmountWithTimeout(mountInfo.MountPoint, 0, time.Second)
 
 				if err == nil {
 					log.Printf("unmounted %s (%s)", mountInfo.MountPoint, mountInfo.MountSource)

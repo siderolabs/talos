@@ -6,6 +6,7 @@ package mount
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -418,7 +419,7 @@ func mount(p *Point) (err error) {
 }
 
 func unmount(p *Point) error {
-	return unix.Unmount(p.target, 0)
+	return SafeUnmount(context.Background(), p.Logger, p.target)
 }
 
 func share(p *Point) error {
