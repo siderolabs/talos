@@ -58,6 +58,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
+	"github.com/siderolabs/talos/internal/pkg/logind"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/partition"
@@ -1604,7 +1605,7 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 
 		logger.Printf("shutting down kubelet gracefully")
 
-		shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, constants.KubeletShutdownGracePeriod*2)
+		shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, logind.InhibitMaxDelay)
 		defer shutdownCtxCancel()
 
 		if err = r.State().Machine().DBus().WaitShutdown(shutdownCtx); err != nil {

@@ -20,9 +20,10 @@ const (
 	logindService   = "org.freedesktop.login1"
 	logindObject    = dbus.ObjectPath("/org/freedesktop/login1")
 	logindInterface = "org.freedesktop.login1.Manager"
-
-	inhibitMaxDelay = 40 * constants.KubeletShutdownGracePeriod
 )
+
+// InhibitMaxDelay is the maximum delay for graceful shutdown.
+const InhibitMaxDelay = 40 * constants.KubeletShutdownGracePeriod
 
 type logindMock struct {
 	mu          sync.Mutex
@@ -32,7 +33,7 @@ type logindMock struct {
 var logindProps = map[string]map[string]*prop.Prop{
 	logindInterface: {
 		"InhibitDelayMaxUSec": {
-			Value:    uint64(inhibitMaxDelay / time.Microsecond),
+			Value:    uint64(InhibitMaxDelay / time.Microsecond),
 			Writable: false,
 		},
 	},
