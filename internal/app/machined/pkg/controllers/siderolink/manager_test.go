@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -26,7 +25,10 @@ import (
 	siderolinkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
 )
 
 func TestManagerSuite(t *testing.T) {
@@ -43,10 +45,10 @@ func TestManagerSuite(t *testing.T) {
 		}()
 
 		cmdline := procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamSideroLink, lis.Addr().String()))
+		configController := siderolinkctrl.ConfigController{Cmdline: cmdline}
 
-		suite.Require().NoError(suite.Runtime().RegisterController(&siderolinkctrl.ManagerController{
-			Cmdline: cmdline,
-		}))
+		suite.Require().NoError(suite.Runtime().RegisterController(&siderolinkctrl.ManagerController{}))
+		suite.Require().NoError(suite.Runtime().RegisterController(&configController))
 	}
 
 	suite.Run(t, &m)
@@ -68,7 +70,7 @@ const (
 	mockNodeAddressPrefix = "fdae:41e4:649b:9303:2a07:9c7:5b08:aef7/64"
 )
 
-func (srv mockServer) Provision(ctx context.Context, req *pb.ProvisionRequest) (*pb.ProvisionResponse, error) {
+func (srv mockServer) Provision(_ context.Context, _ *pb.ProvisionRequest) (*pb.ProvisionResponse, error) {
 	return &pb.ProvisionResponse{
 		ServerEndpoint:    mockServerEndpoint,
 		ServerAddress:     mockServerAddress,
@@ -83,21 +85,18 @@ func (suite *ManagerSuite) TestReconcile() {
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), networkStatus))
 
+	systemInformation := hardware.NewSystemInformation(hardware.SystemInformationID)
+	systemInformation.TypedSpec().UUID = "71233efd-7a07-43f8-b6ba-da90fae0e88b"
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), systemInformation))
+
 	nodeAddress := netip.MustParsePrefix(mockNodeAddressPrefix)
 
+	addressSpec := network.NewAddressSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.AddressID(constants.SideroLinkName, nodeAddress)))
+	linkSpec := network.NewLinkSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.LinkID(constants.SideroLinkName)))
+
 	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
-		addressResource, err := ctest.Get[*network.AddressSpec](
-			suite,
-			resource.NewMetadata(
-				network.ConfigNamespaceName,
-				network.AddressSpecType,
-				network.LayeredID(
-					network.ConfigOperator,
-					network.AddressID(constants.SideroLinkName, nodeAddress),
-				),
-				resource.VersionUndefined,
-			),
-		)
+		addressResource, err := ctest.Get[*network.AddressSpec](suite, addressSpec.Metadata())
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return retry.ExpectedError(err)
@@ -113,15 +112,7 @@ func (suite *ManagerSuite) TestReconcile() {
 		suite.Assert().Equal(nethelpers.FamilyInet6, address.Family)
 		suite.Assert().Equal(constants.SideroLinkName, address.LinkName)
 
-		linkResource, err := ctest.Get[*network.LinkSpec](
-			suite,
-			resource.NewMetadata(
-				network.ConfigNamespaceName,
-				network.LinkSpecType,
-				network.LayeredID(network.ConfigOperator, network.LinkID(constants.SideroLinkName)),
-				resource.VersionUndefined,
-			),
-		)
+		linkResource, err := ctest.Get[*network.LinkSpec](suite, linkSpec.Metadata())
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return retry.ExpectedError(err)
@@ -150,6 +141,30 @@ func (suite *ManagerSuite) TestReconcile() {
 			constants.SideroLinkDefaultPeerKeepalive,
 			link.Wireguard.Peers[0].PersistentKeepaliveInterval,
 		)
+
+		return nil
+	})
+
+	// remove config
+	configPtr := siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID).Metadata()
+	destroyErr := suite.State().Destroy(suite.Ctx(), configPtr,
+		state.WithDestroyOwner(pointer.To(siderolinkctrl.ConfigController{}).Name()))
+	suite.Require().NoError(destroyErr)
+
+	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
+		_, err := ctest.Get[*network.LinkSpec](suite, linkSpec.Metadata())
+		if err == nil {
+			return retry.ExpectedError(fmt.Errorf("link resource still exists"))
+		}
+
+		suite.Assert().Truef(state.IsNotFoundError(err), "unexpected error: %v", err)
+
+		_, err = ctest.Get[*network.AddressSpec](suite, addressSpec.Metadata())
+		if err == nil {
+			return retry.ExpectedError(fmt.Errorf("address resource still exists"))
+		}
+
+		suite.Assert().Truef(state.IsNotFoundError(err), "unexpected error: %v", err)
 
 		return nil
 	})

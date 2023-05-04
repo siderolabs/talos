@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/perf"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/resources/time"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -181,6 +182,7 @@ func NewState() (*State, error) {
 		&secrets.KubernetesRoot{},
 		&secrets.OSRoot{},
 		&secrets.Trustd{},
+		&siderolink.Config{},
 		&time.Status{},
 	} {
 		if err := s.resourceRegistry.Register(ctx, r); err != nil {

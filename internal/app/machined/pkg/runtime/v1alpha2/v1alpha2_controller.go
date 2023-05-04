@@ -251,9 +251,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&secrets.KubernetesController{},
 		&secrets.RootController{},
 		&secrets.TrustdController{},
-		&siderolink.ManagerController{
+		&siderolink.ConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
+		&siderolink.ManagerController{},
 		&timecontrollers.SyncController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

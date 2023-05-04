@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/adapters/wireguard"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
@@ -80,13 +81,13 @@ func TestPeerStatus_CalculateState(t *testing.T) {
 		},
 		{
 			name:                "peer is down",
-			sinceLastHandshake:  2 * kubespanadapter.PeerDownInterval,
-			sinceEndpointChange: 2 * kubespanadapter.PeerDownInterval,
+			sinceLastHandshake:  2 * wireguard.PeerDownInterval,
+			sinceEndpointChange: 2 * wireguard.PeerDownInterval,
 			expectedState:       kubespan.PeerStateDown,
 		},
 		{
 			name:                "fresh peer, no handshake",
-			sinceLastHandshake:  2 * kubespanadapter.PeerDownInterval,
+			sinceLastHandshake:  2 * wireguard.PeerDownInterval,
 			sinceEndpointChange: kubespanadapter.EndpointConnectionTimeout / 2,
 			expectedState:       kubespan.PeerStateUnknown,
 		},
@@ -110,8 +111,8 @@ func TestPeerStatus_CalculateState(t *testing.T) {
 		},
 		{
 			name:                "established peer, up",
-			sinceLastHandshake:  kubespanadapter.PeerDownInterval / 2,
-			sinceEndpointChange: kubespanadapter.PeerDownInterval + 1,
+			sinceLastHandshake:  wireguard.PeerDownInterval / 2,
+			sinceEndpointChange: wireguard.PeerDownInterval + 1,
 			expectedState:       kubespan.PeerStateUp,
 		},
 	} {
