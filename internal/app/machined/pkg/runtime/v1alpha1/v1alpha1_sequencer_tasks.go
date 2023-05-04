@@ -1604,7 +1604,7 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 
 		logger.Printf("shutting down kubelet gracefully")
 
-		shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, constants.KubeletShutdownGracePeriod*2)
+		shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, constants.KubeletShutdownGracePeriod*40)
 		defer shutdownCtxCancel()
 
 		if err = r.State().Machine().DBus().WaitShutdown(shutdownCtx); err != nil {
