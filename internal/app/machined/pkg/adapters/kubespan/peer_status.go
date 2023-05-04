@@ -12,10 +12,11 @@ import (
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/adapters/wireguard"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
-// PeerStatusSpec adapter provides Wiregard integration and state management.
+// PeerStatusSpec adapter provides Wireguard integration and state management.
 //
 //nolint:revive,golint
 func PeerStatusSpec(r *kubespan.PeerStatusSpec) peerStatus {
@@ -27,14 +28,6 @@ func PeerStatusSpec(r *kubespan.PeerStatusSpec) peerStatus {
 type peerStatus struct {
 	*kubespan.PeerStatusSpec
 }
-
-// PeerDownInterval is the time since last handshake when established peer is considered to be down.
-//
-// WG whitepaper defines a downed peer as being:
-// Handshake Timeout (180s) + Rekey Timeout (5s) + Rekey Attempt Timeout (90s)
-//
-// This interval is applied when the link is already established.
-const PeerDownInterval = (180 + 5 + 90) * time.Second
 
 // EndpointConnectionTimeout is time to wait for initial handshake when the endpoint is just set.
 const EndpointConnectionTimeout = 15 * time.Second
@@ -52,7 +45,7 @@ const EndpointConnectionTimeout = 15 * time.Second
 // |            |                                   |
 // T0           T0+endpointConnectionTimeout        T0+peerDownInterval
 //
-// Where T0 = LastEndpontChange
+// Where T0 = LastEndpointChange
 //
 // The question is where is LastHandshakeTimeout vs. those points above:
 //
@@ -71,9 +64,9 @@ func (a peerStatus) CalculateState() {
 // CalculateStateWithDurations calculates the state based on the time since events.
 func (a peerStatus) CalculateStateWithDurations(sinceLastHandshake, sinceEndpointChange time.Duration) {
 	switch {
-	case sinceEndpointChange > PeerDownInterval: // past T0+peerDownInterval
+	case sinceEndpointChange > wireguard.PeerDownInterval: // past T0+peerDownInterval
 		// if we got handshake in the last peerDownInterval, endpoint is up
-		if sinceLastHandshake < PeerDownInterval {
+		if sinceLastHandshake < wireguard.PeerDownInterval {
 			a.PeerStatusSpec.State = kubespan.PeerStateUp
 		} else {
 			a.PeerStatusSpec.State = kubespan.PeerStateDown

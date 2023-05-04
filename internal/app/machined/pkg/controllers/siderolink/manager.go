@@ -8,34 +8,38 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/netip"
 	"net/url"
+	"os"
 	"regexp"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
-	"github.com/siderolabs/go-procfs/procfs"
 	pb "github.com/siderolabs/siderolink/api/siderolink"
 	"github.com/siderolabs/siderolink/pkg/wireguard"
 	"go.uber.org/zap"
+	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
 )
 
 // ManagerController interacts with SideroLink API and brings up the SideroLink Wireguard interface.
 type ManagerController struct {
-	Cmdline *procfs.Cmdline
-
 	nodeKey wgtypes.Key
 }
 
@@ -46,14 +50,7 @@ func (ctrl *ManagerController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *ManagerController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
-			Kind:      controller.InputWeak,
-		},
-	}
+	return nil
 }
 
 // Outputs implements controller.Controller interface.
@@ -70,7 +67,7 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 	}
 }
 
-var urlSchemeMatcher = regexp.MustCompile(`[a-zA-z]+\://`)
+var urlSchemeMatcher = regexp.MustCompile(`[a-zA-z]+://`)
 
 type apiEndpoint struct {
 	Host      string
@@ -110,50 +107,19 @@ func parseAPIEndpoint(sideroLinkParam string) (apiEndpoint, error) {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	if ctrl.Cmdline == nil || ctrl.Cmdline.Get(constants.KernelParamSideroLink).First() == nil {
-		// no SideroLink command line argument, skip controller
-		return nil
+	// initially, wait for the network address status to be ready
+	if err := r.UpdateInputs([]controller.Input{
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.StatusType,
+			ID:        pointer.To(network.StatusID),
+			Kind:      controller.InputWeak,
+		},
+	}); err != nil {
+		return err
 	}
-
-	s, err := smbios.GetSMBIOSInfo()
-	if err != nil {
-		return fmt.Errorf("error reading node UUID: %w", err)
-	}
-
-	nodeUUID := s.SystemInformation.UUID
-
-	var zeroKey wgtypes.Key
-
-	if bytes.Equal(ctrl.nodeKey[:], zeroKey[:]) {
-		ctrl.nodeKey, err = wgtypes.GeneratePrivateKey()
-		if err != nil {
-			return fmt.Errorf("error generating Wireguard key: %w", err)
-		}
-	}
-
-	apiEndpoint := *ctrl.Cmdline.Get(constants.KernelParamSideroLink).First()
-
-	parsedEndpoint, err := parseAPIEndpoint(apiEndpoint)
-	if err != nil {
-		logger.Warn("failed to parse siderolink kernel parameter", zap.Error(err))
-	}
-
-	var transportCredentials credentials.TransportCredentials
-
-	if parsedEndpoint.Insecure {
-		transportCredentials = insecure.NewCredentials()
-	} else {
-		transportCredentials = credentials.NewTLS(&tls.Config{})
-	}
-
-	conn, err := grpc.DialContext(ctx, parsedEndpoint.Host, grpc.WithTransportCredentials(transportCredentials))
-	if err != nil {
-		return fmt.Errorf("error dialing SideroLink endpoint %q: %w", apiEndpoint, err)
-	}
-
-	sideroLinkClient := pb.NewProvisionServiceClient(conn)
 
 	for {
 		select {
@@ -162,7 +128,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-r.EventCh():
 		}
 
-		netStatus, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
+		netStatus, err := safe.ReaderGet[*network.Status](ctx, r, network.NewStatus(network.NamespaceName, network.StatusID).Metadata())
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				// no network state yet
@@ -172,18 +138,143 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error reading network status: %w", err)
 		}
 
-		if !netStatus.(*network.Status).TypedSpec().AddressReady {
+		if !netStatus.TypedSpec().AddressReady {
 			// wait for address
 			continue
 		}
 
-		resp, err := sideroLinkClient.Provision(ctx, &pb.ProvisionRequest{
-			NodeUuid:      nodeUUID,
-			NodePublicKey: ctrl.nodeKey.PublicKey().String(),
-			JoinToken:     parsedEndpoint.JoinToken,
-		})
+		break
+	}
+
+	// normal reconcile loop
+	if err := r.UpdateInputs([]controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      siderolink.ConfigType,
+			ID:        pointer.To(siderolink.ConfigID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.SystemInformationType,
+			ID:        pointer.To(hardware.SystemInformationID),
+			Kind:      controller.InputWeak,
+		},
+	}); err != nil {
+		return err
+	}
+
+	r.QueueReconcile()
+
+	wgClient, wgClientErr := wgctrl.New()
+	if wgClientErr != nil {
+		return wgClientErr
+	}
+
+	defer func() {
+		if closeErr := wgClient.Close(); closeErr != nil {
+			logger.Error("failed to close wg client", zap.Error(closeErr))
+		}
+	}()
+
+	var zeroKey wgtypes.Key
+
+	if bytes.Equal(ctrl.nodeKey[:], zeroKey[:]) {
+		var err error
+
+		ctrl.nodeKey, err = wgtypes.GeneratePrivateKey()
 		if err != nil {
-			return fmt.Errorf("error accessing SideroLink API: %w", err)
+			return fmt.Errorf("error generating Wireguard key: %w", err)
+		}
+	}
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			reconnect, err := ctrl.shouldReconnect(wgClient)
+			if err != nil {
+				return err
+			}
+
+			if !reconnect {
+				// nothing to do
+				continue
+			}
+		case <-r.EventCh():
+		}
+
+		cfg, err := safe.ReaderGet[*siderolink.Config](ctx, r, siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID).Metadata())
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				if cleanupErr := ctrl.cleanup(ctx, r, nil, nil, logger); cleanupErr != nil {
+					return fmt.Errorf("failed to do cleanup: %w", cleanupErr)
+				}
+
+				// no config
+				continue
+			}
+
+			return fmt.Errorf("failed to get siderolink config: %w", err)
+		}
+
+		sysInfo, err := safe.ReaderGet[*hardware.SystemInformation](ctx, r, hardware.NewSystemInformation(hardware.SystemInformationID).Metadata())
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				// no system information
+				continue
+			}
+
+			return fmt.Errorf("failed to get system information: %w", err)
+		}
+
+		nodeUUID := sysInfo.TypedSpec().UUID
+		endpoint := cfg.TypedSpec().APIEndpoint
+
+		parsedEndpoint, err := parseAPIEndpoint(endpoint)
+		if err != nil {
+			return fmt.Errorf("failed to parse siderolink endpoint: %w", err)
+		}
+
+		var transportCredentials credentials.TransportCredentials
+
+		if parsedEndpoint.Insecure {
+			transportCredentials = insecure.NewCredentials()
+		} else {
+			transportCredentials = credentials.NewTLS(&tls.Config{})
+		}
+
+		provision := func() (*pb.ProvisionResponse, error) {
+			connCtx, connCtxCancel := context.WithTimeout(ctx, 10*time.Second)
+			defer connCtxCancel()
+
+			conn, connErr := grpc.DialContext(connCtx, parsedEndpoint.Host, grpc.WithTransportCredentials(transportCredentials))
+			if connErr != nil {
+				return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", endpoint, connErr)
+			}
+
+			defer func() {
+				if closeErr := conn.Close(); closeErr != nil {
+					logger.Error("failed to close SideroLink provisioning GRPC connection", zap.Error(closeErr))
+				}
+			}()
+
+			sideroLinkClient := pb.NewProvisionServiceClient(conn)
+
+			return sideroLinkClient.Provision(ctx, &pb.ProvisionRequest{
+				NodeUuid:      nodeUUID,
+				NodePublicKey: ctrl.nodeKey.PublicKey().String(),
+				JoinToken:     parsedEndpoint.JoinToken,
+			})
+		}
+
+		resp, err := provision()
+		if err != nil {
+			return err
 		}
 
 		serverAddress, err := netip.ParseAddr(resp.ServerAddress)
@@ -196,10 +287,12 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error parsing node address: %w", err)
 		}
 
-		if err = r.Modify(ctx,
-			network.NewLinkSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.LinkID(constants.SideroLinkName))),
-			func(r resource.Resource) error {
-				spec := r.(*network.LinkSpec).TypedSpec()
+		linkSpec := network.NewLinkSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.LinkID(constants.SideroLinkName)))
+		addressSpec := network.NewAddressSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.AddressID(constants.SideroLinkName, nodeAddress)))
+
+		if err = safe.WriterModify(ctx, r, linkSpec,
+			func(res *network.LinkSpec) error {
+				spec := res.TypedSpec()
 
 				spec.ConfigLayer = network.ConfigOperator
 				spec.Name = constants.SideroLinkName
@@ -231,10 +324,9 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error creating siderolink spec: %w", err)
 		}
 
-		if err = r.Modify(ctx,
-			network.NewAddressSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.AddressID(constants.SideroLinkName, nodeAddress))),
-			func(r resource.Resource) error {
-				spec := r.(*network.AddressSpec).TypedSpec()
+		if err = safe.WriterModify(ctx, r, addressSpec,
+			func(res *network.AddressSpec) error {
+				spec := res.TypedSpec()
 
 				spec.ConfigLayer = network.ConfigOperator
 				spec.Address = nodeAddress
@@ -248,7 +340,113 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error creating address spec: %w", err)
 		}
 
-		// all done, terminate controller
-		return nil
+		keepLinkSpecSet := map[resource.ID]struct{}{
+			linkSpec.Metadata().ID(): {},
+		}
+
+		keepAddressSpecSet := map[resource.ID]struct{}{
+			addressSpec.Metadata().ID(): {},
+		}
+
+		if err = ctrl.cleanup(ctx, r, keepLinkSpecSet, keepAddressSpecSet, logger); err != nil {
+			return err
+		}
+
+		logger.Info(
+			"siderolink connection configured",
+			zap.String("endpoint", endpoint),
+			zap.String("node_uuid", nodeUUID),
+			zap.String("node_address", nodeAddress.String()),
+		)
 	}
+}
+
+func (ctrl *ManagerController) cleanup(
+	ctx context.Context,
+	r controller.Runtime,
+	keepLinkSpecIDSet, keepAddressSpecIDSet map[resource.ID]struct{},
+	logger *zap.Logger,
+) error {
+	if err := ctrl.cleanupLinkSpecs(ctx, r, keepLinkSpecIDSet, logger); err != nil {
+		return err
+	}
+
+	return ctrl.cleanupAddressSpecs(ctx, r, keepAddressSpecIDSet, logger)
+}
+
+//nolint:dupl
+func (ctrl *ManagerController) cleanupLinkSpecs(ctx context.Context, r controller.Runtime, keepSet map[resource.ID]struct{}, logger *zap.Logger) error {
+	list, err := safe.ReaderList[*network.LinkSpec](ctx, r, network.NewLinkSpec(network.ConfigNamespaceName, "").Metadata())
+	if err != nil {
+		return err
+	}
+
+	for iter := safe.IteratorFromList(list); iter.Next(); {
+		link := iter.Value()
+
+		if link.Metadata().Owner() != ctrl.Name() {
+			continue
+		}
+
+		if _, ok := keepSet[link.Metadata().ID()]; ok {
+			continue
+		}
+
+		if destroyErr := r.Destroy(ctx, link.Metadata()); destroyErr != nil && !state.IsNotFoundError(destroyErr) {
+			return destroyErr
+		}
+
+		logger.Info("destroyed link spec", zap.String("link_id", link.Metadata().ID()))
+	}
+
+	return nil
+}
+
+//nolint:dupl
+func (ctrl *ManagerController) cleanupAddressSpecs(ctx context.Context, r controller.Runtime, keepSet map[resource.ID]struct{}, logger *zap.Logger) error {
+	list, err := safe.ReaderList[*network.AddressSpec](ctx, r, network.NewAddressSpec(network.ConfigNamespaceName, "").Metadata())
+	if err != nil {
+		return err
+	}
+
+	for iter := safe.IteratorFromList(list); iter.Next(); {
+		address := iter.Value()
+
+		if address.Metadata().Owner() != ctrl.Name() {
+			continue
+		}
+
+		if _, ok := keepSet[address.Metadata().ID()]; ok {
+			continue
+		}
+
+		if destroyErr := r.Destroy(ctx, address.Metadata()); destroyErr != nil && !state.IsNotFoundError(destroyErr) {
+			return destroyErr
+		}
+
+		logger.Info("destroyed address spec", zap.String("address_id", address.Metadata().ID()))
+	}
+
+	return nil
+}
+
+func (ctrl *ManagerController) shouldReconnect(wgClient *wgctrl.Client) (bool, error) {
+	wgDevice, err := wgClient.Device(constants.SideroLinkName)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			// no Wireguard device, so no need to reconnect
+			return false, nil
+		}
+
+		return false, fmt.Errorf("error reading Wireguard device: %w", err)
+	}
+
+	if len(wgDevice.Peers) != 1 {
+		return false, fmt.Errorf("unexpected number of Wireguard peers: %d", len(wgDevice.Peers))
+	}
+
+	peer := wgDevice.Peers[0]
+	since := time.Since(peer.LastHandshakeTime)
+
+	return since >= wireguard.PeerDownInterval, nil
 }

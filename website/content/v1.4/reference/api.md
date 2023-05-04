@@ -197,6 +197,9 @@ description: Talos gRPC API reference.
     - [OSRootSpec](#talos.resource.definitions.secrets.OSRootSpec)
     - [TrustdCertsSpec](#talos.resource.definitions.secrets.TrustdCertsSpec)
   
+- [resource/definitions/siderolink/siderolink.proto](#resource/definitions/siderolink/siderolink.proto)
+    - [ConfigSpec](#talos.resource.definitions.siderolink.ConfigSpec)
+  
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
     - [StatusSpec](#talos.resource.definitions.time.StatusSpec)
   
@@ -3563,6 +3566,37 @@ TrustdCertsSpec describes etcd certs secrets.
 | ----- | ---- | ----- | ----------- |
 | ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="resource/definitions/siderolink/siderolink.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## resource/definitions/siderolink/siderolink.proto
+
+
+
+<a name="talos.resource.definitions.siderolink.ConfigSpec"></a>
+
+### ConfigSpec
+ConfigSpec describes KubeSpan configuration..
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| api_endpoint | [string](#string) |  |  |
 
 
 
