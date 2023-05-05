@@ -9,7 +9,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"github.com/siderolabs/crypto/x509"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -21,16 +20,14 @@ const KubernetesType = resource.Type("KubernetesSecrets.secrets.talos.dev")
 const KubernetesID = resource.ID("k8s-certs")
 
 // Kubernetes contains K8s generated secrets.
+//
+// Kubernetes resource contains secrets which require reload of the control plane pods if updated.
 type Kubernetes = typed.Resource[KubernetesCertsSpec, KubernetesExtension]
 
 // KubernetesCertsSpec describes generated Kubernetes certificates.
 //
 //gotagsrewrite:gen
 type KubernetesCertsSpec struct {
-	APIServer              *x509.PEMEncodedCertificateAndKey `yaml:"apiServer" protobuf:"1"`
-	APIServerKubeletClient *x509.PEMEncodedCertificateAndKey `yaml:"apiServerKubeletClient" protobuf:"2"`
-	FrontProxy             *x509.PEMEncodedCertificateAndKey `yaml:"frontProxy" protobuf:"3"`
-
 	SchedulerKubeconfig         string `yaml:"schedulerKubeconfig" protobuf:"4"`
 	ControllerManagerKubeconfig string `yaml:"controllerManagerKubeconfig" protobuf:"5"`
 

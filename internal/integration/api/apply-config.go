@@ -239,21 +239,17 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 	encryption := machineConfig.MachineConfig.MachineSystemDiskEncryption
 
-	if encryption == nil {
+	if encryption == nil { //nolint:staticcheck
 		suite.T().Skip("skipped in not encrypted mode")
 	}
 
-	cfg := encryption.EphemeralPartition
+	cfg := encryption.EphemeralPartition //nolint:staticcheck
 
 	if cfg == nil {
 		suite.T().Skip("skipped in not encrypted mode")
 	}
 
 	provider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
-
-	if encryption == nil {
-		suite.T().Skip("skipped in not encrypted mode")
-	}
 
 	suite.WaitForBootDone(suite.ctx)
 

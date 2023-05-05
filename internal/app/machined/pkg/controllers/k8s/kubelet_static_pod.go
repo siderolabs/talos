@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -47,8 +48,8 @@ func (ctrl *KubeletStaticPodController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: secrets.NamespaceName,
-			Type:      secrets.KubernetesType,
-			ID:        pointer.To(secrets.KubernetesID),
+			Type:      secrets.KubernetesDynamicCertsType,
+			ID:        pointer.To(secrets.KubernetesDynamicCertsID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -94,7 +95,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 		case <-r.EventCh():
 		}
 
-		kubeletResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "kubelet", resource.VersionUndefined))
+		kubeletService, err := safe.ReaderGet[*v1alpha1.Service](ctx, r, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "kubelet", resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				kubeletClient = nil
@@ -109,7 +110,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		if !kubeletResource.(*v1alpha1.Service).TypedSpec().Running {
+		if !kubeletService.TypedSpec().Running {
 			kubeletClient = nil
 
 			if err = ctrl.teardownStatuses(ctx, r); err != nil {
@@ -121,7 +122,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 
 		// on worker nodes, there's no way to connect to the kubelet to fetch the pod status (only API server can do that)
 		// on control plane nodes, use API servers' client kubelet certificate to fetch statuses
-		rootSecretResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
+		rootSecrets, err := safe.ReaderGet[*secrets.KubernetesRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				kubeletClient = nil
@@ -132,9 +133,10 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		rootSecrets := rootSecretResource.(*secrets.KubernetesRoot).TypedSpec()
-
-		secretsResource, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
+		certsResource, err := safe.ReaderGet[*secrets.KubernetesDynamicCerts](
+			ctx, r,
+			resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesDynamicCertsType, secrets.KubernetesDynamicCertsID, resource.VersionUndefined),
+		)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				kubeletClient = nil
@@ -145,17 +147,20 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			return err
 		}
 
-		secrets := secretsResource.(*secrets.Kubernetes).TypedSpec()
+		certs := certsResource.TypedSpec()
 
-		nodenameResource, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+		nodename, err := safe.ReaderGet[*k8s.Nodename](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
 		if err != nil {
 			// nodename should exist if the kubelet is running
 			return err
 		}
 
-		nodename := nodenameResource.(*k8s.Nodename).TypedSpec().Nodename
-
-		kubeletClient, err = kubelet.NewClient(nodename, secrets.APIServerKubeletClient.Crt, secrets.APIServerKubeletClient.Key, rootSecrets.CA.Crt)
+		kubeletClient, err = kubelet.NewClient(
+			nodename.TypedSpec().Nodename,
+			certs.APIServerKubeletClient.Crt,
+			certs.APIServerKubeletClient.Key,
+			rootSecrets.TypedSpec().CA.Crt,
+		)
 		if err != nil {
 			return fmt.Errorf("error building kubelet client: %w", err)
 		}
