@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
@@ -19,7 +20,6 @@ import (
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/images"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -97,10 +97,10 @@ func (ctrl *ControlPlaneController) Run(ctx context.Context, r controller.Runtim
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGet[*config.MachineConfig](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
-				if err = ctrl.teardownAll(ctx, r, logger); err != nil {
+				if err = ctrl.teardownAll(ctx, r); err != nil {
 					return fmt.Errorf("error destroying resources: %w", err)
 				}
 
@@ -110,9 +110,7 @@ func (ctrl *ControlPlaneController) Run(ctx context.Context, r controller.Runtim
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		cfgProvider := cfg.(*config.MachineConfig).Config()
-
-		machineTypeRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
+		machineType, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -121,10 +119,8 @@ func (ctrl *ControlPlaneController) Run(ctx context.Context, r controller.Runtim
 			return fmt.Errorf("error getting machine type: %w", err)
 		}
 
-		machineType := machineTypeRes.(*config.MachineType).MachineType()
-
-		if machineType == machine.TypeWorker {
-			if err = ctrl.teardownAll(ctx, r, logger); err != nil {
+		if !machineType.MachineType().IsControlPlane() {
+			if err = ctrl.teardownAll(ctx, r); err != nil {
 				return fmt.Errorf("error destroying resources: %w", err)
 			}
 
@@ -140,7 +136,7 @@ func (ctrl *ControlPlaneController) Run(ctx context.Context, r controller.Runtim
 			ctrl.manageManifestsConfig,
 			ctrl.manageExtraManifestsConfig,
 		} {
-			if err = f(ctx, r, logger, cfgProvider); err != nil {
+			if err = f(ctx, r, logger, cfg.Config()); err != nil {
 				return fmt.Errorf("error updating objects: %w", err)
 			}
 		}
@@ -356,7 +352,21 @@ func (ctrl *ControlPlaneController) manageExtraManifestsConfig(ctx context.Conte
 	})
 }
 
-func (ctrl *ControlPlaneController) teardownAll(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ControlPlaneController) teardownAll(ctx context.Context, r controller.Runtime) error {
+	for _, md := range []*resource.Metadata{
+		k8s.NewAPIServerConfig().Metadata(),
+		k8s.NewAdmissionControlConfig().Metadata(),
+		k8s.NewAuditPolicyConfig().Metadata(),
+		k8s.NewControllerManagerConfig().Metadata(),
+		k8s.NewSchedulerConfig().Metadata(),
+		k8s.NewBootstrapManifestsConfig().Metadata(),
+		k8s.NewExtraManifestsConfig().Metadata(),
+	} {
+		if err := r.Destroy(ctx, md); err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error destroying resources: %w", err)
+		}
+	}
+
 	return nil
 }
 

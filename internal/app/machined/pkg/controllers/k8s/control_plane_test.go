@@ -6,27 +6,20 @@
 package k8s_test
 
 import (
-	"context"
-	"fmt"
-	"log"
 	"net/url"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -35,92 +28,25 @@ import (
 )
 
 type K8sControlPlaneSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *K8sControlPlaneSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.ControlPlaneController{}))
-
-	suite.startRuntime()
-}
-
-func (suite *K8sControlPlaneSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
-}
-
-func (suite *K8sControlPlaneSuite) assertControlPlaneConfigs(resourceTypes ...resource.Type) error {
-	for _, resourceType := range resourceTypes {
-		resources, err := suite.state.List(
-			suite.ctx,
-			resource.NewMetadata(k8s.ControlPlaneNamespaceName, resourceType, "", resource.VersionUndefined),
-		)
-		if err != nil {
-			return err
-		}
-
-		if len(resources.Items) == 0 {
-			return retry.ExpectedError(fmt.Errorf("no resources with type %q found", resourceType))
-		}
-	}
-
-	return nil
+	ctest.DefaultSuite
 }
 
 // setupMachine creates a machine with given configuration, waits for it to become ready,
 // and returns API server's spec.
-func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) k8s.APIServerConfigSpec {
+func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) {
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeControlPlane)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertControlPlaneConfigs(
-					k8s.AdmissionControlConfigType,
-					k8s.AuditPolicyConfigType,
-					k8s.APIServerConfigType,
-					k8s.ControllerManagerConfigType,
-					k8s.SchedulerConfigType,
-					k8s.BootstrapManifestsConfigType,
-					k8s.ExtraManifestsConfigType,
-				)
-			},
-		),
-	)
-
-	r, err := suite.state.Get(suite.ctx, k8s.NewAPIServerConfig().Metadata())
-	suite.Require().NoError(err)
-
-	cp, ok := r.(*k8s.APIServerConfig)
-	suite.Require().True(ok, "got %T", r)
-
-	return *cp.TypedSpec()
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.AdmissionControlConfigID}, func(*k8s.AdmissionControlConfig, *assert.Assertions) {})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.AuditPolicyConfigID}, func(*k8s.AuditPolicyConfig, *assert.Assertions) {})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.APIServerConfigID}, func(*k8s.APIServerConfig, *assert.Assertions) {})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ControllerManagerConfigID}, func(*k8s.ControllerManagerConfig, *assert.Assertions) {})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.SchedulerConfigID}, func(*k8s.SchedulerConfig, *assert.Assertions) {})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.BootstrapManifestsConfigID}, func(*k8s.BootstrapManifestsConfig, *assert.Assertions) {})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ExtraManifestsConfigID}, func(*k8s.ExtraManifestsConfig, *assert.Assertions) {})
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
@@ -141,18 +67,63 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 		},
 	)
 
-	apiServerCfg := suite.setupMachine(cfg)
-	suite.Assert().Empty(apiServerCfg.CloudProvider)
+	suite.setupMachine(cfg)
 
-	r, err := suite.state.Get(suite.ctx, k8s.NewControllerManagerConfig().Metadata())
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.APIServerConfigID},
+		func(apiServer *k8s.APIServerConfig, assert *assert.Assertions) {
+			apiServerCfg := apiServer.TypedSpec()
+
+			assert.Empty(apiServerCfg.CloudProvider)
+		},
+	)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ControllerManagerConfigID},
+		func(controllerManager *k8s.ControllerManagerConfig, assert *assert.Assertions) {
+			assert.Empty(controllerManager.TypedSpec().CloudProvider)
+		},
+	)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.BootstrapManifestsConfigID},
+		func(bootstrapConfig *k8s.BootstrapManifestsConfig, assert *assert.Assertions) {
+			assert.Equal("10.96.0.10", bootstrapConfig.TypedSpec().DNSServiceIP)
+			assert.Equal("", bootstrapConfig.TypedSpec().DNSServiceIPv6)
+		},
+	)
+}
+
+func (suite *K8sControlPlaneSuite) TestReconcileTransitionWorker() {
+	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
-	suite.Assert().Empty(r.(*k8s.ControllerManagerConfig).TypedSpec().CloudProvider)
 
-	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
+	cfg := config.NewMachineConfig(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+			},
+		},
+	)
+
+	suite.setupMachine(cfg)
+
+	machineType, err := safe.StateGet[*config.MachineType](suite.Ctx(), suite.State(), resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
 	suite.Require().NoError(err)
 
-	suite.Assert().Equal("10.96.0.10", bootstrapConfig.TypedSpec().DNSServiceIP)
-	suite.Assert().Equal("", bootstrapConfig.TypedSpec().DNSServiceIPv6)
+	machineType.SetMachineType(machine.TypeWorker)
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), machineType))
+
+	rtestutils.AssertNoResource[*k8s.AdmissionControlConfig](suite.Ctx(), suite.T(), suite.State(), k8s.AdmissionControlConfigID)
+	rtestutils.AssertNoResource[*k8s.AuditPolicyConfig](suite.Ctx(), suite.T(), suite.State(), k8s.AuditPolicyConfigID)
+	rtestutils.AssertNoResource[*k8s.APIServerConfig](suite.Ctx(), suite.T(), suite.State(), k8s.APIServerConfigID)
+	rtestutils.AssertNoResource[*k8s.ControllerManagerConfig](suite.Ctx(), suite.T(), suite.State(), k8s.ControllerManagerConfigID)
+	rtestutils.AssertNoResource[*k8s.SchedulerConfig](suite.Ctx(), suite.T(), suite.State(), k8s.SchedulerConfigID)
+	rtestutils.AssertNoResource[*k8s.BootstrapManifestsConfig](suite.Ctx(), suite.T(), suite.State(), k8s.BootstrapManifestsConfigID)
+	rtestutils.AssertNoResource[*k8s.ExtraManifestsConfig](suite.Ctx(), suite.T(), suite.State(), k8s.ExtraManifestsConfigID)
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileIPv6() {
@@ -179,11 +150,12 @@ func (suite *K8sControlPlaneSuite) TestReconcileIPv6() {
 
 	suite.setupMachine(cfg)
 
-	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
-	suite.Require().NoError(err)
-
-	suite.Assert().Equal("", bootstrapConfig.TypedSpec().DNSServiceIP)
-	suite.Assert().Equal("fc00:db8:20::a", bootstrapConfig.TypedSpec().DNSServiceIPv6)
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.BootstrapManifestsConfigID},
+		func(bootstrapConfig *k8s.BootstrapManifestsConfig, assert *assert.Assertions) {
+			assert.Equal("", bootstrapConfig.TypedSpec().DNSServiceIP)
+			assert.Equal("fc00:db8:20::a", bootstrapConfig.TypedSpec().DNSServiceIPv6)
+		},
+	)
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileDualStack() {
@@ -210,11 +182,12 @@ func (suite *K8sControlPlaneSuite) TestReconcileDualStack() {
 
 	suite.setupMachine(cfg)
 
-	bootstrapConfig, err := safe.StateGetResource(suite.ctx, suite.state, k8s.NewBootstrapManifestsConfig())
-	suite.Require().NoError(err)
-
-	suite.Assert().Equal("10.96.0.10", bootstrapConfig.TypedSpec().DNSServiceIP)
-	suite.Assert().Equal("fc00:db8:20::a", bootstrapConfig.TypedSpec().DNSServiceIPv6)
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.BootstrapManifestsConfigID},
+		func(bootstrapConfig *k8s.BootstrapManifestsConfig, assert *assert.Assertions) {
+			assert.Equal("10.96.0.10", bootstrapConfig.TypedSpec().DNSServiceIP)
+			assert.Equal("fc00:db8:20::a", bootstrapConfig.TypedSpec().DNSServiceIPv6)
+		},
+	)
 }
 
 func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
@@ -247,22 +220,29 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 		},
 	)
 
-	apiServerCfg := suite.setupMachine(cfg)
-	suite.Assert().Equal(
-		[]k8s.ExtraVolume{
-			{
-				Name:      "var-foo",
-				HostPath:  "/var/lib",
-				MountPath: "/var/foo/",
-				ReadOnly:  false,
-			},
-			{
-				Name:      "var-foo-b-foo",
-				HostPath:  "/var/lib/a.foo",
-				MountPath: "/var/foo/b.foo",
-				ReadOnly:  false,
-			},
-		}, apiServerCfg.ExtraVolumes,
+	suite.setupMachine(cfg)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.APIServerConfigID},
+		func(apiServer *k8s.APIServerConfig, assert *assert.Assertions) {
+			apiServerCfg := apiServer.TypedSpec()
+
+			assert.Equal(
+				[]k8s.ExtraVolume{
+					{
+						Name:      "var-foo",
+						HostPath:  "/var/lib",
+						MountPath: "/var/foo/",
+						ReadOnly:  false,
+					},
+					{
+						Name:      "var-foo-b-foo",
+						HostPath:  "/var/lib/a.foo",
+						MountPath: "/var/foo/b.foo",
+						ReadOnly:  false,
+					},
+				}, apiServerCfg.ExtraVolumes,
+			)
+		},
 	)
 }
 
@@ -289,11 +269,18 @@ func (suite *K8sControlPlaneSuite) TestReconcileEnvironment() {
 		},
 	)
 
-	apiServerCfg := suite.setupMachine(cfg)
-	suite.Assert().Equal(
-		map[string]string{
-			"HTTP_PROXY": "foo",
-		}, apiServerCfg.EnvironmentVariables,
+	suite.setupMachine(cfg)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.APIServerConfigID},
+		func(apiServer *k8s.APIServerConfig, assert *assert.Assertions) {
+			apiServerCfg := apiServer.TypedSpec()
+
+			assert.Equal(
+				map[string]string{
+					"HTTP_PROXY": "foo",
+				}, apiServerCfg.EnvironmentVariables,
+			)
+		},
 	)
 }
 
@@ -322,31 +309,40 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 		},
 	)
 
-	apiServerCfg := suite.setupMachine(cfg)
-	suite.Assert().Equal("external", apiServerCfg.CloudProvider)
+	suite.setupMachine(cfg)
 
-	r, err := suite.state.Get(suite.ctx, k8s.NewControllerManagerConfig().Metadata())
-	suite.Require().NoError(err)
-	suite.Assert().Equal("external", r.(*k8s.ControllerManagerConfig).TypedSpec().CloudProvider)
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.APIServerConfigID},
+		func(apiServer *k8s.APIServerConfig, assert *assert.Assertions) {
+			apiServerCfg := apiServer.TypedSpec()
 
-	r, err = suite.state.Get(suite.ctx, k8s.NewExtraManifestsConfig().Metadata())
-	suite.Require().NoError(err)
+			assert.Equal("external", apiServerCfg.CloudProvider)
+		},
+	)
 
-	suite.Assert().Equal(
-		&k8s.ExtraManifestsConfigSpec{
-			ExtraManifests: []k8s.ExtraManifest{
-				{
-					Name:     "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
-					URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
-					Priority: "30",
-				},
-				{
-					Name:     "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
-					URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
-					Priority: "30",
-				},
-			},
-		}, r.(*k8s.ExtraManifestsConfig).TypedSpec(),
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ControllerManagerConfigID},
+		func(controllerManager *k8s.ControllerManagerConfig, assert *assert.Assertions) {
+			assert.Equal("external", controllerManager.TypedSpec().CloudProvider)
+		},
+	)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ExtraManifestsConfigID},
+		func(extraManifests *k8s.ExtraManifestsConfig, assert *assert.Assertions) {
+			assert.Equal(
+				&k8s.ExtraManifestsConfigSpec{
+					ExtraManifests: []k8s.ExtraManifest{
+						{
+							Name:     "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
+							URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
+							Priority: "30",
+						},
+						{
+							Name:     "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+							URL:      "https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+							Priority: "30",
+						},
+					},
+				}, extraManifests.TypedSpec())
+		},
 	)
 }
 
@@ -383,45 +379,30 @@ metadata:
 
 	suite.setupMachine(cfg)
 
-	r, err := suite.state.Get(suite.ctx, k8s.NewExtraManifestsConfig().Metadata())
-	suite.Require().NoError(err)
-
-	suite.Assert().Equal(
-		&k8s.ExtraManifestsConfigSpec{
-			ExtraManifests: []k8s.ExtraManifest{
-				{
-					Name:           "namespace-ci",
-					Priority:       "99",
-					InlineManifest: "apiVersion: v1\nkind: Namespace\nmetadata:\n\tname: ci",
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ExtraManifestsConfigID},
+		func(extraManifests *k8s.ExtraManifestsConfig, assert *assert.Assertions) {
+			assert.Equal(
+				&k8s.ExtraManifestsConfigSpec{
+					ExtraManifests: []k8s.ExtraManifest{
+						{
+							Name:           "namespace-ci",
+							Priority:       "99",
+							InlineManifest: "apiVersion: v1\nkind: Namespace\nmetadata:\n\tname: ci",
+						},
+					},
 				},
-			},
-		}, r.(*k8s.ExtraManifestsConfig).TypedSpec(),
-	)
-}
-
-func (suite *K8sControlPlaneSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, "-"),
-		),
-	)
-	suite.Assert().NoError(
-		suite.state.Destroy(
-			context.Background(),
-			k8s.NewAPIServerConfig().Metadata(),
-			state.WithDestroyOwner("k8s.ControlPlaneController"),
-		),
+				extraManifests.TypedSpec())
+		},
 	)
 }
 
 func TestK8sControlPlaneSuite(t *testing.T) {
-	suite.Run(t, new(K8sControlPlaneSuite))
+	suite.Run(t, &K8sControlPlaneSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 10 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.ControlPlaneController{}))
+			},
+		},
+	})
 }
