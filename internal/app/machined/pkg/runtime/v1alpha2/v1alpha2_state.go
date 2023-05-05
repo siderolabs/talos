@@ -177,6 +177,7 @@ func NewState() (*State, error) {
 		&secrets.EtcdRoot{},
 		&secrets.Kubelet{},
 		&secrets.Kubernetes{},
+		&secrets.KubernetesDynamicCerts{},
 		&secrets.KubernetesRoot{},
 		&secrets.OSRoot{},
 		&secrets.Trustd{},

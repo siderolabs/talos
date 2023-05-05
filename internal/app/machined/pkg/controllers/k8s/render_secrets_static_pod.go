@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
@@ -55,6 +56,12 @@ func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input { //no
 		},
 		{
 			Namespace: secrets.NamespaceName,
+			Type:      secrets.KubernetesDynamicCertsType,
+			ID:        pointer.To(secrets.KubernetesDynamicCertsID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdType,
 			ID:        pointer.To(secrets.EtcdID),
 			Kind:      controller.InputWeak,
@@ -83,7 +90,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		case <-r.EventCh():
 		}
 
-		secretsRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
+		secretsRes, err := safe.ReaderGet[*secrets.Kubernetes](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -92,7 +99,19 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting secrets resource: %w", err)
 		}
 
-		etcdRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdType, secrets.EtcdID, resource.VersionUndefined))
+		certsRes, err := safe.ReaderGet[*secrets.KubernetesDynamicCerts](
+			ctx, r,
+			resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesDynamicCertsType, secrets.KubernetesDynamicCertsID, resource.VersionUndefined),
+		)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting certificates resource: %w", err)
+		}
+
+		etcdRes, err := safe.ReaderGet[*secrets.Etcd](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdType, secrets.EtcdID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -101,7 +120,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting secrets resource: %w", err)
 		}
 
-		rootEtcdRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdRootType, secrets.EtcdRootID, resource.VersionUndefined))
+		rootEtcdRes, err := safe.ReaderGet[*secrets.EtcdRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.EtcdRootType, secrets.EtcdRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -110,7 +129,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting secrets resource: %w", err)
 		}
 
-		rootK8sRes, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
+		rootK8sRes, err := safe.ReaderGet[*secrets.KubernetesRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -119,10 +138,11 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting secrets resource: %w", err)
 		}
 
-		rootEtcdSecrets := rootEtcdRes.(*secrets.EtcdRoot).TypedSpec()
-		rootK8sSecrets := rootK8sRes.(*secrets.KubernetesRoot).TypedSpec()
-		etcdSecrets := etcdRes.(*secrets.Etcd).TypedSpec()
-		k8sSecrets := secretsRes.(*secrets.Kubernetes).TypedSpec()
+		rootEtcdSecrets := rootEtcdRes.TypedSpec()
+		rootK8sSecrets := rootK8sRes.TypedSpec()
+		etcdSecrets := etcdRes.TypedSpec()
+		k8sSecrets := secretsRes.TypedSpec()
+		k8sCerts := certsRes.TypedSpec()
 
 		serviceAccountKey, err := rootK8sSecrets.ServiceAccount.GetKey()
 		if err != nil {
@@ -168,12 +188,12 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						certFilename: "ca.crt",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sSecrets.APIServer },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sCerts.APIServer },
 						certFilename: "apiserver.crt",
 						keyFilename:  "apiserver.key",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sSecrets.APIServerKubeletClient },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sCerts.APIServerKubeletClient },
 						certFilename: "apiserver-kubelet-client.crt",
 						keyFilename:  "apiserver-kubelet-client.key",
 					},
@@ -192,7 +212,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						certFilename: "aggregator-ca.crt",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sSecrets.FrontProxy },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return k8sCerts.FrontProxy },
 						certFilename: "front-proxy-client.crt",
 						keyFilename:  "front-proxy-client.key",
 					},

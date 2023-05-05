@@ -247,6 +247,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&secrets.EtcdController{},
 		&secrets.KubeletController{},
 		&secrets.KubernetesCertSANsController{},
+		&secrets.KubernetesDynamicCertsController{},
 		&secrets.KubernetesController{},
 		&secrets.RootController{},
 		&secrets.TrustdController{},

@@ -192,6 +192,7 @@ description: Talos gRPC API reference.
     - [EtcdRootSpec](#talos.resource.definitions.secrets.EtcdRootSpec)
     - [KubeletSpec](#talos.resource.definitions.secrets.KubeletSpec)
     - [KubernetesCertsSpec](#talos.resource.definitions.secrets.KubernetesCertsSpec)
+    - [KubernetesDynamicCertsSpec](#talos.resource.definitions.secrets.KubernetesDynamicCertsSpec)
     - [KubernetesRootSpec](#talos.resource.definitions.secrets.KubernetesRootSpec)
     - [OSRootSpec](#talos.resource.definitions.secrets.OSRootSpec)
     - [TrustdCertsSpec](#talos.resource.definitions.secrets.TrustdCertsSpec)
@@ -3480,13 +3481,27 @@ KubernetesCertsSpec describes generated Kubernetes certificates.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| api_server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
-| api_server_kubelet_client | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
-| front_proxy | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | scheduler_kubeconfig | [string](#string) |  |  |
 | controller_manager_kubeconfig | [string](#string) |  |  |
 | localhost_admin_kubeconfig | [string](#string) |  |  |
 | admin_kubeconfig | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.secrets.KubernetesDynamicCertsSpec"></a>
+
+### KubernetesDynamicCertsSpec
+KubernetesDynamicCertsSpec describes generated KubernetesCerts certificates.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| api_server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| api_server_kubelet_client | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| front_proxy | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 
 
 
