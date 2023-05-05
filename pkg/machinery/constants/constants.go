@@ -321,9 +321,6 @@ const (
 	// KubernetesControllerManagerImage is the enforced controllermanager image to use for the control plane.
 	KubernetesControllerManagerImage = "registry.k8s.io/kube-controller-manager"
 
-	// KubernetesProxyImage is the enforced proxy image to use for the control plane.
-	KubernetesProxyImage = "registry.k8s.io/kube-proxy"
-
 	// KubernetesSchedulerImage is the enforced scheduler image to use for the control plane.
 	KubernetesSchedulerImage = "registry.k8s.io/kube-scheduler"
 
