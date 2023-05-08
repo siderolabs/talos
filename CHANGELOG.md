@@ -1,3 +1,70 @@
+## [Talos 1.4.2](https://github.com/siderolabs/talos/releases/tag/v1.4.2) (2023-05-08)
+
+Welcome to the v1.4.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.1.27
+* containerd: 1.6.21
+* runc: 1.1.7
+
+Talos is built with Go 1.20.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Michael A. Davis
+* Niklas Wik
+* Noel Georgi
+* Utku Ozdemir
+
+### Changes
+<details><summary>9 commits</summary>
+<p>
+
+* [`2652fce90`](https://github.com/siderolabs/talos/commit/2652fce9080ee352c48cd1041a44e17e89c13a61) fix: properly skip/cleanup controlplane configs for workers
+* [`0097a67e5`](https://github.com/siderolabs/talos/commit/0097a67e58c273f7a7a9c0445657223f36b7c7a9) feat: introduce siderolink config resource & reconnect
+* [`3da5aa945`](https://github.com/siderolabs/talos/commit/3da5aa9458a3a16e4605b1dc189146b8ab300398) fix: don't reload control plane pods on cert SANs changes
+* [`447838243`](https://github.com/siderolabs/talos/commit/4478382437f980bc0e70458e1f1d999a75748215) fix: enforce nolock option for all NFS mounts by default
+* [`e2979fb4d`](https://github.com/siderolabs/talos/commit/e2979fb4d1334ffef00bb39c868b1eb2c2694c8d) fix: inhibit timer to follow kubelet timer
+* [`476dccfb0`](https://github.com/siderolabs/talos/commit/476dccfb0d5c01460d166698ebb063c74bdb1963) fix: set timeout for unmount calls
+* [`ebca8496a`](https://github.com/siderolabs/talos/commit/ebca8496adf029752f53640973876bff60743849) fix: set the static pod priority as values
+* [`05f65f1d8`](https://github.com/siderolabs/talos/commit/05f65f1d8ac2f64c452f61556771328c8b02c705) fix: add back required TARGETARCH for installer
+* [`8a8fc5f7a`](https://github.com/siderolabs/talos/commit/8a8fc5f7a8f0e1142d0ab43933bc8782909f23f4) feat: Linux 6.1.27, containerd 1.6.21, runc 1.1.7
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`4b22054`](https://github.com/siderolabs/pkgs/commit/4b2205421d1206c59a698444b7b44d044b1946d6) feat: linux 6.1.27, runc 1.1.7, containerd 1.6.21
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`5d0e9ab`](https://github.com/siderolabs/tools/commit/5d0e9ab834e202214ddb9e1271c95fef8ce9a0cd) chore: bump go to 1.20.4
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**      v1.6.19 -> v1.6.21
+* **github.com/opencontainers/image-spec**  v1.1.0-rc2 -> 3a7f492d3f1b
+* **github.com/siderolabs/pkgs**            v1.4.1-8-g0657493 -> v1.4.1-9-g4b22054
+* **github.com/siderolabs/tools**           v1.4.0-1-g955aabc -> v1.4.0-2-g5d0e9ab
+
+Previous release can be found at [v1.4.1](https://github.com/siderolabs/talos/releases/tag/v1.4.1)
+
 ## [Talos 1.4.1](https://github.com/siderolabs/talos/releases/tag/v1.4.1) (2023-04-27)
 
 Welcome to the v1.4.1 release of Talos!
