@@ -13,8 +13,8 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0
-PKGS ?= v1.5.0-alpha.0-9-g82b9489
+TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-2-g47b0fd3
+PKGS ?= v1.5.0-alpha.0-11-g30a7ac2
 EXTRAS ?= v1.5.0-alpha.0
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
@@ -36,7 +36,7 @@ VTPROTOBUF_VERSION ?= v0.4.0
 DEEPCOPY_VERSION ?= v0.5.5
 IMPORTVET ?= ghcr.io/siderolabs/importvet:2260533
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.33.0
+MARKDOWNLINTCLI_VERSION ?= 0.34.0
 # renovate: datasource=npm depName=textlint
 TEXTLINT_VERSION ?= 13.3.2
 # renovate: datasource=npm depName=textlint-filter-rule-comments
@@ -55,9 +55,9 @@ KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.11.3
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.4.1
+CLUSTERCTL_VERSION ?= 1.4.2
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.14.0
+CILIUM_CLI_VERSION ?= v0.14.1
 KUBECTL_URL ?= https://storage.googleapis.com/kubernetes-release/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
