@@ -1,3 +1,37 @@
+## [Talos 1.4.3](https://github.com/siderolabs/talos/releases/tag/v1.4.3) (2023-05-10)
+
+Welcome to the v1.4.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Fixes
+
+This release fixes a bug that was introduced in Talos v1.4.2 by updating Go to 1.20.4 which sets the default file rlimit to 1024.
+
+See: #7198
+
+
+### Contributors
+
+* Noel Georgi
+
+### Changes
+<details><summary>1 commit</summary>
+<p>
+
+* [`1ad8b7448`](https://github.com/siderolabs/talos/commit/1ad8b744812cf20c892af7cc7ef1ee12adb03b00) fix: set rlimit explicitly in wrapperd
+</p>
+</details>
+
+### Dependency Changes
+
+This release has no dependency changes
+
+Previous release can be found at [v1.4.2](https://github.com/siderolabs/talos/releases/tag/v1.4.2)
+
 ## [Talos 1.4.2](https://github.com/siderolabs/talos/releases/tag/v1.4.2) (2023-05-08)
 
 Welcome to the v1.4.2 release of Talos!

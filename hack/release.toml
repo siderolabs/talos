@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.4.1"
+previous = "v1.4.2"
 
 pre_release = false
 
@@ -15,14 +15,12 @@ preface = """\
 
 [notes]
 
-    [notes.updates]
-        title = "Component Updates"
+    [notes.fixes]
+        title = "Fixes"
         description="""\
-* Linux: 6.1.27
-* containerd: 1.6.21
-* runc: 1.1.7
+This release fixes a bug that was introduced in Talos v1.4.2 by updating Go to 1.20.4 which sets the default file rlimit to 1024.
 
-Talos is built with Go 1.20.4.
+See: #7198
 """
 
 [make_deps]
