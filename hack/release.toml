@@ -18,9 +18,15 @@ preface = """\
     [notes.fixes]
         title = "Fixes"
         description="""\
-This release fixes a bug that was introduced in Talos v1.4.2 by updating Go to 1.20.4 which sets the default file rlimit to 1024.
+This release fixes a bug that was introduced in Talos v1.4.2 and Talos v1.4.3 by updating Go to 1.20.4 which sets the default file rlimit to 1024.
 
 See: #7198
+"""
+
+    [notes.updates]
+        title = "Component Updates"
+        description="""\
+* Linux: 6.1.28
 """
 
 [make_deps]
