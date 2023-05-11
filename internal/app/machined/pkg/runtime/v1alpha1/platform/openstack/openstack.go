@@ -15,7 +15,6 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -83,7 +82,7 @@ func (o *Openstack) ParseMetadata(
 		})
 	}
 
-	hostInterfaces, err := safe.StateList[*network.LinkStatus](ctx, st, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+	hostInterfaces, err := safe.StateListAll[*network.LinkStatus](ctx, st)
 	if err != nil {
 		return nil, fmt.Errorf("error listing host interfaces: %w", err)
 	}

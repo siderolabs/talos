@@ -66,7 +66,7 @@ func (m *mockImageService) List(ctx context.Context, filters ...string) ([]image
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	return append([]images.Image(nil), m.images...), nil
+	return slices.Clone(m.images), nil
 }
 
 func (m *mockImageService) Create(ctx context.Context, image images.Image) (images.Image, error) {

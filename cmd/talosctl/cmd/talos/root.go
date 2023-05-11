@@ -13,6 +13,7 @@ import (
 
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -222,7 +223,7 @@ func getContainersFromNode(kubernetes bool) []string {
 }
 
 func mergeSuggestions(a, b []string) []string {
-	merged := append(append([]string(nil), a...), b...)
+	merged := append(slices.Clone(a), b...)
 
 	sort.Strings(merged)
 

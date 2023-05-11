@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -98,7 +99,7 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterNoK8s), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddressFilter).TypedSpec()
 
-				spec.ExcludeSubnets = append(append([]netip.Prefix(nil), podCIDRs...), serviceCIDRs...)
+				spec.ExcludeSubnets = append(slices.Clone(podCIDRs), serviceCIDRs...)
 
 				return nil
 			}); err != nil {
@@ -110,7 +111,7 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterOnlyK8s), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddressFilter).TypedSpec()
 
-				spec.IncludeSubnets = append(append([]netip.Prefix(nil), podCIDRs...), serviceCIDRs...)
+				spec.IncludeSubnets = append(slices.Clone(podCIDRs), serviceCIDRs...)
 
 				return nil
 			}); err != nil {

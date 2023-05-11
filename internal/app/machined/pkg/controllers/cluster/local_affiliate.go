@@ -113,7 +113,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 			return nil
 		case <-r.EventCh():
 			// mandatory resources to be fetched
-			discoveryConfig, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, cluster.ConfigType, cluster.ConfigID, resource.VersionUndefined))
+			discoveryConfig, err := safe.ReaderGetByID[*cluster.Config](ctx, r, cluster.ConfigID)
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting discovery config: %w", err)
@@ -122,7 +122,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			identity, err := r.Get(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
+			identity, err := safe.ReaderGetByID[*cluster.Identity](ctx, r, cluster.LocalIdentity)
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting local identity: %w", err)
@@ -131,7 +131,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			hostname, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+			hostname, err := safe.ReaderGetByID[*network.HostnameStatus](ctx, r, network.HostnameID)
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting hostname: %w", err)
@@ -140,7 +140,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			nodename, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+			nodename, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting nodename: %w", err)
@@ -149,8 +149,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			routedAddresses, err := r.Get(ctx,
-				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
+			routedAddresses, err := safe.ReaderGetByID[*network.NodeAddress](ctx, r, network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s))
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting addresses: %w", err)
@@ -159,8 +158,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			currentAddresses, err := r.Get(ctx,
-				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s), resource.VersionUndefined))
+			currentAddresses, err := safe.ReaderGetByID[*network.NodeAddress](ctx, r, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s))
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting addresses: %w", err)
@@ -169,7 +167,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			machineType, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
+			machineType, err := safe.ReaderGetByID[*config.MachineType](ctx, r, config.MachineTypeID)
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting machine type: %w", err)
@@ -179,18 +177,17 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 			}
 
 			// optional resources (kubespan)
-			kubespanIdentity, err := r.Get(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.IdentityType, kubespan.LocalIdentity, resource.VersionUndefined))
+			kubespanIdentity, err := safe.ReaderGetByID[*kubespan.Identity](ctx, r, kubespan.LocalIdentity)
 			if err != nil && !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting kubespan identity: %w", err)
 			}
 
-			kubespanConfig, err := safe.ReaderGet[*kubespan.Config](ctx, r, resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined))
+			kubespanConfig, err := safe.ReaderGetByID[*kubespan.Config](ctx, r, kubespan.ConfigID)
 			if err != nil && !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting kubespan config: %w", err)
 			}
 
-			ksAdditionalAddresses, err := r.Get(ctx,
-				resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterOnlyK8s), resource.VersionUndefined))
+			ksAdditionalAddresses, err := safe.ReaderGetByID[*network.NodeAddress](ctx, r, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterOnlyK8s))
 			if err != nil && !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting kubespan additional addresses: %w", err)
 			}
@@ -200,33 +197,33 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				return fmt.Errorf("error getting discovered public IP: %w", err)
 			}
 
-			localID := identity.(*cluster.Identity).TypedSpec().NodeID
+			localID := identity.TypedSpec().NodeID
 
-			touchedIDs := make(map[resource.ID]struct{})
+			touchedIDs := map[resource.ID]struct{}{}
 
-			if discoveryConfig.(*cluster.Config).TypedSpec().DiscoveryEnabled {
-				if err = r.Modify(ctx, cluster.NewAffiliate(cluster.NamespaceName, localID), func(res resource.Resource) error {
-					spec := res.(*cluster.Affiliate).TypedSpec()
+			if discoveryConfig.TypedSpec().DiscoveryEnabled {
+				if err = safe.WriterModify(ctx, r, cluster.NewAffiliate(cluster.NamespaceName, localID), func(res *cluster.Affiliate) error {
+					spec := res.TypedSpec()
 
 					spec.NodeID = localID
-					spec.Hostname = hostname.(*network.HostnameStatus).TypedSpec().FQDN()
-					spec.Nodename = nodename.(*k8s.Nodename).TypedSpec().Nodename
-					spec.MachineType = machineType.(*config.MachineType).MachineType()
+					spec.Hostname = hostname.TypedSpec().FQDN()
+					spec.Nodename = nodename.TypedSpec().Nodename
+					spec.MachineType = machineType.MachineType()
 					spec.OperatingSystem = fmt.Sprintf("%s (%s)", version.Name, version.Tag)
 
-					routedNodeIPs := routedAddresses.(*network.NodeAddress).TypedSpec().IPs()
-					currentNodeIPs := currentAddresses.(*network.NodeAddress).TypedSpec().IPs()
+					routedNodeIPs := routedAddresses.TypedSpec().IPs()
+					currentNodeIPs := currentAddresses.TypedSpec().IPs()
 
 					spec.Addresses = routedNodeIPs
 
 					spec.KubeSpan = cluster.KubeSpanAffiliateSpec{}
 
 					if kubespanIdentity != nil && kubespanConfig != nil {
-						spec.KubeSpan.Address = kubespanIdentity.(*kubespan.Identity).TypedSpec().Address.Addr()
-						spec.KubeSpan.PublicKey = kubespanIdentity.(*kubespan.Identity).TypedSpec().PublicKey
+						spec.KubeSpan.Address = kubespanIdentity.TypedSpec().Address.Addr()
+						spec.KubeSpan.PublicKey = kubespanIdentity.TypedSpec().PublicKey
 
 						if kubespanConfig.TypedSpec().AdvertiseKubernetesNetworks && ksAdditionalAddresses != nil {
-							spec.KubeSpan.AdditionalAddresses = append([]netip.Prefix(nil), ksAdditionalAddresses.(*network.NodeAddress).TypedSpec().Addresses...)
+							spec.KubeSpan.AdditionalAddresses = slices.Clone(ksAdditionalAddresses.TypedSpec().Addresses)
 						} else {
 							spec.KubeSpan.AdditionalAddresses = nil
 						}

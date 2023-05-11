@@ -600,7 +600,7 @@ func (d *Device) Interface() string {
 func (d *Device) Addresses() []string {
 	switch {
 	case len(d.DeviceAddresses) > 0:
-		return append([]string(nil), d.DeviceAddresses...)
+		return slices.Clone(d.DeviceAddresses)
 	case d.DeviceCIDR != "":
 		return []string{d.DeviceCIDR}
 	default:
@@ -1024,7 +1024,7 @@ func (b *Bridge) STP() config.STP {
 func (v *Vlan) Addresses() []string {
 	switch {
 	case len(v.VlanAddresses) > 0:
-		return append([]string(nil), v.VlanAddresses...)
+		return slices.Clone(v.VlanAddresses)
 	case v.VlanCIDR != "":
 		return []string{v.VlanCIDR}
 	default:

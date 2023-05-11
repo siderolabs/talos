@@ -92,7 +92,7 @@ func (ctrl *NodeLabelsApplyController) Run(ctx context.Context, r controller.Run
 }
 
 func (ctrl *NodeLabelsApplyController) getNodeLabelSpecs(ctx context.Context, r controller.Runtime) (map[string]string, error) {
-	items, err := safe.ReaderList[*k8s.NodeLabelSpec](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.NodeLabelSpecType, "", resource.VersionUndefined))
+	items, err := safe.ReaderListAll[*k8s.NodeLabelSpec](ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("error listing node label spec resources: %w", err)
 	}

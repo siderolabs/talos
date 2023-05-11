@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
@@ -81,7 +80,7 @@ func (ctrl *ProbeController) Run(ctx context.Context, r controller.Runtime, logg
 
 //nolint:gocyclo
 func (ctrl *ProbeController) reconcileRunners(ctx context.Context, r controller.Runtime, logger *zap.Logger, notifyCh chan<- probe.Notification) error {
-	specList, err := safe.ReaderList[*network.ProbeSpec](ctx, r, resource.NewMetadata(network.NamespaceName, network.ProbeSpecType, "", resource.VersionUndefined))
+	specList, err := safe.ReaderListAll[*network.ProbeSpec](ctx, r)
 	if err != nil {
 		return fmt.Errorf("error listing probe specs: %w", err)
 	}
@@ -122,7 +121,7 @@ func (ctrl *ProbeController) reconcileRunners(ctx context.Context, r controller.
 	}
 
 	// clean up statuses which should no longer exist
-	statusList, err := safe.ReaderList[*network.ProbeStatus](ctx, r, resource.NewMetadata(network.NamespaceName, network.ProbeStatusType, "", resource.VersionUndefined))
+	statusList, err := safe.ReaderListAll[*network.ProbeStatus](ctx, r)
 	if err != nil {
 		return fmt.Errorf("error listing probe statuses: %w", err)
 	}

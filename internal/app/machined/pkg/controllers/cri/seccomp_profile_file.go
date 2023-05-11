@@ -107,7 +107,7 @@ func (ctrl *SeccompProfileFileController) Run(ctx context.Context, r controller.
 		case <-r.EventCh():
 		}
 
-		list, err := safe.ReaderList[*cri.SeccompProfile](ctx, r, resource.NewMetadata(cri.NamespaceName, cri.SeccompProfileType, "", resource.VersionUndefined))
+		list, err := safe.ReaderListAll[*cri.SeccompProfile](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing seccomp profiles: %w", err)
 		}

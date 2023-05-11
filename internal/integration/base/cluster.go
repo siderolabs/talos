@@ -7,6 +7,8 @@
 package base
 
 import (
+	"github.com/siderolabs/gen/slices"
+
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
@@ -28,7 +30,7 @@ func newNodeInfo(masterNodes, workerNodes []string) (*infoWrapper, error) {
 	}
 
 	return &infoWrapper{
-		nodeInfos: append(append([]cluster.NodeInfo(nil), controlPlaneNodeInfos...), workerNodeInfos...),
+		nodeInfos: append(slices.Clone(controlPlaneNodeInfos), workerNodeInfos...),
 		nodeInfosByType: map[machine.Type][]cluster.NodeInfo{
 			machine.TypeControlPlane: controlPlaneNodeInfos,
 			machine.TypeWorker:       workerNodeInfos,

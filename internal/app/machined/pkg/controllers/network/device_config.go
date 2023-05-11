@@ -81,7 +81,7 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 		case <-r.EventCh():
 		}
 
-		links, err := safe.ReaderList[*network.LinkStatus](ctx, r, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+		links, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 		if err != nil {
 			return err
 		}

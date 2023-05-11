@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-retry/retry"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +38,7 @@ func upgradeKubelet(ctx context.Context, cluster UpgradeProvider, options Upgrad
 
 	options.Log("updating kubelet to version %q", options.Path.ToVersion())
 
-	for _, node := range append(append([]string(nil), options.controlPlaneNodes...), options.workerNodes...) {
+	for _, node := range append(slices.Clone(options.controlPlaneNodes), options.workerNodes...) {
 		if err := upgradeKubeletOnNode(ctx, cluster, options, node); err != nil {
 			return fmt.Errorf("error updating node %q: %w", node, err)
 		}

@@ -16,6 +16,7 @@ import (
 	"syscall"
 
 	multierror "github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/slices"
 )
 
 // Tar creates .tar archive and writes it to output for every item in paths channel.
@@ -105,7 +106,7 @@ func processFile(ctx context.Context, tw *tar.Writer, fi FileItem, buf []byte) e
 			}
 		case n < len(buf):
 			header.Size = int64(n)
-			r = bytes.NewReader(append([]byte(nil), buf[:n]...))
+			r = bytes.NewReader(slices.Clone(buf[:n]))
 		default:
 			// none matched so the file is bigger than we expected, ignore it and copy as zero size
 			skipData = true

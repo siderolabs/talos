@@ -8,7 +8,6 @@ import (
 	"context"
 	"net"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -97,11 +96,7 @@ func (c *Connection) Links() ([]Link, error) {
 		ctx = client.WithNode(ctx, nodes[0])
 	}
 
-	items, err := safe.StateList[*network.LinkStatus](
-		ctx,
-		c.nodeClient.COSI,
-		resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined),
-	)
+	items, err := safe.StateListAll[*network.LinkStatus](ctx, c.nodeClient.COSI)
 	if err != nil {
 		return nil, err
 	}

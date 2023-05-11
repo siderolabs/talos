@@ -72,9 +72,9 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 		}
 
 		for key, value := range nodeLabels {
-			if err = r.Modify(ctx, k8s.NewNodeLabelSpec(key), func(r resource.Resource) error {
-				r.(*k8s.NodeLabelSpec).TypedSpec().Key = key
-				r.(*k8s.NodeLabelSpec).TypedSpec().Value = value
+			if err = safe.WriterModify(ctx, r, k8s.NewNodeLabelSpec(key), func(k *k8s.NodeLabelSpec) error {
+				k.TypedSpec().Key = key
+				k.TypedSpec().Value = value
 
 				return nil
 			}); err != nil {
@@ -82,7 +82,7 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		labelSpecs, err := safe.ReaderList[*k8s.NodeLabelSpec](ctx, r, k8s.NewNodeLabelSpec("").Metadata())
+		labelSpecs, err := safe.ReaderListAll[*k8s.NodeLabelSpec](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error getting node label specs: %w", err)
 		}

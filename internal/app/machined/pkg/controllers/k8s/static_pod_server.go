@@ -99,7 +99,7 @@ func (ctrl *StaticPodServerController) Run(ctx context.Context, r controller.Run
 }
 
 func (ctrl *StaticPodServerController) buildPodList(ctx context.Context, r controller.Runtime, logger *zap.Logger) ([]byte, error) {
-	staticPods, err := safe.ReaderList[*k8s.StaticPod](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
+	staticPods, err := safe.ReaderListAll[*k8s.StaticPod](ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("error listing static pods: %w", err)
 	}

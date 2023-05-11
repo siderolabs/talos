@@ -11,7 +11,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -243,16 +242,12 @@ func buildClusterInfo() (cluster.Info, error) {
 	var members []*clusterres.Member
 
 	err := WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
-		items, err := safe.StateList[*clusterres.Member](ctx, c.COSI, resource.NewMetadata(clusterres.NamespaceName, clusterres.MemberType, "", resource.VersionUndefined))
+		items, err := safe.StateListAll[*clusterres.Member](ctx, c.COSI)
 		if err != nil {
 			return err
 		}
 
-		it := safe.IteratorFromList(items)
-
-		for it.Next() {
-			members = append(members, it.Value())
-		}
+		items.ForEach(func(item *clusterres.Member) { members = append(members, item) })
 
 		return nil
 	})

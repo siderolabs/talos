@@ -9,6 +9,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/siderolabs/gen/slices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -62,7 +63,7 @@ func TestMarshalUnmarshal(t *testing.T) {
 			},
 		},
 	} {
-		corrupted := append([]byte(nil), b...)
+		corrupted := slices.Clone(b)
 
 		for _, z := range c.zeroOut {
 			copy(corrupted[z[0]:z[0]+z[1]], make([]byte, z[1]))

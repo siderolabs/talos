@@ -8,7 +8,7 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 
 require (
 	github.com/containerd/go-cni v1.1.9
-	github.com/cosi-project/runtime v0.3.0
+	github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a
 	github.com/dustin/go-humanize v1.0.1
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -20,7 +20,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/siderolabs/crypto v0.4.0
-	github.com/siderolabs/gen v0.4.4
+	github.com/siderolabs/gen v0.4.5
 	github.com/siderolabs/go-api-signature v0.2.3
 	github.com/siderolabs/go-blockdevice v0.4.5
 	github.com/siderolabs/go-debug v0.2.2
@@ -61,7 +61,7 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
+	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

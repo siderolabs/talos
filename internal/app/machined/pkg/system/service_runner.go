@@ -407,7 +407,7 @@ func (svcrunner *ServiceRunner) Unsubscribe(event StateEvent, ch chan<- struct{}
 
 func (svcrunner *ServiceRunner) notifyEvent(event StateEvent) {
 	svcrunner.mu.Lock()
-	channels := append([]chan<- struct{}(nil), svcrunner.stateSubscribers[event]...)
+	channels := slices.Clone(svcrunner.stateSubscribers[event])
 	svcrunner.mu.Unlock()
 
 	for _, ch := range channels {

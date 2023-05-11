@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 
@@ -21,7 +20,7 @@ import (
 //
 // It is not guaranteed that etcd is running on each listed endpoint.
 func GetEndpoints(ctx context.Context, resources state.State) ([]string, error) {
-	endpointResources, err := safe.StateList[*k8s.Endpoint](ctx, resources, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.EndpointType, "", resource.VersionUndefined))
+	endpointResources, err := safe.StateListAll[*k8s.Endpoint](ctx, resources)
 	if err != nil {
 		return nil, fmt.Errorf("error getting endpoints resources: %w", err)
 	}

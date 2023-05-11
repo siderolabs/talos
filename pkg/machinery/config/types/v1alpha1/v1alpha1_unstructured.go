@@ -6,6 +6,8 @@ package v1alpha1
 
 import (
 	"fmt"
+
+	"github.com/siderolabs/gen/slices"
 )
 
 // Unstructured allows wrapping any map[string]interface{} into a config object.
@@ -58,7 +60,7 @@ func deepCopyUnstructured(x interface{}) interface{} {
 	case string, bool, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, complex64, complex128, nil:
 		return x
 	case []byte:
-		return append([]byte(nil), x...)
+		return slices.Clone(x)
 	default:
 		panic(fmt.Errorf("cannot deep copy %T", x))
 	}

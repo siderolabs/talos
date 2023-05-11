@@ -32,7 +32,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.44.258
 	github.com/beevik/ntp v1.0.0
-	github.com/benbjohnson/clock v1.3.3
+	github.com/benbjohnson/clock v1.3.4
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/cgroups v1.1.0
 	github.com/containerd/containerd v1.6.20
@@ -41,7 +41,7 @@ require (
 	github.com/containernetworking/plugins v1.2.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.1
-	github.com/cosi-project/runtime v0.3.0
+	github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v23.0.5+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -93,7 +93,7 @@ require (
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/discovery-api v0.1.2
 	github.com/siderolabs/discovery-client v0.1.4
-	github.com/siderolabs/gen v0.4.4
+	github.com/siderolabs/gen v0.4.5
 	github.com/siderolabs/go-blockdevice v0.4.5
 	github.com/siderolabs/go-circular v0.1.0
 	github.com/siderolabs/go-cmd v0.1.1
@@ -128,7 +128,7 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.5.8
 	go.uber.org/zap v1.24.0
 	go4.org/netipx v0.0.0-20230303233057-f1b76eb4bb35
-	golang.org/x/net v0.9.0
+	golang.org/x/net v0.10.0
 	golang.org/x/sync v0.2.0
 	golang.org/x/sys v0.8.0
 	golang.org/x/term v0.8.0
@@ -213,7 +213,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.16.3 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

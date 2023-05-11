@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/slices"
 	tnet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -640,7 +641,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, secrets *SecretsB
 		return nil, err
 	}
 
-	additionalSubjectAltNames := append([]string(nil), options.AdditionalSubjectAltNames...)
+	additionalSubjectAltNames := slices.Clone(options.AdditionalSubjectAltNames)
 
 	if !options.VersionContract.SupportsDynamicCertSANs() {
 		additionalSubjectAltNames = append(additionalSubjectAltNames, options.EndpointList...)

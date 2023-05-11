@@ -281,7 +281,7 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.Member {
 	var result []*cluster.Member
 
-	items, err := safe.StateList[*cluster.Member](nodeCtx, suite.Client.COSI, resource.NewMetadata(cluster.NamespaceName, cluster.MemberType, "", resource.VersionUndefined))
+	items, err := safe.StateListAll[*cluster.Member](nodeCtx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
 	it := safe.IteratorFromList(items)
@@ -320,7 +320,7 @@ func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace re
 func (suite *DiscoverySuite) getKubeSpanPeerSpecs(nodeCtx context.Context) []*kubespan.PeerSpec {
 	var result []*kubespan.PeerSpec
 
-	items, err := safe.StateList[*kubespan.PeerSpec](nodeCtx, suite.Client.COSI, resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, "", resource.VersionUndefined))
+	items, err := safe.StateListAll[*kubespan.PeerSpec](nodeCtx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
 	it := safe.IteratorFromList(items)
@@ -336,7 +336,7 @@ func (suite *DiscoverySuite) getKubeSpanPeerSpecs(nodeCtx context.Context) []*ku
 func (suite *DiscoverySuite) getKubeSpanPeerStatuses(nodeCtx context.Context) []*kubespan.PeerStatus {
 	var result []*kubespan.PeerStatus
 
-	items, err := safe.StateList[*kubespan.PeerStatus](nodeCtx, suite.Client.COSI, resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerStatusType, "", resource.VersionUndefined))
+	items, err := safe.StateListAll[*kubespan.PeerStatus](nodeCtx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
 	it := safe.IteratorFromList(items)

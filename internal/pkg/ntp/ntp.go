@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/beevik/ntp"
+	"github.com/siderolabs/gen/slices"
 	"github.com/u-root/u-root/pkg/rtc"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -65,7 +66,7 @@ func NewSyncer(logger *zap.Logger, timeServers []string) *Syncer {
 	syncer := &Syncer{
 		logger: logger,
 
-		timeServers: append([]string(nil), timeServers...),
+		timeServers: slices.Clone(timeServers),
 		timeSynced:  make(chan struct{}),
 
 		restartSyncCh: make(chan struct{}, 1),
@@ -127,7 +128,7 @@ func (syncer *Syncer) SetTimeServers(timeServers []string) {
 		return
 	}
 
-	syncer.timeServers = append([]string(nil), timeServers...)
+	syncer.timeServers = slices.Clone(timeServers)
 	syncer.lastSyncServer = ""
 
 	syncer.restartSync()

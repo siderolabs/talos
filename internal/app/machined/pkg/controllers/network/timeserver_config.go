@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
@@ -195,7 +196,7 @@ func (ctrl *TimeServerConfigController) parseMachineConfiguration(cfgProvider ta
 		return
 	}
 
-	spec.NTPServers = append([]string(nil), cfgProvider.Machine().Time().Servers()...)
+	spec.NTPServers = slices.Clone(cfgProvider.Machine().Time().Servers())
 	spec.ConfigLayer = network.ConfigMachineConfiguration
 
 	return spec

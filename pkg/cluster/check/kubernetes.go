@@ -11,7 +11,6 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/maps"
 	"google.golang.org/grpc/codes"
@@ -406,11 +405,7 @@ func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
 			"kube-system/kube-scheduler":          {},
 		}
 
-		items, err := safe.StateList[*k8s.StaticPodStatus](
-			client.WithNode(ctx, node.InternalIP.String()),
-			c.COSI,
-			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined),
-		)
+		items, err := safe.StateListAll[*k8s.StaticPodStatus](client.WithNode(ctx, node.InternalIP.String()), c.COSI)
 		if err != nil {
 			if client.StatusCode(err) == codes.Unimplemented {
 				// old version of Talos without COSI API

@@ -12,6 +12,7 @@ import (
 
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/prop"
+	"github.com/siderolabs/gen/slices"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -59,5 +60,5 @@ func (mock *logindMock) getPipe() []int {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
 
-	return append([]int(nil), mock.inhibitPipe...)
+	return slices.Clone(mock.inhibitPipe)
 }

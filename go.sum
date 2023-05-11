@@ -266,8 +266,8 @@ github.com/aws/aws-sdk-go v1.44.258/go.mod h1:aVsgQcEevwlmQ7qHE9I3h+dtQgpqhFB+i8
 github.com/beevik/ntp v1.0.0 h1:d0Lgy1xbNNqVyGfvg2Z96ItKcfyn3lzgus/oRoj9vnk=
 github.com/beevik/ntp v1.0.0/go.mod h1:JN7/74B0Z4GUGO/1aUeRI2adARlfJGUeaJb0y0Wvnf4=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
-github.com/benbjohnson/clock v1.3.3 h1:g+rSsSaAzhHJYcIQE78hJ3AhyjjtQvleKDjlhdBnIhc=
-github.com/benbjohnson/clock v1.3.3/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
+github.com/benbjohnson/clock v1.3.4 h1:wj3BFPrTw8yYgA1OlMqvUk95nc8OMv3cvBSF5erT2W4=
+github.com/benbjohnson/clock v1.3.4/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/beorn7/perks v0.0.0-20160804104726-4c0e84591b9a/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
@@ -455,8 +455,8 @@ github.com/coreos/go-systemd/v22 v22.5.0 h1:RrqgGjYQKalulkV8NGVIfkXQf6YYmOyiJKk8
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
-github.com/cosi-project/runtime v0.3.0 h1:f8++A7HUu7pQv9G3IhQworfA4TFLdzGWl3W+jLQF3Oo=
-github.com/cosi-project/runtime v0.3.0/go.mod h1:BBFzt+ANf4BSlVGIbemVuz+Hql8F3tveWaWoErUi0lY=
+github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a h1:H52VL6of0xYiEeM7HLBUnRCWKZzGKLV3QKLlTxM3iD4=
+github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a/go.mod h1:g+0MZ3+2MIUkUL7JYTqgYeo5f4j7dAuGem6apjBJ1XU=
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=
@@ -845,8 +845,8 @@ github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+o
 github.com/klauspost/compress v1.11.3/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
 github.com/klauspost/compress v1.11.13/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
 github.com/klauspost/compress v1.15.11/go.mod h1:QPwzmACJjUTFsnSHH934V6woptycfrDDJnH7hvFVbGM=
-github.com/klauspost/compress v1.16.3 h1:XuJt9zzcnaz6a16/OU53ZjWp/v7/42WcR5t2a0PcNQY=
-github.com/klauspost/compress v1.16.3/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
+github.com/klauspost/compress v1.16.5 h1:IFV2oUNUzZaz+XyusxpLzpzS8Pt5rh0Z16For/djlyI=
+github.com/klauspost/compress v1.16.5/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.3/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -1138,8 +1138,8 @@ github.com/siderolabs/discovery-api v0.1.2 h1:PxJhl9s2qpPgjO65bgOdRovBvRg/RuZu93
 github.com/siderolabs/discovery-api v0.1.2/go.mod h1:JnJg4h1HbAhOazQl0lYHEjrg63rg/cf9r2te6/DqUxo=
 github.com/siderolabs/discovery-client v0.1.4 h1:5e/4tVsCMTdz1YlynI2ebhSJ9PHhmD3y+aGIsKjDlSA=
 github.com/siderolabs/discovery-client v0.1.4/go.mod h1:TmrvPz89JyhQT4vrIzAqx/v89zxikdYmhpC0GQsiH3Y=
-github.com/siderolabs/gen v0.4.4 h1:iShHEAfb3i9jaeDXjT11TepsjdgGoChBKbUuUz4CqnQ=
-github.com/siderolabs/gen v0.4.4/go.mod h1:wS8tFq7sn5vqKAuyS30vJUig3tX5v6q79VG4KfUnILM=
+github.com/siderolabs/gen v0.4.5 h1:rwXUVJlL7hYza1LrSVXfT905ZC9Rgei37jMKKs/+eP0=
+github.com/siderolabs/gen v0.4.5/go.mod h1:wS8tFq7sn5vqKAuyS30vJUig3tX5v6q79VG4KfUnILM=
 github.com/siderolabs/go-api-signature v0.2.3 h1:7jaZ2R1TiJ/xAsMCiFCm72n/PsnoVYt1R+Savbj7l/0=
 github.com/siderolabs/go-api-signature v0.2.3/go.mod h1:HmO3kVEXgrXYzj0tLHT9HAAu0I4grz2/dJwq8AdzE5Q=
 github.com/siderolabs/go-blockdevice v0.4.5 h1:NgpR9XTl/N7WeL59QHBsseDD0Nb8Y2nel+W3u7xHIvY=
@@ -1484,8 +1484,9 @@ golang.org/x/net v0.0.0-20221014081412-f15817d10f9b/go.mod h1:YDH+HFinaLZZlnHAfS
 golang.org/x/net v0.1.0/go.mod h1:Cx3nUiGt4eDBEyega/BKRp+/AlGL8hYe7U9odMt2Cco=
 golang.org/x/net v0.6.0/go.mod h1:2Tu9+aMcznHK/AK1HMvgo6xiTLG5rD5rZLDS+rp2Bjs=
 golang.org/x/net v0.8.0/go.mod h1:QVkue5JL9kW//ek3r6jTKnTFis1tRmNAW2P1shuFdJc=
-golang.org/x/net v0.9.0 h1:aWJ/m6xSmxWBx+V0XRHTlrYrPG56jKsLdTFmsSsCzOM=
 golang.org/x/net v0.9.0/go.mod h1:d48xBJpPfHeWQsugry2m+kC02ZBRGRgulfHnEXEuWns=
+golang.org/x/net v0.10.0 h1:X2//UzNDwYmtCLn7To6G58Wr6f5ahEAQgKNzv9Y951M=
+golang.org/x/net v0.10.0/go.mod h1:0qNGK6F8kojg2nk9dLZ2mShWaEBan6FAoqfSigmmuDg=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=

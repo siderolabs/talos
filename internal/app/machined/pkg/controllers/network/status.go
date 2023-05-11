@@ -95,7 +95,7 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, log
 
 		// connectivity
 		// if any probes are defined, use their status, otherwise rely on presence of the default gateway
-		probeStatuses, err := safe.ReaderList[*network.ProbeStatus](ctx, r, resource.NewMetadata(network.NamespaceName, network.ProbeStatusType, "", resource.VersionUndefined))
+		probeStatuses, err := safe.ReaderListAll[*network.ProbeStatus](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error getting probe statuses: %w", err)
 		}
@@ -115,7 +115,7 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, log
 		} else if probeStatuses.Len() == 0 {
 			var routes safe.List[*network.RouteStatus]
 
-			routes, err = safe.ReaderList[*network.RouteStatus](ctx, r, resource.NewMetadata(network.NamespaceName, network.RouteStatusType, "", resource.VersionUndefined))
+			routes, err = safe.ReaderListAll[*network.RouteStatus](ctx, r)
 			if err != nil {
 				return fmt.Errorf("error getting routes: %w", err)
 			}

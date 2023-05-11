@@ -7,10 +7,10 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/gen/slices"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -73,7 +73,7 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, log
 			if err = r.Modify(ctx, cluster.NewMember(cluster.NamespaceName, affiliateSpec.Nodename), func(res resource.Resource) error {
 				spec := res.(*cluster.Member).TypedSpec()
 
-				spec.Addresses = append([]netip.Addr(nil), affiliateSpec.Addresses...)
+				spec.Addresses = slices.Clone(affiliateSpec.Addresses)
 				spec.Hostname = affiliateSpec.Hostname
 				spec.MachineType = affiliateSpec.MachineType
 				spec.OperatingSystem = affiliateSpec.OperatingSystem

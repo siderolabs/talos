@@ -85,7 +85,7 @@ func (ctrl *SeccompProfileController) Run(ctx context.Context, r controller.Runt
 		}
 
 		// list keys for cleanup
-		list, err := safe.ReaderList[*cri.SeccompProfile](ctx, r, resource.NewMetadata(cri.NamespaceName, cri.SeccompProfileType, "", resource.VersionUndefined))
+		list, err := safe.ReaderListAll[*cri.SeccompProfile](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing seccomp profiles: %w", err)
 		}

@@ -9,7 +9,6 @@ import (
 	"errors"
 	fmt "fmt"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
@@ -21,7 +20,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 	"github.com/siderolabs/talos/pkg/minimal"
 )
 
@@ -210,11 +208,7 @@ type mountData struct {
 var ErrOldTalosVersion = fmt.Errorf("old Talos version")
 
 func getEphemeralPartitionData(ctx context.Context, state state.State, nodeIP string) (mountData, error) {
-	items, err := safe.StateList[*runtime.MountStatus](
-		client.WithNode(ctx, nodeIP),
-		state,
-		resource.NewMetadata(v1alpha1.NamespaceName, runtime.MountStatusType, "", resource.VersionUndefined),
-	)
+	items, err := safe.StateListAll[*runtime.MountStatus](client.WithNode(ctx, nodeIP), state)
 	if err != nil {
 		if client.StatusCode(err) == codes.Unimplemented {
 			// old version of Talos without COSI API

@@ -16,7 +16,6 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -126,7 +125,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 	// determine bond name and build list of interfaces enslaved by the bond
 	bondName := ""
 
-	hostInterfaces, err := safe.StateList[*network.LinkStatus](ctx, st, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+	hostInterfaces, err := safe.StateListAll[*network.LinkStatus](ctx, st)
 	if err != nil {
 		return nil, fmt.Errorf("error listing host interfaces: %w", err)
 	}

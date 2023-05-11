@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/siderolabs/gen/slices"
 )
 
 // Server is an in-memory http web server.
@@ -54,7 +56,7 @@ func NewServer(address string) (Server, error) {
 }
 
 func (s *server) AddFile(filename string, contents []byte) error {
-	contentsCopy := append([]byte(nil), contents...)
+	contentsCopy := slices.Clone(contents)
 
 	s.mux.Handle("/"+filename, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {

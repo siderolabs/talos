@@ -12,7 +12,6 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 
@@ -88,7 +87,7 @@ type DHCPOverrides struct {
 func (v *VMware) ApplyNetworkConfigV2(ctx context.Context, st state.State, config *NetworkConfig, networkConfig *runtime.PlatformNetworkConfig) error {
 	var dnsIPs []netip.Addr
 
-	hostInterfaces, err := safe.StateList[*network.LinkStatus](ctx, st, resource.NewMetadata(network.NamespaceName, network.LinkStatusType, "", resource.VersionUndefined))
+	hostInterfaces, err := safe.StateListAll[*network.LinkStatus](ctx, st)
 	if err != nil {
 		return fmt.Errorf("error listing host interfaces: %w", err)
 	}

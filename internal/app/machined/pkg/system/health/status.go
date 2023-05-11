@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/siderolabs/gen/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -65,7 +66,7 @@ func (state *State) Update(healthy bool, message string) {
 
 	var subscribers []chan<- StateChange
 	if notify {
-		subscribers = append([]chan<- StateChange(nil), state.subscribers...)
+		subscribers = slices.Clone(state.subscribers)
 	}
 
 	state.Unlock()

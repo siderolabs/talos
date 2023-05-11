@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
@@ -507,19 +508,19 @@ func (mock *mockSyncer) getTimeServers() (servers []string) {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
 
-	return append([]string(nil), mock.timeServers...)
+	return slices.Clone(mock.timeServers)
 }
 
 func (mock *mockSyncer) SetTimeServers(servers []string) {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
 
-	mock.timeServers = append([]string(nil), servers...)
+	mock.timeServers = slices.Clone(servers)
 }
 
 func newMockSyncer(_ *zap.Logger, servers []string) *mockSyncer {
 	return &mockSyncer{
-		timeServers: append([]string(nil), servers...),
+		timeServers: slices.Clone(servers),
 		syncedCh:    make(chan struct{}, 1),
 		epochCh:     make(chan struct{}, 1),
 	}

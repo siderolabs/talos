@@ -12,7 +12,6 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/slices"
 	"google.golang.org/grpc/metadata"
@@ -140,7 +139,7 @@ func buildClusterInfo(ctx context.Context,
 		}
 
 		return &clusterState{
-			nodeInfos: append(append([]cluster.NodeInfo(nil), controlPlaneNodeInfos...), workerNodeInfos...),
+			nodeInfos: append(slices.Clone(controlPlaneNodeInfos), workerNodeInfos...),
 			nodeInfosByType: map[machine.Type][]cluster.NodeInfo{
 				machine.TypeControlPlane: controlPlaneNodeInfos,
 				machine.TypeWorker:       workerNodeInfos,
@@ -231,7 +230,7 @@ func k8sNodeToNodeInfo(node *corev1.Node) (*cluster.NodeInfo, error) {
 func getDiscoveryMemberList(ctx context.Context, runtime runtime.Runtime) ([]*clusterres.Member, error) {
 	res := runtime.State().V1Alpha2().Resources()
 
-	list, err := safe.StateList[*clusterres.Member](ctx, res, resource.NewMetadata(clusterres.NamespaceName, clusterres.MemberType, "", resource.VersionUndefined))
+	list, err := safe.StateListAll[*clusterres.Member](ctx, res)
 	if err != nil {
 		return nil, err
 	}

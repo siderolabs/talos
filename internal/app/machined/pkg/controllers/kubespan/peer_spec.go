@@ -7,7 +7,6 @@ package kubespan
 import (
 	"context"
 	"fmt"
-	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -161,7 +160,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 						*res.(*kubespan.PeerSpec).TypedSpec() = kubespan.PeerSpecSpec{
 							Address:    spec.KubeSpan.Address,
 							AllowedIPs: ipSet.Prefixes(),
-							Endpoints:  append([]netip.AddrPort(nil), spec.KubeSpan.Endpoints...),
+							Endpoints:  slices.Clone(spec.KubeSpan.Endpoints),
 							Label:      spec.Nodename,
 						}
 

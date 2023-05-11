@@ -19,7 +19,7 @@ import (
 
 // ResolveResourceKind resolves potentially aliased 'resourceType' and replaces empty 'resourceNamespace' with the default namespace for the resource.
 func (c *Client) ResolveResourceKind(ctx context.Context, resourceNamespace *resource.Namespace, resourceType resource.Type) (*meta.ResourceDefinition, error) {
-	registeredResources, err := safe.StateList[*meta.ResourceDefinition](ctx, c.COSI, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
+	registeredResources, err := safe.StateListAll[*meta.ResourceDefinition](ctx, c.COSI)
 	if err != nil {
 		return nil, err
 	}

@@ -225,7 +225,7 @@ func completeResourceDefinition(withAliases bool) ([]string, cobra.ShellCompDire
 	var result []string
 
 	if WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
-		items, err := safe.StateList[*meta.ResourceDefinition](ctx, c.COSI, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
+		items, err := safe.StateListAll[*meta.ResourceDefinition](ctx, c.COSI)
 		if err != nil {
 			return err
 		}
@@ -278,11 +278,11 @@ func completeResourceID(resourceType, namespace string) ([]string, cobra.ShellCo
 }
 
 // CompleteNodes represents tab completion for `--nodes` argument.
-func CompleteNodes(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func CompleteNodes(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	var nodes []string
 
 	if WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
-		items, err := safe.StateList[*cluster.Member](ctx, c.COSI, resource.NewMetadata(cluster.NamespaceName, cluster.MemberType, "", resource.VersionUndefined))
+		items, err := safe.StateListAll[*cluster.Member](ctx, c.COSI)
 		if err != nil {
 			return err
 		}

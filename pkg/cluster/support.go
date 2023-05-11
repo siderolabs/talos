@@ -400,7 +400,7 @@ func getResources(ctx context.Context, c *client.Client) ([]nodeCollector, error
 		return nil, fmt.Errorf("got more than one node in the context: %v", nodes)
 	}
 
-	rds, err := safe.StateList[*meta.ResourceDefinition](client.WithNode(ctx, nodes[0]), c.COSI, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, "", resource.VersionUndefined))
+	rds, err := safe.StateListAll[*meta.ResourceDefinition](client.WithNode(ctx, nodes[0]), c.COSI)
 	if err != nil {
 		return nil, err
 	}

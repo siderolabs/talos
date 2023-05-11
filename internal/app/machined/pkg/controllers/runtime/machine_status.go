@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
@@ -247,7 +246,7 @@ func (ctrl *MachineStatusController) networkReadyCheck(ctx context.Context, r co
 
 func (ctrl *MachineStatusController) servicesCheck(requiredServices []string) func(ctx context.Context, r controller.Runtime) error {
 	return func(ctx context.Context, r controller.Runtime) error {
-		serviceList, err := safe.ReaderList[*v1alpha1.Service](ctx, r, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "", resource.VersionUndefined))
+		serviceList, err := safe.ReaderListAll[*v1alpha1.Service](ctx, r)
 		if err != nil {
 			return err
 		}
@@ -290,7 +289,7 @@ func (ctrl *MachineStatusController) servicesCheck(requiredServices []string) fu
 
 //nolint:gocyclo
 func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r controller.Runtime) error {
-	staticPodList, err := safe.ReaderList[*k8s.StaticPodStatus](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodStatusType, "", resource.VersionUndefined))
+	staticPodList, err := safe.ReaderListAll[*k8s.StaticPodStatus](ctx, r)
 	if err != nil {
 		return err
 	}

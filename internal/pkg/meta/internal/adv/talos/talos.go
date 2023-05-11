@@ -98,7 +98,7 @@ func (a *ADV) Unmarshal(buf []byte) error {
 		return fmt.Errorf("adv: unexpected magic %x, expecting %x", magic2, Magic2)
 	}
 
-	checksum := append([]byte(nil), buf[len(buf)-36:len(buf)-4]...)
+	checksum := slices.Clone(buf[len(buf)-36 : len(buf)-4])
 
 	copy(buf[len(buf)-36:len(buf)-4], make([]byte, 32))
 
