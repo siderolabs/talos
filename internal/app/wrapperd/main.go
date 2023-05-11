@@ -50,13 +50,6 @@ func Main() {
 		}
 	}
 
-	// set the rlimit for the process before we drop privileges
-	// TODO: frezbo: see if we need to drop Rlimit from the boot sequence, the only downside maybe that some very early process might
-	// not have the higher rlimit set, but it seems we always use the wrapper to start processes.
-	if err := unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Max: 1048576, Cur: 1048576}); err != nil {
-		log.Fatalf("failed to set rlimit: %v", err)
-	}
-
 	// load the cgroup and put the process into the cgroup
 	if cgroupPath != "" {
 		if cgroups.Mode() == cgroups.Unified {
