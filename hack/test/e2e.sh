@@ -126,9 +126,6 @@ function create_cluster_capi {
     ${KUBECTL} get nodes -l node-role.kubernetes.io/control-plane='' && :
     sleep 10
   done
-
-  # verify that RLIMIT_NOFILE is set to 1048576
-  ${KUBECTL} run --rm --restart=Never -it foo --image=alpine -- /bin/sh -c "ulimit -n" | grep -q 1048576
 }
 
 function run_talos_integration_test {
@@ -298,6 +295,11 @@ function run_csi_tests {
 
 function validate_virtio_modules {
   ${TALOSCTL} read /proc/modules | grep -q virtio
+}
+
+function validate_rlimit_nofile {
+  # verify that RLIMIT_NOFILE is set to 1048576
+  ${KUBECTL} run --rm --restart=Never -it rlimit-test --image=alpine -- /bin/sh -c "ulimit -n" | grep 1048576
 }
 
 function install_and_run_cilium_cni_tests {
