@@ -1,3 +1,54 @@
+## [Talos 1.4.4](https://github.com/siderolabs/talos/releases/tag/v1.4.4) (2023-05-12)
+
+Welcome to the v1.4.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Fixes
+
+This release fixes a bug that was introduced in Talos v1.4.2 and Talos v1.4.3 by updating Go to 1.20.4 which sets the default file rlimit to 1024.
+
+See: #7198
+
+
+### Component Updates
+
+* Linux: 6.1.28
+
+
+### Contributors
+
+* Noel Georgi
+
+### Changes
+<details><summary>4 commits</summary>
+<p>
+
+* [`c2220996d`](https://github.com/siderolabs/talos/commit/c2220996ddb20be37241247c223a9d94bdc01a13) fix: rlimit nofile test
+* [`efc9f3a1d`](https://github.com/siderolabs/talos/commit/efc9f3a1dbd8018f0bdd9c4abd30fba7a7dbc555) feat: bump `x/sys` to v0.8.0
+* [`cfa913270`](https://github.com/siderolabs/talos/commit/cfa91327017cd7124a6b323b8c5ed820ffcc6302) chore: bump kernel to 6.1.28
+* [`779febfb9`](https://github.com/siderolabs/talos/commit/779febfb9d87ddf6c38a88570fc8d778257cb672) fix: revert: set rlimit explicitly in wrapperd
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`6d90f68`](https://github.com/siderolabs/pkgs/commit/6d90f689cc9d5a22ec08ea1d53e25283051233e3) chore: bump kernel to 6.1.28
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.4.1-9-g4b22054 -> v1.4.1-10-g6d90f68
+* **golang.org/x/sys**            v0.6.0 -> v0.8.0
+
+Previous release can be found at [v1.4.3](https://github.com/siderolabs/talos/releases/tag/v1.4.3)
+
 ## [Talos 1.4.3](https://github.com/siderolabs/talos/releases/tag/v1.4.3) (2023-05-10)
 
 Welcome to the v1.4.3 release of Talos!
