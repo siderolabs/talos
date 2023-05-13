@@ -265,7 +265,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"legacyCleanup",
 		CleanupLegacyStaticPodFiles,
 	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
+		r.State().Platform().Mode() != runtime.ModeContainer && len(r.Config().Machine().Udev().Rules()) > 0,
 		"udevSetup",
 		WriteUdevRules,
 	).AppendWhen(

@@ -202,6 +202,12 @@ issues:
     - path: internal/app/machined/pkg/system/services
       linters:
         - dupl
+    - path: internal/app/machined/pkg/controllers/files
+      linters:
+        - dupl
+    - path: resources/files
+      linters:
+        - dupl
     - path: cmd/installer/pkg/qemuimg
       text: "should have a package comment"
       linters:

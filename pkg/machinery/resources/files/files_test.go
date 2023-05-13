@@ -27,6 +27,8 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []resource.Resource{
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
+		&files.UdevRule{},
+		&files.UdevRuleStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

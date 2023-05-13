@@ -15,3 +15,13 @@ message EtcFileStatusSpec {
   string spec_version = 1;
 }
 
+// UdevRuleSpec is the specification for UdevRule resource.
+message UdevRuleSpec {
+  string rule = 1;
+}
+
+// UdevRuleStatusSpec is the specification for UdevRule resource.
+message UdevRuleStatusSpec {
+  bool active = 1;
+}
+

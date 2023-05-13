@@ -5,76 +5,49 @@
 package files_test
 
 import (
-	"context"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
 type EtcFileSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-
+	ctest.DefaultSuite
 	etcPath    string
 	shadowPath string
 }
 
-func (suite *EtcFileSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
+func TestEtcFileSuite(t *testing.T) {
+	// skip test if we are not root
+	if os.Getuid() != 0 {
+		t.Skip("can't run the test as non-root")
+	}
 
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
+	etcTempPath := t.TempDir()
+	shadowTempPath := t.TempDir()
 
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
-	suite.Require().NoError(err)
-
-	suite.startRuntime()
-
-	suite.etcPath = suite.T().TempDir()
-	suite.shadowPath = suite.T().TempDir()
-
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&filesctrl.EtcFileController{
-				EtcPath:    suite.etcPath,
-				ShadowPath: suite.shadowPath,
+	suite.Run(t, &EtcFileSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.EtcFileController{
+					EtcPath:    etcTempPath,
+					ShadowPath: shadowTempPath,
+				}))
 			},
-		),
-	)
-}
-
-func (suite *EtcFileSuite) startRuntime() {
-	suite.wg.Add(1)
-
-	go func() {
-		defer suite.wg.Done()
-
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	}()
+		},
+		etcPath:    etcTempPath,
+		shadowPath: shadowTempPath,
+	})
 }
 
 func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVersion resource.Version) error {
@@ -87,8 +60,8 @@ func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVers
 		return retry.ExpectedErrorf("contents don't match %q != %q", string(b), contents)
 	}
 
-	r, err := suite.state.Get(
-		suite.ctx,
+	r, err := suite.State().Get(
+		suite.Ctx(),
 		resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, filename, resource.VersionUndefined),
 	)
 	if err != nil {
@@ -123,19 +96,15 @@ func (suite *EtcFileSuite) TestFiles() {
 	suite.T().Logf("mock created %q", filepath.Join(suite.etcPath, etcFileSpec.Metadata().ID()))
 	suite.Require().NoError(os.WriteFile(filepath.Join(suite.etcPath, etcFileSpec.Metadata().ID()), nil, 0o644))
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, etcFileSpec))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), etcFileSpec))
 
-	suite.Assert().NoError(
-		retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertEtcFile("test1", "foo", etcFileSpec.Metadata().Version())
-			},
-		),
-	)
+	suite.AssertWithin(5*time.Second, 100*time.Millisecond, func() error {
+		return suite.assertEtcFile("test1", "foo", etcFileSpec.Metadata().Version())
+	})
 
 	for _, r := range []resource.Resource{etcFileSpec} {
 		for {
-			ready, err := suite.state.Teardown(suite.ctx, r.Metadata())
+			ready, err := suite.State().Teardown(suite.Ctx(), r.Metadata())
 			suite.Require().NoError(err)
 
 			if ready {
@@ -145,19 +114,4 @@ func (suite *EtcFileSuite) TestFiles() {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
-}
-
-func (suite *EtcFileSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), files.NewEtcFileSpec(files.NamespaceName, "bar")))
-}
-
-func TestEtcFileSuite(t *testing.T) {
-	suite.Run(t, new(EtcFileSuite))
 }

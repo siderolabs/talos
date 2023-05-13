@@ -5,6 +5,7 @@
 package cri_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -84,29 +85,6 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 		})
 	}
 
-	suite.AssertWithin(1*time.Second, 100*time.Millisecond, func() error {
-		seccompProfile, err := ctest.Get[*criseccompresource.SeccompProfile](
-			suite,
-			criseccompresource.NewSeccompProfile("audit.json").Metadata(),
-		)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				return retry.ExpectedError(err)
-			}
-
-			return err
-		}
-
-		spec := seccompProfile.TypedSpec()
-
-		suite.Assert().Equal("audit.json", spec.Name)
-		suite.Assert().Equal(map[string]interface{}{
-			"defaultAction": "SCMP_ACT_LOG",
-		}, spec.Value)
-
-		return nil
-	})
-
 	// test deletion
 	cfg = config.NewMachineConfig(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
@@ -123,9 +101,8 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 		},
 	})
 
-	ctest.UpdateWithConflicts(suite, cfg, func(mc *config.MachineConfig) error {
-		return nil
-	})
+	cfg.Metadata().SetVersion(cfg.Metadata().Version().Next())
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 
 	suite.AssertWithin(1*time.Second, 100*time.Millisecond, func() error {
 		_, err := ctest.Get[*criseccompresource.SeccompProfile](
@@ -133,14 +110,14 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 			criseccompresource.NewSeccompProfile("deny.json").Metadata(),
 		)
 		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return err
+			if state.IsNotFoundError(err) {
+				return nil
 			}
 
 			return err
 		}
 
-		return nil
+		return retry.ExpectedError(fmt.Errorf("seccomp profile with id deny.json should not exist"))
 	})
 }
 
