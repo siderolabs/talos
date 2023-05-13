@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -44,6 +45,10 @@ type TimeServerConfigSuite struct {
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
+
+func (suite *TimeServerConfigSuite) State() state.State { return suite.state }
+
+func (suite *TimeServerConfigSuite) Ctx() context.Context { return suite.ctx }
 
 func (suite *TimeServerConfigSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
@@ -162,14 +167,11 @@ func (suite *TimeServerConfigSuite) TestMachineConfiguration() {
 		},
 	)
 
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
-			r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineTime = nil
+	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
+		r.Config().(*v1alpha1.Config).MachineConfig.MachineTime = nil
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

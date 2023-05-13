@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -43,6 +44,10 @@ type RouteSpecSuite struct {
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
+
+func (suite *RouteSpecSuite) State() state.State { return suite.state }
+
+func (suite *RouteSpecSuite) Ctx() context.Context { return suite.ctx }
 
 func (suite *RouteSpecSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
@@ -233,17 +238,12 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 	)
 
 	// update the route metric and mtu
-	_, err := suite.state.UpdateWithConflicts(
-		suite.ctx, def.Metadata(), func(r resource.Resource) error {
-			defR := r.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
+	ctest.UpdateWithConflicts(suite, def, func(defR *network.RouteSpec) error {
+		defR.TypedSpec().Priority = 1048577
+		defR.TypedSpec().MTU = 1700
 
-			defR.TypedSpec().Priority = 1048577
-			defR.TypedSpec().MTU = 1700
-
-			return nil
-		},
-	)
-	suite.Assert().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -266,16 +266,11 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 	)
 
 	// remove mtu and make sure it's unset
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, def.Metadata(), func(r resource.Resource) error {
-			defR := r.(*network.RouteSpec) //nolint:forcetypeassert,errcheck
+	ctest.UpdateWithConflicts(suite, def, func(defR *network.RouteSpec) error {
+		defR.TypedSpec().MTU = 0
 
-			defR.TypedSpec().MTU = 0
-
-			return nil
-		},
-	)
-	suite.Assert().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -47,6 +48,10 @@ type HostnameConfigSuite struct {
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
+
+func (suite *HostnameConfigSuite) State() state.State { return suite.state }
+
+func (suite *HostnameConfigSuite) Ctx() context.Context { return suite.ctx }
 
 func (suite *HostnameConfigSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
@@ -222,16 +227,11 @@ func (suite *HostnameConfigSuite) TestMachineConfiguration() {
 		},
 	)
 
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
-			r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = strings.Repeat(
-				"a",
-				128,
-			)
+	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
+		r.Config().(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = strings.Repeat("a", 128)
 
-			return nil
-		},
-	)
+		return nil
+	})
 	suite.Require().NoError(err)
 
 	suite.Assert().NoError(

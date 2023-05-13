@@ -110,3 +110,7 @@ func (suite *ClusterSuite) TearDownTest() {
 
 	suite.Assert().NoError(err)
 }
+
+func (suite *ClusterSuite) State() state.State { return suite.state }
+
+func (suite *ClusterSuite) Ctx() context.Context { return suite.ctx }

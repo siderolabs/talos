@@ -123,9 +123,7 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 		},
 	})
 
-	ctest.UpdateWithConflicts(suite, cfg, func(mc *config.MachineConfig) error {
-		return nil
-	})
+	ctest.UpdateWithConflicts(suite, cfg, func(mc *config.MachineConfig) error { return nil })
 
 	suite.AssertWithin(1*time.Second, 100*time.Millisecond, func() error {
 		_, err := ctest.Get[*criseccompresource.SeccompProfile](

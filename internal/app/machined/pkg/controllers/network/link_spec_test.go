@@ -27,6 +27,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -44,6 +45,10 @@ type LinkSpecSuite struct {
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
+
+func (suite *LinkSpecSuite) State() state.State { return suite.state }
+
+func (suite *LinkSpecSuite) Ctx() context.Context { return suite.ctx }
 
 func (suite *LinkSpecSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
@@ -297,14 +302,11 @@ func (suite *LinkSpecSuite) TestVLAN() {
 	)
 
 	// attempt to change VLAN ID
-	_, err := suite.state.UpdateWithConflicts(
-		suite.ctx, vlan1.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkSpec).TypedSpec().VLAN.VID = 42
+	ctest.UpdateWithConflicts(suite, vlan1, func(r *network.LinkSpec) error {
+		r.TypedSpec().VLAN.VID = 42
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -436,14 +438,11 @@ func (suite *LinkSpecSuite) TestBond() {
 	)
 
 	// attempt to change bond type
-	_, err := suite.state.UpdateWithConflicts(
-		suite.ctx, bond.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkSpec).TypedSpec().BondMaster.Mode = nethelpers.BondModeRoundrobin
+	ctest.UpdateWithConflicts(suite, bond, func(r *network.LinkSpec) error {
+		r.TypedSpec().BondMaster.Mode = nethelpers.BondModeRoundrobin
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -466,14 +465,11 @@ func (suite *LinkSpecSuite) TestBond() {
 	)
 
 	// unslave one of the interfaces
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, dummy0.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkSpec).TypedSpec().BondSlave.MasterName = ""
+	ctest.UpdateWithConflicts(suite, dummy0, func(r *network.LinkSpec) error {
+		r.TypedSpec().BondSlave.MasterName = ""
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -698,14 +694,11 @@ func (suite *LinkSpecSuite) TestBridge() {
 	)
 
 	// attempt to enable STP
-	_, err := suite.state.UpdateWithConflicts(
-		suite.ctx, bridge.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkSpec).TypedSpec().BridgeMaster.STP.Enabled = true
+	ctest.UpdateWithConflicts(suite, bridge, func(r *network.LinkSpec) error {
+		r.TypedSpec().BridgeMaster.STP.Enabled = true
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -726,14 +719,11 @@ func (suite *LinkSpecSuite) TestBridge() {
 	)
 
 	// unslave one of the interfaces
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, dummy0.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkSpec).TypedSpec().BridgeSlave.MasterName = ""
+	ctest.UpdateWithConflicts(suite, dummy0, func(r *network.LinkSpec) error {
+		r.TypedSpec().BridgeSlave.MasterName = ""
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -850,14 +840,11 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	priv2, err := wgtypes.GeneratePrivateKey()
 	suite.Require().NoError(err)
 
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, wg.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkSpec).TypedSpec().Wireguard.PrivateKey = priv2.String()
+	ctest.UpdateWithConflicts(suite, wg, func(r *network.LinkSpec) error {
+		r.TypedSpec().Wireguard.PrivateKey = priv2.String()
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

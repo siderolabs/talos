@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/operator"
 	"github.com/siderolabs/talos/pkg/logging"
@@ -40,6 +41,10 @@ type OperatorSpecSuite struct {
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
+
+func (suite *OperatorSpecSuite) State() state.State { return suite.state }
+
+func (suite *OperatorSpecSuite) Ctx() context.Context { return suite.ctx }
 
 type mockOperator struct {
 	spec     network.OperatorSpecSpec
@@ -296,14 +301,11 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 		),
 	)
 
-	_, err := suite.state.UpdateWithConflicts(
-		suite.ctx, linkState.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkStatus).TypedSpec().OperationalState = nethelpers.OperStateUp
+	ctest.UpdateWithConflicts(suite, linkState, func(r *network.LinkStatus) error {
+		r.TypedSpec().OperationalState = nethelpers.OperStateUp
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	// now all operators should be scheduled
 	suite.Assert().NoError(
@@ -328,14 +330,11 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 	)
 
 	// change the spec, operator should be rescheduled
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, specVIP.Metadata(), func(r resource.Resource) error {
-			r.(*network.OperatorSpec).TypedSpec().VIP.IP = netip.MustParseAddr("3.4.5.6")
+	ctest.UpdateWithConflicts(suite, specVIP, func(r *network.OperatorSpec) error {
+		r.TypedSpec().VIP.IP = netip.MustParseAddr("3.4.5.6")
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -361,14 +360,11 @@ func (suite *OperatorSpecSuite) TestScheduling() {
 	)
 
 	// bring down the interface, operator should be stopped
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, linkState.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkStatus).TypedSpec().OperationalState = nethelpers.OperStateDown
+	ctest.UpdateWithConflicts(suite, linkState, func(r *network.LinkStatus) error {
+		r.TypedSpec().OperationalState = nethelpers.OperStateDown
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -413,14 +409,11 @@ func (suite *OperatorSpecSuite) TestPanic() {
 	)
 
 	// bring down the interface, operator should be stopped
-	_, err := suite.state.UpdateWithConflicts(
-		suite.ctx, linkState.Metadata(), func(r resource.Resource) error {
-			r.(*network.LinkStatus).TypedSpec().OperationalState = nethelpers.OperStateDown
+	ctest.UpdateWithConflicts(suite, linkState, func(r *network.LinkStatus) error {
+		r.TypedSpec().OperationalState = nethelpers.OperStateDown
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

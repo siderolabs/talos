@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	timectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/logging"
@@ -49,6 +50,10 @@ type SyncSuite struct {
 	syncerMu sync.Mutex
 	syncer   *mockSyncer
 }
+
+func (suite *SyncSuite) State() state.State { return suite.state }
+
+func (suite *SyncSuite) Ctx() context.Context { return suite.ctx }
 
 func (suite *SyncSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
@@ -319,14 +324,11 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 		),
 	)
 
-	_, err := suite.state.UpdateWithConflicts(
-		suite.ctx, timeServers.Metadata(), func(r resource.Resource) error {
-			r.(*network.TimeServerStatus).TypedSpec().NTPServers = []string{"127.0.0.1"}
+	ctest.UpdateWithConflicts(suite, timeServers, func(r *network.TimeServerStatus) error {
+		r.TypedSpec().NTPServers = []string{"127.0.0.1"}
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -356,16 +358,13 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 		),
 	)
 
-	_, err = suite.state.UpdateWithConflicts(
-		suite.ctx, cfg.Metadata(), func(r resource.Resource) error {
-			r.(*config.MachineConfig).Config().(*v1alpha1.Config).MachineConfig.MachineTime = &v1alpha1.TimeConfig{
-				TimeDisabled: pointer.To(true),
-			}
+	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
+		r.Config().(*v1alpha1.Config).MachineConfig.MachineTime = &v1alpha1.TimeConfig{
+			TimeDisabled: pointer.To(true),
+		}
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

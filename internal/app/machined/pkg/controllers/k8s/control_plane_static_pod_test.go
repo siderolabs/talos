@@ -26,6 +26,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -65,6 +66,10 @@ func (suite *ControlPlaneStaticPodSuite) SetupTest() {
 
 	suite.startRuntime()
 }
+
+func (suite *ControlPlaneStaticPodSuite) State() state.State { return suite.state }
+
+func (suite *ControlPlaneStaticPodSuite) Ctx() context.Context { return suite.ctx }
 
 func (suite *ControlPlaneStaticPodSuite) startRuntime() {
 	suite.wg.Add(1)
@@ -600,14 +605,11 @@ func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptSchedul
 	)
 
 	// flip enabled to disable scheduler
-	_, err := suite.state.UpdateWithConflicts(
-		suite.ctx, configScheduler.Metadata(), func(r resource.Resource) error {
-			r.(*k8s.SchedulerConfig).TypedSpec().Enabled = false
+	ctest.UpdateWithConflicts(suite, configScheduler, func(r *k8s.SchedulerConfig) error {
+		r.TypedSpec().Enabled = false
 
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
+		return nil
+	})
 
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

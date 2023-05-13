@@ -24,6 +24,7 @@ import (
 
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -351,13 +352,11 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 	))
 
 	// now disable the service registry
-	_, err = suite.state.UpdateWithConflicts(suite.ctx, discoveryConfig.Metadata(), func(r resource.Resource) error {
-		r.(*cluster.Config).TypedSpec().RegistryServiceEnabled = false
+	ctest.UpdateWithConflicts(suite, discoveryConfig, func(r *cluster.Config) error {
+		r.TypedSpec().RegistryServiceEnabled = false
 
 		return nil
 	})
-
-	suite.Require().NoError(err)
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		suite.assertNoResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata()),
