@@ -30,20 +30,20 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	github.com/BurntSushi/toml v1.2.1
-	github.com/aws/aws-sdk-go v1.44.258
+	github.com/aws/aws-sdk-go v1.44.264
 	github.com/beevik/ntp v1.0.0
 	github.com/benbjohnson/clock v1.3.4
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/cgroups v1.1.0
 	github.com/containerd/containerd v1.6.20
-	github.com/containerd/typeurl v1.0.2
+	github.com/containerd/typeurl/v2 v2.1.1
 	github.com/containernetworking/cni v1.1.2
-	github.com/containernetworking/plugins v1.2.0
+	github.com/containernetworking/plugins v1.3.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a
 	github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker v23.0.5+incompatible
+	github.com/docker/docker v23.0.6+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.4.2
@@ -65,8 +65,8 @@ require (
 	github.com/hashicorp/go-getter v1.7.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-version v1.6.0
-	github.com/hetznercloud/hcloud-go v1.44.0
-	github.com/insomniacslk/dhcp v0.0.0-20230407062729-974c6f05fe16
+	github.com/hetznercloud/hcloud-go v1.45.1
+	github.com/insomniacslk/dhcp v0.0.0-20230516061539-49801966e6cb
 	github.com/jsimonetti/rtnetlink v1.3.3
 	github.com/jxskiss/base62 v1.1.0
 	github.com/martinlindhe/base36 v1.1.1
@@ -84,7 +84,7 @@ require (
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.1.0
 	github.com/prometheus/procfs v0.9.0
-	github.com/rivo/tview v0.0.0-20230406072732-e22ce9588bb4
+	github.com/rivo/tview v0.0.0-20230511053024-822bd067b165
 	github.com/rs/xid v1.5.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
@@ -101,7 +101,7 @@ require (
 	github.com/siderolabs/go-kmsg v0.1.3
 	github.com/siderolabs/go-kubeconfig v0.1.0
 	github.com/siderolabs/go-kubernetes v0.2.0
-	github.com/siderolabs/go-loadbalancer v0.2.1
+	github.com/siderolabs/go-loadbalancer v0.2.2
 	github.com/siderolabs/go-pcidb v0.1.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/go-procfs v0.1.1
@@ -111,7 +111,7 @@ require (
 	github.com/siderolabs/grpc-proxy v0.4.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/siderolink v0.3.1
-	github.com/siderolabs/talos/pkg/machinery v1.4.0-alpha.4
+	github.com/siderolabs/talos/pkg/machinery v1.4.4
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.2
@@ -138,7 +138,7 @@ require (
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.100.1
-	kernel.org/pub/linux/libs/security/libcap/cap v1.2.68
+	kernel.org/pub/linux/libs/security/libcap/cap v1.2.69
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -149,8 +149,8 @@ require (
 	cloud.google.com/go/storage v1.28.1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
-	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/Microsoft/hcsshim v0.9.8 // indirect
+	github.com/Microsoft/go-winio v0.6.0 // indirect
+	github.com/Microsoft/hcsshim v0.9.9 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756 // indirect
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/ProtonMail/gopenpgp/v2 v2.7.1 // indirect
@@ -168,6 +168,7 @@ require (
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/go-cni v1.1.9 // indirect
 	github.com/containerd/ttrpc v1.1.1 // indirect
+	github.com/containerd/typeurl v1.0.2 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -179,7 +180,7 @@ require (
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.1 // indirect
@@ -223,7 +224,6 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/packet v1.1.2 // indirect
-	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 // indirect
 	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
@@ -241,7 +241,7 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
-	github.com/opencontainers/selinux v1.10.1 // indirect
+	github.com/opencontainers/selinux v1.11.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
@@ -265,7 +265,7 @@ require (
 	github.com/spf13/viper v1.14.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/u-root/uio v0.0.0-20230220225925-ffce2a382923 // indirect
-	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
+	github.com/vishvananda/netns v0.0.4 // indirect
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xlab/treeprint v1.1.0 // indirect
 	go.etcd.io/bbolt v1.3.7 // indirect
@@ -299,7 +299,7 @@ require (
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491 // indirect
-	kernel.org/pub/linux/libs/security/libcap/psx v1.2.68 // indirect
+	kernel.org/pub/linux/libs/security/libcap/psx v1.2.69 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.13.2 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.14.1 // indirect

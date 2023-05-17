@@ -20,7 +20,7 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	v2 "github.com/containerd/containerd/metrics/types/v2"
 	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/typeurl"
+	"github.com/containerd/typeurl/v2"
 	"github.com/hashicorp/go-multierror"
 
 	ctrs "github.com/siderolabs/talos/internal/pkg/containers"

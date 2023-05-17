@@ -23,8 +23,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.0 h1:uIkTLo0AGRc8l7h5l9r+GcYi9qfVPt6lD4/bhmzfiKo=
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.0/go.mod h1:FKdcjfQW6rpZSnxxUvEA5H/cDPdvJ/SZJQLWWXWGrZ0=
-github.com/siderolabs/gen v0.4.4 h1:iShHEAfb3i9jaeDXjT11TepsjdgGoChBKbUuUz4CqnQ=
-github.com/siderolabs/gen v0.4.4/go.mod h1:wS8tFq7sn5vqKAuyS30vJUig3tX5v6q79VG4KfUnILM=
+github.com/siderolabs/gen v0.4.5 h1:rwXUVJlL7hYza1LrSVXfT905ZC9Rgei37jMKKs/+eP0=
+github.com/siderolabs/gen v0.4.5/go.mod h1:wS8tFq7sn5vqKAuyS30vJUig3tX5v6q79VG4KfUnILM=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKsk=

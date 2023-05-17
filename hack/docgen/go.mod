@@ -12,7 +12,7 @@ require (
 	github.com/invopop/jsonschema v0.7.0
 	github.com/microcosm-cc/bluemonday v1.0.23
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
-	github.com/siderolabs/gen v0.4.4
+	github.com/siderolabs/gen v0.4.5
 	gopkg.in/yaml.v3 v3.0.1
 	mvdan.cc/gofumpt v0.5.0
 )

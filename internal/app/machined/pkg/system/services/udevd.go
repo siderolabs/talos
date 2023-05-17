@@ -41,6 +41,7 @@ func (c *Udevd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		"/sbin/udevadm",
 		"hwdb",
 		"--update",
+		"--root=/usr",
 	)
 
 	return err
