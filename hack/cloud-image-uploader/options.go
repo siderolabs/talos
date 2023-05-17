@@ -15,7 +15,17 @@ type Options struct {
 	ArtifactsPath string
 	Architectures []string
 
+	// AWS options.
 	AWSRegions []string
+
+	// Azure options.
+	AzureRegions []Location
+}
+
+// Location is the struct for the Azure Regions Options.
+type Location struct {
+	Abbreviation string
+	Name         string
 }
 
 // DefaultOptions used throughout the cli.
@@ -27,4 +37,9 @@ var DefaultOptions = Options{
 // AWSImage returns path to AWS pre-built image.
 func (o *Options) AWSImage(architecture string) string {
 	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("aws-%s.tar.gz", architecture))
+}
+
+// AzureImage returns path to AWS pre-built image.
+func (o *Options) AzureImage(architecture string) string {
+	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("azure-%s.tar.gz", architecture))
 }

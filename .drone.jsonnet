@@ -585,10 +585,16 @@ local integration_pipelines = [
 // E2E pipeline.
 
 local creds_env_vars = {
+  // AWS creds
   AWS_ACCESS_KEY_ID: { from_secret: 'aws_access_key_id' },
   AWS_SECRET_ACCESS_KEY: { from_secret: 'aws_secret_access_key' },
   AWS_SVC_ACCT: { from_secret: 'aws_svc_acct' },
+  // Azure creds
   AZURE_SVC_ACCT: { from_secret: 'azure_svc_acct' },
+  AZURE_SUBSCRIPTION_ID: { from_secret: 'azure_subscription_id' },
+  AZURE_CLIENT_ID: { from_secret: 'azure_client_id' },
+  AZURE_CLIENT_SECRET: { from_secret: 'azure_client_secret' },
+  AZURE_TENANT_ID: { from_secret: 'azure_tenant_id' },
   // TODO(andrewrynhard): Rename this to the GCP convention.
   GCE_SVC_ACCT: { from_secret: 'gce_svc_acct' },
   PACKET_AUTH_TOKEN: { from_secret: 'packet_auth_token' },

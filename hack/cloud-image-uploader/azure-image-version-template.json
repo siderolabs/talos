@@ -1,0 +1,61 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "gallery_name": {
+        "defaultValue": null,
+        "type": "String"
+      },
+      "disk_name": {
+        "defaultValue": null,
+        "type": "String"
+      },
+      "image_version": {
+        "defaultValue": null,
+        "type": "String"
+      },
+      "definition_name": {
+        "defaultValue": null,
+        "type": "String"
+      },
+      "region": {
+        "defaultValue": null,
+        "type": "String"
+      },
+      "resourceGroupName": {
+        "type": "String"
+      },
+      "targetRegions": {
+        "type": "array"
+      }
+    },
+    "variables": {},
+    "resources": [
+      {
+        "type": "Microsoft.Compute/galleries/images/versions",
+        "apiVersion": "2022-03-03",
+        "name": "[concat(parameters('gallery_name'), '/', parameters('definition_name'), '/', parameters('image_version'))]",
+        "location": "[parameters('region')]",
+        "properties": {
+          "publishingProfile": {
+            "targetRegions": "[parameters('targetRegions')]",
+            "replicaCount": 1,
+            "excludeFromLatest": false,
+            "storageAccountType": "Standard_LRS",
+            "replicationMode": "Full"
+          },
+          "storageProfile": {
+            "osDiskImage": {
+              "hostCaching": "None",
+              "source": {
+                "id": "[concat('/subscriptions/7f739b7d-f399-4b97-9a9f-f1962309ee6e/resourceGroups/SIDEROGALLERY/providers/Microsoft.Compute/disks/', parameters('disk_name'))]"
+              }
+            }
+          },
+          "safetyProfile": {
+            "allowDeletionOfReplicatedLocations": true
+          }
+        }
+      }
+    ]
+  }

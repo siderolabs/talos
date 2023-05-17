@@ -822,6 +822,9 @@ ENV GOLANGCI_LINT_CACHE /.cache/lint
 RUN --mount=type=cache,target=/.cache golangci-lint run --config .golangci.yml
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
+COPY ./hack/cloud-image-uploader /src/hack/cloud-image-uploader
+WORKDIR /src/hack/cloud-image-uploader
+RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml
 WORKDIR /src
 RUN --mount=type=cache,target=/.cache importvet github.com/siderolabs/talos/...
 

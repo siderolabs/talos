@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package main implements Talos cloud image uploader.
 package main
 
 import (
@@ -9,6 +10,7 @@ import (
 	cryptorand "crypto/rand"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -46,6 +48,12 @@ func pushResult(image CloudImage) {
 }
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatalf("%s", err)
+	}
+}
+
+func run() error {
 	var err error
 
 	DefaultOptions.AWSRegions, err = GetAWSDefaultRegions()
@@ -62,11 +70,11 @@ func main() {
 	pflag.Parse()
 
 	seed := make([]byte, 8)
-	if _, err := cryptorand.Read(seed); err != nil {
+	if _, err = cryptorand.Read(seed); err != nil {
 		log.Fatalf("error seeding rand: %s", err)
 	}
 
-	rand.Seed(int64(binary.LittleEndian.Uint64(seed)))
+	rand.Seed(int64(binary.LittleEndian.Uint64(seed))) //nolint:staticcheck
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -83,18 +91,27 @@ func main() {
 		return aws.Upload(ctx)
 	})
 
-	if err := g.Wait(); err != nil {
-		log.Fatalf("failed: %s", err)
+	g.Go(func() error {
+		azure := AzureUploader{
+			Options: DefaultOptions,
+		}
+
+		return azure.AzureGalleryUpload(ctx)
+	})
+
+	if err = g.Wait(); err != nil {
+		return fmt.Errorf("failed: %w", err)
 	}
 
 	f, err := os.Create(filepath.Join(DefaultOptions.ArtifactsPath, "cloud-images.json"))
 	if err != nil {
-		log.Fatalf("failed: %s", err)
+		return fmt.Errorf("failed: %w", err)
 	}
 
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	e := json.NewEncoder(io.MultiWriter(os.Stdout, f))
 	e.SetIndent("", "  ")
-	e.Encode(&result) //nolint:errcheck
+
+	return e.Encode(&result)
 }

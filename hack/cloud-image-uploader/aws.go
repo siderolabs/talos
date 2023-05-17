@@ -161,6 +161,7 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 	return g.Wait()
 }
 
+//nolint:gocyclo
 func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *ec2.EC2, arch, bucketName string, uploader *s3manager.Uploader) error {
 	err := retry.Constant(5*time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
 		source, err := os.Open(au.Options.AWSImage(arch))
