@@ -1114,7 +1114,11 @@ func mountDisks(r runtime.Runtime) (err error) {
 				}
 			}
 
-			mountpoints.Set(partname, mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, ""))
+			mountpoints.Set(partname,
+				mount.NewMountPoint(partname, part.MountPoint(), "xfs", unix.MS_NOATIME, "",
+					mount.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()),
+				),
+			)
 		}
 	}
 
@@ -2147,7 +2151,9 @@ func UnmountStatePartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, st
 // MountEphemeralPartition mounts the ephemeral partition.
 func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionMount(r, logger, constants.EphemeralPartitionLabel, mount.WithFlags(mount.Resize))
+		return mount.SystemPartitionMount(r, logger, constants.EphemeralPartitionLabel,
+			mount.WithFlags(mount.Resize),
+			mount.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()))
 	}, "mountEphemeralPartition"
 }
 

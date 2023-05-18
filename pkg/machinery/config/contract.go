@@ -159,3 +159,8 @@ func (contract *VersionContract) KubeletManifestsDirectoryDisabled() bool {
 func (contract *VersionContract) SecretboxEncryptionSupported() bool {
 	return contract.Greater(TalosVersion1_2)
 }
+
+// DiskQuotaSupportEnabled returns true if XFS filesystems should enable project quota.
+func (contract *VersionContract) DiskQuotaSupportEnabled() bool {
+	return contract.Greater(TalosVersion1_4)
+}

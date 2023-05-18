@@ -70,6 +70,10 @@ func workerUd(in *Input) (*v1alpha1.Config, error) {
 		machine.MachineFeatures.ApidCheckExtKeyUsage = pointer.To(true)
 	}
 
+	if in.VersionContract.DiskQuotaSupportEnabled() {
+		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
+	}
+
 	if in.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
 		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
 	}

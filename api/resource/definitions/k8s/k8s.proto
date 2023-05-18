@@ -116,6 +116,7 @@ message KubeletConfigSpec {
   bool skip_node_registration = 9;
   string static_pod_list_url = 10;
   bool disable_manifests_directory = 11;
+  bool enable_fs_quota_monitoring = 12;
 }
 
 // KubeletSpecSpec holds the source of kubelet configuration.

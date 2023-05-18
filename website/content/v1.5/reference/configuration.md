@@ -2688,6 +2688,7 @@ kubernetesTalosAPIAccess:
         - kube-system
 {{< /highlight >}}</details> | |
 |`apidCheckExtKeyUsage` |bool |Enable checks for extended key usage of client certificates in apid.  | |
+|`diskQuotaSupport` |bool |<details><summary>Enable XFS project quota support for EPHEMERAL partition and user disks.</summary>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.</details>  | |
 
 
 

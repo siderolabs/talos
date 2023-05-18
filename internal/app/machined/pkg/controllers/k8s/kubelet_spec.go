@@ -285,6 +285,16 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec) (*kubeletconfig.Kub
 		}
 	}
 
+	if cfgSpec.EnableFSQuotaMonitoring {
+		if _, overridden := config.FeatureGates["LocalStorageCapacityIsolationFSQuotaMonitoring"]; !overridden {
+			if config.FeatureGates == nil {
+				config.FeatureGates = map[string]bool{}
+			}
+
+			config.FeatureGates["LocalStorageCapacityIsolationFSQuotaMonitoring"] = true
+		}
+	}
+
 	if cfgSpec.SkipNodeRegistration {
 		config.Authentication.Webhook.Enabled = pointer.To(false)
 		config.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow

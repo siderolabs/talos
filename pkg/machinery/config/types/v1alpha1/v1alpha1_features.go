@@ -33,3 +33,8 @@ func (f *FeaturesConfig) KubernetesTalosAPIAccess() config.KubernetesTalosAPIAcc
 func (f *FeaturesConfig) ApidCheckExtKeyUsageEnabled() bool {
 	return pointer.SafeDeref(f.ApidCheckExtKeyUsage)
 }
+
+// DiskQuotaSupportEnabled implements config.Features interface.
+func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {
+	return pointer.SafeDeref(f.DiskQuotaSupport)
+}

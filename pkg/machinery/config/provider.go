@@ -562,6 +562,7 @@ type Features interface {
 	StableHostnameEnabled() bool
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	ApidCheckExtKeyUsageEnabled() bool
+	DiskQuotaSupportEnabled() bool
 }
 
 // KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.

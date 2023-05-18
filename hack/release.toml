@@ -27,6 +27,20 @@ preface = """\
 Talos is built with Go 1.20.4.
 """
 
+    [notes.quota]
+        title = "XFS Quota"
+        description="""\
+Talos 1.5+ enables XFS project quota support by default, also enabling by default
+kubelet feature gate `LocalStorageCapacityIsolationFSQuotaMonitoring` to use xfs quotas
+to monitor volume usage instead of `du`.
+
+This feature is controlled by the `.machine.features.diskQuotaSupport` field in the machine config,
+it is set to true for new clusters.
+
+When upgrading from a previous version, the feature can be enabled by setting the field to true.
+On the first mount of a volume, the quota information will be recalculated, which may take some time.
+"""
+
 [make_deps]
 
     [make_deps.tools]

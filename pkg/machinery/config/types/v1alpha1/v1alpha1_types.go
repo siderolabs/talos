@@ -2603,6 +2603,10 @@ type FeaturesConfig struct {
 	//   description: |
 	//     Enable checks for extended key usage of client certificates in apid.
 	ApidCheckExtKeyUsage *bool `yaml:"apidCheckExtKeyUsage,omitempty"`
+	//   description: |
+	//     Enable XFS project quota support for EPHEMERAL partition and user disks.
+	//     Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.
+	DiskQuotaSupport *bool `yaml:"diskQuotaSupport,omitempty"`
 }
 
 // KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.

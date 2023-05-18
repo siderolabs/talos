@@ -46,6 +46,7 @@ type Options struct {
 	PostUnmountHooks []Hook
 	Encryption       config.Encryption
 	Logger           *log.Logger
+	ProjectQuota     bool
 }
 
 // Option is the functional option func.
@@ -100,6 +101,13 @@ func WithEncryptionConfig(cfg config.Encryption) Option {
 func WithLogger(logger *log.Logger) Option {
 	return func(args *Options) {
 		args.Logger = logger
+	}
+}
+
+// WithProjectQuota enables project quota mount option.
+func WithProjectQuota(enable bool) Option {
+	return func(args *Options) {
+		args.ProjectQuota = enable
 	}
 }
 

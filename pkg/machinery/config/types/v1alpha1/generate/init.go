@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func initUd(in *Input) (*v1alpha1.Config, error) {
 	config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
@@ -67,6 +67,10 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 
 	if in.VersionContract.ApidExtKeyUsageCheckEnabled() {
 		machine.MachineFeatures.ApidCheckExtKeyUsage = pointer.To(true)
+	}
+
+	if in.VersionContract.DiskQuotaSupportEnabled() {
+		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
 	}
 
 	if in.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {

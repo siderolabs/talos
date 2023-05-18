@@ -1952,6 +1952,7 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | skip_node_registration | [bool](#bool) |  |  |
 | static_pod_list_url | [string](#string) |  |  |
 | disable_manifests_directory | [bool](#bool) |  |  |
+| enable_fs_quota_monitoring | [bool](#bool) |  |  |
 
 
 

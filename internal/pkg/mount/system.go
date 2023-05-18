@@ -21,7 +21,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/siderolabs/talos/internal/pkg/encryption"
 	"github.com/siderolabs/talos/internal/pkg/partition"
-	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -189,14 +188,12 @@ func SystemPartitionMount(r runtime.Runtime, logger *log.Logger, label string, o
 		return fmt.Errorf("failed to find device with partition labeled %s", label)
 	}
 
-	var encryptionConfig config.Encryption
-
 	if r.Config() != nil && r.Config().Machine() != nil {
-		encryptionConfig = r.Config().Machine().SystemDiskEncryption().Get(label)
-	}
+		encryptionConfig := r.Config().Machine().SystemDiskEncryption().Get(label)
 
-	if encryptionConfig != nil {
-		opts = append(opts, WithEncryptionConfig(encryptionConfig))
+		if encryptionConfig != nil {
+			opts = append(opts, WithEncryptionConfig(encryptionConfig))
+		}
 	}
 
 	opts = append(opts, WithLogger(logger))

@@ -38,6 +38,7 @@ type KubeletConfigSpec struct {
 	SkipNodeRegistration         bool                   `yaml:"skipNodeRegistration" protobuf:"9"`
 	StaticPodListURL             string                 `yaml:"staticPodListURL" protobuf:"10"`
 	DisableManifestsDirectory    bool                   `yaml:"disableManifestsDirectory" protobuf:"11"`
+	EnableFSQuotaMonitoring      bool                   `yaml:"enableFSQuotaMonitoring" protobuf:"12"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.

@@ -958,6 +958,11 @@ func (in *FeaturesConfig) DeepCopyInto(out *FeaturesConfig) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.DiskQuotaSupport != nil {
+		in, out := &in.DiskQuotaSupport, &out.DiskQuotaSupport
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

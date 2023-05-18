@@ -1340,6 +1340,13 @@
           "description": "Enable checks for extended key usage of client certificates in apid.\n",
           "markdownDescription": "Enable checks for extended key usage of client certificates in apid.",
           "x-intellij-html-description": "\u003cp\u003eEnable checks for extended key usage of client certificates in apid.\u003c/p\u003e\n"
+        },
+        "diskQuotaSupport": {
+          "type": "boolean",
+          "title": "diskQuotaSupport",
+          "description": "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.\n",
+          "markdownDescription": "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.",
+          "x-intellij-html-description": "\u003cp\u003eEnable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

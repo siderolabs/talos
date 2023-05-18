@@ -205,6 +205,14 @@ func NewMountPoint(source, target, fstype string, flags uintptr, data string, se
 		p.target = filepath.Join(p.Prefix, p.target)
 	}
 
+	if p.Options.ProjectQuota {
+		if len(p.data) > 0 {
+			p.data += ","
+		}
+
+		p.data += "prjquota"
+	}
+
 	return p
 }
 

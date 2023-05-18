@@ -144,6 +144,7 @@ func modifyKubeletConfig(cfgProvider talosconfig.Provider, staticPodListURL stri
 		kubeletConfig.SkipNodeRegistration = cfgProvider.Machine().Kubelet().SkipNodeRegistration()
 		kubeletConfig.StaticPodListURL = staticPodListURL
 		kubeletConfig.DisableManifestsDirectory = cfgProvider.Machine().Kubelet().DisableManifestsDirectory()
+		kubeletConfig.EnableFSQuotaMonitoring = cfgProvider.Machine().Features().DiskQuotaSupportEnabled()
 
 		return nil
 	}

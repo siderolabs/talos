@@ -556,6 +556,19 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				kc.StaticPodPath = ""
 			},
 		},
+		{
+			name: "enable local FS quota monitoring",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:              []string{"10.0.0.5"},
+				ClusterDomain:           "cluster.local",
+				EnableFSQuotaMonitoring: true,
+			},
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.FeatureGates = map[string]bool{
+					"LocalStorageCapacityIsolationFSQuotaMonitoring": true,
+				}
+			},
+		},
 	} {
 		tt := tt
 
