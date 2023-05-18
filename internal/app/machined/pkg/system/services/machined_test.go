@@ -16,7 +16,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/api/inspect"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/api/resource"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/api/time"
 )
@@ -29,7 +28,6 @@ func collectMethods(t *testing.T) map[string]struct{} {
 		cluster.ClusterService_ServiceDesc,
 		inspect.InspectService_ServiceDesc,
 		machine.MachineService_ServiceDesc,
-		resource.ResourceService_ServiceDesc,
 		// security.SecurityService_ServiceDesc, - not in machined
 		storage.StorageService_ServiceDesc,
 		time.TimeService_ServiceDesc,

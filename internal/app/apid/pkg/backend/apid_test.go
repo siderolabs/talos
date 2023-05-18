@@ -26,7 +26,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/inspect"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/api/resource"
 	"github.com/siderolabs/talos/pkg/machinery/api/security"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/api/time"
@@ -211,7 +210,6 @@ func TestAPIIdiosyncrasies(t *testing.T) {
 		cluster.File_cluster_cluster_proto.Services(),
 		inspect.File_inspect_inspect_proto.Services(),
 		machine.File_machine_machine_proto.Services(),
-		resource.File_resource_resource_proto.Services(),
 		// security.File_security_security_proto.Services() is different
 		storage.File_storage_storage_proto.Services(),
 		time.File_time_time_proto.Services(),
@@ -361,7 +359,6 @@ func TestDeprecatedAPIs(t *testing.T) {
 		cluster.File_cluster_cluster_proto,
 		inspect.File_inspect_inspect_proto,
 		machine.File_machine_machine_proto,
-		resource.File_resource_resource_proto,
 		security.File_security_security_proto,
 		storage.File_storage_storage_proto,
 		time.File_time_time_proto,

@@ -26,7 +26,6 @@ import (
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
 	"github.com/siderolabs/talos/internal/pkg/configuration"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/api/resource"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
@@ -63,7 +62,6 @@ func (s *Server) Register(obj *grpc.Server) {
 
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{Controller: s.controller})
 	machine.RegisterMachineServiceServer(obj, s)
-	resource.RegisterResourceServiceServer(obj, &resources.Server{Resources: resourceState}) //nolint:staticcheck
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 }
 

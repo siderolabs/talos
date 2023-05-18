@@ -140,6 +140,8 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 				go aggregateEvents(ctx, aggregatedCh, watchCh, node)
 			}
 
+			var bootstrapped bool
+
 			for {
 				var nev nodeAndEvent
 
@@ -154,7 +156,12 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 				}
 
 				if nev.ev.Type == state.Bootstrapped {
-					// TODO: in Talos 1.4, use Bootstrapped event to determine whether it's time to flush the first line
+					bootstrapped = true
+
+					if err = out.Flush(); err != nil {
+						return err
+					}
+
 					continue
 				}
 
@@ -167,8 +174,10 @@ func getResources(args []string) func(ctx context.Context, c *client.Client) err
 					return err
 				}
 
-				if err = out.Flush(); err != nil {
-					return err
+				if bootstrapped {
+					if err = out.Flush(); err != nil {
+						return err
+					}
 				}
 			}
 		}

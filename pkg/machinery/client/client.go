@@ -28,7 +28,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	inspectapi "github.com/siderolabs/talos/pkg/machinery/api/inspect"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	resourceapi "github.com/siderolabs/talos/pkg/machinery/api/resource"
 	storageapi "github.com/siderolabs/talos/pkg/machinery/api/storage"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
@@ -45,10 +44,6 @@ type Client struct {
 	ClusterClient clusterapi.ClusterServiceClient
 	StorageClient storageapi.StorageServiceClient
 	InspectClient inspectapi.InspectServiceClient
-
-	// Deprecated: use COSI client.
-	Resources      *ResourcesClient
-	ResourceClient resourceapi.ResourceServiceClient //nolint:staticcheck
 
 	COSI state.State
 
@@ -169,10 +164,8 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
-	c.ResourceClient = resourceapi.NewResourceServiceClient(c.conn) //nolint:staticcheck
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 
-	c.Resources = &ResourcesClient{c.ResourceClient}
 	c.Inspect = &InspectClient{c.InspectClient}
 	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))
 

@@ -85,15 +85,12 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/Version":                     role.MakeSet(role.Admin, role.Operator, role.Reader),
 
 	// per-type authorization is handled by the service itself
-	"/resource.ResourceService/Get":   role.MakeSet(role.Admin, role.Operator, role.Reader),
-	"/resource.ResourceService/List":  role.MakeSet(role.Admin, role.Operator, role.Reader),
-	"/resource.ResourceService/Watch": role.MakeSet(role.Admin, role.Operator, role.Reader),
-	"/cosi.resource.State/Create":     role.MakeSet(role.Admin),
-	"/cosi.resource.State/Destroy":    role.MakeSet(role.Admin),
-	"/cosi.resource.State/Get":        role.MakeSet(role.Admin, role.Operator, role.Reader),
-	"/cosi.resource.State/List":       role.MakeSet(role.Admin, role.Operator, role.Reader),
-	"/cosi.resource.State/Update":     role.MakeSet(role.Admin),
-	"/cosi.resource.State/Watch":      role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/cosi.resource.State/Create":  role.MakeSet(role.Admin),
+	"/cosi.resource.State/Destroy": role.MakeSet(role.Admin),
+	"/cosi.resource.State/Get":     role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/cosi.resource.State/List":    role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/cosi.resource.State/Update":  role.MakeSet(role.Admin),
+	"/cosi.resource.State/Watch":   role.MakeSet(role.Admin, role.Operator, role.Reader),
 
 	"/storage.StorageService/Disks": role.MakeSet(role.Admin, role.Operator, role.Reader),
 

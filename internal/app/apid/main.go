@@ -131,8 +131,6 @@ func apidMain() error {
 		"/machine.MachineService/Logs",
 		"/machine.MachineService/PacketCapture",
 		"/machine.MachineService/Read",
-		"/resource.ResourceService/List",
-		"/resource.ResourceService/Watch",
 		"/os.OSService/Dmesg",
 		"/cluster.ClusterService/HealthCheck",
 	} {

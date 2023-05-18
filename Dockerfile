@@ -219,8 +219,6 @@ COPY ./api/time/time.proto /api/time/time.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size time/time.proto
 COPY ./api/cluster/cluster.proto /api/cluster/cluster.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size cluster/cluster.proto
-COPY ./api/resource/resource.proto /api/resource/resource.proto
-RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size resource/resource.proto
 COPY ./api/resource/config/config.proto /api/resource/config/config.proto
 RUN protoc -I/api -I/api/vendor/ --go_out=paths=source_relative:/api --go-grpc_out=paths=source_relative:/api --go-vtproto_out=paths=source_relative:/api --go-vtproto_opt=features=marshal+unmarshal+size resource/config/config.proto
 COPY ./api/resource/network/device_config.proto /api/resource/network/device_config.proto
@@ -899,7 +897,6 @@ RUN protoc \
     /protos/resource/definitions/**/*.proto \
     /protos/inspect/*.proto \
     /protos/machine/*.proto \
-    /protos/resource/*.proto \
     /protos/security/*.proto \
     /protos/storage/*.proto \
     /protos/time/*.proto
