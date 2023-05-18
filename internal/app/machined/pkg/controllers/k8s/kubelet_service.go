@@ -20,7 +20,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -191,14 +190,17 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 
 		// refresh certs only if we are managing the node name (not overridden by the user)
 		if cfgSpec.ExpectedNodename != "" {
-			err = ctrl.refreshKubeletCerts(cfgSpec.ExpectedNodename)
+			err = ctrl.refreshKubeletCerts(logger, cfgSpec.ExpectedNodename)
 			if err != nil {
 				return err
 			}
 		}
 
-		err = updateKubeconfig(logger, secretSpec.Endpoint)
-		if err != nil {
+		if err = ctrl.refreshSelfServingCert(); err != nil {
+			return err
+		}
+
+		if err = ctrl.updateKubeconfig(logger, secretSpec.Endpoint); err != nil {
 			return err
 		}
 
@@ -287,7 +289,7 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 }
 
 // updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.
-func updateKubeconfig(logger *zap.Logger, newEndpoint *url.URL) error {
+func (ctrl *KubeletServiceController) updateKubeconfig(logger *zap.Logger, newEndpoint *url.URL) error {
 	config, err := clientcmd.LoadFromFile(constants.KubeletKubeconfig)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -326,8 +328,8 @@ func updateKubeconfig(logger *zap.Logger, newEndpoint *url.URL) error {
 // refreshKubeletCerts checks if the existing kubelet certificates match the node hostname.
 // If they don't match, it clears the certificate directory and the removes kubelet's kubeconfig so that
 // they can be regenerated next time kubelet is started.
-func (ctrl *KubeletServiceController) refreshKubeletCerts(hostname string) error {
-	cert, err := ctrl.readKubeletCertificate()
+func (ctrl *KubeletServiceController) refreshKubeletCerts(logger *zap.Logger, nodename string) error {
+	cert, err := ctrl.readKubeletClientCertificate()
 	if err != nil {
 		return err
 	}
@@ -336,14 +338,19 @@ func (ctrl *KubeletServiceController) refreshKubeletCerts(hostname string) error
 		return nil
 	}
 
-	valid := slices.Contains(cert.DNSNames, func(name string) bool {
-		return name == hostname
-	})
+	expectedCommonName := fmt.Sprintf("system:node:%s", nodename)
+
+	valid := expectedCommonName == cert.Subject.CommonName
 
 	if valid {
 		// certificate looks good, no need to refresh
 		return nil
 	}
+
+	logger.Info("kubelet client certificate does not match expected nodename, removing",
+		zap.String("expected", expectedCommonName),
+		zap.String("actual", cert.Subject.CommonName),
+	)
 
 	// remove the pki directory
 	err = os.RemoveAll(constants.KubeletPKIDir)
@@ -360,8 +367,28 @@ func (ctrl *KubeletServiceController) refreshKubeletCerts(hostname string) error
 	return err
 }
 
-func (ctrl *KubeletServiceController) readKubeletCertificate() (*x509.Certificate, error) {
-	raw, err := os.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet.crt"))
+// refreshSelfServingCert removes the self-signed serving certificate (if exists) to force the kubelet to renew it.
+func (ctrl *KubeletServiceController) refreshSelfServingCert() error {
+	for _, filename := range []string{
+		"kubelet.crt",
+		"kubelet.key",
+	} {
+		path := filepath.Join(constants.KubeletPKIDir, filename)
+
+		_, err := os.Stat(path)
+		if err == nil {
+			err = os.Remove(path)
+			if err != nil {
+				return fmt.Errorf("error removing self-signed certificate: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (ctrl *KubeletServiceController) readKubeletClientCertificate() (*x509.Certificate, error) {
+	raw, err := os.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet-client-current.pem"))
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
