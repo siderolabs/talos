@@ -28,6 +28,7 @@ import (
 type Options struct {
 	ConfigSource      string
 	Disk              string
+	DiskSize          int
 	Platform          string
 	Arch              string
 	Board             string

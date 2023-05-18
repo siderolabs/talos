@@ -61,9 +61,7 @@ func runImageCmd() (err error) {
 
 	log.Printf("creating image for %s", p.Name())
 
-	log.Print("creating RAW disk")
-
-	img, err := pkg.CreateRawDisk()
+	img, err := pkg.CreateRawDisk(p, options.DiskSize)
 	if err != nil {
 		return err
 	}

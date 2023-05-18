@@ -160,7 +160,7 @@ func CreateOVAFromRAW(name, src, out, arch string) (err error) {
 
 	size := f.Size()
 
-	ovf, err := renderOVF(name, size, pkg.RAWDiskSize)
+	ovf, err := renderOVF(name, size, pkg.DefaultRAWDiskSize)
 	if err != nil {
 		return err
 	}

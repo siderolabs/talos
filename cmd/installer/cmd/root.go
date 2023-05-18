@@ -64,6 +64,7 @@ var options = &install.Options{}
 func init() {
 	rootCmd.PersistentFlags().StringVar(&options.ConfigSource, "config", "", "The value of "+constants.KernelParamConfig)
 	rootCmd.PersistentFlags().StringVar(&options.Disk, "disk", "", "The path to the disk to install to")
+	rootCmd.PersistentFlags().IntVar(&options.DiskSize, "disk-size", 0, "The size of the disk to install to in MB")
 	rootCmd.PersistentFlags().StringVar(&options.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)
 	rootCmd.PersistentFlags().StringVar(&options.Arch, "arch", runtime.GOARCH, "The target architecture")
 	rootCmd.PersistentFlags().StringVar(&options.Board, "board", constants.BoardNone, "The value of "+constants.KernelParamBoard)
