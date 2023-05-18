@@ -32,7 +32,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.44.264
 	github.com/beevik/ntp v1.0.0
-	github.com/benbjohnson/clock v1.3.4
+	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/cgroups v1.1.0
 	github.com/containerd/containerd v1.6.20
