@@ -109,7 +109,7 @@ func (checks *PreflightChecks) talosVersion(ctx context.Context) error {
 		return fmt.Errorf("error parsing installer Talos version: %w", err)
 	}
 
-	return checks.hostTalosVersion.UpgradeableFrom(checks.installerTalosVersion)
+	return checks.installerTalosVersion.UpgradeableFrom(checks.hostTalosVersion)
 }
 
 type k8sVersions struct {
