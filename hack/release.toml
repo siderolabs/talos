@@ -20,6 +20,7 @@ preface = """\
         description="""\
 * Linux: 6.1.30
 * etcd: 3.5.9
+* Kubernetes: 1.27.2
 """
 
 [make_deps]
