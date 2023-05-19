@@ -13,6 +13,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 	github.com/aws/aws-sdk-go v1.44.277
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/go-version v1.6.0
 	github.com/siderolabs/gen v0.4.5
 	github.com/siderolabs/go-retry v0.3.2
 	github.com/spf13/pflag v1.0.5

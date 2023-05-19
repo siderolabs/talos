@@ -25,6 +25,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/pageblob"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/hashicorp/go-version"
 	"github.com/siderolabs/gen/channel"
 	"golang.org/x/sync/errgroup"
 )
@@ -32,7 +33,6 @@ import (
 const (
 	resourceGroupName = "SideroGallery"
 	defaultRegion     = "eastus"
-	galleryName       = "SideroLabs"
 	storageAccount    = "siderogallery"
 )
 
@@ -62,6 +62,28 @@ type AzureUploader struct {
 	helper azureHelper
 }
 
+// extractVersion extracts the version number in the format of int.int.int for Azure and assigns to the Options.AzureTag value.
+func (azu *AzureUploader) setVersion() error {
+	v, err := version.NewVersion(azu.Options.AzureAbbrevTag)
+	if err != nil {
+		return err
+	}
+
+	versionCore := v.Core().String()
+
+	if fmt.Sprintf("v%s", versionCore) != azu.Options.AzureAbbrevTag {
+		azu.Options.AzureGalleryName = "SideroGalleryTest"
+		azu.Options.AzureCoreTag = versionCore
+		azu.Options.AzurePreRelease = "-prerelease"
+	} else {
+		azu.Options.AzureGalleryName = "SideroGallery"
+		azu.Options.AzureCoreTag = versionCore
+		azu.Options.AzurePreRelease = ""
+	}
+
+	return err
+}
+
 // AzureGalleryUpload uploads the image to Azure.
 func (azu *AzureUploader) AzureGalleryUpload(ctx context.Context) error {
 	var err error
@@ -69,43 +91,48 @@ func (azu *AzureUploader) AzureGalleryUpload(ctx context.Context) error {
 	var g *errgroup.Group
 	g, ctx = errgroup.WithContext(ctx)
 
-	fmt.Println("Setting default creds")
+	err = azu.setVersion()
+	if err != nil {
+		log.Printf("azure: error setting version: %v\n", err)
+	}
+
+	log.Printf("azure: setting default creds")
 
 	err = azu.helper.setDefaultAzureCreds()
 	if err != nil {
-		log.Fatalf("Error: %v\n", err)
+		return fmt.Errorf("error setting default Azure credentials: %w", err)
 	}
 
-	fmt.Println("Getting locations")
+	log.Printf("azure: getting locations")
 
 	err = azu.helper.getAzureLocations(ctx)
 	if err != nil {
-		log.Fatalf("Error: %v\n", err)
+		return fmt.Errorf("error setting default Azure credentials: %w", err)
 	}
 
 	// Upload blob
-	fmt.Printf("Architectures: %+v\n", azu.Options.Architectures)
+	log.Printf("azure: creating disks for architectures: %+v\n", azu.Options.Architectures)
 
 	for _, arch := range azu.Options.Architectures {
 		arch := arch
 
 		g.Go(func() error {
-			fmt.Printf("Starting upload blob for %s\n", arch)
+			log.Printf("azure: starting upload blob for %s\n", arch)
 			err = azu.uploadAzureBlob(ctx, arch)
 			if err != nil {
-				return fmt.Errorf("error uploading page blob for %s: %w", arch, err)
+				return fmt.Errorf("azure: error uploading page blob for %s: %w", arch, err)
 			}
 
-			fmt.Printf("Starting disk creation for %s\n", arch)
+			log.Printf("azure: starting disk creation for %s\n", arch)
 			err = azu.createAzureDisk(ctx, azureDiskTemplate, arch)
 			if err != nil {
-				fmt.Printf("Error: %v\n", err)
+				log.Printf("azure: error creating disk: %v\n", err)
 			}
 
-			fmt.Printf("Starting image version creation for %s\n", arch)
+			log.Printf("azure: starting image version creation for %s\n", arch)
 			err = azu.createAzureImageVersion(ctx, azureImageVersionTemplate, arch)
 			if err != nil {
-				fmt.Printf("Error: %v\n", err)
+				log.Printf("azure: error creating image version: %v\n", err)
 			}
 
 			return err
@@ -121,7 +148,7 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 
 	pageBlobClient, err := pageblob.NewClient(blobURL, azu.helper.cred, nil)
 	if err != nil {
-		log.Printf("Error: %v\n", err)
+		log.Printf("azure: error creating pageblob client: %v\n", err)
 	}
 
 	source, err := os.Open(azu.Options.AzureImage(arch))
@@ -134,34 +161,34 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 	// calculate totalSize
 	file, err := ExtractFileFromTarGz("disk.vhd", source)
 	if err != nil {
-		return fmt.Errorf("error extracting file from tar.gz: %w", err)
+		return fmt.Errorf("azure: error extracting file from tar.gz: %w", err)
 	}
 
 	totalSize, err := io.Copy(io.Discard, file)
 	if err != nil {
-		return fmt.Errorf("error calculating totalSize: %w", err)
+		return fmt.Errorf("azure: error calculating totalSize: %w", err)
 	}
 
 	// second pass: read chunks and upload
 	// seek back to the beginning of the source file
 	_, err = source.Seek(0, io.SeekStart)
 	if err != nil {
-		return fmt.Errorf("error seeking back: %w", err)
+		return fmt.Errorf("azure: error seeking back: %w", err)
 	}
 
 	file, err = ExtractFileFromTarGz("disk.vhd", source)
 	if err != nil {
-		return fmt.Errorf("error extracting file from tar.gz: %w", err)
+		return fmt.Errorf("azure: error extracting file from tar.gz: %w", err)
 	}
 
 	// Check if the file size is a multiple of 512 bytes
 	if totalSize%pageblob.PageBytes != 0 {
-		panic("The file size must be a multiple of 512 bytes")
+		panic("azure: error: the file size must be a multiple of 512 bytes")
 	}
 
 	_, err = pageBlobClient.Create(ctx, totalSize, nil)
 	if err != nil {
-		log.Printf("Error: %v\n", err)
+		log.Printf("azure: error creating vhd: %v\n", err)
 	}
 
 	type work struct {
@@ -188,7 +215,7 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 					blob.HTTPRange{Offset: w.offset, Count: int64(len(w.chunk))},
 					nil)
 				if err != nil {
-					return fmt.Errorf("error uploading chunk at offset %d: %w", w.offset, err)
+					return fmt.Errorf("azure: error uploading chunk at offset %d: %w", w.offset, err)
 				}
 			}
 
@@ -212,7 +239,7 @@ uploadLoop:
 			// end of file, stop
 			break uploadLoop
 		case err != nil:
-			return fmt.Errorf("error reading chunk: %w", err)
+			return fmt.Errorf("azure: error reading chunk: %w", err)
 		}
 
 		if !channel.SendWithContext(ctx, workCh, work{chunk: buf[:n], offset: offset}) {
@@ -229,7 +256,7 @@ uploadLoop:
 	close(workCh)
 
 	if err = g.Wait(); err != nil {
-		return fmt.Errorf("error uploading chunks: %w", err)
+		return fmt.Errorf("azure: error uploading chunks: %w", err)
 	}
 
 	return nil
@@ -238,13 +265,13 @@ uploadLoop:
 func (azu *AzureUploader) createAzureDisk(ctx context.Context, armTemplate []byte, arch string) error {
 	diskParameters := map[string]interface{}{
 		"disk_name": map[string]string{
-			"value": "talos-" + arch + "-" + azu.Options.Tag,
+			"value": fmt.Sprintf("talos-%s-%s%s", arch, azu.Options.AzureCoreTag, azu.Options.AzurePreRelease),
 		},
 		"storage_account": map[string]string{
 			"value": storageAccount,
 		},
 		"vhd_name": map[string]string{
-			"value": "talos-" + arch + "-" + azu.Options.Tag + ".vhd",
+			"value": fmt.Sprintf("talos-%s-%s.vhd", arch, azu.Options.Tag),
 		},
 		"region": map[string]string{
 			"value": defaultRegion,
@@ -254,10 +281,10 @@ func (azu *AzureUploader) createAzureDisk(ctx context.Context, armTemplate []byt
 		},
 	}
 
-	deploymentName := "disk-talos-" + arch + "-" + azu.Options.Tag
+	deploymentName := fmt.Sprintf("disk-talos-%s-%s", arch, azu.Options.Tag)
 
 	if err := azu.helper.deployResourceFromTemplate(ctx, armTemplate, diskParameters, deploymentName); err != nil {
-		return fmt.Errorf("error applying Azure disk template: %w", err)
+		return fmt.Errorf("azure: error applying Azure disk template: %w", err)
 	}
 
 	return nil
@@ -276,16 +303,16 @@ func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, armTempla
 
 	versionParameters := map[string]interface{}{
 		"disk_name": map[string]string{
-			"value": "talos-" + arch + "-" + azu.Options.Tag,
+			"value": fmt.Sprintf("talos-%s-%s%s", arch, azu.Options.AzureCoreTag, azu.Options.AzurePreRelease),
 		},
 		"image_version": map[string]string{
-			"value": azu.Options.Tag,
+			"value": azu.Options.AzureCoreTag,
 		},
 		"gallery_name": map[string]string{
-			"value": galleryName,
+			"value": azu.Options.AzureGalleryName,
 		},
 		"definition_name": map[string]string{
-			"value": "talos-" + azureArchitectures[arch],
+			"value": fmt.Sprintf("talos-%s", azureArchitectures[arch]),
 		},
 		"region": map[string]string{
 			"value": defaultRegion,
@@ -298,10 +325,10 @@ func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, armTempla
 		},
 	}
 
-	deploymentName := "imgversion-talos-" + arch + "-" + azu.Options.Tag
+	deploymentName := fmt.Sprintf("img-version-talos-%s-%s", arch, azu.Options.Tag)
 
 	if err := azu.helper.deployResourceFromTemplate(ctx, armTemplate, versionParameters, deploymentName); err != nil {
-		return fmt.Errorf("error applying Azure image version template: %w", err)
+		return fmt.Errorf("azure: error applying Azure image version template: %w", err)
 	}
 
 	return nil
@@ -390,7 +417,7 @@ func (helper *azureHelper) getAzureLocations(ctx context.Context) error {
 func (helper *azureHelper) listProviders(ctx context.Context) (result []resources.Provider, err error) {
 	for list, err := helper.providersClient.List(ctx, ""); list.NotDone(); err = list.NextWithContext(ctx) {
 		if err != nil {
-			return nil, fmt.Errorf("error getting providers list: %v", err)
+			return nil, fmt.Errorf("azure: error getting providers list: %v", err)
 		}
 
 		result = append(result, list.Values()...)
@@ -413,7 +440,7 @@ func (helper *azureHelper) deployResourceFromTemplate(ctx context.Context, templ
 	var template map[string]interface{}
 
 	if err = json.Unmarshal(templateBytes, &template); err != nil {
-		return fmt.Errorf("failed to parse template JSON: %w", err)
+		return fmt.Errorf("azure: error parsing template JSON: %w", err)
 	}
 
 	deployment := armresources.Deployment{
@@ -426,16 +453,16 @@ func (helper *azureHelper) deployResourceFromTemplate(ctx context.Context, templ
 
 	poller, err := deploymentsClient.BeginCreateOrUpdate(ctx, resourceGroupName, deploymentName, deployment, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create deployment: %w", err)
+		return fmt.Errorf("azure: failed to create deployment: %w", err)
 	}
 
 	// PollUntilDone requires a context and a poll interval
 	result, err := poller.PollUntilDone(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to poll deployment status: %w", err)
+		return fmt.Errorf("azure: failed to poll deployment status: %w", err)
 	}
 
-	fmt.Printf("Deployment operation for %s: %+v\n", *result.Name, *result.Properties.ProvisioningState)
+	log.Printf("azure: deployment operation for %s: %+v\n", *result.Name, *result.Properties.ProvisioningState)
 
 	return nil
 }

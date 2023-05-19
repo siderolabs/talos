@@ -4,4 +4,4 @@ set -e
 
 cd hack/cloud-image-uploader
 
-go run . --artifacts-path="../../${ARTIFACTS}" --tag="${TAG}"
+go run . --artifacts-path="../../${ARTIFACTS}" --tag="${TAG}" --abbrev-tag="${ABBREV_TAG}"

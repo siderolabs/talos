@@ -64,6 +64,7 @@ func run() error {
 	pflag.StringSliceVar(&DefaultOptions.Architectures, "architectures", DefaultOptions.Architectures, "list of architectures to process")
 	pflag.StringVar(&DefaultOptions.ArtifactsPath, "artifacts-path", DefaultOptions.ArtifactsPath, "artifacts path")
 	pflag.StringVar(&DefaultOptions.Tag, "tag", DefaultOptions.Tag, "tag (version) of the uploaded image")
+	pflag.StringVar(&DefaultOptions.AzureAbbrevTag, "abbrev-tag", DefaultOptions.AzureAbbrevTag, "abbreviated tag (version) of the uploaded image")
 
 	pflag.StringSliceVar(&DefaultOptions.AWSRegions, "aws-regions", DefaultOptions.AWSRegions, "list of AWS regions to upload to")
 
@@ -91,13 +92,13 @@ func run() error {
 		return aws.Upload(ctx)
 	})
 
-	/*g.Go(func() error {
+	g.Go(func() error {
 		azure := AzureUploader{
 			Options: DefaultOptions,
 		}
 
 		return azure.AzureGalleryUpload(ctx)
-	})*/
+	})
 
 	if err = g.Wait(); err != nil {
 		return fmt.Errorf("failed: %w", err)

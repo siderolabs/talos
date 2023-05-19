@@ -345,9 +345,10 @@ talosctl-cni-bundle: ## Creates a compressed tarball that includes CNI bundle fo
 .PHONY: cloud-images
 cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
 	@docker run --rm -v $(PWD):/src -w /src \
-		-e TAG=$(TAG) -e ARTIFACTS=$(ARTIFACTS) \
+		-e TAG=$(TAG) -e ARTIFACTS=$(ARTIFACTS) -e ABBREV_TAG=$(ABBREV_TAG) \
 		-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SVC_ACCT \
 		-e AZURE_SVC_ACCT -e GCE_SVC_ACCT -e PACKET_AUTH_TOKEN \
+		-e AZURE_SUBSCRIPTION_ID -e AZURE_CLIENT_ID -e AZURE_CLIENT_SECRET -e AZURE_TENANT_ID \
 		golang:$(GO_VERSION) \
 		./hack/cloud-image-uploader.sh
 

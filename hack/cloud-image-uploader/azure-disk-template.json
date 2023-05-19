@@ -45,7 +45,7 @@
             "storageAccountId": "[concat('/subscriptions/7f739b7d-f399-4b97-9a9f-f1962309ee6e/resourceGroups/SideroGallery/providers/Microsoft.Storage/storageAccounts/', parameters('storage_account'))]",
             "sourceUri": "[concat('https://siderogallery.blob.core.windows.net/images/talos/', parameters('vhd_name'))]"
           },
-          "diskSizeGB": 10,
+          "diskSizeGB": 8,
           "diskIOPSReadWrite": 120,
           "diskMBpsReadWrite": 25,
           "encryption": {

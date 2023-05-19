@@ -188,6 +188,23 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
   depends_on: [x.name for x in depends_on],
 };
 
+local creds_env_vars = {
+  // AWS creds
+  AWS_ACCESS_KEY_ID: { from_secret: 'aws_access_key_id' },
+  AWS_SECRET_ACCESS_KEY: { from_secret: 'aws_secret_access_key' },
+  AWS_SVC_ACCT: { from_secret: 'aws_svc_acct' },
+  // Azure creds
+  AZURE_SVC_ACCT: { from_secret: 'azure_svc_acct' },
+  AZURE_SUBSCRIPTION_ID: { from_secret: 'azure_subscription_id' },
+  AZURE_CLIENT_ID: { from_secret: 'azure_client_id' },
+  AZURE_CLIENT_SECRET: { from_secret: 'azure_client_secret' },
+  AZURE_TENANT_ID: { from_secret: 'azure_tenant_id' },
+  // TODO(andrewrynhard): Rename this to the GCP convention.
+  GCE_SVC_ACCT: { from_secret: 'gce_svc_acct' },
+  PACKET_AUTH_TOKEN: { from_secret: 'packet_auth_token' },
+  GITHUB_TOKEN: { from_secret: 'ghcr_token' },  // Use GitHub API token to avoid rate limiting on CAPI -> GitHub calls.
+};
+
 // Default pipeline.
 
 local external_artifacts = Step('external-artifacts', depends_on=[setup_ci]);
@@ -516,6 +533,7 @@ local integration_qemu_csi = Step('e2e-csi', target='e2e-qemu', privileged=true,
 
 local integration_images = Step('images', target='images', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
 local integration_sbcs = Step('sbcs', target='sbcs', depends_on=[integration_images], environment={ IMAGE_REGISTRY: local_registry });
+local integration_cloud_images =  Step('cloud-images', depends_on=[integration_images], environment=creds_env_vars);
 
 local integration_reproducibility_test = Step('reproducibility-test', target='reproducibility-test', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
 
@@ -537,6 +555,14 @@ local push_edge = {
   depends_on: [
     integration_qemu.name,
   ],
+};
+
+local literal_trigger(names) = {
+  trigger: {
+    target: {
+      include: names,
+    },
+  },
 };
 
 local integration_trigger(names) = {
@@ -570,6 +596,7 @@ local integration_pipelines = [
   Pipeline('integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi]) + integration_trigger(['integration-qemu-csi']),
   Pipeline('integration-images', default_pipeline_steps + [integration_images, integration_sbcs]) + integration_trigger(['integration-images']),
   Pipeline('integration-reproducibility-test', default_pipeline_steps + [integration_reproducibility_test]) + integration_trigger(['integration-reproducibility']),
+  Pipeline('integration-cloud-images', default_pipeline_steps + [integration_images, integration_cloud_images]) + literal_trigger(['integration-cloud-images']),
 
   // cron pipelines, triggered on schedule events
   Pipeline('cron-integration-qemu', default_pipeline_steps + [integration_qemu, push_edge], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
@@ -597,24 +624,6 @@ local integration_pipelines = [
 
 
 // E2E pipeline.
-
-local creds_env_vars = {
-  // AWS creds
-  AWS_ACCESS_KEY_ID: { from_secret: 'aws_access_key_id' },
-  AWS_SECRET_ACCESS_KEY: { from_secret: 'aws_secret_access_key' },
-  AWS_SVC_ACCT: { from_secret: 'aws_svc_acct' },
-  // Azure creds
-  AZURE_SVC_ACCT: { from_secret: 'azure_svc_acct' },
-  AZURE_SUBSCRIPTION_ID: { from_secret: 'azure_subscription_id' },
-  AZURE_CLIENT_ID: { from_secret: 'azure_client_id' },
-  AZURE_CLIENT_SECRET: { from_secret: 'azure_client_secret' },
-  AZURE_TENANT_ID: { from_secret: 'azure_tenant_id' },
-  // TODO(andrewrynhard): Rename this to the GCP convention.
-  GCE_SVC_ACCT: { from_secret: 'gce_svc_acct' },
-  PACKET_AUTH_TOKEN: { from_secret: 'packet_auth_token' },
-  GITHUB_TOKEN: { from_secret: 'ghcr_token' },  // Use GitHub API token to avoid rate limiting on CAPI -> GitHub calls.
-};
-
 local capi_docker = Step('e2e-docker', depends_on=[load_artifacts], target='e2e-docker', environment={
   IMAGE_REGISTRY: local_registry,
   SHORT_INTEGRATION_TEST: 'yes',
