@@ -91,13 +91,13 @@ func run() error {
 		return aws.Upload(ctx)
 	})
 
-	g.Go(func() error {
+	/*g.Go(func() error {
 		azure := AzureUploader{
 			Options: DefaultOptions,
 		}
 
 		return azure.AzureGalleryUpload(ctx)
-	})
+	})*/
 
 	if err = g.Wait(); err != nil {
 		return fmt.Errorf("failed: %w", err)
