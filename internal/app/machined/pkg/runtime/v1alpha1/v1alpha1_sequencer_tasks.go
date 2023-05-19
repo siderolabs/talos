@@ -1037,7 +1037,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 		disk := disk
 
 		if err := func() error {
-			bd, err := blockdevice.Open(disk.Device())
+			bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode))
 			if err != nil {
 				return err
 			}
