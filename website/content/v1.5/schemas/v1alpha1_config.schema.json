@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://talos.dev/v1.4/schemas/v1alpha1_config.schema.json",
+  "$id": "https://talos.dev/v1.5/schemas/v1alpha1_config.schema.json",
   "$ref": "#/$defs/Config",
   "$defs": {
     "APIServerConfig": {
