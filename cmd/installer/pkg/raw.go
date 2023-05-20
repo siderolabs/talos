@@ -18,7 +18,7 @@ const (
 	MinRAWDiskSize = 1246
 
 	// DefaultRAWDiskSize is the value we use for any non-metal images by default.
-	DefaultRAWDiskSize = 10240
+	DefaultRAWDiskSize = 8192
 )
 
 // CreateRawDisk creates a raw disk by invoking the `dd` command.
