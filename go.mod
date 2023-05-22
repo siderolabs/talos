@@ -9,10 +9,6 @@ replace (
 	// forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 	// which are then encoded as a valid YAML blocks with proper indentiation
 	gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
-
-	// See https://github.com/siderolabs/go-loadbalancer/pull/4
-	// `go get github.com/smira/tcpproxy@combined-fixes`, then copy pseudo-version there
-	inet.af/tcpproxy => github.com/smira/tcpproxy v0.0.0-20201015133617-de5f7797b95b
 )
 
 // Kubernetes dependencies sharing the same version.
@@ -30,7 +26,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	github.com/BurntSushi/toml v1.2.1
-	github.com/aws/aws-sdk-go v1.44.264
+	github.com/aws/aws-sdk-go v1.44.266
 	github.com/beevik/ntp v1.0.0
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/cenkalti/backoff/v4 v4.2.1
@@ -70,7 +66,7 @@ require (
 	github.com/jsimonetti/rtnetlink v1.3.3
 	github.com/jxskiss/base62 v1.1.0
 	github.com/martinlindhe/base36 v1.1.1
-	github.com/mattn/go-isatty v0.0.18
+	github.com/mattn/go-isatty v0.0.19
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
 	github.com/mdlayher/ethtool v0.0.0-20221212131811-ba3b4bc2e02c
 	github.com/mdlayher/genetlink v1.3.2
@@ -83,7 +79,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.1.0
-	github.com/prometheus/procfs v0.9.0
+	github.com/prometheus/procfs v0.10.0
 	github.com/rivo/tview v0.0.0-20230511053024-822bd067b165
 	github.com/rs/xid v1.5.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
@@ -101,7 +97,7 @@ require (
 	github.com/siderolabs/go-kmsg v0.1.3
 	github.com/siderolabs/go-kubeconfig v0.1.0
 	github.com/siderolabs/go-kubernetes v0.2.0
-	github.com/siderolabs/go-loadbalancer v0.2.2
+	github.com/siderolabs/go-loadbalancer v0.3.1
 	github.com/siderolabs/go-pcidb v0.1.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/go-procfs v0.1.1
@@ -114,7 +110,7 @@ require (
 	github.com/siderolabs/talos/pkg/machinery v1.5.0-alpha.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/u-root/u-root v0.11.0
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vishvananda/netlink v1.2.1-beta.2
@@ -258,6 +254,7 @@ require (
 	github.com/sethgrid/pester v1.2.0 // indirect
 	github.com/siderolabs/go-api-signature v0.2.3 // indirect
 	github.com/siderolabs/protoenc v0.2.0 // indirect
+	github.com/siderolabs/tcpproxy v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -294,7 +291,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect
 	k8s.io/cli-runtime v0.27.2 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect

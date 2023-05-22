@@ -10,7 +10,7 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
 	github.com/iancoleman/orderedmap v0.2.0
 	github.com/invopop/jsonschema v0.7.0
-	github.com/microcosm-cc/bluemonday v1.0.23
+	github.com/microcosm-cc/bluemonday v1.0.24
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/siderolabs/gen v0.4.5
 	gopkg.in/yaml.v3 v3.0.1
@@ -22,6 +22,6 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
 )

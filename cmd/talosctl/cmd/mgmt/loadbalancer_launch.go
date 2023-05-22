@@ -10,6 +10,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-loadbalancer/loadbalancer"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -29,7 +30,7 @@ var loadbalancerLaunchCmd = &cobra.Command{
 	Args:   cobra.NoArgs,
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var lb loadbalancer.TCP
+		lb := loadbalancer.TCP{Logger: makeLogger()}
 
 		for _, port := range loadbalancerLaunchCmdFlags.ports {
 			upstreams := slices.Map(loadbalancerLaunchCmdFlags.upstreams, func(upstream string) string {
@@ -43,6 +44,14 @@ var loadbalancerLaunchCmd = &cobra.Command{
 
 		return lb.Run()
 	},
+}
+
+func makeLogger() *zap.Logger {
+	config := zap.NewProductionConfig()
+	config.Encoding = "console"
+	config.DisableStacktrace = true
+
+	return zap.Must(config.Build())
 }
 
 func init() {
