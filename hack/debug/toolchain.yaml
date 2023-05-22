@@ -1,0 +1,39 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toolchain
+  labels:
+    app: toolchain
+spec:
+  selector:
+    matchLabels:
+      app: toolchain
+  template:
+    metadata:
+      labels:
+        app: toolchain
+    spec:
+      containers:
+      - name: toolchain
+        image: TOOLCHAIN_IMAGE
+        env:
+          - name: PATH
+            value: /toolchain/bin
+          - name: LD_LIBRARY_PATH
+            value: /toolchain/lib
+          - name: term
+            value: xterm-256color
+        command: ["tail"]
+        args: ["-f", "/dev/null"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: hosts-sys
+          mountPath: /sys
+      hostNetwork: true
+      hostPID: true
+      volumes:
+      - name: hosts-sys
+        hostPath:
+          path: /sys

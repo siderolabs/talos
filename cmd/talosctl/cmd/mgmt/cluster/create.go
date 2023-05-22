@@ -81,6 +81,9 @@ const (
 	bootloaderEnabledFlag         = "with-bootloader"
 	forceEndpointFlag             = "endpoint"
 	controlPlanePortFlag          = "control-plane-port"
+	tpm2EnabledFlag               = "with-tpm2"
+	secureBootEnabledFlag         = "with-secureboot"
+	secureBootEnrollCertFlag      = "secureboot-enroll-cert"
 )
 
 var (
@@ -97,6 +100,9 @@ var (
 	applyConfigEnabled         bool
 	bootloaderEnabled          bool
 	uefiEnabled                bool
+	secureBootEnabled          bool
+	secureBootEnrollCert       string
+	tpm2Enabled                bool
 	extraUEFISearchPaths       []string
 	configDebug                bool
 	networkCIDR                string
@@ -306,6 +312,8 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		provision.WithDockerPortsHostIP(dockerHostIP),
 		provision.WithBootlader(bootloaderEnabled),
 		provision.WithUEFI(uefiEnabled),
+		provision.WithTPM2(tpm2Enabled),
+		provision.WithSecureBoot(secureBootEnabled),
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
 	}
@@ -870,6 +878,9 @@ func init() {
 	createCmd.Flags().StringVar(&nodeDiskImagePath, "disk-image-path", "", "disk image to use")
 	createCmd.Flags().BoolVar(&applyConfigEnabled, "with-apply-config", false, "enable apply config when the VM is starting in maintenance mode")
 	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
+	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
+	createCmd.Flags().BoolVar(&secureBootEnabled, secureBootEnabledFlag, false, "enforce secure boot")
+	createCmd.Flags().StringVar(&secureBootEnrollCert, secureBootEnrollCertFlag, "hack/certs/uki-signing.crt", "path to certificate to enroll in PK, KEK and DB")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
 	createCmd.Flags().StringSliceVar(&extraUEFISearchPaths, "extra-uefi-search-paths", []string{}, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 	createCmd.Flags().StringSliceVar(&registryMirrors, registryMirrorFlag, []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
@@ -889,7 +900,7 @@ func init() {
 	createCmd.Flags().StringVar(&workersCpus, "cpus-workers", "2.0", "the share of CPUs as fraction (each worker/VM)")
 	createCmd.Flags().IntVar(&controlPlaneMemory, "memory", 2048, "the limit on memory usage in MB (each control plane/VM)")
 	createCmd.Flags().IntVar(&workersMemory, "memory-workers", 2048, "the limit on memory usage in MB (each worker/VM)")
-	createCmd.Flags().IntVar(&clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
+	createCmd.Flags().IntVar(&clusterDiskSize, clusterDiskSizeFlag, 8*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().StringSliceVar(&clusterDisks, clusterDisksFlag, []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
 	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each worker VM")
 	createCmd.Flags().IntVar(&extraDiskSize, "extra-disks-size", 5*1024, "default limit on disk size in MB (each VM)")

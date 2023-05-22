@@ -11,7 +11,7 @@ import (
 	"syscall"
 )
 
-func stopProcessByPidfile(pidPath string) error {
+func StopProcessByPidfile(pidPath string) error {
 	pidFile, err := os.Open(pidPath)
 	if err != nil {
 		if os.IsNotExist(err) {

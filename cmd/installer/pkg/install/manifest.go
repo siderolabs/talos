@@ -132,6 +132,14 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 					Source:      fmt.Sprintf(constants.InitramfsAssetPath, opts.Arch),
 					Destination: filepath.Join(constants.BootMountPoint, label, constants.InitramfsAsset),
 				},
+				{
+					Source:      "/usr/install/amd64/systemd-boot.signed.efi",
+					Destination: "/boot/EFI/EFI/BOOT/BOOTX64.EFI",
+				},
+				{
+					Source:      "/usr/install/amd64/vmlinuz.signed.efi",
+					Destination: "/boot/EFI/EFI/Linux/talos-A.efi",
+				},
 			},
 		})
 	}

@@ -34,10 +34,10 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 
 	var pflashImages []string
 
-	if pflashSpec := arch.PFlash(opts.UEFIEnabled, opts.ExtraUEFISearchPaths); pflashSpec != nil {
+	if pflashSpec := arch.PFlash(opts.UEFIEnabled, opts.SecureBootEnabled, opts.ExtraUEFISearchPaths); pflashSpec != nil {
 		var err error
 
-		if pflashImages, err = p.createPFlashImages(state, nodeReq.Name, pflashSpec); err != nil {
+		if pflashImages, err = p.createPFlashImages(state, nodeReq.Name, pflashSpec, opts.SecureBootEnabled); err != nil {
 			return provision.NodeInfo{}, fmt.Errorf("error creating flash images: %w", err)
 		}
 	}
@@ -139,6 +139,31 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		APIPort:           apiPort,
 	}
 
+	nodeInfo := provision.NodeInfo{
+		ID:   pidPath,
+		UUID: nodeUUID,
+		Name: nodeReq.Name,
+		Type: nodeReq.Type,
+
+		NanoCPUs: nodeReq.NanoCPUs,
+		Memory:   nodeReq.Memory,
+		DiskSize: nodeReq.Disks[0].Size,
+
+		IPs: nodeReq.IPs,
+
+		APIPort: apiPort,
+	}
+
+	if opts.TPM2Enabled {
+		tpm2, err := p.createVirtualTPM2State(state, nodeReq.Name)
+		if err != nil {
+			return provision.NodeInfo{}, err
+		}
+
+		launchConfig.TPM2Config = tpm2
+		nodeInfo.TPM2StateDir = tpm2.StateDir
+	}
+
 	if !clusterReq.Network.DHCPSkipHostname {
 		launchConfig.Hostname = nodeReq.Name
 	}
@@ -186,21 +211,6 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	}
 
 	// no need to wait here, as cmd has all the Stdin/out/err via *os.File
-
-	nodeInfo := provision.NodeInfo{
-		ID:   pidPath,
-		UUID: nodeUUID,
-		Name: nodeReq.Name,
-		Type: nodeReq.Type,
-
-		NanoCPUs: nodeReq.NanoCPUs,
-		Memory:   nodeReq.Memory,
-		DiskSize: nodeReq.Disks[0].Size,
-
-		IPs: nodeReq.IPs,
-
-		APIPort: apiPort,
-	}
 
 	return nodeInfo, nil
 }

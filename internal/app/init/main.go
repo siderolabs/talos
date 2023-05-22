@@ -63,6 +63,16 @@ func run() (err error) {
 		return err
 	}
 
+	// Bind mount the /.extra if needed.
+	if err = bindMountExtra(); err != nil {
+		return err
+	}
+
+	// Bind mount the /.extra/sysext if needed.
+	if err = bindMountSysExt(); err != nil {
+		return err
+	}
+
 	// Switch into the new rootfs.
 	log.Println("entering the rootfs")
 
@@ -186,6 +196,34 @@ func bindMountFirmware() error {
 	log.Printf("bind mounting %s", constants.FirmwarePath)
 
 	return unix.Mount(constants.FirmwarePath, filepath.Join(constants.NewRoot, constants.FirmwarePath), "", unix.MS_BIND|unix.MS_RDONLY, "")
+}
+
+func bindMountExtra() error {
+	if _, err := os.Stat("/.extra"); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	log.Printf("bind mounting %s", "/.extra")
+
+	return unix.Mount("/.extra", filepath.Join(constants.NewRoot, "extras"), "", unix.MS_BIND|unix.MS_RDONLY, "")
+}
+
+func bindMountSysExt() error {
+	if _, err := os.Stat("/.extra/sysext"); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	log.Printf("bind mounting %s", "/.extra/sysext")
+
+	return unix.Mount("/.extra/sysext", filepath.Join(constants.NewRoot, "sysext"), "", unix.MS_BIND|unix.MS_RDONLY, "")
 }
 
 func main() {

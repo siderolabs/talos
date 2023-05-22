@@ -29,6 +29,14 @@ FROM ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub
 FROM --platform=amd64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-arm64
 
+FROM ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub
+FROM --platform=amd64 ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub-arm64
+
+FROM ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot
+FROM --platform=amd64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-arm64
+
 FROM --platform=amd64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-arm64
 
@@ -89,11 +97,18 @@ FROM ghcr.io/siderolabs/talosctl-cni-bundle-install:${EXTRAS} AS extras-talosctl
 
 FROM --platform=${BUILDPLATFORM} $IMPORTVET as importvet
 
-FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
-ENV PATH /toolchain/bin:/toolchain/go/bin
-RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
+FROM --platform=${BUILDPLATFORM} $TOOLS AS tools-prepare
+ENV LD_LIBRARY_PATH /toolchain/lib
+ENV PATH /toolchain/bin
+RUN ["/toolchain/bin/mkdir", "-p", "/bin", "/usr/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
+RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/env", "/usr/bin/env"]
+RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/python3", "/toolchain/bin/python"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
+RUN ["pip3", "install", "pefile"]
+
+FROM --platform=${BUILDPLATFORM} tools-prepare AS tools
+ENV PATH /toolchain/bin:/toolchain/go/bin
 ARG GOLANGCILINT_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCILINT_VERSION} \
 	&& mv /go/bin/golangci-lint /toolchain/go/bin/golangci-lint
@@ -385,6 +400,9 @@ COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd
 COPY --from=talosctl-linux-arm64-build /talosctl-linux-arm64 /talosctl-linux-arm64
 COPY --from=talosctl-linux-armv7-build /talosctl-linux-armv7 /talosctl-linux-armv7
 
+FROM scratch AS talosctl-linux-amd64
+COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd64
+
 FROM scratch as talosctl
 ARG TARGETARCH
 COPY --from=talosctl-linux /talosctl-linux-${TARGETARCH} /talosctl
@@ -494,7 +512,7 @@ RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,us
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
 RUN ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
-RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
+RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes,extras,sysext}
 RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
@@ -650,11 +668,57 @@ RUN chmod +x /installer
 FROM alpine:3.18.0 AS unicode-pf2
 RUN apk add --no-cache --update --no-scripts grub
 
+FROM --platform=${BUILDPLATFORM} tools-prepare AS uki-build-amd64
+WORKDIR /build
+COPY hack/certs certs
+COPY hack/uki .
+COPY --from=pkg-sd-stub-amd64 / .
+COPY --from=embed /pkg/machinery/gendata/data data
+COPY --from=pkg-kernel-amd64 /boot/vmlinuz vmlinuz
+COPY --from=initramfs-archive-amd64 /initramfs.xz initramfs.xz
+RUN <<EOF
+cat > os-release <<EOFINNER
+NAME="$(cat data/name)"
+ID=$(cat data/name)
+VERSION_ID=$(cat data/tag)
+PRETTY_NAME="$(cat data/name) ($(cat data/tag))"
+HOME_URL="https://www.talos.dev/"
+BUG_REPORT_URL="https://github.com/siderolabs/talos/issues"
+EOFINNER
+EOF
+RUN --security=insecure mknod /dev/tpmrm0 c 10 224 && \
+    ukify vmlinuz \
+    initramfs.xz \
+    --stub=linuxx64.efi.stub \
+    --uname=6.1.28-talos \
+    --splash=sidero.bmp \
+    --os-release=@os-release \
+    --cmdline='init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 console=ttyS0 reboot=k panic=1 talos.shutdown=halt talos.platform=metal' \
+    --secureboot-private-key=certs/uki-signing.key \
+    --secureboot-certificate=certs/uki-signing.crt \
+    --pcr-banks=sha384 \
+    --pcr-private-key=certs/uki-signing.key \
+    --pcr-public-key=certs/uki-signing.crt.rsa.pem \
+    --output vmlinuz-amd64.signed.efi
+
+FROM scratch AS uki-amd64
+COPY --from=uki-build-amd64 /build/vmlinuz-amd64.signed.efi /
+
+FROM --platform=${BUILDPLATFORM} tools-prepare as sd-boot-sign-amd64
+WORKDIR /build
+COPY hack/certs certs
+COPY --from=pkg-sd-boot-amd64 /systemd-bootx64.efi .
+RUN sbsign --key certs/uki-signing.key --cert certs/uki-signing.crt systemd-bootx64.efi --output systemd-bootx64.signed.efi
+
+FROM scratch AS sd-boot-amd64
+COPY --from=sd-boot-sign-amd64 /build/systemd-bootx64.signed.efi /
+
 FROM scratch AS install-artifacts-amd64
 COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
-COPY --from=pkg-kernel-amd64 /dtb /usr/install/amd64/dtb
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
+COPY --from=sd-boot-amd64 /systemd-bootx64.signed.efi /usr/install/amd64/systemd-boot.signed.efi
+COPY --from=uki-amd64 /vmlinuz-amd64.signed.efi /usr/install/amd64/vmlinuz.signed.efi
 
 FROM scratch AS install-artifacts-arm64
 COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
@@ -680,6 +744,7 @@ ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 RUN apk add --no-cache --update --no-scripts \
     bash \
     cpio \
+    dosfstools \
     efibootmgr \
     kmod \
     mtools \
@@ -730,6 +795,18 @@ ONBUILD RUN find /rootfs \
 ONBUILD WORKDIR /
 
 FROM installer-image-squashed AS imager
+
+FROM imager AS image-iso-secureboot-build-amd64
+ARG SOURCE_DATE_EPOCH
+ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+RUN /bin/installer \
+    iso \
+    --arch amd64 \
+    --secureboot \
+    --output /out
+
+FROM scratch AS image-iso-secureboot-amd64
+COPY --from=image-iso-secureboot-build-amd64 /out/talos-secureboot-amd64.iso /
 
 # The test target performs tests on the source code.
 

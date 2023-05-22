@@ -18,6 +18,10 @@ func VFAT(partname string, setters ...Option) error {
 		args = append(args, "-F", "32", "-n", opts.Label)
 	}
 
+	if opts.Reproducible {
+		args = append(args, "--invariant")
+	}
+
 	args = append(args, partname)
 
 	_, err := cmd.Run("mkfs.vfat", args...)

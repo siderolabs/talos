@@ -13,8 +13,8 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-7-gd2dde48
-PKGS ?= v1.5.0-alpha.0-17-g702d7a7
+TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-10-g4c5d7fe
+PKGS ?= v1.5.0-alpha.0-18-g9232a42
 EXTRAS ?= v1.5.0-alpha.0
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
@@ -239,6 +239,17 @@ kernel: ## Outputs the kernel package contents (vmlinuz) to the artifact directo
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
 	@-rm -rf $(ARTIFACTS)/modules
 
+uki-amd64: ## Outputs the kernel package contents (vmlinuz) to the artifact directory.
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure" PUSH=false
+
+image-iso-secureboot-amd64:
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure" PUSH=false
+
+debug-shell: $(ARTIFACTS)/kubectl ## Starts a debug shell in the cluster using the toolchain image. This is for development purposes only.
+	@sed "s|TOOLCHAIN_IMAGE|$(TOOLS)|g" hack/debug/toolchain.yaml | $(ARTIFACTS)/kubectl -n kube-system apply -f -
+	@$(ARTIFACTS)/kubectl -n kube-system rollout status deployment toolchain
+	@$(ARTIFACTS)/kubectl -n kube-system exec -it deployment/toolchain -- /toolchain/bin/bash
+
 .PHONY: initramfs
 initramfs: ## Builds the compressed initramfs and outputs it to the artifact directory.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false TARGET_ARGS="--allow security.insecure"
@@ -294,6 +305,13 @@ iso: ## Builds the ISO and outputs it to the artifact directory.
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=`basename "$${platform}"` ; \
 		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)  ; \
+	done
+
+iso-secureboot: ## Builds the ISO and outputs it to the artifact directory.
+	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
+	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=`basename "$${platform}"` ; \
+		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --secureboot=true --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)  ; \
 	done
 
 .PHONY: talosctl-cni-bundle

@@ -317,5 +317,5 @@ func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequ
 func (p *Provisioner) DestroyDHCPd(state *State) error {
 	pidPath := state.GetRelativePath(dhcpPid)
 
-	return stopProcessByPidfile(pidPath)
+	return StopProcessByPidfile(pidPath)
 }

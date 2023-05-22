@@ -38,5 +38,5 @@ func (p *Provisioner) DestroyNodes(cluster provision.ClusterInfo, options *provi
 
 // DestroyNode destroys VM.
 func (p *Provisioner) DestroyNode(node provision.NodeInfo) error {
-	return stopProcessByPidfile(node.ID) // node.ID stores PID path for control process
+	return StopProcessByPidfile(node.ID) // node.ID stores PID path for control process
 }

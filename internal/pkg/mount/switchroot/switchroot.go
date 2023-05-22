@@ -21,6 +21,7 @@ import (
 var preservedPaths = map[string]struct{}{
 	constants.ExtensionsConfigFile: {},
 	constants.FirmwarePath:         {},
+	"/.extra":                      {},
 }
 
 // Switch moves the rootfs to a specified directory. See

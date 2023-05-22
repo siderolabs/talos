@@ -15,7 +15,7 @@ import (
 
 const (
 	// MinRAWDiskSize is the minimum size disk we can create. Used for metal images.
-	MinRAWDiskSize = 1246
+	MinRAWDiskSize = 1500
 
 	// DefaultRAWDiskSize is the value we use for any non-metal images by default.
 	DefaultRAWDiskSize = 8192

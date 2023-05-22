@@ -285,29 +285,29 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 		return nil
 	}
 
-	var conf *grub.Config
-	if i.bootloader == nil {
-		conf = grub.NewConfig(i.cmdline.String())
-	} else {
-		existingConf, ok := i.bootloader.(*grub.Config)
-		if !ok {
-			return fmt.Errorf("unsupported bootloader type: %T", i.bootloader)
-		}
-		if err = existingConf.Put(i.Next, i.cmdline.String()); err != nil {
-			return err
-		}
-		existingConf.Default = i.Next
-		existingConf.Fallback = i.Current
+	// var conf *grub.Config
+	// if i.bootloader == nil {
+	// 	conf = grub.NewConfig(i.cmdline.String())
+	// } else {
+	// 	existingConf, ok := i.bootloader.(*grub.Config)
+	// 	if !ok {
+	// 		return fmt.Errorf("unsupported bootloader type: %T", i.bootloader)
+	// 	}
+	// 	if err = existingConf.Put(i.Next, i.cmdline.String()); err != nil {
+	// 		return err
+	// 	}
+	// 	existingConf.Default = i.Next
+	// 	existingConf.Fallback = i.Current
 
-		conf = existingConf
-	}
+	// 	conf = existingConf
+	// }
 
-	i.bootloader = conf
+	// i.bootloader = conf
 
-	err = i.bootloader.Install(i.options.Disk, i.options.Arch)
-	if err != nil {
-		return err
-	}
+	// err = i.bootloader.Install(i.options.Disk, i.options.Arch)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if i.options.Board != constants.BoardNone {
 		var b runtime.Board

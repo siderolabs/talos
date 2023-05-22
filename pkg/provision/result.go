@@ -57,5 +57,6 @@ type NodeInfo struct {
 
 	IPs []netip.Addr
 
-	APIPort int
+	APIPort      int
+	TPM2StateDir string
 }
