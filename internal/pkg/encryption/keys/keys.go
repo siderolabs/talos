@@ -8,7 +8,7 @@ package keys
 import (
 	"fmt"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 // NewHandler creates a new key handler depending on key handler kind.

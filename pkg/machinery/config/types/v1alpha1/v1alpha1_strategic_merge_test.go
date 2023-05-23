@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
@@ -34,11 +33,11 @@ func TestStrategicMergePatch(t *testing.T) {
 	}
 }
 
-func load(t *testing.T, path string) config.Provider {
+func load(t *testing.T, path string) *v1alpha1.Config {
 	provider, err := configloader.NewFromFile(path)
 	require.NoError(t, err)
 
-	return provider.RawV1Alpha1().(config.Provider)
+	return provider.RawV1Alpha1()
 }
 
 func testMerge(path string) func(t *testing.T) {
@@ -49,7 +48,7 @@ func testMerge(path string) func(t *testing.T) {
 		right := load(t, filepath.Join(path, "right.yaml"))
 		expected := load(t, filepath.Join(path, "expected.yaml"))
 
-		result := left.(*v1alpha1.Config).DeepCopy()
+		result := left.DeepCopy()
 
 		err := merge.Merge(result, right)
 		require.NoError(t, err)

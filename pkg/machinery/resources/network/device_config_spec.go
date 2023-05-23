@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	networkpb "github.com/siderolabs/talos/pkg/machinery/api/resource/network"
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )

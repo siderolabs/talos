@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/decoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader/internal/decoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 

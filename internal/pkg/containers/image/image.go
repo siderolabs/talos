@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 

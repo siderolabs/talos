@@ -100,8 +100,8 @@ func (suite *ApplyConfigSuite) TestApply() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	cfg, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
-	suite.Require().True(ok)
+	cfg := provider.RawV1Alpha1()
+	suite.Require().NotNil(cfg)
 
 	if cfg.MachineConfig.MachineSysctls == nil {
 		cfg.MachineConfig.MachineSysctls = make(map[string]string)
@@ -167,8 +167,8 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 		provider, err := suite.ReadConfigFromNode(nodeCtx)
 		suite.Require().NoError(err, "failed to read existing config from node %q", node)
 
-		cfg, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
-		suite.Require().True(ok)
+		cfg := provider.RawV1Alpha1()
+		suite.Require().NotNil(cfg)
 
 		if cfg.MachineConfig.MachineSysctls == nil {
 			cfg.MachineConfig.MachineSysctls = make(map[string]string)
@@ -199,8 +199,8 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 			applyConfigNoRebootTestSysctlVal,
 		)
 
-		cfg, ok = newProvider.RawV1Alpha1().(*v1alpha1.Config)
-		suite.Require().True(ok)
+		cfg = newProvider.RawV1Alpha1()
+		suite.Require().NotNil(cfg)
 
 		// revert back
 		delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl)
@@ -234,8 +234,8 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 	suite.Assert().NoError(err)
 
-	machineConfig, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
-	suite.Assert().True(ok)
+	machineConfig := provider.RawV1Alpha1()
+	suite.Assert().NotNil(machineConfig)
 
 	encryption := machineConfig.MachineConfig.MachineSystemDiskEncryption
 
@@ -380,8 +380,8 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	cfg, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
-	suite.Require().True(ok)
+	cfg := provider.RawV1Alpha1()
+	suite.Require().NotNil(cfg)
 
 	// this won't be possible without a reboot
 	cfg.MachineConfig.MachineType = "controlplane"
@@ -423,8 +423,8 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	cfg, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
-	suite.Require().True(ok)
+	cfg := provider.RawV1Alpha1()
+	suite.Require().NotNil(cfg)
 
 	// this won't be possible without a reboot
 	cfg.MachineConfig.MachineType = "controlplane"
@@ -471,8 +471,8 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	provider, err := getMachineConfig(nodeCtx)
 	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
-	cfg, ok := provider.Container().RawV1Alpha1().(*v1alpha1.Config)
-	suite.Require().True(ok)
+	cfg := provider.Container().RawV1Alpha1()
+	suite.Require().NotNil(cfg)
 
 	// this won't be possible without a reboot
 	if cfg.MachineConfig.MachineNetwork == nil {

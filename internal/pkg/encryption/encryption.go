@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 
 	"github.com/siderolabs/talos/internal/pkg/encryption/keys"
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 // NewHandler creates new Handler.

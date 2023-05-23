@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -48,13 +49,16 @@ func TestRedactSecrets(t *testing.T) {
 
 	require.Equal(t, string(configBytesBefore), string(configBytesAfter), "original config is modified")
 
-	require.Equal(t, replacement, redacted.Machine().Security().Token())
-	require.Equal(t, replacement, string(redacted.Machine().Security().CA().Key))
-	require.Equal(t, replacement, redacted.Cluster().Secret())
-	require.Equal(t, "***", redacted.Cluster().Token().Secret())
-	require.Equal(t, "", redacted.Cluster().AESCBCEncryptionSecret())
-	require.Equal(t, replacement, redacted.Cluster().SecretboxEncryptionSecret())
-	require.Equal(t, replacement, string(redacted.Cluster().CA().Key))
-	require.Equal(t, replacement, string(redacted.Cluster().Etcd().CA().Key))
-	require.Equal(t, replacement, string(redacted.Cluster().ServiceAccount().Key))
+	redactedCfg, ok := redacted.(*v1alpha1.Config)
+	require.True(t, ok)
+
+	require.Equal(t, replacement, redactedCfg.Machine().Security().Token())
+	require.Equal(t, replacement, string(redactedCfg.Machine().Security().CA().Key))
+	require.Equal(t, replacement, redactedCfg.Cluster().Secret())
+	require.Equal(t, "***", redactedCfg.Cluster().Token().Secret())
+	require.Equal(t, "", redactedCfg.Cluster().AESCBCEncryptionSecret())
+	require.Equal(t, replacement, redactedCfg.Cluster().SecretboxEncryptionSecret())
+	require.Equal(t, replacement, string(redactedCfg.Cluster().CA().Key))
+	require.Equal(t, replacement, string(redactedCfg.Cluster().Etcd().CA().Key))
+	require.Equal(t, replacement, string(redactedCfg.Cluster().ServiceAccount().Key))
 }

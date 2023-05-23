@@ -68,7 +68,7 @@ import (
 	"github.com/siderolabs/talos/pkg/kernel/kspp"
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"

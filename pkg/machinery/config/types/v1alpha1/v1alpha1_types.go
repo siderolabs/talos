@@ -33,17 +33,16 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"gopkg.in/yaml.v3"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func init() {
-	config.Register("v1alpha1", func(version string) (target interface{}) {
-		target = &Config{}
-
-		return target
+	registry.Register("v1alpha1", func(version string) any {
+		return &Config{}
 	})
 }
 

@@ -17,7 +17,6 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -163,8 +162,8 @@ func (suite *NodeLabelsSuite) setNodeLabels(nodeIP string, nodeLabels map[string
 	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	nodeConfigRaw, ok := nodeConfig.RawV1Alpha1().(*v1alpha1.Config)
-	suite.Require().True(ok, "node config is not of type v1alpha1.Config")
+	nodeConfigRaw := nodeConfig.RawV1Alpha1()
+	suite.Require().NotNil(nodeConfigRaw, "node config is not of type v1alpha1.Config")
 
 	nodeConfigRaw.MachineConfig.MachineNodeLabels = nodeLabels
 

@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/kubeconfig"
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"

@@ -15,7 +15,7 @@ import (
 	"github.com/containerd/containerd/oci"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 

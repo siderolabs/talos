@@ -18,7 +18,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/siderolabs/go-pointer"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -100,7 +100,7 @@ func (c *Config) Bytes() ([]byte, error) {
 // RedactSecrets implements the config.Provider interface.
 //
 //nolint:gocyclo
-func (c *Config) RedactSecrets(replacement string) config.Provider {
+func (c *Config) RedactSecrets(replacement string) config.Encoder {
 	if c == nil {
 		return nil
 	}
@@ -153,7 +153,7 @@ func (c *Config) RedactSecrets(replacement string) config.Provider {
 }
 
 // RawV1Alpha1 implements the config.Provider interface.
-func (c *Config) RawV1Alpha1() any {
+func (c *Config) RawV1Alpha1() *Config {
 	return c
 }
 

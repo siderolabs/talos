@@ -10,7 +10,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 

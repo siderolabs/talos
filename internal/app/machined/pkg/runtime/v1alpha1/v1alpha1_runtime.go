@@ -108,13 +108,13 @@ func (r *Runtime) SetConfig(cfg config.Provider) error {
 
 // CanApplyImmediate implements the Runtime interface.
 func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
-	currentConfig, ok := r.c.RawV1Alpha1().(*v1alpha1.Config)
-	if !ok {
+	currentConfig := r.c.RawV1Alpha1()
+	if currentConfig == nil {
 		return fmt.Errorf("current config is not v1alpha1")
 	}
 
-	newConfig, ok := cfg.RawV1Alpha1().(*v1alpha1.Config)
-	if !ok {
+	newConfig := cfg.RawV1Alpha1()
+	if newConfig == nil {
 		return fmt.Errorf("new config is not v1alpha1")
 	}
 

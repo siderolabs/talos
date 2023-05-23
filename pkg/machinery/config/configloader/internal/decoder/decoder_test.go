@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/decoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader/internal/decoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -35,7 +35,7 @@ type MockUnstructured struct {
 }
 
 func init() {
-	config.Register("mock", func(version string) interface{} {
+	registry.Register("mock", func(version string) any {
 		switch version {
 		case "v1alpha2":
 			return &MockV2{}
@@ -46,11 +46,11 @@ func init() {
 		return &Mock{}
 	})
 
-	config.Register("kubelet", func(string) interface{} {
+	registry.Register("kubelet", func(string) any {
 		return &v1alpha1.KubeletConfig{}
 	})
 
-	config.Register("unstructured", func(string) interface{} {
+	registry.Register("unstructured", func(string) any {
 		return &MockUnstructured{}
 	})
 }

@@ -5,8 +5,6 @@
 package configpatcher
 
 import (
-	"fmt"
-
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
@@ -25,10 +23,5 @@ func StrategicMerge(cfg config.Provider, patch StrategicMergePatch) (config.Prov
 		return nil, err
 	}
 
-	result, ok := left.(config.Provider)
-	if !ok {
-		return nil, fmt.Errorf("strategic left is not config.Provider %T", left)
-	}
-
-	return result, nil
+	return left, nil
 }

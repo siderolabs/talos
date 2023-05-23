@@ -102,9 +102,9 @@ func (c *ConfigBundle) ApplyPatches(patches []configpatcher.Patch, patchControlP
 			return nil, err
 		}
 
-		out, ok := cfg.RawV1Alpha1().(*v1alpha1.Config)
-		if !ok {
-			return nil, fmt.Errorf("unexpected config type %T", cfg.RawV1Alpha1())
+		out := cfg.RawV1Alpha1()
+		if out == nil {
+			return nil, fmt.Errorf("unexpected config type %T", out)
 		}
 
 		return out, nil

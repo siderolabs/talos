@@ -15,8 +15,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -105,11 +104,6 @@ func (c *ClusterConfig) AESCBCEncryptionSecret() string {
 // SecretboxEncryptionSecret implements the config.ClusterConfig interface.
 func (c *ClusterConfig) SecretboxEncryptionSecret() string {
 	return c.ClusterSecretboxEncryptionSecret
-}
-
-// Config implements the config.ClusterConfig interface.
-func (c *ClusterConfig) Config(t machine.Type) (string, error) {
-	return "", nil
 }
 
 // Etcd implements the config.ClusterConfig interface.

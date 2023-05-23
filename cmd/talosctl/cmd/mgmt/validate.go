@@ -11,8 +11,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/cli"
-	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
 var (
@@ -38,9 +38,9 @@ var validateCmd = &cobra.Command{
 			return err
 		}
 
-		opts := []config.ValidationOption{config.WithLocal()}
+		opts := []validation.Option{validation.WithLocal()}
 		if validateStrictArg {
-			opts = append(opts, config.WithStrict())
+			opts = append(opts, validation.WithStrict())
 		}
 
 		warnings, err := cfg.Validate(mode, opts...)

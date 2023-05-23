@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package config
+// Package registry provides a registry for configuration documents.
+package registry
 
 import (
 	"errors"
@@ -17,27 +18,30 @@ var (
 	ErrExists = errors.New("exists")
 )
 
+// NewDocumentFunc represents a function that creates a new document by version.
+type NewDocumentFunc func(version string) any
+
 var registry = &Registry{
-	registered: map[string]func(string) interface{}{},
+	registered: map[string]NewDocumentFunc{},
 }
 
-// Registry represents the provider registry.
+// Registry represents the document kind/version registry.
 type Registry struct {
 	m          sync.Mutex
-	registered map[string]func(string) interface{}
+	registered map[string]NewDocumentFunc
 }
 
 // Register registers a manifests with the registry.
-func Register(kind string, f func(version string) interface{}) {
+func Register(kind string, f NewDocumentFunc) {
 	registry.register(kind, f)
 }
 
 // New creates a new instance of the requested manifest.
-func New(kind, version string) (interface{}, error) {
+func New(kind, version string) (any, error) {
 	return registry.new(kind, version)
 }
 
-func (r *Registry) register(kind string, f func(version string) interface{}) {
+func (r *Registry) register(kind string, f NewDocumentFunc) {
 	r.m.Lock()
 	defer r.m.Unlock()
 
@@ -48,7 +52,7 @@ func (r *Registry) register(kind string, f func(version string) interface{}) {
 	r.registered[kind] = f
 }
 
-func (r *Registry) new(kind, version string) (interface{}, error) {
+func (r *Registry) new(kind, version string) (any, error) {
 	r.m.Lock()
 	defer r.m.Unlock()
 

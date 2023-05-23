@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package decoder provides a YAML decoder for machine configuration documents.
 package decoder
 
 import (
@@ -12,7 +13,7 @@ import (
 
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 )
 
 var (
@@ -145,7 +146,7 @@ func decode(manifest *yaml.Node) (target interface{}, err error) {
 			ManifestDeprecatedKeyCluster,
 			ManifestDeprecatedKeyDebug,
 			ManifestDeprecatedKeyPersist:
-			if target, err = config.New("v1alpha1", ""); err != nil {
+			if target, err = registry.New("v1alpha1", ""); err != nil {
 				return nil, fmt.Errorf("new deprecated config: %w", err)
 			}
 
@@ -177,7 +178,7 @@ func decode(manifest *yaml.Node) (target interface{}, err error) {
 		return nil, ErrMissingSpecConent
 	}
 
-	if target, err = config.New(kind, version); err != nil {
+	if target, err = registry.New(kind, version); err != nil {
 		return nil, fmt.Errorf("new config: %w", err)
 	}
 

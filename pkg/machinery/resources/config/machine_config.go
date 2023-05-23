@@ -68,7 +68,7 @@ func (r *MachineConfig) DeepCopy() resource.Resource {
 		// don't copy read only config
 		cfgCopy = r.spec.cfg
 	default:
-		cfgCopy = r.spec.cfg.RawV1Alpha1().(*v1alpha1.Config).DeepCopy()
+		cfgCopy = r.spec.cfg.RawV1Alpha1().DeepCopy()
 	}
 
 	return &MachineConfig{

@@ -12,7 +12,8 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	configcore "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 // State defines the state.
@@ -64,7 +65,7 @@ type V1Alpha2State interface {
 	NamespaceRegistry() *registry.NamespaceRegistry
 	ResourceRegistry() *registry.ResourceRegistry
 
-	SetConfig(config.Provider) error
+	SetConfig(configcore.Provider) error
 }
 
 // DBusState defines the D-Bus logind mock.

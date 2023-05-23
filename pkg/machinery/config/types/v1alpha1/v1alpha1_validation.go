@@ -20,8 +20,9 @@ import (
 	"github.com/siderolabs/go-debug"
 	sideronet "github.com/siderolabs/net"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 	"github.com/siderolabs/talos/pkg/machinery/labels"
@@ -71,13 +72,13 @@ type NetworkDeviceCheck func(*Device, map[string]string) ([]string, error)
 // Validate implements the config.Provider interface.
 //
 //nolint:gocyclo,cyclop
-func (c *Config) Validate(mode config.RuntimeMode, options ...config.ValidationOption) ([]string, error) {
+func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Option) ([]string, error) {
 	var (
 		warnings []string
 		result   *multierror.Error
 	)
 
-	opts := config.NewValidationOptions(options...)
+	opts := validation.NewOptions(options...)
 
 	if c.MachineConfig == nil {
 		result = multierror.Append(result, errors.New("machine instructions are required"))

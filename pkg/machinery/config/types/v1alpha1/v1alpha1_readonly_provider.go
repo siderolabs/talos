@@ -7,8 +7,9 @@ package v1alpha1
 import (
 	"errors"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
 // ReadonlyProvider wraps the *v1alpha1.Config to make config read-only.
@@ -48,7 +49,7 @@ func (r *ReadonlyProvider) Cluster() config.ClusterConfig {
 }
 
 // Validate checks configuration and returns warnings and fatal errors (as multierror).
-func (r *ReadonlyProvider) Validate(mode config.RuntimeMode, opts ...config.ValidationOption) ([]string, error) {
+func (r *ReadonlyProvider) Validate(mode validation.RuntimeMode, opts ...validation.Option) ([]string, error) {
 	return r.cfg.Validate(mode, opts...)
 }
 
@@ -62,7 +63,7 @@ func (r *ReadonlyProvider) Bytes() ([]byte, error) {
 }
 
 // RedactSecrets implements the config.Provider interface.
-func (r *ReadonlyProvider) RedactSecrets(replacement string) config.Provider {
+func (r *ReadonlyProvider) RedactSecrets(replacement string) config.Encoder {
 	return r.cfg.RedactSecrets(replacement)
 }
 
@@ -77,6 +78,6 @@ func (r *ReadonlyProvider) EncodeBytes(encoderOptions ...encoder.Option) ([]byte
 }
 
 // RawV1Alpha1 implements the config.Provider interface.
-func (r *ReadonlyProvider) RawV1Alpha1() any {
+func (r *ReadonlyProvider) RawV1Alpha1() *Config {
 	return r.cfg.DeepCopy()
 }

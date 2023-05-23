@@ -19,7 +19,6 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
@@ -140,9 +139,9 @@ func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, newHos
 		return err
 	}
 
-	nodeConfigRaw, ok := nodeConfig.RawV1Alpha1().(*v1alpha1.Config)
-	if !ok {
-		return fmt.Errorf("unexpected node config type %T", nodeConfig.RawV1Alpha1())
+	nodeConfigRaw := nodeConfig.RawV1Alpha1()
+	if nodeConfigRaw == nil {
+		return fmt.Errorf("unexpected node config type %T", nodeConfig)
 	}
 
 	nodeConfigRaw.MachineConfig.MachineNetwork.NetworkHostname = newHostname

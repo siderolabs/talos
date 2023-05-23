@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -1408,9 +1408,9 @@ func TestValidate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			opts := []config.ValidationOption{config.WithLocal()}
+			opts := []validation.Option{validation.WithLocal()}
 			if test.strict {
-				opts = append(opts, config.WithStrict())
+				opts = append(opts, validation.WithStrict())
 			}
 
 			warnings, errors := test.config.Validate(runtimeMode{test.requiresInstall}, opts...)

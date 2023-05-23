@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/operator/vip"
-	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 

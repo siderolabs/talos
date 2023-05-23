@@ -30,7 +30,8 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/extensions"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	configcore "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -38,7 +39,7 @@ import (
 // RunInstallerContainer performs an installation via the installer container.
 //
 //nolint:gocyclo,cyclop
-func RunInstallerContainer(disk, platform, ref string, cfg config.Config, cfgContainer config.Container, opts ...Option) error {
+func RunInstallerContainer(disk, platform, ref string, cfg configcore.Config, cfgContainer configcore.Container, opts ...Option) error {
 	const containerID = "upgrade"
 
 	options := DefaultInstallOptions()
