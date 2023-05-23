@@ -57,7 +57,7 @@ func NewController() (*Controller, error) {
 	l := logging.NewCircularBufferLoggingManager(log.New(os.Stdout, "machined fallback logger: ", log.Flags()))
 
 	ctlr := &Controller{
-		r:            NewRuntime(nil, s, e, l),
+		r:            NewRuntime(s, e, l),
 		s:            NewSequencer(),
 		priorityLock: NewPriorityLock[runtime.Sequence](),
 	}

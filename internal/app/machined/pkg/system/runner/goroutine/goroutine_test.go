@@ -53,7 +53,9 @@ func (suite *GoroutineSuite) SetupSuite() {
 
 	e := v1alpha1.NewEvents(100, 10)
 
-	r := v1alpha1.NewRuntime(cfg, s, e, suite.loggingManager)
+	r := v1alpha1.NewRuntime(s, e, suite.loggingManager)
+
+	suite.Require().NoError(r.SetConfig(cfg))
 
 	suite.r = r
 }

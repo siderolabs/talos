@@ -96,7 +96,7 @@ func (suite *UpdateEndpointSuite) updateEndpointURL(nodeIP string, newURL string
 	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	nodeConfigRaw, ok := nodeConfig.Raw().(*v1alpha1.Config)
+	nodeConfigRaw, ok := nodeConfig.RawV1Alpha1().(*v1alpha1.Config)
 	suite.Require().True(ok, "node config is not of type v1alpha1.Config")
 
 	newEndpointURL, err := url.Parse(newURL)

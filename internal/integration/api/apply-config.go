@@ -100,7 +100,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	cfg, ok := provider.Raw().(*v1alpha1.Config)
+	cfg, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
 	suite.Require().True(ok)
 
 	if cfg.MachineConfig.MachineSysctls == nil {
@@ -167,7 +167,7 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 		provider, err := suite.ReadConfigFromNode(nodeCtx)
 		suite.Require().NoError(err, "failed to read existing config from node %q", node)
 
-		cfg, ok := provider.Raw().(*v1alpha1.Config)
+		cfg, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
 		suite.Require().True(ok)
 
 		if cfg.MachineConfig.MachineSysctls == nil {
@@ -199,7 +199,7 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 			applyConfigNoRebootTestSysctlVal,
 		)
 
-		cfg, ok = newProvider.Raw().(*v1alpha1.Config)
+		cfg, ok = newProvider.RawV1Alpha1().(*v1alpha1.Config)
 		suite.Require().True(ok)
 
 		// revert back
@@ -234,7 +234,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 	suite.Assert().NoError(err)
 
-	machineConfig, ok := provider.Raw().(*v1alpha1.Config)
+	machineConfig, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
 	suite.Assert().True(ok)
 
 	encryption := machineConfig.MachineConfig.MachineSystemDiskEncryption
@@ -380,7 +380,7 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	cfg, ok := provider.Raw().(*v1alpha1.Config)
+	cfg, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
 	suite.Require().True(ok)
 
 	// this won't be possible without a reboot
@@ -423,7 +423,7 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	cfg, ok := provider.Raw().(*v1alpha1.Config)
+	cfg, ok := provider.RawV1Alpha1().(*v1alpha1.Config)
 	suite.Require().True(ok)
 
 	// this won't be possible without a reboot
@@ -459,19 +459,19 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	getMachineConfig := func(ctx context.Context) (config.Provider, error) {
+	getMachineConfig := func(ctx context.Context) (*mc.MachineConfig, error) {
 		cfg, err := safe.StateGet[*mc.MachineConfig](ctx, suite.Client.COSI, resource.NewMetadata(mc.NamespaceName, mc.MachineConfigType, mc.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
 			return nil, err
 		}
 
-		return cfg.Config(), nil
+		return cfg, nil
 	}
 
 	provider, err := getMachineConfig(nodeCtx)
 	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
-	cfg, ok := provider.Raw().(*v1alpha1.Config)
+	cfg, ok := provider.Container().RawV1Alpha1().(*v1alpha1.Config)
 	suite.Require().True(ok)
 
 	// this won't be possible without a reboot
@@ -501,11 +501,11 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	provider, err = getMachineConfig(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	suite.Assert().NotNil(provider.Machine().Network())
-	suite.Assert().NotNil(provider.Machine().Network().Devices())
+	suite.Assert().NotNil(provider.Config().Machine().Network())
+	suite.Assert().NotNil(provider.Config().Machine().Network().Devices())
 
 	lookupDummyInterface := func() bool {
-		for _, device := range provider.Machine().Network().Devices() {
+		for _, device := range provider.Config().Machine().Network().Devices() {
 			if device.Dummy() && device.Interface() == "dummy0" {
 				return true
 			}
@@ -520,7 +520,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 		provider, err = getMachineConfig(nodeCtx)
 		suite.Assert().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
-		if provider.Machine().Network() == nil {
+		if provider.Config().Machine().Network() == nil {
 			return
 		}
 

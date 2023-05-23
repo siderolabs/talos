@@ -29,11 +29,6 @@ const (
 	Version = "v1alpha1"
 )
 
-// Version implements the config.Provider interface.
-func (c *Config) Version() string {
-	return Version
-}
-
 // Debug implements the config.Provider interface.
 func (c *Config) Debug() bool {
 	return pointer.SafeDeref(c.ConfigDebug)
@@ -157,8 +152,8 @@ func (c *Config) RedactSecrets(replacement string) config.Provider {
 	return clone
 }
 
-// Raw implements the config.Provider interface.
-func (c *Config) Raw() interface{} {
+// RawV1Alpha1 implements the config.Provider interface.
+func (c *Config) RawV1Alpha1() any {
 	return c
 }
 

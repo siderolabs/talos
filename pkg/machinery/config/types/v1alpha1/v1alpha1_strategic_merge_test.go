@@ -38,7 +38,7 @@ func load(t *testing.T, path string) config.Provider {
 	provider, err := configloader.NewFromFile(path)
 	require.NoError(t, err)
 
-	return provider.Raw().(config.Provider)
+	return provider.RawV1Alpha1().(config.Provider)
 }
 
 func testMerge(path string) func(t *testing.T) {

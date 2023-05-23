@@ -21,7 +21,7 @@ import (
 
 // ConfigProvider defines an interface sufficient for the TimeServer.
 type ConfigProvider interface {
-	Config() config.Provider
+	Config() config.Config
 }
 
 // TimeServer implements TimeService API.

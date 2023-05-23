@@ -248,9 +248,9 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 			return err
 		}
 
-		nodeConfigRaw, ok := nodeConfig.Raw().(*v1alpha1.Config)
+		nodeConfigRaw, ok := nodeConfig.RawV1Alpha1().(*v1alpha1.Config)
 		if !ok {
-			return fmt.Errorf("unexpected node config type %T", nodeConfig.Raw())
+			return fmt.Errorf("unexpected node config type %T", nodeConfig.RawV1Alpha1())
 		}
 
 		accessConfig := v1alpha1.KubernetesTalosAPIAccessConfig{

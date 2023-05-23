@@ -27,11 +27,6 @@ func WrapReadonly(cfg *Config, bytes []byte) *ReadonlyProvider {
 	}
 }
 
-// Version implements the config.Provider interface.
-func (r *ReadonlyProvider) Version() string {
-	return r.cfg.Version()
-}
-
 // Debug implements the config.Provider interface.
 func (r *ReadonlyProvider) Debug() bool {
 	return r.cfg.Debug()
@@ -81,7 +76,7 @@ func (r *ReadonlyProvider) EncodeBytes(encoderOptions ...encoder.Option) ([]byte
 	return r.cfg.EncodeBytes(encoderOptions...)
 }
 
-// Raw implements the config.Provider interface.
-func (r *ReadonlyProvider) Raw() interface{} {
+// RawV1Alpha1 implements the config.Provider interface.
+func (r *ReadonlyProvider) RawV1Alpha1() any {
 	return r.cfg.DeepCopy()
 }

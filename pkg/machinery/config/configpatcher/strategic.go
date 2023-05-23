@@ -18,8 +18,8 @@ type StrategicMergePatch struct {
 
 // StrategicMerge performs strategic merge config patching.
 func StrategicMerge(cfg config.Provider, patch StrategicMergePatch) (config.Provider, error) {
-	left := cfg.Raw()
-	right := patch.Raw()
+	left := cfg.RawV1Alpha1()
+	right := patch.RawV1Alpha1()
 
 	if err := merge.Merge(left, right); err != nil {
 		return nil, err

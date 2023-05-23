@@ -67,7 +67,7 @@ func (ctrl *TimeServerConfigController) Run(ctx context.Context, r controller.Ru
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		var cfgProvider talosconfig.Provider
+		var cfgProvider talosconfig.Config
 
 		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
@@ -191,7 +191,7 @@ func (ctrl *TimeServerConfigController) parseCmdline(logger *zap.Logger) (spec n
 	return spec
 }
 
-func (ctrl *TimeServerConfigController) parseMachineConfiguration(cfgProvider talosconfig.Provider) (spec network.TimeServerSpecSpec) {
+func (ctrl *TimeServerConfigController) parseMachineConfiguration(cfgProvider talosconfig.Config) (spec network.TimeServerSpecSpec) {
 	if len(cfgProvider.Machine().Time().Servers()) == 0 {
 		return
 	}

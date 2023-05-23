@@ -82,7 +82,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-r.EventCh():
 		}
 
-		var cfgProvider talosconfig.Provider
+		var cfgProvider talosconfig.Config
 
 		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
@@ -154,7 +154,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.ResolverStatusSpec, hostnameStatus *network.HostnameStatusSpec, cfgProvider talosconfig.Provider) []byte {
+func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.ResolverStatusSpec, hostnameStatus *network.HostnameStatusSpec, cfgProvider talosconfig.Config) []byte {
 	var buf bytes.Buffer
 
 	for i, resolver := range resolverStatus.DNSServers {
@@ -178,7 +178,7 @@ func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.Resolver
 	return buf.Bytes()
 }
 
-func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatusSpec, nodeAddressStatus *network.NodeAddressSpec, cfgProvider talosconfig.Provider) ([]byte, error) {
+func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatusSpec, nodeAddressStatus *network.NodeAddressSpec, cfgProvider talosconfig.Config) ([]byte, error) {
 	var buf bytes.Buffer
 
 	tabW := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)

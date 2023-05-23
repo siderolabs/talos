@@ -84,7 +84,7 @@ func (ctrl *KubeletController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-func (ctrl *KubeletController) updateKubeletSecrets(cfgProvider talosconfig.Provider, kubeletSecrets *secrets.KubeletSpec) error {
+func (ctrl *KubeletController) updateKubeletSecrets(cfgProvider talosconfig.Config, kubeletSecrets *secrets.KubeletSpec) error {
 	if cfgProvider.Machine().Type().IsControlPlane() {
 		// use localhost endpoint for controlplane nodes
 		localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))

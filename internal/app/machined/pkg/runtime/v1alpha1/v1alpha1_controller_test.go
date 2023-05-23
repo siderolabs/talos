@@ -162,7 +162,7 @@ func TestRun(t *testing.T) {
 
 			l := logging.NewCircularBufferLoggingManager(log.New(os.Stdout, "machined fallback logger: ", log.Flags()))
 
-			r := NewRuntime(nil, s, e, l)
+			r := NewRuntime(s, e, l)
 
 			controller := Controller{
 				r:            r,

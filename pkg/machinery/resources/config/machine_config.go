@@ -68,7 +68,7 @@ func (r *MachineConfig) DeepCopy() resource.Resource {
 		// don't copy read only config
 		cfgCopy = r.spec.cfg
 	default:
-		cfgCopy = r.spec.cfg.Raw().(*v1alpha1.Config).DeepCopy()
+		cfgCopy = r.spec.cfg.RawV1Alpha1().(*v1alpha1.Config).DeepCopy()
 	}
 
 	return &MachineConfig{
@@ -124,8 +124,13 @@ func (r *MachineConfig) UnmarshalProto(md *resource.Metadata, protoBytes []byte)
 	return nil
 }
 
-// Config returns config.Provider.
-func (r *MachineConfig) Config() config.Provider {
+// Config returns config.Config to access config fields.
+func (r *MachineConfig) Config() config.Config {
+	return r.spec.cfg
+}
+
+// Container returns config.Container to access config as a whole.
+func (r *MachineConfig) Container() config.Container {
 	return r.spec.cfg
 }
 

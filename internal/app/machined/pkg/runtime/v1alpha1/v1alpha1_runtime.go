@@ -36,9 +36,8 @@ type Runtime struct {
 }
 
 // NewRuntime initializes and returns the v1alpha1 runtime.
-func NewRuntime(c config.Provider, s runtime.State, e runtime.EventStream, l runtime.LoggingManager) *Runtime {
+func NewRuntime(s runtime.State, e runtime.EventStream, l runtime.LoggingManager) *Runtime {
 	return &Runtime{
-		c: c,
 		s: s,
 		e: e,
 		l: l,
@@ -46,7 +45,12 @@ func NewRuntime(c config.Provider, s runtime.State, e runtime.EventStream, l run
 }
 
 // Config implements the Runtime interface.
-func (r *Runtime) Config() config.Provider {
+func (r *Runtime) Config() config.Config {
+	return r.c
+}
+
+// ConfigContainer implements the Runtime interface.
+func (r *Runtime) ConfigContainer() config.Container {
 	return r.c
 }
 
@@ -104,12 +108,12 @@ func (r *Runtime) SetConfig(cfg config.Provider) error {
 
 // CanApplyImmediate implements the Runtime interface.
 func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
-	currentConfig, ok := r.Config().Raw().(*v1alpha1.Config)
+	currentConfig, ok := r.c.RawV1Alpha1().(*v1alpha1.Config)
 	if !ok {
 		return fmt.Errorf("current config is not v1alpha1")
 	}
 
-	newConfig, ok := cfg.Raw().(*v1alpha1.Config)
+	newConfig, ok := cfg.RawV1Alpha1().(*v1alpha1.Config)
 	if !ok {
 		return fmt.Errorf("new config is not v1alpha1")
 	}

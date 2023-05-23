@@ -33,7 +33,7 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}
 
-	cfg, ok := mc.Config().Raw().(*v1alpha1config.Config)
+	cfg, ok := mc.Container().RawV1Alpha1().(*v1alpha1config.Config)
 	if !ok {
 		return fmt.Errorf("config is not v1alpha1 config")
 	}

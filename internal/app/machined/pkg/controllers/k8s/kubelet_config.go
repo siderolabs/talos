@@ -118,7 +118,7 @@ func getStaticPodListURL(ctx context.Context, r controller.Runtime) (string, err
 	return staticPodURLRes.TypedSpec().URL, nil
 }
 
-func modifyKubeletConfig(cfgProvider talosconfig.Provider, staticPodListURL string) func(resource.Resource) error {
+func modifyKubeletConfig(cfgProvider talosconfig.Config, staticPodListURL string) func(resource.Resource) error {
 	return func(r resource.Resource) error {
 		kubeletConfig := r.(*k8s.KubeletConfig).TypedSpec()
 

@@ -569,7 +569,7 @@ func SaveConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		var b []byte
 
-		b, err = r.Config().Bytes()
+		b, err = r.ConfigContainer().Bytes()
 		if err != nil {
 			return err
 		}
@@ -653,7 +653,7 @@ func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger,
 // ValidateConfig validates the config.
 func ValidateConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		warnings, err := r.Config().Validate(r.State().Platform().Mode())
+		warnings, err := r.ConfigContainer().Validate(r.State().Platform().Mode())
 		for _, w := range warnings {
 			logger.Printf("WARNING:\n%s", w)
 		}
@@ -1930,6 +1930,7 @@ func Upgrade(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 			devname, r.State().Platform().Name(),
 			in.GetImage(),
 			r.Config(),
+			r.ConfigContainer(),
 			install.OptionsFromUpgradeRequest(r, in)...,
 		)
 		if err != nil {
@@ -2186,6 +2187,7 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				r.State().Platform().Name(),
 				installerImage,
 				r.Config(),
+				r.ConfigContainer(),
 				install.WithForce(true),
 				install.WithZero(r.Config().Machine().Install().Zero()),
 				install.WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()),
@@ -2230,6 +2232,7 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				devname, r.State().Platform().Name(),
 				r.State().Machine().StagedInstallImageRef(),
 				r.Config(),
+				r.ConfigContainer(),
 				install.WithOptions(options),
 			)
 			if err != nil {

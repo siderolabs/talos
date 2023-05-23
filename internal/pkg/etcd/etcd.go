@@ -92,7 +92,7 @@ func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State, di
 
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
-func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Provider, preserve bool) error {
+func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Config, preserve bool) error {
 	if config.Machine().Type() == machine.TypeWorker {
 		return nil
 	}

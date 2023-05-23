@@ -135,7 +135,7 @@ func (ctrl *RootController) Run(ctx context.Context, r controller.Runtime, logge
 	}
 }
 
-func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Provider, osSecrets *secrets.OSRootSpec) error {
+func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Config, osSecrets *secrets.OSRootSpec) error {
 	osSecrets.CA = cfgProvider.Machine().Security().CA()
 
 	osSecrets.CertSANIPs = nil
@@ -162,7 +162,7 @@ func (ctrl *RootController) updateOSSecrets(cfgProvider talosconfig.Provider, os
 	return nil
 }
 
-func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Provider, etcdSecrets *secrets.EtcdRootSpec) error {
+func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Config, etcdSecrets *secrets.EtcdRootSpec) error {
 	etcdSecrets.EtcdCA = cfgProvider.Cluster().Etcd().CA()
 
 	if etcdSecrets.EtcdCA == nil {
@@ -172,7 +172,7 @@ func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Provider, 
 	return nil
 }
 
-func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Provider, k8sSecrets *secrets.KubernetesRootSpec) error {
+func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Config, k8sSecrets *secrets.KubernetesRootSpec) error {
 	localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
 	if err != nil {
 		return err

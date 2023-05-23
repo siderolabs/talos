@@ -97,7 +97,7 @@ type WireguardConfigBundle struct {
 
 // PatchConfig generates config patch for a node and patches the configuration data.
 func (w *WireguardConfigBundle) PatchConfig(ip fmt.Stringer, cfg config.Provider) (config.Provider, error) {
-	config := cfg.Raw().(*v1alpha1.Config).DeepCopy()
+	config := cfg.RawV1Alpha1().(*v1alpha1.Config).DeepCopy()
 
 	if config.MachineConfig.MachineNetwork == nil {
 		config.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{

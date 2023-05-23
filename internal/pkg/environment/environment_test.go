@@ -64,7 +64,7 @@ func TestGet(t *testing.T) {
 
 			cmdline := procfs.NewCmdline(test.cmdline)
 
-			var cfg config.Provider
+			var cfg config.Config
 
 			if test.cfg != nil {
 				cfg = &v1alpha1.Config{

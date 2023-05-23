@@ -18,17 +18,19 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
-// Provider defines the configuration consumption interface.
-//
-//nolint:interfacebloat
-type Provider interface {
-	// Config parts accessor.
-	Version() string
+// Config defines the interface to access contents of the machine configuration.
+type Config interface {
 	Debug() bool
 	Persist() bool
 	Machine() MachineConfig
 	Cluster() ClusterConfig
+}
 
+// Container provides the interface to access configuration documents.
+//
+// Container might contain multiple config documents, supporting encoding/decoding,
+// validation, and other operations.
+type Container interface {
 	// Validate checks configuration and returns warnings and fatal errors (as multierror).
 	Validate(RuntimeMode, ...ValidationOption) ([]string, error)
 
@@ -42,8 +44,16 @@ type Provider interface {
 	EncodeString(encoderOptions ...encoder.Option) (string, error)
 	EncodeBytes(encoderOptions ...encoder.Option) ([]byte, error)
 
-	// Raw returns internal config representation.
-	Raw() interface{}
+	// RawV1Alpha1 returns internal config representation.
+	//
+	// The method returns *v1alpha1.Config, but due to dependency loop we set it as 'any' here.
+	RawV1Alpha1() any
+}
+
+// Provider defines the configuration consumption interface.
+type Provider interface {
+	Config
+	Container
 }
 
 // MachineConfig defines the requirements for a config that pertains to machine

@@ -81,7 +81,7 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		var cfgProvider talosconfig.Provider
+		var cfgProvider talosconfig.Config
 
 		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
@@ -251,7 +251,7 @@ func (ctrl *HostnameConfigController) parseCmdline(logger *zap.Logger) (spec net
 	return spec
 }
 
-func (ctrl *HostnameConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) (spec network.HostnameSpecSpec) {
+func (ctrl *HostnameConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Config) (spec network.HostnameSpecSpec) {
 	hostname := cfgProvider.Machine().Network().Hostname()
 
 	if hostname == "" {

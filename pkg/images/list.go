@@ -33,7 +33,7 @@ type Versions struct {
 }
 
 // List returns default image versions.
-func List(config config.Provider) Versions {
+func List(config config.Config) Versions {
 	var images Versions
 
 	images.Etcd = config.Cluster().Etcd().Image()

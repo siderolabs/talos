@@ -15,12 +15,12 @@ import (
 // Get the desired set of the environment variables based on kernel cmdline and machine config.
 //
 // The returned value is a list of strings in the form of "key=value".
-func Get(cfg config.Provider) []string {
+func Get(cfg config.Config) []string {
 	return GetCmdline(procfs.ProcCmdline(), cfg)
 }
 
 // GetCmdline the desired set of the environment variables based on kernel cmdline.
-func GetCmdline(cmdline *procfs.Cmdline, cfg config.Provider) []string {
+func GetCmdline(cmdline *procfs.Cmdline, cfg config.Config) []string {
 	var result []string
 
 	param := cmdline.Get(constants.KernelParamEnvironment)

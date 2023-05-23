@@ -291,7 +291,7 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 	var loggingEndpoints []*url.URL
 
 	for {
-		var cfg talosconfig.Provider
+		var cfg talosconfig.Config
 		select {
 		case event := <-watchCh:
 			if event.Type != state.Created && event.Type != state.Updated {
@@ -309,7 +309,7 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 	}
 }
 
-func (ctrl *Controller) updateConsoleLoggingConfig(cfg talosconfig.Provider) {
+func (ctrl *Controller) updateConsoleLoggingConfig(cfg talosconfig.Config) {
 	newLogLevel := zapcore.InfoLevel
 	if cfg.Debug() {
 		newLogLevel = zapcore.DebugLevel
@@ -321,7 +321,7 @@ func (ctrl *Controller) updateConsoleLoggingConfig(cfg talosconfig.Provider) {
 	}
 }
 
-func (ctrl *Controller) updateLoggingConfig(ctx context.Context, cfg talosconfig.Provider, prevLoggingEndpoints *[]*url.URL) {
+func (ctrl *Controller) updateLoggingConfig(ctx context.Context, cfg talosconfig.Config, prevLoggingEndpoints *[]*url.URL) {
 	dests := cfg.Machine().Logging().Destinations()
 	loggingEndpoints := make([]*url.URL, len(dests))
 

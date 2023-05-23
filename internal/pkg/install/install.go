@@ -38,7 +38,7 @@ import (
 // RunInstallerContainer performs an installation via the installer container.
 //
 //nolint:gocyclo,cyclop
-func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts ...Option) error {
+func RunInstallerContainer(disk, platform, ref string, cfg config.Config, cfgContainer config.Container, opts ...Option) error {
 	const containerID = "upgrade"
 
 	options := DefaultInstallOptions()
@@ -226,10 +226,10 @@ func RunInstallerContainer(disk, platform, ref string, cfg config.Provider, opts
 		WaitAndClose(context.Context, containerd.Task)
 	}
 
-	if cfg != nil {
+	if cfgContainer != nil {
 		var configBytes []byte
 
-		configBytes, err = cfg.Bytes()
+		configBytes, err = cfgContainer.Bytes()
 		if err != nil {
 			return err
 		}

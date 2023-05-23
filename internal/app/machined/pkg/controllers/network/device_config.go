@@ -88,7 +88,7 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		var cfgProvider talosconfig.Provider
+		var cfgProvider talosconfig.Config
 
 		cfg, err := safe.ReaderGet[*config.MachineConfig](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {

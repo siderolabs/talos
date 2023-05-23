@@ -38,7 +38,7 @@ type mockConfigProvider struct {
 	timeServer string
 }
 
-func (provider *mockConfigProvider) Config() config.Provider {
+func (provider *mockConfigProvider) Config() config.Config {
 	return &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineTime: &v1alpha1.TimeConfig{

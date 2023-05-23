@@ -202,10 +202,10 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	if in.DryRun {
 		var config interface{}
 		if s.Controller.Runtime().Config() != nil {
-			config = s.Controller.Runtime().Config().Raw()
+			config = s.Controller.Runtime().ConfigContainer().RawV1Alpha1()
 		}
 
-		diff := cmp.Diff(config, cfgProvider.Raw(), cmp.AllowUnexported(v1alpha1.InstallDiskSizeMatcher{}))
+		diff := cmp.Diff(config, cfgProvider.RawV1Alpha1(), cmp.AllowUnexported(v1alpha1.InstallDiskSizeMatcher{}))
 		if diff == "" {
 			diff = "No changes."
 		}
@@ -240,7 +240,7 @@ Config diff:
 	switch in.Mode {
 	// --mode=try
 	case machine.ApplyConfigurationRequest_TRY:
-		oldConfig, err := s.Controller.Runtime().Config().Bytes()
+		oldConfig, err := s.Controller.Runtime().ConfigContainer().Bytes()
 		if err != nil {
 			return nil, err
 		}

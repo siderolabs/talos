@@ -67,7 +67,7 @@ func (ctrl *ResolverConfigController) Run(ctx context.Context, r controller.Runt
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		var cfgProvider talosconfig.Provider
+		var cfgProvider talosconfig.Config
 
 		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
 		if err != nil {
@@ -187,7 +187,7 @@ func (ctrl *ResolverConfigController) parseCmdline(logger *zap.Logger) (spec net
 	return spec
 }
 
-func (ctrl *ResolverConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Provider) (spec network.ResolverSpecSpec) {
+func (ctrl *ResolverConfigController) parseMachineConfiguration(logger *zap.Logger, cfgProvider talosconfig.Config) (spec network.ResolverSpecSpec) {
 	resolvers := cfgProvider.Machine().Network().Resolvers()
 
 	if len(resolvers) == 0 {

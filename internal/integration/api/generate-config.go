@@ -99,7 +99,6 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	suite.Require().NoError(err)
 
 	suite.Require().EqualValues(request.MachineConfig.Type, config.Machine().Type())
-	suite.Require().EqualValues(request.ConfigVersion, config.Version())
 	suite.Require().EqualValues(request.ClusterConfig.Name, config.Cluster().Name())
 	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, config.Cluster().Endpoint().String())
 	suite.Require().EqualValues(request.ClusterConfig.ClusterNetwork.DnsDomain, config.Cluster().Network().DNSDomain())
@@ -154,7 +153,6 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 	suite.Require().NoError(err)
 
 	suite.Require().EqualValues(request.MachineConfig.Type, joinedConfig.Machine().Type())
-	suite.Require().EqualValues(request.ConfigVersion, joinedConfig.Version())
 	suite.Require().EqualValues(request.ClusterConfig.Name, joinedConfig.Cluster().Name())
 	suite.Require().EqualValues(request.ClusterConfig.ControlPlane.Endpoint, joinedConfig.Cluster().Endpoint().String())
 	suite.Require().EqualValues(
