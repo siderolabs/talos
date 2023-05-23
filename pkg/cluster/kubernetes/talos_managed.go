@@ -126,6 +126,8 @@ func upgradeKubeProxy(ctx context.Context, cluster UpgradeProvider, options Upgr
 	options.Log("updating kube-proxy to version %q", options.Path.ToVersion())
 
 	for _, node := range options.controlPlaneNodes {
+		options.Log(" > %q: starting update", node)
+
 		if err := patchNodeConfig(ctx, cluster, node, patchKubeProxy(options)); err != nil {
 			return fmt.Errorf("error updating node %q: %w", node, err)
 		}
@@ -136,6 +138,12 @@ func upgradeKubeProxy(ctx context.Context, cluster UpgradeProvider, options Upgr
 
 func patchKubeProxy(options UpgradeOptions) func(config *v1alpha1config.Config) error {
 	return func(config *v1alpha1config.Config) error {
+		if options.DryRun {
+			options.Log(" > skipped in dry-run")
+
+			return nil
+		}
+
 		if config.ClusterConfig == nil {
 			config.ClusterConfig = &v1alpha1config.ClusterConfig{}
 		}

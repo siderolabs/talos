@@ -172,8 +172,18 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 			continue
 		}
 
+		// try to get the internal IP address
 		for _, nodeAddress := range node.Status.Addresses {
 			if nodeAddress.Type == corev1.NodeInternalIP {
+				addrs = append(addrs, nodeAddress.Address)
+
+				break
+			}
+		}
+
+		// no internal IP, fallback to external IP
+		for _, nodeAddress := range node.Status.Addresses {
+			if nodeAddress.Type == corev1.NodeExternalIP {
 				addrs = append(addrs, nodeAddress.Address)
 
 				break
