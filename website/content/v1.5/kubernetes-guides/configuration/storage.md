@@ -120,6 +120,48 @@ talosctl -n <node ip> service kubelet restart
 
 Continue setting up [Mayastor](https://mayastor.gitbook.io/introduction/quickstart/deploy-mayastor) using the official documentation.
 
+### Piraeus / LINSTOR
+
+* [Piraeus-Operator](https://piraeus.io/)
+* [LINSTOR](https://linbit.com/drbd/)
+* [DRBD Extension](https://github.com/siderolabs/extensions#storage)
+
+#### Install Piraeus Operator V2
+
+There is already a how-to for Talos: [Link](https://github.com/piraeusdatastore/piraeus-operator/blob/v2/docs/how-to/talos.md)
+
+#### Create first storage pool and PVC
+
+Before proceeding, install linstor plugin for kubectl:
+https://github.com/piraeusdatastore/kubectl-linstor
+
+Or use [krew](https://krew.sigs.k8s.io/): `kubectl krew install linstor`
+
+```sh
+# Create device pool on a blank (no partitation table!) disk on node01
+kubectl linstor physical-storage create-device-pool --pool-name nvme_lvm_pool LVM node01 /dev/nvme0n1 --storage-pool nvme_pool
+```
+
+piraeus-sc.yml
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: simple-nvme
+parameters:
+  csi.storage.k8s.io/fstype: xfs
+  linstor.csi.linbit.com/autoPlace: "3"
+  linstor.csi.linbit.com/storagePool: nvme_pool
+provisioner: linstor.csi.linbit.com
+volumeBindingMode: WaitForFirstConsumer
+```
+
+```sh
+# Create storage class
+kubectl apply -f piraeus-sc.yml
+```
+
 ## NFS
 
 NFS is an old pack animal long past its prime.

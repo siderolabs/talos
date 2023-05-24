@@ -120,6 +120,101 @@ talosctl -n <node ip> service kubelet restart
 
 Continue setting up [Mayastor](https://mayastor.gitbook.io/introduction/quickstart/deploy-mayastor) using the official documentation.
 
+### Piraeus / LINSTOR
+
+* [Piraeus-Operator](https://piraeus.io/)
+* [LINSTOR](https://linbit.com/drbd/)
+* [DRBD Extension](https://github.com/siderolabs/extensions#storage)
+
+#### Install Piraeus Operator V2 (recommended, when starting from scratch!)
+
+There is already a how-to for Talos: [Link](https://github.com/piraeusdatastore/piraeus-operator/blob/v2/docs/how-to/talos.md)
+
+#### Install Piraeus Operator V1
+
+<!-- markdownlint-disable MD007 -->
+<!-- markdownlint-disable MD032 -->
+<!-- markdownlint-disable MD025 -->
+
+{{< tabpane lang="yaml" >}}
+{{< tab header="Strategic merge patch" >}}
+machine:
+  install:
+    extensions:
+      - image: ghcr.io/siderolabs/drbd:9.2.2-{{< release >}}
+  kernel:
+    modules:
+      - name: drbd
+      - name: drbd_transport_tcp
+{{< /tab >}}
+{{< tab header="JSON patch" >}}
+* op: add
+  path: /machine/install/extensions/-
+  value:
+    * image: ghcr.io/siderolabs/drbd:9.2.2-{{< release >}}
+* op: add
+  path: /machine/kernel/modules/-
+  value:
+    * name: drbd
+    * name: drbd_transport_tcp
+{{< /tab >}}
+{{< /tabpane >}}
+
+```sh
+# Apply config update on node
+talosctl patch mc --patch-file install-drbd.yml
+
+# Start upgrade of Talos with with current installed version to enable the extension
+talosctl upgrade --image=ghcr.io/siderolabs/installer:{{< release >}}
+
+# Create dedicated namespace for piraeus
+kubectl create namespace piraeus
+kubectl label ns piraeus pod-security.kubernetes.io/enforce=privileged
+kubectl label ns piraeus pod-security.kubernetes.io/auth=privileged
+kubectl label ns piraeus pod-security.kubernetes.io/warn=privileged
+
+# Install Piraeus with Helm chart from GitHub repository
+git clone --branch master https://github.com/piraeusdatastore/piraeus-operator.git
+cd piraeus-operator
+helm install piraeus-op ./charts/piraeus \
+  --namespace piraeus \
+  --set operator.satelliteSet.kernelModuleInjectionMode=None \ # Deprecated, but necessary!
+  --set etcd.enabled=false \
+  --set operator.controller.dbConnectionURL=k8s
+```
+
+#### Create first storage pool and PVC
+
+Before proceeding, install linstor plugin for kubectl:
+https://github.com/piraeusdatastore/kubectl-linstor
+
+Or use [krew](https://krew.sigs.k8s.io/): `kubectl krew install linstor`
+
+```sh
+# Create device pool on a blank (no partitation table!) disk on node01
+kubectl linstor physical-storage create-device-pool --pool-name nvme_lvm_pool LVM node01 /dev/nvme0n1 --storage-pool nvme_pool
+```
+
+piraeus-sc.yml
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: simple-nvme
+parameters:
+  csi.storage.k8s.io/fstype: xfs
+  linstor.csi.linbit.com/autoPlace: "3"
+  linstor.csi.linbit.com/storagePool: nvme_pool
+provisioner: linstor.csi.linbit.com
+volumeBindingMode: WaitForFirstConsumer
+```
+
+```sh
+# Create storage class
+kubectl apply -f piraeus-sc.yml
+```
+
 ## NFS
 
 NFS is an old pack animal long past its prime.
