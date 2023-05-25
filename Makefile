@@ -13,7 +13,7 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-11-g88ebb40
+TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-12-g150efc2
 PKGS ?= v1.5.0-alpha.0-20-g97177be
 EXTRAS ?= v1.5.0-alpha.0
 # renovate: datasource=github-tags depName=golang/go
@@ -285,7 +285,13 @@ talosctl-windows-amd64:
 	@$(MAKE) local-talosctl-windows-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
 
 talosctl:
-	@$(MAKE) local-talosctl-platform DEST=$(ARTIFACTS)
+	@$(MAKE) local-talosctl-targetarch DEST=$(ARTIFACTS)
+
+uki-certs:
+	@$(MAKE) local-uki-certs DEST=$(ARTIFACTS)/uki-certs
+
+uki:
+	@$(MAKE) local-uki DEST=$(ARTIFACTS)
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)

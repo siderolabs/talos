@@ -29,6 +29,14 @@ FROM ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub
 FROM --platform=amd64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-arm64
 
+FROM ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub
+FROM --platform=amd64 ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub-arm64
+
+FROM ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot
+FROM --platform=amd64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-arm64
+
 FROM --platform=amd64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-arm64
 
@@ -91,6 +99,7 @@ FROM --platform=${BUILDPLATFORM} $IMPORTVET as importvet
 
 FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
 ENV PATH /toolchain/bin:/toolchain/go/bin
+ENV LD_LIBRARY_PATH /toolchain/lib
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
@@ -135,6 +144,15 @@ RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/structpro
     && go build -o structprotogen . \
     && mv structprotogen /toolchain/go/bin/
 COPY --from=importvet /importvet /toolchain/go/bin/importvet
+COPY ./hack/ukify /go/src/github.com/siderolabs/ukify
+RUN --mount=type=cache,target=/.cache \
+    --mount=type=bind,source=pkg,target=/go/src/github.com/pkg \
+    cd /go/src/github.com/siderolabs/ukify \
+    && CGO_ENABLED=1 go test ./... \
+    && go build -o gen-uki-certs ./gen-certs \
+    && CGO_ENABLED=1 go build -o ukify . \
+    && mv gen-uki-certs /toolchain/go/bin/ \
+    && mv ukify /toolchain/go/bin/
 
 # The build target creates a container that will be used to build Talos source
 # code.
@@ -444,7 +462,7 @@ COPY --from=talosctl-freebsd-arm64-build /talosctl-freebsd-arm64 /talosctl-freeb
 FROM scratch AS talosctl-windows-amd64
 COPY --from=talosctl-windows-amd64-build /talosctl-windows-amd64.exe /talosctl-windows-amd64.exe
 
-FROM --platform=${BUILDPLATFORM} talosctl-${TARGETOS}-${TARGETARCH} AS talosctl-platform
+FROM --platform=${BUILDPLATFORM} talosctl-${TARGETOS}-${TARGETARCH} AS talosctl-targetarch
 
 FROM scratch AS talosctl-all
 COPY --from=talosctl-linux-amd64 / /
@@ -843,7 +861,6 @@ FROM scratch AS integration-test-provision-linux
 COPY --from=integration-test-provision-linux-build /src/integration.test /integration-test-provision-linux-amd64
 
 # The module-sig-verify targets builds module-sig-verify binary.
-
 FROM build-go AS module-sig-verify-linux-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
@@ -857,8 +874,45 @@ RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64}
 FROM scratch AS module-sig-verify-linux
 COPY --from=module-sig-verify-linux-build /src/module-sig-verify/module-sig-verify /module-sig-verify-linux-amd64
 
-# The lint target performs linting on the source code.
+FROM --platform=${BUILDPLATFORM} tools AS gen-uki-certs
+RUN gen-uki-certs
 
+FROM scratch as uki-certs
+COPY --from=gen-uki-certs /_out /
+
+FROM --platform=${BUILDPLATFORM} tools AS uki-build-amd64
+WORKDIR /build
+COPY --from=pkg-sd-stub-amd64 / _out/
+COPY --from=pkg-sd-boot-amd64 / _out/
+COPY --from=pkg-kernel-amd64 /boot/vmlinuz _out/vmlinuz-amd64
+COPY --from=initramfs-archive-amd64 /initramfs.xz _out/initramfs-amd64.xz
+COPY _out/uki-certs _out/uki-certs
+RUN ukify
+
+FROM scratch AS uki-amd64
+COPY --from=uki-build-amd64 /build/_out/systemd-bootx64.efi.signed /systemd-bootx64.efi.signed
+COPY --from=uki-build-amd64 /build/_out/vmlinuz.efi /vmlinuz-amd64.signed.efi
+
+FROM --platform=${BUILDPLATFORM} tools AS uki-build-arm64
+WORKDIR /build
+COPY --from=pkg-sd-stub-arm64 / _out/
+COPY --from=pkg-sd-boot-arm64 / _out/
+COPY --from=pkg-kernel-arm64 /boot/vmlinuz _out/vmlinuz-arm64
+COPY --from=initramfs-archive-arm64 /initramfs.xz _out/initramfs-arm64.xz
+COPY _out/uki-certs _out/uki-certs
+RUN ukify \
+    -sd-stub _out/linuxaa64.efi.stub \
+    -sd-boot _out/systemd-bootaa64.efi \
+    -kernel _out/vmlinuz-arm64 \
+    -initrd _out/initramfs-arm64.xz
+
+FROM scratch AS uki-arm64
+COPY --from=uki-build-arm64 /build/_out/systemd-bootaa64.efi.signed /systemd-bootaa64.efi.signed
+COPY --from=uki-build-arm64 /build/_out/vmlinuz.efi /vmlinuz-arm64.signed.efi
+
+FROM --platform=${BUILDPLATFORM} uki-${TARGETARCH} AS uki
+
+# The lint target performs linting on the source code.
 FROM base AS lint-go
 COPY .golangci.yml .
 ENV GOGC 50
@@ -921,7 +975,7 @@ FROM base AS docs-build
 ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /src
-COPY --from=talosctl-platform /talosctl-${TARGETOS}-${TARGETARCH} /bin/talosctl
+COPY --from=talosctl-targetarch /talosctl-${TARGETOS}-${TARGETARCH} /bin/talosctl
 RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp \
     && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
 COPY ./pkg/machinery/config/types/v1alpha1/schemas/ /tmp/schemas/

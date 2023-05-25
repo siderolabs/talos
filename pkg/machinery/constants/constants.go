@@ -865,3 +865,12 @@ var DefaultDroppedCapabilities = map[string]struct{}{
 var UdevdDroppedCapabilities = map[string]struct{}{
 	"cap_sys_boot": {},
 }
+
+// OSReleaseTemplate is the template for /etc/os-release.
+const OSReleaseTemplate = `NAME="{{ .Name }}"
+ID={{ .ID }}
+VERSION_ID={{ .Version }}
+PRETTY_NAME="{{ .Name }} ({{ .Version }})"
+HOME_URL="https://www.talos.dev/"
+BUG_REPORT_URL="https://github.com/siderolabs/talos/issues"
+`

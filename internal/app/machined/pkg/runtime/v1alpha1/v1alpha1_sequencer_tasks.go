@@ -370,15 +370,6 @@ func WriteIMAPolicy(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "writeIMAPolicy"
 }
 
-const osReleaseTemplate = `
-NAME="{{ .Name }}"
-ID={{ .ID }}
-VERSION_ID={{ .Version }}
-PRETTY_NAME="{{ .Name }} ({{ .Version }})"
-HOME_URL="https://www.talos.dev/"
-BUG_REPORT_URL="https://github.com/siderolabs/talos/issues"
-`
-
 // OSRelease renders a valid /etc/os-release file and writes it to disk. The
 // node's OS Image field is reported by the node from /etc/os-release.
 func OSRelease() (err error) {
@@ -408,7 +399,7 @@ func OSRelease() (err error) {
 		Version: v,
 	}
 
-	tmpl, err = template.New("").Parse(osReleaseTemplate)
+	tmpl, err = template.New("").Parse(constants.OSReleaseTemplate)
 	if err != nil {
 		return err
 	}
