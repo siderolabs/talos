@@ -23,6 +23,7 @@ import (
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -71,44 +72,46 @@ func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineKubelet: &v1alpha1.KubeletConfig{
-					KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
-						KubeletNodeIPValidSubnets: []string{"10.0.0.0/24"},
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
+							KubeletNodeIPValidSubnets: []string{"10.0.0.0/24"},
+						},
 					},
-				},
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkInterfaces: []*v1alpha1.Device{
-						{
-							DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
-								SharedIP: "1.2.3.4",
-							},
-							DeviceVlans: []*v1alpha1.Vlan{
-								{
-									VlanID: 100,
-									VlanVIP: &v1alpha1.DeviceVIPConfig{
-										SharedIP: "5.6.7.8",
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+									SharedIP: "1.2.3.4",
+								},
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID: 100,
+										VlanVIP: &v1alpha1.DeviceVIPConfig{
+											SharedIP: "5.6.7.8",
+										},
 									},
 								},
 							},
 						},
 					},
 				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+						ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
+						PodSubnet:     []string{constants.DefaultIPv4PodNet},
 					},
 				},
-				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-					ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
-					PodSubnet:     []string{constants.DefaultIPv4PodNet},
-				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -152,21 +155,23 @@ func (suite *NodeIPConfigSuite) TestReconcileDefaults() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+						ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
+						PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
 					},
 				},
-				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-					ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
-					PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
-				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))

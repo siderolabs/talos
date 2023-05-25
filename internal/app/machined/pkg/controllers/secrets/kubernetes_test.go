@@ -20,7 +20,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"

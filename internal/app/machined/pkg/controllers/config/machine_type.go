@@ -14,7 +14,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 

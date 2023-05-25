@@ -20,8 +20,9 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -54,17 +55,19 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.setupMachine(cfg)
@@ -96,17 +99,19 @@ func (suite *K8sControlPlaneSuite) TestReconcileTransitionWorker() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.setupMachine(cfg)
@@ -131,21 +136,23 @@ func (suite *K8sControlPlaneSuite) TestReconcileIPv6() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+						PodSubnet:     []string{constants.DefaultIPv6PodNet},
+						ServiceSubnet: []string{constants.DefaultIPv6ServiceNet},
 					},
 				},
-				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-					PodSubnet:     []string{constants.DefaultIPv6PodNet},
-					ServiceSubnet: []string{constants.DefaultIPv6ServiceNet},
-				},
 			},
-		},
+		),
 	)
 
 	suite.setupMachine(cfg)
@@ -163,21 +170,23 @@ func (suite *K8sControlPlaneSuite) TestReconcileDualStack() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+						PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
+						ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
 					},
 				},
-				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-					PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
-					ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
-				},
 			},
-		},
+		),
 	)
 
 	suite.setupMachine(cfg)
@@ -195,29 +204,31 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
-					},
-				},
-				APIServerConfig: &v1alpha1.APIServerConfig{
-					ExtraVolumesConfig: []v1alpha1.VolumeMountConfig{
-						{
-							VolumeHostPath:  "/var/lib",
-							VolumeMountPath: "/var/foo/",
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
 						},
-						{
-							VolumeHostPath:  "/var/lib/a.foo",
-							VolumeMountPath: "/var/foo/b.foo",
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						ExtraVolumesConfig: []v1alpha1.VolumeMountConfig{
+							{
+								VolumeHostPath:  "/var/lib",
+								VolumeMountPath: "/var/foo/",
+							},
+							{
+								VolumeHostPath:  "/var/lib/a.foo",
+								VolumeMountPath: "/var/foo/b.foo",
+							},
 						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.setupMachine(cfg)
@@ -251,22 +262,24 @@ func (suite *K8sControlPlaneSuite) TestReconcileEnvironment() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
-				},
-				APIServerConfig: &v1alpha1.APIServerConfig{
-					EnvConfig: v1alpha1.Env{
-						"HTTP_PROXY": "foo",
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						EnvConfig: v1alpha1.Env{
+							"HTTP_PROXY": "foo",
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.setupMachine(cfg)
@@ -289,24 +302,26 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
-				},
-				ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-					ExternalEnabled: pointer.To(true),
-					ExternalManifests: []string{
-						"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
-						"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
+						ExternalEnabled: pointer.To(true),
+						ExternalManifests: []string{
+							"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
+							"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.setupMachine(cfg)
@@ -351,30 +366,32 @@ func (suite *K8sControlPlaneSuite) TestReconcileInlineManifests() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
-				},
-				ClusterInlineManifests: v1alpha1.ClusterInlineManifests{
-					{
-						InlineManifestName: "namespace-ci",
-						InlineManifestContents: strings.TrimSpace(
-							`
+					ClusterInlineManifests: v1alpha1.ClusterInlineManifests{
+						{
+							InlineManifestName: "namespace-ci",
+							InlineManifestContents: strings.TrimSpace(
+								`
 apiVersion: v1
 kind: Namespace
 metadata:
 	name: ci
 `,
-						),
+							),
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.setupMachine(cfg)

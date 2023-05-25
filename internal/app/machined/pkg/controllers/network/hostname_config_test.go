@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -116,7 +117,7 @@ func (suite *HostnameConfigSuite) TestDefaultIPBasedHostname() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{ConfigVersion: "v1alpha1"})
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{ConfigVersion: "v1alpha1"}))
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	defaultAddress := network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
@@ -141,14 +142,16 @@ func (suite *HostnameConfigSuite) TestDefaultStableHostname() {
 	suite.startRuntime()
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineFeatures: &v1alpha1.FeaturesConfig{
-					StableHostname: pointer.To(true),
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineFeatures: &v1alpha1.FeaturesConfig{
+						StableHostname: pointer.To(true),
+					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -198,21 +201,23 @@ func (suite *HostnameConfigSuite) TestMachineConfiguration() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkHostname: "foo",
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkHostname: "foo",
+					},
 				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -228,7 +233,7 @@ func (suite *HostnameConfigSuite) TestMachineConfiguration() {
 	)
 
 	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
-		r.Config().(*v1alpha1.Config).MachineConfig.MachineNetwork.NetworkHostname = strings.Repeat("a", 128)
+		r.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NetworkHostname = strings.Repeat("a", 128)
 
 		return nil
 	})
@@ -249,28 +254,6 @@ func (suite *HostnameConfigSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(
-		context.Background(), config.NewMachineConfig(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
-			},
-		),
-	)
-	if state.IsConflictError(err) {
-		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
-	}
-
-	suite.Require().NoError(err)
-
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewNodeAddress(network.NamespaceName, "bar"),
-		),
-	)
 }
 
 func TestHostnameConfigSuite(t *testing.T) {

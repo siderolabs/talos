@@ -631,14 +631,6 @@ func (suite *ControlPlaneStaticPodSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, "-"),
-		),
-	)
 }
 
 func TestControlPlaneStaticPodSuite(t *testing.T) {

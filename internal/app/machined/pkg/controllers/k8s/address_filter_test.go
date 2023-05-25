@@ -24,6 +24,7 @@ import (
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -91,27 +92,29 @@ func (suite *K8sAddressFilterSuite) TestReconcile() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
-				},
-				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-					ServiceSubnet: []string{
-						"10.200.0.0/22",
-						"fd40:10:200::/112",
-					},
-					PodSubnet: []string{
-						"10.32.0.0/12",
-						"fd00:10:32::/102",
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+						ServiceSubnet: []string{
+							"10.200.0.0/22",
+							"fd40:10:200::/112",
+						},
+						PodSubnet: []string{
+							"10.32.0.0/12",
+							"fd00:10:32::/102",
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 

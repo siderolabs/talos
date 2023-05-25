@@ -153,11 +153,12 @@ func (suite *EtcFileSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), files.NewEtcFileSpec(files.NamespaceName, "bar")))
 }
 
 func TestEtcFileSuite(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("requires root")
+	}
+
 	suite.Run(t, new(EtcFileSuite))
 }

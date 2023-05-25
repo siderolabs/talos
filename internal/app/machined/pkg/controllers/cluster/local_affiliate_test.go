@@ -17,7 +17,7 @@ import (
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"

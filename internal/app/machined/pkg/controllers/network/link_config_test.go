@@ -28,6 +28,7 @@ import (
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -150,101 +151,103 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkInterfaces: []*v1alpha1.Device{
-						{
-							DeviceInterface: "eth0",
-							DeviceVlans: []*v1alpha1.Vlan{
-								{
-									VlanID:  24,
-									VlanMTU: 1000,
-									VlanAddresses: []string{
-										"10.0.0.1/8",
-									},
-								},
-								{
-									VlanID: 48,
-									VlanAddresses: []string{
-										"10.0.0.2/8",
-									},
-								},
-							},
-						},
-						{
-							DeviceInterface: "eth1",
-							DeviceAddresses: []string{"192.168.0.24/28"},
-						},
-						{
-							DeviceInterface: "eth1",
-							DeviceMTU:       9001,
-						},
-						{
-							DeviceIgnore:    pointer.To(true),
-							DeviceInterface: "eth2",
-							DeviceAddresses: []string{"192.168.0.24/28"},
-						},
-						{
-							DeviceInterface: "eth2",
-						},
-						{
-							DeviceInterface: "bond0",
-							DeviceBond: &v1alpha1.Bond{
-								BondInterfaces: []string{"eth2", "eth3"},
-								BondMode:       "balance-xor",
-							},
-						},
-						{
-							DeviceInterface: "bond1",
-							DeviceBond: &v1alpha1.Bond{
-								BondDeviceSelectors: []v1alpha1.NetworkDeviceSelector{{
-									NetworkDeviceKernelDriver: kernelDriver,
-								}},
-								BondMode: "balance-xor",
-							},
-						},
-						{
-							DeviceInterface: "eth4",
-							DeviceAddresses: []string{"192.168.0.42/24"},
-						},
-						{
-							DeviceInterface: "eth5",
-							DeviceAddresses: []string{"192.168.0.43/24"},
-						},
-						{
-							DeviceInterface: "br0",
-							DeviceBridge: &v1alpha1.Bridge{
-								BridgedInterfaces: []string{"eth4", "eth5"},
-								BridgeSTP: &v1alpha1.STP{
-									STPEnabled: pointer.To(false),
-								},
-							},
-						},
-						{
-							DeviceInterface: "br0",
-							DeviceBridge: &v1alpha1.Bridge{
-								BridgeSTP: &v1alpha1.STP{
-									STPEnabled: pointer.To(true),
-								},
-							},
-						},
-						{
-							DeviceInterface: "dummy0",
-							DeviceDummy:     pointer.To(true),
-						},
-						{
-							DeviceInterface: "wireguard0",
-							DeviceWireguardConfig: &v1alpha1.DeviceWireguardConfig{
-								WireguardPrivateKey: "ABC",
-								WireguardPeers: []*v1alpha1.DeviceWireguardPeer{
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceVlans: []*v1alpha1.Vlan{
 									{
-										WireguardPublicKey: "DEF",
-										WireguardEndpoint:  "10.0.0.1:3000",
-										WireguardAllowedIPs: []string{
-											"10.2.3.0/24",
-											"10.2.4.0/24",
+										VlanID:  24,
+										VlanMTU: 1000,
+										VlanAddresses: []string{
+											"10.0.0.1/8",
+										},
+									},
+									{
+										VlanID: 48,
+										VlanAddresses: []string{
+											"10.0.0.2/8",
+										},
+									},
+								},
+							},
+							{
+								DeviceInterface: "eth1",
+								DeviceAddresses: []string{"192.168.0.24/28"},
+							},
+							{
+								DeviceInterface: "eth1",
+								DeviceMTU:       9001,
+							},
+							{
+								DeviceIgnore:    pointer.To(true),
+								DeviceInterface: "eth2",
+								DeviceAddresses: []string{"192.168.0.24/28"},
+							},
+							{
+								DeviceInterface: "eth2",
+							},
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{"eth2", "eth3"},
+									BondMode:       "balance-xor",
+								},
+							},
+							{
+								DeviceInterface: "bond1",
+								DeviceBond: &v1alpha1.Bond{
+									BondDeviceSelectors: []v1alpha1.NetworkDeviceSelector{{
+										NetworkDeviceKernelDriver: kernelDriver,
+									}},
+									BondMode: "balance-xor",
+								},
+							},
+							{
+								DeviceInterface: "eth4",
+								DeviceAddresses: []string{"192.168.0.42/24"},
+							},
+							{
+								DeviceInterface: "eth5",
+								DeviceAddresses: []string{"192.168.0.43/24"},
+							},
+							{
+								DeviceInterface: "br0",
+								DeviceBridge: &v1alpha1.Bridge{
+									BridgedInterfaces: []string{"eth4", "eth5"},
+									BridgeSTP: &v1alpha1.STP{
+										STPEnabled: pointer.To(false),
+									},
+								},
+							},
+							{
+								DeviceInterface: "br0",
+								DeviceBridge: &v1alpha1.Bridge{
+									BridgeSTP: &v1alpha1.STP{
+										STPEnabled: pointer.To(true),
+									},
+								},
+							},
+							{
+								DeviceInterface: "dummy0",
+								DeviceDummy:     pointer.To(true),
+							},
+							{
+								DeviceInterface: "wireguard0",
+								DeviceWireguardConfig: &v1alpha1.DeviceWireguardConfig{
+									WireguardPrivateKey: "ABC",
+									WireguardPeers: []*v1alpha1.DeviceWireguardPeer{
+										{
+											WireguardPublicKey: "DEF",
+											WireguardEndpoint:  "10.0.0.1:3000",
+											WireguardAllowedIPs: []string{
+												"10.2.3.0/24",
+												"10.2.4.0/24",
+											},
 										},
 									},
 								},
@@ -252,15 +255,15 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 						},
 					},
 				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -393,48 +396,50 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkInterfaces: []*v1alpha1.Device{
-						{
-							DeviceInterface: "eth0",
-							DeviceVlans: []*v1alpha1.Vlan{
-								{
-									VlanID: 24,
-									VlanAddresses: []string{
-										"10.0.0.1/8",
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID: 24,
+										VlanAddresses: []string{
+											"10.0.0.1/8",
+										},
 									},
-								},
-								{
-									VlanID: 48,
-									VlanAddresses: []string{
-										"10.0.0.2/8",
+									{
+										VlanID: 48,
+										VlanAddresses: []string{
+											"10.0.0.2/8",
+										},
 									},
 								},
 							},
-						},
-						{
-							DeviceInterface: "bond0",
-							DeviceBond: &v1alpha1.Bond{
-								BondInterfaces: []string{
-									"eth3",
-									"eth4",
+							{
+								DeviceInterface: "bond0",
+								DeviceBond: &v1alpha1.Bond{
+									BondInterfaces: []string{
+										"eth3",
+										"eth4",
+									},
 								},
 							},
 						},
 					},
 				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -472,28 +477,6 @@ func (suite *LinkConfigSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(
-		context.Background(), config.NewMachineConfig(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
-			},
-		),
-	)
-	if state.IsConflictError(err) {
-		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
-	}
-
-	suite.Require().NoError(err)
-
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewLinkStatus(network.NamespaceName, "bar"),
-		),
-	)
 }
 
 func TestLinkConfigSuite(t *testing.T) {

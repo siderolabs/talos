@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/bundle"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 func TestGenerateConfig(t *testing.T) {
@@ -35,7 +35,7 @@ func TestGenerateConfig(t *testing.T) {
 
 	configBundleOpts = append(configBundleOpts, bundle.WithPatch(patches))
 
-	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
+	configBundle, err := bundle.NewBundle(configBundleOpts...)
 	require.NoError(t, err)
 
 	tempDir := t.TempDir()

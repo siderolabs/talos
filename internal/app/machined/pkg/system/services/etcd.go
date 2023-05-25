@@ -46,7 +46,7 @@ import (
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/logging"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"

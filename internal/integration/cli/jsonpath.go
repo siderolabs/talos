@@ -13,7 +13,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // JSONPathSuite verifies dmesg command.

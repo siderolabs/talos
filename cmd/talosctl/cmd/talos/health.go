@@ -21,7 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/cluster/sonobuoy"
 	clusterapi "github.com/siderolabs/talos/pkg/machinery/api/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	clusterres "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 

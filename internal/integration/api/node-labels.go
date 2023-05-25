@@ -17,7 +17,8 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // NodeLabelsSuite verifies updating node labels via machine config.
@@ -167,7 +168,7 @@ func (suite *NodeLabelsSuite) setNodeLabels(nodeIP string, nodeLabels map[string
 
 	nodeConfigRaw.MachineConfig.MachineNodeLabels = nodeLabels
 
-	bytes, err := nodeConfigRaw.Bytes()
+	bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
 	suite.Require().NoError(err)
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{

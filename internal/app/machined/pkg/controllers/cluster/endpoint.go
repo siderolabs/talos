@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )

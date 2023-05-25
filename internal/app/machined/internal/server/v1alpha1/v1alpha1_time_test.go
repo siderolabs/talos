@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/grpc/factory"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -39,13 +40,13 @@ type mockConfigProvider struct {
 }
 
 func (provider *mockConfigProvider) Config() config.Config {
-	return &v1alpha1.Config{
+	return container.NewV1Alpha1(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineTime: &v1alpha1.TimeConfig{
 				TimeServers: []string{provider.timeServer},
 			},
 		},
-	}
+	})
 }
 
 func (suite *TimedSuite) TestTime() {

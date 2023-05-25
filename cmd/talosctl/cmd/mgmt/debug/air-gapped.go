@@ -96,7 +96,7 @@ func generateConfigPatch(caPEM []byte) error {
 		},
 	}
 
-	patchBytes, err := patch.EncodeBytes(encoder.WithComments(encoder.CommentsDisabled))
+	patchBytes, err := encoder.NewEncoder(patch, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	if err != nil {
 		return err
 	}

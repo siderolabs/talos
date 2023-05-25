@@ -32,12 +32,12 @@ import (
 	"github.com/siderolabs/talos/pkg/images"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/bundle"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -333,7 +333,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 
 		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(inputDir))
 	} else {
-		genOptions := []generate.GenOption{
+		genOptions := []generate.Option{
 			generate.WithInstallImage(nodeInstallImage),
 			generate.WithDebug(configDebug),
 			generate.WithDNSDomain(dnsDomain),
@@ -530,7 +530,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		return err
 	}
 
-	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
+	configBundle, err := bundle.NewBundle(configBundleOpts...)
 	if err != nil {
 		return err
 	}

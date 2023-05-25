@@ -18,6 +18,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	configs "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -29,7 +31,7 @@ type DeviceConfigSpecSuite struct {
 }
 
 func (suite *DeviceConfigSpecSuite) TestDeviceConfigs() {
-	cfgProvider := &v1alpha1.Config{
+	cfgProvider := container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
@@ -54,13 +56,13 @@ func (suite *DeviceConfigSpecSuite) TestDeviceConfigs() {
 				},
 			},
 		},
-	}
+	})
 
 	cfg := config.NewMachineConfig(cfgProvider)
 
-	devices := map[string]*v1alpha1.Device{}
-	for index, item := range cfgProvider.MachineConfig.MachineNetwork.NetworkInterfaces {
-		devices[fmt.Sprintf("%s/%03d", item.DeviceInterface, index)] = item
+	devices := map[string]configs.Device{}
+	for index, item := range cfgProvider.Machine().Network().Devices() {
+		devices[fmt.Sprintf("%s/%03d", item.Interface(), index)] = item
 	}
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
@@ -75,7 +77,7 @@ func (suite *DeviceConfigSpecSuite) TestDeviceConfigs() {
 func (suite *DeviceConfigSpecSuite) TestSelectors() {
 	kernelDriver := "thedriver"
 
-	cfgProvider := &v1alpha1.Config{
+	cfgProvider := container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
@@ -90,7 +92,7 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 				},
 			},
 		},
-	}
+	})
 
 	cfg := config.NewMachineConfig(cfgProvider)
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
@@ -111,7 +113,7 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 }
 
 func (suite *DeviceConfigSpecSuite) TestBondSelectors() {
-	cfgProvider := &v1alpha1.Config{
+	cfgProvider := container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
@@ -135,7 +137,7 @@ func (suite *DeviceConfigSpecSuite) TestBondSelectors() {
 				},
 			},
 		},
-	}
+	})
 
 	cfg := config.NewMachineConfig(cfgProvider)
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))

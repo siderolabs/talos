@@ -6,6 +6,7 @@ package configpatcher
 
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
 
@@ -15,6 +16,8 @@ type StrategicMergePatch struct {
 }
 
 // StrategicMerge performs strategic merge config patching.
+//
+// TODO: this will drop any extra non-v1alpha1 documents.
 func StrategicMerge(cfg config.Provider, patch StrategicMergePatch) (config.Provider, error) {
 	left := cfg.RawV1Alpha1()
 	right := patch.RawV1Alpha1()
@@ -23,5 +26,5 @@ func StrategicMerge(cfg config.Provider, patch StrategicMergePatch) (config.Prov
 		return nil, err
 	}
 
-	return left, nil
+	return container.New(left)
 }

@@ -10,7 +10,7 @@ import (
 	"regexp"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // StatsSuite verifies dmesg command.

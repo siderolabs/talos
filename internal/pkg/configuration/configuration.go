@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
@@ -17,9 +18,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
-	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -37,7 +39,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 	case "v1alpha1":
 		machineType := v1alpha1machine.Type(in.MachineConfig.Type)
 
-		options := []generate.GenOption{}
+		options := []generate.Option{}
 
 		if in.MachineConfig.NetworkConfig != nil {
 			networkConfig := &v1alpha1.NetworkConfig{
@@ -107,34 +109,35 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 			cfgBytes      []byte
 			taloscfgBytes []byte
 			baseConfig    config.Provider
-			secrets       *generate.SecretsBundle
+			secretsBundle *secrets.Bundle
 		)
 
 		baseConfig, err = configloader.NewFromFile(constants.ConfigPath)
 
-		clock := generate.NewClock()
+		clock := secrets.NewFixedClock(time.Now())
 
 		if in.OverrideTime != nil {
-			clock.SetFixedTimestamp(in.OverrideTime.AsTime())
+			clock = secrets.NewFixedClock(in.OverrideTime.AsTime())
 		}
 
 		switch {
 		case os.IsNotExist(err):
-			secrets, err = generate.NewSecretsBundle(clock)
+			secretsBundle, err = secrets.NewBundle(clock, config.TalosVersionCurrent)
 			if err != nil {
 				return nil, err
 			}
 		case err != nil:
 			return nil, err
 		default:
-			secrets = generate.NewSecretsBundleFromConfig(clock, baseConfig)
+			secretsBundle = secrets.NewBundleFromConfig(clock, baseConfig)
 		}
+
+		options = append(options, generate.WithSecretsBundle(secretsBundle))
 
 		input, err = generate.NewInput(
 			in.ClusterConfig.Name,
 			in.ClusterConfig.ControlPlane.Endpoint,
 			in.MachineConfig.KubernetesVersion,
-			secrets,
 			options...,
 		)
 
@@ -142,10 +145,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 			return nil, err
 		}
 
-		c, err = generate.Config(
-			machineType,
-			input,
-		)
+		c, err = input.Config(machineType)
 
 		if err != nil {
 			return nil, err
@@ -157,7 +157,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 			return nil, err
 		}
 
-		talosconfig, err := generate.Talosconfig(input, options...)
+		talosconfig, err := input.Talosconfig()
 		if err != nil {
 			return nil, err
 		}

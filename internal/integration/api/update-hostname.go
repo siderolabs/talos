@@ -19,7 +19,8 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // UpdateHostnameSuite verifies UpdateHostname API.
@@ -146,7 +147,7 @@ func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, newHos
 
 	nodeConfigRaw.MachineConfig.MachineNetwork.NetworkHostname = newHostname
 
-	bytes, err := nodeConfigRaw.Bytes()
+	bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
 	if err != nil {
 		return err
 	}

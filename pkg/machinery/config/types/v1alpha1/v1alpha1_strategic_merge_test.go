@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -53,7 +54,10 @@ func testMerge(path string) func(t *testing.T) {
 		err := merge.Merge(result, right)
 		require.NoError(t, err)
 
-		marshaled, err := result.EncodeString(encoder.WithComments(encoder.CommentsDisabled))
+		ctr, err := container.New(result)
+		require.NoError(t, err)
+
+		marshaled, err := ctr.EncodeString(encoder.WithComments(encoder.CommentsDisabled))
 		require.NoError(t, err)
 
 		assert.Equal(t, expected, result, "got:\n%v", marshaled)

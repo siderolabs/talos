@@ -17,7 +17,7 @@ import (
 	clusterpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 	networkpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/network"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"

@@ -19,7 +19,7 @@ import (
 
 	k8s "github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // ClientProvider builds Talos client by endpoint.

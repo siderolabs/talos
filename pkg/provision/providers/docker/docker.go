@@ -13,8 +13,8 @@ import (
 
 	"github.com/docker/docker/client"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -46,7 +46,7 @@ func (p *provisioner) Close() error {
 }
 
 // GenOptions provides a list of additional config generate options.
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
+func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.Option {
 	nameservers := make([]string, 0, len(networkReq.Nameservers))
 
 	hasV4 := false
@@ -69,7 +69,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 		}
 	}
 
-	return []generate.GenOption{
+	return []generate.Option{
 		generate.WithNetworkOptions(
 			v1alpha1.WithNetworkInterfaceIgnore("eth0"),
 			v1alpha1.WithNetworkNameservers(nameservers...),

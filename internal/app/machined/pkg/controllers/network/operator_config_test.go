@@ -27,6 +27,7 @@ import (
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -227,64 +228,66 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkInterfaces: []*v1alpha1.Device{
-						{
-							DeviceInterface: "eth0",
-						},
-						{
-							DeviceInterface: "eth1",
-							DeviceDHCP:      pointer.To(true),
-						},
-						{
-							DeviceIgnore:    pointer.To(true),
-							DeviceInterface: "eth2",
-							DeviceDHCP:      pointer.To(true),
-						},
-						{
-							DeviceInterface: "eth3",
-							DeviceDHCP:      pointer.To(true),
-							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-								DHCPIPv4:        pointer.To(true),
-								DHCPRouteMetric: 256,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth0",
 							},
-						},
-						{
-							DeviceInterface: "eth4",
-							DeviceVlans: []*v1alpha1.Vlan{
-								{
-									VlanID:   25,
-									VlanDHCP: pointer.To(true),
+							{
+								DeviceInterface: "eth1",
+								DeviceDHCP:      pointer.To(true),
+							},
+							{
+								DeviceIgnore:    pointer.To(true),
+								DeviceInterface: "eth2",
+								DeviceDHCP:      pointer.To(true),
+							},
+							{
+								DeviceInterface: "eth3",
+								DeviceDHCP:      pointer.To(true),
+								DeviceDHCPOptions: &v1alpha1.DHCPOptions{
+									DHCPIPv4:        pointer.To(true),
+									DHCPRouteMetric: 256,
 								},
-								{
-									VlanID: 26,
-								},
-								{
-									VlanID: 27,
-									VlanDHCPOptions: &v1alpha1.DHCPOptions{
-										DHCPRouteMetric: 256,
+							},
+							{
+								DeviceInterface: "eth4",
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID:   25,
+										VlanDHCP: pointer.To(true),
+									},
+									{
+										VlanID: 26,
+									},
+									{
+										VlanID: 27,
+										VlanDHCPOptions: &v1alpha1.DHCPOptions{
+											DHCPRouteMetric: 256,
+										},
 									},
 								},
 							},
+							{
+								DeviceInterface: "eth5",
+								DeviceDHCP:      pointer.To(true),
+							},
 						},
-						{
-							DeviceInterface: "eth5",
-							DeviceDHCP:      pointer.To(true),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
 						},
 					},
 				},
 			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
-					},
-				},
-			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -344,44 +347,46 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkInterfaces: []*v1alpha1.Device{
-						{
-							DeviceInterface: "eth1",
-							DeviceDHCP:      pointer.To(true),
-							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-								DHCPIPv4: pointer.To(true),
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth1",
+								DeviceDHCP:      pointer.To(true),
+								DeviceDHCPOptions: &v1alpha1.DHCPOptions{
+									DHCPIPv4: pointer.To(true),
+								},
 							},
-						},
-						{
-							DeviceInterface: "eth2",
-							DeviceDHCP:      pointer.To(true),
-							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-								DHCPIPv6: pointer.To(true),
+							{
+								DeviceInterface: "eth2",
+								DeviceDHCP:      pointer.To(true),
+								DeviceDHCPOptions: &v1alpha1.DHCPOptions{
+									DHCPIPv6: pointer.To(true),
+								},
 							},
-						},
-						{
-							DeviceInterface: "eth3",
-							DeviceDHCP:      pointer.To(true),
-							DeviceDHCPOptions: &v1alpha1.DHCPOptions{
-								DHCPIPv6:        pointer.To(true),
-								DHCPRouteMetric: 512,
+							{
+								DeviceInterface: "eth3",
+								DeviceDHCP:      pointer.To(true),
+								DeviceDHCPOptions: &v1alpha1.DHCPOptions{
+									DHCPIPv6:        pointer.To(true),
+									DHCPRouteMetric: 512,
+								},
 							},
 						},
 					},
 				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -424,28 +429,6 @@ func (suite *OperatorConfigSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(
-		context.Background(), config.NewMachineConfig(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
-			},
-		),
-	)
-	if state.IsConflictError(err) {
-		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
-	}
-
-	suite.Require().NoError(err)
-
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewLinkStatus(network.ConfigNamespaceName, "bar"),
-		),
-	)
 }
 
 func TestOperatorConfigSuite(t *testing.T) {

@@ -19,6 +19,10 @@ import (
 func callMethods(t testing.TB, obj reflect.Value, chain ...string) {
 	t.Helper()
 
+	if obj.Kind() == reflect.Interface && obj.IsNil() {
+		return
+	}
+
 	typ := obj.Type()
 
 	for i := 0; i < obj.NumMethod(); i++ {

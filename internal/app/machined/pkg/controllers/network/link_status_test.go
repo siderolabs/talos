@@ -12,6 +12,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -200,6 +201,10 @@ func (suite *LinkStatusSuite) TestLoopbackInterface() {
 }
 
 func (suite *LinkStatusSuite) TestDummyInterface() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("requires root")
+	}
+
 	dummyInterface := suite.uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
@@ -287,6 +292,10 @@ func (suite *LinkStatusSuite) TestDummyInterface() {
 }
 
 func (suite *LinkStatusSuite) TestBridgeInterface() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("requires root")
+	}
+
 	bridgeInterface := suite.uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
@@ -352,14 +361,6 @@ func (suite *LinkStatusSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewLinkRefresh(network.NamespaceName, "bar"),
-		),
-	)
 }
 
 func TestLinkStatusSuite(t *testing.T) {

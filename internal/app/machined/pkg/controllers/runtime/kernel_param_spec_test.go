@@ -6,6 +6,7 @@ package runtime_test
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -108,5 +109,9 @@ func (suite *KernelParamSpecSuite) TestParamsUnsupported() {
 }
 
 func TestKernelParamSpecSuite(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("skipping test because it requires root privileges")
+	}
+
 	suite.Run(t, new(KernelParamSpecSuite))
 }

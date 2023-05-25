@@ -23,8 +23,9 @@ import (
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -102,11 +103,12 @@ func (suite *NodeLabelsSuite) setupMachineType() {
 
 func mcWithNodeLabels(labels map[string]string) *config.MachineConfig {
 	return config.NewMachineConfig(
-		&v1alpha1.Config{
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNodeLabels: labels,
-			},
-		})
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNodeLabels: labels,
+				},
+			}))
 }
 
 func (suite *NodeLabelsSuite) createNodeLabelsConfig(labels map[string]string) {

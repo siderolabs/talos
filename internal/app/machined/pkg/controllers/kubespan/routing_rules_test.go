@@ -4,6 +4,7 @@
 package kubespan_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,10 @@ import (
 )
 
 func TestRoutingRules(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("requires root")
+	}
+
 	// use a different table/mark to avoid conflicts with running kubespan
 	mgr := kubespan.NewRulesManager(constants.KubeSpanDefaultRoutingTable+10, constants.KubeSpanDefaultForceFirewallMark<<1, constants.KubeSpanDefaultFirewallMask<<1)
 

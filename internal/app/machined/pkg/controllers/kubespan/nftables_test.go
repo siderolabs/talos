@@ -5,6 +5,7 @@ package kubespan_test
 
 import (
 	"net/netip"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,10 @@ import (
 )
 
 func TestNfTables(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("requires root")
+	}
+
 	// use a different mark to avoid conflicts with running kubespan
 	mgr := kubespan.NewNfTablesManager(
 		constants.KubeSpanDefaultFirewallMark<<1,

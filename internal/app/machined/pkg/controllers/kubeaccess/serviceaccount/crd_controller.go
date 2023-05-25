@@ -43,7 +43,7 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -639,7 +639,7 @@ func (t *CRDController) newSecret(talosSA *unstructured.Unstructured, roles role
 func (t *CRDController) generateTalosconfig(roles role.Set) ([]byte, error) {
 	var newCert *x509.PEMEncodedCertificateAndKey
 
-	newCert, err := generate.NewAdminCertificateAndKey(time.Now(), t.talosCA, roles, certTTL)
+	newCert, err := secrets.NewAdminCertificateAndKey(time.Now(), t.talosCA, roles, certTTL)
 	if err != nil {
 		return nil, err
 	}

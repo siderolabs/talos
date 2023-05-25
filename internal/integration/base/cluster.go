@@ -10,7 +10,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 
 	"github.com/siderolabs/talos/pkg/cluster"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 type infoWrapper struct {

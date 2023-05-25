@@ -11,4 +11,5 @@ type Config interface {
 	Persist() bool
 	Machine() MachineConfig
 	Cluster() ClusterConfig
+	SideroLink() SideroLinkConfig
 }

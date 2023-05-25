@@ -15,8 +15,9 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	etcdctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 )
@@ -148,7 +149,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 	} {
 		suite.Run(tt.name, func() {
-			cfg := &v1alpha1.Config{
+			cfg := container.NewV1Alpha1(&v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					EtcdConfig: tt.etcdConfig,
 				},
@@ -157,7 +158,7 @@ func (suite *ConfigSuite) TestReconcile() {
 						NetworkInterfaces: tt.networkConfig,
 					},
 				},
-			}
+			})
 
 			machineConfig := config.NewMachineConfig(cfg)
 			suite.Require().NoError(suite.State().Create(suite.Ctx(), machineConfig))

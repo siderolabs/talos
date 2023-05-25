@@ -7,12 +7,13 @@ package gen
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 )
 
 var genSecretsCmdFlags struct {
@@ -30,7 +31,7 @@ var genSecretsCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
-			secretsBundle   *generate.SecretsBundle
+			secretsBundle   *secrets.Bundle
 			versionContract *config.VersionContract
 			err             error
 		)
@@ -43,7 +44,7 @@ var genSecretsCmd = &cobra.Command{
 		}
 
 		if genSecretsCmdFlags.fromKubernetesPki != "" {
-			secretsBundle, err = generate.NewSecretsBundleFromKubernetesPKI(genSecretsCmdFlags.fromKubernetesPki,
+			secretsBundle, err = secrets.NewBundleFromKubernetesPKI(genSecretsCmdFlags.fromKubernetesPki,
 				genSecretsCmdFlags.kubernetesBootstrapToken, versionContract)
 			if err != nil {
 				return fmt.Errorf("failed to create secrets bundle: %w", err)
@@ -52,8 +53,8 @@ var genSecretsCmd = &cobra.Command{
 			return writeSecretsBundleToFile(secretsBundle)
 		}
 
-		secretsBundle, err = generate.NewSecretsBundle(generate.NewClock(),
-			generate.WithVersionContract(versionContract),
+		secretsBundle, err = secrets.NewBundle(secrets.NewFixedClock(time.Now()),
+			versionContract,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create secrets bundle: %w", err)
@@ -63,7 +64,7 @@ var genSecretsCmd = &cobra.Command{
 	},
 }
 
-func writeSecretsBundleToFile(bundle *generate.SecretsBundle) error {
+func writeSecretsBundleToFile(bundle *secrets.Bundle) error {
 	bundleBytes, err := yaml.Marshal(bundle)
 	if err != nil {
 		return err

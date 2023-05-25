@@ -12,7 +12,6 @@ import (
 	configpb "github.com/siderolabs/talos/pkg/machinery/api/resource/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
@@ -61,14 +60,10 @@ func (r *MachineConfig) Spec() interface{} {
 
 // DeepCopy implements resource.Resource.
 func (r *MachineConfig) DeepCopy() resource.Resource {
-	var cfgCopy config.Provider
+	cfgCopy := r.spec.cfg
 
-	switch r.spec.cfg.(type) {
-	case *v1alpha1.ReadonlyProvider:
-		// don't copy read only config
-		cfgCopy = r.spec.cfg
-	default:
-		cfgCopy = r.spec.cfg.RawV1Alpha1().DeepCopy()
+	if !cfgCopy.Readonly() {
+		cfgCopy = cfgCopy.Clone()
 	}
 
 	return &MachineConfig{

@@ -13,12 +13,13 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 )
 
 // GenSuite verifies gen command.
@@ -261,19 +262,19 @@ func (suite *GenSuite) TestSecretsWithPKIDirAndToken() {
 	secretsYaml, err := os.ReadFile(path)
 	suite.Assert().NoError(err)
 
-	var secrets generate.SecretsBundle
+	var secretsBundle secrets.Bundle
 
-	err = yaml.Unmarshal(secretsYaml, &secrets)
+	err = yaml.Unmarshal(secretsYaml, &secretsBundle)
 	suite.Assert().NoError(err)
 
-	suite.Assert().Equal("test-token", secrets.Secrets.BootstrapToken, "bootstrap token does not match")
-	suite.Assert().Equal(pkiCACrt, secrets.Certs.K8s.Crt, "k8s ca cert does not match")
-	suite.Assert().Equal(pkiCAKey, secrets.Certs.K8s.Key, "k8s ca key does not match")
-	suite.Assert().Equal(pkiFrontProxyCACrt, secrets.Certs.K8sAggregator.Crt, "k8s aggregator ca cert does not match")
-	suite.Assert().Equal(pkiFrontProxyCAKey, secrets.Certs.K8sAggregator.Key, "k8s aggregator ca key does not match")
-	suite.Assert().Equal(pkiSAKey, secrets.Certs.K8sServiceAccount.Key, "k8s service account key does not match")
-	suite.Assert().Equal(pkiEtcdCACrt, secrets.Certs.Etcd.Crt, "etcd ca cert does not match")
-	suite.Assert().Equal(pkiEtcdCAKey, secrets.Certs.Etcd.Key, "etcd ca key does not match")
+	suite.Assert().Equal("test-token", secretsBundle.Secrets.BootstrapToken, "bootstrap token does not match")
+	suite.Assert().Equal(pkiCACrt, secretsBundle.Certs.K8s.Crt, "k8s ca cert does not match")
+	suite.Assert().Equal(pkiCAKey, secretsBundle.Certs.K8s.Key, "k8s ca key does not match")
+	suite.Assert().Equal(pkiFrontProxyCACrt, secretsBundle.Certs.K8sAggregator.Crt, "k8s aggregator ca cert does not match")
+	suite.Assert().Equal(pkiFrontProxyCAKey, secretsBundle.Certs.K8sAggregator.Key, "k8s aggregator ca key does not match")
+	suite.Assert().Equal(pkiSAKey, secretsBundle.Certs.K8sServiceAccount.Key, "k8s service account key does not match")
+	suite.Assert().Equal(pkiEtcdCACrt, secretsBundle.Certs.Etcd.Crt, "etcd ca cert does not match")
+	suite.Assert().Equal(pkiEtcdCAKey, secretsBundle.Certs.Etcd.Key, "etcd ca key does not match")
 }
 
 // TestConfigWithSecrets tests the gen config command with secrets provided.
@@ -292,7 +293,7 @@ func (suite *GenSuite) TestConfigWithSecrets() {
 	config, err := configloader.NewFromFile("controlplane.yaml")
 	suite.Assert().NoError(err)
 
-	configSecretsBundle := generate.NewSecretsBundleFromConfig(generate.NewClock(), config)
+	configSecretsBundle := secrets.NewBundleFromConfig(secrets.NewFixedClock(time.Now()), config)
 	configSecretsBundleBytes, err := yaml.Marshal(configSecretsBundle)
 
 	suite.Assert().NoError(err)

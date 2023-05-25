@@ -480,5 +480,9 @@ func asUDP(addr netip.AddrPort) *net.UDPAddr {
 }
 
 func TestManagerSuite(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("requires root")
+	}
+
 	suite.Run(t, new(ManagerSuite))
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	runtimeresource "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -28,22 +29,26 @@ func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineKernel: &v1alpha1.KernelConfig{
-				KernelModules: []*v1alpha1.KernelModuleConfig{
-					{
-						ModuleName: "brtfs",
-					},
-					{
-						ModuleName: "e1000",
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineKernel: &v1alpha1.KernelConfig{
+						KernelModules: []*v1alpha1.KernelModuleConfig{
+							{
+								ModuleName: "brtfs",
+							},
+							{
+								ModuleName: "e1000",
+							},
+						},
 					},
 				},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
 			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+		),
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -59,13 +64,17 @@ func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
 	))
 
 	old := cfg.Metadata().Version()
-	cfg = config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineKernel: nil,
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+	cfg = config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineKernel: nil,
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
+			},
+		),
+	)
 
 	cfg.Metadata().SetVersion(old)
 	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))

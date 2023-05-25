@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
@@ -31,7 +32,14 @@ func (ctrl *ConfigController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *ConfigController) Inputs() []controller.Input {
-	return nil
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        pointer.To(config.V1Alpha1ID),
+			Kind:      controller.InputWeak,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -53,16 +61,21 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, _ *
 		case <-r.EventCh():
 		}
 
-		if err := ctrl.updateConfig(ctx, r); err != nil {
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return err
+		}
+
+		if err := ctrl.updateConfig(ctx, r, cfg); err != nil {
 			return fmt.Errorf("failed to update config: %w", err)
 		}
 	}
 }
 
-func (ctrl *ConfigController) updateConfig(ctx context.Context, r controller.Runtime) error {
+func (ctrl *ConfigController) updateConfig(ctx context.Context, r controller.Runtime, machineConfig *config.MachineConfig) error {
 	cfg := siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID)
 
-	endpoint := ctrl.apiEndpoint()
+	endpoint := ctrl.apiEndpoint(machineConfig)
 	if endpoint == "" {
 		err := r.Destroy(ctx, cfg.Metadata())
 		if err != nil && !state.IsNotFoundError(err) {
@@ -79,7 +92,11 @@ func (ctrl *ConfigController) updateConfig(ctx context.Context, r controller.Run
 	})
 }
 
-func (ctrl *ConfigController) apiEndpoint() string {
+func (ctrl *ConfigController) apiEndpoint(machineConfig *config.MachineConfig) string {
+	if machineConfig != nil && machineConfig.Config().SideroLink() != nil && machineConfig.Config().SideroLink().APIUrl() != nil {
+		return machineConfig.Config().SideroLink().APIUrl().String()
+	}
+
 	if ctrl.Cmdline == nil || ctrl.Cmdline.Get(constants.KernelParamSideroLink).First() == nil {
 		return ""
 	}

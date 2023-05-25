@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/goroutine"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	v1alpha1cfg "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -47,9 +48,10 @@ func (suite *GoroutineSuite) SetupSuite() {
 	suite.loggingManager = logging.NewFileLoggingManager(suite.tmpDir)
 
 	s, err := v1alpha1.NewState()
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
-	cfg := &v1alpha1cfg.Config{}
+	cfg, err := container.New(&v1alpha1cfg.Config{})
+	suite.Require().NoError(err)
 
 	e := v1alpha1.NewEvents(100, 10)
 
@@ -165,5 +167,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 }
 
 func TestGoroutineSuite(t *testing.T) {
+	t.Setenv("PLATFORM", "metal")
+
 	suite.Run(t, new(GoroutineSuite))
 }

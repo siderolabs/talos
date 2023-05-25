@@ -7,11 +7,12 @@ package generate_test
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -46,13 +47,17 @@ func Example() {
 
 	// generate the cluster-wide secrets once and use it for every node machine configuration
 	// secrets can be stashed for future use by marshaling the structure to YAML or JSON
-	secrets, err := generate.NewSecretsBundle(generate.NewClock(), generate.WithVersionContract(versionContract))
+	secretsBundle, err := secrets.NewBundle(secrets.NewFixedClock(time.Now()), versionContract)
 	if err != nil {
 		log.Fatalf("failed to generate secrets bundle: %s", err)
 	}
 
-	input, err := generate.NewInput(clusterName, controlPlaneEndpoint, kubernetesVersion, secrets,
+	input, err := generate.NewInput(clusterName, controlPlaneEndpoint, kubernetesVersion,
 		generate.WithVersionContract(versionContract),
+		generate.WithSecretsBundle(secretsBundle),
+		generate.WithEndpointList(
+			[]string{"172.0.0.1", "172.0.0.2", "172.20.0.3"}, // list of control plane node IP addresses
+		),
 		// there are many more generate options available which allow to tweak generated config programmatically
 	)
 	if err != nil {
@@ -61,18 +66,18 @@ func Example() {
 
 	// generate the machine config for each node of the cluster using the secrets
 	for _, node := range []string{"machine1", "machine2"} {
-		var cfg *v1alpha1.Config
+		var cfg config.Provider
 
 		// generate the machine config for the node, using the right machine type:
 		// * machine.TypeConrolPlane for control plane nodes
 		// * machine.TypeWorker for worker nodes
-		cfg, err = generate.Config(machine.TypeControlPlane, input)
+		cfg, err = input.Config(machine.TypeControlPlane)
 		if err != nil {
 			log.Fatalf("failed to generate config for node %q: %s", node, err)
 		}
 
 		// config can be tweaked at this point to add machine-specific configuration, e.g.:
-		cfg.MachineConfig.MachineInstall.InstallDisk = "/dev/sdb"
+		cfg.RawV1Alpha1().MachineConfig.MachineInstall.InstallDisk = "/dev/sdb"
 
 		// marshal the config to YAML
 		var marshaledCfg []byte
@@ -89,9 +94,7 @@ func Example() {
 	}
 
 	// generate the client Talos configuration (for API access, e.g. talosctl)
-	clientCfg, err := generate.Talosconfig(input, generate.WithEndpointList(
-		[]string{"172.0.0.1", "172.0.0.2", "172.20.0.3"}, // list of control plane node IP addresses
-	))
+	clientCfg, err := input.Talosconfig()
 	if err != nil {
 		log.Fatalf("failed to generate client config: %s", err)
 	}

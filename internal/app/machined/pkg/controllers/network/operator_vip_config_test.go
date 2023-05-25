@@ -25,6 +25,7 @@ import (
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -81,48 +82,50 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationVIP() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkInterfaces: []*v1alpha1.Device{
-						{
-							DeviceInterface: "eth1",
-							DeviceDHCP:      pointer.To(true),
-							DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
-								SharedIP: "2.3.4.5",
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth1",
+								DeviceDHCP:      pointer.To(true),
+								DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+									SharedIP: "2.3.4.5",
+								},
 							},
-						},
-						{
-							DeviceInterface: "eth2",
-							DeviceDHCP:      pointer.To(true),
-							DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
-								SharedIP: "fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
+							{
+								DeviceInterface: "eth2",
+								DeviceDHCP:      pointer.To(true),
+								DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+									SharedIP: "fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
+								},
 							},
-						},
-						{
-							DeviceInterface: "eth3",
-							DeviceDHCP:      pointer.To(true),
-							DeviceVlans: []*v1alpha1.Vlan{
-								{
-									VlanID: 26,
-									VlanVIP: &v1alpha1.DeviceVIPConfig{
-										SharedIP: "5.5.4.4",
+							{
+								DeviceInterface: "eth3",
+								DeviceDHCP:      pointer.To(true),
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID: 26,
+										VlanVIP: &v1alpha1.DeviceVIPConfig{
+											SharedIP: "5.5.4.4",
+										},
 									},
 								},
 							},
 						},
 					},
 				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -160,28 +163,6 @@ func (suite *OperatorVIPConfigSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(
-		context.Background(), config.NewMachineConfig(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
-			},
-		),
-	)
-	if state.IsConflictError(err) {
-		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
-	}
-
-	suite.Require().NoError(err)
-
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewLinkStatus(network.ConfigNamespaceName, "bar"),
-		),
-	)
 }
 
 func TestOperatorVIPConfigSuite(t *testing.T) {

@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 var (
@@ -19,7 +21,7 @@ var (
 )
 
 // NewDocumentFunc represents a function that creates a new document by version.
-type NewDocumentFunc func(version string) any
+type NewDocumentFunc func(version string) config.Document
 
 var registry = &Registry{
 	registered: map[string]NewDocumentFunc{},
@@ -37,7 +39,7 @@ func Register(kind string, f NewDocumentFunc) {
 }
 
 // New creates a new instance of the requested manifest.
-func New(kind, version string) (any, error) {
+func New(kind, version string) (config.Document, error) {
 	return registry.new(kind, version)
 }
 
@@ -52,7 +54,7 @@ func (r *Registry) register(kind string, f NewDocumentFunc) {
 	r.registered[kind] = f
 }
 
-func (r *Registry) new(kind, version string) (any, error) {
+func (r *Registry) new(kind, version string) (config.Document, error) {
 	r.m.Lock()
 	defer r.m.Unlock()
 

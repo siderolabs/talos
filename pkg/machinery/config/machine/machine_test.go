@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 func TestParseType(t *testing.T) {

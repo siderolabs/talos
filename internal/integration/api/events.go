@@ -12,7 +12,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	machinetype "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // EventsSuite verifies Events API.

@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
@@ -27,20 +28,22 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineNetwork: &v1alpha1.NetworkConfig{
-				NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-					KubeSpanEnabled: pointer.To(true),
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
+						},
+					},
 				},
-			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterID:     "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=",
-			ClusterSecret: "I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=",
-		},
-	})
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterID:     "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=",
+					ClusterSecret: "I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=",
+				},
+			}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -69,11 +72,13 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
+			}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 

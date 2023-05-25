@@ -10,7 +10,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // Memory returns the minimal/recommended amount of memory required to run the node.

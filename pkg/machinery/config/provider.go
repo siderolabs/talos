@@ -7,11 +7,13 @@ package config
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
 // Encoder provides the interface to encode configuration documents.
 type Encoder = config.Encoder
+
+// Validator provides the interface to validate configuration.
+type Validator = config.Validator
 
 // Container provides the interface to access configuration documents.
 //
@@ -19,12 +21,9 @@ type Encoder = config.Encoder
 // validation, and other operations.
 type Container interface {
 	Encoder
+	Validator
 
-	// Validate checks configuration and returns warnings and fatal errors (as multierror).
-	Validate(validation.RuntimeMode, ...validation.Option) ([]string, error)
-
-	// RedactSecrets returns a copy of the Provider with all secrets replaced with the given string.
-	RedactSecrets(string) Encoder
+	Readonly() bool
 
 	// RawV1Alpha1 returns internal config representation.
 	RawV1Alpha1() *v1alpha1.Config
@@ -34,4 +33,10 @@ type Container interface {
 type Provider interface {
 	Config
 	Container
+
+	// Clone returns a copy of the Provider.
+	Clone() Provider
+
+	// RedactSecrets returns a copy of the Provider with all secrets replaced with the given string.
+	RedactSecrets(string) Provider
 }

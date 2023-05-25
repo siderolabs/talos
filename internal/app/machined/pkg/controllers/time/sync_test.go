@@ -28,6 +28,7 @@ import (
 	timectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -167,15 +168,17 @@ func (suite *SyncSuite) TestReconcileSyncDisabled() {
 	)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineTime: &v1alpha1.TimeConfig{
-					TimeDisabled: pointer.To(true),
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineTime: &v1alpha1.TimeConfig{
+						TimeDisabled: pointer.To(true),
+					},
 				},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
 			},
-			ClusterConfig: &v1alpha1.ClusterConfig{},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -212,11 +215,13 @@ func (suite *SyncSuite) TestReconcileSyncDefaultConfig() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{},
-		},
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
+			},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -267,11 +272,13 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 	)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{},
-		},
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
+			},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -359,7 +366,7 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 	)
 
 	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
-		r.Config().(*v1alpha1.Config).MachineConfig.MachineTime = &v1alpha1.TimeConfig{
+		r.Container().RawV1Alpha1().MachineConfig.MachineTime = &v1alpha1.TimeConfig{
 			TimeDisabled: pointer.To(true),
 		}
 
@@ -412,15 +419,17 @@ func (suite *SyncSuite) TestReconcileSyncBootTimeout() {
 	)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineTime: &v1alpha1.TimeConfig{
-					TimeBootTimeout: 5 * time.Second,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineTime: &v1alpha1.TimeConfig{
+						TimeBootTimeout: 5 * time.Second,
+					},
 				},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
 			},
-			ClusterConfig: &v1alpha1.ClusterConfig{},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -446,21 +455,6 @@ func (suite *SyncSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(
-		context.Background(), config.NewMachineConfig(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
-			},
-		),
-	)
-	if state.IsConflictError(err) {
-		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
-	}
-
-	suite.Assert().NoError(err)
 }
 
 func (suite *SyncSuite) newMockSyncer(logger *zap.Logger, servers []string) timectrl.NTPSyncer {

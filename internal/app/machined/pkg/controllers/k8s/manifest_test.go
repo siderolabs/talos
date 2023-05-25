@@ -353,9 +353,6 @@ func (suite *ManifestSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), secrets.NewKubernetesRoot("-")))
 }
 
 func TestManifestSuite(t *testing.T) {

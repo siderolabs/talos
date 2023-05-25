@@ -9,7 +9,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 )
 
 // Provisioner is an interface each provisioner should implement.
@@ -21,7 +21,7 @@ type Provisioner interface {
 
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
 
-	GenOptions(NetworkRequest) []generate.GenOption
+	GenOptions(NetworkRequest) []generate.Option
 	GetLoadBalancers(NetworkRequest) (internalEndpoint, externalEndpoint string)
 	GetFirstInterface() string
 

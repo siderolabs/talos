@@ -112,14 +112,6 @@ func (suite *TimeServerSpecSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewTimeServerSpec(network.NamespaceName, "bar"),
-		),
-	)
 }
 
 func TestTimeServerSpecSuite(t *testing.T) {

@@ -17,7 +17,8 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // UpdateEndpointSuite verifies UpdateEndpoint API.
@@ -105,7 +106,7 @@ func (suite *UpdateEndpointSuite) updateEndpointURL(nodeIP string, newURL string
 	oldURL = endpoint.URL.String()
 	endpoint.URL = newEndpointURL
 
-	bytes, err := nodeConfigRaw.Bytes()
+	bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
 	suite.Require().NoError(err)
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{

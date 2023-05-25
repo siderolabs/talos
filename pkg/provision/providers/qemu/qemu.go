@@ -7,8 +7,8 @@ package qemu
 import (
 	"context"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
@@ -34,7 +34,7 @@ func (p *provisioner) Close() error {
 }
 
 // GenOptions provides a list of additional config generate options.
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.GenOption {
+func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.Option {
 	hasIPv4 := false
 	hasIPv6 := false
 
@@ -46,7 +46,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 		}
 	}
 
-	return []generate.GenOption{
+	return []generate.Option{
 		generate.WithInstallDisk("/dev/vda"),
 		generate.WithInstallExtraKernelArgs([]string{
 			"console=ttyS0", // TODO: should depend on arch

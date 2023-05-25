@@ -9,9 +9,11 @@ import (
 
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -67,11 +69,14 @@ func TestGet(t *testing.T) {
 			var cfg config.Config
 
 			if test.cfg != nil {
-				cfg = &v1alpha1.Config{
+				var err error
+
+				cfg, err = container.New(&v1alpha1.Config{
 					MachineConfig: &v1alpha1.MachineConfig{
 						MachineEnv: test.cfg,
 					},
-				}
+				})
+				require.NoError(t, err)
 			}
 
 			result := environment.GetCmdline(cmdline, cfg)

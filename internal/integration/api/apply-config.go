@@ -26,8 +26,9 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	mc "github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
@@ -109,7 +110,10 @@ func (suite *ApplyConfigSuite) TestApply() {
 
 	cfg.MachineConfig.MachineSysctls[applyConfigTestSysctl] = applyConfigTestSysctlVal
 
-	cfgDataOut, err := cfg.Bytes()
+	provider, err = container.New(cfg)
+	suite.Require().NoError(err)
+
+	cfgDataOut, err := provider.Bytes()
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
 
 	suite.AssertRebooted(
@@ -176,7 +180,10 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 
 		cfg.MachineConfig.MachineSysctls[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
 
-		cfgDataOut, err := cfg.Bytes()
+		provider, err = container.New(cfg)
+		suite.Require().NoError(err)
+
+		cfgDataOut, err := provider.Bytes()
 		suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
 
 		_, err = suite.Client.ApplyConfiguration(
@@ -205,7 +212,10 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 		// revert back
 		delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl)
 
-		cfgDataOut, err = cfg.Bytes()
+		provider, err = container.New(cfg)
+		suite.Require().NoError(err)
+
+		cfgDataOut, err = provider.Bytes()
 		suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
 
 		_, err = suite.Client.ApplyConfiguration(
@@ -303,7 +313,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	for _, keys := range keySets {
 		cfg.EncryptionKeys = keys
 
-		data, err := machineConfig.Bytes()
+		data, err := container.NewV1Alpha1(machineConfig).Bytes()
 		suite.Require().NoError(err)
 
 		suite.AssertRebooted(
@@ -386,7 +396,10 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	// this won't be possible without a reboot
 	cfg.MachineConfig.MachineType = "controlplane"
 
-	cfgDataOut, err := cfg.Bytes()
+	provider, err = container.New(cfg)
+	suite.Require().NoError(err)
+
+	cfgDataOut, err := provider.Bytes()
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
 
 	_, err = suite.Client.ApplyConfiguration(
@@ -429,7 +442,10 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 	// this won't be possible without a reboot
 	cfg.MachineConfig.MachineType = "controlplane"
 
-	cfgDataOut, err := cfg.Bytes()
+	provider, err = container.New(cfg)
+	suite.Require().NoError(err)
+
+	cfgDataOut, err := provider.Bytes()
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
 
 	reply, err := suite.Client.ApplyConfiguration(
@@ -486,7 +502,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 		},
 	)
 
-	cfgDataOut, err := cfg.Bytes()
+	cfgDataOut, err := container.NewV1Alpha1(cfg).Bytes()
 	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
 
 	_, err = suite.Client.ApplyConfiguration(

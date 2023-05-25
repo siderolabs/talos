@@ -117,14 +117,6 @@ func (suite *HostnameSpecSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewHostnameSpec(network.NamespaceName, "bar"),
-		),
-	)
 }
 
 func TestHostnameSpecSuite(t *testing.T) {

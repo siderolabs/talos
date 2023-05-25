@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -29,7 +30,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ClusterID:     "cluster1",
@@ -38,7 +39,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				DiscoveryEnabled: pointer.To(true),
 			},
 		},
-	})
+	}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -71,7 +72,7 @@ func (suite *ConfigSuite) TestReconcileConfigCustom() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ClusterID:     "cluster1",
@@ -88,7 +89,7 @@ func (suite *ConfigSuite) TestReconcileConfigCustom() {
 				},
 			},
 		},
-	})
+	}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -117,7 +118,7 @@ func (suite *ConfigSuite) TestReconcileConfigCustomInsecure() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ClusterID:     "cluster1",
@@ -134,7 +135,7 @@ func (suite *ConfigSuite) TestReconcileConfigCustomInsecure() {
 				},
 			},
 		},
-	})
+	}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -163,11 +164,11 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 
 	suite.startRuntime()
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+	}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 

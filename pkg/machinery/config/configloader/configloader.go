@@ -8,71 +8,57 @@ package configloader
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader/internal/decoder"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types" //nolint:revive
 )
 
 // ErrNoConfig is returned when no configuration was found in the input.
 var ErrNoConfig = errors.New("config not found")
 
 // newConfig initializes and returns a Configurator.
-func newConfig(source []byte) (config config.Provider, err error) {
-	dec := decoder.NewDecoder(source)
+func newConfig(r io.Reader) (config config.Provider, err error) {
+	dec := decoder.NewDecoder()
 
-	manifests, err := dec.Decode()
+	var buf bytes.Buffer
+
+	// preserve the original contents
+	r = io.TeeReader(r, &buf)
+
+	manifests, err := dec.Decode(r)
 	if err != nil {
 		return nil, err
 	}
 
-	// Look for the older flat v1alpha1 file first, since we have to handle it in
-	// a special way.
-	for _, manifest := range manifests {
-		if talosconfig, ok := manifest.(*v1alpha1.Config); ok {
-			return v1alpha1.WrapReadonly(talosconfig, source), nil
-		}
+	if len(manifests) == 0 {
+		return nil, ErrNoConfig
 	}
 
-	return nil, ErrNoConfig
+	return container.NewReadonly(buf.Bytes(), manifests...)
 }
 
 // NewFromFile will take a filepath and attempt to parse a config file from it.
 func NewFromFile(filepath string) (config.Provider, error) {
-	source, err := fromFile(filepath)
+	f, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
 
-	return newConfig(source)
+	defer f.Close() //nolint:errcheck
+
+	return newConfig(f)
 }
 
 // NewFromStdin initializes a config provider by reading from stdin.
 func NewFromStdin() (config.Provider, error) {
-	buf := bytes.NewBuffer(nil)
-
-	_, err := io.Copy(buf, os.Stdin)
-	if err != nil {
-		return nil, err
-	}
-
-	config, err := NewFromBytes(buf.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("failed load config from stdin: %w", err)
-	}
-
-	return config, nil
+	return newConfig(os.Stdin)
 }
 
 // NewFromBytes will take a byteslice and attempt to parse a config file from it.
 func NewFromBytes(source []byte) (config.Provider, error) {
-	return newConfig(source)
-}
-
-// fromFile is a convenience function that reads the config from disk.
-func fromFile(p string) ([]byte, error) {
-	return os.ReadFile(p)
+	return newConfig(bytes.NewReader(source))
 }

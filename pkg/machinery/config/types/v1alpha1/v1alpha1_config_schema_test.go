@@ -15,9 +15,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -97,17 +97,14 @@ func TestSchemaValidation(t *testing.T) {
 }
 
 func newConfig(t *testing.T, modifications func(config *v1alpha1.Config), rawModifications func(rawConfig map[string]any)) map[string]any {
-	bundle, err := generate.NewSecretsBundle(generate.NewClock())
+	input, err := generate.NewInput("test", "https://doesntmatter:6443", constants.DefaultKubernetesVersion)
 	require.NoError(t, err)
 
-	input, err := generate.NewInput("test", "https://doesntmatter:6443", constants.DefaultKubernetesVersion, bundle)
-	require.NoError(t, err)
-
-	config, err := generate.Config(machine.TypeControlPlane, input)
+	config, err := input.Config(machine.TypeControlPlane)
 	require.NoError(t, err)
 
 	if modifications != nil {
-		modifications(config)
+		modifications(config.RawV1Alpha1())
 	}
 
 	configBytes, err := config.Bytes()

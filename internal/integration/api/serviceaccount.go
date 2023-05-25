@@ -24,8 +24,9 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -261,7 +262,7 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 
 		nodeConfigRaw.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = &accessConfig
 
-		bytes, err := nodeConfigRaw.Bytes()
+		bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
 		if err != nil {
 			return err
 		}

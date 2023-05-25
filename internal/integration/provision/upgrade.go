@@ -37,10 +37,10 @@ import (
 	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/bundle"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -232,7 +232,7 @@ type UpgradeSuite struct {
 
 	provisioner provision.Provisioner
 
-	configBundle *bundle.ConfigBundle
+	configBundle *bundle.Bundle
 
 	clusterAccess        *access.Adapter
 	controlPlaneEndpoint string
@@ -402,7 +402,7 @@ func (suite *UpgradeSuite) setupCluster() {
 	versionContract, err := config.ParseContractFromVersion(suite.spec.SourceVersion)
 	suite.Require().NoError(err)
 
-	suite.configBundle, err = bundle.NewConfigBundle(
+	suite.configBundle, err = bundle.NewBundle(
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
 				ClusterName: clusterName,

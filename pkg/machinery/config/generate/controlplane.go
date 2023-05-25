@@ -5,17 +5,18 @@
 package generate
 
 import (
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 )
 
-func controlPlaneUd(in *Input) (*v1alpha1.Config, error) {
-	config, err := initUd(in)
+func (in *Input) controlPlane() ([]config.Document, error) {
+	docs, err := in.init()
 	if err != nil {
 		return nil, err
 	}
 
-	config.MachineConfig.MachineType = machine.TypeControlPlane.String()
+	docs[0].(*v1alpha1.Config).MachineConfig.MachineType = machine.TypeControlPlane.String()
 
-	return config, nil
+	return docs, nil
 }

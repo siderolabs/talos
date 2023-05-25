@@ -5,6 +5,7 @@
 package decoder_test
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,30 +13,65 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader/internal/decoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
+type Meta struct {
+	Kind    string `yaml:"kind"`
+	Version string `yaml:"version,omitempty"`
+}
+
 type Mock struct {
+	Meta
 	Test bool `yaml:"test"`
 }
 
+func (m *Mock) Clone() config.Document {
+	return m
+}
+
 type MockV2 struct {
+	Meta
 	Slice []Mock           `yaml:"slice"`
 	Map   map[string]*Mock `yaml:"map"`
 }
 
+func (m *MockV2) Clone() config.Document {
+	return m
+}
+
 type MockV3 struct {
+	Meta
 	Omit bool `yaml:"omit,omitempty"`
 }
 
+func (m *MockV3) Clone() config.Document {
+	return m
+}
+
+type KubeletConfig struct {
+	Meta
+	v1alpha1.KubeletConfig `yaml:",inline"`
+}
+
+func (m *KubeletConfig) Clone() config.Document {
+	return m
+}
+
 type MockUnstructured struct {
+	Meta
 	Pods []v1alpha1.Unstructured `yaml:"pods,omitempty"`
 }
 
+func (m *MockUnstructured) Clone() config.Document {
+	return m
+}
+
 func init() {
-	registry.Register("mock", func(version string) any {
+	registry.Register("mock", func(version string) config.Document {
 		switch version {
 		case "v1alpha2":
 			return &MockV2{}
@@ -46,11 +82,11 @@ func init() {
 		return &Mock{}
 	})
 
-	registry.Register("kubelet", func(string) any {
-		return &v1alpha1.KubeletConfig{}
+	registry.Register("kubelet", func(string) config.Document {
+		return &KubeletConfig{}
 	})
 
-	registry.Register("unstructured", func(string) any {
+	registry.Register("unstructured", func(string) config.Document {
 		return &MockUnstructured{}
 	})
 }
@@ -61,7 +97,7 @@ func TestDecoder(t *testing.T) {
 	tests := []struct {
 		name        string
 		source      []byte
-		expected    []interface{}
+		expected    []config.Document
 		expectedErr string
 	}{
 		{
@@ -69,10 +105,9 @@ func TestDecoder(t *testing.T) {
 			source: []byte(`---
 kind: mock
 version: v1alpha1
-spec:
-  test: true
+test: true
 `),
-			expected: []interface{}{
+			expected: []config.Document{
 				&Mock{
 					Test: true,
 				},
@@ -82,9 +117,8 @@ spec:
 		{
 			name: "missing kind",
 			source: []byte(`---
-version: v1alpha1
-spec:
-  test: true
+version: v1alpha2
+test: true
 `),
 			expected:    nil,
 			expectedErr: "missing kind",
@@ -93,52 +127,11 @@ spec:
 			name: "empty kind",
 			source: []byte(`---
 kind:
-version: v1alpha1
-spec:
-  test: true
+version: v1alpha2
+test: true
 `),
 			expected:    nil,
 			expectedErr: "missing kind",
-		},
-		{
-			name: "missing version",
-			source: []byte(`---
-kind: mock
-spec:
-  test: true
-`),
-			expected:    nil,
-			expectedErr: "missing version",
-		},
-		{
-			name: "empty version",
-			source: []byte(`---
-kind: mock
-version:
-spec:
-  test: true
-`),
-			expected:    nil,
-			expectedErr: "missing version",
-		},
-		{
-			name: "missing spec",
-			source: []byte(`---
-kind: mock
-version: v1alpha1
-`),
-			expected:    nil,
-			expectedErr: "missing spec",
-		},
-		{
-			name: "empty spec",
-			source: []byte(`---
-kind: mock
-version: v1alpha1
-spec:
-`),
-			expected:    nil,
-			expectedErr: "missing spec content",
 		},
 		{
 			name: "tab instead of spaces",
@@ -156,9 +149,8 @@ spec:
 			source: []byte(`---
 kind: mock
 version: v1alpha1
-spec:
-  test: true
-  extra: fail
+test: true
+extra: fail
 `),
 			expected:    nil,
 			expectedErr: "unknown keys found during decoding:\nextra: fail\n",
@@ -168,11 +160,10 @@ spec:
 			source: []byte(`---
 kind: mock
 version: v1alpha2
-spec:
-  map:
-    first:
-      test: true
-      extra: me
+map:
+  first:
+    test: true
+    extra: me
 `),
 			expected:    nil,
 			expectedErr: "unknown keys found during decoding:\nmap:\n    first:\n        extra: me\n",
@@ -182,12 +173,11 @@ spec:
 			source: []byte(`---
 kind: mock
 version: v1alpha2
-spec:
-  slice:
-    - test: true
-      not: working
-      more: extra
-      fields: here
+slice:
+  - test: true
+    not: working
+    more: extra
+    fields: here
 `),
 			expected:    nil,
 			expectedErr: "unknown keys found during decoding:\nslice:\n    - fields: here\n      more: extra\n      not: working\n",
@@ -197,11 +187,10 @@ spec:
 			source: []byte(`---
 kind: mock
 version: v1alpha2
-spec:
-  map:
-    second:
-      a:
-        b: {}
+map:
+  second:
+    a:
+      b: {}
 `),
 			expected:    nil,
 			expectedErr: "unknown keys found during decoding:\nmap:\n    second:\n        a:\n            b: {}\n",
@@ -211,16 +200,15 @@ spec:
 			source: []byte(`---
 kind: mock
 version: v1alpha2
-spec:
-  slice:
-    - test: true
-  map:
-    first:
-      test: true
-    second:
-      test: false
+slice:
+  - test: true
+map:
+  first:
+    test: true
+  second:
+    test: false
 `),
-			expected: []interface{}{
+			expected: []config.Document{
 				&MockV2{
 					Map: map[string]*Mock{
 						"first": {
@@ -242,14 +230,13 @@ spec:
 			source: []byte(`---
 kind: kubelet
 version: v1alpha1
-spec:
-  extraMounts:
-   - destination: /var/local
-     options:
-       - rbind
-       - rshared
-       - rw
-     source: /var/local
+extraMounts:
+ - destination: /var/local
+   options:
+     - rbind
+     - rshared
+     - rw
+   source: /var/local
 `),
 			expected:    nil,
 			expectedErr: "",
@@ -259,8 +246,7 @@ spec:
 			source: []byte(`---
 kind: mock
 version: v1alpha3
-spec:
-  omit: false
+omit: false
 `),
 			expected:    nil,
 			expectedErr: "",
@@ -276,14 +262,13 @@ spec:
 			source: []byte(`---
 kind: unstructured
 version: v1alpha1
-spec:
-  pods:
-   - destination: /var/local
-     options:
-       - rbind
-       - rw
-     source: /var/local
-     something: 1.34
+pods:
+ - destination: /var/local
+   options:
+     - rbind
+     - rw
+   source: /var/local
+   something: 1.34
 `),
 			expected:    nil,
 			expectedErr: "",
@@ -293,8 +278,7 @@ spec:
 			source: []byte(`---
 kind: mock
 version: v1alpha3
-spec:
-  omit: false
+omit: false
 `),
 		},
 	}
@@ -305,8 +289,8 @@ spec:
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			d := decoder.NewDecoder(tt.source)
-			actual, err := d.Decode()
+			d := decoder.NewDecoder()
+			actual, err := d.Decode(bytes.NewReader(tt.source))
 			if tt.expected != nil {
 				assert.Equal(t, tt.expected, actual)
 			}
@@ -334,8 +318,8 @@ func TestDecoderV1Alpha1Config(t *testing.T) {
 			contents, err := os.ReadFile(file)
 			require.NoError(t, err)
 
-			d := decoder.NewDecoder(contents)
-			_, err = d.Decode()
+			d := decoder.NewDecoder()
+			_, err = d.Decode(bytes.NewReader(contents))
 
 			assert.NoError(t, err)
 		})
@@ -349,8 +333,8 @@ func BenchmarkDecoderV1Alpha1Config(b *testing.B) {
 	require.NoError(b, err)
 
 	for i := 0; i < b.N; i++ {
-		d := decoder.NewDecoder(contents)
-		_, err = d.Decode()
+		d := decoder.NewDecoder()
+		_, err = d.Decode(bytes.NewReader(contents))
 
 		assert.NoError(b, err)
 	}

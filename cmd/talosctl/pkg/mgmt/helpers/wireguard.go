@@ -14,6 +14,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -112,5 +113,5 @@ func (w *WireguardConfigBundle) PatchConfig(ip fmt.Stringer, cfg config.Provider
 
 	config.MachineConfig.MachineNetwork.NetworkInterfaces = append(config.MachineConfig.MachineNetwork.NetworkInterfaces, device)
 
-	return config, nil
+	return container.New(config)
 }

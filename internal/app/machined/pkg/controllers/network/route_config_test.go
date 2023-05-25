@@ -26,6 +26,7 @@ import (
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -144,84 +145,86 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkInterfaces: []*v1alpha1.Device{
-						{
-							DeviceInterface: "eth3",
-							DeviceAddresses: []string{"192.168.0.24/28"},
-							DeviceRoutes: []*v1alpha1.Route{
-								{
-									RouteNetwork: "192.168.0.0/18",
-									RouteGateway: "192.168.0.25",
-									RouteMetric:  25,
-								},
-								{
-									RouteNetwork: "169.254.254.254/32",
-								},
-							},
-						},
-						{
-							DeviceIgnore:    pointer.To(true),
-							DeviceInterface: "eth4",
-							DeviceAddresses: []string{"192.168.0.24/28"},
-							DeviceRoutes: []*v1alpha1.Route{
-								{
-									RouteNetwork: "192.168.0.0/18",
-									RouteGateway: "192.168.0.26",
-									RouteMetric:  25,
-								},
-							},
-						},
-						{
-							DeviceInterface: "eth2",
-							DeviceAddresses: []string{"2001:470:6d:30e:8ed2:b60c:9d2f:803a/64"},
-							DeviceRoutes: []*v1alpha1.Route{
-								{
-									RouteGateway: "2001:470:6d:30e:8ed2:b60c:9d2f:803b",
-								},
-							},
-						},
-						{
-							DeviceInterface: "eth0",
-							DeviceVlans: []*v1alpha1.Vlan{
-								{
-									VlanID: 24,
-									VlanAddresses: []string{
-										"10.0.0.1/8",
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkInterfaces: []*v1alpha1.Device{
+							{
+								DeviceInterface: "eth3",
+								DeviceAddresses: []string{"192.168.0.24/28"},
+								DeviceRoutes: []*v1alpha1.Route{
+									{
+										RouteNetwork: "192.168.0.0/18",
+										RouteGateway: "192.168.0.25",
+										RouteMetric:  25,
 									},
-									VlanRoutes: []*v1alpha1.Route{
-										{
-											RouteNetwork: "10.0.3.0/24",
-											RouteGateway: "10.0.3.1",
+									{
+										RouteNetwork: "169.254.254.254/32",
+									},
+								},
+							},
+							{
+								DeviceIgnore:    pointer.To(true),
+								DeviceInterface: "eth4",
+								DeviceAddresses: []string{"192.168.0.24/28"},
+								DeviceRoutes: []*v1alpha1.Route{
+									{
+										RouteNetwork: "192.168.0.0/18",
+										RouteGateway: "192.168.0.26",
+										RouteMetric:  25,
+									},
+								},
+							},
+							{
+								DeviceInterface: "eth2",
+								DeviceAddresses: []string{"2001:470:6d:30e:8ed2:b60c:9d2f:803a/64"},
+								DeviceRoutes: []*v1alpha1.Route{
+									{
+										RouteGateway: "2001:470:6d:30e:8ed2:b60c:9d2f:803b",
+									},
+								},
+							},
+							{
+								DeviceInterface: "eth0",
+								DeviceVlans: []*v1alpha1.Vlan{
+									{
+										VlanID: 24,
+										VlanAddresses: []string{
+											"10.0.0.1/8",
+										},
+										VlanRoutes: []*v1alpha1.Route{
+											{
+												RouteNetwork: "10.0.3.0/24",
+												RouteGateway: "10.0.3.1",
+											},
 										},
 									},
 								},
 							},
-						},
-						{
-							DeviceInterface: "eth1",
-							DeviceRoutes: []*v1alpha1.Route{
-								{
-									RouteNetwork: "192.244.0.0/24",
-									RouteGateway: "192.244.0.1",
-									RouteSource:  "192.244.0.10",
+							{
+								DeviceInterface: "eth1",
+								DeviceRoutes: []*v1alpha1.Route{
+									{
+										RouteNetwork: "192.244.0.0/24",
+										RouteGateway: "192.244.0.1",
+										RouteSource:  "192.244.0.10",
+									},
 								},
 							},
 						},
 					},
 				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -271,21 +274,6 @@ func (suite *RouteConfigSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(
-		context.Background(), config.NewMachineConfig(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
-			},
-		),
-	)
-	if state.IsConflictError(err) {
-		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
-	}
-
-	suite.Require().NoError(err)
 }
 
 func TestRouteConfigSuite(t *testing.T) {

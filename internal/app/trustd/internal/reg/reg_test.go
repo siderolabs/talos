@@ -22,7 +22,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/trustd/internal/reg"
 	"github.com/siderolabs/talos/pkg/machinery/api/security"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
+	gensecrets "github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -33,7 +33,7 @@ func TestCertificate(t *testing.T) {
 
 	resources := state.WrapCore(namespaced.NewState(inmem.Build))
 
-	ca, err := generate.NewTalosCA(time.Now())
+	ca, err := gensecrets.NewTalosCA(time.Now())
 	require.NoError(t, err)
 
 	osRoot := secrets.NewOSRoot(secrets.OSRootID)

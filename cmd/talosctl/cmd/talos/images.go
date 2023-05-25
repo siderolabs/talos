@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/images"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -19,7 +20,7 @@ var imagesCmd = &cobra.Command{
 	Short: "List the default images used by Talos",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		images := images.List(&v1alpha1.Config{
+		images := images.List(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineKubelet: &v1alpha1.KubeletConfig{},
 			},
@@ -31,7 +32,7 @@ var imagesCmd = &cobra.Command{
 				CoreDNSConfig:           &v1alpha1.CoreDNS{},
 				ProxyConfig:             &v1alpha1.ProxyConfig{},
 			},
-		})
+		}))
 
 		fmt.Printf("%s\n", images.Flannel)
 		fmt.Printf("%s\n", images.FlannelCNI)

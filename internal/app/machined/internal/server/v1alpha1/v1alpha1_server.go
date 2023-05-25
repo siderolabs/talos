@@ -79,9 +79,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
-	machinetype "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
@@ -2140,11 +2140,11 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 		return nil, status.Error(codes.InvalidArgument, "crt_ttl should be positive")
 	}
 
-	ca := s.Controller.Runtime().Config().Machine().Security().CA()
-
 	roles, _ := role.Parse(in.Roles)
 
-	cert, err := generate.NewAdminCertificateAndKey(time.Now(), ca, roles, crtTTL)
+	secretsBundle := secrets.NewBundleFromConfig(secrets.NewFixedClock(time.Now()), s.Controller.Runtime().Config())
+
+	cert, err := secretsBundle.GenerateTalosAPIClientCertificate(roles)
 	if err != nil {
 		return nil, err
 	}
@@ -2155,7 +2155,7 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 		contextName = strings.TrimPrefix(r[0], role.Prefix) + "@" + contextName
 	}
 
-	talosconfig := clientconfig.NewConfig(contextName, nil, ca.Crt, cert)
+	talosconfig := clientconfig.NewConfig(contextName, nil, secretsBundle.Certs.OS.Crt, cert)
 
 	b, err := talosconfig.Bytes()
 	if err != nil {
@@ -2165,7 +2165,7 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	reply := &machine.GenerateClientConfigurationResponse{
 		Messages: []*machine.GenerateClientConfiguration{
 			{
-				Ca:          ca.Crt,
+				Ca:          secretsBundle.Certs.OS.Crt,
 				Crt:         cert.Crt,
 				Key:         cert.Key,
 				Talosconfig: b,

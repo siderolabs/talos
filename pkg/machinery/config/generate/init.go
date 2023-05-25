@@ -10,22 +10,23 @@ import (
 
 	"github.com/siderolabs/go-pointer"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 //nolint:gocyclo,cyclop
-func initUd(in *Input) (*v1alpha1.Config, error) {
-	config := &v1alpha1.Config{
+func (in *Input) init() ([]config.Document, error) {
+	v1alpha1Config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
-		ConfigDebug:   pointer.To(in.Debug),
-		ConfigPersist: pointer.To(in.Persist),
+		ConfigDebug:   pointer.To(in.Options.Debug),
+		ConfigPersist: pointer.To(in.Options.Persist),
 	}
 
 	networkConfig := &v1alpha1.NetworkConfig{}
 
-	for _, opt := range in.NetworkConfigOptions {
+	for _, opt := range in.Options.NetworkConfigOptions {
 		if err := opt(machine.TypeControlPlane, networkConfig); err != nil {
 			return nil, err
 		}
@@ -37,47 +38,47 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
 		MachineNetwork:  networkConfig,
-		MachineCA:       in.Certs.OS,
+		MachineCA:       in.Options.SecretsBundle.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
-		MachineToken:    in.TrustdInfo.Token,
+		MachineToken:    in.Options.SecretsBundle.TrustdInfo.Token,
 		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:            in.InstallDisk,
-			InstallImage:           in.InstallImage,
+			InstallDisk:            in.Options.InstallDisk,
+			InstallImage:           in.Options.InstallImage,
 			InstallBootloader:      pointer.To(true),
 			InstallWipe:            pointer.To(false),
-			InstallExtraKernelArgs: in.InstallExtraKernelArgs,
+			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
 		},
 		MachineRegistries: v1alpha1.RegistriesConfig{
-			RegistryMirrors: in.RegistryMirrors,
-			RegistryConfig:  in.RegistryConfig,
+			RegistryMirrors: in.Options.RegistryMirrors,
+			RegistryConfig:  in.Options.RegistryConfig,
 		},
-		MachineDisks:                in.MachineDisks,
-		MachineSystemDiskEncryption: in.SystemDiskEncryptionConfig,
-		MachineSysctls:              in.Sysctls,
+		MachineDisks:                in.Options.MachineDisks,
+		MachineSystemDiskEncryption: in.Options.SystemDiskEncryptionConfig,
+		MachineSysctls:              in.Options.Sysctls,
 		MachineFeatures:             &v1alpha1.FeaturesConfig{},
 	}
 
-	if in.VersionContract.SupportsRBACFeature() {
+	if in.Options.VersionContract.SupportsRBACFeature() {
 		machine.MachineFeatures.RBAC = pointer.To(true)
 	}
 
-	if in.VersionContract.StableHostnameEnabled() {
+	if in.Options.VersionContract.StableHostnameEnabled() {
 		machine.MachineFeatures.StableHostname = pointer.To(true)
 	}
 
-	if in.VersionContract.ApidExtKeyUsageCheckEnabled() {
+	if in.Options.VersionContract.ApidExtKeyUsageCheckEnabled() {
 		machine.MachineFeatures.ApidCheckExtKeyUsage = pointer.To(true)
 	}
 
-	if in.VersionContract.DiskQuotaSupportEnabled() {
+	if in.Options.VersionContract.DiskQuotaSupportEnabled() {
 		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
 	}
 
-	if in.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
+	if in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
 		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
 	}
 
-	if in.VersionContract.KubeletManifestsDirectoryDisabled() {
+	if in.Options.VersionContract.KubeletManifestsDirectoryDisabled() {
 		machine.MachineKubelet.KubeletDisableManifestsDirectory = pointer.To(true)
 	}
 
@@ -85,12 +86,12 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
 	if err != nil {
-		return config, err
+		return nil, err
 	}
 
 	var admissionControlConfig []*v1alpha1.AdmissionPluginConfig
 
-	if in.VersionContract.PodSecurityAdmissionEnabled() {
+	if in.Options.VersionContract.PodSecurityAdmissionEnabled() {
 		admissionControlConfig = append(admissionControlConfig,
 			&v1alpha1.AdmissionPluginConfig{
 				PluginName: "PodSecurity",
@@ -119,17 +120,17 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 
 	var auditPolicyConfig v1alpha1.Unstructured
 
-	if in.VersionContract.APIServerAuditPolicySupported() {
+	if in.Options.VersionContract.APIServerAuditPolicySupported() {
 		auditPolicyConfig = v1alpha1.APIServerDefaultAuditPolicy
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterID:     in.ClusterID,
+		ClusterID:     in.Options.SecretsBundle.Cluster.ID,
 		ClusterName:   in.ClusterName,
-		ClusterSecret: in.ClusterSecret,
+		ClusterSecret: in.Options.SecretsBundle.Cluster.Secret,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint:           &v1alpha1.Endpoint{URL: controlPlaneURL},
-			LocalAPIServerPort: in.LocalAPIServerPort,
+			LocalAPIServerPort: in.Options.LocalAPIServerPort,
 		},
 		APIServerConfig: &v1alpha1.APIServerConfig{
 			CertSANs:               certSANs,
@@ -147,56 +148,56 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion), in.KubernetesVersion),
 		},
 		EtcdConfig: &v1alpha1.EtcdConfig{
-			RootCA: in.Certs.Etcd,
+			RootCA: in.Options.SecretsBundle.Certs.Etcd,
 		},
 		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-			DNSDomain:     in.ServiceDomain,
+			DNSDomain:     in.Options.DNSDomain,
 			PodSubnet:     in.PodNet,
 			ServiceSubnet: in.ServiceNet,
-			CNI:           in.CNIConfig,
+			CNI:           in.Options.CNIConfig,
 		},
-		ClusterCA:              in.Certs.K8s,
-		ClusterAggregatorCA:    in.Certs.K8sAggregator,
-		ClusterServiceAccount:  in.Certs.K8sServiceAccount,
-		BootstrapToken:         in.Secrets.BootstrapToken,
+		ClusterCA:              in.Options.SecretsBundle.Certs.K8s,
+		ClusterAggregatorCA:    in.Options.SecretsBundle.Certs.K8sAggregator,
+		ClusterServiceAccount:  in.Options.SecretsBundle.Certs.K8sServiceAccount,
+		BootstrapToken:         in.Options.SecretsBundle.Secrets.BootstrapToken,
 		ExtraManifests:         []string{},
 		ClusterInlineManifests: v1alpha1.ClusterInlineManifests{},
 	}
 
-	if in.AllowSchedulingOnControlPlanes {
-		if in.VersionContract.KubernetesAllowSchedulingOnControlPlanes() {
-			cluster.AllowSchedulingOnControlPlanes = pointer.To(in.AllowSchedulingOnControlPlanes)
+	if in.Options.AllowSchedulingOnControlPlanes {
+		if in.Options.VersionContract.KubernetesAllowSchedulingOnControlPlanes() {
+			cluster.AllowSchedulingOnControlPlanes = pointer.To(in.Options.AllowSchedulingOnControlPlanes)
 		} else {
 			// backwards compatibility for Talos versions older than 1.2
-			cluster.AllowSchedulingOnMasters = pointer.To(in.AllowSchedulingOnControlPlanes) //nolint:staticcheck
+			cluster.AllowSchedulingOnMasters = pointer.To(in.Options.AllowSchedulingOnControlPlanes) //nolint:staticcheck
 		}
 	}
 
-	if in.DiscoveryEnabled {
+	if in.Options.DiscoveryEnabled != nil {
 		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
-			DiscoveryEnabled: pointer.To(in.DiscoveryEnabled),
+			DiscoveryEnabled: pointer.To(*in.Options.DiscoveryEnabled),
 		}
 
-		if in.VersionContract.KubernetesDiscoveryBackendDisabled() {
+		if in.Options.VersionContract.KubernetesDiscoveryBackendDisabled() {
 			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = pointer.To(true)
 		}
 	}
 
-	if !in.VersionContract.PodSecurityPolicyEnabled() {
+	if !in.Options.VersionContract.PodSecurityPolicyEnabled() {
 		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = pointer.To(true)
 	}
 
-	if in.VersionContract.SecretboxEncryptionSupported() {
-		cluster.ClusterSecretboxEncryptionSecret = in.Secrets.SecretboxEncryptionSecret
+	if in.Options.VersionContract.SecretboxEncryptionSupported() {
+		cluster.ClusterSecretboxEncryptionSecret = in.Options.SecretsBundle.Secrets.SecretboxEncryptionSecret
 	} else {
-		cluster.ClusterAESCBCEncryptionSecret = in.Secrets.AESCBCEncryptionSecret
+		cluster.ClusterAESCBCEncryptionSecret = in.Options.SecretsBundle.Secrets.AESCBCEncryptionSecret
 	}
 
 	if machine.MachineRegistries.RegistryMirrors == nil {
 		machine.MachineRegistries.RegistryMirrors = map[string]*v1alpha1.RegistryMirrorConfig{}
 	}
 
-	if in.VersionContract.KubernetesAlternateImageRegistries() {
+	if in.Options.VersionContract.KubernetesAlternateImageRegistries() {
 		if _, ok := machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"]; !ok {
 			machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"] = &v1alpha1.RegistryMirrorConfig{
 				MirrorEndpoints: []string{
@@ -207,8 +208,8 @@ func initUd(in *Input) (*v1alpha1.Config, error) {
 		}
 	}
 
-	config.MachineConfig = machine
-	config.ClusterConfig = cluster
+	v1alpha1Config.MachineConfig = machine
+	v1alpha1Config.ClusterConfig = cluster
 
-	return config, nil
+	return []config.Document{v1alpha1Config}, nil
 }

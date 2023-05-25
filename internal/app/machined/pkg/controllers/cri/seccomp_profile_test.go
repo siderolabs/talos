@@ -14,13 +14,14 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	criseccompresource "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
 func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineSeccompProfiles: []*v1alpha1.MachineSeccompProfile{
 				{
@@ -41,7 +42,7 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 				},
 			},
 		},
-	})
+	}))
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
@@ -108,7 +109,7 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 	})
 
 	// test deletion
-	cfg = config.NewMachineConfig(&v1alpha1.Config{
+	cfg = config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineSeccompProfiles: []*v1alpha1.MachineSeccompProfile{
 				{
@@ -121,7 +122,7 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 				},
 			},
 		},
-	})
+	}))
 
 	ctest.UpdateWithConflicts(suite, cfg, func(mc *config.MachineConfig) error { return nil })
 

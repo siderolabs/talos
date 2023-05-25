@@ -25,6 +25,7 @@ import (
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -83,46 +84,48 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 	suite.createStaticPodServerStatus()
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineKubelet: &v1alpha1.KubeletConfig{
-					KubeletImage:      "kubelet",
-					KubeletClusterDNS: []string{"10.0.0.1"},
-					KubeletExtraArgs: map[string]string{
-						"enable-feature": "foo",
-					},
-					KubeletExtraMounts: []v1alpha1.ExtraMount{
-						{
-							Mount: specs.Mount{
-								Destination: "/tmp",
-								Source:      "/var",
-								Type:        "tmpfs",
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletImage:      "kubelet",
+						KubeletClusterDNS: []string{"10.0.0.1"},
+						KubeletExtraArgs: map[string]string{
+							"enable-feature": "foo",
+						},
+						KubeletExtraMounts: []v1alpha1.ExtraMount{
+							{
+								Mount: specs.Mount{
+									Destination: "/tmp",
+									Source:      "/var",
+									Type:        "tmpfs",
+								},
 							},
 						},
+						KubeletExtraConfig: v1alpha1.Unstructured{
+							Object: map[string]interface{}{
+								"serverTLSBootstrap": true,
+							},
+						},
+						KubeletDefaultRuntimeSeccompProfileEnabled: pointer.To(true),
 					},
-					KubeletExtraConfig: v1alpha1.Unstructured{
-						Object: map[string]interface{}{
-							"serverTLSBootstrap": true,
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
 						},
 					},
-					KubeletDefaultRuntimeSeccompProfileEnabled: pointer.To(true),
-				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
+						ExternalEnabled: pointer.To(true),
+					},
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+						DNSDomain: "service.svc",
 					},
 				},
-				ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-					ExternalEnabled: pointer.To(true),
-				},
-				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-					DNSDomain: "service.svc",
-				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
@@ -190,24 +193,26 @@ func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 	suite.createStaticPodServerStatus()
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineKubelet: &v1alpha1.KubeletConfig{
-					KubeletImage: "kubelet",
-				},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{
+						KubeletImage: "kubelet",
 					},
 				},
-				ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-					ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+						ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
+					},
 				},
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))

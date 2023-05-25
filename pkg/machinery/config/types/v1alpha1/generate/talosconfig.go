@@ -9,14 +9,8 @@ import (
 )
 
 // Talosconfig returns the talos admin Talos config.
+//
+// Deprecated: use github.com/siderolabs/talos/pkg/machinery/config/generate.Talosconfig instead.
 func Talosconfig(in *Input, opts ...GenOption) (*clientconfig.Config, error) {
-	options := DefaultGenOptions()
-
-	for _, opt := range opts {
-		if err := opt(&options); err != nil {
-			return nil, err
-		}
-	}
-
-	return clientconfig.NewConfig(in.ClusterName, options.EndpointList, in.Certs.OS.Crt, in.Certs.Admin), nil
+	return in.Talosconfig()
 }

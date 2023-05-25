@@ -9,23 +9,21 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestRedactSecrets(t *testing.T) {
-	bundle, err := generate.NewSecretsBundle(generate.NewClock())
+	input, err := generate.NewInput("test", "https://doesntmatter:6443", constants.DefaultKubernetesVersion)
 	require.NoError(t, err)
 
-	input, err := generate.NewInput("test", "https://doesntmatter:6443", constants.DefaultKubernetesVersion, bundle)
-	require.NoError(t, err)
-
-	config, err := generate.Config(machine.TypeControlPlane, input)
+	container, err := input.Config(machine.TypeControlPlane)
 	if err != nil {
 		return
 	}
+
+	config := container.RawV1Alpha1()
 
 	require.NotEmpty(t, config.MachineConfig.MachineToken)
 	require.NotEmpty(t, config.MachineConfig.MachineCA.Key)
@@ -39,26 +37,15 @@ func TestRedactSecrets(t *testing.T) {
 
 	replacement := "**.***"
 
-	configBytesBefore, err := config.Bytes()
-	require.NoError(t, err)
+	config.Redact(replacement)
 
-	redacted := config.RedactSecrets(replacement)
-
-	configBytesAfter, err := config.Bytes()
-	require.NoError(t, err)
-
-	require.Equal(t, string(configBytesBefore), string(configBytesAfter), "original config is modified")
-
-	redactedCfg, ok := redacted.(*v1alpha1.Config)
-	require.True(t, ok)
-
-	require.Equal(t, replacement, redactedCfg.Machine().Security().Token())
-	require.Equal(t, replacement, string(redactedCfg.Machine().Security().CA().Key))
-	require.Equal(t, replacement, redactedCfg.Cluster().Secret())
-	require.Equal(t, "***", redactedCfg.Cluster().Token().Secret())
-	require.Equal(t, "", redactedCfg.Cluster().AESCBCEncryptionSecret())
-	require.Equal(t, replacement, redactedCfg.Cluster().SecretboxEncryptionSecret())
-	require.Equal(t, replacement, string(redactedCfg.Cluster().CA().Key))
-	require.Equal(t, replacement, string(redactedCfg.Cluster().Etcd().CA().Key))
-	require.Equal(t, replacement, string(redactedCfg.Cluster().ServiceAccount().Key))
+	require.Equal(t, replacement, config.Machine().Security().Token())
+	require.Equal(t, replacement, string(config.Machine().Security().CA().Key))
+	require.Equal(t, replacement, config.Cluster().Secret())
+	require.Equal(t, "***", config.Cluster().Token().Secret())
+	require.Equal(t, "", config.Cluster().AESCBCEncryptionSecret())
+	require.Equal(t, replacement, config.Cluster().SecretboxEncryptionSecret())
+	require.Equal(t, replacement, string(config.Cluster().CA().Key))
+	require.Equal(t, replacement, string(config.Cluster().Etcd().CA().Key))
+	require.Equal(t, replacement, string(config.Cluster().ServiceAccount().Key))
 }

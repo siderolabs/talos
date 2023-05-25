@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/siderolabs/gen/value"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 

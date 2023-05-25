@@ -23,6 +23,7 @@ import (
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -100,32 +101,33 @@ func (suite *StaticPodConfigSuite) assertNoResource(md resource.Metadata) func()
 
 func (suite *StaticPodConfigSuite) TestReconcile() {
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachinePods: []v1alpha1.Unstructured{
-					{
-						Object: map[string]interface{}{
-							"apiVersion": "v1",
-							"kind":       "pod",
-							"metadata": map[string]interface{}{
-								"name": "nginx",
-							},
-							"spec": map[string]interface{}{
-								"containers": []interface{}{
-									map[string]interface{}{
-										"name":  "nginx",
-										"image": "nginx",
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachinePods: []v1alpha1.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"apiVersion": "v1",
+								"kind":       "pod",
+								"metadata": map[string]interface{}{
+									"name": "nginx",
+								},
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"name":  "nginx",
+											"image": "nginx",
+										},
 									},
 								},
 							},
 						},
 					},
 				},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
 			},
-			ClusterConfig: &v1alpha1.ClusterConfig{},
-		},
-	)
+		))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 

@@ -20,12 +20,13 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/bundle"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/generate"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -91,7 +92,7 @@ setup, usually involving a load balancer, use the IP and port of the load balanc
 
 			switch genConfigCmdFlags.configVersion {
 			case "v1alpha1":
-				return writeV1Alpha1Config(args)
+				return writeConfig(args)
 			default:
 				return fmt.Errorf("unknown config version: %q", genConfigCmdFlags.configVersion)
 			}
@@ -115,17 +116,17 @@ func fixControlPlaneEndpoint(u *url.URL) *url.URL {
 	return u
 }
 
-// V1Alpha1Config generates the Talos config bundle
+// GenerateConfigBundle generates the Talos config bundle
 //
-// V1Alpha1Config is useful for integration with external tooling options.
-func V1Alpha1Config(genOptions []generate.GenOption,
+// GenerateConfigBundle is useful for integration with external tooling options.
+func GenerateConfigBundle(genOptions []generate.Option,
 	clusterName string,
 	endpoint string,
 	kubernetesVersion string,
 	configPatch []string,
 	configPatchControlPlane []string,
 	configPatchWorker []string,
-) (*bundle.ConfigBundle, error) {
+) (*bundle.Bundle, error) {
 	configBundleOpts := []bundle.Option{
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
@@ -160,7 +161,7 @@ func V1Alpha1Config(genOptions []generate.GenOption,
 		return nil, err
 	}
 
-	configBundle, err := bundle.NewConfigBundle(configBundleOpts...)
+	configBundle, err := bundle.NewBundle(configBundleOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate config bundle: %w", err)
 	}
@@ -172,7 +173,7 @@ func V1Alpha1Config(genOptions []generate.GenOption,
 }
 
 //nolint:gocyclo
-func writeV1Alpha1Config(args []string) error {
+func writeConfig(args []string) error {
 	if err := validateFlags(); err != nil {
 		return err
 	}
@@ -182,7 +183,7 @@ func writeV1Alpha1Config(args []string) error {
 		return err
 	}
 
-	var genOptions []generate.GenOption //nolint:prealloc
+	var genOptions []generate.Option //nolint:prealloc
 
 	for _, registryMirror := range genConfigCmdFlags.registryMirrors {
 		components := strings.SplitN(registryMirror, "=", 2)
@@ -213,7 +214,14 @@ func writeV1Alpha1Config(args []string) error {
 	}
 
 	if genConfigCmdFlags.withSecrets != "" {
-		genOptions = append(genOptions, generate.WithSecrets(genConfigCmdFlags.withSecrets))
+		var secretsBundle *secrets.Bundle
+
+		secretsBundle, err = secrets.LoadBundle(genConfigCmdFlags.withSecrets)
+		if err != nil {
+			return fmt.Errorf("failed to load secrets bundle: %w", err)
+		}
+
+		genOptions = append(genOptions, generate.WithSecretsBundle(secretsBundle))
 	}
 
 	genOptions = append(genOptions,
@@ -234,7 +242,7 @@ func writeV1Alpha1Config(args []string) error {
 		commentsFlags |= encoder.CommentsExamples
 	}
 
-	configBundle, err := V1Alpha1Config(
+	configBundle, err := GenerateConfigBundle(
 		genOptions,
 		args[0],
 		args[1],
@@ -280,7 +288,7 @@ func validateFlags() error {
 }
 
 // nolint:gocyclo
-func writeConfigBundle(configBundle *bundle.ConfigBundle, outputPaths configOutputPaths, commentsFlags encoder.CommentsFlags) error {
+func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPaths, commentsFlags encoder.CommentsFlags) error {
 	outputTypesSet := slices.ToSet(genConfigCmdFlags.outputTypes)
 
 	if _, ok := outputTypesSet[controlPlaneOutputType]; ok {

@@ -29,7 +29,6 @@ import (
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type ExtraManifestSuite struct {
@@ -155,9 +154,6 @@ func (suite *ExtraManifestSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	suite.Assert().NoError(suite.state.Create(context.Background(), v1alpha1.NewService("foo")))
 }
 
 func TestExtraManifestSuite(t *testing.T) {

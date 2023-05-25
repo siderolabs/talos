@@ -18,6 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -47,19 +48,21 @@ func (suite *KubeletSuite) TestReconcile() {
 	k8sCA := x509.NewCertificateAndKeyFromCertificateAuthority(ca)
 
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
 					},
+					ClusterCA:      k8sCA,
+					BootstrapToken: "abc.def",
 				},
-				ClusterCA:      k8sCA,
-				BootstrapToken: "abc.def",
 			},
-		},
+		),
 	)
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))

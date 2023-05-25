@@ -14,8 +14,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	kubeaccessctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubeaccess"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubeaccess"
 )
@@ -34,7 +35,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
@@ -45,7 +46,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				},
 			},
 		},
-	})
+	}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -77,10 +78,10 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
-	})
+	}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -112,7 +113,7 @@ func (suite *ConfigSuite) TestReconcileWorker() {
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
@@ -123,7 +124,7 @@ func (suite *ConfigSuite) TestReconcileWorker() {
 				},
 			},
 		},
-	})
+	}))
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 

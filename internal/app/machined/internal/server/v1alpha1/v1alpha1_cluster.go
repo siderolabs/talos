@@ -24,7 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	clusterapi "github.com/siderolabs/talos/pkg/machinery/api/cluster"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	clusterres "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )

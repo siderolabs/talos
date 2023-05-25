@@ -20,7 +20,7 @@ var Commands []*cobra.Command
 // GenV1Alpha1Config generates the Talos config bundle
 //
 // Kept with this name in this package for backwards-compatibility.
-var GenV1Alpha1Config = gen.V1Alpha1Config
+var GenV1Alpha1Config = gen.GenerateConfigBundle
 
 func addCommand(cmd *cobra.Command) {
 	Commands = append(Commands, cmd)

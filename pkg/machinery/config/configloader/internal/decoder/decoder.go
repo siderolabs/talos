@@ -6,34 +6,24 @@
 package decoder
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
 
 	yaml "gopkg.in/yaml.v3"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 )
 
-var (
-	// ErrMissingVersion indicates that the manifest is missing a version.
-	ErrMissingVersion = errors.New("missing version")
-	// ErrMissingKind indicates that the manifest is missing a kind.
-	ErrMissingKind = errors.New("missing kind")
-	// ErrMissingSpec indicates that the manifest is missing a spec.
-	ErrMissingSpec = errors.New("missing spec")
-	// ErrMissingSpecConent indicates that the manifest spec is empty.
-	ErrMissingSpecConent = errors.New("missing spec content")
-)
+// ErrMissingKind indicates that the manifest is missing a kind.
+var ErrMissingKind = errors.New("missing kind")
 
 const (
 	// ManifestVersionKey is the string indicating a manifest's version.
 	ManifestVersionKey = "version"
 	// ManifestKindKey is the string indicating a manifest's kind.
 	ManifestKindKey = "kind"
-	// ManifestSpecKey represents a manifest's spec.
-	ManifestSpecKey = "spec"
 	// ManifestDeprecatedKeyMachine represents the deprecated v1alpha1 manifest.
 	ManifestDeprecatedKeyMachine = "machine"
 	// ManifestDeprecatedKeyCluster represents the deprecated v1alpha1 manifest.
@@ -45,27 +35,19 @@ const (
 )
 
 // Decoder represents a multi-doc YAML decoder.
-type Decoder struct {
-	source []byte
-}
+type Decoder struct{}
 
 // Decode decodes all known manifests.
-func (d *Decoder) Decode() ([]interface{}, error) {
-	return d.decode()
+func (d *Decoder) Decode(r io.Reader) ([]config.Document, error) {
+	return parse(r)
 }
 
 // NewDecoder initializes and returns a `Decoder`.
-func NewDecoder(source []byte) *Decoder {
-	return &Decoder{
-		source: source,
-	}
+func NewDecoder() *Decoder {
+	return &Decoder{}
 }
 
-func (d *Decoder) decode() ([]interface{}, error) {
-	return parse(d.source)
-}
-
-func parse(source []byte) (decoded []interface{}, err error) {
+func parse(r io.Reader) (decoded []config.Document, err error) {
 	// Recover from yaml.v3 panics because we rely on machine configuration loading _a lot_.
 	defer func() {
 		if p := recover(); p != nil {
@@ -73,9 +55,7 @@ func parse(source []byte) (decoded []interface{}, err error) {
 		}
 	}()
 
-	decoded = []interface{}{}
-
-	r := bytes.NewReader(source)
+	decoded = []config.Document{}
 
 	dec := yaml.NewDecoder(r)
 
@@ -98,7 +78,7 @@ func parse(source []byte) (decoded []interface{}, err error) {
 		}
 
 		for _, manifest := range manifests.Content {
-			var target interface{}
+			var target config.Document
 
 			if target, err = decode(manifest); err != nil {
 				return nil, err
@@ -110,11 +90,10 @@ func parse(source []byte) (decoded []interface{}, err error) {
 }
 
 //nolint:gocyclo,cyclop
-func decode(manifest *yaml.Node) (target interface{}, err error) {
+func decode(manifest *yaml.Node) (target config.Document, err error) {
 	var (
 		version string
 		kind    string
-		spec    *yaml.Node
 	)
 
 	for i, node := range manifest.Content {
@@ -135,58 +114,33 @@ func decode(manifest *yaml.Node) (target interface{}, err error) {
 			if err = manifest.Content[i+1].Decode(&version); err != nil {
 				return nil, fmt.Errorf("version decode: %w", err)
 			}
-		case ManifestSpecKey:
-			if len(manifest.Content) < i+1 {
-				return nil, fmt.Errorf("missing manifest content")
-			}
-
-			spec = manifest.Content[i+1]
 		case
 			ManifestDeprecatedKeyMachine,
 			ManifestDeprecatedKeyCluster,
 			ManifestDeprecatedKeyDebug,
 			ManifestDeprecatedKeyPersist:
-			if target, err = registry.New("v1alpha1", ""); err != nil {
-				return nil, fmt.Errorf("new deprecated config: %w", err)
-			}
-
-			if err = manifest.Decode(target); err != nil {
-				return nil, fmt.Errorf("deprecated decode: %w", err)
-			}
-
-			if err = checkUnknownKeys(target, manifest); err != nil {
-				return nil, err
-			}
-
-			return target, nil
+			version = "v1alpha1"
 		}
 	}
 
-	if kind == "" {
-		return nil, ErrMissingKind
+	switch {
+	case version == "v1alpha1" && kind == "":
+		target, err = registry.New("v1alpha1", "")
+	case kind == "":
+		err = ErrMissingKind
+	default:
+		target, err = registry.New(kind, version)
 	}
 
-	if version == "" {
-		return nil, ErrMissingVersion
+	if err != nil {
+		return nil, err
 	}
 
-	if spec == nil {
-		return nil, ErrMissingSpec
+	if err = manifest.Decode(target); err != nil {
+		return nil, fmt.Errorf("error decoding %s to %T: %w", kind, target, err)
 	}
 
-	if spec.Content == nil {
-		return nil, ErrMissingSpecConent
-	}
-
-	if target, err = registry.New(kind, version); err != nil {
-		return nil, fmt.Errorf("new config: %w", err)
-	}
-
-	if err = spec.Decode(target); err != nil {
-		return nil, fmt.Errorf("spec decode: %w", err)
-	}
-
-	if err = checkUnknownKeys(target, spec); err != nil {
+	if err = checkUnknownKeys(target, manifest); err != nil {
 		return nil, err
 	}
 

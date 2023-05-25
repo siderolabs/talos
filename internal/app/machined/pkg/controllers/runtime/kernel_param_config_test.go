@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	runtimeresource "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -31,18 +32,22 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 	value := "500000"
 	valueSysfs := "600000"
 
-	cfg := config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineSysctls: map[string]string{
-				fsFileMax: value,
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineSysctls: map[string]string{
+						fsFileMax: value,
+					},
+					MachineSysfs: map[string]string{
+						fsFileMax: valueSysfs,
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
 			},
-			MachineSysfs: map[string]string{
-				fsFileMax: valueSysfs,
-			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+		),
+	)
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
@@ -73,16 +78,20 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 	))
 
 	old := cfg.Metadata().Version()
-	cfg = config.NewMachineConfig(&v1alpha1.Config{
-		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineSysctls: map[string]string{},
-			MachineSysfs: map[string]string{
-				fsFileMax: valueSysfs,
+	cfg = config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineSysctls: map[string]string{},
+					MachineSysfs: map[string]string{
+						fsFileMax: valueSysfs,
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
 			},
-		},
-		ClusterConfig: &v1alpha1.ClusterConfig{},
-	})
+		),
+	)
 
 	cfg.Metadata().SetVersion(old)
 	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))

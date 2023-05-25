@@ -46,7 +46,7 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 		return fmt.Errorf("error patching config: %w", err)
 	}
 
-	cfgBytes, err := cfg.Bytes()
+	cfgBytes, err := mc.Container().EncodeBytes()
 	if err != nil {
 		return fmt.Errorf("error serializing config: %w", err)
 	}

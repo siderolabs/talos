@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/netip"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -172,5 +173,9 @@ func (suite *KmsgLogDeliverySuite) TearDownTest() {
 }
 
 func TestKmsgLogDeliverySuite(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("requires root")
+	}
+
 	suite.Run(t, new(KmsgLogDeliverySuite))
 }

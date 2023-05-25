@@ -25,6 +25,7 @@ import (
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -66,30 +67,32 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 	suite.Require().NoError(err)
 
 	suite.cfg = config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					ExtraHostEntries: []*v1alpha1.ExtraHost{
-						{
-							HostIP:      "10.0.0.1",
-							HostAliases: []string{"a", "b"},
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						ExtraHostEntries: []*v1alpha1.ExtraHost{
+							{
+								HostIP:      "10.0.0.1",
+								HostAliases: []string{"a", "b"},
+							},
+							{
+								HostIP:      "10.0.0.2",
+								HostAliases: []string{"c", "d"},
+							},
 						},
-						{
-							HostIP:      "10.0.0.2",
-							HostAliases: []string{"c", "d"},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
 						},
 					},
 				},
 			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
-					},
-				},
-			},
-		},
+		),
 	)
 
 	suite.defaultAddress = network.NewNodeAddress(network.NamespaceName, network.NodeAddressDefaultID)
@@ -182,14 +185,16 @@ func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 
 func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
 	cfg := config.NewMachineConfig(
-		&v1alpha1.Config{
-			ConfigVersion: "v1alpha1",
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineNetwork: &v1alpha1.NetworkConfig{
-					NetworkDisableSearchDomain: pointer.To(true),
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkDisableSearchDomain: pointer.To(true),
+					},
 				},
 			},
-		},
+		),
 	)
 	suite.testFiles(
 		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
@@ -230,40 +235,6 @@ func (suite *EtcFileConfigSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
-
-	// trigger updates in resources to stop watch loops
-	err := suite.state.Create(
-		context.Background(), config.NewMachineConfig(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
-			},
-		),
-	)
-	if state.IsConflictError(err) {
-		err = suite.state.Destroy(context.Background(), config.NewMachineConfig(nil).Metadata())
-	}
-
-	suite.Require().NoError(err)
-
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewHostnameStatus(network.NamespaceName, "bar"),
-		),
-	)
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewResolverStatus(network.NamespaceName, "bar"),
-		),
-	)
-	suite.Assert().NoError(
-		suite.state.Create(
-			context.Background(),
-			network.NewNodeAddress(network.NamespaceName, "bar"),
-		),
-	)
 }
 
 func TestEtcFileConfigSuite(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 
 	configpb "github.com/siderolabs/talos/pkg/machinery/api/resource/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
