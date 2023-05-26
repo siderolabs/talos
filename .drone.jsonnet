@@ -193,7 +193,7 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 
 local generate = Step('generate', target='generate docs', depends_on=[setup_ci]);
 local check_dirty = Step('check-dirty', depends_on=[generate]);
-local build = Step('build', target='talosctl-linux talosctl-darwin talosctl-freebsd talosctl-windows kernel initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
+local build = Step('build', target='talosctl-all kernel initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
 local lint = Step('lint', depends_on=[build]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
 local iso = Step('iso', target='iso', depends_on=[build], environment={ IMAGE_REGISTRY: local_registry });

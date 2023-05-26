@@ -380,20 +380,6 @@ RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm GOARM=7 go build ${G
 RUN chmod +x /talosctl-linux-armv7
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-linux-armv7
 
-FROM scratch AS talosctl-linux
-COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd64
-COPY --from=talosctl-linux-arm64-build /talosctl-linux-arm64 /talosctl-linux-arm64
-COPY --from=talosctl-linux-armv7-build /talosctl-linux-armv7 /talosctl-linux-armv7
-
-FROM scratch as talosctl
-ARG TARGETARCH
-COPY --from=talosctl-linux /talosctl-linux-${TARGETARCH} /talosctl
-ARG TAG
-ENV VERSION ${TAG}
-LABEL "alpha.talos.dev/version"="${VERSION}"
-LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
-ENTRYPOINT ["/talosctl"]
-
 FROM base AS talosctl-darwin-amd64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS
@@ -411,10 +397,6 @@ RUN --mount=type=cache,target=/.cache GOOS=darwin GOARCH=arm64 go build ${GO_BUI
 RUN chmod +x /talosctl-darwin-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" talosctl-darwin-arm64
 
-FROM scratch AS talosctl-darwin
-COPY --from=talosctl-darwin-amd64-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
-COPY --from=talosctl-darwin-arm64-build /talosctl-darwin-arm64 /talosctl-darwin-arm64
-
 FROM base AS talosctl-windows-amd64-build
 WORKDIR /src/cmd/talosctl
 ARG GO_BUILDFLAGS
@@ -422,9 +404,6 @@ ARG GO_LDFLAGS
 ARG GOAMD64
 RUN --mount=type=cache,target=/.cache GOOS=windows GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-windows-amd64.exe
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-windows-amd64.exe
-
-FROM scratch AS talosctl-windows
-COPY --from=talosctl-windows-amd64-build /talosctl-windows-amd64.exe /talosctl-windows-amd64.exe
 
 FROM base AS talosctl-freebsd-amd64-build
 WORKDIR /src/cmd/talosctl
@@ -441,9 +420,50 @@ ARG GO_LDFLAGS
 RUN --mount=type=cache,target=/.cache GOOS=freebsd GOARCH=arm64 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /talosctl-freebsd-arm64
 RUN touch --date="@${SOURCE_DATE_EPOCH}" /talosctl-freebsd-arm64
 
-FROM scratch AS talosctl-freebsd
+FROM scratch AS talosctl-linux-amd64
+COPY --from=talosctl-linux-amd64-build /talosctl-linux-amd64 /talosctl-linux-amd64
+
+FROM scratch AS talosctl-linux-arm64
+COPY --from=talosctl-linux-arm64-build /talosctl-linux-arm64 /talosctl-linux-arm64
+
+FROM scratch AS talosctl-linux-armv7
+COPY --from=talosctl-linux-armv7-build /talosctl-linux-armv7 /talosctl-linux-armv7
+
+FROM scratch AS talosctl-darwin-amd64
+COPY --from=talosctl-darwin-amd64-build /talosctl-darwin-amd64 /talosctl-darwin-amd64
+
+FROM scratch AS talosctl-darwin-arm64
+COPY --from=talosctl-darwin-arm64-build /talosctl-darwin-arm64 /talosctl-darwin-arm64
+
+FROM scratch AS talosctl-freebsd-amd64
 COPY --from=talosctl-freebsd-amd64-build /talosctl-freebsd-amd64 /talosctl-freebsd-amd64
+
+FROM scratch AS talosctl-freebsd-arm64
 COPY --from=talosctl-freebsd-arm64-build /talosctl-freebsd-arm64 /talosctl-freebsd-arm64
+
+FROM scratch AS talosctl-windows-amd64
+COPY --from=talosctl-windows-amd64-build /talosctl-windows-amd64.exe /talosctl-windows-amd64.exe
+
+FROM --platform=${BUILDPLATFORM} talosctl-${TARGETOS}-${TARGETARCH} AS talosctl-platform
+
+FROM scratch AS talosctl-all
+COPY --from=talosctl-linux-amd64 / /
+COPY --from=talosctl-linux-arm64 / /
+COPY --from=talosctl-linux-armv7 / /
+COPY --from=talosctl-darwin-amd64 / /
+COPY --from=talosctl-darwin-arm64 / /
+COPY --from=talosctl-freebsd-amd64 / /
+COPY --from=talosctl-freebsd-arm64 / /
+COPY --from=talosctl-windows-amd64 / /
+
+FROM scratch as talosctl
+ARG TARGETARCH
+COPY --from=talosctl-all /talosctl-linux-${TARGETARCH} /talosctl
+ARG TAG
+ENV VERSION ${TAG}
+LABEL "alpha.talos.dev/version"="${VERSION}"
+LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
+ENTRYPOINT ["/talosctl"]
 
 # The kernel target is the linux kernel.
 
@@ -731,6 +751,30 @@ ONBUILD WORKDIR /
 
 FROM installer-image-squashed AS imager
 
+FROM imager as iso-amd64-build
+ARG SOURCE_DATE_EPOCH
+ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+RUN /bin/installer \
+    iso \
+    --arch amd64 \
+    --output /out
+
+FROM imager as iso-arm64-build
+ARG SOURCE_DATE_EPOCH
+ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+RUN /bin/installer \
+    iso \
+    --arch arm64 \
+    --output /out
+
+FROM scratch as iso-amd64
+COPY --from=iso-amd64-build /out /
+
+FROM scratch as iso-arm64
+COPY --from=iso-arm64-build /out /
+
+FROM --platform=${BUILDPLATFORM} iso-${TARGETARCH} AS iso
+
 # The test target performs tests on the source code.
 
 FROM base AS unit-tests-runner
@@ -874,8 +918,10 @@ RUN find . \
 # The docs target generates documentation.
 
 FROM base AS docs-build
+ARG TARGETOS
+ARG TARGETARCH
 WORKDIR /src
-COPY --from=talosctl-linux /talosctl-linux-amd64 /bin/talosctl
+COPY --from=talosctl-platform /talosctl-${TARGETOS}-${TARGETARCH} /bin/talosctl
 RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp \
     && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
 COPY ./pkg/machinery/config/types/v1alpha1/schemas/ /tmp/schemas/

@@ -260,10 +260,32 @@ talos: ## Builds the Talos container image and outputs it to the registry.
 talosctl-image: ## Builds the talosctl container image and outputs it to the registry.
 	@$(MAKE) registry-talosctl TARGET_ARGS="--allow security.insecure"
 
-talosctl-%:
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/amd64 PUSH=false NAME=Client
+talosctl-all:
+	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false NAME=Client
 
-talosctl: $(TALOSCTL_DEFAULT_TARGET) ## Builds the talosctl binary for the local machine.
+talosctl-linux-amd64:
+	@$(MAKE) local-talosctl-linux-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+
+talosctl-linux-arm64:
+	@$(MAKE) local-talosctl-linux-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+
+talosctl-darwin-amd64:
+	@$(MAKE) local-talosctl-darwin-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+
+talosctl-darwin-arm64:
+	@$(MAKE) local-talosctl-darwin-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+
+talosctl-freebsd-amd64:
+	@$(MAKE) local-talosctl-freebsd-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+
+taloscl-freebsd-arm64:
+	@$(MAKE) local-talosctl-freebsd-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+
+talosctl-windows-amd64:
+	@$(MAKE) local-talosctl-windows-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
+
+talosctl:
+	@$(MAKE) local-talosctl-platform DEST=$(ARTIFACTS)
 
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
