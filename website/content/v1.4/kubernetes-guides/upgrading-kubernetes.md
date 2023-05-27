@@ -6,6 +6,9 @@ aliases:
 ---
 
 This guide covers upgrading Kubernetes on Talos Linux clusters.
+
+For a list of Kubernetes versions compatible with each Talos release, see the [Support Matrix]({{< relref "../introduction/support-matrix" >}}).
+
 For upgrading the Talos Linux operating system, see [Upgrading Talos]({{< relref "../talos-guides/upgrading-talos" >}})
 
 ## Video Walkthrough
