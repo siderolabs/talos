@@ -46,6 +46,10 @@ func init() {
 }
 
 func upgradeKubernetes(ctx context.Context, c *client.Client) error {
+	if err := helpers.FailIfMultiNodes(ctx, "upgrade-k8s"); err != nil {
+		return err
+	}
+
 	if err := helpers.ClientVersionCheck(ctx, c); err != nil {
 		return err
 	}
