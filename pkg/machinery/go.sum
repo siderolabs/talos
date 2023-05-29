@@ -1,6 +1,6 @@
 github.com/ProtonMail/go-crypto v0.0.0-20230321155629-9a39f2531310/go.mod h1:8TI4H3IbrackdNgv+92dI+rhpCaLqM0IfpgCgenFvRE=
-github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756 h1:L6S7kR7SlhQKplIBpkra3s6yhcZV51lhRnXmYc4HohI=
-github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756/go.mod h1:8TI4H3IbrackdNgv+92dI+rhpCaLqM0IfpgCgenFvRE=
+github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903 h1:ZK3C5DtzV2nVAQTx5S5jQvMeDqWtD1By5mOoyY/xJek=
+github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903/go.mod h1:8TI4H3IbrackdNgv+92dI+rhpCaLqM0IfpgCgenFvRE=
 github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f h1:tCbYj7/299ekTTXpdwKYF8eBlsYsDVoggDAuAjoK66k=
 github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f/go.mod h1:gcr0kNtGBqin9zDW9GOHcVntrwnjrK+qdJ06mWYBybw=
 github.com/ProtonMail/gopenpgp/v2 v2.7.1 h1:Awsg7MPc2gD3I7IFac2qE3Gdls0lZW8SzrFZ3k1oz0s=
@@ -21,8 +21,8 @@ github.com/containerd/go-cni v1.1.9 h1:ORi7P1dYzCwVM6XPN4n3CbkuOx/NZ2DOqy+SHRdo9
 github.com/containerd/go-cni v1.1.9/go.mod h1:XYrZJ1d5W6E2VOvjffL3IZq0Dz6bsVlERHbekNK90PM=
 github.com/containernetworking/cni v1.1.2 h1:wtRGZVv7olUHMOqouPpn3cXJWpJgM6+EUl31EQbXALQ=
 github.com/containernetworking/cni v1.1.2/go.mod h1:sDpYKmGVENF3s6uvMvGgldDWeG8dMxakj/u+i9ht9vw=
-github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a h1:H52VL6of0xYiEeM7HLBUnRCWKZzGKLV3QKLlTxM3iD4=
-github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a/go.mod h1:g+0MZ3+2MIUkUL7JYTqgYeo5f4j7dAuGem6apjBJ1XU=
+github.com/cosi-project/runtime v0.3.1-alpha.3 h1:8IDeG7b64OCTMHlngEKWTHTYKCfJ1oMVDxP3y0yuKbU=
+github.com/cosi-project/runtime v0.3.1-alpha.3/go.mod h1:g+0MZ3+2MIUkUL7JYTqgYeo5f4j7dAuGem6apjBJ1XU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -113,8 +113,8 @@ github.com/siderolabs/crypto v0.4.0 h1:o1KIR1KyevUcY9nbJlSyQAj7+p+rveGGF8LjAAFMt
 github.com/siderolabs/crypto v0.4.0/go.mod h1:itZpBsJ9i0aH8jiHAuSlKCal7hni7X1aDYo6vGVl5LY=
 github.com/siderolabs/gen v0.4.5 h1:rwXUVJlL7hYza1LrSVXfT905ZC9Rgei37jMKKs/+eP0=
 github.com/siderolabs/gen v0.4.5/go.mod h1:wS8tFq7sn5vqKAuyS30vJUig3tX5v6q79VG4KfUnILM=
-github.com/siderolabs/go-api-signature v0.2.3 h1:7jaZ2R1TiJ/xAsMCiFCm72n/PsnoVYt1R+Savbj7l/0=
-github.com/siderolabs/go-api-signature v0.2.3/go.mod h1:HmO3kVEXgrXYzj0tLHT9HAAu0I4grz2/dJwq8AdzE5Q=
+github.com/siderolabs/go-api-signature v0.2.4 h1:s+K0GtaPHql4LdZzL72QvwPMzffY+KB0mszORDK+5/w=
+github.com/siderolabs/go-api-signature v0.2.4/go.mod h1:rLIKzbDhKewI3MdztyntS1apH6EC8ccU2TF5S0/O2yg=
 github.com/siderolabs/go-blockdevice v0.4.5 h1:NgpR9XTl/N7WeL59QHBsseDD0Nb8Y2nel+W3u7xHIvY=
 github.com/siderolabs/go-blockdevice v0.4.5/go.mod h1:4PeOuk71pReJj1JQEXDE7kIIQJPVe8a+HZQa+qjxSEA=
 github.com/siderolabs/go-debug v0.2.2 h1:c8styCvp+MO0oPO8q4N1CKSF3fVuAT0qnuUIeZ/BiW0=
@@ -217,8 +217,12 @@ golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8T
 golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
-google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 h1:KpwkzHKEF7B9Zxg18WzOa7djJ+Ha5DzthMyZYQfEn2A=
-google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1/go.mod h1:nKE/iIaLqn2bQwXBg8f1g2Ylh6r5MN5CmZvuzZCgsCU=
+google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e h1:Ao9GzfUMPH3zjVfzXG5rlWlk+Q8MXWKwWpwVQE1MXfw=
+google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e/go.mod h1:zqTuNwFlFRsw5zIts5VnzLQxSRqh+CGOTVMlYbY0Eyk=
+google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 h1:m8v1xLLLzMe1m5P+gCTF8nJB9epwZQUBERm20Oy1poQ=
+google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9/go.mod h1:vHYtlOoi6TsQ3Uk2yxR7NI5z8uoV+3pZtR4jmHIkRig=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 h1:0nDDozoAU19Qb2HwhXadU8OcsiO/09cnTqhUtq2MEOM=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19/go.mod h1:66JfowdXAEgad5O9NnYcsNPLCPZJD++2L9X0PCMODrA=
 google.golang.org/grpc v1.55.0 h1:3Oj82/tFSCeUrRTg/5E/7d/W5A1tj6Ky1ABAuZuv5ag=
 google.golang.org/grpc v1.55.0/go.mod h1:iYEXKGkEBhg1PjZQvoYEVPTDkHo1/bjTnfwTeGONTY8=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=

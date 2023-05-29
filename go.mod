@@ -26,7 +26,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	github.com/BurntSushi/toml v1.2.1
-	github.com/aws/aws-sdk-go v1.44.266
+	github.com/aws/aws-sdk-go v1.44.271
 	github.com/beevik/ntp v1.0.0
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/cenkalti/backoff/v4 v4.2.1
@@ -37,9 +37,9 @@ require (
 	github.com/containernetworking/plugins v1.3.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.1
-	github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a
-	github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker v23.0.6+incompatible
+	github.com/cosi-project/runtime v0.3.1-alpha.3
+	github.com/docker/distribution v2.8.2+incompatible
+	github.com/docker/docker v24.0.2+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.4.2
@@ -79,13 +79,13 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pin/tftp v2.1.0+incompatible
 	github.com/pmorjan/kmod v1.1.0
-	github.com/prometheus/procfs v0.10.0
-	github.com/rivo/tview v0.0.0-20230511053024-822bd067b165
+	github.com/prometheus/procfs v0.10.1
+	github.com/rivo/tview v0.0.0-20230525073430-4a1f85bb2219
 	github.com/rs/xid v1.5.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.3.0
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.16
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.17
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/discovery-api v0.1.2
 	github.com/siderolabs/discovery-client v0.1.4
@@ -96,7 +96,7 @@ require (
 	github.com/siderolabs/go-debug v0.2.2
 	github.com/siderolabs/go-kmsg v0.1.3
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-kubernetes v0.2.0
+	github.com/siderolabs/go-kubernetes v0.2.1
 	github.com/siderolabs/go-loadbalancer v0.3.1
 	github.com/siderolabs/go-pcidb v0.1.0
 	github.com/siderolabs/go-pointer v1.0.0
@@ -147,7 +147,7 @@ require (
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/Microsoft/hcsshim v0.9.9 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903 // indirect
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/ProtonMail/gopenpgp/v2 v2.7.1 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
@@ -252,7 +252,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/sethgrid/pester v1.2.0 // indirect
-	github.com/siderolabs/go-api-signature v0.2.3 // indirect
+	github.com/siderolabs/go-api-signature v0.2.4 // indirect
 	github.com/siderolabs/protoenc v0.2.0 // indirect
 	github.com/siderolabs/tcpproxy v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -287,7 +287,9 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20230325221338-052af4a8072b // indirect
 	google.golang.org/api v0.114.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
+	google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

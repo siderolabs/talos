@@ -8,7 +8,7 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 
 require (
 	github.com/containerd/go-cni v1.1.9
-	github.com/cosi-project/runtime v0.3.1-alpha.2.0.20230511165115-82b69d862a7a
+	github.com/cosi-project/runtime v0.3.1-alpha.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -21,21 +21,21 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/gen v0.4.5
-	github.com/siderolabs/go-api-signature v0.2.3
+	github.com/siderolabs/go-api-signature v0.2.4
 	github.com/siderolabs/go-blockdevice v0.4.5
 	github.com/siderolabs/go-debug v0.2.2
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.0
 	github.com/stretchr/testify v1.8.3
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230518184743-7afd39499903 // indirect
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/ProtonMail/gopenpgp/v2 v2.7.1 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
@@ -64,6 +64,8 @@ require (
 	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
+	google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230525234035-dd9d682886f9 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

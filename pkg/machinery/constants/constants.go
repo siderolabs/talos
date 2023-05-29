@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.28-talos"
+	DefaultKernelVersion = "6.1.30-talos"
 
 	// DefaultKernelModulesPath is the default path to the kernel modules.
 	DefaultKernelModulesPath = "/lib/modules" + "/" + DefaultKernelVersion
@@ -819,7 +819,7 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.21.4"
+	FlannelVersion = "v0.22.0"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"

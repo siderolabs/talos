@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Code generated from the manifest https://raw.githubusercontent.com/flannel-io/flannel/v0.21.4/Documentation/kube-flannel.yml DO NOT EDIT
+// Code generated from the manifest https://raw.githubusercontent.com/flannel-io/flannel/v0.22.0/Documentation/kube-flannel.yml DO NOT EDIT
 
 package flannel
 
@@ -10,6 +10,8 @@ package flannel
 var Template = []byte(`apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  labels:
+    k8s-app: flannel
   name: flannel
 rules:
 - apiGroups:
@@ -43,6 +45,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  labels:
+    k8s-app: flannel
   name: flannel
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -56,6 +60,8 @@ subjects:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  labels:
+    k8s-app: flannel
   name: flannel
   namespace: kube-system
 ---
