@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type NodeAddressSuite struct {
@@ -104,6 +105,11 @@ func (suite *NodeAddressSuite) assertAddresses(requiredIDs []string, check func(
 }
 
 func (suite *NodeAddressSuite) TestDefaults() {
+	// create fake device ready status
+	deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
+	deviceStatus.TypedSpec().Ready = true
+	suite.Require().NoError(suite.state.Create(suite.ctx, deviceStatus))
+
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.AddressStatusController{}))
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkStatusController{}))
 

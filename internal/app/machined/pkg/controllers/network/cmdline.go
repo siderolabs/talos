@@ -53,7 +53,7 @@ func (linkConfig *CmdlineLinkConfig) resolveLinkName() error {
 		if ifaceMAC == mac {
 			linkConfig.LinkName = iface.Name
 
-			break
+			return nil
 		}
 	}
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	v1alpha1config "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
@@ -46,7 +47,7 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 		return fmt.Errorf("error patching config: %w", err)
 	}
 
-	cfgBytes, err := mc.Container().EncodeBytes()
+	cfgBytes, err := container.NewV1Alpha1(cfg).EncodeBytes()
 	if err != nil {
 		return fmt.Errorf("error serializing config: %w", err)
 	}

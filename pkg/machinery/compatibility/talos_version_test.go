@@ -179,3 +179,38 @@ func TestTalosUpgradeCompatibilityUnsupported(t *testing.T) {
 		runTalosVersionTest(t, tt)
 	}
 }
+
+func TestDisablePredictableNetworkInterfaces(t *testing.T) {
+	for _, tt := range []struct {
+		host     string
+		expected bool
+	}{
+		{
+			host:     "1.3.0",
+			expected: true,
+		},
+		{
+			host:     "1.4.0",
+			expected: true,
+		},
+		{
+			host:     "1.5.0",
+			expected: false,
+		},
+		{
+			host:     "1.6.0",
+			expected: false,
+		},
+	} {
+		tt := tt
+
+		t.Run(tt.host, func(t *testing.T) {
+			host, err := compatibility.ParseTalosVersion(&machine.VersionInfo{
+				Tag: tt.host,
+			})
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expected, host.DisablePredictableNetworkInterfaces())
+		})
+	}
+}

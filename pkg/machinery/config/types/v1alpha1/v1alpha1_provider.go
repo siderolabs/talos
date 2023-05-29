@@ -523,16 +523,14 @@ func (n *NetworkConfig) Devices() []config.Device {
 // getDevice adds or returns existing Device by name.
 //
 // This method mutates configuration, but it's only used in config generation.
-func (n *NetworkConfig) getDevice(name string) *Device {
+func (n *NetworkConfig) getDevice(iface IfaceSelector) *Device {
 	for _, dev := range n.NetworkInterfaces {
-		if dev.DeviceInterface == name {
+		if iface.matches(dev) {
 			return dev
 		}
 	}
 
-	dev := &Device{
-		DeviceInterface: name,
-	}
+	dev := iface.new()
 
 	n.NetworkInterfaces = append(n.NetworkInterfaces, dev)
 

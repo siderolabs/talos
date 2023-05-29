@@ -199,6 +199,7 @@ func (v *VMware) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty0").Append("ttyS0"),
 		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
+		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
 	}
 }
 

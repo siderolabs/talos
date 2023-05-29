@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -196,6 +197,7 @@ func (a *Azure) KernelArgs() procfs.Parameters {
 		procfs.NewParameter("console").Append("ttyS0,115200n8"),
 		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
 		procfs.NewParameter("rootdelay").Append("300"),
+		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
 	}
 }
 

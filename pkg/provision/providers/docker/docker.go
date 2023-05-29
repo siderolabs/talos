@@ -71,7 +71,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 
 	return []generate.Option{
 		generate.WithNetworkOptions(
-			v1alpha1.WithNetworkInterfaceIgnore("eth0"),
+			v1alpha1.WithNetworkInterfaceIgnore(v1alpha1.IfaceByName("eth0")),
 			v1alpha1.WithNetworkNameservers(nameservers...),
 		),
 	}
@@ -101,8 +101,8 @@ func (p *provisioner) UserDiskName(index int) string {
 }
 
 // GetFirstInterface returns first network interface name.
-func (p *provisioner) GetFirstInterface() string {
-	return "eth0"
+func (p *provisioner) GetFirstInterface() v1alpha1.IfaceSelector {
+	return v1alpha1.IfaceByName("eth0")
 }
 
 func detectWSL() bool {

@@ -90,6 +90,10 @@ An example of a vlan configuration including static ip configuration:
 
 This will create a vlan interface named `eth0.100` with `eth0` as the underlying interface and set the vlan id to 100 with static IP 172.20.0.2/24 and 172.20.0.1 as default gateway.
 
+#### `net.ifnames=0`
+
+Disable the predictable network interface names by specifying `net.ifnames=0` on the kernel command line.
+
 #### `panic`
 
 The amount of time to wait after a panic before a reboot is issued.

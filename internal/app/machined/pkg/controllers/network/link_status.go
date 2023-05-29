@@ -23,6 +23,7 @@ import (
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/internal/pkg/pci"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -38,13 +39,7 @@ func (ctrl *LinkStatusController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *LinkStatusController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.LinkRefreshType,
-			Kind:      controller.InputWeak,
-		},
-	}
+	return nil
 }
 
 // Outputs implements controller.Controller interface.
@@ -61,6 +56,19 @@ func (ctrl *LinkStatusController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	// wait for udevd to be healthy, which implies that all link renames are done
+	if err := runtime.WaitForDevicesReady(ctx, r,
+		[]controller.Input{
+			{
+				Namespace: network.NamespaceName,
+				Type:      network.LinkSpecType,
+				Kind:      controller.InputStrong,
+			},
+		},
+	); err != nil {
+		return err
+	}
+
 	// create watch connections to rtnetlink and ethtool via genetlink
 	// these connections are used only to join multicast groups and receive notifications on changes
 	// other connections are used to send requests and receive responses, as we can't mix the notifications and request/responses

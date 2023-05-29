@@ -1679,7 +1679,7 @@ func init() {
 	DeviceDoc.Fields[0].Description = "The interface name.\nMutually exclusive with `deviceSelector`."
 	DeviceDoc.Fields[0].Comments[encoder.LineComment] = "The interface name."
 
-	DeviceDoc.Fields[0].AddExample("", "eth0")
+	DeviceDoc.Fields[0].AddExample("", "enp0s3")
 	DeviceDoc.Fields[1].Name = "deviceSelector"
 	DeviceDoc.Fields[1].Type = "NetworkDeviceSelector"
 	DeviceDoc.Fields[1].Note = ""

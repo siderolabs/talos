@@ -184,6 +184,12 @@ func (i *Installer) probeBootPartition() error {
 func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	errataBTF()
 
+	if seq == runtime.SequenceUpgrade {
+		if err = i.errataNetIfnames(); err != nil {
+			return err
+		}
+	}
+
 	if err = i.runPreflightChecks(seq); err != nil {
 		return err
 	}

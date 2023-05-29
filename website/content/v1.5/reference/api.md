@@ -175,6 +175,7 @@ description: Talos gRPC API reference.
     - [Mount](#talos.resource.definitions.proto.Mount)
   
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
+    - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
@@ -3203,6 +3204,21 @@ Mount specifies a mount for a container.
 <p align="right"><a href="#top">Top</a></p>
 
 ## resource/definitions/runtime/runtime.proto
+
+
+
+<a name="talos.resource.definitions.runtime.DevicesStatusSpec"></a>
+
+### DevicesStatusSpec
+DevicesStatusSpec is the spec for devices status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  |  |
+
+
+
 
 
 

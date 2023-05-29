@@ -55,6 +55,9 @@ const (
 	// KernelParamEnvironment is the kernel parameter name for passing process environment.
 	KernelParamEnvironment = "talos.environment"
 
+	// KernelParamNetIfnames is the kernel parameter name to control predictable network interface names.
+	KernelParamNetIfnames = "net.ifnames"
+
 	// BoardNone indicates that the install is not for a specific board.
 	BoardNone = "none"
 

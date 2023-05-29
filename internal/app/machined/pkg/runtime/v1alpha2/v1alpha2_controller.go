@@ -213,6 +213,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.TimeServerSpecController{},
 		&perf.StatsController{},
 		&runtimecontrollers.CRIImageGCController{},
+		&runtimecontrollers.DevicesStatusController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&runtimecontrollers.EventsSinkController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 			Cmdline:        procfs.ProcCmdline(),

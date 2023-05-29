@@ -33,6 +33,7 @@ import (
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type LinkSpecSuite struct {
@@ -60,6 +61,11 @@ func (suite *LinkSpecSuite) SetupTest() {
 
 	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
+
+	// create fake device ready status
+	deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
+	deviceStatus.TypedSpec().Ready = true
+	suite.Require().NoError(suite.state.Create(suite.ctx, deviceStatus))
 
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.LinkSpecController{}))
 

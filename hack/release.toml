@@ -42,6 +42,25 @@ When upgrading from a previous version, the feature can be enabled by setting th
 On the first mount of a volume, the quota information will be recalculated, which may take some time.
 """
 
+    [notes.ifnames]
+        title = "Predictable Network Interface Names"
+        description="""\
+Starting with version Talos 1.5, network interfaces are renamed to [predictable names](https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/)
+same way as `systemd` does that in other Linux distributions.
+
+The naming schema `enx78e7d1ea46da` (based on MAC addresses) is enabled by default, the order of interface naming decisions is:
+
+* firmware/BIOS provided index numbers for on-board devices (example: `eno1`)
+* firmware/BIOS provided PCI Express hotplug slot index numbers (example: `ens1`)
+* physical/geographical location of the connector of the hardware (example: `enp2s0`)
+* interfaces's MAC address (example: `enx78e7d1ea46da`)
+
+The predictable network interface names features can be disabled by specifying `net.ifnames=0` in the kernel command line.
+Talos automatically adds the `net.ifnames=0` kernel argument when upgrading from Talos versions before 1.5.
+
+This change doesn't affect "cloud" platforms, like AWS, as Talos automatically adds `net.ifnames=0` to the kernel command line.
+"""
+
 [make_deps]
 
     [make_deps.tools]

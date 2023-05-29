@@ -31,8 +31,58 @@ func WithNetworkNameservers(nameservers ...string) NetworkConfigOption {
 	}
 }
 
+// IfaceSelector is a helper type to select network interface.
+//
+// It might either to select interface by name or by selector.
+type IfaceSelector struct {
+	Name     *string
+	Selector *NetworkDeviceSelector
+}
+
+// matches checks if Device matches selector.
+func (selector IfaceSelector) matches(dev *Device) bool {
+	if selector.Name != nil && *selector.Name == dev.DeviceInterface {
+		return true
+	}
+
+	if selector.Selector != nil && dev.DeviceSelector != nil && *selector.Selector == *dev.DeviceSelector {
+		return true
+	}
+
+	return false
+}
+
+// new returns new Device with selector.
+func (selector IfaceSelector) new() *Device {
+	dev := &Device{}
+
+	if selector.Name != nil {
+		dev.DeviceInterface = *selector.Name
+	}
+
+	if selector.Selector != nil {
+		dev.DeviceSelector = selector.Selector
+	}
+
+	return dev
+}
+
+// IfaceByName selects interface by name.
+func IfaceByName(name string) IfaceSelector {
+	return IfaceSelector{
+		Name: &name,
+	}
+}
+
+// IfaceBySelector selects interface by selector.
+func IfaceBySelector(selector NetworkDeviceSelector) IfaceSelector {
+	return IfaceSelector{
+		Selector: &selector,
+	}
+}
+
 // WithNetworkInterfaceIgnore marks interface as ignored.
-func WithNetworkInterfaceIgnore(iface string) NetworkConfigOption {
+func WithNetworkInterfaceIgnore(iface IfaceSelector) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		cfg.getDevice(iface).DeviceIgnore = pointer.To(true)
 
@@ -41,7 +91,7 @@ func WithNetworkInterfaceIgnore(iface string) NetworkConfigOption {
 }
 
 // WithNetworkInterfaceDHCP enables DHCP for the interface.
-func WithNetworkInterfaceDHCP(iface string, enable bool) NetworkConfigOption {
+func WithNetworkInterfaceDHCP(iface IfaceSelector, enable bool) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		cfg.getDevice(iface).DeviceDHCP = pointer.To(true)
 
@@ -50,7 +100,7 @@ func WithNetworkInterfaceDHCP(iface string, enable bool) NetworkConfigOption {
 }
 
 // WithNetworkInterfaceDHCPv4 enables DHCPv4 for the interface.
-func WithNetworkInterfaceDHCPv4(iface string, enable bool) NetworkConfigOption {
+func WithNetworkInterfaceDHCPv4(iface IfaceSelector, enable bool) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		dev := cfg.getDevice(iface)
 
@@ -65,7 +115,7 @@ func WithNetworkInterfaceDHCPv4(iface string, enable bool) NetworkConfigOption {
 }
 
 // WithNetworkInterfaceDHCPv6 enables DHCPv6 for the interface.
-func WithNetworkInterfaceDHCPv6(iface string, enable bool) NetworkConfigOption {
+func WithNetworkInterfaceDHCPv6(iface IfaceSelector, enable bool) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		dev := cfg.getDevice(iface)
 
@@ -80,7 +130,7 @@ func WithNetworkInterfaceDHCPv6(iface string, enable bool) NetworkConfigOption {
 }
 
 // WithNetworkInterfaceCIDR configures interface for static addressing.
-func WithNetworkInterfaceCIDR(iface, cidr string) NetworkConfigOption {
+func WithNetworkInterfaceCIDR(iface IfaceSelector, cidr string) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		cfg.getDevice(iface).DeviceAddresses = append(cfg.getDevice(iface).DeviceAddresses, cidr)
 
@@ -89,7 +139,7 @@ func WithNetworkInterfaceCIDR(iface, cidr string) NetworkConfigOption {
 }
 
 // WithNetworkInterfaceMTU configures interface MTU.
-func WithNetworkInterfaceMTU(iface string, mtu int) NetworkConfigOption {
+func WithNetworkInterfaceMTU(iface IfaceSelector, mtu int) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		cfg.getDevice(iface).DeviceMTU = mtu
 
@@ -98,7 +148,7 @@ func WithNetworkInterfaceMTU(iface string, mtu int) NetworkConfigOption {
 }
 
 // WithNetworkInterfaceWireguard configures interface for Wireguard.
-func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguardConfig) NetworkConfigOption {
+func WithNetworkInterfaceWireguard(iface IfaceSelector, wireguardConfig *DeviceWireguardConfig) NetworkConfigOption {
 	return func(_ machine.Type, cfg *NetworkConfig) error {
 		cfg.getDevice(iface).DeviceWireguardConfig = wireguardConfig
 
@@ -107,7 +157,7 @@ func WithNetworkInterfaceWireguard(iface string, wireguardConfig *DeviceWireguar
 }
 
 // WithNetworkInterfaceVirtualIP configures interface for Virtual IP.
-func WithNetworkInterfaceVirtualIP(iface, cidr string) NetworkConfigOption {
+func WithNetworkInterfaceVirtualIP(iface IfaceSelector, cidr string) NetworkConfigOption {
 	return func(machineType machine.Type, cfg *NetworkConfig) error {
 		if machineType == machine.TypeWorker {
 			return nil

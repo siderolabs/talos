@@ -5,4 +5,4 @@
 package runtime
 
 //nolint:lll
-//go:generate deep-copy -type KernelModuleSpecSpec -type KernelParamSpecSpec -type KernelParamStatusSpec -type MachineStatusSpec -type MetaKeySpec -type MountStatusSpec -type PlatformMetadataSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type DevicesStatusSpec -type KernelModuleSpecSpec -type KernelParamSpecSpec -type KernelParamStatusSpec -type MachineStatusSpec -type MetaKeySpec -type MountStatusSpec -type PlatformMetadataSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .

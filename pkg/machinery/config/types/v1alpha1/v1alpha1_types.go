@@ -156,7 +156,7 @@ var (
 		NetworkHostname: "worker-1",
 		NetworkInterfaces: []*Device{
 			{
-				DeviceInterface: "eth0",
+				DeviceInterface: "enp0s1",
 				DeviceAddresses: []string{"192.168.2.0/24"},
 				DeviceMTU:       1500,
 				DeviceRoutes: []*Route{
@@ -425,11 +425,11 @@ var (
 	networkConfigBondExample = &Bond{
 		BondMode:       "802.3ad",
 		BondLACPRate:   "fast",
-		BondInterfaces: []string{"eth0", "eth1"},
+		BondInterfaces: []string{"enp2s0", "enp2s1"},
 	}
 
 	networkConfigBridgeExample = &Bridge{
-		BridgedInterfaces: []string{"eth0", "eth1"},
+		BridgedInterfaces: []string{"enxda4042ca9a51", "enxae2a6774c259"},
 		BridgeSTP: &STP{
 			STPEnabled: pointer.To(true),
 		},
@@ -2135,7 +2135,7 @@ type Device struct {
 	//     The interface name.
 	//     Mutually exclusive with `deviceSelector`.
 	//   examples:
-	//     - value: '"eth0"'
+	//     - value: '"enp0s3"'
 	DeviceInterface string `yaml:"interface,omitempty"`
 	//   description: |
 	//     Picks a network device using the selector.

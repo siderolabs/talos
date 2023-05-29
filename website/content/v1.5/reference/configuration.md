@@ -150,7 +150,7 @@ network:
     hostname: worker-1 # Used to statically set the hostname for the machine.
     # `interfaces` is used to define the network interface configuration.
     interfaces:
-        - interface: eth0 # The interface name.
+        - interface: enp0s1 # The interface name.
           # Assigns static IP addresses to the interface.
           addresses:
             - 192.168.2.0/24
@@ -180,8 +180,8 @@ network:
           # bond:
           #     # The interfaces that make up the bond.
           #     interfaces:
-          #         - eth0
-          #         - eth1
+          #         - enp2s0
+          #         - enp2s1
           #     # Picks a network device using the selector.
           #     deviceSelectors:
           #         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
@@ -194,8 +194,8 @@ network:
           # bridge:
           #     # The interfaces that make up the bridge.
           #     interfaces:
-          #         - eth0
-          #         - eth1
+          #         - enxda4042ca9a51
+          #         - enxae2a6774c259
           #     # A bridge option.
           #     stp:
           #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
@@ -859,7 +859,7 @@ Appears in:
 hostname: worker-1 # Used to statically set the hostname for the machine.
 # `interfaces` is used to define the network interface configuration.
 interfaces:
-    - interface: eth0 # The interface name.
+    - interface: enp0s1 # The interface name.
       # Assigns static IP addresses to the interface.
       addresses:
         - 192.168.2.0/24
@@ -889,8 +889,8 @@ interfaces:
       # bond:
       #     # The interfaces that make up the bond.
       #     interfaces:
-      #         - eth0
-      #         - eth1
+      #         - enp2s0
+      #         - enp2s1
       #     # Picks a network device using the selector.
       #     deviceSelectors:
       #         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
@@ -903,8 +903,8 @@ interfaces:
       # bridge:
       #     # The interfaces that make up the bridge.
       #     interfaces:
-      #         - eth0
-      #         - eth1
+      #         - enxda4042ca9a51
+      #         - enxae2a6774c259
       #     # A bridge option.
       #     stp:
       #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
@@ -970,7 +970,7 @@ nameservers:
 |`hostname` |string |Used to statically set the hostname for the machine.  | |
 |`interfaces` |[]<a href="#device">Device</a> |<details><summary>`interfaces` is used to define the network interface configuration.</summary>By default all network interfaces will attempt a DHCP discovery.<br />This can be further tuned through this configuration parameter.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 interfaces:
-    - interface: eth0 # The interface name.
+    - interface: enp0s1 # The interface name.
       # Assigns static IP addresses to the interface.
       addresses:
         - 192.168.2.0/24
@@ -1000,8 +1000,8 @@ interfaces:
       # bond:
       #     # The interfaces that make up the bond.
       #     interfaces:
-      #         - eth0
-      #         - eth1
+      #         - enp2s0
+      #         - enp2s1
       #     # Picks a network device using the selector.
       #     deviceSelectors:
       #         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
@@ -1014,8 +1014,8 @@ interfaces:
       # bridge:
       #     # The interfaces that make up the bridge.
       #     interfaces:
-      #         - eth0
-      #         - eth1
+      #         - enxda4042ca9a51
+      #         - enxae2a6774c259
       #     # A bridge option.
       #     stp:
       #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
@@ -1978,7 +1978,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-- interface: eth0 # The interface name.
+- interface: enp0s1 # The interface name.
   # Assigns static IP addresses to the interface.
   addresses:
     - 192.168.2.0/24
@@ -2008,8 +2008,8 @@ Appears in:
   # bond:
   #     # The interfaces that make up the bond.
   #     interfaces:
-  #         - eth0
-  #         - eth1
+  #         - enp2s0
+  #         - enp2s1
   #     # Picks a network device using the selector.
   #     deviceSelectors:
   #         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
@@ -2022,8 +2022,8 @@ Appears in:
   # bridge:
   #     # The interfaces that make up the bridge.
   #     interfaces:
-  #         - eth0
-  #         - eth1
+  #         - enxda4042ca9a51
+  #         - enxae2a6774c259
   #     # A bridge option.
   #     stp:
   #         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
@@ -2071,7 +2071,7 @@ Appears in:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`interface` |string |<details><summary>The interface name.</summary>Mutually exclusive with `deviceSelector`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-interface: eth0
+interface: enp0s3
 {{< /highlight >}}</details> | |
 |`deviceSelector` |<a href="#networkdeviceselector">NetworkDeviceSelector</a> |<details><summary>Picks a network device using the selector.</summary>Mutually exclusive with `interface`.<br />Supports partial match using wildcard syntax.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 deviceSelector:
@@ -2097,8 +2097,8 @@ routes:
 bond:
     # The interfaces that make up the bond.
     interfaces:
-        - eth0
-        - eth1
+        - enp2s0
+        - enp2s1
     # Picks a network device using the selector.
     deviceSelectors:
         - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
@@ -2111,8 +2111,8 @@ bond:
 bridge:
     # The interfaces that make up the bridge.
     interfaces:
-        - eth0
-        - eth1
+        - enxda4042ca9a51
+        - enxae2a6774c259
     # A bridge option.
     stp:
         enabled: true # Whether Spanning Tree Protocol (STP) is enabled.
@@ -2318,8 +2318,8 @@ Appears in:
 {{< highlight yaml >}}
 # The interfaces that make up the bond.
 interfaces:
-    - eth0
-    - eth1
+    - enp2s0
+    - enp2s1
 # Picks a network device using the selector.
 deviceSelectors:
     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
@@ -2398,8 +2398,8 @@ Appears in:
 {{< highlight yaml >}}
 # The interfaces that make up the bridge.
 interfaces:
-    - eth0
-    - eth1
+    - enxda4042ca9a51
+    - enxae2a6774c259
 # A bridge option.
 stp:
     enabled: true # Whether Spanning Tree Protocol (STP) is enabled.

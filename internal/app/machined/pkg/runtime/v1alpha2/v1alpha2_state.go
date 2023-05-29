@@ -163,6 +163,7 @@ func NewState() (*State, error) {
 		&network.TimeServerSpec{},
 		&perf.CPU{},
 		&perf.Memory{},
+		&runtime.DevicesStatus{},
 		&runtime.ExtensionStatus{},
 		&runtime.KernelModuleSpec{},
 		&runtime.KernelParamSpec{},

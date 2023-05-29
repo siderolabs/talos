@@ -6,6 +6,11 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 
 import "resource/definitions/enums/enums.proto";
 
+// DevicesStatusSpec is the spec for devices status.
+message DevicesStatusSpec {
+  bool ready = 1;
+}
+
 // KernelModuleSpecSpec describes Linux kernel module to load.
 message KernelModuleSpecSpec {
   string name = 1;

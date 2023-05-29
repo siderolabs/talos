@@ -66,7 +66,7 @@ sudo --preserve-env=HOME _out/talosctl-linux-amd64 cluster create \
     --provisioner=qemu \
     --cidr=172.20.0.0/24 \
     --registry-mirror docker.io=http://172.20.0.1:5000 \
-    --registry-mirror kregistry.k8s.io=http://172.20.0.1:5001  \
+    --registry-mirror registry.k8s.io=http://172.20.0.1:5001  \
     --registry-mirror gcr.io=http://172.20.0.1:5003 \
     --registry-mirror ghcr.io=http://172.20.0.1:5004 \
     --registry-mirror 127.0.0.1:5005=http://172.20.0.1:5005 \
@@ -298,3 +298,37 @@ The following lines should appear in the output of the `talosctl debug air-gappe
 - `GET /debug.yaml`: Talos successfully fetches the extra manifest successfully
 
 There might be more output depending on the registry caches being used or not.
+
+## Running Upgrade Integration Tests
+
+Talos has a separate set of provision upgrade tests, which create a cluster on older versions of Talos, perform an upgrade,
+and verify that the cluster is still functional.
+
+Build the test binary:
+
+```bash
+rm -f  _out/integration-test-provision-linux-amd64; make _out/integration-test-provision-linux-amd64
+```
+
+Prepare the test artifacts for the upgrade test:
+
+```bash
+make release-artifacts
+```
+
+Build and push an installer image for the development version of Talos:
+
+```bash
+make installer IMAGE_REGISTRY=127.0.0.1:5005 PUSH=true
+```
+
+Run the tests (the tests will create the cluster on the older version of Talos, perform an upgrade, and verify that the cluster is still functional):
+
+```bash
+sudo --preserve-env=HOME _out/integration-test-provision-linux-amd64 \
+    -test.v \
+    -talos.talosctlpath _out/talosctl-linux-amd64 \
+    -talos.provision.target-installer-registry=127.0.0.1:5005 \
+    -talos.provision.registry-mirror 127.0.0.1:5005=http://172.20.0.1:5005,docker.io=http://172.20.0.1:5000,registry.k8s.io=http://172.20.0.1:5001,quay.io=http://172.20.0.1:5002,gcr.io=http://172.20.0.1:5003,ghcr.io=http://172.20.0.1:5004 \
+    -talos.provision.cidr 172.20.0.0/24
+```

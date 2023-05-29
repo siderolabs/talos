@@ -10,6 +10,7 @@ import (
 	"io"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 // Provisioner is an interface each provisioner should implement.
@@ -23,7 +24,7 @@ type Provisioner interface {
 
 	GenOptions(NetworkRequest) []generate.Option
 	GetLoadBalancers(NetworkRequest) (internalEndpoint, externalEndpoint string)
-	GetFirstInterface() string
+	GetFirstInterface() v1alpha1.IfaceSelector
 
 	Close() error
 

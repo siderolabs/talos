@@ -39,6 +39,15 @@ func (v *TalosVersion) String() string {
 	return v.version.String()
 }
 
+// DisablePredictableNetworkInterfaces returns true if predictable network interfaces should be disabled on upgrade.
+func (v *TalosVersion) DisablePredictableNetworkInterfaces() bool {
+	if v.majorMinor[0] <= talos14.MajorMinor[0] && v.majorMinor[1] <= talos14.MajorMinor[1] {
+		return true
+	}
+
+	return false
+}
+
 // UpgradeableFrom checks if the current version of Talos can be used as an upgrade for the given host version.
 func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 	var (

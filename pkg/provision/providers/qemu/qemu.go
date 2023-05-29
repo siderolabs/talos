@@ -46,6 +46,10 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 		}
 	}
 
+	virtioSelector := v1alpha1.IfaceBySelector(v1alpha1.NetworkDeviceSelector{
+		NetworkDeviceKernelDriver: "virtio_net",
+	})
+
 	return []generate.Option{
 		generate.WithInstallDisk("/dev/vda"),
 		generate.WithInstallExtraKernelArgs([]string{
@@ -58,9 +62,9 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 			"talos.platform=metal",
 		}),
 		generate.WithNetworkOptions(
-			v1alpha1.WithNetworkInterfaceDHCP("eth0", true),
-			v1alpha1.WithNetworkInterfaceDHCPv4("eth0", hasIPv4),
-			v1alpha1.WithNetworkInterfaceDHCPv6("eth0", hasIPv6),
+			v1alpha1.WithNetworkInterfaceDHCP(virtioSelector, true),
+			v1alpha1.WithNetworkInterfaceDHCPv4(virtioSelector, hasIPv4),
+			v1alpha1.WithNetworkInterfaceDHCPv6(virtioSelector, hasIPv6),
 		),
 	}
 }
@@ -72,6 +76,8 @@ func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (int
 }
 
 // GetFirstInterface returns first network interface name.
-func (p *provisioner) GetFirstInterface() string {
-	return "eth0"
+func (p *provisioner) GetFirstInterface() v1alpha1.IfaceSelector {
+	return v1alpha1.IfaceBySelector(v1alpha1.NetworkDeviceSelector{
+		NetworkDeviceKernelDriver: "virtio_net",
+	})
 }

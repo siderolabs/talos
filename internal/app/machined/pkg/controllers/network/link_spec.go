@@ -21,6 +21,7 @@ import (
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -35,13 +36,7 @@ func (ctrl *LinkSpecController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *LinkSpecController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.LinkSpecType,
-			Kind:      controller.InputStrong,
-		},
-	}
+	return nil
 }
 
 // Outputs implements controller.Controller interface.
@@ -58,6 +53,19 @@ func (ctrl *LinkSpecController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	// wait for udevd to be healthy, which implies that all link renames are done
+	if err := runtime.WaitForDevicesReady(ctx, r,
+		[]controller.Input{
+			{
+				Namespace: network.NamespaceName,
+				Type:      network.LinkSpecType,
+				Kind:      controller.InputStrong,
+			},
+		},
+	); err != nil {
+		return err
+	}
+
 	// watch link changes as some routes might need to be re-applied if the link appears
 	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK)
 	if err != nil {
