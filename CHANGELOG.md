@@ -1,3 +1,74 @@
+## [Talos 1.4.5](https://github.com/siderolabs/talos/releases/tag/v1.4.5) (2023-05-30)
+
+Welcome to the v1.4.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.1.30
+* etcd: 3.5.9
+* Kubernetes: 1.27.2
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>10 commits</summary>
+<p>
+
+* [`d522db5e0`](https://github.com/siderolabs/talos/commit/d522db5e00fe75521b35dd06d01efaf57b6e0de9) chore: update go-kubernetes to v0.2.1
+* [`cdc9ad889`](https://github.com/siderolabs/talos/commit/cdc9ad88942df7c32f86a2fad59b313d5d14f176) fix: fail quickly if upgrade-k8s is used with multiple nodes
+* [`b5b39f99b`](https://github.com/siderolabs/talos/commit/b5b39f99b2f55b96c43f5afd9d19ac31031cd09b) fix: fall back to external IP when discovering nodes in upgrade-k8s
+* [`a89c9d201`](https://github.com/siderolabs/talos/commit/a89c9d201625e59ea4e0ac4bf71275827734133f) fix: race with `udevd` and `mountUserDisks`
+* [`9abd00564`](https://github.com/siderolabs/talos/commit/9abd005647cd806095739d812aa772c55a8892bb) feat: update default Kubernetes to v1.27.2
+* [`d249b14d0`](https://github.com/siderolabs/talos/commit/d249b14d00ab736bee7fe663ba7f012747c3543b) fix: refresh kubelet self-issued serving certificates
+* [`abfb534a2`](https://github.com/siderolabs/talos/commit/abfb534a217434d24781b46a54c0659351077324) feat: update etcd to v3.5.9
+* [`4b7083fc9`](https://github.com/siderolabs/talos/commit/4b7083fc9670de1abc38e4bee3b088b9df73577e) chore: re-enable Go buildid
+* [`65a58c8ac`](https://github.com/siderolabs/talos/commit/65a58c8ac3d7396783269dfa23a99f4c7aed7868) feat: update Linux to 6.1.30
+* [`4393b624d`](https://github.com/siderolabs/talos/commit/4393b624d7df1175652ffc7bb2f89f69f12bedac) fix: correct upgrade Talos version check
+</p>
+</details>
+
+### Changes from siderolabs/go-kubernetes
+<details><summary>1 commit</summary>
+<p>
+
+* [`5a3df5b`](https://github.com/siderolabs/go-kubernetes/commit/5a3df5b002d74ba9f4d773dc1278047481b1d4ba) fix: remove removed APIs for 1.27 upgrade
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`3e75ce2`](https://github.com/siderolabs/pkgs/commit/3e75ce27aecc8854626be140ccfb8e778dc0457a) feat: update Linux to 6.1.30
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/go-kubernetes**  v0.2.0 -> v0.2.1
+* **github.com/siderolabs/pkgs**           v1.4.1-10-g6d90f68 -> v1.4.1-11-g3e75ce2
+* **go.etcd.io/etcd/api/v3**               v3.5.8 -> v3.5.9
+* **go.etcd.io/etcd/client/pkg/v3**        v3.5.8 -> v3.5.9
+* **go.etcd.io/etcd/client/v3**            v3.5.8 -> v3.5.9
+* **go.etcd.io/etcd/etcdutl/v3**           v3.5.8 -> v3.5.9
+* **k8s.io/api**                           v0.27.1 -> v0.27.2
+* **k8s.io/apimachinery**                  v0.27.1 -> v0.27.2
+* **k8s.io/apiserver**                     v0.27.1 -> v0.27.2
+* **k8s.io/client-go**                     v0.27.1 -> v0.27.2
+* **k8s.io/component-base**                v0.27.1 -> v0.27.2
+* **k8s.io/kubectl**                       v0.27.1 -> v0.27.2
+* **k8s.io/kubelet**                       v0.27.1 -> v0.27.2
+
+Previous release can be found at [v1.4.4](https://github.com/siderolabs/talos/releases/tag/v1.4.4)
+
 ## [Talos 1.4.4](https://github.com/siderolabs/talos/releases/tag/v1.4.4) (2023-05-12)
 
 Welcome to the v1.4.4 release of Talos!
