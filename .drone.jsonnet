@@ -193,10 +193,12 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 local external_artifacts = Step('external-artifacts', depends_on=[setup_ci]);
 local generate = Step('generate', target='generate docs', depends_on=[setup_ci]);
 local check_dirty = Step('check-dirty', depends_on=[generate, external_artifacts]);
-local build = Step('build', target='talosctl-all kernel initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
+local uki_certs = Step('uki-certs', depends_on=[setup_ci], environment={ PLATFORM: 'linux/amd64' });
+local build = Step('build', target='talosctl-all kernel initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty, uki_certs], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
 local lint = Step('lint', depends_on=[build]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
 local iso = Step('iso', target='iso', depends_on=[build], environment={ IMAGE_REGISTRY: local_registry });
+local iso_uki = Step('iso-uki', target='iso-uki', depends_on=[build], environment={ IMAGE_REGISTRY: local_registry });
 local images_essential = Step('images-essential', target='images-essential', depends_on=[iso], environment={ IMAGE_REGISTRY: local_registry });
 local unit_tests = Step('unit-tests', target='unit-tests unit-tests-race', depends_on=[build, lint]);
 local e2e_docker = Step('e2e-docker-short', depends_on=[build, unit_tests], target='e2e-docker', environment={ SHORT_INTEGRATION_TEST: 'yes', IMAGE_REGISTRY: local_registry });
@@ -281,7 +283,7 @@ local save_artifacts = {
     'az storage blob upload-batch --overwrite -s _out -d  ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
   ],
   volumes: volumes.ForStep(),
-  depends_on: [build.name, images_essential.name, iso.name, talosctl_cni_bundle.name],
+  depends_on: [build.name, images_essential.name, iso.name, iso_uki.name, talosctl_cni_bundle.name],
 };
 
 local load_artifacts = {
@@ -359,10 +361,12 @@ local default_steps = [
   external_artifacts,
   generate,
   check_dirty,
+  uki_certs,
   build,
   lint,
   talosctl_cni_bundle,
   iso,
+  iso_uki,
   images_essential,
   unit_tests,
   save_artifacts,
@@ -708,6 +712,8 @@ local release = {
       '_out/scaleway-arm64.raw.xz',
       '_out/talos-amd64.iso',
       '_out/talos-arm64.iso',
+      '_out/talos-uki-amd64.iso',
+      '_out/talos-uki-arm64.iso',
       '_out/talosctl-cni-bundle-amd64.tar.gz',
       '_out/talosctl-cni-bundle-arm64.tar.gz',
       '_out/talosctl-darwin-amd64',

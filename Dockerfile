@@ -676,9 +676,46 @@ COPY --from=rootfs / /
 LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/sbin/init"]
 
+FROM --platform=${BUILDPLATFORM} tools AS gen-uki-certs
+RUN gen-uki-certs
+
+FROM scratch as uki-certs
+COPY --from=gen-uki-certs /_out /
+
+FROM --platform=${BUILDPLATFORM} tools AS uki-build-amd64
+WORKDIR /build
+COPY --from=pkg-sd-stub-amd64 / _out/
+COPY --from=pkg-sd-boot-amd64 / _out/
+COPY --from=pkg-kernel-amd64 /boot/vmlinuz _out/vmlinuz-amd64
+COPY --from=initramfs-archive-amd64 /initramfs.xz _out/initramfs-amd64.xz
+COPY _out/uki-certs _out/uki-certs
+RUN ukify
+
+FROM scratch AS uki-amd64
+COPY --from=uki-build-amd64 /build/_out/systemd-bootx64.efi.signed /systemd-boot.efi.signed
+COPY --from=uki-build-amd64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
+
+FROM --platform=${BUILDPLATFORM} tools AS uki-build-arm64
+WORKDIR /build
+COPY --from=pkg-sd-stub-arm64 / _out/
+COPY --from=pkg-sd-boot-arm64 / _out/
+COPY --from=pkg-kernel-arm64 /boot/vmlinuz _out/vmlinuz-arm64
+COPY --from=initramfs-archive-arm64 /initramfs.xz _out/initramfs-arm64.xz
+COPY _out/uki-certs _out/uki-certs
+RUN ukify \
+    -sd-stub _out/linuxaa64.efi.stub \
+    -sd-boot _out/systemd-bootaa64.efi \
+    -kernel _out/vmlinuz-arm64 \
+    -initrd _out/initramfs-arm64.xz
+
+FROM scratch AS uki-arm64
+COPY --from=uki-build-arm64 /build/_out/systemd-bootaa64.efi.signed /systemd-boot.efi.signed
+COPY --from=uki-build-arm64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
+
+FROM --platform=${BUILDPLATFORM} uki-${TARGETARCH} AS uki
+
 # The installer target generates an image that can be used to install Talos to
 # various environments.
-
 FROM base AS installer-build
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
@@ -695,12 +732,16 @@ COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
 COPY --from=pkg-kernel-amd64 /dtb /usr/install/amd64/dtb
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
+COPY --from=uki-amd64 /systemd-boot.efi.signed /usr/install/amd64/systemd-boot.efi.signed
+COPY --from=uki-amd64 /vmlinuz.efi.signed /usr/install/amd64/vmlinuz.efi.signed
 
 FROM scratch AS install-artifacts-arm64
 COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
 COPY --from=pkg-kernel-arm64 /boot/vmlinuz /usr/install/arm64/vmlinuz
 COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
 COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
+COPY --from=uki-arm64 /systemd-boot.efi.signed /usr/install/arm64/systemd-boot.efi.signed
+COPY --from=uki-arm64 /vmlinuz.efi.signed /usr/install/arm64/vmlinuz.efi.signed
 COPY --from=pkg-u-boot-arm64 / /usr/install/arm64/u-boot
 COPY --from=pkg-raspberrypi-firmware-arm64 / /usr/install/arm64/raspberrypi-firmware
 
@@ -720,6 +761,7 @@ ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 RUN apk add --no-cache --update --no-scripts \
     bash \
     cpio \
+    dosfstools \
     efibootmgr \
     kmod \
     mtools \
@@ -797,8 +839,33 @@ COPY --from=iso-arm64-build /out /
 
 FROM --platform=${BUILDPLATFORM} iso-${TARGETARCH} AS iso
 
-# The test target performs tests on the source code.
+FROM imager as iso-uki-amd64-build
+ARG SOURCE_DATE_EPOCH
+ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+RUN /bin/installer \
+    iso \
+    --uki \
+    --arch amd64 \
+    --output /out
 
+FROM imager as iso-uki-arm64-build
+ARG SOURCE_DATE_EPOCH
+ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+RUN /bin/installer \
+    iso \
+    --uki \
+    --arch arm64 \
+    --output /out
+
+FROM scratch as iso-uki-amd64
+COPY --from=iso-uki-amd64-build /out /
+
+FROM scratch as iso-uki-arm64
+COPY --from=iso-uki-arm64-build /out /
+
+FROM --platform=${BUILDPLATFORM} iso-uki-${TARGETARCH} AS iso-uki
+
+# The test target performs tests on the source code.
 FROM base AS unit-tests-runner
 RUN unlink /etc/ssl
 COPY --from=rootfs / /
@@ -877,44 +944,6 @@ RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64}
 
 FROM scratch AS module-sig-verify-linux
 COPY --from=module-sig-verify-linux-build /src/module-sig-verify/module-sig-verify /module-sig-verify-linux-amd64
-
-FROM --platform=${BUILDPLATFORM} tools AS gen-uki-certs
-RUN gen-uki-certs
-
-FROM scratch as uki-certs
-COPY --from=gen-uki-certs /_out /
-
-FROM --platform=${BUILDPLATFORM} tools AS uki-build-amd64
-WORKDIR /build
-COPY --from=pkg-sd-stub-amd64 / _out/
-COPY --from=pkg-sd-boot-amd64 / _out/
-COPY --from=pkg-kernel-amd64 /boot/vmlinuz _out/vmlinuz-amd64
-COPY --from=initramfs-archive-amd64 /initramfs.xz _out/initramfs-amd64.xz
-COPY _out/uki-certs _out/uki-certs
-RUN ukify
-
-FROM scratch AS uki-amd64
-COPY --from=uki-build-amd64 /build/_out/systemd-bootx64.efi.signed /systemd-bootx64.efi.signed
-COPY --from=uki-build-amd64 /build/_out/vmlinuz.efi /vmlinuz-amd64.signed.efi
-
-FROM --platform=${BUILDPLATFORM} tools AS uki-build-arm64
-WORKDIR /build
-COPY --from=pkg-sd-stub-arm64 / _out/
-COPY --from=pkg-sd-boot-arm64 / _out/
-COPY --from=pkg-kernel-arm64 /boot/vmlinuz _out/vmlinuz-arm64
-COPY --from=initramfs-archive-arm64 /initramfs.xz _out/initramfs-arm64.xz
-COPY _out/uki-certs _out/uki-certs
-RUN ukify \
-    -sd-stub _out/linuxaa64.efi.stub \
-    -sd-boot _out/systemd-bootaa64.efi \
-    -kernel _out/vmlinuz-arm64 \
-    -initrd _out/initramfs-arm64.xz
-
-FROM scratch AS uki-arm64
-COPY --from=uki-build-arm64 /build/_out/systemd-bootaa64.efi.signed /systemd-bootaa64.efi.signed
-COPY --from=uki-build-arm64 /build/_out/vmlinuz.efi /vmlinuz-arm64.signed.efi
-
-FROM --platform=${BUILDPLATFORM} uki-${TARGETARCH} AS uki
 
 # The lint target performs linting on the source code.
 FROM base AS lint-go

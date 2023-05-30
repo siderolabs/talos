@@ -324,6 +324,14 @@ iso: ## Builds the ISO and outputs it to the artifact directory.
 		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)  ; \
 	done
 
+.PHONY: iso-uki
+iso-uki: ## Builds UEFI only ISO which uses UKI and outputs it to the artifact directory.
+	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
+	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=`basename "$${platform}"` ; \
+		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --uki --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)  ; \
+	done
+
 .PHONY: talosctl-cni-bundle
 talosctl-cni-bundle: ## Creates a compressed tarball that includes CNI bundle for talosctl.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)

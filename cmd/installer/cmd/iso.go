@@ -26,8 +26,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
-//go:embed grub.iso.cfg
-var isoGrubCfg []byte
+var (
+	//go:embed grub.iso.cfg
+	isoGrubCfg []byte
+	uki        bool
+)
 
 // isoCmd represents the iso command.
 var isoCmd = &cobra.Command{
@@ -42,6 +45,7 @@ var isoCmd = &cobra.Command{
 }
 
 func init() {
+	isoCmd.Flags().BoolVar(&uki, "uki", false, "Create UKI ISO")
 	isoCmd.Flags().StringVar(&outputArg, "output", "/out", "The output path")
 	isoCmd.Flags().BoolVar(&tarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
 	rootCmd.AddCommand(isoCmd)
@@ -53,36 +57,56 @@ func runISOCmd() error {
 		return err
 	}
 
+	out := fmt.Sprintf("/tmp/talos-%s.iso", options.Arch)
+
+	if uki {
+		out = fmt.Sprintf("/tmp/talos-uki-%s.iso", options.Arch)
+
+		if err := createUKIISO(out); err != nil {
+			return err
+		}
+	} else {
+		if err := createISO(out); err != nil {
+			return err
+		}
+	}
+
+	from, err := os.Open(out)
+	if err != nil {
+		return err
+	}
+	//nolint:errcheck
+	defer from.Close()
+
+	to, err := os.OpenFile(filepath.Join(outputArg, filepath.Base(out)), os.O_RDWR|os.O_CREATE, 0o666)
+	if err != nil {
+		return err
+	}
+	//nolint:errcheck
+	defer to.Close()
+
+	_, err = io.Copy(to, from)
+	if err != nil {
+		return err
+	}
+
+	if tarToStdout {
+		if err := tarOutput(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func createISO(out string) error {
 	files := map[string]string{
 		fmt.Sprintf("/usr/install/%s/vmlinuz", options.Arch):      "/mnt/boot/vmlinuz",
 		fmt.Sprintf("/usr/install/%s/initramfs.xz", options.Arch): "/mnt/boot/initramfs.xz",
 	}
 
-	for src, dest := range files {
-		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-			return err
-		}
-
-		log.Printf("copying %s to %s", src, dest)
-
-		from, err := os.Open(src)
-		if err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer from.Close()
-
-		to, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0o666)
-		if err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer to.Close()
-
-		_, err = io.Copy(to, from)
-		if err != nil {
-			return err
-		}
+	if err := copyFiles(files); err != nil {
+		return err
 	}
 
 	log.Println("creating grub.cfg")
@@ -145,33 +169,48 @@ func runISOCmd() error {
 
 	log.Println("creating ISO")
 
-	out := fmt.Sprintf("/tmp/talos-%s.iso", options.Arch)
+	return pkg.CreateISO(out, "/mnt")
+}
 
-	if err = pkg.CreateISO(out, "/mnt"); err != nil {
+func createUKIISO(out string) error {
+	files := map[string]string{
+		fmt.Sprintf("/usr/install/%s/systemd-boot.efi.signed", options.Arch): "/mnt/systemd-boot.efi.signed",
+		fmt.Sprintf("/usr/install/%s/vmlinuz.efi.signed", options.Arch):      "/mnt/vmlinuz.efi.signed",
+	}
+
+	if err := copyFiles(files); err != nil {
 		return err
 	}
 
-	from, err := os.Open(out)
-	if err != nil {
-		return err
-	}
-	//nolint:errcheck
-	defer from.Close()
+	log.Println("creating UKI ISO")
 
-	to, err := os.OpenFile(filepath.Join(outputArg, filepath.Base(out)), os.O_RDWR|os.O_CREATE, 0o666)
-	if err != nil {
-		return err
-	}
-	//nolint:errcheck
-	defer to.Close()
+	return pkg.CreateUKIISO(out, "/mnt", options.Arch)
+}
 
-	_, err = io.Copy(to, from)
-	if err != nil {
-		return err
-	}
+func copyFiles(files map[string]string) error {
+	for src, dest := range files {
+		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+			return err
+		}
 
-	if tarToStdout {
-		if err := tarOutput(); err != nil {
+		log.Printf("copying %s to %s", src, dest)
+
+		from, err := os.Open(src)
+		if err != nil {
+			return err
+		}
+		//nolint:errcheck
+		defer from.Close()
+
+		to, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0o666)
+		if err != nil {
+			return err
+		}
+		//nolint:errcheck
+		defer to.Close()
+
+		_, err = io.Copy(to, from)
+		if err != nil {
 			return err
 		}
 	}

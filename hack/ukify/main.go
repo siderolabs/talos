@@ -298,7 +298,13 @@ func run() error {
 		return err
 	}
 
-	return buildUKI(sdStub, output, sections)
+	if err := buildUKI(sdStub, output, sections); err != nil {
+		return err
+	}
+
+	_, err = sbSign(output)
+
+	return err
 }
 
 func main() {
