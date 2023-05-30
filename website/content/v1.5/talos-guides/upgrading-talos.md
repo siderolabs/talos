@@ -162,3 +162,7 @@ If running a single-node cluster, and you want to force an upgrade despite the l
 
 Nothing prevents the user from sending near-simultaneous upgrades to each node of the cluster - and while Talos Linux and Kubernetes can generally deal with this situation, other components of the cluster may not be able to recover from more than one node rebooting at a time.
 (e.g. any software that maintains a quorum or state across nodes, such as Rook/Ceph)
+
+**Q.** Which version of `talosctl` should I use to update a cluster?
+
+**A.** We recommend using the version that matches the current running version of the cluster.
