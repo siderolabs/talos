@@ -154,7 +154,7 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 	for _, node := range resp.Items {
 		_, labelControlPlane := node.Labels[constants.LabelNodeRoleControlPlane]
 
-		var skip bool
+		var skip, foundInternalIP bool
 
 		switch machineType {
 		case machine.TypeInit, machine.TypeControlPlane:
@@ -175,17 +175,20 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 		for _, nodeAddress := range node.Status.Addresses {
 			if nodeAddress.Type == corev1.NodeInternalIP {
 				addrs = append(addrs, nodeAddress.Address)
+				foundInternalIP = true
 
 				break
 			}
 		}
 
-		// no internal IP, fallback to external IP
-		for _, nodeAddress := range node.Status.Addresses {
-			if nodeAddress.Type == corev1.NodeExternalIP {
-				addrs = append(addrs, nodeAddress.Address)
+		if !foundInternalIP {
+			// no internal IP, fallback to external IP
+			for _, nodeAddress := range node.Status.Addresses {
+				if nodeAddress.Type == corev1.NodeExternalIP {
+					addrs = append(addrs, nodeAddress.Address)
 
-				break
+					break
+				}
 			}
 		}
 	}
