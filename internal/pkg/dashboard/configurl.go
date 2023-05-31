@@ -119,7 +119,13 @@ func NewConfigURLGrid(ctx context.Context, dashboard *Dashboard) *ConfigURLGrid 
 	return grid
 }
 
-func (widget *ConfigURLGrid) readTemplateFromKernelArgs() string {
+func (widget *ConfigURLGrid) readTemplateFromKernelArgs() (val string) {
+	defer func() { // catch potential panic from procfs.ProcCmdline()
+		if r := recover(); r != nil {
+			val = "error reading kernel args"
+		}
+	}()
+
 	option := procfs.ProcCmdline().Get(constants.KernelParamConfig).First()
 	if option == nil {
 		return unset

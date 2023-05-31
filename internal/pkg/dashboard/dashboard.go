@@ -114,11 +114,6 @@ type Dashboard struct {
 
 	pages *tview.Pages
 
-	summaryGrid       *SummaryGrid
-	monitorGrid       *MonitorGrid
-	networkConfigGrid *NetworkConfigGrid
-	configURLGrid     *ConfigURLGrid
-
 	selectedScreenConfig *screenConfig
 	screenConfigs        []screenConfig
 	footer               *components.Footer
@@ -157,12 +152,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	header := components.NewHeader()
 	dashboard.mainGrid.AddItem(header, 0, 0, 1, 1, 0, 0, false)
 
-	dashboard.summaryGrid = NewSummaryGrid(dashboard.app)
-	dashboard.monitorGrid = NewMonitorGrid(dashboard.app)
-	dashboard.networkConfigGrid = NewNetworkConfigGrid(ctx, dashboard)
-	dashboard.configURLGrid = NewConfigURLGrid(ctx, dashboard)
-
-	err := dashboard.initScreenConfigs(defOptions.screens)
+	err := dashboard.initScreenConfigs(ctx, defOptions.screens)
 	if err != nil {
 		return nil, err
 	}
@@ -208,31 +198,50 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 
 	dashboard.apiDataListeners = []APIDataListener{
 		header,
-		dashboard.summaryGrid,
-		dashboard.monitorGrid,
 	}
 
 	dashboard.resourceDataListeners = []ResourceDataListener{
 		header,
-		dashboard.summaryGrid,
-		dashboard.networkConfigGrid,
-		dashboard.configURLGrid,
 	}
 
-	dashboard.logDataListeners = []LogDataListener{
-		dashboard.summaryGrid,
-	}
+	dashboard.logDataListeners = []LogDataListener{}
 
 	dashboard.nodeSelectListeners = []NodeSelectListener{
 		header,
-		dashboard.summaryGrid,
-		dashboard.networkConfigGrid,
-		dashboard.configURLGrid,
 		dashboard.footer,
 	}
 
 	dashboard.nodeSetChangeListeners = []NodeSetListener{
 		dashboard.footer,
+	}
+
+	for _, config := range dashboard.screenConfigs {
+		screenPrimitive := config.primitive
+
+		apiDataListener, ok := screenPrimitive.(APIDataListener)
+		if ok {
+			dashboard.apiDataListeners = append(dashboard.apiDataListeners, apiDataListener)
+		}
+
+		resourceDataListener, ok := screenPrimitive.(ResourceDataListener)
+		if ok {
+			dashboard.resourceDataListeners = append(dashboard.resourceDataListeners, resourceDataListener)
+		}
+
+		logDataListener, ok := screenPrimitive.(LogDataListener)
+		if ok {
+			dashboard.logDataListeners = append(dashboard.logDataListeners, logDataListener)
+		}
+
+		nodeSelectListener, ok := screenPrimitive.(NodeSelectListener)
+		if ok {
+			dashboard.nodeSelectListeners = append(dashboard.nodeSelectListeners, nodeSelectListener)
+		}
+
+		nodeSetListener, ok := screenPrimitive.(NodeSetListener)
+		if ok {
+			dashboard.nodeSetChangeListeners = append(dashboard.nodeSetChangeListeners, nodeSetListener)
+		}
 	}
 
 	dashboard.apiDataSource = &apidata.Source{
@@ -249,17 +258,17 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	return dashboard, nil
 }
 
-func (d *Dashboard) initScreenConfigs(screens []Screen) error {
+func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) error {
 	primitiveForScreen := func(screen Screen) screenSelectListener {
 		switch screen {
 		case ScreenSummary:
-			return d.summaryGrid
+			return NewSummaryGrid(d.app)
 		case ScreenMonitor:
-			return d.monitorGrid
+			return NewMonitorGrid(d.app)
 		case ScreenNetworkConfig:
-			return d.networkConfigGrid
+			return NewNetworkConfigGrid(ctx, d)
 		case ScreenConfigURL:
-			return d.configURLGrid
+			return NewConfigURLGrid(ctx, d)
 		default:
 			return nil
 		}
