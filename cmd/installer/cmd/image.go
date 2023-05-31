@@ -273,7 +273,7 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 }
 
 func tar(filename, src, dir string) error {
-	if _, err := cmd.Run("tar", "-czvf", filepath.Join(outputArg, filename), src, "-C", dir); err != nil {
+	if _, err := cmd.Run("tar", "-cvf", filepath.Join(outputArg, filename), "-C", dir, "--sparse", "--use-compress-program=pigz -6", src); err != nil {
 		return err
 	}
 
