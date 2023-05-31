@@ -452,7 +452,7 @@ func (d *DHCP4) newClient() (*nclient4.Client, error) {
 	var clientOpts []nclient4.ClientOpt
 
 	// We have an existing lease, target the server with unicast
-	if d.lease != nil {
+	if d.lease != nil && !d.lease.ACK.ServerIPAddr.IsUnspecified() {
 		// RFC 2131, section 4.3.2:
 		//     DHCPREQUEST generated during RENEWING state:
 		//     ... This message will be unicast, so no relay
@@ -534,10 +534,14 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 	//nolint:errcheck
 	defer client.Close()
 
-	if d.lease != nil {
+	switch {
+	case d.lease != nil && !d.lease.ACK.ServerIPAddr.IsUnspecified():
 		d.logger.Debug("DHCP RENEW", zap.String("link", d.linkName))
 		d.lease, err = client.Renew(ctx, d.lease, mods...)
-	} else {
+	case d.lease != nil && d.lease.Offer != nil:
+		d.logger.Debug("DHCP REQUEST FROM OFFER", zap.String("link", d.linkName))
+		d.lease, err = client.RequestFromOffer(ctx, d.lease.Offer, mods...)
+	default:
 		d.logger.Debug("DHCP REQUEST", zap.String("link", d.linkName))
 		d.lease, err = client.Request(ctx, mods...)
 	}
