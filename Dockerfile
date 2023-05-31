@@ -721,8 +721,10 @@ RUN apk add --no-cache --update --no-scripts \
     efibootmgr \
     kmod \
     mtools \
+    pigz \
     qemu-img \
     squashfs-tools \
+    tar \
     util-linux \
     xfsprogs \
     xorriso \

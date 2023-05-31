@@ -133,7 +133,6 @@ local setup_ci = {
 
   commands: [
     'setup-ci',
-    'make external-artifacts',
   ],
   environment: {
     BUILDKIT_FLAVOR: 'cross',
@@ -191,8 +190,9 @@ local Pipeline(name, steps=[], depends_on=[], with_docker=true, disable_clone=fa
 
 // Default pipeline.
 
+local external_artifacts = Step('external-artifacts', depends_on=[setup_ci]);
 local generate = Step('generate', target='generate docs', depends_on=[setup_ci]);
-local check_dirty = Step('check-dirty', depends_on=[generate]);
+local check_dirty = Step('check-dirty', depends_on=[generate, external_artifacts]);
 local build = Step('build', target='talosctl-all kernel initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
 local lint = Step('lint', depends_on=[build]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
@@ -355,6 +355,7 @@ local extensions_patch_manifest = {
 
 local default_steps = [
   setup_ci,
+  external_artifacts,
   generate,
   check_dirty,
   build,
