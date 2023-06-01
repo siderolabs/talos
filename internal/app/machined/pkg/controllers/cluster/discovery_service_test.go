@@ -16,10 +16,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/discovery-api/api/v1alpha1/client/pb"
 	"github.com/siderolabs/discovery-client/pkg/client"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
@@ -88,6 +89,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
 			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
+		ControlPlane: &cluster.ControlPlane{APIServerPort: 6443},
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, localAffiliate))
 
@@ -141,6 +143,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 						},
 					},
 				},
+				ControlPlane: &pb.ControlPlane{ApiServerPort: 6443},
 			}, affiliates[0].Affiliate))
 			suite.Assert().True(proto.Equal(
 				&pb.Endpoint{
@@ -187,9 +190,11 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 		},
 	}, nil))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+	ctest.AssertResource(
+		suite,
+		"service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		func(r *cluster.Affiliate, asrt *assert.Assertions) {
+			spec := r.TypedSpec()
 
 			suite.Assert().Equal("7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", spec.NodeID)
 			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
@@ -201,22 +206,18 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 			suite.Assert().Equal("1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=", spec.KubeSpan.PublicKey)
 			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.244.4.1/24")}, spec.KubeSpan.AdditionalAddresses)
 			suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("192.168.3.5:51820")}, spec.KubeSpan.Endpoints)
-
-			return nil
-		}),
-	))
+			suite.Assert().Zero(spec.ControlPlane)
+		},
+		rtestutils.WithNamespace(cluster.RawNamespaceName),
+	)
 
 	// controller should publish public IP
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*network.NewAddressStatus(cluster.NamespaceName, "service").Metadata(), func(r resource.Resource) error {
-			spec := r.(*network.AddressStatus).TypedSpec()
+	ctest.AssertResource(suite, "service", func(r *network.AddressStatus, assertions *assert.Assertions) {
+		spec := r.TypedSpec()
 
-			suite.Assert().True(spec.Address.IsValid())
-			suite.Assert().True(spec.Address.IsSingleIP())
-
-			return nil
-		}),
-	))
+		assertions.True(spec.Address.IsValid())
+		assertions.True(spec.Address.IsSingleIP())
+	}, rtestutils.WithNamespace(cluster.NamespaceName))
 
 	// make controller inject additional endpoint via kubespan.Endpoint
 	endpoint := kubespan.NewEndpoint(kubespan.NamespaceName, "1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=")
@@ -226,22 +227,19 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, endpoint))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+	ctest.AssertResource(suite,
+		"service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		func(r *cluster.Affiliate, assertions *assert.Assertions) {
+			spec := r.TypedSpec()
 
-			if len(spec.KubeSpan.Endpoints) != 2 {
-				return retry.ExpectedErrorf("waiting for 2 endpoints, got %d", len(spec.KubeSpan.Endpoints))
-			}
-
-			suite.Assert().Equal([]netip.AddrPort{
+			assertions.Len(spec.KubeSpan.Endpoints, 2)
+			assertions.Equal([]netip.AddrPort{
 				netip.MustParseAddrPort("192.168.3.5:51820"),
 				netip.MustParseAddrPort("1.1.1.1:343"),
 			}, spec.KubeSpan.Endpoints)
-
-			return nil
-		}),
-	))
+		},
+		rtestutils.WithNamespace(cluster.RawNamespaceName),
+	)
 
 	// pretend that machine is being reset
 	machineStatus := runtime.NewMachineStatus()
@@ -341,15 +339,14 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 		},
 	}, nil))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
-
-			suite.Assert().Equal("7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", spec.NodeID)
-
-			return nil
-		}),
-	))
+	ctest.AssertResource(
+		suite,
+		"service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		func(r *cluster.Affiliate, asrt *assert.Assertions) {
+			suite.Assert().Equal("7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", r.TypedSpec().NodeID)
+		},
+		rtestutils.WithNamespace(cluster.RawNamespaceName),
+	)
 
 	// now disable the service registry
 	ctest.UpdateWithConflicts(suite, discoveryConfig, func(r *cluster.Config) error {
@@ -358,9 +355,11 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 		return nil
 	})
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(*cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC").Metadata()),
-	))
+	ctest.AssertNoResource[*cluster.Affiliate](
+		suite,
+		"service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		rtestutils.WithNamespace(cluster.RawNamespaceName),
+	)
 
 	cliCtxCancel()
 	suite.Assert().NoError(<-errCh)

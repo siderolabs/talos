@@ -131,7 +131,6 @@ linters-settings:
     replace-local: true
     replace-allow-list:
       - gopkg.in/yaml.v3
-      - inet.af/tcpproxy
     retract-allow-no-explanation: false
     exclude-forbidden: true
 

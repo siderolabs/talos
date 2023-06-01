@@ -25,6 +25,10 @@ func (o AffiliateSpec) DeepCopy() AffiliateSpec {
 		cp.KubeSpan.Endpoints = make([]netip.AddrPort, len(o.KubeSpan.Endpoints))
 		copy(cp.KubeSpan.Endpoints, o.KubeSpan.Endpoints)
 	}
+	if o.ControlPlane != nil {
+		cp.ControlPlane = new(ControlPlane)
+		*cp.ControlPlane = *o.ControlPlane
+	}
 	return cp
 }
 
@@ -50,6 +54,10 @@ func (o MemberSpec) DeepCopy() MemberSpec {
 	if o.Addresses != nil {
 		cp.Addresses = make([]netip.Addr, len(o.Addresses))
 		copy(cp.Addresses, o.Addresses)
+	}
+	if o.ControlPlane != nil {
+		cp.ControlPlane = new(ControlPlane)
+		*cp.ControlPlane = *o.ControlPlane
 	}
 	return cp
 }

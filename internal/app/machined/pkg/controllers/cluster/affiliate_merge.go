@@ -10,6 +10,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/channel"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -47,23 +49,21 @@ func (ctrl *AffiliateMergeController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
+			return nil //nolint:nilerr
 		}
 
-		mergedAffiliates := make(map[resource.ID]*cluster.AffiliateSpec)
-
-		rawAffiliates, err := r.List(ctx, resource.NewMetadata(cluster.RawNamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
+		rawAffiliates, err := safe.ReaderList[*cluster.Affiliate](ctx, r, resource.NewMetadata(cluster.RawNamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing affiliates")
 		}
 
-		for _, rawAffiliate := range rawAffiliates.Items {
-			affiliateSpec := rawAffiliate.(*cluster.Affiliate).TypedSpec()
+		mergedAffiliates := make(map[resource.ID]*cluster.AffiliateSpec, rawAffiliates.Len())
+
+		for it := safe.IteratorFromList(rawAffiliates); it.Next(); {
+			affiliateSpec := it.Value().TypedSpec()
 			id := affiliateSpec.NodeID
 
 			if affiliate, ok := mergedAffiliates[id]; ok {
@@ -73,13 +73,13 @@ func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
+		touchedIDs := make(map[resource.ID]struct{}, len(mergedAffiliates))
 
 		for id, affiliateSpec := range mergedAffiliates {
 			affiliateSpec := affiliateSpec
 
-			if err = r.Modify(ctx, cluster.NewAffiliate(cluster.NamespaceName, id), func(res resource.Resource) error {
-				*res.(*cluster.Affiliate).TypedSpec() = *affiliateSpec
+			if err = safe.WriterModify(ctx, r, cluster.NewAffiliate(cluster.NamespaceName, id), func(res *cluster.Affiliate) error {
+				*res.TypedSpec() = *affiliateSpec
 
 				return nil
 			}); err != nil {
@@ -90,12 +90,14 @@ func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runt
 		}
 
 		// list keys for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
+		list, err := safe.ReaderListAll[*cluster.Affiliate](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for _, res := range list.Items {
+		for it := safe.IteratorFromList(list); it.Next(); {
+			res := it.Value()
+
 			if res.Metadata().Owner() != ctrl.Name() {
 				continue
 			}

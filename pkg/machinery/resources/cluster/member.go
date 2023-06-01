@@ -28,11 +28,12 @@ type Member = typed.Resource[MemberSpec, MemberExtension]
 //
 //gotagsrewrite:gen
 type MemberSpec struct {
-	NodeID          string       `yaml:"nodeId" protobuf:"1"`
-	Addresses       []netip.Addr `yaml:"addresses" protobuf:"2"`
-	Hostname        string       `yaml:"hostname" protobuf:"3"`
-	MachineType     machine.Type `yaml:"machineType" protobuf:"4"`
-	OperatingSystem string       `yaml:"operatingSystem" protobuf:"5"`
+	NodeID          string        `yaml:"nodeId" protobuf:"1"`
+	Addresses       []netip.Addr  `yaml:"addresses" protobuf:"2"`
+	Hostname        string        `yaml:"hostname" protobuf:"3"`
+	MachineType     machine.Type  `yaml:"machineType" protobuf:"4"`
+	OperatingSystem string        `yaml:"operatingSystem" protobuf:"5"`
+	ControlPlane    *ControlPlane `yaml:"controlPlane,omitempty" protobuf:"6"`
 }
 
 // NewMember initializes a Member resource.

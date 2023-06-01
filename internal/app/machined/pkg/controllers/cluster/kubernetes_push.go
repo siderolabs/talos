@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -73,7 +74,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-			discoveryConfig, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, cluster.ConfigType, cluster.ConfigID, resource.VersionUndefined))
+			discoveryConfig, err := safe.ReaderGetByID[*cluster.Config](ctx, r, cluster.ConfigID)
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting discovery config: %w", err)
@@ -82,7 +83,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			if !discoveryConfig.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled {
+			if !discoveryConfig.TypedSpec().RegistryKubernetesEnabled {
 				continue
 			}
 
@@ -90,7 +91,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				return err
 			}
 
-			identity, err := r.Get(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
+			identity, err := safe.ReaderGetByID[*cluster.Identity](ctx, r, cluster.LocalIdentity)
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting local identity: %w", err)
@@ -99,7 +100,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			localAffiliateID := identity.(*cluster.Identity).TypedSpec().NodeID
+			localAffiliateID := identity.TypedSpec().NodeID
 
 			if ctrl.localAffiliateID != localAffiliateID {
 				ctrl.localAffiliateID = localAffiliateID
@@ -116,7 +117,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				}
 			}
 
-			affiliate, err := r.Get(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.AffiliateType, ctrl.localAffiliateID, resource.VersionUndefined))
+			affiliate, err := safe.ReaderGetByID[*cluster.Affiliate](ctx, r, ctrl.localAffiliateID)
 			if err != nil {
 				if !state.IsNotFoundError(err) {
 					return fmt.Errorf("error getting local affiliate: %w", err)
@@ -132,7 +133,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				}
 			}
 
-			if err = registry.NewKubernetes(ctrl.kubernetesClient).Push(ctx, affiliate.(*cluster.Affiliate)); err != nil {
+			if err = registry.NewKubernetes(ctrl.kubernetesClient).Push(ctx, affiliate); err != nil {
 				// reset client connection
 				ctrl.kubernetesClient.Close() //nolint:errcheck
 				ctrl.kubernetesClient = nil

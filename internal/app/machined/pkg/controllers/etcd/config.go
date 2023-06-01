@@ -83,7 +83,7 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 			continue
 		}
 
-		machineConfig, err := safe.ReaderGet[*config.MachineConfig](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue

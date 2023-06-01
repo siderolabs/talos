@@ -27,6 +27,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
     - [AffiliateSpec](#talos.resource.definitions.cluster.AffiliateSpec)
     - [ConfigSpec](#talos.resource.definitions.cluster.ConfigSpec)
+    - [ControlPlane](#talos.resource.definitions.cluster.ControlPlane)
     - [IdentitySpec](#talos.resource.definitions.cluster.IdentitySpec)
     - [InfoSpec](#talos.resource.definitions.cluster.InfoSpec)
     - [KubeSpanAffiliateSpec](#talos.resource.definitions.cluster.KubeSpanAffiliateSpec)
@@ -89,6 +90,8 @@ description: Talos gRPC API reference.
     - [APIServerConfigSpec](#talos.resource.definitions.k8s.APIServerConfigSpec)
     - [APIServerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry)
     - [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry)
+    - [APIServerEndpoint](#talos.resource.definitions.k8s.APIServerEndpoint)
+    - [APIServerEndpointsSpec](#talos.resource.definitions.k8s.APIServerEndpointsSpec)
     - [AdmissionControlConfigSpec](#talos.resource.definitions.k8s.AdmissionControlConfigSpec)
     - [AdmissionPluginSpec](#talos.resource.definitions.k8s.AdmissionPluginSpec)
     - [AuditPolicyConfigSpec](#talos.resource.definitions.k8s.AuditPolicyConfigSpec)
@@ -686,6 +689,7 @@ AffiliateSpec describes Affiliate state.
 | operating_system | [string](#string) |  |  |
 | machine_type | [talos.resource.definitions.enums.MachineType](#talos.resource.definitions.enums.MachineType) |  |  |
 | kube_span | [KubeSpanAffiliateSpec](#talos.resource.definitions.cluster.KubeSpanAffiliateSpec) |  |  |
+| control_plane | [ControlPlane](#talos.resource.definitions.cluster.ControlPlane) |  |  |
 
 
 
@@ -707,6 +711,21 @@ ConfigSpec describes KubeSpan configuration.
 | service_endpoint_insecure | [bool](#bool) |  |  |
 | service_encryption_key | [bytes](#bytes) |  |  |
 | service_cluster_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cluster.ControlPlane"></a>
+
+### ControlPlane
+ControlPlane describes ControlPlane data if any.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| api_server_port | [int64](#int64) |  |  |
 
 
 
@@ -778,6 +797,7 @@ MemberSpec describes Member state.
 | hostname | [string](#string) |  |  |
 | machine_type | [talos.resource.definitions.enums.MachineType](#talos.resource.definitions.enums.MachineType) |  |  |
 | operating_system | [string](#string) |  |  |
+| control_plane | [ControlPlane](#talos.resource.definitions.cluster.ControlPlane) |  |  |
 
 
 
@@ -1700,6 +1720,37 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.APIServerEndpoint"></a>
+
+### APIServerEndpoint
+APIServerEndpoint holds data for control plane endpoint.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| port | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.APIServerEndpointsSpec"></a>
+
+### APIServerEndpointsSpec
+APIServerEndpointsSpec describes APIServerEndpoints configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoints | [APIServerEndpoint](#talos.resource.definitions.k8s.APIServerEndpoint) | repeated |  |
 
 
 

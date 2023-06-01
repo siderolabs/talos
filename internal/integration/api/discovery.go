@@ -307,11 +307,7 @@ func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace re
 	items, err := safe.StateList[*cluster.Affiliate](nodeCtx, suite.Client.COSI, resource.NewMetadata(namespace, cluster.AffiliateType, "", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
-	it := safe.IteratorFromList(items)
-
-	for it.Next() {
-		result = append(result, it.Value())
-	}
+	items.ForEach(func(item *cluster.Affiliate) { result = append(result, item) })
 
 	return result
 }

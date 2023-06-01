@@ -10,6 +10,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
@@ -56,18 +58,16 @@ func (ctrl *EndpointController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
+			return nil //nolint:nilerr
 		}
 
-		peerStatuses, err := r.List(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerStatusType, "", resource.VersionUndefined))
+		peerStatuses, err := safe.ReaderListAll[*kubespan.PeerStatus](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing cluster affiliates: %w", err)
 		}
 
-		affiliates, err := r.List(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
+		affiliates, err := safe.ReaderListAll[*cluster.Affiliate](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing cluster affiliates: %w", err)
 		}
@@ -75,8 +75,8 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		// build lookup table of affiliate's kubespan public key back to affiliate ID
 		affiliateLookup := make(map[string]string)
 
-		for _, res := range affiliates.Items {
-			affiliate := res.(*cluster.Affiliate).TypedSpec()
+		for it := safe.IteratorFromList(affiliates); it.Next(); {
+			affiliate := it.Value().TypedSpec()
 
 			if affiliate.KubeSpan.PublicKey != "" {
 				affiliateLookup[affiliate.KubeSpan.PublicKey] = affiliate.NodeID
@@ -86,8 +86,9 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		// for every kubespan peer, if it's up and has endpoint, harvest that endpoint
 		touchedIDs := make(map[resource.ID]struct{})
 
-		for _, res := range peerStatuses.Items {
-			peerStatus := res.(*kubespan.PeerStatus).TypedSpec()
+		for it := safe.IteratorFromList(peerStatuses); it.Next(); {
+			res := it.Value()
+			peerStatus := res.TypedSpec()
 
 			if peerStatus.State != kubespan.PeerStateUp {
 				continue
@@ -102,8 +103,8 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 				continue
 			}
 
-			if err = r.Modify(ctx, kubespan.NewEndpoint(kubespan.NamespaceName, res.Metadata().ID()), func(res resource.Resource) error {
-				*res.(*kubespan.Endpoint).TypedSpec() = kubespan.EndpointSpec{
+			if err = safe.WriterModify(ctx, r, kubespan.NewEndpoint(kubespan.NamespaceName, res.Metadata().ID()), func(res *kubespan.Endpoint) error {
+				*res.TypedSpec() = kubespan.EndpointSpec{
 					AffiliateID: affiliateID,
 					Endpoint:    peerStatus.Endpoint,
 				}
@@ -117,12 +118,14 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		}
 
 		// list keys for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.EndpointType, "", resource.VersionUndefined))
+		list, err := safe.ReaderListAll[*kubespan.Endpoint](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for _, res := range list.Items {
+		for it := safe.IteratorFromList(list); it.Next(); {
+			res := it.Value()
+
 			if res.Metadata().Owner() != ctrl.Name() {
 				continue
 			}

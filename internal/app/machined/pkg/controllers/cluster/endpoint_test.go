@@ -5,16 +5,16 @@
 package cluster_test
 
 import (
-	"fmt"
 	"net/netip"
 	"testing"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/siderolabs/gen/slices"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -61,15 +61,19 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 	}
 
 	// control plane members should be translated to Endpoints
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneDiscoveredEndpointsID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*k8s.Endpoint).TypedSpec()
+	ctest.AssertResource(suite, k8s.ControlPlaneDiscoveredEndpointsID, func(r *k8s.Endpoint, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-			suite.Assert().Equal(`["172.20.0.2" "172.20.0.3" "fd50:8d60:4238:6302:f857:23ff:fe21:d1e0" "fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"]`, fmt.Sprintf("%q", spec.Addresses))
-
-			return nil
-		}),
-	))
+		asrt.Equal(
+			[]string{
+				"172.20.0.2",
+				"172.20.0.3",
+				"fd50:8d60:4238:6302:f857:23ff:fe21:d1e0",
+				"fd50:8d60:4238:6302:f857:23ff:fe21:d1e1",
+			},
+			slices.Map(spec.Addresses, netip.Addr.String),
+		)
+	})
 }
 
 func TestEndpointSuite(t *testing.T) {

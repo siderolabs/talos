@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -29,7 +28,7 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 
 	ctx = client.WithNode(ctx, node)
 
-	mc, err := safe.StateGet[*config.MachineConfig](ctx, c.COSI, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+	mc, err := safe.StateGetByID[*config.MachineConfig](ctx, c.COSI, config.V1Alpha1ID)
 	if err != nil {
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}

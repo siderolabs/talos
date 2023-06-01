@@ -10,7 +10,9 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -67,127 +69,130 @@ func (ctrl *PeerSpecController) Outputs() []controller.Output {
 //nolint:gocyclo,cyclop
 func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-			cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined))
-			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting kubespan configuration: %w", err)
-			}
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
+			return nil //nolint:nilerr
+		}
 
-			localIdentity, err := r.Get(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
-			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting first MAC address: %w", err)
-			}
+		cfg, err := safe.ReaderGetByID[*kubespan.Config](ctx, r, kubespan.ConfigID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting kubespan configuration: %w", err)
+		}
 
-			affiliates, err := r.List(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
-			if err != nil {
-				return fmt.Errorf("error listing cluster affiliates: %w", err)
-			}
+		localIdentity, err := safe.ReaderGetByID[*cluster.Identity](ctx, r, cluster.LocalIdentity)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting first MAC address: %w", err)
+		}
 
-			touchedIDs := make(map[resource.ID]struct{})
+		affiliates, err := safe.ReaderListAll[*cluster.Affiliate](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing cluster affiliates: %w", err)
+		}
 
-			if cfg != nil && localIdentity != nil && cfg.(*kubespan.Config).TypedSpec().Enabled {
-				localAffiliateID := localIdentity.(*cluster.Identity).TypedSpec().NodeID
+		touchedIDs := map[resource.ID]struct{}{}
 
-				peerIPSets := make(map[string]*netipx.IPSet, len(affiliates.Items))
+		if cfg != nil && localIdentity != nil && cfg.TypedSpec().Enabled {
+			localAffiliateID := localIdentity.TypedSpec().NodeID
 
-			affiliateLoop:
-				for _, affiliate := range affiliates.Items {
-					if affiliate.Metadata().ID() == localAffiliateID {
-						// skip local affiliate, it's not a peer
-						continue
-					}
+			peerIPSets := make(map[string]*netipx.IPSet, affiliates.Len())
 
-					spec := affiliate.(*cluster.Affiliate).TypedSpec()
+		affiliateLoop:
+			for it := safe.IteratorFromList(affiliates); it.Next(); {
+				affiliate := it.Value()
 
-					if spec.KubeSpan.PublicKey == "" {
-						// no kubespan information, skip it
-						continue
-					}
-
-					var builder netipx.IPSetBuilder
-
-					for _, ipPrefix := range spec.KubeSpan.AdditionalAddresses {
-						builder.AddPrefix(ipPrefix)
-					}
-
-					for _, ip := range spec.Addresses {
-						builder.Add(ip)
-					}
-
-					builder.Add(spec.KubeSpan.Address)
-
-					var ipSet *netipx.IPSet
-
-					ipSet, err = builder.IPSet()
-					if err != nil {
-						logger.Warn("failed building list of IP ranges for the peer", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("label", spec.Nodename), zap.Error(err))
-
-						continue
-					}
-
-					for otherPublicKey, otherIPSet := range peerIPSets {
-						if otherIPSet.Overlaps(ipSet) {
-							logger.Warn("peer address overlap", zap.String("this_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey),
-								zap.Strings("this_ips", dumpSet(ipSet)), zap.Strings("other_ips", dumpSet(otherIPSet)))
-
-							// exclude overlapping IPs from the ipSet
-							var bldr netipx.IPSetBuilder
-
-							// ipSet = ipSet & ~otherIPSet
-							bldr.AddSet(otherIPSet)
-							bldr.Complement()
-							bldr.Intersect(ipSet)
-
-							ipSet, err = bldr.IPSet()
-							if err != nil {
-								logger.Warn("failed building list of IP ranges for the peer", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("label", spec.Nodename), zap.Error(err))
-
-								continue affiliateLoop
-							}
-
-							if len(ipSet.Ranges()) == 0 {
-								logger.Warn("conflict resolution removed all ranges", zap.String("this_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey))
-							}
-						}
-					}
-
-					peerIPSets[spec.KubeSpan.PublicKey] = ipSet
-
-					if err = r.Modify(ctx, kubespan.NewPeerSpec(kubespan.NamespaceName, spec.KubeSpan.PublicKey), func(res resource.Resource) error {
-						*res.(*kubespan.PeerSpec).TypedSpec() = kubespan.PeerSpecSpec{
-							Address:    spec.KubeSpan.Address,
-							AllowedIPs: ipSet.Prefixes(),
-							Endpoints:  slices.Clone(spec.KubeSpan.Endpoints),
-							Label:      spec.Nodename,
-						}
-
-						return nil
-					}); err != nil {
-						return err
-					}
-
-					touchedIDs[spec.KubeSpan.PublicKey] = struct{}{}
-				}
-			}
-
-			// list keys for cleanup
-			list, err := r.List(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerSpecType, "", resource.VersionUndefined))
-			if err != nil {
-				return fmt.Errorf("error listing resources: %w", err)
-			}
-
-			for _, res := range list.Items {
-				if res.Metadata().Owner() != ctrl.Name() {
+				if affiliate.Metadata().ID() == localAffiliateID {
+					// skip local affiliate, it's not a peer
 					continue
 				}
 
-				if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-					if err = r.Destroy(ctx, res.Metadata()); err != nil {
-						return fmt.Errorf("error cleaning up specs: %w", err)
+				spec := affiliate.TypedSpec()
+
+				if spec.KubeSpan.PublicKey == "" {
+					// no kubespan information, skip it
+					continue
+				}
+
+				var builder netipx.IPSetBuilder
+
+				for _, ipPrefix := range spec.KubeSpan.AdditionalAddresses {
+					builder.AddPrefix(ipPrefix)
+				}
+
+				for _, ip := range spec.Addresses {
+					builder.Add(ip)
+				}
+
+				builder.Add(spec.KubeSpan.Address)
+
+				var ipSet *netipx.IPSet
+
+				ipSet, err = builder.IPSet()
+				if err != nil {
+					logger.Warn("failed building list of IP ranges for the peer", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("label", spec.Nodename), zap.Error(err))
+
+					continue
+				}
+
+				for otherPublicKey, otherIPSet := range peerIPSets {
+					if otherIPSet.Overlaps(ipSet) {
+						logger.Warn("peer address overlap", zap.String("this_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey),
+							zap.Strings("this_ips", dumpSet(ipSet)), zap.Strings("other_ips", dumpSet(otherIPSet)))
+
+						// exclude overlapping IPs from the ipSet
+						var bldr netipx.IPSetBuilder
+
+						// ipSet = ipSet & ~otherIPSet
+						bldr.AddSet(otherIPSet)
+						bldr.Complement()
+						bldr.Intersect(ipSet)
+
+						ipSet, err = bldr.IPSet()
+						if err != nil {
+							logger.Warn("failed building list of IP ranges for the peer", zap.String("ignored_peer", spec.KubeSpan.PublicKey), zap.String("label", spec.Nodename), zap.Error(err))
+
+							continue affiliateLoop
+						}
+
+						if len(ipSet.Ranges()) == 0 {
+							logger.Warn("conflict resolution removed all ranges", zap.String("this_peer", spec.KubeSpan.PublicKey), zap.String("other_peer", otherPublicKey))
+						}
 					}
+				}
+
+				peerIPSets[spec.KubeSpan.PublicKey] = ipSet
+
+				if err = safe.WriterModify(ctx, r, kubespan.NewPeerSpec(kubespan.NamespaceName, spec.KubeSpan.PublicKey), func(res *kubespan.PeerSpec) error {
+					*res.TypedSpec() = kubespan.PeerSpecSpec{
+						Address:    spec.KubeSpan.Address,
+						AllowedIPs: ipSet.Prefixes(),
+						Endpoints:  slices.Clone(spec.KubeSpan.Endpoints),
+						Label:      spec.Nodename,
+					}
+
+					return nil
+				}); err != nil {
+					return err
+				}
+
+				touchedIDs[spec.KubeSpan.PublicKey] = struct{}{}
+			}
+		}
+
+		// list keys for cleanup
+		list, err := safe.ReaderListAll[*kubespan.PeerSpec](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing resources: %w", err)
+		}
+
+		for it := safe.IteratorFromList(list); it.Next(); {
+			res := it.Value()
+
+			if res.Metadata().Owner() != ctrl.Name() {
+				continue
+			}
+
+			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
+				if err = r.Destroy(ctx, res.Metadata()); err != nil {
+					return fmt.Errorf("error cleaning up specs: %w", err)
 				}
 			}
 		}

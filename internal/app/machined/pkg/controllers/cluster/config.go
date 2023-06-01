@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -67,17 +68,17 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 				}
 			}
 
-			touchedIDs := make(map[resource.ID]struct{})
+			touchedIDs := map[resource.ID]struct{}{}
 
 			if cfg != nil {
 				c := cfg.(*config.MachineConfig).Config()
 
-				if err = r.Modify(ctx, cluster.NewConfig(config.NamespaceName, cluster.ConfigID), func(res resource.Resource) error {
-					res.(*cluster.Config).TypedSpec().DiscoveryEnabled = c.Cluster().Discovery().Enabled()
+				if err = safe.WriterModify(ctx, r, cluster.NewConfig(config.NamespaceName, cluster.ConfigID), func(res *cluster.Config) error {
+					res.TypedSpec().DiscoveryEnabled = c.Cluster().Discovery().Enabled()
 
 					if c.Cluster().Discovery().Enabled() {
-						res.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
-						res.(*cluster.Config).TypedSpec().RegistryServiceEnabled = c.Cluster().Discovery().Registries().Service().Enabled()
+						res.TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
+						res.TypedSpec().RegistryServiceEnabled = c.Cluster().Discovery().Registries().Service().Enabled()
 
 						if c.Cluster().Discovery().Registries().Service().Enabled() {
 							var u *url.URL
@@ -98,24 +99,24 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, log
 								}
 							}
 
-							res.(*cluster.Config).TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
-							res.(*cluster.Config).TypedSpec().ServiceEndpointInsecure = u.Scheme == "http"
+							res.TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
+							res.TypedSpec().ServiceEndpointInsecure = u.Scheme == "http"
 
-							res.(*cluster.Config).TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
+							res.TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
 							if err != nil {
 								return err
 							}
 
-							res.(*cluster.Config).TypedSpec().ServiceClusterID = c.Cluster().ID()
+							res.TypedSpec().ServiceClusterID = c.Cluster().ID()
 						} else {
-							res.(*cluster.Config).TypedSpec().ServiceEndpoint = ""
-							res.(*cluster.Config).TypedSpec().ServiceEndpointInsecure = false
-							res.(*cluster.Config).TypedSpec().ServiceEncryptionKey = nil
-							res.(*cluster.Config).TypedSpec().ServiceClusterID = ""
+							res.TypedSpec().ServiceEndpoint = ""
+							res.TypedSpec().ServiceEndpointInsecure = false
+							res.TypedSpec().ServiceEncryptionKey = nil
+							res.TypedSpec().ServiceClusterID = ""
 						}
 					} else {
-						res.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled = false
-						res.(*cluster.Config).TypedSpec().RegistryServiceEnabled = false
+						res.TypedSpec().RegistryKubernetesEnabled = false
+						res.TypedSpec().RegistryServiceEnabled = false
 					}
 
 					return nil

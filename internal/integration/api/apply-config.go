@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
@@ -476,7 +475,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	getMachineConfig := func(ctx context.Context) (*mc.MachineConfig, error) {
-		cfg, err := safe.StateGet[*mc.MachineConfig](ctx, suite.Client.COSI, resource.NewMetadata(mc.NamespaceName, mc.MachineConfigType, mc.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.COSI, mc.V1Alpha1ID)
 		if err != nil {
 			return nil, err
 		}

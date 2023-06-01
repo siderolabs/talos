@@ -11,18 +11,24 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 
 func cleanupAffiliates(ctx context.Context, ctrl controller.Controller, r controller.Runtime, touchedIDs map[resource.ID]struct{}) error {
 	// list keys for cleanup
-	list, err := r.List(ctx, resource.NewMetadata(cluster.RawNamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
+	list, err := safe.ReaderList[*cluster.Affiliate](
+		ctx,
+		r,
+		resource.NewMetadata(cluster.RawNamespaceName, cluster.AffiliateType, "", resource.VersionUndefined),
+	)
 	if err != nil {
 		return fmt.Errorf("error listing resources: %w", err)
 	}
 
-	for _, res := range list.Items {
+	for it := safe.IteratorFromList(list); it.Next(); {
+		res := it.Value()
 		if res.Metadata().Owner() != ctrl.Name() {
 			continue
 		}

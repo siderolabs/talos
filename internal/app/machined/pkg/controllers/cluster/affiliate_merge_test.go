@@ -7,13 +7,13 @@ package cluster_test
 import (
 	"net/netip"
 	"testing"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
@@ -40,6 +40,7 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
 			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
+		ControlPlane: &cluster.ControlPlane{APIServerPort: 6443},
 	}
 
 	affiliate2 := cluster.NewAffiliate(cluster.RawNamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
@@ -65,67 +66,63 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 	}
 
 	// there should be two merged affiliates: one from affiliate1+affiliate2, and another from affiliate3
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, affiliate1.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+	ctest.AssertResource(
+		suite,
+		affiliate1.TypedSpec().NodeID,
+		func(r *cluster.Affiliate, asrt *assert.Assertions) {
+			spec := r.TypedSpec()
 
-			suite.Assert().Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
-			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("192.168.3.4"), netip.MustParseAddr("10.5.0.2")}, spec.Addresses)
-			suite.Assert().Equal("foo.com", spec.Hostname)
-			suite.Assert().Equal("bar", spec.Nodename)
-			suite.Assert().Equal(machine.TypeControlPlane, spec.MachineType)
-			suite.Assert().Equal(netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"), spec.KubeSpan.Address)
-			suite.Assert().Equal("PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=", spec.KubeSpan.PublicKey)
-			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")}, spec.KubeSpan.AdditionalAddresses)
-			suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")}, spec.KubeSpan.Endpoints)
+			asrt.Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
+			asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.3.4"), netip.MustParseAddr("10.5.0.2")}, spec.Addresses)
+			asrt.Equal("foo.com", spec.Hostname)
+			asrt.Equal("bar", spec.Nodename)
+			asrt.Equal(machine.TypeControlPlane, spec.MachineType)
+			asrt.Equal(netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"), spec.KubeSpan.Address)
+			asrt.Equal("PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=", spec.KubeSpan.PublicKey)
+			asrt.Equal([]netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")}, spec.KubeSpan.AdditionalAddresses)
+			asrt.Equal([]netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")}, spec.KubeSpan.Endpoints)
+			asrt.Equal(&cluster.ControlPlane{APIServerPort: 6443}, spec.ControlPlane)
+		},
+	)
 
-			return nil
-		}),
-	))
+	ctest.AssertResource(
+		suite,
+		affiliate3.TypedSpec().NodeID,
+		func(r *cluster.Affiliate, asrt *assert.Assertions) {
+			spec := r.TypedSpec()
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, affiliate3.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
-
-			suite.Assert().Equal(affiliate3.TypedSpec().NodeID, spec.NodeID)
-			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
-			suite.Assert().Equal("worker-1", spec.Hostname)
-			suite.Assert().Equal("worker-1", spec.Nodename)
-			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)
-			suite.Assert().Zero(spec.KubeSpan.PublicKey)
-
-			return nil
-		}),
-	))
+			asrt.Equal(affiliate3.TypedSpec().NodeID, spec.NodeID)
+			asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
+			asrt.Equal("worker-1", spec.Hostname)
+			asrt.Equal("worker-1", spec.Nodename)
+			asrt.Equal(machine.TypeWorker, spec.MachineType)
+			asrt.Zero(spec.KubeSpan.PublicKey)
+			asrt.Nil(spec.ControlPlane)
+		},
+	)
 
 	// remove affiliate2, KubeSpan information should eventually go away
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, affiliate1.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewAffiliate(cluster.NamespaceName, affiliate1.TypedSpec().NodeID).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Affiliate).TypedSpec()
+	ctest.AssertResource(
+		suite,
+		affiliate1.TypedSpec().NodeID,
+		func(r *cluster.Affiliate, asrt *assert.Assertions) {
+			spec := r.TypedSpec()
 
-			suite.Assert().Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
-
-			if spec.KubeSpan.PublicKey != "" {
-				return retry.ExpectedErrorf("not reconciled yet")
-			}
-
-			suite.Assert().Zero(spec.KubeSpan.Address)
-			suite.Assert().Zero(spec.KubeSpan.PublicKey)
-			suite.Assert().Zero(spec.KubeSpan.AdditionalAddresses)
-			suite.Assert().Zero(spec.KubeSpan.Endpoints)
-
-			return nil
-		}),
-	))
+			asrt.Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
+			asrt.Zero(spec.KubeSpan.Address)
+			asrt.Zero(spec.KubeSpan.PublicKey)
+			asrt.Zero(spec.KubeSpan.AdditionalAddresses)
+			asrt.Zero(spec.KubeSpan.Endpoints)
+			asrt.Nil(spec.ControlPlane)
+		},
+	)
 
 	// remove affiliate3, merged affiliate should be removed
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, affiliate3.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(*cluster.NewAffiliate(cluster.NamespaceName, affiliate3.TypedSpec().NodeID).Metadata()),
-	))
+	ctest.AssertNoResource[*cluster.Affiliate](suite, affiliate3.TypedSpec().NodeID)
 }
 
 func TestAffiliateMergeSuite(t *testing.T) {

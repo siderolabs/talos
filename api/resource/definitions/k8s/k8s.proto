@@ -23,6 +23,17 @@ message APIServerConfigSpec {
   string advertised_address = 11;
 }
 
+// APIServerEndpoint holds data for control plane endpoint.
+message APIServerEndpoint {
+  string host = 1;
+  uint32 port = 2;
+}
+
+// APIServerEndpointsSpec describes APIServerEndpoints configuration.
+message APIServerEndpointsSpec {
+  repeated APIServerEndpoint endpoints = 1;
+}
+
 // AdmissionControlConfigSpec is configuration for kube-apiserver.
 message AdmissionControlConfigSpec {
   repeated AdmissionPluginSpec config = 1;

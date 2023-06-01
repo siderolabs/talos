@@ -7,13 +7,13 @@ package cluster_test
 import (
 	"net/netip"
 	"testing"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
@@ -41,6 +41,7 @@ func (suite *MemberSuite) TestReconcileDefault() {
 			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
 			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
 		},
+		ControlPlane: &cluster.ControlPlane{APIServerPort: 6443},
 	}
 
 	affiliate2 := cluster.NewAffiliate(cluster.NamespaceName, "9dwHNUViZlPlIervqX9Qo256RUhrfhgO0xBBnKcKl4F")
@@ -64,39 +65,38 @@ func (suite *MemberSuite) TestReconcileDefault() {
 	}
 
 	// affiliates with non-empty Nodename should be translated to Members
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewMember(cluster.NamespaceName, affiliate1.TypedSpec().Nodename).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Member).TypedSpec()
+	ctest.AssertResource(
+		suite,
+		affiliate1.TypedSpec().Nodename,
+		func(r *cluster.Member, asrt *assert.Assertions) {
+			spec := r.TypedSpec()
 
-			suite.Assert().Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
-			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("192.168.3.4")}, spec.Addresses)
-			suite.Assert().Equal("foo.com", spec.Hostname)
-			suite.Assert().Equal(machine.TypeControlPlane, spec.MachineType)
-			suite.Assert().Equal("Talos (v1.0.0)", spec.OperatingSystem)
+			asrt.Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
+			asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.3.4")}, spec.Addresses)
+			asrt.Equal("foo.com", spec.Hostname)
+			asrt.Equal(machine.TypeControlPlane, spec.MachineType)
+			asrt.Equal("Talos (v1.0.0)", spec.OperatingSystem)
+			asrt.Equal(6443, spec.ControlPlane.APIServerPort)
+		},
+	)
 
-			return nil
-		}),
-	))
+	ctest.AssertResource(
+		suite,
+		affiliate2.TypedSpec().Nodename,
+		func(r *cluster.Member, asrt *assert.Assertions) {
+			spec := r.TypedSpec()
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(*cluster.NewMember(cluster.NamespaceName, affiliate2.TypedSpec().Nodename).Metadata(), func(r resource.Resource) error {
-			spec := r.(*cluster.Member).TypedSpec()
-
-			suite.Assert().Equal(affiliate2.TypedSpec().NodeID, spec.NodeID)
-			suite.Assert().Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
-			suite.Assert().Equal("worker-1", spec.Hostname)
-			suite.Assert().Equal(machine.TypeWorker, spec.MachineType)
-
-			return nil
-		}),
-	))
+			asrt.Equal(affiliate2.TypedSpec().NodeID, spec.NodeID)
+			asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
+			asrt.Equal("worker-1", spec.Hostname)
+			asrt.Equal(machine.TypeWorker, spec.MachineType)
+		},
+	)
 
 	// remove affiliate2, member information should eventually go away
 	suite.Require().NoError(suite.state.Destroy(suite.ctx, affiliate2.Metadata()))
 
-	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertNoResource(*cluster.NewMember(cluster.NamespaceName, affiliate2.TypedSpec().Nodename).Metadata()),
-	))
+	ctest.AssertNoResource[*cluster.Member](suite, affiliate2.TypedSpec().Nodename)
 }
 
 func TestMemberSuite(t *testing.T) {

@@ -133,7 +133,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			}
 		}
 
-		discoveryConfig, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, cluster.ConfigType, cluster.ConfigID, resource.VersionUndefined))
+		discoveryConfig, err := safe.ReaderGetByID[*cluster.Config](ctx, r, cluster.ConfigID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting discovery config: %w", err)
@@ -142,7 +142,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		if !discoveryConfig.(*cluster.Config).TypedSpec().RegistryServiceEnabled {
+		if !discoveryConfig.TypedSpec().RegistryServiceEnabled {
 			// if discovery is disabled cleanup existing resources
 			if err = cleanupAffiliates(ctx, ctrl, r, nil); err != nil {
 				return err
@@ -164,7 +164,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		identity, err := r.Get(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
+		identity, err := safe.ReaderGetByID[*cluster.Identity](ctx, r, cluster.LocalIdentity)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting local identity: %w", err)
@@ -173,7 +173,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		localAffiliateID := identity.(*cluster.Identity).TypedSpec().NodeID
+		localAffiliateID := identity.TypedSpec().NodeID
 
 		if ctrl.localAffiliateID != localAffiliateID {
 			ctrl.localAffiliateID = localAffiliateID
@@ -203,7 +203,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			}
 		}
 
-		affiliate, err := r.Get(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.AffiliateType, ctrl.localAffiliateID, resource.VersionUndefined))
+		affiliate, err := safe.ReaderGetByID[*cluster.Affiliate](ctx, r, ctrl.localAffiliateID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting local affiliate: %w", err)
@@ -212,9 +212,9 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			continue
 		}
 
-		affiliateSpec := affiliate.(*cluster.Affiliate).TypedSpec()
+		affiliateSpec := affiliate.TypedSpec()
 
-		otherEndpointsList, err := r.List(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.EndpointType, "", resource.VersionUndefined))
+		otherEndpointsList, err := safe.ReaderListAll[*kubespan.Endpoint](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing endpoints: %w", err)
 		}
@@ -225,20 +225,20 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 		}
 
 		if client == nil {
-			var cipher cipher.Block
+			var cipherBlock cipher.Block
 
-			cipher, err = aes.NewCipher(discoveryConfig.(*cluster.Config).TypedSpec().ServiceEncryptionKey)
+			cipherBlock, err = aes.NewCipher(discoveryConfig.TypedSpec().ServiceEncryptionKey)
 			if err != nil {
 				return fmt.Errorf("error initializing AES cipher: %w", err)
 			}
 
 			client, err = discoveryclient.NewClient(discoveryclient.Options{
-				Cipher:        cipher,
-				Endpoint:      discoveryConfig.(*cluster.Config).TypedSpec().ServiceEndpoint,
-				ClusterID:     discoveryConfig.(*cluster.Config).TypedSpec().ServiceClusterID,
+				Cipher:        cipherBlock,
+				Endpoint:      discoveryConfig.TypedSpec().ServiceEndpoint,
+				ClusterID:     discoveryConfig.TypedSpec().ServiceClusterID,
 				AffiliateID:   localAffiliateID,
 				TTL:           defaultDiscoveryTTL,
-				Insecure:      discoveryConfig.(*cluster.Config).TypedSpec().ServiceEndpointInsecure,
+				Insecure:      discoveryConfig.TypedSpec().ServiceEndpointInsecure,
 				ClientVersion: version.Tag,
 			})
 			if err != nil {
@@ -306,8 +306,8 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 			discoveredAffiliate := discoveredAffiliate
 
-			if err = r.Modify(ctx, cluster.NewAffiliate(cluster.RawNamespaceName, id), func(res resource.Resource) error {
-				*res.(*cluster.Affiliate).TypedSpec() = specAffiliate(discoveredAffiliate.Affiliate, discoveredAffiliate.Endpoints)
+			if err = safe.WriterModify(ctx, r, cluster.NewAffiliate(cluster.RawNamespaceName, id), func(res *cluster.Affiliate) error {
+				*res.TypedSpec() = specAffiliate(discoveredAffiliate.Affiliate, discoveredAffiliate.Endpoints)
 
 				return nil
 			}); err != nil {
@@ -327,9 +327,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
 	addresses := slices.Map(affiliate.Addresses, func(address netip.Addr) []byte {
-		result, _ := address.MarshalBinary() //nolint:errcheck // doesn't fail
-
-		return result
+		return takeResult(address.MarshalBinary())
 	})
 
 	var kubeSpan *pb.KubeSpan
@@ -337,21 +335,14 @@ func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
 	if affiliate.KubeSpan.PublicKey != "" {
 		kubeSpan = &pb.KubeSpan{
 			PublicKey: affiliate.KubeSpan.PublicKey,
+			Address:   takeResult(affiliate.KubeSpan.Address.MarshalBinary()),
+			AdditionalAddresses: slices.Map(affiliate.KubeSpan.AdditionalAddresses, func(address netip.Prefix) *pb.IPPrefix {
+				return &pb.IPPrefix{
+					Bits: uint32(address.Bits()),
+					Ip:   takeResult(address.Addr().MarshalBinary()),
+				}
+			}),
 		}
-
-		kubeSpan.Address, _ = affiliate.KubeSpan.Address.MarshalBinary() //nolint:errcheck // doesn't fail
-
-		additionalAddresses := make([]*pb.IPPrefix, len(affiliate.KubeSpan.AdditionalAddresses))
-
-		for i := range additionalAddresses {
-			additionalAddresses[i] = &pb.IPPrefix{
-				Bits: uint32(affiliate.KubeSpan.AdditionalAddresses[i].Bits()),
-			}
-
-			additionalAddresses[i].Ip, _ = affiliate.KubeSpan.AdditionalAddresses[i].Addr().MarshalBinary() //nolint:errcheck // doesn't fail
-		}
-
-		kubeSpan.AdditionalAddresses = additionalAddresses
 	}
 
 	return &pb.Affiliate{
@@ -362,7 +353,16 @@ func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
 		MachineType:     affiliate.MachineType.String(),
 		OperatingSystem: affiliate.OperatingSystem,
 		Kubespan:        kubeSpan,
+		ControlPlane:    toPlane(affiliate.ControlPlane),
 	}
+}
+
+func toPlane(data *cluster.ControlPlane) *pb.ControlPlane {
+	if data == nil {
+		return nil
+	}
+
+	return &pb.ControlPlane{ApiServerPort: uint32(data.APIServerPort)}
 }
 
 func pbEndpoints(affiliate *cluster.AffiliateSpec) []*pb.Endpoint {
@@ -370,39 +370,31 @@ func pbEndpoints(affiliate *cluster.AffiliateSpec) []*pb.Endpoint {
 		return nil
 	}
 
-	result := make([]*pb.Endpoint, len(affiliate.KubeSpan.Endpoints))
-
-	for i := range result {
-		result[i] = &pb.Endpoint{
-			Port: uint32(affiliate.KubeSpan.Endpoints[i].Port()),
+	return slices.Map(affiliate.KubeSpan.Endpoints, func(endpoint netip.AddrPort) *pb.Endpoint {
+		return &pb.Endpoint{
+			Port: uint32(endpoint.Port()),
+			Ip:   takeResult(endpoint.Addr().MarshalBinary()),
 		}
-
-		result[i].Ip, _ = affiliate.KubeSpan.Endpoints[i].Addr().MarshalBinary() //nolint:errcheck // doesn't fail
-	}
-
-	return result
+	})
 }
 
-func pbOtherEndpoints(otherEndpointsList resource.List) []discoveryclient.Endpoint {
-	if len(otherEndpointsList.Items) == 0 {
+func pbOtherEndpoints(otherEndpointsList safe.List[*kubespan.Endpoint]) []discoveryclient.Endpoint {
+	if otherEndpointsList.Len() == 0 {
 		return nil
 	}
 
-	result := make([]discoveryclient.Endpoint, 0, len(otherEndpointsList.Items))
+	result := make([]discoveryclient.Endpoint, 0, otherEndpointsList.Len())
 
-	for _, res := range otherEndpointsList.Items {
-		endpoint := res.(*kubespan.Endpoint).TypedSpec()
-
-		encodedEndpoint := &pb.Endpoint{
-			Port: uint32(endpoint.Endpoint.Port()),
-		}
-
-		encodedEndpoint.Ip, _ = endpoint.Endpoint.Addr().MarshalBinary() //nolint:errcheck // doesn't fail
+	for it := safe.IteratorFromList(otherEndpointsList); it.Next(); {
+		endpoint := it.Value().TypedSpec()
 
 		result = append(result, discoveryclient.Endpoint{
 			AffiliateID: endpoint.AffiliateID,
 			Endpoints: []*pb.Endpoint{
-				encodedEndpoint,
+				{
+					Port: uint32(endpoint.Endpoint.Port()),
+					Ip:   takeResult(endpoint.Endpoint.Addr().MarshalBinary()),
+				},
 			},
 		})
 	}
@@ -456,9 +448,9 @@ func specAffiliate(affiliate *pb.Affiliate, endpoints []*pb.Endpoint) cluster.Af
 		Hostname:        affiliate.Hostname,
 		Nodename:        affiliate.Nodename,
 		OperatingSystem: affiliate.OperatingSystem,
+		MachineType:     takeResult(machine.ParseType(affiliate.MachineType)), // ignore parse error (machine.TypeUnknown)
+		ControlPlane:    fromControlPlane(affiliate.ControlPlane),
 	}
-
-	result.MachineType, _ = machine.ParseType(affiliate.MachineType) //nolint:errcheck // ignore parse error (machine.TypeUnknown)
 
 	result.Addresses = make([]netip.Addr, 0, len(affiliate.Addresses))
 
@@ -496,4 +488,16 @@ func specAffiliate(affiliate *pb.Affiliate, endpoints []*pb.Endpoint) cluster.Af
 	}
 
 	return result
+}
+
+func fromControlPlane(plane *pb.ControlPlane) *cluster.ControlPlane {
+	if plane == nil {
+		return nil
+	}
+
+	return &cluster.ControlPlane{APIServerPort: int(plane.ApiServerPort)}
+}
+
+func takeResult[T any](arg1 T, _ error) T {
+	return arg1
 }

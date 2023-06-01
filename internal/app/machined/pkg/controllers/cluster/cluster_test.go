@@ -71,21 +71,6 @@ func (suite *ClusterSuite) assertResource(md resource.Metadata, check func(res r
 	}
 }
 
-func (suite *ClusterSuite) assertNoResource(md resource.Metadata) func() error {
-	return func() error {
-		_, err := suite.state.Get(suite.ctx, md)
-		if err == nil {
-			return retry.ExpectedErrorf("resource %s still exists", md)
-		}
-
-		if state.IsNotFoundError(err) {
-			return nil
-		}
-
-		return err
-	}
-}
-
 func (suite *ClusterSuite) TearDownTest() {
 	suite.T().Log("tear down")
 

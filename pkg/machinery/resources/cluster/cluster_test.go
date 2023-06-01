@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 func TestRegisterResource(t *testing.T) {
@@ -27,6 +28,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []resource.Resource{
 		&cluster.Affiliate{},
 		&cluster.Config{},
+		&k8s.APIServerEndpoints{},
 		&cluster.Identity{},
 		&cluster.Member{},
 	} {

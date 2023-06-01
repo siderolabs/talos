@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -93,7 +94,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 		case <-notifyCh:
 		}
 
-		discoveryConfig, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, cluster.ConfigType, cluster.ConfigID, resource.VersionUndefined))
+		discoveryConfig, err := safe.ReaderGetByID[*cluster.Config](ctx, r, cluster.ConfigID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting discovery config: %w", err)
@@ -102,7 +103,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			continue
 		}
 
-		if !discoveryConfig.(*cluster.Config).TypedSpec().RegistryKubernetesEnabled {
+		if !discoveryConfig.TypedSpec().RegistryKubernetesEnabled {
 			// if discovery is disabled cleanup existing resources
 			if err = cleanupAffiliates(ctx, ctrl, r, nil); err != nil {
 				return err
@@ -115,7 +116,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			return err
 		}
 
-		nodename, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+		nodename, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting nodename: %w", err)
@@ -145,7 +146,7 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
-		affiliateSpecs, err := kubernetesRegistry.List(nodename.(*k8s.Nodename).TypedSpec().Nodename)
+		affiliateSpecs, err := kubernetesRegistry.List(nodename.TypedSpec().Nodename)
 		if err != nil {
 			return fmt.Errorf("error listing affiliates: %w", err)
 		}
@@ -157,8 +158,8 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 
 			affilateSpec := affilateSpec
 
-			if err = r.Modify(ctx, cluster.NewAffiliate(cluster.RawNamespaceName, id), func(res resource.Resource) error {
-				*res.(*cluster.Affiliate).TypedSpec() = *affilateSpec
+			if err = safe.WriterModify(ctx, r, cluster.NewAffiliate(cluster.RawNamespaceName, id), func(res *cluster.Affiliate) error {
+				*res.TypedSpec() = *affilateSpec
 
 				return nil
 			}); err != nil {

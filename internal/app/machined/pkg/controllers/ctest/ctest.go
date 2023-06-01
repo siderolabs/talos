@@ -14,11 +14,13 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -108,6 +110,11 @@ func (suite *DefaultSuite) TearDownTest() {
 	}
 }
 
+// Create creates a new resource in the state of the suite.
+func (suite *DefaultSuite) Create(res resource.Resource, opts ...state.CreateOption) {
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), res, opts...))
+}
+
 // Suite is a type which describes the suite type.
 type Suite interface {
 	T() *testing.T
@@ -133,4 +140,52 @@ func GetUsingResource[T resource.Resource](suite Suite, res T, options ...state.
 // Get is a type safe wrapper around state.Get which uses the provided suite.
 func Get[T resource.Resource](suite Suite, ptr resource.Pointer, options ...state.GetOption) (T, error) { //nolint:ireturn
 	return safe.StateGet[T](suite.Ctx(), suite.State(), ptr, options...)
+}
+
+// Suiter is like Suite but do not require Require() method.
+type Suiter interface {
+	T() *testing.T
+	State() state.State
+	Ctx() context.Context
+}
+
+// AssertResources asserts on a resource list.
+func AssertResources[R rtestutils.ResourceWithRD](
+	suiter Suiter,
+	requiredIDs []resource.ID,
+	check func(R, *assert.Assertions),
+	opts ...rtestutils.Option,
+) {
+	ctx, cancel := context.WithTimeout(suiter.Ctx(), 10*time.Second)
+	defer cancel()
+
+	rtestutils.AssertResources(ctx, suiter.T(), suiter.State(), requiredIDs, check, opts...)
+}
+
+// AssertResource asserts on a single resource.
+func AssertResource[R rtestutils.ResourceWithRD](
+	suiter Suiter,
+	requiredIDs resource.ID,
+	check func(R, *assert.Assertions),
+	opts ...rtestutils.Option,
+) {
+	AssertResources(suiter, []resource.ID{requiredIDs}, check, opts...)
+}
+
+// AssertNoResource asserts that a resource no longer exists.
+func AssertNoResource[R rtestutils.ResourceWithRD](
+	suiter Suiter,
+	id string,
+	opts ...rtestutils.Option,
+) {
+	ctx, cancel := context.WithTimeout(suiter.Ctx(), 10*time.Second)
+	defer cancel()
+
+	rtestutils.AssertNoResource[R](
+		ctx,
+		suiter.T(),
+		suiter.State(),
+		id,
+		opts...,
+	)
 }

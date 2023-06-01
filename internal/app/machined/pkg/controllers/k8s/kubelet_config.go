@@ -78,7 +78,7 @@ func (ctrl *KubeletConfigController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error accessing static pod server status resource: %w", err)
 		}
 
-		cfg, err := safe.ReaderGet[*config.MachineConfig](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue

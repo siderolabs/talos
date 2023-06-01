@@ -16,6 +16,7 @@ message AffiliateSpec {
   string operating_system = 5;
   talos.resource.definitions.enums.MachineType machine_type = 6;
   KubeSpanAffiliateSpec kube_span = 7;
+  ControlPlane control_plane = 8;
 }
 
 // ConfigSpec describes KubeSpan configuration.
@@ -27,6 +28,11 @@ message ConfigSpec {
   bool service_endpoint_insecure = 5;
   bytes service_encryption_key = 6;
   string service_cluster_id = 7;
+}
+
+// ControlPlane describes ControlPlane data if any.
+message ControlPlane {
+  int64 api_server_port = 1;
 }
 
 // IdentitySpec describes status of rendered secrets.
@@ -58,5 +64,6 @@ message MemberSpec {
   string hostname = 3;
   talos.resource.definitions.enums.MachineType machine_type = 4;
   string operating_system = 5;
+  ControlPlane control_plane = 6;
 }
 

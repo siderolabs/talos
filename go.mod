@@ -37,7 +37,7 @@ require (
 	github.com/containernetworking/plugins v1.3.0
 	github.com/coreos/go-iptables v0.6.0
 	github.com/coreos/go-semver v0.3.1
-	github.com/cosi-project/runtime v0.3.1-alpha.3
+	github.com/cosi-project/runtime v0.3.1-alpha.4
 	github.com/docker/distribution v2.8.2+incompatible
 	github.com/docker/docker v24.0.2+incompatible
 	github.com/docker/go-connections v0.4.0
@@ -87,8 +87,8 @@ require (
 	github.com/safchain/ethtool v0.3.0
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.17
 	github.com/siderolabs/crypto v0.4.0
-	github.com/siderolabs/discovery-api v0.1.2
-	github.com/siderolabs/discovery-client v0.1.4
+	github.com/siderolabs/discovery-api v0.1.3
+	github.com/siderolabs/discovery-client v0.1.5
 	github.com/siderolabs/gen v0.4.5
 	github.com/siderolabs/go-blockdevice v0.4.5
 	github.com/siderolabs/go-circular v0.1.0
@@ -110,7 +110,7 @@ require (
 	github.com/siderolabs/talos/pkg/machinery v1.5.0-alpha.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	github.com/u-root/u-root v0.11.0
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vishvananda/netlink v1.2.1-beta.2

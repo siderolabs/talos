@@ -82,6 +82,14 @@ type AffiliateSpec struct {
 	OperatingSystem string                `yaml:"operatingSystem" protobuf:"5"`
 	MachineType     machine.Type          `yaml:"machineType" protobuf:"6"`
 	KubeSpan        KubeSpanAffiliateSpec `yaml:"kubespan,omitempty" protobuf:"7"`
+	ControlPlane    *ControlPlane         `yaml:"controlPlane,omitempty" protobuf:"8"`
+}
+
+// ControlPlane describes ControlPlane data if any.
+//
+//gotagsrewrite:gen
+type ControlPlane struct {
+	APIServerPort int `yaml:"port" protobuf:"1"`
 }
 
 // Merge two AffiliateSpecs.
@@ -102,6 +110,10 @@ func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 		if !found {
 			spec.Addresses = append(spec.Addresses, addr)
 		}
+	}
+
+	if other.ControlPlane != nil {
+		spec.ControlPlane = other.ControlPlane
 	}
 
 	if other.Hostname != "" {

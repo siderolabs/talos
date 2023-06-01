@@ -97,6 +97,7 @@ func NewState() (*State, error) {
 		&v1alpha1.Service{},
 		&cluster.Affiliate{},
 		&cluster.Config{},
+		&k8s.APIServerEndpoints{},
 		&cluster.Identity{},
 		&cluster.Info{},
 		&cluster.Member{},

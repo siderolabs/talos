@@ -10,6 +10,8 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/slices"
 	"go.uber.org/zap"
 
@@ -48,36 +50,35 @@ func (ctrl *MemberController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
+			return nil //nolint:nilerr
 		}
 
-		affiliates, err := r.List(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
+		affiliates, err := safe.ReaderListAll[*cluster.Affiliate](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing affiliates")
 		}
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		for _, affiliate := range affiliates.Items {
-			affiliateSpec := affiliate.(*cluster.Affiliate).TypedSpec()
+		for it := safe.IteratorFromList(affiliates); it.Next(); {
+			affiliateSpec := it.Value().TypedSpec()
 			if affiliateSpec.Nodename == "" {
 				// not a cluster member
 				continue
 			}
 
-			if err = r.Modify(ctx, cluster.NewMember(cluster.NamespaceName, affiliateSpec.Nodename), func(res resource.Resource) error {
-				spec := res.(*cluster.Member).TypedSpec()
+			if err = safe.WriterModify(ctx, r, cluster.NewMember(cluster.NamespaceName, affiliateSpec.Nodename), func(res *cluster.Member) error {
+				spec := res.TypedSpec()
 
 				spec.Addresses = slices.Clone(affiliateSpec.Addresses)
 				spec.Hostname = affiliateSpec.Hostname
 				spec.MachineType = affiliateSpec.MachineType
 				spec.OperatingSystem = affiliateSpec.OperatingSystem
 				spec.NodeID = affiliateSpec.NodeID
+				spec.ControlPlane = affiliateSpec.ControlPlane
 
 				return nil
 			}); err != nil {
@@ -88,12 +89,14 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, log
 		}
 
 		// list keys for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.MemberType, "", resource.VersionUndefined))
+		list, err := safe.ReaderListAll[*cluster.Member](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for _, res := range list.Items {
+		for it := safe.IteratorFromList(list); it.Next(); {
+			res := it.Value()
+
 			if res.Metadata().Owner() != ctrl.Name() {
 				continue
 			}

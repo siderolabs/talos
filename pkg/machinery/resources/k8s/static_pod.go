@@ -23,7 +23,7 @@ type StaticPod = typed.Resource[StaticPodSpec, StaticPodExtension]
 //
 //gotagsrewrite:gen
 type StaticPodSpec struct {
-	Pod map[string]interface{} `protobuf:"1"`
+	Pod map[string]any `protobuf:"1"`
 }
 
 // MarshalYAML implements yaml.Marshaler.
