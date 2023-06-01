@@ -21,6 +21,13 @@ machine:
       rotate-server-certificates: true
 ```
 
+This may require manually approving the kubelets certificate signing requests in the cluster PKI:
+
+```shell
+kubectl get csr --sort-by=.metadata.creationTimestamp
+kubectl certificate approve csr-xxxxx
+```
+
 ## Install During Bootstrap
 
 We will want to ensure that new certificates for the kubelets are approved automatically.
