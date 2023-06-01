@@ -49,7 +49,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintln(options.LogWriter, "creating network", request.Network.Name)
 
-	if err = p.CreateNetwork(ctx, state, request.Network); err != nil {
+	if err = p.CreateNetwork(ctx, state, request.Network, options); err != nil {
 		return nil, fmt.Errorf("unable to provision CNI network: %w", err)
 	}
 

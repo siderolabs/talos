@@ -7,6 +7,7 @@ package provision
 import (
 	"fmt"
 	"net/netip"
+	"time"
 
 	"github.com/siderolabs/go-procfs/procfs"
 
@@ -62,6 +63,15 @@ type NetworkRequest struct {
 
 	// Docker-specific parameters.
 	DockerDisableIPv6 bool
+
+	// Network chaos parameters.
+	NetworkChaos  bool
+	Jitter        time.Duration
+	Latency       time.Duration
+	PacketLoss    float64
+	PacketReorder float64
+	PacketCorrupt float64
+	Bandwidth     int
 }
 
 // NodeRequests is a list of NodeRequest.

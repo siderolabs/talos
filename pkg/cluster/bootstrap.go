@@ -54,8 +54,8 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 
 	fmt.Fprintln(out, "waiting for API")
 
-	err = retry.Constant(5*time.Minute, retry.WithUnits(500*time.Millisecond)).RetryWithContext(nodeCtx, func(nodeCtx context.Context) error {
-		retryCtx, cancel := context.WithTimeout(nodeCtx, 500*time.Millisecond)
+	err = retry.Constant(10*time.Minute, retry.WithUnits(500*time.Millisecond)).RetryWithContext(nodeCtx, func(nodeCtx context.Context) error {
+		retryCtx, cancel := context.WithTimeout(nodeCtx, 2*time.Second)
 		defer cancel()
 
 		if _, err = cli.Version(retryCtx); err != nil {
@@ -72,7 +72,7 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	fmt.Fprintln(out, "bootstrapping cluster")
 
 	return retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(100*time.Millisecond)).RetryWithContext(nodeCtx, func(nodeCtx context.Context) error {
-		retryCtx, cancel := context.WithTimeout(nodeCtx, 500*time.Millisecond)
+		retryCtx, cancel := context.WithTimeout(nodeCtx, 2*time.Second)
 		defer cancel()
 
 		if err = cli.Bootstrap(retryCtx, &machineapi.BootstrapRequest{}); err != nil {

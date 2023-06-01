@@ -156,6 +156,13 @@ talosctl cluster create [flags]
       --with-debug                               enable debug in Talos config to send service logs to the console
       --with-init-node                           create the cluster with an init node
       --with-kubespan                            enable KubeSpan system
+      --with-network-bandwidth int               specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster
+      --with-network-chaos                       enable to use network chaos parameters when creating a qemu cluster
+      --with-network-jitter duration             specify jitter on the bridge interface when creating a qemu cluster
+      --with-network-latency duration            specify latency on the bridge interface when creating a qemu cluster
+      --with-network-packet-corrupt float        specify percent of corrupt packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)
+      --with-network-packet-loss float           specify percent of packet loss on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)
+      --with-network-packet-reorder float        specify percent of reordered packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)
       --with-secureboot                          enforce secure boot
       --with-tpm2                                enable TPM2 emulation support using swtpm
       --with-uefi                                enable UEFI on x86_64 architecture (default true)

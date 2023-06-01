@@ -154,6 +154,13 @@ var (
 	controlPlanePort           int
 	dhcpSkipHostname           bool
 	skipBootPhaseFinishedCheck bool
+	networkChaos               bool
+	jitter                     time.Duration
+	latency                    time.Duration
+	packetLoss                 float64
+	packetReorder              float64
+	packetCorrupt              float64
+	bandwidth                  int
 )
 
 // createCmd represents the cluster up command.
@@ -269,6 +276,13 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		}
 	}
 
+	// Validate network chaos flags
+	if !networkChaos {
+		if jitter != 0 || latency != 0 || packetLoss != 0 || packetReorder != 0 || packetCorrupt != 0 || bandwidth != 0 {
+			return fmt.Errorf("network chaos flags can only be used with --with-network-chaos")
+		}
+	}
+
 	provisioner, err := providers.Factory(ctx, provisionerName)
 	if err != nil {
 		return err
@@ -296,6 +310,13 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 			},
 			DHCPSkipHostname:  dhcpSkipHostname,
 			DockerDisableIPv6: dockerDisableIPv6,
+			NetworkChaos:      networkChaos,
+			Jitter:            jitter,
+			Latency:           latency,
+			PacketLoss:        packetLoss,
+			PacketReorder:     packetReorder,
+			PacketCorrupt:     packetCorrupt,
+			Bandwidth:         bandwidth,
 		},
 
 		Image:         nodeImage,
@@ -945,6 +966,15 @@ func init() {
 	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
 	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
 	createCmd.Flags().BoolVar(&skipBootPhaseFinishedCheck, "skip-boot-phase-finished-check", false, "skip waiting for node to finish boot phase")
+	createCmd.Flags().BoolVar(&networkChaos, "with-network-chaos", false, "enable to use network chaos parameters when creating a qemu cluster")
+	createCmd.Flags().DurationVar(&jitter, "with-network-jitter", 0, "specify jitter on the bridge interface when creating a qemu cluster")
+	createCmd.Flags().DurationVar(&latency, "with-network-latency", 0, "specify latency on the bridge interface when creating a qemu cluster")
+	createCmd.Flags().Float64Var(&packetLoss, "with-network-packet-loss", 0.0, "specify percent of packet loss on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)")
+	createCmd.Flags().Float64Var(&packetReorder, "with-network-packet-reorder", 0.0,
+		"specify percent of reordered packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)")
+	createCmd.Flags().Float64Var(&packetCorrupt, "with-network-packet-corrupt", 0.0,
+		"specify percent of corrupt packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)")
+	createCmd.Flags().IntVar(&bandwidth, "with-network-bandwidth", 0, "specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster")
 
 	Cmd.AddCommand(createCmd)
 }

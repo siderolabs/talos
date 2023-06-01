@@ -80,6 +80,14 @@ case "${DISABLE_DHCP_HOSTNAME:-false}" in
     ;;
 esac
 
+case "${WITH_NETWORK_CHAOS:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS="${QEMU_FLAGS} --with-network-chaos --with-network-packet-loss=0.01 --with-network-latency=15ms --with-network-jitter=5ms"
+    ;;
+esac
+
 case "${USE_DISK_IMAGE:-false}" in
   false)
     DISK_IMAGE_FLAG=

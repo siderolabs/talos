@@ -22,6 +22,7 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/siderolabs/gen/slices"
 	sideronet "github.com/siderolabs/net"
+	"github.com/vishvananda/netlink"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -30,8 +31,8 @@ import (
 // so that interface name is defined by network name, and different networks have
 // different bridge interfaces.
 //
-//nolint:gocyclo
-func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network provision.NetworkRequest) error {
+//nolint:gocyclo,cyclop
+func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network provision.NetworkRequest, options provision.Options) error {
 	networkNameHash := sha256.Sum256([]byte(network.Name))
 	state.BridgeName = fmt.Sprintf("%s%s", "talos", hex.EncodeToString(networkNameHash[:])[:8])
 
@@ -127,6 +128,82 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 
 	if state.VMCNIConfig, err = libcni.ConfListFromBytes(buf.Bytes()); err != nil {
 		return fmt.Errorf("error parsing VM CNI config: %w", err)
+	}
+
+	// configure bridge interface with network chaos if flag is set
+	if network.NetworkChaos {
+		if err = p.configureNetworkChaos(network, state, options); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+//nolint:gocyclo
+func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, state *State, options provision.Options) error {
+	if (network.Bandwidth != 0) && (network.Latency != 0 || network.Jitter != 0 || network.PacketLoss != 0 || network.PacketReorder != 0 || network.PacketCorrupt != 0) {
+		return fmt.Errorf("bandwidth and other chaos options cannot be used together")
+	}
+
+	link, err := netlink.LinkByName(state.BridgeName)
+	if err != nil {
+		return fmt.Errorf("could not get link: %v", err)
+	}
+
+	fmt.Fprintln(options.LogWriter, "network chaos enabled on interface:", state.BridgeName)
+
+	if network.Bandwidth != 0 {
+		fmt.Fprintf(options.LogWriter, "  bandwidth: %4d kbps\n", network.Bandwidth)
+
+		rate := network.Bandwidth * 1000 / 8
+
+		buffer := rate / 10
+
+		limit := buffer * 5
+
+		qdisc := &netlink.Tbf{
+			QdiscAttrs: netlink.QdiscAttrs{
+				LinkIndex: link.Attrs().Index,
+				Handle:    netlink.MakeHandle(1, 0),
+				Parent:    netlink.HANDLE_ROOT,
+			},
+			Rate:   uint64(rate),
+			Buffer: uint32(buffer),
+			Limit:  uint32(limit),
+		}
+
+		if err := netlink.QdiscAdd(qdisc); err != nil {
+			return fmt.Errorf("could not add netem qdisc: %v", err)
+		}
+	} else {
+		packetLoss := network.PacketLoss * 100
+		packetReorder := network.PacketReorder * 100
+		packetCorrupt := network.PacketCorrupt * 100
+
+		fmt.Fprintf(options.LogWriter, "  jitter:            %4dms\n", network.Jitter.Milliseconds())
+		fmt.Fprintf(options.LogWriter, "  latency:           %4dms\n", network.Latency.Milliseconds())
+		fmt.Fprintf(options.LogWriter, "  packet loss:       %4v%%\n", packetLoss)
+		fmt.Fprintf(options.LogWriter, "  packet reordering: %4v%%\n", packetReorder)
+		fmt.Fprintf(options.LogWriter, "  packet corruption: %4v%%\n", packetCorrupt)
+
+		qdisc := netlink.NewNetem(
+			netlink.QdiscAttrs{
+				LinkIndex: link.Attrs().Index,
+				Handle:    netlink.MakeHandle(1, 0),
+				Parent:    netlink.HANDLE_ROOT,
+			},
+			netlink.NetemQdiscAttrs{
+				Jitter:      uint32(network.Jitter / 1000),
+				Latency:     uint32(network.Latency / 1000),
+				Loss:        float32(packetLoss),
+				ReorderProb: float32(packetReorder),
+				CorruptProb: float32(packetCorrupt),
+			},
+		)
+		if err := netlink.QdiscAdd(qdisc); err != nil {
+			return fmt.Errorf("could not add netem qdisc: %v", err)
+		}
 	}
 
 	return nil

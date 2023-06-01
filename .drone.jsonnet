@@ -450,7 +450,13 @@ local integration_cilium_strict = Step('e2e-cilium-strict', target='e2e-qemu', p
   WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]',
   IMAGE_REGISTRY: local_registry,
 });
-local integration_canal_reset = Step('e2e-canal-reset', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
+
+local integration_network_chaos = Step('e2e-network-chaos', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
+  SHORT_INTEGRATION_TEST: 'yes',
+  WITH_NETWORK_CHAOS: 'true',
+  REGISTRY: local_registry,
+});
+local integration_canal_reset = Step('e2e-canal-reset', target='e2e-qemu', privileged=true, depends_on=[integration_network_chaos], environment={
   INTEGRATION_TEST_RUN: 'TestIntegration/api.ResetSuite/TestResetWithSpec',
   CUSTOM_CNI_URL: 'https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml',
   REGISTRY: local_registry,
@@ -548,6 +554,7 @@ local integration_pipelines = [
   Pipeline('integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + integration_trigger(['integration-provision', 'integration-provision-1']),
   Pipeline('integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2]) + integration_trigger(['integration-provision', 'integration-provision-2']),
   Pipeline('integration-misc', default_pipeline_steps + [
+    integration_network_chaos,
     integration_canal_reset,
     integration_bios_cgroupsv1,
     integration_disk_image,
