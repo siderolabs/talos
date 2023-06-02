@@ -40,6 +40,16 @@ func (c *Config) Clone() config.Document {
 	return c.DeepCopy()
 }
 
+// Kind returns the kind of the document.
+func (c *Config) Kind() string {
+	return Version // legacy document
+}
+
+// APIVersion returns the API version of the document.
+func (c *Config) APIVersion() string {
+	return "" // legacy document
+}
+
 // Debug implements the config.Provider interface.
 func (c *Config) Debug() bool {
 	return pointer.SafeDeref(c.ConfigDebug)

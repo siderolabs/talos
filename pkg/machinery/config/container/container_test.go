@@ -57,6 +57,20 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "https://siderolink.api/join?jointoken=REDACTED&user=alice", cfgRedacted.SideroLink().APIUrl().String())
 }
 
+func TestNewDuplicate(t *testing.T) {
+	v1alpha1Cfg1 := &v1alpha1.Config{}
+	v1alpha1Cfg2 := &v1alpha1.Config{}
+
+	siderolink1 := siderolink.NewConfigV1Alpha1()
+	siderolink2 := siderolink.NewConfigV1Alpha1()
+
+	_, err := container.New(v1alpha1Cfg1, siderolink1, v1alpha1Cfg2)
+	assert.EqualError(t, err, "duplicate v1alpha1.Config")
+
+	_, err = container.New(siderolink1, siderolink2)
+	assert.EqualError(t, err, "duplicate document: SideroLinkConfig/")
+}
+
 func must[T any](t T, err error) T {
 	if err != nil {
 		panic(err)

@@ -16,6 +16,9 @@ Talos supports two configuration patch formats:
 
 Strategic merge patches are the easiest to use, but JSON patches allow more precise configuration adjustments.
 
+> Note: Talos 1.5 introduces experimental support for multi-document machine configuration.
+> JSON patches don't support multi-document machine configuration, while strategic merge patches do.
+
 ### Strategic Merge patches
 
 Strategic merge patches look like incomplete machine configuration files:
@@ -46,6 +49,11 @@ There are some special rules:
   - values of the fields `cluster.network.podSubnets` and `cluster.network.serviceSubnets` are overwritten on merge
   - `network.interfaces` section is merged with the value in the machine config if there is a match on `interface:` or `deviceSelector:` keys
   - `network.interfaces.vlans` section is merged with the value in the machine config if there is a match on the `vlanId:` key
+
+When patching a multi-document machine configuration, following rules apply:
+
+- for each document in the patch, the document is merged with the respective document in the machine configuration (matching by `kind`, `apiVersion` and `name` for named documentes)
+- if the patch document doesn't exist in the machine configuration, it is appended to the machine configuration
 
 ### RFC6902 (JSON Patches)
 

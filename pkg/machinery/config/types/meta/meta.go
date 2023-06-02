@@ -7,6 +7,16 @@ package meta
 
 // Meta is a shared meta information for config documents.
 type Meta struct {
-	Kind    string `yaml:"kind"`
-	Version string `yaml:"version,omitempty"`
+	MetaAPIVersion string `yaml:"apiVersion,omitempty"`
+	MetaKind       string `yaml:"kind"`
+}
+
+// Kind implements config.Document interface.
+func (m Meta) Kind() string {
+	return m.MetaKind
+}
+
+// APIVersion implements config.Document interface.
+func (m Meta) APIVersion() string {
+	return m.MetaAPIVersion
 }

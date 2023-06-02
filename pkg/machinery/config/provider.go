@@ -27,6 +27,11 @@ type Container interface {
 
 	// RawV1Alpha1 returns internal config representation.
 	RawV1Alpha1() *v1alpha1.Config
+
+	// Documents returns a list of config documents.
+	//
+	// Documents should be not be modified.
+	Documents() []config.Document
 }
 
 // Provider defines the configuration consumption interface combining access and encoding/decoding.

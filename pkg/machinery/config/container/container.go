@@ -35,6 +35,8 @@ func New(documents ...config.Document) (*Container, error) {
 		documents: make([]config.Document, 0, len(documents)),
 	}
 
+	seenDocuments := make(map[string]struct{})
+
 	for _, doc := range documents {
 		switch d := doc.(type) {
 		case *v1alpha1.Config:
@@ -44,7 +46,18 @@ func New(documents ...config.Document) (*Container, error) {
 
 			container.v1alpha1Config = d
 		default:
-			// TODO: we should check for some uniqueness of multi-docs (?)
+			documentID := d.Kind() + "/"
+
+			if named, ok := d.(config.NamedDocument); ok {
+				documentID += named.Name()
+			}
+
+			if _, alreadySeen := seenDocuments[documentID]; alreadySeen {
+				return nil, fmt.Errorf("duplicate document: %s", documentID)
+			}
+
+			seenDocuments[documentID] = struct{}{}
+
 			container.documents = append(container.documents, d)
 		}
 	}
@@ -226,11 +239,24 @@ func (container *Container) RedactSecrets(replacement string) coreconfig.Provide
 	return clone
 }
 
-// RawV1Alpha1 returns internal config representation.
+// RawV1Alpha1 returns internal config representation for v1alpha1.Config.
 func (container *Container) RawV1Alpha1() *v1alpha1.Config {
 	if container.readonly {
 		return container.v1alpha1Config.DeepCopy()
 	}
 
 	return container.v1alpha1Config
+}
+
+// Documents returns all documents in the container.
+//
+// Documents should not be modified.
+func (container *Container) Documents() []config.Document {
+	docs := slices.Clone(container.documents)
+
+	if container.v1alpha1Config != nil {
+		docs = append([]config.Document{container.v1alpha1Config}, docs...)
+	}
+
+	return docs
 }

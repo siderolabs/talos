@@ -20,8 +20,16 @@ import (
 )
 
 type Meta struct {
-	Kind    string `yaml:"kind"`
-	Version string `yaml:"version,omitempty"`
+	MetaKind       string `yaml:"kind"`
+	MetaAPIVersion string `yaml:"apiVersion,omitempty"`
+}
+
+func (m Meta) Kind() string {
+	return m.MetaKind
+}
+
+func (m Meta) APIVersion() string {
+	return m.MetaAPIVersion
 }
 
 type Mock struct {
@@ -104,7 +112,7 @@ func TestDecoder(t *testing.T) {
 			name: "valid",
 			source: []byte(`---
 kind: mock
-version: v1alpha1
+apiVersion: v1alpha1
 test: true
 `),
 			expected: []config.Document{
@@ -117,7 +125,7 @@ test: true
 		{
 			name: "missing kind",
 			source: []byte(`---
-version: v1alpha2
+apiVersion: v1alpha2
 test: true
 `),
 			expected:    nil,
@@ -127,7 +135,7 @@ test: true
 			name: "empty kind",
 			source: []byte(`---
 kind:
-version: v1alpha2
+apiVersion: v1alpha2
 test: true
 `),
 			expected:    nil,
@@ -137,7 +145,7 @@ test: true
 			name: "tab instead of spaces",
 			source: []byte(`---
 kind: mock
-version: v1alpha1
+apiVersion: v1alpha1
 spec:
 	test: true
 `),
@@ -148,7 +156,7 @@ spec:
 			name: "extra field",
 			source: []byte(`---
 kind: mock
-version: v1alpha1
+apiVersion: v1alpha1
 test: true
 extra: fail
 `),
@@ -159,7 +167,7 @@ extra: fail
 			name: "extra fields in map",
 			source: []byte(`---
 kind: mock
-version: v1alpha2
+apiVersion: v1alpha2
 map:
   first:
     test: true
@@ -172,7 +180,7 @@ map:
 			name: "extra fields in slice",
 			source: []byte(`---
 kind: mock
-version: v1alpha2
+apiVersion: v1alpha2
 slice:
   - test: true
     not: working
@@ -186,7 +194,7 @@ slice:
 			name: "extra zero fields in map",
 			source: []byte(`---
 kind: mock
-version: v1alpha2
+apiVersion: v1alpha2
 map:
   second:
     a:
@@ -199,7 +207,7 @@ map:
 			name: "valid nested",
 			source: []byte(`---
 kind: mock
-version: v1alpha2
+apiVersion: v1alpha2
 slice:
   - test: true
 map:
@@ -229,7 +237,7 @@ map:
 			name: "kubelet config",
 			source: []byte(`---
 kind: kubelet
-version: v1alpha1
+apiVersion: v1alpha1
 extraMounts:
  - destination: /var/local
    options:
@@ -245,7 +253,7 @@ extraMounts:
 			name: "omit empty test",
 			source: []byte(`---
 kind: mock
-version: v1alpha3
+apiVersion: v1alpha3
 omit: false
 `),
 			expected:    nil,
@@ -261,7 +269,7 @@ omit: false
 			name: "unstructured config",
 			source: []byte(`---
 kind: unstructured
-version: v1alpha1
+apiVersion: v1alpha1
 pods:
  - destination: /var/local
    options:
@@ -277,7 +285,7 @@ pods:
 			name: "omit empty test",
 			source: []byte(`---
 kind: mock
-version: v1alpha3
+apiVersion: v1alpha3
 omit: false
 `),
 		},

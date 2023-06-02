@@ -20,8 +20,8 @@ import (
 var ErrMissingKind = errors.New("missing kind")
 
 const (
-	// ManifestVersionKey is the string indicating a manifest's version.
-	ManifestVersionKey = "version"
+	// ManifestAPIVersionKey is the string indicating a manifest's version.
+	ManifestAPIVersionKey = "apiVersion"
 	// ManifestKindKey is the string indicating a manifest's kind.
 	ManifestKindKey = "kind"
 	// ManifestDeprecatedKeyMachine represents the deprecated v1alpha1 manifest.
@@ -106,7 +106,7 @@ func decode(manifest *yaml.Node) (target config.Document, err error) {
 			if err = manifest.Content[i+1].Decode(&kind); err != nil {
 				return nil, fmt.Errorf("kind decode: %w", err)
 			}
-		case ManifestVersionKey:
+		case ManifestAPIVersionKey:
 			if len(manifest.Content) < i+1 {
 				return nil, fmt.Errorf("missing manifest content")
 			}

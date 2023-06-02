@@ -5,26 +5,53 @@
 package configpatcher
 
 import (
-	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/gen/slices"
+
+	coreconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
 
 // StrategicMergePatch is a strategic merge config patch.
 type StrategicMergePatch struct {
-	config.Provider
+	coreconfig.Provider
 }
 
 // StrategicMerge performs strategic merge config patching.
 //
-// TODO: this will drop any extra non-v1alpha1 documents.
-func StrategicMerge(cfg config.Provider, patch StrategicMergePatch) (config.Provider, error) {
-	left := cfg.RawV1Alpha1()
-	right := patch.RawV1Alpha1()
+// Strategic merge on two sets of documents - on the left hand side and on the right hand side.
+// Documents with matching tuples (apiVersion, kind, name) are merged together.
+// If the document on the right doesn't exist on the left, it is appended.
+func StrategicMerge(cfg coreconfig.Provider, patch StrategicMergePatch) (coreconfig.Provider, error) {
+	left := cfg.Clone().Documents()
+	right := patch.Documents()
 
-	if err := merge.Merge(left, right); err != nil {
-		return nil, err
+	documentID := func(doc config.Document) string {
+		id := doc.APIVersion() + "/" + doc.Kind()
+
+		if named, ok := doc.(config.NamedDocument); ok {
+			id += "/" + named.Name()
+		}
+
+		return id
 	}
 
-	return container.New(left)
+	leftIndex := slices.ToMap(left, func(d config.Document) (string, config.Document) {
+		return documentID(d), d
+	})
+
+	for _, rightDoc := range right {
+		id := documentID(rightDoc)
+
+		if leftDoc, ok := leftIndex[id]; ok {
+			if err := merge.Merge(leftDoc, rightDoc); err != nil {
+				return nil, err
+			}
+		} else {
+			left = append(left, rightDoc)
+		}
+	}
+
+	return container.New(left...)
 }

@@ -42,8 +42,8 @@ type ConfigV1Alpha1 struct {
 func NewConfigV1Alpha1() *ConfigV1Alpha1 {
 	return &ConfigV1Alpha1{
 		Meta: meta.Meta{
-			Kind:    Kind,
-			Version: "v1alpha1",
+			MetaKind:       Kind,
+			MetaAPIVersion: "v1alpha1",
 		},
 	}
 }

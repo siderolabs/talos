@@ -8,6 +8,16 @@ package config
 type Document interface {
 	// Clone returns a deep copy of the document.
 	Clone() Document
+	// Kind returns the kind of the document.
+	Kind() string
+	// APIVersion returns the API version of the document.
+	APIVersion() string
+}
+
+// NamedDocument is a configuration document which has a name.
+type NamedDocument interface {
+	// Name of the document.
+	Name() string
 }
 
 // SecretDocument is a configuration document that contains secrets.
