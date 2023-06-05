@@ -220,10 +220,9 @@ func (suite *manifestSuite) TestExecuteManifestClean() {
 	suite.skipUnderBuildkit()
 
 	manifest, err := install.NewManifest("A", runtime.SequenceInstall, false, &install.Options{
-		Disk:       suite.loopbackDevice.Name(),
-		Bootloader: true,
-		Force:      true,
-		Board:      constants.BoardNone,
+		Disk:  suite.loopbackDevice.Name(),
+		Force: true,
+		Board: constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -241,10 +240,9 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 	suite.skipUnderBuildkit()
 
 	manifest, err := install.NewManifest("A", runtime.SequenceInstall, false, &install.Options{
-		Disk:       suite.loopbackDevice.Name(),
-		Bootloader: true,
-		Force:      true,
-		Board:      constants.BoardNone,
+		Disk:  suite.loopbackDevice.Name(),
+		Force: true,
+		Board: constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -260,11 +258,10 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 	// reinstall
 
 	manifest, err = install.NewManifest("B", runtime.SequenceUpgrade, true, &install.Options{
-		Disk:       suite.loopbackDevice.Name(),
-		Bootloader: true,
-		Force:      true,
-		Zero:       true,
-		Board:      constants.BoardNone,
+		Disk:  suite.loopbackDevice.Name(),
+		Force: true,
+		Zero:  true,
+		Board: constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -282,10 +279,9 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 	suite.skipUnderBuildkit()
 
 	manifest, err := install.NewManifest("A", runtime.SequenceInstall, false, &install.Options{
-		Disk:       suite.loopbackDevice.Name(),
-		Bootloader: true,
-		Force:      true,
-		Board:      constants.BoardNone,
+		Disk:  suite.loopbackDevice.Name(),
+		Force: true,
+		Board: constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 
@@ -301,10 +297,9 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 	// reinstall
 
 	manifest, err = install.NewManifest("B", runtime.SequenceUpgrade, true, &install.Options{
-		Disk:       suite.loopbackDevice.Name(),
-		Bootloader: true,
-		Force:      false,
-		Board:      constants.BoardNone,
+		Disk:  suite.loopbackDevice.Name(),
+		Force: false,
+		Board: constants.BoardNone,
 	})
 	suite.Require().NoError(err)
 

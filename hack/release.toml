@@ -61,6 +61,13 @@ Talos automatically adds the `net.ifnames=0` kernel argument when upgrading from
 This change doesn't affect "cloud" platforms, like AWS, as Talos automatically adds `net.ifnames=0` to the kernel command line.
 """
 
+    [notes.machineconfig]
+        title = "Machine Config option `.machine.install.bootloader`"
+        description="""\
+The `.machine.install.bootloader` option in the machine config is deprecated and will be removed in Talos 1.6.
+This was a no-op for a long time. The bootloader is always installed.
+"""
+
 [make_deps]
 
     [make_deps.tools]

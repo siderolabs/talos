@@ -45,7 +45,6 @@ func (in *Input) worker() ([]config.Document, error) {
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:            in.Options.InstallDisk,
 			InstallImage:           in.Options.InstallImage,
-			InstallBootloader:      pointer.To(true),
 			InstallWipe:            pointer.To(false),
 			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
 		},

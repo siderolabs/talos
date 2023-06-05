@@ -33,7 +33,6 @@ type Options struct {
 	Arch              string
 	Board             string
 	ExtraKernelArgs   []string
-	Bootloader        bool
 	Upgrade           bool
 	Force             bool
 	Zero              bool
@@ -286,11 +285,6 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	}
 
 	// Install the bootloader.
-
-	if !i.options.Bootloader {
-		return nil
-	}
-
 	var conf *grub.Config
 	if i.bootloader == nil {
 		conf = grub.NewConfig(i.cmdline.String())

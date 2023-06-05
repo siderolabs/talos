@@ -31,23 +31,6 @@ func VerifyEphemeralPartition(opts *Options) (err error) {
 	return nil
 }
 
-// VerifyBootPartition verifies the supplied boot device options.
-func VerifyBootPartition(opts *Options) (err error) {
-	if opts.Bootloader {
-		return nil
-	}
-
-	if opts.Force {
-		return nil
-	}
-
-	if err = VerifyDiskAvailability(opts.Disk, constants.BootPartitionLabel); err != nil {
-		return fmt.Errorf("failed to verify disk availability: %w", err)
-	}
-
-	return nil
-}
-
 // VerifyDiskAvailability verifies that no filesystems currently exist with
 // the labels used by the OS.
 func VerifyDiskAvailability(devpath, label string) (err error) {

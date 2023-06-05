@@ -88,10 +88,6 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 		if err = VerifyEphemeralPartition(opts); err != nil {
 			return nil, fmt.Errorf("failed to prepare ephemeral partition: %w", err)
 		}
-
-		if err = VerifyBootPartition(opts); err != nil {
-			return nil, fmt.Errorf("failed to prepare boot partition: %w", err)
-		}
 	}
 
 	skipOverlayMountsCheck, err := shouldSkipOverlayMountsCheck(sequence)
@@ -118,23 +114,19 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 	efiTarget := EFITarget(opts.Disk, nil)
 	biosTarget := BIOSTarget(opts.Disk, nil)
 
-	var bootTarget *Target
-
-	if opts.Bootloader {
-		bootTarget = BootTarget(opts.Disk, &Target{
-			PreserveContents: bootPartitionFound,
-			Assets: []*Asset{
-				{
-					Source:      fmt.Sprintf(constants.KernelAssetPath, opts.Arch),
-					Destination: filepath.Join(constants.BootMountPoint, label, constants.KernelAsset),
-				},
-				{
-					Source:      fmt.Sprintf(constants.InitramfsAssetPath, opts.Arch),
-					Destination: filepath.Join(constants.BootMountPoint, label, constants.InitramfsAsset),
-				},
+	bootTarget := BootTarget(opts.Disk, &Target{
+		PreserveContents: bootPartitionFound,
+		Assets: []*Asset{
+			{
+				Source:      fmt.Sprintf(constants.KernelAssetPath, opts.Arch),
+				Destination: filepath.Join(constants.BootMountPoint, label, constants.KernelAsset),
 			},
-		})
-	}
+			{
+				Source:      fmt.Sprintf(constants.InitramfsAssetPath, opts.Arch),
+				Destination: filepath.Join(constants.BootMountPoint, label, constants.InitramfsAsset),
+			},
+		},
+	})
 
 	metaTarget := MetaTarget(opts.Disk, &Target{
 		PreserveContents: bootPartitionFound,

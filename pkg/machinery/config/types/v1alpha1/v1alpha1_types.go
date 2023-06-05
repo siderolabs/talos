@@ -186,7 +186,6 @@ var (
 		InstallDisk:            "/dev/sda",
 		InstallExtraKernelArgs: []string{"console=ttyS1", "panic=10"},
 		InstallImage:           "ghcr.io/siderolabs/installer:latest",
-		InstallBootloader:      pointer.To(true),
 		InstallWipe:            pointer.To(false),
 	}
 

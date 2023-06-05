@@ -59,7 +59,6 @@ install:
         - console=ttyS1
         - panic=10
     image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
-    bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
 
     # # Look up disk using disk attributes like model, size, serial and others.
@@ -276,7 +275,6 @@ install:
         - console=ttyS1
         - panic=10
     image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
-    bootloader: true # Indicates if a bootloader should be installed.
     wipe: false # Indicates if the installation disk should be wiped at installation time.
 
     # # Look up disk using disk attributes like model, size, serial and others.
@@ -1096,7 +1094,6 @@ extraKernelArgs:
     - console=ttyS1
     - panic=10
 image: ghcr.io/siderolabs/installer:latest # Allows for supplying the image used to perform the installation.
-bootloader: true # Indicates if a bootloader should be installed.
 wipe: false # Indicates if the installation disk should be wiped at installation time.
 
 # # Look up disk using disk attributes like model, size, serial and others.
