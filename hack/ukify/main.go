@@ -170,6 +170,9 @@ func run() error {
 		return err
 	}
 
+	defaultCmdline.Append("console", "ttyS0")
+	defaultCmdline.Append("console", "tty0")
+
 	flag.StringVar(&sdStub, "sd-stub", "_out/linuxx64.efi.stub", "path to sd-stub")
 	flag.StringVar(&sdBoot, "sd-boot", "_out/systemd-bootx64.efi", "path to sd-boot")
 	flag.StringVar(&output, "output", "_out/vmlinuz.efi", "output path")
