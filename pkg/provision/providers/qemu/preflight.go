@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -31,6 +32,8 @@ func (p *provisioner) preflightChecks(ctx context.Context, request provision.Clu
 		checkContext.checkKVM,
 		checkContext.qemuExecutable,
 		checkContext.checkFlashImages,
+		checkContext.ovmfctlExecutable,
+		checkContext.swtpmExecutable,
 		checkContext.cniDirectories,
 		checkContext.cniBundle,
 		checkContext.checkIptables,
@@ -75,7 +78,7 @@ func (check *preflightCheckContext) qemuExecutable(ctx context.Context) error {
 }
 
 func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error {
-	for _, flashImage := range check.arch.PFlash(check.options.UEFIEnabled, check.options.ExtraUEFISearchPaths) {
+	for _, flashImage := range check.arch.PFlash(check.options.UEFIEnabled, check.options.SecureBootEnabled, check.options.ExtraUEFISearchPaths) {
 		if len(flashImage.SourcePaths) == 0 {
 			continue
 		}
@@ -94,6 +97,26 @@ func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error 
 		if !found {
 			return fmt.Errorf("the required flash image was not found in any of the expected paths for (%q), "+
 				"please install it with the package manager or specify --extra-uefi-search-paths", flashImage.SourcePaths)
+		}
+	}
+
+	return nil
+}
+
+func (check *preflightCheckContext) ovmfctlExecutable(ctx context.Context) error {
+	if check.options.SecureBootEnabled {
+		if _, err := exec.LookPath("ovmfctl"); err != nil {
+			return fmt.Errorf("ovmfctl not found in PATH, please install it with pip: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (check *preflightCheckContext) swtpmExecutable(ctx context.Context) error {
+	if check.options.TPM2Enabled {
+		if _, err := exec.LookPath("swtpm"); err != nil {
+			return fmt.Errorf("swtpm not found in PATH, please install swtpm-tools with the package manager: %w", err)
 		}
 	}
 

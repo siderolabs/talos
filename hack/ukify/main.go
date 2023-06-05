@@ -30,10 +30,8 @@ import (
 	"github.com/siderolabs/talos/pkg/version"
 )
 
-var (
-	//go:embed assets/sidero.bmp
-	splashBMP []byte
-)
+//go:embed assets/sidero.bmp
+var splashBMP []byte
 
 var (
 	sdStub         string
@@ -149,7 +147,7 @@ func Measure(tempDir, kernel, signingKey string, sections []section) ([]section,
 		return nil, err
 	}
 
-	if err = os.WriteFile(pcrpsigFile, pcrSignatureData, 0644); err != nil {
+	if err = os.WriteFile(pcrpsigFile, pcrSignatureData, 0o644); err != nil {
 		return nil, err
 	}
 

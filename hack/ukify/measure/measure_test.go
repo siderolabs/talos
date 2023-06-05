@@ -28,10 +28,8 @@ const (
 	ExpectedSignatureHex = "12e432978d18c9f720b3fb922cab180ca025ecd5f918966d1f878ae93f1eedbc6b20885d5a9f1c4ffdd4bf2dc3c25dc1097b6c5109d9c9a90128eff20056ace7"
 )
 
-var (
-	//go:embed testdata/pcr-signing-key.pem
-	pcrSigningKeyPEM []byte
-)
+//go:embed testdata/pcr-signing-key.pem
+var pcrSigningKeyPEM []byte
 
 func TestMeasureMatchesExpectedOutput(t *testing.T) {
 	tmpDir := t.TempDir()

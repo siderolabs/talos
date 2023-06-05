@@ -138,6 +138,7 @@ talosctl cluster create [flags]
       --nameservers strings                      list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
+      --secureboot-enroll-cert string            path to certificate to enroll in PK, KEK and DB (default "_out/uki-certs/uki-signing-cert.pem")
       --skip-boot-phase-finished-check           skip waiting for node to finish boot phase
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
@@ -155,6 +156,8 @@ talosctl cluster create [flags]
       --with-debug                               enable debug in Talos config to send service logs to the console
       --with-init-node                           create the cluster with an init node
       --with-kubespan                            enable KubeSpan system
+      --with-secureboot                          enforce secure boot
+      --with-tpm2                                enable TPM2 emulation support using swtpm
       --with-uefi                                enable UEFI on x86_64 architecture (default true)
       --workers int                              the number of workers to create (default 1)
 ```

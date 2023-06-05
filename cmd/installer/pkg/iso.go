@@ -97,7 +97,7 @@ func CreateUKIISO(iso, dir, arch string) error {
 		return err
 	}
 
-	efiBootPath := "::EFI/BOOT/BOOTX64.efi"
+	efiBootPath := "::EFI/BOOT/BOOTX64.EFI"
 
 	if arch == "arm64" {
 		efiBootPath = "::EFI/BOOT/BOOTAA64.EFI"

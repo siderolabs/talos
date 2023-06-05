@@ -49,6 +49,10 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
+	if err := p.destroyVirtualTPM2s(cluster.Info()); err != nil {
+		return err
+	}
+
 	state, ok := cluster.(*vm.State)
 	if !ok {
 		return fmt.Errorf("error inspecting QEMU state, %#+v", cluster)

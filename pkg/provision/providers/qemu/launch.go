@@ -12,6 +12,7 @@ import (
 	"net/netip"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -48,6 +49,7 @@ type LaunchConfig struct {
 	DefaultBootOrder  string
 	EnableKVM         bool
 	BootloaderEnabled bool
+	TPM2Config        tpm2Config
 	NodeUUID          uuid.UUID
 	BadRTC            bool
 
@@ -83,6 +85,11 @@ type LaunchConfig struct {
 
 	// controller
 	controller *Controller
+}
+
+type tpm2Config struct {
+	NodeName string
+	StateDir string
 }
 
 // withCNI creates network namespace, launches CNI and passes control to the next function
@@ -257,7 +264,7 @@ func launchVM(config *LaunchConfig) error {
 	machineArg := config.MachineType
 
 	if config.EnableKVM {
-		machineArg += ",accel=kvm"
+		machineArg += ",accel=kvm,smm=on"
 	}
 
 	args = append(args, "-machine", machineArg)
@@ -274,6 +281,36 @@ func launchVM(config *LaunchConfig) error {
 	diskBootable, err := checkPartitions(config)
 	if err != nil {
 		return err
+	}
+
+	if config.TPM2Config.NodeName != "" {
+		tpm2SocketPath := filepath.Join(config.TPM2Config.StateDir, "swtpm.sock")
+
+		cmd := exec.Command("swtpm", []string{
+			"socket",
+			"--tpmstate",
+			fmt.Sprintf("dir=%s,mode=0644", config.TPM2Config.StateDir),
+			"--ctrl",
+			fmt.Sprintf("type=unixio,path=%s", tpm2SocketPath),
+			"--tpm2",
+			"--pid",
+			fmt.Sprintf("file=%s", filepath.Join(config.TPM2Config.StateDir, "swtpm.pid")),
+			"--log",
+			fmt.Sprintf("file=%s,level=20", filepath.Join(config.TPM2Config.StateDir, "swtpm.log")),
+		}...)
+
+		if err := cmd.Start(); err != nil {
+			return err
+		}
+
+		args = append(args,
+			"-chardev",
+			fmt.Sprintf("socket,id=chrtpm,path=%s", tpm2SocketPath),
+			"-tpmdev",
+			"emulator,id=tpm0,chardev=chrtpm",
+			"-device",
+			"tpm-tis,tpmdev=tpm0",
+		)
 	}
 
 	if !diskBootable || !config.BootloaderEnabled {
