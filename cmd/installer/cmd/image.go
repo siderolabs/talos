@@ -281,7 +281,7 @@ func tar(filename, src, dir string) error {
 }
 
 func gz(filename string) error {
-	if _, err := cmd.Run("gzip", "-6", filename); err != nil {
+	if _, err := cmd.Run("pigz", "-6", filename); err != nil {
 		return err
 	}
 
@@ -289,7 +289,7 @@ func gz(filename string) error {
 }
 
 func xz(filename string) error {
-	if _, err := cmd.Run("xz", "-6", "-T", "0", filename); err != nil {
+	if _, err := cmd.Run("xz", "-0", "-T", "0", filename); err != nil {
 		return err
 	}
 
