@@ -193,14 +193,8 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"stopEverything",
 				StopAllServices,
 			).Append(
-				"mountBoot",
-				MountBootPartition,
-			).Append(
 				"kexec",
 				KexecPrepare,
-			).Append(
-				"unmountBoot",
-				UnmountBootPartition,
 			).Append(
 				"reboot",
 				Reboot,
@@ -468,14 +462,8 @@ func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, _ *machineapi.UpgradeReq
 			"meta",
 			ReloadMeta,
 		).Append(
-			"mountBoot",
-			MountBootPartition,
-		).Append(
 			"kexec",
 			KexecPrepare,
-		).Append(
-			"unmountBoot",
-			UnmountBootPartition,
 		).Append(
 			"stopEverything",
 			StopAllServices,
@@ -542,14 +530,8 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"meta",
 			ReloadMeta,
 		).Append(
-			"mountBoot",
-			MountBootPartition,
-		).Append(
 			"kexec",
 			KexecPrepare,
-		).Append(
-			"unmountBoot",
-			UnmountBootPartition,
 		).Append(
 			"stopEverything",
 			StopAllServices,
@@ -591,16 +573,8 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 			UnmountStatePartition,
 		).AppendWhen(
 			enableKexec,
-			"mountBoot",
-			MountBootPartition,
-		).AppendWhen(
-			enableKexec,
 			"kexec",
 			KexecPrepare,
-		).AppendWhen(
-			enableKexec,
-			"unmountBoot",
-			UnmountBootPartition,
 		).Append(
 			"stopEverything",
 			StopAllServices,

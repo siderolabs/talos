@@ -46,6 +46,7 @@ import (
 
 	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	perrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
@@ -2065,20 +2066,6 @@ func SaveStateEncryptionConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc
 	}, "SaveStateEncryptionConfig"
 }
 
-// MountBootPartition mounts the boot partition.
-func MountBootPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionMount(r, logger, constants.BootPartitionLabel)
-	}, "mountBootPartition"
-}
-
-// UnmountBootPartition unmounts the boot partition.
-func UnmountBootPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionUnmount(r, logger, constants.BootPartitionLabel)
-	}, "unmountBootPartition"
-}
-
 // MountEFIPartition mounts the EFI partition.
 func MountEFIPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
@@ -2289,6 +2276,18 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 		if r.Config() == nil {
 			return nil
 		}
+
+		// check if partition with label BOOT exists
+		if device := r.State().Machine().Disk(disk.WithPartitionLabel(constants.BootPartitionLabel)); device == nil {
+			return nil
+		}
+
+		// BOOT partition exists and we can mount it
+		if err := mount.SystemPartitionMount(r, logger, constants.BootPartitionLabel); err != nil {
+			return err
+		}
+
+		defer mount.SystemPartitionUnmount(r, logger, constants.BootPartitionLabel) //nolint:errcheck
 
 		conf, err := grub.Read(grub.ConfigPath)
 		if err != nil {

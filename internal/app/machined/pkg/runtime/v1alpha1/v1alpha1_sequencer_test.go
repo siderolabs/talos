@@ -51,9 +51,9 @@ func TestPhaseList_Append(t *testing.T) {
 			p:    PhaseList{},
 			args: args{
 				name:  "mount",
-				tasks: []runtime.TaskSetupFunc{MountBootPartition},
+				tasks: []runtime.TaskSetupFunc{KexecPrepare},
 			},
-			want: PhaseList{runtime.Phase{Name: "mount", Tasks: []runtime.TaskSetupFunc{MountBootPartition}}},
+			want: PhaseList{runtime.Phase{Name: "mount", Tasks: []runtime.TaskSetupFunc{KexecPrepare}}},
 		},
 	}
 
@@ -87,16 +87,16 @@ func TestPhaseList_AppendWhen(t *testing.T) {
 			args: args{
 				when:  true,
 				name:  "mount",
-				tasks: []runtime.TaskSetupFunc{MountBootPartition},
+				tasks: []runtime.TaskSetupFunc{KexecPrepare},
 			},
-			want: PhaseList{runtime.Phase{Name: "mount", Tasks: []runtime.TaskSetupFunc{MountBootPartition}}},
+			want: PhaseList{runtime.Phase{Name: "mount", Tasks: []runtime.TaskSetupFunc{KexecPrepare}}},
 		},
 		{
 			name: "false",
 			p:    PhaseList{},
 			args: args{
 				when:  false,
-				tasks: []runtime.TaskSetupFunc{MountBootPartition},
+				tasks: []runtime.TaskSetupFunc{KexecPrepare},
 			},
 			want: PhaseList{},
 		},
