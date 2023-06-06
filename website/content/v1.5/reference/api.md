@@ -182,6 +182,7 @@ description: Talos gRPC API reference.
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
+    - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
     - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
     - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
@@ -3316,6 +3317,21 @@ KernelParamStatusSpec describes status of the defined sysctls.
 | current | [string](#string) |  |  |
 | default | [string](#string) |  |  |
 | unsupported | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KmsgLogConfigSpec"></a>
+
+### KmsgLogConfigSpec
+KmsgLogConfigSpec describes status of the defined sysctls.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| destinations | [common.URL](#common.URL) | repeated |  |
 
 
 

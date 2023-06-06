@@ -4,6 +4,7 @@ package talos.resource.definitions.runtime;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/runtime";
 
+import "common/common.proto";
 import "resource/definitions/enums/enums.proto";
 
 // DevicesStatusSpec is the spec for devices status.
@@ -28,6 +29,11 @@ message KernelParamStatusSpec {
   string current = 1;
   string default = 2;
   bool unsupported = 3;
+}
+
+// KmsgLogConfigSpec describes status of the defined sysctls.
+message KmsgLogConfigSpec {
+  repeated common.URL destinations = 1;
 }
 
 // MachineStatusSpec describes status of the defined sysctls.

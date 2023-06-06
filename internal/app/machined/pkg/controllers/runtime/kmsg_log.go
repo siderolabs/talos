@@ -6,34 +6,41 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/channel"
+	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-pointer"
-	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
+	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-const drainTimeout = 100 * time.Millisecond
+const (
+	drainTimeout    = 100 * time.Millisecond
+	logSendTimeout  = 5 * time.Second
+	logRetryTimeout = 1 * time.Second
+	logCloseTimeout = 5 * time.Second
+)
 
 // KmsgLogDeliveryController watches events and forwards them to the events sink server
 // if it's configured.
 type KmsgLogDeliveryController struct {
-	Cmdline *procfs.Cmdline
-	Drainer *runtime.Drainer
+	Drainer *machinedruntime.Drainer
 
-	drainSub *runtime.DrainSubscription
+	drainSub *machinedruntime.DrainSubscription
 }
 
 // Name implements controller.Controller interface.
@@ -43,14 +50,7 @@ func (ctrl *KmsgLogDeliveryController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *KmsgLogDeliveryController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
-			Kind:      controller.InputWeak,
-		},
-	}
+	return nil
 }
 
 // Outputs implements controller.Controller interface.
@@ -59,52 +59,24 @@ func (ctrl *KmsgLogDeliveryController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-//
-//nolint:gocyclo,cyclop
-func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) (err error) {
-	if ctrl.Cmdline == nil || ctrl.Cmdline.Get(constants.KernelParamLoggingKernel).First() == nil {
-		return nil
+func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if err := networkutils.WaitForNetworkReady(ctx, r,
+		func(status *network.StatusSpec) bool {
+			return status.AddressReady
+		},
+		[]controller.Input{
+			{
+				Namespace: runtime.NamespaceName,
+				Type:      runtime.KmsgLogConfigType,
+				ID:        pointer.To(runtime.KmsgLogConfigID),
+				Kind:      controller.InputWeak,
+			},
+		},
+	); err != nil {
+		return fmt.Errorf("error waiting for network: %w", err)
 	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		}
-
-		var netStatus resource.Resource
-
-		netStatus, err = r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				// no network state yet
-				continue
-			}
-
-			return fmt.Errorf("error reading network status: %w", err)
-		}
-
-		if !netStatus.(*network.Status).TypedSpec().AddressReady {
-			// wait for address
-			continue
-		}
-
-		break
-	}
-
-	if ctrl.drainSub == nil {
-		ctrl.drainSub = ctrl.Drainer.Subscribe()
-	}
-
-	destURL, err := url.Parse(*ctrl.Cmdline.Get(constants.KernelParamLoggingKernel).First())
-	if err != nil {
-		return fmt.Errorf("error parsing %q: %w", constants.KernelParamLoggingKernel, err)
-	}
-
-	sender := logging.NewJSONLines(destURL)
-	defer sender.Close(ctx) //nolint:errcheck
-
+	// initilalize kmsg reader early, so that we don't lose position on config changes
 	reader, err := kmsg.NewReader(kmsg.Follow())
 	if err != nil {
 		return fmt.Errorf("error reading kernel messages: %w", err)
@@ -113,6 +85,49 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 	defer reader.Close() //nolint:errcheck
 
 	kmsgCh := reader.Scan(ctx)
+
+	for {
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok {
+			return nil
+		}
+
+		cfg, err := safe.ReaderGetByID[*runtime.KmsgLogConfig](ctx, r, runtime.KmsgLogConfigID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting configuration: %w", err)
+		}
+
+		if cfg == nil {
+			// no config, wait for the next event
+			continue
+		}
+
+		if err = ctrl.deliverLogs(ctx, r, logger, kmsgCh, cfg.TypedSpec().Destinations); err != nil {
+			return fmt.Errorf("error delivering logs: %w", err)
+		}
+
+		r.ResetRestartBackoff()
+	}
+}
+
+//nolint:gocyclo
+func (ctrl *KmsgLogDeliveryController) deliverLogs(ctx context.Context, r controller.Runtime, logger *zap.Logger, kmsgCh <-chan kmsg.Packet, destURLs []*url.URL) error {
+	if ctrl.drainSub == nil {
+		ctrl.drainSub = ctrl.Drainer.Subscribe()
+	}
+
+	// initialize all log senders
+	senders := slices.Map(destURLs, logging.NewJSONLines)
+
+	defer func() {
+		closeCtx, closeCtxCancel := context.WithTimeout(context.Background(), logCloseTimeout)
+		defer closeCtxCancel()
+
+		for _, sender := range senders {
+			if err := sender.Close(closeCtx); err != nil {
+				logger.Error("error closing log sender", zap.Error(err))
+			}
+		}
+	}()
 
 	var (
 		drainTimer   *time.Timer
@@ -127,6 +142,19 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 			ctrl.drainSub.Cancel()
 
 			return nil
+		case <-r.EventCh():
+			// config changed, restart the loop
+			return nil
+		case <-ctrl.drainSub.EventCh():
+			// drain started, assume that ksmg is drained if there're no new messages in drainTimeout
+			drainTimer = time.NewTimer(drainTimeout)
+			drainTimerCh = drainTimer.C
+
+			continue
+		case <-drainTimerCh:
+			ctrl.drainSub.Cancel()
+
+			return nil
 		case msg = <-kmsgCh:
 			if drainTimer != nil {
 				// if draining, reset the timer as there's a new message
@@ -136,21 +164,13 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 
 				drainTimer.Reset(drainTimeout)
 			}
-		case <-ctrl.drainSub.EventCh():
-			// drain started, assume that ksmg is drained if there're no new messages in drainTimeout
-			drainTimer = time.NewTimer(drainTimeout)
-			drainTimerCh = drainTimer.C
-		case <-drainTimerCh:
-			ctrl.drainSub.Cancel()
-
-			return nil
 		}
 
 		if msg.Err != nil {
 			return fmt.Errorf("error receiving kernel logs: %w", msg.Err)
 		}
 
-		if err = sender.Send(ctx, &runtime.LogEvent{
+		event := machinedruntime.LogEvent{
 			Msg:   msg.Message.Message,
 			Time:  msg.Message.Timestamp,
 			Level: kmsgPriorityToLevel(msg.Message.Priority),
@@ -160,11 +180,61 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 				"clock":    msg.Message.Clock,
 				"priority": msg.Message.Priority.String(),
 			},
-		}); err != nil {
-			return fmt.Errorf("error sending logs: %w", err)
 		}
 
-		r.ResetRestartBackoff()
+		if err := ctrl.resend(ctx, r, logger, senders, &event); err != nil {
+			return fmt.Errorf("error sending log event: %w", err)
+		}
+	}
+}
+
+//nolint:gocyclo
+func (ctrl *KmsgLogDeliveryController) resend(ctx context.Context, r controller.Runtime, logger *zap.Logger, senders []machinedruntime.LogSender, e *machinedruntime.LogEvent) error {
+	for {
+		sendCtx, sendCancel := context.WithTimeout(ctx, logSendTimeout)
+		sendErrors := make(chan error, len(senders))
+
+		for _, sender := range senders {
+			sender := sender
+
+			go func() {
+				sendErrors <- sender.Send(sendCtx, e)
+			}()
+		}
+
+		var dontRetry bool
+
+		for range senders {
+			err := <-sendErrors
+
+			// don't retry if at least one sender succeed to avoid implementing per-sender queue, etc
+			if err == nil {
+				dontRetry = true
+
+				continue
+			}
+
+			logger.Debug("error sending log event", zap.Error(err))
+
+			if errors.Is(err, machinedruntime.ErrDontRetry) || errors.Is(err, context.Canceled) {
+				dontRetry = true
+			}
+		}
+
+		sendCancel()
+
+		if dontRetry {
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
+			// config changed, restart the loop
+			return fmt.Errorf("config changed")
+		case <-time.After(logRetryTimeout):
+		}
 	}
 }
 

@@ -170,6 +170,7 @@ func NewState() (*State, error) {
 		&runtime.KernelParamSpec{},
 		&runtime.KernelParamDefaultSpec{},
 		&runtime.KernelParamStatus{},
+		&runtime.KmsgLogConfig{},
 		&runtime.MachineStatus{},
 		&runtime.MetaKey{},
 		&runtime.MountStatus{},

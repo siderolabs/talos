@@ -236,8 +236,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&runtimecontrollers.KernelParamSpecController{},
-		&runtimecontrollers.KmsgLogDeliveryController{
+		&runtimecontrollers.KmsgLogConfigController{
 			Cmdline: procfs.ProcCmdline(),
+		},
+		&runtimecontrollers.KmsgLogDeliveryController{
 			Drainer: drainer,
 		},
 		&runtimecontrollers.MachineStatusController{
