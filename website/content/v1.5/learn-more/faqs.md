@@ -37,3 +37,14 @@ The `talosconfig` file contains client credentials to access the Talos Linux API
 Sometimes Kubernetes might be down for a number of reasons (etcd issues, misconfiguration, etc.), while Talos API access will always be available.
 The Talos API is a way to access the operating system and fix issues, e.g. fixing access to Kubernetes.
 When Talos Linux is running fine, using the Kubernetes APIs (via `kubeconfig`) is all you should need to deploy and manage Kubernetes workloads.
+
+## How Talos handles certificates ?
+
+During the machine config generation process, Talos generates a set of certificate authorities (CAs) that remains valid for 10 years.
+Talos is responsible for managing certificates for `etcd`, Talos API (`apid`), node certificates (`kubelet`), and other components.
+It also handles the automatic rotation of server-side certificates.
+
+However, client certificates such as `talosconfig` and `kubeconfig` are the user's responsibility, and by default, they have a validity period of 1 year.
+
+To renew the `talosconfig` certificate, the follow [this process]({{< relref "../talos-guides/configuration/managing-pki" >}}).
+To renew `kubeconfig`, use `talosctl kubeconfig` command, and the time-to-live (TTL) is defined in the [configuration]({{< relref "../reference/configuration/#adminkubeconfigconfig" >}}).
