@@ -7,9 +7,7 @@ package partition
 
 import (
 	"fmt"
-	"io"
 	"log"
-	"os"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 
@@ -39,7 +37,7 @@ func NewFormatOptions(label string) *FormatOptions {
 // Format zeroes the device and formats it using filesystem type provided.
 func Format(devname string, t *FormatOptions) error {
 	if t.FileSystemType == FilesystemTypeNone {
-		return zeroPartition(devname, int64(t.Size))
+		return zeroPartition(devname)
 	}
 
 	opts := []makefs.Option{makefs.WithForce(t.Force), makefs.WithLabel(t.Label)}
@@ -56,29 +54,17 @@ func Format(devname string, t *FormatOptions) error {
 }
 
 // zeroPartition fills the partition with zeroes.
-func zeroPartition(devname string, size int64) (err error) {
+func zeroPartition(devname string) (err error) {
 	log.Printf("zeroing out %q", devname)
 
-	zeroes, err := os.Open("/dev/zero")
-	if err != nil {
-		return err
-	}
-
-	defer zeroes.Close() //nolint:errcheck
-
-	part, err := os.OpenFile(devname, os.O_WRONLY, 0)
+	part, err := blockdevice.Open(devname, blockdevice.WithExclusiveLock(true))
 	if err != nil {
 		return err
 	}
 
 	defer part.Close() //nolint:errcheck
 
-	// wipe at least minimal header size
-	if size == 0 {
-		size = blockdevice.FastWipeRange
-	}
-
-	_, err = io.CopyN(part, zeroes, size)
+	_, err = part.Wipe()
 
 	return err
 }
