@@ -18,20 +18,13 @@ import (
 // FormatOptions contains format parameters.
 type FormatOptions struct {
 	Label          string
-	PartitionType  Type
 	FileSystemType FileSystemType
-	Size           uint64
 	Force          bool
 }
 
 // NewFormatOptions creates a new format options.
 func NewFormatOptions(label string) *FormatOptions {
-	opts, ok := systemPartitions[label]
-	if ok {
-		return &opts
-	}
-
-	return nil
+	return systemPartitionsFormatOptions(label)
 }
 
 // Format zeroes the device and formats it using filesystem type provided.
@@ -69,47 +62,45 @@ func zeroPartition(devname string) (err error) {
 	return err
 }
 
-var systemPartitions = map[string]FormatOptions{
-	constants.EFIPartitionLabel: {
-		Label:          constants.EFIPartitionLabel,
-		PartitionType:  EFISystemPartition,
-		FileSystemType: FilesystemTypeVFAT,
-		Size:           EFISize,
-		Force:          true,
-	},
-	constants.BIOSGrubPartitionLabel: {
-		Label:          constants.BIOSGrubPartitionLabel,
-		PartitionType:  BIOSBootPartition,
-		FileSystemType: FilesystemTypeNone,
-		Size:           BIOSGrubSize,
-		Force:          true,
-	},
-	constants.BootPartitionLabel: {
-		Label:          constants.BootPartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeXFS,
-		Size:           BootSize,
-		Force:          true,
-	},
-	constants.MetaPartitionLabel: {
-		Label:          constants.MetaPartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeNone,
-		Size:           MetaSize,
-		Force:          true,
-	},
-	constants.StatePartitionLabel: {
-		Label:          constants.StatePartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeXFS,
-		Size:           StateSize,
-		Force:          true,
-	},
-	constants.EphemeralPartitionLabel: {
-		Label:          constants.EphemeralPartitionLabel,
-		PartitionType:  LinuxFilesystemData,
-		FileSystemType: FilesystemTypeXFS,
-		Size:           0,
-		Force:          true,
-	},
+func systemPartitionsFormatOptions(label string) *FormatOptions {
+	switch label {
+	case constants.EFIPartitionLabel:
+		return &FormatOptions{
+			Label:          constants.EFIPartitionLabel,
+			FileSystemType: FilesystemTypeVFAT,
+			Force:          true,
+		}
+	case constants.BIOSGrubPartitionLabel:
+		return &FormatOptions{
+			Label:          constants.BIOSGrubPartitionLabel,
+			FileSystemType: FilesystemTypeNone,
+			Force:          true,
+		}
+	case constants.BootPartitionLabel:
+		return &FormatOptions{
+			Label:          constants.BootPartitionLabel,
+			FileSystemType: FilesystemTypeXFS,
+			Force:          true,
+		}
+	case constants.MetaPartitionLabel:
+		return &FormatOptions{
+			Label:          constants.MetaPartitionLabel,
+			FileSystemType: FilesystemTypeNone,
+			Force:          true,
+		}
+	case constants.StatePartitionLabel:
+		return &FormatOptions{
+			Label:          constants.StatePartitionLabel,
+			FileSystemType: FilesystemTypeXFS,
+			Force:          true,
+		}
+	case constants.EphemeralPartitionLabel:
+		return &FormatOptions{
+			Label:          constants.EphemeralPartitionLabel,
+			FileSystemType: FilesystemTypeXFS,
+			Force:          true,
+		}
+	default:
+		return nil
+	}
 }

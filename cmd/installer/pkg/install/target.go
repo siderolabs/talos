@@ -14,8 +14,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dustin/go-humanize"
-	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util"
 	"golang.org/x/sys/unix"
@@ -31,6 +29,7 @@ import (
 //nolint:maligned
 type Target struct {
 	*partition.FormatOptions
+	*partition.Options
 	Device string
 
 	LegacyBIOSBootable bool
@@ -99,6 +98,18 @@ func ParseTarget(label, deviceName string) (*Target, error) {
 func EFITarget(device string, extra *Target) *Target {
 	target := &Target{
 		FormatOptions: partition.NewFormatOptions(constants.EFIPartitionLabel),
+		Options:       partition.NewPartitionOptions(constants.EFIPartitionLabel, false),
+		Device:        device,
+	}
+
+	return target.enhance(extra)
+}
+
+// EFITargetUKI builds the default EFI UKI target.
+func EFITargetUKI(device string, extra *Target) *Target {
+	target := &Target{
+		FormatOptions: partition.NewFormatOptions(constants.EFIPartitionLabel),
+		Options:       partition.NewPartitionOptions(constants.EFIPartitionLabel, true),
 		Device:        device,
 	}
 
@@ -109,6 +120,7 @@ func EFITarget(device string, extra *Target) *Target {
 func BIOSTarget(device string, extra *Target) *Target {
 	target := &Target{
 		FormatOptions:      partition.NewFormatOptions(constants.BIOSGrubPartitionLabel),
+		Options:            partition.NewPartitionOptions(constants.BIOSGrubPartitionLabel, false),
 		Device:             device,
 		LegacyBIOSBootable: true,
 	}
@@ -120,6 +132,7 @@ func BIOSTarget(device string, extra *Target) *Target {
 func BootTarget(device string, extra *Target) *Target {
 	target := &Target{
 		FormatOptions: partition.NewFormatOptions(constants.BootPartitionLabel),
+		Options:       partition.NewPartitionOptions(constants.BootPartitionLabel, false),
 		Device:        device,
 	}
 
@@ -130,6 +143,7 @@ func BootTarget(device string, extra *Target) *Target {
 func MetaTarget(device string, extra *Target) *Target {
 	target := &Target{
 		FormatOptions: partition.NewFormatOptions(constants.MetaPartitionLabel),
+		Options:       partition.NewPartitionOptions(constants.MetaPartitionLabel, false),
 		Device:        device,
 	}
 
@@ -140,6 +154,7 @@ func MetaTarget(device string, extra *Target) *Target {
 func StateTarget(device string, extra *Target) *Target {
 	target := &Target{
 		FormatOptions: partition.NewFormatOptions(constants.StatePartitionLabel),
+		Options:       partition.NewPartitionOptions(constants.StatePartitionLabel, false),
 		Device:        device,
 	}
 
@@ -150,6 +165,7 @@ func StateTarget(device string, extra *Target) *Target {
 func EphemeralTarget(device string, extra *Target) *Target {
 	target := &Target{
 		FormatOptions: partition.NewFormatOptions(constants.EphemeralPartitionLabel),
+		Options:       partition.NewPartitionOptions(constants.EphemeralPartitionLabel, false),
 		Device:        device,
 	}
 
@@ -179,24 +195,21 @@ func (t *Target) String() string {
 
 // Locate existing partition on the disk.
 func (t *Target) Locate(pt *gpt.GPT) (*gpt.Partition, error) {
-	for _, part := range pt.Partitions().Items() {
-		if part.Name == t.Label {
-			var err error
-
-			t.PartitionName, err = part.Path()
-			if err != nil {
-				return part, err
-			}
-
-			return part, nil
-		}
+	part, err := partition.Locate(pt, t.Label)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, nil
+	t.PartitionName, err = part.Path()
+	if err != nil {
+		return nil, err
+	}
+
+	return part, nil
 }
 
-// Partition creates a new partition on the specified device.
-func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (err error) {
+// partition creates a new partition on the specified device.
+func (t *Target) partition(pt *gpt.GPT, pos int) (err error) {
 	if t.Skip {
 		part := pt.Partitions().FindByName(t.Label)
 		if part != nil {
@@ -211,32 +224,17 @@ func (t *Target) Partition(pt *gpt.GPT, pos int, bd *blockdevice.BlockDevice) (e
 		return nil
 	}
 
-	log.Printf("partitioning %s - %s %q\n", t.Device, t.Label, humanize.Bytes(t.Size))
-
-	opts := []gpt.PartitionOption{
-		gpt.WithPartitionType(t.PartitionType),
-		gpt.WithPartitionName(t.Label),
-	}
-
-	if t.Size == 0 {
-		opts = append(opts, gpt.WithMaximumSize(true))
-	}
-
-	if t.LegacyBIOSBootable {
-		opts = append(opts, gpt.WithLegacyBIOSBootableAttribute(true))
-	}
-
-	part, err := pt.InsertAt(pos, t.Size, opts...)
+	partitionName, err := partition.Partition(pt, pos, t.Device, partition.Options{
+		PartitionLabel:     t.Label,
+		PartitionType:      t.PartitionType,
+		Size:               t.Size,
+		LegacyBIOSBootable: t.LegacyBIOSBootable,
+	})
 	if err != nil {
 		return err
 	}
 
-	t.PartitionName, err = part.Path()
-	if err != nil {
-		return err
-	}
-
-	log.Printf("created %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
+	t.PartitionName = partitionName
 
 	return nil
 }

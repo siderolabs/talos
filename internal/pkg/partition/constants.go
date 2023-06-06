@@ -33,6 +33,10 @@ const (
 	EFISize      = 100 * MiB
 	BIOSGrubSize = 1 * MiB
 	BootSize     = 1000 * MiB
-	MetaSize     = 1 * MiB
-	StateSize    = 100 * MiB
+	// EFIUKISize is the size of the EFI partition when UKI is enabled.
+	// With UKI all assets are stored in the EFI partition.
+	// This is the size of the old EFISize + BIOSGrubSize + BootSize.
+	EFIUKISize = EFISize + BIOSGrubSize + BootSize
+	MetaSize   = 1 * MiB
+	StateSize  = 100 * MiB
 )

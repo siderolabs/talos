@@ -360,7 +360,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 	}
 
 	for i, target := range targets {
-		if err = target.Partition(pt, i, bd); err != nil {
+		if err = target.partition(pt, i); err != nil {
 			return fmt.Errorf("failed to partition device: %w", err)
 		}
 	}

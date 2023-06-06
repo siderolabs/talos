@@ -1069,10 +1069,12 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 				extraTarget := &installer.Target{
 					Device: disk.Device(),
 					FormatOptions: &partition.FormatOptions{
-						Size:           part.Size(),
 						Force:          true,
-						PartitionType:  partition.LinuxFilesystemData,
 						FileSystemType: partition.FilesystemTypeXFS,
+					},
+					Options: &partition.Options{
+						Size:          part.Size(),
+						PartitionType: partition.LinuxFilesystemData,
 					},
 				}
 
