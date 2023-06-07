@@ -54,8 +54,7 @@ import (
 
 	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/resources"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
@@ -67,7 +66,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/miniprocfs"
-	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/archiver"
 	"github.com/siderolabs/talos/pkg/chunker"
 	"github.com/siderolabs/talos/pkg/chunker/stream"
@@ -340,46 +338,16 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 	}
 
 	if err := func() error {
-		if err := mount.SystemPartitionMount(s.Controller.Runtime(), nil, constants.BootPartitionLabel); err != nil {
-			return fmt.Errorf("error mounting boot partition: %w", err)
-		}
-
-		defer func() {
-			if err := mount.SystemPartitionUnmount(s.Controller.Runtime(), nil, constants.BootPartitionLabel); err != nil {
-				log.Printf("failed unmounting boot partition: %s", err)
-			}
-		}()
-
-		disk := s.Controller.Runtime().State().Machine().Disk(disk.WithPartitionLabel(constants.BootPartitionLabel))
-		if disk == nil {
-			return fmt.Errorf("boot disk not found")
-		}
-
-		conf, err := grub.Read(grub.ConfigPath)
+		config, err := bootloader.Probe(false)
 		if err != nil {
 			return err
 		}
 
-		if conf == nil {
+		if !config.Installed() {
 			return fmt.Errorf("grub configuration not found, nothing to rollback")
 		}
 
-		next, err := grub.FlipBootLabel(conf.Default)
-		if err != nil {
-			return err
-		}
-
-		if _, err = os.Stat(filepath.Join(constants.BootMountPoint, string(next))); errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("cannot rollback to %q, label does not exist", next)
-		}
-
-		conf.Default = next
-		conf.Fallback = ""
-		if err := conf.Write(grub.ConfigPath); err != nil {
-			return fmt.Errorf("failed to revert bootloader: %v", err)
-		}
-
-		return nil
+		return config.Revert()
 	}(); err != nil {
 		return nil, err
 	}

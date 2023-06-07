@@ -9,12 +9,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
-
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/pkg/meta"
-	"github.com/siderolabs/talos/internal/pkg/mount"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func revertBootloader() {
@@ -50,60 +46,20 @@ func revertBootloadInternal() error {
 
 	log.Printf("reverting failed upgrade, switching to %q", label)
 
-	// attempt to mount BOOT partition directly without using other code paths, as they rely on Runtime
-	dev, err := probe.GetDevWithPartitionName(constants.BootPartitionLabel)
-	if os.IsNotExist(err) {
-		// no BOOT partition???
-		return nil
-	}
-
-	if err != nil {
-		return err
-	}
-
-	defer dev.Close() //nolint:errcheck
-
-	mp, err := mount.SystemMountPointForLabel(dev.BlockDevice, constants.BootPartitionLabel)
-	if err != nil {
-		return err
-	}
-
-	if mp == nil {
-		return nil
-	}
-
-	alreadyMounted, err := mp.IsMounted()
-	if err != nil {
-		return err
-	}
-
-	if !alreadyMounted {
-		if err = mp.Mount(); err != nil {
-			return err
+	if err = func() error {
+		config, probeErr := bootloader.Probe(false)
+		if probeErr != nil {
+			return probeErr
 		}
 
-		defer mp.Unmount() //nolint:errcheck
-	}
-
-	conf, err := grub.Read(grub.ConfigPath)
-	if err != nil {
-		return err
-	}
-
-	if conf == nil {
-		return nil
-	}
-
-	bootEntry, err := grub.ParseBootLabel(label)
-	if err != nil {
-		return err
-	}
-
-	if conf.Default != bootEntry {
-		conf.Default, conf.Fallback = bootEntry, conf.Default
-		if err = conf.Write(grub.ConfigPath); err != nil {
-			return err
+		// not bootloader found, nothing to do
+		if !config.Installed() {
+			return nil
 		}
+
+		return config.Revert()
+	}(); err != nil {
+		return err
 	}
 
 	if _, err = metaState.DeleteTag(context.Background(), meta.Upgrade); err != nil {
