@@ -47,7 +47,7 @@ type Device struct {
 // NewManifest initializes and returns a Manifest.
 //
 //nolint:gocyclo
-func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound bool, opts *Options) (manifest *Manifest, err error) {
+func NewManifest(label string, sequence runtime.Sequence, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
 	if label == "" {
 		return nil, fmt.Errorf("a label is required, got \"\"")
 	}
@@ -70,7 +70,7 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 	}
 
 	// TODO: legacy, to support old Talos initramfs, assume force if boot partition not found
-	if !bootPartitionFound {
+	if !bootLoaderPresent {
 		opts.Force = true
 	}
 
@@ -78,7 +78,7 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 		return nil, fmt.Errorf("zero option can't be used without force")
 	}
 
-	if !opts.Force && !bootPartitionFound {
+	if !opts.Force && !bootLoaderPresent {
 		return nil, fmt.Errorf("install with preserve is not supported if existing boot partition was not found")
 	}
 
@@ -115,7 +115,7 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 	biosTarget := BIOSTarget(opts.Disk, nil)
 
 	bootTarget := BootTarget(opts.Disk, &Target{
-		PreserveContents: bootPartitionFound,
+		PreserveContents: bootLoaderPresent,
 		Assets: []*Asset{
 			{
 				Source:      fmt.Sprintf(constants.KernelAssetPath, opts.Arch),
@@ -129,11 +129,11 @@ func NewManifest(label string, sequence runtime.Sequence, bootPartitionFound boo
 	})
 
 	metaTarget := MetaTarget(opts.Disk, &Target{
-		PreserveContents: bootPartitionFound,
+		PreserveContents: bootLoaderPresent,
 	})
 
 	stateTarget := StateTarget(opts.Disk, &Target{
-		PreserveContents: bootPartitionFound,
+		PreserveContents: bootLoaderPresent,
 		FormatOptions: &partition.FormatOptions{
 			FileSystemType: partition.FilesystemTypeNone,
 		},
@@ -245,7 +245,9 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 	}
 
 	if device.Zero {
-		if err = m.zeroDevice(device); err != nil {
+		if err = partition.Format(device.Device, &partition.FormatOptions{
+			FileSystemType: partition.FilesystemTypeNone,
+		}); err != nil {
 			return err
 		}
 	}
@@ -510,29 +512,6 @@ func (m *Manifest) SystemMountpoints(opts ...mount.Option) (*mount.Points, error
 	}
 
 	return mountpoints, nil
-}
-
-// zeroDevice fills the device with zeroes.
-func (m *Manifest) zeroDevice(device Device) (err error) {
-	var bd *blockdevice.BlockDevice
-
-	log.Printf("wiping %q", device.Device)
-
-	if bd, err = blockdevice.Open(device.Device, blockdevice.WithExclusiveLock(true)); err != nil {
-		return err
-	}
-
-	defer bd.Close() //nolint:errcheck
-
-	var method string
-
-	if method, err = bd.Wipe(); err != nil {
-		return err
-	}
-
-	log.Printf("wiped %q with %q", device.Device, method)
-
-	return bd.Close()
 }
 
 func shouldSkipOverlayMountsCheck(sequence runtime.Sequence) (bool, error) {

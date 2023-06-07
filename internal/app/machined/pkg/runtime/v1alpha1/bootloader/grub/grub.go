@@ -9,15 +9,16 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/bootloader"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/version"
 )
 
 // Config represents a grub configuration file (grub.cfg).
 type Config struct {
-	Default  BootLabel
-	Fallback BootLabel
-	Entries  map[BootLabel]MenuEntry
+	Next     bootloader.BootLabel
+	Fallback bootloader.BootLabel
+	Entries  map[bootloader.BootLabel]MenuEntry
 }
 
 // MenuEntry represents a grub menu entry in the grub config file.
@@ -28,26 +29,35 @@ type MenuEntry struct {
 	Initrd  string
 }
 
+func (e bootloaderNotInstalledError) Error() string {
+	return bootloaderNotInstalled
+}
+
 // NewConfig creates a new grub configuration (nothing is written to disk).
 func NewConfig(cmdline string) *Config {
 	return &Config{
-		Default: BootA,
-		Entries: map[BootLabel]MenuEntry{
-			BootA: buildMenuEntry(BootA, cmdline),
+		Next: bootloader.BootA,
+		Entries: map[bootloader.BootLabel]MenuEntry{
+			bootloader.BootA: buildMenuEntry(bootloader.BootA, cmdline),
 		},
 	}
 }
 
+// Installed returns true if the bootloader is installed.
+func (c *Config) Installed() bool {
+	return c != nil
+}
+
 // Put puts a new menu entry to the grub config (nothing is written to disk).
-func (c *Config) Put(entry BootLabel, cmdline string) error {
+func (c *Config) Put(entry bootloader.BootLabel, cmdline string) error {
 	c.Entries[entry] = buildMenuEntry(entry, cmdline)
 
 	return nil
 }
 
 func (c *Config) validate() error {
-	if _, ok := c.Entries[c.Default]; !ok {
-		return fmt.Errorf("invalid default entry: %s", c.Default)
+	if _, ok := c.Entries[c.Next]; !ok {
+		return fmt.Errorf("invalid default entry: %s", c.Next)
 	}
 
 	if c.Fallback != "" {
@@ -56,14 +66,14 @@ func (c *Config) validate() error {
 		}
 	}
 
-	if c.Default == c.Fallback {
+	if c.Next == c.Fallback {
 		return fmt.Errorf("default and fallback entries must not be the same")
 	}
 
 	return nil
 }
 
-func buildMenuEntry(entry BootLabel, cmdline string) MenuEntry {
+func buildMenuEntry(entry bootloader.BootLabel, cmdline string) MenuEntry {
 	return MenuEntry{
 		Name:    fmt.Sprintf("%s - %s", entry, version.Short()),
 		Linux:   filepath.Join("/", string(entry), constants.KernelAsset),

@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/bootloader"
 )
 
 var (
@@ -45,7 +47,7 @@ func Decode(c []byte) (*Config, error) {
 		return nil, fmt.Errorf("found multiple fallback entries")
 	}
 
-	var fallbackEntry BootLabel
+	var fallbackEntry bootloader.BootLabel
 
 	if len(fallbackEntryMatches) == 1 {
 		if len(fallbackEntryMatches[0]) != 2 {
@@ -75,7 +77,7 @@ func Decode(c []byte) (*Config, error) {
 	}
 
 	conf := Config{
-		Default:  defaultEntry,
+		Next:     defaultEntry,
 		Fallback: fallbackEntry,
 		Entries:  entries,
 	}
@@ -83,8 +85,8 @@ func Decode(c []byte) (*Config, error) {
 	return &conf, nil
 }
 
-func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
-	entries := make(map[BootLabel]MenuEntry)
+func parseEntries(conf []byte) (map[bootloader.BootLabel]MenuEntry, error) {
+	entries := make(map[bootloader.BootLabel]MenuEntry)
 
 	matches := menuEntryRegex.FindAllSubmatch(conf, -1)
 	for _, m := range matches {
@@ -106,7 +108,7 @@ func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
 			return nil, err
 		}
 
-		if bootEntry == BootReset {
+		if bootEntry == bootloader.BootReset {
 			continue
 		}
 

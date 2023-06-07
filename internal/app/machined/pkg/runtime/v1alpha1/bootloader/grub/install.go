@@ -25,7 +25,16 @@ const (
 // Install validates the grub configuration and writes it to the disk.
 //
 //nolint:gocyclo
-func (c *Config) Install(bootDisk, arch string) error {
+func (c *Config) Install(bootDisk, arch, cmdline string) error {
+	// grub not installed, create a default config
+	if c == nil {
+		c = NewConfig(cmdline)
+	}
+
+	if err := c.Put(c.Next, cmdline); err != nil {
+		return err
+	}
+
 	if err := c.Write(ConfigPath); err != nil {
 		return err
 	}

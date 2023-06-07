@@ -4,18 +4,17 @@
 
 package grub
 
-import "github.com/siderolabs/talos/pkg/machinery/constants"
+import (
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+)
 
 const (
-	// BootA is a bootloader label.
-	BootA BootLabel = "A"
-
-	// BootB is a bootloader label.
-	BootB BootLabel = "B"
-
-	// BootReset is a bootloader label.
-	BootReset BootLabel = "Reset"
-
 	// ConfigPath is the path to the grub config.
 	ConfigPath = constants.BootMountPoint + "/grub/grub.cfg"
 )
+
+const (
+	bootloaderNotInstalled = "bootloader not installed"
+)
+
+type bootloaderNotInstalledError struct{}
