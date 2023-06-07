@@ -18,7 +18,6 @@ require (
 	github.com/mdlayher/ethtool v0.0.0-20221212131811-ba3b4bc2e02c
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
-	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/gen v0.4.3
 	github.com/siderolabs/go-api-signature v0.2.2
