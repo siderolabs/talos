@@ -43,9 +43,9 @@ Appears in:
 |-------|------|-------------|----------|
 {{ range $field := $struct.Fields -}}
 {{ if $field.Name -}}
-| {{- $tick }}{{ $field.Name }}{{ $tick }} | 
-{{- encodeType $field.Type }} | 
-{{- fmtDesc $field.Description }} {{ with $field.Examples }}<details><summary>Show example(s)</summary>{{ range . }}{{ yaml .GetValue $field.Name }}{{ end }}</details>{{ end }} | 
+| {{- $tick }}{{ $field.Name }}{{ $tick }} |
+{{- encodeType $field.Type }} |
+{{- fmtDesc $field.Description }} {{ with $field.Examples }}<details><summary>Show example(s)</summary>{{ range . }}{{ yaml .GetValue $field.Name }}{{ end }}</details>{{ end }} |
 {{- range $value := $field.Values }}{{ $tick }}{{ $value }}{{ $tick }}<br />{{ end }} |
 {{ end -}}
 {{ end }}
@@ -113,7 +113,7 @@ func (fd *FileDoc) Write(path, frontmatter string) error {
 		return err
 	}
 
-	if _, err := f.Write([]byte(frontmatter)); err != nil {
+	if _, err := f.WriteString(frontmatter); err != nil {
 		return err
 	}
 

@@ -3,7 +3,6 @@
 # Meta args applied to stage base names.
 
 ARG TOOLS
-ARG IMPORTVET
 ARG PKGS
 ARG EXTRAS
 ARG INSTALLER_ARCH
@@ -95,8 +94,6 @@ FROM ghcr.io/siderolabs/talosctl-cni-bundle-install:${EXTRAS} AS extras-talosctl
 
 # The tools target provides base toolchain for the build.
 
-FROM --platform=${BUILDPLATFORM} $IMPORTVET as importvet
-
 FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
 ENV PATH /toolchain/bin:/toolchain/go/bin
 ENV LD_LIBRARY_PATH /toolchain/lib
@@ -127,6 +124,9 @@ RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepc
 ARG VTPROTOBUF_VERSION
 RUN --mount=type=cache,target=/.cache go install github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto@${VTPROTOBUF_VERSION} \
     && mv /go/bin/protoc-gen-go-vtproto /toolchain/go/bin/protoc-gen-go-vtproto
+ARG IMPORTVET_VERSION
+RUN --mount=type=cache,target=/.cache go install github.com/siderolabs/importvet/cmd/importvet@${IMPORTVET_VERSION} \
+    && mv /go/bin/importvet /toolchain/go/bin/importvet
 RUN --mount=type=cache,target=/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
     && mv /go/bin/govulncheck /toolchain/go/bin/govulncheck
 RUN --mount=type=cache,target=/.cache go install github.com/uber/prototool/cmd/prototool@v1.10.0 \
@@ -143,7 +143,6 @@ COPY ./hack/structprotogen /go/src/github.com/siderolabs/structprotogen
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/structprotogen \
     && go build -o structprotogen . \
     && mv structprotogen /toolchain/go/bin/
-COPY --from=importvet /importvet /toolchain/go/bin/importvet
 COPY ./hack/ukify /go/src/github.com/siderolabs/ukify
 RUN --mount=type=cache,target=/.cache \
     --mount=type=bind,source=pkg,target=/go/src/github.com/pkg \
@@ -318,7 +317,6 @@ COPY --from=generate /pkg/machinery/ ./pkg/machinery/
 COPY --from=embed / ./
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache go mod download
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
 WORKDIR /src
 

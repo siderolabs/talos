@@ -77,7 +77,7 @@ type apiEndpoint struct {
 
 // parseAPIEndpoint parses the siderolink.api kernel parameter.
 func parseAPIEndpoint(sideroLinkParam string) (apiEndpoint, error) {
-	if !urlSchemeMatcher.Match([]byte(sideroLinkParam)) {
+	if !urlSchemeMatcher.MatchString(sideroLinkParam) {
 		sideroLinkParam = "grpc://" + sideroLinkParam
 	}
 

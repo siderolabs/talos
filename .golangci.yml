@@ -168,6 +168,9 @@ linters:
     - contextcheck # enable once golangci-lint 1.50.1 or 1.51 lands
     - dupword # too annoying
     - musttag # too annoying
+    - nakedret # too annoying
+    - depguard
+    - tagalign # too annoying
 
     # abandoned linters for which golangci shows the warning that the repo is archived by the owner
     - golint

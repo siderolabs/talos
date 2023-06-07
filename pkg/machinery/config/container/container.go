@@ -185,7 +185,7 @@ func (container *Container) EncodeBytes(encoderOptions ...encoder.Option) ([]byt
 
 	for _, doc := range container.documents {
 		if buf.Len() > 0 {
-			buf.Write([]byte("---\n"))
+			buf.WriteString("---\n")
 		}
 
 		b, err := encoder.NewEncoder(doc, encoderOptions...).Encode()

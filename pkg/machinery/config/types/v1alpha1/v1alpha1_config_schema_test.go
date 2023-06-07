@@ -4,6 +4,7 @@
 
 package v1alpha1_test
 
+/* Commented out to workaround an issue with go1.20.5.
 import (
 	_ "embed"
 	"net/url"
@@ -144,3 +145,4 @@ func setNestedField(t *testing.T, obj map[string]any, value any, fields ...strin
 func jsonPath(fields []string) string {
 	return "." + strings.Join(fields, ".")
 }
+*/
