@@ -482,13 +482,41 @@ LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/talosctl"]
 
 # The kernel target is the linux kernel.
-
 FROM scratch AS kernel
 ARG TARGETARCH
 COPY --from=pkg-kernel /boot/vmlinuz /vmlinuz-${TARGETARCH}
 
-# The rootfs target provides the Talos rootfs.
+FROM tools AS depmod-amd64
+WORKDIR /staging
+COPY hack/modules-amd64.txt .
+COPY --from=pkg-kernel-amd64 /lib/modules lib/modules
+RUN <<EOF
+KERNEL_VERSION=$(ls lib/modules)
 
+xargs -a modules-amd64.txt -I {} install -D lib/modules/${KERNEL_VERSION}/{} /build/lib/modules/${KERNEL_VERSION}/{}
+
+depmod -b /build ${KERNEL_VERSION}
+EOF
+
+FROM scratch AS modules-amd64
+COPY --from=depmod-amd64 /build/lib/modules /lib/modules
+
+FROM tools AS depmod-arm64
+WORKDIR /staging
+COPY hack/modules-arm64.txt .
+COPY --from=pkg-kernel-arm64 /lib/modules lib/modules
+RUN <<EOF
+KERNEL_VERSION=$(ls lib/modules)
+
+xargs -a modules-arm64.txt -I {} install -D lib/modules/${KERNEL_VERSION}/{} /build/lib/modules/${KERNEL_VERSION}/{}
+
+depmod -b /build ${KERNEL_VERSION}
+EOF
+
+FROM scratch AS modules-arm64
+COPY --from=depmod-arm64 /build/lib/modules /lib/modules
+
+# The rootfs target provides the Talos rootfs.
 FROM build AS rootfs-base-amd64
 COPY --from=pkg-fhs / /rootfs
 COPY --from=pkg-ca-certificates / /rootfs
@@ -513,7 +541,7 @@ COPY --from=pkg-util-linux-amd64 /lib/libuuid.* /rootfs/lib/
 COPY --from=pkg-util-linux-amd64 /lib/libmount.* /rootfs/lib/
 COPY --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/sbin/modprobe
-COPY --from=pkg-kernel-amd64 /lib/modules /rootfs/lib/modules
+COPY --from=modules-amd64 /lib/modules /rootfs/lib/modules
 COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
 RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
@@ -567,7 +595,7 @@ COPY --from=pkg-util-linux-arm64 /lib/libuuid.* /rootfs/lib/
 COPY --from=pkg-util-linux-arm64 /lib/libmount.* /rootfs/lib/
 COPY --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
-COPY --from=pkg-kernel-arm64 /lib/modules /rootfs/lib/modules
+COPY --from=modules-amd64 /lib/modules /rootfs/lib/modules
 COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
 RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
@@ -804,7 +832,7 @@ ONBUILD RUN xz -d /usr/install/${TARGETARCH}/initramfs.xz \
     && rm /usr/install/${TARGETARCH}/initramfs \
     && rm rootfs.sqsh
 ONBUILD COPY --from=customization / /rootfs
-ONBUILD RUN find /rootfs \
+ONBUILD RUN depmod -b /rootfs $(ls /rootfs/lib/modules) \
     && mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress \
     && set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/usr/install/${TARGETARCH}/initramfs.xz \
     && rm -rf /rootfs \

@@ -1,0 +1,14 @@
+kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
+kernel/drivers/irqchip/irq-imx-mu-msi.ko
+kernel/drivers/mailbox/bcm-flexrm-mailbox.ko
+kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko
+kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_en.ko
+kernel/drivers/net/ethernet/mellanox/mlx5/core/mlx5_core.ko
+kernel/drivers/net/ethernet/mellanox/mlxfw/mlxfw.ko
+kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_core.ko
+kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_i2c.ko
+kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_minimal.ko
+kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_pci.ko
+kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_spectrum.ko
+kernel/lib/objagg.ko
+kernel/lib/parman.ko

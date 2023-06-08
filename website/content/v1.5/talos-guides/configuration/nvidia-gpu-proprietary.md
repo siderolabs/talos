@@ -64,7 +64,7 @@ COPY --from=ghcr.io/talos-user/kernel:{{< release >}}-nvidia /boot/vmlinuz /usr/
 Now build the image and push it to the registry.
 
 ```bash
-DOCKER_BUILDKIT=0 docker build --squash --build-arg RM="/lib/modules" -t ghcr.io/talos-user/installer:{{< release >}}-nvidia .
+DOCKER_BUILDKIT=0 docker build --squash -t ghcr.io/talos-user/installer:{{< release >}}-nvidia .
 docker push ghcr.io/talos-user/installer:{{< release >}}-nvidia
 ```
 
