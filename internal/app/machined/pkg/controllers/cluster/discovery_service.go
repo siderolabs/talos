@@ -37,7 +37,8 @@ const defaultDiscoveryTTL = 30 * time.Minute
 
 // DiscoveryServiceController pushes Affiliate resource to the Kubernetes registry.
 type DiscoveryServiceController struct {
-	localAffiliateID resource.ID
+	localAffiliateID       resource.ID
+	discoveryConfigVersion resource.Version
 }
 
 // Name implements controller.Controller interface.
@@ -133,6 +134,21 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			}
 		}
 
+		cleanupClient := func() {
+			if clientCtxCancel != nil {
+				clientCtxCancel()
+
+				<-clientErrCh
+
+				clientCtxCancel = nil
+				client = nil
+
+				prevLocalData = nil
+				prevLocalEndpoints = nil
+				prevOtherEndpoints = nil
+			}
+		}
+
 		discoveryConfig, err := safe.ReaderGetByID[*cluster.Config](ctx, r, cluster.ConfigID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
@@ -148,20 +164,14 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				return err
 			}
 
-			if clientCtxCancel != nil {
-				clientCtxCancel()
-
-				<-clientErrCh
-
-				clientCtxCancel = nil
-				client = nil
-
-				prevLocalData = nil
-				prevLocalEndpoints = nil
-				prevOtherEndpoints = nil
-			}
+			cleanupClient()
 
 			continue
+		}
+
+		if !discoveryConfig.Metadata().Version().Equal(ctrl.discoveryConfigVersion) {
+			// force reconnect on config change
+			cleanupClient()
 		}
 
 		identity, err := safe.ReaderGetByID[*cluster.Identity](ctx, r, cluster.LocalIdentity)
@@ -189,18 +199,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				return err
 			}
 
-			if clientCtxCancel != nil {
-				clientCtxCancel()
-
-				<-clientErrCh
-
-				clientCtxCancel = nil
-				client = nil
-
-				prevLocalData = nil
-				prevLocalEndpoints = nil
-				prevOtherEndpoints = nil
-			}
+			cleanupClient()
 		}
 
 		affiliate, err := safe.ReaderGetByID[*cluster.Affiliate](ctx, r, ctrl.localAffiliateID)
@@ -248,6 +247,8 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			var clientCtx context.Context
 
 			clientCtx, clientCtxCancel = context.WithCancel(ctx) //nolint:govet
+
+			ctrl.discoveryConfigVersion = discoveryConfig.Metadata().Version()
 
 			go func() {
 				clientErrCh <- client.Run(clientCtx, logger, notifyCh)

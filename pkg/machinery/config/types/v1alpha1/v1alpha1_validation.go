@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/go-debug"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -443,17 +442,8 @@ func (c *ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 		url, err := url.ParseRequestURI(c.Registries().Service().Endpoint())
 		if err != nil {
 			result = multierror.Append(result, fmt.Errorf("cluster discovery service registry endpoint is invalid: %w", err))
-		} else {
-			// allow insecure discovery service for easier local development
-			if !debug.Enabled {
-				if url.Scheme != "https" {
-					result = multierror.Append(result, fmt.Errorf("cluster discovery service should use TLS"))
-				}
-			}
-
-			if url.Path != "" && url.Path != "/" {
-				result = multierror.Append(result, fmt.Errorf("cluster discovery service path should be empty"))
-			}
+		} else if url.Path != "" && url.Path != "/" {
+			result = multierror.Append(result, fmt.Errorf("cluster discovery service path should be empty"))
 		}
 
 		if clusterCfg.ID() == "" {
