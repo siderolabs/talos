@@ -68,6 +68,13 @@ The `.machine.install.bootloader` option in the machine config is deprecated and
 This was a no-op for a long time. The bootloader is always installed.
 """
 
+    [notes.rdma-rxe]
+        title = "RDMA/RoCE support"
+        description="""\
+Talos no longer loads by default `rdma_rxe` Linux driver, which is required for RoCE support.
+If the driver is required, it can be enabled by specifying `rdma_rxe` in the `.machine.kernel.modules` field in the machine config.
+"""
+
 [make_deps]
 
     [make_deps.tools]
