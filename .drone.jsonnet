@@ -577,6 +577,7 @@ local integration_pipelines = [
   Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-misc', default_pipeline_steps + [
+    integration_network_chaos,
     integration_canal_reset,
     integration_bios_cgroupsv1,
     integration_disk_image,
