@@ -491,6 +491,8 @@ WORKDIR /staging
 COPY hack/modules-amd64.txt .
 COPY --from=pkg-kernel-amd64 /lib/modules lib/modules
 RUN <<EOF
+set -euo pipefail
+
 KERNEL_VERSION=$(ls lib/modules)
 
 xargs -a modules-amd64.txt -I {} install -D lib/modules/${KERNEL_VERSION}/{} /build/lib/modules/${KERNEL_VERSION}/{}
@@ -506,6 +508,8 @@ WORKDIR /staging
 COPY hack/modules-arm64.txt .
 COPY --from=pkg-kernel-arm64 /lib/modules lib/modules
 RUN <<EOF
+set -euo pipefail
+
 KERNEL_VERSION=$(ls lib/modules)
 
 xargs -a modules-arm64.txt -I {} install -D lib/modules/${KERNEL_VERSION}/{} /build/lib/modules/${KERNEL_VERSION}/{}
@@ -1087,7 +1091,7 @@ COPY ./hack/module-sig-verify ./hack/module-sig-verify
 COPY ./hack/structprotogen ./hack/structprotogen
 # fail always to get the output back
 RUN --mount=type=cache,target=/.cache <<EOF
-    for project in pkg/machinery . hack/cloud-image-uploader hack/docgen hack/gotagsrewrite hack/module-sig-verify hack/structprotogen; do
+    for project in pkg/machinery . hack/cloud-image-uploader hack/docgen hack/gotagsrewrite hack/module-sig-verify hack/structprotogen hack/ukify; do
         echo -e "\n>>>> ${project}:" && \
         (cd "${project}" && go list -u -m -json all | go-mod-outdated -update -direct)
     done

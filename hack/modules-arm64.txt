@@ -1,3 +1,6 @@
+modules.order
+modules.builtin
+modules.builtin.modinfo
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
 kernel/drivers/irqchip/irq-imx-mu-msi.ko
 kernel/drivers/mailbox/bcm-flexrm-mailbox.ko
