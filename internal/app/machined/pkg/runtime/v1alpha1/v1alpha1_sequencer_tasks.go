@@ -1971,26 +1971,6 @@ func LabelNodeAsControlPlane(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 	}, "labelNodeAsControlPlane"
 }
 
-// UpdateBootloader represents the UpdateBootloader task.
-func UpdateBootloader(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		ok, err := r.State().Machine().Meta().DeleteTag(ctx, meta.Upgrade)
-		if err != nil {
-			return err
-		}
-
-		if ok {
-			logger.Println("removing fallback")
-
-			if err = r.State().Machine().Meta().Flush(); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	}, "updateBootloader"
-}
-
 // Reboot represents the Reboot task.
 func Reboot(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

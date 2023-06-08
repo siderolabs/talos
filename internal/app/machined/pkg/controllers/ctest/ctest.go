@@ -7,7 +7,6 @@ package ctest
 
 import (
 	"context"
-	"log"
 	"sync"
 	"testing"
 	"time"
@@ -23,8 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/siderolabs/talos/pkg/logging"
+	"go.uber.org/zap/zaptest"
 )
 
 // DefaultSuite is a base suite for controller testing.
@@ -56,7 +54,7 @@ func (suite *DefaultSuite) SetupTest() {
 
 	var err error
 
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
+	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
 	suite.startRuntime()

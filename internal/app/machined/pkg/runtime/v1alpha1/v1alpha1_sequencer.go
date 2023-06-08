@@ -284,10 +284,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() != runtime.ModeContainer && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
 		"uncordon",
 		UncordonNode,
-	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
-		"bootloader",
-		UpdateBootloader,
 	)
 
 	return phases
