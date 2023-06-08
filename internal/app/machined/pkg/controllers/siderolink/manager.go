@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
+	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -110,62 +111,29 @@ func parseAPIEndpoint(sideroLinkParam string) (apiEndpoint, error) {
 //nolint:gocyclo,cyclop
 func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// initially, wait for the network address status to be ready
-	if err := r.UpdateInputs([]controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
-			Kind:      controller.InputWeak,
+	if err := networkutils.WaitForNetworkReady(ctx, r,
+		func(status *network.StatusSpec) bool {
+			return status.AddressReady
 		},
-	}); err != nil {
-		return err
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		}
-
-		netStatus, err := safe.ReaderGet[*network.Status](ctx, r, network.NewStatus(network.NamespaceName, network.StatusID).Metadata())
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				// no network state yet
-				continue
-			}
-
-			return fmt.Errorf("error reading network status: %w", err)
-		}
-
-		if !netStatus.TypedSpec().AddressReady {
-			// wait for address
-			continue
-		}
-
-		break
+		[]controller.Input{
+			{
+				Namespace: config.NamespaceName,
+				Type:      siderolink.ConfigType,
+				ID:        pointer.To(siderolink.ConfigID),
+				Kind:      controller.InputWeak,
+			},
+			{
+				Namespace: hardware.NamespaceName,
+				Type:      hardware.SystemInformationType,
+				ID:        pointer.To(hardware.SystemInformationID),
+				Kind:      controller.InputWeak,
+			},
+		},
+	); err != nil {
+		return fmt.Errorf("error waiting for network: %w", err)
 	}
 
 	// normal reconcile loop
-	if err := r.UpdateInputs([]controller.Input{
-		{
-			Namespace: config.NamespaceName,
-			Type:      siderolink.ConfigType,
-			ID:        pointer.To(siderolink.ConfigID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: hardware.NamespaceName,
-			Type:      hardware.SystemInformationType,
-			ID:        pointer.To(hardware.SystemInformationID),
-			Kind:      controller.InputWeak,
-		},
-	}); err != nil {
-		return err
-	}
-
-	r.QueueReconcile()
-
 	wgClient, wgClientErr := wgctrl.New()
 	if wgClientErr != nil {
 		return wgClientErr

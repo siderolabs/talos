@@ -6,33 +6,31 @@ package runtime_test
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 	eventsapi "github.com/siderolabs/siderolink/api/events"
 	"github.com/siderolabs/siderolink/pkg/events"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap/zaptest"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	controllerruntime "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type handler struct {
@@ -56,7 +54,6 @@ type EventsSinkSuite struct {
 	events  *v1alpha1.Events
 	state   state.State
 	handler *handler
-	cmdline *procfs.Cmdline
 	server  *grpc.Server
 	sink    *events.Sink
 
@@ -78,22 +75,25 @@ func (suite *EventsSinkSuite) SetupTest() {
 
 	var err error
 
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
+	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
 	suite.handler = &handler{}
-	suite.cmdline = procfs.NewCmdline(fmt.Sprintf("%s=%s", constants.KernelParamEventsSink, "localhost"))
 	suite.drainer = talosruntime.NewDrainer()
 
 	suite.Require().NoError(
 		suite.runtime.RegisterController(
 			&controllerruntime.EventsSinkController{
 				V1Alpha1Events: suite.events,
-				Cmdline:        suite.cmdline,
 				Drainer:        suite.drainer,
 			},
 		),
 	)
+
+	status := network.NewStatus(network.NamespaceName, network.StatusID)
+	status.TypedSpec().AddressReady = true
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, status))
 
 	suite.startRuntime()
 }
@@ -108,7 +108,7 @@ func (suite *EventsSinkSuite) startRuntime() {
 	}()
 }
 
-func (suite *EventsSinkSuite) startServer(ctx context.Context) {
+func (suite *EventsSinkSuite) startServer(ctx context.Context) string {
 	suite.sink = events.NewSink(
 		suite.handler,
 		[]proto.Message{
@@ -116,18 +116,9 @@ func (suite *EventsSinkSuite) startServer(ctx context.Context) {
 			&machine.PhaseEvent{},
 		})
 
-	status := network.NewStatus(network.NamespaceName, network.StatusID)
-	status.TypedSpec().AddressReady = true
-
-	suite.Require().NoError(suite.state.Create(ctx, status))
-
 	lis, err := net.Listen("tcp", "localhost:0")
 	suite.Require().NoError(err)
 
-	param := procfs.NewParameter(constants.KernelParamEventsSink)
-	param.Append(lis.Addr().String())
-
-	suite.cmdline.Set(constants.KernelParamEventsSink, param)
 	suite.server = grpc.NewServer()
 	eventsapi.RegisterEventSinkServiceServer(suite.server, suite.sink)
 
@@ -146,6 +137,8 @@ func (suite *EventsSinkSuite) startServer(ctx context.Context) {
 			return suite.server.Serve(lis)
 		},
 	)
+
+	return lis.Addr().String()
 }
 
 func (suite *EventsSinkSuite) TestPublish() {
@@ -169,21 +162,44 @@ func (suite *EventsSinkSuite) TestPublish() {
 
 	suite.Require().Equal(0, len(suite.handler.events))
 
-	suite.startServer(ctx)
+	endpoint := suite.startServer(ctx)
+	config := runtimeres.NewEventSinkConfig()
+	config.TypedSpec().Endpoint = endpoint
+	suite.Require().NoError(suite.state.Create(ctx, config))
 
-	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
+	suite.Require().NoError(retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
 		func() error {
 			suite.handler.eventsMu.Lock()
 			defer suite.handler.eventsMu.Unlock()
 
 			if len(suite.handler.events) != 2 {
-				return retry.ExpectedErrorf("expected 2 events")
+				return retry.ExpectedErrorf("expected 2 events, got %d", len(suite.handler.events))
 			}
 
 			return nil
 		},
+	))
+
+	suite.events.Publish(
+		ctx,
+		&machine.PhaseEvent{
+			Phase:  "test",
+			Action: machine.PhaseEvent_STOP,
+		},
 	)
-	suite.Require().NoError(err)
+
+	suite.Require().NoError(retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
+		func() error {
+			suite.handler.eventsMu.Lock()
+			defer suite.handler.eventsMu.Unlock()
+
+			if len(suite.handler.events) != 3 {
+				return retry.ExpectedErrorf("expected 3 events, got %d", len(suite.handler.events))
+			}
+
+			return nil
+		},
+	))
 }
 
 func (suite *EventsSinkSuite) TestDrain() {
@@ -209,30 +225,56 @@ func (suite *EventsSinkSuite) TestDrain() {
 
 	suite.Require().Equal(0, len(suite.handler.events))
 
+	// first, publish wrong endpoint
+	badLis, err := net.Listen("tcp", "localhost:0")
+	suite.Require().NoError(err)
+
+	badEndpoint := badLis.Addr().String()
+	suite.Require().NoError(badLis.Close())
+
+	config := runtimeres.NewEventSinkConfig()
+	config.TypedSpec().Endpoint = badEndpoint
+	suite.Require().NoError(suite.state.Create(ctx, config))
+
+	suite.T().Logf("%s starting bad server at %s", time.Now().Format(time.RFC3339), badEndpoint)
+
 	time.Sleep(time.Second * 1)
 
-	c, abort := context.WithTimeout(context.Background(), time.Second*5)
-	defer abort()
+	drainCtx, drainCtxCancel := context.WithTimeout(ctx, time.Second*5)
+	defer drainCtxCancel()
 
 	var eg errgroup.Group
 
 	eg.Go(
 		func() error {
-			return suite.drainer.Drain(c)
+			suite.T().Logf("%s starting drain", time.Now().Format(time.RFC3339))
+
+			return suite.drainer.Drain(drainCtx)
 		},
 	)
 
 	eg.Go(
 		func() error {
-			time.Sleep(time.Millisecond * 300)
+			// start real server with delay
+			time.Sleep(300 * time.Millisecond)
 
-			suite.startServer(ctx)
+			endpoint := suite.startServer(ctx)
 
-			return nil
+			suite.T().Logf("%s starting real server at %s", time.Now().Format(time.RFC3339), endpoint)
+
+			_, updateErr := safe.StateUpdateWithConflicts(
+				ctx, suite.state, runtimeres.NewEventSinkConfig().Metadata(),
+				func(cfg *runtimeres.EventSinkConfig) error {
+					cfg.TypedSpec().Endpoint = endpoint
+
+					return nil
+				})
+
+			return updateErr
 		},
 	)
 
-	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
+	suite.Require().NoError(retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
 		func() error {
 			suite.handler.eventsMu.Lock()
 			defer suite.handler.eventsMu.Unlock()
@@ -243,8 +285,7 @@ func (suite *EventsSinkSuite) TestDrain() {
 
 			return nil
 		},
-	)
-	suite.Require().NoError(err)
+	))
 
 	suite.Require().NoError(eg.Wait())
 }

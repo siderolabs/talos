@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-// KmsgLogConfigType is type of KernelParam resource.
+// KmsgLogConfigType is type of KmsgLogConfig resource.
 const KmsgLogConfigType = resource.Type("KmsgLogConfigs.runtime.talos.dev")
 
 // KmsgLogConfig resource holds configuration for kernel message log streaming.
@@ -24,7 +24,7 @@ type KmsgLogConfig = typed.Resource[KmsgLogConfigSpec, KmsgLogConfigExtension]
 // KmsgLogConfigID is a resource ID for KmsgLogConfig.
 const KmsgLogConfigID resource.ID = "kmsg-log"
 
-// KmsgLogConfigSpec describes status of the defined sysctls.
+// KmsgLogConfigSpec describes configuration for kmsg log streaming.
 //
 //gotagsrewrite:gen
 type KmsgLogConfigSpec struct {

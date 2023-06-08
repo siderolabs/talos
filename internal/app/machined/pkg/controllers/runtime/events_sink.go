@@ -7,35 +7,32 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/rs/xid"
+	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/go-pointer"
-	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/siderolink/api/events"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
+	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // EventsSinkController watches events and forwards them to the events sink server
 // if it's configured.
 type EventsSinkController struct {
-	V1Alpha1Events runtime.Watcher
-	Cmdline        *procfs.Cmdline
-	Drainer        *runtime.Drainer
+	V1Alpha1Events machinedruntime.Watcher
+	Drainer        *machinedruntime.Drainer
 
-	drainSub *runtime.DrainSubscription
-	drain    bool
-	backlog  atomic.Int32
+	drainSub *machinedruntime.DrainSubscription
 	eventID  xid.ID
 }
 
@@ -46,14 +43,7 @@ func (ctrl *EventsSinkController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *EventsSinkController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
-			Kind:      controller.InputWeak,
-		},
-	}
+	return nil
 }
 
 // Outputs implements controller.Controller interface.
@@ -63,20 +53,48 @@ func (ctrl *EventsSinkController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
-func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) (err error) {
-	if ctrl.Cmdline == nil || ctrl.Cmdline.Get(constants.KernelParamEventsSink).First() == nil {
-		return nil
-	}
+//nolint:gocyclo,cyclop
+func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	if ctrl.drainSub == nil {
-		ctrl.backlog.Store(-1)
 		ctrl.drainSub = ctrl.Drainer.Subscribe()
 	}
 
 	defer func() {
-		if ctrl.backlog.Load() == 0 {
+		if ctrl.drainSub != nil {
 			ctrl.drainSub.Cancel()
+		}
+	}()
+
+	if err := networkutils.WaitForNetworkReady(ctx, r,
+		func(status *network.StatusSpec) bool {
+			return status.AddressReady
+		},
+		[]controller.Input{
+			{
+				Namespace: runtime.NamespaceName,
+				Type:      runtime.EventSinkConfigType,
+				ID:        pointer.To(runtime.EventSinkConfigID),
+				Kind:      controller.InputWeak,
+			},
+		},
+	); err != nil {
+		return fmt.Errorf("error waiting for network: %w", err)
+	}
+
+	var (
+		conn                    *grpc.ClientConn
+		client                  events.EventSinkServiceClient
+		watchCh, consumeWatchCh chan machinedruntime.EventInfo
+		backlog                 int
+		draining                bool
+	)
+
+	defer func() {
+		if conn != nil {
+			conn.Close() //nolint:errcheck
 		}
 	}()
 
@@ -84,110 +102,102 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-r.EventCh():
-		}
-
-		var netStatus resource.Resource
-
-		netStatus, err = r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				// no network state yet
-				continue
-			}
-
-			return fmt.Errorf("error reading network status: %w", err)
-		}
-
-		if !netStatus.(*network.Status).TypedSpec().AddressReady {
-			// wait for address
-			continue
-		}
-
-		break
-	}
-
-	errCh := make(chan error)
-
-	sink := ctrl.Cmdline.Get(constants.KernelParamEventsSink).First()
-
-	conn, err := grpc.DialContext(ctx, *sink, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return err
-	}
-
-	defer conn.Close() //nolint:errcheck
-
-	client := events.NewEventSinkServiceClient(conn)
-
-	opts := []runtime.WatchOptionFunc{}
-	if ctrl.eventID.IsNil() {
-		opts = append(opts, runtime.WithTailEvents(-1))
-	} else {
-		opts = append(opts, runtime.WithTailID(ctrl.eventID))
-	}
-
-	if err = ctrl.V1Alpha1Events.Watch(func(eventCh <-chan runtime.EventInfo) {
-		errCh <- ctrl.handleEvents(ctx, eventCh, client)
-	}, opts...); err != nil {
-		return err
-	}
-
-	err = <-errCh
-
-	return err
-}
-
-//nolint:gocyclo
-func (ctrl *EventsSinkController) handleEvents(ctx context.Context, eventCh <-chan runtime.EventInfo, client events.EventSinkServiceClient) error {
-	for {
-		var (
-			event runtime.EventInfo
-			ok    bool
-			data  *anypb.Any
-			err   error
-		)
-
-		select {
-		case <-ctx.Done():
-			return nil
-		case event, ok = <-eventCh:
-			if !ok {
-				return nil
-			}
 		case <-ctrl.drainSub.EventCh():
-			backlog := ctrl.backlog.Load()
+			// drain started, return immediately if there's no backlog
+			draining = true
 
 			if backlog == 0 {
 				return nil
 			}
+		case event := <-consumeWatchCh:
+			// if consumeWatchCh is not nil, client connection was established
+			backlog = event.Backlog
 
-			ctrl.drain = true
+			data, err := anypb.New(event.Payload)
+			if err != nil {
+				return err
+			}
 
-			continue
-		}
+			req := &events.EventRequest{
+				Id:   event.ID.String(),
+				Data: data,
+			}
 
-		ctrl.backlog.Store(int32(event.Backlog))
+			_, err = client.Publish(ctx, req)
+			if err != nil {
+				return fmt.Errorf("error publishing event: %w", err)
+			}
 
-		data, err = anypb.New(event.Payload)
-		if err != nil {
-			return err
-		}
+			// adjust last consumed event
+			ctrl.eventID = event.ID
 
-		req := &events.EventRequest{
-			Id:   event.ID.String(),
-			Data: data,
-		}
+			// if draining and backlog is 0, return immediately
+			if draining && backlog == 0 {
+				return nil
+			}
+		case <-r.EventCh():
+			// configuration changed, re-establish connection
+			cfg, err := safe.ReaderGetByID[*runtime.EventSinkConfig](ctx, r, runtime.EventSinkConfigID)
+			if err != nil && !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting event sink config: %w", err)
+			}
 
-		_, err = client.Publish(ctx, req)
-		if err != nil {
-			return err
-		}
+			if conn != nil {
+				logger.Debug("closing connection to event sink")
 
-		ctrl.eventID = event.ID
+				conn.Close() //nolint:errcheck
+				conn = nil
+				client = nil
+				consumeWatchCh = nil // stop consuming events
+				backlog = 0
+			}
 
-		if ctrl.drain && event.Backlog == 0 {
-			return nil
+			if cfg == nil {
+				// no config, no event streaming
+				continue
+			}
+
+			// establish connection
+			logger.Debug("establishing connection to event sink", zap.String("endpoint", cfg.TypedSpec().Endpoint))
+
+			conn, err = grpc.DialContext(ctx, cfg.TypedSpec().Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				return fmt.Errorf("error establishing connection to event sink: %w", err)
+			}
+
+			client = events.NewEventSinkServiceClient(conn)
+
+			// start watching events if we haven't already done so
+			//
+			// watch is only established with the first live connection to make sure we don't miss any events
+			if watchCh == nil {
+				watchCh = make(chan machinedruntime.EventInfo)
+
+				opts := []machinedruntime.WatchOptionFunc{}
+				if ctrl.eventID.IsNil() {
+					opts = append(opts, machinedruntime.WithTailEvents(-1))
+				} else {
+					opts = append(opts, machinedruntime.WithTailID(ctrl.eventID))
+				}
+
+				// Watch returns immediately, setting up a goroutine which will copy events to `watchCh`
+				if err = ctrl.V1Alpha1Events.Watch(func(eventCh <-chan machinedruntime.EventInfo) {
+					for {
+						select {
+						case <-ctx.Done():
+							return
+						case event := <-eventCh:
+							if !channel.SendWithContext(ctx, watchCh, event) {
+								return
+							}
+						}
+					}
+				}, opts...); err != nil {
+					return err
+				}
+			}
+
+			consumeWatchCh = watchCh
 		}
 	}
 }

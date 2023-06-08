@@ -217,9 +217,11 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.DevicesStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&runtimecontrollers.EventsSinkConfigController{
+			Cmdline: procfs.ProcCmdline(),
+		},
 		&runtimecontrollers.EventsSinkController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
-			Cmdline:        procfs.ProcCmdline(),
 			Drainer:        drainer,
 		},
 		&runtimecontrollers.ExtensionServiceController{

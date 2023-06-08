@@ -179,6 +179,7 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
+    - [EventSinkConfigSpec](#talos.resource.definitions.runtime.EventSinkConfigSpec)
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
@@ -3274,6 +3275,21 @@ DevicesStatusSpec is the spec for devices status.
 
 
 
+<a name="talos.resource.definitions.runtime.EventSinkConfigSpec"></a>
+
+### EventSinkConfigSpec
+EventSinkConfigSpec describes configuration of Talos event log streaming.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.runtime.KernelModuleSpecSpec"></a>
 
 ### KernelModuleSpecSpec
@@ -3326,7 +3342,7 @@ KernelParamStatusSpec describes status of the defined sysctls.
 <a name="talos.resource.definitions.runtime.KmsgLogConfigSpec"></a>
 
 ### KmsgLogConfigSpec
-KmsgLogConfigSpec describes status of the defined sysctls.
+KmsgLogConfigSpec describes configuration for kmsg log streaming.
 
 
 | Field | Type | Label | Description |

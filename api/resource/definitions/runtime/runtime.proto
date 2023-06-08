@@ -12,6 +12,11 @@ message DevicesStatusSpec {
   bool ready = 1;
 }
 
+// EventSinkConfigSpec describes configuration of Talos event log streaming.
+message EventSinkConfigSpec {
+  string endpoint = 1;
+}
+
 // KernelModuleSpecSpec describes Linux kernel module to load.
 message KernelModuleSpecSpec {
   string name = 1;
@@ -31,7 +36,7 @@ message KernelParamStatusSpec {
   bool unsupported = 3;
 }
 
-// KmsgLogConfigSpec describes status of the defined sysctls.
+// KmsgLogConfigSpec describes configuration for kmsg log streaming.
 message KmsgLogConfigSpec {
   repeated common.URL destinations = 1;
 }
