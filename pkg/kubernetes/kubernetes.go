@@ -6,7 +6,6 @@ package kubernetes
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -27,8 +26,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -194,68 +191,6 @@ func (h *Client) NodeIPs(ctx context.Context, machineType machine.Type) (addrs [
 	}
 
 	return addrs, nil
-}
-
-// LabelNodeAsControlPlane labels a node with the required control-plane label and NoSchedule taint.
-//
-//nolint:gocyclo
-func (h *Client) LabelNodeAsControlPlane(ctx context.Context, name string, taintNoSchedule bool) (err error) {
-	n, err := h.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	// The node may appear to have no labels at first, so we check for the
-	// existence of a well known label to ensure that a patch will be successful.
-	if _, found := n.ObjectMeta.Labels[corev1.LabelHostname]; !found {
-		return fmt.Errorf("could not find hostname label")
-	}
-
-	oldData, err := json.Marshal(n)
-	if err != nil {
-		return fmt.Errorf("failed to marshal unmodified node %q into JSON: %w", n.Name, err)
-	}
-
-	n.Labels[constants.LabelNodeRoleControlPlane] = ""
-
-	newTaints := make([]corev1.Taint, 0, len(n.Spec.Taints))
-
-	for _, taint := range n.Spec.Taints {
-		if taint.Key == constants.LabelNodeRoleControlPlane {
-			continue
-		}
-
-		newTaints = append(newTaints, taint)
-	}
-
-	if taintNoSchedule {
-		newTaints = append(newTaints, corev1.Taint{
-			Key:    constants.LabelNodeRoleControlPlane,
-			Effect: corev1.TaintEffectNoSchedule,
-		})
-	}
-
-	n.Spec.Taints = newTaints
-
-	newData, err := json.Marshal(n)
-	if err != nil {
-		return fmt.Errorf("failed to marshal modified node %q into JSON: %w", n.Name, err)
-	}
-
-	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, corev1.Node{})
-	if err != nil {
-		return fmt.Errorf("failed to create two way merge patch: %w", err)
-	}
-
-	if _, err := h.CoreV1().Nodes().Patch(ctx, name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{}); err != nil {
-		if apierrors.IsConflict(err) {
-			return fmt.Errorf("unable to update node metadata due to conflict: %w", err)
-		}
-
-		return fmt.Errorf("error patching node %q: %w", name, err)
-	}
-
-	return nil
 }
 
 // WaitUntilReady waits for a node to be ready.

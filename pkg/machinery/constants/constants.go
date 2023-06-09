@@ -640,6 +640,9 @@ const (
 	// AnnotationOwnedLabels is the annotation key for the list of node labels owned by Talos.
 	AnnotationOwnedLabels = "talos.dev/owned-labels"
 
+	// AnnotationOwnedTaints is the annotation key for the list of node taints owned by Talos.
+	AnnotationOwnedTaints = "talos.dev/owned-taints"
+
 	// DefaultNTPServer is the NTP server to use if not configured explicitly.
 	//
 	// TODO: Once we get naming sorted we need to apply for a project specific address

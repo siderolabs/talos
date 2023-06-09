@@ -100,6 +100,7 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, l
 				}
 
 				nodename.TypedSpec().HostnameVersion = hostnameResource.Metadata().Version().String()
+				nodename.TypedSpec().SkipNodeRegistration = cfgProvider.Machine().Kubelet().SkipNodeRegistration()
 
 				return nil
 			},

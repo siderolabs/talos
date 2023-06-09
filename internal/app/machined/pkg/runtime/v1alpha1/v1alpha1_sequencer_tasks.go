@@ -1937,40 +1937,6 @@ func Upgrade(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	}, "upgrade"
 }
 
-// LabelNodeAsControlPlane represents the LabelNodeAsControlPlane task.
-func LabelNodeAsControlPlane(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		err = retry.Constant(constants.NodeReadyTimeout, retry.WithUnits(3*time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
-			var h *kubernetes.Client
-
-			h, err = kubernetes.NewTemporaryClientControlPlane(ctx, r.State().V1Alpha2().Resources())
-			if err != nil {
-				return err
-			}
-
-			defer h.Close() //nolint:errcheck
-
-			var nodename string
-
-			if nodename, err = r.NodeName(); err != nil {
-				return err
-			}
-
-			if err = h.LabelNodeAsControlPlane(ctx, nodename, !r.Config().Cluster().ScheduleOnControlPlanes()); err != nil {
-				return retry.ExpectedError(err)
-			}
-
-			return nil
-		})
-
-		if err != nil {
-			return fmt.Errorf("failed to label node as control-plane: %w", err)
-		}
-
-		return nil
-	}, "labelNodeAsControlPlane"
-}
-
 // Reboot represents the Reboot task.
 func Reboot(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

@@ -277,10 +277,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"startEverything",
 		StartAllServices,
 	).AppendWhen(
-		r.Config().Machine().Type() != machine.TypeWorker && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
-		"labelControlPlane",
-		LabelNodeAsControlPlane,
-	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
 		"uncordon",
 		UncordonNode,

@@ -26,8 +26,9 @@ type Nodename = typed.Resource[NodenameSpec, NodenameExtension]
 //
 //gotagsrewrite:gen
 type NodenameSpec struct {
-	Nodename        string `yaml:"nodename" protobuf:"1"`
-	HostnameVersion string `yaml:"hostnameVersion" protobuf:"2"`
+	Nodename             string `yaml:"nodename" protobuf:"1"`
+	HostnameVersion      string `yaml:"hostnameVersion" protobuf:"2"`
+	SkipNodeRegistration bool   `yaml:"skipNodeRegistration" protobuf:"3"`
 }
 
 // NewNodename initializes a Nodename resource.

@@ -166,10 +166,18 @@ message NodeLabelSpecSpec {
   string value = 2;
 }
 
+// NodeTaintSpecSpec represents a label that's attached to a Talos node.
+message NodeTaintSpecSpec {
+  string key = 1;
+  string effect = 2;
+  string value = 3;
+}
+
 // NodenameSpec describes Kubernetes nodename.
 message NodenameSpec {
   string nodename = 1;
   string hostname_version = 2;
+  bool skip_node_registration = 3;
 }
 
 // SchedulerConfigSpec is configuration for kube-scheduler.

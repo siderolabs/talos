@@ -13,22 +13,23 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-// NodeLabelSpecController manages k8s.NodeLabelsConfig based on configuration.
-type NodeLabelSpecController struct{}
+// NodeTaintSpecController manages k8s.NodeLabelsConfig based on configuration.
+type NodeTaintSpecController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *NodeLabelSpecController) Name() string {
-	return "k8s.NodeLabelSpecController"
+func (ctrl *NodeTaintSpecController) Name() string {
+	return "k8s.NodeTaintSpecController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *NodeLabelSpecController) Inputs() []controller.Input {
+func (ctrl *NodeTaintSpecController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
@@ -40,10 +41,10 @@ func (ctrl *NodeLabelSpecController) Inputs() []controller.Input {
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *NodeLabelSpecController) Outputs() []controller.Output {
+func (ctrl *NodeTaintSpecController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: k8s.NodeLabelSpecType,
+			Type: k8s.NodeTaintSpecType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -52,7 +53,7 @@ func (ctrl *NodeLabelSpecController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *NodeTaintSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -69,42 +70,34 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		nodeLabels := cfg.Config().Machine().NodeLabels()
+		touched := map[string]struct{}{}
 
-		if nodeLabels == nil {
-			nodeLabels = map[string]string{}
-		}
+		if cfg.Config().Machine().Type().IsControlPlane() && !cfg.Config().Cluster().ScheduleOnControlPlanes() {
+			touched[constants.LabelNodeRoleControlPlane] = struct{}{}
 
-		if cfg.Config().Machine().Type().IsControlPlane() {
-			nodeLabels[constants.LabelNodeRoleControlPlane] = ""
-		}
-
-		for key, value := range nodeLabels {
-			if err = safe.WriterModify(ctx, r, k8s.NewNodeLabelSpec(key), func(k *k8s.NodeLabelSpec) error {
-				k.TypedSpec().Key = key
-				k.TypedSpec().Value = value
+			if err = safe.WriterModify(ctx, r, k8s.NewNodeTaintSpec(constants.LabelNodeRoleControlPlane), func(k *k8s.NodeTaintSpec) error {
+				k.TypedSpec().Key = constants.LabelNodeRoleControlPlane
+				k.TypedSpec().Value = ""
+				k.TypedSpec().Effect = string(v1.TaintEffectNoSchedule)
 
 				return nil
 			}); err != nil {
-				return fmt.Errorf("error updating node label spec: %w", err)
+				return fmt.Errorf("error updating node taint spec: %w", err)
 			}
 		}
 
-		labelSpecs, err := safe.ReaderListAll[*k8s.NodeLabelSpec](ctx, r)
+		taintSpecs, err := safe.ReaderListAll[*k8s.NodeTaintSpec](ctx, r)
 		if err != nil {
-			return fmt.Errorf("error getting node label specs: %w", err)
+			return fmt.Errorf("error getting node taint specs: %w", err)
 		}
 
-		for iter := safe.IteratorFromList(labelSpecs); iter.Next(); {
-			labelSpec := iter.Value()
-
-			_, touched := nodeLabels[labelSpec.TypedSpec().Key]
-			if touched {
+		for iter := safe.IteratorFromList(taintSpecs); iter.Next(); {
+			if _, touched := touched[iter.Value().Metadata().ID()]; touched {
 				continue
 			}
 
-			if err = r.Destroy(ctx, labelSpec.Metadata()); err != nil {
-				return fmt.Errorf("error destroying node label spec: %w", err)
+			if err = r.Destroy(ctx, iter.Value().Metadata()); err != nil {
+				return fmt.Errorf("error destroying node taint spec: %w", err)
 			}
 		}
 

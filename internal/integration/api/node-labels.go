@@ -10,6 +10,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/siderolabs/go-pointer"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -19,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // NodeLabelsSuite verifies updating node labels via machine config.
@@ -89,7 +91,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	suite.waitUntil(watcher, map[string]string{
 		"talos.dev/test1": "value1",
 		"talos.dev/test2": "value2",
-	})
+	}, isControlplane)
 
 	// remove one label owned by Talos
 	suite.setNodeLabels(node, map[string]string{
@@ -99,7 +101,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	suite.waitUntil(watcher, map[string]string{
 		"talos.dev/test1": "foo",
 		"talos.dev/test2": "",
-	})
+	}, isControlplane)
 
 	// on control plane node, try to override a label not owned by Talos
 	if isControlplane {
@@ -111,7 +113,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 		suite.waitUntil(watcher, map[string]string{
 			"talos.dev/test1": "foo2",
 			stdLabelName:      stdLabelValue,
-		})
+		}, isControlplane)
 	}
 
 	// remove all Talos Labels
@@ -120,10 +122,39 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	suite.waitUntil(watcher, map[string]string{
 		"talos.dev/test1": "",
 		"talos.dev/test2": "",
-	})
+	}, isControlplane)
 }
 
-func (suite *NodeLabelsSuite) waitUntil(watcher watch.Interface, expectedLabels map[string]string) {
+// TestAllowScheduling verifies node taints are updated.
+func (suite *NodeLabelsSuite) TestAllowScheduling() {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	suite.T().Logf("updating taints on node %q (%q)", node, k8sNode.Name)
+
+	watcher, err := suite.Clientset.CoreV1().Nodes().Watch(suite.ctx, metav1.ListOptions{
+		FieldSelector: "metadata.name=" + k8sNode.Name,
+		Watch:         true,
+	})
+	suite.Require().NoError(err)
+
+	defer watcher.Stop()
+
+	suite.waitUntil(watcher, nil, true)
+
+	suite.setAllowScheduling(node, true)
+
+	suite.waitUntil(watcher, nil, false)
+
+	suite.setAllowScheduling(node, false)
+
+	suite.waitUntil(watcher, nil, true)
+}
+
+//nolint:gocyclo
+func (suite *NodeLabelsSuite) waitUntil(watcher watch.Interface, expectedLabels map[string]string, taintNoSchedule bool) {
 outer:
 	for {
 		select {
@@ -131,7 +162,7 @@ outer:
 			k8sNode, ok := ev.Object.(*v1.Node)
 			suite.Require().True(ok, "watch event is not of type v1.Node")
 
-			suite.T().Logf("labels %v", k8sNode.Labels)
+			suite.T().Logf("labels %v, taints %v", k8sNode.Labels, k8sNode.Spec.Taints)
 
 			for k, v := range expectedLabels {
 				if v == "" {
@@ -148,6 +179,24 @@ outer:
 
 					continue outer
 				}
+			}
+
+			var found bool
+
+			for _, taint := range k8sNode.Spec.Taints {
+				if taint.Key == constants.LabelNodeRoleControlPlane && taint.Effect == v1.TaintEffectNoSchedule {
+					found = true
+				}
+			}
+
+			if taintNoSchedule && !found {
+				suite.T().Logf("taint %q is not present", constants.LabelNodeRoleControlPlane)
+
+				continue outer
+			} else if !taintNoSchedule && found {
+				suite.T().Logf("taint %q is still present", constants.LabelNodeRoleControlPlane)
+
+				continue outer
 			}
 
 			return
@@ -167,6 +216,32 @@ func (suite *NodeLabelsSuite) setNodeLabels(nodeIP string, nodeLabels map[string
 	suite.Require().NotNil(nodeConfigRaw, "node config is not of type v1alpha1.Config")
 
 	nodeConfigRaw.MachineConfig.MachineNodeLabels = nodeLabels
+
+	bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
+	suite.Require().NoError(err)
+
+	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+		Data: bytes,
+		Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
+	})
+
+	suite.Require().NoError(err)
+}
+
+func (suite *NodeLabelsSuite) setAllowScheduling(nodeIP string, allowScheduling bool) {
+	nodeCtx := client.WithNode(suite.ctx, nodeIP)
+
+	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	nodeConfigRaw := nodeConfig.RawV1Alpha1()
+	suite.Require().NotNil(nodeConfigRaw, "node config is not of type v1alpha1.Config")
+
+	if allowScheduling {
+		nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = pointer.To(true)
+	} else {
+		nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = nil
+	}
 
 	bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
 	suite.Require().NoError(err)

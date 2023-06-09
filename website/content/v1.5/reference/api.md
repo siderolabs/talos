@@ -113,6 +113,7 @@ description: Talos gRPC API reference.
     - [NodeIPConfigSpec](#talos.resource.definitions.k8s.NodeIPConfigSpec)
     - [NodeIPSpec](#talos.resource.definitions.k8s.NodeIPSpec)
     - [NodeLabelSpecSpec](#talos.resource.definitions.k8s.NodeLabelSpecSpec)
+    - [NodeTaintSpecSpec](#talos.resource.definitions.k8s.NodeTaintSpecSpec)
     - [NodenameSpec](#talos.resource.definitions.k8s.NodenameSpec)
     - [SchedulerConfigSpec](#talos.resource.definitions.k8s.SchedulerConfigSpec)
     - [SchedulerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry)
@@ -2125,6 +2126,23 @@ NodeLabelSpecSpec represents a label that's attached to a Talos node.
 
 
 
+<a name="talos.resource.definitions.k8s.NodeTaintSpecSpec"></a>
+
+### NodeTaintSpecSpec
+NodeTaintSpecSpec represents a label that's attached to a Talos node.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| effect | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.k8s.NodenameSpec"></a>
 
 ### NodenameSpec
@@ -2135,6 +2153,7 @@ NodenameSpec describes Kubernetes nodename.
 | ----- | ---- | ----- | ----------- |
 | nodename | [string](#string) |  |  |
 | hostname_version | [string](#string) |  |  |
+| skip_node_registration | [bool](#bool) |  |  |
 
 
 
