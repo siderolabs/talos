@@ -10,6 +10,7 @@ import (
 	"log"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -26,7 +27,7 @@ import (
 
 // Runtime implements the Runtime interface.
 type Runtime struct {
-	c config.Provider
+	c atomicInterface[config.Provider]
 	s runtime.State
 	e runtime.EventStream
 	l runtime.LoggingManager
@@ -46,12 +47,12 @@ func NewRuntime(s runtime.State, e runtime.EventStream, l runtime.LoggingManager
 
 // Config implements the Runtime interface.
 func (r *Runtime) Config() config.Config {
-	return r.c
+	return r.c.Load()
 }
 
 // ConfigContainer implements the Runtime interface.
 func (r *Runtime) ConfigContainer() config.Container {
-	return r.c
+	return r.c.Load()
 }
 
 // LoadAndValidateConfig implements the Runtime interface.
@@ -101,14 +102,19 @@ func (r *Runtime) CancelConfigRollbackTimeout() {
 
 // SetConfig implements the Runtime interface.
 func (r *Runtime) SetConfig(cfg config.Provider) error {
-	r.c = cfg
+	r.c.Store(cfg)
 
 	return r.s.V1Alpha2().SetConfig(cfg)
 }
 
 // CanApplyImmediate implements the Runtime interface.
 func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
-	currentConfig := r.c.RawV1Alpha1()
+	cfgProv := r.c.Load()
+	if cfgProv == nil {
+		return fmt.Errorf("no current config")
+	}
+
+	currentConfig := cfgProv.RawV1Alpha1()
 	if currentConfig == nil {
 		return fmt.Errorf("current config is not v1alpha1")
 	}
@@ -209,3 +215,20 @@ func (r *Runtime) IsBootstrapAllowed() bool {
 
 	return true
 }
+
+// atomicInterface is a typed wrapper around atomic.Value. It's only useful for storing the interfaces, because
+// you don't need another layer of indirection (unlike atomic.Pointer[T]) to load the value. For concrete types
+// please use atomic.Pointer.
+type atomicInterface[T any] struct{ v atomic.Value }
+
+func (a *atomicInterface[T]) Load() T {
+	if val := a.v.Load(); val != nil {
+		return val.(T) //nolint:forcetypeassert
+	}
+
+	var zero T
+
+	return zero
+}
+
+func (a *atomicInterface[T]) Store(v T) { a.v.Store(v) }
