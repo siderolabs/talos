@@ -314,8 +314,8 @@ function install_and_run_cilium_cni_tests {
         --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
         --helm-set=cgroup.autoMount.enabled=false \
         --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
-        --helm-set=k8sServiceHost=172.20.1.1 \
-        --helm-set=k8sServicePort=6443 \
+        --helm-set=k8sServiceHost=localhost \
+        --helm-set=k8sServicePort=13336 \
         --wait-duration=10m
       ;;
     *)

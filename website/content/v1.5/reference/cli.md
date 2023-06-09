@@ -92,6 +92,7 @@ talosctl cluster create [flags]
 ### Options
 
 ```
+      --api-server-balancer-port int             load balancer port for the API server (defaults 0 - disabled)
       --arch string                              cluster architecture (default "amd64")
       --bad-rtc                                  launch VM with bad RTC state (QEMU only)
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")

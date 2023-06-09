@@ -75,6 +75,22 @@ Talos no longer loads by default `rdma_rxe` Linux driver, which is required for 
 If the driver is required, it can be enabled by specifying `rdma_rxe` in the `.machine.kernel.modules` field in the machine config.
 """
 
+    [notes.api-server-loadbalancer]
+        title = "Kubernetes API Server In-Cluster Load Balancer"
+        description="""\
+Talos now supports configuring the Kubernetes API Server in-cluster load balancer with machine config
+`features.apiServerBalancerSupport.port` and `features.apiServerBalancerSupport.enabled` fields.
+
+If enabled, the loadbalancer binds to `localhost` and runs on the same port on every machine in the cluster.
+The default value for loadbalancer endpoint is https://localhost:7445.
+
+The in-cluster loadbalancer endpoint is used by the `kubelet`, `kube-scheduler`, `kube-controller-manager`
+and `kube-proxy` by default and can be passed to the CNIs like Cilium and Calico.
+
+The in-cluster loadbalancer provides access to the Kubernetes API endpoint even if the external loadbalancer
+is not healthy, provided that the worker nodes can reach to the controlplane machine addresses directly.
+"""
+
 [make_deps]
 
     [make_deps.tools]

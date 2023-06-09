@@ -70,6 +70,7 @@ var (
 	RegistryTLSConfigDoc              encoder.Doc
 	SystemDiskEncryptionConfigDoc     encoder.Doc
 	FeaturesConfigDoc                 encoder.Doc
+	APIServerBalancerDoc              encoder.Doc
 	KubernetesTalosAPIAccessConfigDoc encoder.Doc
 	VolumeMountConfigDoc              encoder.Doc
 	ClusterInlineManifestDoc          encoder.Doc
@@ -2370,7 +2371,7 @@ func init() {
 			FieldName: "features",
 		},
 	}
-	FeaturesConfigDoc.Fields = make([]encoder.Doc, 5)
+	FeaturesConfigDoc.Fields = make([]encoder.Doc, 6)
 	FeaturesConfigDoc.Fields[0].Name = "rbac"
 	FeaturesConfigDoc.Fields[0].Type = "bool"
 	FeaturesConfigDoc.Fields[0].Note = ""
@@ -2398,6 +2399,32 @@ func init() {
 	FeaturesConfigDoc.Fields[4].Note = ""
 	FeaturesConfigDoc.Fields[4].Description = "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota."
 	FeaturesConfigDoc.Fields[4].Comments[encoder.LineComment] = "Enable XFS project quota support for EPHEMERAL partition and user disks."
+	FeaturesConfigDoc.Fields[5].Name = "apiServerBalancerSupport"
+	FeaturesConfigDoc.Fields[5].Type = "APIServerBalancer"
+	FeaturesConfigDoc.Fields[5].Note = ""
+	FeaturesConfigDoc.Fields[5].Description = "API server load balancer support - local proxy on defined port that will distribute\nrequests to all API servers in the cluster."
+	FeaturesConfigDoc.Fields[5].Comments[encoder.LineComment] = "API server load balancer support - local proxy on defined port that will distribute"
+
+	APIServerBalancerDoc.Type = "APIServerBalancer"
+	APIServerBalancerDoc.Comments[encoder.LineComment] = "APIServerBalancer describes the configuration for the API server load balancer."
+	APIServerBalancerDoc.Description = "APIServerBalancer describes the configuration for the API server load balancer."
+	APIServerBalancerDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "FeaturesConfig",
+			FieldName: "apiServerBalancerSupport",
+		},
+	}
+	APIServerBalancerDoc.Fields = make([]encoder.Doc, 2)
+	APIServerBalancerDoc.Fields[0].Name = "enabled"
+	APIServerBalancerDoc.Fields[0].Type = "bool"
+	APIServerBalancerDoc.Fields[0].Note = ""
+	APIServerBalancerDoc.Fields[0].Description = "Enable API server load balancer support - will start local proxy."
+	APIServerBalancerDoc.Fields[0].Comments[encoder.LineComment] = "Enable API server load balancer support - will start local proxy."
+	APIServerBalancerDoc.Fields[1].Name = "port"
+	APIServerBalancerDoc.Fields[1].Type = "int"
+	APIServerBalancerDoc.Fields[1].Note = ""
+	APIServerBalancerDoc.Fields[1].Description = "API server load balancer port."
+	APIServerBalancerDoc.Fields[1].Comments[encoder.LineComment] = "API server load balancer port."
 
 	KubernetesTalosAPIAccessConfigDoc.Type = "KubernetesTalosAPIAccessConfig"
 	KubernetesTalosAPIAccessConfigDoc.Comments[encoder.LineComment] = "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods."
@@ -2994,6 +3021,10 @@ func (_ FeaturesConfig) Doc() *encoder.Doc {
 	return &FeaturesConfigDoc
 }
 
+func (_ APIServerBalancer) Doc() *encoder.Doc {
+	return &APIServerBalancerDoc
+}
+
 func (_ KubernetesTalosAPIAccessConfig) Doc() *encoder.Doc {
 	return &KubernetesTalosAPIAccessConfigDoc
 }
@@ -3116,6 +3147,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&RegistryTLSConfigDoc,
 			&SystemDiskEncryptionConfigDoc,
 			&FeaturesConfigDoc,
+			&APIServerBalancerDoc,
 			&KubernetesTalosAPIAccessConfigDoc,
 			&VolumeMountConfigDoc,
 			&ClusterInlineManifestDoc,

@@ -108,6 +108,8 @@ description: Talos gRPC API reference.
     - [KubeletConfigSpec](#talos.resource.definitions.k8s.KubeletConfigSpec)
     - [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry)
     - [KubeletSpecSpec](#talos.resource.definitions.k8s.KubeletSpecSpec)
+    - [LoadBalancerConfigSpec](#talos.resource.definitions.k8s.LoadBalancerConfigSpec)
+    - [LoadBalancerStatusesSpec](#talos.resource.definitions.k8s.LoadBalancerStatusesSpec)
     - [ManifestSpec](#talos.resource.definitions.k8s.ManifestSpec)
     - [ManifestStatusSpec](#talos.resource.definitions.k8s.ManifestStatusSpec)
     - [NodeIPConfigSpec](#talos.resource.definitions.k8s.NodeIPConfigSpec)
@@ -2046,6 +2048,39 @@ KubeletSpecSpec holds the source of kubelet configuration.
 | extra_mounts | [talos.resource.definitions.proto.Mount](#talos.resource.definitions.proto.Mount) | repeated |  |
 | expected_nodename | [string](#string) |  |  |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.LoadBalancerConfigSpec"></a>
+
+### LoadBalancerConfigSpec
+LoadBalancerConfigSpec describes LoadBalancerConfig data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| port | [int64](#int64) |  |  |
+| endpoints | [APIServerEndpoint](#talos.resource.definitions.k8s.APIServerEndpoint) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.LoadBalancerStatusesSpec"></a>
+
+### LoadBalancerStatusesSpec
+LoadBalancerStatusesSpec describes LoadBalancerStatuses data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| healthy | [bool](#bool) |  |  |
 
 
 

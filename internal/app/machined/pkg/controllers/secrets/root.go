@@ -173,9 +173,21 @@ func (ctrl *RootController) updateEtcdSecrets(cfgProvider talosconfig.Config, et
 }
 
 func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Config, k8sSecrets *secrets.KubernetesRootSpec) error {
-	localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
-	if err != nil {
-		return err
+	var (
+		err           error
+		localEndpoint *url.URL
+	)
+
+	if cfgProvider.Machine().Features().APIServerBalancer().Enabled() {
+		localEndpoint, err = url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().APIServerBalancer().Port()))
+		if err != nil {
+			return err
+		}
+	} else {
+		localEndpoint, err = url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
+		if err != nil {
+			return err
+		}
 	}
 
 	k8sSecrets.Name = cfgProvider.Cluster().Name()

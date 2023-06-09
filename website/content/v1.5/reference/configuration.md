@@ -2688,6 +2688,25 @@ kubernetesTalosAPIAccess:
 {{< /highlight >}}</details> | |
 |`apidCheckExtKeyUsage` |bool |Enable checks for extended key usage of client certificates in apid.  | |
 |`diskQuotaSupport` |bool |<details><summary>Enable XFS project quota support for EPHEMERAL partition and user disks.</summary>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.</details>  | |
+|`apiServerBalancerSupport` |<a href="#apiserverbalancer">APIServerBalancer</a> |<details><summary>API server load balancer support - local proxy on defined port that will distribute</summary>requests to all API servers in the cluster.</details>  | |
+
+
+
+---
+## APIServerBalancer
+APIServerBalancer describes the configuration for the API server load balancer.
+
+Appears in:
+
+- <code><a href="#featuresconfig">FeaturesConfig</a>.apiServerBalancerSupport</code>
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable API server load balancer support - will start local proxy.  | |
+|`port` |int |API server load balancer port.  | |
 
 
 

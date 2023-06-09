@@ -389,6 +389,7 @@ type Features interface {
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	ApidCheckExtKeyUsageEnabled() bool
 	DiskQuotaSupportEnabled() bool
+	APIServerBalancer() APIServerBalancer
 }
 
 // KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.
@@ -396,6 +397,12 @@ type KubernetesTalosAPIAccess interface {
 	Enabled() bool
 	AllowedRoles() []string
 	AllowedKubernetesNamespaces() []string
+}
+
+// APIServerBalancer describes the API Server load balancer features.
+type APIServerBalancer interface {
+	Enabled() bool
+	Port() int
 }
 
 // UdevConfig describes configuration for udev.

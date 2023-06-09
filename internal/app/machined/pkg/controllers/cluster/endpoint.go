@@ -12,7 +12,8 @@ import (
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/channel"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -52,21 +53,19 @@ func (ctrl *EndpointController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
+			return nil //nolint:nilerr
 		}
 
-		memberList, err := r.List(ctx, resource.NewMetadata(cluster.NamespaceName, cluster.MemberType, "", resource.VersionUndefined))
+		memberList, err := safe.ReaderListAll[*cluster.Member](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing members: %w", err)
 		}
 
 		var endpoints []netip.Addr
 
-		for _, res := range memberList.Items {
-			member := res.(*cluster.Member).TypedSpec()
+		for it := safe.IteratorFromList(memberList); it.Next(); {
+			member := it.Value().TypedSpec()
 
 			if !(member.MachineType == machine.TypeControlPlane || member.MachineType == machine.TypeInit) {
 				continue
@@ -77,14 +76,16 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 
 		sort.Slice(endpoints, func(i, j int) bool { return endpoints[i].Compare(endpoints[j]) < 0 })
 
-		if err := r.Modify(ctx,
+		if err := safe.WriterModify(
+			ctx,
+			r,
 			k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneDiscoveredEndpointsID),
-			func(r resource.Resource) error {
-				if !reflect.DeepEqual(r.(*k8s.Endpoint).TypedSpec().Addresses, endpoints) {
+			func(r *k8s.Endpoint) error {
+				if !reflect.DeepEqual(r.TypedSpec().Addresses, endpoints) {
 					logger.Debug("updated controlplane endpoints", zap.Any("endpoints", endpoints))
 				}
 
-				r.(*k8s.Endpoint).TypedSpec().Addresses = endpoints
+				r.TypedSpec().Addresses = endpoints
 
 				return nil
 			},

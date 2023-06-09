@@ -3,6 +3,26 @@
   "$id": "https://talos.dev/v1.5/schemas/v1alpha1_config.schema.json",
   "$ref": "#/$defs/Config",
   "$defs": {
+    "APIServerBalancer": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable API server load balancer support - will start local proxy.\n",
+          "markdownDescription": "Enable API server load balancer support - will start local proxy.",
+          "x-intellij-html-description": "\u003cp\u003eEnable API server load balancer support - will start local proxy.\u003c/p\u003e\n"
+        },
+        "port": {
+          "type": "integer",
+          "title": "port",
+          "description": "API server load balancer port.\n",
+          "markdownDescription": "API server load balancer port.",
+          "x-intellij-html-description": "\u003cp\u003eAPI server load balancer port.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "APIServerConfig": {
       "properties": {
         "image": {
@@ -1347,6 +1367,13 @@
           "description": "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.\n",
           "markdownDescription": "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.",
           "x-intellij-html-description": "\u003cp\u003eEnable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.\u003c/p\u003e\n"
+        },
+        "apiServerBalancerSupport": {
+          "$ref": "#/$defs/APIServerBalancer",
+          "title": "apiServerBalancerSupport",
+          "description": "API server load balancer support - local proxy on defined port that will distribute\nrequests to all API servers in the cluster.\n",
+          "markdownDescription": "API server load balancer support - local proxy on defined port that will distribute\nrequests to all API servers in the cluster.",
+          "x-intellij-html-description": "\u003cp\u003eAPI server load balancer support - local proxy on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

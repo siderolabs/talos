@@ -34,6 +34,15 @@ func WithLocalAPIServerPort(port int) Option {
 	}
 }
 
+// WithAPIServerBalancerPort specifies the local API server load balancer port. If 0, lod balancer is disabled.
+func WithAPIServerBalancerPort(port int) Option {
+	return func(o *Options) error {
+		o.APIServerBalancerPort = port
+
+		return nil
+	}
+}
+
 // WithInstallDisk specifies install disk to use in Talos cluster.
 func WithInstallDisk(disk string) Option {
 	return func(o *Options) error {
@@ -285,6 +294,8 @@ type Options struct {
 	LocalAPIServerPort             int
 	AdditionalSubjectAltNames      []string
 	DiscoveryEnabled               *bool
+
+	APIServerBalancerPort int
 
 	// Client options.
 	Roles        role.Set

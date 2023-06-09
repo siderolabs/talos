@@ -139,6 +139,19 @@ message KubeletSpecSpec {
   google.protobuf.Struct config = 5;
 }
 
+// LoadBalancerConfigSpec describes LoadBalancerConfig data.
+message LoadBalancerConfigSpec {
+  string host = 1;
+  int64 port = 2;
+  repeated APIServerEndpoint endpoints = 3;
+}
+
+// LoadBalancerStatusesSpec describes LoadBalancerStatuses data.
+message LoadBalancerStatusesSpec {
+  string host = 1;
+  bool healthy = 2;
+}
+
 // ManifestSpec holds the Kubernetes resources spec.
 message ManifestSpec {
   repeated SingleManifest items = 1;

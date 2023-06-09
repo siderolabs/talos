@@ -167,8 +167,8 @@ func (ctrl *ControlPlaneController) manageAPIServerConfig(ctx context.Context, r
 		advertisedAddress = ""
 	}
 
-	return r.Modify(ctx, k8s.NewAPIServerConfig(), func(r resource.Resource) error {
-		*r.(*k8s.APIServerConfig).TypedSpec() = k8s.APIServerConfigSpec{
+	return safe.WriterModify(ctx, r, k8s.NewAPIServerConfig(), func(r *k8s.APIServerConfig) error {
+		*r.TypedSpec() = k8s.APIServerConfigSpec{
 			Image:                    cfgProvider.Cluster().APIServer().Image(),
 			CloudProvider:            cloudProvider,
 			ControlPlaneEndpoint:     cfgProvider.Cluster().Endpoint().String(),
@@ -186,7 +186,7 @@ func (ctrl *ControlPlaneController) manageAPIServerConfig(ctx context.Context, r
 	})
 }
 
-func (ctrl *ControlPlaneController) manageAdmissionControlConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Config) error {
+func (ctrl *ControlPlaneController) manageAdmissionControlConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
 	spec := k8s.AdmissionControlConfigSpec{}
 
 	for _, cfg := range cfgProvider.Cluster().APIServer().AdmissionControl() {
@@ -198,33 +198,33 @@ func (ctrl *ControlPlaneController) manageAdmissionControlConfig(ctx context.Con
 		)
 	}
 
-	return r.Modify(ctx, k8s.NewAdmissionControlConfig(), func(r resource.Resource) error {
-		*r.(*k8s.AdmissionControlConfig).TypedSpec() = spec
+	return safe.WriterModify(ctx, r, k8s.NewAdmissionControlConfig(), func(r *k8s.AdmissionControlConfig) error {
+		*r.TypedSpec() = spec
 
 		return nil
 	})
 }
 
-func (ctrl *ControlPlaneController) manageAuditPolicyConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Config) error {
+func (ctrl *ControlPlaneController) manageAuditPolicyConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
 	spec := k8s.AuditPolicyConfigSpec{}
 
 	spec.Config = cfgProvider.Cluster().APIServer().AuditPolicy()
 
-	return r.Modify(ctx, k8s.NewAuditPolicyConfig(), func(r resource.Resource) error {
-		*r.(*k8s.AuditPolicyConfig).TypedSpec() = spec
+	return safe.WriterModify(ctx, r, k8s.NewAuditPolicyConfig(), func(r *k8s.AuditPolicyConfig) error {
+		*r.TypedSpec() = spec
 
 		return nil
 	})
 }
 
-func (ctrl *ControlPlaneController) manageControllerManagerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Config) error {
+func (ctrl *ControlPlaneController) manageControllerManagerConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
 	var cloudProvider string
 	if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
 		cloudProvider = "external"
 	}
 
-	return r.Modify(ctx, k8s.NewControllerManagerConfig(), func(r resource.Resource) error {
-		*r.(*k8s.ControllerManagerConfig).TypedSpec() = k8s.ControllerManagerConfigSpec{
+	return safe.WriterModify(ctx, r, k8s.NewControllerManagerConfig(), func(r *k8s.ControllerManagerConfig) error {
+		*r.TypedSpec() = k8s.ControllerManagerConfigSpec{
 			Enabled:              !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
 			Image:                cfgProvider.Cluster().ControllerManager().Image(),
 			CloudProvider:        cloudProvider,
@@ -239,9 +239,9 @@ func (ctrl *ControlPlaneController) manageControllerManagerConfig(ctx context.Co
 	})
 }
 
-func (ctrl *ControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Config) error {
-	return r.Modify(ctx, k8s.NewSchedulerConfig(), func(r resource.Resource) error {
-		*r.(*k8s.SchedulerConfig).TypedSpec() = k8s.SchedulerConfigSpec{
+func (ctrl *ControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
+	return safe.WriterModify(ctx, r, k8s.NewSchedulerConfig(), func(r *k8s.SchedulerConfig) error {
+		*r.TypedSpec() = k8s.SchedulerConfigSpec{
 			Enabled:              !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
 			Image:                cfgProvider.Cluster().Scheduler().Image(),
 			ExtraArgs:            cfgProvider.Cluster().Scheduler().ExtraArgs(),
@@ -253,7 +253,7 @@ func (ctrl *ControlPlaneController) manageSchedulerConfig(ctx context.Context, r
 	})
 }
 
-func (ctrl *ControlPlaneController) manageManifestsConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Config) error {
+func (ctrl *ControlPlaneController) manageManifestsConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
 	dnsServiceIPs, err := cfgProvider.Cluster().Network().DNSServiceIPs()
 	if err != nil {
 		return fmt.Errorf("error calculating DNS service IPs: %w", err)
@@ -272,7 +272,7 @@ func (ctrl *ControlPlaneController) manageManifestsConfig(ctx context.Context, r
 		}
 	}
 
-	return r.Modify(ctx, k8s.NewBootstrapManifestsConfig(), func(r resource.Resource) error {
+	return safe.WriterModify(ctx, r, k8s.NewBootstrapManifestsConfig(), func(r *k8s.BootstrapManifestsConfig) error {
 		images := images.List(cfgProvider)
 
 		proxyArgs, err := getProxyArgs(cfgProvider)
@@ -280,8 +280,15 @@ func (ctrl *ControlPlaneController) manageManifestsConfig(ctx context.Context, r
 			return err
 		}
 
-		*r.(*k8s.BootstrapManifestsConfig).TypedSpec() = k8s.BootstrapManifestsConfigSpec{
-			Server:        cfgProvider.Cluster().Endpoint().String(),
+		var server string
+		if cfgProvider.Machine().Features().APIServerBalancer().Enabled() {
+			server = fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().APIServerBalancer().Port())
+		} else {
+			server = cfgProvider.Cluster().Endpoint().String()
+		}
+
+		*r.TypedSpec() = k8s.BootstrapManifestsConfigSpec{
+			Server:        server,
 			ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
 
 			PodCIDRs: cfgProvider.Cluster().Network().PodCIDRs(),
@@ -309,8 +316,8 @@ func (ctrl *ControlPlaneController) manageManifestsConfig(ctx context.Context, r
 	})
 }
 
-func (ctrl *ControlPlaneController) manageExtraManifestsConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Config) error {
-	return r.Modify(ctx, k8s.NewExtraManifestsConfig(), func(r resource.Resource) error {
+func (ctrl *ControlPlaneController) manageExtraManifestsConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
+	return safe.WriterModify(ctx, r, k8s.NewExtraManifestsConfig(), func(r *k8s.ExtraManifestsConfig) error {
 		spec := k8s.ExtraManifestsConfigSpec{}
 
 		for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
@@ -346,7 +353,7 @@ func (ctrl *ControlPlaneController) manageExtraManifestsConfig(ctx context.Conte
 			})
 		}
 
-		*r.(*k8s.ExtraManifestsConfig).TypedSpec() = spec
+		*r.TypedSpec() = spec
 
 		return nil
 	})

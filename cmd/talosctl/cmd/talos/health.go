@@ -198,13 +198,9 @@ func runE2E() error {
 		}
 		defer clientProvider.Close() //nolint:errcheck
 
-		state := struct {
-			cluster.K8sProvider
-		}{
-			K8sProvider: &cluster.KubernetesClient{
-				ClientProvider: clientProvider,
-				ForceEndpoint:  healthCmdFlags.forceEndpoint,
-			},
+		state := &cluster.KubernetesClient{
+			ClientProvider: clientProvider,
+			ForceEndpoint:  healthCmdFlags.forceEndpoint,
 		}
 
 		// Run cluster readiness checks
@@ -214,7 +210,7 @@ func runE2E() error {
 		options := sonobuoy.DefaultOptions()
 		options.UseSpinner = true
 
-		return sonobuoy.Run(checkCtx, &state, options)
+		return sonobuoy.Run(checkCtx, state, options)
 	})
 }
 

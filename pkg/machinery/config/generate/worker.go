@@ -74,6 +74,13 @@ func (in *Input) worker() ([]config.Document, error) {
 		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
 	}
 
+	if in.Options.APIServerBalancerPort > 0 {
+		machine.MachineFeatures.APIServerBalancerSupport = &v1alpha1.APIServerBalancer{
+			ServerEnabled: pointer.To(true),
+			ServerPort:    in.Options.APIServerBalancerPort,
+		}
+	}
+
 	if in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
 		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
 	}

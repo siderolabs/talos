@@ -16,7 +16,7 @@ import (
 )
 
 // APIServerEndpointsType is type of APIServerEndpoints resource.
-const APIServerEndpointsType = resource.Type("APIServerEndpoints.cluster.talos.dev")
+const APIServerEndpointsType = resource.Type("APIServerEndpoints.kubernetes.talos.dev")
 
 // APIServerEndpointsID the singleton balancer data resource ID.
 const APIServerEndpointsID = resource.ID("k8s-cluster")
@@ -64,11 +64,11 @@ func (APIServerEndpointsExtension) ResourceDefinition() meta.ResourceDefinitionS
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Hosts",
-				JSONPath: ".endpoints[*].host",
+				JSONPath: "{.endpoints[*].host}",
 			},
 			{
 				Name:     "Ports",
-				JSONPath: ".endpoints[*].port",
+				JSONPath: "{.endpoints[*].port}",
 			},
 		},
 	}

@@ -47,7 +47,7 @@ type Input struct {
 
 // GetAPIServerSANs returns the formatted list of Subject Alt Name addresses for the API Server.
 func (in *Input) GetAPIServerSANs() []string {
-	list := []string{}
+	var list []string
 
 	endpointURL, err := url.Parse(in.ControlPlaneEndpoint)
 	if err == nil {

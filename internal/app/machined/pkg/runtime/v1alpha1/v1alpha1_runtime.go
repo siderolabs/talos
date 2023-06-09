@@ -164,8 +164,14 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineSeccompProfiles = currentConfig.MachineConfig.MachineSeccompProfiles
 		newConfig.MachineConfig.MachineNodeLabels = currentConfig.MachineConfig.MachineNodeLabels
 
-		if newConfig.MachineConfig.MachineFeatures != nil && currentConfig.MachineConfig.MachineFeatures != nil {
-			newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
+		if newConfig.MachineConfig.MachineFeatures != nil {
+			if currentConfig.MachineConfig.MachineFeatures != nil {
+				newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
+			}
+
+			if currentConfig.MachineConfig.MachineFeatures != nil {
+				newConfig.MachineConfig.MachineFeatures.APIServerBalancerSupport = currentConfig.MachineConfig.MachineFeatures.APIServerBalancerSupport
+			}
 		}
 	}
 

@@ -7,7 +7,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -154,17 +153,4 @@ func (ctrl *APIServerEndpointsController) Run(ctx context.Context, r controller.
 
 		r.ResetRestartBackoff()
 	}
-}
-
-func toPort(port string) uint32 {
-	if port == "" {
-		return 443
-	}
-
-	p, err := strconv.ParseUint(port, 10, 32)
-	if err != nil {
-		return 443
-	}
-
-	return uint32(p)
 }

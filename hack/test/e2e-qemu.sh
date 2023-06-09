@@ -136,6 +136,15 @@ case "${WITH_SKIP_BOOT_PHASE_FINISHED_CHECK:-no}" in
       ;;
 esac
 
+case "${CUSTOM_CNI_NAME:-none}" in
+  cilium)
+    API_SERVER_BALANCER="--api-server-balancer-port 13336"
+    ;;
+  *)
+    API_SERVER_BALANCER=""
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 
@@ -164,6 +173,7 @@ function create_cluster {
     ${DISK_ENCRYPTION_FLAG} \
     ${REGISTRY_MIRROR_FLAGS} \
     ${QEMU_FLAGS} \
+    ${API_SERVER_BALANCER} \
     ${CUSTOM_CNI_FLAG} \
     "${CONFIG_PATCH_FLAG[@]}" \
     "${CONFIG_PATCH_FLAG_WORKER[@]}" \

@@ -2607,6 +2607,20 @@ type FeaturesConfig struct {
 	//     Enable XFS project quota support for EPHEMERAL partition and user disks.
 	//     Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.
 	DiskQuotaSupport *bool `yaml:"diskQuotaSupport,omitempty"`
+	//   description: |
+	//     API server load balancer support - local proxy on defined port that will distribute
+	//     requests to all API servers in the cluster.
+	APIServerBalancerSupport *APIServerBalancer `yaml:"apiServerBalancerSupport,omitempty"`
+}
+
+// APIServerBalancer describes the configuration for the API server load balancer.
+type APIServerBalancer struct {
+	//   description: |
+	//     Enable API server load balancer support - will start local proxy.
+	ServerEnabled *bool `yaml:"enabled,omitempty"`
+	//   description: |
+	//     API server load balancer port.
+	ServerPort int `yaml:"port,omitempty"`
 }
 
 // KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.

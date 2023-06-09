@@ -85,7 +85,16 @@ func (ctrl *KubeletController) Run(ctx context.Context, r controller.Runtime, lo
 }
 
 func (ctrl *KubeletController) updateKubeletSecrets(cfgProvider talosconfig.Config, kubeletSecrets *secrets.KubeletSpec) error {
-	if cfgProvider.Machine().Type().IsControlPlane() {
+	switch {
+	case cfgProvider.Machine().Features().APIServerBalancer().Enabled():
+		// use cluster endpoint for controlplane nodes with loadbalancer support
+		localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().APIServerBalancer().Port()))
+		if err != nil {
+			return err
+		}
+
+		kubeletSecrets.Endpoint = localEndpoint
+	case cfgProvider.Machine().Type().IsControlPlane():
 		// use localhost endpoint for controlplane nodes
 		localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
 		if err != nil {
@@ -93,7 +102,7 @@ func (ctrl *KubeletController) updateKubeletSecrets(cfgProvider talosconfig.Conf
 		}
 
 		kubeletSecrets.Endpoint = localEndpoint
-	} else {
+	default:
 		// use cluster endpoint for workers
 		kubeletSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
 	}

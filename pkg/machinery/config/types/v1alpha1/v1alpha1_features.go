@@ -38,3 +38,28 @@ func (f *FeaturesConfig) ApidCheckExtKeyUsageEnabled() bool {
 func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {
 	return pointer.SafeDeref(f.DiskQuotaSupport)
 }
+
+// APIServerBalancer implements config.Features interface.
+func (f *FeaturesConfig) APIServerBalancer() config.APIServerBalancer {
+	if f.APIServerBalancerSupport == nil {
+		return &APIServerBalancer{}
+	}
+
+	return f.APIServerBalancerSupport
+}
+
+const defaultAPIBalancerPort = 7445
+
+// Enabled implements config.APIServerBalancer.
+func (a *APIServerBalancer) Enabled() bool {
+	return pointer.SafeDeref(a.ServerEnabled)
+}
+
+// Port implements config.APIServerBalancer.
+func (a *APIServerBalancer) Port() int {
+	if a.ServerPort == 0 {
+		return defaultAPIBalancerPort
+	}
+
+	return a.ServerPort
+}
