@@ -7,7 +7,7 @@ package v1alpha2
 import (
 	"context"
 
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
@@ -93,7 +93,7 @@ func NewState() (*State, error) {
 	}
 
 	// register Talos resources
-	for _, r := range []resource.Resource{
+	for _, r := range []meta.ResourceWithRD{
 		&v1alpha1.Service{},
 		&cluster.Affiliate{},
 		&cluster.Config{},

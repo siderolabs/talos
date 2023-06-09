@@ -8,7 +8,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
@@ -24,7 +24,7 @@ func TestRegisterResource(t *testing.T) {
 	resources := state.WrapCore(namespaced.NewState(inmem.Build))
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
-	for _, resource := range []resource.Resource{
+	for _, resource := range []meta.ResourceWithRD{
 		&time.Status{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
