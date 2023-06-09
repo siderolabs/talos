@@ -18,19 +18,13 @@ import (
 	"github.com/siderolabs/talos/pkg/version"
 )
 
-// installCmd represents the install command.
+// installCmd represents the installation command.
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		if err := runInstallCmd(); err != nil {
-			if err = (err); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return runInstallCmd()
 	},
 }
 
