@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	humanize "github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-kubeconfig"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -339,7 +339,8 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
 	}
-	configBundleOpts := []bundle.Option{}
+
+	var configBundleOpts []bundle.Option
 
 	if ports != "" {
 		if provisionerName != "docker" {
@@ -592,7 +593,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		extraKernelArgs = procfs.NewCmdline(extraBootKernelArgs)
 	}
 
-	// Add talosconfig to provision options so we'll have it to parse there
+	// Add talosconfig to provision options, so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
 	// Create the controlplane nodes.
@@ -771,14 +772,14 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 		return fmt.Errorf("error fetching kubeconfig: %w", err)
 	}
 
-	config, err := clientcmd.Load(k8sconfig)
+	kubeConfig, err := clientcmd.Load(k8sconfig)
 	if err != nil {
 		return fmt.Errorf("error parsing kubeconfig: %w", err)
 	}
 
 	if clusterAccess.ForceEndpoint != "" {
-		for name := range config.Clusters {
-			config.Clusters[name].Server = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(clusterAccess.ForceEndpoint, controlPlanePort))
+		for name := range kubeConfig.Clusters {
+			kubeConfig.Clusters[name].Server = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(clusterAccess.ForceEndpoint, controlPlanePort))
 		}
 	}
 
@@ -788,7 +789,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 			return err
 		}
 
-		return clientcmd.WriteToFile(*config, kubeconfigPath)
+		return clientcmd.WriteToFile(*kubeConfig, kubeconfigPath)
 	}
 
 	merger, err := kubeconfig.Load(kubeconfigPath)
@@ -796,7 +797,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 		return fmt.Errorf("error loading existing kubeconfig: %w", err)
 	}
 
-	err = merger.Merge(config, kubeconfig.MergeOptions{
+	err = merger.Merge(kubeConfig, kubeconfig.MergeOptions{
 		ActivateContext: true,
 		OutputWriter:    os.Stdout,
 		ConflictHandler: func(component kubeconfig.ConfigComponent, name string) (kubeconfig.ConflictDecision, error) {

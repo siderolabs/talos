@@ -34,7 +34,7 @@ type PreflightChecks struct {
 	hostTalosVersion      *compatibility.TalosVersion
 }
 
-// NewPreflightChecks initializes and returns the install PreflightChecks.
+// NewPreflightChecks initializes and returns the installation PreflightChecks.
 func NewPreflightChecks(ctx context.Context) (*PreflightChecks, error) {
 	if _, err := os.Stat(constants.MachineSocketPath); err != nil {
 		log.Printf("pre-flight checks disabled, as host Talos version is too old")

@@ -24,7 +24,7 @@ type MetaValue struct {
 	Value string
 }
 
-func (v MetaValue) String() string {
+func (v *MetaValue) String() string {
 	return fmt.Sprintf("0x%x=%s", v.Key, v.Value)
 }
 
