@@ -120,10 +120,10 @@ esac
 case "${WITH_CONFIG_PATCH_WORKER:-false}" in
   # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH_WORKER
   false)
-      CONFIG_PATCH_FLAG=()
+      CONFIG_PATCH_FLAG_WORKER=()
       ;;
   *)
-      CONFIG_PATCH_FLAG=(--config-patch-worker "${WITH_CONFIG_PATCH_WORKER}")
+      CONFIG_PATCH_FLAG_WORKER=(--config-patch-worker "${WITH_CONFIG_PATCH_WORKER}")
       ;;
 esac
 
@@ -166,6 +166,7 @@ function create_cluster {
     ${QEMU_FLAGS} \
     ${CUSTOM_CNI_FLAG} \
     "${CONFIG_PATCH_FLAG[@]}" \
+    "${CONFIG_PATCH_FLAG_WORKER[@]}" \
     "${SKIP_BOOT_PHASE_FINISHED_CHECK_FLAG}"
 
   "${TALOSCTL}" config node 172.20.1.2

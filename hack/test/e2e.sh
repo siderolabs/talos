@@ -340,7 +340,5 @@ function install_and_run_cilium_cni_tests {
   ${KUBECTL} label ns cilium-test pod-security.kubernetes.io/enforce=privileged
 
   # --external-target added, as default 'one.one.one.one' is buggy, and CloudFlare status is of course "all healthy"
-  ${CILIUM_CLI} connectivity test --test-namespace cilium-test --external-target google.com
-
-  ${KUBECTL} delete ns cilium-test
+  ${CILIUM_CLI} connectivity test --test-namespace cilium-test --external-target google.com; ${KUBECTL} delete ns cilium-test
 }

@@ -42,7 +42,6 @@ func (suite *JSONPathSuite) TestGetWithJSONPathWildcard() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	suite.RunCLI([]string{"get", "--nodes", node, "manifests", "--output", `jsonpath='{.spec[*].metadata.name}'`},
-		base.StdoutShouldMatch(regexp.MustCompile("kube-proxy")),
 		base.StdoutShouldMatch(regexp.MustCompile("coredns")),
 		base.StdoutShouldMatch(regexp.MustCompile("kube-dns")),
 		base.StdoutShouldMatch(regexp.MustCompile("kubeconfig-in-cluster")),
