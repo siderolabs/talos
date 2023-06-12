@@ -30,6 +30,9 @@ Using a multi-stage `Dockerfile` we can define the `customization` stage and bui
 
 ```docker
 FROM scratch AS customization
+# this is needed so that Talos copies base kernel modules info and default modules shipped with Talos
+COPY --from=<custom kernel image> /lib/modules /kernel/lib/modules
+# this copies over the custom modules
 COPY --from=<custom kernel image> /lib/modules /lib/modules
 
 FROM ghcr.io/siderolabs/installer:latest

@@ -55,6 +55,8 @@ Start by creating a `Dockerfile` with the following content:
 
 ```Dockerfile
 FROM scratch as customization
+# this is needed so that Talos copies base kernel modules info and default modules shipped with Talos
+COPY --from=ghcr.io/talos-user/kernel:{{< release >}}-nvidia /lib/modules /kernel/lib/modules
 COPY --from=ghcr.io/talos-user/nonfree-kmod-nvidia:{{< release >}}-nvidia /lib/modules /lib/modules
 
 FROM ghcr.io/siderolabs/installer:{{< release >}}

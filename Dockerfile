@@ -808,6 +808,7 @@ ENV TARGETARCH ${TARGETARCH}
 COPY --from=install-artifacts / /
 COPY --from=installer-build /installer /bin/installer
 COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
+COPY --chmod=0644 hack/modules-${TARGETARCH}.txt /usr/install/modules-${TARGETARCH}.txt
 RUN ln -s /bin/installer /bin/talosctl
 RUN find /bin /etc /lib /usr /sbin | grep -Ev '/etc/hosts|/etc/resolv.conf' \
     | xargs -r touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
@@ -836,11 +837,11 @@ ONBUILD RUN xz -d /usr/install/${TARGETARCH}/initramfs.xz \
     && rm /usr/install/${TARGETARCH}/initramfs \
     && rm rootfs.sqsh
 ONBUILD COPY --from=customization / /rootfs
-ONBUILD RUN depmod -b /rootfs $(ls /rootfs/lib/modules) \
-    && mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress \
-    && set -o pipefail && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z >/usr/install/${TARGETARCH}/initramfs.xz \
-    && rm -rf /rootfs \
-    && rm -rf /initramfs
+ONBUILD RUN xargs -a /usr/install/modules-${TARGETARCH}.txt -I {} install -D /rootfs/kernel/lib/modules/$(ls /rootfs/lib/modules)/{} /rootfs/lib/modules/$(ls /rootfs/lib/modules)/{} \
+    && depmod -b /rootfs $(ls /rootfs/lib/modules) \
+    && set -o pipefail && mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress \
+    && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z > /usr/install/${TARGETARCH}/initramfs.xz \
+    && rm -rf /rootfs /initramfs /rootfs/kernel
 ONBUILD WORKDIR /
 
 FROM installer-image-squashed AS imager
