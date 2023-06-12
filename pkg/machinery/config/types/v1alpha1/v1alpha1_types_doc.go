@@ -523,6 +523,8 @@ func init() {
 	ClusterConfigDoc.Fields[24].Note = ""
 	ClusterConfigDoc.Fields[24].Description = "Allows running workload on control-plane nodes."
 	ClusterConfigDoc.Fields[24].Comments[encoder.LineComment] = "Allows running workload on control-plane nodes."
+
+	ClusterConfigDoc.Fields[24].AddExample("", true)
 	ClusterConfigDoc.Fields[24].Values = []string{
 		"true",
 		"yes",

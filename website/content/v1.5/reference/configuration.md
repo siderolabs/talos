@@ -642,7 +642,9 @@ inlineManifests:
 adminKubeconfig:
     certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
 {{< /highlight >}}</details> | |
-|`allowSchedulingOnControlPlanes` |bool |Allows running workload on control-plane nodes.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
+|`allowSchedulingOnControlPlanes` |bool |Allows running workload on control-plane nodes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+allowSchedulingOnControlPlanes: true
+{{< /highlight >}}</details> |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 

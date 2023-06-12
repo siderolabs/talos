@@ -1051,6 +1051,8 @@ type ClusterConfig struct {
 	//     - yes
 	//     - false
 	//     - no
+	//   examples:
+	//     - value: true
 	AllowSchedulingOnControlPlanes *bool `yaml:"allowSchedulingOnControlPlanes,omitempty"`
 }
 
