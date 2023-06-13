@@ -110,6 +110,15 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 
 	bootLabel := i.bootloader.NextLabel()
 
+	if i.bootloader.String() == "sdboot" {
+		i.manifest, err = NewUKIManifest(bootLabel, seq, bootLoaderPresent, i.options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create UKI installation manifest: %w", err)
+		}
+
+		return i, nil
+	}
+
 	i.manifest, err = NewManifest(bootLabel, seq, bootLoaderPresent, i.options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installation manifest: %w", err)

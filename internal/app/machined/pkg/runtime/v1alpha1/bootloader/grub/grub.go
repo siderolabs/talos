@@ -48,6 +48,11 @@ func (c *Config) Installed() bool {
 	return c != nil
 }
 
+// String returns the bootloader name.
+func (c *Config) String() string {
+	return "grub"
+}
+
 // Put puts a new menu entry to the grub config (nothing is written to disk).
 func (c *Config) Put(entry bootloader.BootLabel, cmdline string) error {
 	c.Entries[entry] = buildMenuEntry(entry, cmdline)

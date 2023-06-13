@@ -161,6 +161,120 @@ func NewManifest(label string, sequence runtime.Sequence, bootLoaderPresent bool
 	return manifest, nil
 }
 
+// NewUKIManifest initializes and returns a Manifest.
+//
+//nolint:gocyclo
+func NewUKIManifest(label string, sequence runtime.Sequence, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
+	if label == "" {
+		return nil, fmt.Errorf("a label is required, got \"\"")
+	}
+
+	manifest = &Manifest{
+		Devices: map[string]Device{},
+		Targets: map[string][]*Target{},
+	}
+
+	// TODO: not supported yet
+	// if opts.Board != constants.BoardNone {
+	// 	var b runtime.Board
+
+	// 	b, err = board.NewBoard(opts.Board)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	manifest.PartitionOptions = b.PartitionOptions()
+	// }
+
+	// TODO: legacy, to support old Talos initramfs, assume force if boot partition not found
+	if !bootLoaderPresent {
+		opts.Force = true
+	}
+
+	if !opts.Force && opts.Zero {
+		return nil, fmt.Errorf("zero option can't be used without force")
+	}
+
+	if !opts.Force && !bootLoaderPresent {
+		return nil, fmt.Errorf("install with preserve is not supported if existing boot partition was not found")
+	}
+
+	// Verify that the target device(s) can satisfy the requested options.
+
+	if sequence != runtime.SequenceUpgrade {
+		if err = VerifyEphemeralPartition(opts); err != nil {
+			return nil, fmt.Errorf("failed to prepare ephemeral partition: %w", err)
+		}
+	}
+
+	skipOverlayMountsCheck, err := shouldSkipOverlayMountsCheck(sequence)
+	if err != nil {
+		return nil, err
+	}
+
+	manifest.Devices[opts.Disk] = Device{
+		Device: opts.Disk,
+
+		ResetPartitionTable: opts.Force,
+		Zero:                opts.Zero,
+
+		SkipOverlayMountsCheck: skipOverlayMountsCheck,
+	}
+
+	// Initialize any slices we need. Note that a boot partition is not
+	// required.
+
+	if manifest.Targets[opts.Disk] == nil {
+		manifest.Targets[opts.Disk] = []*Target{}
+	}
+
+	efiTarget := EFITargetUKI(opts.Disk, &Target{
+		PreserveContents: bootLoaderPresent,
+		Assets: []*Asset{
+			{
+				Source:      fmt.Sprintf(constants.UKIAssetPath, opts.Arch),
+				Destination: filepath.Join(constants.EFIMountPoint, "EFI", label, constants.UKIAsset),
+			},
+			{
+				Source:      fmt.Sprintf(constants.SDBootAssetPath, opts.Arch),
+				Destination: filepath.Join(constants.EFIMountPoint, "EFI", label, constants.SDBootAsset),
+			},
+		},
+	})
+
+	metaTarget := MetaTarget(opts.Disk, &Target{
+		PreserveContents: bootLoaderPresent,
+	})
+
+	stateTarget := StateTarget(opts.Disk, &Target{
+		PreserveContents: bootLoaderPresent,
+		FormatOptions: &partition.FormatOptions{
+			FileSystemType: partition.FilesystemTypeNone,
+		},
+	})
+
+	ephemeralTarget := EphemeralTarget(opts.Disk, NoFilesystem)
+
+	targets := []*Target{efiTarget, metaTarget, stateTarget, ephemeralTarget}
+
+	if !opts.Force {
+		for _, target := range targets {
+			target.Force = false
+			target.Skip = true
+		}
+	}
+
+	for _, target := range targets {
+		if target == nil {
+			continue
+		}
+
+		manifest.Targets[target.Device] = append(manifest.Targets[target.Device], target)
+	}
+
+	return manifest, nil
+}
+
 // Execute partitions and formats all disks in a manifest.
 func (m *Manifest) Execute() (err error) {
 	for dev, targets := range m.Targets {

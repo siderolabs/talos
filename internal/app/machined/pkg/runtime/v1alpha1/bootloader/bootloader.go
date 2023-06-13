@@ -5,7 +5,9 @@
 // Package bootloader provides bootloader implementation.
 package bootloader
 
-import "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+import (
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+)
 
 // Bootloader describes a bootloader.
 type Bootloader interface {
@@ -21,12 +23,16 @@ type Bootloader interface {
 	PreviousLabel() string
 	// Installed returns true if the bootloader is installed.
 	Installed() bool
+	// String returns the bootloader name
+	String() string
 }
 
 // Probe checks if any supported bootloaders are installed.
 // Returns nil if it cannot detect any supported bootloader.
 func Probe(skipProbe bool) (Bootloader, error) {
+	// first probe for sd boot and fallback to grub
 	// skipProbe skips bootloader probing.
+	// TODO: not sure how to handle when we have multiple bootloaders
 	if skipProbe {
 		return nil, nil
 	}
