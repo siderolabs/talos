@@ -1450,6 +1450,12 @@ func CordonAndDrainNode(runtime.Sequence, any) (runtime.TaskExecutionFunc, strin
 			return err
 		}
 
+		// controllers will automatically cordon the node when the node enters appropriate phase,
+		// so here we just wait for the node to be cordoned
+		if err = waitForNodeCordoned(ctx, logger, r, nodename); err != nil {
+			return err
+		}
+
 		var kubeHelper *kubernetes.Client
 
 		if kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig(); err != nil {
@@ -1458,44 +1464,34 @@ func CordonAndDrainNode(runtime.Sequence, any) (runtime.TaskExecutionFunc, strin
 
 		defer kubeHelper.Close() //nolint:errcheck
 
-		return kubeHelper.CordonAndDrain(ctx, nodename)
+		return kubeHelper.Drain(ctx, nodename)
 	}, "cordonAndDrainNode"
 }
 
-// UncordonNode represents the task for mark node as scheduling enabled.
-//
-// This action undoes the CordonAndDrainNode task.
-func UncordonNode(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		var kubeHelper *kubernetes.Client
+func waitForNodeCordoned(ctx context.Context, logger *log.Logger, r runtime.Runtime, nodename string) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
 
-		if err = retry.Constant(5*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx,
-			func(ctx context.Context) error {
-				if r.Config().Machine().Type().IsControlPlane() {
-					kubeHelper, err = kubernetes.NewTemporaryClientControlPlane(ctx, r.State().V1Alpha2().Resources())
-				} else {
-					kubeHelper, err = kubernetes.NewClientFromKubeletKubeconfig()
-				}
+	logger.Print("waiting for node to be cordoned")
 
-				return retry.ExpectedError(err)
-			}); err != nil {
-			return err
-		}
+	_, err := r.State().V1Alpha2().Resources().WatchFor(
+		ctx,
+		k8s.NewNodeStatus(k8s.NamespaceName, nodename).Metadata(),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			if resource.IsTombstone(r) {
+				return false, nil
+			}
 
-		defer kubeHelper.Close() //nolint:errcheck
+			nodeStatus, ok := r.(*k8s.NodeStatus)
+			if !ok {
+				return false, nil
+			}
 
-		var nodename string
+			return nodeStatus.TypedSpec().Unschedulable, nil
+		}),
+	)
 
-		if nodename, err = r.NodeName(); err != nil {
-			return err
-		}
-
-		if err = kubeHelper.WaitUntilReady(ctx, nodename); err != nil {
-			return err
-		}
-
-		return kubeHelper.Uncordon(ctx, nodename, false)
-	}, "uncordonNode"
+	return err
 }
 
 // LeaveEtcd represents the task for removing a control plane node from etcd.

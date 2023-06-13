@@ -34,7 +34,8 @@ import (
 type MachineStatusController struct {
 	V1Alpha1Events v1alpha1runtime.Watcher
 
-	setupOnce sync.Once
+	setupOnce  sync.Once
+	notifyOnce sync.Once
 
 	notifyCh chan struct{}
 
@@ -76,6 +77,17 @@ func (ctrl *MachineStatusController) Inputs() []controller.Input {
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
 			ID:        pointer.To(config.MachineTypeID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.NodenameType,
+			ID:        pointer.To(k8s.NodenameID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.NodeStatusType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -152,6 +164,12 @@ func (ctrl *MachineStatusController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error updating machine status: %w", err)
 		}
 
+		if currentStage == runtime.MachineStageRunning && ready {
+			ctrl.notifyOnce.Do(func() {
+				logger.Info("machine is running and ready")
+			})
+		}
+
 		r.ResetRestartBackoff()
 	}
 }
@@ -193,6 +211,10 @@ func (ctrl *MachineStatusController) getReadinessChecks(stage runtime.MachineSta
 			{
 				name: "staticPods",
 				f:    ctrl.staticPodsCheck,
+			},
+			{
+				name: "nodeReady",
+				f:    ctrl.nodeReadyCheck,
 			},
 		}
 	default:
@@ -332,6 +354,39 @@ func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r cont
 	}
 
 	return fmt.Errorf("%s", strings.Join(problems, ", "))
+}
+
+func (ctrl *MachineStatusController) nodeReadyCheck(ctx context.Context, r controller.Runtime) error {
+	nodename, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			// nodename not established yet, skip
+			return nil
+		}
+
+		return fmt.Errorf("failed to get nodename: %w", err)
+	}
+
+	if nodename.TypedSpec().SkipNodeRegistration {
+		// node registration skipped, skip the check
+		return nil
+	}
+
+	nodeStatus, err := safe.ReaderGetByID[*k8s.NodeStatus](ctx, r, nodename.TypedSpec().Nodename)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			// node not established yet, skip
+			return fmt.Errorf("node %q status is not available yet", nodename.TypedSpec().Nodename)
+		}
+
+		return fmt.Errorf("failed to get node status: %w", err)
+	}
+
+	if !nodeStatus.TypedSpec().NodeReady {
+		return fmt.Errorf("node %q is not ready", nodename.TypedSpec().Nodename)
+	}
+
+	return nil
 }
 
 //nolint:gocyclo,cyclop

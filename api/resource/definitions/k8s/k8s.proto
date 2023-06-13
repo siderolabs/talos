@@ -166,6 +166,15 @@ message NodeLabelSpecSpec {
   string value = 2;
 }
 
+// NodeStatusSpec describes Kubernetes NodeStatus.
+message NodeStatusSpec {
+  string nodename = 1;
+  bool node_ready = 2;
+  bool unschedulable = 3;
+  map<string, string> labels = 4;
+  map<string, string> annotations = 5;
+}
+
 // NodeTaintSpecSpec represents a label that's attached to a Talos node.
 message NodeTaintSpecSpec {
   string key = 1;

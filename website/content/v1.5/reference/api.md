@@ -113,6 +113,9 @@ description: Talos gRPC API reference.
     - [NodeIPConfigSpec](#talos.resource.definitions.k8s.NodeIPConfigSpec)
     - [NodeIPSpec](#talos.resource.definitions.k8s.NodeIPSpec)
     - [NodeLabelSpecSpec](#talos.resource.definitions.k8s.NodeLabelSpecSpec)
+    - [NodeStatusSpec](#talos.resource.definitions.k8s.NodeStatusSpec)
+    - [NodeStatusSpec.AnnotationsEntry](#talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntry)
+    - [NodeStatusSpec.LabelsEntry](#talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry)
     - [NodeTaintSpecSpec](#talos.resource.definitions.k8s.NodeTaintSpecSpec)
     - [NodenameSpec](#talos.resource.definitions.k8s.NodenameSpec)
     - [SchedulerConfigSpec](#talos.resource.definitions.k8s.SchedulerConfigSpec)
@@ -2114,6 +2117,57 @@ NodeIPSpec holds the Node IP specification.
 
 ### NodeLabelSpecSpec
 NodeLabelSpecSpec represents a label that's attached to a Talos node.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.NodeStatusSpec"></a>
+
+### NodeStatusSpec
+NodeStatusSpec describes Kubernetes NodeStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| nodename | [string](#string) |  |  |
+| node_ready | [bool](#bool) |  |  |
+| unschedulable | [bool](#bool) |  |  |
+| labels | [NodeStatusSpec.LabelsEntry](#talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry) | repeated |  |
+| annotations | [NodeStatusSpec.AnnotationsEntry](#talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntry"></a>
+
+### NodeStatusSpec.AnnotationsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry"></a>
+
+### NodeStatusSpec.LabelsEntry
+
 
 
 | Field | Type | Label | Description |

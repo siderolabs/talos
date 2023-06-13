@@ -276,10 +276,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"startEverything",
 		StartAllServices,
-	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
-		"uncordon",
-		UncordonNode,
 	)
 
 	return phases

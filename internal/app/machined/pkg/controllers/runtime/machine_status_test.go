@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/gen/slices"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -20,6 +20,7 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
@@ -32,6 +33,7 @@ func TestMachineStatusSuite(t *testing.T) {
 	suite.Run(t, &MachineStatusSuite{
 		eventCh: eventCh,
 		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.MachineStatusController{
 					V1Alpha1Events: &mockWatcher{eventCh: eventCh},
@@ -58,24 +60,14 @@ type MachineStatusSuite struct {
 }
 
 func (suite *MachineStatusSuite) assertMachineStatus(stage runtime.MachineStage, ready bool, unmetConditions []string) {
-	suite.AssertWithin(10*time.Second, 100*time.Millisecond, ctest.WrapRetry(func(assert *assert.Assertions, require *require.Assertions) {
-		machineStatus, err := ctest.Get[*runtime.MachineStatus](suite, runtime.NewMachineStatus().Metadata())
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				assert.NoError(err)
-			} else {
-				require.NoError(err)
-			}
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{runtime.MachineStatusID},
+		func(machineStatus *runtime.MachineStatus, asrt *assert.Assertions) {
+			asrt.Equal(stage, machineStatus.TypedSpec().Stage)
+			asrt.Equal(ready, machineStatus.TypedSpec().Status.Ready)
 
-			return
-		}
-
-		assert.Equal(stage, machineStatus.TypedSpec().Stage)
-		assert.Equal(ready, machineStatus.TypedSpec().Status.Ready)
-
-		assert.Equal(unmetConditions,
-			slices.Map(machineStatus.TypedSpec().Status.UnmetConditions, func(c runtime.UnmetCondition) string { return c.Name }))
-	}))
+			asrt.Equal(unmetConditions,
+				slices.Map(machineStatus.TypedSpec().Status.UnmetConditions, func(c runtime.UnmetCondition) string { return c.Name }))
+		})
 }
 
 func (suite *MachineStatusSuite) TestReconcile() {
@@ -135,6 +127,22 @@ func (suite *MachineStatusSuite) TestReconcile() {
 		serviceStatus.TypedSpec().Healthy = true
 		suite.Require().NoError(suite.State().Create(suite.Ctx(), serviceStatus))
 	}
+
+	suite.assertMachineStatus(runtime.MachineStageRunning, true, nil)
+
+	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
+	nodename.TypedSpec().Nodename = "test"
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodename))
+
+	suite.assertMachineStatus(runtime.MachineStageRunning, false, []string{"nodeReady"})
+
+	nodeStatus := k8s.NewNodeStatus(k8s.NamespaceName, "test")
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeStatus))
+
+	suite.assertMachineStatus(runtime.MachineStageRunning, false, []string{"nodeReady"})
+
+	nodeStatus.TypedSpec().NodeReady = true
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), nodeStatus))
 
 	suite.assertMachineStatus(runtime.MachineStageRunning, true, nil)
 

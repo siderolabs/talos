@@ -20,7 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-// NodeTaintSpecController manages k8s.NodeLabelsConfig based on configuration.
+// NodeTaintSpecController manages k8s.NodeTaintSpec based on configuration.
 type NodeTaintSpecController struct{}
 
 // Name implements controller.Controller interface.

@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 // VersionSuite verifies version command.
@@ -33,7 +34,7 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 // TestShortVersion verifies short version output.
 func (suite *VersionSuite) TestShortVersion() {
 	suite.RunCLI([]string{"version", "--short", "--nodes", suite.RandomDiscoveredNodeInternalIP()},
-		base.StdoutShouldMatch(regexp.MustCompile(`Client\s*`+regexp.QuoteMeta(suite.Version))),
+		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(version.Name)+`\s*`+regexp.QuoteMeta(suite.Version))),
 	)
 }
 

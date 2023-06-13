@@ -15,10 +15,13 @@ import (
 	v1 "k8s.io/api/core/v1"
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 func TestApplyLabels(t *testing.T) {
+	t.Parallel()
+
 	ctrl := &k8sctrl.NodeApplyController{}
 	logger := zaptest.NewLogger(t)
 
@@ -109,7 +112,11 @@ func TestApplyLabels(t *testing.T) {
 			},
 		},
 	} {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			node := &v1.Node{}
 			node.Labels = tt.inputLabels
 
@@ -134,6 +141,8 @@ func TestApplyLabels(t *testing.T) {
 }
 
 func TestApplyTaints(t *testing.T) {
+	t.Parallel()
+
 	ctrl := &k8sctrl.NodeApplyController{}
 	logger := zaptest.NewLogger(t)
 
@@ -288,7 +297,11 @@ func TestApplyTaints(t *testing.T) {
 			},
 		},
 	} {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			node := &v1.Node{}
 			node.Spec.Taints = tt.inputTaints
 
@@ -308,6 +321,93 @@ func TestApplyTaints(t *testing.T) {
 
 			assert.Equal(t, tt.expectedTaints, node.Spec.Taints)
 			assert.Equal(t, tt.expectedOwnedTaints, newOwnedTaints)
+		})
+	}
+}
+
+func TestApplyCordoned(t *testing.T) {
+	t.Parallel()
+
+	ctrl := &k8sctrl.NodeApplyController{}
+	logger := zaptest.NewLogger(t)
+
+	for _, tt := range []struct {
+		name               string
+		inputAnnotations   map[string]string
+		inputUnschedulable bool
+		shouldCordon       bool
+
+		expectedUnschedulable bool
+		expectedAnnotations   map[string]string
+	}{
+		{
+			name:               "not cordoned - uncordon",
+			inputAnnotations:   nil,
+			inputUnschedulable: false,
+			shouldCordon:       false,
+
+			expectedUnschedulable: false,
+			expectedAnnotations:   nil,
+		},
+		{
+			name:               "not cordoned - cordon",
+			inputAnnotations:   nil,
+			inputUnschedulable: false,
+			shouldCordon:       true,
+
+			expectedUnschedulable: true,
+			expectedAnnotations:   map[string]string{constants.AnnotationCordonedKey: constants.AnnotationCordonedValue},
+		},
+		{
+			name:               "cordoned - no annotation - cordon",
+			inputAnnotations:   nil,
+			inputUnschedulable: true,
+			shouldCordon:       true,
+
+			expectedUnschedulable: true,
+			expectedAnnotations:   nil,
+		},
+		{
+			name:               "cordoned - with annotation - cordon",
+			inputAnnotations:   map[string]string{constants.AnnotationCordonedKey: constants.AnnotationCordonedValue},
+			inputUnschedulable: true,
+			shouldCordon:       true,
+
+			expectedUnschedulable: true,
+			expectedAnnotations:   map[string]string{constants.AnnotationCordonedKey: constants.AnnotationCordonedValue},
+		},
+		{
+			name:               "cordoned - with annotation - uncordon",
+			inputAnnotations:   map[string]string{constants.AnnotationCordonedKey: constants.AnnotationCordonedValue},
+			inputUnschedulable: true,
+			shouldCordon:       false,
+
+			expectedUnschedulable: false,
+			expectedAnnotations:   map[string]string{},
+		},
+		{
+			name:               "cordoned - no annotation - uncordon",
+			inputAnnotations:   map[string]string{"foo": "bar"},
+			inputUnschedulable: true,
+			shouldCordon:       false,
+
+			expectedUnschedulable: true,
+			expectedAnnotations:   map[string]string{"foo": "bar"},
+		},
+	} {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			node := &v1.Node{}
+			node.Annotations = tt.inputAnnotations
+			node.Spec.Unschedulable = tt.inputUnschedulable
+
+			ctrl.ApplyCordoned(logger, node, tt.shouldCordon)
+
+			assert.Equal(t, tt.expectedUnschedulable, node.Spec.Unschedulable)
+			assert.Equal(t, tt.expectedAnnotations, node.Annotations)
 		})
 	}
 }

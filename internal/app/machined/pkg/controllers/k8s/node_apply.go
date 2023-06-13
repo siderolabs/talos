@@ -54,6 +54,17 @@ func (ctrl *NodeApplyController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.NodeCordonedSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			// NodeStatus is used to trigger the controller on node status updates.
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.NodeStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
 			ID:        pointer.To(secrets.KubernetesRootID),
@@ -114,7 +125,7 @@ func (ctrl *NodeApplyController) getNodeLabelSpecs(ctx context.Context, r contro
 func (ctrl *NodeApplyController) getNodeTaintSpecs(ctx context.Context, r controller.Runtime) ([]k8s.NodeTaintSpecSpec, error) {
 	items, err := safe.ReaderListAll[*k8s.NodeTaintSpec](ctx, r)
 	if err != nil {
-		return nil, fmt.Errorf("error listing node label spec resources: %w", err)
+		return nil, fmt.Errorf("error listing node taint spec resources: %w", err)
 	}
 
 	result := make([]k8s.NodeTaintSpecSpec, 0, items.Len())
@@ -124,6 +135,15 @@ func (ctrl *NodeApplyController) getNodeTaintSpecs(ctx context.Context, r contro
 	}
 
 	return result, nil
+}
+
+func (ctrl *NodeApplyController) getNodeCordoned(ctx context.Context, r controller.Runtime) (bool, error) {
+	items, err := safe.ReaderListAll[*k8s.NodeCordonedSpec](ctx, r)
+	if err != nil {
+		return false, fmt.Errorf("error listing node cordoned spec resources: %w", err)
+	}
+
+	return items.Len() > 0, nil
 }
 
 func (ctrl *NodeApplyController) getK8sClient(ctx context.Context, r controller.Runtime, logger *zap.Logger) (*kubernetes.Client, error) {
@@ -188,7 +208,12 @@ func (ctrl *NodeApplyController) reconcileWithK8s(
 		return err
 	}
 
-	return ctrl.sync(ctx, logger, k8sClient, nodename, nodeLabelSpecs, nodeTaintSpecs)
+	nodeShouldCordon, err := ctrl.getNodeCordoned(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	return ctrl.sync(ctx, logger, k8sClient, nodename, nodeLabelSpecs, nodeTaintSpecs, nodeShouldCordon)
 }
 
 func (ctrl *NodeApplyController) sync(
@@ -198,10 +223,11 @@ func (ctrl *NodeApplyController) sync(
 	nodeName string,
 	nodeLabelSpecs map[string]string,
 	nodeTaintSpecs []k8s.NodeTaintSpecSpec,
+	nodeShouldCordon bool,
 ) error {
 	// run several attempts retrying conflict errors
 	return retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).RetryWithContext(ctx, func(ctx context.Context) error {
-		err := ctrl.syncOnce(ctx, logger, k8sClient, nodeName, nodeLabelSpecs, nodeTaintSpecs)
+		err := ctrl.syncOnce(ctx, logger, k8sClient, nodeName, nodeLabelSpecs, nodeTaintSpecs, nodeShouldCordon)
 
 		if err != nil && apierrors.IsConflict(err) {
 			return retry.ExpectedError(err)
@@ -255,6 +281,7 @@ func (ctrl *NodeApplyController) syncOnce(
 	nodeName string,
 	nodeLabelSpecs map[string]string,
 	nodeTaintSpecs []k8s.NodeTaintSpecSpec,
+	nodeShouldCordon bool,
 ) error {
 	node, err := k8sClient.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
@@ -277,6 +304,7 @@ func (ctrl *NodeApplyController) syncOnce(
 
 	ctrl.ApplyLabels(logger, node, ownedLabelsMap, nodeLabelSpecs)
 	ctrl.ApplyTaints(logger, node, ownedTaintsMap, nodeTaintSpecs)
+	ctrl.ApplyCordoned(logger, node, nodeShouldCordon)
 
 	if err = marshalOwnedAnnotation(node, constants.AnnotationOwnedLabels, ownedLabelsMap); err != nil {
 		return fmt.Errorf("error marshaling owned labels: %w", err)
@@ -388,4 +416,28 @@ func (ctrl *NodeApplyController) ApplyTaints(logger *zap.Logger, node *v1.Node, 
 
 			return false
 		})
+}
+
+// ApplyCordoned marks the node as unschedulable if it is cordoned.
+//
+// This method is exported for testing purposes.
+func (ctrl *NodeApplyController) ApplyCordoned(logger *zap.Logger, node *v1.Node, shouldCordon bool) {
+	switch {
+	case shouldCordon && !node.Spec.Unschedulable:
+		node.Spec.Unschedulable = true
+
+		if node.Annotations == nil {
+			node.Annotations = map[string]string{}
+		}
+
+		node.Annotations[constants.AnnotationCordonedKey] = constants.AnnotationCordonedValue
+	case !shouldCordon && node.Spec.Unschedulable:
+		if _, exists := node.Annotations[constants.AnnotationCordonedKey]; !exists {
+			// not cordoned by Talos, skip
+			return
+		}
+
+		node.Spec.Unschedulable = false
+		delete(node.Annotations, constants.AnnotationCordonedKey)
+	}
 }
