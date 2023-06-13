@@ -83,6 +83,8 @@ type GenerateInput struct {
 	ContextName string
 }
 
+const allowedTimeSkew = 10 * time.Second
+
 // Generate a kubeconfig for the cluster from the given Input.
 func Generate(in *GenerateInput, out io.Writer) error {
 	tpl, err := template.New("kubeconfig").Funcs(template.FuncMap{
@@ -100,6 +102,7 @@ func Generate(in *GenerateInput, out io.Writer) error {
 	clientCert, err := x509.NewKeyPair(k8sCA,
 		x509.CommonName(in.CommonName),
 		x509.Organization(in.Organization),
+		x509.NotBefore(time.Now().Add(-allowedTimeSkew)),
 		x509.NotAfter(time.Now().Add(in.CertificateLifetime)),
 		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
 		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
