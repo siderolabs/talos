@@ -63,6 +63,13 @@ func (suite *manifestSuite) SetupTest() {
 	suite.Require().NoError(loopback.Loop(suite.loopbackDevice, suite.disk))
 
 	suite.Require().NoError(loopback.LoopSetReadWrite(suite.loopbackDevice))
+
+	// set the env vars xfsprogs expects to use Talos STATE partition which is 100Megs
+	// whereas xfs expects a default minimum size of 300Megs if these are not set.
+	// Ref: https://git.kernel.org/pub/scm/fs/xfs/xfsprogs-dev.git/tree/mkfs/xfs_mkfs.c?h=v6.3.0#n2582
+	suite.T().Setenv("TEST_DIR", "true")
+	suite.T().Setenv("TEST_DEV", "true")
+	suite.T().Setenv("QA_CHECK_FS", "true")
 }
 
 func (suite *manifestSuite) TearDownTest() {
@@ -132,7 +139,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 	suite.Assert().Equal(constants.StatePartitionLabel, part.Name)
 	suite.Assert().EqualValues(0, part.Attributes)
 
-	suite.Assert().EqualValues(extendedStateSize/lbaSize, part.Length())
+	suite.Assert().EqualValues(partition.StateSize/lbaSize, part.Length())
 
 	part = table.Partitions().Items()[5]
 	suite.Assert().Equal(partition.LinuxFilesystemData, strings.ToUpper(part.Type.String()))
@@ -215,12 +222,10 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 	suite.Assert().NoError(os.WriteFile(filepath.Join(tempDir, "var", "content"), []byte("data"), 0o600))
 }
 
-const extendedStateSize = 300 * 1024 * 1024
-
 func (suite *manifestSuite) TestExecuteManifestClean() {
 	suite.skipUnderBuildkit()
 
-	manifest, err := install.NewManifest(runtime.SequenceInstall, false, &install.Options{
+	manifest, err := install.NewManifest(runtime.SequenceInstall, false, false, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: true,
 		Board: constants.BoardNone,
@@ -231,13 +236,6 @@ func (suite *manifestSuite) TestExecuteManifestClean() {
 	dev := manifest.Devices[suite.loopbackDevice.Name()]
 	dev.SkipOverlayMountsCheck = true
 	manifest.Devices[suite.loopbackDevice.Name()] = dev
-
-	// increase the size of the state partition
-	for _, t := range manifest.Targets[suite.loopbackDevice.Name()] {
-		if t.Label == constants.StatePartitionLabel {
-			t.Size = extendedStateSize
-		}
-	}
 
 	suite.Assert().NoError(manifest.Execute())
 
@@ -247,7 +245,7 @@ func (suite *manifestSuite) TestExecuteManifestClean() {
 func (suite *manifestSuite) TestExecuteManifestForce() {
 	suite.skipUnderBuildkit()
 
-	manifest, err := install.NewManifest(runtime.SequenceInstall, false, &install.Options{
+	manifest, err := install.NewManifest(runtime.SequenceInstall, false, false, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: true,
 		Board: constants.BoardNone,
@@ -259,20 +257,13 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 	dev.SkipOverlayMountsCheck = true
 	manifest.Devices[suite.loopbackDevice.Name()] = dev
 
-	// increase the size of the state partition
-	for _, t := range manifest.Targets[suite.loopbackDevice.Name()] {
-		if t.Label == constants.StatePartitionLabel {
-			t.Size = extendedStateSize
-		}
-	}
-
 	suite.Assert().NoError(manifest.Execute())
 
 	suite.verifyBlockdevice(manifest, "", "A", false, false)
 
 	// reinstall
 
-	manifest, err = install.NewManifest(runtime.SequenceUpgrade, true, &install.Options{
+	manifest, err = install.NewManifest(runtime.SequenceUpgrade, false, true, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: true,
 		Zero:  true,
@@ -285,13 +276,6 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 	dev.SkipOverlayMountsCheck = true
 	manifest.Devices[suite.loopbackDevice.Name()] = dev
 
-	// increase the size of the state partition
-	for _, t := range manifest.Targets[suite.loopbackDevice.Name()] {
-		if t.Label == constants.StatePartitionLabel {
-			t.Size = extendedStateSize
-		}
-	}
-
 	suite.Assert().NoError(manifest.Execute())
 
 	suite.verifyBlockdevice(manifest, "A", "B", true, false)
@@ -300,19 +284,12 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 func (suite *manifestSuite) TestExecuteManifestPreserve() {
 	suite.skipUnderBuildkit()
 
-	manifest, err := install.NewManifest(runtime.SequenceInstall, false, &install.Options{
+	manifest, err := install.NewManifest(runtime.SequenceInstall, false, false, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: true,
 		Board: constants.BoardNone,
 	})
 	suite.Require().NoError(err)
-
-	// increase the size of the state partition
-	for _, t := range manifest.Targets[suite.loopbackDevice.Name()] {
-		if t.Label == constants.StatePartitionLabel {
-			t.Size = extendedStateSize
-		}
-	}
 
 	// in the tests overlay mounts should be ignored
 	dev := manifest.Devices[suite.loopbackDevice.Name()]
@@ -325,7 +302,7 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 
 	// reinstall
 
-	manifest, err = install.NewManifest(runtime.SequenceUpgrade, true, &install.Options{
+	manifest, err = install.NewManifest(runtime.SequenceUpgrade, false, true, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: false,
 		Board: constants.BoardNone,

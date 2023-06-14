@@ -109,7 +109,7 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 		}
 	}
 
-	i.manifest, err = NewManifest(seq, bootLoaderPresent, i.options)
+	i.manifest, err = NewManifest(seq, i.bootloader.UEFIBoot(), bootLoaderPresent, i.options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installation manifest: %w", err)
 	}
@@ -158,7 +158,15 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 	// Mount the partitions.
 	mountpoints := mount.NewMountPoints()
 
-	for _, label := range []string{constants.BootPartitionLabel, constants.EFIPartitionLabel} {
+	var bootLabels []string
+
+	if i.bootloader.UEFIBoot() {
+		bootLabels = []string{constants.EFIPartitionLabel}
+	} else {
+		bootLabels = []string{constants.BootPartitionLabel, constants.EFIPartitionLabel}
+	}
+
+	for _, label := range bootLabels {
 		err = func() error {
 			var device string
 			// searching targets for the device to be used

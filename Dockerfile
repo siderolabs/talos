@@ -143,15 +143,6 @@ COPY ./hack/structprotogen /go/src/github.com/siderolabs/structprotogen
 RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/structprotogen \
     && go build -o structprotogen . \
     && mv structprotogen /toolchain/go/bin/
-COPY ./hack/ukify /go/src/github.com/siderolabs/ukify
-RUN --mount=type=cache,target=/.cache \
-    --mount=type=bind,source=pkg,target=/go/src/github.com/pkg \
-    cd /go/src/github.com/siderolabs/ukify \
-    && CGO_ENABLED=1 go test ./... \
-    && go build -o gen-uki-certs ./gen-certs \
-    && CGO_ENABLED=1 go build -o ukify . \
-    && mv gen-uki-certs /toolchain/go/bin/ \
-    && mv ukify /toolchain/go/bin/
 
 # The build target creates a container that will be used to build Talos source
 # code.
@@ -706,13 +697,25 @@ COPY --from=rootfs / /
 LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/sbin/init"]
 
-FROM --platform=${BUILDPLATFORM} tools AS gen-uki-certs
+FROM --platform=${BUILDPLATFORM} tools AS ukify-tools
+# base has the talos source with the non-abrev version of TAG
+COPY --from=base /src/pkg /go/src/github.com/pkg
+COPY ./hack/ukify /go/src/github.com/siderolabs/ukify
+RUN --mount=type=cache,target=/.cache \
+    cd /go/src/github.com/siderolabs/ukify \
+    && CGO_ENABLED=1 go test ./... \
+    && go build -o gen-uki-certs ./gen-certs \
+    && CGO_ENABLED=1 go build -o ukify . \
+    && mv gen-uki-certs /toolchain/go/bin/ \
+    && mv ukify /toolchain/go/bin/
+
+FROM --platform=${BUILDPLATFORM} ukify-tools AS gen-uki-certs
 RUN gen-uki-certs
 
 FROM scratch as uki-certs
 COPY --from=gen-uki-certs /_out /
 
-FROM --platform=${BUILDPLATFORM} tools AS uki-build-amd64
+FROM --platform=${BUILDPLATFORM} ukify-tools AS uki-build-amd64
 WORKDIR /build
 COPY --from=pkg-sd-stub-amd64 / _out/
 COPY --from=pkg-sd-boot-amd64 / _out/
@@ -725,7 +728,7 @@ FROM scratch AS uki-amd64
 COPY --from=uki-build-amd64 /build/_out/systemd-bootx64.efi.signed /systemd-boot.efi.signed
 COPY --from=uki-build-amd64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
 
-FROM --platform=${BUILDPLATFORM} tools AS uki-build-arm64
+FROM --platform=${BUILDPLATFORM} ukify-tools AS uki-build-arm64
 WORKDIR /build
 COPY --from=pkg-sd-stub-arm64 / _out/
 COPY --from=pkg-sd-boot-arm64 / _out/

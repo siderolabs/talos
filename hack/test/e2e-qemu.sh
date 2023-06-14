@@ -145,6 +145,14 @@ case "${CUSTOM_CNI_NAME:-none}" in
     ;;
 esac
 
+case "${WITH_TRUSTED_BOOT:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS="${QEMU_FLAGS} --iso-path=_out/talos-uki-amd64.iso --with-secureboot=true --with-tpm2=true"
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 

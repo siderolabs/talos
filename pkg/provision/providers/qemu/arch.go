@@ -5,6 +5,7 @@
 package qemu
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -93,7 +94,18 @@ func (arch Arch) PFlash(uefiEnabled, secureBootEnabled bool, extraUEFISearchPath
 			return nil
 		}
 
-		uefiSourcePaths := []string{"/usr/share/ovmf/OVMF.fd", "/usr/share/OVMF/OVMF.fd", "/usr/share/OVMF/OVMF_CODE_4M.fd", "/usr/share/OVMF/OVMF_CODE_4M.secboot.fd"}
+		uefiSourcePaths := []string{
+			"/usr/share/ovmf/OVMF.fd",
+			"/usr/share/OVMF/OVMF.fd",
+			"/usr/share/OVMF/OVMF_CODE_4M.fd",
+			"/usr/share/OVMF/OVMF_CODE_4M.secboot.fd",
+		}
+
+		if _, err := os.Stat("/usr/share/qemu/edk2-x86_64-secure-code.fd"); err == nil {
+			// alpine uses this path
+			uefiSourcePaths = append(uefiSourcePaths, "/usr/share/qemu/edk2-x86_64-secure-code.fd")
+		}
+
 		for _, p := range extraUEFISearchPaths {
 			uefiSourcePaths = append(uefiSourcePaths, filepath.Join(p, "OVMF.fd"))
 		}

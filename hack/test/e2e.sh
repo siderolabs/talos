@@ -302,6 +302,10 @@ function validate_rlimit_nofile {
   ${KUBECTL} run --rm --restart=Never -it rlimit-test --image=alpine -- /bin/sh -c "ulimit -n" | grep 1048576
 }
 
+function validate_booted_secureboot {
+  ${TALOSCTL} dmesg | grep "Secure boot enabled"
+}
+
 function install_and_run_cilium_cni_tests {
   get_kubeconfig
 

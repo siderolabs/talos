@@ -47,7 +47,7 @@ type Device struct {
 // NewManifest initializes and returns a Manifest.
 //
 //nolint:gocyclo
-func NewManifest(sequence runtime.Sequence, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
+func NewManifest(sequence runtime.Sequence, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Devices:           map[string]Device{},
 		Targets:           map[string][]*Target{},
@@ -55,6 +55,10 @@ func NewManifest(sequence runtime.Sequence, bootLoaderPresent bool, opts *Option
 	}
 
 	if opts.Board != constants.BoardNone {
+		if uefiOnlyBoot {
+			return nil, fmt.Errorf("board option can't be used with uefi-only-boot")
+		}
+
 		var b runtime.Board
 
 		b, err = board.NewBoard(opts.Board)
@@ -107,27 +111,37 @@ func NewManifest(sequence runtime.Sequence, bootLoaderPresent bool, opts *Option
 		manifest.Targets[opts.Disk] = []*Target{}
 	}
 
-	efiTarget := EFITarget(opts.Disk, nil)
-	biosTarget := BIOSTarget(opts.Disk, nil)
+	targets := []*Target{}
 
-	bootTarget := BootTarget(opts.Disk, &Target{
-		PreserveContents: bootLoaderPresent,
-	})
+	// create GRUB BIOS+UEFI partitions, or only one big EFI partition if not using GRUB
+	if !uefiOnlyBoot {
+		targets = append(targets,
+			EFITarget(opts.Disk, nil),
+			BIOSTarget(opts.Disk, nil),
+			BootTarget(opts.Disk, &Target{
+				PreserveContents: bootLoaderPresent,
+			}),
+		)
+	} else {
+		targets = append(targets,
+			EFITargetUKI(opts.Disk, &Target{
+				PreserveContents: bootLoaderPresent,
+			}),
+		)
+	}
 
-	metaTarget := MetaTarget(opts.Disk, &Target{
-		PreserveContents: bootLoaderPresent,
-	})
-
-	stateTarget := StateTarget(opts.Disk, &Target{
-		PreserveContents: bootLoaderPresent,
-		FormatOptions: &partition.FormatOptions{
-			FileSystemType: partition.FilesystemTypeNone,
-		},
-	})
-
-	ephemeralTarget := EphemeralTarget(opts.Disk, NoFilesystem)
-
-	targets := []*Target{efiTarget, biosTarget, bootTarget, metaTarget, stateTarget, ephemeralTarget}
+	targets = append(targets,
+		MetaTarget(opts.Disk, &Target{
+			PreserveContents: bootLoaderPresent,
+		}),
+		StateTarget(opts.Disk, &Target{
+			PreserveContents: bootLoaderPresent,
+			FormatOptions: &partition.FormatOptions{
+				FileSystemType: partition.FilesystemTypeNone,
+			},
+		}),
+		EphemeralTarget(opts.Disk, NoFilesystem),
+	)
 
 	if !opts.Force {
 		for _, target := range targets {

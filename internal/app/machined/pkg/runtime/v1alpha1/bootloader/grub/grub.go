@@ -41,6 +41,12 @@ func NewConfig() *Config {
 	}
 }
 
+// UEFIBoot returns true if bootloader is UEFI-only.
+func (c *Config) UEFIBoot() bool {
+	// grub supports BIOS boot, so false here.
+	return false
+}
+
 // Put puts a new menu entry to the grub config (nothing is written to disk).
 func (c *Config) Put(entry bootloader.BootLabel, cmdline string) error {
 	c.Entries[entry] = buildMenuEntry(entry, cmdline)

@@ -138,6 +138,10 @@ const (
 	// the boot path.
 	EFIMountPoint = BootMountPoint + "/EFI"
 
+	// EFIVarsMountPoint is mount point for efivars filesystem type.
+	// https://www.kernel.org/doc/html/next/filesystems/efivarfs.html
+	EFIVarsMountPoint = "/sys/firmware/efi/efivars"
+
 	// BIOSGrubPartitionLabel is the label of the partition used by grub's second
 	// stage bootloader.
 	BIOSGrubPartitionLabel = "BIOS"
@@ -506,6 +510,18 @@ const (
 
 	// RootfsAsset defines a well known name for our rootfs filename.
 	RootfsAsset = "rootfs.sqsh"
+
+	// UKIAsset defines a well known name for our UKI filename.
+	UKIAsset = "vmlinuz.efi.signed"
+
+	// UKIAssetPath is the path to the UKI in the installer.
+	UKIAssetPath = "/usr/install/%s/" + UKIAsset
+
+	// SDBootAsset defines a well known name for our SDBoot filename.
+	SDBootAsset = "systemd-boot.efi.signed"
+
+	// SDBootAssetPath is the path to the SDBoot in the installer.
+	SDBootAssetPath = "/usr/install/%s/" + SDBootAsset
 
 	// DefaultCertificateValidityDuration is the default duration for a certificate.
 	DefaultCertificateValidityDuration = x509.DefaultCertificateValidityDuration

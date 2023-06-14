@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 )
 
 // Bootloader describes a bootloader.
@@ -19,6 +20,8 @@ type Bootloader interface {
 	Revert() error
 	// PreviousLabel returns the previous bootloader label.
 	PreviousLabel() string
+	// UEFIBoot returns true if the bootloader is UEFI-only.
+	UEFIBoot() bool
 }
 
 // Probe checks if any supported bootloaders are installed.
@@ -31,14 +34,29 @@ func Probe(disk string) (Bootloader, error) {
 		return nil, err
 	}
 
-	if grubBootloader == nil {
-		return nil, os.ErrNotExist
+	if grubBootloader != nil {
+		return grubBootloader, nil
 	}
 
-	return grubBootloader, nil
+	sdbootBootloader, err := sdboot.Probe(disk)
+	if err != nil {
+		return nil, err
+	}
+
+	if sdbootBootloader != nil {
+		return sdbootBootloader, nil
+	}
+
+	return nil, os.ErrNotExist
 }
 
 // New returns a new bootloader.
 func New() (Bootloader, error) {
+	// TODO: there should be a way to force sd-boot/GRUB based on installer args,
+	//       to build a disk image with specified bootloader.
+	if sdboot.IsBootedUsingSDBoot() {
+		return sdboot.New(), nil
+	}
+
 	return grub.NewConfig(), nil
 }

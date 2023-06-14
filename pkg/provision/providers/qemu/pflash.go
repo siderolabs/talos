@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
@@ -69,6 +70,18 @@ func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflas
 
 	if secureBootEnabled {
 		flashVarsPath := state.GetRelativePath(fmt.Sprintf("%s-flash_vars.fd", nodeName))
+		ovmfVars := "/usr/share/OVMF/OVMF_VARS_4M.fd"
+
+		for _, pflash := range pflashSpec {
+			for _, sourcePath := range pflash.SourcePaths {
+				if strings.Contains(sourcePath, "edk2-x86_64-secure-code.fd") {
+					// alpine
+					ovmfVars = "/usr/share/OVMF/OVMF_VARS.fd"
+
+					break
+				}
+			}
+		}
 
 		cmd := exec.Command("ovmfctl", []string{
 			"--no-microsoft",
@@ -84,7 +97,7 @@ func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflas
 			"4e32566d-8e9e-4f52-81d3-5bb9715f9727",
 			secureBootEnrollCert,
 			"--input",
-			"/usr/share/OVMF/OVMF_VARS_4M.fd",
+			ovmfVars,
 			"--output",
 			flashVarsPath,
 		}...)

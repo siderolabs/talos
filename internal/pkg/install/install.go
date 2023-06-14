@@ -137,6 +137,13 @@ func RunInstallerContainer(disk, platform, ref string, cfg configcore.Config, cf
 		)
 	}
 
+	// mount the efivars into the container if the efivars directory exists
+	if _, err = os.Stat(constants.EFIVarsMountPoint); err == nil {
+		mounts = append(mounts,
+			specs.Mount{Type: "efivarfs", Source: "efivarfs", Destination: constants.EFIVarsMountPoint, Options: []string{"rw", "nosuid", "nodev", "noexec", "relatime"}},
+		)
+	}
+
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
 	config := constants.ConfigNone

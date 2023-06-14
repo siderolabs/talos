@@ -5,7 +5,11 @@
 package mount
 
 import (
+	"os"
+
 	"golang.org/x/sys/unix"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // PseudoMountPoints returns the mountpoints required to boot the system.
@@ -28,6 +32,12 @@ func PseudoSubMountPoints() (mountpoints *Points, err error) {
 	pseudo.Set("devpts", NewMountPoint("devpts", "/dev/pts", "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"))
 	pseudo.Set("hugetlb", NewMountPoint("hugetlbfs", "/dev/hugepages", "hugetlbfs", 0, ""))
 	pseudo.Set("securityfs", NewMountPoint("securityfs", "/sys/kernel/security", "securityfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""))
+
+	if _, err := os.Stat(constants.EFIVarsMountPoint); err == nil {
+		// mount EFI vars if they exist
+		// TODO: frezbo: maybe mount ro and rw when needed to write? better security?
+		pseudo.Set("efivars", NewMountPoint("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""))
+	}
 
 	return pseudo, nil
 }

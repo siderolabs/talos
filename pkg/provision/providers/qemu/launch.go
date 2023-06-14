@@ -299,6 +299,8 @@ func launchVM(config *LaunchConfig) error {
 			fmt.Sprintf("file=%s,level=20", filepath.Join(config.TPM2Config.StateDir, "swtpm.log")),
 		}...)
 
+		log.Printf("starting swtpm: %s", cmd.String())
+
 		if err := cmd.Start(); err != nil {
 			return err
 		}
