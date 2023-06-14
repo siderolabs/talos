@@ -9,11 +9,13 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/assets"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -26,12 +28,26 @@ const (
 //
 //nolint:gocyclo
 func (c *Config) Install(bootDisk, arch, cmdline string) error {
-	// grub not installed, create a default config
-	if c == nil {
-		c = NewConfig(cmdline)
+	if err := c.flip(); err != nil {
+		return err
 	}
 
-	if err := c.Put(c.Next, cmdline); err != nil {
+	assets := assets.Assets{
+		{
+			Source:      fmt.Sprintf(constants.KernelAssetPath, arch),
+			Destination: filepath.Join(constants.BootMountPoint, string(c.Default), constants.KernelAsset),
+		},
+		{
+			Source:      fmt.Sprintf(constants.InitramfsAssetPath, arch),
+			Destination: filepath.Join(constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
+		},
+	}
+
+	if err := assets.Install(); err != nil {
+		return err
+	}
+
+	if err := c.Put(c.Default, cmdline); err != nil {
 		return err
 	}
 
@@ -89,7 +105,7 @@ func (c *Config) Install(bootDisk, arch, cmdline string) error {
 }
 
 func getBlockDeviceName(bootDisk string) (string, error) {
-	dev, err := blockdevice.Open(bootDisk)
+	dev, err := blockdevice.Open(bootDisk, blockdevice.WithMode(blockdevice.ReadonlyMode))
 	if err != nil {
 		return "", err
 	}

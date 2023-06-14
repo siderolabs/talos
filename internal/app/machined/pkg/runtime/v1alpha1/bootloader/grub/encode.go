@@ -13,7 +13,7 @@ import (
 	"text/template"
 )
 
-const confTemplate = `set default="{{ (index .Entries .Next).Name }}"
+const confTemplate = `set default="{{ (index .Entries .Default).Name }}"
 {{ with (index .Entries .Fallback).Name -}}
 set fallback="{{ . }}"
 {{- end }}
@@ -33,7 +33,7 @@ menuentry "{{ $entry.Name }}" {
 }
 {{ end -}}
 
-{{ $defaultEntry := index .Entries .Next -}}
+{{ $defaultEntry := index .Entries .Default -}}
 menuentry "Reset Talos installation and return to maintenance mode" {
   set gfxmode=auto
   set gfxpayload=text

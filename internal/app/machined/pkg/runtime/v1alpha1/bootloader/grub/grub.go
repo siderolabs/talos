@@ -16,7 +16,7 @@ import (
 
 // Config represents a grub configuration file (grub.cfg).
 type Config struct {
-	Next     bootloader.BootLabel
+	Default  bootloader.BootLabel
 	Fallback bootloader.BootLabel
 	Entries  map[bootloader.BootLabel]MenuEntry
 }
@@ -34,18 +34,11 @@ func (e bootloaderNotInstalledError) Error() string {
 }
 
 // NewConfig creates a new grub configuration (nothing is written to disk).
-func NewConfig(cmdline string) *Config {
+func NewConfig() *Config {
 	return &Config{
-		Next: bootloader.BootA,
-		Entries: map[bootloader.BootLabel]MenuEntry{
-			bootloader.BootA: buildMenuEntry(bootloader.BootA, cmdline),
-		},
+		Default: bootloader.BootA,
+		Entries: map[bootloader.BootLabel]MenuEntry{},
 	}
-}
-
-// Installed returns true if the bootloader is installed.
-func (c *Config) Installed() bool {
-	return c != nil
 }
 
 // Put puts a new menu entry to the grub config (nothing is written to disk).
@@ -56,8 +49,8 @@ func (c *Config) Put(entry bootloader.BootLabel, cmdline string) error {
 }
 
 func (c *Config) validate() error {
-	if _, ok := c.Entries[c.Next]; !ok {
-		return fmt.Errorf("invalid default entry: %s", c.Next)
+	if _, ok := c.Entries[c.Default]; !ok {
+		return fmt.Errorf("invalid default entry: %s", c.Default)
 	}
 
 	if c.Fallback != "" {
@@ -66,7 +59,7 @@ func (c *Config) validate() error {
 		}
 	}
 
-	if c.Next == c.Fallback {
+	if c.Default == c.Fallback {
 		return fmt.Errorf("default and fallback entries must not be the same")
 	}
 

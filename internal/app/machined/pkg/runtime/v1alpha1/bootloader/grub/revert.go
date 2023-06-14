@@ -24,7 +24,7 @@ func (c *Config) Revert() error {
 		return fmt.Errorf("cannot revert bootloader: %w", bootloaderNotInstalledError{})
 	}
 
-	if err := c.Flip(); err != nil {
+	if err := c.flip(); err != nil {
 		return err
 	}
 
@@ -64,7 +64,7 @@ func (c *Config) Revert() error {
 		defer mp.Unmount() //nolint:errcheck
 	}
 
-	if _, err = os.Stat(filepath.Join(constants.BootMountPoint, string(c.Next))); errors.Is(err, os.ErrNotExist) {
+	if _, err = os.Stat(filepath.Join(constants.BootMountPoint, string(c.Default))); errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("cannot rollback to %q, label does not exist", "")
 	}
 

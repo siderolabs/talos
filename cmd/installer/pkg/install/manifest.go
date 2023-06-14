@@ -47,11 +47,7 @@ type Device struct {
 // NewManifest initializes and returns a Manifest.
 //
 //nolint:gocyclo
-func NewManifest(label string, sequence runtime.Sequence, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
-	if label == "" {
-		return nil, fmt.Errorf("a label is required, got \"\"")
-	}
-
+func NewManifest(sequence runtime.Sequence, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Devices:           map[string]Device{},
 		Targets:           map[string][]*Target{},
@@ -116,16 +112,6 @@ func NewManifest(label string, sequence runtime.Sequence, bootLoaderPresent bool
 
 	bootTarget := BootTarget(opts.Disk, &Target{
 		PreserveContents: bootLoaderPresent,
-		Assets: []*Asset{
-			{
-				Source:      fmt.Sprintf(constants.KernelAssetPath, opts.Arch),
-				Destination: filepath.Join(constants.BootMountPoint, label, constants.KernelAsset),
-			},
-			{
-				Source:      fmt.Sprintf(constants.InitramfsAssetPath, opts.Arch),
-				Destination: filepath.Join(constants.BootMountPoint, label, constants.InitramfsAsset),
-			},
-		},
 	})
 
 	metaTarget := MetaTarget(opts.Disk, &Target{

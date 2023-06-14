@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -92,25 +93,23 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 		options: opts,
 	}
 
-	i.bootloader, err = bootloader.Probe(i.options.Zero)
-	if err != nil {
-		return nil, fmt.Errorf("failed to probe bootloader: %w", err)
-	}
-
-	var bootLoaderPresent bool
-
-	// we have a bootloader, so we can flip it
-	if i.bootloader.Installed() {
-		bootLoaderPresent = true
-
-		if err = i.bootloader.Flip(); err != nil {
-			return nil, fmt.Errorf("failed to flip bootloader: %w", err)
+	if !i.options.Zero {
+		i.bootloader, err = bootloader.Probe(i.options.Disk)
+		if err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("failed to probe bootloader: %w", err)
 		}
 	}
 
-	bootLabel := i.bootloader.NextLabel()
+	bootLoaderPresent := i.bootloader != nil
 
-	i.manifest, err = NewManifest(bootLabel, seq, bootLoaderPresent, i.options)
+	if !bootLoaderPresent {
+		i.bootloader, err = bootloader.New()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create bootloader: %w", err)
+		}
+	}
+
+	i.manifest, err = NewManifest(seq, bootLoaderPresent, i.options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installation manifest: %w", err)
 	}
@@ -214,16 +213,6 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 			log.Printf("failed to unmount: %v", e)
 		}
 	}()
-
-	// Install the assets.
-	for _, targets := range i.manifest.Targets {
-		for _, target := range targets {
-			// Handle the download and extraction of assets.
-			if err = target.Save(); err != nil {
-				return err
-			}
-		}
-	}
 
 	// Install the bootloader.
 	if err = i.bootloader.Install(i.options.Disk, i.options.Arch, i.cmdline.String()); err != nil {

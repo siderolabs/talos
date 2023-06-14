@@ -6,9 +6,11 @@
 package grub
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 
 	"github.com/siderolabs/talos/internal/pkg/mount"
@@ -16,21 +18,50 @@ import (
 )
 
 // Probe probes a block device for GRUB bootloader.
-func Probe() (*Config, error) {
-	// attempt to probe BOOT partition directly
-	dev, err := probe.GetDevWithPartitionName(constants.BootPartitionLabel)
-	if os.IsNotExist(err) {
-		// no BOOT partition, nothing to do
-		return nil, nil
+//
+// If the 'disk' is passed, search happens on that disk only, otherwise searches all partitions.
+//
+//nolint:gocyclo
+func Probe(disk string) (*Config, error) {
+	var probedBlockDevice *blockdevice.BlockDevice
+
+	switch {
+	case disk != "":
+		dev, err := blockdevice.Open(disk, blockdevice.WithMode(blockdevice.ReadonlyMode))
+		if err != nil {
+			return nil, err
+		}
+
+		defer dev.Close() //nolint:errcheck
+
+		_, err = dev.GetPartition(constants.BootPartitionLabel)
+		if err != nil {
+			if errors.Is(err, blockdevice.ErrMissingPartitionTable) || os.IsNotExist(err) {
+				return nil, nil
+			}
+
+			return nil, err
+		}
+
+		probedBlockDevice = dev
+	case disk == "":
+		// attempt to probe BOOT partition on any disk
+		dev, err := probe.GetDevWithPartitionName(constants.BootPartitionLabel)
+		if os.IsNotExist(err) {
+			// no BOOT partition, nothing to do
+			return nil, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		defer dev.Close() //nolint:errcheck
+
+		probedBlockDevice = dev.BlockDevice
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer dev.Close() //nolint:errcheck
-
-	mp, err := mount.SystemMountPointForLabel(dev.BlockDevice, constants.BootPartitionLabel)
+	mp, err := mount.SystemMountPointForLabel(probedBlockDevice, constants.BootPartitionLabel, mount.WithFlags(mount.ReadOnly))
 	if err != nil {
 		return nil, err
 	}

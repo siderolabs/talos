@@ -35,7 +35,7 @@ func TestDecode(t *testing.T) {
 	conf, err := grub.Decode(grubCfg)
 	assert.NoError(t, err)
 
-	assert.Equal(t, bootloader.BootA, conf.Next)
+	assert.Equal(t, bootloader.BootA, conf.Default)
 	assert.Equal(t, bootloader.BootB, conf.Fallback)
 
 	assert.Len(t, conf.Entries, 2)
@@ -54,7 +54,8 @@ func TestDecode(t *testing.T) {
 }
 
 func TestEncodeDecode(t *testing.T) {
-	config := grub.NewConfig("talos.platform=metal talos.config=https://my-metadata.server/talos/config?hostname=${hostname}&mac=${mac}")
+	config := grub.NewConfig()
+	require.NoError(t, config.Put(bootloader.BootA, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?hostname=${hostname}&mac=${mac}"))
 	require.NoError(t, config.Put(bootloader.BootB, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?uuid=${uuid}"))
 
 	var b bytes.Buffer
@@ -101,7 +102,8 @@ func TestWrite(t *testing.T) {
 
 	t.Cleanup(func() { require.NoError(t, os.Remove(tempFile.Name())) })
 
-	config := grub.NewConfig("cmdline A")
+	config := grub.NewConfig()
+	require.NoError(t, config.Put(bootloader.BootA, "cmdline A"))
 
 	err := config.Write(tempFile.Name())
 	assert.NoError(t, err)
@@ -111,7 +113,9 @@ func TestWrite(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
-	config := grub.NewConfig("cmdline A")
+	config := grub.NewConfig()
+	require.NoError(t, config.Put(bootloader.BootA, "cmdline A"))
+
 	err := config.Put(bootloader.BootB, "cmdline B")
 
 	assert.NoError(t, err)
@@ -127,7 +131,9 @@ func TestPut(t *testing.T) {
 
 //nolint:errcheck
 func TestFallback(t *testing.T) {
-	config := grub.NewConfig("cmdline A")
+	config := grub.NewConfig()
+	require.NoError(t, config.Put(bootloader.BootA, "cmdline A"))
+
 	_ = config.Put(bootloader.BootB, "cmdline B")
 
 	config.Fallback = bootloader.BootB
@@ -226,9 +232,10 @@ func TestBackwardsCompat(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	config := grub.NewConfig("cmdline A")
+	config := grub.NewConfig()
+	require.NoError(t, config.Put(bootloader.BootA, "cmdline A"))
 	require.NoError(t, config.Put(bootloader.BootB, "cmdline B"))
-	config.Next = bootloader.BootB
+	config.Default = bootloader.BootB
 
 	err := config.Encode(&buf)
 	assert.NoError(t, err)

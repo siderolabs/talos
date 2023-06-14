@@ -337,14 +337,15 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 		return nil, err
 	}
 
+	systemDisk := s.Controller.Runtime().State().Machine().Disk()
+	if systemDisk == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "system disk not found")
+	}
+
 	if err := func() error {
-		config, err := bootloader.Probe(false)
+		config, err := bootloader.Probe(systemDisk.Device().Name())
 		if err != nil {
 			return err
-		}
-
-		if !config.Installed() {
-			return fmt.Errorf("grub configuration not found, nothing to rollback")
 		}
 
 		return config.Revert()

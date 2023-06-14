@@ -72,21 +72,21 @@ func WithPrefix(o string) Option {
 // WithFlags is a functional option to set up mount flags.
 func WithFlags(flags Flags) Option {
 	return func(args *Options) {
-		args.MountFlags = flags
+		args.MountFlags |= flags
 	}
 }
 
 // WithPreMountHooks adds functions to be called before mounting the partition.
 func WithPreMountHooks(hooks ...Hook) Option {
 	return func(args *Options) {
-		args.PreMountHooks = hooks
+		args.PreMountHooks = append(args.PreMountHooks, hooks...)
 	}
 }
 
 // WithPostUnmountHooks adds functions to be called after unmounting the partition.
 func WithPostUnmountHooks(hooks ...Hook) Option {
 	return func(args *Options) {
-		args.PostUnmountHooks = hooks
+		args.PostUnmountHooks = append(args.PostUnmountHooks, hooks...)
 	}
 }
 

@@ -77,7 +77,7 @@ func Decode(c []byte) (*Config, error) {
 	}
 
 	conf := Config{
-		Next:     defaultEntry,
+		Default:  defaultEntry,
 		Fallback: fallbackEntry,
 		Entries:  entries,
 	}

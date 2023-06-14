@@ -2242,7 +2242,7 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 			return nil
 		}
 
-		defaultEntry, ok := conf.Entries[conf.Next]
+		defaultEntry, ok := conf.Entries[conf.Default]
 		if !ok {
 			return nil
 		}

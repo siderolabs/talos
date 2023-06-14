@@ -12,41 +12,26 @@ import (
 )
 
 // Flip flips the default boot label.
-func (c *Config) Flip() error {
-	if c == nil {
-		return fmt.Errorf("cannot flip bootloader: %w", bootloaderNotInstalledError{})
+func (c *Config) flip() error {
+	if _, exists := c.Entries[c.Default]; !exists {
+		return nil
 	}
 
-	current := c.Next
+	current := c.Default
 
-	next, err := bootloader.FlipBootLabel(c.Next)
+	next, err := bootloader.FlipBootLabel(c.Default)
 	if err != nil {
 		return err
 	}
 
-	c.Next = next
+	c.Default = next
 	c.Fallback = current
 
 	return nil
 }
 
-// NextLabel returns the next bootloader label.
-func (c *Config) NextLabel() string {
-	// If the bootloader is not installed, return the default label.
-	if c == nil {
-		return string(bootloader.BootA)
-	}
-
-	return string(c.Next)
-}
-
 // PreviousLabel returns the previous bootloader label.
 func (c *Config) PreviousLabel() string {
-	// If the bootloader is not installed, empty.
-	if c == nil {
-		return ""
-	}
-
 	return string(c.Fallback)
 }
 

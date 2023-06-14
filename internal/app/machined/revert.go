@@ -47,14 +47,14 @@ func revertBootloadInternal() error {
 	log.Printf("reverting failed upgrade, switching to %q", label)
 
 	if err = func() error {
-		config, probeErr := bootloader.Probe(false)
+		config, probeErr := bootloader.Probe("")
 		if probeErr != nil {
-			return probeErr
-		}
+			if os.IsNotExist(probeErr) {
+				// no bootloader found, nothing to do
+				return nil
+			}
 
-		// not bootloader found, nothing to do
-		if !config.Installed() {
-			return nil
+			return probeErr
 		}
 
 		return config.Revert()
