@@ -180,17 +180,16 @@ Generate a machine configuration:
 talosctl gen config my-cluster https://192.168.121.100:6443 --install-disk /dev/vda
 ```
 
-Edit `controlplane.yaml` to add the virtual IP you picked to a network interface under `.spec.machine.network.interfaces`, for example:
+Edit `controlplane.yaml` to add the virtual IP you picked to a network interface under `.machine.network.interfaces`, for example:
 
 ```yaml
-spec:
-  machine:
-    network:
-      interfaces:
-        - interface: eth0
-          dhcp: true
-          vip:
-            ip: 192.168.121.100
+machine:
+  network:
+    interfaces:
+      - interface: eth0
+        dhcp: true
+        vip:
+          ip: 192.168.121.100
 ```
 
 Apply the configuration to the initial control plane node:
