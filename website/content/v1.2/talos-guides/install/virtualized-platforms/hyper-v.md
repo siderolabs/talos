@@ -8,7 +8,7 @@ aliases:
 ## Pre-requisities
 
 1. Download the latest `talos-amd64.iso` ISO from github [releases page](https://github.com/siderolabs/talos/releases)
-2. Create a New-TalosVM folder in any of your PS Module Path folders `$env:PSModulePath -split ';'` and save the [New-TalosVM.psm1](https://github.com/nebula-it/New-TalosVM/blob/main/New-TalosVM.psm1) there
+2. Create a New-TalosVM folder in any of your PS Module Path folders `$env:PSModulePath -split ';'` and save the [New-TalosVM.psm1](https://github.com/nebula-it/New-TalosVM/blob/main/Talos/1.0.0/Talos.psm1) there
 
 ## Plan Overview
 
