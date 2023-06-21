@@ -1,0 +1,47 @@
+FROM installer as build
+ARG TARGETARCH
+ENV TARGETARCH ${TARGETARCH}
+RUN apk add --no-cache --update \
+    cpio \
+    squashfs-tools \
+    xz
+WORKDIR /initramfs
+ARG RM
+RUN <<EOF
+set -euo pipefail
+
+xz -d /usr/install/${TARGETARCH}/initramfs.xz
+cpio -idvm < /usr/install/${TARGETARCH}/initramfs
+unsquashfs -f -d /rootfs rootfs.sqsh
+
+for f in ${RM}; do
+    rm -rfv /rootfs$f
+done
+
+rm /usr/install/${TARGETARCH}/initramfs
+rm rootfs.sqsh
+EOF
+
+COPY --from=kernel /lib/modules /rootfs/kernel/lib/modules
+COPY --from=kernel /certs/signing_key.x509 /rootfs/kernel/signing_key.x509
+COPY --from=customization / /rootfs
+RUN <<EOF
+set -euo pipefail
+
+KERNEL_VERSION=$(ls /rootfs/kernel/lib/modules)
+
+xargs -a /usr/install/modules-${TARGETARCH}.txt -I {} install -D /rootfs/kernel/lib/modules/${KERNEL_VERSION}/{} /rootfs/lib/modules/${KERNEL_VERSION}/{}
+
+depmod -b /rootfs ${KERNEL_VERSION}
+
+# verify all modules are signed
+find /rootfs/lib/modules/${KERNEL_VERSION} -type f -name '*.ko' | xargs -I {} /bin/module-sig-verify -cert /rootfs/kernel/signing_key.x509 -module {}
+
+mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
+find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z > /usr/install/${TARGETARCH}/initramfs.xz
+
+rm -rf /rootfs /initramfs /rootfs/kernel
+EOF
+
+WORKDIR /
+COPY --from=kernel /boot/vmlinuz /usr/install/${TARGETARCH}/vmlinuz

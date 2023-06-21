@@ -697,6 +697,34 @@ COPY --from=rootfs / /
 LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/sbin/init"]
 
+FROM build-go AS module-sig-verify-linux-amd64-build
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+ARG GOAMD64
+WORKDIR /src/module-sig-verify
+COPY ./hack/module-sig-verify/go.mod ./hack/module-sig-verify/go.sum .
+RUN --mount=type=cache,target=/.cache go mod download
+COPY ./hack/module-sig-verify/main.go .
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build -o module-sig-verify-linux-amd64 .
+
+FROM build-go AS module-sig-verify-linux-arm64-build
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+ARG GOAMD64
+WORKDIR /src/module-sig-verify
+COPY ./hack/module-sig-verify/go.mod ./hack/module-sig-verify/go.sum .
+RUN --mount=type=cache,target=/.cache go mod download
+COPY ./hack/module-sig-verify/main.go .
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=arm64 GOAMD64=${GOAMD64} go build -o module-sig-verify-linux-arm64 .
+
+FROM scratch AS module-sig-verify-linux-amd64
+COPY --from=module-sig-verify-linux-amd64-build /src/module-sig-verify/module-sig-verify-linux-amd64 /module-sig-verify-linux-amd64
+
+FROM scratch AS module-sig-verify-linux-arm64
+COPY --from=module-sig-verify-linux-arm64-build /src/module-sig-verify/module-sig-verify-linux-arm64 /module-sig-verify-linux-arm64
+
+FROM module-sig-verify-linux-${TARGETARCH} AS module-sig-verify-targetarch
+
 FROM --platform=${BUILDPLATFORM} tools AS ukify-tools
 # base has the talos source with the non-abrev version of TAG
 COPY --from=base /src/pkg /go/src/github.com/pkg
@@ -812,6 +840,7 @@ COPY --from=install-artifacts / /
 COPY --from=installer-build /installer /bin/installer
 COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
 COPY --chmod=0644 hack/modules-${TARGETARCH}.txt /usr/install/modules-${TARGETARCH}.txt
+COPY --from=module-sig-verify-targetarch /module-sig-verify-linux-${TARGETARCH} /bin/module-sig-verify
 RUN ln -s /bin/installer /bin/talosctl
 RUN find /bin /etc /lib /usr /sbin | grep -Ev '/etc/hosts|/etc/resolv.conf' \
     | xargs -r touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
@@ -825,29 +854,16 @@ LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 
 FROM installer-image-squashed AS installer
-ARG TARGETARCH
-ENV TARGETARCH ${TARGETARCH}
-ONBUILD RUN apk add --no-cache --update \
-    cpio \
-    squashfs-tools \
-    xz
-ONBUILD WORKDIR /initramfs
-ONBUILD ARG RM
-ONBUILD RUN xz -d /usr/install/${TARGETARCH}/initramfs.xz \
-    && cpio -idvm < /usr/install/${TARGETARCH}/initramfs \
-    && unsquashfs -f -d /rootfs rootfs.sqsh \
-    && for f in ${RM}; do rm -rfv /rootfs$f; done \
-    && rm /usr/install/${TARGETARCH}/initramfs \
-    && rm rootfs.sqsh
-ONBUILD COPY --from=customization / /rootfs
-ONBUILD RUN xargs -a /usr/install/modules-${TARGETARCH}.txt -I {} install -D /rootfs/kernel/lib/modules/$(ls /rootfs/lib/modules)/{} /rootfs/lib/modules/$(ls /rootfs/lib/modules)/{} \
-    && depmod -b /rootfs $(ls /rootfs/lib/modules) \
-    && set -o pipefail && mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress \
-    && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z > /usr/install/${TARGETARCH}/initramfs.xz \
-    && rm -rf /rootfs /initramfs /rootfs/kernel
-ONBUILD WORKDIR /
 
 FROM installer-image-squashed AS imager
+
+# installer frontend
+FROM erichripko/simple-frontend AS installer-frontend
+COPY hack/Dockerfile.installer-frontend /footer.Dockerfile
+ARG TAG
+ENV VERSION ${TAG}
+LABEL "alpha.talos.dev/version"="${VERSION}"
+LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 
 FROM imager as iso-amd64-build
 ARG SOURCE_DATE_EPOCH
@@ -964,20 +980,6 @@ RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64}
 
 FROM scratch AS integration-test-provision-linux
 COPY --from=integration-test-provision-linux-build /src/integration.test /integration-test-provision-linux-amd64
-
-# The module-sig-verify targets builds module-sig-verify binary.
-FROM build-go AS module-sig-verify-linux-build
-ARG GO_BUILDFLAGS
-ARG GO_LDFLAGS
-ARG GOAMD64
-WORKDIR /src/module-sig-verify
-COPY ./hack/module-sig-verify/go.mod ./hack/module-sig-verify/go.sum .
-RUN --mount=type=cache,target=/.cache go mod download
-COPY ./hack/module-sig-verify/main.go .
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build -o module-sig-verify .
-
-FROM scratch AS module-sig-verify-linux
-COPY --from=module-sig-verify-linux-build /src/module-sig-verify/module-sig-verify /module-sig-verify-linux-amd64
 
 # The lint target performs linting on the source code.
 FROM base AS lint-go

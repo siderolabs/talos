@@ -249,6 +249,11 @@ installer: ## Builds the container image for the installer and outputs it to the
 	@INSTALLER_ARCH=targetarch  \
 		$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
 
+.PHONY: installer-frontend
+installer-frontend: ## Builds the container image for the installer-frontend and outputs it to the registry.
+	@INSTALLER_ARCH=targetarch  \
+		$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
+
 .PHONY: imager
 imager: ## Builds the container image for the imager and outputs it to the registry.
 	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
@@ -395,7 +400,7 @@ $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
 
 $(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(MODULE_SIG_VERIFY_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64
+	@$(MAKE) local-$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64 DEST=$(ARTIFACTS) PLATFORM=linux/amd64
 
 $(ARTIFACTS)/kubectl:
 	@mkdir -p $(ARTIFACTS)
