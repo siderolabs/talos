@@ -37,7 +37,7 @@ DEEPCOPY_VERSION ?= v0.5.5
 # renovate: datasource=go depName=github.com/siderolabs/importvet
 IMPORTVET_VERSION ?= v0.1.0
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.34.0
+MARKDOWNLINTCLI_VERSION ?= 0.35.0
 # renovate: datasource=npm depName=textlint
 TEXTLINT_VERSION ?= 13.3.2
 # renovate: datasource=npm depName=textlint-filter-rule-comments
