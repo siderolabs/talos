@@ -37,6 +37,9 @@ const (
 	// events sink server.
 	KernelParamEventsSink = "talos.events.sink"
 
+	// KernelParamIP is the kernel parameter name for network interface configuration
+	KernelParamIP = "ip"
+
 	// KernelParamLoggingKernel is the kernel parameter name for specifying the
 	// kernel log delivery destination.
 	KernelParamLoggingKernel = "talos.logging.kernel"

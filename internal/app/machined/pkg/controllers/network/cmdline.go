@@ -116,7 +116,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 	}
 
 	// standard ip=
-	ipSettings := cmdline.Get("ip")
+	ipSettings := cmdline.Get(constants.KernelParamIP)
 
 	for idx := 0; ipSettings.Get(idx) != nil; idx++ {
 		// https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
