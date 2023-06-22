@@ -82,7 +82,7 @@ const (
 	//
 	//  git show ${TAG}:pkg/machinery/constants/constants.go | grep KubernetesVersion
 	previousK8sVersion = "1.26.2" // constants.DefaultKubernetesVersion in the previousRelease
-	stableK8sVersion   = "1.27.2" // constants.DefaultKubernetesVersion in the stableRelease
+	stableK8sVersion   = "1.27.3" // constants.DefaultKubernetesVersion in the stableRelease
 	currentK8sVersion  = constants.DefaultKubernetesVersion
 )
 

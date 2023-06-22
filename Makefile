@@ -14,22 +14,22 @@ NAME = Talos
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-14-ge0c76c0
-PKGS ?= v1.5.0-alpha.0-25-ga56d15a
+PKGS ?= v1.5.0-alpha.0-28-gedd725a
 EXTRAS ?= v1.5.0-alpha.0-1-ga73d524
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.9.3
+GOIMPORTS_VERSION ?= v0.10.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.5.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.53.2
+GOLANGCILINT_VERSION ?= v1.53.3
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.9.3
+STRINGER_VERSION ?= v0.10.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.27.2
+DEEPCOPY_GEN_VERSION ?= v0.27.3
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -37,7 +37,7 @@ DEEPCOPY_VERSION ?= v0.5.5
 # renovate: datasource=go depName=github.com/siderolabs/importvet
 IMPORTVET_VERSION ?= v0.1.0
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.34.0
+MARKDOWNLINTCLI_VERSION ?= 0.35.0
 # renovate: datasource=npm depName=textlint
 TEXTLINT_VERSION ?= 13.3.2
 # renovate: datasource=npm depName=textlint-filter-rule-comments
@@ -50,15 +50,15 @@ INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 MODULE_SIG_VERIFY_DEFAULT_TARGET := module-sig-verify-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.27.2
+KUBECTL_VERSION ?= v1.27.3
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.12.0
+HELM_VERSION ?= v3.12.1
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.4.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.14.6
+CILIUM_CLI_VERSION ?= v0.14.7
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz

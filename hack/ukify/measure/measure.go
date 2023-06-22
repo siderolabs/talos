@@ -19,7 +19,9 @@ import (
 	"os"
 
 	"github.com/google/go-tpm-tools/simulator"
-	"github.com/google/go-tpm/tpm2"
+	// TODO: frezbo: switch to new tpm2 package.
+	// Ref: https://github.com/google/go-tpm/releases/tag/v0.9.0
+	"github.com/google/go-tpm/legacy/tpm2"
 	"github.com/google/go-tpm/tpmutil"
 
 	"github.com/siderolabs/ukify/constants"

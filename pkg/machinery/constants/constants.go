@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.32-talos"
+	DefaultKernelVersion = "6.1.35-talos"
 
 	// DefaultKernelModulesPath is the default path to the kernel modules.
 	DefaultKernelModulesPath = "/lib/modules" + "/" + DefaultKernelVersion
@@ -311,7 +311,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.27.2"
+	DefaultKubernetesVersion = "1.27.3"
 
 	// DefaultControlPlanePort is the default port to use for the control plane.
 	DefaultControlPlanePort = 6443
