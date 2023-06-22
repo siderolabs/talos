@@ -13,9 +13,9 @@ import (
 	"strings"
 
 	"github.com/ecks/uefi/efi/efivario"
-	"github.com/siderolabs/go-blockdevice/blockdevice"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/assets"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/version"
 )
@@ -37,7 +37,7 @@ func isUEFIBoot() bool {
 func IsBootedUsingSDBoot() bool {
 	// https://www.freedesktop.org/software/systemd/man/systemd-stub.html#EFI%20Variables
 	// https://www.freedesktop.org/software/systemd/man/systemd-stub.html#StubInfo
-	_, err := os.Stat(fmt.Sprintf("/sys/firmware/efi/efivars/StubInfo-%s", SystemdBootGUIDString))
+	_, err := os.Stat(SystemdBootStubInfoPath)
 
 	return err == nil
 }
@@ -48,6 +48,7 @@ func New() *Config {
 }
 
 // Probe for existing sd-boot bootloader.
+// nolint:gocyclo
 func Probe(disk string) (*Config, error) {
 	// if not UEFI boot, nothing to do
 	if !isUEFIBoot() {
@@ -58,7 +59,23 @@ func Probe(disk string) (*Config, error) {
 		return nil, nil
 	}
 
-	// TODO: read /boot/EFI and find if sd-boot is already being used
+	// read /boot/EFI and find if sd-boot is already being used
+	// this is to make sure sd-boot from Talos is being used and not sd-boot from another distro
+	if err := mount.PartitionOp(disk, constants.EFIPartitionLabel, func() error {
+		// list existing boot*.efi files in boot folder
+		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "boot", "BOOT*.efi"))
+		if err != nil {
+			return err
+		}
+
+		if len(files) == 0 {
+			return fmt.Errorf("no boot*.efi files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "boot"))
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
 
 	// here we need to read the EFI vars to see if we have any defaults
 	// and populate config accordingly
@@ -74,7 +91,23 @@ func Probe(disk string) (*Config, error) {
 
 	log.Printf("booted entry: %q", bootedEntry)
 
-	// TODO: verify that bootedEntry is in the EFI partition
+	if opErr := mount.PartitionOp(disk, constants.EFIPartitionLabel, func() error {
+		// list existing UKIs, and check if the current one is present
+		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+		if err != nil {
+			return err
+		}
+
+		for _, file := range files {
+			if strings.EqualFold(filepath.Base(file), bootedEntry) {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("booted entry %q not found", bootedEntry)
+	}); opErr != nil {
+		return nil, opErr
+	}
 
 	return &Config{
 		Default: bootedEntry,
@@ -144,7 +177,7 @@ func (c *Config) Install(bootDisk, arch, cmdline string) error {
 		return err
 	}
 
-	blk, err := getBlockDeviceName(bootDisk)
+	blk, err := mount.GetBlockDeviceName(bootDisk, constants.EFIPartitionLabel)
 	if err != nil {
 		return err
 	}
@@ -176,26 +209,27 @@ func (c *Config) PreviousLabel() string {
 
 // Revert the bootloader to the previous version.
 func (c *Config) Revert() error {
-	// TODO: use c.Default as the current entry, list other UKIs, find the one which is not c.Default, and update EFI var
-	panic("not implemented")
-}
+	if err := mount.PartitionOp("", constants.EFIPartitionLabel, func() error {
+		// use c.Default as the current entry, list other UKIs, find the one which is not c.Default, and update EFI var
+		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+		if err != nil {
+			return err
+		}
 
-func getBlockDeviceName(bootDisk string) (string, error) {
-	dev, err := blockdevice.Open(bootDisk, blockdevice.WithMode(blockdevice.ReadonlyMode))
-	if err != nil {
-		return "", err
+		for _, file := range files {
+			if strings.EqualFold(filepath.Base(file), c.Default) {
+				continue
+			}
+
+			log.Printf("reverting to previous UKI: %s", file)
+
+			return WriteVariable(efivario.NewDefaultContext(), LoaderEntryDefaultName, filepath.Base(file))
+		}
+
+		return fmt.Errorf("previous UKI not found")
+	}); err != nil {
+		return err
 	}
 
-	//nolint:errcheck
-	defer dev.Close()
-
-	// verify that BootDisk has EFI partition
-	_, err = dev.GetPartition(constants.EFIPartitionLabel)
-	if err != nil {
-		return "", err
-	}
-
-	blk := dev.Device().Name()
-
-	return blk, nil
+	return nil
 }

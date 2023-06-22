@@ -9,11 +9,18 @@ import (
 
 	"github.com/ecks/uefi/efi/efiguid"
 	"github.com/ecks/uefi/efi/efivario"
+	"golang.org/x/sys/unix"
 	"golang.org/x/text/encoding/unicode"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// SystemdBootGUIDString is the GUID of the SystemdBoot EFI variables.
-const SystemdBootGUIDString = "4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
+const (
+	// SystemdBootGUIDString is the GUID of the SystemdBoot EFI variables.
+	SystemdBootGUIDString = "4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"
+	// SystemdBootStubInfoPath is the path to the SystemdBoot StubInfo EFI variable.
+	SystemdBootStubInfoPath = constants.EFIVarsMountPoint + "/" + "StubInfo-" + SystemdBootGUIDString
+)
 
 // SystemdBootGUID is the GUID of the SystemdBoot EFI variables.
 var SystemdBootGUID = efiguid.MustFromString(SystemdBootGUIDString)
@@ -54,6 +61,13 @@ func ReadVariable(c efivario.Context, name string) (string, error) {
 
 // WriteVariable reads a SystemdBoot EFI variable.
 func WriteVariable(c efivario.Context, name, value string) error {
+	// mount EFI vars as rw
+	if err := unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT, ""); err != nil {
+		return err
+	}
+
+	defer unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT|unix.MS_RDONLY, "") // nolint: errcheck
+
 	out := make([]byte, (len(value)+1)*2)
 
 	encoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewEncoder()

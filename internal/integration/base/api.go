@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc/backoff"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -147,6 +148,7 @@ type Capabilities struct {
 	RunsTalosKernel bool
 	SupportsReboot  bool
 	SupportsRecover bool
+	TrustedBoot     bool
 }
 
 // Capabilities returns a set of capabilities to skip tests for different environments.
@@ -164,6 +166,13 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 			caps.SupportsReboot = true
 			caps.SupportsRecover = true
 		}
+	}
+
+	if _, err = apiSuite.Client.LS(context.Background(), &machineapi.ListRequest{
+		Root:  sdboot.SystemdBootStubInfoPath,
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_REGULAR},
+	}); err == nil {
+		caps.TrustedBoot = true
 	}
 
 	return caps

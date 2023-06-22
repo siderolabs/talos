@@ -436,8 +436,6 @@ local default_pipeline_steps = [
 local integration_qemu = Step('e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
 
 local integration_qemu_trusted_boot = Step('e2e-qemu-trusted-boot', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
-  // TODO: frezbo: do we need the full suite here?
-  SHORT_INTEGRATION_TEST: 'yes',
   IMAGE_REGISTRY: local_registry,
   VIA_MAINTENANCE_MODE: "true",
   WITH_TRUSTED_BOOT: "true",

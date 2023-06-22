@@ -35,8 +35,7 @@ func PseudoSubMountPoints() (mountpoints *Points, err error) {
 
 	if _, err := os.Stat(constants.EFIVarsMountPoint); err == nil {
 		// mount EFI vars if they exist
-		// TODO: frezbo: maybe mount ro and rw when needed to write? better security?
-		pseudo.Set("efivars", NewMountPoint("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""))
+		pseudo.Set("efivars", NewMountPoint("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME|unix.MS_RDONLY, ""))
 	}
 
 	return pseudo, nil

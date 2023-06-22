@@ -7,9 +7,21 @@ package grub
 import (
 	"fmt"
 	"strings"
-
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/bootloader"
 )
+
+// flipBootLabel flips the boot label.
+func flipBootLabel(e BootLabel) (BootLabel, error) {
+	switch e {
+	case BootA:
+		return BootB, nil
+	case BootB:
+		return BootA, nil
+	case BootReset:
+		fallthrough
+	default:
+		return "", fmt.Errorf("invalid entry: %s", e)
+	}
+}
 
 // Flip flips the default boot label.
 func (c *Config) flip() error {
@@ -19,7 +31,7 @@ func (c *Config) flip() error {
 
 	current := c.Default
 
-	next, err := bootloader.FlipBootLabel(c.Default)
+	next, err := flipBootLabel(c.Default)
 	if err != nil {
 		return err
 	}
@@ -35,15 +47,15 @@ func (c *Config) PreviousLabel() string {
 	return string(c.Fallback)
 }
 
-// ParseBootLabel parses the given human-readable boot label to a bootloader.BootLabel.
-func ParseBootLabel(name string) (bootloader.BootLabel, error) {
+// ParseBootLabel parses the given human-readable boot label to a BootLabel.
+func ParseBootLabel(name string) (BootLabel, error) {
 	switch {
-	case strings.HasPrefix(name, string(bootloader.BootA)):
-		return bootloader.BootA, nil
-	case strings.HasPrefix(name, string(bootloader.BootB)):
-		return bootloader.BootB, nil
+	case strings.HasPrefix(name, string(BootA)):
+		return BootA, nil
+	case strings.HasPrefix(name, string(BootB)):
+		return BootB, nil
 	case strings.HasPrefix(name, "Reset"):
-		return bootloader.BootReset, nil
+		return BootReset, nil
 	default:
 		return "", fmt.Errorf("could not parse boot entry from name: %s", name)
 	}

@@ -549,7 +549,7 @@ RUN chmod +x /rootfs/sbin/dashboard
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN cleanup.sh /rootfs
-RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+RUN mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
 RUN ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf

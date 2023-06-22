@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/pkg/version"
 )
@@ -35,18 +34,18 @@ func TestDecode(t *testing.T) {
 	conf, err := grub.Decode(grubCfg)
 	assert.NoError(t, err)
 
-	assert.Equal(t, bootloader.BootA, conf.Default)
-	assert.Equal(t, bootloader.BootB, conf.Fallback)
+	assert.Equal(t, grub.BootA, conf.Default)
+	assert.Equal(t, grub.BootB, conf.Fallback)
 
 	assert.Len(t, conf.Entries, 2)
 
-	a := conf.Entries[bootloader.BootA]
+	a := conf.Entries[grub.BootA]
 	assert.Equal(t, "A - v1", a.Name)
 	assert.True(t, strings.HasPrefix(a.Linux, "/A/"))
 	assert.True(t, strings.HasPrefix(a.Initrd, "/A/"))
 	assert.Equal(t, "cmdline A", a.Cmdline)
 
-	b := conf.Entries[bootloader.BootB]
+	b := conf.Entries[grub.BootB]
 	assert.Equal(t, "B - v2", b.Name)
 	assert.Equal(t, "cmdline B", b.Cmdline)
 	assert.True(t, strings.HasPrefix(b.Linux, "/B/"))
@@ -55,8 +54,8 @@ func TestDecode(t *testing.T) {
 
 func TestEncodeDecode(t *testing.T) {
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(bootloader.BootA, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?hostname=${hostname}&mac=${mac}"))
-	require.NoError(t, config.Put(bootloader.BootB, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?uuid=${uuid}"))
+	require.NoError(t, config.Put(grub.BootA, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?hostname=${hostname}&mac=${mac}"))
+	require.NoError(t, config.Put(grub.BootB, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?uuid=${uuid}"))
 
 	var b bytes.Buffer
 
@@ -73,15 +72,15 @@ func TestEncodeDecode(t *testing.T) {
 func TestParseBootLabel(t *testing.T) {
 	label, err := grub.ParseBootLabel("A - v1")
 	assert.NoError(t, err)
-	assert.Equal(t, bootloader.BootA, label)
+	assert.Equal(t, grub.BootA, label)
 
 	label, err = grub.ParseBootLabel("B - v2")
 	assert.NoError(t, err)
-	assert.Equal(t, bootloader.BootB, label)
+	assert.Equal(t, grub.BootB, label)
 
 	label, err = grub.ParseBootLabel("Reset Talos installation and return to maintenance mode\n")
 	assert.NoError(t, err)
-	assert.Equal(t, bootloader.BootReset, label)
+	assert.Equal(t, grub.BootReset, label)
 
 	_, err = grub.ParseBootLabel("C - v3")
 	assert.Error(t, err)
@@ -103,7 +102,7 @@ func TestWrite(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, os.Remove(tempFile.Name())) })
 
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(bootloader.BootA, "cmdline A"))
+	require.NoError(t, config.Put(grub.BootA, "cmdline A"))
 
 	err := config.Write(tempFile.Name())
 	assert.NoError(t, err)
@@ -114,29 +113,29 @@ func TestWrite(t *testing.T) {
 
 func TestPut(t *testing.T) {
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(bootloader.BootA, "cmdline A"))
+	require.NoError(t, config.Put(grub.BootA, "cmdline A"))
 
-	err := config.Put(bootloader.BootB, "cmdline B")
+	err := config.Put(grub.BootB, "cmdline B")
 
 	assert.NoError(t, err)
 
 	assert.Len(t, config.Entries, 2)
-	assert.Equal(t, "cmdline B", config.Entries[bootloader.BootB].Cmdline)
+	assert.Equal(t, "cmdline B", config.Entries[grub.BootB].Cmdline)
 
-	err = config.Put(bootloader.BootA, "cmdline A 2")
+	err = config.Put(grub.BootA, "cmdline A 2")
 	assert.NoError(t, err)
 
-	assert.Equal(t, "cmdline A 2", config.Entries[bootloader.BootA].Cmdline)
+	assert.Equal(t, "cmdline A 2", config.Entries[grub.BootA].Cmdline)
 }
 
 //nolint:errcheck
 func TestFallback(t *testing.T) {
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(bootloader.BootA, "cmdline A"))
+	require.NoError(t, config.Put(grub.BootA, "cmdline A"))
 
-	_ = config.Put(bootloader.BootB, "cmdline B")
+	_ = config.Put(grub.BootB, "cmdline B")
 
-	config.Fallback = bootloader.BootB
+	config.Fallback = grub.BootB
 
 	var buf bytes.Buffer
 	_ = config.Encode(&buf)
@@ -233,9 +232,9 @@ func TestBackwardsCompat(t *testing.T) {
 	var buf bytes.Buffer
 
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(bootloader.BootA, "cmdline A"))
-	require.NoError(t, config.Put(bootloader.BootB, "cmdline B"))
-	config.Default = bootloader.BootB
+	require.NoError(t, config.Put(grub.BootA, "cmdline A"))
+	require.NoError(t, config.Put(grub.BootB, "cmdline B"))
+	config.Default = grub.BootB
 
 	err := config.Encode(&buf)
 	assert.NoError(t, err)

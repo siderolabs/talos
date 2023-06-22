@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/makefs"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 const (
@@ -107,7 +108,7 @@ func CreateUKIISO(iso, dir, arch string) error {
 		return err
 	}
 
-	if _, err := cmd.Run("mcopy", "-i", efiBootImg, filepath.Join(dir, "vmlinuz.efi.signed"), "::EFI/Linux/talos-A.efi"); err != nil {
+	if _, err := cmd.Run("mcopy", "-i", efiBootImg, filepath.Join(dir, "vmlinuz.efi.signed"), fmt.Sprintf("::EFI/Linux/Talos-%s.efi", version.Tag)); err != nil {
 		return err
 	}
 
