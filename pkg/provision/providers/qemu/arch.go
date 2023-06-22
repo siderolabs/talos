@@ -5,7 +5,6 @@
 package qemu
 
 import (
-	"os"
 	"os/exec"
 	"path/filepath"
 )
@@ -94,31 +93,53 @@ func (arch Arch) PFlash(uefiEnabled, secureBootEnabled bool, extraUEFISearchPath
 			return nil
 		}
 
-		uefiSourcePaths := []string{
-			"/usr/share/ovmf/OVMF.fd",
-			"/usr/share/OVMF/OVMF.fd",
-			"/usr/share/OVMF/OVMF_CODE_4M.fd",
-			"/usr/share/OVMF/OVMF_CODE_4M.secboot.fd",
+		// Default search paths
+		uefiSourcePathPrefixes := []string{
+			"/usr/share/ovmf",
+			"/usr/share/OVMF",
+			"/usr/share/qemu",
 		}
 
-		uefiVarsSourcePaths := []string{
-			"/usr/share/OVMF/OVMF_VARS_4M.fd",
+		// Secure boot enabled firmware files
+		uefiSourceFiles := []string{
+			"OVMF_CODE_4M.secboot.fd",
+			"OVMF_CODE.secboot.fd",
+			"OVMF.secboot.fd",
+			"edk2-x86_64-secure-code.fd", // Alpine Linux
 		}
 
-		if _, err := os.Stat("/usr/share/qemu/edk2-x86_64-secure-code.fd"); err == nil {
-			// alpine uses this path
-			uefiSourcePaths = append(uefiSourcePaths, "/usr/share/qemu/edk2-x86_64-secure-code.fd")
-			uefiVarsSourcePaths = append(uefiVarsSourcePaths, "/usr/share/OVMF/OVMF_VARS.fd")
+		// Non-secure boot firmware files
+		uefiSourceFilesInsecure := []string{
+			"OVMF_CODE_4M.fd",
+			"OVMF_CODE.fd",
+			"OVMF.fd",
 		}
 
-		for _, p := range extraUEFISearchPaths {
-			uefiSourcePaths = append(uefiSourcePaths, filepath.Join(p, "OVMF.fd"))
+		// Empty vars files
+		uefiVarsFiles := []string{
+			"OVMF_VARS_4M.fd",
+			"OVMF_VARS.fd",
 		}
 
-		if secureBootEnabled {
-			// picking exactly the last one, as it's the one having secure boot enabled
-			uefiSourcePaths = uefiSourcePaths[len(uefiSourcePaths)-1:]
-			uefiVarsSourcePaths = uefiVarsSourcePaths[len(uefiVarsSourcePaths)-1:]
+		if !secureBootEnabled {
+			uefiSourceFiles = append(uefiSourceFiles, uefiSourceFilesInsecure...)
+		}
+
+		// Append extra search paths
+		uefiSourcePathPrefixes = append(uefiSourcePathPrefixes, extraUEFISearchPaths...)
+
+		var uefiSourcePaths []string
+
+		var uefiVarsPaths []string
+
+		for _, p := range uefiSourcePathPrefixes {
+			for _, f := range uefiSourceFiles {
+				uefiSourcePaths = append(uefiSourcePaths, filepath.Join(p, f))
+			}
+
+			for _, f := range uefiVarsFiles {
+				uefiVarsPaths = append(uefiVarsPaths, filepath.Join(p, f))
+			}
 		}
 
 		return []PFlash{
@@ -128,7 +149,7 @@ func (arch Arch) PFlash(uefiEnabled, secureBootEnabled bool, extraUEFISearchPath
 			},
 			{
 				Size:        0,
-				SourcePaths: uefiVarsSourcePaths,
+				SourcePaths: uefiVarsPaths,
 			},
 		}
 	default:
