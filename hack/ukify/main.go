@@ -19,7 +19,9 @@ import (
 
 	_ "embed"
 
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/saferwall/pe"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/ukify/constants"
@@ -47,18 +49,37 @@ var (
 	output         string
 )
 
-func sbSign(input string) (string, error) {
+func sign(input string) (string, error) {
 	out := input + ".signed"
 
 	if err := os.RemoveAll(out); err != nil {
 		return "", err
 	}
 
-	cmd := exec.Command("sbsign", "--key", signingKey, "--cert", signingCert, "--output", out, input)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	pem, err := x509.NewCertificateAndKeyFromFiles(signingCert, signingKey)
+	if err != nil {
+		return "", err
+	}
+	cert, err := pem.GetCert()
+	if err != nil {
+		return "", err
+	}
+	key, err := pem.GetRSAKey()
+	if err != nil {
+		return "", err
+	}
 
-	err := cmd.Run()
+	unsigned, err := os.ReadFile(input)
+	if err != nil {
+		return "", err
+	}
+
+	signed, err := efi.SignEFIExecutable(key, cert, unsigned)
+	if err != nil {
+		return "", err
+	}
+
+	err = os.WriteFile(out, signed, 0o600)
 
 	return out, err
 }
@@ -184,12 +205,12 @@ func run() error {
 	flag.StringVar(&pcrSigningCert, "prc-signing-cert-path", "_out/uki-certs/pcr-signing-cert.pem", "path to PCR signing cert")
 	flag.Parse()
 
-	_, err := sbSign(sdBoot)
+	_, err := sign(sdBoot)
 	if err != nil {
 		return fmt.Errorf("failed to sign sd-boot: %w", err)
 	}
 
-	signedKernel, err := sbSign(kernel)
+	signedKernel, err := sign(kernel)
 	if err != nil {
 		return fmt.Errorf("failed to sign kernel: %w", err)
 	}
@@ -303,7 +324,7 @@ func run() error {
 		return err
 	}
 
-	_, err = sbSign(output)
+	_, err = sign(output)
 
 	return err
 }

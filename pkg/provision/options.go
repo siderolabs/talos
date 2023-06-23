@@ -88,15 +88,6 @@ func WithSecureBoot(enabled bool) Option {
 	}
 }
 
-// WithSecureBootEnrollmentCert specifies secure boot enrollment certificate.
-func WithSecureBootEnrollmentCert(cert string) Option {
-	return func(o *Options) error {
-		o.SecureBootEnrollmentCert = cert
-
-		return nil
-	}
-}
-
 // WithExtraUEFISearchPaths configures additional search paths to look for UEFI firmware.
 func WithExtraUEFISearchPaths(extraUEFISearchPaths []string) Option {
 	return func(o *Options) error {
@@ -159,8 +150,6 @@ type Options struct {
 	TPM2Enabled bool
 	// Enforce Secure Boot.
 	SecureBootEnabled bool
-	// Path to Secure Boot enrollment certificate.
-	SecureBootEnrollmentCert string
 	// Configure additional search paths to look for UEFI firmware.
 	ExtraUEFISearchPaths []string
 

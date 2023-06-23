@@ -8,14 +8,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 //nolint:gocyclo
-func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflashSpec []PFlash, secureBootEnabled bool, secureBootEnrollCert string) ([]string, error) {
+func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflashSpec []PFlash) ([]string, error) {
 	var images []string
 
 	for i, pflash := range pflashSpec {
@@ -66,47 +64,6 @@ func (p *provisioner) createPFlashImages(state *vm.State, nodeName string, pflas
 		}(i, pflash); err != nil {
 			return nil, err
 		}
-	}
-
-	if secureBootEnabled {
-		flashVarsPath := state.GetRelativePath(fmt.Sprintf("%s-flash_vars.fd", nodeName))
-		ovmfVars := "/usr/share/OVMF/OVMF_VARS_4M.fd"
-
-		for _, pflash := range pflashSpec {
-			for _, sourcePath := range pflash.SourcePaths {
-				if strings.Contains(sourcePath, "edk2-x86_64-secure-code.fd") {
-					// alpine
-					ovmfVars = "/usr/share/OVMF/OVMF_VARS.fd"
-
-					break
-				}
-			}
-		}
-
-		cmd := exec.Command("ovmfctl", []string{
-			"--no-microsoft",
-			"--secure-boot",
-			"--set-pk",
-			// OEM value from here: https://bugzilla.tianocore.org/show_bug.cgi?id=1747#c2
-			"4e32566d-8e9e-4f52-81d3-5bb9715f9727",
-			secureBootEnrollCert,
-			"--add-kek",
-			"4e32566d-8e9e-4f52-81d3-5bb9715f9727",
-			secureBootEnrollCert,
-			"--add-db",
-			"4e32566d-8e9e-4f52-81d3-5bb9715f9727",
-			secureBootEnrollCert,
-			"--input",
-			ovmfVars,
-			"--output",
-			flashVarsPath,
-		}...)
-
-		if err := cmd.Run(); err != nil {
-			return nil, err
-		}
-
-		images = append(images, flashVarsPath)
 	}
 
 	return images, nil

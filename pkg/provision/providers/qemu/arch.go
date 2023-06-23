@@ -101,9 +101,14 @@ func (arch Arch) PFlash(uefiEnabled, secureBootEnabled bool, extraUEFISearchPath
 			"/usr/share/OVMF/OVMF_CODE_4M.secboot.fd",
 		}
 
+		uefiVarsSourcePaths := []string{
+			"/usr/share/OVMF/OVMF_VARS_4M.fd",
+		}
+
 		if _, err := os.Stat("/usr/share/qemu/edk2-x86_64-secure-code.fd"); err == nil {
 			// alpine uses this path
 			uefiSourcePaths = append(uefiSourcePaths, "/usr/share/qemu/edk2-x86_64-secure-code.fd")
+			uefiVarsSourcePaths = append(uefiVarsSourcePaths, "/usr/share/OVMF/OVMF_VARS.fd")
 		}
 
 		for _, p := range extraUEFISearchPaths {
@@ -113,12 +118,17 @@ func (arch Arch) PFlash(uefiEnabled, secureBootEnabled bool, extraUEFISearchPath
 		if secureBootEnabled {
 			// picking exactly the last one, as it's the one having secure boot enabled
 			uefiSourcePaths = uefiSourcePaths[len(uefiSourcePaths)-1:]
+			uefiVarsSourcePaths = uefiVarsSourcePaths[len(uefiVarsSourcePaths)-1:]
 		}
 
 		return []PFlash{
 			{
 				Size:        0,
 				SourcePaths: uefiSourcePaths,
+			},
+			{
+				Size:        0,
+				SourcePaths: uefiVarsSourcePaths,
 			},
 		}
 	default:

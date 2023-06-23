@@ -98,6 +98,18 @@ func CreateUKIISO(iso, dir, arch string) error {
 		return err
 	}
 
+	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::loader"); err != nil {
+		return err
+	}
+
+	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::loader/keys"); err != nil {
+		return err
+	}
+
+	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::loader/keys/auto"); err != nil {
+		return err
+	}
+
 	efiBootPath := "::EFI/BOOT/BOOTX64.EFI"
 
 	if arch == "arm64" {
@@ -109,6 +121,18 @@ func CreateUKIISO(iso, dir, arch string) error {
 	}
 
 	if _, err := cmd.Run("mcopy", "-i", efiBootImg, filepath.Join(dir, "vmlinuz.efi.signed"), fmt.Sprintf("::EFI/Linux/Talos-%s.efi", version.Tag)); err != nil {
+		return err
+	}
+
+	if _, err := cmd.Run("mcopy", "-i", efiBootImg, filepath.Join(dir, "PK.auth"), "::loader/keys/auto/PK.auth"); err != nil {
+		return err
+	}
+
+	if _, err := cmd.Run("mcopy", "-i", efiBootImg, filepath.Join(dir, "PK.auth"), "::loader/keys/auto/KEK.auth"); err != nil {
+		return err
+	}
+
+	if _, err := cmd.Run("mcopy", "-i", efiBootImg, filepath.Join(dir, "PK.auth"), "::loader/keys/auto/db.auth"); err != nil {
 		return err
 	}
 

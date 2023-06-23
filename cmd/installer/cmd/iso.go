@@ -26,6 +26,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
+const (
+	destinationPrefix = "/mnt"
+)
+
 var (
 	//go:embed grub.iso.cfg
 	isoGrubCfg []byte
@@ -101,8 +105,8 @@ func runISOCmd() error {
 
 func createISO(out string) error {
 	files := map[string]string{
-		fmt.Sprintf("/usr/install/%s/vmlinuz", options.Arch):      "/mnt/boot/vmlinuz",
-		fmt.Sprintf("/usr/install/%s/initramfs.xz", options.Arch): "/mnt/boot/initramfs.xz",
+		fmt.Sprintf("/usr/install/%s/vmlinuz", options.Arch):      filepath.Join(destinationPrefix, "boot", constants.KernelAsset),
+		fmt.Sprintf("/usr/install/%s/initramfs.xz", options.Arch): filepath.Join(destinationPrefix, "boot", constants.InitramfsAsset),
 	}
 
 	if err := copyFiles(files); err != nil {
@@ -153,7 +157,7 @@ func createISO(out string) error {
 		return err
 	}
 
-	cfgPath := "/mnt/boot/grub/grub.cfg"
+	cfgPath := filepath.Join(destinationPrefix, "boot/grub/grub.cfg")
 
 	if err = os.MkdirAll(filepath.Dir(cfgPath), 0o755); err != nil {
 		return err
@@ -163,19 +167,22 @@ func createISO(out string) error {
 		return err
 	}
 
-	if err = pkg.TouchFiles("/mnt"); err != nil {
+	if err = pkg.TouchFiles(destinationPrefix); err != nil {
 		return err
 	}
 
 	log.Println("creating ISO")
 
-	return pkg.CreateISO(out, "/mnt")
+	return pkg.CreateISO(out, destinationPrefix)
 }
 
 func createUKIISO(out string) error {
 	files := map[string]string{
-		fmt.Sprintf("/usr/install/%s/systemd-boot.efi.signed", options.Arch): "/mnt/systemd-boot.efi.signed",
-		fmt.Sprintf("/usr/install/%s/vmlinuz.efi.signed", options.Arch):      "/mnt/vmlinuz.efi.signed",
+		fmt.Sprintf(constants.SDBootAssetPath, options.Arch):         filepath.Join(destinationPrefix, constants.SDBootAsset),
+		fmt.Sprintf(constants.UKIAssetPath, options.Arch):            filepath.Join(destinationPrefix, constants.UKIAsset),
+		fmt.Sprintf(constants.PlatformKeyAssetPath, options.Arch):    filepath.Join(destinationPrefix, constants.PlatformKeyAsset),
+		fmt.Sprintf(constants.KeyExchangeKeyAssetPath, options.Arch): filepath.Join(destinationPrefix, constants.KeyExchangeKeyAsset),
+		fmt.Sprintf(constants.SignatureKeyAssetPath, options.Arch):   filepath.Join(destinationPrefix, constants.SignatureKeyAsset),
 	}
 
 	if err := copyFiles(files); err != nil {
@@ -184,7 +191,7 @@ func createUKIISO(out string) error {
 
 	log.Println("creating UKI ISO")
 
-	return pkg.CreateUKIISO(out, "/mnt", options.Arch)
+	return pkg.CreateUKIISO(out, destinationPrefix, options.Arch)
 }
 
 func copyFiles(files map[string]string) error {

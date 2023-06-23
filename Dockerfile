@@ -727,6 +727,9 @@ RUN ukify
 FROM scratch AS uki-amd64
 COPY --from=uki-build-amd64 /build/_out/systemd-bootx64.efi.signed /systemd-boot.efi.signed
 COPY --from=uki-build-amd64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
+COPY --from=uki-build-amd64 /build/_out/uki-certs/PK.auth /PK.auth
+COPY --from=uki-build-amd64 /build/_out/uki-certs/KEK.auth /KEK.auth
+COPY --from=uki-build-amd64 /build/_out/uki-certs/db.auth /db.auth
 
 FROM --platform=${BUILDPLATFORM} ukify-tools AS uki-build-arm64
 WORKDIR /build
@@ -744,6 +747,9 @@ RUN ukify \
 FROM scratch AS uki-arm64
 COPY --from=uki-build-arm64 /build/_out/systemd-bootaa64.efi.signed /systemd-boot.efi.signed
 COPY --from=uki-build-arm64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
+COPY --from=uki-build-amd64 /build/_out/uki-certs/PK.auth /PK.auth
+COPY --from=uki-build-amd64 /build/_out/uki-certs/KEK.auth /KEK.auth
+COPY --from=uki-build-amd64 /build/_out/uki-certs/db.auth /db.auth
 
 FROM --platform=${BUILDPLATFORM} uki-${TARGETARCH} AS uki
 
@@ -767,6 +773,9 @@ COPY --from=pkg-kernel-amd64 /dtb /usr/install/amd64/dtb
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
 COPY --from=uki-amd64 /systemd-boot.efi.signed /usr/install/amd64/systemd-boot.efi.signed
 COPY --from=uki-amd64 /vmlinuz.efi.signed /usr/install/amd64/vmlinuz.efi.signed
+COPY --from=uki-amd64 /PK.auth /usr/install/amd64/PK.auth
+COPY --from=uki-amd64 /KEK.auth /usr/install/amd64/KEK.auth
+COPY --from=uki-amd64 /db.auth /usr/install/amd64/db.auth
 
 FROM scratch AS install-artifacts-arm64
 COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
@@ -775,6 +784,9 @@ COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
 COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
 COPY --from=uki-arm64 /systemd-boot.efi.signed /usr/install/arm64/systemd-boot.efi.signed
 COPY --from=uki-arm64 /vmlinuz.efi.signed /usr/install/arm64/vmlinuz.efi.signed
+COPY --from=uki-arm64 /PK.auth /usr/install/arm64/PK.auth
+COPY --from=uki-arm64 /KEK.auth /usr/install/arm64/KEK.auth
+COPY --from=uki-arm64 /db.auth /usr/install/arm64/db.auth
 COPY --from=pkg-u-boot-arm64 / /usr/install/arm64/u-boot
 COPY --from=pkg-raspberrypi-firmware-arm64 / /usr/install/arm64/raspberrypi-firmware
 

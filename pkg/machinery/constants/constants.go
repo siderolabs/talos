@@ -523,6 +523,24 @@ const (
 	// SDBootAssetPath is the path to the SDBoot in the installer.
 	SDBootAssetPath = "/usr/install/%s/" + SDBootAsset
 
+	// PlatformKeyAsset defines a well known name for the platform key filename used for auto-enrolling.
+	PlatformKeyAsset = "PK.auth"
+
+	// PlatformKeyAssetPath is the path to the platform key in the installer.
+	PlatformKeyAssetPath = "/usr/install/%s/" + PlatformKeyAsset
+
+	// KeyExchangeKeyAsset defines a well known name for the key exchange key filename used for auto-enrolling.
+	KeyExchangeKeyAsset = "KEK.auth"
+
+	// KeyExchangeKeyAssetPath is the path to the key exchange key in the installer.
+	KeyExchangeKeyAssetPath = "/usr/install/%s/" + KeyExchangeKeyAsset
+
+	// SignatureKeyAsset defines a well known name for the signature key filename used for auto-enrolling.
+	SignatureKeyAsset = "db.auth"
+
+	// SignatureKeyAssetPath is the path to the signature key in the installer.
+	SignatureKeyAssetPath = "/usr/install/%s/" + SignatureKeyAsset
+
 	// DefaultCertificateValidityDuration is the default duration for a certificate.
 	DefaultCertificateValidityDuration = x509.DefaultCertificateValidityDuration
 
