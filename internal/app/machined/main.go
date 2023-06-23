@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -286,25 +287,25 @@ func run() error {
 }
 
 func main() {
-	switch os.Args[0] {
-	case "/apid":
+	switch filepath.Base(os.Args[0]) {
+	case "apid":
 		apid.Main()
 
 		return
-	case "/trustd":
+	case "trustd":
 		trustd.Main()
 
 		return
 	// Azure uses the hv_utils kernel module to shutdown the node in hyper-v by calling perform_shutdown which will call orderly_poweroff which will call /sbin/poweroff.
-	case "/sbin/poweroff":
+	case "poweroff":
 		poweroff.Main()
 
 		return
-	case "/sbin/wrapperd":
+	case "wrapperd":
 		wrapperd.Main()
 
 		return
-	case "/sbin/dashboard":
+	case "dashboard":
 		dashboard.Main()
 
 		return
