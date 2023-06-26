@@ -437,9 +437,9 @@ local integration_qemu = Step('e2e-qemu', privileged=true, depends_on=[load_arti
 
 local integration_qemu_trusted_boot = Step('e2e-qemu-trusted-boot', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
   IMAGE_REGISTRY: local_registry,
-  VIA_MAINTENANCE_MODE: "true",
-  WITH_TRUSTED_BOOT: "true",
-  WITH_TEST: "validate_booted_secureboot"
+  VIA_MAINTENANCE_MODE: 'true',
+  WITH_TRUSTED_BOOT_ISO: 'true',
+  WITH_TEST: 'validate_booted_secureboot',
 });
 
 local build_race = Step('build-race', target='initramfs installer', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry, PUSH: true, TAG_SUFFIX: '-race', WITH_RACE: '1', PLATFORM: 'linux/amd64' });
@@ -460,7 +460,7 @@ local integration_extensions = Step('e2e-extensions', target='e2e-qemu', privile
 local integration_cilium = Step('e2e-cilium', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
   SHORT_INTEGRATION_TEST: 'yes',
   WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: 'yes',
-  CUSTOM_CNI_NAME: 'cilium',
+  WITH_CUSTOM_CNI: 'cilium',
   QEMU_WORKERS: '2',
   WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}]',
   IMAGE_REGISTRY: local_registry,
@@ -468,7 +468,7 @@ local integration_cilium = Step('e2e-cilium', target='e2e-qemu', privileged=true
 local integration_cilium_strict = Step('e2e-cilium-strict', target='e2e-qemu', privileged=true, depends_on=[integration_cilium], environment={
   SHORT_INTEGRATION_TEST: 'yes',
   WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: 'yes',
-  CUSTOM_CNI_NAME: 'cilium',
+  WITH_CUSTOM_CNI: 'cilium',
   QEMU_WORKERS: '2',
   CILIUM_INSTALL_TYPE: 'strict',
   WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]',
@@ -494,6 +494,7 @@ local integration_bios_cgroupsv1 = Step('e2e-bios-cgroupsv1', target='e2e-qemu',
 local integration_disk_image = Step('e2e-disk-image', target='e2e-qemu', privileged=true, depends_on=[integration_bios_cgroupsv1], environment={
   SHORT_INTEGRATION_TEST: 'yes',
   USE_DISK_IMAGE: 'true',
+  VIA_MAINTENANCE_MODE: 'true',
   IMAGE_REGISTRY: local_registry,
   WITH_DISK_ENCRYPTION: 'true',
 });
@@ -540,7 +541,7 @@ local integration_qemu_csi = Step('e2e-csi', target='e2e-qemu', privileged=true,
 
 local integration_images = Step('images', target='images', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
 local integration_sbcs = Step('sbcs', target='sbcs', depends_on=[integration_images], environment={ IMAGE_REGISTRY: local_registry });
-local integration_cloud_images =  Step('cloud-images', depends_on=[integration_images], environment=creds_env_vars);
+local integration_cloud_images = Step('cloud-images', depends_on=[integration_images], environment=creds_env_vars);
 
 local integration_reproducibility_test = Step('reproducibility-test', target='reproducibility-test', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
 

@@ -4,28 +4,27 @@ set -eou pipefail
 
 export USER_DISKS_MOUNTS="/var/lib/extra,/var/lib/p1,/var/lib/p2"
 
+# shellcheck source=/dev/null
 source ./hack/test/e2e.sh
 
 PROVISIONER=qemu
-CLUSTER_NAME=e2e-${PROVISIONER}
+CLUSTER_NAME="e2e-${PROVISIONER}"
+
+QEMU_FLAGS=()
 
 case "${CI:-false}" in
-  true)
-    QEMU_FLAGS=""
-    INSTALLER_TAG="${TAG}"
+  false)
+    QEMU_FLAGS+=("--with-bootloader=false")
     ;;
   *)
-    QEMU_FLAGS="--with-bootloader=false"
-    INSTALLER_TAG="latest"
     ;;
 esac
 
 case "${CUSTOM_CNI_URL:-false}" in
   false)
-    CUSTOM_CNI_FLAG=
     ;;
   *)
-    CUSTOM_CNI_FLAG="--custom-cni-url=${CUSTOM_CNI_URL}"
+    QEMU_FLAGS+=("--custom-cni-url=${CUSTOM_CNI_URL}")
     ;;
 esac
 
@@ -33,25 +32,25 @@ case "${WITH_UEFI:-none}" in
   none)
     ;;
   *)
-    QEMU_FLAGS="${QEMU_FLAGS} --with-uefi=${WITH_UEFI}"
+    QEMU_FLAGS+=("--with-uefi=${WITH_UEFI}")
     ;;
 esac
 
 case "${WITH_VIRTUAL_IP:-false}" in
   true)
-    QEMU_FLAGS="${QEMU_FLAGS} --use-vip"
+    QEMU_FLAGS+=("--use-vip")
     ;;
 esac
 
 case "${WITH_CLUSTER_DISCOVERY:-true}" in
   false)
-    QEMU_FLAGS="${QEMU_FLAGS} --with-cluster-discovery=false"
+    QEMU_FLAGS+=("--with-cluster-discovery=false")
     ;;
 esac
 
 case "${WITH_KUBESPAN:-false}" in
   true)
-    QEMU_FLAGS="${QEMU_FLAGS} --with-kubespan"
+    QEMU_FLAGS+=("--with-kubespan")
     ;;
 esac
 
@@ -59,7 +58,7 @@ case "${WITH_CONTROL_PLANE_PORT:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS="${QEMU_FLAGS} --control-plane-port=${WITH_CONTROL_PLANE_PORT}"
+    QEMU_FLAGS+=("--control-plane-port=${WITH_CONTROL_PLANE_PORT}")
     ;;
 esac
 
@@ -68,7 +67,7 @@ case "${VIA_MAINTENANCE_MODE:-false}" in
     ;;
   *)
     # apply config via maintenance mode
-    QEMU_FLAGS="${QEMU_FLAGS} --skip-injecting-config --with-apply-config"
+    QEMU_FLAGS+=("--skip-injecting-config" "--with-apply-config")
     ;;
 esac
 
@@ -76,7 +75,7 @@ case "${DISABLE_DHCP_HOSTNAME:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS="${QEMU_FLAGS} --disable-dhcp-hostname"
+    QEMU_FLAGS+=("--disable-dhcp-hostname")
     ;;
 esac
 
@@ -84,72 +83,64 @@ case "${WITH_NETWORK_CHAOS:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS="${QEMU_FLAGS} --with-network-chaos --with-network-packet-loss=0.01 --with-network-latency=15ms --with-network-jitter=5ms"
+    QEMU_FLAGS+=("--with-network-chaos" "--with-network-packet-loss=0.01" "--with-network-latency=15ms" "--with-network-jitter=5ms")
     ;;
 esac
 
 case "${USE_DISK_IMAGE:-false}" in
   false)
-    DISK_IMAGE_FLAG=
     ;;
   *)
     tar -xf _out/metal-amd64.tar.gz -C _out/
-    DISK_IMAGE_FLAG="--disk-image-path=_out/disk.raw --with-apply-config"
+    QEMU_FLAGS+=("--disk-image-path=_out/disk.raw")
     ;;
 esac
 
 case "${WITH_DISK_ENCRYPTION:-false}" in
   false)
-    DISK_ENCRYPTION_FLAG=""
     ;;
   *)
-    DISK_ENCRYPTION_FLAG="--encrypt-ephemeral --encrypt-state"
+    QEMU_FLAGS+=("--encrypt-ephemeral" "--encrypt-state")
     ;;
 esac
 
 case "${WITH_CONFIG_PATCH:-false}" in
-  # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH
   false)
-      CONFIG_PATCH_FLAG=()
-      ;;
+    ;;
   *)
-      CONFIG_PATCH_FLAG=(--config-patch "${WITH_CONFIG_PATCH}")
-      ;;
+    QEMU_FLAGS+=("--config-patch=${WITH_CONFIG_PATCH}")
+    ;;
 esac
 
 case "${WITH_CONFIG_PATCH_WORKER:-false}" in
-  # using arrays here to preserve spaces properly in WITH_CONFIG_PATCH_WORKER
   false)
-      CONFIG_PATCH_FLAG_WORKER=()
-      ;;
+    ;;
   *)
-      CONFIG_PATCH_FLAG_WORKER=(--config-patch-worker "${WITH_CONFIG_PATCH_WORKER}")
-      ;;
+    QEMU_FLAGS+=("--config-patch-worker=${WITH_CONFIG_PATCH_WORKER}")
+    ;;
 esac
 
-case "${WITH_SKIP_BOOT_PHASE_FINISHED_CHECK:-no}" in
-  yes|true|y)
-      SKIP_BOOT_PHASE_FINISHED_CHECK_FLAG="--skip-boot-phase-finished-check=true"
-      ;;
+case "${WITH_SKIP_BOOT_PHASE_FINISHED_CHECK:-false}" in
+  false)
+    ;;
   *)
-      SKIP_BOOT_PHASE_FINISHED_CHECK_FLAG="--skip-boot-phase-finished-check=false"
-      ;;
+    QEMU_FLAGS+=("--skip-boot-phase-finished-check")
+    ;;
 esac
 
-case "${CUSTOM_CNI_NAME:-none}" in
+case "${WITH_CUSTOM_CNI:-none}" in
+  false)
+    ;;
   cilium)
-    API_SERVER_BALANCER="--api-server-balancer-port 13336"
-    ;;
-  *)
-    API_SERVER_BALANCER=""
+    QEMU_FLAGS+=("--api-server-balancer-port=13336")
     ;;
 esac
 
-case "${WITH_TRUSTED_BOOT:-false}" in
+case "${WITH_TRUSTED_BOOT_ISO:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS="${QEMU_FLAGS} --iso-path=_out/talos-uki-amd64.iso --with-secureboot=true --with-tpm2=true"
+    QEMU_FLAGS+=("--iso-path=_out/talos-uki-amd64.iso" "--with-secureboot" "--with-tpm2")
     ;;
 esac
 
@@ -159,7 +150,7 @@ function create_cluster {
   "${TALOSCTL}" cluster create \
     --provisioner="${PROVISIONER}" \
     --name="${CLUSTER_NAME}" \
-    --kubernetes-version=${KUBERNETES_VERSION} \
+    --kubernetes-version="${KUBERNETES_VERSION}" \
     --controlplanes=3 \
     --workers="${QEMU_WORKERS:-1}" \
     --disk=15360 \
@@ -173,19 +164,12 @@ function create_cluster {
     --cidr=172.20.1.0/24 \
     --user-disk=/var/lib/extra:100MB \
     --user-disk=/var/lib/p1:100MB:/var/lib/p2:100MB \
-    --install-image=${INSTALLER_IMAGE} \
+    --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
-    --cni-bundle-url=${ARTIFACTS}/talosctl-cni-bundle-'${ARCH}'.tar.gz \
+    --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \
     --crashdump \
-    ${DISK_IMAGE_FLAG} \
-    ${DISK_ENCRYPTION_FLAG} \
-    ${REGISTRY_MIRROR_FLAGS} \
-    ${QEMU_FLAGS} \
-    ${API_SERVER_BALANCER} \
-    ${CUSTOM_CNI_FLAG} \
-    "${CONFIG_PATCH_FLAG[@]}" \
-    "${CONFIG_PATCH_FLAG_WORKER[@]}" \
-    "${SKIP_BOOT_PHASE_FINISHED_CHECK_FLAG}"
+    "${REGISTRY_MIRROR_FLAGS[@]}" \
+    "${QEMU_FLAGS[@]}"
 
   "${TALOSCTL}" config node 172.20.1.2
 }
@@ -196,7 +180,7 @@ function destroy_cluster() {
 
 create_cluster
 
-case "${CUSTOM_CNI_NAME:-none}" in
+case "${WITH_CUSTOM_CNI:-none}" in
   cilium)
     install_and_run_cilium_cni_tests
     ;;

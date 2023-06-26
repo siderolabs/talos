@@ -32,7 +32,6 @@ func (p *provisioner) preflightChecks(ctx context.Context, request provision.Clu
 		checkContext.checkKVM,
 		checkContext.qemuExecutable,
 		checkContext.checkFlashImages,
-		checkContext.ovmfctlExecutable,
 		checkContext.swtpmExecutable,
 		checkContext.cniDirectories,
 		checkContext.cniBundle,
@@ -97,16 +96,6 @@ func (check *preflightCheckContext) checkFlashImages(ctx context.Context) error 
 		if !found {
 			return fmt.Errorf("the required flash image was not found in any of the expected paths for (%q), "+
 				"please install it with the package manager or specify --extra-uefi-search-paths", flashImage.SourcePaths)
-		}
-	}
-
-	return nil
-}
-
-func (check *preflightCheckContext) ovmfctlExecutable(ctx context.Context) error {
-	if check.options.SecureBootEnabled {
-		if _, err := exec.LookPath("ovmfctl"); err != nil {
-			return fmt.Errorf("ovmfctl not found in PATH, please install it with pip: %w", err)
 		}
 	}
 
