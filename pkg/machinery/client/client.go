@@ -543,24 +543,85 @@ func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-ch
 	return ReadStream(stream)
 }
 
-// Upgrade initiates a Talos upgrade and implements the proto.MachineServiceClient interface.
-func (c *Client) Upgrade(ctx context.Context, image string, preserve, stage, force bool, callOptions ...grpc.CallOption) (resp *machineapi.UpgradeResponse, err error) {
-	resp, err = c.MachineClient.Upgrade(
-		ctx,
-		&machineapi.UpgradeRequest{
-			Image:    image,
-			Preserve: preserve,
-			Stage:    stage,
-			Force:    force,
-		},
-		callOptions...,
-	)
+// UpgradeOptions provides upgrade API options.
+type UpgradeOptions struct {
+	Request         machineapi.UpgradeRequest
+	GRPCCallOptions []grpc.CallOption
+}
 
-	var filtered interface{}
+// UpgradeOption provides upgrade API options.
+type UpgradeOption func(*UpgradeOptions)
+
+// WithUpgradeImage sets the image for the upgrade.
+func WithUpgradeImage(image string) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.Image = image
+	}
+}
+
+// WithUpgradeRebootMode sets the reboot mode for the upgrade.
+func WithUpgradeRebootMode(mode machineapi.UpgradeRequest_RebootMode) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.RebootMode = mode
+	}
+}
+
+// WithUpgradePreserve sets the preserve flag for the upgrade.
+func WithUpgradePreserve(preserve bool) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.Preserve = preserve
+	}
+}
+
+// WithUpgradeStage sets the stage flag for the upgrade.
+func WithUpgradeStage(stage bool) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.Stage = stage
+	}
+}
+
+// WithUpgradeForce sets the force flag for the upgrade.
+func WithUpgradeForce(force bool) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.Force = force
+	}
+}
+
+// WithUpgradeGRPCCallOptions sets the gRPC call options for the upgrade.
+func WithUpgradeGRPCCallOptions(opts ...grpc.CallOption) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.GRPCCallOptions = opts
+	}
+}
+
+// Upgrade initiates a Talos upgrade and implements the proto.MachineServiceClient interface.
+func (c *Client) Upgrade(ctx context.Context, image string, preserve, stage, force bool, callOptions ...grpc.CallOption) (*machineapi.UpgradeResponse, error) {
+	return c.UpgradeWithOptions(
+		ctx,
+		WithUpgradeImage(image),
+		WithUpgradeRebootMode(machineapi.UpgradeRequest_DEFAULT),
+		WithUpgradePreserve(preserve),
+		WithUpgradeStage(stage),
+		WithUpgradeForce(force),
+		WithUpgradeGRPCCallOptions(callOptions...),
+	)
+}
+
+// UpgradeWithOptions initiates a Talos upgrade with the given options.
+func (c *Client) UpgradeWithOptions(ctx context.Context, opts ...UpgradeOption) (*machineapi.UpgradeResponse, error) {
+	var options UpgradeOptions
+
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	resp, err := c.MachineClient.Upgrade(ctx, &options.Request, options.GRPCCallOptions...)
+
+	var filtered any
 	filtered, err = FilterMessages(resp, err)
 	resp, _ = filtered.(*machineapi.UpgradeResponse) //nolint:errcheck
 
-	return
+	return resp, err
 }
 
 // ServiceList returns list of services with their state.

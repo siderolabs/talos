@@ -339,10 +339,15 @@ message ShutdownResponse {
 
 // rpc upgrade
 message UpgradeRequest {
+  enum RebootMode {
+    DEFAULT = 0;
+    POWERCYCLE = 1;
+  }
   string image = 1;
   bool preserve = 2;
   bool stage = 3;
   bool force = 4;
+  RebootMode reboot_mode = 5;
 }
 
 message Upgrade {

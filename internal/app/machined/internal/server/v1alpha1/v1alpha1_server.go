@@ -451,7 +451,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 		return nil, err
 	}
 
-	log.Printf("upgrade request received: preserve %v, staged %v, force %v", in.GetPreserve(), in.GetStage(), in.GetForce())
+	log.Printf("upgrade request received: preserve %v, staged %v, force %v, reboot mode %v", in.GetPreserve(), in.GetStage(), in.GetForce(), in.GetRebootMode().String())
 
 	log.Printf("validating %q", in.GetImage())
 

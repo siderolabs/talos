@@ -419,7 +419,7 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 			"leave",
 			LeaveEtcd,
 		).AppendList(
-			stopAllPhaselist(r, true),
+			stopAllPhaselist(r, in.GetRebootMode() == machineapi.UpgradeRequest_DEFAULT),
 		).Append(
 			"reboot",
 			Reboot,
@@ -430,7 +430,7 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 }
 
 // MaintenanceUpgrade is the upgrade sequence in maintenance mode.
-func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, _ *machineapi.UpgradeRequest) []runtime.Phase {
+func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
 	switch r.State().Platform().Mode() { //nolint:exhaustive
@@ -449,7 +449,8 @@ func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, _ *machineapi.UpgradeReq
 		).Append(
 			"meta",
 			ReloadMeta,
-		).Append(
+		).AppendWhen(
+			in.GetRebootMode() == machineapi.UpgradeRequest_DEFAULT,
 			"kexec",
 			KexecPrepare,
 		).Append(
@@ -517,7 +518,8 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 		).Append(
 			"meta",
 			ReloadMeta,
-		).Append(
+		).AppendWhen(
+			in.GetRebootMode() == machineapi.UpgradeRequest_DEFAULT,
 			"kexec",
 			KexecPrepare,
 		).Append(

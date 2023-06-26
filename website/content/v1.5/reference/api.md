@@ -404,6 +404,7 @@ description: Talos gRPC API reference.
     - [SequenceEvent.Action](#machine.SequenceEvent.Action)
     - [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action)
     - [TaskEvent.Action](#machine.TaskEvent.Action)
+    - [UpgradeRequest.RebootMode](#machine.UpgradeRequest.RebootMode)
   
     - [MachineService](#machine.MachineService)
   
@@ -6644,6 +6645,7 @@ rpc upgrade
 | preserve | [bool](#bool) |  |  |
 | stage | [bool](#bool) |  |  |
 | force | [bool](#bool) |  |  |
+| reboot_mode | [UpgradeRequest.RebootMode](#machine.UpgradeRequest.RebootMode) |  |  |
 
 
 
@@ -6921,6 +6923,18 @@ File type.
 | ---- | ------ | ----------- |
 | START | 0 |  |
 | STOP | 1 |  |
+
+
+
+<a name="machine.UpgradeRequest.RebootMode"></a>
+
+### UpgradeRequest.RebootMode
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DEFAULT | 0 |  |
+| POWERCYCLE | 1 |  |
 
 
  <!-- end enums -->

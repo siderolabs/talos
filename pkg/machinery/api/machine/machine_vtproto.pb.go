@@ -1623,6 +1623,11 @@ func (m *UpgradeRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.RebootMode != 0 {
+		i = encodeVarint(dAtA, i, uint64(m.RebootMode))
+		i--
+		dAtA[i] = 0x28
+	}
 	if m.Force {
 		i--
 		if m.Force {
@@ -10461,6 +10466,9 @@ func (m *UpgradeRequest) SizeVT() (n int) {
 	if m.Force {
 		n += 2
 	}
+	if m.RebootMode != 0 {
+		n += 1 + sov(uint64(m.RebootMode))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -17117,6 +17125,25 @@ func (m *UpgradeRequest) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.Force = bool(v != 0)
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RebootMode", wireType)
+			}
+			m.RebootMode = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RebootMode |= UpgradeRequest_RebootMode(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

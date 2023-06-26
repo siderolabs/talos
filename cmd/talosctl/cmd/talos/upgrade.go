@@ -8,9 +8,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
+	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -20,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/images"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/version"
 )
@@ -27,6 +31,7 @@ import (
 var upgradeCmdFlags struct {
 	trackableActionCmdFlags
 	upgradeImage string
+	rebootMode   string
 	preserve     bool
 	stage        bool
 	force        bool
@@ -48,8 +53,23 @@ var upgradeCmd = &cobra.Command{
 			return fmt.Errorf("cannot use --wait and --insecure together")
 		}
 
+		rebootModeStr := strings.ToUpper(upgradeCmdFlags.rebootMode)
+
+		rebootMode, rebootModeOk := machine.UpgradeRequest_RebootMode_value[rebootModeStr]
+		if !rebootModeOk {
+			return fmt.Errorf("invalid reboot mode: %s", upgradeCmdFlags.rebootMode)
+		}
+
+		opts := []client.UpgradeOption{
+			client.WithUpgradeImage(upgradeCmdFlags.upgradeImage),
+			client.WithUpgradeRebootMode(machine.UpgradeRequest_RebootMode(rebootMode)),
+			client.WithUpgradePreserve(upgradeCmdFlags.preserve),
+			client.WithUpgradeStage(upgradeCmdFlags.stage),
+			client.WithUpgradeForce(upgradeCmdFlags.force),
+		}
+
 		if !upgradeCmdFlags.wait {
-			return runUpgradeNoWait()
+			return runUpgradeNoWait(opts)
 		}
 
 		common.SuppressErrors = true
@@ -57,7 +77,9 @@ var upgradeCmd = &cobra.Command{
 		return action.NewTracker(
 			&GlobalArgs,
 			action.MachineReadyEventFn,
-			upgradeGetActorID,
+			func(ctx context.Context, c *client.Client) (string, error) {
+				return upgradeGetActorID(ctx, c, opts)
+			},
 			action.WithPostCheck(action.BootIDChangedPostCheckFn),
 			action.WithDebug(upgradeCmdFlags.debug),
 			action.WithTimeout(upgradeCmdFlags.timeout),
@@ -65,7 +87,7 @@ var upgradeCmd = &cobra.Command{
 	},
 }
 
-func runUpgradeNoWait() error {
+func runUpgradeNoWait(opts []client.UpgradeOption) error {
 	upgradeFn := func(ctx context.Context, c *client.Client) error {
 		if err := helpers.ClientVersionCheck(ctx, c); err != nil {
 			return err
@@ -73,15 +95,10 @@ func runUpgradeNoWait() error {
 
 		var remotePeer peer.Peer
 
+		opts = append(opts, client.WithUpgradeGRPCCallOptions(grpc.Peer(&remotePeer)))
+
 		// TODO: See if we can validate version and prevent starting upgrades to an unknown version
-		resp, err := c.Upgrade(
-			ctx,
-			upgradeCmdFlags.upgradeImage,
-			upgradeCmdFlags.preserve,
-			upgradeCmdFlags.stage,
-			upgradeCmdFlags.force,
-			grpc.Peer(&remotePeer),
-		)
+		resp, err := c.UpgradeWithOptions(ctx, opts...)
 		if err != nil {
 			if resp == nil {
 				return fmt.Errorf("error performing upgrade: %s", err)
@@ -115,14 +132,8 @@ func runUpgradeNoWait() error {
 	return WithClient(upgradeFn)
 }
 
-func upgradeGetActorID(ctx context.Context, c *client.Client) (string, error) {
-	resp, err := c.Upgrade(
-		ctx,
-		upgradeCmdFlags.upgradeImage,
-		upgradeCmdFlags.preserve,
-		upgradeCmdFlags.stage,
-		upgradeCmdFlags.force,
-	)
+func upgradeGetActorID(ctx context.Context, c *client.Client, opts []client.UpgradeOption) (string, error) {
+	resp, err := c.UpgradeWithOptions(ctx, opts...)
 	if err != nil {
 		return "", err
 	}
@@ -135,9 +146,18 @@ func upgradeGetActorID(ctx context.Context, c *client.Client) (string, error) {
 }
 
 func init() {
+	rebootModes := maps.KeysFunc(machine.UpgradeRequest_RebootMode_value, strings.ToLower)
+	sort.Slice(rebootModes, func(i, j int) bool {
+		return machine.UpgradeRequest_RebootMode_value[rebootModes[i]] > machine.UpgradeRequest_RebootMode_value[rebootModes[j]]
+	})
+
 	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i",
 		fmt.Sprintf("%s/%s/installer:%s", images.Registry, images.Username, version.Trim(version.Tag)),
 		"the container image to use for performing the install")
+	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.rebootMode, "reboot-mode", "m", strings.ToLower(machine.UpgradeRequest_DEFAULT.String()),
+		fmt.Sprintf("select the reboot mode during upgrade. Mode %q bypasses kexec. Valid values are: %q.",
+			strings.ToLower(machine.UpgradeRequest_POWERCYCLE.String()),
+			rebootModes))
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.preserve, "preserve", "p", false, "preserve data")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.stage, "stage", "s", false, "stage the upgrade to perform it after a reboot")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
