@@ -262,6 +262,10 @@ func finalize(platform runtime.Platform, img, arch string) (err error) {
 
 		name := fmt.Sprintf("metal-%s.tar.gz", arch)
 
+		if options.UEFI {
+			name = fmt.Sprintf("metal-uki-%s.tar.gz", arch)
+		}
+
 		if err = tar(name, file, dir); err != nil {
 			return err
 		}

@@ -442,6 +442,13 @@ local integration_qemu_trusted_boot = Step('e2e-qemu-trusted-boot', target='e2e-
   WITH_TEST: 'validate_booted_secureboot',
 });
 
+local integration_qemu_trusted_boot_image = Step('e2e-qemu-trusted-boot-image', target='e2e-qemu', privileged=true, depends_on=[integration_qemu_trusted_boot], environment={
+  IMAGE_REGISTRY: local_registry,
+  VIA_MAINTENANCE_MODE: 'true',
+  WITH_TRUSTED_BOOT_IMAGE: 'true',
+  WITH_TEST: 'validate_booted_secureboot',
+});
+
 local build_race = Step('build-race', target='initramfs installer', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry, PUSH: true, TAG_SUFFIX: '-race', WITH_RACE: '1', PLATFORM: 'linux/amd64' });
 local integration_qemu_race = Step('e2e-qemu-race', target='e2e-qemu', privileged=true, depends_on=[build_race], environment={ IMAGE_REGISTRY: local_registry, TAG_SUFFIX: '-race' });
 
@@ -584,7 +591,7 @@ local integration_trigger(names) = {
 local integration_pipelines = [
   // regular pipelines, triggered on promote events
   Pipeline('integration-qemu', default_pipeline_steps + [integration_qemu, push_edge]) + integration_trigger(['integration-qemu']),
-  Pipeline('integration-trusted-boot', default_pipeline_steps + [integration_qemu_trusted_boot]) + integration_trigger(['integration-trusted-boot']),
+  Pipeline('integration-trusted-boot', default_pipeline_steps + [integration_qemu_trusted_boot, integration_qemu_trusted_boot_image]) + integration_trigger(['integration-trusted-boot']),
   Pipeline('integration-provision-0', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_0]) + integration_trigger(['integration-provision', 'integration-provision-0']),
   Pipeline('integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + integration_trigger(['integration-provision', 'integration-provision-1']),
   Pipeline('integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2]) + integration_trigger(['integration-provision', 'integration-provision-2']),

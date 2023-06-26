@@ -61,6 +61,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&options.Board, "board", constants.BoardNone, "The value of "+constants.KernelParamBoard)
 	rootCmd.PersistentFlags().StringArrayVar(&options.ExtraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.PersistentFlags().BoolVar(&bootloader, "bootloader", true, "Deprecated: no op")
+	rootCmd.PersistentFlags().BoolVar(&options.UEFI, "uefi", false, "Indicates that the install should use UEFI bootloader")
 	rootCmd.PersistentFlags().BoolVar(&options.Upgrade, "upgrade", false, "Indicates that the install is being performed by an upgrade")
 	rootCmd.PersistentFlags().BoolVar(&options.Force, "force", false, "Indicates that the install should forcefully format the partition")
 	rootCmd.PersistentFlags().BoolVar(&options.Zero, "zero", false, "Indicates that the install should write zeros to the disk before installing")

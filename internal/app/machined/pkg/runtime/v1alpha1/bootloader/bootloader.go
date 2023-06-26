@@ -51,10 +51,10 @@ func Probe(disk string) (Bootloader, error) {
 }
 
 // New returns a new bootloader.
-func New() (Bootloader, error) {
-	// TODO: there should be a way to force sd-boot/GRUB based on installer args,
-	//       to build a disk image with specified bootloader.
-	if sdboot.IsBootedUsingSDBoot() {
+func New(uefi bool) (Bootloader, error) {
+	// uefi means we are installing UEFI only bootloader,
+	// so return SDBoot.
+	if uefi || sdboot.IsBootedUsingSDBoot() {
 		return sdboot.New(), nil
 	}
 

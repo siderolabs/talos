@@ -25,13 +25,15 @@ import (
 
 // Options represents the set of options available for an install.
 type Options struct {
-	ConfigSource      string
-	Disk              string
-	DiskSize          int
-	Platform          string
-	Arch              string
-	Board             string
-	ExtraKernelArgs   []string
+	ConfigSource    string
+	Disk            string
+	DiskSize        int
+	Platform        string
+	Arch            string
+	Board           string
+	ExtraKernelArgs []string
+	// UEFI denotes installing UEFI only bootloader.
+	UEFI              bool
 	Upgrade           bool
 	Force             bool
 	Zero              bool
@@ -103,7 +105,7 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 	bootLoaderPresent := i.bootloader != nil
 
 	if !bootLoaderPresent {
-		i.bootloader, err = bootloader.New()
+		i.bootloader, err = bootloader.New(i.options.UEFI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create bootloader: %w", err)
 		}

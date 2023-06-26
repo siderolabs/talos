@@ -163,7 +163,14 @@ func (c *Config) Install(bootDisk, arch, cmdline string) error {
 		}
 	}
 
-	assets := assets.Assets{
+	blk, err := mount.GetBlockDeviceName(bootDisk, constants.EFIPartitionLabel)
+	if err != nil {
+		return err
+	}
+
+	loopDevice := strings.HasPrefix(blk, "/dev/loop")
+
+	installAssets := assets.Assets{
 		{
 			Source:      fmt.Sprintf(constants.UKIAssetPath, arch),
 			Destination: filepath.Join(constants.EFIMountPoint, "EFI", "Linux", ukiPath),
@@ -173,16 +180,28 @@ func (c *Config) Install(bootDisk, arch, cmdline string) error {
 			Destination: filepath.Join(constants.EFIMountPoint, "EFI", "boot", sdbootFilename),
 		},
 	}
-	if err = assets.Install(); err != nil {
-		return err
+
+	// we only need the auto-enroll files when creating the metal image
+	if loopDevice {
+		installAssets = append(installAssets, []assets.Asset{
+			{
+				Source:      fmt.Sprintf(constants.PlatformKeyAssetPath, arch),
+				Destination: filepath.Join(constants.EFIMountPoint, "loader/keys/auto", constants.PlatformKeyAsset),
+			},
+			{
+				Source:      fmt.Sprintf(constants.KeyExchangeKeyAssetPath, arch),
+				Destination: filepath.Join(constants.EFIMountPoint, "loader/keys/auto", constants.KeyExchangeKeyAsset),
+			},
+			{
+				Source:      fmt.Sprintf(constants.SignatureKeyAssetPath, arch),
+				Destination: filepath.Join(constants.EFIMountPoint, "loader/keys/auto", constants.SignatureKeyAsset),
+			},
+		}...)
 	}
 
-	blk, err := mount.GetBlockDeviceName(bootDisk, constants.EFIPartitionLabel)
-	if err != nil {
+	if err = installAssets.Install(); err != nil {
 		return err
 	}
-
-	loopDevice := strings.HasPrefix(blk, "/dev/loop")
 
 	// don't update EFI variables if we're installing to a loop device
 	if !loopDevice {

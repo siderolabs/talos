@@ -304,7 +304,17 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 		rm -rf "$${tmpdir}"; \
 	done
 
-images-essential: image-aws image-gcp image-metal ## Builds only essential images used in the CI (AWS, GCP, and Metal).
+image-uki-metal: ## Builds the uki metal image
+	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
+	@ . ./hack/imager.sh && \
+	for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=$$(basename "$${platform}") && \
+		tmpdir=$$(prepare_extension_images "$${platform}" $(IMAGER_SYSTEM_EXTENSIONS)) && \
+		docker run --rm -v /dev:/dev -v "$${tmpdir}:/system/extensions" --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --uefi --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
+		rm -rf "$${tmpdir}"; \
+	done
+
+images-essential: image-aws image-gcp image-metal image-uki-metal ## Builds only essential images used in the CI (AWS, GCP, Metal and Metal UKI).
 
 images: image-aws image-azure image-digital-ocean image-exoscale image-gcp image-hcloud image-metal image-nocloud image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, GCP, HCloud, Metal, NoCloud, Openstack, Oracle, Scaleway, UpCloud, Vultr and VMware).
 

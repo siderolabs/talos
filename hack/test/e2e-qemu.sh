@@ -96,6 +96,15 @@ case "${USE_DISK_IMAGE:-false}" in
     ;;
 esac
 
+case "${WITH_TRUSTED_BOOT_IMAGE:-false}" in
+  false)
+    ;;
+  *)
+    tar -xf _out/metal-uki-amd64.tar.gz -C _out/
+    QEMU_FLAGS+=("--disk-image-path=_out/disk.raw" "--with-secureboot=true" "--with-tpm2=true")
+    ;;
+esac
+
 case "${WITH_DISK_ENCRYPTION:-false}" in
   false)
     ;;
