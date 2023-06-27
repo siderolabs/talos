@@ -6,6 +6,7 @@ package services_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/containerd/containerd/containers"
@@ -35,7 +36,12 @@ func TestGetOCIOptions(t *testing.T) {
 	defer mockClient.controller.Finish()
 
 	generateOCISpec := func(svc *services.Extension) (*oci.Spec, error) {
-		return oci.GenerateSpec(namespaces.WithNamespace(context.Background(), "testNamespace"), &mockClient, &containers.Container{}, svc.GetOCIOptions()...)
+		ociOpts, err := svc.GetOCIOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		return oci.GenerateSpec(namespaces.WithNamespace(context.Background(), "testNamespace"), &mockClient, &containers.Container{}, ociOpts...)
 	}
 
 	t.Run("default configurations are cleared away if user passes empty arrays for MaskedPaths and ReadonlyPaths", func(t *testing.T) {
@@ -155,5 +161,28 @@ func TestGetOCIOptions(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"FOO=BAR"}, spec.Process.Env)
+	})
+
+	t.Run("allows setting extra envFile", func(t *testing.T) {
+		tempDir := t.TempDir()
+		envFile := tempDir + "/envfile"
+
+		assert.NoError(t, os.WriteFile(envFile, []byte("FOO=BARFROMENVFILE"), 0o644))
+
+		// given
+		svc := &services.Extension{
+			Spec: &extservices.Spec{
+				Container: extservices.Container{
+					EnvironmentFile: envFile,
+				},
+			},
+		}
+
+		// when
+		spec, err := generateOCISpec(svc)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"FOO=BARFROMENVFILE"}, spec.Process.Env)
 	})
 }

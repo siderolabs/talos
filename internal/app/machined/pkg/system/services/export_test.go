@@ -7,6 +7,11 @@ package services
 import "github.com/containerd/containerd/oci"
 
 // GetOCIOptions gets all OCI options from an Extension.
-func (svc *Extension) GetOCIOptions() []oci.SpecOpts {
-	return svc.getOCIOptions()
+func (svc *Extension) GetOCIOptions() ([]oci.SpecOpts, error) {
+	envVars, err := svc.parseEnvironment()
+	if err != nil {
+		return nil, err
+	}
+
+	return svc.getOCIOptions(envVars), nil
 }

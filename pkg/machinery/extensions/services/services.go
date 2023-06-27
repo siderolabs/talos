@@ -38,6 +38,8 @@ type Container struct {
 	Entrypoint string `yaml:"entrypoint"`
 	// Environment variables for the service.
 	Environment []string `yaml:"environment"`
+	// EnvironmentFile to load environment vars before running the service.
+	EnvironmentFile string `yaml:"environmentFile"`
 	// Args to pass to the entrypoint.
 	Args []string `yaml:"args"`
 	// Volume mounts.

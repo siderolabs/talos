@@ -90,11 +90,18 @@ and `kube-proxy` by default and can be passed to the CNIs like Cilium and Calico
 The in-cluster loadbalancer provides access to the Kubernetes API endpoint even if the external loadbalancer
 is not healthy, provided that the worker nodes can reach to the controlplane machine addresses directly.
 """
-    
+
     [notes.secureboot]
         title = "SecureBoot"
         description="""\
 Talos now supports generating a custom iso that can be used with SecureBoot. Key generation and enrolling has to be done manually.
+"""
+
+    [notes.extensions]
+        title = "Extension Services"
+        description="""\
+Talos now supports setting `environmentFile` for an extension service container spec. Refer: https://www.talos.dev/v1.5/advanced/extension-services/#container
+The extension waits for the file to be present before starting the service.
 """
 
 [make_deps]

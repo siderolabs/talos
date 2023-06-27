@@ -7,11 +7,14 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/containerd/containerd/oci"
+	"github.com/hashicorp/go-envparse"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/gen/maps"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
@@ -64,6 +67,11 @@ func (svc *Extension) PostFunc(r runtime.Runtime, state events.ServiceState) (er
 func (svc *Extension) Condition(r runtime.Runtime) conditions.Condition {
 	conds := []conditions.Condition{}
 
+	if svc.Spec.Container.EnvironmentFile != "" {
+		// add a dependency on the environment file
+		conds = append(conds, conditions.WaitForFileToExist(svc.Spec.Container.EnvironmentFile))
+	}
+
 	for _, dep := range svc.Spec.Depends {
 		switch {
 		case dep.Path != "":
@@ -95,7 +103,7 @@ func (svc *Extension) DependsOn(r runtime.Runtime) []string {
 	return deps
 }
 
-func (svc *Extension) getOCIOptions() []oci.SpecOpts {
+func (svc *Extension) getOCIOptions(envVars []string) []oci.SpecOpts {
 	ociOpts := []oci.SpecOpts{
 		oci.WithRootFSPath(filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name)),
 		oci.WithCgroup(constants.CgroupExtensions),
@@ -105,6 +113,7 @@ func (svc *Extension) getOCIOptions() []oci.SpecOpts {
 		oci.WithApparmorProfile(""),
 		oci.WithCapabilities(capability.AllGrantableCapabilities()),
 		oci.WithAllDevicesAllowed,
+		oci.WithEnv(envVars),
 	}
 
 	if !svc.Spec.Container.Security.WriteableRootfs {
@@ -113,10 +122,6 @@ func (svc *Extension) getOCIOptions() []oci.SpecOpts {
 
 	if svc.Spec.Container.Security.WriteableSysfs {
 		ociOpts = append(ociOpts, oci.WithWriteableSysfs)
-	}
-
-	if svc.Spec.Container.Environment != nil {
-		ociOpts = append(ociOpts, oci.WithEnv(svc.Spec.Container.Environment))
 	}
 
 	if svc.Spec.Container.Security.MaskedPaths != nil {
@@ -161,6 +166,13 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		restartType = restart.UntilSuccess
 	}
 
+	envVars, err := svc.parseEnvironment()
+	if err != nil {
+		return nil, err
+	}
+
+	ociSpecOpts := svc.getOCIOptions(envVars)
+
 	return restart.New(containerd.NewRunner(
 		r.Config().Debug(),
 		&args,
@@ -168,7 +180,7 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(environment.Get(r.Config())),
-		runner.WithOCISpecOpts(svc.getOCIOptions()...),
+		runner.WithOCISpecOpts(ociSpecOpts...),
 		runner.WithOOMScoreAdj(-600),
 	),
 		restart.WithType(restartType),
@@ -188,4 +200,38 @@ func (svc *Extension) APIStartAllowed(runtime.Runtime) bool {
 // APIStopAllowed implements APIStoppableService.
 func (svc *Extension) APIStopAllowed(runtime.Runtime) bool {
 	return true
+}
+
+func (svc *Extension) parseEnvironment() ([]string, error) {
+	var envVars []string
+
+	if svc.Spec.Container.EnvironmentFile != "" {
+		envFile, err := os.OpenFile(svc.Spec.Container.EnvironmentFile, os.O_RDONLY, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			if closeErr := envFile.Close(); err != nil {
+				err = closeErr
+			}
+		}()
+
+		parsedEnvVars, err := envparse.Parse(envFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse environment file %q: %w", svc.Spec.Container.EnvironmentFile, err)
+		}
+
+		envVarsSlice := maps.ToSlice(parsedEnvVars, func(k, v string) string {
+			return fmt.Sprintf("%s=%s", k, v)
+		})
+
+		envVars = append(envVars, envVarsSlice...)
+	}
+
+	if svc.Spec.Container.Environment != nil {
+		envVars = append(envVars, svc.Spec.Container.Environment...)
+	}
+
+	return envVars, nil
 }
