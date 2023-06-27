@@ -28,6 +28,7 @@ func generateSigningCerts(path, prefix, commonName string) error {
 		x509.CommonName(commonName),
 		x509.NotAfter(currentTime.Add(24 * time.Hour)),
 		x509.NotBefore(currentTime),
+		x509.Organization(commonName),
 	}
 
 	signingKey, err := x509.NewSelfSignedCertificateAuthority(opts...)
