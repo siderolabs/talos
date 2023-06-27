@@ -541,6 +541,9 @@ COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
 RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
 RUN chmod +x /rootfs/sbin/poweroff
+# some extensions like qemu-guest agent will call '/sbin/shutdown'
+RUN ln /rootfs/sbin/init /rootfs/sbin/shutdown
+RUN chmod +x /rootfs/sbin/shutdown
 RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
 RUN chmod +x /rootfs/sbin/wrapperd
 RUN ln /rootfs/sbin/init /rootfs/sbin/dashboard
@@ -595,6 +598,9 @@ COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
 # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
 RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
 RUN chmod +x /rootfs/sbin/poweroff
+# some extensions like qemu-guest agent will call '/sbin/shutdown'
+RUN ln /rootfs/sbin/init /rootfs/sbin/shutdown
+RUN chmod +x /rootfs/sbin/shutdown
 RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
 RUN chmod +x /rootfs/sbin/wrapperd
 RUN ln /rootfs/sbin/init /rootfs/sbin/dashboard
