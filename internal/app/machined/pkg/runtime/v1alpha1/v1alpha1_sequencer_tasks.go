@@ -75,6 +75,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -2368,6 +2369,31 @@ func ReloadMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 		err := r.State().Machine().Meta().Reload(ctx)
 		if err != nil && !os.IsNotExist(err) {
 			return err
+		}
+
+		// attempt to populate meta from the environment if Talos is not installed (yet)
+		if os.IsNotExist(err) {
+			env := environment.Get(r.Config())
+
+			prefix := constants.MetaValuesEnvVar + "="
+
+			for _, e := range env {
+				if !strings.HasPrefix(e, prefix) {
+					continue
+				}
+
+				values, err := metamachinery.DecodeValues(e[len(prefix):])
+				if err != nil {
+					return fmt.Errorf("error decoding meta values: %w", err)
+				}
+
+				for _, value := range values {
+					_, err = r.State().Machine().Meta().SetTag(ctx, value.Key, value.Value)
+					if err != nil {
+						return fmt.Errorf("error setting meta tag %x: %w", value.Key, err)
+					}
+				}
+			}
 		}
 
 		return nil

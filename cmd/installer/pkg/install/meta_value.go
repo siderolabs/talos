@@ -5,45 +5,17 @@
 package install
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/pflag"
+
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 )
 
 // MetaValues is a list of MetaValue.
 type MetaValues struct {
-	values  []MetaValue
+	values  meta.Values
 	changed bool
-}
-
-// MetaValue represents a key/value pair for META.
-type MetaValue struct {
-	Key   uint8
-	Value string
-}
-
-func (v *MetaValue) String() string {
-	return fmt.Sprintf("0x%x=%s", v.Key, v.Value)
-}
-
-// Parse k=v expression.
-func (v *MetaValue) Parse(s string) error {
-	k, vv, ok := strings.Cut(s, "=")
-	if !ok {
-		return fmt.Errorf("invalid value %q", s)
-	}
-
-	key, err := strconv.ParseUint(k, 0, 8)
-	if err != nil {
-		return fmt.Errorf("invalid key %q", k)
-	}
-
-	v.Key = uint8(key)
-	v.Value = vv
-
-	return nil
 }
 
 // Interface check.
@@ -54,14 +26,14 @@ var (
 
 // Set implements pflag.Value.
 func (s *MetaValues) Set(val string) error {
-	var v MetaValue
+	var v meta.Value
 
 	if err := v.Parse(val); err != nil {
 		return err
 	}
 
 	if !s.changed {
-		s.values = []MetaValue{v}
+		s.values = meta.Values{v}
 	} else {
 		s.values = append(s.values, v)
 	}
@@ -83,7 +55,7 @@ func (s *MetaValues) String() string {
 
 // Append implements pflag.SliceValue.
 func (s *MetaValues) Append(val string) error {
-	var v MetaValue
+	var v meta.Value
 
 	if err := v.Parse(val); err != nil {
 		return err
@@ -96,10 +68,10 @@ func (s *MetaValues) Append(val string) error {
 
 // Replace implements pflag.SliceValue.
 func (s *MetaValues) Replace(val []string) error {
-	out := make([]MetaValue, len(val))
+	out := make(meta.Values, len(val))
 
 	for i, pair := range val {
-		var v MetaValue
+		var v meta.Value
 
 		if err := v.Parse(pair); err != nil {
 			return err
@@ -122,4 +94,21 @@ func (s *MetaValues) GetSlice() []string {
 	}
 
 	return out
+}
+
+// Encode returns the encoded values.
+func (s *MetaValues) Encode() string {
+	return s.values.Encode()
+}
+
+// Decode the values from the given string.
+func (s *MetaValues) Decode(val string) error {
+	values, err := meta.DecodeValues(val)
+	if err != nil {
+		return err
+	}
+
+	s.values = values
+
+	return nil
 }
