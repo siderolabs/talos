@@ -6,11 +6,9 @@
 package cmd
 
 import (
-	"encoding/base64"
 	"fmt"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -25,19 +23,10 @@ var rootCmd = &cobra.Command{
 	Long:  ``,
 }
 
-const metaValueEnvVariable = "INSTALLER_META_BASE64"
-
 func setFlagsFromEnvironment() error {
-	if metaEnvBase64 := os.Getenv(metaValueEnvVariable); metaEnvBase64 != "" {
-		metaEnv, err := base64.StdEncoding.DecodeString(metaEnvBase64)
-		if err != nil {
+	if metaEnvBase64 := os.Getenv(constants.MetaValuesEnvVar); metaEnvBase64 != "" {
+		if err := options.MetaValues.Decode(metaEnvBase64); err != nil {
 			return err
-		}
-
-		for _, val := range strings.Split(string(metaEnv), ";") {
-			if err := options.MetaValues.Set(val); err != nil {
-				return err
-			}
 		}
 	}
 

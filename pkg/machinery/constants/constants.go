@@ -829,6 +829,9 @@ const (
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
+
+	// MetaValuesEnvVar is the name of the environment variable to store encoded meta values for the disk image (installer).
+	MetaValuesEnvVar = "INSTALLER_META_BASE64"
 )
 
 // See https://linux.die.net/man/3/klogctl

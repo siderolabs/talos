@@ -7,13 +7,11 @@ package cmd
 import (
 	"bytes"
 	_ "embed"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"github.com/siderolabs/go-procfs/procfs"
@@ -106,8 +104,7 @@ func runISOCmd() error {
 
 	if metaValues := options.MetaValues.GetSlice(); len(metaValues) > 0 {
 		// pass META values as kernel talos.environment args which will be passed via the environment to the installer
-		metaBase64 := base64.StdEncoding.EncodeToString([]byte(strings.Join(metaValues, ";")))
-		cmdline.Append(constants.KernelParamEnvironment, metaValueEnvVariable+"="+metaBase64)
+		cmdline.Append(constants.KernelParamEnvironment, constants.MetaValuesEnvVar+"="+options.MetaValues.Encode())
 	}
 
 	var grubCfg bytes.Buffer

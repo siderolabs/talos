@@ -147,14 +147,17 @@ func (s *MachineState) Meta() runtime.Meta {
 		return s
 	}
 
-	var justLoaded bool
+	var (
+		justLoaded bool
+		loadErr    error
+	)
 
 	s.metaOnce.Do(func() {
-		var err error
-
-		s.meta, err = meta.New(context.Background(), s.resources)
-		if err != nil {
-			log.Printf("META: failed to load: %s", err)
+		s.meta, loadErr = meta.New(context.Background(), s.resources)
+		if loadErr != nil {
+			if !os.IsNotExist(loadErr) {
+				log.Printf("META: failed to load: %s", loadErr)
+			}
 		} else {
 			s.probeMeta()
 		}
@@ -165,6 +168,7 @@ func (s *MachineState) Meta() runtime.Meta {
 	return metaWrapper{
 		MachineState: s,
 		justLoaded:   justLoaded,
+		loadErr:      loadErr,
 	}
 }
 
@@ -330,11 +334,12 @@ func (s *MachineState) DBus() runtime.DBusState {
 type metaWrapper struct {
 	*MachineState
 	justLoaded bool
+	loadErr    error
 }
 
 func (m metaWrapper) Reload(ctx context.Context) error {
 	if m.justLoaded {
-		return nil
+		return m.loadErr
 	}
 
 	return m.MachineState.Reload(ctx)

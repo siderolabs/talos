@@ -75,11 +75,8 @@ func New(ctx context.Context, st state.State, opts ...Option) (*Meta, error) {
 	}
 
 	err = meta.Reload(ctx)
-	if err != nil && !os.IsNotExist(err) {
-		return meta, err
-	}
 
-	return meta, nil
+	return meta, err
 }
 
 func (meta *Meta) getPath() (string, error) {
