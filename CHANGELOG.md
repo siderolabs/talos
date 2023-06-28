@@ -1,3 +1,85 @@
+## [Talos 1.4.6](https://github.com/siderolabs/talos/releases/tag/v1.4.6) (2023-06-28)
+
+Welcome to the v1.4.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Kubernetes: 1.27.3
+Linux: 6.1.35
+
+Talos is built with Go 1.20.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Alex Lubbock
+* Noel Georgi
+* Utku Ozdemir
+
+### Changes
+<details><summary>9 commits</summary>
+<p>
+
+* [`bb76a38d4`](https://github.com/siderolabs/talos/commit/bb76a38d4aaa6d5dc6d03aa6213225b57746feb6) fix: provide stashed META values before installation
+* [`109a6c659`](https://github.com/siderolabs/talos/commit/109a6c65931f44a1262161494c0d30a76a9a1b1c) fix: allow time skew for generated kubeconfig
+* [`765f87b95`](https://github.com/siderolabs/talos/commit/765f87b955bcaed87b57b8f123bb7e0794e2df4b) chore: optimize image compression
+* [`8c9f0495f`](https://github.com/siderolabs/talos/commit/8c9f0495fc5058f2669790b4dc8d9a9b423ca915) fix: do not probe kernel args in dashboard if not needed
+* [`d759302d9`](https://github.com/siderolabs/talos/commit/d759302d92787b5e70bdf7316b658d3fe2867d0e) fix: skip DHCP RENEW if server IP in the lease is all zeroes
+* [`2b33a66d7`](https://github.com/siderolabs/talos/commit/2b33a66d7e9edb00e6127a548b5ab673480d2c50) fix: upgrade-k8s use internal IP first, external IP fallback
+* [`b5bbb3f2e`](https://github.com/siderolabs/talos/commit/b5bbb3f2e82b25fee7e6aecc23a90c3daaaeea8f) feat: update Linux to 6.1.36
+* [`1e9c3b3b8`](https://github.com/siderolabs/talos/commit/1e9c3b3b8341b988d27322f06034b1cbf70736c8) feat: update default Kubernetes version to 1.27.3
+* [`21a490b11`](https://github.com/siderolabs/talos/commit/21a490b11ac2a786619bd6748b6a3417661380f2) chore: update to Go 1.20.5
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`b2aba9d`](https://github.com/siderolabs/extras/commit/b2aba9da5992a36ab94bcb25d869a55c7e643147) feat: update Go to 1.20.5
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`e911ac5`](https://github.com/siderolabs/pkgs/commit/e911ac552caec72b0ef7f74e7c2e1887cd2bd9f9) feat: update Linux to 6.1.35
+* [`15a5cba`](https://github.com/siderolabs/pkgs/commit/15a5cbadb674e9bfda47382236854e0cd98bb632) fix: bump drbd to 9.2.4
+* [`91b8dd4`](https://github.com/siderolabs/pkgs/commit/91b8dd485d9327bce809f55f56fca882f3415839) feat: update Go to 1.20.5
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`fac34e5`](https://github.com/siderolabs/tools/commit/fac34e51d888f62c8db33548751640a3d27d7c6f) feat: update Go to 1.20.5
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**  v1.4.0-1-g9b07505 -> v1.4.0-2-gb2aba9d
+* **github.com/siderolabs/pkgs**    v1.4.1-11-g3e75ce2 -> v1.4.1-14-ge911ac5
+* **github.com/siderolabs/tools**   v1.4.0-2-g5d0e9ab -> v1.4.0-3-gfac34e5
+* **k8s.io/api**                    v0.27.2 -> v0.27.3
+* **k8s.io/apimachinery**           v0.27.2 -> v0.27.3
+* **k8s.io/apiserver**              v0.27.2 -> v0.27.3
+* **k8s.io/client-go**              v0.27.2 -> v0.27.3
+* **k8s.io/component-base**         v0.27.2 -> v0.27.3
+* **k8s.io/cri-api**                v0.27.2 -> v0.27.3
+* **k8s.io/kubectl**                v0.27.2 -> v0.27.3
+* **k8s.io/kubelet**                v0.27.2 -> v0.27.3
+
+Previous release can be found at [v1.4.5](https://github.com/siderolabs/talos/releases/tag/v1.4.5)
+
 ## [Talos 1.4.5](https://github.com/siderolabs/talos/releases/tag/v1.4.5) (2023-05-30)
 
 Welcome to the v1.4.5 release of Talos!
