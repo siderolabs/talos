@@ -11,9 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/netip"
-	"net/url"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -31,6 +29,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
+	"github.com/siderolabs/talos/internal/pkg/endpoint"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -66,44 +65,6 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 			Kind: controller.OutputShared,
 		},
 	}
-}
-
-var urlSchemeMatcher = regexp.MustCompile(`[a-zA-z]+://`)
-
-type apiEndpoint struct {
-	Host      string
-	Insecure  bool
-	JoinToken *string
-}
-
-// parseAPIEndpoint parses the siderolink.api kernel parameter.
-func parseAPIEndpoint(sideroLinkParam string) (apiEndpoint, error) {
-	if !urlSchemeMatcher.MatchString(sideroLinkParam) {
-		sideroLinkParam = "grpc://" + sideroLinkParam
-	}
-
-	u, err := url.Parse(sideroLinkParam)
-	if err != nil {
-		return apiEndpoint{}, err
-	}
-
-	result := apiEndpoint{
-		Host:     u.Host,
-		Insecure: u.Scheme == "grpc",
-	}
-
-	if u.Port() == "" && u.Scheme == "https" {
-		result.Host += ":443"
-	}
-
-	params := u.Query()
-
-	joinTokenStr, ok := params["jointoken"]
-	if ok && len(joinTokenStr) > 0 {
-		result.JoinToken = &joinTokenStr[0]
-	}
-
-	return result, nil
 }
 
 // Run implements controller.Controller interface.
@@ -201,9 +162,9 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		}
 
 		nodeUUID := sysInfo.TypedSpec().UUID
-		endpoint := cfg.TypedSpec().APIEndpoint
+		stringEndpoint := cfg.TypedSpec().APIEndpoint
 
-		parsedEndpoint, err := parseAPIEndpoint(endpoint)
+		parsedEndpoint, err := endpoint.Parse(stringEndpoint)
 		if err != nil {
 			return fmt.Errorf("failed to parse siderolink endpoint: %w", err)
 		}
@@ -222,7 +183,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 
 			conn, connErr := grpc.DialContext(connCtx, parsedEndpoint.Host, grpc.WithTransportCredentials(transportCredentials))
 			if connErr != nil {
-				return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", endpoint, connErr)
+				return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", stringEndpoint, connErr)
 			}
 
 			defer func() {
@@ -232,12 +193,18 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			}()
 
 			sideroLinkClient := pb.NewProvisionServiceClient(conn)
-
-			return sideroLinkClient.Provision(ctx, &pb.ProvisionRequest{
+			request := &pb.ProvisionRequest{
 				NodeUuid:      nodeUUID,
 				NodePublicKey: ctrl.nodeKey.PublicKey().String(),
-				JoinToken:     parsedEndpoint.JoinToken,
-			})
+			}
+
+			token := parsedEndpoint.GetParam("jointoken")
+
+			if token != "" {
+				request.JoinToken = pointer.To(token)
+			}
+
+			return sideroLinkClient.Provision(ctx, request)
 		}
 
 		resp, err := provision()
@@ -322,7 +289,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 
 		logger.Info(
 			"siderolink connection configured",
-			zap.String("endpoint", endpoint),
+			zap.String("endpoint", stringEndpoint),
 			zap.String("node_uuid", nodeUUID),
 			zap.String("node_address", nodeAddress.String()),
 		)

@@ -3522,6 +3522,7 @@ MountStatusSpec describes status of the defined sysctls.
 | target | [string](#string) |  |  |
 | filesystem_type | [string](#string) |  |  |
 | options | [string](#string) | repeated |  |
+| encrypted | [bool](#bool) |  |  |
 
 
 

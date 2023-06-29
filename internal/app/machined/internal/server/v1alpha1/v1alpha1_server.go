@@ -343,12 +343,12 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 	}
 
 	if err := func() error {
-		config, err := bootloader.Probe(systemDisk.Device().Name())
+		config, err := bootloader.Probe(ctx, systemDisk.Device().Name())
 		if err != nil {
 			return err
 		}
 
-		return config.Revert()
+		return config.Revert(ctx)
 	}(); err != nil {
 		return nil, err
 	}

@@ -356,12 +356,18 @@ type RegistryTLSConfig interface {
 type EncryptionKey interface {
 	Static() EncryptionKeyStatic
 	NodeID() EncryptionKeyNodeID
+	KMS() EncryptionKeyKMS
 	Slot() int
 }
 
 // EncryptionKeyStatic ephemeral encryption key.
 type EncryptionKeyStatic interface {
 	Key() []byte
+}
+
+// EncryptionKeyKMS encryption key sealed by KMS.
+type EncryptionKeyKMS interface {
+	Endpoint() string
 }
 
 // EncryptionKeyNodeID deterministically generated encryption key.

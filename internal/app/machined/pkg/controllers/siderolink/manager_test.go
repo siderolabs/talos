@@ -17,7 +17,6 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 	pb "github.com/siderolabs/siderolink/api/siderolink"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 
@@ -167,85 +166,5 @@ func (suite *ManagerSuite) TestReconcile() {
 		suite.Assert().Truef(state.IsNotFoundError(err), "unexpected error: %v", err)
 
 		return nil
-	})
-}
-
-func TestParseJoinToken(t *testing.T) {
-	t.Run("parses a join token from a complete URL without error", func(t *testing.T) {
-		// when
-		endpoint, err := siderolinkctrl.ParseAPIEndpoint("grpc://10.5.0.2:3445?jointoken=ttt")
-
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, siderolinkctrl.APIEndpoint{
-			Host:      "10.5.0.2:3445",
-			Insecure:  true,
-			JoinToken: pointer.To("ttt"),
-		}, endpoint)
-	})
-
-	t.Run("parses a join token from a secure URL without error", func(t *testing.T) {
-		// when
-		endpoint, err := siderolinkctrl.ParseAPIEndpoint("https://10.5.0.2:3445?jointoken=ttt&jointoken=xxx")
-
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, siderolinkctrl.APIEndpoint{
-			Host:      "10.5.0.2:3445",
-			Insecure:  false,
-			JoinToken: pointer.To("ttt"),
-		}, endpoint)
-	})
-
-	t.Run("parses a join token from a secure URL without port", func(t *testing.T) {
-		// when
-		endpoint, err := siderolinkctrl.ParseAPIEndpoint("https://10.5.0.2?jointoken=ttt&jointoken=xxx")
-
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, siderolinkctrl.APIEndpoint{
-			Host:      "10.5.0.2:443",
-			Insecure:  false,
-			JoinToken: pointer.To("ttt"),
-		}, endpoint)
-	})
-
-	t.Run("parses a join token from an URL without a scheme", func(t *testing.T) {
-		// when
-		endpoint, err := siderolinkctrl.ParseAPIEndpoint("10.5.0.2:3445?jointoken=ttt")
-
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, siderolinkctrl.APIEndpoint{
-			Host:      "10.5.0.2:3445",
-			Insecure:  true,
-			JoinToken: pointer.To("ttt"),
-		}, endpoint)
-	})
-
-	t.Run("does not error if there is no join token in a complete URL", func(t *testing.T) {
-		// when
-		endpoint, err := siderolinkctrl.ParseAPIEndpoint("grpc://10.5.0.2:3445")
-
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, siderolinkctrl.APIEndpoint{
-			Host:      "10.5.0.2:3445",
-			Insecure:  true,
-			JoinToken: nil,
-		}, endpoint)
-	})
-
-	t.Run("does not error if there is no join token in an URL without a scheme", func(t *testing.T) {
-		// when
-		endpoint, err := siderolinkctrl.ParseAPIEndpoint("10.5.0.2:3445")
-
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, siderolinkctrl.APIEndpoint{
-			Host:      "10.5.0.2:3445",
-			Insecure:  true,
-			JoinToken: nil,
-		}, endpoint)
 	})
 }

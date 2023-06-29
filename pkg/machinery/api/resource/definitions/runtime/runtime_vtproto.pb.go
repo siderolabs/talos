@@ -492,6 +492,16 @@ func (m *MountStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Encrypted {
+		i--
+		if m.Encrypted {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x28
+	}
 	if len(m.Options) > 0 {
 		for iNdEx := len(m.Options) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.Options[iNdEx])
@@ -855,6 +865,9 @@ func (m *MountStatusSpec) SizeVT() (n int) {
 			l = len(s)
 			n += 1 + l + sov(uint64(l))
 		}
+	}
+	if m.Encrypted {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -1976,6 +1989,26 @@ func (m *MountStatusSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Options = append(m.Options, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Encrypted", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Encrypted = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

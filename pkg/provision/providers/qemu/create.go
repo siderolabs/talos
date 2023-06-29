@@ -59,6 +59,14 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, fmt.Errorf("error creating loadbalancer: %w", err)
 	}
 
+	if options.KMSEndpoint != "" {
+		fmt.Fprintln(options.LogWriter, "creating KMS server")
+
+		if err = p.CreateKMS(state, request, options); err != nil {
+			return nil, fmt.Errorf("error creating KMS server: %w", err)
+		}
+	}
+
 	fmt.Fprintln(options.LogWriter, "creating dhcpd")
 
 	if err = p.CreateDHCPd(state, request); err != nil {

@@ -84,6 +84,7 @@ const (
 	apiServerBalancerPortFlag     = "api-server-balancer-port"
 	tpm2EnabledFlag               = "with-tpm2"
 	secureBootEnabledFlag         = "with-secureboot"
+	diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
 )
 
 var (
@@ -161,6 +162,7 @@ var (
 	packetReorder              float64
 	packetCorrupt              float64
 	bandwidth                  int
+	diskEncryptionKeyTypes     []string
 )
 
 // createCmd represents the cluster up command.
@@ -431,27 +433,54 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		if encryptStatePartition || encryptEphemeralPartition {
 			diskEncryptionConfig := &v1alpha1.SystemDiskEncryptionConfig{}
 
+			var keys []*v1alpha1.EncryptionKey
+
+			for i, key := range diskEncryptionKeyTypes {
+				switch key {
+				case "uuid":
+					keys = append(keys, &v1alpha1.EncryptionKey{
+						KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+						KeySlot:   i,
+					})
+				case "kms":
+					var ip netip.Addr
+
+					// get bridge IP
+					ip, err = sideronet.NthIPInNetwork(cidr4, 1)
+					if err != nil {
+						return err
+					}
+
+					port := 4050
+
+					keys = append(keys, &v1alpha1.EncryptionKey{
+						KeyKMS: &v1alpha1.EncryptionKeyKMS{
+							KMSEndpoint: "http://" + nethelpers.JoinHostPort(ip.String(), port),
+						},
+						KeySlot: i,
+					})
+
+					provisionOptions = append(provisionOptions, provision.WithKMS(nethelpers.JoinHostPort("0.0.0.0", port)))
+				default:
+					return fmt.Errorf("unknown key type %q", key)
+				}
+			}
+
+			if len(keys) == 0 {
+				return fmt.Errorf("no disk encryption key types enabled")
+			}
+
 			if encryptStatePartition {
 				diskEncryptionConfig.StatePartition = &v1alpha1.EncryptionConfig{
 					EncryptionProvider: encryption.LUKS2,
-					EncryptionKeys: []*v1alpha1.EncryptionKey{
-						{
-							KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-							KeySlot:   0,
-						},
-					},
+					EncryptionKeys:     keys,
 				}
 			}
 
 			if encryptEphemeralPartition {
 				diskEncryptionConfig.EphemeralPartition = &v1alpha1.EncryptionConfig{
 					EncryptionProvider: encryption.LUKS2,
-					EncryptionKeys: []*v1alpha1.EncryptionKey{
-						{
-							KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-							KeySlot:   0,
-						},
-					},
+					EncryptionKeys:     keys,
 				}
 			}
 
@@ -958,6 +987,7 @@ func init() {
 	createCmd.Flags().BoolVar(&skipInjectingConfig, "skip-injecting-config", false, "skip injecting config from embedded metadata server, write config files to current directory")
 	createCmd.Flags().BoolVar(&encryptStatePartition, encryptStatePartitionFlag, false, "enable state partition encryption")
 	createCmd.Flags().BoolVar(&encryptEphemeralPartition, encryptEphemeralPartitionFlag, false, "enable ephemeral partition encryption")
+	createCmd.Flags().StringArrayVar(&diskEncryptionKeyTypes, diskEncryptionKeyTypesFlag, []string{"uuid"}, "encryption key types to use for disk encryption (uuid, kms)")
 	createCmd.Flags().StringVar(&talosVersion, talosVersionFlag, "", "the desired Talos version to generate config for (if not set, defaults to image version)")
 	createCmd.Flags().BoolVar(&useVIP, useVIPFlag, false, "use a virtual IP for the controlplane endpoint instead of the loadbalancer")
 	createCmd.Flags().BoolVar(&enableClusterDiscovery, withClusterDiscoveryFlag, true, "enable cluster discovery")

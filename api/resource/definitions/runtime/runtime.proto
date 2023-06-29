@@ -64,6 +64,7 @@ message MountStatusSpec {
   string target = 2;
   string filesystem_type = 3;
   repeated string options = 4;
+  bool encrypted = 5;
 }
 
 // PlatformMetadataSpec describes platform metadata properties.

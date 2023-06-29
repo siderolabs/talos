@@ -49,6 +49,7 @@ var (
 	EncryptionConfigDoc               encoder.Doc
 	EncryptionKeyDoc                  encoder.Doc
 	EncryptionKeyStaticDoc            encoder.Doc
+	EncryptionKeyKMSDoc               encoder.Doc
 	EncryptionKeyNodeIDDoc            encoder.Doc
 	MachineFileDoc                    encoder.Doc
 	ExtraHostDoc                      encoder.Doc
@@ -1559,7 +1560,7 @@ func init() {
 			FieldName: "keys",
 		},
 	}
-	EncryptionKeyDoc.Fields = make([]encoder.Doc, 3)
+	EncryptionKeyDoc.Fields = make([]encoder.Doc, 4)
 	EncryptionKeyDoc.Fields[0].Name = "static"
 	EncryptionKeyDoc.Fields[0].Type = "EncryptionKeyStatic"
 	EncryptionKeyDoc.Fields[0].Note = ""
@@ -1570,11 +1571,18 @@ func init() {
 	EncryptionKeyDoc.Fields[1].Note = ""
 	EncryptionKeyDoc.Fields[1].Description = "Deterministically generated key from the node UUID and PartitionLabel."
 	EncryptionKeyDoc.Fields[1].Comments[encoder.LineComment] = "Deterministically generated key from the node UUID and PartitionLabel."
-	EncryptionKeyDoc.Fields[2].Name = "slot"
-	EncryptionKeyDoc.Fields[2].Type = "int"
+	EncryptionKeyDoc.Fields[2].Name = "kms"
+	EncryptionKeyDoc.Fields[2].Type = "EncryptionKeyKMS"
 	EncryptionKeyDoc.Fields[2].Note = ""
-	EncryptionKeyDoc.Fields[2].Description = "Key slot number for LUKS2 encryption."
-	EncryptionKeyDoc.Fields[2].Comments[encoder.LineComment] = "Key slot number for LUKS2 encryption."
+	EncryptionKeyDoc.Fields[2].Description = "KMS managed encryption key."
+	EncryptionKeyDoc.Fields[2].Comments[encoder.LineComment] = "KMS managed encryption key."
+
+	EncryptionKeyDoc.Fields[2].AddExample("", kmsKeyExample)
+	EncryptionKeyDoc.Fields[3].Name = "slot"
+	EncryptionKeyDoc.Fields[3].Type = "int"
+	EncryptionKeyDoc.Fields[3].Note = ""
+	EncryptionKeyDoc.Fields[3].Description = "Key slot number for LUKS2 encryption."
+	EncryptionKeyDoc.Fields[3].Comments[encoder.LineComment] = "Key slot number for LUKS2 encryption."
 
 	EncryptionKeyStaticDoc.Type = "EncryptionKeyStatic"
 	EncryptionKeyStaticDoc.Comments[encoder.LineComment] = "EncryptionKeyStatic represents throw away key type."
@@ -1591,6 +1599,24 @@ func init() {
 	EncryptionKeyStaticDoc.Fields[0].Note = ""
 	EncryptionKeyStaticDoc.Fields[0].Description = "Defines the static passphrase value."
 	EncryptionKeyStaticDoc.Fields[0].Comments[encoder.LineComment] = "Defines the static passphrase value."
+
+	EncryptionKeyKMSDoc.Type = "EncryptionKeyKMS"
+	EncryptionKeyKMSDoc.Comments[encoder.LineComment] = "EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server."
+	EncryptionKeyKMSDoc.Description = "EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server."
+
+	EncryptionKeyKMSDoc.AddExample("", kmsKeyExample)
+	EncryptionKeyKMSDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "EncryptionKey",
+			FieldName: "kms",
+		},
+	}
+	EncryptionKeyKMSDoc.Fields = make([]encoder.Doc, 1)
+	EncryptionKeyKMSDoc.Fields[0].Name = "endpoint"
+	EncryptionKeyKMSDoc.Fields[0].Type = "string"
+	EncryptionKeyKMSDoc.Fields[0].Note = ""
+	EncryptionKeyKMSDoc.Fields[0].Description = "KMS endpoint to Seal/Unseal the key."
+	EncryptionKeyKMSDoc.Fields[0].Comments[encoder.LineComment] = "KMS endpoint to Seal/Unseal the key."
 
 	EncryptionKeyNodeIDDoc.Type = "EncryptionKeyNodeID"
 	EncryptionKeyNodeIDDoc.Comments[encoder.LineComment] = "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel."
@@ -2937,6 +2963,10 @@ func (_ EncryptionKeyStatic) Doc() *encoder.Doc {
 	return &EncryptionKeyStaticDoc
 }
 
+func (_ EncryptionKeyKMS) Doc() *encoder.Doc {
+	return &EncryptionKeyKMSDoc
+}
+
 func (_ EncryptionKeyNodeID) Doc() *encoder.Doc {
 	return &EncryptionKeyNodeIDDoc
 }
@@ -3126,6 +3156,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&EncryptionConfigDoc,
 			&EncryptionKeyDoc,
 			&EncryptionKeyStaticDoc,
+			&EncryptionKeyKMSDoc,
 			&EncryptionKeyNodeIDDoc,
 			&MachineFileDoc,
 			&ExtraHostDoc,

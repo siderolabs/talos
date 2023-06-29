@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -24,7 +25,7 @@ var installCmd = &cobra.Command{
 	Short: "",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		return runInstallCmd()
+		return runInstallCmd(cmd.Context())
 	},
 }
 
@@ -32,7 +33,7 @@ func init() {
 	rootCmd.AddCommand(installCmd)
 }
 
-func runInstallCmd() (err error) {
+func runInstallCmd(ctx context.Context) (err error) {
 	log.Printf("running Talos installer %s", version.NewVersion().Tag)
 
 	seq := runtime.SequenceInstall
@@ -74,5 +75,5 @@ func runInstallCmd() (err error) {
 		}
 	}
 
-	return install.Install(p, seq, options)
+	return install.Install(ctx, p, seq, options)
 }

@@ -27,6 +27,7 @@ type MountStatusSpec struct {
 	Target         string   `yaml:"target" protobuf:"2"`
 	FilesystemType string   `yaml:"filesystemType" protobuf:"3"`
 	Options        []string `yaml:"options" protobuf:"4"`
+	Encrypted      bool     `yaml:"encrypted" protobuf:"5"`
 }
 
 // NewMountStatus initializes a MountStatus resource.

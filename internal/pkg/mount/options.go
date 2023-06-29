@@ -7,6 +7,7 @@ package mount
 import (
 	"log"
 
+	"github.com/siderolabs/talos/internal/pkg/encryption"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
@@ -45,6 +46,7 @@ type Options struct {
 	PreMountHooks    []Hook
 	PostUnmountHooks []Hook
 	Encryption       config.Encryption
+	NodeParams       encryption.NodeParams
 	Logger           *log.Logger
 	ProjectQuota     bool
 }
@@ -108,6 +110,13 @@ func WithLogger(logger *log.Logger) Option {
 func WithProjectQuota(enable bool) Option {
 	return func(args *Options) {
 		args.ProjectQuota = enable
+	}
+}
+
+// WithNodeParams node info used by the encryption handler.
+func WithNodeParams(params encryption.NodeParams) Option {
+	return func(args *Options) {
+		args.NodeParams = params
 	}
 }
 

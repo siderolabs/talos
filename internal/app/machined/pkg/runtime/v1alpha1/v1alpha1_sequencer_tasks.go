@@ -2014,7 +2014,7 @@ func SaveStateEncryptionConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc
 // MountEFIPartition mounts the EFI partition.
 func MountEFIPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return mount.SystemPartitionMount(r, logger, constants.EFIPartitionLabel)
+		return mount.SystemPartitionMount(ctx, r, logger, constants.EFIPartitionLabel)
 	}, "mountEFIPartition"
 }
 
@@ -2061,7 +2061,7 @@ func MountStatePartition(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc
 			opts = append(opts, mount.WithEncryptionConfig(encryption))
 		}
 
-		return mount.SystemPartitionMount(r, logger, constants.StatePartitionLabel, opts...)
+		return mount.SystemPartitionMount(ctx, r, logger, constants.StatePartitionLabel, opts...)
 	}, "mountStatePartition"
 }
 
@@ -2075,7 +2075,7 @@ func UnmountStatePartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, st
 // MountEphemeralPartition mounts the ephemeral partition.
 func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		return mount.SystemPartitionMount(r, logger, constants.EphemeralPartitionLabel,
+		return mount.SystemPartitionMount(ctx, r, logger, constants.EphemeralPartitionLabel,
 			mount.WithFlags(mount.Resize),
 			mount.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()))
 	}, "mountEphemeralPartition"
@@ -2228,7 +2228,7 @@ func KexecPrepare(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, stri
 		}
 
 		// BOOT partition exists and we can mount it
-		if err := mount.SystemPartitionMount(r, logger, constants.BootPartitionLabel); err != nil {
+		if err := mount.SystemPartitionMount(ctx, r, logger, constants.BootPartitionLabel); err != nil {
 			return err
 		}
 

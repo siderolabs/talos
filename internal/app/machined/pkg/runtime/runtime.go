@@ -5,9 +5,11 @@
 package runtime
 
 import (
+	"context"
 	"time"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 // Runtime defines the runtime parameters.
@@ -24,4 +26,5 @@ type Runtime interface { //nolint:interfacebloat
 	Logging() LoggingManager
 	NodeName() (string, error)
 	IsBootstrapAllowed() bool
+	GetSystemInformation(ctx context.Context) (*hardware.SystemInformation, error)
 }

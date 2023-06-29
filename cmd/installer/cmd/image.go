@@ -36,7 +36,7 @@ var imageCmd = &cobra.Command{
 	Short: "",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := runImageCmd(); err != nil {
+		if err := runImageCmd(cmd.Context()); err != nil {
 			log.Fatal(err)
 		}
 	},
@@ -49,7 +49,7 @@ func init() {
 }
 
 //nolint:gocyclo
-func runImageCmd() (err error) {
+func runImageCmd(ctx context.Context) (err error) {
 	p, err := platform.NewPlatform(options.Platform)
 	if err != nil {
 		return err
@@ -90,7 +90,7 @@ func runImageCmd() (err error) {
 		}
 	}
 
-	if err = install.Install(p, runtime.SequenceNoop, options); err != nil {
+	if err = install.Install(ctx, p, runtime.SequenceNoop, options); err != nil {
 		return err
 	}
 

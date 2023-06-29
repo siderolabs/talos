@@ -262,17 +262,17 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 	suite.WaitForBootDone(suite.ctx)
 
+	existing := cfg.EncryptionKeys[0]
+	slot := existing.Slot() + 1
+
 	keySets := [][]*v1alpha1.EncryptionKey{
 		{
-			{
-				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-				KeySlot:   0,
-			},
+			existing,
 			{
 				KeyStatic: &v1alpha1.EncryptionKeyStatic{
 					KeyData: "AlO93jayutOpsDxDS=-",
 				},
-				KeySlot: 1,
+				KeySlot: slot,
 			},
 		},
 		{
@@ -280,31 +280,29 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 				KeyStatic: &v1alpha1.EncryptionKeyStatic{
 					KeyData: "AlO93jayutOpsDxDS=-",
 				},
-				KeySlot: 1,
+				KeySlot: slot,
 			},
 		},
 		{
-			{
-				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-				KeySlot:   0,
-			},
+			existing,
 			{
 				KeyStatic: &v1alpha1.EncryptionKeyStatic{
 					KeyData: "AlO93jayutOpsDxDS=-",
 				},
-				KeySlot: 1,
+				KeySlot: slot,
+			},
+		},
+		{
+			existing,
+			{
+				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
+				KeySlot:   slot,
 			},
 		},
 		{
 			{
 				KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-				KeySlot:   0,
-			},
-			{
-				KeyStatic: &v1alpha1.EncryptionKeyStatic{
-					KeyData: "1js4nfhvneJJsak=GVN4Inf5gh",
-				},
-				KeySlot: 1,
+				KeySlot:   slot,
 			},
 		},
 	}

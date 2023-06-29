@@ -5,46 +5,50 @@
 package keys
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/siderolabs/talos/internal/pkg/smbios"
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
 )
 
 // NodeIDKeyHandler generates the key based on current node information
 // and provided template string.
-type NodeIDKeyHandler struct{}
-
-// NewNodeIDKeyHandler creates new NodeIDKeyHandler.
-func NewNodeIDKeyHandler() (*NodeIDKeyHandler, error) {
-	return &NodeIDKeyHandler{}, nil
+type NodeIDKeyHandler struct {
+	KeyHandler
+	partitionLabel string
+	nodeUUID       string
 }
 
-// GetKey implements KeyHandler interface.
-func (h *NodeIDKeyHandler) GetKey(options ...KeyOption) ([]byte, error) {
-	opts, err := NewDefaultOptions(options)
-	if err != nil {
-		return nil, err
+// NewNodeIDKeyHandler creates new NodeIDKeyHandler.
+func NewNodeIDKeyHandler(key KeyHandler, partitionLabel, nodeUUID string) *NodeIDKeyHandler {
+	return &NodeIDKeyHandler{
+		KeyHandler:     key,
+		partitionLabel: partitionLabel,
 	}
+}
 
-	s, err := smbios.GetSMBIOSInfo()
-	if err != nil {
-		return nil, err
-	}
+// NewKey implements Handler interface.
+func (h *NodeIDKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Token, error) {
+	k, err := h.GetKey(ctx, nil)
 
-	machineUUID := s.SystemInformation.UUID
+	return k, nil, err
+}
 
-	if machineUUID == "" {
-		return nil, fmt.Errorf("machine UUID is not populated %s", machineUUID)
+// GetKey implements Handler interface.
+func (h *NodeIDKeyHandler) GetKey(context.Context, token.Token) (*encryption.Key, error) {
+	if h.nodeUUID == "" {
+		return nil, fmt.Errorf("machine UUID is not populated %s", h.nodeUUID)
 	}
 
 	// primitive entropy check
 	counts := map[rune]int{}
-	for _, s := range machineUUID {
+	for _, s := range h.nodeUUID {
 		counts[s]++
-		if counts[s] > len(machineUUID)/2 {
-			return nil, fmt.Errorf("machine UUID %s entropy check failed", machineUUID)
+		if counts[s] > len(h.nodeUUID)/2 {
+			return nil, fmt.Errorf("machine UUID %s entropy check failed", h.nodeUUID)
 		}
 	}
 
-	return []byte(machineUUID + opts.PartitionLabel), nil
+	return encryption.NewKey(h.slot, []byte(h.nodeUUID+h.partitionLabel)), nil
 }

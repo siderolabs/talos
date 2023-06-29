@@ -92,7 +92,7 @@ require (
 	github.com/siderolabs/discovery-api v0.1.3
 	github.com/siderolabs/discovery-client v0.1.5
 	github.com/siderolabs/gen v0.4.5
-	github.com/siderolabs/go-blockdevice v0.4.5
+	github.com/siderolabs/go-blockdevice v0.4.6
 	github.com/siderolabs/go-circular v0.1.0
 	github.com/siderolabs/go-cmd v0.1.1
 	github.com/siderolabs/go-debug v0.2.2
@@ -107,6 +107,7 @@ require (
 	github.com/siderolabs/go-smbios v0.3.2
 	github.com/siderolabs/go-tail v0.1.0
 	github.com/siderolabs/grpc-proxy v0.4.0
+	github.com/siderolabs/kms-client v0.1.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/siderolink v0.3.1
 	github.com/siderolabs/talos/pkg/machinery v1.5.0-alpha.1

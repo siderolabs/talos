@@ -6,6 +6,7 @@
 package grub
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -19,7 +20,7 @@ import (
 
 // Revert reverts the bootloader to the previous version.
 // nolint:gocyclo
-func (c *Config) Revert() error {
+func (c *Config) Revert(ctx context.Context) error {
 	if c == nil {
 		return fmt.Errorf("cannot revert bootloader: %w", bootloaderNotInstalledError{})
 	}
@@ -41,7 +42,7 @@ func (c *Config) Revert() error {
 
 	defer dev.Close() //nolint:errcheck
 
-	mp, err := mount.SystemMountPointForLabel(dev.BlockDevice, constants.BootPartitionLabel)
+	mp, err := mount.SystemMountPointForLabel(ctx, dev.BlockDevice, constants.BootPartitionLabel)
 	if err != nil {
 		return err
 	}

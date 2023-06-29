@@ -104,6 +104,23 @@ Talos now supports setting `environmentFile` for an extension service container 
 The extension waits for the file to be present before starting the service.
 """
 
+    [notes.kms-encryption-keys]
+        title = "Network KMS Disk Encryption"
+        description="""\
+Talos now supports new type of encryption keys which are sealed/unsealed with an external KMS server:
+
+```
+systemDiskEncryption:
+  ephemeral:
+    keys:
+      - kms:
+          endpoint: https://1.2.3.4:443
+        slot: 0
+```
+gRPC API definitions and a simple reference implementation of the KMS server can be found in this
+[repository](https://github.com/siderolabs/kms-client/blob/main/cmd/kms-server/main.go).
+"""
+
 [make_deps]
 
     [make_deps.tools]

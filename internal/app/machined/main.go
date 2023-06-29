@@ -47,7 +47,7 @@ func init() {
 	http.DefaultClient.Transport = httpdefaults.PatchTransport(cleanhttp.DefaultPooledTransport())
 }
 
-func recovery() {
+func recovery(ctx context.Context) {
 	if r := recover(); r != nil {
 		var (
 			err error
@@ -56,7 +56,7 @@ func recovery() {
 
 		err, ok = r.(error)
 		if ok {
-			handle(err)
+			handle(ctx, err)
 		}
 	}
 }
@@ -94,7 +94,7 @@ func syncNonVolatileStorageBuffers() {
 }
 
 //nolint:gocyclo
-func handle(err error) {
+func handle(ctx context.Context, err error) {
 	rebootCmd := unix.LINUX_REBOOT_CMD_RESTART
 
 	var rebootErr runtime.RebootError
@@ -108,7 +108,7 @@ func handle(err error) {
 
 	if err != nil {
 		log.Print(err)
-		revertBootloader()
+		revertBootloader(ctx)
 
 		if p := procfs.ProcCmdline().Get(constants.KernelParamPanic).First(); p != nil {
 			if *p == "0" {
@@ -287,6 +287,9 @@ func run() error {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	switch filepath.Base(os.Args[0]) {
 	case "apid":
 		apid.Main()
@@ -313,11 +316,11 @@ func main() {
 	}
 
 	// Setup panic handler.
-	defer recovery()
+	defer recovery(ctx)
 
 	// Initialize the process reaper.
 	reaper.Run()
 	defer reaper.Shutdown()
 
-	handle(run())
+	handle(ctx, run())
 }

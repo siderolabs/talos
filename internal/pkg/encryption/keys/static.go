@@ -4,19 +4,35 @@
 
 package keys
 
+import (
+	"context"
+
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
+)
+
 // StaticKeyHandler just handles the static key value all the time.
 type StaticKeyHandler struct {
-	key []byte
+	KeyHandler
+	data []byte
 }
 
 // NewStaticKeyHandler creates new EphemeralKeyHandler.
-func NewStaticKeyHandler(key []byte) (*StaticKeyHandler, error) {
+func NewStaticKeyHandler(key KeyHandler, data []byte) *StaticKeyHandler {
 	return &StaticKeyHandler{
-		key: key,
-	}, nil
+		KeyHandler: key,
+		data:       data,
+	}
 }
 
-// GetKey implements KeyHandler interface.
-func (h *StaticKeyHandler) GetKey(options ...KeyOption) ([]byte, error) {
-	return h.key, nil
+// NewKey implements Handler interface.
+func (h *StaticKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Token, error) {
+	k, err := h.GetKey(ctx, nil)
+
+	return k, nil, err
+}
+
+// GetKey implements Handler interface.
+func (h *StaticKeyHandler) GetKey(context.Context, token.Token) (*encryption.Key, error) {
+	return encryption.NewKey(h.slot, h.data), nil
 }

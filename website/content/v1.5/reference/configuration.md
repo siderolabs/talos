@@ -357,6 +357,10 @@ systemDiskEncryption:
               nodeID: {}
               slot: 0 # Key slot number for LUKS2 encryption.
 
+              # # KMS managed encryption key.
+              # kms:
+              #     endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+
         # # Cipher kind to use for the encryption. Depends on the encryption provider.
         # cipher: aes-xts-plain64
 
@@ -1879,6 +1883,10 @@ Appears in:
 |-------|------|-------------|----------|
 |`static` |<a href="#encryptionkeystatic">EncryptionKeyStatic</a> |Key which value is stored in the configuration file.  | |
 |`nodeID` |<a href="#encryptionkeynodeid">EncryptionKeyNodeID</a> |Deterministically generated key from the node UUID and PartitionLabel.  | |
+|`kms` |<a href="#encryptionkeykms">EncryptionKeyKMS</a> |KMS managed encryption key. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+kms:
+    endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+{{< /highlight >}}</details> | |
 |`slot` |int |Key slot number for LUKS2 encryption.  | |
 
 
@@ -1897,6 +1905,27 @@ Appears in:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`passphrase` |string |Defines the static passphrase value.  | |
+
+
+
+---
+## EncryptionKeyKMS
+EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server.
+
+Appears in:
+
+- <code><a href="#encryptionkey">EncryptionKey</a>.kms</code>
+
+
+
+{{< highlight yaml >}}
+endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`endpoint` |string |KMS endpoint to Seal/Unseal the key.  | |
 
 
 
@@ -2626,6 +2655,10 @@ ephemeral:
         - # Deterministically generated key from the node UUID and PartitionLabel.
           nodeID: {}
           slot: 0 # Key slot number for LUKS2 encryption.
+
+          # # KMS managed encryption key.
+          # kms:
+          #     endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
 
     # # Cipher kind to use for the encryption. Depends on the encryption provider.
     # cipher: aes-xts-plain64

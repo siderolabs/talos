@@ -100,7 +100,7 @@ case "${WITH_DISK_ENCRYPTION:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--encrypt-ephemeral" "--encrypt-state")
+    QEMU_FLAGS+=("--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=kms")
     ;;
 esac
 

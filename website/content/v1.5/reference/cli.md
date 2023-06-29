@@ -111,6 +111,7 @@ talosctl cluster create [flags]
       --custom-cni-url string                    install custom CNI from the URL (Talos cluster)
       --disable-dhcp-hostname                    skip announcing hostname via DHCP (QEMU only)
       --disk int                                 default limit on disk size in MB (each VM) (default 6144)
+      --disk-encryption-key-types stringArray    encryption key types to use for disk encryption (uuid, kms) (default [uuid])
       --disk-image-path string                   disk image to use
       --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
       --docker-disable-ipv6                      skip enabling IPv6 in containers (Docker only)

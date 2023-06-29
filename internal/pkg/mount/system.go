@@ -36,7 +36,7 @@ var (
 // creation and bare metall installs ). This is why we want to look up
 // device by specified disk as well as why we don't want to grow any
 // filesystems.
-func SystemMountPointsForDevice(devpath string, opts ...Option) (mountpoints *Points, err error) {
+func SystemMountPointsForDevice(ctx context.Context, devpath string, opts ...Option) (mountpoints *Points, err error) {
 	mountpoints = NewMountPoints()
 
 	bd, err := blockdevice.Open(devpath)
@@ -47,7 +47,7 @@ func SystemMountPointsForDevice(devpath string, opts ...Option) (mountpoints *Po
 	defer bd.Close() //nolint:errcheck
 
 	for _, name := range []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel, constants.EFIPartitionLabel, constants.StatePartitionLabel} {
-		mountpoint, err := SystemMountPointForLabel(bd, name, opts...)
+		mountpoint, err := SystemMountPointForLabel(ctx, bd, name, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +61,7 @@ func SystemMountPointsForDevice(devpath string, opts ...Option) (mountpoints *Po
 // SystemMountPointForLabel returns a mount point for the specified device and label.
 //
 //nolint:gocyclo
-func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opts ...Option) (mountpoint *Point, err error) {
+func SystemMountPointForLabel(ctx context.Context, device *blockdevice.BlockDevice, label string, opts ...Option) (mountpoint *Point, err error) {
 	var target string
 
 	switch label {
@@ -110,6 +110,7 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 			device,
 			part,
 			o.Encryption,
+			o.NodeParams,
 		)
 		if err != nil {
 			return nil, err
@@ -122,7 +123,7 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 					path string
 				)
 
-				if path, err = encryptionHandler.Open(); err != nil {
+				if path, err = encryptionHandler.Open(context.TODO()); err != nil {
 					return err
 				}
 
@@ -182,23 +183,40 @@ func SystemMountPointForLabel(device *blockdevice.BlockDevice, label string, opt
 // SystemPartitionMount mounts a system partition by the label.
 //
 //nolint:gocyclo
-func SystemPartitionMount(r runtime.Runtime, logger *log.Logger, label string, opts ...Option) (err error) {
+func SystemPartitionMount(ctx context.Context, r runtime.Runtime, logger *log.Logger, label string, opts ...Option) (err error) {
 	device := r.State().Machine().Disk(disk.WithPartitionLabel(label))
 	if device == nil {
 		return fmt.Errorf("failed to find device with partition labeled %s", label)
 	}
 
+	systemInformation, err := r.GetSystemInformation(ctx)
+	if err != nil && !errors.Is(err, context.Canceled) && state.IsNotFoundError(err) {
+		return err
+	}
+
+	if systemInformation != nil {
+		opts = append(opts, WithNodeParams(encryption.NodeParams{
+			UUID: systemInformation.TypedSpec().UUID,
+		}))
+	}
+
+	var encrypted bool
+
 	if r.Config() != nil && r.Config().Machine() != nil {
 		encryptionConfig := r.Config().Machine().SystemDiskEncryption().Get(label)
 
 		if encryptionConfig != nil {
-			opts = append(opts, WithEncryptionConfig(encryptionConfig))
+			encrypted = true
+
+			opts = append(opts,
+				WithEncryptionConfig(encryptionConfig),
+			)
 		}
 	}
 
 	opts = append(opts, WithLogger(logger))
 
-	mountpoint, err := SystemMountPointForLabel(device.BlockDevice, label, opts...)
+	mountpoint, err := SystemMountPointForLabel(ctx, device.BlockDevice, label, opts...)
 	if err != nil {
 		return err
 	}
@@ -226,6 +244,7 @@ func SystemPartitionMount(r runtime.Runtime, logger *log.Logger, label string, o
 	mountStatus.TypedSpec().Source = mountpoint.Source()
 	mountStatus.TypedSpec().Target = mountpoint.Target()
 	mountStatus.TypedSpec().FilesystemType = mountpoint.Fstype()
+	mountStatus.TypedSpec().Encrypted = encrypted
 
 	// ignore the error if the MountStatus already exists, as many mounts are silently skipped with the flag SkipIfMounted
 	if err = r.State().V1Alpha2().Resources().Create(context.Background(), mountStatus); err != nil && !state.IsConflictError(err) {

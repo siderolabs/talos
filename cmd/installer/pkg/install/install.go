@@ -40,7 +40,7 @@ type Options struct {
 }
 
 // Install installs Talos.
-func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error) {
+func Install(ctx context.Context, p runtime.Platform, seq runtime.Sequence, opts *Options) (err error) {
 	cmdline := procfs.NewCmdline("")
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
 
@@ -63,12 +63,12 @@ func Install(p runtime.Platform, seq runtime.Sequence, opts *Options) (err error
 		return err
 	}
 
-	i, err := NewInstaller(cmdline, seq, opts)
+	i, err := NewInstaller(ctx, cmdline, seq, opts)
 	if err != nil {
 		return err
 	}
 
-	if err = i.Install(seq); err != nil {
+	if err = i.Install(ctx, seq); err != nil {
 		return err
 	}
 
@@ -87,14 +87,14 @@ type Installer struct {
 }
 
 // NewInstaller initializes and returns an Installer.
-func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) (i *Installer, err error) {
+func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) (i *Installer, err error) {
 	i = &Installer{
 		cmdline: cmdline,
 		options: opts,
 	}
 
 	if !i.options.Zero {
-		i.bootloader, err = bootloader.Probe(i.options.Disk)
+		i.bootloader, err = bootloader.Probe(ctx, i.options.Disk)
 		if err != nil && !os.IsNotExist(err) {
 			return nil, fmt.Errorf("failed to probe bootloader: %w", err)
 		}
@@ -121,7 +121,7 @@ func NewInstaller(cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) 
 // to the target locations.
 //
 //nolint:gocyclo,cyclop
-func (i *Installer) Install(seq runtime.Sequence) (err error) {
+func (i *Installer) Install(ctx context.Context, seq runtime.Sequence) (err error) {
 	errataBTF()
 
 	if seq == runtime.SequenceUpgrade {
@@ -196,7 +196,7 @@ func (i *Installer) Install(seq runtime.Sequence) (err error) {
 
 			var mountpoint *mount.Point
 
-			mountpoint, err = mount.SystemMountPointForLabel(bd, label)
+			mountpoint, err = mount.SystemMountPointForLabel(ctx, bd, label)
 			if err != nil {
 				return err
 			}

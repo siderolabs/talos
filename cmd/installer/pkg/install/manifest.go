@@ -6,6 +6,7 @@ package install
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -496,11 +497,11 @@ func (m *Manifest) restoreContents(targets []*Target) error {
 }
 
 // SystemMountpoints returns list of system mountpoints for the manifest.
-func (m *Manifest) SystemMountpoints(opts ...mount.Option) (*mount.Points, error) {
+func (m *Manifest) SystemMountpoints(ctx context.Context, opts ...mount.Option) (*mount.Points, error) {
 	mountpoints := mount.NewMountPoints()
 
 	for dev := range m.Targets {
-		mp, err := mount.SystemMountPointsForDevice(dev, opts...)
+		mp, err := mount.SystemMountPointsForDevice(ctx, dev, opts...)
 		if err != nil {
 			return nil, err
 		}

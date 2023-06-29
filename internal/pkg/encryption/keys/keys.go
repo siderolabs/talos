@@ -6,29 +6,67 @@
 package keys
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
-// NewHandler creates a new key handler depending on key handler kind.
-func NewHandler(key config.EncryptionKey) (Handler, error) {
+var errNoNodeUUID = fmt.Errorf("the node UUID is not set")
+
+// NewHandler key using provided config.
+func NewHandler(cfg config.EncryptionKey, options ...KeyOption) (Handler, error) {
+	opts, err := NewDefaultOptions(options)
+	if err != nil {
+		return nil, err
+	}
+
+	key := KeyHandler{slot: cfg.Slot()}
+
 	switch {
-	case key.Static() != nil:
-		k := key.Static().Key()
+	case cfg.Static() != nil:
+		k := cfg.Static().Key()
 		if k == nil {
 			return nil, fmt.Errorf("static key must have key data defined")
 		}
 
-		return NewStaticKeyHandler(k)
-	case key.NodeID() != nil:
-		return NewNodeIDKeyHandler()
+		return NewStaticKeyHandler(key, k), nil
+	case cfg.NodeID() != nil:
+		if opts.NodeUUID == "" {
+			return nil, fmt.Errorf("failed to create nodeUUID key handler at slot %d: %w", cfg.Slot(), errNoNodeUUID)
+		}
+
+		return NewNodeIDKeyHandler(key, opts.PartitionLabel, opts.NodeUUID), nil
+	case cfg.KMS() != nil:
+		if opts.NodeUUID == "" {
+			return nil, fmt.Errorf("failed to create KMS key handler at slot %d: %w", cfg.Slot(), errNoNodeUUID)
+		}
+
+		return NewKMSKeyHandler(key, cfg.KMS().Endpoint(), opts.NodeUUID)
 	}
 
-	return nil, fmt.Errorf("failed to create key handler: malformed config")
+	return nil, fmt.Errorf("malformed config: no key handler can be created")
 }
 
-// Handler represents an interface for fetching encryption keys.
+// Handler manages key lifecycle.
 type Handler interface {
-	GetKey(options ...KeyOption) ([]byte, error)
+	NewKey(context.Context) (*encryption.Key, token.Token, error)
+	GetKey(context.Context, token.Token) (*encryption.Key, error)
+	Slot() int
 }
+
+// KeyHandler is the base class for all key handlers.
+type KeyHandler struct {
+	slot int
+}
+
+// Slot implements Handler interface.
+func (k *KeyHandler) Slot() int {
+	return k.slot
+}
+
+// ErrTokenInvalid is returned by the keys handler if the supplied token is not valid.
+var ErrTokenInvalid = fmt.Errorf("invalid token")

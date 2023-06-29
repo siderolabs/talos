@@ -64,7 +64,7 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 	return nil
 }
 
-// DestroyLoadBalancer destoys load balancer.
+// DestroyLoadBalancer destroys load balancer.
 func (p *Provisioner) DestroyLoadBalancer(state *State) error {
 	pidPath := state.GetRelativePath(lbPid)
 

@@ -607,6 +607,10 @@ metadata:
 			"kube-system",
 		},
 	}
+
+	kmsKeyExample = &EncryptionKeyKMS{
+		KMSEndpoint: "https://192.168.88.21:4443",
+	}
 )
 
 // Config defines the v1alpha1 configuration file.
@@ -2070,6 +2074,11 @@ type EncryptionKey struct {
 	//     Deterministically generated key from the node UUID and PartitionLabel.
 	KeyNodeID *EncryptionKeyNodeID `yaml:"nodeID,omitempty"`
 	//   description: >
+	//     KMS managed encryption key.
+	//   examples:
+	//     - value: kmsKeyExample
+	KeyKMS *EncryptionKeyKMS `yaml:"kms,omitempty"`
+	//   description: >
 	//     Key slot number for LUKS2 encryption.
 	KeySlot int `yaml:"slot"`
 }
@@ -2079,6 +2088,13 @@ type EncryptionKeyStatic struct {
 	//   description: >
 	//     Defines the static passphrase value.
 	KeyData string `yaml:"passphrase,omitempty"`
+}
+
+// EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server.
+type EncryptionKeyKMS struct {
+	//   description: >
+	//     KMS endpoint to Seal/Unseal the key.
+	KMSEndpoint string `yaml:"endpoint"`
 }
 
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.

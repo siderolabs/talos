@@ -5,6 +5,7 @@
 package install_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -98,6 +99,9 @@ func (suite *manifestSuite) skipIfNotRoot() {
 }
 
 func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, current, next string, verifyConfigPersistence, verifyEphemeralPersistence bool) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	bd, err := blockdevice.Open(suite.loopbackDevice.Name())
 	suite.Require().NoError(err)
 
@@ -151,7 +155,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 
 	// query mount points directly for the device
 
-	mountpoints, err := mount.SystemMountPointsForDevice(suite.loopbackDevice.Name())
+	mountpoints, err := mount.SystemMountPointsForDevice(ctx, suite.loopbackDevice.Name())
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(4, mountpoints.Len())
@@ -160,7 +164,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 
 	tempDir := suite.T().TempDir()
 
-	mountpoints, err = manifest.SystemMountpoints()
+	mountpoints, err = manifest.SystemMountpoints(ctx)
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(4, mountpoints.Len())

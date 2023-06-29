@@ -6,6 +6,7 @@
 package sdboot
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -49,7 +50,7 @@ func New() *Config {
 
 // Probe for existing sd-boot bootloader.
 // nolint:gocyclo
-func Probe(disk string) (*Config, error) {
+func Probe(ctx context.Context, disk string) (*Config, error) {
 	// if not UEFI boot, nothing to do
 	if !isUEFIBoot() {
 		return nil, nil
@@ -61,7 +62,7 @@ func Probe(disk string) (*Config, error) {
 
 	// read /boot/EFI and find if sd-boot is already being used
 	// this is to make sure sd-boot from Talos is being used and not sd-boot from another distro
-	if err := mount.PartitionOp(disk, constants.EFIPartitionLabel, func() error {
+	if err := mount.PartitionOp(ctx, disk, constants.EFIPartitionLabel, func() error {
 		// list existing boot*.efi files in boot folder
 		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "boot", "BOOT*.efi"))
 		if err != nil {
@@ -91,7 +92,7 @@ func Probe(disk string) (*Config, error) {
 
 	log.Printf("booted entry: %q", bootedEntry)
 
-	if opErr := mount.PartitionOp(disk, constants.EFIPartitionLabel, func() error {
+	if opErr := mount.PartitionOp(ctx, disk, constants.EFIPartitionLabel, func() error {
 		// list existing UKIs, and check if the current one is present
 		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
 		if err != nil {
@@ -208,8 +209,8 @@ func (c *Config) PreviousLabel() string {
 }
 
 // Revert the bootloader to the previous version.
-func (c *Config) Revert() error {
-	if err := mount.PartitionOp("", constants.EFIPartitionLabel, func() error {
+func (c *Config) Revert(ctx context.Context) error {
+	if err := mount.PartitionOp(ctx, "", constants.EFIPartitionLabel, func() error {
 		// use c.Default as the current entry, list other UKIs, find the one which is not c.Default, and update EFI var
 		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
 		if err != nil {

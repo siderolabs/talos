@@ -6,6 +6,7 @@
 package bootloader
 
 import (
+	"context"
 	"os"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
@@ -17,7 +18,7 @@ type Bootloader interface {
 	// Install installs the bootloader
 	Install(bootDisk, arch, cmdline string) error
 	// Revert reverts the bootloader entry to the previous state.
-	Revert() error
+	Revert(ctx context.Context) error
 	// PreviousLabel returns the previous bootloader label.
 	PreviousLabel() string
 	// UEFIBoot returns true if the bootloader is UEFI-only.
@@ -28,8 +29,8 @@ type Bootloader interface {
 //
 // If 'disk' is empty, it will probe all disks.
 // Returns nil if it cannot detect any supported bootloader.
-func Probe(disk string) (Bootloader, error) {
-	grubBootloader, err := grub.Probe(disk)
+func Probe(ctx context.Context, disk string) (Bootloader, error) {
+	grubBootloader, err := grub.Probe(ctx, disk)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +39,7 @@ func Probe(disk string) (Bootloader, error) {
 		return grubBootloader, nil
 	}
 
-	sdbootBootloader, err := sdboot.Probe(disk)
+	sdbootBootloader, err := sdboot.Probe(ctx, disk)
 	if err != nil {
 		return nil, err
 	}

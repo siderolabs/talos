@@ -1185,12 +1185,32 @@
           "markdownDescription": "Deterministically generated key from the node UUID and PartitionLabel.",
           "x-intellij-html-description": "\u003cp\u003eDeterministically generated key from the node UUID and PartitionLabel.\u003c/p\u003e\n"
         },
+        "kms": {
+          "$ref": "#/$defs/EncryptionKeyKMS",
+          "title": "kms",
+          "description": "KMS managed encryption key.\n",
+          "markdownDescription": "KMS managed encryption key.",
+          "x-intellij-html-description": "\u003cp\u003eKMS managed encryption key.\u003c/p\u003e\n"
+        },
         "slot": {
           "type": "integer",
           "title": "slot",
           "description": "Key slot number for LUKS2 encryption.\n",
           "markdownDescription": "Key slot number for LUKS2 encryption.",
           "x-intellij-html-description": "\u003cp\u003eKey slot number for LUKS2 encryption.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKeyKMS": {
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint",
+          "description": "KMS endpoint to Seal/Unseal the key.\n",
+          "markdownDescription": "KMS endpoint to Seal/Unseal the key.",
+          "x-intellij-html-description": "\u003cp\u003eKMS endpoint to Seal/Unseal the key.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

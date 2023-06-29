@@ -6,6 +6,7 @@
 package mount
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -18,7 +19,7 @@ import (
 
 // PartitionOp mounts a partition with the specified label, executes the operation func, and unmounts the partition.
 // nolint:gocyclo
-func PartitionOp(disk string, partitionLabel string, opFunc func() error) error {
+func PartitionOp(ctx context.Context, disk string, partitionLabel string, opFunc func() error) error {
 	var probedBlockDevice *blockdevice.BlockDevice
 
 	switch {
@@ -57,7 +58,7 @@ func PartitionOp(disk string, partitionLabel string, opFunc func() error) error 
 		probedBlockDevice = dev.BlockDevice
 	}
 
-	mp, err := mount.SystemMountPointForLabel(probedBlockDevice, partitionLabel, mount.WithFlags(mount.ReadOnly))
+	mp, err := mount.SystemMountPointForLabel(ctx, probedBlockDevice, partitionLabel, mount.WithFlags(mount.ReadOnly))
 	if err != nil {
 		return err
 	}

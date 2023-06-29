@@ -10,12 +10,22 @@ type KeyOption func(o *KeyOptions) error
 // KeyOptions set of options to be used in KeyHandler.GetKey func.
 type KeyOptions struct {
 	PartitionLabel string
+	NodeUUID       string
 }
 
-// WithPartitionLabel passes the partition label in to GetKey function.
+// WithPartitionLabel passes the partition label to the key handler.
 func WithPartitionLabel(label string) KeyOption {
 	return func(o *KeyOptions) error {
 		o.PartitionLabel = label
+
+		return nil
+	}
+}
+
+// WithNodeUUID passes the node UUID to the key handler.
+func WithNodeUUID(uuid string) KeyOption {
+	return func(o *KeyOptions) error {
+		o.NodeUUID = uuid
 
 		return nil
 	}

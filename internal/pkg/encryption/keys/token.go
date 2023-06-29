@@ -2,15 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package encryption_test
+package keys
 
-import (
-	"testing"
+const (
+	// TokenTypeKMS is KMS assisted encryption token.
+	TokenTypeKMS = "sideroKMS"
 )
-
-func TestEmpty(t *testing.T) {
-	// added for accurate coverage estimation
-	//
-	// please remove it once any unit-test is added
-	// for this package
-}

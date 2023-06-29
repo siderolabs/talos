@@ -6,6 +6,8 @@
 package grub
 
 import (
+	"context"
+
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -15,10 +17,10 @@ import (
 // If the 'disk' is passed, search happens on that disk only, otherwise searches all partitions.
 //
 //nolint:gocyclo
-func Probe(disk string) (*Config, error) {
+func Probe(ctx context.Context, disk string) (*Config, error) {
 	var grubConf *Config
 
-	if err := mount.PartitionOp(disk, constants.BootPartitionLabel, func() error {
+	if err := mount.PartitionOp(ctx, disk, constants.BootPartitionLabel, func() error {
 		var err error
 
 		grubConf, err = Read(ConfigPath)

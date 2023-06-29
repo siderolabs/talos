@@ -133,6 +133,15 @@ func WithDeleteOnErr(v bool) Option {
 	}
 }
 
+// WithKMS inits KMS server in the provisioner.
+func WithKMS(endpoint string) Option {
+	return func(o *Options) error {
+		o.KMSEndpoint = endpoint
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter     io.Writer
@@ -157,6 +166,8 @@ type Options struct {
 	DockerPorts       []string
 	DockerPortsHostIP string
 	DeleteStateOnErr  bool
+
+	KMSEndpoint string
 }
 
 // DefaultOptions returns default options.

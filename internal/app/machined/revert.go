@@ -13,15 +13,15 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/meta"
 )
 
-func revertBootloader() {
-	if err := revertBootloadInternal(); err != nil {
+func revertBootloader(ctx context.Context) {
+	if err := revertBootloadInternal(ctx); err != nil {
 		log.Printf("failed to revert bootloader: %s", err)
 	}
 }
 
 //nolint:gocyclo
-func revertBootloadInternal() error {
-	metaState, err := meta.New(context.Background(), nil)
+func revertBootloadInternal(ctx context.Context) error {
+	metaState, err := meta.New(ctx, nil)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// no META, no way to revert
@@ -37,7 +37,7 @@ func revertBootloadInternal() error {
 	}
 
 	if label == "" {
-		if _, err = metaState.DeleteTag(context.Background(), meta.Upgrade); err != nil {
+		if _, err = metaState.DeleteTag(ctx, meta.Upgrade); err != nil {
 			return err
 		}
 
@@ -47,7 +47,7 @@ func revertBootloadInternal() error {
 	log.Printf("reverting failed upgrade, switching to %q", label)
 
 	if err = func() error {
-		config, probeErr := bootloader.Probe("")
+		config, probeErr := bootloader.Probe(ctx, "")
 		if probeErr != nil {
 			if os.IsNotExist(probeErr) {
 				// no bootloader found, nothing to do
@@ -57,12 +57,12 @@ func revertBootloadInternal() error {
 			return probeErr
 		}
 
-		return config.Revert()
+		return config.Revert(ctx)
 	}(); err != nil {
 		return err
 	}
 
-	if _, err = metaState.DeleteTag(context.Background(), meta.Upgrade); err != nil {
+	if _, err = metaState.DeleteTag(ctx, meta.Upgrade); err != nil {
 		return err
 	}
 
