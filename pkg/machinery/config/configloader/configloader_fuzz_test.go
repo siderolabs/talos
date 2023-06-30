@@ -31,6 +31,6 @@ func FuzzConfigLoader(f *testing.F) {
 	f.Fuzz(func(t *testing.T, b []byte) {
 		t.Parallel()
 
-		testConfigLoaderBytes(t, b)
+		testConfigLoaderBytes(t, b, false)
 	})
 }

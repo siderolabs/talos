@@ -52,17 +52,25 @@ func (c *Config) APIVersion() string {
 
 // Debug implements the config.Provider interface.
 func (c *Config) Debug() bool {
+	if c == nil {
+		return false
+	}
+
 	return pointer.SafeDeref(c.ConfigDebug)
 }
 
 // Persist implements the config.Provider interface.
 func (c *Config) Persist() bool {
+	if c == nil {
+		return true
+	}
+
 	return pointer.SafeDeref(c.ConfigPersist)
 }
 
 // Machine implements the config.Provider interface.
 func (c *Config) Machine() config.MachineConfig {
-	if c.MachineConfig == nil {
+	if c == nil || c.MachineConfig == nil {
 		return &MachineConfig{}
 	}
 
@@ -91,7 +99,7 @@ func (m *MachineConfig) NodeLabels() config.NodeLabels {
 
 // Cluster implements the config.Provider interface.
 func (c *Config) Cluster() config.ClusterConfig {
-	if c.ClusterConfig == nil {
+	if c == nil || c.ClusterConfig == nil {
 		return &ClusterConfig{}
 	}
 

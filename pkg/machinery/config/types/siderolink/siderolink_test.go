@@ -17,6 +17,8 @@ import (
 )
 
 func TestRedact(t *testing.T) {
+	t.Parallel()
+
 	cfg := siderolink.NewConfigV1Alpha1()
 	cfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
 
@@ -31,6 +33,8 @@ func TestRedact(t *testing.T) {
 var expectedDocument []byte
 
 func TestMarshalStability(t *testing.T) {
+	t.Parallel()
+
 	cfg := siderolink.NewConfigV1Alpha1()
 	cfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
 
@@ -40,10 +44,86 @@ func TestMarshalStability(t *testing.T) {
 	assert.Equal(t, expectedDocument, marshaled)
 }
 
+func TestValidate(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		cfg  func() *siderolink.ConfigV1Alpha1
+
+		expectedError    string
+		expectedWarnings []string
+	}{
+		{
+			name: "empty",
+			cfg:  siderolink.NewConfigV1Alpha1,
+
+			expectedError: "apiUrl is required",
+		},
+		{
+			name: "wrong scheme",
+			cfg: func() *siderolink.ConfigV1Alpha1 {
+				cfg := siderolink.NewConfigV1Alpha1()
+				cfg.APIUrlConfig.URL = must(url.Parse("http://siderolink.api/"))
+
+				return cfg
+			},
+
+			expectedError: "apiUrl scheme must be https:// or grpc://",
+		},
+		{
+			name: "extra path",
+			cfg: func() *siderolink.ConfigV1Alpha1 {
+				cfg := siderolink.NewConfigV1Alpha1()
+				cfg.APIUrlConfig.URL = must(url.Parse("grpc://siderolink.api/path?jointoken=foo"))
+
+				return cfg
+			},
+
+			expectedError: "apiUrl path must be empty",
+		},
+		{
+			name: "valid",
+			cfg: func() *siderolink.ConfigV1Alpha1 {
+				cfg := siderolink.NewConfigV1Alpha1()
+				cfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api:434/?jointoken=foo"))
+
+				return cfg
+			},
+		},
+	} {
+		test := test
+
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			warnings, err := test.cfg().Validate(validationMode{})
+
+			assert.Equal(t, test.expectedWarnings, warnings)
+
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func must[T any](t T, err error) T {
 	if err != nil {
 		panic(err)
 	}
 
 	return t
+}
+
+type validationMode struct{}
+
+func (validationMode) String() string {
+	return ""
+}
+
+func (validationMode) RequiresInstall() bool {
+	return false
 }

@@ -16,6 +16,8 @@ import (
 )
 
 // callMethods calls obj's "getter" methods recursively and fails on panic.
+//
+//nolint:gocyclo
 func callMethods(t testing.TB, obj reflect.Value, chain ...string) {
 	t.Helper()
 
@@ -44,6 +46,8 @@ func callMethods(t testing.TB, obj reflect.Value, chain ...string) {
 			fallthrough
 		case "MarshalYAML":
 			fallthrough
+		case "Doc":
+			fallthrough
 		case "Endpoint":
 			// t.Logf("Skipping %v", nextChain)
 			continue
@@ -69,12 +73,16 @@ func callMethods(t testing.TB, obj reflect.Value, chain ...string) {
 	}
 }
 
-func testConfigLoaderBytes(t testing.TB, b []byte) {
+func testConfigLoaderBytes(t testing.TB, b []byte, failOnError bool) {
 	t.Helper()
 
 	p, err := configloader.NewFromBytes(b)
 	if err != nil {
-		t.Skipf("Failed to load, skipping: %s.", err)
+		if failOnError {
+			t.Fatalf("Failed to load: %s.", err)
+		} else {
+			t.Skipf("Failed to load, skipping: %s.", err)
+		}
 	}
 
 	callMethods(t, reflect.ValueOf(p))
@@ -95,7 +103,7 @@ func TestConfigLoader(t *testing.T) {
 			b, err := os.ReadFile(file)
 			require.NoError(t, err)
 
-			testConfigLoaderBytes(t, b)
+			testConfigLoaderBytes(t, b, true)
 		})
 	}
 }

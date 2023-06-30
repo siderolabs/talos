@@ -11,10 +11,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -30,7 +32,14 @@ func (ctrl *EventsSinkConfigController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *EventsSinkConfigController) Inputs() []controller.Input {
-	return nil
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        pointer.To(config.V1Alpha1ID),
+			Kind:      controller.InputWeak,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -60,6 +69,15 @@ func (ctrl *EventsSinkConfigController) Run(ctx context.Context, r controller.Ru
 			if val := ctrl.Cmdline.Get(constants.KernelParamEventsSink).First(); val != nil {
 				endpoint = *val
 			}
+		}
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting machine config: %w", err)
+		}
+
+		if cfg != nil && cfg.Config().Runtime().EventsEndpoint() != nil {
+			endpoint = *cfg.Config().Runtime().EventsEndpoint()
 		}
 
 		if endpoint == "" {

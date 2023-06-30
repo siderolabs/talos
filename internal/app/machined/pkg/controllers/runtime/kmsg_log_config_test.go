@@ -17,7 +17,11 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimectrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -35,6 +39,45 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigNone() {
 	rtestutils.AssertNoResource[*runtime.KmsgLogConfig](suite.Ctx(), suite.T(), suite.State(), runtime.KmsgLogConfigID)
 }
 
+func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
+	cmdline := procfs.NewCmdline("")
+	cmdline.Append(constants.KernelParamLoggingKernel, "https://10.0.0.1:3333/logs")
+
+	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.KmsgLogConfigController{
+		Cmdline: cmdline,
+	}))
+
+	kmsgLogConfig1 := &runtimecfg.KmsgLogV1Alpha1{
+		MetaName: "1",
+		KmsgLogURL: meta.URL{
+			URL: must(url.Parse("https://10.0.0.2:4444/logs")),
+		},
+	}
+
+	kmsgLogConfig2 := &runtimecfg.KmsgLogV1Alpha1{
+		MetaName: "2",
+		KmsgLogURL: meta.URL{
+			URL: must(url.Parse("https://10.0.0.1:3333/logs")),
+		},
+	}
+
+	cfg, err := container.New(kmsgLogConfig1, kmsgLogConfig2)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
+
+	rtestutils.AssertResources[*runtime.KmsgLogConfig](suite.Ctx(), suite.T(), suite.State(), []resource.ID{runtime.KmsgLogConfigID},
+		func(cfg *runtime.KmsgLogConfig, asrt *assert.Assertions) {
+			asrt.Equal(
+				[]string{
+					"https://10.0.0.1:3333/logs",
+					"https://10.0.0.2:4444/logs",
+				},
+				slices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
+			)
+		})
+}
+
 func (suite *KmsgLogConfigSuite) TestKmsgLogConfigCmdline() {
 	cmdline := procfs.NewCmdline("")
 	cmdline.Append(constants.KernelParamLoggingKernel, "https://10.0.0.1:3333/logs")
@@ -50,4 +93,12 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigCmdline() {
 				slices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
 			)
 		})
+}
+
+func must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+
+	return t
 }

@@ -15,7 +15,10 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimectrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -33,9 +36,35 @@ func (suite *EventsSinkConfigSuite) TestEventSinkConfigNone() {
 	rtestutils.AssertNoResource[*runtime.EventSinkConfig](suite.Ctx(), suite.T(), suite.State(), runtime.EventSinkConfigID)
 }
 
+func (suite *EventsSinkConfigSuite) TestEventSinkConfigMachineConfig() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.EventsSinkConfigController{}))
+
+	eventSinkConfig := &runtimecfg.EventSinkV1Alpha1{
+		Endpoint: "10.0.0.2:4444",
+	}
+
+	cfg, err := container.New(eventSinkConfig)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
+
+	rtestutils.AssertResources[*runtime.EventSinkConfig](suite.Ctx(), suite.T(), suite.State(), []resource.ID{runtime.EventSinkConfigID},
+		func(cfg *runtime.EventSinkConfig, asrt *assert.Assertions) {
+			asrt.Equal(
+				"10.0.0.2:4444",
+				cfg.TypedSpec().Endpoint,
+			)
+		})
+}
+
 func (suite *EventsSinkConfigSuite) TestEventSinkConfigCmdline() {
 	cmdline := procfs.NewCmdline("")
 	cmdline.Append(constants.KernelParamEventsSink, "10.0.0.1:3333")
+
+	cfg, err := container.New()
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
 
 	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.EventsSinkConfigController{
 		Cmdline: cmdline,

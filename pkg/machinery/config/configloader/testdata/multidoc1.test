@@ -1,0 +1,12 @@
+apiVersion: v1alpha1
+kind: SideroLinkConfig
+apiUrl: grpc://172.20.0.1:4000/?jointoken=foo
+---
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: apiSink
+url: tcp://[fdae:41e4:649b:9303::1]:4001/
+---
+apiVersion: v1alpha1
+kind: EventSinkConfig
+endpoint: "[fdae:41e4:649b:9303::1]:8080"

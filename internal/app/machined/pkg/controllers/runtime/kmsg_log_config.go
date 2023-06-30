@@ -12,10 +12,13 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -31,7 +34,14 @@ func (ctrl *KmsgLogConfigController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *KmsgLogConfigController) Inputs() []controller.Input {
-	return nil
+	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        pointer.To(config.V1Alpha1ID),
+			Kind:      controller.InputWeak,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -66,6 +76,21 @@ func (ctrl *KmsgLogConfigController) Run(ctx context.Context, r controller.Runti
 
 				destinations = append(destinations, destURL)
 			}
+		}
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting machine config: %w", err)
+		}
+
+		if cfg != nil {
+			// remove duplicate URLs in case same destination is specified in both machine config and kernel args
+			destinations = append(destinations, slices.Filter(cfg.Config().Runtime().KmsgLogURLs(),
+				func(u *url.URL) bool {
+					return !slices.Contains(destinations, func(v *url.URL) bool {
+						return v.String() == u.String()
+					})
+				})...)
 		}
 
 		if len(destinations) == 0 {

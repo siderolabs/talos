@@ -6,11 +6,13 @@
 package siderolink
 
 import (
+	"fmt"
 	"net/url"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
 //go:generate deep-copy -type ConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
@@ -30,7 +32,11 @@ func init() {
 }
 
 // Check interfaces.
-var _ config.SecretDocument = &ConfigV1Alpha1{}
+var (
+	_ config.SecretDocument   = &ConfigV1Alpha1{}
+	_ config.SideroLinkConfig = &ConfigV1Alpha1{}
+	_ config.Validator        = &ConfigV1Alpha1{}
+)
 
 // ConfigV1Alpha1 is a siderolink config document.
 type ConfigV1Alpha1 struct {
@@ -77,4 +83,27 @@ func (s *ConfigV1Alpha1) APIUrl() *url.URL {
 	}
 
 	return s.APIUrlConfig.URL
+}
+
+// Validate implements config.Validator interface.
+func (s *ConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
+	if s.APIUrlConfig.URL == nil {
+		return nil, fmt.Errorf("apiUrl is required")
+	}
+
+	switch s.APIUrlConfig.URL.Scheme {
+	case "https":
+	case "grpc":
+	default:
+		return nil, fmt.Errorf("apiUrl scheme must be https:// or grpc://")
+	}
+
+	switch s.APIUrlConfig.URL.Path {
+	case "/":
+	case "":
+	default:
+		return nil, fmt.Errorf("apiUrl path must be empty")
+	}
+
+	return nil, nil
 }

@@ -6,6 +6,7 @@
 package types
 
 import (
-	_ "github.com/siderolabs/talos/pkg/machinery/config/types/siderolink" //nolint:revive
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types/runtime" //nolint:revive
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	_ "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )

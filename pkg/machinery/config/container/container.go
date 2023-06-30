@@ -112,7 +112,7 @@ func (container *Container) Debug() bool {
 // Persist implements config.Config interface.
 func (container *Container) Persist() bool {
 	if container.v1alpha1Config == nil {
-		return false
+		return true
 	}
 
 	return container.v1alpha1Config.Persist()
@@ -136,15 +136,31 @@ func (container *Container) Cluster() config.ClusterConfig {
 	return container.v1alpha1Config.Cluster()
 }
 
-// SideroLink implements config.Config interface.
-func (container *Container) SideroLink() config.SideroLinkConfig {
-	for _, doc := range container.documents {
-		if c, ok := doc.(config.SideroLinkConfig); ok {
-			return c
+func findMatchingDocs[T any](documents []config.Document) []T {
+	var result []T
+
+	for _, doc := range documents {
+		if c, ok := doc.(T); ok {
+			result = append(result, c)
 		}
 	}
 
-	return nil
+	return result
+}
+
+// SideroLink implements config.Config interface.
+func (container *Container) SideroLink() config.SideroLinkConfig {
+	matching := findMatchingDocs[config.SideroLinkConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
+// Runtime implements config.Config interface.
+func (container *Container) Runtime() config.RuntimeConfig {
+	return config.WrapRuntimeConfigList(findMatchingDocs[config.RuntimeConfig](container.documents)...)
 }
 
 // Bytes returns source YAML representation (if available) or does default encoding.

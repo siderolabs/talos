@@ -12,4 +12,5 @@ type Config interface {
 	Machine() MachineConfig
 	Cluster() ClusterConfig
 	SideroLink() SideroLinkConfig
+	Runtime() RuntimeConfig
 }
