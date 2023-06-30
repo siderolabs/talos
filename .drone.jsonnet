@@ -209,9 +209,9 @@ local creds_env_vars = {
 
 local external_artifacts = Step('external-artifacts', depends_on=[setup_ci]);
 local generate = Step('generate', target='generate docs', depends_on=[setup_ci]);
-local check_dirty = Step('check-dirty', depends_on=[generate, external_artifacts]);
-local uki_certs = Step('uki-certs', depends_on=[setup_ci], environment={ PLATFORM: 'linux/amd64' });
-local build = Step('build', target='talosctl-all kernel initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty, uki_certs], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
+local uki_certs = Step('uki-certs', depends_on=[generate], environment={ PLATFORM: 'linux/amd64' });
+local check_dirty = Step('check-dirty', depends_on=[generate, external_artifacts, uki_certs]);
+local build = Step('build', target='talosctl-all kernel initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
 local lint = Step('lint', depends_on=[build]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
 local iso = Step('iso', target='iso', depends_on=[build], environment={ IMAGE_REGISTRY: local_registry });
@@ -377,8 +377,8 @@ local default_steps = [
   setup_ci,
   external_artifacts,
   generate,
-  check_dirty,
   uki_certs,
+  check_dirty,
   build,
   lint,
   talosctl_cni_bundle,

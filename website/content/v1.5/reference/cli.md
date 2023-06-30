@@ -1516,6 +1516,130 @@ talosctl gen secrets [flags]
 
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
 
+## talosctl gen secureboot database
+
+Generates a UEFI database to enroll the signing certificate
+
+```
+talosctl gen secureboot database [flags]
+```
+
+### Options
+
+```
+      --enrolled-certificate string   path to the certificate to enroll (default "_out/uki-signing-cert.pem")
+  -h, --help                          help for database
+      --signing-certificate string    path to the certificate used to sign the database (default "_out/uki-signing-cert.pem")
+      --signing-key string            path to the key used to sign the database (default "_out/uki-signing-key.pem")
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
+  -n, --nodes strings        target the specified nodes
+  -o, --output string        path to the directory storing the generated files (default "_out")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl gen secureboot](#talosctl-gen-secureboot)	 - Generates secrets for the SecureBoot process
+
+## talosctl gen secureboot pcr
+
+Generates a certificate which is used to sign TPM PCR values
+
+```
+talosctl gen secureboot pcr [flags]
+```
+
+### Options
+
+```
+      --common-name string   common name for the certificate (default "Test PCR Signing Key")
+  -h, --help                 help for pcr
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
+  -n, --nodes strings        target the specified nodes
+  -o, --output string        path to the directory storing the generated files (default "_out")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl gen secureboot](#talosctl-gen-secureboot)	 - Generates secrets for the SecureBoot process
+
+## talosctl gen secureboot uki
+
+Generates a certificate which is used to sign boot assets (UKI)
+
+```
+talosctl gen secureboot uki [flags]
+```
+
+### Options
+
+```
+      --common-name string   common name for the certificate (default "Test UKI Signing Key")
+  -h, --help                 help for uki
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
+  -n, --nodes strings        target the specified nodes
+  -o, --output string        path to the directory storing the generated files (default "_out")
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl gen secureboot](#talosctl-gen-secureboot)	 - Generates secrets for the SecureBoot process
+
+## talosctl gen secureboot
+
+Generates secrets for the SecureBoot process
+
+### Options
+
+```
+  -h, --help            help for secureboot
+  -o, --output string   path to the directory storing the generated files (default "_out")
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -f, --force                will overwrite existing files
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+* [talosctl gen secureboot database](#talosctl-gen-secureboot-database)	 - Generates a UEFI database to enroll the signing certificate
+* [talosctl gen secureboot pcr](#talosctl-gen-secureboot-pcr)	 - Generates a certificate which is used to sign TPM PCR values
+* [talosctl gen secureboot uki](#talosctl-gen-secureboot-uki)	 - Generates a certificate which is used to sign boot assets (UKI)
+
 ## talosctl gen
 
 Generate CAs, certificates, and private keys
@@ -1547,6 +1671,7 @@ Generate CAs, certificates, and private keys
 * [talosctl gen key](#talosctl-gen-key)	 - Generates an Ed25519 private key
 * [talosctl gen keypair](#talosctl-gen-keypair)	 - Generates an X.509 Ed25519 key pair
 * [talosctl gen secrets](#talosctl-gen-secrets)	 - Generates a secrets bundle file which can later be used to generate a config
+* [talosctl gen secureboot](#talosctl-gen-secureboot)	 - Generates secrets for the SecureBoot process
 
 ## talosctl get
 

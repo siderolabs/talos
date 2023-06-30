@@ -45,6 +45,7 @@ require (
 	github.com/ecks/uefi v0.0.0-20221116212947-caef65d070eb
 	github.com/emicklei/dot v1.5.0
 	github.com/fatih/color v1.15.0
+	github.com/foxboron/go-uefi v0.0.0-20230701115042-32187aa193d0
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gdamore/tcell/v2 v2.6.0

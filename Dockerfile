@@ -712,16 +712,19 @@ COPY ./hack/ukify /go/src/github.com/siderolabs/ukify
 RUN --mount=type=cache,target=/.cache \
     cd /go/src/github.com/siderolabs/ukify \
     && CGO_ENABLED=1 go test ./... \
-    && go build -o gen-uki-certs ./gen-certs \
     && CGO_ENABLED=1 go build -o ukify . \
-    && mv gen-uki-certs /toolchain/go/bin/ \
     && mv ukify /toolchain/go/bin/
 
-FROM --platform=${BUILDPLATFORM} ukify-tools AS gen-uki-certs
-RUN gen-uki-certs
+FROM base AS gen-uki-certs
+ARG TARGETOS
+ARG TARGETARCH
+COPY --from=talosctl-targetarch /talosctl-${TARGETOS}-${TARGETARCH} /bin/talosctl
+RUN /bin/talosctl gen secureboot uki
+RUN /bin/talosctl gen secureboot pcr
+RUN /bin/talosctl gen secureboot database
 
 FROM scratch as uki-certs
-COPY --from=gen-uki-certs /_out /
+COPY --from=gen-uki-certs /src/_out /
 
 FROM --platform=${BUILDPLATFORM} ukify-tools AS uki-build-amd64
 WORKDIR /build
@@ -991,7 +994,7 @@ ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
 ARG GOAMD64
 WORKDIR /src/module-sig-verify
-COPY ./hack/module-sig-verify/go.mod ./hack/module-sig-verify/go.sum .
+COPY ./hack/module-sig-verify/go.mod ./hack/module-sig-verify/go.sum ./
 RUN --mount=type=cache,target=/.cache go mod download
 COPY ./hack/module-sig-verify/main.go .
 RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build -o module-sig-verify .

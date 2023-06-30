@@ -373,7 +373,7 @@ lint: ## Runs linters on go, vulncheck, protobuf, and markdown file types.
 	@$(MAKE) lint-go lint-vulncheck lint-protobuf lint-markdown
 
 check-dirty: ## Verifies that source tree is not dirty
-	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; exit 1 ; fi
+	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; git diff; exit 1 ; fi
 
 go-mod-outdated: ## Runs the go-mod-oudated to show outdated dependencies.
 	@$(MAKE) target-go-mod-outdated PLATFORM=linux/amd64
