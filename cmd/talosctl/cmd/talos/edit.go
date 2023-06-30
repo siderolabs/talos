@@ -19,11 +19,11 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"gopkg.in/yaml.v3"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/cmd/util/editor"
 	"k8s.io/kubectl/pkg/cmd/util/editor/crlf"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/yamlstrip"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -111,7 +111,7 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 			edited = stripEditingComment(edited)
 
 			// If we're retrying the loop because of an error, and no change was made in the file, short-circuit
-			if lastError != "" && bytes.Equal(cmdutil.StripComments(editedDiff), cmdutil.StripComments(edited)) {
+			if lastError != "" && bytes.Equal(yamlstrip.Comments(editedDiff), yamlstrip.Comments(edited)) {
 				if _, err = os.Stat(path); !os.IsNotExist(err) {
 					message := addEditingComment(lastError)
 					message += fmt.Sprintf("A copy of your changes has been stored to %q\nEdit canceled, no valid changes were saved.\n", path)
@@ -120,7 +120,7 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 				}
 			}
 
-			if len(bytes.TrimSpace(bytes.TrimSpace(cmdutil.StripComments(edited)))) == 0 {
+			if len(bytes.TrimSpace(bytes.TrimSpace(yamlstrip.Comments(edited)))) == 0 {
 				fmt.Fprintln(os.Stderr, "Apply was skipped: empty file.")
 
 				break

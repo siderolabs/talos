@@ -1,0 +1,4 @@
+data:
+  # This is a comment
+  some:
+    other: a: b: c

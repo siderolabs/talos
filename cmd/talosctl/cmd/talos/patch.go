@@ -15,9 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"gopkg.in/yaml.v3"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/yamlstrip"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
@@ -67,8 +67,8 @@ func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Conte
 		})
 
 		if bytes.Equal(
-			bytes.TrimSpace(cmdutil.StripComments(patched)),
-			bytes.TrimSpace(cmdutil.StripComments(body)),
+			bytes.TrimSpace(yamlstrip.Comments(patched)),
+			bytes.TrimSpace(yamlstrip.Comments(body)),
 		) {
 			fmt.Fprintln(os.Stderr, "Apply was skipped: no changes detected.")
 
