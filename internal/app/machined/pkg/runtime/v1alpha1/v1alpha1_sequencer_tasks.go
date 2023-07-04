@@ -53,7 +53,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
-	"github.com/siderolabs/talos/internal/app/maintenance"
 	"github.com/siderolabs/talos/internal/pkg/console"
 	"github.com/siderolabs/talos/internal/pkg/cri"
 	"github.com/siderolabs/talos/internal/pkg/environment"
@@ -76,6 +75,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
+	resourceconfig "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -472,7 +472,7 @@ func LoadConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 					},
 				)
 
-				b, e = receiveConfigViaMaintenanceService(ctx, logger, r)
+				b, e = receiveConfigViaMaintenanceService(ctx, r)
 				if e != nil {
 					return fmt.Errorf("failed to receive config via maintenance service: %w", e)
 				}
@@ -604,7 +604,8 @@ func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error)
 	return b, nil
 }
 
-func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger, r runtime.Runtime) ([]byte, error) {
+//nolint:gocyclo
+func receiveConfigViaMaintenanceService(ctx context.Context, r runtime.Runtime) ([]byte, error) {
 	// add "fake" events to signal when Talos enters and leaves maintenance mode
 	r.Events().Publish(ctx, &machineapi.TaskEvent{
 		Action: machineapi.TaskEvent_START,
@@ -616,28 +617,84 @@ func receiveConfigViaMaintenanceService(ctx context.Context, logger *log.Logger,
 		Task:   "runningMaintenance",
 	})
 
-	cfgBytes, err := maintenance.Run(ctx, logger)
-	if err != nil {
-		return nil, fmt.Errorf("maintenance service failed: %w", err)
+	// NOTE: this code is temporary, until the config acquisition is completely rewritten to be controller-based
+	//       so this code looks a bit messy, as it's not conreoller-based
+
+	// start watching for maintenance service generated machine config
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	watchCh := make(chan state.Event)
+
+	if err := r.State().V1Alpha2().Resources().Watch(ctx, resourceconfig.NewMachineConfigWithID(nil, resourceconfig.MaintenanceID).Metadata(), watchCh); err != nil {
+		return nil, fmt.Errorf("failed to watch for maintenance service generated machine config: %w", err)
 	}
 
-	provider, err := configloader.NewFromBytes(cfgBytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create config provider: %w", err)
+	// consume the first watch event, it's either Destroyed (if the config is missing), or Created (if the config is there from the previous run)
+	select {
+	case ev := <-watchCh:
+		switch ev.Type { //nolint:exhaustive
+		case state.Created, state.Destroyed:
+			// expected
+		case state.Errored:
+			return nil, fmt.Errorf("failed to watch for maintenance service generated machine config: %w", ev.Error)
+		default:
+			return nil, fmt.Errorf("unexpected event type: %v", ev.Type)
+		}
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
 
-	warnings, err := provider.Validate(r.State().Platform().Mode())
-	for _, w := range warnings {
-		logger.Printf("WARNING:\n%s", w)
+	// create request for maintenance service
+	req := resourceruntime.NewMaintenanceServiceRequest()
+	if err := r.State().V1Alpha2().Resources().Create(ctx, req); err != nil {
+		return nil, fmt.Errorf("failed to create maintenance service request: %w", err)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate config: %w", err)
+	// wait for an update from the maintenance service
+	var processedBytes []byte
+
+waitForConfig:
+	for {
+		select {
+		case ev := <-watchCh:
+			switch ev.Type { //nolint:exhaustive
+			case state.Created, state.Updated:
+				var err error
+
+				configContainer := ev.Resource.(*resourceconfig.MachineConfig).Container()
+
+				processedBytes, err = configContainer.Bytes()
+				if err != nil {
+					return nil, fmt.Errorf("failed to get machine config bytes: %w", err)
+				}
+
+				// wait for v1alpha1 config to appear
+				// we should refactor this to do a proper check for "complete" config
+				if configContainer.RawV1Alpha1() != nil {
+					break waitForConfig
+				}
+			case state.Errored:
+				return nil, fmt.Errorf("failed to watch for maintenance service generated machine config: %w", ev.Error)
+			default:
+				return nil, fmt.Errorf("unexpected event type: %v", ev.Type)
+			}
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
 	}
 
-	processedBytes, err := provider.Bytes()
-	if err != nil {
-		return nil, fmt.Errorf("failed to export validated config: %w", err)
+	// tear down and destroy the maintenance service
+	if _, err := r.State().V1Alpha2().Resources().Teardown(ctx, req.Metadata()); err != nil {
+		return nil, fmt.Errorf("failed to teardown maintenance service: %w", err)
+	}
+
+	if _, err := r.State().V1Alpha2().Resources().WatchFor(ctx, req.Metadata(), state.WithFinalizerEmpty()); err != nil {
+		return nil, fmt.Errorf("failed to watch for teardown of maintenance service: %w", err)
+	}
+
+	if err := r.State().V1Alpha2().Resources().Destroy(ctx, req.Metadata()); err != nil {
+		return nil, fmt.Errorf("failed to destroy maintenance service: %w", err)
 	}
 
 	return processedBytes, nil

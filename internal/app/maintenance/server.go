@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package server
+package maintenance
 
 import (
 	"context"
@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/configuration"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -38,16 +39,18 @@ type Server struct {
 	machine.UnimplementedMachineServiceServer
 
 	controller runtime.Controller
-	logger     *log.Logger
-	cfgCh      chan<- []byte
+	cfgCh      chan<- config.Provider
 	server     *grpc.Server
 }
 
 // New initializes and returns a `Server`.
-func New(c runtime.Controller, logger *log.Logger, cfgCh chan<- []byte) *Server {
+func New(cfgCh chan<- config.Provider) *Server {
+	if runtimeController == nil {
+		panic("runtime controller is not set")
+	}
+
 	return &Server{
-		controller: c,
-		logger:     logger,
+		controller: runtimeController,
 		cfgCh:      cfgCh,
 	}
 }
@@ -104,7 +107,7 @@ Node is running in maintenance mode and does not have a config yet.`
 		return reply, nil
 	}
 
-	s.cfgCh <- in.GetData()
+	s.cfgCh <- cfgProvider
 
 	return reply, nil
 }

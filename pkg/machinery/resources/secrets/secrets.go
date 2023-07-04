@@ -11,4 +11,4 @@ import "github.com/cosi-project/runtime/pkg/resource"
 const NamespaceName resource.Namespace = "secrets"
 
 //nolint:lll
-//go:generate deep-copy -type APICertsSpec -type CertSANSpec -type EtcdCertsSpec -type EtcdRootSpec -type KubeletSpec -type KubernetesCertsSpec -type KubernetesDynamicCertsSpec -type KubernetesRootSpec -type OSRootSpec -type TrustdCertsSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type APICertsSpec -type CertSANSpec -type EtcdCertsSpec -type EtcdRootSpec -type KubeletSpec -type KubernetesCertsSpec -type KubernetesDynamicCertsSpec -type KubernetesRootSpec -type MaintenanceServiceCertsSpec -type MaintenanceRootSpec -type OSRootSpec -type TrustdCertsSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .

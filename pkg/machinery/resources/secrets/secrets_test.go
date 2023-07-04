@@ -33,6 +33,8 @@ func TestRegisterResource(t *testing.T) {
 		&secrets.Kubernetes{},
 		&secrets.KubernetesDynamicCerts{},
 		&secrets.KubernetesRoot{},
+		&secrets.MaintenanceServiceCerts{},
+		&secrets.MaintenanceRoot{},
 		&secrets.OSRoot{},
 		&secrets.Trustd{},
 	} {

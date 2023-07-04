@@ -57,6 +57,7 @@ func (ConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 				JSONPath: `{.apiEndpoint}`,
 			},
 		},
+		Sensitivity: meta.Sensitive,
 	}
 }
 

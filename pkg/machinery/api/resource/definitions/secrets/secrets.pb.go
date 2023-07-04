@@ -623,6 +623,110 @@ func (x *KubernetesRootSpec) GetApiServerIps() []*common.NetIP {
 	return nil
 }
 
+// MaintenanceRootSpec describes maintenance service CA.
+type MaintenanceRootSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Ca *common.PEMEncodedCertificateAndKey `protobuf:"bytes,1,opt,name=ca,proto3" json:"ca,omitempty"`
+}
+
+func (x *MaintenanceRootSpec) Reset() {
+	*x = MaintenanceRootSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MaintenanceRootSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MaintenanceRootSpec) ProtoMessage() {}
+
+func (x *MaintenanceRootSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MaintenanceRootSpec.ProtoReflect.Descriptor instead.
+func (*MaintenanceRootSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *MaintenanceRootSpec) GetCa() *common.PEMEncodedCertificateAndKey {
+	if x != nil {
+		return x.Ca
+	}
+	return nil
+}
+
+// MaintenanceServiceCertsSpec describes maintenance service certs secrets.
+type MaintenanceServiceCertsSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Ca     *common.PEMEncodedCertificateAndKey `protobuf:"bytes,1,opt,name=ca,proto3" json:"ca,omitempty"`
+	Server *common.PEMEncodedCertificateAndKey `protobuf:"bytes,2,opt,name=server,proto3" json:"server,omitempty"`
+}
+
+func (x *MaintenanceServiceCertsSpec) Reset() {
+	*x = MaintenanceServiceCertsSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MaintenanceServiceCertsSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MaintenanceServiceCertsSpec) ProtoMessage() {}
+
+func (x *MaintenanceServiceCertsSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MaintenanceServiceCertsSpec.ProtoReflect.Descriptor instead.
+func (*MaintenanceServiceCertsSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *MaintenanceServiceCertsSpec) GetCa() *common.PEMEncodedCertificateAndKey {
+	if x != nil {
+		return x.Ca
+	}
+	return nil
+}
+
+func (x *MaintenanceServiceCertsSpec) GetServer() *common.PEMEncodedCertificateAndKey {
+	if x != nil {
+		return x.Server
+	}
+	return nil
+}
+
 // OSRootSpec describes operating system CA.
 type OSRootSpec struct {
 	state         protoimpl.MessageState
@@ -638,7 +742,7 @@ type OSRootSpec struct {
 func (x *OSRootSpec) Reset() {
 	*x = OSRootSpec{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[8]
+		mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -651,7 +755,7 @@ func (x *OSRootSpec) String() string {
 func (*OSRootSpec) ProtoMessage() {}
 
 func (x *OSRootSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[8]
+	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -664,7 +768,7 @@ func (x *OSRootSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OSRootSpec.ProtoReflect.Descriptor instead.
 func (*OSRootSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{8}
+	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *OSRootSpec) GetCa() *common.PEMEncodedCertificateAndKey {
@@ -708,7 +812,7 @@ type TrustdCertsSpec struct {
 func (x *TrustdCertsSpec) Reset() {
 	*x = TrustdCertsSpec{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[9]
+		mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -721,7 +825,7 @@ func (x *TrustdCertsSpec) String() string {
 func (*TrustdCertsSpec) ProtoMessage() {}
 
 func (x *TrustdCertsSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[9]
+	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -734,7 +838,7 @@ func (x *TrustdCertsSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrustdCertsSpec.ProtoReflect.Descriptor instead.
 func (*TrustdCertsSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{9}
+	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TrustdCertsSpec) GetCa() *common.PEMEncodedCertificateAndKey {
@@ -887,32 +991,46 @@ var file_resource_definitions_secrets_secrets_proto_rawDesc = []byte{
 	0x6f, 0x6e, 0x53, 0x65, 0x63, 0x72, 0x65, 0x74, 0x12, 0x33, 0x0a, 0x0e, 0x61, 0x70, 0x69, 0x5f,
 	0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5f, 0x69, 0x70, 0x73, 0x18, 0x0e, 0x20, 0x03, 0x28, 0x0b,
 	0x32, 0x0d, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x4e, 0x65, 0x74, 0x49, 0x50, 0x52,
-	0x0c, 0x61, 0x70, 0x69, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x70, 0x73, 0x22, 0xb4, 0x01,
-	0x0a, 0x0a, 0x4f, 0x53, 0x52, 0x6f, 0x6f, 0x74, 0x53, 0x70, 0x65, 0x63, 0x12, 0x33, 0x0a, 0x02,
-	0x63, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f,
-	0x6e, 0x2e, 0x50, 0x45, 0x4d, 0x45, 0x6e, 0x63, 0x6f, 0x64, 0x65, 0x64, 0x43, 0x65, 0x72, 0x74,
-	0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x4b, 0x65, 0x79, 0x52, 0x02, 0x63,
-	0x61, 0x12, 0x2f, 0x0a, 0x0c, 0x63, 0x65, 0x72, 0x74, 0x5f, 0x73, 0x61, 0x6e, 0x69, 0x5f, 0x70,
-	0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e,
-	0x2e, 0x4e, 0x65, 0x74, 0x49, 0x50, 0x52, 0x0a, 0x63, 0x65, 0x72, 0x74, 0x53, 0x61, 0x6e, 0x69,
-	0x50, 0x73, 0x12, 0x2a, 0x0a, 0x11, 0x63, 0x65, 0x72, 0x74, 0x5f, 0x73, 0x61, 0x6e, 0x64, 0x6e,
-	0x73, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0f, 0x63,
-	0x65, 0x72, 0x74, 0x53, 0x61, 0x6e, 0x64, 0x6e, 0x73, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x12, 0x14,
-	0x0a, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74,
-	0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x83, 0x01, 0x0a, 0x0f, 0x54, 0x72, 0x75, 0x73, 0x74, 0x64, 0x43,
-	0x65, 0x72, 0x74, 0x73, 0x53, 0x70, 0x65, 0x63, 0x12, 0x33, 0x0a, 0x02, 0x63, 0x61, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x50, 0x45,
-	0x4d, 0x45, 0x6e, 0x63, 0x6f, 0x64, 0x65, 0x64, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63,
-	0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x4b, 0x65, 0x79, 0x52, 0x02, 0x63, 0x61, 0x12, 0x3b, 0x0a,
-	0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e,
-	0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x50, 0x45, 0x4d, 0x45, 0x6e, 0x63, 0x6f, 0x64, 0x65,
-	0x64, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x4b,
-	0x65, 0x79, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x42, 0x4c, 0x5a, 0x4a, 0x67, 0x69,
-	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x69, 0x64, 0x65, 0x72, 0x6f, 0x6c,
-	0x61, 0x62, 0x73, 0x2f, 0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x6d, 0x61,
-	0x63, 0x68, 0x69, 0x6e, 0x65, 0x72, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x72, 0x65, 0x73, 0x6f,
-	0x75, 0x72, 0x63, 0x65, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x2f, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x0c, 0x61, 0x70, 0x69, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x49, 0x70, 0x73, 0x22, 0x4a, 0x0a,
+	0x13, 0x4d, 0x61, 0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x52, 0x6f, 0x6f, 0x74,
+	0x53, 0x70, 0x65, 0x63, 0x12, 0x33, 0x0a, 0x02, 0x63, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x23, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x50, 0x45, 0x4d, 0x45, 0x6e, 0x63,
+	0x6f, 0x64, 0x65, 0x64, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x41,
+	0x6e, 0x64, 0x4b, 0x65, 0x79, 0x52, 0x02, 0x63, 0x61, 0x22, 0x8f, 0x01, 0x0a, 0x1b, 0x4d, 0x61,
+	0x69, 0x6e, 0x74, 0x65, 0x6e, 0x61, 0x6e, 0x63, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
+	0x43, 0x65, 0x72, 0x74, 0x73, 0x53, 0x70, 0x65, 0x63, 0x12, 0x33, 0x0a, 0x02, 0x63, 0x61, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x50,
+	0x45, 0x4d, 0x45, 0x6e, 0x63, 0x6f, 0x64, 0x65, 0x64, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69,
+	0x63, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x4b, 0x65, 0x79, 0x52, 0x02, 0x63, 0x61, 0x12, 0x3b,
+	0x0a, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23,
+	0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x50, 0x45, 0x4d, 0x45, 0x6e, 0x63, 0x6f, 0x64,
+	0x65, 0x64, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x64,
+	0x4b, 0x65, 0x79, 0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x22, 0xb4, 0x01, 0x0a, 0x0a,
+	0x4f, 0x53, 0x52, 0x6f, 0x6f, 0x74, 0x53, 0x70, 0x65, 0x63, 0x12, 0x33, 0x0a, 0x02, 0x63, 0x61,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e,
+	0x50, 0x45, 0x4d, 0x45, 0x6e, 0x63, 0x6f, 0x64, 0x65, 0x64, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66,
+	0x69, 0x63, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x4b, 0x65, 0x79, 0x52, 0x02, 0x63, 0x61, 0x12,
+	0x2f, 0x0a, 0x0c, 0x63, 0x65, 0x72, 0x74, 0x5f, 0x73, 0x61, 0x6e, 0x69, 0x5f, 0x70, 0x73, 0x18,
+	0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x4e,
+	0x65, 0x74, 0x49, 0x50, 0x52, 0x0a, 0x63, 0x65, 0x72, 0x74, 0x53, 0x61, 0x6e, 0x69, 0x50, 0x73,
+	0x12, 0x2a, 0x0a, 0x11, 0x63, 0x65, 0x72, 0x74, 0x5f, 0x73, 0x61, 0x6e, 0x64, 0x6e, 0x73, 0x5f,
+	0x6e, 0x61, 0x6d, 0x65, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0f, 0x63, 0x65, 0x72,
+	0x74, 0x53, 0x61, 0x6e, 0x64, 0x6e, 0x73, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x12, 0x14, 0x0a, 0x05,
+	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x6b,
+	0x65, 0x6e, 0x22, 0x83, 0x01, 0x0a, 0x0f, 0x54, 0x72, 0x75, 0x73, 0x74, 0x64, 0x43, 0x65, 0x72,
+	0x74, 0x73, 0x53, 0x70, 0x65, 0x63, 0x12, 0x33, 0x0a, 0x02, 0x63, 0x61, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x50, 0x45, 0x4d, 0x45,
+	0x6e, 0x63, 0x6f, 0x64, 0x65, 0x64, 0x43, 0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74,
+	0x65, 0x41, 0x6e, 0x64, 0x4b, 0x65, 0x79, 0x52, 0x02, 0x63, 0x61, 0x12, 0x3b, 0x0a, 0x06, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x63, 0x6f,
+	0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x50, 0x45, 0x4d, 0x45, 0x6e, 0x63, 0x6f, 0x64, 0x65, 0x64, 0x43,
+	0x65, 0x72, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x65, 0x41, 0x6e, 0x64, 0x4b, 0x65, 0x79,
+	0x52, 0x06, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x42, 0x4c, 0x5a, 0x4a, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x69, 0x64, 0x65, 0x72, 0x6f, 0x6c, 0x61, 0x62,
+	0x73, 0x2f, 0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x6d, 0x61, 0x63, 0x68,
+	0x69, 0x6e, 0x65, 0x72, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x73,
+	0x65, 0x63, 0x72, 0x65, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -927,7 +1045,7 @@ func file_resource_definitions_secrets_secrets_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_secrets_secrets_proto_rawDescData
 }
 
-var file_resource_definitions_secrets_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_resource_definitions_secrets_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_resource_definitions_secrets_secrets_proto_goTypes = []interface{}{
 	(*APICertsSpec)(nil),                       // 0: talos.resource.definitions.secrets.APICertsSpec
 	(*CertSANSpec)(nil),                        // 1: talos.resource.definitions.secrets.CertSANSpec
@@ -937,43 +1055,48 @@ var file_resource_definitions_secrets_secrets_proto_goTypes = []interface{}{
 	(*KubernetesCertsSpec)(nil),                // 5: talos.resource.definitions.secrets.KubernetesCertsSpec
 	(*KubernetesDynamicCertsSpec)(nil),         // 6: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec
 	(*KubernetesRootSpec)(nil),                 // 7: talos.resource.definitions.secrets.KubernetesRootSpec
-	(*OSRootSpec)(nil),                         // 8: talos.resource.definitions.secrets.OSRootSpec
-	(*TrustdCertsSpec)(nil),                    // 9: talos.resource.definitions.secrets.TrustdCertsSpec
-	(*common.PEMEncodedCertificateAndKey)(nil), // 10: common.PEMEncodedCertificateAndKey
-	(*common.NetIP)(nil),                       // 11: common.NetIP
-	(*common.URL)(nil),                         // 12: common.URL
-	(*common.PEMEncodedKey)(nil),               // 13: common.PEMEncodedKey
+	(*MaintenanceRootSpec)(nil),                // 8: talos.resource.definitions.secrets.MaintenanceRootSpec
+	(*MaintenanceServiceCertsSpec)(nil),        // 9: talos.resource.definitions.secrets.MaintenanceServiceCertsSpec
+	(*OSRootSpec)(nil),                         // 10: talos.resource.definitions.secrets.OSRootSpec
+	(*TrustdCertsSpec)(nil),                    // 11: talos.resource.definitions.secrets.TrustdCertsSpec
+	(*common.PEMEncodedCertificateAndKey)(nil), // 12: common.PEMEncodedCertificateAndKey
+	(*common.NetIP)(nil),                       // 13: common.NetIP
+	(*common.URL)(nil),                         // 14: common.URL
+	(*common.PEMEncodedKey)(nil),               // 15: common.PEMEncodedKey
 }
 var file_resource_definitions_secrets_secrets_proto_depIdxs = []int32{
-	10, // 0: talos.resource.definitions.secrets.APICertsSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 1: talos.resource.definitions.secrets.APICertsSpec.client:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 2: talos.resource.definitions.secrets.APICertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
-	11, // 3: talos.resource.definitions.secrets.CertSANSpec.i_ps:type_name -> common.NetIP
-	10, // 4: talos.resource.definitions.secrets.EtcdCertsSpec.etcd:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 5: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_peer:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 6: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_admin:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 7: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_api_server:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 8: talos.resource.definitions.secrets.EtcdRootSpec.etcd_ca:type_name -> common.PEMEncodedCertificateAndKey
-	12, // 9: talos.resource.definitions.secrets.KubeletSpec.endpoint:type_name -> common.URL
-	10, // 10: talos.resource.definitions.secrets.KubeletSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 11: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.api_server:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 12: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.api_server_kubelet_client:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 13: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.front_proxy:type_name -> common.PEMEncodedCertificateAndKey
-	12, // 14: talos.resource.definitions.secrets.KubernetesRootSpec.endpoint:type_name -> common.URL
-	12, // 15: talos.resource.definitions.secrets.KubernetesRootSpec.local_endpoint:type_name -> common.URL
-	10, // 16: talos.resource.definitions.secrets.KubernetesRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 17: talos.resource.definitions.secrets.KubernetesRootSpec.service_account:type_name -> common.PEMEncodedKey
-	10, // 18: talos.resource.definitions.secrets.KubernetesRootSpec.aggregator_ca:type_name -> common.PEMEncodedCertificateAndKey
-	11, // 19: talos.resource.definitions.secrets.KubernetesRootSpec.api_server_ips:type_name -> common.NetIP
-	10, // 20: talos.resource.definitions.secrets.OSRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	11, // 21: talos.resource.definitions.secrets.OSRootSpec.cert_sani_ps:type_name -> common.NetIP
-	10, // 22: talos.resource.definitions.secrets.TrustdCertsSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	10, // 23: talos.resource.definitions.secrets.TrustdCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	12, // 0: talos.resource.definitions.secrets.APICertsSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 1: talos.resource.definitions.secrets.APICertsSpec.client:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 2: talos.resource.definitions.secrets.APICertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
+	13, // 3: talos.resource.definitions.secrets.CertSANSpec.i_ps:type_name -> common.NetIP
+	12, // 4: talos.resource.definitions.secrets.EtcdCertsSpec.etcd:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 5: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_peer:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 6: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_admin:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 7: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_api_server:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 8: talos.resource.definitions.secrets.EtcdRootSpec.etcd_ca:type_name -> common.PEMEncodedCertificateAndKey
+	14, // 9: talos.resource.definitions.secrets.KubeletSpec.endpoint:type_name -> common.URL
+	12, // 10: talos.resource.definitions.secrets.KubeletSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 11: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.api_server:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 12: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.api_server_kubelet_client:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 13: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.front_proxy:type_name -> common.PEMEncodedCertificateAndKey
+	14, // 14: talos.resource.definitions.secrets.KubernetesRootSpec.endpoint:type_name -> common.URL
+	14, // 15: talos.resource.definitions.secrets.KubernetesRootSpec.local_endpoint:type_name -> common.URL
+	12, // 16: talos.resource.definitions.secrets.KubernetesRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	15, // 17: talos.resource.definitions.secrets.KubernetesRootSpec.service_account:type_name -> common.PEMEncodedKey
+	12, // 18: talos.resource.definitions.secrets.KubernetesRootSpec.aggregator_ca:type_name -> common.PEMEncodedCertificateAndKey
+	13, // 19: talos.resource.definitions.secrets.KubernetesRootSpec.api_server_ips:type_name -> common.NetIP
+	12, // 20: talos.resource.definitions.secrets.MaintenanceRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 21: talos.resource.definitions.secrets.MaintenanceServiceCertsSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 22: talos.resource.definitions.secrets.MaintenanceServiceCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 23: talos.resource.definitions.secrets.OSRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	13, // 24: talos.resource.definitions.secrets.OSRootSpec.cert_sani_ps:type_name -> common.NetIP
+	12, // 25: talos.resource.definitions.secrets.TrustdCertsSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 26: talos.resource.definitions.secrets.TrustdCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_secrets_secrets_proto_init() }
@@ -1079,7 +1202,7 @@ func file_resource_definitions_secrets_secrets_proto_init() {
 			}
 		}
 		file_resource_definitions_secrets_secrets_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*OSRootSpec); i {
+			switch v := v.(*MaintenanceRootSpec); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1091,6 +1214,30 @@ func file_resource_definitions_secrets_secrets_proto_init() {
 			}
 		}
 		file_resource_definitions_secrets_secrets_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MaintenanceServiceCertsSpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_resource_definitions_secrets_secrets_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OSRootSpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_resource_definitions_secrets_secrets_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TrustdCertsSpec); i {
 			case 0:
 				return &v.state
@@ -1109,7 +1256,7 @@ func file_resource_definitions_secrets_secrets_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_resource_definitions_secrets_secrets_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

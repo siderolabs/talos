@@ -24,6 +24,9 @@ const CertSANType = resource.Type("CertSANs.secrets.talos.dev")
 // CertSANAPIID is a resource ID of singleton instance for the Talos API.
 const CertSANAPIID = resource.ID("api")
 
+// CertSANMaintenanceID is a resource ID of singleton instance for the Talos Maintenance API.
+const CertSANMaintenanceID = resource.ID("maintenance")
+
 // CertSANKubernetesID is a resource ID of singleton instance for the Kubernetes API Server.
 const CertSANKubernetesID = resource.ID("k8s")
 

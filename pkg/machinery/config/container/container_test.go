@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
@@ -19,6 +20,8 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	v1alpha1Cfg := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
@@ -42,6 +45,7 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "topsecret", cfg.Cluster().Secret())
 	assert.Equal(t, "https://siderolink.api/join?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 	assert.Same(t, v1alpha1Cfg, cfg.RawV1Alpha1())
+	assert.Equal(t, []config.Document{v1alpha1Cfg, sideroLinkCfg}, cfg.Documents())
 
 	bytes, err := cfg.Bytes()
 	require.NoError(t, err)
@@ -58,6 +62,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewDuplicate(t *testing.T) {
+	t.Parallel()
+
 	v1alpha1Cfg1 := &v1alpha1.Config{}
 	v1alpha1Cfg2 := &v1alpha1.Config{}
 
@@ -71,10 +77,102 @@ func TestNewDuplicate(t *testing.T) {
 	assert.EqualError(t, err, "duplicate document: SideroLinkConfig/")
 }
 
+func TestValidate(t *testing.T) {
+	t.Parallel()
+
+	sideroLinkCfg := siderolink.NewConfigV1Alpha1()
+	sideroLinkCfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api/?jointoken=secret&user=alice"))
+
+	invalidSideroLinkCfg := siderolink.NewConfigV1Alpha1()
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: must(url.Parse("https://localhost:6443")),
+				},
+			},
+		},
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "worker",
+		},
+	}
+
+	invalidV1alpha1Config := &v1alpha1.Config{}
+
+	for _, tt := range []struct {
+		name      string
+		documents []config.Document
+
+		expectedError     string
+		expecetedWarnings []string
+	}{
+		{
+			name: "empty",
+		},
+		{
+			name:      "multi-doc",
+			documents: []config.Document{sideroLinkCfg, v1alpha1Cfg},
+		},
+		{
+			name:      "only siderolink",
+			documents: []config.Document{sideroLinkCfg},
+		},
+		{
+			name:      "only v1alpha1",
+			documents: []config.Document{v1alpha1Cfg},
+		},
+		{
+			name:          "invalid siderolink",
+			documents:     []config.Document{invalidSideroLinkCfg},
+			expectedError: "1 error occurred:\n\t* apiUrl is required\n\n",
+		},
+		{
+			name:          "invalid v1alpha1",
+			documents:     []config.Document{invalidV1alpha1Config},
+			expectedError: "1 error occurred:\n\t* machine instructions are required\n\n",
+		},
+		{
+			name:          "invalid multi-doc",
+			documents:     []config.Document{invalidSideroLinkCfg, invalidV1alpha1Config},
+			expectedError: "2 errors occurred:\n\t* machine instructions are required\n\t* apiUrl is required\n\n",
+		},
+	} {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctr, err := container.New(tt.documents...)
+			require.NoError(t, err)
+
+			warnings, err := ctr.Validate(validationMode{})
+
+			if tt.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tt.expectedError)
+			}
+
+			require.Equal(t, tt.expecetedWarnings, warnings)
+		})
+	}
+}
+
 func must[T any](t T, err error) T {
 	if err != nil {
 		panic(err)
 	}
 
 	return t
+}
+
+type validationMode struct{}
+
+func (validationMode) String() string {
+	return ""
+}
+
+func (validationMode) RequiresInstall() bool {
+	return false
 }

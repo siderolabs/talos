@@ -21,6 +21,9 @@ const MachineConfigType = resource.Type("MachineConfigs.config.talos.dev")
 // V1Alpha1ID is the ID of V1Alpha1 resource (singleton).
 const V1Alpha1ID = resource.ID("v1alpha1")
 
+// MaintenanceID is the ID of the config submitted in the maintenance mode.
+const MaintenanceID = resource.ID("maintenance")
+
 // MachineConfig resource holds v1alpha Talos configuration.
 type MachineConfig struct {
 	md   resource.Metadata
@@ -38,8 +41,13 @@ func (s *v1alpha1Spec) MarshalYAMLBytes() ([]byte, error) {
 
 // NewMachineConfig initializes a V1Alpha1 resource.
 func NewMachineConfig(spec config.Provider) *MachineConfig {
+	return NewMachineConfigWithID(spec, V1Alpha1ID)
+}
+
+// NewMachineConfigWithID initializes a MachineConfig resource.
+func NewMachineConfigWithID(spec config.Provider, id resource.ID) *MachineConfig {
 	r := &MachineConfig{
-		md: resource.NewMetadata(NamespaceName, MachineConfigType, V1Alpha1ID, resource.VersionUndefined),
+		md: resource.NewMetadata(NamespaceName, MachineConfigType, id, resource.VersionUndefined),
 		spec: &v1alpha1Spec{
 			cfg: spec,
 		},

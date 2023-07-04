@@ -252,6 +252,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.KmsgLogDeliveryController{
 			Drainer: drainer,
 		},
+		&runtimecontrollers.MaintenanceConfigController{},
+		&runtimecontrollers.MaintenanceServiceController{},
 		&runtimecontrollers.MachineStatusController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
@@ -265,6 +267,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&secrets.KubernetesCertSANsController{},
 		&secrets.KubernetesDynamicCertsController{},
 		&secrets.KubernetesController{},
+		&secrets.MaintenanceController{},
+		&secrets.MaintenanceCertSANsController{},
+		&secrets.MaintenanceRootController{},
 		&secrets.RootController{},
 		&secrets.TrustdController{},
 		&siderolink.ConfigController{

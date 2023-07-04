@@ -53,6 +53,12 @@ message MachineStatusStatus {
   repeated UnmetCondition unmet_conditions = 2;
 }
 
+// MaintenanceServiceConfigSpec describes configuration for maintenance service API.
+message MaintenanceServiceConfigSpec {
+  string listen_address = 1;
+  repeated common.NetIP reachable_addresses = 2;
+}
+
 // MetaKeySpec describes status of the defined sysctls.
 message MetaKeySpec {
   string value = 1;

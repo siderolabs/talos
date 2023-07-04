@@ -226,16 +226,22 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 		warnings, err = container.v1alpha1Config.Validate(mode, opt...)
 	}
 
+	var multiErr *multierror.Error
+
+	if err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
 	for _, doc := range container.documents {
 		if validatableDoc, ok := doc.(config.Validator); ok {
 			docWarnings, docErr := validatableDoc.Validate(mode, opt...)
 
 			warnings = append(warnings, docWarnings...)
-			err = multierror.Append(err, docErr)
+			multiErr = multierror.Append(multiErr, docErr)
 		}
 	}
 
-	return warnings, err
+	return warnings, multiErr.ErrorOrNil()
 }
 
 // RedactSecrets returns a copy of the Provider with all secrets replaced with the given string.

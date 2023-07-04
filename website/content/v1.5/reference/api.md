@@ -195,6 +195,7 @@ description: Talos gRPC API reference.
     - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
     - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
+    - [MaintenanceServiceConfigSpec](#talos.resource.definitions.runtime.MaintenanceServiceConfigSpec)
     - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
@@ -209,6 +210,8 @@ description: Talos gRPC API reference.
     - [KubernetesCertsSpec](#talos.resource.definitions.secrets.KubernetesCertsSpec)
     - [KubernetesDynamicCertsSpec](#talos.resource.definitions.secrets.KubernetesDynamicCertsSpec)
     - [KubernetesRootSpec](#talos.resource.definitions.secrets.KubernetesRootSpec)
+    - [MaintenanceRootSpec](#talos.resource.definitions.secrets.MaintenanceRootSpec)
+    - [MaintenanceServiceCertsSpec](#talos.resource.definitions.secrets.MaintenanceServiceCertsSpec)
     - [OSRootSpec](#talos.resource.definitions.secrets.OSRootSpec)
     - [TrustdCertsSpec](#talos.resource.definitions.secrets.TrustdCertsSpec)
   
@@ -3549,6 +3552,22 @@ MachineStatusStatus describes machine current status at the stage.
 
 
 
+<a name="talos.resource.definitions.runtime.MaintenanceServiceConfigSpec"></a>
+
+### MaintenanceServiceConfigSpec
+MaintenanceServiceConfigSpec describes configuration for maintenance service API.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| listen_address | [string](#string) |  |  |
+| reachable_addresses | [common.NetIP](#common.NetIP) | repeated |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.runtime.MetaKeySpec"></a>
 
 ### MetaKeySpec
@@ -3778,6 +3797,37 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | bootstrap_token_secret | [string](#string) |  |  |
 | secretbox_encryption_secret | [string](#string) |  |  |
 | api_server_ips | [common.NetIP](#common.NetIP) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.secrets.MaintenanceRootSpec"></a>
+
+### MaintenanceRootSpec
+MaintenanceRootSpec describes maintenance service CA.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.secrets.MaintenanceServiceCertsSpec"></a>
+
+### MaintenanceServiceCertsSpec
+MaintenanceServiceCertsSpec describes maintenance service certs secrets.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 
 
 

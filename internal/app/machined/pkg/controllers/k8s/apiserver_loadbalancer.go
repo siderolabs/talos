@@ -188,7 +188,9 @@ func (ctrl *APILoadBalancerController) startLoadBalancer(lbCfg *k8s.LoadBalancer
 	ctrl.balancerHost = spec.Host
 	ctrl.balancerPort = spec.Port
 
-	lb, err := controlplane.NewLoadBalancer(ctrl.balancerHost, ctrl.balancerPort, logger)
+	lb, err := controlplane.NewLoadBalancer(ctrl.balancerHost, ctrl.balancerPort,
+		logger.WithOptions(zap.IncreaseLevel(zap.ErrorLevel)), // silence the load balancer logs
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create load balancer: %w", err)
 	}
