@@ -21,7 +21,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
-	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/tools v0.8.0 // indirect
+	golang.org/x/mod v0.12.0 // indirect
+	golang.org/x/net v0.11.0 // indirect
+	golang.org/x/tools v0.10.0 // indirect
 )

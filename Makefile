@@ -13,8 +13,8 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-14-ge0c76c0
-PKGS ?= v1.5.0-alpha.0-28-gedd725a
+TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-16-gcd3b692
+PKGS ?= v1.5.0-alpha.0-31-g43451e6
 EXTRAS ?= v1.5.0-alpha.0-1-ga73d524
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
@@ -56,9 +56,9 @@ KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.12.1
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.4.3
+CLUSTERCTL_VERSION ?= 1.4.4
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.14.7
+CILIUM_CLI_VERSION ?= v0.15.0
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
