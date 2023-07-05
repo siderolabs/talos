@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/slices"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -146,10 +147,12 @@ func upgradeGetActorID(ctx context.Context, c *client.Client, opts []client.Upgr
 }
 
 func init() {
-	rebootModes := maps.KeysFunc(machine.UpgradeRequest_RebootMode_value, strings.ToLower)
+	rebootModes := maps.Keys(machine.UpgradeRequest_RebootMode_value)
 	sort.Slice(rebootModes, func(i, j int) bool {
-		return machine.UpgradeRequest_RebootMode_value[rebootModes[i]] > machine.UpgradeRequest_RebootMode_value[rebootModes[j]]
+		return machine.UpgradeRequest_RebootMode_value[rebootModes[i]] < machine.UpgradeRequest_RebootMode_value[rebootModes[j]]
 	})
+
+	rebootModes = slices.Map(rebootModes, strings.ToLower)
 
 	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i",
 		fmt.Sprintf("%s/%s/installer:%s", images.Registry, images.Username, version.Trim(version.Tag)),
