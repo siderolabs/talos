@@ -348,7 +348,14 @@ func (c *ClusterConfig) Validate() error {
 		result = multierror.Append(result, c.EtcdConfig.Validate())
 	}
 
-	result = multierror.Append(result, c.ClusterInlineManifests.Validate(), c.ClusterDiscoveryConfig.Validate(c))
+	result = multierror.Append(
+		result,
+		c.ClusterInlineManifests.Validate(),
+		c.ClusterDiscoveryConfig.Validate(c),
+		c.APIServerConfig.Validate(),
+		c.ControllerManagerConfig.Validate(),
+		c.SchedulerConfig.Validate(),
+	)
 
 	return result.ErrorOrNil()
 }

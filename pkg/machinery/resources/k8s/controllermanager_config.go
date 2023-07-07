@@ -37,6 +37,7 @@ type ControllerManagerConfigSpec struct {
 	ExtraArgs            map[string]string `yaml:"extraArgs" protobuf:"6"`
 	ExtraVolumes         []ExtraVolume     `yaml:"extraVolumes" protobuf:"7"`
 	EnvironmentVariables map[string]string `yaml:"environmentVariables" protobuf:"8"`
+	Resources            Resources         `yaml:"resources" protobuf:"9"`
 }
 
 // NewControllerManagerConfig returns new ControllerManagerConfig resource.

@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/images"
@@ -156,6 +157,33 @@ func convertVolumes(volumes []talosconfig.VolumeMount) []k8s.ExtraVolume {
 	})
 }
 
+func convertResources(resources talosconfig.Resources) k8s.Resources {
+	var convertedLimits map[string]string
+
+	cpuLimits := resources.CPULimits()
+	memoryLimits := resources.MemoryLimits()
+
+	if cpuLimits != "" || memoryLimits != "" {
+		convertedLimits = map[string]string{}
+
+		if cpuLimits != "" {
+			convertedLimits[string(v1.ResourceCPU)] = cpuLimits
+		}
+
+		if memoryLimits != "" {
+			convertedLimits[string(v1.ResourceMemory)] = memoryLimits
+		}
+	}
+
+	return k8s.Resources{
+		Requests: map[string]string{
+			string(v1.ResourceCPU):    resources.CPURequests(),
+			string(v1.ResourceMemory): resources.MemoryRequests(),
+		},
+		Limits: convertedLimits,
+	}
+}
+
 func (ctrl *ControlPlaneController) manageAPIServerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Config) error {
 	var cloudProvider string
 	if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
@@ -180,6 +208,7 @@ func (ctrl *ControlPlaneController) manageAPIServerConfig(ctx context.Context, r
 			EnvironmentVariables:     cfgProvider.Cluster().APIServer().Env(),
 			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 			AdvertisedAddress:        advertisedAddress,
+			Resources:                convertResources(cfgProvider.Cluster().APIServer().Resources()),
 		}
 
 		return nil

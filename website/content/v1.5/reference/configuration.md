@@ -1477,6 +1477,7 @@ auditPolicy:
     rules:
         - level: Metadata
 {{< /highlight >}}</details> | |
+|`resources` |<a href="#resourcesconfig">ResourcesConfig</a> |Configure the API server resources.  | |
 
 
 
@@ -1544,6 +1545,7 @@ image: registry.k8s.io/kube-controller-manager:v1.27.3
 |`extraArgs` |map[string]string |Extra arguments to supply to the controller manager.  | |
 |`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the controller manager static pod.  | |
 |`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
+|`resources` |<a href="#resourcesconfig">ResourcesConfig</a> |Configure the controller manager resources.  | |
 
 
 
@@ -1608,6 +1610,7 @@ image: registry.k8s.io/kube-scheduler:v1.27.3
 |`extraArgs` |map[string]string |Extra arguments to supply to the scheduler.  | |
 |`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the scheduler static pod.  | |
 |`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
+|`resources` |<a href="#resourcesconfig">ResourcesConfig</a> |Configure the scheduler resources.  | |
 
 
 
@@ -1939,6 +1942,34 @@ Appears in:
 
 
 
+
+
+
+---
+## ResourcesConfig
+ResourcesConfig represents the pod resources.
+
+Appears in:
+
+- <code><a href="#apiserverconfig">APIServerConfig</a>.resources</code>
+- <code><a href="#controllermanagerconfig">ControllerManagerConfig</a>.resources</code>
+- <code><a href="#schedulerconfig">SchedulerConfig</a>.resources</code>
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+requests:
+    cpu: 1
+    memory: 1Gi
+{{< /highlight >}}</details> | |
+|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+limits:
+    cpu: 2
+    memory: 2500Mi
+{{< /highlight >}}</details> | |
 
 
 

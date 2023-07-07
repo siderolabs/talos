@@ -71,3 +71,21 @@ func (a *APIServerConfig) AuditPolicy() map[string]interface{} {
 
 	return a.AuditPolicyConfig.Object
 }
+
+// Resources implements the config.Resources interface.
+func (a *APIServerConfig) Resources() config.Resources {
+	return a.ResourcesConfig
+}
+
+// Validate performs config validation.
+func (a *APIServerConfig) Validate() error {
+	if a == nil {
+		return nil
+	}
+
+	if err := a.ResourcesConfig.Validate(); err != nil {
+		return fmt.Errorf("apiserver resource validation failed: %w", err)
+	}
+
+	return nil
+}

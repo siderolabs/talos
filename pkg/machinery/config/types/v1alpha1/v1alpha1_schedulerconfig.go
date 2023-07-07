@@ -38,3 +38,21 @@ func (s *SchedulerConfig) ExtraVolumes() []config.VolumeMount {
 func (s *SchedulerConfig) Env() Env {
 	return s.EnvConfig
 }
+
+// Resources implements the config.Resources interface.
+func (s *SchedulerConfig) Resources() config.Resources {
+	return s.ResourcesConfig
+}
+
+// Validate performs config validation.
+func (s *SchedulerConfig) Validate() error {
+	if s == nil {
+		return nil
+	}
+
+	if err := s.ResourcesConfig.Validate(); err != nil {
+		return fmt.Errorf("scheduler resource validation failed: %w", err)
+	}
+
+	return nil
+}

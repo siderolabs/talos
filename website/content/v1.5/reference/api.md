@@ -120,6 +120,9 @@ description: Talos gRPC API reference.
     - [NodeStatusSpec.LabelsEntry](#talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry)
     - [NodeTaintSpecSpec](#talos.resource.definitions.k8s.NodeTaintSpecSpec)
     - [NodenameSpec](#talos.resource.definitions.k8s.NodenameSpec)
+    - [Resources](#talos.resource.definitions.k8s.Resources)
+    - [Resources.LimitsEntry](#talos.resource.definitions.k8s.Resources.LimitsEntry)
+    - [Resources.RequestsEntry](#talos.resource.definitions.k8s.Resources.RequestsEntry)
     - [SchedulerConfigSpec](#talos.resource.definitions.k8s.SchedulerConfigSpec)
     - [SchedulerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry)
     - [SchedulerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry)
@@ -1697,6 +1700,7 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | environment_variables | [APIServerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
 | pod_security_policy_enabled | [bool](#bool) |  |  |
 | advertised_address | [string](#string) |  |  |
+| resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 
 
 
@@ -1873,6 +1877,7 @@ ControllerManagerConfigSpec is configuration for kube-controller-manager.
 | extra_args | [ControllerManagerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry) | repeated |  |
 | extra_volumes | [ExtraVolume](#talos.resource.definitions.k8s.ExtraVolume) | repeated |  |
 | environment_variables | [ControllerManagerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
+| resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 
 
 
@@ -2250,6 +2255,54 @@ NodenameSpec describes Kubernetes nodename.
 
 
 
+<a name="talos.resource.definitions.k8s.Resources"></a>
+
+### Resources
+Resources is a configuration of cpu and memory resources.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| requests | [Resources.RequestsEntry](#talos.resource.definitions.k8s.Resources.RequestsEntry) | repeated |  |
+| limits | [Resources.LimitsEntry](#talos.resource.definitions.k8s.Resources.LimitsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.Resources.LimitsEntry"></a>
+
+### Resources.LimitsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.Resources.RequestsEntry"></a>
+
+### Resources.RequestsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.k8s.SchedulerConfigSpec"></a>
 
 ### SchedulerConfigSpec
@@ -2263,6 +2316,7 @@ SchedulerConfigSpec is configuration for kube-scheduler.
 | extra_args | [SchedulerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry) | repeated |  |
 | extra_volumes | [ExtraVolume](#talos.resource.definitions.k8s.ExtraVolume) | repeated |  |
 | environment_variables | [SchedulerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
+| resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 
 
 

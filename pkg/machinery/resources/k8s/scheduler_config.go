@@ -34,6 +34,7 @@ type SchedulerConfigSpec struct {
 	ExtraArgs            map[string]string `yaml:"extraArgs" protobuf:"3"`
 	ExtraVolumes         []ExtraVolume     `yaml:"extraVolumes" protobuf:"4"`
 	EnvironmentVariables map[string]string `yaml:"environmentVariables" protobuf:"5"`
+	Resources            Resources         `yaml:"resources" protobuf:"6"`
 }
 
 // NewSchedulerConfig returns new SchedulerConfig resource.

@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/api/core/v1"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -623,6 +624,144 @@ func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptSchedul
 			},
 		),
 	)
+}
+
+func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
+	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
+	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, configStatus))
+	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
+
+	tests := []struct {
+		resources k8s.Resources
+		expected  v1.ResourceRequirements
+	}{
+		{
+			resources: k8s.Resources{
+				Requests: map[string]string{
+					string(v1.ResourceCPU):    "100m",
+					string(v1.ResourceMemory): "256Mi",
+				},
+			},
+			expected: v1.ResourceRequirements{
+				Requests: map[v1.ResourceName]apiresource.Quantity{
+					v1.ResourceCPU:    apiresource.MustParse("100m"),
+					v1.ResourceMemory: apiresource.MustParse("256Mi"),
+				},
+			},
+		},
+		{
+			resources: k8s.Resources{
+				Requests: map[string]string{
+					string(v1.ResourceCPU):    "100m",
+					string(v1.ResourceMemory): "256Mi",
+				},
+				Limits: map[string]string{
+					string(v1.ResourceCPU):    "1",
+					string(v1.ResourceMemory): "1Gi",
+				},
+			},
+			expected: v1.ResourceRequirements{
+				Requests: map[v1.ResourceName]apiresource.Quantity{
+					v1.ResourceCPU:    apiresource.MustParse("100m"),
+					v1.ResourceMemory: apiresource.MustParse("256Mi"),
+				},
+				Limits: map[v1.ResourceName]apiresource.Quantity{
+					v1.ResourceCPU:    apiresource.MustParse("1"),
+					v1.ResourceMemory: apiresource.MustParse("1Gi"),
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		configAPIServer := k8s.NewAPIServerConfig()
+		configControllerManager := k8s.NewControllerManagerConfig()
+		configControllerManager.TypedSpec().Enabled = true
+		configScheduler := k8s.NewSchedulerConfig()
+		configScheduler.TypedSpec().Enabled = true
+
+		configAPIServer.TypedSpec().Resources = test.resources
+		configControllerManager.TypedSpec().Resources = test.resources
+		configScheduler.TypedSpec().Resources = test.resources
+
+		suite.Require().NoError(suite.state.Create(suite.ctx, configAPIServer))
+		suite.Require().NoError(suite.state.Create(suite.ctx, configControllerManager))
+		suite.Require().NoError(suite.state.Create(suite.ctx, configScheduler))
+
+		suite.Assert().NoError(
+			retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+				func() error {
+					return suite.assertControlPlaneStaticPods(
+						[]string{
+							"kube-apiserver",
+							"kube-controller-manager",
+							"kube-scheduler",
+						},
+					)
+				},
+			),
+		)
+
+		r, err := suite.state.Get(
+			suite.ctx,
+			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-apiserver", resource.VersionUndefined),
+		)
+		suite.Require().NoError(err)
+
+		apiServerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
+		suite.Require().NoError(err)
+
+		r, err = suite.state.Get(
+			suite.ctx,
+			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-controller-manager", resource.VersionUndefined),
+		)
+		suite.Require().NoError(err)
+
+		controllerManagerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
+		suite.Require().NoError(err)
+
+		r, err = suite.state.Get(
+			suite.ctx,
+			resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "kube-scheduler", resource.VersionUndefined),
+		)
+		suite.Require().NoError(err)
+
+		schedulerPod, err := k8sadapter.StaticPod(r.(*k8s.StaticPod)).Pod()
+		suite.Require().NoError(err)
+
+		suite.Require().NotEmpty(apiServerPod.Spec.Containers)
+		suite.Require().NotEmpty(controllerManagerPod.Spec.Containers)
+		suite.Require().NotEmpty(schedulerPod.Spec.Containers)
+
+		suite.Assert().Equal(test.expected, apiServerPod.Spec.Containers[0].Resources)
+		suite.Assert().Equal(test.expected, controllerManagerPod.Spec.Containers[0].Resources)
+		suite.Assert().Equal(test.expected, schedulerPod.Spec.Containers[0].Resources)
+
+		suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
+		suite.Require().NoError(suite.state.Destroy(suite.ctx, configControllerManager.Metadata()))
+		suite.Require().NoError(suite.state.Destroy(suite.ctx, configScheduler.Metadata()))
+
+		suite.Assert().NoError(
+			retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+				func() error {
+					list, err := suite.state.List(
+						suite.ctx,
+						resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined),
+					)
+					if err != nil {
+						return err
+					}
+
+					if len(list.Items) > 0 {
+						return retry.ExpectedErrorf("expected no pods, got %d", len(list.Items))
+					}
+
+					return nil
+				},
+			),
+		)
+	}
 }
 
 func (suite *ControlPlaneStaticPodSuite) TearDownTest() {

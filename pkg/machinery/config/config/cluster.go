@@ -76,6 +76,7 @@ type APIServer interface {
 	DisablePodSecurityPolicy() bool
 	AdmissionControl() []AdmissionPlugin
 	AuditPolicy() map[string]interface{}
+	Resources() Resources
 }
 
 // AdmissionPlugin defines the API server Admission Plugin configuration.
@@ -91,6 +92,7 @@ type ControllerManager interface {
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
 	Env() Env
+	Resources() Resources
 }
 
 // Proxy defines the requirements for a config that pertains to the kube-proxy
@@ -114,6 +116,7 @@ type Scheduler interface {
 	ExtraArgs() map[string]string
 	ExtraVolumes() []VolumeMount
 	Env() Env
+	Resources() Resources
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related
@@ -161,6 +164,14 @@ type VolumeMount interface {
 	HostPath() string
 	MountPath() string
 	ReadOnly() bool
+}
+
+// Resources describes memory/cpu requests/limits for static pods.
+type Resources interface {
+	CPURequests() string
+	MemoryRequests() string
+	CPULimits() string
+	MemoryLimits() string
 }
 
 // InlineManifest describes inline manifest for the cluster boostrap.

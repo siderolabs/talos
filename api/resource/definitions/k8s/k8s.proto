@@ -21,6 +21,7 @@ message APIServerConfigSpec {
   map<string, string> environment_variables = 9;
   bool pod_security_policy_enabled = 10;
   string advertised_address = 11;
+  Resources resources = 12;
 }
 
 // APIServerEndpoint holds data for control plane endpoint.
@@ -85,6 +86,7 @@ message ControllerManagerConfigSpec {
   map<string, string> extra_args = 6;
   repeated ExtraVolume extra_volumes = 7;
   map<string, string> environment_variables = 8;
+  Resources resources = 9;
 }
 
 // EndpointSpec describes status of rendered secrets.
@@ -202,6 +204,12 @@ message NodenameSpec {
   bool skip_node_registration = 3;
 }
 
+// Resources is a configuration of cpu and memory resources.
+message Resources {
+  map<string, string> requests = 1;
+  map<string, string> limits = 2;
+}
+
 // SchedulerConfigSpec is configuration for kube-scheduler.
 message SchedulerConfigSpec {
   bool enabled = 1;
@@ -209,6 +217,7 @@ message SchedulerConfigSpec {
   map<string, string> extra_args = 3;
   repeated ExtraVolume extra_volumes = 4;
   map<string, string> environment_variables = 5;
+  Resources resources = 6;
 }
 
 // SecretsStatusSpec describes status of rendered secrets.

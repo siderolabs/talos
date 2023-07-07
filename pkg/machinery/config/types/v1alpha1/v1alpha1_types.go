@@ -296,6 +296,20 @@ var (
 		ServiceSubnet: []string{"10.96.0.0/12"},
 	}
 
+	resourcesConfigRequestsExample = Unstructured{
+		Object: map[string]interface{}{
+			"cpu":    1,
+			"memory": "1Gi",
+		},
+	}
+
+	resourcesConfigLimitsExample = Unstructured{
+		Object: map[string]interface{}{
+			"cpu":    2,
+			"memory": "2500Mi",
+		},
+	}
+
 	clusterAPIServerExample = &APIServerConfig{
 		ContainerImage: (&APIServerConfig{}).Image(),
 		ExtraArgsConfig: map[string]string{
@@ -1678,6 +1692,11 @@ type APIServerConfig struct {
 	//   schema:
 	//     type: object
 	AuditPolicyConfig Unstructured `yaml:"auditPolicy,omitempty"`
+	//   description: |
+	//     Configure the API server resources.
+	//   schema:
+	//     type: object
+	ResourcesConfig *ResourcesConfig `yaml:"resources,omitempty"`
 }
 
 // AdmissionPluginConfigList represents the admission plugin configuration list.
@@ -1758,6 +1777,11 @@ type ControllerManagerConfig struct {
 	//       ".*":
 	//         type: string
 	EnvConfig Env `yaml:"env,omitempty"`
+	//   description: |
+	//     Configure the controller manager resources.
+	//   schema:
+	//     type: object
+	ResourcesConfig *ResourcesConfig `yaml:"resources,omitempty"`
 }
 
 // ProxyConfig represents the kube proxy configuration options.
@@ -1804,6 +1828,11 @@ type SchedulerConfig struct {
 	//       ".*":
 	//         type: string
 	EnvConfig Env `yaml:"env,omitempty"`
+	//   description: |
+	//     Configure the scheduler resources.
+	//   schema:
+	//     type: object
+	ResourcesConfig *ResourcesConfig `yaml:"resources,omitempty"`
 }
 
 var _ config.Etcd = (*EtcdConfig)(nil)
@@ -2102,6 +2131,22 @@ type EncryptionKeyNodeID struct{}
 
 // Env represents a set of environment variables.
 type Env = map[string]string
+
+// ResourcesConfig represents the pod resources.
+type ResourcesConfig struct {
+	//   description: |
+	//     Requests configures the reserved cpu/memory resources.
+	//   examples:
+	//     - name: resources requests.
+	//       value: resourcesConfigRequestsExample
+	Requests Unstructured `yaml:"requests,omitempty"`
+	//   description: |
+	//     Limits configures the maximum cpu/memory resources a container can use.
+	//   examples:
+	//     - name: resources requests.
+	//       value: resourcesConfigLimitsExample
+	Limits Unstructured `yaml:"limits,omitempty"`
+}
 
 // FileMode represents file's permissions.
 type FileMode os.FileMode

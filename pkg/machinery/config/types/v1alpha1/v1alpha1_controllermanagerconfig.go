@@ -38,3 +38,21 @@ func (c *ControllerManagerConfig) ExtraVolumes() []config.VolumeMount {
 func (c *ControllerManagerConfig) Env() Env {
 	return c.EnvConfig
 }
+
+// Resources implements the config.Resources interface.
+func (c *ControllerManagerConfig) Resources() config.Resources {
+	return c.ResourcesConfig
+}
+
+// Validate performs config validation.
+func (c *ControllerManagerConfig) Validate() error {
+	if c == nil {
+		return nil
+	}
+
+	if err := c.ResourcesConfig.Validate(); err != nil {
+		return fmt.Errorf("controller-manager resource validation failed: %w", err)
+	}
+
+	return nil
+}

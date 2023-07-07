@@ -35,6 +35,14 @@ type ExtraVolume struct {
 	ReadOnly  bool   `yaml:"readonly" protobuf:"4"`
 }
 
+// Resources is a configuration of cpu and memory resources.
+//
+//gotagsrewrite:gen
+type Resources struct {
+	Requests map[string]string `yaml:"requests" protobuf:"1"`
+	Limits   map[string]string `yaml:"limits" protobuf:"2"`
+}
+
 // APIServerConfigSpec is configuration for kube-apiserver.
 //
 //gotagsrewrite:gen
@@ -50,6 +58,7 @@ type APIServerConfigSpec struct {
 	EnvironmentVariables     map[string]string `yaml:"environmentVariables" protobuf:"9"`
 	PodSecurityPolicyEnabled bool              `yaml:"podSecurityPolicyEnabled" protobuf:"10"`
 	AdvertisedAddress        string            `yaml:"advertisedAddress" protobuf:"11"`
+	Resources                Resources         `yaml:"resources" protobuf:"12"`
 }
 
 // NewAPIServerConfig returns new APIServerConfig resource.

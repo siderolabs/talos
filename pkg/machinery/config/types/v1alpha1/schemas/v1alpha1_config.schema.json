@@ -99,6 +99,13 @@
           "description": "Configure the API server audit policy.\n",
           "markdownDescription": "Configure the API server audit policy.",
           "x-intellij-html-description": "\u003cp\u003eConfigure the API server audit policy.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the API server resources.\n",
+          "markdownDescription": "Configure the API server resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the API server resources.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -796,6 +803,13 @@
           "description": "The env field allows for the addition of environment variables for the control plane component.\n",
           "markdownDescription": "The `env` field allows for the addition of environment variables for the control plane component.",
           "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the control plane component.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the controller manager resources.\n",
+          "markdownDescription": "Configure the controller manager resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the controller manager resources.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2484,6 +2498,26 @@
       "additionalProperties": false,
       "type": "object"
     },
+    "ResourcesConfig": {
+      "properties": {
+        "requests": {
+          "$ref": "#/$defs/Unstructured",
+          "title": "requests",
+          "description": "Requests configures the reserved cpu/memory resources.\n",
+          "markdownDescription": "Requests configures the reserved cpu/memory resources.",
+          "x-intellij-html-description": "\u003cp\u003eRequests configures the reserved cpu/memory resources.\u003c/p\u003e\n"
+        },
+        "limits": {
+          "$ref": "#/$defs/Unstructured",
+          "title": "limits",
+          "description": "Limits configures the maximum cpu/memory resources a container can use.\n",
+          "markdownDescription": "Limits configures the maximum cpu/memory resources a container can use.",
+          "x-intellij-html-description": "\u003cp\u003eLimits configures the maximum cpu/memory resources a container can use.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "Route": {
       "properties": {
         "network": {
@@ -2580,6 +2614,13 @@
           "description": "The env field allows for the addition of environment variables for the control plane component.\n",
           "markdownDescription": "The `env` field allows for the addition of environment variables for the control plane component.",
           "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the control plane component.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the scheduler resources.\n",
+          "markdownDescription": "Configure the scheduler resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the scheduler resources.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -51,6 +51,7 @@ var (
 	EncryptionKeyStaticDoc            encoder.Doc
 	EncryptionKeyKMSDoc               encoder.Doc
 	EncryptionKeyNodeIDDoc            encoder.Doc
+	ResourcesConfigDoc                encoder.Doc
 	MachineFileDoc                    encoder.Doc
 	ExtraHostDoc                      encoder.Doc
 	DeviceDoc                         encoder.Doc
@@ -1096,7 +1097,7 @@ func init() {
 			FieldName: "apiServer",
 		},
 	}
-	APIServerConfigDoc.Fields = make([]encoder.Doc, 8)
+	APIServerConfigDoc.Fields = make([]encoder.Doc, 9)
 	APIServerConfigDoc.Fields[0].Name = "image"
 	APIServerConfigDoc.Fields[0].Type = "string"
 	APIServerConfigDoc.Fields[0].Note = ""
@@ -1143,6 +1144,11 @@ func init() {
 	APIServerConfigDoc.Fields[7].Comments[encoder.LineComment] = "Configure the API server audit policy."
 
 	APIServerConfigDoc.Fields[7].AddExample("", APIServerDefaultAuditPolicy)
+	APIServerConfigDoc.Fields[8].Name = "resources"
+	APIServerConfigDoc.Fields[8].Type = "ResourcesConfig"
+	APIServerConfigDoc.Fields[8].Note = ""
+	APIServerConfigDoc.Fields[8].Description = "Configure the API server resources."
+	APIServerConfigDoc.Fields[8].Comments[encoder.LineComment] = "Configure the API server resources."
 
 	AdmissionPluginConfigDoc.Type = "AdmissionPluginConfig"
 	AdmissionPluginConfigDoc.Comments[encoder.LineComment] = "AdmissionPluginConfig represents the API server admission plugin configuration."
@@ -1178,7 +1184,7 @@ func init() {
 			FieldName: "controllerManager",
 		},
 	}
-	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 4)
+	ControllerManagerConfigDoc.Fields = make([]encoder.Doc, 5)
 	ControllerManagerConfigDoc.Fields[0].Name = "image"
 	ControllerManagerConfigDoc.Fields[0].Type = "string"
 	ControllerManagerConfigDoc.Fields[0].Note = ""
@@ -1201,6 +1207,11 @@ func init() {
 	ControllerManagerConfigDoc.Fields[3].Note = ""
 	ControllerManagerConfigDoc.Fields[3].Description = "The `env` field allows for the addition of environment variables for the control plane component."
 	ControllerManagerConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `env` field allows for the addition of environment variables for the control plane component."
+	ControllerManagerConfigDoc.Fields[4].Name = "resources"
+	ControllerManagerConfigDoc.Fields[4].Type = "ResourcesConfig"
+	ControllerManagerConfigDoc.Fields[4].Note = ""
+	ControllerManagerConfigDoc.Fields[4].Description = "Configure the controller manager resources."
+	ControllerManagerConfigDoc.Fields[4].Comments[encoder.LineComment] = "Configure the controller manager resources."
 
 	ProxyConfigDoc.Type = "ProxyConfig"
 	ProxyConfigDoc.Comments[encoder.LineComment] = "ProxyConfig represents the kube proxy configuration options."
@@ -1250,7 +1261,7 @@ func init() {
 			FieldName: "scheduler",
 		},
 	}
-	SchedulerConfigDoc.Fields = make([]encoder.Doc, 4)
+	SchedulerConfigDoc.Fields = make([]encoder.Doc, 5)
 	SchedulerConfigDoc.Fields[0].Name = "image"
 	SchedulerConfigDoc.Fields[0].Type = "string"
 	SchedulerConfigDoc.Fields[0].Note = ""
@@ -1273,6 +1284,11 @@ func init() {
 	SchedulerConfigDoc.Fields[3].Note = ""
 	SchedulerConfigDoc.Fields[3].Description = "The `env` field allows for the addition of environment variables for the control plane component."
 	SchedulerConfigDoc.Fields[3].Comments[encoder.LineComment] = "The `env` field allows for the addition of environment variables for the control plane component."
+	SchedulerConfigDoc.Fields[4].Name = "resources"
+	SchedulerConfigDoc.Fields[4].Type = "ResourcesConfig"
+	SchedulerConfigDoc.Fields[4].Note = ""
+	SchedulerConfigDoc.Fields[4].Description = "Configure the scheduler resources."
+	SchedulerConfigDoc.Fields[4].Comments[encoder.LineComment] = "Configure the scheduler resources."
 
 	EtcdConfigDoc.Type = "EtcdConfig"
 	EtcdConfigDoc.Comments[encoder.LineComment] = "EtcdConfig represents the etcd configuration options."
@@ -1628,6 +1644,39 @@ func init() {
 		},
 	}
 	EncryptionKeyNodeIDDoc.Fields = make([]encoder.Doc, 0)
+
+	ResourcesConfigDoc.Type = "ResourcesConfig"
+	ResourcesConfigDoc.Comments[encoder.LineComment] = "ResourcesConfig represents the pod resources."
+	ResourcesConfigDoc.Description = "ResourcesConfig represents the pod resources."
+	ResourcesConfigDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "APIServerConfig",
+			FieldName: "resources",
+		},
+		{
+			TypeName:  "ControllerManagerConfig",
+			FieldName: "resources",
+		},
+		{
+			TypeName:  "SchedulerConfig",
+			FieldName: "resources",
+		},
+	}
+	ResourcesConfigDoc.Fields = make([]encoder.Doc, 2)
+	ResourcesConfigDoc.Fields[0].Name = "requests"
+	ResourcesConfigDoc.Fields[0].Type = "Unstructured"
+	ResourcesConfigDoc.Fields[0].Note = ""
+	ResourcesConfigDoc.Fields[0].Description = "Requests configures the reserved cpu/memory resources."
+	ResourcesConfigDoc.Fields[0].Comments[encoder.LineComment] = "Requests configures the reserved cpu/memory resources."
+
+	ResourcesConfigDoc.Fields[0].AddExample("resources requests.", resourcesConfigRequestsExample)
+	ResourcesConfigDoc.Fields[1].Name = "limits"
+	ResourcesConfigDoc.Fields[1].Type = "Unstructured"
+	ResourcesConfigDoc.Fields[1].Note = ""
+	ResourcesConfigDoc.Fields[1].Description = "Limits configures the maximum cpu/memory resources a container can use."
+	ResourcesConfigDoc.Fields[1].Comments[encoder.LineComment] = "Limits configures the maximum cpu/memory resources a container can use."
+
+	ResourcesConfigDoc.Fields[1].AddExample("resources requests.", resourcesConfigLimitsExample)
 
 	MachineFileDoc.Type = "MachineFile"
 	MachineFileDoc.Comments[encoder.LineComment] = "MachineFile represents a file to write to disk."
@@ -2971,6 +3020,10 @@ func (_ EncryptionKeyNodeID) Doc() *encoder.Doc {
 	return &EncryptionKeyNodeIDDoc
 }
 
+func (_ ResourcesConfig) Doc() *encoder.Doc {
+	return &ResourcesConfigDoc
+}
+
 func (_ MachineFile) Doc() *encoder.Doc {
 	return &MachineFileDoc
 }
@@ -3158,6 +3211,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&EncryptionKeyStaticDoc,
 			&EncryptionKeyKMSDoc,
 			&EncryptionKeyNodeIDDoc,
+			&ResourcesConfigDoc,
 			&MachineFileDoc,
 			&ExtraHostDoc,
 			&DeviceDoc,

@@ -297,6 +297,64 @@ func (suite *K8sControlPlaneSuite) TestReconcileEnvironment() {
 	)
 }
 
+func (suite *K8sControlPlaneSuite) TestReconcileResources() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						ResourcesConfig: &v1alpha1.ResourcesConfig{
+							Requests: v1alpha1.Unstructured{
+								Object: map[string]interface{}{
+									"cpu":    "100m",
+									"memory": "1Gi",
+								},
+							},
+							Limits: v1alpha1.Unstructured{
+								Object: map[string]interface{}{
+									"cpu":    2,
+									"memory": "1500Mi",
+								},
+							},
+						},
+					},
+				},
+			},
+		),
+	)
+
+	suite.setupMachine(cfg)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.APIServerConfigID},
+		func(apiServer *k8s.APIServerConfig, assert *assert.Assertions) {
+			apiServerCfg := apiServer.TypedSpec()
+
+			assert.Equal(
+				k8s.Resources{
+					Requests: map[string]string{
+						"cpu":    "100m",
+						"memory": "1Gi",
+					},
+					Limits: map[string]string{
+						"cpu":    "2",
+						"memory": "1500Mi",
+					},
+				}, apiServerCfg.Resources,
+			)
+		},
+	)
+}
+
 func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)

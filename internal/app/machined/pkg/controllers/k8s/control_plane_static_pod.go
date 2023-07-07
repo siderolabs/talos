@@ -274,6 +274,54 @@ func envVars(environment map[string]string) []v1.EnvVar {
 	})
 }
 
+func resources(resourcesConfig k8s.Resources, defaultCPU, defaultMemory string) (v1.ResourceRequirements, error) {
+	resources := v1.ResourceRequirements{
+		Requests: v1.ResourceList{
+			v1.ResourceCPU:    apiresource.MustParse(defaultCPU),
+			v1.ResourceMemory: apiresource.MustParse(defaultMemory),
+		},
+		Limits: v1.ResourceList{},
+	}
+
+	if cpu := resourcesConfig.Requests[string(v1.ResourceCPU)]; cpu != "" {
+		parsedCPU, err := apiresource.ParseQuantity(cpu)
+		if err != nil {
+			return v1.ResourceRequirements{}, fmt.Errorf("error parsing CPU request: %w", err)
+		}
+
+		resources.Requests[v1.ResourceCPU] = parsedCPU
+	}
+
+	if memory := resourcesConfig.Requests[string(v1.ResourceMemory)]; memory != "" {
+		parsedMemory, err := apiresource.ParseQuantity(memory)
+		if err != nil {
+			return v1.ResourceRequirements{}, fmt.Errorf("error parsing memory request: %w", err)
+		}
+
+		resources.Requests[v1.ResourceMemory] = parsedMemory
+	}
+
+	if cpu := resourcesConfig.Limits[string(v1.ResourceCPU)]; cpu != "" {
+		parsedCPU, err := apiresource.ParseQuantity(cpu)
+		if err != nil {
+			return v1.ResourceRequirements{}, fmt.Errorf("error parsing CPU limit: %w", err)
+		}
+
+		resources.Limits[v1.ResourceCPU] = parsedCPU
+	}
+
+	if memory := resourcesConfig.Limits[string(v1.ResourceMemory)]; memory != "" {
+		parsedMemory, err := apiresource.ParseQuantity(memory)
+		if err != nil {
+			return v1.ResourceRequirements{}, fmt.Errorf("error parsing memory limit: %w", err)
+		}
+
+		resources.Limits[v1.ResourceMemory] = parsedMemory
+	}
+
+	return resources, nil
+}
+
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
 	configResource resource.Resource, secretsVersion, configVersion string,
 ) (string, error) {
@@ -370,6 +418,11 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	args = append(args, builder.Args()...)
 
+	resources, err := resources(cfg.Resources, "200m", "512Mi")
+	if err != nil {
+		return "", err
+	}
+
 	return k8s.APIServerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.APIServerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
@@ -426,12 +479,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 								ReadOnly:  false,
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{
-								v1.ResourceCPU:    apiresource.MustParse("200m"),
-								v1.ResourceMemory: apiresource.MustParse("512Mi"),
-							},
-						},
+						Resources: resources,
 						SecurityContext: &v1.SecurityContext{
 							AllowPrivilegeEscalation: pointer.To(false),
 							Capabilities: &v1.Capabilities{
@@ -539,6 +587,11 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 
 	args = append(args, builder.Args()...)
 
+	resources, err := resources(cfg.Resources, "50m", "256Mi")
+	if err != nil {
+		return "", err
+	}
+
 	//nolint:dupl
 	return k8s.ControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.ControllerManagerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
@@ -599,12 +652,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 							},
 							TimeoutSeconds: 15,
 						},
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{
-								v1.ResourceCPU:    apiresource.MustParse("50m"),
-								v1.ResourceMemory: apiresource.MustParse("256Mi"),
-							},
-						},
+						Resources: resources,
 						SecurityContext: &v1.SecurityContext{
 							AllowPrivilegeEscalation: pointer.To(false),
 							Capabilities: &v1.Capabilities{
@@ -673,6 +721,11 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 
 	args = append(args, builder.Args()...)
 
+	resources, err := resources(cfg.Resources, "10m", "64Mi")
+	if err != nil {
+		return "", err
+	}
+
 	//nolint:dupl
 	return k8s.SchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
@@ -733,12 +786,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 							},
 							TimeoutSeconds: 15,
 						},
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{
-								v1.ResourceCPU:    apiresource.MustParse("10m"),
-								v1.ResourceMemory: apiresource.MustParse("64Mi"),
-							},
-						},
+						Resources: resources,
 						SecurityContext: &v1.SecurityContext{
 							AllowPrivilegeEscalation: pointer.To(false),
 							Capabilities: &v1.Capabilities{

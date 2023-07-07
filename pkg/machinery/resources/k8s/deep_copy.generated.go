@@ -67,6 +67,18 @@ func (o APIServerConfigSpec) DeepCopy() APIServerConfigSpec {
 			cp.EnvironmentVariables[k2] = v2
 		}
 	}
+	if o.Resources.Requests != nil {
+		cp.Resources.Requests = make(map[string]string, len(o.Resources.Requests))
+		for k3, v3 := range o.Resources.Requests {
+			cp.Resources.Requests[k3] = v3
+		}
+	}
+	if o.Resources.Limits != nil {
+		cp.Resources.Limits = make(map[string]string, len(o.Resources.Limits))
+		for k3, v3 := range o.Resources.Limits {
+			cp.Resources.Limits[k3] = v3
+		}
+	}
 	return cp
 }
 
@@ -127,6 +139,18 @@ func (o ControllerManagerConfigSpec) DeepCopy() ControllerManagerConfigSpec {
 		cp.EnvironmentVariables = make(map[string]string, len(o.EnvironmentVariables))
 		for k2, v2 := range o.EnvironmentVariables {
 			cp.EnvironmentVariables[k2] = v2
+		}
+	}
+	if o.Resources.Requests != nil {
+		cp.Resources.Requests = make(map[string]string, len(o.Resources.Requests))
+		for k3, v3 := range o.Resources.Requests {
+			cp.Resources.Requests[k3] = v3
+		}
+	}
+	if o.Resources.Limits != nil {
+		cp.Resources.Limits = make(map[string]string, len(o.Resources.Limits))
+		for k3, v3 := range o.Resources.Limits {
+			cp.Resources.Limits[k3] = v3
 		}
 	}
 	return cp
@@ -351,6 +375,18 @@ func (o SchedulerConfigSpec) DeepCopy() SchedulerConfigSpec {
 		cp.EnvironmentVariables = make(map[string]string, len(o.EnvironmentVariables))
 		for k2, v2 := range o.EnvironmentVariables {
 			cp.EnvironmentVariables[k2] = v2
+		}
+	}
+	if o.Resources.Requests != nil {
+		cp.Resources.Requests = make(map[string]string, len(o.Resources.Requests))
+		for k3, v3 := range o.Resources.Requests {
+			cp.Resources.Requests[k3] = v3
+		}
+	}
+	if o.Resources.Limits != nil {
+		cp.Resources.Limits = make(map[string]string, len(o.Resources.Limits))
+		for k3, v3 := range o.Resources.Limits {
+			cp.Resources.Limits[k3] = v3
 		}
 	}
 	return cp

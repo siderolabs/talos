@@ -1402,6 +1402,57 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* kubespan link MTU must be at least 1280\n\n",
 		},
+		{
+			name: "ControlPlanePodResources",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					APIServerConfig: &v1alpha1.APIServerConfig{
+						ResourcesConfig: &v1alpha1.ResourcesConfig{
+							Requests: v1alpha1.Unstructured{
+								Object: map[string]any{
+									"cpu":      "1m",
+									"invalid1": "23",
+								},
+							},
+						},
+					},
+					ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
+						ResourcesConfig: &v1alpha1.ResourcesConfig{
+							Limits: v1alpha1.Unstructured{
+								Object: map[string]any{
+									"memory":   "1m",
+									"invalid2": "23",
+								},
+							},
+						},
+					},
+					SchedulerConfig: &v1alpha1.SchedulerConfig{
+						ResourcesConfig: &v1alpha1.ResourcesConfig{
+							Requests: v1alpha1.Unstructured{
+								Object: map[string]any{
+									"cpu": "1m",
+								},
+							},
+							Limits: v1alpha1.Unstructured{
+								Object: map[string]any{
+									"invalid3": "23",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedError: "3 errors occurred:\n\t* apiserver resource validation failed: unsupported pod resource \"invalid1\"\n\t* controller-manager resource validation failed: unsupported pod resource \"invalid2\"\n\t* scheduler resource validation failed: unsupported pod resource \"invalid3\"\n\n", //nolint:lll
+		},
 	} {
 		test := test
 
