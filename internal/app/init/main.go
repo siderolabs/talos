@@ -24,6 +24,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/mount/switchroot"
+	"github.com/siderolabs/talos/internal/pkg/rng"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
 	"github.com/siderolabs/talos/pkg/version"
@@ -49,6 +50,12 @@ func run() (err error) {
 	err = kmsg.SetupLogger(nil, "[talos] [initramfs]", nil)
 	if err != nil {
 		return err
+	}
+
+	// Seed RNG.
+	if err = rng.TPMSeed(); err != nil {
+		// not making this fatal error
+		log.Printf("failed to seed from the TPM: %s", err)
 	}
 
 	log.Printf("booting Talos %s", version.Tag)
