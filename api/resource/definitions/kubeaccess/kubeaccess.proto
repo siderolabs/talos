@@ -10,4 +10,3 @@ message ConfigSpec {
   repeated string allowed_api_roles = 2;
   repeated string allowed_kubernetes_namespaces = 3;
 }
-

@@ -83,4 +83,3 @@ message UnmetCondition {
   string name = 1;
   string reason = 2;
 }
-

@@ -55,4 +55,3 @@ message PeerStatusSpec {
   common.NetIPPort last_used_endpoint = 7;
   google.protobuf.Timestamp last_endpoint_change = 8;
 }
-

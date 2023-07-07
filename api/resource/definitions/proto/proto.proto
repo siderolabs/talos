@@ -11,4 +11,3 @@ message Mount {
   string source = 3;
   repeated string options = 4;
 }
-

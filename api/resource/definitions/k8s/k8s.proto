@@ -236,4 +236,3 @@ message StaticPodSpec {
 message StaticPodStatusSpec {
   google.protobuf.Struct pod_status = 1;
 }
-

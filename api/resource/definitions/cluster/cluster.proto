@@ -66,4 +66,3 @@ message MemberSpec {
   string operating_system = 5;
   ControlPlane control_plane = 6;
 }
-

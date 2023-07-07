@@ -330,4 +330,3 @@ enum RuntimeMachineStage {
   MACHINE_STAGE_RESETTING = 7;
   MACHINE_STAGE_UPGRADING = 8;
 }
-
