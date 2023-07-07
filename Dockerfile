@@ -513,120 +513,132 @@ COPY --from=depmod-arm64 /build/lib/modules /lib/modules
 
 # The rootfs target provides the Talos rootfs.
 FROM build AS rootfs-base-amd64
-COPY --from=pkg-fhs / /rootfs
-COPY --from=pkg-ca-certificates / /rootfs
-COPY --from=pkg-cryptsetup-amd64 / /rootfs
-COPY --from=pkg-containerd-amd64 / /rootfs
-COPY --from=pkg-dosfstools-amd64 / /rootfs
-COPY --from=pkg-eudev-amd64 / /rootfs
-COPY --from=pkg-iptables-amd64 / /rootfs
-COPY --from=pkg-libinih-amd64 / /rootfs
-COPY --from=pkg-libjson-c-amd64 / /rootfs
-COPY --from=pkg-libpopt-amd64 / /rootfs
-COPY --from=pkg-liburcu-amd64 / /rootfs
-COPY --from=pkg-openssl-amd64 / /rootfs
-COPY --from=pkg-libseccomp-amd64 / /rootfs
-COPY --from=pkg-lvm2-amd64 / /rootfs
-COPY --from=pkg-libaio-amd64 / /rootfs
-COPY --from=pkg-musl-amd64 / /rootfs
-COPY --from=pkg-runc-amd64 / /rootfs
-COPY --from=pkg-xfsprogs-amd64 / /rootfs
-COPY --from=pkg-util-linux-amd64 /lib/libblkid.* /rootfs/lib/
-COPY --from=pkg-util-linux-amd64 /lib/libuuid.* /rootfs/lib/
-COPY --from=pkg-util-linux-amd64 /lib/libmount.* /rootfs/lib/
-COPY --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
-COPY --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/sbin/modprobe
-COPY --from=modules-amd64 /lib/modules /rootfs/lib/modules
-COPY --from=machined-build-amd64 /machined /rootfs/sbin/init
-# the orderly_poweroff call by the kernel will call '/sbin/poweroff'
-RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
-RUN chmod +x /rootfs/sbin/poweroff
-# some extensions like qemu-guest agent will call '/sbin/shutdown'
-RUN ln /rootfs/sbin/init /rootfs/sbin/shutdown
-RUN chmod +x /rootfs/sbin/shutdown
-RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
-RUN chmod +x /rootfs/sbin/wrapperd
-RUN ln /rootfs/sbin/init /rootfs/sbin/dashboard
-RUN chmod +x /rootfs/sbin/dashboard
+COPY --link --from=pkg-fhs / /rootfs
+COPY --link --from=pkg-ca-certificates / /rootfs
+COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
+COPY --link --from=pkg-containerd-amd64 / /rootfs
+COPY --link --from=pkg-dosfstools-amd64 / /rootfs
+COPY --link --from=pkg-eudev-amd64 / /rootfs
+COPY --link --from=pkg-iptables-amd64 / /rootfs
+COPY --link --from=pkg-libinih-amd64 / /rootfs
+COPY --link --from=pkg-libjson-c-amd64 / /rootfs
+COPY --link --from=pkg-libpopt-amd64 / /rootfs
+COPY --link --from=pkg-liburcu-amd64 / /rootfs
+COPY --link --from=pkg-openssl-amd64 / /rootfs
+COPY --link --from=pkg-libseccomp-amd64 / /rootfs
+COPY --link --from=pkg-lvm2-amd64 / /rootfs
+COPY --link --from=pkg-libaio-amd64 / /rootfs
+COPY --link --from=pkg-musl-amd64 / /rootfs
+COPY --link --from=pkg-runc-amd64 / /rootfs
+COPY --link --from=pkg-xfsprogs-amd64 / /rootfs
+COPY --link --from=pkg-util-linux-amd64 /lib/libblkid.* /rootfs/lib/
+COPY --link --from=pkg-util-linux-amd64 /lib/libuuid.* /rootfs/lib/
+COPY --link --from=pkg-util-linux-amd64 /lib/libmount.* /rootfs/lib/
+COPY --link --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/lib/
+COPY --link --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/sbin/modprobe
+COPY --link --from=modules-amd64 /lib/modules /rootfs/lib/modules
+COPY --link --from=machined-build-amd64 /machined /rootfs/sbin/init
+RUN <<END
+    # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
+    ln /rootfs/sbin/init /rootfs/sbin/poweroff
+    chmod +x /rootfs/sbin/poweroff
+    # some extensions like qemu-guest agent will call '/sbin/shutdown'
+    ln /rootfs/sbin/init /rootfs/sbin/shutdown
+    chmod +x /rootfs/sbin/shutdown
+    ln /rootfs/sbin/init /rootfs/sbin/wrapperd
+    chmod +x /rootfs/sbin/wrapperd
+    ln /rootfs/sbin/init /rootfs/sbin/dashboard
+    chmod +x /rootfs/sbin/dashboard
+END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
-RUN cleanup.sh /rootfs
-RUN mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+RUN <<END
+    cleanup.sh /rootfs
+    mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
+    mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
+END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
-RUN ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
-RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
-RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
-RUN touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part}
-RUN ln -s ca-certificates /rootfs/etc/ssl/certs/ca-certificates.crt
-RUN ln -s /etc/ssl /rootfs/etc/pki
-RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
-RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
-RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
+RUN <<END
+    ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
+    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part}
+    ln -s ca-certificates /rootfs/etc/ssl/certs/ca-certificates.crt
+    ln -s /etc/ssl /rootfs/etc/pki
+    ln -s /etc/ssl /rootfs/usr/share/ca-certificates
+    ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
+    ln -s /etc/ssl /rootfs/etc/ca-certificates
+END
 
 FROM build AS rootfs-base-arm64
-COPY --from=pkg-fhs / /rootfs
-COPY --from=pkg-ca-certificates / /rootfs
-COPY --from=pkg-cryptsetup-arm64 / /rootfs
-COPY --from=pkg-containerd-arm64 / /rootfs
-COPY --from=pkg-dosfstools-arm64 / /rootfs
-COPY --from=pkg-eudev-arm64 / /rootfs
-COPY --from=pkg-iptables-arm64 / /rootfs
-COPY --from=pkg-libinih-arm64 / /rootfs
-COPY --from=pkg-libjson-c-arm64 / /rootfs
-COPY --from=pkg-libpopt-arm64 / /rootfs
-COPY --from=pkg-liburcu-arm64 / /rootfs
-COPY --from=pkg-openssl-arm64 / /rootfs
-COPY --from=pkg-libseccomp-arm64 / /rootfs
-COPY --from=pkg-lvm2-arm64 / /rootfs
-COPY --from=pkg-libaio-arm64 / /rootfs
-COPY --from=pkg-musl-arm64 / /rootfs
-COPY --from=pkg-runc-arm64 / /rootfs
-COPY --from=pkg-xfsprogs-arm64 / /rootfs
-COPY --from=pkg-util-linux-arm64 /lib/libblkid.* /rootfs/lib/
-COPY --from=pkg-util-linux-arm64 /lib/libuuid.* /rootfs/lib/
-COPY --from=pkg-util-linux-arm64 /lib/libmount.* /rootfs/lib/
-COPY --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
-COPY --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
-COPY --from=modules-amd64 /lib/modules /rootfs/lib/modules
-COPY --from=machined-build-arm64 /machined /rootfs/sbin/init
-# the orderly_poweroff call by the kernel will call '/sbin/poweroff'
-RUN ln /rootfs/sbin/init /rootfs/sbin/poweroff
-RUN chmod +x /rootfs/sbin/poweroff
-# some extensions like qemu-guest agent will call '/sbin/shutdown'
-RUN ln /rootfs/sbin/init /rootfs/sbin/shutdown
-RUN chmod +x /rootfs/sbin/shutdown
-RUN ln /rootfs/sbin/init /rootfs/sbin/wrapperd
-RUN chmod +x /rootfs/sbin/wrapperd
-RUN ln /rootfs/sbin/init /rootfs/sbin/dashboard
-RUN chmod +x /rootfs/sbin/dashboard
+COPY --link --from=pkg-fhs / /rootfs
+COPY --link --from=pkg-ca-certificates / /rootfs
+COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
+COPY --link --from=pkg-containerd-arm64 / /rootfs
+COPY --link --from=pkg-dosfstools-arm64 / /rootfs
+COPY --link --from=pkg-eudev-arm64 / /rootfs
+COPY --link --from=pkg-iptables-arm64 / /rootfs
+COPY --link --from=pkg-libinih-arm64 / /rootfs
+COPY --link --from=pkg-libjson-c-arm64 / /rootfs
+COPY --link --from=pkg-libpopt-arm64 / /rootfs
+COPY --link --from=pkg-liburcu-arm64 / /rootfs
+COPY --link --from=pkg-openssl-arm64 / /rootfs
+COPY --link --from=pkg-libseccomp-arm64 / /rootfs
+COPY --link --from=pkg-lvm2-arm64 / /rootfs
+COPY --link --from=pkg-libaio-arm64 / /rootfs
+COPY --link --from=pkg-musl-arm64 / /rootfs
+COPY --link --from=pkg-runc-arm64 / /rootfs
+COPY --link --from=pkg-xfsprogs-arm64 / /rootfs
+COPY --link --from=pkg-util-linux-arm64 /lib/libblkid.* /rootfs/lib/
+COPY --link --from=pkg-util-linux-arm64 /lib/libuuid.* /rootfs/lib/
+COPY --link --from=pkg-util-linux-arm64 /lib/libmount.* /rootfs/lib/
+COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
+COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
+COPY --link --from=modules-amd64 /lib/modules /rootfs/lib/modules
+COPY --link --from=machined-build-arm64 /machined /rootfs/sbin/init
+RUN <<END
+    # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
+    ln /rootfs/sbin/init /rootfs/sbin/poweroff
+    chmod +x /rootfs/sbin/poweroff
+    # some extensions like qemu-guest agent will call '/sbin/shutdown'
+    ln /rootfs/sbin/init /rootfs/sbin/shutdown
+    chmod +x /rootfs/sbin/shutdown
+    ln /rootfs/sbin/init /rootfs/sbin/wrapperd
+    chmod +x /rootfs/sbin/wrapperd
+    ln /rootfs/sbin/init /rootfs/sbin/dashboard
+    chmod +x /rootfs/sbin/dashboard
+END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
-RUN cleanup.sh /rootfs
-RUN mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+RUN <<END
+    cleanup.sh /rootfs
+    mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
+    mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
+END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
-RUN ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
-RUN mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
-RUN mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/80-net-name-slot.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
-RUN touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part}
-RUN ln -s /etc/ssl /rootfs/etc/pki
-RUN ln -s ca-certificates /rootfs/etc/ssl/certs/ca-certificates.crt
-RUN ln -s /etc/ssl /rootfs/usr/share/ca-certificates
-RUN ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
-RUN ln -s /etc/ssl /rootfs/etc/ca-certificates
+RUN <<END
+    ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
+    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,os-release,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part}
+    ln -s /etc/ssl /rootfs/etc/pki
+    ln -s ca-certificates /rootfs/etc/ssl/certs/ca-certificates.crt
+    ln -s /etc/ssl /rootfs/usr/share/ca-certificates
+    ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
+    ln -s /etc/ssl /rootfs/etc/ca-certificates
+END
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN find /rootfs -print0 \
