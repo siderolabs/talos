@@ -186,6 +186,7 @@ func (s *Scaleway) KernelArgs() procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
+		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
 	}
 }
 

@@ -198,6 +198,7 @@ func (a *Azure) KernelArgs() procfs.Parameters {
 		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
 		procfs.NewParameter("rootdelay").Append("300"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
+		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
 	}
 }
 
