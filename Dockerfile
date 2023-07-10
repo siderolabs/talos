@@ -723,8 +723,8 @@ COPY --from=base /src/pkg /go/src/github.com/pkg
 COPY ./hack/ukify /go/src/github.com/siderolabs/ukify
 RUN --mount=type=cache,target=/.cache \
     cd /go/src/github.com/siderolabs/ukify \
-    && CGO_ENABLED=1 go test ./... \
-    && CGO_ENABLED=1 go build -o ukify . \
+    && go test ./... \
+    && go build -o ukify . \
     && mv ukify /toolchain/go/bin/
 
 FROM base AS gen-uki-certs

@@ -7,7 +7,6 @@ replace github.com/siderolabs/talos/pkg/machinery => ../../pkg/machinery
 require (
 	github.com/foxboron/go-uefi v0.0.0-20230218004016-d1bb9a12f92c
 	github.com/google/go-tpm v0.9.0
-	github.com/google/go-tpm-tools v0.3.13-0.20230620182252-4639ecce2aba
 	github.com/saferwall/pe v1.4.4
 	github.com/siderolabs/crypto v0.4.0
 	github.com/siderolabs/go-procfs v0.1.1

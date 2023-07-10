@@ -5,26 +5,23 @@
 package measure
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rsa"
-	"crypto/sha1"
 	"crypto/sha256"
-	"crypto/sha512"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"io"
 	"os"
 
-	"github.com/google/go-tpm-tools/simulator"
-	// TODO: frezbo: switch to new tpm2 package.
-	// Ref: https://github.com/google/go-tpm/releases/tag/v0.9.0
-	"github.com/google/go-tpm/legacy/tpm2"
+	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpmutil"
 
 	"github.com/siderolabs/ukify/constants"
+	"github.com/siderolabs/ukify/measure/extend"
 )
 
 type PCRData struct {
@@ -54,7 +51,7 @@ type signatureData struct {
 // SectionData holds a map of Section to file path to the corresponding section
 type SectionsData map[constants.Section]string
 
-func calculatePCRBankData(pcr int, alg tpm2.Algorithm, sectionData SectionsData, privateKeyFile string) ([]bankData, error) {
+func calculatePCRBankData(pcr int, alg tpm2.TPMAlgID, sectionData SectionsData, privateKeyFile string) ([]bankData, error) {
 	rsaKey, err := parseRSAKey(privateKeyFile)
 	if err != nil {
 		return nil, err
@@ -63,38 +60,50 @@ func calculatePCRBankData(pcr int, alg tpm2.Algorithm, sectionData SectionsData,
 	// get fingerprint of public key
 	pubKeyFingerprint := sha256.Sum256(x509.MarshalPKCS1PublicKey(&rsaKey.PublicKey))
 
-	sim, err := simulator.Get()
+	hashAlg, err := alg.Hash()
 	if err != nil {
-		return nil, fmt.Errorf("creating tpm2 simulator failed: %v", err)
+		return nil, err
 	}
 
-	defer sim.Close()
+	pcrSelector, err := createPCRSelection([]int{constants.UKIPCR})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create PCR selection: %v", err)
+	}
+
+	pcrSelection := tpm2.TPMLPCRSelection{
+		PCRSelections: []tpm2.TPMSPCRSelection{
+			{
+				Hash:      alg,
+				PCRSelect: pcrSelector,
+			},
+		},
+	}
+
+	hashData := extend.New(hashAlg)
 
 	for _, section := range constants.OrderedSections() {
 		if file, ok := sectionData[section]; ok && file != "" {
-			if err := pcrExtent(sim, pcr, alg, append([]byte(section), 0)); err != nil {
-				return nil, err
-			}
+			hashData.Extend(append([]byte(section), 0))
 
 			sectionData, err := os.ReadFile(file)
 			if err != nil {
 				return nil, err
 			}
 
-			if err := pcrExtent(sim, pcr, alg, sectionData); err != nil {
-				return nil, err
-			}
+			hashData.Extend(sectionData)
 		}
 	}
 
 	banks := make([]bankData, len(constants.OrderedPhases()))
 
 	for i, phase := range constants.OrderedPhases() {
-		if err := pcrExtent(sim, pcr, alg, []byte(phase)); err != nil {
-			return nil, err
-		}
+		hashData.Extend([]byte(phase))
 
-		sigData, err := calculateSignature(sim, rsaKey, pcr, alg)
+		hash := hashData.Hash()
+
+		policyPCR := calculatePolicyPCR(hash, pcrSelection)
+
+		sigData, err := calculateSignature(policyPCR, hashAlg, rsaKey)
 		if err != nil {
 			return nil, err
 		}
@@ -108,6 +117,24 @@ func calculatePCRBankData(pcr int, alg tpm2.Algorithm, sectionData SectionsData,
 	}
 
 	return banks, nil
+}
+
+func calculatePolicyPCR(pcrValue []byte, pcrSelection tpm2.TPMLPCRSelection) []byte {
+	initial := bytes.Repeat([]byte{0x00}, sha256.Size)
+	pcrHash := sha256.Sum256(pcrValue)
+
+	policyPCRCommandValue := make([]byte, 4)
+	binary.BigEndian.PutUint32(policyPCRCommandValue, uint32(tpm2.TPMCCPolicyPCR))
+
+	pcrSelectionMarshalled := tpm2.Marshal(pcrSelection)
+
+	commandWithPCRSelectionMarshalled := append(policyPCRCommandValue, pcrSelectionMarshalled...)
+
+	toHash := append(initial[:], append(commandWithPCRSelectionMarshalled, pcrHash[:]...)...)
+
+	hashed := sha256.Sum256(toHash)
+
+	return hashed[:]
 }
 
 func parseRSAKey(key string) (*rsa.PrivateKey, error) {
@@ -130,124 +157,40 @@ func parseRSAKey(key string) (*rsa.PrivateKey, error) {
 	return rsaKey, nil
 }
 
-func calculateSignature(rw io.ReadWriter, rsaKey *rsa.PrivateKey, pcr int, alg tpm2.Algorithm) (*signatureData, error) {
-	pcrData, err := tpm2.ReadPCR(rw, pcr, alg)
-	if err != nil {
-		return nil, fmt.Errorf("reading pcr failed: %v", err)
-	}
-
-	pcrHash := sha256.Sum256(pcrData)
-
-	tpm2Session, _, err := tpm2.StartAuthSession(
-		rw,
-		tpm2.HandleNull,
-		tpm2.HandleNull,
-		make([]byte, 16),
-		nil,
-		tpm2.SessionTrial,
-		tpm2.AlgNull,
-		// session hash alorithm is always SHA256
-		tpm2.AlgSHA256,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer tpm2.FlushContext(rw, tpm2Session)
-
-	sel := tpm2.PCRSelection{
-		Hash: alg,
-		PCRs: []int{pcr},
-	}
-
-	if err := tpm2.PolicyPCR(rw, tpm2Session, pcrHash[:], sel); err != nil {
-		return nil, err
-	}
-
-	policyDigest, err := tpm2.PolicyGetDigest(rw, tpm2Session)
-	if err != nil {
-		return nil, err
-	}
-
-	policyDigestHashed, err := hashFromAlg(alg, policyDigest)
-	if err != nil {
-		return nil, err
-	}
-
-	sigHash, err := alg.Hash()
-	if err != nil {
-		return nil, err
-	}
+func calculateSignature(digest []byte, hash crypto.Hash, rsaKey *rsa.PrivateKey) (*signatureData, error) {
+	digestToHash := hash.New()
+	digestToHash.Write(digest)
+	digestHashed := digestToHash.Sum(nil)
 
 	// sign policy digest
-	signedData, err := rsaKey.Sign(nil, policyDigestHashed, sigHash)
+	signedData, err := rsaKey.Sign(nil, digestHashed[:], hash)
 	if err != nil {
 		return nil, fmt.Errorf("signing failed: %v", err)
 	}
 
 	return &signatureData{
-		Digest:          hex.EncodeToString(policyDigest[:]),
+		Digest:          hex.EncodeToString(digest),
 		SignatureBase64: base64.StdEncoding.EncodeToString(signedData),
 	}, nil
 }
 
-func hashFromAlg(alg tpm2.Algorithm, data []byte) ([]byte, error) {
-	signHash, err := alg.Hash()
-	if err != nil {
-		return nil, err
-	}
-
-	switch signHash.String() {
-	case crypto.SHA1.String():
-		digest := sha1.Sum(data)
-
-		return digest[:], nil
-	case crypto.SHA256.String():
-		digest := sha256.Sum256(data)
-
-		return digest[:], nil
-	case crypto.SHA384.String():
-		digest := sha512.Sum384(data)
-
-		return digest[:], nil
-	case crypto.SHA512.String():
-		digest := sha512.Sum512(data)
-
-		return digest[:], nil
-	}
-
-	return nil, fmt.Errorf("unsupported hash algorithm: %v", signHash)
-}
-
-// pcrExtent hashes the input and extends the PCR with the hash
-func pcrExtent(rw io.ReadWriter, pcr int, alg tpm2.Algorithm, data []byte) error {
-	// we can't use tpm2.Hash here since it's buffer size is too limited
-	// ref: https://github.com/google/go-tpm/blob/3270509f088425fc9499bc9b7b8ff0811119bedb/tpm2/constants.go#L47
-	digest, err := hashFromAlg(alg, data)
-	if err != nil {
-		return err
-	}
-
-	return tpm2.PCRExtend(rw, tpmutil.Handle(pcr), alg, digest, "")
-}
-
 func GenerateSignedPCR(sectionsData SectionsData, rsaKey string) (*PCRData, error) {
-	sha1BankData, err := calculatePCRBankData(constants.UKIPCR, tpm2.AlgSHA1, sectionsData, rsaKey)
+	sha1BankData, err := calculatePCRBankData(constants.UKIPCR, tpm2.TPMAlgSHA1, sectionsData, rsaKey)
 	if err != nil {
 		return nil, err
 	}
 
-	sha256BankData, err := calculatePCRBankData(constants.UKIPCR, tpm2.AlgSHA256, sectionsData, rsaKey)
+	sha256BankData, err := calculatePCRBankData(constants.UKIPCR, tpm2.TPMAlgSHA256, sectionsData, rsaKey)
 	if err != nil {
 		return nil, err
 	}
 
-	sha384BankData, err := calculatePCRBankData(constants.UKIPCR, tpm2.AlgSHA384, sectionsData, rsaKey)
+	sha384BankData, err := calculatePCRBankData(constants.UKIPCR, tpm2.TPMAlgSHA384, sectionsData, rsaKey)
 	if err != nil {
 		return nil, err
 	}
 
-	sha512BankData, err := calculatePCRBankData(constants.UKIPCR, tpm2.AlgSHA512, sectionsData, rsaKey)
+	sha512BankData, err := calculatePCRBankData(constants.UKIPCR, tpm2.TPMAlgSHA512, sectionsData, rsaKey)
 	if err != nil {
 		return nil, err
 	}
@@ -258,4 +201,22 @@ func GenerateSignedPCR(sectionsData SectionsData, rsaKey string) (*PCRData, erro
 		SHA384: sha384BankData,
 		SHA512: sha512BankData,
 	}, nil
+}
+
+func createPCRSelection(s []int) ([]byte, error) {
+
+	const sizeOfPCRSelect = 3
+
+	PCRs := make(tpmutil.RawBytes, sizeOfPCRSelect)
+
+	for _, n := range s {
+		if n >= 8*sizeOfPCRSelect {
+			return nil, fmt.Errorf("PCR index %d is out of range (exceeds maximum value %d)", n, 8*sizeOfPCRSelect-1)
+		}
+		byteNum := n / 8
+		bytePos := byte(1 << (n % 8))
+		PCRs[byteNum] |= bytePos
+	}
+
+	return PCRs, nil
 }
