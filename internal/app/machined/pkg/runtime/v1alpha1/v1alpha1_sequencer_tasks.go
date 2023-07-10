@@ -2115,7 +2115,7 @@ func MountStatePartition(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc
 		}
 
 		if encryption != nil {
-			opts = append(opts, mount.WithEncryptionConfig(encryption))
+			opts = append(opts, mount.WithEncryptionConfig(encryption), mount.WithSystemInformationGetter(r.GetSystemInformation))
 		}
 
 		return mount.SystemPartitionMount(ctx, r, logger, constants.StatePartitionLabel, opts...)

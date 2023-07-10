@@ -110,7 +110,7 @@ func SystemMountPointForLabel(ctx context.Context, device *blockdevice.BlockDevi
 			device,
 			part,
 			o.Encryption,
-			o.NodeParams,
+			o.SystemInformationGetter,
 		)
 		if err != nil {
 			return nil, err
@@ -123,7 +123,7 @@ func SystemMountPointForLabel(ctx context.Context, device *blockdevice.BlockDevi
 					path string
 				)
 
-				if path, err = encryptionHandler.Open(context.TODO()); err != nil {
+				if path, err = encryptionHandler.Open(ctx); err != nil {
 					return err
 				}
 
@@ -189,27 +189,13 @@ func SystemPartitionMount(ctx context.Context, r runtime.Runtime, logger *log.Lo
 		return fmt.Errorf("failed to find device with partition labeled %s", label)
 	}
 
-	systemInformation, err := r.GetSystemInformation(ctx)
-	if err != nil && !errors.Is(err, context.Canceled) && state.IsNotFoundError(err) {
-		return err
-	}
-
-	if systemInformation != nil {
-		opts = append(opts, WithNodeParams(encryption.NodeParams{
-			UUID: systemInformation.TypedSpec().UUID,
-		}))
-	}
-
-	var encrypted bool
-
 	if r.Config() != nil && r.Config().Machine() != nil {
 		encryptionConfig := r.Config().Machine().SystemDiskEncryption().Get(label)
 
 		if encryptionConfig != nil {
-			encrypted = true
-
 			opts = append(opts,
 				WithEncryptionConfig(encryptionConfig),
+				WithSystemInformationGetter(r.GetSystemInformation),
 			)
 		}
 	}
@@ -238,6 +224,9 @@ func SystemPartitionMount(ctx context.Context, r runtime.Runtime, logger *log.Lo
 
 		return
 	}
+
+	o := NewDefaultOptions(opts...)
+	encrypted := o.Encryption != nil
 
 	// record mount as the resource
 	mountStatus := runtimeres.NewMountStatus(v1alpha1.NamespaceName, label)

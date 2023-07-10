@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/siderolabs/go-retry/retry"
 
+	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 	"github.com/siderolabs/talos/internal/pkg/encryption/keys"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
@@ -33,7 +34,7 @@ const (
 )
 
 // NewHandler creates new Handler.
-func NewHandler(device *blockdevice.BlockDevice, partition *gpt.Partition, encryptionConfig config.Encryption, nodeParams NodeParams) (*Handler, error) {
+func NewHandler(device *blockdevice.BlockDevice, partition *gpt.Partition, encryptionConfig config.Encryption, getSystemInformation helpers.SystemInformationGetter) (*Handler, error) {
 	var provider encryption.Provider
 
 	switch encryptionConfig.Kind() {
@@ -71,23 +72,23 @@ func NewHandler(device *blockdevice.BlockDevice, partition *gpt.Partition, encry
 	}
 
 	return &Handler{
-		device:             device,
-		partition:          partition,
-		encryptionConfig:   encryptionConfig,
-		encryptionProvider: provider,
-		nodeParams:         nodeParams,
+		device:               device,
+		partition:            partition,
+		encryptionConfig:     encryptionConfig,
+		encryptionProvider:   provider,
+		getSystemInformation: getSystemInformation,
 	}, nil
 }
 
 // Handler reads encryption config, creates appropriate
 // encryption provider, handles encrypted partition open and close.
 type Handler struct {
-	device             *blockdevice.BlockDevice
-	partition          *gpt.Partition
-	encryptionConfig   config.Encryption
-	encryptionProvider encryption.Provider
-	nodeParams         NodeParams
-	encryptedPath      string
+	device               *blockdevice.BlockDevice
+	partition            *gpt.Partition
+	encryptionConfig     config.Encryption
+	encryptionProvider   encryption.Provider
+	getSystemInformation helpers.SystemInformationGetter
+	encryptedPath        string
 }
 
 // Open encrypted partition.
@@ -337,7 +338,7 @@ func (h *Handler) initKeyHandlers(encryptionConfig config.Encryption, partition 
 	handlers := make([]keys.Handler, 0, len(encryptionConfig.Keys()))
 
 	for _, cfg := range encryptionConfig.Keys() {
-		handler, err := keys.NewHandler(cfg, keys.WithPartitionLabel(partition.Name), keys.WithNodeUUID(h.nodeParams.UUID))
+		handler, err := keys.NewHandler(cfg, keys.WithPartitionLabel(partition.Name), keys.WithSystemInformationGetter(h.getSystemInformation))
 		if err != nil {
 			return nil, err
 		}

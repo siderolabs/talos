@@ -21,8 +21,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 	"github.com/siderolabs/talos/internal/pkg/endpoint"
-	"github.com/siderolabs/talos/internal/pkg/smbios"
 )
 
 // KMSToken is the userdata stored in the partition token metadata.
@@ -33,15 +33,16 @@ type KMSToken struct {
 // KMSKeyHandler seals token using KMS service.
 type KMSKeyHandler struct {
 	KeyHandler
-	kmsEndpoint string
-	nodeUUID    string
+	kmsEndpoint   string
+	getSystemInfo helpers.SystemInformationGetter
 }
 
 // NewKMSKeyHandler creates new KMSKeyHandler.
-func NewKMSKeyHandler(key KeyHandler, kmsEndpoint, nodeUUID string) (*KMSKeyHandler, error) {
+func NewKMSKeyHandler(key KeyHandler, kmsEndpoint string, getSystemInfo helpers.SystemInformationGetter) (*KMSKeyHandler, error) {
 	return &KMSKeyHandler{
-		KeyHandler:  key,
-		kmsEndpoint: kmsEndpoint,
+		KeyHandler:    key,
+		kmsEndpoint:   kmsEndpoint,
+		getSystemInfo: getSystemInfo,
 	}, nil
 }
 
@@ -62,8 +63,13 @@ func (h *KMSKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 		return nil, nil, err
 	}
 
+	systemInformation, err := h.getSystemInfo(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	resp, err := client.Seal(ctx, &kms.Request{
-		NodeUuid: h.nodeUUID,
+		NodeUuid: systemInformation.TypedSpec().UUID,
 		Data:     key,
 	})
 	if err != nil {
@@ -97,13 +103,13 @@ func (h *KMSKeyHandler) GetKey(ctx context.Context, t token.Token) (*encryption.
 
 	client := kms.NewKMSServiceClient(conn)
 
-	s, err := smbios.GetSMBIOSInfo()
+	systemInformation, err := h.getSystemInfo(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := client.Unseal(ctx, &kms.Request{
-		NodeUuid: s.SystemInformation.UUID,
+		NodeUuid: systemInformation.TypedSpec().UUID,
 		Data:     token.UserData.SealedData,
 	})
 	if err != nil {

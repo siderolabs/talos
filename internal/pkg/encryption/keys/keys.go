@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
-var errNoNodeUUID = fmt.Errorf("the node UUID is not set")
+var errNoSystemInfoGetter = fmt.Errorf("the UUID getter is not set")
 
 // NewHandler key using provided config.
 func NewHandler(cfg config.EncryptionKey, options ...KeyOption) (Handler, error) {
@@ -35,17 +35,17 @@ func NewHandler(cfg config.EncryptionKey, options ...KeyOption) (Handler, error)
 
 		return NewStaticKeyHandler(key, k), nil
 	case cfg.NodeID() != nil:
-		if opts.NodeUUID == "" {
-			return nil, fmt.Errorf("failed to create nodeUUID key handler at slot %d: %w", cfg.Slot(), errNoNodeUUID)
+		if opts.GetSystemInformation == nil {
+			return nil, fmt.Errorf("failed to create nodeUUID key handler at slot %d: %w", cfg.Slot(), errNoSystemInfoGetter)
 		}
 
-		return NewNodeIDKeyHandler(key, opts.PartitionLabel, opts.NodeUUID), nil
+		return NewNodeIDKeyHandler(key, opts.PartitionLabel, opts.GetSystemInformation), nil
 	case cfg.KMS() != nil:
-		if opts.NodeUUID == "" {
-			return nil, fmt.Errorf("failed to create KMS key handler at slot %d: %w", cfg.Slot(), errNoNodeUUID)
+		if opts.GetSystemInformation == nil {
+			return nil, fmt.Errorf("failed to create KMS key handler at slot %d: %w", cfg.Slot(), errNoSystemInfoGetter)
 		}
 
-		return NewKMSKeyHandler(key, cfg.KMS().Endpoint(), opts.NodeUUID)
+		return NewKMSKeyHandler(key, cfg.KMS().Endpoint(), opts.GetSystemInformation)
 	}
 
 	return nil, fmt.Errorf("malformed config: no key handler can be created")

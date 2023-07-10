@@ -15,7 +15,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -227,12 +226,7 @@ func (r *Runtime) IsBootstrapAllowed() bool {
 
 // GetSystemInformation returns system information resource if it exists.
 func (r *Runtime) GetSystemInformation(ctx context.Context) (*hardware.SystemInformation, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
-	defer cancel()
-
-	return safe.StateWatchFor[*hardware.SystemInformation](ctx, r.State().V1Alpha2().Resources(), hardware.NewSystemInformation(hardware.SystemInformationID).Metadata(),
-		state.WithEventTypes(state.Created, state.Updated),
-	)
+	return safe.StateGet[*hardware.SystemInformation](ctx, r.State().V1Alpha2().Resources(), hardware.NewSystemInformation(hardware.SystemInformationID).Metadata())
 }
 
 // atomicInterface is a typed wrapper around atomic.Value. It's only useful for storing the interfaces, because

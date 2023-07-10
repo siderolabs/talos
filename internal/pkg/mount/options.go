@@ -7,7 +7,7 @@ package mount
 import (
 	"log"
 
-	"github.com/siderolabs/talos/internal/pkg/encryption"
+	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
@@ -40,15 +40,15 @@ type Flags uint
 
 // Options is the functional options struct.
 type Options struct {
-	Loopback         string
-	Prefix           string
-	MountFlags       Flags
-	PreMountHooks    []Hook
-	PostUnmountHooks []Hook
-	Encryption       config.Encryption
-	NodeParams       encryption.NodeParams
-	Logger           *log.Logger
-	ProjectQuota     bool
+	Loopback                string
+	Prefix                  string
+	MountFlags              Flags
+	PreMountHooks           []Hook
+	PostUnmountHooks        []Hook
+	Encryption              config.Encryption
+	SystemInformationGetter helpers.SystemInformationGetter
+	Logger                  *log.Logger
+	ProjectQuota            bool
 }
 
 // Option is the functional option func.
@@ -113,10 +113,10 @@ func WithProjectQuota(enable bool) Option {
 	}
 }
 
-// WithNodeParams node info used by the encryption handler.
-func WithNodeParams(params encryption.NodeParams) Option {
+// WithSystemInformationGetter the function to get system information on the node.
+func WithSystemInformationGetter(getter helpers.SystemInformationGetter) Option {
 	return func(args *Options) {
-		args.NodeParams = params
+		args.SystemInformationGetter = getter
 	}
 }
 

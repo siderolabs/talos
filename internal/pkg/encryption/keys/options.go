@@ -4,13 +4,15 @@
 
 package keys
 
+import "github.com/siderolabs/talos/internal/pkg/encryption/helpers"
+
 // KeyOption represents key option callback used in KeyHandler.GetKey func.
 type KeyOption func(o *KeyOptions) error
 
 // KeyOptions set of options to be used in KeyHandler.GetKey func.
 type KeyOptions struct {
-	PartitionLabel string
-	NodeUUID       string
+	PartitionLabel       string
+	GetSystemInformation helpers.SystemInformationGetter
 }
 
 // WithPartitionLabel passes the partition label to the key handler.
@@ -22,10 +24,10 @@ func WithPartitionLabel(label string) KeyOption {
 	}
 }
 
-// WithNodeUUID passes the node UUID to the key handler.
-func WithNodeUUID(uuid string) KeyOption {
+// WithSystemInformationGetter passes the node UUID to the key handler.
+func WithSystemInformationGetter(getter helpers.SystemInformationGetter) KeyOption {
 	return func(o *KeyOptions) error {
-		o.NodeUUID = uuid
+		o.GetSystemInformation = getter
 
 		return nil
 	}

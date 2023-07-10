@@ -10,6 +10,8 @@ import (
 
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
+
+	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
 )
 
 // NodeIDKeyHandler generates the key based on current node information
@@ -17,14 +19,15 @@ import (
 type NodeIDKeyHandler struct {
 	KeyHandler
 	partitionLabel string
-	nodeUUID       string
+	getSystemInfo  helpers.SystemInformationGetter
 }
 
 // NewNodeIDKeyHandler creates new NodeIDKeyHandler.
-func NewNodeIDKeyHandler(key KeyHandler, partitionLabel, nodeUUID string) *NodeIDKeyHandler {
+func NewNodeIDKeyHandler(key KeyHandler, partitionLabel string, systemInfoGetter helpers.SystemInformationGetter) *NodeIDKeyHandler {
 	return &NodeIDKeyHandler{
 		KeyHandler:     key,
 		partitionLabel: partitionLabel,
+		getSystemInfo:  systemInfoGetter,
 	}
 }
 
@@ -36,19 +39,26 @@ func (h *NodeIDKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.T
 }
 
 // GetKey implements Handler interface.
-func (h *NodeIDKeyHandler) GetKey(context.Context, token.Token) (*encryption.Key, error) {
-	if h.nodeUUID == "" {
-		return nil, fmt.Errorf("machine UUID is not populated %s", h.nodeUUID)
+func (h *NodeIDKeyHandler) GetKey(ctx context.Context, _ token.Token) (*encryption.Key, error) {
+	systemInformation, err := h.getSystemInfo(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get UUID: %w", err)
+	}
+
+	nodeUUID := systemInformation.TypedSpec().UUID
+
+	if nodeUUID == "" {
+		return nil, fmt.Errorf("machine UUID is not populated %s", nodeUUID)
 	}
 
 	// primitive entropy check
 	counts := map[rune]int{}
-	for _, s := range h.nodeUUID {
+	for _, s := range nodeUUID {
 		counts[s]++
-		if counts[s] > len(h.nodeUUID)/2 {
-			return nil, fmt.Errorf("machine UUID %s entropy check failed", h.nodeUUID)
+		if counts[s] > len(nodeUUID)/2 {
+			return nil, fmt.Errorf("machine UUID %s entropy check failed", nodeUUID)
 		}
 	}
 
-	return encryption.NewKey(h.slot, []byte(h.nodeUUID+h.partitionLabel)), nil
+	return encryption.NewKey(h.slot, []byte(nodeUUID+h.partitionLabel)), nil
 }
