@@ -455,7 +455,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 
 					keys = append(keys, &v1alpha1.EncryptionKey{
 						KeyKMS: &v1alpha1.EncryptionKeyKMS{
-							KMSEndpoint: "http://" + nethelpers.JoinHostPort(ip.String(), port),
+							KMSEndpoint: "grpc://" + nethelpers.JoinHostPort(ip.String(), port),
 						},
 						KeySlot: i,
 					})

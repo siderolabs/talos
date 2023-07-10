@@ -128,9 +128,9 @@ func (h *KMSKeyHandler) getConn(ctx context.Context) (*grpc.ClientConn, error) {
 	}
 
 	if endpoint.Insecure {
-		transportCredentials = credentials.NewTLS(&tls.Config{})
-	} else {
 		transportCredentials = insecure.NewCredentials()
+	} else {
+		transportCredentials = credentials.NewTLS(&tls.Config{})
 	}
 
 	return grpc.DialContext(ctx, endpoint.Host, grpc.WithTransportCredentials(transportCredentials))
