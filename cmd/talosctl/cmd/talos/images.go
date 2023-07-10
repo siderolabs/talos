@@ -5,49 +5,18 @@
 package talos
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-
-	"github.com/siderolabs/talos/pkg/images"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-// imagesCmd represents the images command.
+// imagesCmd represents the (deprecated) images command.
+//
+// TODO: remove in Talos 1.6, add 'images' as an alias to talosctl image.
 var imagesCmd = &cobra.Command{
-	Use:   "images",
-	Short: "List the default images used by Talos",
-	Long:  ``,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		images := images.List(container.NewV1Alpha1(&v1alpha1.Config{
-			MachineConfig: &v1alpha1.MachineConfig{
-				MachineKubelet: &v1alpha1.KubeletConfig{},
-			},
-			ClusterConfig: &v1alpha1.ClusterConfig{
-				EtcdConfig:              &v1alpha1.EtcdConfig{},
-				APIServerConfig:         &v1alpha1.APIServerConfig{},
-				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
-				SchedulerConfig:         &v1alpha1.SchedulerConfig{},
-				CoreDNSConfig:           &v1alpha1.CoreDNS{},
-				ProxyConfig:             &v1alpha1.ProxyConfig{},
-			},
-		}))
-
-		fmt.Printf("%s\n", images.Flannel)
-		fmt.Printf("%s\n", images.FlannelCNI)
-		fmt.Printf("%s\n", images.CoreDNS)
-		fmt.Printf("%s\n", images.Etcd)
-		fmt.Printf("%s\n", images.KubeAPIServer)
-		fmt.Printf("%s\n", images.KubeControllerManager)
-		fmt.Printf("%s\n", images.KubeScheduler)
-		fmt.Printf("%s\n", images.KubeProxy)
-		fmt.Printf("%s\n", images.Kubelet)
-		fmt.Printf("%s\n", images.Installer)
-		fmt.Printf("%s\n", images.Pause)
-
-		return nil
-	},
+	Use:    "images",
+	Short:  "List the default images used by Talos",
+	Long:   ``,
+	Hidden: true,
+	RunE:   imageDefaultCmd.RunE,
 }
 
 func init() {

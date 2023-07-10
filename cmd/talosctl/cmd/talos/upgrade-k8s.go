@@ -41,6 +41,7 @@ func init() {
 	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false, "skip the actual upgrade and show the upgrade plan instead")
+	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.PrePullImages, "pre-pull-images", true, "pre-pull images before upgrade")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.UpgradeKubelet, "upgrade-kubelet", true, "upgrade kubelet service")
 	addCommand(upgradeK8sCmd)
 }

@@ -57,6 +57,8 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/GenerateClientConfiguration": role.MakeSet(role.Admin),
 	"/machine.MachineService/GenerateConfiguration":       role.MakeSet(role.Admin),
 	"/machine.MachineService/Hostname":                    role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/machine.MachineService/ImageList":                   role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/machine.MachineService/ImagePull":                   role.MakeSet(role.Admin, role.Operator),
 	"/machine.MachineService/Kubeconfig":                  role.MakeSet(role.Admin),
 	"/machine.MachineService/List":                        role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/LoadAvg":                     role.MakeSet(role.Admin, role.Operator, role.Reader),

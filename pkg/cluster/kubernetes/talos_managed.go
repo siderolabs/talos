@@ -16,13 +16,16 @@ import (
 	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/siderolabs/go-retry/retry"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/kubernetes"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	v1alpha1config "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -88,6 +91,12 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 		return err
 	}
 
+	if options.PrePullImages {
+		if err = prePullImages(ctx, talosClient, options); err != nil {
+			return fmt.Errorf("failed pre-pulling images: %w", err)
+		}
+	}
+
 	for _, service := range []string{kubeAPIServer, kubeControllerManager, kubeScheduler} {
 		if err = upgradeStaticPod(ctx, cluster, options, service); err != nil {
 			return fmt.Errorf("failed updating service %q: %w", service, err)
@@ -108,6 +117,48 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 	}
 
 	return syncManifests(ctx, objects, cluster, options)
+}
+
+func prePullImages(ctx context.Context, talosClient *client.Client, options UpgradeOptions) error {
+	for _, imageRef := range []string{
+		fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, options.Path.ToVersion()),
+		fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, options.Path.ToVersion()),
+		fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, options.Path.ToVersion()),
+	} {
+		for _, node := range options.controlPlaneNodes {
+			options.Log(" > %q: pre-pulling %s", node, imageRef)
+
+			err := talosClient.ImagePull(client.WithNode(ctx, node), common.ContainerdNamespace_NS_CRI, imageRef)
+			if err != nil {
+				if status.Code(err) == codes.Unimplemented {
+					options.Log(" < %q: not implemented, skipping", node)
+				} else {
+					return fmt.Errorf("error pre-pulling %s on %s: %w", imageRef, node, err)
+				}
+			}
+		}
+	}
+
+	if !options.UpgradeKubelet {
+		return nil
+	}
+
+	imageRef := fmt.Sprintf("%s:v%s", constants.KubeletImage, options.Path.ToVersion())
+
+	for _, node := range append(append([]string(nil), options.controlPlaneNodes...), options.workerNodes...) {
+		options.Log(" > %q: pre-pulling %s", node, imageRef)
+
+		err := talosClient.ImagePull(client.WithNode(ctx, node), common.ContainerdNamespace_NS_SYSTEM, imageRef)
+		if err != nil {
+			if status.Code(err) == codes.Unimplemented {
+				options.Log(" < %q: not implemented, skipping", node)
+			} else {
+				return fmt.Errorf("error pre-pulling %s on %s: %w", imageRef, node, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func upgradeStaticPod(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service string) error {

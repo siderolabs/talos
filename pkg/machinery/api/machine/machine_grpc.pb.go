@@ -72,6 +72,8 @@ const (
 	MachineService_Netstat_FullMethodName                     = "/machine.MachineService/Netstat"
 	MachineService_MetaWrite_FullMethodName                   = "/machine.MachineService/MetaWrite"
 	MachineService_MetaDelete_FullMethodName                  = "/machine.MachineService/MetaDelete"
+	MachineService_ImageList_FullMethodName                   = "/machine.MachineService/ImageList"
+	MachineService_ImagePull_FullMethodName                   = "/machine.MachineService/ImagePull"
 )
 
 // MachineServiceClient is the client API for MachineService service.
@@ -169,6 +171,10 @@ type MachineServiceClient interface {
 	MetaWrite(ctx context.Context, in *MetaWriteRequest, opts ...grpc.CallOption) (*MetaWriteResponse, error)
 	// MetaDelete deletes a META key.
 	MetaDelete(ctx context.Context, in *MetaDeleteRequest, opts ...grpc.CallOption) (*MetaDeleteResponse, error)
+	// ImageList lists images in the CRI.
+	ImageList(ctx context.Context, in *ImageListRequest, opts ...grpc.CallOption) (MachineService_ImageListClient, error)
+	// ImagePull pulls an image into the CRI.
+	ImagePull(ctx context.Context, in *ImagePullRequest, opts ...grpc.CallOption) (*ImagePullResponse, error)
 }
 
 type machineServiceClient struct {
@@ -876,6 +882,47 @@ func (c *machineServiceClient) MetaDelete(ctx context.Context, in *MetaDeleteReq
 	return out, nil
 }
 
+func (c *machineServiceClient) ImageList(ctx context.Context, in *ImageListRequest, opts ...grpc.CallOption) (MachineService_ImageListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[11], MachineService_ImageList_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &machineServiceImageListClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type MachineService_ImageListClient interface {
+	Recv() (*ImageListResponse, error)
+	grpc.ClientStream
+}
+
+type machineServiceImageListClient struct {
+	grpc.ClientStream
+}
+
+func (x *machineServiceImageListClient) Recv() (*ImageListResponse, error) {
+	m := new(ImageListResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *machineServiceClient) ImagePull(ctx context.Context, in *ImagePullRequest, opts ...grpc.CallOption) (*ImagePullResponse, error) {
+	out := new(ImagePullResponse)
+	err := c.cc.Invoke(ctx, MachineService_ImagePull_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MachineServiceServer is the server API for MachineService service.
 // All implementations must embed UnimplementedMachineServiceServer
 // for forward compatibility
@@ -971,6 +1018,10 @@ type MachineServiceServer interface {
 	MetaWrite(context.Context, *MetaWriteRequest) (*MetaWriteResponse, error)
 	// MetaDelete deletes a META key.
 	MetaDelete(context.Context, *MetaDeleteRequest) (*MetaDeleteResponse, error)
+	// ImageList lists images in the CRI.
+	ImageList(*ImageListRequest, MachineService_ImageListServer) error
+	// ImagePull pulls an image into the CRI.
+	ImagePull(context.Context, *ImagePullRequest) (*ImagePullResponse, error)
 	mustEmbedUnimplementedMachineServiceServer()
 }
 
@@ -1124,6 +1175,12 @@ func (UnimplementedMachineServiceServer) MetaWrite(context.Context, *MetaWriteRe
 }
 func (UnimplementedMachineServiceServer) MetaDelete(context.Context, *MetaDeleteRequest) (*MetaDeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MetaDelete not implemented")
+}
+func (UnimplementedMachineServiceServer) ImageList(*ImageListRequest, MachineService_ImageListServer) error {
+	return status.Errorf(codes.Unimplemented, "method ImageList not implemented")
+}
+func (UnimplementedMachineServiceServer) ImagePull(context.Context, *ImagePullRequest) (*ImagePullResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ImagePull not implemented")
 }
 func (UnimplementedMachineServiceServer) mustEmbedUnimplementedMachineServiceServer() {}
 
@@ -2058,6 +2115,45 @@ func _MachineService_MetaDelete_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MachineService_ImageList_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ImageListRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(MachineServiceServer).ImageList(m, &machineServiceImageListServer{stream})
+}
+
+type MachineService_ImageListServer interface {
+	Send(*ImageListResponse) error
+	grpc.ServerStream
+}
+
+type machineServiceImageListServer struct {
+	grpc.ServerStream
+}
+
+func (x *machineServiceImageListServer) Send(m *ImageListResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _MachineService_ImagePull_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImagePullRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).ImagePull(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MachineService_ImagePull_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).ImagePull(ctx, req.(*ImagePullRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MachineService_ServiceDesc is the grpc.ServiceDesc for MachineService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2217,6 +2313,10 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "MetaDelete",
 			Handler:    _MachineService_MetaDelete_Handler,
 		},
+		{
+			MethodName: "ImagePull",
+			Handler:    _MachineService_ImagePull_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -2272,6 +2372,11 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "PacketCapture",
 			Handler:       _MachineService_PacketCapture_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ImageList",
+			Handler:       _MachineService_ImageList_Handler,
 			ServerStreams: true,
 		},
 	},

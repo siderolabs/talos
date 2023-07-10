@@ -1064,3 +1064,28 @@ func (c *Client) MetaDelete(ctx context.Context, key uint8, callOptions ...grpc.
 
 	return err
 }
+
+// ImageList lists images in the CRI.
+func (c *Client) ImageList(ctx context.Context, namespace common.ContainerdNamespace, callOptions ...grpc.CallOption) (machineapi.MachineService_ImageListClient, error) {
+	return c.MachineClient.ImageList(ctx,
+		&machineapi.ImageListRequest{
+			Namespace: namespace,
+		},
+		callOptions...,
+	)
+}
+
+// ImagePull pre-pulls an image to the CRI.
+func (c *Client) ImagePull(ctx context.Context, namespace common.ContainerdNamespace, imageRef string, callOptions ...grpc.CallOption) error {
+	resp, err := c.MachineClient.ImagePull(ctx,
+		&machineapi.ImagePullRequest{
+			Namespace: namespace,
+			Reference: imageRef,
+		},
+		callOptions...,
+	)
+
+	_, err = FilterMessages(resp, err)
+
+	return err
+}

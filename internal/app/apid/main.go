@@ -126,6 +126,7 @@ func apidMain() error {
 		"/machine.MachineService/Dmesg",
 		"/machine.MachineService/EtcdSnapshot",
 		"/machine.MachineService/Events",
+		"/machine.MachineService/ImageList",
 		"/machine.MachineService/Kubeconfig",
 		"/machine.MachineService/List",
 		"/machine.MachineService/Logs",

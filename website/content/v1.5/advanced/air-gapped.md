@@ -21,12 +21,12 @@ In air-gapped environments, access to the public Internet is restricted, so Talo
 We need to identify the images required to install and run Talos.
 The same strategy can be used for images required by custom workloads running on the cluster.
 
-The `talosctl images` command provides a list of default images used by the Talos cluster (with default configuration
+The `talosctl image default` command provides a list of default images used by the Talos cluster (with default configuration
 settings).
 To print the list of images, run:
 
 ```bash
-talosctl images
+talosctl image default
 ```
 
 This list contains images required by a default deployment of Talos.
@@ -48,7 +48,7 @@ The registry is empty by default, so we have fill it with the images required by
 First, we pull all the images to our local Docker daemon:
 
 ```bash
-$ for image in `talosctl images`; do docker pull $image; done
+$ for image in `talosctl image default`; do docker pull $image; done
 v0.15.1: Pulling from coreos/flannel
 Digest: sha256:9a296fbb67790659adc3701e287adde3c59803b7fcefe354f1fc482840cdb3d9
 ...
@@ -68,7 +68,7 @@ Now we need to re-tag them so that we can push them to our local registry.
 We are going to replace the first component of the image name (before the first slash) with our registry endpoint `127.0.0.1:6000`:
 
 ```bash
-$ for image in `talosctl images`; do \
+$ for image in `talosctl image default`; do \
     docker tag $image `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'`; \
   done
 ```
@@ -76,7 +76,7 @@ $ for image in `talosctl images`; do \
 As the next step, we push images to the internal registry:
 
 ```bash
-$ for image in `talosctl images`; do \
+$ for image in `talosctl image default`; do \
     docker push `echo $image | sed -E 's#^[^/]+/#127.0.0.1:6000/#'`; \
   done
 ```
@@ -98,7 +98,7 @@ This means that the registry endpoint (as the first component of the image refer
 We are going to use a QEMU-based Talos cluster for this guide, but the same approach works with Docker-based clusters as well.
 As QEMU-based clusters go through the Talos install process, they can be used better to model a real air-gapped environment.
 
-Identify all registry prefixes from `talosctl images`, for example:
+Identify all registry prefixes from `talosctl image default`, for example:
 
 - `docker.io`
 - `gcr.io`

@@ -25,6 +25,7 @@ type UpgradeOptions struct {
 
 	ControlPlaneEndpoint string
 	LogOutput            io.Writer
+	PrePullImages        bool
 	UpgradeKubelet       bool
 	DryRun               bool
 

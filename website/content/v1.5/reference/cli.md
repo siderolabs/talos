@@ -1746,18 +1746,102 @@ talosctl health [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-## talosctl images
+## talosctl image default
 
 List the default images used by Talos
 
 ```
-talosctl images [flags]
+talosctl image default [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for images
+  -h, --help   help for default
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+      --namespace system     namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+
+## talosctl image list
+
+List CRI images
+
+```
+talosctl image list [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for list
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+      --namespace system     namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+
+## talosctl image pull
+
+Pull an image into CRI
+
+```
+talosctl image pull [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for pull
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+      --namespace system     namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl image](#talosctl-image)	 - Manage CRI containter images
+
+## talosctl image
+
+Manage CRI containter images
+
+### Options
+
+```
+  -h, --help               help for image
+      --namespace system   namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads (default "cri")
 ```
 
 ### Options inherited from parent commands
@@ -1773,6 +1857,9 @@ talosctl images [flags]
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl image default](#talosctl-image-default)	 - List the default images used by Talos
+* [talosctl image list](#talosctl-image-list)	 - List CRI images
+* [talosctl image pull](#talosctl-image-pull)	 - Pull an image into CRI
 
 ## talosctl inject serviceaccount
 
@@ -2800,6 +2887,7 @@ talosctl upgrade-k8s [flags]
       --endpoint string   the cluster control plane endpoint
       --from string       the Kubernetes control plane version to upgrade from
   -h, --help              help for upgrade-k8s
+      --pre-pull-images   pre-pull images before upgrade (default true)
       --to string         the Kubernetes control plane version to upgrade to (default "1.28.0-alpha.4")
       --upgrade-kubelet   upgrade kubelet service (default true)
 ```
@@ -2946,7 +3034,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
 * [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources (use 'talosctl get rd' to see all available resource types).
 * [talosctl health](#talosctl-health)	 - Check cluster health
-* [talosctl images](#talosctl-images)	 - List the default images used by Talos
+* [talosctl image](#talosctl-image)	 - Manage CRI containter images
 * [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
 * [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
 * [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node

@@ -660,6 +660,7 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string, skip
 		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
 
 		UpgradeKubelet: !skipKubeletUpgrade,
+		PrePullImages:  true,
 	}
 
 	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, options))

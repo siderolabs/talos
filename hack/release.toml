@@ -121,6 +121,37 @@ gRPC API definitions and a simple reference implementation of the KMS server can
 [repository](https://github.com/siderolabs/kms-client/blob/main/cmd/kms-server/main.go).
 """
 
+    [notes.talosctl-images]
+        title = "`talosctl images` Command"
+        description="""\
+The command `talosctl images` was renamed to `talosctl image default`.
+
+The backward-compatible alias is kept in Talos 1.5, but it will be dropped in Talos 1.6.
+"""
+
+    [notes.talosctl-image]
+        title = "`talosctl image` Command"
+        description="""\
+A new set of commands was introduced to manage container images in the CRI:
+
+* `talosctl image list` shows list of available images
+* `talosctl image pull` allows to pre-pull an image into the CRI
+
+Both new commands accept `--namespace` flag with two possible values:
+
+* `cri` (default): images managed by the CRI (Kubernetes workloads)
+* `system`: images managed by Talos (`etcd` and `kubelet`)
+```
+"""
+
+    [notes.upgrade-k8s]
+        title = "`talosctl upgrade-k8s` Image Pre-pulling"
+        description="""\
+The command `talosctl upgrade-k8s` now by default pre-pulls images for Kubernetes controlplane components
+and kubelet. This provides an early check for missing images, and minimizes downtime during Kubernetes
+rolling component update.
+"""
+
 [make_deps]
 
     [make_deps.tools]

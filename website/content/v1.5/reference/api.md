@@ -21,6 +21,7 @@ description: Talos gRPC API reference.
   
     - [Code](#common.Code)
     - [ContainerDriver](#common.ContainerDriver)
+    - [ContainerdNamespace](#common.ContainerdNamespace)
   
     - [File-level Extensions](#common/common.proto-extensions)
   
@@ -307,6 +308,11 @@ description: Talos gRPC API reference.
     - [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse)
     - [Hostname](#machine.Hostname)
     - [HostnameResponse](#machine.HostnameResponse)
+    - [ImageListRequest](#machine.ImageListRequest)
+    - [ImageListResponse](#machine.ImageListResponse)
+    - [ImagePull](#machine.ImagePull)
+    - [ImagePullRequest](#machine.ImagePullRequest)
+    - [ImagePullResponse](#machine.ImagePullResponse)
     - [InstallConfig](#machine.InstallConfig)
     - [ListRequest](#machine.ListRequest)
     - [LoadAvg](#machine.LoadAvg)
@@ -659,6 +665,19 @@ Common metadata message nested in all reply message types
 | ---- | ------ | ----------- |
 | CONTAINERD | 0 |  |
 | CRI | 1 |  |
+
+
+
+<a name="common.ContainerdNamespace"></a>
+
+### ContainerdNamespace
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NS_UNKNOWN | 0 |  |
+| NS_SYSTEM | 1 |  |
+| NS_CRI | 2 |  |
 
 
  <!-- end enums -->
@@ -5313,6 +5332,86 @@ on a node.
 
 
 
+<a name="machine.ImageListRequest"></a>
+
+### ImageListRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [common.ContainerdNamespace](#common.ContainerdNamespace) |  | Containerd namespace to use. |
+
+
+
+
+
+
+<a name="machine.ImageListResponse"></a>
+
+### ImageListResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| name | [string](#string) |  |  |
+| digest | [string](#string) |  |  |
+| size | [int64](#int64) |  |  |
+| created_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+
+
+
+
+
+
+<a name="machine.ImagePull"></a>
+
+### ImagePull
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.ImagePullRequest"></a>
+
+### ImagePullRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [common.ContainerdNamespace](#common.ContainerdNamespace) |  | Containerd namespace to use. |
+| reference | [string](#string) |  | Image reference to pull. |
+
+
+
+
+
+
+<a name="machine.ImagePullResponse"></a>
+
+### ImagePullResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [ImagePull](#machine.ImagePull) | repeated |  |
+
+
+
+
+
+
 <a name="machine.InstallConfig"></a>
 
 ### InstallConfig
@@ -7125,6 +7224,8 @@ This method is available only on control plane nodes (which run etcd). |
 | Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) | Netstat provides information about network connections. |
 | MetaWrite | [MetaWriteRequest](#machine.MetaWriteRequest) | [MetaWriteResponse](#machine.MetaWriteResponse) | MetaWrite writes a META key-value pair. |
 | MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
+| ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI. |
+| ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI. |
 
  <!-- end services -->
 

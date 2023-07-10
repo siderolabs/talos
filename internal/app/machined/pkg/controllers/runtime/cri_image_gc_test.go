@@ -13,6 +13,8 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/containerd/containerd/images"
+	"github.com/opencontainers/go-digest"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
@@ -98,18 +100,51 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 		{
 			Name:      "registry.io/org/image1:v1.3.5@sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a",
 			CreatedAt: suite.fakeClock.Now().Add(-2 * runtimectrl.ImageGCGracePeriod),
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a")),
+			},
 		}, // ok to be gc'd
+		{
+			Name:      "sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a",
+			CreatedAt: suite.fakeClock.Now().Add(-2 * runtimectrl.ImageGCGracePeriod),
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a")),
+			},
+		}, // ok to be gc'd, same as above, another ref
 		{
 			Name:      "registry.io/org/image1:v1.3.7",
 			CreatedAt: suite.fakeClock.Now().Add(-2 * runtimectrl.ImageGCGracePeriod),
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135")),
+			},
 		}, // current image
+		{
+			Name:      "registry.io/org/image1@sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			CreatedAt: suite.fakeClock.Now().Add(-2 * runtimectrl.ImageGCGracePeriod),
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135")),
+			},
+		}, // current image, canonical ref
+		{
+			Name:      "sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			CreatedAt: suite.fakeClock.Now().Add(-2 * runtimectrl.ImageGCGracePeriod),
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135")),
+			},
+		}, // current image, digest ref
 		{
 			Name:      "registry.io/org/image1:v1.3.8",
 			CreatedAt: suite.fakeClock.Now(),
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:fd03335dd2e7163e5e36e933a0c735d7fec6f42b33ddafad0bc54f333e4a23c0")),
+			},
 		}, // not ok to clean up, too new
 		{
 			Name:      "registry.io/org/image2@sha256:2f794176e9bd8a28501fa185693dc1073013a048c51585022ebce4f84b469db8",
 			CreatedAt: suite.fakeClock.Now().Add(-2 * runtimectrl.ImageGCGracePeriod),
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:2f794176e9bd8a28501fa185693dc1073013a048c51585022ebce4f84b469db8")),
+			},
 		}, // current image
 	}
 
@@ -129,7 +164,7 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 	etcd.TypedSpec().Image = "registry.io/org/image2@sha256:2f794176e9bd8a28501fa185693dc1073013a048c51585022ebce4f84b469db8"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), etcd))
 
-	expectedImages := slices.Map(storedImages[1:4], func(i images.Image) string { return i.Name })
+	expectedImages := slices.Map(storedImages[2:7], func(i images.Image) string { return i.Name })
 
 	suite.Assert().NoError(retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		suite.fakeClock.Add(runtimectrl.ImageCleanupInterval)

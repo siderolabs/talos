@@ -88,6 +88,12 @@ enum ContainerDriver {
   CRI = 1;
 }
 
+enum ContainerdNamespace {
+  NS_UNKNOWN = 0;
+  NS_SYSTEM = 1;
+  NS_CRI = 2;
+}
+
 message URL {
   string full_path = 1;
 }
