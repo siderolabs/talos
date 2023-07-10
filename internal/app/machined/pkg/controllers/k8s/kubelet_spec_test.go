@@ -128,7 +128,6 @@ func (suite *KubeletSpecSuite) TestReconcileDefault() {
 						"--cert-dir=/var/lib/kubelet/pki",
 						"--cloud-provider=external",
 						"--config=/etc/kubernetes/kubelet.yaml",
-						"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
 						"--foo=bar",
 						"--hostname-override=example.com",
 						"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
@@ -188,7 +187,6 @@ func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 						"--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubeconfig",
 						"--cert-dir=/var/lib/kubelet/pki",
 						"--config=/etc/kubernetes/kubelet.yaml",
-						"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
 						"--hostname-override=example.com",
 						"--kubeconfig=/etc/kubernetes/kubeconfig-kubelet",
 						"--node-ip=10.0.0.1",
@@ -318,7 +316,6 @@ func (suite *KubeletSpecSuite) TestReconcileWithSkipNodeRegistration() {
 				suite.Assert().Equal([]string{
 					"--cert-dir=/var/lib/kubelet/pki",
 					"--config=/etc/kubernetes/kubelet.yaml",
-					"--container-runtime-endpoint=unix:///run/containerd/containerd.sock",
 					"--hostname-override=foo.com",
 					"--node-ip=172.20.0.3",
 				}, spec.Args)
@@ -444,6 +441,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		StreamingConnectionIdleTimeout:  metav1.Duration{Duration: 5 * time.Minute},
 		TLSMinVersion:                   "VersionTLS13",
 		StaticPodPath:                   constants.ManifestsDirectory,
+		ContainerRuntimeEndpoint:        "unix://" + constants.CRIContainerdAddress,
 	}
 
 	for _, tt := range []struct {
@@ -490,47 +488,6 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.SeccompDefault = pointer.To(true)
-				kc.FeatureGates = map[string]bool{
-					"SeccompDefault": true,
-				}
-			},
-		},
-		{
-			name: "enable seccomp default when featuregate already set",
-			cfgSpec: &k8s.KubeletConfigSpec{
-				ClusterDNS:                   []string{"10.0.0.5"},
-				ClusterDomain:                "cluster.local",
-				DefaultRuntimeSeccompEnabled: true,
-				ExtraConfig: map[string]interface{}{
-					"featureGates": map[string]interface{}{
-						"SeccompDefault": true,
-					},
-				},
-			},
-			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
-				kc.SeccompDefault = pointer.To(true)
-				kc.FeatureGates = map[string]bool{
-					"SeccompDefault": true,
-				}
-			},
-		},
-		{
-			name: "enable seccomp default when featuregate already set to false",
-			cfgSpec: &k8s.KubeletConfigSpec{
-				ClusterDNS:                   []string{"10.0.0.5"},
-				ClusterDomain:                "cluster.local",
-				DefaultRuntimeSeccompEnabled: true,
-				ExtraConfig: map[string]interface{}{
-					"featureGates": map[string]interface{}{
-						"SeccompDefault": false,
-					},
-				},
-			},
-			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
-				kc.SeccompDefault = pointer.To(true)
-				kc.FeatureGates = map[string]bool{
-					"SeccompDefault": true,
-				}
 			},
 		},
 		{

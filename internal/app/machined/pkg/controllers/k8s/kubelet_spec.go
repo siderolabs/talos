@@ -109,8 +109,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 		expectedNodename := nodenameSpec.Nodename
 
 		args := argsbuilder.Args{
-			"container-runtime-endpoint": "unix://" + constants.CRIContainerdAddress,
-			"config":                     "/etc/kubernetes/kubelet.yaml",
+			"config": "/etc/kubernetes/kubelet.yaml",
 
 			"cert-dir": constants.KubeletPKIDir,
 
@@ -271,18 +270,11 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec) (*kubeletconfig.Kub
 	config.KubeletCgroups = constants.CgroupKubelet
 	config.RotateCertificates = true
 	config.ProtectKernelDefaults = true
+	config.ContainerRuntimeEndpoint = "unix://" + constants.CRIContainerdAddress
 
+	// SeccompDefault feature gate is enabled by default Kubernetes 1.25+, GA in 1.27
 	if cfgSpec.DefaultRuntimeSeccompEnabled {
 		config.SeccompDefault = pointer.To(true)
-		if config.FeatureGates != nil {
-			if defaultRuntimeSeccompProfileEnabled, overridden := config.FeatureGates["SeccompDefault"]; overridden && !defaultRuntimeSeccompProfileEnabled {
-				config.FeatureGates["SeccompDefault"] = true
-			}
-		} else {
-			config.FeatureGates = map[string]bool{
-				"SeccompDefault": true,
-			}
-		}
 	}
 
 	if cfgSpec.EnableFSQuotaMonitoring {
