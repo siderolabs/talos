@@ -8,7 +8,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -194,12 +196,19 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 			if stopAction == StopAndRemove {
 				log.Printf("removing container %s/%s:%s", pod.Metadata.Namespace, pod.Metadata.Name, container.Metadata.Name)
 
-				if criErr := client.RemoveContainer(ctx, container.Id); criErr != nil {
-					if talosclient.StatusCode(criErr) == codes.NotFound {
-						return nil
-					}
+				if removeErr := retry.Constant(constants.KubeletShutdownGracePeriod, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx,
+					func(ctx context.Context) error {
+						if criErr := client.RemoveContainer(ctx, container.Id); criErr != nil {
+							if talosclient.StatusCode(criErr) == codes.NotFound {
+								return nil
+							}
 
-					return criErr
+							return retry.ExpectedError(criErr)
+						}
+
+						return nil
+					}); removeErr != nil {
+					return removeErr
 				}
 			}
 

@@ -148,7 +148,7 @@ func upgradeCurrentToCurrent() upgradeSpec {
 	)
 
 	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-%s", DefaultSettings.CurrentVersion, DefaultSettings.CurrentVersion),
+		ShortName: fmt.Sprintf("%s-same-ver", DefaultSettings.CurrentVersion),
 
 		SourceKernelPath:     helpers.ArtifactPath(constants.KernelAssetWithArch),
 		SourceInitramfsPath:  helpers.ArtifactPath(constants.InitramfsAssetWithArch),
@@ -565,10 +565,14 @@ func (suite *UpgradeSuite) readVersion(nodeCtx context.Context, client *taloscli
 	return
 }
 
+//nolint:gocyclo
 func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provision.NodeInfo) {
 	suite.T().Logf("upgrading node %s", node.IPs[0])
 
-	nodeCtx := talosclient.WithNodes(suite.ctx, node.IPs[0].String())
+	ctx, cancel := context.WithCancel(suite.ctx)
+	defer cancel()
+
+	nodeCtx := talosclient.WithNodes(ctx, node.IPs[0].String())
 
 	var (
 		resp *machineapi.UpgradeResponse
@@ -600,14 +604,48 @@ func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provisio
 		},
 	)
 
-	err = base.IgnoreGRPCUnavailable(err)
 	suite.Require().NoError(err)
+	suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)
 
-	if resp != nil {
-		suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)
+	actorID := resp.Messages[0].ActorId
+
+	eventCh := make(chan talosclient.EventResult)
+
+	// watch for events
+	suite.Require().NoError(client.EventsWatchV2(nodeCtx, eventCh, talosclient.WithActorID(actorID), talosclient.WithTailEvents(-1)))
+
+	waitTimer := time.NewTimer(5 * time.Minute)
+	defer waitTimer.Stop()
+
+waitLoop:
+	for {
+		select {
+		case ev := <-eventCh:
+			suite.Require().NoError(ev.Error)
+
+			switch msg := ev.Event.Payload.(type) {
+			case *machineapi.SequenceEvent:
+				if msg.Error != nil {
+					suite.FailNow("upgrade failed", "%s: %s", msg.Error.Message, msg.Error.Code)
+				}
+			case *machineapi.PhaseEvent:
+				if msg.Action == machineapi.PhaseEvent_START && msg.Phase == "kexec" {
+					// about to be rebooted
+					break waitLoop
+				}
+
+				if msg.Action == machineapi.PhaseEvent_STOP {
+					suite.T().Logf("upgrade phase %q finished", msg.Phase)
+				}
+			}
+		case <-waitTimer.C:
+			suite.FailNow("timeout waiting for upgrade to finish")
+		case <-ctx.Done():
+			suite.FailNow("context canceled")
+		}
 	}
 
-	// wait for the upgrade to be kicked off
+	// wait for the apid to be shut down
 	time.Sleep(10 * time.Second)
 
 	// wait for the version to be equal to target version
