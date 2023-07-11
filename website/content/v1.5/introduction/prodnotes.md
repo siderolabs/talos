@@ -38,6 +38,8 @@ If you are using a cloud provider or have your own load-balancer
 Create an appropriate frontend for the endpoint, listening on TCP port 6443, and point the backends at the addresses of each of the Talos control plane nodes.
 Your Kubernetes endpoint will be the IP address or DNS name of the load balancer front end, with the port appended (e.g. https://myK8s.mydomain.io:6443).
 
+> Note: an HTTP load balancer can't be used, as Kubernetes API server does TLS termination and mutual TLS authentication.
+
 ### Layer 2 VIP Shared IP
 
 Talos has integrated support for serving Kubernetes from a shared/virtual IP address.
@@ -99,10 +101,11 @@ https://kube.cluster1.mydomain.com:6443
 
 ## Load balancing the Talos API
 
-The `talosctl` tool provides built-in client-side load-balancing across control plane nodes, if they are all reachable from the workstation where you run `talosctl`.
-So usually you do not need to configure a load balancer for the Talos API.
+The `talosctl` tool provides built-in client-side load-balancing across control plane nodes, so usually you do not need to configure a load balancer for the Talos API.
 
-If the control plane nodes are not directly reachable from the workstation where you run `talosctl`, then configure a load balancer to forward TCP port 50000 to the control plane nodes.
+However, if the control plane nodes are *not* directly reachable from the workstation where you run `talosctl`, then configure a load balancer to forward TCP port 50000 to the control plane nodes.
+
+> Note: Because the Talos Linux API uses gRPC and mutual TLS, it cannot be proxied by a HTTP/S proxy, but only by a TCP load balancer.
 
 If you create a load balancer to forward the Talos API calls, the load balancer IP or hostname will be used as the `endpoint` for `talosctl`.
 
