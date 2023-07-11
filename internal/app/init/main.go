@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/mount/switchroot"
 	"github.com/siderolabs/talos/internal/pkg/rng"
+	"github.com/siderolabs/talos/internal/pkg/tpm2"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
 	"github.com/siderolabs/talos/pkg/version"
@@ -58,6 +59,11 @@ func run() (err error) {
 		log.Printf("failed to seed from the TPM: %s", err)
 	}
 
+	// extend PCR 11 with enter-initrd
+	if err = tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(tpm2.EnterInitrd)); err != nil {
+		return fmt.Errorf("failed to extend PCR %d with enter-initrd: %v", constants.UKIMeasuredPCR, err)
+	}
+
 	log.Printf("booting Talos %s", version.Tag)
 
 	// Mount the rootfs.
@@ -67,6 +73,11 @@ func run() (err error) {
 
 	// Bind mount the lib/firmware if needed.
 	if err = bindMountFirmware(); err != nil {
+		return err
+	}
+
+	// Bind mount /.extra if needed.
+	if err = bindMountExtra(); err != nil {
 		return err
 	}
 
@@ -193,6 +204,20 @@ func bindMountFirmware() error {
 	log.Printf("bind mounting %s", constants.FirmwarePath)
 
 	return unix.Mount(constants.FirmwarePath, filepath.Join(constants.NewRoot, constants.FirmwarePath), "", unix.MS_BIND|unix.MS_RDONLY, "")
+}
+
+func bindMountExtra() error {
+	if _, err := os.Stat(constants.SDStubDynamicInitrdPath); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	log.Printf("bind mounting %s", constants.SDStubDynamicInitrdPath)
+
+	return unix.Mount(constants.SDStubDynamicInitrdPath, filepath.Join(constants.NewRoot, constants.SDStubDynamicInitrdPath), "", unix.MS_BIND|unix.MS_RDONLY, "")
 }
 
 func main() {

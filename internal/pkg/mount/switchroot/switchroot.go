@@ -14,13 +14,15 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/internal/pkg/tpm2"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Paths preserved in the initramfs.
 var preservedPaths = map[string]struct{}{
-	constants.ExtensionsConfigFile: {},
-	constants.FirmwarePath:         {},
+	constants.ExtensionsConfigFile:    {},
+	constants.FirmwarePath:            {},
+	constants.SDStubDynamicInitrdPath: {},
 }
 
 // Switch moves the rootfs to a specified directory. See
@@ -63,6 +65,11 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 
 	if _, err = recursiveDelete(int(old.Fd()), "/"); err != nil {
 		return fmt.Errorf("error deleting initramfs: %w", err)
+	}
+
+	// extend PCR 11 with leave-initrd
+	if err = tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(tpm2.LeaveInitrd)); err != nil {
+		return fmt.Errorf("failed to extend PCR %d with leave-initrd: %v", constants.UKIMeasuredPCR, err)
 	}
 
 	// Note that /sbin/init is machined. We call it init since this is the

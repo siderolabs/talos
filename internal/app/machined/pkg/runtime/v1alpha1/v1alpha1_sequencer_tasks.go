@@ -62,6 +62,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/internal/pkg/tpm2"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
 	krnl "github.com/siderolabs/talos/pkg/kernel"
@@ -862,6 +863,10 @@ func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // StartMachined represents the task to start machined.
 func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if err := tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(tpm2.EnterMachined)); err != nil {
+			return err
+		}
+
 		svc := &services.Machined{}
 
 		id := svc.ID(r)
@@ -910,6 +915,13 @@ func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
 	}, "startUdevd"
+}
+
+// ExtendPCRStartAll represents the task to extend the PCR with the StartTheWorld PCR phase.
+func ExtendPCRStartAll(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(tpm2.StartTheWorld))
+	}, "extendPCRStartAll"
 }
 
 // StartAllServices represents the task to start the system services.

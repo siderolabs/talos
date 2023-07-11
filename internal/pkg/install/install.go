@@ -144,6 +144,13 @@ func RunInstallerContainer(disk, platform, ref string, cfg configcore.Config, cf
 		)
 	}
 
+	// mount the /.extra directory into the container if the directory exists
+	if _, err = os.Stat(constants.SDStubDynamicInitrdPath); err == nil {
+		mounts = append(mounts,
+			specs.Mount{Type: "bind", Destination: constants.SDStubDynamicInitrdPath, Source: constants.SDStubDynamicInitrdPath, Options: []string{"rbind", "rshared", "ro"}},
+		)
+	}
+
 	// TODO(andrewrynhard): To handle cases when the newer version changes the
 	// platform name, this should be determined in the installer container.
 	config := constants.ConfigNone

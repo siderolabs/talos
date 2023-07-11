@@ -88,6 +88,7 @@ type section struct {
 	name    constants.Section
 	file    string
 	measure bool
+	append  bool
 	size    uint64
 	vma     uint64
 }
@@ -121,6 +122,10 @@ func buildUKI(source, output string, sections []section) error {
 
 	// calculate sections size and VMA
 	for i := range sections {
+		if !sections[i].append {
+			continue
+		}
+
 		st, err := os.Stat(sections[i].file)
 		if err != nil {
 			return err
@@ -137,6 +142,10 @@ func buildUKI(source, output string, sections []section) error {
 	args := []string{}
 
 	for _, section := range sections {
+		if !section.append {
+			continue
+		}
+
 		args = append(args, "--add-section", fmt.Sprintf("%s=%s", section.name, section.file), "--change-section-vma", fmt.Sprintf("%s=0x%x", section.name, section.vma))
 	}
 
@@ -149,7 +158,7 @@ func buildUKI(source, output string, sections []section) error {
 	return cmd.Run()
 }
 
-func Measure(tempDir, kernel, signingKey string, sections []section) ([]section, error) {
+func Measure(tempDir, signingKey string, sections []section) ([]section, error) {
 	sectionsData := measure.SectionsData{}
 
 	for _, section := range sections {
@@ -159,9 +168,6 @@ func Measure(tempDir, kernel, signingKey string, sections []section) ([]section,
 
 		sectionsData[section.name] = section.file
 	}
-
-	// manually add the linux section
-	sectionsData[constants.Linux] = kernel
 
 	pcrpsigFile := filepath.Join(tempDir, "pcrpsig")
 
@@ -183,6 +189,7 @@ func Measure(tempDir, kernel, signingKey string, sections []section) ([]section,
 		name:    constants.PCRSig,
 		file:    pcrpsigFile,
 		measure: false,
+		append:  true,
 	})
 
 	return sections, nil
@@ -276,42 +283,61 @@ func run() error {
 		return err
 	}
 
+	sbat, closeFunc, err := parseSBATFromStub()
+	if err != nil {
+		return err
+	}
+
+	defer closeFunc() //nolint:errcheck
+
+	sbatFile := filepath.Join(tempDir, "sbat")
+
+	if err = os.WriteFile(sbatFile, sbat, 0o644); err != nil {
+		return err
+	}
+
 	sections := []section{
 		{
 			name:    constants.OSRel,
 			file:    osReleaseFile,
 			measure: true,
+			append:  true,
 		},
 		{
 			name:    constants.CMDLine,
 			file:    cmdlineFile,
 			measure: true,
+			append:  true,
 		},
 		{
 			name:    constants.Initrd,
 			file:    initrd,
 			measure: true,
+			append:  true,
 		},
 		{
 			name:    constants.Splash,
 			file:    splashFile,
 			measure: true,
+			append:  true,
 		},
 		{
 			name:    constants.Uname,
 			file:    unameFile,
+			measure: true,
+			append:  true,
+		},
+		{
+			name:    constants.SBAT,
+			file:    sbatFile,
 			measure: true,
 		},
 		{
 			name:    constants.PCRPKey,
 			file:    pcrPublicKey,
 			measure: true,
+			append:  true,
 		},
-	}
-
-	// systemd-measure
-	if sections, err = Measure(tempDir, signedKernel, pcrSigningKey, sections); err != nil {
-		return err
 	}
 
 	// kernel is added last to account for decompression
@@ -320,8 +346,14 @@ func run() error {
 			name:    constants.Linux,
 			file:    signedKernel,
 			measure: true,
+			append:  true,
 		},
 	)
+
+	// systemd-measure
+	if sections, err = Measure(tempDir, pcrSigningKey, sections); err != nil {
+		return err
+	}
 
 	if err = os.RemoveAll(output); err != nil {
 		return err
@@ -334,6 +366,29 @@ func run() error {
 	_, err = sign(output)
 
 	return err
+}
+
+func parseSBATFromStub() ([]byte, func() error, error) {
+	pefile, err := pe.New(sdStub, &pe.Options{Fast: true})
+	if err != nil {
+		return nil, pefile.Close, err
+	}
+
+	if err := pefile.Parse(); err != nil {
+		return nil, pefile.Close, err
+	}
+
+	var sbatData []byte
+
+	for _, section := range pefile.Sections {
+		if section.String() == string(constants.SBAT) {
+			sbatData = section.Data(section.Header.VirtualAddress, section.Header.VirtualSize, pefile)
+
+			break
+		}
+	}
+
+	return sbatData, pefile.Close, nil
 }
 
 func main() {

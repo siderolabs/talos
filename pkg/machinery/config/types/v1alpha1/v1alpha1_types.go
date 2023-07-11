@@ -2110,6 +2110,9 @@ type EncryptionKey struct {
 	//   description: >
 	//     Key slot number for LUKS2 encryption.
 	KeySlot int `yaml:"slot"`
+	//   description: >
+	//     Enable TPM based disk encryption.
+	KeyTPM *EncryptionKeyTPM `yaml:"tpm,omitempty"`
 }
 
 // EncryptionKeyStatic represents throw away key type.
@@ -2125,6 +2128,9 @@ type EncryptionKeyKMS struct {
 	//     KMS endpoint to Seal/Unseal the key.
 	KMSEndpoint string `yaml:"endpoint"`
 }
+
+// EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.
+type EncryptionKeyTPM struct{}
 
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
 type EncryptionKeyNodeID struct{}

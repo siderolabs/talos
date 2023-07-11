@@ -14,6 +14,7 @@ const (
 	Splash  Section = ".splash"
 	DTB     Section = ".dtb"
 	Uname   Section = ".uname"
+	SBAT    Section = ".sbat"
 	PCRSig  Section = ".pcrsig"
 	PCRPKey Section = ".pcrpkey"
 )
@@ -23,24 +24,49 @@ const (
 // .pcrsig section is omitted here since that's what we are calulating here
 func OrderedSections() []Section {
 	// DO NOT REARRANGE
-	return []Section{Linux, OSRel, CMDLine, Initrd, Splash, DTB, Uname, PCRPKey}
+	return []Section{Linux, OSRel, CMDLine, Initrd, Splash, DTB, Uname, SBAT, PCRPKey}
 }
 
 type Phase string
 
 const (
+	// EnterInitrd is the phase value extended to the PCR during the initrd.
 	EnterInitrd Phase = "enter-initrd"
+	// LeaveInitrd is the phase value extended to the PCR just before switching to machined.
 	LeaveInitrd Phase = "leave-initrd"
-	SysInit     Phase = "sysinit"
-	Ready       Phase = "ready"
+	// EnterMachined is the phase value extended to the PCR before starting machined.
+	// The should be only a signed signature for the enter-machined phase.
+	EnterMachined Phase = "enter-machined"
+	// StartTheWorld is the phase value extended to the PCR before starting all services.
+	StartTheWorld Phase = "start-the-world"
 )
+
+type PhaseInfo struct {
+	Phase              Phase
+	CalculateSignature bool
+}
 
 // derived from https://github.com/systemd/systemd/blob/v253/src/boot/measure.c#L295-L308
 // ref: https://www.freedesktop.org/software/systemd/man/systemd-pcrphase.service.html#Description
+// In the case of Talos disk decryption, happens in machined, so we need to only sign EnterMachined
+// so that machined can only decrypt the disk if the system booted with the correct kernel/initrd/cmdline
 // OrderedPhases returns the phases that are measured
-func OrderedPhases() []Phase {
+func OrderedPhases() []PhaseInfo {
 	// DO NOT REARRANGE
-	return []Phase{EnterInitrd, LeaveInitrd, SysInit, Ready}
+	return []PhaseInfo{
+		{
+			Phase:              EnterInitrd,
+			CalculateSignature: false,
+		},
+		{
+			Phase:              LeaveInitrd,
+			CalculateSignature: false,
+		},
+		{
+			Phase:              EnterMachined,
+			CalculateSignature: true,
+		},
+	}
 }
 
 const (

@@ -94,10 +94,15 @@ func calculatePCRBankData(pcr int, alg tpm2.TPMAlgID, sectionData SectionsData, 
 		}
 	}
 
-	banks := make([]bankData, len(constants.OrderedPhases()))
+	banks := make([]bankData, 0)
 
-	for i, phase := range constants.OrderedPhases() {
-		hashData.Extend([]byte(phase))
+	for _, phaseInfo := range constants.OrderedPhases() {
+		// extend always, but only calculate signature if requested
+		hashData.Extend([]byte(phaseInfo.Phase))
+
+		if !phaseInfo.CalculateSignature {
+			continue
+		}
 
 		hash := hashData.Hash()
 
@@ -108,12 +113,12 @@ func calculatePCRBankData(pcr int, alg tpm2.TPMAlgID, sectionData SectionsData, 
 			return nil, err
 		}
 
-		banks[i] = bankData{
+		banks = append(banks, bankData{
 			PCRS: []int{pcr},
 			PKFP: hex.EncodeToString(pubKeyFingerprint[:]),
 			SIG:  sigData.SignatureBase64,
 			POL:  sigData.Digest,
-		}
+		})
 	}
 
 	return banks, nil
@@ -204,7 +209,6 @@ func GenerateSignedPCR(sectionsData SectionsData, rsaKey string) (*PCRData, erro
 }
 
 func createPCRSelection(s []int) ([]byte, error) {
-
 	const sizeOfPCRSelect = 3
 
 	PCRs := make(tpmutil.RawBytes, sizeOfPCRSelect)

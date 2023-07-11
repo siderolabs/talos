@@ -392,7 +392,8 @@ func (h *Handler) readToken(path string, id int) (token.Token, error) {
 		return nil, err
 	}
 
-	if token.Type == keys.TokenTypeKMS {
+	switch token.Type {
+	case keys.TokenTypeKMS:
 		kmsData := &keys.KMSToken{}
 
 		if err = json.Unmarshal(token.UserData, &kmsData); err != nil {
@@ -403,7 +404,18 @@ func (h *Handler) readToken(path string, id int) (token.Token, error) {
 			Type:     token.Type,
 			UserData: kmsData,
 		}, nil
-	}
+	case keys.TokenTypeTPM:
+		tpmData := &keys.TPMToken{}
 
-	return &token, nil
+		if err = json.Unmarshal(token.UserData, &tpmData); err != nil {
+			return nil, err
+		}
+
+		return &luks.Token[*keys.TPMToken]{
+			Type:     token.Type,
+			UserData: tpmData,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown token type %s", token.Type)
+	}
 }

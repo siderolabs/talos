@@ -231,7 +231,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 
 				slotsInUse[key.Slot()] = true
 
-				if key.NodeID() == nil && key.Static() == nil && key.KMS() == nil {
+				if key.NodeID() == nil && key.Static() == nil && key.KMS() == nil && key.TPM() == nil {
 					result = multierror.Append(result, fmt.Errorf("encryption key at slot %d doesn't have any settings", key.Slot()))
 				}
 			}

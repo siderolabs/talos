@@ -7,4 +7,6 @@ package keys
 const (
 	// TokenTypeKMS is KMS assisted encryption token.
 	TokenTypeKMS = "sideroKMS"
+	// TokenTypeTPM is TPM assisted encryption token.
+	TokenTypeTPM = "talos-tpm2"
 )

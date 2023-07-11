@@ -1370,6 +1370,15 @@ func (e *EncryptionKey) KMS() config.EncryptionKeyKMS {
 	return e.KeyKMS
 }
 
+// TPM implements the config.Provider interface.
+func (e *EncryptionKey) TPM() config.EncryptionKeyTPM {
+	if e.KeyTPM == nil {
+		return nil
+	}
+
+	return e.KeyTPM
+}
+
 // Slot implements the config.Provider interface.
 func (e *EncryptionKey) Slot() int {
 	return e.KeySlot

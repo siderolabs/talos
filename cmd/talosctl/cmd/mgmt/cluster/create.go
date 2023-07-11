@@ -461,6 +461,11 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 					})
 
 					provisionOptions = append(provisionOptions, provision.WithKMS(nethelpers.JoinHostPort("0.0.0.0", port)))
+				case "tpm":
+					keys = append(keys, &v1alpha1.EncryptionKey{
+						KeyTPM:  &v1alpha1.EncryptionKeyTPM{},
+						KeySlot: i,
+					})
 				default:
 					return fmt.Errorf("unknown key type %q", key)
 				}

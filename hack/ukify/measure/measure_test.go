@@ -24,7 +24,7 @@ import (
 
 const (
 	// ExpectedSignatureHex is output of `go test go test -v ./...` when systemd-measure binary is available
-	ExpectedSignatureHex = "12e432978d18c9f720b3fb922cab180ca025ecd5f918966d1f878ae93f1eedbc6b20885d5a9f1c4ffdd4bf2dc3c25dc1097b6c5109d9c9a90128eff20056ace7"
+	ExpectedSignatureHex = "e5fbb57a24951ad4c1621c7b1aa3071d0220d71cb8b498ff7f68ef431d70ee82ab12e6355259253366c839e2ec3dbb92caedb3398f5ceb6aa973666317d4a7f7"
 )
 
 //go:embed testdata/pcr-signing-key.pem
@@ -78,12 +78,11 @@ func TestMeasureMatchesExpectedOutput(t *testing.T) {
 func getSignatureUsingSDMeasure(t *testing.T) string {
 	tmpDir, err := os.MkdirTemp("", "measure-testdata-gen")
 	if err != nil {
-		panic(err)
+		t.Error(err)
 	}
 
 	defer os.RemoveAll(tmpDir)
 
-	sectionsData := measure.SectionsData{}
 	sdMeasureArgs := make([]string, len(constants.OrderedSections()))
 
 	// create temporary files with the ordered section name and data as the section name
@@ -91,17 +90,16 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 		sectionFile := filepath.Join(tmpDir, string(section))
 
 		if err := os.WriteFile(sectionFile, []byte(section), 0o644); err != nil {
-			panic(err)
+			t.Error(err)
 		}
 
-		sectionsData[section] = sectionFile
 		sdMeasureArgs[i] = fmt.Sprintf("--%s=%s", strings.TrimPrefix(string(section), "."), sectionFile)
 	}
 
 	signingKey := filepath.Join(tmpDir, "pcr-signing-key.pem")
 
 	if err := os.WriteFile(signingKey, pcrSigningKeyPEM, 0o644); err != nil {
-		panic(err)
+		t.Error(err)
 	}
 
 	var signature bytes.Buffer
@@ -112,6 +110,7 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 			"sign",
 			"--private-key",
 			signingKey,
+			"--phase=enter-initrd:leave-initrd:enter-machined",
 			"--json=short",
 		},
 			sdMeasureArgs...,
@@ -120,7 +119,7 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 	sdCmd.Stdout = &signature
 
 	if err := sdCmd.Run(); err != nil {
-		panic(err)
+		t.Error(err)
 	}
 
 	s := bytes.TrimSpace(signature.Bytes())

@@ -28,7 +28,6 @@ FROM ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub
 FROM --platform=amd64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-arm64
 
-FROM ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot
 FROM --platform=amd64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-arm64
 
@@ -551,7 +550,7 @@ END
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
-    mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+    mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
     mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
@@ -615,7 +614,7 @@ END
 COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
-    mkdir -pv /rootfs/{boot,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt}
+    mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
     mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END

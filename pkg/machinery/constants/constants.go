@@ -541,6 +541,21 @@ const (
 	// SignatureKeyAssetPath is the path to the signature key in the installer.
 	SignatureKeyAssetPath = "/usr/install/%s/" + SignatureKeyAsset
 
+	// SDStubDynamicInitrdPath is the path where dynamically generated initrds are placed by systemd-stub.
+	// https://www.mankier.com/7/systemd-stub#Description
+	SDStubDynamicInitrdPath = "/.extra"
+
+	// PCRSignatureJSON is the path to the PCR signature JSON file.
+	// https://www.mankier.com/7/systemd-stub#Initrd_Resources
+	PCRSignatureJSON = SDStubDynamicInitrdPath + "/" + "tpm2-pcr-signature.json"
+
+	// PCRPublicKey is the path to the PCR public key file.
+	// https://www.mankier.com/7/systemd-stub#Initrd_Resources
+	PCRPublicKey = SDStubDynamicInitrdPath + "/" + "tpm2-pcr-public-key.pem"
+
+	// UKIMeasuredPCR is the PCR index that systemd-boot measures the UKI values into.
+	UKIMeasuredPCR = 11
+
 	// DefaultCertificateValidityDuration is the default duration for a certificate.
 	DefaultCertificateValidityDuration = x509.DefaultCertificateValidityDuration
 

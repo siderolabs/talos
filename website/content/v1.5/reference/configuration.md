@@ -1891,6 +1891,7 @@ kms:
     endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
 {{< /highlight >}}</details> | |
 |`slot` |int |Key slot number for LUKS2 encryption.  | |
+|`tpm` |<a href="#encryptionkeytpm">EncryptionKeyTPM</a> |Enable TPM based disk encryption.  | |
 
 
 
@@ -1929,6 +1930,19 @@ endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`endpoint` |string |KMS endpoint to Seal/Unseal the key.  | |
+
+
+
+---
+## EncryptionKeyTPM
+EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.
+
+Appears in:
+
+- <code><a href="#encryptionkey">EncryptionKey</a>.tpm</code>
+
+
+
 
 
 

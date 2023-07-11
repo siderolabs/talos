@@ -358,6 +358,7 @@ type EncryptionKey interface {
 	NodeID() EncryptionKeyNodeID
 	KMS() EncryptionKeyKMS
 	Slot() int
+	TPM() EncryptionKeyTPM
 }
 
 // EncryptionKeyStatic ephemeral encryption key.
@@ -372,6 +373,9 @@ type EncryptionKeyKMS interface {
 
 // EncryptionKeyNodeID deterministically generated encryption key.
 type EncryptionKeyNodeID interface{}
+
+// EncryptionKeyTPM encryption key sealed by TPM.
+type EncryptionKeyTPM interface{}
 
 // Encryption defines settings for the partition encryption.
 type Encryption interface {

@@ -50,6 +50,7 @@ var (
 	EncryptionKeyDoc                  encoder.Doc
 	EncryptionKeyStaticDoc            encoder.Doc
 	EncryptionKeyKMSDoc               encoder.Doc
+	EncryptionKeyTPMDoc               encoder.Doc
 	EncryptionKeyNodeIDDoc            encoder.Doc
 	ResourcesConfigDoc                encoder.Doc
 	MachineFileDoc                    encoder.Doc
@@ -1576,7 +1577,7 @@ func init() {
 			FieldName: "keys",
 		},
 	}
-	EncryptionKeyDoc.Fields = make([]encoder.Doc, 4)
+	EncryptionKeyDoc.Fields = make([]encoder.Doc, 5)
 	EncryptionKeyDoc.Fields[0].Name = "static"
 	EncryptionKeyDoc.Fields[0].Type = "EncryptionKeyStatic"
 	EncryptionKeyDoc.Fields[0].Note = ""
@@ -1599,6 +1600,11 @@ func init() {
 	EncryptionKeyDoc.Fields[3].Note = ""
 	EncryptionKeyDoc.Fields[3].Description = "Key slot number for LUKS2 encryption."
 	EncryptionKeyDoc.Fields[3].Comments[encoder.LineComment] = "Key slot number for LUKS2 encryption."
+	EncryptionKeyDoc.Fields[4].Name = "tpm"
+	EncryptionKeyDoc.Fields[4].Type = "EncryptionKeyTPM"
+	EncryptionKeyDoc.Fields[4].Note = ""
+	EncryptionKeyDoc.Fields[4].Description = "Enable TPM based disk encryption."
+	EncryptionKeyDoc.Fields[4].Comments[encoder.LineComment] = "Enable TPM based disk encryption."
 
 	EncryptionKeyStaticDoc.Type = "EncryptionKeyStatic"
 	EncryptionKeyStaticDoc.Comments[encoder.LineComment] = "EncryptionKeyStatic represents throw away key type."
@@ -1633,6 +1639,17 @@ func init() {
 	EncryptionKeyKMSDoc.Fields[0].Note = ""
 	EncryptionKeyKMSDoc.Fields[0].Description = "KMS endpoint to Seal/Unseal the key."
 	EncryptionKeyKMSDoc.Fields[0].Comments[encoder.LineComment] = "KMS endpoint to Seal/Unseal the key."
+
+	EncryptionKeyTPMDoc.Type = "EncryptionKeyTPM"
+	EncryptionKeyTPMDoc.Comments[encoder.LineComment] = "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM."
+	EncryptionKeyTPMDoc.Description = "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM."
+	EncryptionKeyTPMDoc.AppearsIn = []encoder.Appearance{
+		{
+			TypeName:  "EncryptionKey",
+			FieldName: "tpm",
+		},
+	}
+	EncryptionKeyTPMDoc.Fields = make([]encoder.Doc, 0)
 
 	EncryptionKeyNodeIDDoc.Type = "EncryptionKeyNodeID"
 	EncryptionKeyNodeIDDoc.Comments[encoder.LineComment] = "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel."
@@ -3016,6 +3033,10 @@ func (_ EncryptionKeyKMS) Doc() *encoder.Doc {
 	return &EncryptionKeyKMSDoc
 }
 
+func (_ EncryptionKeyTPM) Doc() *encoder.Doc {
+	return &EncryptionKeyTPMDoc
+}
+
 func (_ EncryptionKeyNodeID) Doc() *encoder.Doc {
 	return &EncryptionKeyNodeIDDoc
 }
@@ -3210,6 +3231,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			&EncryptionKeyDoc,
 			&EncryptionKeyStaticDoc,
 			&EncryptionKeyKMSDoc,
+			&EncryptionKeyTPMDoc,
 			&EncryptionKeyNodeIDDoc,
 			&ResourcesConfigDoc,
 			&MachineFileDoc,

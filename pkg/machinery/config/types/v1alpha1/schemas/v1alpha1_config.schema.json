@@ -1212,6 +1212,13 @@
           "description": "Key slot number for LUKS2 encryption.\n",
           "markdownDescription": "Key slot number for LUKS2 encryption.",
           "x-intellij-html-description": "\u003cp\u003eKey slot number for LUKS2 encryption.\u003c/p\u003e\n"
+        },
+        "tpm": {
+          "$ref": "#/$defs/EncryptionKeyTPM",
+          "title": "tpm",
+          "description": "Enable TPM based disk encryption.\n",
+          "markdownDescription": "Enable TPM based disk encryption.",
+          "x-intellij-html-description": "\u003cp\u003eEnable TPM based disk encryption.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1245,6 +1252,11 @@
           "x-intellij-html-description": "\u003cp\u003eDefines the static passphrase value.\u003c/p\u003e\n"
         }
       },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EncryptionKeyTPM": {
+      "properties": {},
       "additionalProperties": false,
       "type": "object"
     },

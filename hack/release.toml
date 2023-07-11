@@ -121,6 +121,28 @@ gRPC API definitions and a simple reference implementation of the KMS server can
 [repository](https://github.com/siderolabs/kms-client/blob/main/cmd/kms-server/main.go).
 """
 
+    [notes.tpm-encryption-]
+        title = "TPM Disk Encryption"
+        description="""\
+Talos now supports encrypting STATE/EPHEMERAL with keys bound to a TPM device. The TPM device must be TPM2.0 compatible.
+This is ideally supported when booting with new Talos SecureBoot UKI ISOs/Metal images. This feature would still work if SecureBoot
+is not enabled for UKI images, but not recommended since there is no way to verify the trust of the bootloader.
+
+Example machine config:
+
+```
+systemDiskEncryption:
+  ephemeral:
+    keys:
+      - slot: 0
+        tpm: {}
+  state:
+    keys:
+      - slot: 0
+        tpm: {}
+```
+"""
+
     [notes.talosctl-images]
         title = "`talosctl images` Command"
         description="""\

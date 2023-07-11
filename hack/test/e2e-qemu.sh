@@ -140,7 +140,7 @@ case "${WITH_TRUSTED_BOOT_ISO:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--iso-path=_out/talos-uki-amd64.iso" "--with-secureboot" "--with-tpm2")
+    QEMU_FLAGS+=("--iso-path=_out/talos-uki-amd64.iso" "--with-secureboot" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
     ;;
 esac
 

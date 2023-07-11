@@ -274,6 +274,9 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		"lvm",
 		ActivateLogicalVolumes,
 	).Append(
+		"extendPCRStartAll",
+		ExtendPCRStartAll,
+	).Append(
 		"startEverything",
 		StartAllServices,
 	)
