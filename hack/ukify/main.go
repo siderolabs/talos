@@ -88,8 +88,8 @@ type section struct {
 	name    constants.Section
 	file    string
 	measure bool
-	size    uint32
-	vma     uint32
+	size    uint64
+	vma     uint64
 }
 
 func buildUKI(source, output string, sections []section) error {
@@ -107,9 +107,16 @@ func buildUKI(source, output string, sections []section) error {
 	// find the first VMA address
 	lastSection := peFile.Sections[len(peFile.Sections)-1]
 
-	const alignment = 0xfff
+	// align the VMA to 512 bytes
+	// https://github.com/saferwall/pe/blob/main/helper.go#L22-L26
+	const alignment = 0x1ff
 
-	baseVMA := lastSection.Header.VirtualAddress + lastSection.Header.VirtualSize
+	header, ok := peFile.NtHeader.OptionalHeader.(pe.ImageOptionalHeader64)
+	if !ok {
+		return fmt.Errorf("failed to get optional header")
+	}
+
+	baseVMA := header.ImageBase + uint64(lastSection.Header.VirtualAddress) + uint64(lastSection.Header.VirtualSize)
 	baseVMA = (baseVMA + alignment) &^ alignment
 
 	// calculate sections size and VMA
@@ -119,7 +126,7 @@ func buildUKI(source, output string, sections []section) error {
 			return err
 		}
 
-		sections[i].size = uint32(st.Size())
+		sections[i].size = uint64(st.Size())
 		sections[i].vma = baseVMA
 
 		baseVMA += sections[i].size

@@ -18,8 +18,12 @@ import (
 )
 
 const (
-	// UKIISOSize is the size of the UKI ISO.
-	UKIISOSize = 120 * 1024 * 1024
+	// MiB is the size of a megabyte.
+	MiB = 1024 * 1024
+	// UKIISOSizeAMD64 is the size of the AMD64 UKI ISO.
+	UKIISOSizeAMD64 = 80 * MiB
+	// UKIISOSizeARM64 is the size of the ARM64 UKI ISO.
+	UKIISOSizeARM64 = 120 * MiB
 )
 
 // CreateISO creates an iso by invoking the `grub-mkrescue` command.
@@ -71,7 +75,13 @@ func CreateUKIISO(iso, dir, arch string) error {
 		return err
 	}
 
-	if err := f.Truncate(UKIISOSize); err != nil {
+	isoSize := UKIISOSizeAMD64
+
+	if arch == "arm64" {
+		isoSize = UKIISOSizeARM64
+	}
+
+	if err := f.Truncate(int64(isoSize)); err != nil {
 		return err
 	}
 

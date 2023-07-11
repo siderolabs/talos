@@ -28,10 +28,6 @@ FROM ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub
 FROM --platform=amd64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-arm64
 
-FROM ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub
-FROM --platform=amd64 ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub-amd64
-FROM --platform=arm64 ghcr.io/siderolabs/sd-stub:${PKGS} AS pkg-sd-stub-arm64
-
 FROM ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot
 FROM --platform=amd64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-arm64
@@ -740,7 +736,6 @@ COPY --from=gen-uki-certs /src/_out /
 
 FROM --platform=${BUILDPLATFORM} ukify-tools AS uki-build-amd64
 WORKDIR /build
-COPY --from=pkg-sd-stub-amd64 / _out/
 COPY --from=pkg-sd-boot-amd64 / _out/
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz _out/vmlinuz-amd64
 COPY --from=initramfs-archive-amd64 /initramfs.xz _out/initramfs-amd64.xz
@@ -756,7 +751,6 @@ COPY --from=uki-build-amd64 /build/_out/uki-certs/db.auth /db.auth
 
 FROM --platform=${BUILDPLATFORM} ukify-tools AS uki-build-arm64
 WORKDIR /build
-COPY --from=pkg-sd-stub-arm64 / _out/
 COPY --from=pkg-sd-boot-arm64 / _out/
 COPY --from=pkg-kernel-arm64 /boot/vmlinuz _out/vmlinuz-arm64
 COPY --from=initramfs-archive-arm64 /initramfs.xz _out/initramfs-arm64.xz
