@@ -14,6 +14,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/tpm2"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -68,7 +69,7 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	}
 
 	// extend PCR 11 with leave-initrd
-	if err = tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(tpm2.LeaveInitrd)); err != nil {
+	if err = tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(secureboot.LeaveInitrd)); err != nil {
 		return fmt.Errorf("failed to extend PCR %d with leave-initrd: %v", constants.UKIMeasuredPCR, err)
 	}
 

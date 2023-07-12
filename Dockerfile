@@ -712,15 +712,11 @@ COPY --from=rootfs / /
 LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/sbin/init"]
 
-FROM --platform=${BUILDPLATFORM} tools AS ukify-tools
-# base has the talos source with the non-abrev version of TAG
-COPY --from=base /src/pkg /go/src/github.com/pkg
-COPY ./hack/ukify /go/src/github.com/siderolabs/ukify
-RUN --mount=type=cache,target=/.cache \
-    cd /go/src/github.com/siderolabs/ukify \
-    && go test ./... \
-    && go build -o ukify . \
-    && mv ukify /toolchain/go/bin/
+FROM base AS ukify-tools
+WORKDIR /src/cmd/ukify
+ARG GO_BUILDFLAGS
+ARG GO_LDFLAGS
+RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /toolchain/bin/ukify
 
 FROM base AS gen-uki-certs
 ARG TARGETOS
@@ -742,7 +738,7 @@ COPY _out/uki-certs _out/uki-certs
 RUN ukify
 
 FROM scratch AS uki-amd64
-COPY --from=uki-build-amd64 /build/_out/systemd-bootx64.efi.signed /systemd-boot.efi.signed
+COPY --from=uki-build-amd64 /build/_out/systemd-boot.efi.signed /systemd-boot.efi.signed
 COPY --from=uki-build-amd64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
 COPY --from=uki-build-amd64 /build/_out/uki-certs/PK.auth /PK.auth
 COPY --from=uki-build-amd64 /build/_out/uki-certs/KEK.auth /KEK.auth
@@ -761,7 +757,7 @@ RUN ukify \
     -initrd _out/initramfs-arm64.xz
 
 FROM scratch AS uki-arm64
-COPY --from=uki-build-arm64 /build/_out/systemd-bootaa64.efi.signed /systemd-boot.efi.signed
+COPY --from=uki-build-arm64 /build/_out/systemd-boot.efi.signed /systemd-boot.efi.signed
 COPY --from=uki-build-arm64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
 COPY --from=uki-build-amd64 /build/_out/uki-certs/PK.auth /PK.auth
 COPY --from=uki-build-amd64 /build/_out/uki-certs/KEK.auth /KEK.auth
@@ -1121,10 +1117,9 @@ COPY ./hack/docgen ./hack/docgen
 COPY ./hack/gotagsrewrite ./hack/gotagsrewrite
 COPY ./hack/module-sig-verify ./hack/module-sig-verify
 COPY ./hack/structprotogen ./hack/structprotogen
-COPY ./hack/ukify ./hack/ukify
 # fail always to get the output back
 RUN --mount=type=cache,target=/.cache <<EOF
-    for project in pkg/machinery . hack/cloud-image-uploader hack/docgen hack/gotagsrewrite hack/module-sig-verify hack/structprotogen hack/ukify; do
+    for project in pkg/machinery . hack/cloud-image-uploader hack/docgen hack/gotagsrewrite hack/module-sig-verify hack/structprotogen; do
         echo -e "\n>>>> ${project}:" && \
         (cd "${project}" && go list -u -m -json all | go-mod-outdated -update -direct)
     done

@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/mount/switchroot"
 	"github.com/siderolabs/talos/internal/pkg/rng"
+	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/tpm2"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
@@ -60,7 +61,7 @@ func run() (err error) {
 	}
 
 	// extend PCR 11 with enter-initrd
-	if err = tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(tpm2.EnterInitrd)); err != nil {
+	if err = tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(secureboot.EnterInitrd)); err != nil {
 		return fmt.Errorf("failed to extend PCR %d with enter-initrd: %v", constants.UKIMeasuredPCR, err)
 	}
 

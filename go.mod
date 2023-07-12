@@ -76,6 +76,7 @@ require (
 	github.com/mdlayher/netlink v1.7.2
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/nberlee/go-netstat v0.1.2
+	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc4
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/packethost/packngo v0.30.0
@@ -89,7 +90,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.3.0
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.18
-	github.com/siderolabs/crypto v0.4.0
+	github.com/siderolabs/crypto v0.4.1
 	github.com/siderolabs/discovery-api v0.1.3
 	github.com/siderolabs/discovery-client v0.1.5
 	github.com/siderolabs/gen v0.4.5
@@ -241,7 +242,6 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect

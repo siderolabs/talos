@@ -19,7 +19,6 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"text/template"
 	"time"
 
 	"github.com/containerd/cgroups"
@@ -62,6 +61,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/tpm2"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
@@ -380,43 +380,12 @@ func OSRelease() (err error) {
 		return err
 	}
 
-	var (
-		v    string
-		tmpl *template.Template
-	)
-
-	switch version.Tag {
-	case "none":
-		v = version.SHA
-	default:
-		v = version.Tag
-	}
-
-	data := struct {
-		Name    string
-		ID      string
-		Version string
-	}{
-		Name:    version.Name,
-		ID:      strings.ToLower(version.Name),
-		Version: v,
-	}
-
-	tmpl, err = template.New("").Parse(constants.OSReleaseTemplate)
+	contents, err := version.OSRelease()
 	if err != nil {
 		return err
 	}
 
-	var buf []byte
-
-	writer := bytes.NewBuffer(buf)
-
-	err = tmpl.Execute(writer, data)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), writer.Bytes(), 0o644)
+	return os.WriteFile(filepath.Join(constants.SystemEtcPath, "os-release"), contents, 0o644)
 }
 
 // createBindMount creates a common way to create a writable source file with a
@@ -863,7 +832,7 @@ func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // StartMachined represents the task to start machined.
 func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		if err := tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(tpm2.EnterMachined)); err != nil {
+		if err := tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(secureboot.EnterMachined)); err != nil {
 			return err
 		}
 
@@ -920,7 +889,7 @@ func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // ExtendPCRStartAll represents the task to extend the PCR with the StartTheWorld PCR phase.
 func ExtendPCRStartAll(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		return tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(tpm2.StartTheWorld))
+		return tpm2.PCRExtent(constants.UKIMeasuredPCR, []byte(secureboot.StartTheWorld))
 	}, "extendPCRStartAll"
 }
 

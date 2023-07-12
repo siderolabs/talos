@@ -16,19 +16,14 @@ import (
 	"strings"
 	"testing"
 
-	_ "embed"
-
-	"github.com/siderolabs/ukify/constants"
-	"github.com/siderolabs/ukify/measure"
+	"github.com/siderolabs/talos/internal/pkg/secureboot"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
 )
 
 const (
-	// ExpectedSignatureHex is output of `go test go test -v ./...` when systemd-measure binary is available
+	// ExpectedSignatureHex is output of `go test go test -v ./...` when systemd-measure binary is available.
 	ExpectedSignatureHex = "e5fbb57a24951ad4c1621c7b1aa3071d0220d71cb8b498ff7f68ef431d70ee82ab12e6355259253366c839e2ec3dbb92caedb3398f5ceb6aa973666317d4a7f7"
 )
-
-//go:embed testdata/pcr-signing-key.pem
-var pcrSigningKeyPEM []byte
 
 func TestMeasureMatchesExpectedOutput(t *testing.T) {
 	expectedSignatureHex := ExpectedSignatureHex
@@ -42,7 +37,7 @@ func TestMeasureMatchesExpectedOutput(t *testing.T) {
 	sectionsData := measure.SectionsData{}
 
 	// create temporary files with the ordered section name and data as the section name
-	for _, section := range constants.OrderedSections() {
+	for _, section := range secureboot.OrderedSections() {
 		sectionFile := filepath.Join(tmpDir, string(section))
 
 		if err := os.WriteFile(sectionFile, []byte(section), 0o644); err != nil {
@@ -52,13 +47,7 @@ func TestMeasureMatchesExpectedOutput(t *testing.T) {
 		sectionsData[section] = sectionFile
 	}
 
-	signingKey := filepath.Join(tmpDir, "pcr-signing-key.pem")
-
-	if err := os.WriteFile(signingKey, pcrSigningKeyPEM, 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	pcrData, err := measure.GenerateSignedPCR(sectionsData, signingKey)
+	pcrData, err := measure.GenerateSignedPCR(sectionsData, "testdata/pcr-signing-key.pem")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,17 +65,12 @@ func TestMeasureMatchesExpectedOutput(t *testing.T) {
 }
 
 func getSignatureUsingSDMeasure(t *testing.T) string {
-	tmpDir, err := os.MkdirTemp("", "measure-testdata-gen")
-	if err != nil {
-		t.Error(err)
-	}
+	tmpDir := t.TempDir()
 
-	defer os.RemoveAll(tmpDir)
-
-	sdMeasureArgs := make([]string, len(constants.OrderedSections()))
+	sdMeasureArgs := make([]string, len(secureboot.OrderedSections()))
 
 	// create temporary files with the ordered section name and data as the section name
-	for i, section := range constants.OrderedSections() {
+	for i, section := range secureboot.OrderedSections() {
 		sectionFile := filepath.Join(tmpDir, string(section))
 
 		if err := os.WriteFile(sectionFile, []byte(section), 0o644); err != nil {
@@ -96,12 +80,6 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 		sdMeasureArgs[i] = fmt.Sprintf("--%s=%s", strings.TrimPrefix(string(section), "."), sectionFile)
 	}
 
-	signingKey := filepath.Join(tmpDir, "pcr-signing-key.pem")
-
-	if err := os.WriteFile(signingKey, pcrSigningKeyPEM, 0o644); err != nil {
-		t.Error(err)
-	}
-
 	var signature bytes.Buffer
 
 	sdCmd := exec.Command(
@@ -109,7 +87,7 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 		append([]string{
 			"sign",
 			"--private-key",
-			signingKey,
+			"testdata/pcr-signing-key.pem",
 			"--phase=enter-initrd:leave-initrd:enter-machined",
 			"--json=short",
 		},

@@ -1552,7 +1552,7 @@ talosctl gen secureboot database [flags]
 
 ## talosctl gen secureboot pcr
 
-Generates a certificate which is used to sign TPM PCR values
+Generates a key which is used to sign TPM PCR values
 
 ```
 talosctl gen secureboot pcr [flags]
@@ -1561,8 +1561,7 @@ talosctl gen secureboot pcr [flags]
 ### Options
 
 ```
-      --common-name string   common name for the certificate (default "Test PCR Signing Key")
-  -h, --help                 help for pcr
+  -h, --help   help for pcr
 ```
 
 ### Options inherited from parent commands
@@ -1638,7 +1637,7 @@ Generates secrets for the SecureBoot process
 
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
 * [talosctl gen secureboot database](#talosctl-gen-secureboot-database)	 - Generates a UEFI database to enroll the signing certificate
-* [talosctl gen secureboot pcr](#talosctl-gen-secureboot-pcr)	 - Generates a certificate which is used to sign TPM PCR values
+* [talosctl gen secureboot pcr](#talosctl-gen-secureboot-pcr)	 - Generates a key which is used to sign TPM PCR values
 * [talosctl gen secureboot uki](#talosctl-gen-secureboot-uki)	 - Generates a certificate which is used to sign boot assets (UKI)
 
 ## talosctl gen

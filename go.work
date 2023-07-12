@@ -7,6 +7,5 @@ use (
 	./hack/gotagsrewrite
 	./hack/module-sig-verify
 	./hack/structprotogen
-	./hack/ukify
 	./pkg/machinery
 )

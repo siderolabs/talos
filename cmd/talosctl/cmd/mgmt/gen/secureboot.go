@@ -43,22 +43,18 @@ var genSecurebootUKICmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "uki", genSecurebootUKICmdFlags.commonName, 4096)
+		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "uki", genSecurebootUKICmdFlags.commonName, 4096, true)
 	},
-}
-
-var genSecurebootPCRCmdFlags struct {
-	commonName string
 }
 
 // genSecurebootPCRCmd represents the `gen secureboot pcr` command.
 var genSecurebootPCRCmd = &cobra.Command{
 	Use:   "pcr",
-	Short: "Generates a certificate which is used to sign TPM PCR values",
+	Short: "Generates a key which is used to sign TPM PCR values",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "pcr", genSecurebootPCRCmdFlags.commonName, 2048)
+		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "pcr", "dummy", 2048, false)
 	},
 }
 
@@ -99,7 +95,7 @@ func checkedWrite(path string, data []byte, perm fs.FileMode) error { //nolint:u
 	return os.WriteFile(path, data, perm)
 }
 
-func generateSigningCerts(path, prefix, commonName string, rsaBits int) error {
+func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCert bool) error {
 	currentTime := time.Now()
 
 	opts := []x509.Option{
@@ -116,24 +112,32 @@ func generateSigningCerts(path, prefix, commonName string, rsaBits int) error {
 		return err
 	}
 
-	if err = checkedWrite(filepath.Join(path, prefix+"-signing-cert.pem"), signingKey.CrtPEM, 0o600); err != nil {
-		return err
+	if outputCert {
+		if err = checkedWrite(filepath.Join(path, prefix+"-signing-cert.pem"), signingKey.CrtPEM, 0o600); err != nil {
+			return err
+		}
 	}
 
 	if err = checkedWrite(filepath.Join(path, prefix+"-signing-key.pem"), signingKey.KeyPEM, 0o600); err != nil {
 		return err
 	}
 
-	pemKey := x509.PEMEncodedKey{
-		Key: signingKey.KeyPEM,
+	if !outputCert {
+		pemKey := x509.PEMEncodedKey{
+			Key: signingKey.KeyPEM,
+		}
+
+		privKey, err := pemKey.GetRSAKey()
+		if err != nil {
+			return err
+		}
+
+		if err = checkedWrite(filepath.Join(path, prefix+"-signing-public-key.pem"), privKey.PublicKeyPEM, 0o600); err != nil {
+			return err
+		}
 	}
 
-	privKey, err := pemKey.GetRSAKey()
-	if err != nil {
-		return err
-	}
-
-	return checkedWrite(filepath.Join(path, prefix+"-signing-public-key.pem"), privKey.PublicKeyPEM, 0o600)
+	return nil
 }
 
 // generateSecureBootDatabase generates a UEFI database to enroll the signing certificate.
@@ -216,7 +220,6 @@ func init() {
 	genSecurebootUKICmd.Flags().StringVar(&genSecurebootUKICmdFlags.commonName, "common-name", "Test UKI Signing Key", "common name for the certificate")
 	genSecurebootCmd.AddCommand(genSecurebootUKICmd)
 
-	genSecurebootPCRCmd.Flags().StringVar(&genSecurebootPCRCmdFlags.commonName, "common-name", "Test PCR Signing Key", "common name for the certificate")
 	genSecurebootCmd.AddCommand(genSecurebootPCRCmd)
 
 	genSecurebootDatabaseCmd.Flags().StringVar(

@@ -28,23 +28,23 @@ import (
 )
 
 // PCRData is the data structure for PCR signature json.
-// TODO: this is copied from measure, once measure/ukify is part of installer, we should refer from here.
 type PCRData struct {
-	SHA1   []bankData `json:"sha1,omitempty"`
-	SHA256 []bankData `json:"sha256,omitempty"`
-	SHA384 []bankData `json:"sha384,omitempty"`
-	SHA512 []bankData `json:"sha512,omitempty"`
+	SHA1   []BankData `json:"sha1,omitempty"`
+	SHA256 []BankData `json:"sha256,omitempty"`
+	SHA384 []BankData `json:"sha384,omitempty"`
+	SHA512 []BankData `json:"sha512,omitempty"`
 }
 
-type bankData struct {
+// BankData constains data for a specific PCR bank.
+type BankData struct {
 	// list of PCR banks
-	PCRS []int `json:"pcrs"`
+	PCRs []int `json:"pcrs"`
 	// Public key of the TPM
 	PKFP string `json:"pkfp"`
 	// Policy digest
-	POL string `json:"pol"`
+	Pol string `json:"pol"`
 	// Signature of the policy digest in base64
-	SIG string `json:"sig"`
+	Sig string `json:"sig"`
 }
 
 // SealedResponse is the response from the TPM2.0 Seal operation.
@@ -306,13 +306,13 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	// TODO: maybe we should use the highest supported algorithm of the TPM
 	// fallback to the next one if the signature is not found
 	for _, bank := range sigJSON.SHA256 {
-		digest, decodeErr := hex.DecodeString(bank.POL)
+		digest, decodeErr := hex.DecodeString(bank.Pol)
 		if decodeErr != nil {
 			return nil, decodeErr
 		}
 
 		if bytes.Equal(digest, policyGetDigestResp.PolicyDigest.Buffer) {
-			signature = bank.SIG
+			signature = bank.Sig
 
 			if hex.EncodeToString(pubKeyFingerprint[:]) != bank.PKFP {
 				return nil, fmt.Errorf("certificate fingerprint does not match")

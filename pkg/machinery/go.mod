@@ -18,7 +18,7 @@ require (
 	github.com/mdlayher/ethtool v0.1.0
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
-	github.com/siderolabs/crypto v0.4.0
+	github.com/siderolabs/crypto v0.4.1
 	github.com/siderolabs/gen v0.4.5
 	github.com/siderolabs/go-api-signature v0.2.4
 	github.com/siderolabs/go-blockdevice v0.4.6
