@@ -934,4 +934,6 @@ VERSION_ID={{ .Version }}
 PRETTY_NAME="{{ .Name }} ({{ .Version }})"
 HOME_URL="https://www.talos.dev/"
 BUG_REPORT_URL="https://github.com/siderolabs/talos/issues"
+VENDOR_NAME="Sidero Labs"
+VENDOR_URL="https://www.siderolabs.com/"
 `
