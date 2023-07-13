@@ -20,16 +20,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-type EndpointsBalancerConfigControllerSuite struct {
+type KubePrismConfigControllerSuite struct {
 	ctest.DefaultSuite
 }
 
-func (suite *EndpointsBalancerConfigControllerSuite) TestGeneration() {
+func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 	cfg := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
-				APIServerBalancerSupport: &v1alpha1.APIServerBalancer{
+				KubePrismSupport: &v1alpha1.KubePrism{
 					ServerEnabled: pointer.To(true),
 					ServerPort:    7445,
 				},
@@ -48,8 +48,8 @@ func (suite *EndpointsBalancerConfigControllerSuite) TestGeneration() {
 	mc := config.NewMachineConfig(container.NewV1Alpha1(cfg))
 	suite.Create(mc)
 
-	endpoints := k8s.NewEndpoints(k8s.NamespaceName, k8s.APIServerEndpointsID)
-	endpoints.TypedSpec().Endpoints = []k8s.APIServerEndpoint{
+	endpoints := k8s.NewKubePrismEndpoints(k8s.NamespaceName, k8s.KubePrismEndpointsID)
+	endpoints.TypedSpec().Endpoints = []k8s.KubePrismEndpoint{
 		{Host: "example.com", Port: 443},
 		{Host: "localhost", Port: 6445},
 		{Host: "192.168.3.4", Port: 6446},
@@ -58,12 +58,12 @@ func (suite *EndpointsBalancerConfigControllerSuite) TestGeneration() {
 
 	suite.Create(endpoints)
 
-	ctest.AssertResource(suite, k8s.LoadBalancerConfigID, func(e *k8s.LoadBalancerConfig, asrt *assert.Assertions) {
+	ctest.AssertResource(suite, k8s.KubePrismConfigID, func(e *k8s.KubePrismConfig, asrt *assert.Assertions) {
 		asrt.Equal(
-			&k8s.LoadBalancerConfigSpec{
+			&k8s.KubePrismConfigSpec{
 				Host: "localhost",
 				Port: 7445,
-				Endpoints: []k8s.APIServerEndpoint{
+				Endpoints: []k8s.KubePrismEndpoint{
 					{Host: "example.com", Port: 443},
 					{Host: "localhost", Port: 6445},
 					{Host: "192.168.3.4", Port: 6446},
@@ -75,28 +75,28 @@ func (suite *EndpointsBalancerConfigControllerSuite) TestGeneration() {
 	})
 
 	ctest.UpdateWithConflicts(suite, mc, func(cfg *config.MachineConfig) error {
-		balancer := cfg.Config().Machine().Features().APIServerBalancer().(*v1alpha1.APIServerBalancer) //nolint:errcheck
+		balancer := cfg.Config().Machine().Features().KubePrism().(*v1alpha1.KubePrism) //nolint:errcheck
 		balancer.ServerEnabled = pointer.To(false)
 
 		return nil
 	})
 
-	ctest.AssertNoResource[*k8s.LoadBalancerConfig](suite, k8s.LoadBalancerConfigID)
+	ctest.AssertNoResource[*k8s.KubePrismConfig](suite, k8s.KubePrismConfigID)
 
 	ctest.UpdateWithConflicts(suite, mc, func(cfg *config.MachineConfig) error {
-		balancer := cfg.Config().Machine().Features().APIServerBalancer().(*v1alpha1.APIServerBalancer) //nolint:errcheck
+		balancer := cfg.Config().Machine().Features().KubePrism().(*v1alpha1.KubePrism) //nolint:errcheck
 		balancer.ServerEnabled = pointer.To(true)
 		balancer.ServerPort = 7446
 
 		return nil
 	})
 
-	ctest.AssertResource(suite, k8s.LoadBalancerConfigID, func(e *k8s.LoadBalancerConfig, asrt *assert.Assertions) {
+	ctest.AssertResource(suite, k8s.KubePrismConfigID, func(e *k8s.KubePrismConfig, asrt *assert.Assertions) {
 		asrt.Equal(
-			&k8s.LoadBalancerConfigSpec{
+			&k8s.KubePrismConfigSpec{
 				Host: "localhost",
 				Port: 7446,
-				Endpoints: []k8s.APIServerEndpoint{
+				Endpoints: []k8s.KubePrismEndpoint{
 					{Host: "example.com", Port: 443},
 					{Host: "localhost", Port: 6445},
 					{Host: "192.168.3.4", Port: 6446},
@@ -109,16 +109,16 @@ func (suite *EndpointsBalancerConfigControllerSuite) TestGeneration() {
 
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), mc.Metadata()))
 
-	ctest.AssertNoResource[*k8s.LoadBalancerConfig](suite, k8s.LoadBalancerConfigID)
+	ctest.AssertNoResource[*k8s.KubePrismConfig](suite, k8s.KubePrismConfigID)
 
 	suite.Create(mc)
 
-	ctest.AssertResource(suite, k8s.LoadBalancerConfigID, func(e *k8s.LoadBalancerConfig, asrt *assert.Assertions) {
+	ctest.AssertResource(suite, k8s.KubePrismConfigID, func(e *k8s.KubePrismConfig, asrt *assert.Assertions) {
 		asrt.Equal(
-			&k8s.LoadBalancerConfigSpec{
+			&k8s.KubePrismConfigSpec{
 				Host: "localhost",
 				Port: 7445,
-				Endpoints: []k8s.APIServerEndpoint{
+				Endpoints: []k8s.KubePrismEndpoint{
 					{Host: "example.com", Port: 443},
 					{Host: "localhost", Port: 6445},
 					{Host: "192.168.3.4", Port: 6446},
@@ -131,14 +131,14 @@ func (suite *EndpointsBalancerConfigControllerSuite) TestGeneration() {
 
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), endpoints.Metadata()))
 
-	ctest.AssertNoResource[*k8s.LoadBalancerConfig](suite, k8s.LoadBalancerConfigID)
+	ctest.AssertNoResource[*k8s.KubePrismConfig](suite, k8s.KubePrismConfigID)
 }
 
 func TestEndpointsBalancerConfigControllerSuite(t *testing.T) {
-	suite.Run(t, &EndpointsBalancerConfigControllerSuite{
+	suite.Run(t, &KubePrismConfigControllerSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.APILoadBalancerConfigController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.KubePrismConfigController{}))
 			},
 		},
 	})

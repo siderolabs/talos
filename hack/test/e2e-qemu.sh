@@ -132,7 +132,7 @@ case "${WITH_CUSTOM_CNI:-none}" in
   false)
     ;;
   cilium)
-    QEMU_FLAGS+=("--api-server-balancer-port=13336")
+    QEMU_FLAGS+=("--kubeprism-port=13336")
     ;;
 esac
 

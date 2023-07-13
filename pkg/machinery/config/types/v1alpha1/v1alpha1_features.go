@@ -39,26 +39,26 @@ func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {
 	return pointer.SafeDeref(f.DiskQuotaSupport)
 }
 
-// APIServerBalancer implements config.Features interface.
-func (f *FeaturesConfig) APIServerBalancer() config.APIServerBalancer {
-	if f.APIServerBalancerSupport == nil {
-		return &APIServerBalancer{}
+// KubePrism implements config.Features interface.
+func (f *FeaturesConfig) KubePrism() config.KubePrism {
+	if f.KubePrismSupport == nil {
+		return &KubePrism{}
 	}
 
-	return f.APIServerBalancerSupport
+	return f.KubePrismSupport
 }
 
-const defaultAPIBalancerPort = 7445
+const defaultKubePrismPort = 7445
 
-// Enabled implements config.APIServerBalancer.
-func (a *APIServerBalancer) Enabled() bool {
+// Enabled implements [config.KubePrism].
+func (a *KubePrism) Enabled() bool {
 	return pointer.SafeDeref(a.ServerEnabled)
 }
 
-// Port implements config.APIServerBalancer.
-func (a *APIServerBalancer) Port() int {
+// Port implements [config.KubePrism].
+func (a *KubePrism) Port() int {
 	if a.ServerPort == 0 {
-		return defaultAPIBalancerPort
+		return defaultKubePrismPort
 	}
 
 	return a.ServerPort

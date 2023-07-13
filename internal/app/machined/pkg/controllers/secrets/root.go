@@ -178,8 +178,8 @@ func (ctrl *RootController) updateK8sSecrets(cfgProvider talosconfig.Config, k8s
 		localEndpoint *url.URL
 	)
 
-	if cfgProvider.Machine().Features().APIServerBalancer().Enabled() {
-		localEndpoint, err = url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().APIServerBalancer().Port()))
+	if cfgProvider.Machine().Features().KubePrism().Enabled() {
+		localEndpoint, err = url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().KubePrism().Port()))
 		if err != nil {
 			return err
 		}

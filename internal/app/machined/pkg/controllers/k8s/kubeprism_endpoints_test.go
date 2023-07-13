@@ -24,11 +24,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-type EndpointsBalancerControllerSuite struct {
+type KubePrismControllerSuite struct {
 	ctest.DefaultSuite
 }
 
-func (suite *EndpointsBalancerControllerSuite) TestGeneration() {
+func (suite *KubePrismControllerSuite) TestGeneration() {
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
 	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
 	suite.Create(nodeIdentity)
@@ -84,10 +84,10 @@ func (suite *EndpointsBalancerControllerSuite) TestGeneration() {
 
 	suite.Create(member3)
 
-	ctest.AssertResource(suite, k8s.APIServerEndpointsID, func(e *k8s.APIServerEndpoints, asrt *assert.Assertions) {
+	ctest.AssertResource(suite, k8s.KubePrismEndpointsID, func(e *k8s.KubePrismEndpoints, asrt *assert.Assertions) {
 		asrt.Equal(
-			&k8s.APIServerEndpointsSpec{
-				Endpoints: []k8s.APIServerEndpoint{
+			&k8s.KubePrismEndpointsSpec{
+				Endpoints: []k8s.KubePrismEndpoint{
 					{
 						Host: "example.com",
 						Port: 443,
@@ -120,10 +120,10 @@ func must[T any](res T, err error) func(t *require.Assertions) T {
 }
 
 func TestEndpointsBalancerControllerSuite(t *testing.T) {
-	suite.Run(t, &EndpointsBalancerControllerSuite{
+	suite.Run(t, &KubePrismControllerSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.APIServerEndpointsController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.KubePrismEndpointsController{}))
 			},
 		},
 	})

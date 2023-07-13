@@ -92,7 +92,6 @@ talosctl cluster create [flags]
 ### Options
 
 ```
-      --api-server-balancer-port int             load balancer port for the API server (defaults 0 - disabled)
       --arch string                              cluster architecture (default "amd64")
       --bad-rtc                                  launch VM with bad RTC state (QEMU only)
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
@@ -133,6 +132,7 @@ talosctl cluster create [flags]
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster (QEMU provisioner only)
       --iso-path string                          the ISO path to use for the initial boot (VM only)
+      --kubeprism-port int                       KubePrism port (defaults to 0 - disabled)
       --kubernetes-version string                desired kubernetes version to run (default "1.28.0-alpha.4")
       --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)

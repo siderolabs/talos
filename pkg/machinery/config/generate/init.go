@@ -74,7 +74,7 @@ func (in *Input) init() ([]config.Document, error) {
 	}
 
 	if in.Options.APIServerBalancerPort > 0 {
-		machine.MachineFeatures.APIServerBalancerSupport = &v1alpha1.APIServerBalancer{
+		machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
 			ServerEnabled: pointer.To(true),
 			ServerPort:    in.Options.APIServerBalancerPort,
 		}

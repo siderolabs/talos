@@ -3,26 +3,6 @@
   "$id": "https://talos.dev/v1.5/schemas/v1alpha1_config.schema.json",
   "$ref": "#/$defs/Config",
   "$defs": {
-    "APIServerBalancer": {
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "title": "enabled",
-          "description": "Enable API server load balancer support - will start local proxy.\n",
-          "markdownDescription": "Enable API server load balancer support - will start local proxy.",
-          "x-intellij-html-description": "\u003cp\u003eEnable API server load balancer support - will start local proxy.\u003c/p\u003e\n"
-        },
-        "port": {
-          "type": "integer",
-          "title": "port",
-          "description": "API server load balancer port.\n",
-          "markdownDescription": "API server load balancer port.",
-          "x-intellij-html-description": "\u003cp\u003eAPI server load balancer port.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object"
-    },
     "APIServerConfig": {
       "properties": {
         "image": {
@@ -1414,12 +1394,12 @@
           "markdownDescription": "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.",
           "x-intellij-html-description": "\u003cp\u003eEnable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.\u003c/p\u003e\n"
         },
-        "apiServerBalancerSupport": {
-          "$ref": "#/$defs/APIServerBalancer",
-          "title": "apiServerBalancerSupport",
-          "description": "API server load balancer support - local proxy on defined port that will distribute\nrequests to all API servers in the cluster.\n",
-          "markdownDescription": "API server load balancer support - local proxy on defined port that will distribute\nrequests to all API servers in the cluster.",
-          "x-intellij-html-description": "\u003cp\u003eAPI server load balancer support - local proxy on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
+        "kubePrism": {
+          "$ref": "#/$defs/KubePrism",
+          "title": "kubePrism",
+          "description": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\n",
+          "markdownDescription": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
+          "x-intellij-html-description": "\u003cp\u003eKubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1614,6 +1594,26 @@
           "description": "Module parameters, changes applied after reboot.\n",
           "markdownDescription": "Module parameters, changes applied after reboot.",
           "x-intellij-html-description": "\u003cp\u003eModule parameters, changes applied after reboot.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "KubePrism": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable KubePrism support - will start local load balacing proxy.\n",
+          "markdownDescription": "Enable KubePrism support - will start local load balacing proxy.",
+          "x-intellij-html-description": "\u003cp\u003eEnable KubePrism support - will start local load balacing proxy.\u003c/p\u003e\n"
+        },
+        "port": {
+          "type": "integer",
+          "title": "port",
+          "description": "KubePrism port.\n",
+          "markdownDescription": "KubePrism port.",
+          "x-intellij-html-description": "\u003cp\u003eKubePrism port.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -24,17 +24,6 @@ message APIServerConfigSpec {
   Resources resources = 12;
 }
 
-// APIServerEndpoint holds data for control plane endpoint.
-message APIServerEndpoint {
-  string host = 1;
-  uint32 port = 2;
-}
-
-// APIServerEndpointsSpec describes APIServerEndpoints configuration.
-message APIServerEndpointsSpec {
-  repeated APIServerEndpoint endpoints = 1;
-}
-
 // AdmissionControlConfigSpec is configuration for kube-apiserver.
 message AdmissionControlConfigSpec {
   repeated AdmissionPluginSpec config = 1;
@@ -116,6 +105,30 @@ message ExtraVolume {
   bool read_only = 4;
 }
 
+// KubePrismConfigSpec describes KubePrismConfig data.
+message KubePrismConfigSpec {
+  string host = 1;
+  int64 port = 2;
+  repeated KubePrismEndpoint endpoints = 3;
+}
+
+// KubePrismEndpoint holds data for control plane endpoint.
+message KubePrismEndpoint {
+  string host = 1;
+  uint32 port = 2;
+}
+
+// KubePrismEndpointsSpec describes KubePrismEndpoints configuration.
+message KubePrismEndpointsSpec {
+  repeated KubePrismEndpoint endpoints = 1;
+}
+
+// KubePrismStatusesSpec describes KubePrismStatuses data.
+message KubePrismStatusesSpec {
+  string host = 1;
+  bool healthy = 2;
+}
+
 // KubeletConfigSpec holds the source of kubelet configuration.
 message KubeletConfigSpec {
   string image = 1;
@@ -139,19 +152,6 @@ message KubeletSpecSpec {
   repeated talos.resource.definitions.proto.Mount extra_mounts = 3;
   string expected_nodename = 4;
   google.protobuf.Struct config = 5;
-}
-
-// LoadBalancerConfigSpec describes LoadBalancerConfig data.
-message LoadBalancerConfigSpec {
-  string host = 1;
-  int64 port = 2;
-  repeated APIServerEndpoint endpoints = 3;
-}
-
-// LoadBalancerStatusesSpec describes LoadBalancerStatuses data.
-message LoadBalancerStatusesSpec {
-  string host = 1;
-  bool healthy = 2;
 }
 
 // ManifestSpec holds the Kubernetes resources spec.

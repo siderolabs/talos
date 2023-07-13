@@ -86,9 +86,9 @@ func (ctrl *KubeletController) Run(ctx context.Context, r controller.Runtime, lo
 
 func (ctrl *KubeletController) updateKubeletSecrets(cfgProvider talosconfig.Config, kubeletSecrets *secrets.KubeletSpec) error {
 	switch {
-	case cfgProvider.Machine().Features().APIServerBalancer().Enabled():
+	case cfgProvider.Machine().Features().KubePrism().Enabled():
 		// use cluster endpoint for controlplane nodes with loadbalancer support
-		localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().APIServerBalancer().Port()))
+		localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().KubePrism().Port()))
 		if err != nil {
 			return err
 		}

@@ -399,7 +399,7 @@ type Features interface {
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	ApidCheckExtKeyUsageEnabled() bool
 	DiskQuotaSupportEnabled() bool
-	APIServerBalancer() APIServerBalancer
+	KubePrism() KubePrism
 }
 
 // KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.
@@ -409,8 +409,8 @@ type KubernetesTalosAPIAccess interface {
 	AllowedKubernetesNamespaces() []string
 }
 
-// APIServerBalancer describes the API Server load balancer features.
-type APIServerBalancer interface {
+// KubePrism describes the API Server load balancer features.
+type KubePrism interface {
 	Enabled() bool
 	Port() int
 }

@@ -81,7 +81,7 @@ const (
 	bootloaderEnabledFlag         = "with-bootloader"
 	forceEndpointFlag             = "endpoint"
 	controlPlanePortFlag          = "control-plane-port"
-	apiServerBalancerPortFlag     = "api-server-balancer-port"
+	kubePrismFlag                 = "kubeprism-port"
 	tpm2EnabledFlag               = "with-tpm2"
 	secureBootEnabledFlag         = "with-secureboot"
 	diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
@@ -1004,7 +1004,7 @@ func init() {
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
 	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
 	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
-	createCmd.Flags().IntVar(&apiServerBalancerPort, apiServerBalancerPortFlag, 0, "load balancer port for the API server (defaults 0 - disabled)")
+	createCmd.Flags().IntVar(&apiServerBalancerPort, kubePrismFlag, 0, "KubePrism port (defaults to 0 - disabled)")
 	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
 	createCmd.Flags().BoolVar(&skipBootPhaseFinishedCheck, "skip-boot-phase-finished-check", false, "skip waiting for node to finish boot phase")
 	createCmd.Flags().BoolVar(&networkChaos, "with-network-chaos", false, "enable to use network chaos parameters when creating a qemu cluster")
@@ -1045,7 +1045,7 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 		bootloaderEnabledFlag,
 		forceEndpointFlag,
 		controlPlanePortFlag,
-		apiServerBalancerPortFlag,
+		kubePrismFlag,
 	}
 	for _, genFlag := range genOptionFlags {
 		if flags.Lookup(genFlag).Changed {

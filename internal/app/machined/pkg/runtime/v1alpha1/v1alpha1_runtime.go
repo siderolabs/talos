@@ -172,7 +172,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 			}
 
 			if currentConfig.MachineConfig.MachineFeatures != nil {
-				newConfig.MachineConfig.MachineFeatures.APIServerBalancerSupport = currentConfig.MachineConfig.MachineFeatures.APIServerBalancerSupport
+				newConfig.MachineConfig.MachineFeatures.KubePrismSupport = currentConfig.MachineConfig.MachineFeatures.KubePrismSupport
 			}
 		}
 	}

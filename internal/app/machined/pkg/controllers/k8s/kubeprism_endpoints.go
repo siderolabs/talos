@@ -21,16 +21,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-// APIServerEndpointsController creates a list of API server endpoints.
-type APIServerEndpointsController struct{}
+// KubePrismEndpointsController creates a list of API server endpoints.
+type KubePrismEndpointsController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *APIServerEndpointsController) Name() string {
-	return "cluster.APIServerEndpointsController"
+func (ctrl *KubePrismEndpointsController) Name() string {
+	return "cluster.KubePrismEndpointsController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *APIServerEndpointsController) Inputs() []controller.Input {
+func (ctrl *KubePrismEndpointsController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
@@ -44,10 +44,10 @@ func (ctrl *APIServerEndpointsController) Inputs() []controller.Input {
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *APIServerEndpointsController) Outputs() []controller.Output {
+func (ctrl *KubePrismEndpointsController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: k8s.APIServerEndpointsType,
+			Type: k8s.KubePrismEndpointsType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -56,7 +56,7 @@ func (ctrl *APIServerEndpointsController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *APIServerEndpointsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *KubePrismEndpointsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
 			return nil //nolint:nilerr
@@ -85,18 +85,18 @@ func (ctrl *APIServerEndpointsController) Run(ctx context.Context, r controller.
 			return fmt.Errorf("error listing affiliates: %w", err)
 		}
 
-		var endpoints []k8s.APIServerEndpoint
+		var endpoints []k8s.KubePrismEndpoint
 
 		ce := machineConfig.Config().Cluster().Endpoint()
 		if ce != nil {
-			endpoints = append(endpoints, k8s.APIServerEndpoint{
+			endpoints = append(endpoints, k8s.KubePrismEndpoint{
 				Host: ce.Hostname(),
 				Port: toPort(ce.Port()),
 			})
 		}
 
 		if machineType.MachineType() == machine.TypeControlPlane {
-			endpoints = append(endpoints, k8s.APIServerEndpoint{
+			endpoints = append(endpoints, k8s.KubePrismEndpoint{
 				Host: "localhost",
 				Port: uint32(machineConfig.Config().Cluster().LocalAPIServerPort()),
 			})
@@ -107,7 +107,7 @@ func (ctrl *APIServerEndpointsController) Run(ctx context.Context, r controller.
 
 			if len(memberSpec.Addresses) > 0 && memberSpec.ControlPlane != nil {
 				for _, addr := range memberSpec.Addresses {
-					endpoints = append(endpoints, k8s.APIServerEndpoint{
+					endpoints = append(endpoints, k8s.KubePrismEndpoint{
 						Host: addr.String(),
 						Port: uint32(memberSpec.ControlPlane.APIServerPort),
 					})
@@ -115,24 +115,24 @@ func (ctrl *APIServerEndpointsController) Run(ctx context.Context, r controller.
 			}
 		}
 
-		err = safe.WriterModify[*k8s.APIServerEndpoints](
+		err = safe.WriterModify[*k8s.KubePrismEndpoints](
 			ctx,
 			r,
-			k8s.NewEndpoints(k8s.NamespaceName, k8s.APIServerEndpointsID),
-			func(res *k8s.APIServerEndpoints) error {
+			k8s.NewKubePrismEndpoints(k8s.NamespaceName, k8s.KubePrismEndpointsID),
+			func(res *k8s.KubePrismEndpoints) error {
 				res.TypedSpec().Endpoints = endpoints
 
 				return nil
 			},
 		)
 		if err != nil {
-			return fmt.Errorf("error updating endpoints: %w", err)
+			return fmt.Errorf("error updating KubePrism endpoints: %w", err)
 		}
 
 		// list keys for cleanup
-		list, err := safe.ReaderListAll[*k8s.APIServerEndpoints](ctx, r)
+		list, err := safe.ReaderListAll[*k8s.KubePrismEndpoints](ctx, r)
 		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
+			return fmt.Errorf("error listing KubePrism resources: %w", err)
 		}
 
 		for it := safe.IteratorFromList(list); it.Next(); {
@@ -142,12 +142,12 @@ func (ctrl *APIServerEndpointsController) Run(ctx context.Context, r controller.
 				continue
 			}
 
-			if res.Metadata().ID() != k8s.APIServerEndpointsID {
+			if res.Metadata().ID() != k8s.KubePrismEndpointsID {
 				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up specs: %w", err)
+					return fmt.Errorf("error cleaning up KubePrism specs: %w", err)
 				}
 
-				logger.Info("removed endpoints resource", zap.String("id", res.Metadata().ID()))
+				logger.Info("removed KubePrism endpoints resource", zap.String("id", res.Metadata().ID()))
 			}
 		}
 

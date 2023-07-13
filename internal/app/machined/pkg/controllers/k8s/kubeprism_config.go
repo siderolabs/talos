@@ -20,22 +20,21 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-// APILoadBalancerConfigController creates config for load balancer.
-type APILoadBalancerConfigController struct{}
+// KubePrismConfigController creates config for KubePrism.
+type KubePrismConfigController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *APILoadBalancerConfigController) Name() string {
-	return "k8s.APILoadBalancerConfigController"
+func (ctrl *KubePrismConfigController) Name() string {
+	return "k8s.KubePrismConfigController"
 }
 
-// Inputs implements controller.Controll
-// er interface.
-func (ctrl *APILoadBalancerConfigController) Inputs() []controller.Input {
+// Inputs implements controller.Controller interface.
+func (ctrl *KubePrismConfigController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: k8s.NamespaceName,
-			Type:      k8s.APIServerEndpointsType,
-			ID:        pointer.To(k8s.APIServerEndpointsID),
+			Type:      k8s.KubePrismEndpointsType,
+			ID:        pointer.To(k8s.KubePrismEndpointsID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -48,10 +47,10 @@ func (ctrl *APILoadBalancerConfigController) Inputs() []controller.Input {
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *APILoadBalancerConfigController) Outputs() []controller.Output {
+func (ctrl *KubePrismConfigController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: k8s.LoadBalancerConfigType,
+			Type: k8s.KubePrismConfigType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -60,13 +59,13 @@ func (ctrl *APILoadBalancerConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *APILoadBalancerConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *KubePrismConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
 			return nil //nolint:nilerr
 		}
 
-		endpt, err := safe.ReaderGetByID[*k8s.APIServerEndpoints](ctx, r, k8s.APIServerEndpointsID)
+		endpt, err := safe.ReaderGetByID[*k8s.KubePrismEndpoints](ctx, r, k8s.KubePrismEndpointsID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return err
 		}
@@ -82,17 +81,17 @@ func (ctrl *APILoadBalancerConfigController) Run(ctx context.Context, r controll
 		}
 
 		// list keys for cleanup
-		lbCfgList, err := safe.ReaderListAll[*k8s.LoadBalancerConfig](ctx, r)
+		lbCfgList, err := safe.ReaderListAll[*k8s.KubePrismConfig](ctx, r)
 		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
+			return fmt.Errorf("error listing KubePrism resources: %w", err)
 		}
 
 		for it := safe.IteratorFromList(lbCfgList); it.Next(); {
 			res := it.Value()
 
-			if !wroteConfig || res.Metadata().ID() != k8s.LoadBalancerConfigID {
+			if !wroteConfig || res.Metadata().ID() != k8s.KubePrismConfigID {
 				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up load balancer config: %w", err)
+					return fmt.Errorf("error cleaning up KubePrism config: %w", err)
 				}
 			}
 		}
@@ -101,7 +100,7 @@ func (ctrl *APILoadBalancerConfigController) Run(ctx context.Context, r controll
 	}
 }
 
-func (ctrl *APILoadBalancerConfigController) writeConfig(ctx context.Context, r controller.Runtime, endpt *k8s.APIServerEndpoints, mc *config.MachineConfig) (bool, error) {
+func (ctrl *KubePrismConfigController) writeConfig(ctx context.Context, r controller.Runtime, endpt *k8s.KubePrismEndpoints, mc *config.MachineConfig) (bool, error) {
 	if endpt == nil || mc == nil {
 		return false, nil
 	}
@@ -111,7 +110,7 @@ func (ctrl *APILoadBalancerConfigController) writeConfig(ctx context.Context, r 
 		return false, nil
 	}
 
-	balancerCfg := mc.Config().Machine().Features().APIServerBalancer()
+	balancerCfg := mc.Config().Machine().Features().KubePrism()
 	if !balancerCfg.Enabled() {
 		return false, nil
 	}
@@ -119,8 +118,8 @@ func (ctrl *APILoadBalancerConfigController) writeConfig(ctx context.Context, r 
 	err := safe.WriterModify(
 		ctx,
 		r,
-		k8s.NewLoadBalancerConfig(k8s.NamespaceName, k8s.LoadBalancerConfigID),
-		func(res *k8s.LoadBalancerConfig) error {
+		k8s.NewKubePrismConfig(k8s.NamespaceName, k8s.KubePrismConfigID),
+		func(res *k8s.KubePrismConfig) error {
 			spec := res.TypedSpec()
 			spec.Endpoints = endpoints
 			spec.Host = "localhost"
@@ -130,7 +129,7 @@ func (ctrl *APILoadBalancerConfigController) writeConfig(ctx context.Context, r 
 		},
 	)
 	if err != nil {
-		return false, fmt.Errorf("failed to write load balancer config: %w", err)
+		return false, fmt.Errorf("failed to KubePrism balancer config: %w", err)
 	}
 
 	return true, nil

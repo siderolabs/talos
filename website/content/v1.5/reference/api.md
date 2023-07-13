@@ -91,8 +91,6 @@ description: Talos gRPC API reference.
     - [APIServerConfigSpec](#talos.resource.definitions.k8s.APIServerConfigSpec)
     - [APIServerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry)
     - [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry)
-    - [APIServerEndpoint](#talos.resource.definitions.k8s.APIServerEndpoint)
-    - [APIServerEndpointsSpec](#talos.resource.definitions.k8s.APIServerEndpointsSpec)
     - [AdmissionControlConfigSpec](#talos.resource.definitions.k8s.AdmissionControlConfigSpec)
     - [AdmissionPluginSpec](#talos.resource.definitions.k8s.AdmissionPluginSpec)
     - [AuditPolicyConfigSpec](#talos.resource.definitions.k8s.AuditPolicyConfigSpec)
@@ -106,11 +104,13 @@ description: Talos gRPC API reference.
     - [ExtraManifest.ExtraHeadersEntry](#talos.resource.definitions.k8s.ExtraManifest.ExtraHeadersEntry)
     - [ExtraManifestsConfigSpec](#talos.resource.definitions.k8s.ExtraManifestsConfigSpec)
     - [ExtraVolume](#talos.resource.definitions.k8s.ExtraVolume)
+    - [KubePrismConfigSpec](#talos.resource.definitions.k8s.KubePrismConfigSpec)
+    - [KubePrismEndpoint](#talos.resource.definitions.k8s.KubePrismEndpoint)
+    - [KubePrismEndpointsSpec](#talos.resource.definitions.k8s.KubePrismEndpointsSpec)
+    - [KubePrismStatusesSpec](#talos.resource.definitions.k8s.KubePrismStatusesSpec)
     - [KubeletConfigSpec](#talos.resource.definitions.k8s.KubeletConfigSpec)
     - [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry)
     - [KubeletSpecSpec](#talos.resource.definitions.k8s.KubeletSpecSpec)
-    - [LoadBalancerConfigSpec](#talos.resource.definitions.k8s.LoadBalancerConfigSpec)
-    - [LoadBalancerStatusesSpec](#talos.resource.definitions.k8s.LoadBalancerStatusesSpec)
     - [ManifestSpec](#talos.resource.definitions.k8s.ManifestSpec)
     - [ManifestStatusSpec](#talos.resource.definitions.k8s.ManifestStatusSpec)
     - [NodeIPConfigSpec](#talos.resource.definitions.k8s.NodeIPConfigSpec)
@@ -1761,37 +1761,6 @@ APIServerConfigSpec is configuration for kube-apiserver.
 
 
 
-<a name="talos.resource.definitions.k8s.APIServerEndpoint"></a>
-
-### APIServerEndpoint
-APIServerEndpoint holds data for control plane endpoint.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| host | [string](#string) |  |  |
-| port | [uint32](#uint32) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.k8s.APIServerEndpointsSpec"></a>
-
-### APIServerEndpointsSpec
-APIServerEndpointsSpec describes APIServerEndpoints configuration.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| endpoints | [APIServerEndpoint](#talos.resource.definitions.k8s.APIServerEndpoint) | repeated |  |
-
-
-
-
-
-
 <a name="talos.resource.definitions.k8s.AdmissionControlConfigSpec"></a>
 
 ### AdmissionControlConfigSpec
@@ -2021,6 +1990,70 @@ ExtraVolume is a configuration of extra volume.
 
 
 
+<a name="talos.resource.definitions.k8s.KubePrismConfigSpec"></a>
+
+### KubePrismConfigSpec
+KubePrismConfigSpec describes KubePrismConfig data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| port | [int64](#int64) |  |  |
+| endpoints | [KubePrismEndpoint](#talos.resource.definitions.k8s.KubePrismEndpoint) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubePrismEndpoint"></a>
+
+### KubePrismEndpoint
+KubePrismEndpoint holds data for control plane endpoint.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| port | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubePrismEndpointsSpec"></a>
+
+### KubePrismEndpointsSpec
+KubePrismEndpointsSpec describes KubePrismEndpoints configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoints | [KubePrismEndpoint](#talos.resource.definitions.k8s.KubePrismEndpoint) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubePrismStatusesSpec"></a>
+
+### KubePrismStatusesSpec
+KubePrismStatusesSpec describes KubePrismStatuses data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| healthy | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.k8s.KubeletConfigSpec"></a>
 
 ### KubeletConfigSpec
@@ -2076,39 +2109,6 @@ KubeletSpecSpec holds the source of kubelet configuration.
 | extra_mounts | [talos.resource.definitions.proto.Mount](#talos.resource.definitions.proto.Mount) | repeated |  |
 | expected_nodename | [string](#string) |  |  |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.k8s.LoadBalancerConfigSpec"></a>
-
-### LoadBalancerConfigSpec
-LoadBalancerConfigSpec describes LoadBalancerConfig data.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| host | [string](#string) |  |  |
-| port | [int64](#int64) |  |  |
-| endpoints | [APIServerEndpoint](#talos.resource.definitions.k8s.APIServerEndpoint) | repeated |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.k8s.LoadBalancerStatusesSpec"></a>
-
-### LoadBalancerStatusesSpec
-LoadBalancerStatusesSpec describes LoadBalancerStatuses data.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| host | [string](#string) |  |  |
-| healthy | [bool](#bool) |  |  |
 
 
 

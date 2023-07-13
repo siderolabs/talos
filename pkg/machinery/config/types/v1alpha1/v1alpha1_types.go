@@ -2675,18 +2675,18 @@ type FeaturesConfig struct {
 	//     Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.
 	DiskQuotaSupport *bool `yaml:"diskQuotaSupport,omitempty"`
 	//   description: |
-	//     API server load balancer support - local proxy on defined port that will distribute
+	//     KubePrism - local proxy/load balancer on defined port that will distribute
 	//     requests to all API servers in the cluster.
-	APIServerBalancerSupport *APIServerBalancer `yaml:"apiServerBalancerSupport,omitempty"`
+	KubePrismSupport *KubePrism `yaml:"kubePrism,omitempty"`
 }
 
-// APIServerBalancer describes the configuration for the API server load balancer.
-type APIServerBalancer struct {
+// KubePrism describes the configuration for the KubePrism load balancer.
+type KubePrism struct {
 	//   description: |
-	//     Enable API server load balancer support - will start local proxy.
+	//     Enable KubePrism support - will start local load balacing proxy.
 	ServerEnabled *bool `yaml:"enabled,omitempty"`
 	//   description: |
-	//     API server load balancer port.
+	//     KubePrism port.
 	ServerPort int `yaml:"port,omitempty"`
 }
 

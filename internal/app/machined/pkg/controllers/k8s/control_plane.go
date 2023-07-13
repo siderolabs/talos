@@ -310,8 +310,8 @@ func (ctrl *ControlPlaneController) manageManifestsConfig(ctx context.Context, r
 		}
 
 		var server string
-		if cfgProvider.Machine().Features().APIServerBalancer().Enabled() {
-			server = fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().APIServerBalancer().Port())
+		if cfgProvider.Machine().Features().KubePrism().Enabled() {
+			server = fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().KubePrism().Port())
 		} else {
 			server = cfgProvider.Cluster().Endpoint().String()
 		}
