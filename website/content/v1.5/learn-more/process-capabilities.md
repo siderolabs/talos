@@ -9,7 +9,7 @@ Linux defines a set of [process capabilities](https://man7.org/linux/man-pages/m
 Talos Linux for security reasons restricts any process from gaining the following capabilities:
 
 * `CAP_SYS_MODULE` (loading kernel modules)
-* `CAP_BOOT` (rebooting the system)
+* `CAP_SYS_BOOT` (rebooting the system)
 
 This means that any process including privileged Kubernetes pods will not be able to get these capabilities.
 
