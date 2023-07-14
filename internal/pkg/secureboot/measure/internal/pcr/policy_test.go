@@ -16,7 +16,7 @@ import (
 func TestCalculatePolicy(t *testing.T) {
 	t.Parallel()
 
-	policy := pcr.CalculatePolicy([]byte{1, 3, 5}, tpm2.TPMLPCRSelection{
+	policy, err := pcr.CalculatePolicy([]byte{1, 3, 5}, tpm2.TPMLPCRSelection{
 		PCRSelections: []tpm2.TPMSPCRSelection{
 			{
 				Hash:      tpm2.TPMAlgSHA256,
@@ -24,6 +24,7 @@ func TestCalculatePolicy(t *testing.T) {
 			},
 		},
 	})
+	require.NoError(t, err)
 	require.Equal(t,
 		[]byte{0x84, 0xd6, 0x51, 0x47, 0xb0, 0x53, 0x94, 0xd0, 0xfa, 0xc4, 0x5e, 0x36, 0x0, 0x20, 0x3e, 0x3a, 0x11, 0x1, 0x27, 0xfb, 0xe2, 0x6f, 0xc1, 0xe3, 0x3, 0x3, 0x10, 0x21, 0x33, 0xf9, 0x15, 0xe3},
 		policy,

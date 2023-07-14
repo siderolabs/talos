@@ -6,26 +6,29 @@ package pcr
 
 import (
 	"crypto/sha256"
-	"encoding/binary"
 
 	"github.com/google/go-tpm/tpm2"
 )
 
 // CalculatePolicy calculates the policy hash for a given PCR value and PCR selection.
-func CalculatePolicy(pcrValue []byte, pcrSelection tpm2.TPMLPCRSelection) []byte {
-	initial := make([]byte, sha256.Size)
+func CalculatePolicy(pcrValue []byte, pcrSelection tpm2.TPMLPCRSelection) ([]byte, error) {
+	calculator, err := tpm2.NewPolicyCalculator(tpm2.TPMAlgSHA256)
+	if err != nil {
+		return nil, err
+	}
+
 	pcrHash := sha256.Sum256(pcrValue)
 
-	policyPCRCommandValue := make([]byte, 4)
-	binary.BigEndian.PutUint32(policyPCRCommandValue, uint32(tpm2.TPMCCPolicyPCR))
+	policy := tpm2.PolicyPCR{
+		PcrDigest: tpm2.TPM2BDigest{
+			Buffer: pcrHash[:],
+		},
+		Pcrs: pcrSelection,
+	}
 
-	pcrSelectionMarshalled := tpm2.Marshal(pcrSelection)
+	if err := policy.Update(calculator); err != nil {
+		return nil, err
+	}
 
-	hasher := sha256.New()
-	hasher.Write(initial)
-	hasher.Write(policyPCRCommandValue)
-	hasher.Write(pcrSelectionMarshalled)
-	hasher.Write(pcrHash[:])
-
-	return hasher.Sum(nil)
+	return calculator.Hash().Digest, nil
 }

@@ -71,7 +71,10 @@ func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureb
 
 		hash := hashData.Hash()
 
-		policyPCR := CalculatePolicy(hash, pcrSelection)
+		policyPCR, err := CalculatePolicy(hash, pcrSelection)
+		if err != nil {
+			return nil, err
+		}
 
 		sigData, err := Sign(policyPCR, hashAlg, rsaKey)
 		if err != nil {
