@@ -34,10 +34,10 @@ func WithLocalAPIServerPort(port int) Option {
 	}
 }
 
-// WithAPIServerBalancerPort specifies the local API server load balancer port. If 0, lod balancer is disabled.
-func WithAPIServerBalancerPort(port int) Option {
+// WithKubePrismPort specifies the KubePrism port. If 0, lod balancer is disabled.
+func WithKubePrismPort(port int) Option {
 	return func(o *Options) error {
-		o.APIServerBalancerPort = port
+		o.KubePrismPort = port
 
 		return nil
 	}
@@ -295,7 +295,7 @@ type Options struct {
 	AdditionalSubjectAltNames      []string
 	DiscoveryEnabled               *bool
 
-	APIServerBalancerPort int
+	KubePrismPort int
 
 	// Client options.
 	Roles        role.Set

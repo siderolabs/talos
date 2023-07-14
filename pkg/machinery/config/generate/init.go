@@ -73,10 +73,10 @@ func (in *Input) init() ([]config.Document, error) {
 		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
 	}
 
-	if in.Options.APIServerBalancerPort > 0 {
+	if in.Options.KubePrismPort > 0 {
 		machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
 			ServerEnabled: pointer.To(true),
-			ServerPort:    in.Options.APIServerBalancerPort,
+			ServerPort:    in.Options.KubePrismPort,
 		}
 	}
 
