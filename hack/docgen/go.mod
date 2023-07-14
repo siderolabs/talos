@@ -7,8 +7,8 @@ go 1.20
 replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b0f05cf2c
 
 require (
-	github.com/gomarkdown/markdown v0.0.0-20230322041520-c84983bdbf2a
-	github.com/iancoleman/orderedmap v0.2.0
+	github.com/gomarkdown/markdown v0.0.0-20230711084535-11b03c0ae6d6
+	github.com/iancoleman/orderedmap v0.3.0
 	github.com/invopop/jsonschema v0.7.0
 	github.com/microcosm-cc/bluemonday v1.0.24
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0
