@@ -15,13 +15,13 @@ import (
 	"github.com/google/go-tpm/tpm2"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
-	talostpm2 "github.com/siderolabs/talos/internal/pkg/tpm2"
+	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 )
 
 // CalculateBankData calculates the PCR bank data for a given set of UKI file sections.
 //
 // This mimics the process happening happening in the TPM when the UKI is being loaded.
-func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureboot.Section]string, rsaKey *rsa.PrivateKey) ([]talostpm2.BankData, error) {
+func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureboot.Section]string, rsaKey *rsa.PrivateKey) ([]tpm2internal.BankData, error) {
 	// get fingerprint of public key
 	pubKeyFingerprint := sha256.Sum256(x509.MarshalPKCS1PublicKey(&rsaKey.PublicKey))
 
@@ -30,7 +30,7 @@ func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureb
 		return nil, err
 	}
 
-	pcrSelector, err := CreateSelector([]int{secureboot.UKIPCR})
+	pcrSelector, err := tpm2internal.CreateSelector([]int{secureboot.UKIPCR})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PCR selection: %v", err)
 	}
@@ -59,7 +59,7 @@ func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureb
 		}
 	}
 
-	banks := make([]talostpm2.BankData, 0)
+	banks := make([]tpm2internal.BankData, 0)
 
 	for _, phaseInfo := range secureboot.OrderedPhases() {
 		// extend always, but only calculate signature if requested
@@ -71,7 +71,7 @@ func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureb
 
 		hash := hashData.Hash()
 
-		policyPCR, err := CalculatePolicy(hash, pcrSelection)
+		policyPCR, err := tpm2internal.CalculatePolicy(hash, pcrSelection)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +81,7 @@ func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureb
 			return nil, err
 		}
 
-		banks = append(banks, talostpm2.BankData{
+		banks = append(banks, tpm2internal.BankData{
 			PCRs: []int{pcrNumber},
 			PKFP: hex.EncodeToString(pubKeyFingerprint[:]),
 			Sig:  sigData.SignatureBase64,

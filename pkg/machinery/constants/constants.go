@@ -553,9 +553,6 @@ const (
 	// https://www.mankier.com/7/systemd-stub#Initrd_Resources
 	PCRPublicKey = SDStubDynamicInitrdPath + "/" + "tpm2-pcr-public-key.pem"
 
-	// UKIMeasuredPCR is the PCR index that systemd-boot measures the UKI values into.
-	UKIMeasuredPCR = 11
-
 	// DefaultCertificateValidityDuration is the default duration for a certificate.
 	DefaultCertificateValidityDuration = x509.DefaultCertificateValidityDuration
 

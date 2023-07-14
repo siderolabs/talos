@@ -15,7 +15,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure/internal/pcr"
-	talostpm2 "github.com/siderolabs/talos/internal/pkg/tpm2"
+	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 )
 
 func TestCalculateBankData(t *testing.T) {
@@ -40,7 +40,7 @@ func TestCalculateBankData(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t,
-		[]talostpm2.BankData{
+		[]tpm2internal.BankData{
 			{
 				PCRs: []int{15},
 				PKFP: "58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620",

@@ -14,8 +14,8 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/luks"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
 
-	"github.com/siderolabs/talos/internal/pkg/tpm2"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/internal/pkg/secureboot"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 )
 
 // TPMToken is the userdata stored in the partition token metadata.
@@ -59,7 +59,7 @@ func (h *TPMKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 			KeySlots:          []int{h.slot},
 			SealedBlobPrivate: resp.SealedBlobPrivate,
 			SealedBlobPublic:  resp.SealedBlobPublic,
-			PCRs:              []int{constants.UKIMeasuredPCR},
+			PCRs:              []int{secureboot.UKIPCR},
 			Alg:               "sha256",
 			PolicyHash:        resp.PolicyDigest,
 			KeyName:           resp.KeyName,

@@ -2,14 +2,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package pcr_test
+// Package tpm2 provides TPM2.0 related functionality helpers.
+package tpm2_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/pkg/secureboot/measure/internal/pcr"
+	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 )
 
 func TestGetSelection(t *testing.T) {
@@ -40,7 +41,7 @@ func TestGetSelection(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual, err := pcr.CreateSelector(tt.pcrs)
+			actual, err := tpm2internal.CreateSelector(tt.pcrs)
 			require.NoError(t, err)
 
 			require.Equal(t, tt.expected, actual)

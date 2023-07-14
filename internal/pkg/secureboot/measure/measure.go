@@ -18,7 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure/internal/pcr"
-	talostpm2 "github.com/siderolabs/talos/internal/pkg/tpm2"
+	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 )
 
 // SectionsData holds a map of Section to file path to the corresponding section.
@@ -45,17 +45,17 @@ func loadRSAKey(path string) (*rsa.PrivateKey, error) {
 }
 
 // GenerateSignedPCR generates the PCR signed data for a given set of UKI file sections.
-func GenerateSignedPCR(sectionsData SectionsData, rsaKeyPath string) (*talostpm2.PCRData, error) {
+func GenerateSignedPCR(sectionsData SectionsData, rsaKeyPath string) (*tpm2internal.PCRData, error) {
 	rsaKey, err := loadRSAKey(rsaKeyPath)
 	if err != nil {
 		return nil, err
 	}
 
-	data := &talostpm2.PCRData{}
+	data := &tpm2internal.PCRData{}
 
 	for _, algo := range []struct {
 		alg            tpm2.TPMAlgID
-		bankDataSetter *[]talostpm2.BankData
+		bankDataSetter *[]tpm2internal.BankData
 	}{
 		{
 			alg:            tpm2.TPMAlgSHA1,
