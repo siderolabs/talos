@@ -34,7 +34,7 @@ func WithLocalAPIServerPort(port int) Option {
 	}
 }
 
-// WithKubePrismPort specifies the KubePrism port. If 0, lod balancer is disabled.
+// WithKubePrismPort specifies the KubePrism port. If 0, load balancer is disabled.
 func WithKubePrismPort(port int) Option {
 	return func(o *Options) error {
 		o.KubePrismPort = port

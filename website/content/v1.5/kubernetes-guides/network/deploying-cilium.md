@@ -12,6 +12,9 @@ Adhering to Talos principles we'll deploy Cilium with IPAM mode set to Kubernete
 As Talos does not allow loading kernel modules by Kubernetes workloads, `SYS_MODULE` capability needs to be dropped from the Cilium default set of values, this override can be seen in the helm/cilium cli install commands.
 Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.13/network/kubernetes/kubeproxy-free/)
 
+From Talos 1.5 we can use Cilium in combination with KubePrism.
+You can read more about it in Talos 1.5 release notes.
+
 ## Machine config preparation
 
 When generating the machine config for a node set the CNI to none.
@@ -24,6 +27,11 @@ cluster:
   network:
     cni:
       name: none
+machine:
+  features:
+    kubePrism:
+      enabled: true
+      port: 7445
 ```
 
 ```bash
@@ -43,6 +51,11 @@ cluster:
       name: none
   proxy:
     disabled: true
+machine:
+  features:
+    kubePrism:
+      enabled: true
+      port: 7445
 ```
 
 ```bash
@@ -72,9 +85,6 @@ cilium install \
 #### Without kube-proxy
 
 ```bash
-export KUBERNETES_API_SERVER_ADDRESS=<replace with api server endpoint here> # e.g. 10.96.0.1
-export KUBERNETES_API_SERVER_PORT=6443
-
 cilium install \
     --helm-set=ipam.mode=kubernetes \
     --helm-set=kubeProxyReplacement=strict \
@@ -82,8 +92,8 @@ cilium install \
     --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --helm-set=cgroup.autoMount.enabled=false \
     --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
-    --helm-set=k8sServiceHost="${KUBERNETES_API_SERVER_ADDRESS}" \
-    --helm-set=k8sServicePort="${KUBERNETES_API_SERVER_PORT}"
+    --helm-set=k8sServiceHost=localhost \
+    --helm-set=k8sServicePort=7445
 ```
 
 ### Installation using Helm
@@ -122,9 +132,6 @@ helm install \
 Or if you want to deploy Cilium in strict mode without kube-proxy, also set some extra paramaters:
 
 ```bash
-export KUBERNETES_API_SERVER_ADDRESS=<replace with api server endpoint here> # e.g. 10.96.0.1
-export KUBERNETES_API_SERVER_PORT=6443
-
 helm install \
     cilium \
     cilium/cilium \
@@ -136,8 +143,8 @@ helm install \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set=cgroup.autoMount.enabled=false \
     --set=cgroup.hostRoot=/sys/fs/cgroup \
-    --set=k8sServiceHost="${KUBERNETES_API_SERVER_ADDRESS}" \
-    --set=k8sServicePort="${KUBERNETES_API_SERVER_PORT}"
+    --set=k8sServiceHost=localhost \
+    --set=k8sServicePort=7445
 ```
 
 After Cilium is installed the boot process should continue and complete successfully.
@@ -179,8 +186,8 @@ helm template \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set=cgroup.autoMount.enabled=false \
     --set=cgroup.hostRoot=/sys/fs/cgroup \
-    --set=k8sServiceHost="${KUBERNETES_API_SERVER_ADDRESS}" \
-    --set=k8sServicePort="${KUBERNETES_API_SERVER_PORT}" > cilium.yaml
+    --set=k8sServiceHost=localhost \
+    --set=k8sServicePort=7445 > cilium.yaml
 
 kubectl apply -f cilium.yaml
 ```
@@ -200,6 +207,11 @@ cluster:
       name: custom
       urls:
         - https://server.yourdomain.tld/some/path/cilium.yaml
+machine:
+  features:
+    kubePrism:
+      enabled: true
+      port: 7445
 ```
 
 ```bash
@@ -223,6 +235,11 @@ cluster:
   network:
     cni:
       name: none
+machine:
+  features:
+    kubePrism:
+      enabled: true
+      port: 7445
 ```
 
 ```bash
@@ -242,6 +259,11 @@ cluster:
       name: none
   proxy:
     disabled: true
+machine:
+  features:
+    kubePrism:
+      enabled: true
+      port: 7445
 ```
 
 ```bash
