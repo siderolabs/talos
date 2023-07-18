@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/go-tpm/tpm2"
@@ -20,7 +21,8 @@ import (
 func TPMSeed() error {
 	t, err := transport.OpenTPM()
 	if err != nil {
-		if os.IsNotExist(err) {
+		// if the TPM is not available or not a TPM 2.0, we can skip the PCR extension
+		if os.IsNotExist(err) || strings.Contains(err.Error(), "device is not a TPM 2.0") {
 			log.Printf("TPM device is not available")
 
 			return nil

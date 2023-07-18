@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/google/go-tpm/tpm2"
 	"github.com/google/go-tpm/tpm2/transport"
@@ -66,7 +67,8 @@ func ReadPCR(t transport.TPM, pcr int) ([]byte, error) {
 func PCRExtent(pcr int, data []byte) error {
 	t, err := transport.OpenTPM()
 	if err != nil {
-		if os.IsNotExist(err) {
+		// if the TPM is not available or not a TPM 2.0, we can skip the PCR extension
+		if os.IsNotExist(err) || strings.Contains(err.Error(), "device is not a TPM 2.0") {
 			log.Printf("TPM device is not available, skipping PCR extension")
 
 			return nil
