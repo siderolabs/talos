@@ -185,5 +185,7 @@ func (suite *NodenameSuite) TearDownTest() {
 }
 
 func TestNodenameSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(NodenameSuite))
 }

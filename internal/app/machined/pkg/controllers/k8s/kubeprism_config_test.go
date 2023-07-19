@@ -135,6 +135,8 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 }
 
 func TestEndpointsBalancerConfigControllerSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &KubePrismConfigControllerSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {

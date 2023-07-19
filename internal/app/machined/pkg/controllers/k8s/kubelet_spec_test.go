@@ -335,10 +335,14 @@ func (suite *KubeletSpecSuite) TearDownTest() {
 }
 
 func TestKubeletSpecSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(KubeletSpecSuite))
 }
 
 func TestNewKubeletConfigurationFail(t *testing.T) {
+	t.Parallel()
+
 	for _, tt := range []struct {
 		name        string
 		cfgSpec     *k8s.KubeletConfigSpec
@@ -386,6 +390,8 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 
 		t.Run(
 			tt.name, func(t *testing.T) {
+				t.Parallel()
+
 				_, err := k8sctrl.NewKubeletConfiguration(tt.cfgSpec)
 				require.Error(t, err)
 
@@ -396,6 +402,8 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 }
 
 func TestNewKubeletConfigurationMerge(t *testing.T) {
+	t.Parallel()
+
 	defaultKubeletConfig := kubeletconfig.KubeletConfiguration{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubeletconfig.SchemeGroupVersion.String(),
@@ -530,6 +538,8 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			expected := defaultKubeletConfig
 			tt.expectedOverrides(&expected)
 

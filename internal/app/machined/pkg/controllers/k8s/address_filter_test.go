@@ -176,5 +176,7 @@ func (suite *K8sAddressFilterSuite) TearDownTest() {
 }
 
 func TestK8sAddressFilterSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(K8sAddressFilterSuite))
 }

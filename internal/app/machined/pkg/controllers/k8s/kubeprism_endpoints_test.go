@@ -120,6 +120,8 @@ func must[T any](res T, err error) func(t *require.Assertions) T {
 }
 
 func TestEndpointsBalancerControllerSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &KubePrismControllerSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {

@@ -157,5 +157,7 @@ func (suite *ExtraManifestSuite) TearDownTest() {
 }
 
 func TestExtraManifestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(ExtraManifestSuite))
 }

@@ -186,5 +186,7 @@ func (suite *StaticPodListSuite) TearDownTest() {
 }
 
 func TestStaticPodListSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(StaticPodListSuite))
 }

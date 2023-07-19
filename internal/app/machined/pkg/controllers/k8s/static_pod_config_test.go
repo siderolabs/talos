@@ -200,5 +200,7 @@ func (suite *StaticPodConfigSuite) TearDownTest() {
 }
 
 func TestStaticPodConfigSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(StaticPodConfigSuite))
 }

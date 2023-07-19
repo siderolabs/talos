@@ -261,5 +261,7 @@ func (suite *KubeletConfigSuite) TearDownTest() {
 }
 
 func TestKubeletConfigSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(KubeletConfigSuite))
 }

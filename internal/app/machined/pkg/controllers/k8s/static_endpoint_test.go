@@ -55,6 +55,8 @@ func (suite *StaticEndpointControllerSuite) TestReconcile() {
 }
 
 func TestStaticEndpointControllerSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &StaticEndpointControllerSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {

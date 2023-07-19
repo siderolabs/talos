@@ -29,6 +29,8 @@ type NodeLabelsSuite struct {
 }
 
 func TestNodeLabelsSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &NodeLabelsSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 5 * time.Second,

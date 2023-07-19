@@ -472,6 +472,8 @@ metadata:
 }
 
 func TestK8sControlPlaneSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &K8sControlPlaneSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 10 * time.Second,

@@ -356,5 +356,7 @@ func (suite *ManifestSuite) TearDownTest() {
 }
 
 func TestManifestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(ManifestSuite))
 }

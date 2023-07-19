@@ -773,5 +773,7 @@ func (suite *ControlPlaneStaticPodSuite) TearDownTest() {
 }
 
 func TestControlPlaneStaticPodSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(ControlPlaneStaticPodSuite))
 }

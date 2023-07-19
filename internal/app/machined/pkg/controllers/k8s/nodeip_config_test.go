@@ -219,5 +219,7 @@ func (suite *NodeIPConfigSuite) TearDownTest() {
 }
 
 func TestNodeIPConfigSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(NodeIPConfigSuite))
 }

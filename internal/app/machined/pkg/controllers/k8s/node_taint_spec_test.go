@@ -31,6 +31,8 @@ type NodeTaintsSuite struct {
 }
 
 func TestNodeTaintsSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &NodeTaintsSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 5 * time.Second,
