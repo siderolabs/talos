@@ -151,7 +151,12 @@ func (handler *circularHandler) Writer() (io.WriteCloser, error) {
 		}()
 	}
 
-	return nopCloser{handler.buf}, nil
+	switch handler.id {
+	case "machined":
+		return &timeStampWriter{w: handler.buf}, nil
+	default:
+		return nopCloser{handler.buf}, nil
+	}
 }
 
 // Reader implements runtime.LogHandler interface.
@@ -276,4 +281,30 @@ func (handler *circularHandler) resend(e *runtime.LogEvent) {
 
 		time.Sleep(time.Second)
 	}
+}
+
+// timeStampWriter is a writer that adds a timestamp to each line.
+type timeStampWriter struct {
+	w io.Writer
+}
+
+// Write implements the io.Writer interface.
+func (t *timeStampWriter) Write(p []byte) (int, error) {
+	// Current log.Logger implementation always adds a newline to the message, so we don't need to wait for it.
+	var buf bytes.Buffer
+
+	buf.WriteString(time.Now().Format("2006/01/02 15:04:05.000000"))
+	buf.WriteByte(' ')
+	buf.Write(p)
+
+	return t.w.Write(buf.Bytes())
+}
+
+// Close implements the io.Closer interface.
+func (t *timeStampWriter) Close() error {
+	if c, ok := t.w.(io.Closer); ok {
+		return c.Close()
+	}
+
+	return nil
 }
