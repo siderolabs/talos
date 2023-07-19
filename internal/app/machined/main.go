@@ -301,7 +301,7 @@ func main() {
 		return
 	// Azure uses the hv_utils kernel module to shutdown the node in hyper-v by calling perform_shutdown which will call orderly_poweroff which will call /sbin/poweroff.
 	case "poweroff", "shutdown":
-		poweroff.Main()
+		poweroff.Main(os.Args)
 
 		return
 	case "wrapperd":
