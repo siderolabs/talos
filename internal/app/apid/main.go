@@ -179,7 +179,9 @@ func apidMain() error {
 					proxy.TransparentHandler(
 						router.Director,
 						proxy.WithStreamedDetector(router.StreamedDetector),
-					)),
+					),
+				),
+				grpc.MaxRecvMsgSize(constants.GRPCMaxMessageSize),
 			),
 			factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
 			factory.WithStreamInterceptor(injector.StreamInterceptor()),
@@ -201,7 +203,9 @@ func apidMain() error {
 					proxy.TransparentHandler(
 						router.Director,
 						proxy.WithStreamedDetector(router.StreamedDetector),
-					)),
+					),
+				),
+				grpc.MaxRecvMsgSize(constants.GRPCMaxMessageSize),
 			),
 			factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
 			factory.WithStreamInterceptor(injector.StreamInterceptor()),

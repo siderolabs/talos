@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"google.golang.org/grpc"
+
 	v1alpha1server "github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
@@ -127,6 +129,10 @@ func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter
 			ShutdownCtx: ctx,
 		},
 		factory.WithLog("machined ", logWriter),
+
+		factory.ServerOptions(
+			grpc.MaxRecvMsgSize(constants.GRPCMaxMessageSize),
+		),
 
 		factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
 		factory.WithStreamInterceptor(injector.StreamInterceptor()), //nolint:contextcheck

@@ -881,6 +881,9 @@ const (
 
 	// MaintenanceServiceCommonName is the CN of the maintenance service server certificate.
 	MaintenanceServiceCommonName = "maintenance-service.talos.dev"
+
+	// GRPCMaxMessageSize is the maximum message size for Talos API.
+	GRPCMaxMessageSize = 32 * 1024 * 1024
 )
 
 // See https://linux.die.net/man/3/klogctl
