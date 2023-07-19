@@ -137,6 +137,14 @@ func (r *MachineConfig) Container() config.Container {
 	return r.spec.cfg
 }
 
+// Provider returns config.Provider to access config provider.
+//
+// This method should only be used when Container() and Config() methods are not enough.
+// Config()/Container() provides better semantic split on the config access.
+func (r *MachineConfig) Provider() config.Provider {
+	return r.spec.cfg
+}
+
 func init() {
 	if err := protobuf.RegisterResource(MachineConfigType, &MachineConfig{}); err != nil {
 		panic(err)

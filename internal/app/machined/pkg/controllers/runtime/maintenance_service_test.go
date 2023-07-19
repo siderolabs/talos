@@ -147,11 +147,7 @@ func (mock mockController) ConfigContainer() config.Container {
 	return nil
 }
 
-func (mock mockController) LoadAndValidateConfig([]byte) (config.Provider, error) {
-	return nil, nil
-}
-
-func (mock mockController) RollbackToConfigAfter([]byte, time.Duration) error {
+func (mock mockController) RollbackToConfigAfter(time.Duration) error {
 	return nil
 }
 

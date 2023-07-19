@@ -44,4 +44,7 @@ type Provider interface {
 
 	// RedactSecrets returns a copy of the Provider with all secrets replaced with the given string.
 	RedactSecrets(string) Provider
+
+	// CompleteForBoot return true if the machine config is enough to proceed with the boot process.
+	CompleteForBoot() bool
 }

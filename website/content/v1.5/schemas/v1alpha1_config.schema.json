@@ -697,9 +697,9 @@
         "persist": {
           "type": "boolean",
           "title": "persist",
-          "description": "Indicates whether to pull the machine config upon every boot.\n",
-          "markdownDescription": "Indicates whether to pull the machine config upon every boot.",
-          "x-intellij-html-description": "\u003cp\u003eIndicates whether to pull the machine config upon every boot.\u003c/p\u003e\n"
+          "description": "description: |\n    Indicates whether to pull the machine config upon every boot.\n\nNote: this option is deprecated and it will be removed in Talos 1.6.\n  values:\n    - true\n    - yes\n    - false\n    - no\n",
+          "markdownDescription": "description: |\n    Indicates whether to pull the machine config upon every boot.\n\n   **Note**: this option is deprecated and it will be removed in Talos 1.6.\n  values:\n    - true\n    - yes\n    - false\n    - no",
+          "x-intellij-html-description": "\u003cp\u003edescription: |\n    Indicates whether to pull the machine config upon every boot.\u003c/p\u003e\n\n\u003cp\u003e\u003cstrong\u003eNote\u003c/strong\u003e: this option is deprecated and it will be removed in Talos 1.6.\n  values:\n    - true\n    - yes\n    - false\n    - no\u003c/p\u003e\n"
         },
         "machine": {
           "$ref": "#/$defs/MachineConfig",

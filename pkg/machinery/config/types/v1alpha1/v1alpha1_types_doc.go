@@ -120,14 +120,8 @@ func init() {
 	ConfigDoc.Fields[2].Name = "persist"
 	ConfigDoc.Fields[2].Type = "bool"
 	ConfigDoc.Fields[2].Note = ""
-	ConfigDoc.Fields[2].Description = "Indicates whether to pull the machine config upon every boot."
-	ConfigDoc.Fields[2].Comments[encoder.LineComment] = "Indicates whether to pull the machine config upon every boot."
-	ConfigDoc.Fields[2].Values = []string{
-		"true",
-		"yes",
-		"false",
-		"no",
-	}
+	ConfigDoc.Fields[2].Description = "description: |\n    Indicates whether to pull the machine config upon every boot.\n\n   **Note**: this option is deprecated and it will be removed in Talos 1.6.\n  values:\n    - true\n    - yes\n    - false\n    - no\n"
+	ConfigDoc.Fields[2].Comments[encoder.LineComment] = "description: |"
 	ConfigDoc.Fields[3].Name = "machine"
 	ConfigDoc.Fields[3].Type = "MachineConfig"
 	ConfigDoc.Fields[3].Note = ""

@@ -89,7 +89,6 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&cluster.ConfigController{},
 		&cluster.DiscoveryServiceController{},
 		&cluster.EndpointController{},
-		&k8s.KubePrismEndpointsController{},
 		&cluster.InfoController{},
 		&cluster.KubernetesPullController{},
 		&cluster.KubernetesPushController{},
@@ -97,6 +96,18 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&cluster.MemberController{},
 		&cluster.NodeIdentityController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
+		&config.AcquireController{
+			PlatformConfiguration: &platformConfigurator{
+				platform: ctrl.v1alpha1Runtime.State().Platform(),
+				state:    ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
+			},
+			PlatformEvent: &platformEventer{
+				platform: ctrl.v1alpha1Runtime.State().Platform(),
+			},
+			ConfigSetter:   ctrl.v1alpha1Runtime,
+			EventPublisher: ctrl.v1alpha1Runtime.Events(),
+			ValidationMode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&config.MachineTypeController{},
 		&cri.SeccompProfileController{},
@@ -132,6 +143,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&k8s.KubeletStaticPodController{},
+		&k8s.KubePrismEndpointsController{},
 		&k8s.KubePrismConfigController{},
 		&k8s.KubePrismController{},
 		&k8s.ManifestApplyController{},

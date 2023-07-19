@@ -7,5 +7,8 @@ package v1alpha1
 
 import "github.com/cosi-project/runtime/pkg/resource"
 
+//nolint:lll
+//go:generate deep-copy -type AcquireConfigSpecSpec -type AcquireConfigStatusSpec -type ServiceSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
 // NamespaceName contains resources linking v1alpha2 components with v1alpha1 Talos runtime.
 const NamespaceName resource.Namespace = "runtime"

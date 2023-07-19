@@ -94,7 +94,6 @@ func NewState() (*State, error) {
 
 	// register Talos resources
 	for _, r := range []meta.ResourceWithRD{
-		&v1alpha1.Service{},
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},
@@ -197,6 +196,9 @@ func NewState() (*State, error) {
 		&secrets.Trustd{},
 		&siderolink.Config{},
 		&time.Status{},
+		&v1alpha1.AcquireConfigSpec{},
+		&v1alpha1.AcquireConfigStatus{},
+		&v1alpha1.Service{},
 	} {
 		if err := s.resourceRegistry.Register(ctx, r); err != nil {
 			return nil, err

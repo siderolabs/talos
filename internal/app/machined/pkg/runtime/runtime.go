@@ -16,8 +16,7 @@ import (
 type Runtime interface { //nolint:interfacebloat
 	Config() config.Config
 	ConfigContainer() config.Container
-	LoadAndValidateConfig([]byte) (config.Provider, error)
-	RollbackToConfigAfter([]byte, time.Duration) error
+	RollbackToConfigAfter(time.Duration) error
 	CancelConfigRollbackTimeout()
 	SetConfig(config.Provider) error
 	CanApplyImmediate(config.Provider) error

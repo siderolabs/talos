@@ -160,9 +160,6 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 	default:
 		if !r.State().Machine().Installed() || r.State().Machine().IsInstallStaged() {
 			phases = phases.Append(
-				"validateConfig",
-				ValidateConfig,
-			).Append(
 				"env",
 				SetUserEnvVars,
 			).Append(
@@ -219,9 +216,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"mountState",
 		MountStatePartition,
-	).Append(
-		"validateConfig",
-		ValidateConfig,
 	).Append(
 		"saveConfig",
 		SaveConfig,

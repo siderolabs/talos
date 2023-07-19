@@ -21,7 +21,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -57,26 +56,9 @@ func (r *Runtime) ConfigContainer() config.Container {
 	return r.c.Load()
 }
 
-// LoadAndValidateConfig implements the Runtime interface.
-func (r *Runtime) LoadAndValidateConfig(b []byte) (config.Provider, error) {
-	cfg, err := configloader.NewFromBytes(b)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse config: %w", err)
-	}
-
-	if _, err := cfg.Validate(r.State().Platform().Mode()); err != nil {
-		return nil, fmt.Errorf("failed to validate config: %w", err)
-	}
-
-	return cfg, nil
-}
-
 // RollbackToConfigAfter implements the Runtime interface.
-func (r *Runtime) RollbackToConfigAfter(cfg []byte, timeout time.Duration) error {
-	cfgProvider, err := r.LoadAndValidateConfig(cfg)
-	if err != nil {
-		return err
-	}
+func (r *Runtime) RollbackToConfigAfter(timeout time.Duration) error {
+	cfgProvider := r.c.Load()
 
 	r.CancelConfigRollbackTimeout()
 

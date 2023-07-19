@@ -7,14 +7,12 @@ package v1alpha1
 import (
 	"bufio"
 	"bytes"
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -48,7 +46,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
-	perrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
@@ -70,16 +67,15 @@ import (
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
-	resourceconfig "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	resourcev1alpha1 "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 	"github.com/siderolabs/talos/pkg/minimal"
 	"github.com/siderolabs/talos/pkg/version"
 )
@@ -419,111 +415,21 @@ func CreateOSReleaseFile(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 
 // LoadConfig represents the LoadConfig task.
 func LoadConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		download := func() error {
-			var b []byte
-
-			fetchCtx, ctxCancel := context.WithTimeout(ctx, constants.ConfigLoadTimeout)
-			defer ctxCancel()
-
-			b, e := fetchConfig(fetchCtx, r)
-			if errors.Is(e, perrors.ErrNoConfigSource) {
-				logger.Println("machine configuration not found; starting maintenance service")
-
-				// nb: we treat maintenance mode as an "activate"
-				// event b/c the user is expected to be able to
-				// interact with the system at this point.
-				platform.FireEvent(
-					ctx,
-					r.State().Platform(),
-					platform.Event{
-						Type:    platform.EventTypeActivate,
-						Message: "Talos booted into maintenance mode. Ready for user interaction.",
-					},
-				)
-
-				b, e = receiveConfigViaMaintenanceService(ctx, r)
-				if e != nil {
-					return fmt.Errorf("failed to receive config via maintenance service: %w", e)
-				}
-			}
-
-			if e != nil {
-				r.Events().Publish(ctx, &machineapi.ConfigLoadErrorEvent{
-					Error: e.Error(),
-				})
-
-				platform.FireEvent(
-					ctx,
-					r.State().Platform(),
-					platform.Event{
-						Type:    platform.EventTypeFailure,
-						Message: "Error fetching Talos machine config.",
-						Error:   e,
-					},
-				)
-
-				return e
-			}
-
-			logger.Printf("storing config in memory")
-
-			cfg, e := r.LoadAndValidateConfig(b)
-			if e != nil {
-				r.Events().Publish(ctx, &machineapi.ConfigLoadErrorEvent{
-					Error: e.Error(),
-				})
-
-				platform.FireEvent(
-					ctx,
-					r.State().Platform(),
-					platform.Event{
-						Type:    platform.EventTypeFailure,
-						Message: "Error loading and validating Talos machine config.",
-						Error:   e,
-					},
-				)
-
-				return e
-			}
-
-			platform.FireEvent(
-				ctx,
-				r.State().Platform(),
-				platform.Event{
-					Type:    platform.EventTypeConfigLoaded,
-					Message: "Talos machine config loaded successfully.",
-				},
-			)
-
-			return r.SetConfig(cfg)
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		// create a request to initialize the process acquisition process
+		request := resourcev1alpha1.NewAcquireConfigSpec()
+		if err := r.State().V1Alpha2().Resources().Create(ctx, request); err != nil {
+			return fmt.Errorf("failed to create config request: %w", err)
 		}
 
-		cfg, err := configloader.NewFromFile(constants.ConfigPath)
-		if err != nil {
-			logger.Printf("downloading config")
-
-			return download()
+		// wait for the config to be acquired
+		status := resourcev1alpha1.NewAcquireConfigStatus()
+		if _, err := r.State().V1Alpha2().Resources().WatchFor(ctx, status.Metadata(), state.WithEventTypes(state.Created)); err != nil {
+			return err
 		}
 
-		if !cfg.Persist() {
-			logger.Printf("found existing config, but persistence is disabled, downloading config")
-
-			return download()
-		}
-
-		logger.Printf("persistence is enabled, using existing config on disk")
-
-		platform.FireEvent(
-			ctx,
-			r.State().Platform(),
-			platform.Event{
-				Type:    platform.EventTypeConfigLoaded,
-				Message: "Talos machine config loaded successfully.",
-			},
-		)
-
-		return r.SetConfig(cfg)
+		// clean up request to make sure controller doesn't work after this point
+		return r.State().V1Alpha2().Resources().Destroy(ctx, request.Metadata())
 	}, "loadConfig"
 }
 
@@ -539,147 +445,6 @@ func SaveConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 		return os.WriteFile(constants.ConfigPath, b, 0o600)
 	}, "saveConfig"
-}
-
-func fetchConfig(ctx context.Context, r runtime.Runtime) (out []byte, err error) {
-	var b []byte
-
-	if b, err = r.State().Platform().Configuration(ctx, r.State().V1Alpha2().Resources()); err != nil {
-		return nil, err
-	}
-
-	// Detect if config is a gzip archive and unzip it if so
-	contentType := http.DetectContentType(b)
-	if contentType == "application/x-gzip" {
-		var gzipReader *gzip.Reader
-
-		gzipReader, err = gzip.NewReader(bytes.NewReader(b))
-		if err != nil {
-			return nil, fmt.Errorf("error creating gzip reader: %w", err)
-		}
-
-		//nolint:errcheck
-		defer gzipReader.Close()
-
-		var unzippedData []byte
-
-		unzippedData, err = io.ReadAll(gzipReader)
-		if err != nil {
-			return nil, fmt.Errorf("error unzipping machine config: %w", err)
-		}
-
-		b = unzippedData
-	}
-
-	return b, nil
-}
-
-//nolint:gocyclo
-func receiveConfigViaMaintenanceService(ctx context.Context, r runtime.Runtime) ([]byte, error) {
-	// add "fake" events to signal when Talos enters and leaves maintenance mode
-	r.Events().Publish(ctx, &machineapi.TaskEvent{
-		Action: machineapi.TaskEvent_START,
-		Task:   "runningMaintenance",
-	})
-
-	defer r.Events().Publish(ctx, &machineapi.TaskEvent{
-		Action: machineapi.TaskEvent_STOP,
-		Task:   "runningMaintenance",
-	})
-
-	// NOTE: this code is temporary, until the config acquisition is completely rewritten to be controller-based
-	//       so this code looks a bit messy, as it's not conreoller-based
-
-	// start watching for maintenance service generated machine config
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	watchCh := make(chan state.Event)
-
-	if err := r.State().V1Alpha2().Resources().Watch(ctx, resourceconfig.NewMachineConfigWithID(nil, resourceconfig.MaintenanceID).Metadata(), watchCh); err != nil {
-		return nil, fmt.Errorf("failed to watch for maintenance service generated machine config: %w", err)
-	}
-
-	// consume the first watch event, it's either Destroyed (if the config is missing), or Created (if the config is there from the previous run)
-	select {
-	case ev := <-watchCh:
-		switch ev.Type { //nolint:exhaustive
-		case state.Created, state.Destroyed:
-			// expected
-		case state.Errored:
-			return nil, fmt.Errorf("failed to watch for maintenance service generated machine config: %w", ev.Error)
-		default:
-			return nil, fmt.Errorf("unexpected event type: %v", ev.Type)
-		}
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
-
-	// create request for maintenance service
-	req := resourceruntime.NewMaintenanceServiceRequest()
-	if err := r.State().V1Alpha2().Resources().Create(ctx, req); err != nil {
-		return nil, fmt.Errorf("failed to create maintenance service request: %w", err)
-	}
-
-	// wait for an update from the maintenance service
-	var processedBytes []byte
-
-waitForConfig:
-	for {
-		select {
-		case ev := <-watchCh:
-			switch ev.Type { //nolint:exhaustive
-			case state.Created, state.Updated:
-				var err error
-
-				configContainer := ev.Resource.(*resourceconfig.MachineConfig).Container()
-
-				processedBytes, err = configContainer.Bytes()
-				if err != nil {
-					return nil, fmt.Errorf("failed to get machine config bytes: %w", err)
-				}
-
-				// wait for v1alpha1 config to appear
-				// we should refactor this to do a proper check for "complete" config
-				if configContainer.RawV1Alpha1() != nil {
-					break waitForConfig
-				}
-			case state.Errored:
-				return nil, fmt.Errorf("failed to watch for maintenance service generated machine config: %w", ev.Error)
-			default:
-				return nil, fmt.Errorf("unexpected event type: %v", ev.Type)
-			}
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		}
-	}
-
-	// tear down and destroy the maintenance service
-	if _, err := r.State().V1Alpha2().Resources().Teardown(ctx, req.Metadata()); err != nil {
-		return nil, fmt.Errorf("failed to teardown maintenance service: %w", err)
-	}
-
-	if _, err := r.State().V1Alpha2().Resources().WatchFor(ctx, req.Metadata(), state.WithFinalizerEmpty()); err != nil {
-		return nil, fmt.Errorf("failed to watch for teardown of maintenance service: %w", err)
-	}
-
-	if err := r.State().V1Alpha2().Resources().Destroy(ctx, req.Metadata()); err != nil {
-		return nil, fmt.Errorf("failed to destroy maintenance service: %w", err)
-	}
-
-	return processedBytes, nil
-}
-
-// ValidateConfig validates the config.
-func ValidateConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		warnings, err := r.ConfigContainer().Validate(r.State().Platform().Mode())
-		for _, w := range warnings {
-			logger.Printf("WARNING:\n%s", w)
-		}
-
-		return err
-	}, "validateConfig"
 }
 
 // MemorySizeCheck represents the MemorySizeCheck task.

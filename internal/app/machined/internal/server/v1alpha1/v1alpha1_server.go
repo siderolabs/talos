@@ -77,6 +77,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -163,7 +164,12 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		s.Controller.Runtime().CancelConfigRollbackTimeout()
 	}
 
-	cfgProvider, err := s.Controller.Runtime().LoadAndValidateConfig(in.GetData())
+	cfgProvider, err := configloader.NewFromBytes(in.GetData())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	warnings, err := cfgProvider.Validate(s.Controller.Runtime().State().Platform().Mode())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -238,11 +244,6 @@ Config diff:
 	switch in.Mode {
 	// --mode=try
 	case machine.ApplyConfigurationRequest_TRY:
-		oldConfig, err := s.Controller.Runtime().ConfigContainer().Bytes()
-		if err != nil {
-			return nil, err
-		}
-
 		timeout := constants.ConfigTryTimeout
 		if in.TryModeTimeout != nil {
 			timeout = in.TryModeTimeout.AsDuration()
@@ -250,7 +251,7 @@ Config diff:
 
 		modeDetails += fmt.Sprintf("\nThe config is applied in 'try' mode and will be automatically reverted back in %s", timeout.String())
 
-		if err := s.Controller.Runtime().RollbackToConfigAfter(oldConfig, timeout); err != nil {
+		if err := s.Controller.Runtime().RollbackToConfigAfter(timeout); err != nil {
 			return nil, err
 		}
 
@@ -279,6 +280,7 @@ Config diff:
 		Messages: []*machine.ApplyConfiguration{
 			{
 				Mode:        in.Mode,
+				Warnings:    warnings,
 				ModeDetails: modeDetails + modeErr,
 			},
 		},

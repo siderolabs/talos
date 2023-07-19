@@ -282,3 +282,9 @@ func (container *Container) Documents() []config.Document {
 
 	return docs
 }
+
+// CompleteForBoot return true if the machine config is enough to proceed with the boot process.
+func (container *Container) CompleteForBoot() bool {
+	// for now, v1alpha1 config is required
+	return container.v1alpha1Config != nil
+}

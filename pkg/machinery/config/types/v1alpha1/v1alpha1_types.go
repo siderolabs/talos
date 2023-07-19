@@ -650,6 +650,8 @@ type Config struct {
 	ConfigDebug *bool `yaml:"debug,omitempty"`
 	//   description: |
 	//     Indicates whether to pull the machine config upon every boot.
+	//
+	//	   **Note**: this option is deprecated and it will be removed in Talos 1.6.
 	//   values:
 	//     - true
 	//     - yes

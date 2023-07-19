@@ -13,9 +13,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-//nolint:lll
-//go:generate deep-copy -type ServiceSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
-
 // ServiceType is type of Service resource.
 const ServiceType = resource.Type("Services.v1alpha1.talos.dev")
 
