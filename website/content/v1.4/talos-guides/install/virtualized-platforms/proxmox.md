@@ -59,7 +59,11 @@ Select the ISO you downloaded previously, then hit "Upload"
 
 ## Create VMs
 
-Start by creating a new VM by clicking the "Create VM" button in the Proxmox UI:
+Before starting, familiarise yourself with the
+[system requirements]({{< relref "../../../introduction/system-requirements" >}}) for Talos and assign VM
+resources accordingly.
+
+Create a new VM by clicking the "Create VM" button in the Proxmox UI:
 
 <img src="/images/proxmox-guide/create-vm.png" width="500px">
 
@@ -77,18 +81,17 @@ Keep the defaults in the "Hard Disk" tab as well, only changing the size if desi
 
 In the "CPU" section, give at least 2 cores to the VM:
 
-> Note: As of Talos v1.0 (which requires the x86-64-v2 microarchitecture), booting
-> with the default Processor Type `kvm64` will not work.
-> You can enable the required
-> CPU features after creating the VM by adding the following line in the corresponding
-> `/etc/pve/qemu-server/<vmid>.conf` file:
+> Note: As of Talos v1.0 (which requires the x86-64-v2 microarchitecture), prior to Proxmox V8.0, booting with the
+> default Processor Type `kvm64` will not work.
+> You can enable the required CPU features after creating the VM by
+> adding the following line in the corresponding `/etc/pve/qemu-server/<vmid>.conf` file:
 >
 > ```text
 > args: -cpu kvm64,+cx16,+lahf_lm,+popcnt,+sse3,+ssse3,+sse4.1,+sse4.2
 > ```
 >
-> Alternatively, you can set the Processor Type to `host` if your Proxmox host supports
-> these CPU features, this however prevents using live VM migration.
+> Alternatively, you can set the Processor Type to `host` if your Proxmox host supports these CPU features,
+> this however prevents using live VM migration.
 
 <img src="/images/proxmox-guide/edit-cpu.png" width="500px">
 
@@ -104,6 +107,11 @@ Finish creating the VM by clicking through the "Confirm" tab and then "Finish".
 
 Repeat this process for a second VM to use as a worker node.
 You can also repeat this for additional nodes desired.
+
+> Note: Talos doesn't support memory hot plugging, if creating the VM programmatically don't enable memory hotplug on your
+> Talos VM's.
+> Doing so will cause Talos to be unable to see all available memory and have insufficient memory to complete
+> installation of the cluster.
 
 ## Start Control Plane Node
 
@@ -152,7 +160,17 @@ Issue the following command, updating the output directory, cluster name, and co
 talosctl gen config talos-vbox-cluster https://$CONTROL_PLANE_IP:6443 --output-dir _out
 ```
 
-This will create several files in the `_out` directory: controlplane.yaml, worker.yaml, and talosconfig.
+This will create several files in the `_out` directory: `controlplane.yaml`, `worker.yaml`, and `talosconfig`.
+
+> Note: The Talos config by default will install to `/dev/sda`.
+> Depending on your setup the virtual disk may be mounted differently Eg: `/dev/vda`.
+> You can check for disks running the following command:
+>
+> ```bash
+> talosctl disks --insecure --nodes $CONTROL_PLANE_IP
+> ```
+>
+> Update `controlplane.yaml` and `worker.yaml` config files to point to the correct disk location.
 
 ## Create Control Plane Node
 
@@ -198,17 +216,8 @@ talosctl config node $CONTROL_PLANE_IP
 
 ### Bootstrap Etcd
 
-Set the `endpoints` and `nodes`:
-
 ```bash
-talosctl --talosconfig _out/talosconfig config endpoint <control plane 1 IP>
-talosctl --talosconfig _out/talosconfig config node <control plane 1 IP>
-```
-
-Bootstrap `etcd`:
-
-```bash
-talosctl --talosconfig _out/talosconfig bootstrap
+talosctl bootstrap
 ```
 
 ### Retrieve the `kubeconfig`
@@ -216,7 +225,7 @@ talosctl --talosconfig _out/talosconfig bootstrap
 At this point we can retrieve the admin `kubeconfig` by running:
 
 ```bash
-talosctl --talosconfig _out/talosconfig kubeconfig .
+talosctl kubeconfig .
 ```
 
 ## Cleaning Up
