@@ -38,6 +38,12 @@
                 "permissions": 600,
                 "op": "create",
                 "content": "MONITOR ${upsmonHost} 1 remote ${upsmonPasswd} slave\nSHUTDOWNCMD \"/sbin/poweroff\""
+            },
+            {
+                "path": "/var/etc/tailscale/auth.env",
+                "permissions": 600,
+                "op": "create",
+                "content": ""
             }
         ]
     }

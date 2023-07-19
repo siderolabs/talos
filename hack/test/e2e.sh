@@ -267,8 +267,33 @@ function run_extensions_test {
   ${TALOSCTL} services ext-hello-world | grep -E "STATE\s+Running"
   curl http://172.20.1.5/ | grep Hello
 
+  echo "Testing tailscale extension service..."
+  ${TALOSCTL} services ext-tailscale | grep -E "STATE\s+Running"
+  ${TALOSCTL} get links tailscale0
+
+  echo "Testing qemu-guest-agent extension service..."
+  ${TALOSCTL} services ext-qemu-guest-agent | grep -E "STATE\s+Running"
+  # get exisitng boot id
+  BOOT_ID=$(get_boot_id)
+  NODE_HOSTNAME=$(${TALOSCTL} get hostname -o json | jq -r '.spec.hostname')
+  CLUSTERNAME=$(cut -d '-' -f 1-2 <<< "${NODE_HOSTNAME}")
+  # issue a reboot via qemu-guest-agent
+  echo '{"execute":"guest-shutdown", "arguments": {"mode": "reboot"}}' | socat - unix-connect:"${HOME}/.talos/clusters/${CLUSTERNAME}/${NODE_HOSTNAME}.sock"
+  # wait for the node to reboot
+  ${TALOSCTL} -n 172.20.1.2 health
+  NEW_BOOT_ID=$(get_boot_id)
+  # verify that the boot id has changed
+  if [ "${BOOT_ID}" == "${NEW_BOOT_ID}" ]; then
+    echo "ERROR: boot id has not changed, reboot failed"
+    exit 1
+  fi
+
   # set talosctl config back to the first controlplane
   "${TALOSCTL}" config node 172.20.1.2
+}
+
+function get_boot_id() {
+  ${TALOSCTL} read /proc/sys/kernel/random/boot_id
 }
 
 function run_csi_tests {
