@@ -13,7 +13,8 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/protoenc"
-	"google.golang.org/protobuf/proto" //nolint:depguard
+	_ "google.golang.org/grpc/encoding/gzip" //nolint:depguard // enable compression server-side
+	"google.golang.org/protobuf/proto"       //nolint:depguard
 
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 )

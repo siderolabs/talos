@@ -13,8 +13,8 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-18-ge27c249
-PKGS ?= v1.5.0-alpha.0-34-g75696ba
+TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-19-gdc7dd9e
+PKGS ?= v1.5.0-alpha.0-37-gd0eaedc
 EXTRAS ?= v1.5.0-alpha.0-2-gf415aac
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
@@ -29,7 +29,7 @@ STRINGER_VERSION ?= v0.11.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.27.3
+DEEPCOPY_GEN_VERSION ?= v0.27.4
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.4.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -54,11 +54,11 @@ KUBECTL_VERSION ?= v1.28.0-alpha.4
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.37
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.12.1
+HELM_VERSION ?= v3.12.2
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.4.4
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.14.7
+CILIUM_CLI_VERSION ?= v0.14.8
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz

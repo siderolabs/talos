@@ -17,7 +17,6 @@ import (
 	"github.com/siderolabs/gen/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/encoding/gzip"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/client/resolver"
@@ -41,7 +40,8 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcCon
 
 	dialOpts := []grpc.DialOption{
 		grpc.WithDefaultCallOptions( // enable compression by default
-			grpc.UseCompressor(gzip.Name),
+			// TODO: enable compression for Talos 1.7+
+			// grpc.UseCompressor(gzip.Name),
 			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
 		),
 	}

@@ -18,9 +18,9 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-* Linux: 6.1.37
+* Linux: 6.1.39
 * containerd: 1.6.21
-* runc: 1.1.7
+* runc: 1.1.8
 * etcd: 3.5.9
 * Kubernetes: 1.28.0-alpha.4
 * Flannel: 0.22.0
