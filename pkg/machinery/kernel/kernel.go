@@ -31,6 +31,11 @@ var DefaultArgs = []string{
 	"ima_hash=sha512",
 }
 
+// SecureBootArgs returns the kernel commandline options required for secure boot.
+var SecureBootArgs = []string{
+	"lockdown=confidentiality",
+}
+
 // Param represents a kernel system property.
 type Param struct {
 	Key   string

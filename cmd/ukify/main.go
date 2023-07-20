@@ -34,6 +34,10 @@ func run() error {
 		return err
 	}
 
+	if err := defaultCmdline.AppendAll(kernelpkg.SecureBootArgs); err != nil {
+		return err
+	}
+
 	if err := defaultCmdline.AppendAll(metal.KernelArgs().Strings()); err != nil {
 		return err
 	}
