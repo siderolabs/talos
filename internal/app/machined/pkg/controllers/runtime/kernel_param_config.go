@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -58,61 +59,43 @@ func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.R
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-			cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
-			if err != nil {
-				if !state.IsNotFoundError(err) {
-					return fmt.Errorf("error getting config: %w", err)
+		}
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting config: %w", err)
+			}
+		}
+
+		r.StartTrackingOutputs()
+
+		setKernelParam := func(kind, key, value string) error {
+			item := runtime.NewKernelParamSpec(runtime.NamespaceName, strings.Join([]string{kind, key}, "."))
+
+			return r.Modify(ctx, item, func(res resource.Resource) error {
+				res.(*runtime.KernelParamSpec).TypedSpec().Value = value
+
+				return nil
+			})
+		}
+
+		if cfg != nil && cfg.Config().Machine() != nil {
+			for key, value := range cfg.Config().Machine().Sysctls() {
+				if err = setKernelParam(kernel.Sysctl, key, value); err != nil {
+					return err
 				}
 			}
 
-			touchedIDs := make(map[resource.ID]struct{})
-
-			setKernelParam := func(kind, key, value string) error {
-				item := runtime.NewKernelParamSpec(runtime.NamespaceName, strings.Join([]string{kind, key}, "."))
-
-				touchedIDs[item.Metadata().ID()] = struct{}{}
-
-				return r.Modify(ctx, item, func(res resource.Resource) error {
-					res.(*runtime.KernelParamSpec).TypedSpec().Value = value
-
-					return nil
-				})
-			}
-
-			if cfg != nil {
-				c, _ := cfg.(*config.MachineConfig) //nolint:errcheck
-				for key, value := range c.Config().Machine().Sysctls() {
-					if err = setKernelParam(kernel.Sysctl, key, value); err != nil {
-						return err
-					}
-				}
-
-				for key, value := range c.Config().Machine().Sysfs() {
-					if err = setKernelParam(kernel.Sysfs, key, value); err != nil {
-						return err
-					}
-				}
-			}
-
-			// list keys for cleanup
-			list, err := r.List(ctx, resource.NewMetadata(runtime.NamespaceName, runtime.KernelParamSpecType, "", resource.VersionUndefined))
-			if err != nil {
-				return fmt.Errorf("error listing resources: %w", err)
-			}
-
-			for _, res := range list.Items {
-				if res.Metadata().Owner() != ctrl.Name() {
-					continue
-				}
-
-				if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-					if err = r.Destroy(ctx, res.Metadata()); err != nil {
-						return fmt.Errorf("error cleaning up specs: %w", err)
-					}
+			for key, value := range cfg.Config().Machine().Sysfs() {
+				if err = setKernelParam(kernel.Sysfs, key, value); err != nil {
+					return err
 				}
 			}
 		}
 
-		r.ResetRestartBackoff()
+		if err = safe.CleanupOutputs[*runtime.KernelParamSpec](ctx, r); err != nil {
+			return err
+		}
 	}
 }

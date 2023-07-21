@@ -126,5 +126,7 @@ func (suite *AffiliateMergeSuite) TestReconcileDefault() {
 }
 
 func TestAffiliateMergeSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(AffiliateMergeSuite))
 }

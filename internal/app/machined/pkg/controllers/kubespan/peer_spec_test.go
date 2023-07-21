@@ -251,5 +251,7 @@ func (suite *PeerSpecSuite) TestIPOverlap() {
 }
 
 func TestPeerSpecSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(PeerSpecSuite))
 }

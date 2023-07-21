@@ -77,5 +77,7 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 }
 
 func TestEndpointSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(EndpointSuite))
 }

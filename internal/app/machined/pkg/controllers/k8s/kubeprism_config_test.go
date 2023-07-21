@@ -106,7 +106,6 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 			e.TypedSpec(),
 		)
 	})
-
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), mc.Metadata()))
 
 	ctest.AssertNoResource[*k8s.KubePrismConfig](suite, k8s.KubePrismConfigID)
@@ -128,10 +127,6 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 			e.TypedSpec(),
 		)
 	})
-
-	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), endpoints.Metadata()))
-
-	ctest.AssertNoResource[*k8s.KubePrismConfig](suite, k8s.KubePrismConfigID)
 }
 
 func TestEndpointsBalancerConfigControllerSuite(t *testing.T) {
@@ -140,7 +135,7 @@ func TestEndpointsBalancerConfigControllerSuite(t *testing.T) {
 	suite.Run(t, &KubePrismConfigControllerSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.KubePrismConfigController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewKubePrismConfigController()))
 			},
 		},
 	})

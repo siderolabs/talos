@@ -22,6 +22,8 @@ import (
 )
 
 func TestSpecSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &SpecSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {

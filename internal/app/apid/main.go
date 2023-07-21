@@ -163,8 +163,11 @@ func apidMain() error {
 		}
 
 		injector := &authz.Injector{
-			Mode:   mode,
-			Logger: log.New(log.Writer(), "apid/authz/injector/http ", log.Flags()).Printf,
+			Mode: mode,
+		}
+
+		if debug.Enabled {
+			injector.Logger = log.New(log.Writer(), "apid/authz/injector/http ", log.Flags()).Printf
 		}
 
 		return factory.NewServer(
@@ -190,8 +193,11 @@ func apidMain() error {
 
 	socketServer := func() *grpc.Server {
 		injector := &authz.Injector{
-			Mode:   authz.MetadataOnly,
-			Logger: log.New(log.Writer(), "apid/authz/injector/unix ", log.Flags()).Printf,
+			Mode: authz.MetadataOnly,
+		}
+
+		if debug.Enabled {
+			injector.Logger = log.New(log.Writer(), "apid/authz/injector/unix ", log.Flags()).Printf
 		}
 
 		return factory.NewServer(

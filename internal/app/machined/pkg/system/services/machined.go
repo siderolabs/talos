@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/siderolabs/go-debug"
 	"google.golang.org/grpc"
 
 	v1alpha1server "github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1"
@@ -109,8 +110,11 @@ type machinedService struct {
 // Main is an entrypoint to the API service.
 func (s *machinedService) Main(ctx context.Context, r runtime.Runtime, logWriter io.Writer) error {
 	injector := &authz.Injector{
-		Mode:   authz.MetadataOnly,
-		Logger: log.New(logWriter, "machined/authz/injector ", log.Flags()).Printf,
+		Mode: authz.MetadataOnly,
+	}
+
+	if debug.Enabled {
+		injector.Logger = log.New(logWriter, "machined/authz/injector ", log.Flags()).Printf
 	}
 
 	authorizer := &authz.Authorizer{

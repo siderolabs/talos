@@ -366,5 +366,7 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 }
 
 func TestDiscoveryServiceSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(DiscoveryServiceSuite))
 }

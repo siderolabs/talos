@@ -80,12 +80,10 @@ func (ctrl *EventsSinkConfigController) Run(ctx context.Context, r controller.Ru
 			endpoint = *cfg.Config().Runtime().EventsEndpoint()
 		}
 
-		if endpoint == "" {
-			if err := r.Destroy(ctx, runtime.NewEventSinkConfig().Metadata()); err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error destroying event sink config: %w", err)
-			}
-		} else {
-			if err := safe.WriterModify(ctx, r, runtime.NewEventSinkConfig(), func(cfg *runtime.EventSinkConfig) error {
+		r.StartTrackingOutputs()
+
+		if endpoint != "" {
+			if err = safe.WriterModify(ctx, r, runtime.NewEventSinkConfig(), func(cfg *runtime.EventSinkConfig) error {
 				cfg.TypedSpec().Endpoint = endpoint
 
 				return nil
@@ -94,6 +92,8 @@ func (ctrl *EventsSinkConfigController) Run(ctx context.Context, r controller.Ru
 			}
 		}
 
-		r.ResetRestartBackoff()
+		if err = safe.CleanupOutputs[*runtime.EventSinkConfig](ctx, r); err != nil {
+			return err
+		}
 	}
 }

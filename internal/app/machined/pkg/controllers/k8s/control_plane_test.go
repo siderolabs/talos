@@ -13,7 +13,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -21,7 +20,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -35,10 +33,6 @@ type K8sControlPlaneSuite struct {
 // setupMachine creates a machine with given configuration, waits for it to become ready,
 // and returns API server's spec.
 func (suite *K8sControlPlaneSuite) setupMachine(cfg *config.MachineConfig) {
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeControlPlane)
-
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.AdmissionControlConfigID}, func(*k8s.AdmissionControlConfig, *assert.Assertions) {})
@@ -58,7 +52,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -102,7 +98,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileTransitionWorker() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -116,11 +114,8 @@ func (suite *K8sControlPlaneSuite) TestReconcileTransitionWorker() {
 
 	suite.setupMachine(cfg)
 
-	machineType, err := safe.StateGet[*config.MachineType](suite.Ctx(), suite.State(), resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
-	suite.Require().NoError(err)
-
-	machineType.SetMachineType(machine.TypeWorker)
-	suite.Require().NoError(suite.State().Update(suite.Ctx(), machineType))
+	cfg.Container().RawV1Alpha1().MachineConfig.MachineType = "worker"
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 
 	rtestutils.AssertNoResource[*k8s.AdmissionControlConfig](suite.Ctx(), suite.T(), suite.State(), k8s.AdmissionControlConfigID)
 	rtestutils.AssertNoResource[*k8s.AuditPolicyConfig](suite.Ctx(), suite.T(), suite.State(), k8s.AuditPolicyConfigID)
@@ -139,7 +134,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileIPv6() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -173,7 +170,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileDualStack() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -207,7 +206,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -265,7 +266,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileEnvironment() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -305,7 +308,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -363,7 +368,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -427,7 +434,9 @@ func (suite *K8sControlPlaneSuite) TestReconcileInlineManifests() {
 		container.NewV1Alpha1(
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -478,7 +487,13 @@ func TestK8sControlPlaneSuite(t *testing.T) {
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 10 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.ControlPlaneController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAPIServerController()))
+				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAdmissionControlController()))
+				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAuditPolicyController()))
+				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneBootstrapManifestsController()))
+				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneControllerManagerController()))
+				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneExtraManifestsController()))
+				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneSchedulerController()))
 			},
 		},
 	})

@@ -62,45 +62,28 @@ func (ctrl *NodeTaintSpecController) Run(ctx context.Context, r controller.Runti
 		}
 
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
+		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		touched := map[string]struct{}{}
+		r.StartTrackingOutputs()
 
-		if cfg.Config().Machine().Type().IsControlPlane() && !cfg.Config().Cluster().ScheduleOnControlPlanes() {
-			touched[constants.LabelNodeRoleControlPlane] = struct{}{}
+		if cfg != nil && cfg.Config().Machine() != nil && cfg.Config().Cluster() != nil {
+			if cfg.Config().Machine().Type().IsControlPlane() && !cfg.Config().Cluster().ScheduleOnControlPlanes() {
+				if err = safe.WriterModify(ctx, r, k8s.NewNodeTaintSpec(constants.LabelNodeRoleControlPlane), func(k *k8s.NodeTaintSpec) error {
+					k.TypedSpec().Key = constants.LabelNodeRoleControlPlane
+					k.TypedSpec().Value = ""
+					k.TypedSpec().Effect = string(v1.TaintEffectNoSchedule)
 
-			if err = safe.WriterModify(ctx, r, k8s.NewNodeTaintSpec(constants.LabelNodeRoleControlPlane), func(k *k8s.NodeTaintSpec) error {
-				k.TypedSpec().Key = constants.LabelNodeRoleControlPlane
-				k.TypedSpec().Value = ""
-				k.TypedSpec().Effect = string(v1.TaintEffectNoSchedule)
-
-				return nil
-			}); err != nil {
-				return fmt.Errorf("error updating node taint spec: %w", err)
+					return nil
+				}); err != nil {
+					return fmt.Errorf("error updating node taint spec: %w", err)
+				}
 			}
 		}
 
-		taintSpecs, err := safe.ReaderListAll[*k8s.NodeTaintSpec](ctx, r)
-		if err != nil {
-			return fmt.Errorf("error getting node taint specs: %w", err)
+		if err = safe.CleanupOutputs[*k8s.NodeTaintSpec](ctx, r); err != nil {
+			return err
 		}
-
-		for iter := safe.IteratorFromList(taintSpecs); iter.Next(); {
-			if _, touched := touched[iter.Value().Metadata().ID()]; touched {
-				continue
-			}
-
-			if err = r.Destroy(ctx, iter.Value().Metadata()); err != nil {
-				return fmt.Errorf("error destroying node taint spec: %w", err)
-			}
-		}
-
-		r.ResetRestartBackoff()
 	}
 }

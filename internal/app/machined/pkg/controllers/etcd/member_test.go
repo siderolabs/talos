@@ -21,6 +21,8 @@ import (
 )
 
 func TestMemberSuite(t *testing.T) {
+	t.Parallel()
+
 	ctrl := &etcdctrl.MemberController{}
 
 	suite.Run(t, &MemberSuite{

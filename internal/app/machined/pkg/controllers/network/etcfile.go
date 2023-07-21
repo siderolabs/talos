@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -84,13 +85,13 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 
 		var cfgProvider talosconfig.Config
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
 		} else {
-			cfgProvider = cfg.(*config.MachineConfig).Config()
+			cfgProvider = cfg.Config()
 		}
 
 		var resolverStatus *network.ResolverStatusSpec
@@ -167,7 +168,7 @@ func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.Resolver
 	}
 
 	var disableSearchDomain bool
-	if cfgProvider != nil {
+	if cfgProvider != nil && cfgProvider.Machine() != nil {
 		disableSearchDomain = cfgProvider.Machine().Network().DisableSearchDomain()
 	}
 
@@ -201,7 +202,7 @@ func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatu
 	write("ff02::1\tip6-allnodes\n")
 	write("ff02::2\tip6-allrouters\n")
 
-	if cfgProvider != nil {
+	if cfgProvider != nil && cfgProvider.Machine() != nil {
 		for _, extraHost := range cfgProvider.Machine().Network().ExtraHosts() {
 			write(fmt.Sprintf("%s\t%s\n", extraHost.IP(), strings.Join(extraHost.Aliases(), " ")))
 		}

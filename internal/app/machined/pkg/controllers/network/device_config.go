@@ -86,8 +86,6 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 			return err
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
-
 		var cfgProvider talosconfig.Config
 
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
@@ -99,7 +97,9 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 			cfgProvider = cfg.Config()
 		}
 
-		if cfgProvider != nil {
+		r.StartTrackingOutputs()
+
+		if cfgProvider != nil && cfgProvider.Machine() != nil {
 			selectedInterfaces := map[string]struct{}{}
 
 			for index, device := range cfgProvider.Machine().Network().Devices() {
@@ -135,8 +135,6 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 
 				id := fmt.Sprintf("%s/%03d", device.Interface(), index)
 
-				touchedIDs[id] = struct{}{}
-
 				config := network.NewDeviceConfig(id, device)
 
 				if err = r.Modify(
@@ -153,21 +151,9 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 			}
 		}
 
-		// list network devices for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
+		if err = safe.CleanupOutputs[*network.DeviceConfigSpec](ctx, r); err != nil {
+			return err
 		}
-
-		for _, res := range list.Items {
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up routes: %w", err)
-				}
-			}
-		}
-
-		r.ResetRestartBackoff()
 	}
 }
 

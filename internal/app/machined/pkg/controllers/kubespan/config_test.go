@@ -24,7 +24,7 @@ type ConfigSuite struct {
 }
 
 func (suite *ConfigSuite) TestReconcileConfig() {
-	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.ConfigController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(kubespanctrl.NewConfigController()))
 
 	suite.startRuntime()
 
@@ -68,7 +68,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 }
 
 func (suite *ConfigSuite) TestReconcileDisabled() {
-	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.ConfigController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(kubespanctrl.NewConfigController()))
 
 	suite.startRuntime()
 
@@ -99,5 +99,7 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 }
 
 func TestConfigSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(ConfigSuite))
 }

@@ -16,17 +16,18 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	etcdctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 )
 
 func TestConfigSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &ConfigSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&etcdctrl.ConfigController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(etcdctrl.NewConfigController()))
 			},
 		},
 	})
@@ -37,10 +38,6 @@ type ConfigSuite struct {
 }
 
 func (suite *ConfigSuite) TestReconcile() {
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeControlPlane)
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
-
 	for _, tt := range []struct {
 		name           string
 		etcdConfig     *v1alpha1.EtcdConfig
@@ -154,6 +151,7 @@ func (suite *ConfigSuite) TestReconcile() {
 					EtcdConfig: tt.etcdConfig,
 				},
 				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: tt.networkConfig,
 					},

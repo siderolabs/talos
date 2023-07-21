@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -56,52 +56,34 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-			cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
-			if err != nil {
-				if !state.IsNotFoundError(err) {
-					return fmt.Errorf("error getting config: %w", err)
-				}
+		}
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting config: %w", err)
 			}
+		}
 
-			touchedIDs := make(map[resource.ID]struct{})
+		r.StartTrackingOutputs()
 
-			if cfg != nil {
-				c, _ := cfg.(*config.MachineConfig) //nolint:errcheck
-				for _, module := range c.Config().Machine().Kernel().Modules() {
-					touchedIDs[module.Name()] = struct{}{}
+		if cfg != nil && cfg.Config().Machine() != nil {
+			for _, module := range cfg.Config().Machine().Kernel().Modules() {
+				item := runtime.NewKernelModuleSpec(runtime.NamespaceName, module.Name())
 
-					item := runtime.NewKernelModuleSpec(runtime.NamespaceName, module.Name())
+				if err = safe.WriterModify(ctx, r, item, func(res *runtime.KernelModuleSpec) error {
+					res.TypedSpec().Name = module.Name()
+					res.TypedSpec().Parameters = module.Parameters()
 
-					if err = r.Modify(ctx, item, func(res resource.Resource) error {
-						res.(*runtime.KernelModuleSpec).TypedSpec().Name = module.Name()
-						res.(*runtime.KernelModuleSpec).TypedSpec().Parameters = module.Parameters()
-
-						return nil
-					}); err != nil {
-						return err
-					}
-				}
-			}
-
-			// list keys for cleanup
-			list, err := r.List(ctx, resource.NewMetadata(runtime.NamespaceName, runtime.KernelModuleSpecType, "", resource.VersionUndefined))
-			if err != nil {
-				return fmt.Errorf("error listing resources: %w", err)
-			}
-
-			for _, res := range list.Items {
-				if res.Metadata().Owner() != ctrl.Name() {
-					continue
-				}
-
-				if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-					if err = r.Destroy(ctx, res.Metadata()); err != nil {
-						return fmt.Errorf("error cleaning up specs: %w", err)
-					}
+					return nil
+				}); err != nil {
+					return err
 				}
 			}
 		}
 
-		r.ResetRestartBackoff()
+		if err = safe.CleanupOutputs[*runtime.KernelModuleSpec](ctx, r); err != nil {
+			return err
+		}
 	}
 }

@@ -111,5 +111,7 @@ func (suite *NodeIdentitySuite) TestLoad() {
 }
 
 func TestNodeIdentitySuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(NodeIdentitySuite))
 }

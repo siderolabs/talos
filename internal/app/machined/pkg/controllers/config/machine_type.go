@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -59,13 +60,13 @@ func (ctrl *MachineTypeController) Run(ctx context.Context, r controller.Runtime
 
 		var machineType machine.Type
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
-		} else {
-			machineType = cfg.(*config.MachineConfig).Config().Machine().Type()
+		} else if cfg.Config().Machine() != nil {
+			machineType = cfg.Config().Machine().Type()
 		}
 
 		if err = r.Modify(ctx, config.NewMachineType(), func(r resource.Resource) error {

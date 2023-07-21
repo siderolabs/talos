@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
@@ -88,7 +89,7 @@ func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.R
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting config: %w", err)
 		}
@@ -98,13 +99,13 @@ func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.R
 			criHosts            *containerd.HostsConfig
 		)
 
-		if cfg != nil {
-			criRegistryContents, err = containerd.GenerateCRIConfig(cfg.(*config.MachineConfig).Config().Machine().Registries())
+		if cfg != nil && cfg.Config().Machine() != nil {
+			criRegistryContents, err = containerd.GenerateCRIConfig(cfg.Config().Machine().Registries())
 			if err != nil {
 				return err
 			}
 
-			criHosts, err = containerd.GenerateHosts(cfg.(*config.MachineConfig).Config().Machine().Registries(), basePath)
+			criHosts, err = containerd.GenerateHosts(cfg.Config().Machine().Registries(), basePath)
 			if err != nil {
 				return err
 			}

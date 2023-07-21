@@ -6,12 +6,10 @@ package cluster
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -19,63 +17,30 @@ import (
 )
 
 // InfoController looks up control plane infos.
-type InfoController struct{}
+type InfoController = transform.Controller[*config.MachineConfig, *cluster.Info]
 
-// Name implements controller.Controller interface.
-func (ctrl *InfoController) Name() string {
-	return "cluster.InfoController"
-}
+// NewInfoController instanciates the cluster info controller.
+func NewInfoController() *InfoController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *cluster.Info]{
+			Name: "cluster.InfoController",
+			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*cluster.Info] {
+				if cfg.Metadata().ID() != config.V1Alpha1ID {
+					return optional.None[*cluster.Info]()
+				}
 
-// Inputs implements controller.Controller interface.
-func (ctrl *InfoController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
-			Kind:      controller.InputWeak,
+				if cfg.Config().Cluster() == nil {
+					return optional.None[*cluster.Info]()
+				}
+
+				return optional.Some(cluster.NewInfo())
+			},
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, info *cluster.Info) error {
+				info.TypedSpec().ClusterID = cfg.Config().Cluster().ID()
+				info.TypedSpec().ClusterName = cfg.Config().Cluster().Name()
+
+				return nil
+			},
 		},
-	}
-}
-
-// Outputs implements controller.Controller interface.
-func (ctrl *InfoController) Outputs() []controller.Output {
-	return []controller.Output{
-		{
-			Type: cluster.InfoType,
-			Kind: controller.OutputShared,
-		},
-	}
-}
-
-// Run implements controller.Controller interface.
-func (ctrl *InfoController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		}
-
-		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return fmt.Errorf("error getting config: %w", err)
-		}
-
-		err = safe.WriterModify(ctx, r, cluster.NewInfo(), func(info *cluster.Info) error {
-			info.TypedSpec().ClusterID = cfg.Config().Cluster().ID()
-			info.TypedSpec().ClusterName = cfg.Config().Cluster().Name()
-
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("error updating objects: %w", err)
-		}
-
-		r.ResetRestartBackoff()
-	}
+	)
 }

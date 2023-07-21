@@ -1125,7 +1125,7 @@ func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (reply *machine
 	var features *machine.FeaturesInfo
 
 	config := s.Controller.Runtime().Config()
-	if config != nil {
+	if config != nil && config.Machine() != nil {
 		features = &machine.FeaturesInfo{
 			Rbac: config.Machine().Features().RBACEnabled(),
 		}

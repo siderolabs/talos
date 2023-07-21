@@ -68,37 +68,23 @@ func (ctrl *SeccompProfileController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		touchedIDs := make(map[string]struct{}, len(cfg.Config().Machine().SeccompProfiles()))
+		r.StartTrackingOutputs()
 
-		for _, profile := range cfg.Config().Machine().SeccompProfiles() {
-			if err = safe.WriterModify(ctx, r, cri.NewSeccompProfile(profile.Name()), func(cri *cri.SeccompProfile) error {
-				cri.TypedSpec().Name = profile.Name()
-				cri.TypedSpec().Value = profile.Value()
+		if cfg.Config().Machine() != nil {
+			for _, profile := range cfg.Config().Machine().SeccompProfiles() {
+				if err = safe.WriterModify(ctx, r, cri.NewSeccompProfile(profile.Name()), func(cri *cri.SeccompProfile) error {
+					cri.TypedSpec().Name = profile.Name()
+					cri.TypedSpec().Value = profile.Value()
 
-				return nil
-			}); err != nil {
-				return err
-			}
-
-			touchedIDs[profile.Name()] = struct{}{}
-		}
-
-		// list keys for cleanup
-		list, err := safe.ReaderListAll[*cri.SeccompProfile](ctx, r)
-		if err != nil {
-			return fmt.Errorf("error listing seccomp profiles: %w", err)
-		}
-
-		for iter := safe.IteratorFromList(list); iter.Next(); {
-			profile := iter.Value()
-
-			if _, ok := touchedIDs[profile.Metadata().ID()]; !ok {
-				if err := r.Destroy(ctx, profile.Metadata()); err != nil {
-					return fmt.Errorf("error deleting seccomp profile: %w", err)
+					return nil
+				}); err != nil {
+					return err
 				}
 			}
 		}
 
-		r.ResetRestartBackoff()
+		if err = safe.CleanupOutputs[*cri.SeccompProfile](ctx, r); err != nil {
+			return err
+		}
 	}
 }

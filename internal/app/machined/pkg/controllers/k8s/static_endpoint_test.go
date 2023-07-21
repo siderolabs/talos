@@ -52,6 +52,10 @@ func (suite *StaticEndpointControllerSuite) TestReconcile() {
 		func(endpoint *k8s.Endpoint, assert *assert.Assertions) {
 			assert.Equal([]netip.Addr{netip.MustParseAddr("2001:db8::1")}, endpoint.TypedSpec().Addresses)
 		})
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), cfg.Metadata()))
+
+	rtestutils.AssertNoResource[*k8s.Endpoint](suite.Ctx(), suite.T(), suite.State(), k8s.ControlPlaneKubernetesEndpointsID)
 }
 
 func TestStaticEndpointControllerSuite(t *testing.T) {

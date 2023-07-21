@@ -10,77 +10,43 @@ import (
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-// NodeIPConfigController renders manifests based on templates and config/secrets.
-type NodeIPConfigController struct{}
+// NodeIPConfigController configures k8s.NodeIP based on machine config.
+type NodeIPConfigController = transform.Controller[*config.MachineConfig, *k8s.NodeIPConfig]
 
-// Name implements controller.Controller interface.
-func (ctrl *NodeIPConfigController) Name() string {
-	return "k8s.NodeIPConfigController"
-}
+// NewNodeIPConfigController instanciates the controller.
+func NewNodeIPConfigController() *NodeIPConfigController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.NodeIPConfig]{
+			Name: "k8s.NodeIPConfigController",
+			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.NodeIPConfig] {
+				if cfg.Metadata().ID() != config.V1Alpha1ID {
+					return optional.None[*k8s.NodeIPConfig]()
+				}
 
-// Inputs implements controller.Controller interface.
-func (ctrl *NodeIPConfigController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
-			Kind:      controller.InputWeak,
-		},
-	}
-}
+				if cfg.Config().Machine() == nil || cfg.Config().Cluster() == nil {
+					return optional.None[*k8s.NodeIPConfig]()
+				}
 
-// Outputs implements controller.Controller interface.
-func (ctrl *NodeIPConfigController) Outputs() []controller.Output {
-	return []controller.Output{
-		{
-			Type: k8s.NodeIPConfigType,
-			Kind: controller.OutputExclusive,
-		},
-	}
-}
-
-// Run implements controller.Controller interface.
-//
-//nolint:gocyclo
-func (ctrl *NodeIPConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		}
-
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return fmt.Errorf("error getting config: %w", err)
-		}
-
-		cfgProvider := cfg.(*config.MachineConfig).Config()
-
-		if err = r.Modify(
-			ctx,
-			k8s.NewNodeIPConfig(k8s.NamespaceName, k8s.KubeletID),
-			func(r resource.Resource) error {
-				spec := r.(*k8s.NodeIPConfig).TypedSpec()
+				return optional.Some(k8s.NewNodeIPConfig(k8s.NamespaceName, k8s.KubeletID))
+			},
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *k8s.NodeIPConfig) error {
+				spec := res.TypedSpec()
+				cfgProvider := cfg.Config()
 
 				spec.ValidSubnets = cfgProvider.Machine().Kubelet().NodeIP().ValidSubnets()
 
 				if len(spec.ValidSubnets) == 0 {
 					// automatically deduce validsubnets from ServiceCIDRs
+					var err error
+
 					spec.ValidSubnets, err = ipSubnetsFromServiceCIDRs(cfgProvider.Cluster().Network().ServiceCIDRs())
 					if err != nil {
 						return fmt.Errorf("error building valid subnets: %w", err)
@@ -113,12 +79,8 @@ func (ctrl *NodeIPConfigController) Run(ctx context.Context, r controller.Runtim
 
 				return nil
 			},
-		); err != nil {
-			return fmt.Errorf("error modifying NodeIPConfig resource: %w", err)
-		}
-
-		r.ResetRestartBackoff()
-	}
+		},
+	)
 }
 
 func ipSubnetsFromServiceCIDRs(serviceCIDRs []string) ([]string, error) {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -57,6 +58,8 @@ func (ctrl *NodenameController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
+//
+//nolint:gocyclo
 func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -65,7 +68,7 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, l
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -74,7 +77,11 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		cfgProvider := cfg.(*config.MachineConfig).Config()
+		cfgProvider := cfg.Config()
+
+		if cfgProvider.Machine() == nil {
+			continue
+		}
 
 		hostnameResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
 		if err != nil {

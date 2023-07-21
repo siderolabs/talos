@@ -9,148 +9,80 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 // KubePrismEndpointsController creates a list of API server endpoints.
-type KubePrismEndpointsController struct{}
+type KubePrismEndpointsController = transform.Controller[*config.MachineConfig, *k8s.KubePrismEndpoints]
 
-// Name implements controller.Controller interface.
-func (ctrl *KubePrismEndpointsController) Name() string {
-	return "cluster.KubePrismEndpointsController"
-}
-
-// Inputs implements controller.Controller interface.
-func (ctrl *KubePrismEndpointsController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineTypeType,
-			ID:        pointer.To(config.MachineTypeID),
-			Kind:      controller.InputWeak,
-		},
-		safe.Input[*cluster.Member](controller.InputWeak),
-		safe.Input[*config.MachineConfig](controller.InputWeak),
-	}
-}
-
-// Outputs implements controller.Controller interface.
-func (ctrl *KubePrismEndpointsController) Outputs() []controller.Output {
-	return []controller.Output{
-		{
-			Type: k8s.KubePrismEndpointsType,
-			Kind: controller.OutputExclusive,
-		},
-	}
-}
-
-// Run implements controller.Controller interface.
+// NewKubePrismEndpointsController instanciates the controller.
 //
-//nolint:gocyclo,cyclop
-func (ctrl *KubePrismEndpointsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
-		}
+//nolint:gocyclo
+func NewKubePrismEndpointsController() *KubePrismEndpointsController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.KubePrismEndpoints]{
+			Name: "k8s.KubePrismEndpointsController",
+			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.KubePrismEndpoints] {
+				if cfg.Metadata().ID() != config.V1Alpha1ID {
+					return optional.None[*k8s.KubePrismEndpoints]()
+				}
 
-		machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting machine config: %w", err)
-			}
+				if cfg.Config().Cluster() == nil || cfg.Config().Machine() == nil {
+					return optional.None[*k8s.KubePrismEndpoints]()
+				}
 
-			continue
-		}
+				return optional.Some(k8s.NewKubePrismEndpoints(k8s.NamespaceName, k8s.KubePrismEndpointsID))
+			},
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.KubePrismEndpoints) error {
+				members, err := safe.ReaderListAll[*cluster.Member](ctx, r)
+				if err != nil {
+					return fmt.Errorf("error listing affiliates: %w", err)
+				}
 
-		machineType, err := safe.ReaderGetByID[*config.MachineType](ctx, r, config.MachineTypeID)
-		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting machine type: %w", err)
-			}
+				var endpoints []k8s.KubePrismEndpoint
 
-			continue
-		}
-
-		members, err := safe.ReaderListAll[*cluster.Member](ctx, r)
-		if err != nil {
-			return fmt.Errorf("error listing affiliates: %w", err)
-		}
-
-		var endpoints []k8s.KubePrismEndpoint
-
-		ce := machineConfig.Config().Cluster().Endpoint()
-		if ce != nil {
-			endpoints = append(endpoints, k8s.KubePrismEndpoint{
-				Host: ce.Hostname(),
-				Port: toPort(ce.Port()),
-			})
-		}
-
-		if machineType.MachineType() == machine.TypeControlPlane {
-			endpoints = append(endpoints, k8s.KubePrismEndpoint{
-				Host: "localhost",
-				Port: uint32(machineConfig.Config().Cluster().LocalAPIServerPort()),
-			})
-		}
-
-		for it := safe.IteratorFromList(members); it.Next(); {
-			memberSpec := it.Value().TypedSpec()
-
-			if len(memberSpec.Addresses) > 0 && memberSpec.ControlPlane != nil {
-				for _, addr := range memberSpec.Addresses {
+				ce := machineConfig.Config().Cluster().Endpoint()
+				if ce != nil {
 					endpoints = append(endpoints, k8s.KubePrismEndpoint{
-						Host: addr.String(),
-						Port: uint32(memberSpec.ControlPlane.APIServerPort),
+						Host: ce.Hostname(),
+						Port: toPort(ce.Port()),
 					})
 				}
-			}
-		}
 
-		err = safe.WriterModify[*k8s.KubePrismEndpoints](
-			ctx,
-			r,
-			k8s.NewKubePrismEndpoints(k8s.NamespaceName, k8s.KubePrismEndpointsID),
-			func(res *k8s.KubePrismEndpoints) error {
+				if machineConfig.Config().Machine().Type().IsControlPlane() {
+					endpoints = append(endpoints, k8s.KubePrismEndpoint{
+						Host: "localhost",
+						Port: uint32(machineConfig.Config().Cluster().LocalAPIServerPort()),
+					})
+				}
+
+				for it := safe.IteratorFromList(members); it.Next(); {
+					memberSpec := it.Value().TypedSpec()
+
+					if len(memberSpec.Addresses) > 0 && memberSpec.ControlPlane != nil {
+						for _, addr := range memberSpec.Addresses {
+							endpoints = append(endpoints, k8s.KubePrismEndpoint{
+								Host: addr.String(),
+								Port: uint32(memberSpec.ControlPlane.APIServerPort),
+							})
+						}
+					}
+				}
+
 				res.TypedSpec().Endpoints = endpoints
 
 				return nil
 			},
-		)
-		if err != nil {
-			return fmt.Errorf("error updating KubePrism endpoints: %w", err)
-		}
-
-		// list keys for cleanup
-		list, err := safe.ReaderListAll[*k8s.KubePrismEndpoints](ctx, r)
-		if err != nil {
-			return fmt.Errorf("error listing KubePrism resources: %w", err)
-		}
-
-		for it := safe.IteratorFromList(list); it.Next(); {
-			res := it.Value()
-
-			if res.Metadata().Owner() != ctrl.Name() {
-				continue
-			}
-
-			if res.Metadata().ID() != k8s.KubePrismEndpointsID {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up KubePrism specs: %w", err)
-				}
-
-				logger.Info("removed KubePrism endpoints resource", zap.String("id", res.Metadata().ID()))
-			}
-		}
-
-		r.ResetRestartBackoff()
-	}
+		},
+		transform.WithExtraInputs(
+			safe.Input[*cluster.Member](controller.InputWeak),
+		),
+	)
 }

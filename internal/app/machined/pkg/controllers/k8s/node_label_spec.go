@@ -61,22 +61,24 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 		}
 
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
+		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		nodeLabels := cfg.Config().Machine().NodeLabels()
+		r.StartTrackingOutputs()
 
-		if nodeLabels == nil {
-			nodeLabels = map[string]string{}
-		}
+		var nodeLabels map[string]string
 
-		if cfg.Config().Machine().Type().IsControlPlane() {
-			nodeLabels[constants.LabelNodeRoleControlPlane] = ""
+		if cfg != nil && cfg.Config().Machine() != nil {
+			nodeLabels = cfg.Config().Machine().NodeLabels()
+
+			if cfg.Config().Machine().Type().IsControlPlane() {
+				if nodeLabels == nil {
+					nodeLabels = map[string]string{}
+				}
+
+				nodeLabels[constants.LabelNodeRoleControlPlane] = ""
+			}
 		}
 
 		for key, value := range nodeLabels {
@@ -90,24 +92,8 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		labelSpecs, err := safe.ReaderListAll[*k8s.NodeLabelSpec](ctx, r)
-		if err != nil {
-			return fmt.Errorf("error getting node label specs: %w", err)
+		if err = safe.CleanupOutputs[*k8s.NodeLabelSpec](ctx, r); err != nil {
+			return err
 		}
-
-		for iter := safe.IteratorFromList(labelSpecs); iter.Next(); {
-			labelSpec := iter.Value()
-
-			_, touched := nodeLabels[labelSpec.TypedSpec().Key]
-			if touched {
-				continue
-			}
-
-			if err = r.Destroy(ctx, labelSpec.Metadata()); err != nil {
-				return fmt.Errorf("error destroying node label spec: %w", err)
-			}
-		}
-
-		r.ResetRestartBackoff()
 	}
 }

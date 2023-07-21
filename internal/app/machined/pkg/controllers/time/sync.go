@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -143,7 +144,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		timeServers := timeServersStatus.(*network.TimeServerStatus).TypedSpec().NTPServers
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
@@ -158,12 +159,12 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			syncDisabled = true
 		}
 
-		if cfg != nil && cfg.(*config.MachineConfig).Config().Machine().Time().Disabled() {
-			syncDisabled = true
-		}
+		if cfg != nil && cfg.Config().Machine() != nil {
+			if cfg.Config().Machine().Time().Disabled() {
+				syncDisabled = true
+			}
 
-		if cfg != nil {
-			syncTimeout = cfg.(*config.MachineConfig).Config().Machine().Time().BootTimeout()
+			syncTimeout = cfg.Config().Machine().Time().BootTimeout()
 		}
 
 		if !timeSynced {

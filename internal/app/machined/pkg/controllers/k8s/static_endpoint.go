@@ -52,6 +52,8 @@ func (ctrl *StaticEndpointController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
+//
+//nolint:gocyclo
 func (ctrl *StaticEndpointController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -61,31 +63,38 @@ func (ctrl *StaticEndpointController) Run(ctx context.Context, r controller.Runt
 		}
 
 		machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
+		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting machine config: %w", err)
 		}
 
-		cpHostname := machineConfig.Config().Cluster().Endpoint().Hostname()
+		r.StartTrackingOutputs()
 
-		var resolver net.Resolver
+		if machineConfig != nil && machineConfig.Config().Cluster() != nil {
+			cpHostname := machineConfig.Config().Cluster().Endpoint().Hostname()
 
-		addrs, err := resolver.LookupNetIP(ctx, "ip", cpHostname)
-		if err != nil {
-			return fmt.Errorf("error resolving %q: %w", cpHostname, err)
+			var (
+				resolver net.Resolver
+				addrs    []netip.Addr
+			)
+
+			addrs, err = resolver.LookupNetIP(ctx, "ip", cpHostname)
+			if err != nil {
+				return fmt.Errorf("error resolving %q: %w", cpHostname, err)
+			}
+
+			addrs = slices.Map(addrs, netip.Addr.Unmap)
+
+			if err = safe.WriterModify(ctx, r, k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneKubernetesEndpointsID), func(endpoint *k8s.Endpoint) error {
+				endpoint.TypedSpec().Addresses = addrs
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error modifying endpoint: %w", err)
+			}
 		}
 
-		addrs = slices.Map(addrs, netip.Addr.Unmap)
-
-		if err = safe.WriterModify(ctx, r, k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneKubernetesEndpointsID), func(endpoint *k8s.Endpoint) error {
-			endpoint.TypedSpec().Addresses = addrs
-
-			return nil
-		}); err != nil {
-			return fmt.Errorf("error modifying endpoint: %w", err)
+		if err = safe.CleanupOutputs[*k8s.Endpoint](ctx, r); err != nil {
+			return err
 		}
 	}
 }

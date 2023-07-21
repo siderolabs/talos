@@ -7,7 +7,6 @@ package cluster_test
 import (
 	"net"
 	"net/netip"
-	"net/url"
 	"testing"
 
 	"github.com/siderolabs/gen/slices"
@@ -18,9 +17,7 @@ import (
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -153,26 +150,9 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 	machineType.SetMachineType(machine.TypeControlPlane)
 	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
 
-	u, err := url.Parse("https://foo:6443")
-	suite.Require().NoError(err)
-
-	mc := config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
-				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
-						Endpoint: &v1alpha1.Endpoint{
-							URL: u,
-						},
-						LocalAPIServerPort: 6445,
-					},
-				},
-			},
-		),
-	)
-	suite.Require().NoError(suite.state.Create(suite.ctx, mc))
+	apiServerConfig := k8s.NewAPIServerConfig()
+	apiServerConfig.TypedSpec().LocalPort = 6445
+	suite.Require().NoError(suite.state.Create(suite.ctx, apiServerConfig))
 
 	ctest.AssertResource(suite, nodeIdentity.TypedSpec().NodeID, func(r *cluster.Affiliate, asrt *assert.Assertions) {
 		spec := r.TypedSpec()
@@ -241,5 +221,7 @@ func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network
 }
 
 func TestLocalAffiliateSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(LocalAffiliateSuite))
 }

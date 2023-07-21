@@ -19,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/go-debug"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -112,10 +113,15 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 
 	cfgCh := make(chan machineryconfig.Provider)
 	srv := maintenance.New(cfgCh)
+
 	injector := &authz.Injector{
-		Mode:   authz.ReadOnly,
-		Logger: logger.Sugar().Debugf,
+		Mode: authz.ReadOnly,
 	}
+
+	if debug.Enabled {
+		injector.Logger = logger.Sugar().Infof
+	}
+
 	tlsProvider := maintenance.NewTLSProvider()
 
 	for {

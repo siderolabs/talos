@@ -7,15 +7,12 @@ package cluster
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"net"
 	"net/url"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -23,129 +20,74 @@ import (
 )
 
 // ConfigController watches v1alpha1.Config, updates discovery config.
-type ConfigController struct{}
+type ConfigController = transform.Controller[*config.MachineConfig, *cluster.Config]
 
-// Name implements controller.Controller interface.
-func (ctrl *ConfigController) Name() string {
-	return "cluster.ConfigController"
-}
-
-// Inputs implements controller.Controller interface.
-func (ctrl *ConfigController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
-			Kind:      controller.InputWeak,
-		},
-	}
-}
-
-// Outputs implements controller.Controller interface.
-func (ctrl *ConfigController) Outputs() []controller.Output {
-	return []controller.Output{
-		{
-			Type: cluster.ConfigType,
-			Kind: controller.OutputExclusive,
-		},
-	}
-}
-
-// Run implements controller.Controller interface.
-//
-//nolint:gocyclo
-func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-			cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
-			if err != nil {
-				if !state.IsNotFoundError(err) {
-					return fmt.Errorf("error getting config: %w", err)
+// NewConfigController instanciates the config controller.
+func NewConfigController() *ConfigController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *cluster.Config]{
+			Name: "cluster.ConfigController",
+			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*cluster.Config] {
+				if cfg.Metadata().ID() != config.V1Alpha1ID {
+					return optional.None[*cluster.Config]()
 				}
-			}
 
-			touchedIDs := map[resource.ID]struct{}{}
+				if cfg.Config().Cluster() == nil {
+					return optional.None[*cluster.Config]()
+				}
 
-			if cfg != nil {
-				c := cfg.(*config.MachineConfig).Config()
+				return optional.Some(cluster.NewConfig(config.NamespaceName, cluster.ConfigID))
+			},
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *cluster.Config) error {
+				c := cfg.Config()
 
-				if err = safe.WriterModify(ctx, r, cluster.NewConfig(config.NamespaceName, cluster.ConfigID), func(res *cluster.Config) error {
-					res.TypedSpec().DiscoveryEnabled = c.Cluster().Discovery().Enabled()
+				res.TypedSpec().DiscoveryEnabled = c.Cluster().Discovery().Enabled()
 
-					if c.Cluster().Discovery().Enabled() {
-						res.TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
-						res.TypedSpec().RegistryServiceEnabled = c.Cluster().Discovery().Registries().Service().Enabled()
+				if c.Cluster().Discovery().Enabled() {
+					res.TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
+					res.TypedSpec().RegistryServiceEnabled = c.Cluster().Discovery().Registries().Service().Enabled()
 
-						if c.Cluster().Discovery().Registries().Service().Enabled() {
-							var u *url.URL
+					if c.Cluster().Discovery().Registries().Service().Enabled() {
+						var u *url.URL
 
-							u, err = url.ParseRequestURI(c.Cluster().Discovery().Registries().Service().Endpoint())
-							if err != nil {
-								return err
-							}
-
-							host := u.Hostname()
-							port := u.Port()
-
-							if port == "" {
-								if u.Scheme == "http" {
-									port = "80"
-								} else {
-									port = "443" // use default https port for everything else
-								}
-							}
-
-							res.TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
-							res.TypedSpec().ServiceEndpointInsecure = u.Scheme == "http"
-
-							res.TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
-							if err != nil {
-								return err
-							}
-
-							res.TypedSpec().ServiceClusterID = c.Cluster().ID()
-						} else {
-							res.TypedSpec().ServiceEndpoint = ""
-							res.TypedSpec().ServiceEndpointInsecure = false
-							res.TypedSpec().ServiceEncryptionKey = nil
-							res.TypedSpec().ServiceClusterID = ""
+						u, err := url.ParseRequestURI(c.Cluster().Discovery().Registries().Service().Endpoint())
+						if err != nil {
+							return err
 						}
+
+						host := u.Hostname()
+						port := u.Port()
+
+						if port == "" {
+							if u.Scheme == "http" {
+								port = "80"
+							} else {
+								port = "443" // use default https port for everything else
+							}
+						}
+
+						res.TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
+						res.TypedSpec().ServiceEndpointInsecure = u.Scheme == "http"
+
+						res.TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
+						if err != nil {
+							return err
+						}
+
+						res.TypedSpec().ServiceClusterID = c.Cluster().ID()
 					} else {
-						res.TypedSpec().RegistryKubernetesEnabled = false
-						res.TypedSpec().RegistryServiceEnabled = false
+						res.TypedSpec().ServiceEndpoint = ""
+						res.TypedSpec().ServiceEndpointInsecure = false
+						res.TypedSpec().ServiceEncryptionKey = nil
+						res.TypedSpec().ServiceClusterID = ""
 					}
-
-					return nil
-				}); err != nil {
-					return err
+				} else {
+					res.TypedSpec().RegistryKubernetesEnabled = false
+					res.TypedSpec().RegistryServiceEnabled = false
 				}
 
-				touchedIDs[cluster.ConfigID] = struct{}{}
-			}
-
-			// list keys for cleanup
-			list, err := r.List(ctx, resource.NewMetadata(config.NamespaceName, cluster.ConfigType, "", resource.VersionUndefined))
-			if err != nil {
-				return fmt.Errorf("error listing resources: %w", err)
-			}
-
-			for _, res := range list.Items {
-				if res.Metadata().Owner() != ctrl.Name() {
-					continue
-				}
-
-				if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-					if err = r.Destroy(ctx, res.Metadata()); err != nil {
-						return fmt.Errorf("error cleaning up specs: %w", err)
-					}
-				}
-			}
-		}
-
-		r.ResetRestartBackoff()
-	}
+				return nil
+			},
+		},
+	)
 }

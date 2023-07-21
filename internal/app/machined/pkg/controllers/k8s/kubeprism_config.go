@@ -6,14 +6,14 @@ package k8s
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xerrors"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -21,118 +21,50 @@ import (
 )
 
 // KubePrismConfigController creates config for KubePrism.
-type KubePrismConfigController struct{}
+type KubePrismConfigController = transform.Controller[*config.MachineConfig, *k8s.KubePrismConfig]
 
-// Name implements controller.Controller interface.
-func (ctrl *KubePrismConfigController) Name() string {
-	return "k8s.KubePrismConfigController"
-}
-
-// Inputs implements controller.Controller interface.
-func (ctrl *KubePrismConfigController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: k8s.NamespaceName,
-			Type:      k8s.KubePrismEndpointsType,
-			ID:        pointer.To(k8s.KubePrismEndpointsID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
-			Kind:      controller.InputWeak,
-		},
-	}
-}
-
-// Outputs implements controller.Controller interface.
-func (ctrl *KubePrismConfigController) Outputs() []controller.Output {
-	return []controller.Output{
-		{
-			Type: k8s.KubePrismConfigType,
-			Kind: controller.OutputExclusive,
-		},
-	}
-}
-
-// Run implements controller.Controller interface.
-//
-//nolint:gocyclo
-func (ctrl *KubePrismConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
-	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
-		}
-
-		endpt, err := safe.ReaderGetByID[*k8s.KubePrismEndpoints](ctx, r, k8s.KubePrismEndpointsID)
-		if err != nil && !state.IsNotFoundError(err) {
-			return err
-		}
-
-		mc, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil && !state.IsNotFoundError(err) {
-			return err
-		}
-
-		wroteConfig, err := ctrl.writeConfig(ctx, r, endpt, mc)
-		if err != nil {
-			return err
-		}
-
-		// list keys for cleanup
-		lbCfgList, err := safe.ReaderListAll[*k8s.KubePrismConfig](ctx, r)
-		if err != nil {
-			return fmt.Errorf("error listing KubePrism resources: %w", err)
-		}
-
-		for it := safe.IteratorFromList(lbCfgList); it.Next(); {
-			res := it.Value()
-
-			if !wroteConfig || res.Metadata().ID() != k8s.KubePrismConfigID {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up KubePrism config: %w", err)
+// NewKubePrismConfigController instanciates the controller.
+func NewKubePrismConfigController() *KubePrismConfigController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.KubePrismConfig]{
+			Name: "k8s.KubePrismConfigController",
+			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.KubePrismConfig] {
+				if cfg.Metadata().ID() != config.V1Alpha1ID {
+					return optional.None[*k8s.KubePrismConfig]()
 				}
-			}
-		}
 
-		r.ResetRestartBackoff()
-	}
-}
+				if cfg.Config().Machine() == nil {
+					return optional.None[*k8s.KubePrismConfig]()
+				}
 
-func (ctrl *KubePrismConfigController) writeConfig(ctx context.Context, r controller.Runtime, endpt *k8s.KubePrismEndpoints, mc *config.MachineConfig) (bool, error) {
-	if endpt == nil || mc == nil {
-		return false, nil
-	}
+				if !cfg.Config().Machine().Features().KubePrism().Enabled() {
+					return optional.None[*k8s.KubePrismConfig]()
+				}
 
-	endpoints := endpt.TypedSpec().Endpoints
-	if len(endpoints) == 0 {
-		return false, nil
-	}
+				return optional.Some(k8s.NewKubePrismConfig(k8s.NamespaceName, k8s.KubePrismConfigID))
+			},
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *k8s.KubePrismConfig) error {
+				endpt, err := safe.ReaderGetByID[*k8s.KubePrismEndpoints](ctx, r, k8s.KubePrismEndpointsID)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return xerrors.NewTaggedf[transform.SkipReconcileTag]("KubePrism endpoints resource not found; not creating KubePrism config")
+					}
 
-	balancerCfg := mc.Config().Machine().Features().KubePrism()
-	if !balancerCfg.Enabled() {
-		return false, nil
-	}
+					return err
+				}
 
-	err := safe.WriterModify(
-		ctx,
-		r,
-		k8s.NewKubePrismConfig(k8s.NamespaceName, k8s.KubePrismConfigID),
-		func(res *k8s.KubePrismConfig) error {
-			spec := res.TypedSpec()
-			spec.Endpoints = endpoints
-			spec.Host = "localhost"
-			spec.Port = balancerCfg.Port()
+				spec := res.TypedSpec()
+				spec.Endpoints = endpt.TypedSpec().Endpoints
+				spec.Host = "localhost"
+				spec.Port = cfg.Config().Machine().Features().KubePrism().Port()
 
-			return nil
+				return nil
+			},
 		},
+		transform.WithExtraInputs(
+			safe.Input[*k8s.KubePrismEndpoints](controller.InputWeak),
+		),
 	)
-	if err != nil {
-		return false, fmt.Errorf("failed to KubePrism balancer config: %w", err)
-	}
-
-	return true, nil
 }
 
 func toPort(port string) uint32 {

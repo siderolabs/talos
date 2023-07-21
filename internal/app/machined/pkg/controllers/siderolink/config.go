@@ -66,30 +66,22 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, _ *
 			return err
 		}
 
-		if err := ctrl.updateConfig(ctx, r, cfg); err != nil {
-			return fmt.Errorf("failed to update config: %w", err)
+		r.StartTrackingOutputs()
+
+		if endpoint := ctrl.apiEndpoint(cfg); endpoint != "" {
+			if err = safe.WriterModify(ctx, r, siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID), func(c *siderolink.Config) error {
+				c.TypedSpec().APIEndpoint = endpoint
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("failed to update config: %w", err)
+			}
 		}
-	}
-}
 
-func (ctrl *ConfigController) updateConfig(ctx context.Context, r controller.Runtime, machineConfig *config.MachineConfig) error {
-	cfg := siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID)
-
-	endpoint := ctrl.apiEndpoint(machineConfig)
-	if endpoint == "" {
-		err := r.Destroy(ctx, cfg.Metadata())
-		if err != nil && !state.IsNotFoundError(err) {
+		if err = safe.CleanupOutputs[*siderolink.Config](ctx, r); err != nil {
 			return err
 		}
-
-		return nil
 	}
-
-	return safe.WriterModify(ctx, r, cfg, func(c *siderolink.Config) error {
-		c.TypedSpec().APIEndpoint = endpoint
-
-		return nil
-	})
 }
 
 func (ctrl *ConfigController) apiEndpoint(machineConfig *config.MachineConfig) string {

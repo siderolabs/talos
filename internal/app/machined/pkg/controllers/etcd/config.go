@@ -6,134 +6,64 @@ package etcd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 )
 
-// ConfigController renders manifests based on templates and config/secrets.
-type ConfigController struct{}
+// ConfigController watches v1alpha1.Config, updates etcd config.
+type ConfigController = transform.Controller[*config.MachineConfig, *etcd.Config]
 
-// Name implements controller.Controller interface.
-func (ctrl *ConfigController) Name() string {
-	return "etcd.ConfigController"
-}
-
-// Inputs implements controller.Controller interface.
-func (ctrl *ConfigController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineTypeType,
-			ID:        pointer.To(config.MachineTypeID),
-			Kind:      controller.InputWeak,
-		},
-	}
-}
-
-// Outputs implements controller.Controller interface.
-func (ctrl *ConfigController) Outputs() []controller.Output {
-	return []controller.Output{
-		{
-			Type: etcd.ConfigType,
-			Kind: controller.OutputExclusive,
-		},
-	}
-}
-
-// Run implements controller.Controller interface.
-//
-//nolint:gocyclo
-func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		}
-
-		machineType, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return fmt.Errorf("error getting machine config: %w", err)
-		}
-
-		if !machineType.MachineType().IsControlPlane() {
-			if err = ctrl.teardownAll(ctx, r); err != nil {
-				return err
-			}
-
-			continue
-		}
-
-		machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return fmt.Errorf("error getting machine config: %w", err)
-		}
-
-		if err = safe.WriterModify(ctx, r, etcd.NewConfig(etcd.NamespaceName, etcd.ConfigID), func(cfg *etcd.Config) error {
-			cfg.TypedSpec().AdvertiseValidSubnets = machineConfig.Config().Cluster().Etcd().AdvertisedSubnets()
-			cfg.TypedSpec().AdvertiseExcludeSubnets = nil
-			cfg.TypedSpec().ListenValidSubnets = machineConfig.Config().Cluster().Etcd().ListenSubnets()
-			cfg.TypedSpec().ListenExcludeSubnets = nil
-
-			// filter out any virtual IPs, they can't be node IPs either
-			for _, device := range machineConfig.Config().Machine().Network().Devices() {
-				if device.VIPConfig() != nil {
-					cfg.TypedSpec().AdvertiseExcludeSubnets = append(cfg.TypedSpec().AdvertiseExcludeSubnets, device.VIPConfig().IP())
+// NewConfigController instanciates the config controller.
+func NewConfigController() *ConfigController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *etcd.Config]{
+			Name: "etcd.ConfigController",
+			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*etcd.Config] {
+				if cfg.Metadata().ID() != config.V1Alpha1ID {
+					return optional.None[*etcd.Config]()
 				}
 
-				for _, vlan := range device.Vlans() {
-					if vlan.VIPConfig() != nil {
-						cfg.TypedSpec().AdvertiseExcludeSubnets = append(cfg.TypedSpec().AdvertiseExcludeSubnets, vlan.VIPConfig().IP())
+				if cfg.Config().Machine() == nil || cfg.Config().Cluster() == nil {
+					return optional.None[*etcd.Config]()
+				}
+
+				if !cfg.Config().Machine().Type().IsControlPlane() {
+					// etcd only runs on controlplane nodes
+					return optional.None[*etcd.Config]()
+				}
+
+				return optional.Some(etcd.NewConfig(etcd.NamespaceName, etcd.ConfigID))
+			},
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, cfg *etcd.Config) error {
+				cfg.TypedSpec().AdvertiseValidSubnets = machineConfig.Config().Cluster().Etcd().AdvertisedSubnets()
+				cfg.TypedSpec().AdvertiseExcludeSubnets = nil
+				cfg.TypedSpec().ListenValidSubnets = machineConfig.Config().Cluster().Etcd().ListenSubnets()
+				cfg.TypedSpec().ListenExcludeSubnets = nil
+
+				// filter out any virtual IPs, they can't be node IPs either
+				for _, device := range machineConfig.Config().Machine().Network().Devices() {
+					if device.VIPConfig() != nil {
+						cfg.TypedSpec().AdvertiseExcludeSubnets = append(cfg.TypedSpec().AdvertiseExcludeSubnets, device.VIPConfig().IP())
+					}
+
+					for _, vlan := range device.Vlans() {
+						if vlan.VIPConfig() != nil {
+							cfg.TypedSpec().AdvertiseExcludeSubnets = append(cfg.TypedSpec().AdvertiseExcludeSubnets, vlan.VIPConfig().IP())
+						}
 					}
 				}
-			}
 
-			cfg.TypedSpec().Image = machineConfig.Config().Cluster().Etcd().Image()
-			cfg.TypedSpec().ExtraArgs = machineConfig.Config().Cluster().Etcd().ExtraArgs()
+				cfg.TypedSpec().Image = machineConfig.Config().Cluster().Etcd().Image()
+				cfg.TypedSpec().ExtraArgs = machineConfig.Config().Cluster().Etcd().ExtraArgs()
 
-			return nil
-		}); err != nil {
-			return fmt.Errorf("error updating Config status: %w", err)
-		}
-
-		r.ResetRestartBackoff()
-	}
-}
-
-func (ctrl *ConfigController) teardownAll(ctx context.Context, r controller.Runtime) error {
-	list, err := r.List(ctx, resource.NewMetadata(etcd.NamespaceName, etcd.ConfigType, "", resource.VersionUndefined))
-	if err != nil {
-		return err
-	}
-
-	for _, res := range list.Items {
-		if err = r.Destroy(ctx, res.Metadata()); err != nil {
-			return err
-		}
-	}
-
-	return nil
+				return nil
+			},
+		},
+	)
 }

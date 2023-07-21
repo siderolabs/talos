@@ -10,11 +10,10 @@ import (
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/controller/generic"
+	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/slices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 
@@ -27,123 +26,309 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-// ControlPlaneController manages Kubernetes control plane resources based on configuration.
-type ControlPlaneController struct{}
-
-// Name implements controller.Controller interface.
-func (ctrl *ControlPlaneController) Name() string {
-	return "k8s.ControlPlaneController"
-}
-
-// Inputs implements controller.Controller interface.
-func (ctrl *ControlPlaneController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineTypeType,
-			ID:        pointer.To(config.MachineTypeID),
-			Kind:      controller.InputWeak,
-		},
-	}
-}
-
-// Outputs implements controller.Controller interface.
-func (ctrl *ControlPlaneController) Outputs() []controller.Output {
-	return []controller.Output{
-		{
-			Type: k8s.AdmissionControlConfigType,
-			Kind: controller.OutputExclusive,
-		},
-		{
-			Type: k8s.AuditPolicyConfigType,
-			Kind: controller.OutputExclusive,
-		},
-		{
-			Type: k8s.APIServerConfigType,
-			Kind: controller.OutputExclusive,
-		},
-		{
-			Type: k8s.ControllerManagerConfigType,
-			Kind: controller.OutputExclusive,
-		},
-		{
-			Type: k8s.ExtraManifestsConfigType,
-			Kind: controller.OutputExclusive,
-		},
-		{
-			Type: k8s.BootstrapManifestsConfigType,
-			Kind: controller.OutputExclusive,
-		},
-		{
-			Type: k8s.SchedulerConfigType,
-			Kind: controller.OutputExclusive,
-		},
-	}
-}
-
-// Run implements controller.Controller interface.
-//
-//nolint:gocyclo
-func (ctrl *ControlPlaneController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
+// controlplaneMapFunc is a shared "map" func for transform controller which guards on:
+// * machine config is there
+// * it has cluster & machine parts
+// * machine is controlplane one.
+func controlplaneMapFunc[Output generic.ResourceWithRD](output Output) func(cfg *config.MachineConfig) optional.Optional[Output] {
+	return func(cfg *config.MachineConfig) optional.Optional[Output] {
+		if cfg.Metadata().ID() != config.V1Alpha1ID {
+			return optional.None[Output]()
 		}
 
-		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				if err = ctrl.teardownAll(ctx, r); err != nil {
-					return fmt.Errorf("error destroying resources: %w", err)
+		if cfg.Config().Cluster() == nil || cfg.Config().Machine() == nil {
+			return optional.None[Output]()
+		}
+
+		if !cfg.Config().Machine().Type().IsControlPlane() {
+			return optional.None[Output]()
+		}
+
+		return optional.Some(output)
+	}
+}
+
+// ControlPlaneAdmissionControlController manages k8s.AdmissionControlConfig based on configuration.
+type ControlPlaneAdmissionControlController = transform.Controller[*config.MachineConfig, *k8s.AdmissionControlConfig]
+
+// NewControlPlaneAdmissionControlController instanciates the controller.
+func NewControlPlaneAdmissionControlController() *ControlPlaneAdmissionControlController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.AdmissionControlConfig]{
+			Name:                    "k8s.ControlPlaneAdmissionControlController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewAdmissionControlConfig()),
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.AdmissionControlConfig) error {
+				cfgProvider := machineConfig.Config()
+
+				res.TypedSpec().Config = nil
+
+				for _, cfg := range cfgProvider.Cluster().APIServer().AdmissionControl() {
+					res.TypedSpec().Config = append(res.TypedSpec().Config,
+						k8s.AdmissionPluginSpec{
+							Name:          cfg.Name(),
+							Configuration: cfg.Configuration(),
+						},
+					)
 				}
 
-				continue
-			}
+				return nil
+			},
+		},
+	)
+}
 
-			return fmt.Errorf("error getting config: %w", err)
-		}
+// ControlPlaneAuditPolicyController manages k8s.AuditPolicyConfig based on configuration.
+type ControlPlaneAuditPolicyController = transform.Controller[*config.MachineConfig, *k8s.AuditPolicyConfig]
 
-		machineType, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
+// NewControlPlaneAuditPolicyController instanciates the controller.
+func NewControlPlaneAuditPolicyController() *ControlPlaneAuditPolicyController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.AuditPolicyConfig]{
+			Name:                    "k8s.ControlPlaneAuditPolicyController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewAuditPolicyConfig()),
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.AuditPolicyConfig) error {
+				cfgProvider := machineConfig.Config()
 
-			return fmt.Errorf("error getting machine type: %w", err)
-		}
+				res.TypedSpec().Config = cfgProvider.Cluster().APIServer().AuditPolicy()
 
-		if !machineType.MachineType().IsControlPlane() {
-			if err = ctrl.teardownAll(ctx, r); err != nil {
-				return fmt.Errorf("error destroying resources: %w", err)
-			}
+				return nil
+			},
+		},
+	)
+}
 
-			continue
-		}
+// ControlPlaneAPIServerController manages k8s.APIServerConfig based on configuration.
+type ControlPlaneAPIServerController = transform.Controller[*config.MachineConfig, *k8s.APIServerConfig]
 
-		for _, f := range []func(context.Context, controller.Runtime, *zap.Logger, talosconfig.Config) error{
-			ctrl.manageAPIServerConfig,
-			ctrl.manageAdmissionControlConfig,
-			ctrl.manageAuditPolicyConfig,
-			ctrl.manageControllerManagerConfig,
-			ctrl.manageSchedulerConfig,
-			ctrl.manageManifestsConfig,
-			ctrl.manageExtraManifestsConfig,
-		} {
-			if err = f(ctx, r, logger, cfg.Config()); err != nil {
-				return fmt.Errorf("error updating objects: %w", err)
-			}
-		}
+// NewControlPlaneAPIServerController instanciates the controller.
+func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.APIServerConfig]{
+			Name:                    "k8s.ControlPlaneAPIServerController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewAPIServerConfig()),
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.APIServerConfig) error {
+				cfgProvider := machineConfig.Config()
 
-		r.ResetRestartBackoff()
-	}
+				var cloudProvider string
+				if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
+					cloudProvider = "external" //nolint:goconst
+				}
+
+				advertisedAddress := "$(POD_IP)"
+				if cfgProvider.Machine().Kubelet().SkipNodeRegistration() {
+					advertisedAddress = ""
+				}
+
+				*res.TypedSpec() = k8s.APIServerConfigSpec{
+					Image:                    cfgProvider.Cluster().APIServer().Image(),
+					CloudProvider:            cloudProvider,
+					ControlPlaneEndpoint:     cfgProvider.Cluster().Endpoint().String(),
+					EtcdServers:              []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("localhost", constants.EtcdClientPort))},
+					LocalPort:                cfgProvider.Cluster().LocalAPIServerPort(),
+					ServiceCIDRs:             cfgProvider.Cluster().Network().ServiceCIDRs(),
+					ExtraArgs:                cfgProvider.Cluster().APIServer().ExtraArgs(),
+					ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
+					EnvironmentVariables:     cfgProvider.Cluster().APIServer().Env(),
+					PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
+					AdvertisedAddress:        advertisedAddress,
+					Resources:                convertResources(cfgProvider.Cluster().APIServer().Resources()),
+				}
+
+				return nil
+			},
+		},
+	)
+}
+
+// ControlPlaneControllerManagerController manages k8s.ControllerManagerConfig based on configuration.
+type ControlPlaneControllerManagerController = transform.Controller[*config.MachineConfig, *k8s.ControllerManagerConfig]
+
+// NewControlPlaneControllerManagerController instanciates the controller.
+func NewControlPlaneControllerManagerController() *ControlPlaneControllerManagerController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.ControllerManagerConfig]{
+			Name:                    "k8s.ControlPlaneControllerManagerController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewControllerManagerConfig()),
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.ControllerManagerConfig) error {
+				cfgProvider := machineConfig.Config()
+
+				var cloudProvider string
+
+				if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
+					cloudProvider = "external"
+				}
+
+				*res.TypedSpec() = k8s.ControllerManagerConfigSpec{
+					Enabled:              !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
+					Image:                cfgProvider.Cluster().ControllerManager().Image(),
+					CloudProvider:        cloudProvider,
+					PodCIDRs:             cfgProvider.Cluster().Network().PodCIDRs(),
+					ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
+					ExtraArgs:            cfgProvider.Cluster().ControllerManager().ExtraArgs(),
+					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
+					EnvironmentVariables: cfgProvider.Cluster().ControllerManager().Env(),
+				}
+
+				return nil
+			},
+		},
+	)
+}
+
+// ControlPlaneSchedulerController manages k8s.SchedulerConfig based on configuration.
+type ControlPlaneSchedulerController = transform.Controller[*config.MachineConfig, *k8s.SchedulerConfig]
+
+// NewControlPlaneSchedulerController instanciates the controller.
+func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.SchedulerConfig]{
+			Name:                    "k8s.ControlPlaneSchedulerController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewSchedulerConfig()),
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.SchedulerConfig) error {
+				cfgProvider := machineConfig.Config()
+
+				*res.TypedSpec() = k8s.SchedulerConfigSpec{
+					Enabled:              !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
+					Image:                cfgProvider.Cluster().Scheduler().Image(),
+					ExtraArgs:            cfgProvider.Cluster().Scheduler().ExtraArgs(),
+					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
+					EnvironmentVariables: cfgProvider.Cluster().Scheduler().Env(),
+				}
+
+				return nil
+			},
+		},
+	)
+}
+
+// ControlPlaneBootstrapManifestsController manages k8s.BootstrapManifestsConfig based on configuration.
+type ControlPlaneBootstrapManifestsController = transform.Controller[*config.MachineConfig, *k8s.BootstrapManifestsConfig]
+
+// NewControlPlaneBootstrapManifestsController instanciates the controller.
+func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifestsController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.BootstrapManifestsConfig]{
+			Name:                    "k8s.ControlPlaneBootstrapManifestsController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewBootstrapManifestsConfig()),
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.BootstrapManifestsConfig) error {
+				cfgProvider := machineConfig.Config()
+
+				dnsServiceIPs, err := cfgProvider.Cluster().Network().DNSServiceIPs()
+				if err != nil {
+					return fmt.Errorf("error calculating DNS service IPs: %w", err)
+				}
+
+				dnsServiceIP := ""
+				dnsServiceIPv6 := ""
+
+				for _, ip := range dnsServiceIPs {
+					if dnsServiceIP == "" && ip.Is4() {
+						dnsServiceIP = ip.String()
+					}
+
+					if dnsServiceIPv6 == "" && ip.Is6() {
+						dnsServiceIPv6 = ip.String()
+					}
+				}
+
+				images := images.List(cfgProvider)
+
+				proxyArgs, err := getProxyArgs(cfgProvider)
+				if err != nil {
+					return err
+				}
+
+				var server string
+				if cfgProvider.Machine().Features().KubePrism().Enabled() {
+					server = fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().KubePrism().Port())
+				} else {
+					server = cfgProvider.Cluster().Endpoint().String()
+				}
+
+				*res.TypedSpec() = k8s.BootstrapManifestsConfigSpec{
+					Server:        server,
+					ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
+
+					PodCIDRs: cfgProvider.Cluster().Network().PodCIDRs(),
+
+					ProxyEnabled: cfgProvider.Cluster().Proxy().Enabled(),
+					ProxyImage:   cfgProvider.Cluster().Proxy().Image(),
+					ProxyArgs:    proxyArgs,
+
+					CoreDNSEnabled: cfgProvider.Cluster().CoreDNS().Enabled(),
+					CoreDNSImage:   cfgProvider.Cluster().CoreDNS().Image(),
+
+					DNSServiceIP:   dnsServiceIP,
+					DNSServiceIPv6: dnsServiceIPv6,
+
+					FlannelEnabled:  cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
+					FlannelImage:    images.Flannel,
+					FlannelCNIImage: images.FlannelCNI,
+
+					PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
+
+					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
+				}
+
+				return nil
+			},
+		},
+	)
+}
+
+// ControlPlaneExtraManifestsController manages k8s.ExtraManifestsConfig based on configuration.
+type ControlPlaneExtraManifestsController = transform.Controller[*config.MachineConfig, *k8s.ExtraManifestsConfig]
+
+// NewControlPlaneExtraManifestsController instanciates the controller.
+func NewControlPlaneExtraManifestsController() *ControlPlaneExtraManifestsController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.ExtraManifestsConfig]{
+			Name:                    "k8s.ControlPlaneExtraManifestsController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewExtraManifestsConfig()),
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.ExtraManifestsConfig) error {
+				cfgProvider := machineConfig.Config()
+
+				spec := k8s.ExtraManifestsConfigSpec{}
+
+				for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
+					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
+						Name:     url,
+						URL:      url,
+						Priority: "05", // push CNI to the top
+					})
+				}
+
+				for _, url := range cfgProvider.Cluster().ExternalCloudProvider().ManifestURLs() {
+					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
+						Name:     url,
+						URL:      url,
+						Priority: "30", // after default manifests
+					})
+				}
+
+				for _, url := range cfgProvider.Cluster().ExtraManifestURLs() {
+					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
+						Name:         url,
+						URL:          url,
+						Priority:     "99", // make sure extra manifests come last, when PSP is already created
+						ExtraHeaders: cfgProvider.Cluster().ExtraManifestHeaderMap(),
+					})
+				}
+
+				for _, manifest := range cfgProvider.Cluster().InlineManifests() {
+					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
+						Name:           manifest.Name(),
+						Priority:       "99", // make sure extra manifests come last, when PSP is already created
+						InlineManifest: manifest.Contents(),
+					})
+				}
+
+				*res.TypedSpec() = spec
+
+				return nil
+			},
+		},
+	)
 }
 
 func convertVolumes(volumes []talosconfig.VolumeMount) []k8s.ExtraVolume {
@@ -182,228 +367,6 @@ func convertResources(resources talosconfig.Resources) k8s.Resources {
 		},
 		Limits: convertedLimits,
 	}
-}
-
-func (ctrl *ControlPlaneController) manageAPIServerConfig(ctx context.Context, r controller.Runtime, logger *zap.Logger, cfgProvider talosconfig.Config) error {
-	var cloudProvider string
-	if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
-		cloudProvider = "external" //nolint:goconst
-	}
-
-	advertisedAddress := "$(POD_IP)"
-	if cfgProvider.Machine().Kubelet().SkipNodeRegistration() {
-		advertisedAddress = ""
-	}
-
-	return safe.WriterModify(ctx, r, k8s.NewAPIServerConfig(), func(r *k8s.APIServerConfig) error {
-		*r.TypedSpec() = k8s.APIServerConfigSpec{
-			Image:                    cfgProvider.Cluster().APIServer().Image(),
-			CloudProvider:            cloudProvider,
-			ControlPlaneEndpoint:     cfgProvider.Cluster().Endpoint().String(),
-			EtcdServers:              []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("localhost", constants.EtcdClientPort))},
-			LocalPort:                cfgProvider.Cluster().LocalAPIServerPort(),
-			ServiceCIDRs:             cfgProvider.Cluster().Network().ServiceCIDRs(),
-			ExtraArgs:                cfgProvider.Cluster().APIServer().ExtraArgs(),
-			ExtraVolumes:             convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
-			EnvironmentVariables:     cfgProvider.Cluster().APIServer().Env(),
-			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
-			AdvertisedAddress:        advertisedAddress,
-			Resources:                convertResources(cfgProvider.Cluster().APIServer().Resources()),
-		}
-
-		return nil
-	})
-}
-
-func (ctrl *ControlPlaneController) manageAdmissionControlConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
-	spec := k8s.AdmissionControlConfigSpec{}
-
-	for _, cfg := range cfgProvider.Cluster().APIServer().AdmissionControl() {
-		spec.Config = append(spec.Config,
-			k8s.AdmissionPluginSpec{
-				Name:          cfg.Name(),
-				Configuration: cfg.Configuration(),
-			},
-		)
-	}
-
-	return safe.WriterModify(ctx, r, k8s.NewAdmissionControlConfig(), func(r *k8s.AdmissionControlConfig) error {
-		*r.TypedSpec() = spec
-
-		return nil
-	})
-}
-
-func (ctrl *ControlPlaneController) manageAuditPolicyConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
-	spec := k8s.AuditPolicyConfigSpec{}
-
-	spec.Config = cfgProvider.Cluster().APIServer().AuditPolicy()
-
-	return safe.WriterModify(ctx, r, k8s.NewAuditPolicyConfig(), func(r *k8s.AuditPolicyConfig) error {
-		*r.TypedSpec() = spec
-
-		return nil
-	})
-}
-
-func (ctrl *ControlPlaneController) manageControllerManagerConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
-	var cloudProvider string
-	if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
-		cloudProvider = "external"
-	}
-
-	return safe.WriterModify(ctx, r, k8s.NewControllerManagerConfig(), func(r *k8s.ControllerManagerConfig) error {
-		*r.TypedSpec() = k8s.ControllerManagerConfigSpec{
-			Enabled:              !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
-			Image:                cfgProvider.Cluster().ControllerManager().Image(),
-			CloudProvider:        cloudProvider,
-			PodCIDRs:             cfgProvider.Cluster().Network().PodCIDRs(),
-			ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
-			ExtraArgs:            cfgProvider.Cluster().ControllerManager().ExtraArgs(),
-			ExtraVolumes:         convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
-			EnvironmentVariables: cfgProvider.Cluster().ControllerManager().Env(),
-		}
-
-		return nil
-	})
-}
-
-func (ctrl *ControlPlaneController) manageSchedulerConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
-	return safe.WriterModify(ctx, r, k8s.NewSchedulerConfig(), func(r *k8s.SchedulerConfig) error {
-		*r.TypedSpec() = k8s.SchedulerConfigSpec{
-			Enabled:              !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
-			Image:                cfgProvider.Cluster().Scheduler().Image(),
-			ExtraArgs:            cfgProvider.Cluster().Scheduler().ExtraArgs(),
-			ExtraVolumes:         convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
-			EnvironmentVariables: cfgProvider.Cluster().Scheduler().Env(),
-		}
-
-		return nil
-	})
-}
-
-func (ctrl *ControlPlaneController) manageManifestsConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
-	dnsServiceIPs, err := cfgProvider.Cluster().Network().DNSServiceIPs()
-	if err != nil {
-		return fmt.Errorf("error calculating DNS service IPs: %w", err)
-	}
-
-	dnsServiceIP := ""
-	dnsServiceIPv6 := ""
-
-	for _, ip := range dnsServiceIPs {
-		if dnsServiceIP == "" && ip.Is4() {
-			dnsServiceIP = ip.String()
-		}
-
-		if dnsServiceIPv6 == "" && ip.Is6() {
-			dnsServiceIPv6 = ip.String()
-		}
-	}
-
-	return safe.WriterModify(ctx, r, k8s.NewBootstrapManifestsConfig(), func(r *k8s.BootstrapManifestsConfig) error {
-		images := images.List(cfgProvider)
-
-		proxyArgs, err := getProxyArgs(cfgProvider)
-		if err != nil {
-			return err
-		}
-
-		var server string
-		if cfgProvider.Machine().Features().KubePrism().Enabled() {
-			server = fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().KubePrism().Port())
-		} else {
-			server = cfgProvider.Cluster().Endpoint().String()
-		}
-
-		*r.TypedSpec() = k8s.BootstrapManifestsConfigSpec{
-			Server:        server,
-			ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
-
-			PodCIDRs: cfgProvider.Cluster().Network().PodCIDRs(),
-
-			ProxyEnabled: cfgProvider.Cluster().Proxy().Enabled(),
-			ProxyImage:   cfgProvider.Cluster().Proxy().Image(),
-			ProxyArgs:    proxyArgs,
-
-			CoreDNSEnabled: cfgProvider.Cluster().CoreDNS().Enabled(),
-			CoreDNSImage:   cfgProvider.Cluster().CoreDNS().Image(),
-
-			DNSServiceIP:   dnsServiceIP,
-			DNSServiceIPv6: dnsServiceIPv6,
-
-			FlannelEnabled:  cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
-			FlannelImage:    images.Flannel,
-			FlannelCNIImage: images.FlannelCNI,
-
-			PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
-
-			TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
-		}
-
-		return nil
-	})
-}
-
-func (ctrl *ControlPlaneController) manageExtraManifestsConfig(ctx context.Context, r controller.Runtime, _ *zap.Logger, cfgProvider talosconfig.Config) error {
-	return safe.WriterModify(ctx, r, k8s.NewExtraManifestsConfig(), func(r *k8s.ExtraManifestsConfig) error {
-		spec := k8s.ExtraManifestsConfigSpec{}
-
-		for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
-			spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
-				Name:     url,
-				URL:      url,
-				Priority: "05", // push CNI to the top
-			})
-		}
-
-		for _, url := range cfgProvider.Cluster().ExternalCloudProvider().ManifestURLs() {
-			spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
-				Name:     url,
-				URL:      url,
-				Priority: "30", // after default manifests
-			})
-		}
-
-		for _, url := range cfgProvider.Cluster().ExtraManifestURLs() {
-			spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
-				Name:         url,
-				URL:          url,
-				Priority:     "99", // make sure extra manifests come last, when PSP is already created
-				ExtraHeaders: cfgProvider.Cluster().ExtraManifestHeaderMap(),
-			})
-		}
-
-		for _, manifest := range cfgProvider.Cluster().InlineManifests() {
-			spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
-				Name:           manifest.Name(),
-				Priority:       "99", // make sure extra manifests come last, when PSP is already created
-				InlineManifest: manifest.Contents(),
-			})
-		}
-
-		*r.TypedSpec() = spec
-
-		return nil
-	})
-}
-
-func (ctrl *ControlPlaneController) teardownAll(ctx context.Context, r controller.Runtime) error {
-	for _, md := range []*resource.Metadata{
-		k8s.NewAPIServerConfig().Metadata(),
-		k8s.NewAdmissionControlConfig().Metadata(),
-		k8s.NewAuditPolicyConfig().Metadata(),
-		k8s.NewControllerManagerConfig().Metadata(),
-		k8s.NewSchedulerConfig().Metadata(),
-		k8s.NewBootstrapManifestsConfig().Metadata(),
-		k8s.NewExtraManifestsConfig().Metadata(),
-	} {
-		if err := r.Destroy(ctx, md); err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error destroying resources: %w", err)
-		}
-	}
-
-	return nil
 }
 
 func getProxyArgs(cfgProvider talosconfig.Config) ([]string, error) {

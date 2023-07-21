@@ -35,7 +35,9 @@ func (suite *KubePrismControllerSuite) TestGeneration() {
 
 	mc := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
-		MachineConfig: &v1alpha1.MachineConfig{},
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "controlplane",
+		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ControlPlane: &v1alpha1.ControlPlaneConfig{
 				Endpoint: &v1alpha1.Endpoint{
@@ -47,10 +49,6 @@ func (suite *KubePrismControllerSuite) TestGeneration() {
 	}))
 
 	suite.Create(mc)
-
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeControlPlane)
-	suite.Create(machineType)
 
 	member1 := cluster.NewMember(cluster.NamespaceName, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
 	*member1.TypedSpec() = cluster.MemberSpec{
@@ -125,7 +123,7 @@ func TestEndpointsBalancerControllerSuite(t *testing.T) {
 	suite.Run(t, &KubePrismControllerSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.KubePrismEndpointsController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewKubePrismEndpointsController()))
 			},
 		},
 	})

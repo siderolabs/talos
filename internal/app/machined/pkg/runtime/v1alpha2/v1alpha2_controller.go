@@ -40,7 +40,7 @@ import (
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/pkg/logging"
-	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	configresource "github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
@@ -86,10 +86,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 
 	for _, c := range []controller.Controller{
 		&cluster.AffiliateMergeController{},
-		&cluster.ConfigController{},
+		cluster.NewConfigController(),
 		&cluster.DiscoveryServiceController{},
 		&cluster.EndpointController{},
-		&cluster.InfoController{},
+		cluster.NewInfoController(),
 		&cluster.KubernetesPullController{},
 		&cluster.KubernetesPushController{},
 		&cluster.LocalAffiliateController{},
@@ -116,7 +116,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			SeccompProfilesDirectory: constants.SeccompProfilesDirectory,
 		},
 		&etcd.AdvertisedPeerController{},
-		&etcd.ConfigController{},
+		etcd.NewConfigController(),
 		&etcd.PKIController{},
 		&etcd.SpecController{},
 		&etcd.MemberController{},
@@ -130,11 +130,17 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&k8s.AddressFilterController{},
-		&k8s.ControlPlaneController{},
+		k8s.NewControlPlaneAPIServerController(),
+		k8s.NewControlPlaneAdmissionControlController(),
+		k8s.NewControlPlaneAuditPolicyController(),
+		k8s.NewControlPlaneBootstrapManifestsController(),
+		k8s.NewControlPlaneControllerManagerController(),
+		k8s.NewControlPlaneExtraManifestsController(),
+		k8s.NewControlPlaneSchedulerController(),
 		&k8s.ControlPlaneStaticPodController{},
 		&k8s.EndpointController{},
 		&k8s.ExtraManifestController{},
-		&k8s.KubeletConfigController{},
+		k8s.NewKubeletConfigController(),
 		&k8s.KubeletServiceController{
 			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
 			V1Alpha1Mode:     ctrl.v1alpha1Runtime.State().Platform().Mode(),
@@ -143,12 +149,12 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&k8s.KubeletStaticPodController{},
-		&k8s.KubePrismEndpointsController{},
-		&k8s.KubePrismConfigController{},
+		k8s.NewKubePrismEndpointsController(),
+		k8s.NewKubePrismConfigController(),
 		&k8s.KubePrismController{},
 		&k8s.ManifestApplyController{},
 		&k8s.ManifestController{},
-		&k8s.NodeIPConfigController{},
+		k8s.NewNodeIPConfigController(),
 		&k8s.NodeIPController{},
 		&k8s.NodeApplyController{},
 		&k8s.NodeCordonedSpecController{},
@@ -161,10 +167,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.StaticEndpointController{},
 		&k8s.StaticPodConfigController{},
 		&k8s.StaticPodServerController{},
-		&kubeaccess.ConfigController{},
+		kubeaccess.NewConfigController(),
 		&kubeaccess.CRDController{},
 		&kubeaccess.EndpointController{},
-		&kubespan.ConfigController{},
+		kubespan.NewConfigController(),
 		&kubespan.EndpointController{},
 		&kubespan.IdentityController{},
 		&kubespan.ManagerController{},
@@ -275,14 +281,16 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&secrets.APICertSANsController{},
 		&secrets.APIController{},
 		&secrets.EtcdController{},
-		&secrets.KubeletController{},
+		secrets.NewKubeletController(),
 		&secrets.KubernetesCertSANsController{},
 		&secrets.KubernetesDynamicCertsController{},
 		&secrets.KubernetesController{},
 		&secrets.MaintenanceController{},
 		&secrets.MaintenanceCertSANsController{},
 		&secrets.MaintenanceRootController{},
-		&secrets.RootController{},
+		secrets.NewRootEtcdController(),
+		secrets.NewRootKubernetesController(),
+		secrets.NewRootOSController(),
 		&secrets.TrustdController{},
 		&siderolink.ConfigController{
 			Cmdline: procfs.ProcCmdline(),
@@ -337,14 +345,19 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 			return
 		}
 
-		ctrl.updateConsoleLoggingConfig(cfg)
-		ctrl.updateLoggingConfig(ctx, cfg, &loggingEndpoints)
+		ctrl.updateConsoleLoggingConfig(cfg.Debug())
+
+		if cfg.Machine() == nil {
+			ctrl.updateLoggingConfig(ctx, nil, &loggingEndpoints)
+		} else {
+			ctrl.updateLoggingConfig(ctx, cfg.Machine().Logging().Destinations(), &loggingEndpoints)
+		}
 	}
 }
 
-func (ctrl *Controller) updateConsoleLoggingConfig(cfg talosconfig.Config) {
+func (ctrl *Controller) updateConsoleLoggingConfig(debug bool) {
 	newLogLevel := zapcore.InfoLevel
-	if cfg.Debug() {
+	if debug {
 		newLogLevel = zapcore.DebugLevel
 	}
 
@@ -354,8 +367,7 @@ func (ctrl *Controller) updateConsoleLoggingConfig(cfg talosconfig.Config) {
 	}
 }
 
-func (ctrl *Controller) updateLoggingConfig(ctx context.Context, cfg talosconfig.Config, prevLoggingEndpoints *[]*url.URL) {
-	dests := cfg.Machine().Logging().Destinations()
+func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosconfig.LoggingDestination, prevLoggingEndpoints *[]*url.URL) {
 	loggingEndpoints := make([]*url.URL, len(dests))
 
 	for i, dest := range dests {

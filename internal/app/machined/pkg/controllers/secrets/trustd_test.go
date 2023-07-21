@@ -27,6 +27,8 @@ import (
 )
 
 func TestTrustdSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &TrustdSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {

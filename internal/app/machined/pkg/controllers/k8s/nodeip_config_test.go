@@ -52,7 +52,7 @@ func (suite *NodeIPConfigSuite) SetupTest() {
 	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.NodeIPConfigController{}))
+	suite.Require().NoError(suite.runtime.RegisterController(k8sctrl.NewNodeIPConfigController()))
 
 	suite.startRuntime()
 }

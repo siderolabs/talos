@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
@@ -62,15 +63,15 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		touchedIDs := make(map[resource.ID]struct{})
+		r.StartTrackingOutputs()
 
-		if cfg != nil {
-			cfgProvider := cfg.(*config.MachineConfig).Config()
+		if cfg != nil && cfg.Config().Cluster() != nil {
+			cfgProvider := cfg.Config()
 
 			var podCIDRs, serviceCIDRs []netip.Prefix
 
@@ -106,8 +107,6 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error updating output resource: %w", err)
 			}
 
-			touchedIDs[k8s.NodeAddressFilterNoK8s] = struct{}{}
-
 			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterOnlyK8s), func(r resource.Resource) error {
 				spec := r.(*network.NodeAddressFilter).TypedSpec()
 
@@ -117,28 +116,10 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 			}); err != nil {
 				return fmt.Errorf("error updating output resource: %w", err)
 			}
-
-			touchedIDs[k8s.NodeAddressFilterOnlyK8s] = struct{}{}
 		}
 
-		// list keys for cleanup
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressFilterType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
+		if err = safe.CleanupOutputs[*network.NodeAddressFilter](ctx, r); err != nil {
+			return err
 		}
-
-		for _, res := range list.Items {
-			if res.Metadata().Owner() != ctrl.Name() {
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up specs: %w", err)
-				}
-			}
-		}
-
-		r.ResetRestartBackoff()
 	}
 }

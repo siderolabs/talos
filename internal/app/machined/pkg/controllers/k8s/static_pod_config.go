@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -61,20 +62,25 @@ func (ctrl *StaticPodConfigController) Run(ctx context.Context, r controller.Run
 		case <-r.EventCh():
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.V1Alpha1ID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
 		}
 
-		touchedIDs := map[string]struct{}{}
+		r.StartTrackingOutputs()
 
-		if cfg != nil {
-			cfgProvider := cfg.(*config.MachineConfig).Config()
+		if cfg != nil && cfg.Config().Machine() != nil {
+			cfgProvider := cfg.Config()
 
 			for _, pod := range cfgProvider.Machine().Pods() {
-				name, ok, err := unstructured.NestedString(pod, "metadata", "name")
+				var (
+					name, namespace string
+					ok              bool
+				)
+
+				name, ok, err = unstructured.NestedString(pod, "metadata", "name")
 				if err != nil {
 					return fmt.Errorf("error getting name from static pod: %w", err)
 				}
@@ -83,7 +89,7 @@ func (ctrl *StaticPodConfigController) Run(ctx context.Context, r controller.Run
 					return fmt.Errorf("name is missing in static pod metadata")
 				}
 
-				namespace, ok, err := unstructured.NestedString(pod, "metadata", "namespace")
+				namespace, ok, err = unstructured.NestedString(pod, "metadata", "namespace")
 				if err != nil {
 					return fmt.Errorf("error getting namespace from static pod: %w", err)
 				}
@@ -101,33 +107,12 @@ func (ctrl *StaticPodConfigController) Run(ctx context.Context, r controller.Run
 				}); err != nil {
 					return fmt.Errorf("error modifying resource: %w", err)
 				}
-
-				touchedIDs[id] = struct{}{}
 			}
 		}
 
 		// clean up static pods which haven't been touched
-		{
-			list, err := r.List(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
-			if err != nil {
-				return err
-			}
-
-			for _, res := range list.Items {
-				if _, ok := touchedIDs[res.Metadata().ID()]; ok {
-					continue
-				}
-
-				if res.Metadata().Owner() != ctrl.Name() {
-					continue
-				}
-
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return err
-				}
-			}
+		if err = safe.CleanupOutputs[*k8s.StaticPod](ctx, r); err != nil {
+			return err
 		}
-
-		r.ResetRestartBackoff()
 	}
 }

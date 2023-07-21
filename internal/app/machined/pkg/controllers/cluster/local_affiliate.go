@@ -92,8 +92,9 @@ func (ctrl *LocalAffiliateController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.APIServerConfigType,
+			ID:        pointer.To(k8s.APIServerConfigID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -182,11 +183,6 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 			continue
 		}
 
-		machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
-		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error getting machine config: %w", err)
-		}
-
 		// optional resources (kubespan)
 		kubespanIdentity, err := safe.ReaderGetByID[*kubespan.Identity](ctx, r, kubespan.LocalIdentity)
 		if err != nil && !state.IsNotFoundError(err) {
@@ -208,6 +204,12 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error getting discovered public IP: %w", err)
 		}
 
+		// optional resources (kubernetes)
+		apiServerConfig, err := safe.ReaderGetByID[*k8s.APIServerConfig](ctx, r, k8s.APIServerConfigID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting API server config: %w", err)
+		}
+
 		localID := identity.TypedSpec().NodeID
 
 		touchedIDs := map[resource.ID]struct{}{}
@@ -222,9 +224,9 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 				spec.MachineType = machineType.MachineType()
 				spec.OperatingSystem = fmt.Sprintf("%s (%s)", version.Name, version.Tag)
 
-				if machineType.MachineType().IsControlPlane() && machineConfig != nil {
+				if machineType.MachineType().IsControlPlane() && apiServerConfig != nil {
 					spec.ControlPlane = &cluster.ControlPlane{
-						APIServerPort: machineConfig.Config().Cluster().LocalAPIServerPort(),
+						APIServerPort: apiServerConfig.TypedSpec().LocalPort,
 					}
 				} else {
 					spec.ControlPlane = nil

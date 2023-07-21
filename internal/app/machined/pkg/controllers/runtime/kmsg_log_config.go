@@ -93,12 +93,10 @@ func (ctrl *KmsgLogConfigController) Run(ctx context.Context, r controller.Runti
 				})...)
 		}
 
-		if len(destinations) == 0 {
-			if err := r.Destroy(ctx, runtime.NewKmsgLogConfig().Metadata()); err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error destroying kmsg log config: %w", err)
-			}
-		} else {
-			if err := safe.WriterModify(ctx, r, runtime.NewKmsgLogConfig(), func(cfg *runtime.KmsgLogConfig) error {
+		r.StartTrackingOutputs()
+
+		if len(destinations) > 0 {
+			if err = safe.WriterModify(ctx, r, runtime.NewKmsgLogConfig(), func(cfg *runtime.KmsgLogConfig) error {
 				cfg.TypedSpec().Destinations = destinations
 
 				return nil
@@ -107,6 +105,8 @@ func (ctrl *KmsgLogConfigController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		r.ResetRestartBackoff()
+		if err = safe.CleanupOutputs[*runtime.KmsgLogConfig](ctx, r); err != nil {
+			return err
+		}
 	}
 }

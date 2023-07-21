@@ -137,5 +137,7 @@ publicKey: Oak2fBEWngBhwslBxDVgnRNHXs88OAp4kjroSX0uqUE=
 }
 
 func TestIdentitySuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(IdentitySuite))
 }
