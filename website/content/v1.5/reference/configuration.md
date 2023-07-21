@@ -101,7 +101,7 @@ controlPlane:
 {{< /highlight >}}</details> | |
 |`kubelet` |<a href="#kubeletconfig">KubeletConfig</a> |Used to provide additional options to the kubelet. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kubelet:
-    image: ghcr.io/siderolabs/kubelet:v1.28.0-alpha.4 # The `image` field is an optional reference to an alternative kubelet image.
+    image: ghcr.io/siderolabs/kubelet:v1.28.0-beta.0 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -523,7 +523,7 @@ serviceAccount:
 {{< /highlight >}}</details> | |
 |`apiServer` |<a href="#apiserverconfig">APIServerConfig</a> |API server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 apiServer:
-    image: registry.k8s.io/kube-apiserver:v1.28.0-alpha.4 # The container image used in the API server manifest.
+    image: registry.k8s.io/kube-apiserver:v1.28.0-beta.0 # The container image used in the API server manifest.
     # Extra arguments to supply to the API server.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -562,14 +562,14 @@ apiServer:
 {{< /highlight >}}</details> | |
 |`controllerManager` |<a href="#controllermanagerconfig">ControllerManagerConfig</a> |Controller manager server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 controllerManager:
-    image: registry.k8s.io/kube-controller-manager:v1.28.0-alpha.4 # The container image used in the controller manager manifest.
+    image: registry.k8s.io/kube-controller-manager:v1.28.0-beta.0 # The container image used in the controller manager manifest.
     # Extra arguments to supply to the controller manager.
     extraArgs:
         feature-gates: ServerSideApply=true
 {{< /highlight >}}</details> | |
 |`proxy` |<a href="#proxyconfig">ProxyConfig</a> |Kube-proxy server-specific configuration options <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 proxy:
-    image: registry.k8s.io/kube-proxy:v1.28.0-alpha.4 # The container image used in the kube-proxy manifest.
+    image: registry.k8s.io/kube-proxy:v1.28.0-beta.0 # The container image used in the kube-proxy manifest.
     mode: ipvs # proxy mode of kube-proxy.
     # Extra arguments to supply to kube-proxy.
     extraArgs:
@@ -580,7 +580,7 @@ proxy:
 {{< /highlight >}}</details> | |
 |`scheduler` |<a href="#schedulerconfig">SchedulerConfig</a> |Scheduler server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 scheduler:
-    image: registry.k8s.io/kube-scheduler:v1.28.0-alpha.4 # The container image used in the scheduler manifest.
+    image: registry.k8s.io/kube-scheduler:v1.28.0-beta.0 # The container image used in the scheduler manifest.
     # Extra arguments to supply to the scheduler.
     extraArgs:
         feature-gates: AllBeta=true
@@ -747,7 +747,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-image: ghcr.io/siderolabs/kubelet:v1.28.0-alpha.4 # The `image` field is an optional reference to an alternative kubelet image.
+image: ghcr.io/siderolabs/kubelet:v1.28.0-beta.0 # The `image` field is an optional reference to an alternative kubelet image.
 # The `extraArgs` field is used to provide additional flags to the kubelet.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -784,7 +784,7 @@ extraArgs:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The `image` field is an optional reference to an alternative kubelet image. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: ghcr.io/siderolabs/kubelet:v1.28.0-alpha.4
+image: ghcr.io/siderolabs/kubelet:v1.28.0-beta.0
 {{< /highlight >}}</details> | |
 |`clusterDNS` |[]string |The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 clusterDNS:
@@ -1401,7 +1401,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-image: registry.k8s.io/kube-apiserver:v1.28.0-alpha.4 # The container image used in the API server manifest.
+image: registry.k8s.io/kube-apiserver:v1.28.0-beta.0 # The container image used in the API server manifest.
 # Extra arguments to supply to the API server.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -1443,7 +1443,7 @@ certSANs:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used in the API server manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-apiserver:v1.28.0-alpha.4
+image: registry.k8s.io/kube-apiserver:v1.28.0-beta.0
 {{< /highlight >}}</details> | |
 |`extraArgs` |map[string]string |Extra arguments to supply to the API server.  | |
 |`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the API server static pod.  | |
@@ -1530,7 +1530,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-image: registry.k8s.io/kube-controller-manager:v1.28.0-alpha.4 # The container image used in the controller manager manifest.
+image: registry.k8s.io/kube-controller-manager:v1.28.0-beta.0 # The container image used in the controller manager manifest.
 # Extra arguments to supply to the controller manager.
 extraArgs:
     feature-gates: ServerSideApply=true
@@ -1540,7 +1540,7 @@ extraArgs:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used in the controller manager manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-controller-manager:v1.28.0-alpha.4
+image: registry.k8s.io/kube-controller-manager:v1.28.0-beta.0
 {{< /highlight >}}</details> | |
 |`extraArgs` |map[string]string |Extra arguments to supply to the controller manager.  | |
 |`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the controller manager static pod.  | |
@@ -1560,7 +1560,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-image: registry.k8s.io/kube-proxy:v1.28.0-alpha.4 # The container image used in the kube-proxy manifest.
+image: registry.k8s.io/kube-proxy:v1.28.0-beta.0 # The container image used in the kube-proxy manifest.
 mode: ipvs # proxy mode of kube-proxy.
 # Extra arguments to supply to kube-proxy.
 extraArgs:
@@ -1577,7 +1577,7 @@ extraArgs:
 disabled: false
 {{< /highlight >}}</details> | |
 |`image` |string |The container image used in the kube-proxy manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-proxy:v1.28.0-alpha.4
+image: registry.k8s.io/kube-proxy:v1.28.0-beta.0
 {{< /highlight >}}</details> | |
 |`mode` |string |<details><summary>proxy mode of kube-proxy.</summary>The default is 'iptables'.</details>  | |
 |`extraArgs` |map[string]string |Extra arguments to supply to kube-proxy.  | |
@@ -1595,7 +1595,7 @@ Appears in:
 
 
 {{< highlight yaml >}}
-image: registry.k8s.io/kube-scheduler:v1.28.0-alpha.4 # The container image used in the scheduler manifest.
+image: registry.k8s.io/kube-scheduler:v1.28.0-beta.0 # The container image used in the scheduler manifest.
 # Extra arguments to supply to the scheduler.
 extraArgs:
     feature-gates: AllBeta=true
@@ -1605,7 +1605,7 @@ extraArgs:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used in the scheduler manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-scheduler:v1.28.0-alpha.4
+image: registry.k8s.io/kube-scheduler:v1.28.0-beta.0
 {{< /highlight >}}</details> | |
 |`extraArgs` |map[string]string |Extra arguments to supply to the scheduler.  | |
 |`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the scheduler static pod.  | |
