@@ -90,7 +90,8 @@ you can do the following:
     - `.cluster.network.serviceSubnets[0]` with the value of the `networking.serviceSubnet` from the previous step
     - `.cluster.network.dnsDomain` with the value of the `networking.dnsDomain` from the previous step
 
-7. Go through the rest of `controlplane.yaml` and `worker.yaml` to customize them according to your needs.
+7. Go through the rest of `controlplane.yaml` and `worker.yaml` to customize them according to your needs, especially :
+    - `.cluster.secretboxEncryptionSecret` should be either removed if you don't currently use `EncryptionConfig` on your `kube-apiserver` or set to the correct value
 
 8. Bring up a Talos node to be the initial Talos control plane node.
 
