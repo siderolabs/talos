@@ -42,7 +42,7 @@ IPv6 addresses can be specified by enclosing them in the square brackets, e.g. `
 
 `<device>` can be traditional interface naming scheme `eth0, eth1` or `enx<MAC>`, example: `enx78e7d1ea46da`
 
-DCHP can be enabled by setting `<autoconf>` to `dhcp`, example: `ip=:::::eth0.3:dhcp`.
+DHCP can be enabled by setting `<autoconf>` to `dhcp`, example: `ip=:::::eth0.3:dhcp`.
 Alternative syntax is `ip=eth0.3:dhcp`.
 
 #### `bond`
