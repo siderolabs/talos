@@ -24,3 +24,5 @@ kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_spectrum.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko
+kernel/net/ipv4/ip_gre.ko
+kernel/net/openvswitch/vport-gre.ko

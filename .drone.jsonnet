@@ -688,7 +688,7 @@ local conformance_pipelines = [
 
 // Release pipeline.
 
-local cloud_images = Step('cloud-images', depends_on=[e2e_docker, e2e_qemu], environment=creds_env_vars);
+// DISABLED: local cloud_images = Step('cloud-images', depends_on=[e2e_docker, e2e_qemu], environment=creds_env_vars);
 local images = Step('images', target='images', depends_on=[iso, images_essential], environment={ IMAGE_REGISTRY: local_registry });
 local sbcs = Step('sbcs', target='sbcs', depends_on=[images], environment={ IMAGE_REGISTRY: local_registry });
 
@@ -705,7 +705,7 @@ local release = {
       '_out/aws-arm64.tar.gz',
       '_out/azure-amd64.tar.gz',
       '_out/azure-arm64.tar.gz',
-      '_out/cloud-images.json',
+      // DISABLED: '_out/cloud-images.json',
       '_out/digital-ocean-amd64.raw.gz',
       '_out/digital-ocean-arm64.raw.gz',
       '_out/exoscale-amd64.qcow2',
@@ -764,13 +764,22 @@ local release = {
   when: {
     event: ['tag'],
   },
-  depends_on: [build.name, cloud_images.name, talosctl_cni_bundle.name, images.name, sbcs.name, iso.name, push.name, release_notes.name],
+  depends_on: [
+    build.name,
+    // DISABLED: cloud_images.name,
+    talosctl_cni_bundle.name,
+    images.name,
+    sbcs.name,
+    iso.name,
+    push.name,
+    release_notes.name,
+  ],
 };
 
 local release_steps = default_steps + [
   images,
   sbcs,
-  cloud_images,
+  // DISABLED: cloud_images,
   release,
 ];
 

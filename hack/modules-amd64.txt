@@ -28,3 +28,5 @@ kernel/drivers/virtio/virtio_pci_modern_dev.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko
+kernel/net/ipv4/ip_gre.ko
+kernel/net/openvswitch/vport-gre.ko
