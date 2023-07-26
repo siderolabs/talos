@@ -1,3 +1,76 @@
+## [Talos 1.4.7](https://github.com/siderolabs/talos/releases/tag/v1.4.7) (2023-07-26)
+
+Welcome to the v1.4.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Kubernetes: 1.27.4
+Linux: 6.1.41
+
+Talos is built with Go 1.20.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>5 commits</summary>
+<p>
+
+* [`95a3670f6`](https://github.com/siderolabs/talos/commit/95a3670f617e36870200f6184088fbdc305fb607) chore: workaround AWS AMI failures, disable Azure uploader
+* [`8f35f7dbe`](https://github.com/siderolabs/talos/commit/8f35f7dbe630d4b8191e602e93d0c43b7d9c3731) feat: update Linux to 6.1.41
+* [`696a6fb63`](https://github.com/siderolabs/talos/commit/696a6fb6354410139beb1e8cac1c223a3dae220e) feat: update Kubernetes default to 1.27.4
+* [`7b5e94816`](https://github.com/siderolabs/talos/commit/7b5e948169ec65b6f0eb258ed193f612f37750a2) chore: optimize image generation time
+* [`d6af392e1`](https://github.com/siderolabs/talos/commit/d6af392e11dd17f8754a508b064d620e32f2afe5) chore: update Go to 1.20.6
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`2b5a1e6`](https://github.com/siderolabs/extras/commit/2b5a1e6c6e72be896e4076d4314fcb277c22cf7a) feat: update Go to 1.20.6
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`69266d9`](https://github.com/siderolabs/pkgs/commit/69266d91f7a8ea57bc706e9e5ff0114aef92c607) feat: update Linux to 6.1.41
+* [`d5a3fd7`](https://github.com/siderolabs/pkgs/commit/d5a3fd79828b0ce0e88c4241c9bc13a71c0c6041) feat: update Go to 1.20.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`78b2dc6`](https://github.com/siderolabs/tools/commit/78b2dc62a4eadeed47343fd2dba3bc2af5829c15) feat: update Go to 1.20.6
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**  v1.4.0-2-gb2aba9d -> v1.4.0-3-g2b5a1e6
+* **github.com/siderolabs/pkgs**    v1.4.1-14-ge911ac5 -> v1.4.1-16-g69266d9
+* **github.com/siderolabs/tools**   v1.4.0-3-gfac34e5 -> v1.4.0-4-g78b2dc6
+* **k8s.io/api**                    v0.27.3 -> v0.27.4
+* **k8s.io/apimachinery**           v0.27.3 -> v0.27.4
+* **k8s.io/apiserver**              v0.27.3 -> v0.27.4
+* **k8s.io/client-go**              v0.27.3 -> v0.27.4
+* **k8s.io/component-base**         v0.27.3 -> v0.27.4
+* **k8s.io/kubectl**                v0.27.3 -> v0.27.4
+* **k8s.io/kubelet**                v0.27.3 -> v0.27.4
+
+Previous release can be found at [v1.4.6](https://github.com/siderolabs/talos/releases/tag/v1.4.6)
+
 ## [Talos 1.4.6](https://github.com/siderolabs/talos/releases/tag/v1.4.6) (2023-06-28)
 
 Welcome to the v1.4.6 release of Talos!
