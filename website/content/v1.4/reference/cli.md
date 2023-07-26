@@ -131,7 +131,7 @@ talosctl cluster create [flags]
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster (QEMU provisioner only)
       --iso-path string                          the ISO path to use for the initial boot (VM only)
-      --kubernetes-version string                desired kubernetes version to run (default "1.27.3")
+      --kubernetes-version string                desired kubernetes version to run (default "1.27.4")
       --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
       --mtu int                                  MTU of the cluster network (default 1500)
@@ -1318,7 +1318,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "ghcr.io/siderolabs/installer:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.27.3")
+      --kubernetes-version string                desired kubernetes version to run (default "1.27.4")
   -o, --output string                            destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout
   -t, --output-types strings                     types of outputs to be generated. valid types are: ["controlplane" "worker" "talosconfig"] (default [controlplane,worker,talosconfig])
   -p, --persist                                  the desired persist value for configs (default true)
@@ -2663,7 +2663,7 @@ talosctl upgrade-k8s [flags]
       --endpoint string   the cluster control plane endpoint
       --from string       the Kubernetes control plane version to upgrade from
   -h, --help              help for upgrade-k8s
-      --to string         the Kubernetes control plane version to upgrade to (default "1.27.3")
+      --to string         the Kubernetes control plane version to upgrade to (default "1.27.4")
       --upgrade-kubelet   upgrade kubelet service (default true)
 ```
 
