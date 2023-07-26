@@ -11,6 +11,12 @@ addresses:
       scope: global
       flags: permanent
       layer: platform
+    - address: 10.10.4.140/29
+      linkName: bond0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
 links:
     - name: eth0
       logical: false
@@ -18,6 +24,48 @@ links:
       mtu: 0
       kind: ""
       type: netrom
+      layer: platform
+    - name: eth1
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: bond0
+      slaveIndex: 1
+      layer: platform
+    - name: eth2
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: bond0
+      slaveIndex: 1
+      layer: platform
+    - name: bond0
+      logical: true
+      up: true
+      mtu: 1500
+      kind: bond
+      type: ether
+      bondMaster:
+        mode: 802.3ad
+        xmitHashPolicy: layer3+4
+        lacpRate: fast
+        arpValidate: none
+        arpAllTargets: any
+        primaryReselect: always
+        failOverMac: 0
+        miimon: 100
+        updelay: 200
+        downdelay: 200
+        resendIgmp: 1
+        lpInterval: 1
+        packetsPerSlave: 1
+        numPeerNotif: 1
+        tlbLogicalLb: 1
+        adActorSysPrio: 65535
       layer: platform
 routes:
     - family: inet4
@@ -44,6 +92,42 @@ routes:
       flags: ""
       protocol: static
       layer: platform
+    - family: inet4
+      dst: 10.0.0.0/8
+      src: ""
+      gateway: 10.10.4.147
+      outLinkName: bond0
+      table: unspec
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 192.168.0.0/16
+      src: ""
+      gateway: 10.10.4.147
+      outLinkName: bond0
+      table: unspec
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 188.42.208.0/21
+      src: ""
+      gateway: 10.10.4.147
+      outLinkName: bond0
+      table: unspec
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
 hostnames:
     - hostname: talos
       domainname: fqdn
@@ -51,6 +135,8 @@ hostnames:
 resolvers:
     - dnsServers:
         - 8.8.8.8
+        - 1.1.1.1
+        - 2.2.2.2
       layer: platform
 timeServers: []
 operators:

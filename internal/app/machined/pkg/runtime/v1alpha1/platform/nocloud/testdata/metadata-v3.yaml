@@ -15,10 +15,10 @@ ethernets:
 
   ext1:
     match:
-      macaddress: 68:05:ca:b8:f1:f8
+      macaddress: f4:33:01:16:3d:90
   ext2:
     match:
-      macaddress: 68:05:ca:b8:f1:f9
+      macaddress: 50:a5:1b:e8:7b:db
 
 bonds:
   bond0:

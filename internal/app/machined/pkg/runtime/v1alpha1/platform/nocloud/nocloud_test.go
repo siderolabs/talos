@@ -5,15 +5,21 @@
 package nocloud_test
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"testing"
 
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/nocloud"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 //go:embed testdata/metadata-v1.yaml
@@ -50,6 +56,16 @@ func TestParseMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			n := &nocloud.Nocloud{}
 
+			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+			eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
+			eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf8}
+			require.NoError(t, st.Create(context.TODO(), eth1))
+
+			eth2 := network.NewLinkStatus(network.NamespaceName, "eth2")
+			eth2.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf9}
+			require.NoError(t, st.Create(context.TODO(), eth2))
+
 			var m nocloud.NetworkConfig
 
 			require.NoError(t, yaml.Unmarshal(tt.raw, &m))
@@ -59,7 +75,7 @@ func TestParseMetadata(t *testing.T) {
 				InstanceID: "0",
 			}
 
-			networkConfig, err := n.ParseMetadata(&m, &mc)
+			networkConfig, err := n.ParseMetadata(&m, st, &mc)
 			require.NoError(t, err)
 
 			marshaled, err := yaml.Marshal(networkConfig)

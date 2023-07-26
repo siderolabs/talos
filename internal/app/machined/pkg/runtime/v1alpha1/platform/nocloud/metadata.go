@@ -16,12 +16,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 	"golang.org/x/sys/unix"
 	yaml "gopkg.in/yaml.v3"
 
+	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
+	networkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
@@ -45,7 +48,7 @@ type NetworkConfig struct {
 	Config  []struct {
 		Mac        string `yaml:"mac_address,omitempty"`
 		Interfaces string `yaml:"name,omitempty"`
-		MTU        string `yaml:"mtu,omitempty"`
+		MTU        uint32 `yaml:"mtu,omitempty"`
 		Subnets    []struct {
 			Address string `yaml:"address,omitempty"`
 			Netmask string `yaml:"netmask,omitempty"`
@@ -70,25 +73,34 @@ type Ethernet struct {
 	Address     []string `yaml:"addresses,omitempty"`
 	Gateway4    string   `yaml:"gateway4,omitempty"`
 	Gateway6    string   `yaml:"gateway6,omitempty"`
-	MTU         int      `yaml:"mtu,omitempty"`
+	MTU         uint32   `yaml:"mtu,omitempty"`
 	NameServers struct {
 		Search  []string `yaml:"search,omitempty"`
 		Address []string `yaml:"addresses,omitempty"`
 	} `yaml:"nameservers,omitempty"`
+	Routes []struct {
+		To     string `yaml:"to,omitempty"`
+		Via    string `yaml:"via,omitempty"`
+		Metric string `yaml:"metric,omitempty"`
+		Table  uint32 `yaml:"table,omitempty"`
+	} `yaml:"routes,omitempty"`
+	RoutingPolicy []struct { // TODO
+		From  string `yaml:"froom,omitempty"`
+		Table uint32 `yaml:"table,omitempty"`
+	} `yaml:"routing-policy,omitempty"`
 }
 
 // Bonds holds bonding interface info.
 type Bonds struct {
-	Interfaces  []string `yaml:"interfaces,omitempty"`
-	Address     []string `yaml:"addresses,omitempty"`
-	NameServers struct {
-		Search  []string `yaml:"search,omitempty"`
-		Address []string `yaml:"addresses,omitempty"`
-	} `yaml:"nameservers,omitempty"`
-	Params []struct {
+	Ethernet   `yaml:",inline"`
+	Interfaces []string `yaml:"interfaces,omitempty"`
+	Params     struct {
 		Mode       string `yaml:"mode,omitempty"`
 		LACPRate   string `yaml:"lacp-rate,omitempty"`
 		HashPolicy string `yaml:"transmit-hash-policy,omitempty"`
+		MIIMon     uint32 `yaml:"mii-monitor-interval,omitempty"`
+		UpDelay    uint32 `yaml:"up-delay,omitempty"`
+		DownDelay  uint32 `yaml:"down-delay,omitempty"`
 	} `yaml:"parameters,omitempty"`
 }
 
@@ -333,11 +345,11 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 							Protocol:    nethelpers.ProtocolStatic,
 							Type:        nethelpers.TypeUnicast,
 							Family:      family,
-							Priority:    1024,
+							Priority:    networkctrl.DefaultRouteMetric,
 						}
 
 						if family == nethelpers.FamilyInet6 {
-							route.Priority = 2048
+							route.Priority = 2 * networkctrl.DefaultRouteMetric
 						}
 
 						route.Normalize()
@@ -363,119 +375,241 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 }
 
 //nolint:gocyclo
-func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, networkConfig *runtime.PlatformNetworkConfig) error {
+func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runtime.PlatformNetworkConfig, dnsIPs *[]netip.Addr) error {
+	if eth.DHCPv4 {
+		networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+			Operator:  network.OperatorDHCP4,
+			LinkName:  name,
+			RequireUp: true,
+			DHCP4: network.DHCP4OperatorSpec{
+				RouteMetric: uint32(networkctrl.DefaultRouteMetric),
+			},
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	if eth.DHCPv6 {
+		networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+			Operator:  network.OperatorDHCP6,
+			LinkName:  name,
+			RequireUp: true,
+			DHCP6: network.DHCP6OperatorSpec{
+				RouteMetric: uint32(networkctrl.DefaultRouteMetric),
+			},
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	for _, addr := range eth.Address {
+		ipPrefix, err := netip.ParsePrefix(addr)
+		if err != nil {
+			return err
+		}
+
+		family := nethelpers.FamilyInet4
+
+		if ipPrefix.Addr().Is6() {
+			family = nethelpers.FamilyInet6
+		}
+
+		networkConfig.Addresses = append(networkConfig.Addresses,
+			network.AddressSpecSpec{
+				ConfigLayer: network.ConfigPlatform,
+				LinkName:    name,
+				Address:     ipPrefix,
+				Scope:       nethelpers.ScopeGlobal,
+				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+				Family:      family,
+			},
+		)
+	}
+
+	if eth.Gateway4 != "" {
+		gw, err := netip.ParseAddr(eth.Gateway4)
+		if err != nil {
+			return err
+		}
+
+		route := network.RouteSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Gateway:     gw,
+			OutLinkName: name,
+			Table:       nethelpers.TableMain,
+			Protocol:    nethelpers.ProtocolStatic,
+			Type:        nethelpers.TypeUnicast,
+			Family:      nethelpers.FamilyInet4,
+			Priority:    networkctrl.DefaultRouteMetric,
+		}
+
+		route.Normalize()
+
+		networkConfig.Routes = append(networkConfig.Routes, route)
+	}
+
+	if eth.Gateway6 != "" {
+		gw, err := netip.ParseAddr(eth.Gateway6)
+		if err != nil {
+			return err
+		}
+
+		route := network.RouteSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Gateway:     gw,
+			OutLinkName: name,
+			Table:       nethelpers.TableMain,
+			Protocol:    nethelpers.ProtocolStatic,
+			Type:        nethelpers.TypeUnicast,
+			Family:      nethelpers.FamilyInet6,
+			Priority:    2 * networkctrl.DefaultRouteMetric,
+		}
+
+		route.Normalize()
+
+		networkConfig.Routes = append(networkConfig.Routes, route)
+	}
+
+	for _, addr := range eth.NameServers.Address {
+		if ip, err := netip.ParseAddr(addr); err == nil {
+			*dnsIPs = append(*dnsIPs, ip)
+		} else {
+			return err
+		}
+	}
+
+	for _, route := range eth.Routes {
+		gw, err := netip.ParseAddr(route.Via)
+		if err != nil {
+			return fmt.Errorf("failed to parse route gateway: %w", err)
+		}
+
+		dest, err := netip.ParsePrefix(route.To)
+		if err != nil {
+			return fmt.Errorf("failed to parse route destination: %w", err)
+		}
+
+		family := nethelpers.FamilyInet4
+		if gw.Is6() {
+			family = nethelpers.FamilyInet6
+		}
+
+		route := network.RouteSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Destination: dest,
+			Gateway:     gw,
+			OutLinkName: name,
+			Table:       nethelpers.RoutingTable(route.Table),
+			Protocol:    nethelpers.ProtocolStatic,
+			Type:        nethelpers.TypeUnicast,
+			Family:      family,
+			Priority:    1024,
+		}
+
+		route.Normalize()
+
+		networkConfig.Routes = append(networkConfig.Routes, route)
+	}
+
+	return nil
+}
+
+//nolint:gocyclo
+func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, st state.State, networkConfig *runtime.PlatformNetworkConfig) error {
 	var dnsIPs []netip.Addr
 
+	hostInterfaces, err := safe.StateListAll[*network.LinkStatus](context.TODO(), st)
+	if err != nil {
+		return fmt.Errorf("error listing host interfaces: %w", err)
+	}
+
 	for name, eth := range config.Ethernets {
-		if !strings.HasPrefix(name, "eth") {
-			continue
+		var bondSlave network.BondSlave
+
+		for bondName, bond := range config.Bonds {
+			for _, iface := range bond.Interfaces {
+				if iface == name {
+					bondSlave.MasterName = bondName
+					bondSlave.SlaveIndex = 1
+				}
+			}
+		}
+
+		if eth.Match.HWAddr != "" {
+			var availableMACAddresses []string
+
+			macAddressMatched := false
+			hostInterfaceIter := safe.IteratorFromList(hostInterfaces)
+
+			for hostInterfaceIter.Next() {
+				macAddress := hostInterfaceIter.Value().TypedSpec().PermanentAddr.String()
+				if macAddress == eth.Match.HWAddr {
+					name = hostInterfaceIter.Value().Metadata().ID()
+					macAddressMatched = true
+
+					break
+				}
+
+				availableMACAddresses = append(availableMACAddresses, macAddress)
+			}
+
+			if !macAddressMatched {
+				log.Printf("vmware: no link with matching MAC address %q (available %v), defaulted to use name %s instead", eth.Match.HWAddr, availableMACAddresses, name)
+			}
 		}
 
 		networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
 			Name:        name,
 			Up:          true,
-			MTU:         uint32(eth.MTU),
+			MTU:         eth.MTU,
 			ConfigLayer: network.ConfigPlatform,
+			BondSlave:   bondSlave,
 		})
 
-		if eth.DHCPv4 {
-			networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
-				Operator:  network.OperatorDHCP4,
-				LinkName:  name,
-				RequireUp: true,
-				DHCP4: network.DHCP4OperatorSpec{
-					RouteMetric: 1024,
-				},
-				ConfigLayer: network.ConfigPlatform,
-			})
+		err := applyNetworkConfigV2Ethernet(name, eth, networkConfig, &dnsIPs)
+		if err != nil {
+			return err
+		}
+	}
+
+	for name, bond := range config.Bonds {
+		mode, err := nethelpers.BondModeByName(bond.Params.Mode)
+		if err != nil {
+			return fmt.Errorf("invalid mode: %w", err)
 		}
 
-		if eth.DHCPv6 {
-			networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
-				Operator:  network.OperatorDHCP6,
-				LinkName:  name,
-				RequireUp: true,
-				DHCP6: network.DHCP6OperatorSpec{
-					RouteMetric: 1024,
-				},
-				ConfigLayer: network.ConfigPlatform,
-			})
+		hashPolicy, err := nethelpers.BondXmitHashPolicyByName(bond.Params.HashPolicy)
+		if err != nil {
+			return fmt.Errorf("invalid transmit-hash-policy: %w", err)
 		}
 
-		for _, addr := range eth.Address {
-			ipPrefix, err := netip.ParsePrefix(addr)
-			if err != nil {
-				return err
-			}
-
-			family := nethelpers.FamilyInet4
-
-			if ipPrefix.Addr().Is6() {
-				family = nethelpers.FamilyInet6
-			}
-
-			networkConfig.Addresses = append(networkConfig.Addresses,
-				network.AddressSpecSpec{
-					ConfigLayer: network.ConfigPlatform,
-					LinkName:    name,
-					Address:     ipPrefix,
-					Scope:       nethelpers.ScopeGlobal,
-					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
-					Family:      family,
-				},
-			)
+		lacpRate, err := nethelpers.LACPRateByName(bond.Params.LACPRate)
+		if err != nil {
+			return fmt.Errorf("invalid lacp-rate: %w", err)
 		}
 
-		if eth.Gateway4 != "" {
-			gw, err := netip.ParseAddr(eth.Gateway4)
-			if err != nil {
-				return err
-			}
-
-			route := network.RouteSpecSpec{
-				ConfigLayer: network.ConfigPlatform,
-				Gateway:     gw,
-				OutLinkName: name,
-				Table:       nethelpers.TableMain,
-				Protocol:    nethelpers.ProtocolStatic,
-				Type:        nethelpers.TypeUnicast,
-				Family:      nethelpers.FamilyInet4,
-				Priority:    1024,
-			}
-
-			route.Normalize()
-
-			networkConfig.Routes = append(networkConfig.Routes, route)
+		bondLink := network.LinkSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Name:        name,
+			Logical:     true,
+			Up:          true,
+			MTU:         bond.Ethernet.MTU,
+			Kind:        network.LinkKindBond,
+			Type:        nethelpers.LinkEther,
+			BondMaster: network.BondMasterSpec{
+				Mode:       mode,
+				HashPolicy: hashPolicy,
+				MIIMon:     bond.Params.MIIMon,
+				UpDelay:    bond.Params.UpDelay,
+				DownDelay:  bond.Params.DownDelay,
+				LACPRate:   lacpRate,
+			},
 		}
 
-		if eth.Gateway6 != "" {
-			gw, err := netip.ParseAddr(eth.Gateway6)
-			if err != nil {
-				return err
-			}
+		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
+		networkConfig.Links = append(networkConfig.Links, bondLink)
 
-			route := network.RouteSpecSpec{
-				ConfigLayer: network.ConfigPlatform,
-				Gateway:     gw,
-				OutLinkName: name,
-				Table:       nethelpers.TableMain,
-				Protocol:    nethelpers.ProtocolStatic,
-				Type:        nethelpers.TypeUnicast,
-				Family:      nethelpers.FamilyInet6,
-				Priority:    2048,
-			}
-
-			route.Normalize()
-
-			networkConfig.Routes = append(networkConfig.Routes, route)
-		}
-
-		for _, addr := range eth.NameServers.Address {
-			if ip, err := netip.ParseAddr(addr); err == nil {
-				dnsIPs = append(dnsIPs, ip)
-			} else {
-				return err
-			}
+		err = applyNetworkConfigV2Ethernet(name, bond.Ethernet, networkConfig, &dnsIPs)
+		if err != nil {
+			return err
 		}
 	}
 

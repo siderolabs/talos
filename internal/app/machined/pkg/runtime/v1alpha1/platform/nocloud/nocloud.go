@@ -30,7 +30,7 @@ func (n *Nocloud) Name() string {
 }
 
 // ParseMetadata converts nocloud metadata to platform network config.
-func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
+func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, st state.State, metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if metadata.Hostname != "" {
@@ -51,7 +51,7 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metada
 			return nil, err
 		}
 	case 2:
-		if err := n.applyNetworkConfigV2(unmarshalledNetworkConfig, networkConfig); err != nil {
+		if err := n.applyNetworkConfigV2(unmarshalledNetworkConfig, st, networkConfig); err != nil {
 			return nil, err
 		}
 	default:
@@ -101,8 +101,8 @@ func (n *Nocloud) KernelArgs() procfs.Parameters {
 // NetworkConfiguration implements the runtime.Platform interface.
 //
 //nolint:gocyclo
-func (n *Nocloud) NetworkConfiguration(ctx context.Context, r state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	metadataConfigDl, metadataNetworkConfigDl, _, metadata, err := n.acquireConfig(ctx, r)
+func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	metadataConfigDl, metadataNetworkConfigDl, _, metadata, err := n.acquireConfig(ctx, st)
 	if stderrors.Is(err, errors.ErrNoConfigSource) {
 		err = nil
 	}
@@ -123,7 +123,7 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, r state.State, ch ch
 		}
 	}
 
-	networkConfig, err := n.ParseMetadata(&unmarshalledNetworkConfig, metadata)
+	networkConfig, err := n.ParseMetadata(&unmarshalledNetworkConfig, st, metadata)
 	if err != nil {
 		return err
 	}
