@@ -5,8 +5,6 @@
 // Package config provides methods to generate and consume Talos configuration.
 package config
 
-//go:generate docgen -generate-schema-from-dir types/ -json-schema-output schemas/config.schema.json -version-tag-file ../gendata/data/tag
-
 import "github.com/siderolabs/talos/pkg/machinery/config/config"
 
 // Config defines the interface to access contents of the machine configuration.

@@ -195,7 +195,7 @@ func (in *Input) init() ([]config.Document, error) {
 			cluster.AllowSchedulingOnControlPlanes = pointer.To(in.Options.AllowSchedulingOnControlPlanes)
 		} else {
 			// backwards compatibility for Talos versions older than 1.2
-			cluster.AllowSchedulingOnMasters = pointer.To(in.Options.AllowSchedulingOnControlPlanes) //nolint:staticcheck
+			cluster.AllowSchedulingOnMasters = pointer.To(in.Options.AllowSchedulingOnControlPlanes)
 		}
 	}
 

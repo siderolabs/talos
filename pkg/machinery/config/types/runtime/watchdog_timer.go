@@ -4,8 +4,6 @@
 
 package runtime
 
-//docgen:jsonschema
-
 import (
 	"fmt"
 	"net/url"
@@ -45,29 +43,13 @@ const (
 
 // WatchdogTimerV1Alpha1 is a watchdog timer config document.
 //
-//	examples:
-//	  - value: exampleWatchdogTimerV1Alpha1()
-//	alias: WatchdogTimerConfig
-//	schemaRoot: true
-//	schemaMeta: v1alpha1/WatchdogTimerConfig
+//docgen:version=v1alpha1
 type WatchdogTimerV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-	//   description: |
-	//     Path to the watchdog device.
-	//   examples:
-	//     - value: >
-	//        "/dev/watchdog0"
-	WatchdogDevice string `yaml:"device"`
-	//   description: |
-	//     Timeout for the watchdog.
-	//
-	//     If Talos is unresponsive for this duration, the watchdog will reset the system.
-	//
-	//     Default value is 1 minute, minimum value is 10 seconds.
-	//   schema:
-	//     type: string
-	//     pattern: ^[-+]?(((\d+(\.\d*)?|\d*(\.\d+)+)([nuµm]?s|m|h))|0)+$
-	WatchdogTimeout time.Duration `yaml:"timeout,omitempty"`
+	// The Path to the watchdog device.
+	WatchdogDevice string `yaml:"device" docgen:"{'in':'1.7'}"`
+	// The timeout for the watchdog. If Talos is unresponsive for this duration, the watchdog will reset the system.
+	WatchdogTimeout time.Duration `yaml:"timeout,omitempty" docgen:"{'in':'1.7','default':'1m'}"`
 }
 
 // NewWatchdogTimerV1Alpha1 creates a new eventsink config document.
