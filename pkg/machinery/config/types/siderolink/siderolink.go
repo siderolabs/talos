@@ -19,8 +19,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
-//go:generate docgen -output ./siderolink_doc.go ./siderolink.go
-
 //go:generate deep-copy -type ConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // Kind is a siderolink config document kind.
@@ -46,22 +44,11 @@ var (
 
 // ConfigV1Alpha1 is a SideroLink connection machine configuration document.
 //
-//	examples:
-//	  - value: exampleConfigV1Alpha1()
-//	alias: SideroLinkConfig
-//	schemaRoot: true
-//	schemaMeta: v1alpha1/SideroLinkConfig
+// docgen:configuration
 type ConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-	//   description: |
-	//     SideroLink API URL to connect to.
-	//   examples:
-	//     - value: >
-	//        "https://siderolink.api/join?token=secret"
-	//   schema:
-	//     type: string
-	//     pattern: "^(https|grpc)://"
-	APIUrlConfig meta.URL `yaml:"apiUrl"`
+	// The SideroLink API URL to connect to.
+	APIUrlConfig meta.URL `yaml:"apiUrl" docgen:"{'in': '1.7', 'pattern': '^(https|grpc)://'}"`
 }
 
 // NewConfigV1Alpha1 creates a new siderolink config document.

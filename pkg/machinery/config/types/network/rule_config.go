@@ -45,50 +45,25 @@ var (
 
 // RuleConfigV1Alpha1 is a network firewall rule config document.
 //
-//	examples:
-//	  - value: exampleRuleConfigV1Alpha1()
-//	alias: NetworkRuleConfig
-//	schemaRoot: true
-//	schemaMeta: v1alpha1/NetworkRuleConfig
+// docgen:configuration
 type RuleConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-	//   description: |
-	//     Name of the config document.
-	//   schemaRequired: true
-	MetaName string `yaml:"name"`
-	//   description: |
-	//     Port selector defines which ports and protocols on the host are affected by the rule.
-	PortSelector RulePortSelector `yaml:"portSelector"`
-	//   description: |
-	//     Ingress defines which source subnets are allowed to access the host ports/protocols defined by the `portSelector`.
-	Ingress IngressConfig `yaml:"ingress" merge:"replace"`
+	// Name of the config document.
+	MetaName string `yaml:"name" docgen:"{'in': '1.7', 'optional': false}"`
+	// The port selector defines which ports and protocols on the host are affected by the rule.
+	PortSelector RulePortSelector `yaml:"portSelector" docgen:"{'in': '1.7'}"`
+	// Defines which source subnets are allowed to access the host ports/protocols defined by the `portSelector`.
+	Ingress IngressConfig `yaml:"ingress" merge:"replace" docgen:"{'in': '1.7'}"`
 }
 
 // RulePortSelector is a port selector for the network rule.
+//
+// docgen:configuration
 type RulePortSelector struct {
-	//   description: |
-	//     Ports defines a list of port ranges or single ports.
-	//     The port ranges are inclusive, and should not overlap.
-	//   examples:
-	//    - value: >
-	//       examplePortRanges1()
-	//    - value: >
-	//       examplePortRanges2()
-	//   schema:
-	//     type: array
-	//     items:
-	//       oneOf:
-	//         - type: integer
-	//         - type: string
-	Ports PortRanges `yaml:"ports" merge:"replace"`
-	//   description: |
-	//     Protocol defines traffic protocol (e.g. TCP or UDP).
-	//   values:
-	//    - "tcp"
-	//    - "udp"
-	//    - "icmp"
-	//    - "icmpv6"
-	Protocol nethelpers.Protocol `yaml:"protocol"`
+	// Defines a list of port ranges or single ports. The port ranges are inclusive, and should not overlap.
+	Ports PortRanges `yaml:"ports" merge:"replace" docgen:"{'in': '1.7'}"`
+	// Defines traffic protocol (e.g. TCP or UDP).
+	Protocol nethelpers.Protocol `yaml:"protocol" docgen:"{'in': '1.7', 'values': ['tcp', 'udp', 'icmp', 'icmpv6']}"`
 }
 
 // IngressConfig is a ingress config.
@@ -97,26 +72,17 @@ type RulePortSelector struct {
 type IngressConfig []IngressRule
 
 // IngressRule is a ingress rule.
+//
+// docgen:configuration
 type IngressRule struct {
-	//   description: |
-	//     Subnet defines a source subnet.
-	//   examples:
-	//    - value: >
-	//       netip.MustParsePrefix("10.3.4.0/24")
-	//    - value: >
-	//       netip.MustParsePrefix("2001:db8::/32")
-	//    - value: >
-	//       netip.MustParsePrefix("1.3.4.5/32")
-	//   schema:
-	//     type: string
-	//     pattern: ^[0-9a-f.:]+/\d{1,3}$
-	Subnet netip.Prefix `yaml:"subnet"`
+	// Defines a source subnet.
+	Subnet netip.Prefix `yaml:"subnet" docgen:"{'in': '1.7', 'pattern': '^[0-9a-f.:]+/\d{1,3}$'}"`
 	//   description: |
 	//     Except defines a source subnet to exclude from the rule, it gets excluded from the `subnet`.
 	//   schema:
 	//     type: string
 	//     pattern: ^[0-9a-f.:]+/\d{1,3}$
-	Except Prefix `yaml:"except,omitempty"`
+	Except Prefix `yaml:"except,omitempty" docgen:"{'in': '1.7', 'pattern': '^[0-9a-f.:]+/\d{1,3}$'}"`
 }
 
 // Prefix is a wrapper for netip.Prefix.
