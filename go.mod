@@ -13,14 +13,14 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.28.0-alpha.4
-	k8s.io/apimachinery v0.28.0-alpha.4
-	k8s.io/apiserver v0.28.0-alpha.4
-	k8s.io/client-go v0.28.0-alpha.4
-	k8s.io/component-base v0.28.0-alpha.4
-	k8s.io/cri-api v0.28.0-alpha.4
-	k8s.io/kubectl v0.28.0-alpha.4
-	k8s.io/kubelet v0.28.0-alpha.4
+	k8s.io/api v0.28.0-rc.0
+	k8s.io/apimachinery v0.28.0-rc.0
+	k8s.io/apiserver v0.28.0-rc.0
+	k8s.io/client-go v0.28.0-rc.0
+	k8s.io/component-base v0.28.0-rc.0
+	k8s.io/cri-api v0.28.0-rc.0
+	k8s.io/kubectl v0.28.0-rc.0
+	k8s.io/kubelet v0.28.0-rc.0
 )
 
 require (
@@ -253,8 +253,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.16.0 // indirect
-	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.42.0 // indirect
+	github.com/prometheus/client_model v0.4.0 // indirect
+	github.com/prometheus/common v0.44.0 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
@@ -300,9 +300,9 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.28.0-alpha.4 // indirect
+	k8s.io/cli-runtime v0.28.0-rc.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20230601164746-7562a1006961 // indirect
+	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.69 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
