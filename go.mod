@@ -102,7 +102,7 @@ require (
 	github.com/siderolabs/go-kubeconfig v0.1.0
 	github.com/siderolabs/go-kubernetes v0.2.2
 	github.com/siderolabs/go-loadbalancer v0.3.2
-	github.com/siderolabs/go-pcidb v0.1.0
+	github.com/siderolabs/go-pcidb v0.2.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/go-procfs v0.1.1
 	github.com/siderolabs/go-retry v0.3.2
@@ -286,9 +286,9 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/mod v0.10.0 // indirect
+	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
-	golang.org/x/tools v0.8.0 // indirect
+	golang.org/x/tools v0.11.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20230325221338-052af4a8072b // indirect
