@@ -49,7 +49,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
-	"github.com/siderolabs/talos/internal/pkg/console"
 	"github.com/siderolabs/talos/internal/pkg/cri"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
@@ -620,13 +619,9 @@ func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string
 // StartDashboard represents the task to start dashboard.
 func StartDashboard(_ runtime.Sequence, _ interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
-		ttyNumber := constants.DashboardTTY
+		system.Services(r).LoadAndStart(&services.Dashboard{})
 
-		system.Services(r).LoadAndStart(&services.Dashboard{
-			TTYNumber: ttyNumber,
-		})
-
-		return console.Switch(ttyNumber)
+		return nil
 	}, "startDashboard"
 }
 

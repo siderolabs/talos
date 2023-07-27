@@ -149,6 +149,8 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 
 	dashboard.pages = tview.NewPages().AddPage(pageMain, dashboard.mainGrid, true, true)
 
+	dashboard.app.SetRoot(dashboard.pages, true).SetFocus(dashboard.pages)
+
 	header := components.NewHeader()
 	dashboard.mainGrid.AddItem(header, 0, 0, 1, 1, 0, 0, false)
 
@@ -301,25 +303,47 @@ func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) err
 }
 
 // Run starts the dashboard.
-func Run(ctx context.Context, cli *client.Client, opts ...Option) error {
+func Run(ctx context.Context, cli *client.Client, opts ...Option) (runErr error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	dashboard, err := buildDashboard(ctx, cli, opts...)
 	if err != nil {
 		return err
 	}
 
+	// handle panic & stop dashboard gracefully on exit
+	defer func() {
+		if r := recover(); r != nil {
+			runErr = fmt.Errorf("dashboard panic: %v", r)
+		}
+
+		dashboard.app.Stop()
+	}()
+
 	dashboard.selectScreen(ScreenSummary)
+
+	eg, ctx := errgroup.WithContext(ctx)
 
 	stopFunc := dashboard.startDataHandler(ctx)
 	defer stopFunc() //nolint:errcheck
 
-	if err = dashboard.app.
-		SetRoot(dashboard.pages, true).
-		SetFocus(dashboard.pages).
-		Run(); err != nil {
-		return err
-	}
+	eg.Go(func() error {
+		defer cancel()
 
-	return stopFunc()
+		return dashboard.app.Run()
+	})
+
+	// stop dashboard when the context is canceled
+	eg.Go(func() error {
+		<-ctx.Done()
+
+		dashboard.app.Stop()
+
+		return nil
+	})
+
+	return eg.Wait()
 }
 
 // startDataHandler starts the data and log update handler and returns a function to stop it.

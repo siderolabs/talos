@@ -15,15 +15,14 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/capability"
+	"github.com/siderolabs/talos/internal/pkg/console"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Dashboard implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Dashboard struct {
-	TTYNumber int
-}
+type Dashboard struct{}
 
 // ID implements the Service interface.
 func (d *Dashboard) ID(_ runtime.Runtime) string {
@@ -32,12 +31,12 @@ func (d *Dashboard) ID(_ runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (d *Dashboard) PreFunc(_ context.Context, _ runtime.Runtime) error {
-	return nil
+	return console.Switch(constants.DashboardTTY)
 }
 
 // PostFunc implements the Service interface.
 func (d *Dashboard) PostFunc(_ runtime.Runtime, _ events.ServiceState) error {
-	return nil
+	return console.Switch(constants.KernelLogsTTY)
 }
 
 // Condition implements the Service interface.
@@ -52,7 +51,7 @@ func (d *Dashboard) DependsOn(_ runtime.Runtime) []string {
 
 // Runner implements the Service interface.
 func (d *Dashboard) Runner(r runtime.Runtime) (runner.Runner, error) {
-	tty := fmt.Sprintf("/dev/tty%d", d.TTYNumber)
+	tty := fmt.Sprintf("/dev/tty%d", constants.DashboardTTY)
 
 	return restart.New(process.NewRunner(false, &runner.Args{
 		ID:          d.ID(r),

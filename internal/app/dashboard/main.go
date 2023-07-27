@@ -10,6 +10,9 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/siderolabs/go-procfs/procfs"
 	"google.golang.org/grpc"
@@ -38,9 +41,13 @@ func dashboardMain() error {
 
 	md := metadata.Pairs()
 	authz.SetMetadata(md, role.MakeSet(role.Admin))
-	adminCtx := metadata.NewOutgoingContext(context.Background(), md)
 
-	c, err := client.New(adminCtx,
+	ctx, cancel := sigtermAwareContext(context.Background())
+	defer cancel()
+
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	c, err := client.New(ctx,
 		client.WithUnixSocket(constants.MachineSocketPath),
 		client.WithGRPCDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())),
 	)
@@ -60,7 +67,7 @@ func dashboardMain() error {
 		}
 	}
 
-	return dashboard.Run(adminCtx, c, dashboard.WithAllowExitKeys(false), dashboard.WithScreens(screens...))
+	return dashboard.Run(ctx, c, dashboard.WithAllowExitKeys(false), dashboard.WithScreens(screens...))
 }
 
 func showConfigURLTab() bool {
@@ -80,4 +87,21 @@ func showConfigURLTab() bool {
 	}
 
 	return codeVar.Matches(parsedURL.Query())
+}
+
+func sigtermAwareContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(ctx)
+
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, syscall.SIGTERM)
+
+	go func() {
+		select {
+		case <-signalCh:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
+	return ctx, cancel
 }

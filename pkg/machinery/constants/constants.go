@@ -867,6 +867,9 @@ const (
 	// APIAuthzRoleMetadataKey is the gRPC metadata key used to submit a role with os:impersonator.
 	APIAuthzRoleMetadataKey = "talos-role"
 
+	// KernelLogsTTY is the number of the TTY device (/dev/ttyN) to redirect Kernel logs to.
+	KernelLogsTTY = 1
+
 	// DashboardTTY is the number of the TTY device (/dev/ttyN) for dashboard.
 	DashboardTTY = 2
 

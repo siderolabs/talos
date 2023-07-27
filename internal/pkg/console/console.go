@@ -10,6 +10,8 @@ import (
 	"os"
 	"syscall"
 	"unsafe"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const (
@@ -28,9 +30,9 @@ const (
 
 // Switch switches the active console to the specified tty.
 func Switch(ttyNumber int) error {
-	// redirect the kernel logs to tty1 instead of the currently used one,
-	// so that dashboard on tty2 does not get flooded with kernel logs
-	if err := redirectKernelLogs(1); err != nil {
+	// redirect the kernel logs to their own TTY instead of the currently used one,
+	// so that other TTYs (e.g., dashboard on tty2) do not get flooded with kernel logs
+	if err := redirectKernelLogs(constants.KernelLogsTTY); err != nil {
 		return err
 	}
 
@@ -40,7 +42,7 @@ func Switch(ttyNumber int) error {
 		return err
 	}
 
-	defer tty0.Close() //nolint: errcheck
+	defer tty0.Close() //nolint:errcheck
 
 	if _, _, errno := syscall.Syscall(syscall.SYS_IOCTL, tty0.Fd(), vtActivate, uintptr(ttyNumber)); errno != 0 {
 		return fmt.Errorf("failed to activate console: %w", errno)
