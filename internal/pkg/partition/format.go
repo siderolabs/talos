@@ -57,9 +57,7 @@ func zeroPartition(devname string) (err error) {
 
 	defer part.Close() //nolint:errcheck
 
-	_, err = part.Wipe()
-
-	return err
+	return part.FastWipe()
 }
 
 func systemPartitionsFormatOptions(label string) *FormatOptions {
