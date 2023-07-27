@@ -11,8 +11,8 @@ function setup {
   # Setup svc account
   mkdir -p ${TMP}
 
-  # Untar image
-  tar -C ${TMP} -xf ${ARTIFACTS}/aws-amd64.tar.gz
+  # Uncompress image
+  xz -d < ${ARTIFACTS}/aws-amd64.raw.xz > ${TMP}/disk.raw
 
   # Upload Image
   echo "uploading image to s3"

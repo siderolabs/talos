@@ -21,7 +21,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rock64"
 	rockpi4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4"
 	rockpi4c "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4c"
-	rpi4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_4"
 	rpigeneric "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_generic"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -55,8 +54,6 @@ func newBoard(board string) (b runtime.Board, err error) {
 	switch board {
 	case constants.BoardLibretechAllH3CCH5:
 		b = &libretechallh3cch5.LibretechAllH3CCH5{}
-	case constants.BoardRPi4:
-		b = &rpi4.RPi4{}
 	case constants.BoardRPiGeneric:
 		b = &rpigeneric.RPiGeneric{}
 	case constants.BoardBananaPiM64:

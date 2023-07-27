@@ -33,6 +33,8 @@ type section struct {
 type Builder struct {
 	// Source options.
 	//
+	// Arch of the UKI file.
+	Arch string
 	// Path to the sd-stub.
 	SdStubPath string
 	// Path to the sd-boot.

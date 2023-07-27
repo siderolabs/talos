@@ -48,7 +48,7 @@ type Device struct {
 // NewManifest initializes and returns a Manifest.
 //
 //nolint:gocyclo
-func NewManifest(sequence runtime.Sequence, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
+func NewManifest(mode Mode, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Devices:           map[string]Device{},
 		Targets:           map[string][]*Target{},
@@ -85,13 +85,13 @@ func NewManifest(sequence runtime.Sequence, uefiOnlyBoot bool, bootLoaderPresent
 
 	// Verify that the target device(s) can satisfy the requested options.
 
-	if sequence != runtime.SequenceUpgrade {
+	if mode == ModeInstall {
 		if err = VerifyEphemeralPartition(opts); err != nil {
 			return nil, fmt.Errorf("failed to prepare ephemeral partition: %w", err)
 		}
 	}
 
-	skipOverlayMountsCheck, err := shouldSkipOverlayMountsCheck(sequence)
+	skipOverlayMountsCheck, err := shouldSkipOverlayMountsCheck(mode)
 	if err != nil {
 		return nil, err
 	}
@@ -515,7 +515,7 @@ func (m *Manifest) SystemMountpoints(ctx context.Context, opts ...mount.Option) 
 	return mountpoints, nil
 }
 
-func shouldSkipOverlayMountsCheck(sequence runtime.Sequence) (bool, error) {
+func shouldSkipOverlayMountsCheck(mode Mode) (bool, error) {
 	var skipOverlayMountsCheck bool
 
 	_, err := os.Stat("/.dockerenv")
@@ -524,7 +524,7 @@ func shouldSkipOverlayMountsCheck(sequence runtime.Sequence) (bool, error) {
 	case err == nil:
 		skipOverlayMountsCheck = true
 	case os.IsNotExist(err):
-		skipOverlayMountsCheck = sequence == runtime.SequenceNoop
+		skipOverlayMountsCheck = mode.IsImage()
 	default:
 		return false, fmt.Errorf("cannot determine if /.dockerenv exists: %w", err)
 	}

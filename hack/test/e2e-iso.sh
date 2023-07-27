@@ -16,7 +16,7 @@ function create_cluster {
     --provisioner="${PROVISIONER}" \
     --name="${CLUSTER_NAME}" \
     --kubernetes-version=${KUBERNETES_VERSION} \
-    --iso-path=${ARTIFACTS}/talos-amd64.iso \
+    --iso-path=${ARTIFACTS}/metal-amd64.iso \
     --controlplanes=1 \
     --workers=0 \
     --mtu=1450 \

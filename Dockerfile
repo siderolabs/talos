@@ -286,6 +286,7 @@ COPY --from=generate-build /api/resource/config/*.pb.go /pkg/machinery/api/resou
 COPY --from=generate-build /api/resource/network/*.pb.go /pkg/machinery/api/resource/network/
 COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
 COPY --from=go-generate /src/pkg/flannel/ /pkg/flannel/
+COPY --from=go-generate /src/pkg/imager/profile/ /pkg/imager/profile/
 COPY --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
 COPY --from=go-generate /src/pkg/machinery/config/types/v1alpha1/ /pkg/machinery/config/types/v1alpha1/
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
@@ -299,6 +300,8 @@ FROM build-go AS base
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
+COPY --from=generate /pkg/flannel/ ./pkg/flannel/
+COPY --from=generate /pkg/imager/ ./pkg/imager/
 COPY --from=generate /pkg/machinery/ ./pkg/machinery/
 COPY --from=embed / ./
 RUN --mount=type=cache,target=/.cache go list all >/dev/null
@@ -712,59 +715,6 @@ COPY --from=rootfs / /
 LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/sbin/init"]
 
-FROM base AS ukify-tools
-WORKDIR /src/cmd/ukify
-ARG GO_BUILDFLAGS
-ARG GO_LDFLAGS
-RUN --mount=type=cache,target=/.cache go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /toolchain/bin/ukify
-
-FROM base AS gen-uki-certs
-ARG TARGETOS
-ARG TARGETARCH
-COPY --from=talosctl-targetarch /talosctl-${TARGETOS}-${TARGETARCH} /bin/talosctl
-RUN /bin/talosctl gen secureboot uki
-RUN /bin/talosctl gen secureboot pcr
-RUN /bin/talosctl gen secureboot database
-
-FROM scratch as uki-certs
-COPY --from=gen-uki-certs /src/_out /
-
-FROM --platform=${BUILDPLATFORM} ukify-tools AS uki-build-amd64
-WORKDIR /build
-COPY --from=pkg-sd-boot-amd64 / _out/
-COPY --from=pkg-kernel-amd64 /boot/vmlinuz _out/vmlinuz-amd64
-COPY --from=initramfs-archive-amd64 /initramfs.xz _out/initramfs-amd64.xz
-COPY _out/uki-certs _out/uki-certs
-RUN ukify
-
-FROM scratch AS uki-amd64
-COPY --from=uki-build-amd64 /build/_out/systemd-boot.efi.signed /systemd-boot.efi.signed
-COPY --from=uki-build-amd64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
-COPY --from=uki-build-amd64 /build/_out/uki-certs/PK.auth /PK.auth
-COPY --from=uki-build-amd64 /build/_out/uki-certs/KEK.auth /KEK.auth
-COPY --from=uki-build-amd64 /build/_out/uki-certs/db.auth /db.auth
-
-FROM --platform=${BUILDPLATFORM} ukify-tools AS uki-build-arm64
-WORKDIR /build
-COPY --from=pkg-sd-boot-arm64 / _out/
-COPY --from=pkg-kernel-arm64 /boot/vmlinuz _out/vmlinuz-arm64
-COPY --from=initramfs-archive-arm64 /initramfs.xz _out/initramfs-arm64.xz
-COPY _out/uki-certs _out/uki-certs
-RUN ukify \
-    -sd-stub _out/linuxaa64.efi.stub \
-    -sd-boot _out/systemd-bootaa64.efi \
-    -kernel _out/vmlinuz-arm64 \
-    -initrd _out/initramfs-arm64.xz
-
-FROM scratch AS uki-arm64
-COPY --from=uki-build-arm64 /build/_out/systemd-boot.efi.signed /systemd-boot.efi.signed
-COPY --from=uki-build-arm64 /build/_out/vmlinuz.efi.signed /vmlinuz.efi.signed
-COPY --from=uki-build-amd64 /build/_out/uki-certs/PK.auth /PK.auth
-COPY --from=uki-build-amd64 /build/_out/uki-certs/KEK.auth /KEK.auth
-COPY --from=uki-build-amd64 /build/_out/uki-certs/db.auth /db.auth
-
-FROM --platform=${BUILDPLATFORM} uki-${TARGETARCH} AS uki
-
 # The installer target generates an image that can be used to install Talos to
 # various environments.
 FROM base AS installer-build
@@ -779,26 +729,18 @@ FROM alpine:3.18.2 AS unicode-pf2
 RUN apk add --no-cache --update --no-scripts grub
 
 FROM scratch AS install-artifacts-amd64
-COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
 COPY --from=pkg-kernel-amd64 /dtb /usr/install/amd64/dtb
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
-COPY --from=uki-amd64 /systemd-boot.efi.signed /usr/install/amd64/systemd-boot.efi.signed
-COPY --from=uki-amd64 /vmlinuz.efi.signed /usr/install/amd64/vmlinuz.efi.signed
-COPY --from=uki-amd64 /PK.auth /usr/install/amd64/PK.auth
-COPY --from=uki-amd64 /KEK.auth /usr/install/amd64/KEK.auth
-COPY --from=uki-amd64 /db.auth /usr/install/amd64/db.auth
+COPY --from=pkg-sd-boot-amd64 /linuxx64.efi.stub /usr/install/amd64/systemd-stub.efi
+COPY --from=pkg-sd-boot-amd64 /systemd-bootx64.efi /usr/install/amd64/systemd-boot.efi
 
 FROM scratch AS install-artifacts-arm64
-COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
 COPY --from=pkg-kernel-arm64 /boot/vmlinuz /usr/install/arm64/vmlinuz
 COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
 COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
-COPY --from=uki-arm64 /systemd-boot.efi.signed /usr/install/arm64/systemd-boot.efi.signed
-COPY --from=uki-arm64 /vmlinuz.efi.signed /usr/install/arm64/vmlinuz.efi.signed
-COPY --from=uki-arm64 /PK.auth /usr/install/arm64/PK.auth
-COPY --from=uki-arm64 /KEK.auth /usr/install/arm64/KEK.auth
-COPY --from=uki-arm64 /db.auth /usr/install/arm64/db.auth
+COPY --from=pkg-sd-boot-arm64 /linuxaa64.efi.stub /usr/install/arm64/systemd-stub.efi
+COPY --from=pkg-sd-boot-arm64 /systemd-bootaa64.efi /usr/install/arm64/systemd-boot.efi
 COPY --from=pkg-u-boot-arm64 / /usr/install/arm64/u-boot
 COPY --from=pkg-raspberrypi-firmware-arm64 / /usr/install/arm64/raspberrypi-firmware
 
@@ -809,14 +751,14 @@ COPY --from=install-artifacts-arm64 / /
 FROM install-artifacts-${TARGETARCH} AS install-artifacts-targetarch
 
 FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
-COPY --from=pkg-grub / /
-COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
 
 FROM alpine:3.18.2 AS installer-image
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 RUN apk add --no-cache --update --no-scripts \
     bash \
+    binutils-aarch64 \
+    binutils-x86_64 \
     cpio \
     dosfstools \
     efibootmgr \
@@ -832,11 +774,13 @@ RUN apk add --no-cache --update --no-scripts \
     xz
 ARG TARGETARCH
 ENV TARGETARCH ${TARGETARCH}
-COPY --from=install-artifacts / /
 COPY --from=installer-build /installer /bin/installer
 COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
-COPY --chmod=0644 hack/modules-${TARGETARCH}.txt /usr/install/modules-${TARGETARCH}.txt
-RUN ln -s /bin/installer /bin/talosctl
+COPY --from=pkg-grub / /
+COPY --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
+COPY --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
+COPY --from=unicode-pf2 /usr/share/grub/unicode.pf2 /usr/share/grub/unicode.pf2
+RUN ln /bin/installer /bin/imager
 RUN find /bin /etc /lib /usr /sbin | grep -Ev '/etc/hosts|/etc/resolv.conf' \
     | xargs -r touch --date="@${SOURCE_DATE_EPOCH}" --no-dereference
 
@@ -849,29 +793,11 @@ LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 
 FROM installer-image-squashed AS installer
-ARG TARGETARCH
-ENV TARGETARCH ${TARGETARCH}
-ONBUILD RUN apk add --no-cache --update \
-    cpio \
-    squashfs-tools \
-    xz
-ONBUILD WORKDIR /initramfs
-ONBUILD ARG RM
-ONBUILD RUN xz -d /usr/install/${TARGETARCH}/initramfs.xz \
-    && cpio -idvm < /usr/install/${TARGETARCH}/initramfs \
-    && unsquashfs -f -d /rootfs rootfs.sqsh \
-    && for f in ${RM}; do rm -rfv /rootfs$f; done \
-    && rm /usr/install/${TARGETARCH}/initramfs \
-    && rm rootfs.sqsh
-ONBUILD COPY --from=customization / /rootfs
-ONBUILD RUN xargs -a /usr/install/modules-${TARGETARCH}.txt -I {} install -D /rootfs/kernel/lib/modules/$(ls /rootfs/lib/modules)/{} /rootfs/lib/modules/$(ls /rootfs/lib/modules)/{} \
-    && depmod -b /rootfs $(ls /rootfs/lib/modules) \
-    && set -o pipefail && mksquashfs /rootfs rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress \
-    && find . 2>/dev/null | cpio -H newc -o | xz -v -C crc32 -0 -e -T 0 -z > /usr/install/${TARGETARCH}/initramfs.xz \
-    && rm -rf /rootfs /initramfs /rootfs/kernel
-ONBUILD WORKDIR /
+COPY --from=install-artifacts / /
 
 FROM installer-image-squashed AS imager
+COPY --from=install-artifacts / /
+ENTRYPOINT ["/bin/imager"]
 
 FROM imager as iso-amd64-build
 ARG SOURCE_DATE_EPOCH
@@ -896,32 +822,6 @@ FROM scratch as iso-arm64
 COPY --from=iso-arm64-build /out /
 
 FROM --platform=${BUILDPLATFORM} iso-${TARGETARCH} AS iso
-
-FROM imager as iso-uki-amd64-build
-ARG SOURCE_DATE_EPOCH
-ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
-RUN /bin/installer \
-    iso \
-    --uki \
-    --arch amd64 \
-    --output /out
-
-FROM imager as iso-uki-arm64-build
-ARG SOURCE_DATE_EPOCH
-ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
-RUN /bin/installer \
-    iso \
-    --uki \
-    --arch arm64 \
-    --output /out
-
-FROM scratch as iso-uki-amd64
-COPY --from=iso-uki-amd64-build /out /
-
-FROM scratch as iso-uki-arm64
-COPY --from=iso-uki-arm64-build /out /
-
-FROM --platform=${BUILDPLATFORM} iso-uki-${TARGETARCH} AS iso-uki
 
 # The test target performs tests on the source code.
 FROM base AS unit-tests-runner

@@ -1,13 +1,13 @@
 ---
 title: "Hyper-V"
 description: "Creating a Talos Kubernetes cluster using Hyper-V."
-aliases: 
+aliases:
   - ../../../virtualized-platforms/hyper-v
 ---
 
 ## Pre-requisities
 
-1. Download the latest `talos-amd64.iso` ISO from github [releases page](https://github.com/siderolabs/talos/releases)
+1. Download the latest `metal-amd64.iso` ISO from github [releases page](https://github.com/siderolabs/talos/releases)
 2. Create a New-TalosVM folder in any of your PS Module Path folders `$env:PSModulePath -split ';'` and save the [New-TalosVM.psm1](https://github.com/nebula-it/New-TalosVM/blob/main/Talos/1.0.0/Talos.psm1) there
 
 ## Plan Overview
@@ -25,7 +25,7 @@ For example, if VMs `talos-cp01` and `talos-cp02` exist, this will create VMs st
 Use the following command to create a single control plane node:
 
 ```powershell
-New-TalosVM -VMNamePrefix talos-cp -CPUCount 2 -StartupMemory 4GB -SwitchName LAB -TalosISOPath C:\ISO\talos-amd64.iso -NumberOfVMs 1 -VMDestinationBasePath 'D:\Virtual Machines\Test VMs\Talos'
+New-TalosVM -VMNamePrefix talos-cp -CPUCount 2 -StartupMemory 4GB -SwitchName LAB -TalosISOPath C:\ISO\metal-amd64.iso -NumberOfVMs 1 -VMDestinationBasePath 'D:\Virtual Machines\Test VMs\Talos'
 ```
 
 This will create `talos-cp01` VM and power it on.
@@ -35,7 +35,7 @@ This will create `talos-cp01` VM and power it on.
 Use the following command to create 2 worker nodes:
 
 ```powershell
-New-TalosVM -VMNamePrefix talos-worker -CPUCount 4 -StartupMemory 8GB -SwitchName LAB -TalosISOPath C:\ISO\talos-amd64.iso -NumberOfVMs 2 -VMDestinationBasePath 'D:\Virtual Machines\Test VMs\Talos' -StorageVHDSize 50GB
+New-TalosVM -VMNamePrefix talos-worker -CPUCount 4 -StartupMemory 8GB -SwitchName LAB -TalosISOPath C:\ISO\metal-amd64.iso -NumberOfVMs 2 -VMDestinationBasePath 'D:\Virtual Machines\Test VMs\Talos' -StorageVHDSize 50GB
 ```
 
 This will create two VMs: `talos-worker01` and `talos-wworker02` and attach an additional VHD of 50GB for storage (which in my case will be passed to Mayastor).

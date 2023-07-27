@@ -5,8 +5,19 @@
 // Package installer provides the installer implementation.
 package main
 
-import "github.com/siderolabs/talos/cmd/installer/cmd"
+import (
+	"os"
+	"path/filepath"
+
+	"github.com/siderolabs/talos/cmd/installer/cmd/imager"
+	"github.com/siderolabs/talos/cmd/installer/cmd/installer"
+)
 
 func main() {
-	cmd.Execute()
+	switch filepath.Base(os.Args[0]) {
+	case "imager":
+		imager.Execute()
+	default:
+		installer.Execute()
+	}
 }

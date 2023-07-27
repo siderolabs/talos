@@ -24,6 +24,11 @@ var (
 	_ pflag.SliceValue = &MetaValues{}
 )
 
+// FromMeta returns a new MetaValues from a meta.Values.
+func FromMeta(values meta.Values) MetaValues {
+	return MetaValues{values: values}
+}
+
 // Set implements pflag.Value.
 func (s *MetaValues) Set(val string) error {
 	var v meta.Value
@@ -111,4 +116,9 @@ func (s *MetaValues) Decode(val string) error {
 	s.values = values
 
 	return nil
+}
+
+// GetMetaValues returns the wrapped meta.Values.
+func (s *MetaValues) GetMetaValues() meta.Values {
+	return s.values
 }

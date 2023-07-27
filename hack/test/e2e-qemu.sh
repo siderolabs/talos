@@ -91,8 +91,8 @@ case "${USE_DISK_IMAGE:-false}" in
   false)
     ;;
   *)
-    tar -xf _out/metal-amd64.tar.gz -C _out/
-    QEMU_FLAGS+=("--disk-image-path=_out/disk.raw")
+    xz -d < _out/metal-amd64.raw.xz > _out/metal-amd64.raw
+    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64.raw")
     ;;
 esac
 
@@ -140,7 +140,8 @@ case "${WITH_TRUSTED_BOOT_ISO:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--iso-path=_out/talos-uki-amd64.iso" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
+    INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot
+    QEMU_FLAGS+=("--iso-path=_out/metal-amd64-secureboot.iso" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--disk-encryption-key-types=tpm")
     ;;
 esac
 

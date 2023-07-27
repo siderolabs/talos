@@ -45,7 +45,9 @@ TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
 TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
+ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
+TALOSCTL_EXECUTABLE := $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-$(ARCH)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 MODULE_SIG_VERIFY_DEFAULT_TARGET := module-sig-verify-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
@@ -70,7 +72,6 @@ SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 INSTALLER_ARCH ?= all
 IMAGER_ARGS ?=
-IMAGER_SYSTEM_EXTENSIONS ?=
 
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
@@ -164,8 +165,7 @@ docker buildx create --driver docker-container --name local --buildkitd-flags '-
 
 If you already have a compatible builder instance, you may use that instead.
 
-> Note: The security.insecure entitlement is only required, and used by the unit-tests target and targets which build container images
-for applications using `img` tool.
+> Note: The security.insecure entitlement is only required, and used by the unit-tests target.
 
 ## Artifacts
 
@@ -242,24 +242,24 @@ kernel: ## Outputs the kernel package contents (vmlinuz) to the artifact directo
 
 .PHONY: initramfs
 initramfs: ## Builds the compressed initramfs and outputs it to the artifact directory.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false TARGET_ARGS="--allow security.insecure"
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
 
 .PHONY: installer
 installer: ## Builds the container image for the installer and outputs it to the registry.
 	@INSTALLER_ARCH=targetarch  \
-		$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
+		$(MAKE) registry-$@
 
 .PHONY: imager
 imager: ## Builds the container image for the imager and outputs it to the registry.
-	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
+	@$(MAKE) registry-$@
 
 .PHONY: talos
 talos: ## Builds the Talos container image and outputs it to the registry.
-	@$(MAKE) registry-$@ TARGET_ARGS="--allow security.insecure"
+	@$(MAKE) registry-$@
 
 .PHONY: talosctl-image
 talosctl-image: ## Builds the talosctl container image and outputs it to the registry.
-	@$(MAKE) registry-talosctl TARGET_ARGS="--allow security.insecure"
+	@$(MAKE) registry-talosctl
 
 talosctl-all:
 	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false NAME=Client
@@ -288,49 +288,35 @@ talosctl-windows-amd64:
 talosctl:
 	@$(MAKE) local-talosctl-targetarch DEST=$(ARTIFACTS)
 
-uki-certs:
-	@$(MAKE) local-uki-certs DEST=$(ARTIFACTS)/uki-certs
-
-uki:
-	@$(MAKE) local-uki DEST=$(ARTIFACTS)
-
 image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
-	@ . ./hack/imager.sh && \
-	for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
-		tmpdir=$$(prepare_extension_images "$${platform}" $(IMAGER_SYSTEM_EXTENSIONS)) && \
-		docker run --rm -v /dev:/dev -v "$${tmpdir}:/system/extensions" --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform $* --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
-		rm -rf "$${tmpdir}"; \
+		docker run --rm -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
 	done
 
-images-essential: image-aws image-gcp image-metal ## Builds only essential images used in the CI (AWS, GCP, and Metal).
+images-essential: image-aws image-gcp image-metal secureboot-installer ## Builds only essential images used in the CI (AWS, GCP, and Metal).
 
-images: image-aws image-azure image-digital-ocean image-exoscale image-gcp image-hcloud image-metal image-nocloud image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, GCP, HCloud, Metal, NoCloud, Openstack, Oracle, Scaleway, UpCloud, Vultr and VMware).
+images: image-aws image-azure image-digital-ocean image-exoscale image-gcp image-hcloud image-iso image-metal image-nocloud image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, GCP, HCloud, Metal, NoCloud, Openstack, Oracle, Scaleway, UpCloud, Vultr and VMware).
 
-sbc-%: ## Builds the specified SBC image. Valid options are rpi_4, rpi_generic, rock64, bananapi_m64, libretech_all_h3_cc_h5, rockpi_4, rockpi_4c, pine64, jetson_nano and nanopi_r4s (e.g. sbc-rpi_4)
+sbc-%: ## Builds the specified SBC image. Valid options are rpi_generic, rock64, bananapi_m64, libretech_all_h3_cc_h5, rockpi_4, rockpi_4c, pine64, jetson_nano and nanopi_r4s (e.g. sbc-rpi_generic)
 	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
-	@ . ./hack/imager.sh && \
-	    tmpdir=$$(prepare_extension_images linux/arm64 $(IMAGER_SYSTEM_EXTENSIONS)) && \
-		docker run --rm -v /dev:/dev -v "$${tmpdir}:/system/extensions" --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) image --platform metal --arch arm64 --board $* --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS) ; \
-		rm -rf "$${tmpdir}"
+	@docker run --rm -v /dev:/dev --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch arm64 --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)
 
-sbcs: sbc-rpi_4 sbc-rpi_generic sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-rockpi_4c sbc-pine64 sbc-jetson_nano sbc-nanopi_r4s ## Builds all known SBC images (Raspberry Pi 4 Model B, Rock64, Banana Pi M64, Radxa ROCK Pi 4, Radxa ROCK Pi 4c, Pine64, Libre Computer Board ALL-H3-CC, Jetson Nano and Nano Pi R4S).
+sbcs: sbc-rpi_generic sbc-rock64 sbc-bananapi_m64 sbc-libretech_all_h3_cc_h5 sbc-rockpi_4 sbc-rockpi_4c sbc-pine64 sbc-jetson_nano sbc-nanopi_r4s ## Builds all known SBC images (Raspberry Pi 4, Rock64, Banana Pi M64, Radxa ROCK Pi 4, Radxa ROCK Pi 4c, Pine64, Libre Computer Board ALL-H3-CC, Jetson Nano and Nano Pi R4S).
 
 .PHONY: iso
-iso: ## Builds the ISO and outputs it to the artifact directory.
-	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=`basename "$${platform}"` ; \
-		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)  ; \
-	done
+iso: image-iso ## Builds the ISO and outputs it to the artifact directory.
 
-.PHONY: iso-uki
-iso-uki: ## Builds UEFI only ISO which uses UKI and outputs it to the artifact directory.
-	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
+.PHONY: secureboot-iso
+secureboot-iso: image-secureboot-iso ## Builds UEFI only ISO which uses UKI and outputs it to the artifact directory.
+
+.PHONY: secureboot-installer
+secureboot-installer: ## Builds UEFI only installer which uses UKI and push it to the registry.
+	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)"
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=`basename "$${platform}"` ; \
-		docker run --rm -e SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) -i $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) iso --arch $$arch --uki --tar-to-stdout $(IMAGER_ARGS) | tar xz -C $(ARTIFACTS)  ; \
+		arch=$$(basename "$${platform}") && \
+		crane push $(ARTIFACTS)/metal-$${arch}-secureboot-installer.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-$${arch}-secureboot ; \
 	done
 
 .PHONY: talosctl-cni-bundle
@@ -351,6 +337,12 @@ cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
 		-e AZURE_SUBSCRIPTION_ID -e AZURE_CLIENT_ID -e AZURE_CLIENT_SECRET -e AZURE_TENANT_ID \
 		golang:$(GO_VERSION) \
 		./hack/cloud-image-uploader.sh
+
+.PHONY: uki-certs
+uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
+	@$(TALOSCTL_EXECUTABLE) gen secureboot uki
+	@$(TALOSCTL_EXECUTABLE) gen secureboot pcr
+	@$(TALOSCTL_EXECUTABLE) gen secureboot database
 
 # Code Quality
 

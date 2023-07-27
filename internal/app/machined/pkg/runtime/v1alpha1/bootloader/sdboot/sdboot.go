@@ -15,10 +15,10 @@ import (
 
 	"github.com/ecks/uefi/efi/efivario"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/assets"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/version"
 )
 
 // Config describe sd-boot state.
@@ -126,16 +126,16 @@ func (c *Config) UEFIBoot() bool {
 // Writes down the UKI and updates the EFI variables.
 //
 //nolint:gocyclo
-func (c *Config) Install(bootDisk, arch, cmdline string) error {
+func (c *Config) Install(options options.InstallOptions) error {
 	var sdbootFilename string
 
-	switch arch {
+	switch options.Arch {
 	case "amd64":
 		sdbootFilename = "BOOTX64.efi"
 	case "arm64":
 		sdbootFilename = "BOOTAA64.efi"
 	default:
-		return fmt.Errorf("unsupported architecture: %s", arch)
+		return fmt.Errorf("unsupported architecture: %s", options.Arch)
 	}
 
 	// list existing UKIs, and clean up all but the current one (used to boot)
@@ -145,7 +145,7 @@ func (c *Config) Install(bootDisk, arch, cmdline string) error {
 	}
 
 	// writing UKI by version-based filename here
-	ukiPath := fmt.Sprintf("%s-%s.efi", "Talos", version.Tag)
+	ukiPath := fmt.Sprintf("%s-%s.efi", "Talos", options.Version)
 
 	for _, file := range files {
 		if strings.EqualFold(filepath.Base(file), c.Default) {
@@ -164,29 +164,17 @@ func (c *Config) Install(bootDisk, arch, cmdline string) error {
 		}
 	}
 
-	assets := assets.Assets{
-		{
-			Source:      fmt.Sprintf(constants.UKIAssetPath, arch),
-			Destination: filepath.Join(constants.EFIMountPoint, "EFI", "Linux", ukiPath),
-		},
-		{
-			Source:      fmt.Sprintf(constants.SDBootAssetPath, arch),
-			Destination: filepath.Join(constants.EFIMountPoint, "EFI", "boot", sdbootFilename),
-		},
-	}
-	if err = assets.Install(); err != nil {
+	options.BootAssets.FillDefaults(options.Arch)
+
+	if err := utils.CopyFiles(
+		utils.SourceDestination(options.BootAssets.UKIPath, filepath.Join(constants.EFIMountPoint, "EFI", "Linux", ukiPath)),
+		utils.SourceDestination(options.BootAssets.SDBootPath, filepath.Join(constants.EFIMountPoint, "EFI", "boot", sdbootFilename)),
+	); err != nil {
 		return err
 	}
-
-	blk, err := mount.GetBlockDeviceName(bootDisk, constants.EFIPartitionLabel)
-	if err != nil {
-		return err
-	}
-
-	loopDevice := strings.HasPrefix(blk, "/dev/loop")
 
 	// don't update EFI variables if we're installing to a loop device
-	if !loopDevice {
+	if !options.ImageMode {
 		efiCtx := efivario.NewDefaultContext()
 
 		// set the new entry as a default one

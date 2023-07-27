@@ -1,7 +1,7 @@
 ---
 title: VirtualBox
 description: "Creating Talos Kubernetes cluster using VurtualBox VMs."
-aliases: 
+aliases:
   - ../../../local-platforms/virtualbox
 ---
 
@@ -35,19 +35,19 @@ curl -sL https://talos.dev/install | sh
 ### Download ISO Image
 
 Download the ISO image from the Talos release page.
-You can download `talos-amd64.iso` via
+You can download `metal-amd64.iso` via
 [github.com/siderolabs/talos/releases](https://github.com/siderolabs/talos/releases)
 
 ```bash
 mkdir -p _out/
-curl https://github.com/siderolabs/talos/releases/download/<version>/talos-<arch>.iso -L -o _out/talos-<arch>.iso
+curl https://github.com/siderolabs/talos/releases/download/<version>/metal-<arch>.iso -L -o _out/metal-<arch>.iso
 ```
 
 For example version `{{< release >}}` for `linux` platform:
 
 ```bash
 mkdir -p _out/
-curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-amd64.iso -L -o _out/talos-amd64.iso
+curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso -L -o _out/metal-amd64.iso
 ```
 
 ## Create VMs

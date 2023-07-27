@@ -1,8 +1,0 @@
----
-rules:
-  - regexp: ^github.com/siderolabs/talos/
-    action: deny
-  - regexp: ^github.com/siderolabs/talos/pkg
-    action: allow
-  - regexp: ^github.com/siderolabs/talos/pkg/machinery/api
-    action: allow

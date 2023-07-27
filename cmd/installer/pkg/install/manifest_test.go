@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -229,7 +228,7 @@ func (suite *manifestSuite) verifyBlockdevice(manifest *install.Manifest, curren
 func (suite *manifestSuite) TestExecuteManifestClean() {
 	suite.skipUnderBuildkit()
 
-	manifest, err := install.NewManifest(runtime.SequenceInstall, false, false, &install.Options{
+	manifest, err := install.NewManifest(install.ModeInstall, false, false, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: true,
 		Board: constants.BoardNone,
@@ -249,7 +248,7 @@ func (suite *manifestSuite) TestExecuteManifestClean() {
 func (suite *manifestSuite) TestExecuteManifestForce() {
 	suite.skipUnderBuildkit()
 
-	manifest, err := install.NewManifest(runtime.SequenceInstall, false, false, &install.Options{
+	manifest, err := install.NewManifest(install.ModeInstall, false, false, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: true,
 		Board: constants.BoardNone,
@@ -267,7 +266,7 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 
 	// reinstall
 
-	manifest, err = install.NewManifest(runtime.SequenceUpgrade, false, true, &install.Options{
+	manifest, err = install.NewManifest(install.ModeUpgrade, false, true, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: true,
 		Zero:  true,
@@ -288,7 +287,7 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 func (suite *manifestSuite) TestExecuteManifestPreserve() {
 	suite.skipUnderBuildkit()
 
-	manifest, err := install.NewManifest(runtime.SequenceInstall, false, false, &install.Options{
+	manifest, err := install.NewManifest(install.ModeInstall, false, false, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: true,
 		Board: constants.BoardNone,
@@ -306,7 +305,7 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 
 	// reinstall
 
-	manifest, err = install.NewManifest(runtime.SequenceUpgrade, false, true, &install.Options{
+	manifest, err = install.NewManifest(install.ModeUpgrade, false, true, &install.Options{
 		Disk:  suite.loopbackDevice.Name(),
 		Force: false,
 		Board: constants.BoardNone,

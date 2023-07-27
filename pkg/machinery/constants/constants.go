@@ -64,9 +64,6 @@ const (
 	// BoardLibretechAllH3CCH5 is the  name of the Libre Computer board ALL-H3-CC.
 	BoardLibretechAllH3CCH5 = "libretech_all_h3_cc_h5"
 
-	// BoardRPi4 is the  name of the Raspberry Pi 4 Model B.
-	BoardRPi4 = "rpi_4"
-
 	// BoardRPiGeneric is the  name of the Raspberry Pi Compute Module 4.
 	BoardRPiGeneric = "rpi_generic"
 
@@ -517,8 +514,14 @@ const (
 	// UKIAssetPath is the path to the UKI in the installer.
 	UKIAssetPath = "/usr/install/%s/" + UKIAsset
 
+	// SDStubAsset defines a well known name for our systemd-stub filename.
+	SDStubAsset = "systemd-stub.efi"
+
+	// SDStubAssetPath is the path to the systemd-stub in the installer.
+	SDStubAssetPath = "/usr/install/%s/" + SDStubAsset
+
 	// SDBootAsset defines a well known name for our SDBoot filename.
-	SDBootAsset = "systemd-boot.efi.signed"
+	SDBootAsset = "systemd-boot.efi"
 
 	// SDBootAssetPath is the path to the SDBoot in the installer.
 	SDBootAssetPath = "/usr/install/%s/" + SDBootAsset
@@ -526,20 +529,23 @@ const (
 	// PlatformKeyAsset defines a well known name for the platform key filename used for auto-enrolling.
 	PlatformKeyAsset = "PK.auth"
 
-	// PlatformKeyAssetPath is the path to the platform key in the installer.
-	PlatformKeyAssetPath = "/usr/install/%s/" + PlatformKeyAsset
-
 	// KeyExchangeKeyAsset defines a well known name for the key exchange key filename used for auto-enrolling.
 	KeyExchangeKeyAsset = "KEK.auth"
-
-	// KeyExchangeKeyAssetPath is the path to the key exchange key in the installer.
-	KeyExchangeKeyAssetPath = "/usr/install/%s/" + KeyExchangeKeyAsset
 
 	// SignatureKeyAsset defines a well known name for the signature key filename used for auto-enrolling.
 	SignatureKeyAsset = "db.auth"
 
-	// SignatureKeyAssetPath is the path to the signature key in the installer.
-	SignatureKeyAssetPath = "/usr/install/%s/" + SignatureKeyAsset
+	// SecureBootSigningKeyAsset defines a well known name for the secure boot signing key filename.
+	SecureBootSigningKeyAsset = "uki-signing-key.pem"
+
+	// SecureBootSigningCertAsset defines a well known name for the secure boot signing key filename.
+	SecureBootSigningCertAsset = "uki-signing-cert.pem"
+
+	// PCRSigningKeyAsset defines a well known name for the PCR signing key filename.
+	PCRSigningKeyAsset = "pcr-signing-key.pem"
+
+	// PCRSigningPublicKeyAsset defines a well known name for the PCR signing public key filename.
+	PCRSigningPublicKeyAsset = "pcr-signing-public-key.pem"
 
 	// SDStubDynamicInitrdPath is the path where dynamically generated initrds are placed by systemd-stub.
 	// https://www.mankier.com/7/systemd-stub#Description

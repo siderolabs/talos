@@ -54,8 +54,8 @@ func TestDecode(t *testing.T) {
 
 func TestEncodeDecode(t *testing.T) {
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(grub.BootA, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?hostname=${hostname}&mac=${mac}"))
-	require.NoError(t, config.Put(grub.BootB, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?uuid=${uuid}"))
+	require.NoError(t, config.Put(grub.BootA, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?hostname=${hostname}&mac=${mac}", "v1.2.3"))
+	require.NoError(t, config.Put(grub.BootB, "talos.platform=metal talos.config=https://my-metadata.server/talos/config?uuid=${uuid}", "v1.3.4"))
 
 	var b bytes.Buffer
 
@@ -88,21 +88,20 @@ func TestParseBootLabel(t *testing.T) {
 
 //nolint:errcheck
 func TestWrite(t *testing.T) {
-	oldName, oldTag := version.Name, version.Tag
+	oldName := version.Name
 
 	t.Cleanup(func() {
-		version.Name, version.Tag = oldName, oldTag
+		version.Name = oldName
 	})
 
 	version.Name = "Test"
-	version.Tag = "v0.0.1"
 
 	tempFile, _ := os.CreateTemp("", "talos-test-grub-*.cfg")
 
 	t.Cleanup(func() { require.NoError(t, os.Remove(tempFile.Name())) })
 
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(grub.BootA, "cmdline A"))
+	require.NoError(t, config.Put(grub.BootA, "cmdline A", "v0.0.1"))
 
 	err := config.Write(tempFile.Name())
 	assert.NoError(t, err)
@@ -113,16 +112,16 @@ func TestWrite(t *testing.T) {
 
 func TestPut(t *testing.T) {
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(grub.BootA, "cmdline A"))
+	require.NoError(t, config.Put(grub.BootA, "cmdline A", "v1.2.3"))
 
-	err := config.Put(grub.BootB, "cmdline B")
+	err := config.Put(grub.BootB, "cmdline B", "v1.0.0")
 
 	assert.NoError(t, err)
 
 	assert.Len(t, config.Entries, 2)
 	assert.Equal(t, "cmdline B", config.Entries[grub.BootB].Cmdline)
 
-	err = config.Put(grub.BootA, "cmdline A 2")
+	err = config.Put(grub.BootA, "cmdline A 2", "v1.3.4")
 	assert.NoError(t, err)
 
 	assert.Equal(t, "cmdline A 2", config.Entries[grub.BootA].Cmdline)
@@ -131,9 +130,9 @@ func TestPut(t *testing.T) {
 //nolint:errcheck
 func TestFallback(t *testing.T) {
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(grub.BootA, "cmdline A"))
+	require.NoError(t, config.Put(grub.BootA, "cmdline A", "v1.0.0"))
 
-	_ = config.Put(grub.BootB, "cmdline B")
+	_ = config.Put(grub.BootB, "cmdline B", "1.2.0")
 
 	config.Fallback = grub.BootB
 
@@ -220,20 +219,19 @@ func oldParser(r io.Reader) (*bootEntry, error) {
 }
 
 func TestBackwardsCompat(t *testing.T) {
-	oldName, oldTag := version.Name, version.Tag
+	oldName := version.Name
 
 	t.Cleanup(func() {
-		version.Name, version.Tag = oldName, oldTag
+		version.Name = oldName
 	})
 
 	version.Name = "Test"
-	version.Tag = "v0.0.1"
 
 	var buf bytes.Buffer
 
 	config := grub.NewConfig()
-	require.NoError(t, config.Put(grub.BootA, "cmdline A"))
-	require.NoError(t, config.Put(grub.BootB, "cmdline B"))
+	require.NoError(t, config.Put(grub.BootA, "cmdline A", "v0.0.1"))
+	require.NoError(t, config.Put(grub.BootB, "cmdline B", "v0.0.1"))
 	config.Default = grub.BootB
 
 	err := config.Encode(&buf)

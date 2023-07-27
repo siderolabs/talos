@@ -48,8 +48,8 @@ The most general way to install Talos Linux is to use the ISO image.
 
 The latest ISO image can be found on the Github [Releases](https://github.com/siderolabs/talos/releases) page:
 
-- X86: [https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-amd64.iso](https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-amd64.iso)
-- ARM64: [https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-arm64.iso](https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-arm64.iso)
+- X86: [https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso](https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso)
+- ARM64: [https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-arm64.iso](https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-arm64.iso)
 
 When booted from the ISO, Talos will run in RAM and will not install to disk until provided a configuration.
 Thus, it is safe to boot any machine from the ISO.

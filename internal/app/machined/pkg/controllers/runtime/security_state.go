@@ -17,15 +17,20 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/foxboron/go-uefi/efi"
 	"go.uber.org/zap"
 
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // SecurityStateController is a controller that updates the security state of Talos.
-type SecurityStateController struct{}
+type SecurityStateController struct {
+	V1Alpha1Mode machineruntime.Mode
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *SecurityStateController) Name() string {
@@ -34,7 +39,13 @@ func (ctrl *SecurityStateController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *SecurityStateController) Inputs() []controller.Input {
-	return nil
+	return []controller.Input{
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			Kind:      controller.OutputExclusive,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -50,47 +61,60 @@ func (ctrl *SecurityStateController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 // nolint:gocyclo
 func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	select {
-	case <-ctx.Done():
-		return nil
-	case <-r.EventCh():
-	}
-
-	var secureBootState bool
-
-	if efi.GetSecureBoot() && !efi.GetSetupMode() {
-		secureBootState = true
-	}
-
-	if err := safe.WriterModify(ctx, r, runtimeres.NewSecurityStateSpec(runtimeres.NamespaceName), func(state *runtimeres.SecurityState) error {
-		state.TypedSpec().SecureBoot = secureBootState
-
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	if pcrPublicKeyData, err := os.ReadFile(constants.PCRPublicKey); err == nil {
-		block, _ := pem.Decode(pcrPublicKeyData)
-		if block == nil {
-			return fmt.Errorf("failed to decode PEM block for PCR public key")
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
-		cert := x509.Certificate{
-			Raw: block.Bytes,
+		// wait for the `machined` service to start, as by that time initial mounts will be done
+		_, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "machined")
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("failed to get machined state: %w", err)
+		}
+
+		var (
+			secureBootState          bool
+			pcrSigningKeyFingerprint string
+		)
+
+		// in container mode, never populate the fields
+		if ctrl.V1Alpha1Mode != machineruntime.ModeContainer {
+			if efi.GetSecureBoot() && !efi.GetSetupMode() {
+				secureBootState = true
+			}
+
+			if pcrPublicKeyData, err := os.ReadFile(constants.PCRPublicKey); err == nil {
+				block, _ := pem.Decode(pcrPublicKeyData)
+				if block == nil {
+					return fmt.Errorf("failed to decode PEM block for PCR public key")
+				}
+
+				cert := x509.Certificate{
+					Raw: block.Bytes,
+				}
+
+				pcrSigningKeyFingerprint = x509CertFingerprint(cert)
+			}
 		}
 
 		if err := safe.WriterModify(ctx, r, runtimeres.NewSecurityStateSpec(runtimeres.NamespaceName), func(state *runtimeres.SecurityState) error {
-			state.TypedSpec().PCRSigningKeyFingerprint = x509CertFingerprint(cert)
+			state.TypedSpec().SecureBoot = secureBootState
+			state.TypedSpec().PCRSigningKeyFingerprint = pcrSigningKeyFingerprint
 
 			return nil
 		}); err != nil {
 			return err
 		}
-	}
 
-	// terminating the controller here, as we need to only populate securitystate once
-	return nil
+		// terminating the controller here, as we need to only populate securitystate once
+		return nil
+	}
 }
 
 func x509CertFingerprint(cert x509.Certificate) string {

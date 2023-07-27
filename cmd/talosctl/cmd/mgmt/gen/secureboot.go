@@ -18,7 +18,9 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var genSecurebootCmdFlags struct {
@@ -201,9 +203,9 @@ func generateSecureBootDatabase(path, enrolledCertificatePath, signingKeyPath, s
 		name string
 		data []byte
 	}{
-		{"db.auth", signedDB},
-		{"KEK.auth", signedKEK},
-		{"PK.auth", signedPK},
+		{constants.SignatureKeyAsset, signedDB},
+		{constants.KeyExchangeKeyAsset, signedKEK},
+		{constants.PlatformKeyAsset, signedPK},
 	} {
 		if err = checkedWrite(filepath.Join(path, out.name), out.data, 0o600); err != nil {
 			return err
@@ -214,7 +216,7 @@ func generateSecureBootDatabase(path, enrolledCertificatePath, signingKeyPath, s
 }
 
 func init() {
-	genSecurebootCmd.PersistentFlags().StringVarP(&genSecurebootCmdFlags.outputDirectory, "output", "o", "_out", "path to the directory storing the generated files")
+	genSecurebootCmd.PersistentFlags().StringVarP(&genSecurebootCmdFlags.outputDirectory, "output", "o", helpers.ArtifactsPath, "path to the directory storing the generated files")
 	Cmd.AddCommand(genSecurebootCmd)
 
 	genSecurebootUKICmd.Flags().StringVar(&genSecurebootUKICmdFlags.commonName, "common-name", "Test UKI Signing Key", "common name for the certificate")
@@ -223,10 +225,10 @@ func init() {
 	genSecurebootCmd.AddCommand(genSecurebootPCRCmd)
 
 	genSecurebootDatabaseCmd.Flags().StringVar(
-		&genSecurebootDatabaseCmdFlags.enrolledCertificatePath, "enrolled-certificate", "_out/uki-signing-cert.pem", "path to the certificate to enroll")
+		&genSecurebootDatabaseCmdFlags.enrolledCertificatePath, "enrolled-certificate", helpers.ArtifactPath(constants.SecureBootSigningCertAsset), "path to the certificate to enroll")
 	genSecurebootDatabaseCmd.Flags().StringVar(
-		&genSecurebootDatabaseCmdFlags.signingCertificatePath, "signing-certificate", "_out/uki-signing-cert.pem", "path to the certificate used to sign the database")
+		&genSecurebootDatabaseCmdFlags.signingCertificatePath, "signing-certificate", helpers.ArtifactPath(constants.SecureBootSigningCertAsset), "path to the certificate used to sign the database")
 	genSecurebootDatabaseCmd.Flags().StringVar(
-		&genSecurebootDatabaseCmdFlags.signingKeyPath, "signing-key", "_out/uki-signing-key.pem", "path to the key used to sign the database")
+		&genSecurebootDatabaseCmdFlags.signingKeyPath, "signing-key", helpers.ArtifactPath(constants.SecureBootSigningKeyAsset), "path to the key used to sign the database")
 	genSecurebootCmd.AddCommand(genSecurebootDatabaseCmd)
 }

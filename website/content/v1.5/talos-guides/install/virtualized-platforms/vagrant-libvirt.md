@@ -23,10 +23,10 @@ We will also configure a virtual IP address on Talos to achieve high-availabilit
 
 ## Preparing the environment
 
-First, we download the latest `talos-amd64.iso` ISO from GitHub releases into the `/tmp` directory.
+First, we download the latest `metal-amd64.iso` ISO from GitHub releases into the `/tmp` directory.
 
 ```bash
-wget --timestamping https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-amd64.iso -O /tmp/talos-amd64.iso
+wget --timestamping https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso -O /tmp/metal-amd64.iso
 ```
 
 Create a `Vagrantfile` with the following contents:
@@ -38,7 +38,7 @@ Vagrant.configure("2") do |config|
       domain.cpus = 2
       domain.memory = 2048
       domain.serial :type => "file", :source => {:path => "/tmp/control-plane-node-1.log"}
-      domain.storage :file, :device => :cdrom, :path => "/tmp/talos-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
       domain.storage :file, :size => '4G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -50,7 +50,7 @@ Vagrant.configure("2") do |config|
       domain.cpus = 2
       domain.memory = 2048
       domain.serial :type => "file", :source => {:path => "/tmp/control-plane-node-2.log"}
-      domain.storage :file, :device => :cdrom, :path => "/tmp/talos-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
       domain.storage :file, :size => '4G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -62,7 +62,7 @@ Vagrant.configure("2") do |config|
       domain.cpus = 2
       domain.memory = 2048
       domain.serial :type => "file", :source => {:path => "/tmp/control-plane-node-3.log"}
-      domain.storage :file, :device => :cdrom, :path => "/tmp/talos-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
       domain.storage :file, :size => '4G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -74,7 +74,7 @@ Vagrant.configure("2") do |config|
       domain.cpus = 1
       domain.memory = 1024
       domain.serial :type => "file", :source => {:path => "/tmp/worker-node-1.log"}
-      domain.storage :file, :device => :cdrom, :path => "/tmp/talos-amd64.iso"
+      domain.storage :file, :device => :cdrom, :path => "/tmp/metal-amd64.iso"
       domain.storage :file, :size => '4G', :type => 'raw'
       domain.boot 'hd'
       domain.boot 'cdrom'
@@ -278,5 +278,5 @@ vagrant destroy -f
 And remove the ISO image you downloaded:
 
 ```bash
-sudo rm -f /tmp/talos-amd64.iso
+sudo rm -f /tmp/metal-amd64.iso
 ```

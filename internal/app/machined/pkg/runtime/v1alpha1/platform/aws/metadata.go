@@ -11,8 +11,8 @@ import (
 	"io"
 	"net/http"
 
-	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
 // MetadataConfig represents a metadata AWS instance.
@@ -89,7 +89,7 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 }
 
 func isNotFoundError(err error) bool {
-	var awsErr *awshttp.ResponseError
+	var awsErr *smithyhttp.ResponseError
 
 	if errors.As(err, &awsErr) {
 		return awsErr.HTTPStatusCode() == http.StatusNotFound

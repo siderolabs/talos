@@ -79,7 +79,7 @@ Note that the role should be associated with the S3 bucket we created above.
 First, download the AWS image from a Talos release:
 
 ```bash
-curl -L https://github.com/siderolabs/talos/releases/download/{{< release >}}/aws-amd64.tar.gz | tar -xv
+curl -L https://github.com/siderolabs/talos/releases/download/{{< release >}}/aws-amd64.raw.xz | xz -d > disk.raw
 ```
 
 Copy the RAW disk to S3 and import it as a snapshot:

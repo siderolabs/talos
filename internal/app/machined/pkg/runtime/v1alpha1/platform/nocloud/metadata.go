@@ -14,10 +14,12 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 	"golang.org/x/sys/unix"
@@ -521,7 +523,12 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, st state.State, ne
 		return fmt.Errorf("error listing host interfaces: %w", err)
 	}
 
-	for name, eth := range config.Ethernets {
+	ethernetNames := maps.Keys(config.Ethernets)
+	sort.Strings(ethernetNames)
+
+	for _, name := range ethernetNames {
+		eth := config.Ethernets[name]
+
 		var bondSlave network.BondSlave
 
 		for bondName, bond := range config.Bonds {
@@ -552,7 +559,7 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, st state.State, ne
 			}
 
 			if !macAddressMatched {
-				log.Printf("vmware: no link with matching MAC address %q (available %v), defaulted to use name %s instead", eth.Match.HWAddr, availableMACAddresses, name)
+				log.Printf("nocloud: no link with matching MAC address %q (available %v), defaulted to use name %s instead", eth.Match.HWAddr, availableMACAddresses, name)
 			}
 		}
 

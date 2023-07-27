@@ -172,7 +172,7 @@ Supported boards are:
 * `bananapi_m64`: Banana Pi M64
 * `libretech_all_h3_cc_h5`: Libre Computer ALL-H3-CC
 * `rock64`: Pine64 Rock64
-* `rpi_4`: Raspberry Pi 4, Model B
+* ...
 
 #### `talos.hostname`
 

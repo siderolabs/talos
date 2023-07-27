@@ -204,10 +204,6 @@ issues:
     - path: internal/app/machined/pkg/system/services
       linters:
         - dupl
-    - path: cmd/installer/pkg/qemuimg
-      text: "should have a package comment"
-      linters:
-        - revive
     - path: cmd/talosctl/cmd/mgmt
       text: "should have a package comment"
       linters:

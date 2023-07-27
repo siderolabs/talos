@@ -10,7 +10,7 @@ function setup {
   gcloud auth activate-service-account --key-file ${TMP}/svc-acct.json
   set -x
 
-  gsutil cp ${ARTIFACTS}/gcp-amd64.tar.gz gs://talos-e2e/gcp-${SHA}.tar.gz
+  gsutil cp ${ARTIFACTS}/gcp-amd64.raw.tar.gz gs://talos-e2e/gcp-${SHA}.tar.gz
   gcloud --quiet --project talos-testbed compute images delete talos-e2e-${SHA} || true
   gcloud --quiet --project talos-testbed compute images create talos-e2e-${SHA} --source-uri gs://talos-e2e/gcp-${SHA}.tar.gz
 

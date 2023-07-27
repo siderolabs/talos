@@ -47,8 +47,8 @@ func (c *Config) UEFIBoot() bool {
 }
 
 // Put puts a new menu entry to the grub config (nothing is written to disk).
-func (c *Config) Put(entry BootLabel, cmdline string) error {
-	c.Entries[entry] = buildMenuEntry(entry, cmdline)
+func (c *Config) Put(entry BootLabel, cmdline, version string) error {
+	c.Entries[entry] = buildMenuEntry(entry, cmdline, version)
 
 	return nil
 }
@@ -71,9 +71,9 @@ func (c *Config) validate() error {
 	return nil
 }
 
-func buildMenuEntry(entry BootLabel, cmdline string) MenuEntry {
+func buildMenuEntry(entry BootLabel, cmdline, versionTag string) MenuEntry {
 	return MenuEntry{
-		Name:    fmt.Sprintf("%s - %s", entry, version.Short()),
+		Name:    fmt.Sprintf("%s - %s %s", entry, version.Name, versionTag),
 		Linux:   filepath.Join("/", string(entry), constants.KernelAsset),
 		Cmdline: cmdline,
 		Initrd:  filepath.Join("/", string(entry), constants.InitramfsAsset),

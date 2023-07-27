@@ -69,7 +69,13 @@ func (builder *Builder) assemble() error {
 
 	args = append(args, builder.SdStubPath, builder.unsignedUKIPath)
 
-	cmd := exec.Command("objcopy", args...)
+	objcopy := "/usr/x86_64-alpine-linux-musl/bin/objcopy"
+
+	if builder.Arch == "arm64" {
+		objcopy = "/usr/aarch64-alpine-linux-musl/bin/objcopy"
+	}
+
+	cmd := exec.Command(objcopy, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

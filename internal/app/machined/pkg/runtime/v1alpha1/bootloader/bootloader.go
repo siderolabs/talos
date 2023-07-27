@@ -10,13 +10,14 @@ import (
 	"os"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 )
 
 // Bootloader describes a bootloader.
 type Bootloader interface {
 	// Install installs the bootloader
-	Install(bootDisk, arch, cmdline string) error
+	Install(options options.InstallOptions) error
 	// Revert reverts the bootloader entry to the previous state.
 	Revert(ctx context.Context) error
 	// PreviousLabel returns the previous bootloader label.
@@ -51,13 +52,20 @@ func Probe(ctx context.Context, disk string) (Bootloader, error) {
 	return nil, os.ErrNotExist
 }
 
-// New returns a new bootloader.
-func New() (Bootloader, error) {
-	// TODO: there should be a way to force sd-boot/GRUB based on installer args,
-	//       to build a disk image with specified bootloader.
+// NewAuto returns a new bootloader based on auto-detection.
+func NewAuto() Bootloader {
 	if sdboot.IsBootedUsingSDBoot() {
-		return sdboot.New(), nil
+		return sdboot.New()
 	}
 
-	return grub.NewConfig(), nil
+	return grub.NewConfig()
+}
+
+// New returns a new bootloader based on the secureboot flag.
+func New(secureboot bool) Bootloader {
+	if secureboot {
+		return sdboot.New()
+	}
+
+	return grub.NewConfig()
 }

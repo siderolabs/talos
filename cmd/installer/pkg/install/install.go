@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	bootloaderoptions "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -27,7 +28,6 @@ import (
 type Options struct {
 	ConfigSource      string
 	Disk              string
-	DiskSize          int
 	Platform          string
 	Arch              string
 	Board             string
@@ -37,10 +37,32 @@ type Options struct {
 	Zero              bool
 	LegacyBIOSSupport bool
 	MetaValues        MetaValues
+
+	// Options specific for the image creation mode.
+	ImageSecureboot bool
+	Version         string
+	BootAssets      bootloaderoptions.BootAssets
+}
+
+// Mode is the install mode.
+type Mode int
+
+const (
+	// ModeInstall is the install mode.
+	ModeInstall Mode = iota
+	// ModeUpgrade is the upgrade mode.
+	ModeUpgrade
+	// ModeImage is the image creation mode.
+	ModeImage
+)
+
+// IsImage returns true if the mode is image creation.
+func (m Mode) IsImage() bool {
+	return m == ModeImage
 }
 
 // Install installs Talos.
-func Install(ctx context.Context, p runtime.Platform, seq runtime.Sequence, opts *Options) (err error) {
+func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) (err error) {
 	cmdline := procfs.NewCmdline("")
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
 
@@ -55,6 +77,19 @@ func Install(ctx context.Context, p runtime.Platform, seq runtime.Sequence, opts
 		return err
 	}
 
+	if opts.Board != constants.BoardNone {
+		var b runtime.Board
+
+		b, err = board.NewBoard(opts.Board)
+		if err != nil {
+			return err
+		}
+
+		cmdline.Append(constants.KernelParamBoard, b.Name())
+
+		cmdline.SetAll(b.KernelArgs().Strings())
+	}
+
 	if err = cmdline.AppendAll(
 		opts.ExtraKernelArgs,
 		procfs.WithOverwriteArgs("console"),
@@ -63,12 +98,12 @@ func Install(ctx context.Context, p runtime.Platform, seq runtime.Sequence, opts
 		return err
 	}
 
-	i, err := NewInstaller(ctx, cmdline, seq, opts)
+	i, err := NewInstaller(ctx, cmdline, mode, opts)
 	if err != nil {
 		return err
 	}
 
-	if err = i.Install(ctx, seq); err != nil {
+	if err = i.Install(ctx, mode); err != nil {
 		return err
 	}
 
@@ -87,10 +122,14 @@ type Installer struct {
 }
 
 // NewInstaller initializes and returns an Installer.
-func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, seq runtime.Sequence, opts *Options) (i *Installer, err error) {
+func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, mode Mode, opts *Options) (i *Installer, err error) {
 	i = &Installer{
 		cmdline: cmdline,
 		options: opts,
+	}
+
+	if i.options.Version == "" {
+		i.options.Version = version.Tag
 	}
 
 	if !i.options.Zero {
@@ -101,15 +140,17 @@ func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, seq runtime.Sequ
 	}
 
 	bootLoaderPresent := i.bootloader != nil
-
 	if !bootLoaderPresent {
-		i.bootloader, err = bootloader.New()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create bootloader: %w", err)
+		if mode.IsImage() {
+			// on image creation, use the bootloader based on options
+			i.bootloader = bootloader.New(opts.ImageSecureboot)
+		} else {
+			// on install/upgrade perform automatic detection
+			i.bootloader = bootloader.NewAuto()
 		}
 	}
 
-	i.manifest, err = NewManifest(seq, i.bootloader.UEFIBoot(), bootLoaderPresent, i.options)
+	i.manifest, err = NewManifest(mode, i.bootloader.UEFIBoot(), bootLoaderPresent, i.options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installation manifest: %w", err)
 	}
@@ -121,34 +162,21 @@ func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, seq runtime.Sequ
 // to the target locations.
 //
 //nolint:gocyclo,cyclop
-func (i *Installer) Install(ctx context.Context, seq runtime.Sequence) (err error) {
+func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	errataBTF()
 
-	if seq == runtime.SequenceUpgrade {
+	if mode == ModeUpgrade {
 		if err = i.errataNetIfnames(); err != nil {
 			return err
 		}
 	}
 
-	if err = i.runPreflightChecks(seq); err != nil {
+	if err = i.runPreflightChecks(mode); err != nil {
 		return err
 	}
 
 	if err = i.installExtensions(); err != nil {
 		return err
-	}
-
-	if i.options.Board != constants.BoardNone {
-		var b runtime.Board
-
-		b, err = board.NewBoard(i.options.Board)
-		if err != nil {
-			return err
-		}
-
-		i.cmdline.Append(constants.KernelParamBoard, b.Name())
-
-		i.cmdline.SetAll(b.KernelArgs().Strings())
 	}
 
 	if err = i.manifest.Execute(); err != nil {
@@ -223,7 +251,14 @@ func (i *Installer) Install(ctx context.Context, seq runtime.Sequence) (err erro
 	}()
 
 	// Install the bootloader.
-	if err = i.bootloader.Install(i.options.Disk, i.options.Arch, i.cmdline.String()); err != nil {
+	if err = i.bootloader.Install(bootloaderoptions.InstallOptions{
+		BootDisk:   i.options.Disk,
+		Arch:       i.options.Arch,
+		Cmdline:    i.cmdline.String(),
+		Version:    i.options.Version,
+		ImageMode:  mode.IsImage(),
+		BootAssets: i.options.BootAssets,
+	}); err != nil {
 		return err
 	}
 
@@ -242,7 +277,7 @@ func (i *Installer) Install(ctx context.Context, seq runtime.Sequence) (err erro
 		}
 	}
 
-	if seq == runtime.SequenceUpgrade || len(i.options.MetaValues.values) > 0 {
+	if mode == ModeUpgrade || len(i.options.MetaValues.values) > 0 {
 		var metaState *meta.Meta
 
 		if metaState, err = meta.New(context.Background(), nil); err != nil {
@@ -251,7 +286,7 @@ func (i *Installer) Install(ctx context.Context, seq runtime.Sequence) (err erro
 
 		var ok bool
 
-		if seq == runtime.SequenceUpgrade {
+		if mode == ModeUpgrade {
 			if ok, err = metaState.SetTag(context.Background(), meta.Upgrade, i.bootloader.PreviousLabel()); !ok || err != nil {
 				return fmt.Errorf("failed to set upgrade tag: %q", i.bootloader.PreviousLabel())
 			}
@@ -271,8 +306,8 @@ func (i *Installer) Install(ctx context.Context, seq runtime.Sequence) (err erro
 	return nil
 }
 
-func (i *Installer) runPreflightChecks(seq runtime.Sequence) error {
-	if seq != runtime.SequenceUpgrade {
+func (i *Installer) runPreflightChecks(mode Mode) error {
+	if mode != ModeUpgrade {
 		// pre-flight checks only apply to upgrades
 		return nil
 	}

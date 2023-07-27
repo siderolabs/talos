@@ -1,7 +1,7 @@
 ---
 title: "Vultr"
 description: "Creating a cluster via the CLI (vultr-cli) on Vultr.com."
-aliases: 
+aliases:
   - ../../../cloud-platforms/vultr
 ---
 
@@ -17,7 +17,7 @@ Make sure to follow installation and authentication instructions for the `vultr-
 First step is to make the Talos ISO available to Vultr by uploading the latest release of the ISO to the Vultr ISO server.
 
 ```bash
-vultr-cli iso create --url https://github.com/siderolabs/talos/releases/download/{{< release >}}/talos-amd64.iso
+vultr-cli iso create --url https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso
 ```
 
 Make a note of the `ID` in the output, it will be needed later when creating the instances.

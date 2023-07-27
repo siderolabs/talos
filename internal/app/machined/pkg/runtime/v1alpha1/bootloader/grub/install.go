@@ -15,7 +15,8 @@ import (
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/assets"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -27,27 +28,21 @@ const (
 // Install validates the grub configuration and writes it to the disk.
 //
 //nolint:gocyclo
-func (c *Config) Install(bootDisk, arch, cmdline string) error {
+func (c *Config) Install(options options.InstallOptions) error {
 	if err := c.flip(); err != nil {
 		return err
 	}
 
-	assets := assets.Assets{
-		{
-			Source:      fmt.Sprintf(constants.KernelAssetPath, arch),
-			Destination: filepath.Join(constants.BootMountPoint, string(c.Default), constants.KernelAsset),
-		},
-		{
-			Source:      fmt.Sprintf(constants.InitramfsAssetPath, arch),
-			Destination: filepath.Join(constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
-		},
-	}
+	options.BootAssets.FillDefaults(options.Arch)
 
-	if err := assets.Install(); err != nil {
+	if err := utils.CopyFiles(
+		utils.SourceDestination(options.BootAssets.KernelPath, filepath.Join(constants.BootMountPoint, string(c.Default), constants.KernelAsset)),
+		utils.SourceDestination(options.BootAssets.InitramfsPath, filepath.Join(constants.BootMountPoint, string(c.Default), constants.InitramfsAsset)),
+	); err != nil {
 		return err
 	}
 
-	if err := c.Put(c.Default, cmdline); err != nil {
+	if err := c.Put(c.Default, options.Cmdline, options.Version); err != nil {
 		return err
 	}
 
@@ -55,23 +50,21 @@ func (c *Config) Install(bootDisk, arch, cmdline string) error {
 		return err
 	}
 
-	blk, err := getBlockDeviceName(bootDisk)
+	blk, err := getBlockDeviceName(options.BootDisk)
 	if err != nil {
 		return err
 	}
 
-	loopDevice := strings.HasPrefix(blk, "/dev/loop")
-
 	var platforms []string
 
-	switch arch {
+	switch options.Arch {
 	case amd64:
 		platforms = []string{"x86_64-efi", "i386-pc"}
 	case arm64:
 		platforms = []string{"arm64-efi"}
 	}
 
-	if runtime.GOARCH == amd64 && arch == amd64 && !loopDevice {
+	if runtime.GOARCH == amd64 && options.Arch == amd64 && !options.ImageMode {
 		// let grub choose the platform automatically if not building an image
 		platforms = []string{""}
 	}
@@ -80,7 +73,7 @@ func (c *Config) Install(bootDisk, arch, cmdline string) error {
 		args := []string{"--boot-directory=" + constants.BootMountPoint, "--efi-directory=" +
 			constants.EFIMountPoint, "--removable"}
 
-		if loopDevice {
+		if options.ImageMode {
 			args = append(args, "--no-nvram")
 		}
 
