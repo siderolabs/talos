@@ -7,7 +7,9 @@ kernel/crypto/async_tx/async_raid6_recov.ko
 kernel/crypto/async_tx/async_tx.ko
 kernel/crypto/async_tx/async_xor.ko
 kernel/crypto/xor.ko
+kernel/drivers/md/dm-multipath.ko
 kernel/drivers/md/dm-raid.ko
+kernel/drivers/md/dm-round-robin.ko
 kernel/drivers/md/raid456.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
 kernel/drivers/irqchip/irq-imx-mu-msi.ko
