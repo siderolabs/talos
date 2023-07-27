@@ -1693,7 +1693,7 @@ type APIServerConfig struct {
 	//     - value: APIServerDefaultAuditPolicy
 	//   schema:
 	//     type: object
-	AuditPolicyConfig Unstructured `yaml:"auditPolicy,omitempty"`
+	AuditPolicyConfig Unstructured `yaml:"auditPolicy,omitempty" merge:"replace"`
 	//   description: |
 	//     Configure the API server resources.
 	//   schema:

@@ -130,3 +130,43 @@ func TestApplyMultiDoc(t *testing.T) {
 		})
 	}
 }
+
+//go:embed testdata/auditpolicy/config.yaml
+var configAudit []byte
+
+//go:embed testdata/auditpolicy/expected.yaml
+var expectedAudit []byte
+
+func TestApplyAuditPolicy(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{
+		"@testdata/auditpolicy/patch1.yaml",
+	})
+	require.NoError(t, err)
+
+	cfg, err := configloader.NewFromBytes(configAudit)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		input configpatcher.Input
+	}{
+		{
+			name:  "WithConfig",
+			input: configpatcher.WithConfig(cfg),
+		},
+		{
+			name:  "WithBytes",
+			input: configpatcher.WithBytes(configAudit),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := configpatcher.Apply(tt.input, patches)
+			require.NoError(t, err)
+
+			bytes, err := out.Bytes()
+			require.NoError(t, err)
+
+			assert.Equal(t, string(expectedAudit), string(bytes))
+		})
+	}
+}

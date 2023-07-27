@@ -49,6 +49,7 @@ There are some special rules:
   - values of the fields `cluster.network.podSubnets` and `cluster.network.serviceSubnets` are overwritten on merge
   - `network.interfaces` section is merged with the value in the machine config if there is a match on `interface:` or `deviceSelector:` keys
   - `network.interfaces.vlans` section is merged with the value in the machine config if there is a match on the `vlanId:` key
+  - `cluster.apiServer.auditPolicy` value is replaced on merge
 
 When patching a multi-document machine configuration, following rules apply:
 
