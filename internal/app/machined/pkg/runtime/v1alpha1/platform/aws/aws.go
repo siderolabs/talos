@@ -8,16 +8,13 @@ package aws
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
-	"net/http"
 	"net/netip"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
@@ -32,21 +29,19 @@ import (
 
 // AWS is the concrete type that implements the runtime.Platform interface.
 type AWS struct {
-	metadataClient *ec2metadata.EC2Metadata
+	metadataClient *imds.Client
 }
 
 // NewAWS initializes AWS platform building the IMDS client.
 func NewAWS() (*AWS, error) {
 	a := &AWS{}
 
-	sess, err := session.NewSession(&aws.Config{})
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error initializing AWS default config: %w", err)
 	}
 
-	sess.Config.Credentials = ec2rolecreds.NewCredentials(sess)
-
-	a.metadataClient = ec2metadata.New(sess)
+	a.metadataClient = imds.NewFromConfig(cfg)
 
 	return a, nil
 }
@@ -123,18 +118,20 @@ func (a *AWS) Configuration(ctx context.Context, r state.State) ([]byte, error) 
 }
 
 func (a *AWS) fetchConfiguration(ctx context.Context) (string, error) {
-	userdata, err := a.metadataClient.GetUserDataWithContext(ctx)
+	resp, err := a.metadataClient.GetUserData(ctx, &imds.GetUserDataInput{})
 	if err != nil {
-		if awsErr, ok := err.(awserr.RequestFailure); ok {
-			if awsErr.StatusCode() == http.StatusNotFound {
-				return "", errors.ErrNoConfigSource
-			}
+		if isNotFoundError(err) {
+			return "", errors.ErrNoConfigSource
 		}
 
 		return "", retry.ExpectedErrorf("failed to fetch EC2 userdata: %w", err)
 	}
 
-	return userdata, nil
+	defer resp.Content.Close() //nolint:errcheck
+
+	userdata, err := io.ReadAll(resp.Content)
+
+	return string(userdata), err
 }
 
 // Mode implements the runtime.Platform interface.

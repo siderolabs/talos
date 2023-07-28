@@ -6,10 +6,13 @@ package aws
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 )
 
 // MetadataConfig represents a metadata AWS instance.
@@ -26,19 +29,23 @@ type MetadataConfig struct {
 
 //nolint:gocyclo
 func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
-	getMetadataKey := func(key string) (v string, err error) {
-		v, err = a.metadataClient.GetMetadataWithContext(ctx, key)
+	getMetadataKey := func(key string) (string, error) {
+		resp, err := a.metadataClient.GetMetadata(ctx, &imds.GetMetadataInput{
+			Path: key,
+		})
 		if err != nil {
-			if awsErr, ok := err.(awserr.RequestFailure); ok {
-				if awsErr.StatusCode() == http.StatusNotFound {
-					return "", nil
-				}
+			if isNotFoundError(err) {
+				return "", nil
 			}
 
 			return "", fmt.Errorf("failed to fetch %q from IMDS: %w", key, err)
 		}
 
-		return v, nil
+		defer resp.Content.Close() //nolint:errcheck
+
+		v, err := io.ReadAll(resp.Content)
+
+		return string(v), err
 	}
 
 	var (
@@ -79,4 +86,14 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 	}
 
 	return &metadata, nil
+}
+
+func isNotFoundError(err error) bool {
+	var awsErr *awshttp.ResponseError
+
+	if errors.As(err, &awsErr) {
+		return awsErr.HTTPStatusCode() == http.StatusNotFound
+	}
+
+	return false
 }

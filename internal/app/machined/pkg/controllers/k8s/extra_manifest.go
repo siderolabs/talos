@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/go-getter"
+	"github.com/hashicorp/go-getter/v2"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -183,19 +183,20 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 		httpGetter.Header.Add(k, v)
 	}
 
-	getter.Getters["http"] = httpGetter
-	getter.Getters["https"] = httpGetter
-
 	client := &getter.Client{
-		Ctx:     ctx,
-		Src:     manifest.URL,
-		Dst:     filepath.Join(tmpDir, "manifest.yaml"),
-		Pwd:     tmpDir,
-		Mode:    getter.ClientModeFile,
-		Options: []getter.ClientOption{},
+		Getters: []getter.Getter{
+			httpGetter,
+		},
 	}
 
-	if err = client.Get(); err != nil {
+	dst := filepath.Join(tmpDir, "manifest.yaml")
+
+	if _, err = client.Get(ctx, &getter.Request{
+		Src:     manifest.URL,
+		Dst:     dst,
+		Pwd:     tmpDir,
+		GetMode: getter.ModeFile,
+	}); err != nil {
 		err = fmt.Errorf("error downloading %q: %w", manifest.URL, err)
 
 		return
@@ -205,7 +206,7 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 
 	var contents []byte
 
-	contents, err = os.ReadFile(client.Dst)
+	contents, err = os.ReadFile(dst)
 	if err != nil {
 		return
 	}

@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/coreos/go-iptables/iptables"
-	"github.com/hashicorp/go-getter"
+	"github.com/hashicorp/go-getter/v2"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -176,18 +176,20 @@ func (check *preflightCheckContext) cniBundle(ctx context.Context) error {
 		return err
 	}
 
-	client := getter.Client{
-		Ctx: ctx,
-		// Network CNI runs on the host
-		Src:  strings.ReplaceAll(check.request.Network.CNI.BundleURL, constants.ArchVariable, runtime.GOARCH),
-		Dst:  check.request.Network.CNI.BinPath[0],
-		Pwd:  pwd,
-		Mode: getter.ClientModeDir,
-	}
+	client := getter.Client{}
+	src := strings.ReplaceAll(check.request.Network.CNI.BundleURL, constants.ArchVariable, runtime.GOARCH)
+	dst := check.request.Network.CNI.BinPath[0]
 
-	fmt.Fprintf(os.Stderr, "downloading CNI bundle from %q to %q\n", client.Src, client.Dst)
+	fmt.Fprintf(os.Stderr, "downloading CNI bundle from %q to %q\n", src, dst)
 
-	return client.Get()
+	_, err = client.Get(ctx, &getter.Request{
+		Src:     src,
+		Dst:     dst,
+		Pwd:     pwd,
+		GetMode: getter.ModeDir,
+	})
+
+	return err
 }
 
 func (check *preflightCheckContext) checkIptables(ctx context.Context) error {
