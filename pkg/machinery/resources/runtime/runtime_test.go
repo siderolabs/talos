@@ -38,6 +38,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.MetaKey{},
 		&runtime.MountStatus{},
 		&runtime.PlatformMetadata{},
+		&runtime.SecurityState{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

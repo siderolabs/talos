@@ -325,6 +325,8 @@ function validate_rlimit_nofile {
 
 function validate_booted_secureboot {
   ${TALOSCTL} dmesg | grep "Secure boot enabled"
+  ${TALOSCTL} get securitystate -o json 
+  ${TALOSCTL} get securitystate -o json | jq -e '.spec.secureBoot == true'
 }
 
 function install_and_run_cilium_cni_tests {

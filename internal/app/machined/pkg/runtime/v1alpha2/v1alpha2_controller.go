@@ -278,6 +278,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.MachineStatusPublisherController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
+		&runtimecontrollers.SecurityStateController{},
 		&secrets.APICertSANsController{},
 		&secrets.APIController{},
 		&secrets.EtcdController{},

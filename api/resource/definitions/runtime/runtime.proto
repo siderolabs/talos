@@ -85,6 +85,13 @@ message PlatformMetadataSpec {
   bool spot = 8;
 }
 
+// SecurityStateSpec describes the security state resource properties.
+message SecurityStateSpec {
+  bool secure_boot = 1;
+  string uki_signing_key_fingerprint = 2;
+  string pcr_signing_key_fingerprint = 3;
+}
+
 // UnmetCondition is a failure which prevents machine from being ready at the stage.
 message UnmetCondition {
   string name = 1;

@@ -200,6 +200,7 @@ description: Talos gRPC API reference.
     - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
+    - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
   
 - [resource/definitions/secrets/secrets.proto](#resource/definitions/secrets/secrets.proto)
@@ -3637,6 +3638,23 @@ PlatformMetadataSpec describes platform metadata properties.
 | instance_id | [string](#string) |  |  |
 | provider_id | [string](#string) |  |  |
 | spot | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.SecurityStateSpec"></a>
+
+### SecurityStateSpec
+SecurityStateSpec describes the security state resource properties.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| secure_boot | [bool](#bool) |  |  |
+| uki_signing_key_fingerprint | [string](#string) |  |  |
+| pcr_signing_key_fingerprint | [string](#string) |  |  |
 
 
 

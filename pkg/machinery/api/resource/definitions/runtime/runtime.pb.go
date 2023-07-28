@@ -744,6 +744,70 @@ func (x *PlatformMetadataSpec) GetSpot() bool {
 	return false
 }
 
+// SecurityStateSpec describes the security state resource properties.
+type SecurityStateSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SecureBoot               bool   `protobuf:"varint,1,opt,name=secure_boot,json=secureBoot,proto3" json:"secure_boot,omitempty"`
+	UkiSigningKeyFingerprint string `protobuf:"bytes,2,opt,name=uki_signing_key_fingerprint,json=ukiSigningKeyFingerprint,proto3" json:"uki_signing_key_fingerprint,omitempty"`
+	PcrSigningKeyFingerprint string `protobuf:"bytes,3,opt,name=pcr_signing_key_fingerprint,json=pcrSigningKeyFingerprint,proto3" json:"pcr_signing_key_fingerprint,omitempty"`
+}
+
+func (x *SecurityStateSpec) Reset() {
+	*x = SecurityStateSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SecurityStateSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecurityStateSpec) ProtoMessage() {}
+
+func (x *SecurityStateSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecurityStateSpec.ProtoReflect.Descriptor instead.
+func (*SecurityStateSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SecurityStateSpec) GetSecureBoot() bool {
+	if x != nil {
+		return x.SecureBoot
+	}
+	return false
+}
+
+func (x *SecurityStateSpec) GetUkiSigningKeyFingerprint() string {
+	if x != nil {
+		return x.UkiSigningKeyFingerprint
+	}
+	return ""
+}
+
+func (x *SecurityStateSpec) GetPcrSigningKeyFingerprint() string {
+	if x != nil {
+		return x.PcrSigningKeyFingerprint
+	}
+	return ""
+}
+
 // UnmetCondition is a failure which prevents machine from being ready at the stage.
 type UnmetCondition struct {
 	state         protoimpl.MessageState
@@ -757,7 +821,7 @@ type UnmetCondition struct {
 func (x *UnmetCondition) Reset() {
 	*x = UnmetCondition{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[12]
+		mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -770,7 +834,7 @@ func (x *UnmetCondition) String() string {
 func (*UnmetCondition) ProtoMessage() {}
 
 func (x *UnmetCondition) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[12]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -783,7 +847,7 @@ func (x *UnmetCondition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnmetCondition.ProtoReflect.Descriptor instead.
 func (*UnmetCondition) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{12}
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *UnmetCondition) GetName() string {
@@ -895,16 +959,28 @@ var file_resource_definitions_runtime_runtime_proto_rawDesc = []byte{
 	0x63, 0x65, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72,
 	0x5f, 0x69, 0x64, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x70, 0x72, 0x6f, 0x76, 0x69,
 	0x64, 0x65, 0x72, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x73, 0x70, 0x6f, 0x74, 0x18, 0x08, 0x20,
-	0x01, 0x28, 0x08, 0x52, 0x04, 0x73, 0x70, 0x6f, 0x74, 0x22, 0x3c, 0x0a, 0x0e, 0x55, 0x6e, 0x6d,
-	0x65, 0x74, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x6e,
-	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12,
-	0x16, 0x0a, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x42, 0x4c, 0x5a, 0x4a, 0x67, 0x69, 0x74, 0x68, 0x75,
-	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x69, 0x64, 0x65, 0x72, 0x6f, 0x6c, 0x61, 0x62, 0x73,
-	0x2f, 0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x6d, 0x61, 0x63, 0x68, 0x69,
-	0x6e, 0x65, 0x72, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x72, 0x75,
-	0x6e, 0x74, 0x69, 0x6d, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x01, 0x28, 0x08, 0x52, 0x04, 0x73, 0x70, 0x6f, 0x74, 0x22, 0xb2, 0x01, 0x0a, 0x11, 0x53, 0x65,
+	0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x53, 0x74, 0x61, 0x74, 0x65, 0x53, 0x70, 0x65, 0x63, 0x12,
+	0x1f, 0x0a, 0x0b, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x5f, 0x62, 0x6f, 0x6f, 0x74, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x0a, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x42, 0x6f, 0x6f, 0x74,
+	0x12, 0x3d, 0x0a, 0x1b, 0x75, 0x6b, 0x69, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x69, 0x6e, 0x67, 0x5f,
+	0x6b, 0x65, 0x79, 0x5f, 0x66, 0x69, 0x6e, 0x67, 0x65, 0x72, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x18, 0x75, 0x6b, 0x69, 0x53, 0x69, 0x67, 0x6e, 0x69, 0x6e,
+	0x67, 0x4b, 0x65, 0x79, 0x46, 0x69, 0x6e, 0x67, 0x65, 0x72, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x12,
+	0x3d, 0x0a, 0x1b, 0x70, 0x63, 0x72, 0x5f, 0x73, 0x69, 0x67, 0x6e, 0x69, 0x6e, 0x67, 0x5f, 0x6b,
+	0x65, 0x79, 0x5f, 0x66, 0x69, 0x6e, 0x67, 0x65, 0x72, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x18, 0x70, 0x63, 0x72, 0x53, 0x69, 0x67, 0x6e, 0x69, 0x6e, 0x67,
+	0x4b, 0x65, 0x79, 0x46, 0x69, 0x6e, 0x67, 0x65, 0x72, 0x70, 0x72, 0x69, 0x6e, 0x74, 0x22, 0x3c,
+	0x0a, 0x0e, 0x55, 0x6e, 0x6d, 0x65, 0x74, 0x43, 0x6f, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
+	0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x42, 0x4c, 0x5a, 0x4a,
+	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x69, 0x64, 0x65, 0x72,
+	0x6f, 0x6c, 0x61, 0x62, 0x73, 0x2f, 0x74, 0x61, 0x6c, 0x6f, 0x73, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x6d, 0x61, 0x63, 0x68, 0x69, 0x6e, 0x65, 0x72, 0x79, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x72, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2f, 0x64, 0x65, 0x66, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x2f, 0x72, 0x75, 0x6e, 0x74, 0x69, 0x6d, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -919,7 +995,7 @@ func file_resource_definitions_runtime_runtime_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_runtime_runtime_proto_rawDescData
 }
 
-var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_resource_definitions_runtime_runtime_proto_goTypes = []interface{}{
 	(*DevicesStatusSpec)(nil),            // 0: talos.resource.definitions.runtime.DevicesStatusSpec
 	(*EventSinkConfigSpec)(nil),          // 1: talos.resource.definitions.runtime.EventSinkConfigSpec
@@ -933,17 +1009,18 @@ var file_resource_definitions_runtime_runtime_proto_goTypes = []interface{}{
 	(*MetaKeySpec)(nil),                  // 9: talos.resource.definitions.runtime.MetaKeySpec
 	(*MountStatusSpec)(nil),              // 10: talos.resource.definitions.runtime.MountStatusSpec
 	(*PlatformMetadataSpec)(nil),         // 11: talos.resource.definitions.runtime.PlatformMetadataSpec
-	(*UnmetCondition)(nil),               // 12: talos.resource.definitions.runtime.UnmetCondition
-	(*common.URL)(nil),                   // 13: common.URL
-	(enums.RuntimeMachineStage)(0),       // 14: talos.resource.definitions.enums.RuntimeMachineStage
-	(*common.NetIP)(nil),                 // 15: common.NetIP
+	(*SecurityStateSpec)(nil),            // 12: talos.resource.definitions.runtime.SecurityStateSpec
+	(*UnmetCondition)(nil),               // 13: talos.resource.definitions.runtime.UnmetCondition
+	(*common.URL)(nil),                   // 14: common.URL
+	(enums.RuntimeMachineStage)(0),       // 15: talos.resource.definitions.enums.RuntimeMachineStage
+	(*common.NetIP)(nil),                 // 16: common.NetIP
 }
 var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
-	13, // 0: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
-	14, // 1: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
+	14, // 0: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
+	15, // 1: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
 	7,  // 2: talos.resource.definitions.runtime.MachineStatusSpec.status:type_name -> talos.resource.definitions.runtime.MachineStatusStatus
-	12, // 3: talos.resource.definitions.runtime.MachineStatusStatus.unmet_conditions:type_name -> talos.resource.definitions.runtime.UnmetCondition
-	15, // 4: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
+	13, // 3: talos.resource.definitions.runtime.MachineStatusStatus.unmet_conditions:type_name -> talos.resource.definitions.runtime.UnmetCondition
+	16, // 4: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
 	5,  // [5:5] is the sub-list for method output_type
 	5,  // [5:5] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
@@ -1102,6 +1179,18 @@ func file_resource_definitions_runtime_runtime_proto_init() {
 			}
 		}
 		file_resource_definitions_runtime_runtime_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SecurityStateSpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_resource_definitions_runtime_runtime_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UnmetCondition); i {
 			case 0:
 				return &v.state
@@ -1120,7 +1209,7 @@ func file_resource_definitions_runtime_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_resource_definitions_runtime_runtime_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

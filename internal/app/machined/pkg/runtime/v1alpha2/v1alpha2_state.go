@@ -182,6 +182,7 @@ func NewState() (*State, error) {
 		&runtime.MetaKey{},
 		&runtime.MountStatus{},
 		&runtime.PlatformMetadata{},
+		&runtime.SecurityState{},
 		&secrets.API{},
 		&secrets.CertSAN{},
 		&secrets.Etcd{},
