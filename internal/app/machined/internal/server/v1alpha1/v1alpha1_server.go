@@ -28,10 +28,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
-	"github.com/google/gopacket/pcapgo"
 	"github.com/google/uuid"
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
+	"github.com/gopacket/gopacket/pcapgo"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/nberlee/go-netstat/netstat"
 	"github.com/prometheus/procfs"
@@ -2238,8 +2238,8 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 
 //nolint:gocyclo
 func capturePackets(pw *io.PipeWriter, handle *pcapgo.EthernetHandle, snapLen uint32, linkType layers.LinkType) {
-	defer pw.Close() //nolint:errcheck
-	defer handle.Close()
+	defer pw.Close()     //nolint:errcheck
+	defer handle.Close() //nolint:errcheck
 
 	pcapw := pcapgo.NewWriterNanos(pw)
 

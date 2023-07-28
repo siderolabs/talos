@@ -14,13 +14,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-var hline string
-
-func init() {
-	for i := 0; i < 2000; i++ {
-		hline += string(tcell.RuneHLine)
-	}
-}
+var hline = strings.Repeat(string(tcell.RuneHLine), 2000)
 
 // Separator hline with a description below.
 type Separator struct {
