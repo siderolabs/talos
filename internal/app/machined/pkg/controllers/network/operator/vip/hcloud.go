@@ -11,7 +11,7 @@ import (
 	"net/netip"
 	"strconv"
 
-	"github.com/hetznercloud/hcloud-go/hcloud"
+	"github.com/hetznercloud/hcloud-go/v2/hcloud"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/download"
@@ -25,9 +25,9 @@ type HCloudHandler struct {
 	logger *zap.Logger
 
 	vip        string
-	deviceID   int
-	floatingID int
-	networkID  int
+	deviceID   int64
+	floatingID int64
+	networkID  int64
 }
 
 // NewHCloudHandler creates new NewEHCloudHandler.
@@ -73,7 +73,7 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 			}
 
 			handler.logger.Info("cleared previous Hetzner Cloud IP alias", zap.String("vip", handler.vip),
-				zap.Int("device_id", oldDeviceID), zap.String("status", string(action.Status)))
+				zap.Int64("device_id", oldDeviceID), zap.String("status", string(action.Status)))
 		}
 
 		netIP := net.ParseIP(handler.vip)
@@ -86,8 +86,8 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 			return fmt.Errorf("error change alias IPs %q to server %d: %w", handler.vip, handler.deviceID, err)
 		}
 
-		handler.logger.Info("assigned Hetzner Cloud alias IP", zap.String("vip", handler.vip), zap.Int("device_id", handler.deviceID),
-			zap.Int("network_id", handler.networkID), zap.String("status", string(action.Status)))
+		handler.logger.Info("assigned Hetzner Cloud alias IP", zap.String("vip", handler.vip), zap.Int64("device_id", handler.deviceID),
+			zap.Int64("network_id", handler.networkID), zap.String("status", string(action.Status)))
 
 		return nil
 	}
@@ -104,7 +104,7 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 				return fmt.Errorf("error assigning %q on server %d: %w", handler.vip, handler.deviceID, err)
 			}
 
-			handler.logger.Info("assigned Hetzner Cloud floating IP", zap.String("vip", handler.vip), zap.Int("device_id", handler.deviceID), zap.String("status", string(action.Status)))
+			handler.logger.Info("assigned Hetzner Cloud floating IP", zap.String("vip", handler.vip), zap.Int64("device_id", handler.deviceID), zap.String("status", string(action.Status)))
 			handler.floatingID = floatip.ID
 
 			return nil
@@ -129,8 +129,8 @@ func (handler *HCloudHandler) Release(ctx context.Context) error {
 			return fmt.Errorf("error remove alias IPs %q on server %d: %w", handler.vip, handler.deviceID, err)
 		}
 
-		handler.logger.Info("unassigned Hetzner Cloud alias IP", zap.String("vip", handler.vip), zap.Int("device_id", handler.deviceID),
-			zap.Int("network_id", handler.networkID), zap.String("status", string(action.Status)))
+		handler.logger.Info("unassigned Hetzner Cloud alias IP", zap.String("vip", handler.vip), zap.Int64("device_id", handler.deviceID),
+			zap.Int64("network_id", handler.networkID), zap.String("status", string(action.Status)))
 
 		return nil
 	}
@@ -142,7 +142,7 @@ func (handler *HCloudHandler) Release(ctx context.Context) error {
 		}
 
 		if floatip.Server == nil || floatip.Server.ID != handler.deviceID {
-			handler.logger.Info("unassigned Hetzner Cloud floating IP", zap.String("vip", handler.vip), zap.Int("device_id", handler.deviceID))
+			handler.logger.Info("unassigned Hetzner Cloud floating IP", zap.String("vip", handler.vip), zap.Int64("device_id", handler.deviceID))
 		}
 
 		handler.floatingID = 0
@@ -161,7 +161,7 @@ func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vi
 		return fmt.Errorf("error downloading instance-id: %w", err)
 	}
 
-	spec.DeviceID, err = strconv.Atoi(string(metadataInstanceID))
+	spec.DeviceID, err = strconv.ParseInt(string(metadataInstanceID), 10, 64)
 	if err != nil {
 		return fmt.Errorf("error getting instance-id id: %w", err)
 	}
@@ -191,7 +191,7 @@ func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vi
 	return nil
 }
 
-func findServerByAlias(serverList []*hcloud.Server, networkID int, vip string) (deviceID int) {
+func findServerByAlias(serverList []*hcloud.Server, networkID int64, vip string) (deviceID int64) {
 	for _, server := range serverList {
 		for _, network := range server.PrivateNet {
 			if network.Network.ID == networkID {

@@ -85,8 +85,8 @@ type VIPEquinixMetalSpec struct {
 //
 //gotagsrewrite:gen
 type VIPHCloudSpec struct {
-	DeviceID  int    `yaml:"deviceID" protobuf:"1"`
-	NetworkID int    `yaml:"networkID" protobuf:"2"`
+	DeviceID  int64  `yaml:"deviceID" protobuf:"1"`
+	NetworkID int64  `yaml:"networkID" protobuf:"2"`
 	APIToken  string `yaml:"apiToken" protobuf:"3"`
 }
 
