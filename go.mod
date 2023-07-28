@@ -122,7 +122,6 @@ require (
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vishvananda/netlink v1.2.1-beta.2
 	github.com/vmware-tanzu/sonobuoy v0.56.17
-	github.com/vmware/govmomi v0.30.6
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
 	go.etcd.io/etcd/api/v3 v3.5.9

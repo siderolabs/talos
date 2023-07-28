@@ -17,7 +17,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
-	"github.com/vmware/govmomi/ovf"
 	"github.com/vmware/vmw-guestinfo/rpcvmx"
 	"github.com/vmware/vmw-guestinfo/vmcheck"
 	yaml "gopkg.in/yaml.v3"
@@ -63,6 +62,32 @@ func readConfigFromExtraConfig(extraConfig *rpcvmx.Config, key string) ([]byte, 
 	return decoded, nil
 }
 
+// ofvEnv and related types are extracted from github.com/vmware/govmomi/ovf/env.go.
+type ovfEnvFile struct {
+	XMLName xml.Name `xml:"http://schemas.dmtf.org/ovf/environment/1 Environment"`
+	ID      string   `xml:"id,attr"`
+	EsxID   string   `xml:"http://www.vmware.com/schema/ovfenv esxId,attr"`
+
+	Platform *ovfPlatformSection `xml:"PlatformSection"`
+	Property *ovfPropertySection `xml:"PropertySection"`
+}
+
+type ovfPlatformSection struct {
+	Kind    string `xml:"Kind"`
+	Version string `xml:"Version"`
+	Vendor  string `xml:"Vendor"`
+	Locale  string `xml:"Locale"`
+}
+
+type ovfPropertySection struct {
+	Properties []ovfEnvProperty `xml:"Property"`
+}
+
+type ovfEnvProperty struct {
+	Key   string `xml:"key,attr"`
+	Value string `xml:"value,attr"`
+}
+
 // Read and de-base64 a property from the OVF env. This is different way to pass data to your VM.
 // This is how data gets passed when using vCloud Director.
 func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
@@ -75,7 +100,7 @@ func readConfigFromOvf(extraConfig *rpcvmx.Config, key string) ([]byte, error) {
 		return nil, nil
 	}
 
-	var ovfEnv ovf.Env
+	var ovfEnv ovfEnvFile
 
 	err = xml.Unmarshal([]byte(ovfXML), &ovfEnv)
 	if err != nil {

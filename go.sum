@@ -1117,8 +1117,6 @@ github.com/vishvananda/netns v0.0.4 h1:Oeaw1EM2JMxD51g9uhtC0D7erkIjgmj8+JZc26m1Y
 github.com/vishvananda/netns v0.0.4/go.mod h1:SpkAiCQRtJ6TvvxPnOSyH3BMl6unz3xZlaprSwhNNJM=
 github.com/vmware-tanzu/sonobuoy v0.56.17 h1:X30OozdtWOkvMCOZLb1b/QSeKEBx634py8ArTw8RcFU=
 github.com/vmware-tanzu/sonobuoy v0.56.17/go.mod h1:EZay4jbB9SKlkG/ywbmtoe8rWzd0w1eCxuk+tHbBQbM=
-github.com/vmware/govmomi v0.30.6 h1:O3tjSwQBy0XwI5uK1/yVIfQ1LP9bAECEDUfifnyGs9U=
-github.com/vmware/govmomi v0.30.6/go.mod h1:epgoslm97rLECMV4D+08ORzUBEU7boFSepKjt7AYVGg=
 github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3 h1:v6jG/tdl4O07LNVp74Nt7/OyL+1JsIW1M2f/nSvQheY=
 github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3/go.mod h1:CSBTxrhePCm0cmXNKDGeu+6bOQzpaEklfCqEpn89JWk=
 github.com/vultr/metadata v1.1.0 h1:RUjCnH5Mdlz7uuyfb1jOZNkU72zl/HwK76jLzVFdiOo=
