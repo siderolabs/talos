@@ -13,9 +13,9 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-19-gdc7dd9e
-PKGS ?= v1.5.0-alpha.0-44-gcb97daf
-EXTRAS ?= v1.5.0-alpha.0-2-gf415aac
+TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0-alpha.0-21-gfd42f4b
+PKGS ?= v1.5.0-alpha.0-45-g8144720
+EXTRAS ?= v1.5.0-alpha.0-3-g26b9d64
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
 # renovate: datasource=go depName=golang.org/x/tools
@@ -39,7 +39,7 @@ IMPORTVET_VERSION ?= v0.1.0
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.35.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 13.3.2
+TEXTLINT_VERSION ?= 13.3.3
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -52,11 +52,11 @@ INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERAT
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.28.0-rc.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
-KUBESTR_VERSION ?= v0.4.37
+KUBESTR_VERSION ?= v0.4.41
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.12.2
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.4.4
+CLUSTERCTL_VERSION ?= 1.5.0
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.14.8
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
