@@ -79,15 +79,6 @@ func WithTPM2(enabled bool) Option {
 	}
 }
 
-// WithSecureBoot enables or disables secure boot.
-func WithSecureBoot(enabled bool) Option {
-	return func(o *Options) error {
-		o.SecureBootEnabled = enabled
-
-		return nil
-	}
-}
-
 // WithExtraUEFISearchPaths configures additional search paths to look for UEFI firmware.
 func WithExtraUEFISearchPaths(extraUEFISearchPaths []string) Option {
 	return func(o *Options) error {
@@ -157,8 +148,6 @@ type Options struct {
 	UEFIEnabled bool
 	// Enable TPM2 emulation using swtpm.
 	TPM2Enabled bool
-	// Enforce Secure Boot.
-	SecureBootEnabled bool
 	// Configure additional search paths to look for UEFI firmware.
 	ExtraUEFISearchPaths []string
 

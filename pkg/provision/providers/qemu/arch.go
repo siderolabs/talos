@@ -71,7 +71,7 @@ type PFlash struct {
 }
 
 // PFlash returns settings for parallel flash.
-func (arch Arch) PFlash(uefiEnabled, secureBootEnabled bool, extraUEFISearchPaths []string) []PFlash {
+func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlash {
 	switch arch {
 	case ArchArm64:
 		uefiSourcePaths := []string{"/usr/share/qemu-efi-aarch64/QEMU_EFI.fd", "/usr/share/OVMF/QEMU_EFI.fd"}
@@ -121,9 +121,7 @@ func (arch Arch) PFlash(uefiEnabled, secureBootEnabled bool, extraUEFISearchPath
 			"OVMF_VARS.fd",
 		}
 
-		if !secureBootEnabled {
-			uefiSourceFiles = append(uefiSourceFiles, uefiSourceFilesInsecure...)
-		}
+		uefiSourceFiles = append(uefiSourceFiles, uefiSourceFilesInsecure...)
 
 		// Append extra search paths
 		uefiSourcePathPrefixes = append(uefiSourcePathPrefixes, extraUEFISearchPaths...)

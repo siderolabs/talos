@@ -83,7 +83,6 @@ const (
 	controlPlanePortFlag          = "control-plane-port"
 	kubePrismFlag                 = "kubeprism-port"
 	tpm2EnabledFlag               = "with-tpm2"
-	secureBootEnabledFlag         = "with-secureboot"
 	diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
 )
 
@@ -101,7 +100,6 @@ var (
 	applyConfigEnabled         bool
 	bootloaderEnabled          bool
 	uefiEnabled                bool
-	secureBootEnabled          bool
 	tpm2Enabled                bool
 	extraUEFISearchPaths       []string
 	configDebug                bool
@@ -336,7 +334,6 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		provision.WithBootlader(bootloaderEnabled),
 		provision.WithUEFI(uefiEnabled),
 		provision.WithTPM2(tpm2Enabled),
-		provision.WithSecureBoot(secureBootEnabled),
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
 	}
@@ -942,7 +939,6 @@ func init() {
 	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")
 	createCmd.Flags().BoolVar(&tpm2Enabled, tpm2EnabledFlag, false, "enable TPM2 emulation support using swtpm")
-	createCmd.Flags().BoolVar(&secureBootEnabled, secureBootEnabledFlag, false, "enforce secure boot")
 	createCmd.Flags().StringSliceVar(&extraUEFISearchPaths, "extra-uefi-search-paths", []string{}, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 	createCmd.Flags().StringSliceVar(&registryMirrors, registryMirrorFlag, []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	createCmd.Flags().StringSliceVar(&registryInsecure, registryInsecureFlag, []string{}, "list of registry hostnames to skip TLS verification for")
