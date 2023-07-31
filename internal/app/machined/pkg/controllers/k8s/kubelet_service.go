@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
+	stdjson "encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -19,7 +20,10 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/channel"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -89,10 +93,8 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 	}
 
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
+			return nil //nolint:nilerr
 		}
 
 		_, err := r.Get(ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, "machine-id", resource.VersionUndefined))
@@ -141,13 +143,11 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 	r.QueueReconcile()
 
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
+			return nil //nolint:nilerr
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*k8s.KubeletSpec](ctx, r, k8s.KubeletID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -156,9 +156,9 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		cfgSpec := cfg.(*k8s.KubeletSpec).TypedSpec()
+		cfgSpec := cfg.TypedSpec()
 
-		secret, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubeletType, secrets.KubeletID, resource.VersionUndefined))
+		secret, err := safe.ReaderGetByID[*secrets.Kubelet](ctx, r, secrets.KubeletID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -167,7 +167,7 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error getting secrets: %w", err)
 		}
 
-		secretSpec := secret.(*secrets.Kubelet).TypedSpec()
+		secretSpec := secret.TypedSpec()
 
 		if err = ctrl.writePKI(secretSpec); err != nil {
 			return fmt.Errorf("error writing kubelet PKI: %w", err)
@@ -190,17 +190,21 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 
 		// refresh certs only if we are managing the node name (not overridden by the user)
 		if cfgSpec.ExpectedNodename != "" {
-			err = ctrl.refreshKubeletCerts(logger, cfgSpec.ExpectedNodename)
+			err = ctrl.refreshKubeletCerts(cfgSpec.ExpectedNodename, logger)
 			if err != nil {
 				return err
 			}
+		}
+
+		if err = ctrl.handlePolicyChange(cfgSpec, logger); err != nil {
+			return err
 		}
 
 		if err = ctrl.refreshSelfServingCert(); err != nil {
 			return err
 		}
 
-		if err = ctrl.updateKubeconfig(logger, secretSpec.Endpoint); err != nil {
+		if err = ctrl.updateKubeconfig(secretSpec.Endpoint, logger); err != nil {
 			return err
 		}
 
@@ -210,6 +214,83 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 
 		r.ResetRestartBackoff()
 	}
+}
+
+// handlePolicyChange handles the cpuManagerPolicy change.
+func (ctrl *KubeletServiceController) handlePolicyChange(cfgSpec *k8s.KubeletSpecSpec, logger *zap.Logger) error {
+	const managerFilename = "/var/lib/kubelet/cpu_manager_state"
+
+	oldPolicy, err := loadPolicyFromFile(managerFilename)
+
+	switch {
+	case errors.Is(err, os.ErrNotExist):
+		return nil // no cpu_manager_state file, nothing to do
+	case err != nil:
+		return fmt.Errorf("error loading cpu_manager_state file: %w", err)
+	}
+
+	policy, err := getFromMap[string](cfgSpec.Config, "cpuManagerPolicy")
+	if err != nil {
+		return err
+	}
+
+	newPolicy := policy.ValueOrZero()
+	if equalPolicy(oldPolicy, newPolicy) {
+		return nil
+	}
+
+	logger.Info("cpuManagerPolicy changed", zap.String("old", oldPolicy), zap.String("new", newPolicy))
+
+	err = os.Remove(managerFilename)
+	if err != nil {
+		return fmt.Errorf("error removing cpu_manager_state file: %w", err)
+	}
+
+	return nil
+}
+
+func loadPolicyFromFile(filename string) (string, error) {
+	raw, err := os.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+
+	cpuManagerState := struct {
+		Policy string `json:"policyName"`
+	}{}
+
+	if err = stdjson.Unmarshal(raw, &cpuManagerState); err != nil {
+		return "", err
+	}
+
+	return cpuManagerState.Policy, nil
+}
+
+func equalPolicy(current, newOne string) bool {
+	if current == "none" {
+		current = ""
+	}
+
+	if newOne == "none" {
+		newOne = ""
+	}
+
+	return current == newOne
+}
+
+func getFromMap[T any](m map[string]any, key string) (optional.Optional[T], error) {
+	var zero optional.Optional[T]
+
+	res, ok := m[key]
+	if !ok {
+		return zero, nil
+	}
+
+	if res, ok := res.(T); ok {
+		return optional.Some(res), nil
+	}
+
+	return zero, fmt.Errorf("unexpected type for key %q: found %T, expected %T", key, res, *new(T))
 }
 
 func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) error {
@@ -289,7 +370,7 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 }
 
 // updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.
-func (ctrl *KubeletServiceController) updateKubeconfig(logger *zap.Logger, newEndpoint *url.URL) error {
+func (ctrl *KubeletServiceController) updateKubeconfig(newEndpoint *url.URL, logger *zap.Logger) error {
 	config, err := clientcmd.LoadFromFile(constants.KubeletKubeconfig)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -328,7 +409,7 @@ func (ctrl *KubeletServiceController) updateKubeconfig(logger *zap.Logger, newEn
 // refreshKubeletCerts checks if the existing kubelet certificates match the node hostname.
 // If they don't match, it clears the certificate directory and the removes kubelet's kubeconfig so that
 // they can be regenerated next time kubelet is started.
-func (ctrl *KubeletServiceController) refreshKubeletCerts(logger *zap.Logger, nodename string) error {
+func (ctrl *KubeletServiceController) refreshKubeletCerts(nodename string, logger *zap.Logger) error {
 	cert, err := ctrl.readKubeletClientCertificate()
 	if err != nil {
 		return err

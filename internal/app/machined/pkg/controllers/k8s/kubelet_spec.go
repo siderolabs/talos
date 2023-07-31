@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -78,13 +79,11 @@ func (ctrl *KubeletSpecController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
+		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
+			return nil //nolint:nilerr
 		}
 
-		cfg, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletConfigType, k8s.KubeletID, resource.VersionUndefined))
+		cfg, err := safe.ReaderGetByID[*k8s.KubeletConfig](ctx, r, k8s.KubeletID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -93,9 +92,9 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error getting config: %w", err)
 		}
 
-		cfgSpec := cfg.(*k8s.KubeletConfig).TypedSpec()
+		cfgSpec := cfg.TypedSpec()
 
-		nodename, err := r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined))
+		nodename, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -104,9 +103,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error getting nodename: %w", err)
 		}
 
-		nodenameSpec := nodename.(*k8s.Nodename).TypedSpec()
-
-		expectedNodename := nodenameSpec.Nodename
+		expectedNodename := nodename.TypedSpec().Nodename
 
 		args := argsbuilder.Args{
 			"config": "/etc/kubernetes/kubelet.yaml",
@@ -134,20 +131,16 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 		// if the user supplied node-ip via extra args, no need to pick automatically
 		if !extraArgs.Contains("node-ip") {
-			var nodeIP resource.Resource
-
-			nodeIP, err = r.Get(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.NodeIPType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil {
-				if state.IsNotFoundError(err) {
+			nodeIP, nodeErr := safe.ReaderGetByID[*k8s.NodeIP](ctx, r, k8s.KubeletID)
+			if nodeErr != nil {
+				if state.IsNotFoundError(nodeErr) {
 					continue
 				}
 
-				return fmt.Errorf("error getting node IPs: %w", err)
+				return fmt.Errorf("error getting node IPs: %w", nodeErr)
 			}
 
-			nodeIPSpec := nodeIP.(*k8s.NodeIP).TypedSpec()
-
-			nodeIPsString := slices.Map(nodeIPSpec.Addresses, netip.Addr.String)
+			nodeIPsString := slices.Map(nodeIP.TypedSpec().Addresses, netip.Addr.String)
 			args["node-ip"] = strings.Join(nodeIPsString, ",")
 		}
 
@@ -181,11 +174,12 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error converting to unstructured: %w", err)
 		}
 
-		if err = r.Modify(
+		if err = safe.WriterModify(
 			ctx,
+			r,
 			k8s.NewKubeletSpec(k8s.NamespaceName, k8s.KubeletID),
-			func(r resource.Resource) error {
-				kubeletSpec := r.(*k8s.KubeletSpec).TypedSpec()
+			func(r *k8s.KubeletSpec) error {
+				kubeletSpec := r.TypedSpec()
 
 				kubeletSpec.Image = cfgSpec.Image
 				kubeletSpec.ExtraMounts = cfgSpec.ExtraMounts

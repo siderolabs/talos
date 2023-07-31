@@ -224,7 +224,7 @@ func (o KubeletSpecSpec) DeepCopy() KubeletSpecSpec {
 		}
 	}
 	if o.Config != nil {
-		cp.Config = make(map[string]interface{}, len(o.Config))
+		cp.Config = make(map[string]any, len(o.Config))
 		for k2, v2 := range o.Config {
 			cp.Config[k2] = v2
 		}
@@ -302,7 +302,7 @@ func (o KubeletConfigSpec) DeepCopy() KubeletConfigSpec {
 		}
 	}
 	if o.ExtraConfig != nil {
-		cp.ExtraConfig = make(map[string]interface{}, len(o.ExtraConfig))
+		cp.ExtraConfig = make(map[string]any, len(o.ExtraConfig))
 		for k2, v2 := range o.ExtraConfig {
 			cp.ExtraConfig[k2] = v2
 		}

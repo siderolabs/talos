@@ -54,8 +54,8 @@ func Services(runtime runtime.Runtime) *singleton {
 	once.Do(func() {
 		instance = &singleton{
 			runtime: runtime,
-			state:   make(map[string]*ServiceRunner),
-			running: make(map[string]struct{}),
+			state:   map[string]*ServiceRunner{},
+			running: map[string]struct{}{},
 		}
 	})
 
@@ -102,7 +102,7 @@ func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 		return nil
 	}
 
-	servicesToRemove := []string{}
+	servicesToRemove := make([]string, 0, len(serviceIDs))
 
 	for _, id := range serviceIDs {
 		if _, exists := s.state[id]; exists {
@@ -264,7 +264,7 @@ func (s *singleton) StopWithRevDepenencies(ctx context.Context, serviceIDs ...st
 
 //nolint:gocyclo
 func (s *singleton) stopServices(ctx context.Context, services []string, waitForRevDependencies bool) error {
-	servicesToStop := make(map[string]*ServiceRunner)
+	servicesToStop := map[string]*ServiceRunner{}
 
 	if services == nil {
 		for name, svcrunner := range s.state {
@@ -282,7 +282,7 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 
 	// build reverse dependencies, and expand the list of services to stop
 	// with services which depend on the one being stopped
-	reverseDependencies := make(map[string][]string)
+	reverseDependencies := map[string][]string{}
 
 	if waitForRevDependencies {
 		// expand the list of services to stop with the list of services which depend
@@ -342,7 +342,7 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer shutdownCtxCancel()
 
-	stoppedConds := []conditions.Condition{}
+	stoppedConds := make([]conditions.Condition, 0, len(servicesToStop))
 
 	for name, svcrunner := range servicesToStop {
 		shutdownWg.Add(1)

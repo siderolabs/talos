@@ -24,11 +24,11 @@ type KubeletSpec = typed.Resource[KubeletSpecSpec, KubeletSpecExtension]
 //
 //gotagsrewrite:gen
 type KubeletSpecSpec struct {
-	Image            string                 `yaml:"image" protobuf:"1"`
-	Args             []string               `yaml:"args,omitempty" protobuf:"2"`
-	ExtraMounts      []specs.Mount          `yaml:"extraMounts,omitempty" protobuf:"3"`
-	ExpectedNodename string                 `yaml:"expectedNodename,omitempty" protobuf:"4"`
-	Config           map[string]interface{} `yaml:"config" protobuf:"5"`
+	Image            string         `yaml:"image" protobuf:"1"`
+	Args             []string       `yaml:"args,omitempty" protobuf:"2"`
+	ExtraMounts      []specs.Mount  `yaml:"extraMounts,omitempty" protobuf:"3"`
+	ExpectedNodename string         `yaml:"expectedNodename,omitempty" protobuf:"4"`
+	Config           map[string]any `yaml:"config" protobuf:"5"`
 }
 
 // NewKubeletSpec initializes an empty KubeletSpec resource.
