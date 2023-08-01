@@ -13,4 +13,8 @@ var AllowedPaths = []string{
 	"/lib64/ld-linux-x86-64.so.2",
 	"/usr/etc/udev/rules.d",
 	"/usr/local",
+	// glvnd, egl and vulkan are needed for OpenGL/Vulkan.
+	"/usr/share/glvnd",
+	"/usr/share/egl",
+	"/etc/vulkan",
 }
