@@ -17,6 +17,7 @@ require (
 	github.com/siderolabs/gen v0.4.5
 	github.com/siderolabs/go-retry v0.3.2
 	github.com/spf13/pflag v1.0.5
+	github.com/ulikunitz/xz v0.5.11
 	golang.org/x/sync v0.3.0
 )
 

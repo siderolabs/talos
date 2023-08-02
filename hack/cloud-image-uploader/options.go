@@ -40,10 +40,10 @@ var DefaultOptions = Options{
 
 // AWSImage returns path to AWS pre-built image.
 func (o *Options) AWSImage(architecture string) string {
-	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("aws-%s.tar.gz", architecture))
+	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("aws-%s.raw.xz", architecture))
 }
 
 // AzureImage returns path to AWS pre-built image.
 func (o *Options) AzureImage(architecture string) string {
-	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("azure-%s.tar.gz", architecture))
+	return filepath.Join(o.ArtifactsPath, fmt.Sprintf("azure-%s.vhd.xz", architecture))
 }
