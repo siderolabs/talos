@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -19,7 +18,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/streaming"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/pageblob"
@@ -36,19 +35,6 @@ const (
 	defaultRegion     = "eastus"
 	storageAccount    = "siderogallery"
 )
-
-//go:embed azure-disk-template.json
-var azureDiskTemplate []byte
-
-//go:embed azure-image-version-template.json
-var azureImageVersionTemplate []byte
-
-// TargetRegion describes the region to upload to.
-type TargetRegion struct {
-	Name                 string `json:"name"`
-	RegionalReplicaCount int    `json:"regionalReplicaCount"`
-	StorageAccountType   string `json:"storageAccountType"`
-}
 
 // Mapping CPU architectures to Azure architectures.
 var azureArchitectures = map[string]string{
@@ -75,11 +61,11 @@ func (azu *AzureUploader) setVersion() error {
 	if fmt.Sprintf("v%s", versionCore) != azu.Options.AzureAbbrevTag {
 		azu.Options.AzureGalleryName = "SideroGalleryTest"
 		azu.Options.AzureCoreTag = versionCore
-		azu.Options.AzurePreRelease = "-prerelease"
+		fmt.Println(azu.Options.AzureGalleryName)
 	} else {
-		azu.Options.AzureGalleryName = "SideroGallery"
+		azu.Options.AzureGalleryName = "SideroLabs"
 		azu.Options.AzureCoreTag = versionCore
-		azu.Options.AzurePreRelease = ""
+		fmt.Println(azu.Options.AzureGalleryName)
 	}
 
 	return err
@@ -94,7 +80,7 @@ func (azu *AzureUploader) AzureGalleryUpload(ctx context.Context) error {
 
 	err = azu.setVersion()
 	if err != nil {
-		log.Printf("azure: error setting version: %v\n", err)
+		return fmt.Errorf("azure: error setting version: %w", err)
 	}
 
 	log.Printf("azure: setting default creds")
@@ -108,11 +94,11 @@ func (azu *AzureUploader) AzureGalleryUpload(ctx context.Context) error {
 
 	err = azu.helper.getAzureLocations(ctx)
 	if err != nil {
-		return fmt.Errorf("error setting default Azure credentials: %w", err)
+		return fmt.Errorf("azure: error setting default Azure credentials: %w", err)
 	}
 
 	// Upload blob
-	log.Printf("azure: creating disks for architectures: %+v\n", azu.Options.Architectures)
+	log.Printf("azure: uploading blobs for architectures: %+v\n", azu.Options.Architectures)
 
 	for _, arch := range azu.Options.Architectures {
 		arch := arch
@@ -124,16 +110,10 @@ func (azu *AzureUploader) AzureGalleryUpload(ctx context.Context) error {
 				return fmt.Errorf("azure: error uploading page blob for %s: %w", arch, err)
 			}
 
-			log.Printf("azure: starting disk creation for %s\n", arch)
-			err = azu.createAzureDisk(ctx, azureDiskTemplate, arch)
-			if err != nil {
-				log.Printf("azure: error creating disk: %v\n", err)
-			}
-
 			log.Printf("azure: starting image version creation for %s\n", arch)
-			err = azu.createAzureImageVersion(ctx, azureImageVersionTemplate, arch)
+			err = azu.createAzureImageVersion(ctx, arch)
 			if err != nil {
-				log.Printf("azure: error creating image version: %v\n", err)
+				return fmt.Errorf("azure: error creating image version: %w", err)
 			}
 
 			return err
@@ -149,7 +129,7 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 
 	pageBlobClient, err := pageblob.NewClient(blobURL, azu.helper.cred, nil)
 	if err != nil {
-		log.Printf("azure: error creating pageblob client: %v\n", err)
+		return fmt.Errorf("azure: error creating pageblob client: %w", err)
 	}
 
 	source, err := os.Open(azu.Options.AzureImage(arch))
@@ -184,12 +164,12 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 
 	// Check if the file size is a multiple of 512 bytes
 	if totalSize%pageblob.PageBytes != 0 {
-		panic("azure: error: the file size must be a multiple of 512 bytes")
+		return fmt.Errorf("azure: error: the file size must be a multiple of 512 bytes")
 	}
 
 	_, err = pageBlobClient.Create(ctx, totalSize, nil)
 	if err != nil {
-		log.Printf("azure: error creating vhd: %v\n", err)
+		return fmt.Errorf("azure: error creating vhd: %w", err)
 	}
 
 	type work struct {
@@ -263,80 +243,105 @@ uploadLoop:
 	return nil
 }
 
-func (azu *AzureUploader) createAzureDisk(ctx context.Context, armTemplate []byte, arch string) error {
-	diskParameters := map[string]interface{}{
-		"disk_name": map[string]string{
-			"value": fmt.Sprintf("talos-%s-%s%s", arch, azu.Options.AzureCoreTag, azu.Options.AzurePreRelease),
-		},
-		"storage_account": map[string]string{
-			"value": storageAccount,
-		},
-		"vhd_name": map[string]string{
-			"value": fmt.Sprintf("talos-%s-%s.vhd", arch, azu.Options.Tag),
-		},
-		"region": map[string]string{
-			"value": defaultRegion,
-		},
-		"architecture": map[string]string{
-			"value": azureArchitectures[arch],
-		},
-	}
-
-	deploymentName := fmt.Sprintf("disk-talos-%s-%s", arch, azu.Options.Tag)
-
-	if err := azu.helper.deployResourceFromTemplate(ctx, armTemplate, diskParameters, deploymentName); err != nil {
-		return fmt.Errorf("azure: error applying Azure disk template: %w", err)
-	}
-
-	return nil
-}
-
-func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, armTemplate []byte, arch string) error {
-	targetRegions := make([]TargetRegion, 0, len(azu.helper.locations))
+func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, arch string) error {
+	targetRegions := make([]*armcompute.TargetRegion, 0, len(azu.helper.locations))
 
 	for _, region := range azu.helper.locations {
-		targetRegions = append(targetRegions, TargetRegion{
-			Name:                 region.Name,
-			RegionalReplicaCount: 1,
-			StorageAccountType:   "Standard_LRS",
+		targetRegions = append(targetRegions, &armcompute.TargetRegion{
+			Name:                 to.Ptr(region.Name),
+			ExcludeFromLatest:    to.Ptr(false),
+			RegionalReplicaCount: to.Ptr[int32](1),
+			StorageAccountType:   to.Ptr(armcompute.StorageAccountTypeStandardLRS),
 		})
 	}
 
-	versionParameters := map[string]interface{}{
-		"disk_name": map[string]string{
-			"value": fmt.Sprintf("talos-%s-%s%s", arch, azu.Options.AzureCoreTag, azu.Options.AzurePreRelease),
-		},
-		"image_version": map[string]string{
-			"value": azu.Options.AzureCoreTag,
-		},
-		"gallery_name": map[string]string{
-			"value": azu.Options.AzureGalleryName,
-		},
-		"definition_name": map[string]string{
-			"value": fmt.Sprintf("talos-%s", azureArchitectures[arch]),
-		},
-		"region": map[string]string{
-			"value": defaultRegion,
-		},
-		"resourceGroupName": map[string]string{
-			"value": resourceGroupName,
-		},
-		"targetRegions": map[string]interface{}{
-			"value": targetRegions,
-		},
+	pager := azu.helper.clientFactory.NewGalleryImageVersionsClient().NewListByGalleryImagePager(resourceGroupName, azu.Options.AzureGalleryName, fmt.Sprintf("talos-%s", azureArchitectures[arch]), nil)
+
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("azure: failed to list image versions: %w", err)
+		}
+
+		for _, v := range page.Value {
+			if *v.Name == azu.Options.AzureCoreTag {
+				log.Printf("azure: image version exists for %s\n azure: removing old image version\n", *v.Name)
+
+				err = azu.deleteImageVersion(ctx, arch)
+
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
-	deploymentName := fmt.Sprintf("img-version-talos-%s-%s", arch, azu.Options.Tag)
+	log.Printf("azure: creating %s image version", arch)
 
-	if err := azu.helper.deployResourceFromTemplate(ctx, armTemplate, versionParameters, deploymentName); err != nil {
-		return fmt.Errorf("azure: error applying Azure image version template: %w", err)
+	poller, err := azu.helper.clientFactory.NewGalleryImageVersionsClient().BeginCreateOrUpdate(
+		ctx,
+		resourceGroupName,
+		azu.Options.AzureGalleryName,
+		fmt.Sprintf("talos-%s", azureArchitectures[arch]),
+		azu.Options.AzureCoreTag,
+		armcompute.GalleryImageVersion{
+			Location: to.Ptr(defaultRegion),
+			Properties: &armcompute.GalleryImageVersionProperties{
+				PublishingProfile: &armcompute.GalleryImageVersionPublishingProfile{
+					TargetRegions: targetRegions,
+				},
+				SafetyProfile: &armcompute.GalleryImageVersionSafetyProfile{
+					AllowDeletionOfReplicatedLocations: to.Ptr(true),
+				},
+				StorageProfile: &armcompute.GalleryImageVersionStorageProfile{
+					OSDiskImage: &armcompute.GalleryOSDiskImage{
+						HostCaching: to.Ptr(armcompute.HostCachingReadOnly),
+						Source: &armcompute.GalleryDiskImageSource{
+							ID:  to.Ptr(fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Storage/storageAccounts/%s", azu.helper.subscriptionID, resourceGroupName, storageAccount)),
+							URI: to.Ptr(fmt.Sprintf("https://siderogallery.blob.core.windows.net/images/talos/talos-%s-%s.vhd", arch, azu.Options.Tag)),
+						},
+					},
+				},
+			},
+		},
+		nil)
+	if err != nil {
+		return fmt.Errorf("azure: failed to create image version: %w", err)
 	}
 
-	return nil
+	_, err = poller.PollUntilDone(ctx, nil)
+
+	if err != nil {
+		return fmt.Errorf("azure: failed to pull the result for image version creation: %w", err)
+	}
+
+	return err
+}
+
+func (azu *AzureUploader) deleteImageVersion(ctx context.Context, arch string) error {
+	poller, err := azu.helper.clientFactory.NewGalleryImageVersionsClient().BeginDelete(
+		ctx,
+		resourceGroupName,
+		azu.Options.AzureGalleryName,
+		fmt.Sprintf("talos-%s", azureArchitectures[arch]),
+		azu.Options.AzureCoreTag,
+		nil)
+	if err != nil {
+		return fmt.Errorf("azure: failed to delete image: %w", err)
+	}
+
+	_, err = poller.PollUntilDone(ctx, nil)
+
+	if err != nil {
+		return fmt.Errorf("azure: failed to pull the result for image deletion: %w", err)
+	}
+
+	return err
 }
 
 type azureHelper struct {
 	subscriptionID  string
+	clientFactory   *armcompute.ClientFactory
 	cred            *azidentity.DefaultAzureCredential
 	authorizer      autorest.Authorizer
 	providersClient resources.ProvidersClient
@@ -346,7 +351,7 @@ type azureHelper struct {
 func (helper *azureHelper) setDefaultAzureCreds() error {
 	helper.subscriptionID = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	if len(helper.subscriptionID) == 0 {
-		log.Fatalln("AZURE_SUBSCRIPTION_ID is not set.")
+		return fmt.Errorf("azure: AZURE_SUBSCRIPTION_ID is not set")
 	}
 
 	authFromEnvironment, err := auth.NewAuthorizerFromEnvironment()
@@ -360,6 +365,11 @@ func (helper *azureHelper) setDefaultAzureCreds() error {
 	helper.cred, err = azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		return err
+	}
+
+	helper.clientFactory, err = armcompute.NewClientFactory(helper.subscriptionID, helper.cred, nil)
+	if err != nil {
+		return fmt.Errorf("azure: failed to create client: %w", err)
 	}
 
 	// Initialize the Storage Accounts Client
@@ -412,7 +422,7 @@ func (helper *azureHelper) getAzureLocations(ctx context.Context) error {
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (helper *azureHelper) listProviders(ctx context.Context) (result []resources.Provider, err error) {
@@ -425,45 +435,4 @@ func (helper *azureHelper) listProviders(ctx context.Context) (result []resource
 	}
 
 	return
-}
-
-func (helper *azureHelper) deployResourceFromTemplate(ctx context.Context, templateBytes []byte, parameters map[string]interface{}, deploymentName string) error {
-	// Create a new instance of the DeploymentsClient
-	deploymentsClient, err := armresources.NewDeploymentsClient(helper.subscriptionID, helper.cred, nil)
-	if err != nil {
-		return err
-	}
-
-	// Replace these variables with your own values
-	resourceGroupName := "SideroGallery"
-
-	// Parse the template JSON
-	var template map[string]interface{}
-
-	if err = json.Unmarshal(templateBytes, &template); err != nil {
-		return fmt.Errorf("azure: error parsing template JSON: %w", err)
-	}
-
-	deployment := armresources.Deployment{
-		Properties: &armresources.DeploymentProperties{
-			Template:   template,
-			Parameters: parameters,
-			Mode:       to.Ptr(armresources.DeploymentModeIncremental),
-		},
-	}
-
-	poller, err := deploymentsClient.BeginCreateOrUpdate(ctx, resourceGroupName, deploymentName, deployment, nil)
-	if err != nil {
-		return fmt.Errorf("azure: failed to create deployment: %w", err)
-	}
-
-	// PollUntilDone requires a context and a poll interval
-	result, err := poller.PollUntilDone(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("azure: failed to poll deployment status: %w", err)
-	}
-
-	log.Printf("azure: deployment operation for %s: %+v\n", *result.Name, *result.Properties.ProvisioningState)
-
-	return nil
 }
