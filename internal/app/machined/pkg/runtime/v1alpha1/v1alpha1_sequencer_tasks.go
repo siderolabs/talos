@@ -1520,7 +1520,7 @@ func ResetSystemDisk(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 
 		defer dev.Close() //nolint:errcheck
 
-		return dev.Reset()
+		return dev.FastWipe()
 	}, "resetSystemDisk"
 }
 
