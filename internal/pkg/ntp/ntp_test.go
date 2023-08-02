@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"syscall"
 	"testing"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/ntp"
 	"github.com/siderolabs/talos/internal/pkg/timex"
@@ -57,11 +57,11 @@ func (suite *NTPSuite) getSystemClock() time.Time {
 	return suite.systemClock
 }
 
-func (suite *NTPSuite) adjustSystemClock(val *syscall.Timex) (status timex.State, err error) {
+func (suite *NTPSuite) adjustSystemClock(val *unix.Timex) (status timex.State, err error) {
 	suite.clockLock.Lock()
 	defer suite.clockLock.Unlock()
 
-	if val.Modes&timex.ADJ_OFFSET == timex.ADJ_OFFSET {
+	if val.Modes&unix.ADJ_OFFSET == unix.ADJ_OFFSET {
 		suite.T().Logf("adjustment by %s", time.Duration(val.Offset)*time.Nanosecond)
 		suite.clockAdjustments = append(suite.clockAdjustments, time.Duration(val.Offset)*time.Nanosecond)
 	} else {

@@ -14,13 +14,13 @@ import (
 	"net"
 	"reflect"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/beevik/ntp"
 	"github.com/u-root/u-root/pkg/rtc"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/timex"
 )
@@ -393,13 +393,22 @@ func (syncer *Syncer) queryServer(server string) (*ntp.Response, error) {
 	return resp, err
 }
 
+// log2i returns 0 for v == 0 and v == 1.
+func log2i(v uint64) int {
+	if v == 0 {
+		return 0
+	}
+
+	return 63 - bits.LeadingZeros64(v)
+}
+
 // adjustTime adds an offset to the current time.
 //
 //nolint:gocyclo
 func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndicator, server string, nextPollInterval time.Duration) error {
 	var (
 		buf  bytes.Buffer
-		req  syscall.Timex
+		req  unix.Timex
 		jump bool
 	)
 
@@ -408,9 +417,9 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 
 		fmt.Fprintf(&buf, "adjusting time (jump) by %s via %s", offset, server)
 
-		req = syscall.Timex{
-			Modes: timex.ADJ_SETOFFSET | timex.ADJ_NANO | timex.ADJ_STATUS | timex.ADJ_MAXERROR | timex.ADJ_ESTERROR,
-			Time: syscall.Timeval{
+		req = unix.Timex{
+			Modes: unix.ADJ_SETOFFSET | unix.ADJ_NANO | unix.ADJ_STATUS | unix.ADJ_MAXERROR | unix.ADJ_ESTERROR,
+			Time: unix.Timeval{
 				Sec:  int64(offset / time.Second),
 				Usec: int64(offset / time.Nanosecond % time.Second),
 			},
@@ -427,12 +436,12 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 		fmt.Fprintf(&buf, "adjusting time (slew) by %s via %s", offset, server)
 
 		pollSeconds := uint64(nextPollInterval / time.Second)
-		log2iPollSeconds := 64 - bits.LeadingZeros64(pollSeconds)
+		log2iPollSeconds := log2i(pollSeconds)
 
-		req = syscall.Timex{
-			Modes:    timex.ADJ_OFFSET | timex.ADJ_NANO | timex.ADJ_STATUS | timex.ADJ_TIMECONST | timex.ADJ_MAXERROR | timex.ADJ_ESTERROR,
+		req = unix.Timex{
+			Modes:    unix.ADJ_OFFSET | unix.ADJ_NANO | unix.ADJ_STATUS | unix.ADJ_TIMECONST | unix.ADJ_MAXERROR | unix.ADJ_ESTERROR,
 			Offset:   int64(offset / time.Nanosecond),
-			Status:   timex.STA_PLL,
+			Status:   unix.STA_PLL,
 			Maxerror: 0,
 			Esterror: 0,
 			Constant: int64(log2iPollSeconds) - 4,
@@ -441,9 +450,9 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 
 	switch leapSecond { //nolint:exhaustive
 	case ntp.LeapAddSecond:
-		req.Status |= timex.STA_INS
+		req.Status |= unix.STA_INS
 	case ntp.LeapDelSecond:
-		req.Status |= timex.STA_DEL
+		req.Status |= unix.STA_DEL
 	}
 
 	logLevel := zapcore.DebugLevel
