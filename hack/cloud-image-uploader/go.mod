@@ -6,6 +6,7 @@ require (
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.7.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 v5.1.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources v1.1.1
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.3.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.1.0
@@ -17,6 +18,7 @@ require (
 	github.com/siderolabs/gen v0.4.5
 	github.com/siderolabs/go-retry v0.3.2
 	github.com/spf13/pflag v1.0.5
+	github.com/ulikunitz/xz v0.5.11
 	golang.org/x/sync v0.3.0
 )
 
