@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/beevik/ntp"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/timex"
 )
@@ -23,4 +24,4 @@ type QueryFunc func(server string) (*ntp.Response, error)
 type SetTimeFunc func(tv *syscall.Timeval) error
 
 // AdjustTimeFunc provides a function to adjust time.
-type AdjustTimeFunc func(buf *syscall.Timex) (state timex.State, err error)
+type AdjustTimeFunc func(buf *unix.Timex) (state timex.State, err error)
