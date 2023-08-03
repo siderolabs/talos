@@ -13,7 +13,9 @@ import (
 type Options struct {
 	Tag           string
 	ArtifactsPath string
+	NamePrefix    string
 	Architectures []string
+	TargetClouds  []string
 
 	// AWS options.
 	AWSRegions []string
@@ -36,6 +38,7 @@ type Location struct {
 var DefaultOptions = Options{
 	ArtifactsPath: "_out/",
 	Architectures: []string{"amd64", "arm64"},
+	TargetClouds:  []string{"aws", "azure"},
 }
 
 // AWSImage returns path to AWS pre-built image.

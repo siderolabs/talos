@@ -253,6 +253,10 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 
 	imageName := fmt.Sprintf("talos-%s-%s-%s", au.Options.Tag, region, arch)
 
+	if au.Options.NamePrefix != "" {
+		imageName = fmt.Sprintf("%s-%s-%s-%s", au.Options.NamePrefix, au.Options.Tag, region, arch)
+	}
+
 	imageResp, err := svc.DescribeImagesWithContext(ctx, &ec2.DescribeImagesInput{
 		Filters: []*ec2.Filter{
 			{
