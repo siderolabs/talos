@@ -7,8 +7,8 @@ aliases:
 
 > Cilium can be installed either via the `cilium` cli or using `helm`.
 
-This documentation will outline installing Cilium CNI v1.13.0 on Talos in six different ways.
-Adhering to Talos principles we'll deploy Cilium with IPAM mode set to Kubernetes, and using the `cgroupv2` mount that talos already provides.
+This documentation will outline installing Cilium CNI v1.14.0 on Talos in six different ways.
+Adhering to Talos principles we'll deploy Cilium with IPAM mode set to Kubernetes, and using the `cgroupv2` and `bpffs` mount that talos already provides.
 As Talos does not allow loading kernel modules by Kubernetes workloads, `SYS_MODULE` capability needs to be dropped from the Cilium default set of values, this override can be seen in the helm/cilium cli install commands.
 Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.13/network/kubernetes/kubeproxy-free/)
 
@@ -90,6 +90,7 @@ cilium install \
     --helm-set=kubeProxyReplacement=strict \
     --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --helm-set=bpf.autoMount.enabled=false \
     --helm-set=cgroup.autoMount.enabled=false \
     --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
     --helm-set=k8sServiceHost=localhost \
@@ -119,12 +120,13 @@ During this window you can install Cilium manually by running the following:
 helm install \
     cilium \
     cilium/cilium \
-    --version 1.13.0 \
+    --version 1.14.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set=kubeProxyReplacement=disabled \
     --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set=bpf.autoMount.enabled=false \
     --set=cgroup.autoMount.enabled=false \
     --set=cgroup.hostRoot=/sys/fs/cgroup
 ```
@@ -135,12 +137,13 @@ Or if you want to deploy Cilium in strict mode without kube-proxy, also set some
 helm install \
     cilium \
     cilium/cilium \
-    --version 1.13.0 \
+    --version 1.14.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set=kubeProxyReplacement=strict \
     --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set=bpf.autoMount.enabled=false \
     --set=cgroup.autoMount.enabled=false \
     --set=cgroup.hostRoot=/sys/fs/cgroup \
     --set=k8sServiceHost=localhost \
@@ -157,12 +160,13 @@ Instead of directly installing Cilium you can instead first generate the manifes
 helm template \
     cilium \
     cilium/cilium \
-    --version 1.13.0 \
+    --version 1.14.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set=kubeProxyReplacement=disabled \
     --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set=bpf.autoMount.enabled=false \
     --set=cgroup.autoMount.enabled=false \
     --set=cgroup.hostRoot=/sys/fs/cgroup > cilium.yaml
 
@@ -178,12 +182,13 @@ export KUBERNETES_API_SERVER_PORT=6443
 helm template \
     cilium \
     cilium/cilium \
-    --version 1.13.0 \
+    --version 1.14.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
     --set=kubeProxyReplacement=strict \
     --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set=bpf.autoMount.enabled=false \
     --set=cgroup.autoMount.enabled=false \
     --set=cgroup.hostRoot=/sys/fs/cgroup \
     --set=k8sServiceHost=localhost \
