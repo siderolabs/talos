@@ -244,6 +244,14 @@ kernel: ## Outputs the kernel package contents (vmlinuz) to the artifact directo
 initramfs: ## Builds the compressed initramfs and outputs it to the artifact directory.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
 
+.PHONY: sd-boot
+sd-boot: ## Outputs the systemd-boot to the artifact directory.
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
+
+.PHONY: sd-stub
+sd-stub: ## Outputs the systemd-stub to the artifact directory.
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
+
 .PHONY: installer
 installer: ## Builds the container image for the installer and outputs it to the registry.
 	@INSTALLER_ARCH=targetarch  \
