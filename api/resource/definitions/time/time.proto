@@ -4,6 +4,20 @@ package talos.resource.definitions.time;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/time";
 
+import "google/protobuf/duration.proto";
+
+// AdjtimeStatusSpec describes Linux internal adjtime state.
+message AdjtimeStatusSpec {
+  google.protobuf.Duration offset = 1;
+  double frequency_adjustment_ratio = 2;
+  google.protobuf.Duration max_error = 3;
+  google.protobuf.Duration est_error = 4;
+  string status = 5;
+  int64 constant = 6;
+  bool sync_status = 7;
+  string state = 8;
+}
+
 // StatusSpec describes time sync state.
 message StatusSpec {
   bool synced = 1;

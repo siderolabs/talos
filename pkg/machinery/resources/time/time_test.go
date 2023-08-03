@@ -25,6 +25,7 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []meta.ResourceWithRD{
+		&time.AdjtimeStatus{},
 		&time.Status{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))

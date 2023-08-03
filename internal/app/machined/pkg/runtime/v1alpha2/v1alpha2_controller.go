@@ -299,6 +299,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Cmdline: procfs.ProcCmdline(),
 		},
 		&siderolink.ManagerController{},
+		&timecontrollers.AdjtimeStatusController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&timecontrollers.SyncController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

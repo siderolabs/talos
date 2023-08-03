@@ -221,6 +221,7 @@ description: Talos gRPC API reference.
     - [ConfigSpec](#talos.resource.definitions.siderolink.ConfigSpec)
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
+    - [AdjtimeStatusSpec](#talos.resource.definitions.time.AdjtimeStatusSpec)
     - [StatusSpec](#talos.resource.definitions.time.StatusSpec)
   
 - [resource/definitions/v1alpha1/v1alpha1.proto](#resource/definitions/v1alpha1/v1alpha1.proto)
@@ -3949,6 +3950,28 @@ ConfigSpec describes KubeSpan configuration..
 <p align="right"><a href="#top">Top</a></p>
 
 ## resource/definitions/time/time.proto
+
+
+
+<a name="talos.resource.definitions.time.AdjtimeStatusSpec"></a>
+
+### AdjtimeStatusSpec
+AdjtimeStatusSpec describes Linux internal adjtime state.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| offset | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| frequency_adjustment_ratio | [double](#double) |  |  |
+| max_error | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| est_error | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| status | [string](#string) |  |  |
+| constant | [int64](#int64) |  |  |
+| sync_status | [bool](#bool) |  |  |
+| state | [string](#string) |  |  |
+
+
+
 
 
 

@@ -196,6 +196,7 @@ func NewState() (*State, error) {
 		&secrets.OSRoot{},
 		&secrets.Trustd{},
 		&siderolink.Config{},
+		&time.AdjtimeStatus{},
 		&time.Status{},
 		&v1alpha1.AcquireConfigSpec{},
 		&v1alpha1.AcquireConfigStatus{},
