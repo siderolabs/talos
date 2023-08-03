@@ -5,22 +5,24 @@
 // Package talos15 provides compatibility constants for Talos 1.5.
 package talos15
 
-import "github.com/hashicorp/go-version"
+import (
+	"github.com/blang/semver/v4"
+)
 
 // MajorMinor is the major.minor version of Talos 1.5.
-var MajorMinor = [2]int{1, 5}
+var MajorMinor = [2]uint64{1, 5}
 
 // MinimumHostUpgradeVersion is the minimum version of Talos that can be upgraded to 1.5.
-var MinimumHostUpgradeVersion = version.Must(version.NewVersion("1.2.0"))
+var MinimumHostUpgradeVersion = semver.MustParse("1.2.0")
 
 // MaximumHostDowngradeVersion is the maximum (not inclusive) version of Talos that can be downgraded to 1.5.
-var MaximumHostDowngradeVersion = version.Must(version.NewVersion("1.7.0"))
+var MaximumHostDowngradeVersion = semver.MustParse("1.7.0")
 
 // DeniedHostUpgradeVersions are the versions of Talos that cannot be upgraded to 1.5.
-var DeniedHostUpgradeVersions = []*version.Version{}
+var DeniedHostUpgradeVersions = []semver.Version{}
 
 // MinimumKubernetesVersion is the minimum version of Kubernetes is supported with 1.5.
-var MinimumKubernetesVersion = version.Must(version.NewVersion("1.26.0"))
+var MinimumKubernetesVersion = semver.MustParse("1.26.0")
 
 // MaximumKubernetesVersion is the maximum version of Kubernetes is supported with 1.5.
-var MaximumKubernetesVersion = version.Must(version.NewVersion("1.28.99"))
+var MaximumKubernetesVersion = semver.MustParse("1.28.99")

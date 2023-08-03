@@ -7,7 +7,8 @@ package compatibility
 import (
 	"fmt"
 
-	"github.com/hashicorp/go-version"
+	"github.com/blang/semver/v4"
+	"github.com/siderolabs/gen/pair/ordered"
 
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos12"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos13"
@@ -17,28 +18,28 @@ import (
 
 // KubernetesVersion embeds Kubernetes version.
 type KubernetesVersion struct {
-	version version.Version
+	vers semver.Version
 }
 
 // ParseKubernetesVersion parses Kubernetes version.
 func ParseKubernetesVersion(v string) (*KubernetesVersion, error) {
-	parsed, err := version.NewVersion(v)
+	parsed, err := semver.ParseTolerant(v)
 	if err != nil {
 		return nil, err
 	}
 
 	return &KubernetesVersion{
-		version: *parsed,
+		vers: parsed,
 	}, nil
 }
 
 func (v *KubernetesVersion) String() string {
-	return v.version.String()
+	return v.vers.String()
 }
 
 // SupportedWith checks if the Kubernetes version is supported with specified version of Talos.
 func (v *KubernetesVersion) SupportedWith(target *TalosVersion) error {
-	var minK8sVersion, maxK8sVersion *version.Version
+	var minK8sVersion, maxK8sVersion semver.Version
 
 	switch target.majorMinor {
 	case talos12.MajorMinor: // upgrades to 1.2.x
@@ -53,12 +54,17 @@ func (v *KubernetesVersion) SupportedWith(target *TalosVersion) error {
 		return fmt.Errorf("compatibility with version %s is not supported", target.String())
 	}
 
-	if v.version.Core().LessThan(minK8sVersion) {
-		return fmt.Errorf("version of Kubernetes %s is too old to be used with Talos %s", v.version.String(), target.version.String())
+	core := ordered.MakeTriple(v.vers.Major, v.vers.Minor, v.vers.Patch)
+	minK8sVersionCore := ordered.MakeTriple(minK8sVersion.Major, minK8sVersion.Minor, minK8sVersion.Patch)
+
+	if core.LessThan(minK8sVersionCore) {
+		return fmt.Errorf("version of Kubernetes %s is too old to be used with Talos %s", v.vers.String(), target.version.String())
 	}
 
-	if v.version.Core().GreaterThanOrEqual(maxK8sVersion) {
-		return fmt.Errorf("version of Kubernetes %s is too new to be used with Talos %s", v.version.String(), target.version.String())
+	maxK8sVersionCore := ordered.MakeTriple(maxK8sVersion.Major, maxK8sVersion.Minor, maxK8sVersion.Patch)
+
+	if core.Compare(maxK8sVersionCore) >= 0 {
+		return fmt.Errorf("version of Kubernetes %s is too new to be used with Talos %s", v.vers.String(), target.version.String())
 	}
 
 	return nil

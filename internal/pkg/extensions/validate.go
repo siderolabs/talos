@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	hashiversion "github.com/hashicorp/go-version"
+	"github.com/blang/semver/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
 	"github.com/siderolabs/talos/pkg/version"
@@ -27,23 +27,44 @@ func (ext *Extension) Validate() error {
 }
 
 func (ext *Extension) validateConstraints() error {
-	if ext.Manifest.Metadata.Compatibility.Talos.Version != "" {
-		talosVersion, err := hashiversion.NewVersion(version.Tag)
+	constraint := ext.Manifest.Metadata.Compatibility.Talos.Version
+
+	if constraint != "" {
+		talosVersion, err := semver.ParseTolerant(version.Tag)
 		if err != nil {
 			return err
 		}
 
-		versionConstraint, err := hashiversion.NewConstraint(ext.Manifest.Metadata.Compatibility.Talos.Version)
+		versionConstraint, err := semver.ParseRange(trim(constraint))
 		if err != nil {
 			return fmt.Errorf("error parsing Talos version constraint: %w", err)
 		}
 
-		if !versionConstraint.Check(talosVersion.Core()) {
-			return fmt.Errorf("version constraint %s can't be satisfied with Talos version %s", versionConstraint, talosVersion)
+		if !versionConstraint(coreVersion(talosVersion)) {
+			return fmt.Errorf("version constraint %s can't be satisfied with Talos version %s", constraint, talosVersion)
 		}
 	}
 
 	return nil
+}
+
+// trim removes 'v' symbol anywhere in string if it's located before the number.
+func trim(constraint string) string {
+	for i := 0; i < len(constraint); i++ {
+		if constraint[i] == 'v' && i+1 < len(constraint) && constraint[i+1] >= '0' && constraint[i+1] <= '9' {
+			constraint = constraint[:i] + constraint[i+1:]
+		}
+	}
+
+	return constraint
+}
+
+func coreVersion(talosVersion semver.Version) semver.Version {
+	return semver.Version{
+		Major: talosVersion.Major,
+		Minor: talosVersion.Minor,
+		Patch: talosVersion.Patch,
+	}
 }
 
 //nolint:gocyclo

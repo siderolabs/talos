@@ -7,7 +7,8 @@ package compatibility
 import (
 	"fmt"
 
-	"github.com/hashicorp/go-version"
+	"github.com/blang/semver/v4"
+	"github.com/siderolabs/gen/pair/ordered"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos12"
@@ -18,20 +19,20 @@ import (
 
 // TalosVersion embeds Talos version.
 type TalosVersion struct {
-	version    version.Version
-	majorMinor [2]int
+	version    semver.Version
+	majorMinor [2]uint64
 }
 
 // ParseTalosVersion parses Talos version.
 func ParseTalosVersion(v *machine.VersionInfo) (*TalosVersion, error) {
-	parsed, err := version.NewVersion(v.Tag)
+	parsed, err := semver.ParseTolerant(v.Tag)
 	if err != nil {
 		return nil, err
 	}
 
 	return &TalosVersion{
-		version:    *parsed,
-		majorMinor: [2]int{parsed.Segments()[0], parsed.Segments()[1]},
+		version:    parsed,
+		majorMinor: [2]uint64{parsed.Major, parsed.Minor},
 	}, nil
 }
 
@@ -51,8 +52,8 @@ func (v *TalosVersion) DisablePredictableNetworkInterfaces() bool {
 // UpgradeableFrom checks if the current version of Talos can be used as an upgrade for the given host version.
 func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 	var (
-		minHostUpgradeVersion, maxHostDowngradeVersion *version.Version
-		deniedHostUpgradeVersions                      []*version.Version
+		minHostUpgradeVersion, maxHostDowngradeVersion semver.Version
+		deniedHostUpgradeVersions                      []semver.Version
 	)
 
 	switch v.majorMinor {
@@ -72,16 +73,22 @@ func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 		return fmt.Errorf("upgrades to version %s are not supported", v.version.String())
 	}
 
-	if host.version.Core().LessThan(minHostUpgradeVersion) {
+	hostCore := ordered.MakeTriple(host.majorMinor[0], host.majorMinor[1], host.version.Patch)
+
+	minHostUpgradeVersionCore := ordered.MakeTriple(minHostUpgradeVersion.Major, minHostUpgradeVersion.Minor, minHostUpgradeVersion.Patch)
+
+	if hostCore.LessThan(minHostUpgradeVersionCore) {
 		return fmt.Errorf("host version %s is too old to upgrade to Talos %s", host.version.String(), v.version.String())
 	}
 
-	if host.version.Core().GreaterThanOrEqual(maxHostDowngradeVersion) {
+	maxHostDowngradeVersionCore := ordered.MakeTriple(maxHostDowngradeVersion.Major, maxHostDowngradeVersion.Minor, maxHostDowngradeVersion.Patch)
+
+	if hostCore.Compare(maxHostDowngradeVersionCore) >= 0 {
 		return fmt.Errorf("host version %s is too new to downgrade to Talos %s", host.version.String(), v.version.String())
 	}
 
 	for _, denied := range deniedHostUpgradeVersions {
-		if host.version.Equal(denied) {
+		if host.version.EQ(denied) {
 			return fmt.Errorf("host version %s is denied for upgrade to Talos %s", host.version.String(), v.version.String())
 		}
 	}

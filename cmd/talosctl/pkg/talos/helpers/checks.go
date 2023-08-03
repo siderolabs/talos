@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	hashiversion "github.com/hashicorp/go-version"
+	"github.com/blang/semver/v4"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -51,7 +51,7 @@ func ClientVersionCheck(ctx context.Context, c *client.Client) error {
 	// ignore the error, as we are only interested in the nodes which respond
 	serverVersions, _ := c.Version(ctx) //nolint:errcheck
 
-	clientVersion, err := hashiversion.NewVersion(version.NewVersion().Tag)
+	clientVersion, err := semver.ParseTolerant(version.NewVersion().Tag)
 	if err != nil {
 		return fmt.Errorf("error parsing client version: %w", err)
 	}
@@ -61,7 +61,7 @@ func ClientVersionCheck(ctx context.Context, c *client.Client) error {
 	for _, msg := range serverVersions.GetMessages() {
 		node := msg.GetMetadata().GetHostname()
 
-		serverVersion, err := hashiversion.NewVersion(msg.GetVersion().Tag)
+		serverVersion, err := semver.ParseTolerant(msg.GetVersion().Tag)
 		if err != nil {
 			return fmt.Errorf("%s: error parsing server version: %w", node, err)
 		}

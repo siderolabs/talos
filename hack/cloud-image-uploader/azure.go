@@ -24,7 +24,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/pageblob"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
-	"github.com/hashicorp/go-version"
+	"github.com/blang/semver/v4"
 	"github.com/siderolabs/gen/channel"
 	"github.com/ulikunitz/xz"
 	"golang.org/x/sync/errgroup"
@@ -51,12 +51,12 @@ type AzureUploader struct {
 
 // extractVersion extracts the version number in the format of int.int.int for Azure and assigns to the Options.AzureTag value.
 func (azu *AzureUploader) setVersion() error {
-	v, err := version.NewVersion(azu.Options.AzureAbbrevTag)
+	v, err := semver.ParseTolerant(azu.Options.AzureAbbrevTag)
 	if err != nil {
 		return err
 	}
 
-	versionCore := v.Core().String()
+	versionCore := fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
 
 	if fmt.Sprintf("v%s", versionCore) != azu.Options.AzureAbbrevTag {
 		azu.Options.AzureGalleryName = "SideroGalleryTest"

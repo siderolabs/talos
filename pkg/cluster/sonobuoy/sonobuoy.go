@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/go-semver/semver"
+	"github.com/blang/semver/v4"
 	"github.com/vmware-tanzu/sonobuoy/cmd/sonobuoy/app"
 	"github.com/vmware-tanzu/sonobuoy/pkg/client"
 	"github.com/vmware-tanzu/sonobuoy/pkg/config"
@@ -106,7 +106,7 @@ func CertifiedConformance(ctx context.Context, cluster cluster.K8sProvider) erro
 		RetrieveResults:   true,
 	}
 
-	k8sVersion, err := semver.NewVersion(options.KubernetesVersion)
+	k8sVersion, err := semver.ParseTolerant(options.KubernetesVersion)
 	if err != nil {
 		return err
 	}

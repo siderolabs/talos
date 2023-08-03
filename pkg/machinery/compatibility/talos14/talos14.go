@@ -5,22 +5,24 @@
 // Package talos14 provides compatibility constants for Talos 1.4
 package talos14
 
-import "github.com/hashicorp/go-version"
+import (
+	"github.com/blang/semver/v4"
+)
 
 // MajorMinor is the major.minor version of Talos 1.4.
-var MajorMinor = [2]int{1, 4}
+var MajorMinor = [2]uint64{1, 4}
 
 // MinimumHostUpgradeVersion is the minimum version of Talos that can be upgraded to 1.4.
-var MinimumHostUpgradeVersion = version.Must(version.NewVersion("1.0.0"))
+var MinimumHostUpgradeVersion = semver.MustParse("1.0.0")
 
 // MaximumHostDowngradeVersion is the maximum (not inclusive) version of Talos that can be downgraded to 1.4.
-var MaximumHostDowngradeVersion = version.Must(version.NewVersion("1.6.0"))
+var MaximumHostDowngradeVersion = semver.MustParse("1.6.0")
 
 // DeniedHostUpgradeVersions are the versions of Talos that cannot be upgraded to 1.4.
-var DeniedHostUpgradeVersions = []*version.Version{}
+var DeniedHostUpgradeVersions = []semver.Version{}
 
 // MinimumKubernetesVersion is the minimum version of Kubernetes is supported with 1.4.
-var MinimumKubernetesVersion = version.Must(version.NewVersion("1.25.0"))
+var MinimumKubernetesVersion = semver.MustParse("1.25.0")
 
 // MaximumKubernetesVersion is the maximum version of Kubernetes is supported with 1.4.
-var MaximumKubernetesVersion = version.Must(version.NewVersion("1.27.99"))
+var MaximumKubernetesVersion = semver.MustParse("1.27.99")

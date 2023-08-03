@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/coreos/go-semver/semver"
+	"github.com/blang/semver/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -52,15 +52,15 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 				continue
 			}
 
-			v, err := semver.NewVersion(strings.TrimLeft(container.Image[idx+1:], "v"))
+			v, err := semver.ParseTolerant(strings.TrimLeft(container.Image[idx+1:], "v"))
 			if err != nil {
 				options.Log("failed to parse %s container version %s", app, err)
 
 				continue
 			}
 
-			if version == nil || v.LessThan(*version) {
-				version = v
+			if version == nil || v.LT(*version) {
+				version = &v
 			}
 		}
 	}
