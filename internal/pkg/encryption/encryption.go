@@ -37,7 +37,7 @@ const (
 func NewHandler(device *blockdevice.BlockDevice, partition *gpt.Partition, encryptionConfig config.Encryption, getSystemInformation helpers.SystemInformationGetter) (*Handler, error) {
 	var provider encryption.Provider
 
-	switch encryptionConfig.Kind() {
+	switch encryptionConfig.Provider() {
 	case encryption.LUKS2:
 		cipher, err := luks.ParseCipherKind(encryptionConfig.Cipher())
 		if err != nil {
@@ -68,7 +68,7 @@ func NewHandler(device *blockdevice.BlockDevice, partition *gpt.Partition, encry
 			opts...,
 		)
 	default:
-		return nil, fmt.Errorf("unknown encryption kind %s", encryptionConfig.Kind())
+		return nil, fmt.Errorf("unknown encryption kind %s", encryptionConfig.Provider())
 	}
 
 	return &Handler{
@@ -116,7 +116,7 @@ func (h *Handler) Open(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
-	} else if sb.Type() != h.encryptionConfig.Kind() {
+	} else if sb.Type() != h.encryptionConfig.Provider() {
 		return "", fmt.Errorf("failed to encrypt the partition %s, because it is not empty", partPath)
 	}
 
