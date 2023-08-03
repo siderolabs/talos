@@ -133,10 +133,12 @@ Example machine config:
 ```
 systemDiskEncryption:
   ephemeral:
+    provider: luks2
     keys:
       - slot: 0
         tpm: {}
   state:
+    provider: luks2
     keys:
       - slot: 0
         tpm: {}
@@ -163,7 +165,6 @@ Both new commands accept `--namespace` flag with two possible values:
 
 * `cri` (default): images managed by the CRI (Kubernetes workloads)
 * `system`: images managed by Talos (`etcd` and `kubelet`)
-```
 """
 
     [notes.upgrade-k8s]
