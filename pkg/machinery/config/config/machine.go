@@ -379,7 +379,7 @@ type EncryptionKeyTPM interface{}
 
 // Encryption defines settings for the partition encryption.
 type Encryption interface {
-	Kind() string
+	Provider() string
 	Cipher() string
 	KeySize() uint
 	BlockSize() uint64

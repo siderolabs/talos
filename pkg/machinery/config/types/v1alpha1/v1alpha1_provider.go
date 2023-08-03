@@ -15,6 +15,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/siderolabs/go-pointer"
 
@@ -1313,8 +1314,12 @@ func (p *DiskPartition) MountPoint() string {
 	return p.DiskMountPoint
 }
 
-// Kind implements the config.Provider interface.
-func (e *EncryptionConfig) Kind() string {
+// Provider implements the config.Provider interface.
+func (e *EncryptionConfig) Provider() string {
+	if e.EncryptionProvider == "" {
+		return encryption.LUKS2
+	}
+
 	return e.EncryptionProvider
 }
 

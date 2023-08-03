@@ -220,19 +220,19 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		encryptionConfig := c.MachineConfig.SystemDiskEncryption().Get(label)
 		if encryptionConfig != nil {
 			if len(encryptionConfig.Keys()) == 0 {
-				result = multierror.Append(result, fmt.Errorf("no encryption keys provided for the ephemeral partition encryption"))
+				result = multierror.Append(result, fmt.Errorf("partition %q: no encryption keys provided", label))
 			}
 
-			slotsInUse := map[int]bool{}
+			slotsInUse := map[int]struct{}{}
 			for _, key := range encryptionConfig.Keys() {
-				if slotsInUse[key.Slot()] {
-					result = multierror.Append(result, fmt.Errorf("encryption key slot %d is already in use", key.Slot()))
+				if _, inUse := slotsInUse[key.Slot()]; inUse {
+					result = multierror.Append(result, fmt.Errorf("partition %q: encryption key slot %d is already in use", label, key.Slot()))
 				}
 
-				slotsInUse[key.Slot()] = true
+				slotsInUse[key.Slot()] = struct{}{}
 
 				if key.NodeID() == nil && key.Static() == nil && key.KMS() == nil && key.TPM() == nil {
-					result = multierror.Append(result, fmt.Errorf("encryption key at slot %d doesn't have any settings", key.Slot()))
+					result = multierror.Append(result, fmt.Errorf("partition %q: encryption key at slot %d doesn't have the configuration parameters", label, key.Slot()))
 				}
 			}
 		}
