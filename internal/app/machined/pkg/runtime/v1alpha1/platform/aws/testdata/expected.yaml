@@ -16,4 +16,4 @@ metadata:
     region: us-east-1
     zone: us-east-1a
     instanceId: i-0a0a0a0a0a0a0a0a0
-    providerId: aws://us-east-1a/i-0a0a0a0a0a0a0a0a0
+    providerId: aws:///us-east-1a/i-0a0a0a0a0a0a0a0a0

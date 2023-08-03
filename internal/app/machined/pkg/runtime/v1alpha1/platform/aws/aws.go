@@ -85,7 +85,7 @@ func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		Zone:         metadata.Zone,
 		InstanceType: metadata.InstanceType,
 		InstanceID:   metadata.InstanceID,
-		ProviderID:   fmt.Sprintf("aws://%s/%s", metadata.Zone, metadata.InstanceID),
+		ProviderID:   fmt.Sprintf("aws:///%s/%s", metadata.Zone, metadata.InstanceID),
 		Spot:         metadata.InstanceLifeCycle == "spot",
 	}
 
