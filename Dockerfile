@@ -28,6 +28,7 @@ FROM ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub
 FROM --platform=amd64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/grub:${PKGS} AS pkg-grub-arm64
 
+FROM ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot
 FROM --platform=amd64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-arm64
 
@@ -474,6 +475,16 @@ ENTRYPOINT ["/talosctl"]
 FROM scratch AS kernel
 ARG TARGETARCH
 COPY --from=pkg-kernel /boot/vmlinuz /vmlinuz-${TARGETARCH}
+
+# The sd-boot target is the systemd-boot asset.
+FROM scratch AS sd-boot
+ARG TARGETARCH
+COPY --from=pkg-sd-boot /*.efi /sd-boot-${TARGETARCH}.efi
+
+# The sd-stub target is the systemd-stub asset.
+FROM scratch AS sd-stub
+ARG TARGETARCH
+COPY --from=pkg-sd-boot /*.efi.stub /sd-stub-${TARGETARCH}.efi
 
 FROM tools AS depmod-amd64
 WORKDIR /staging

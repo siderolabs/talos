@@ -211,7 +211,7 @@ local external_artifacts = Step('external-artifacts', depends_on=[setup_ci]);
 local generate = Step('generate', target='generate docs', depends_on=[setup_ci]);
 local uki_certs = Step('uki-certs', depends_on=[generate], environment={ PLATFORM: 'linux/amd64' });
 local check_dirty = Step('check-dirty', depends_on=[generate, external_artifacts, uki_certs]);
-local build = Step('build', target='talosctl-all kernel initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
+local build = Step('build', target='talosctl-all kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64', depends_on=[check_dirty], environment={ IMAGE_REGISTRY: local_registry, PUSH: true });
 local lint = Step('lint', depends_on=[build]);
 local talosctl_cni_bundle = Step('talosctl-cni-bundle', depends_on=[build, lint]);
 local iso = Step('iso', target='iso secureboot-iso', depends_on=[build], environment={ IMAGE_REGISTRY: local_registry });
@@ -735,6 +735,10 @@ local release = {
       '_out/oracle-arm64.qcow2.xz',
       '_out/scaleway-amd64.raw.xz',
       '_out/scaleway-arm64.raw.xz',
+      '_out/sd-boot-amd64.efi',
+      '_out/sd-boot-arm64.efi',
+      '_out/sd-stub-amd64.efi',
+      '_out/sd-stub-arm64.efi',
       '_out/talosctl-cni-bundle-amd64.tar.gz',
       '_out/talosctl-cni-bundle-arm64.tar.gz',
       '_out/talosctl-darwin-amd64',
