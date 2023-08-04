@@ -159,7 +159,9 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: filepath.Dir(constants.APISocketPath), Source: filepath.Dir(constants.APISocketPath), Options: []string{"rbind", "rw"}},
 	}
 
-	env := []string{}
+	env := []string{
+		constants.TcellMinimizeEnvironment,
+	}
 
 	for _, value := range environment.Get(r.Config()) {
 		key, _, _ := strings.Cut(value, "=")

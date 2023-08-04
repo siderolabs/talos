@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	_ "github.com/gdamore/tcell/v2/terminfo/l/linux" // linux terminal is used when running on the machine, but not included with tcell_minimal
 	"github.com/gizak/termui/v3"
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"

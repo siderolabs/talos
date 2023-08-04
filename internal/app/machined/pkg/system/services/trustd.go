@@ -140,6 +140,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	env := environment.Get(r.Config())
+	env = append(env, constants.TcellMinimizeEnvironment)
 
 	if debug.RaceEnabled {
 		env = append(env, "GORACE=halt_on_error=1")

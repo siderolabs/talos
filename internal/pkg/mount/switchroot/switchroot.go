@@ -77,7 +77,9 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 	// convention.
 	log.Println("executing /sbin/init")
 
-	envv := []string{}
+	envv := []string{
+		constants.TcellMinimizeEnvironment,
+	}
 
 	if debug.RaceEnabled {
 		envv = append(envv, "GORACE=halt_on_error=1")

@@ -893,6 +893,9 @@ const (
 
 	// GRPCMaxMessageSize is the maximum message size for Talos API.
 	GRPCMaxMessageSize = 32 * 1024 * 1024
+
+	// TcellMinimizeEnvironment is the environment variable to minimize tcell library memory usage (skips rune width calculation).
+	TcellMinimizeEnvironment = "TCELL_MINIMIZE=1"
 )
 
 // See https://linux.die.net/man/3/klogctl
