@@ -58,7 +58,10 @@ func (d *Dashboard) Runner(r runtime.Runtime) (runner.Runner, error) {
 		ProcessArgs: []string{"/sbin/dashboard"},
 	},
 		runner.WithLoggingManager(r.Logging()),
-		runner.WithEnv([]string{"TERM=linux"}),
+		runner.WithEnv([]string{
+			"TERM=linux",
+			constants.TcellMinimizeEnvironment,
+		}),
 		runner.WithStdinFile(tty),
 		runner.WithStdoutFile(tty),
 		runner.WithCtty(1),
