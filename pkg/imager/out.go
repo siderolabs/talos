@@ -28,25 +28,54 @@ import (
 	"github.com/siderolabs/talos/pkg/imager/qemuimg"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/reporter"
 )
 
-func (i *Imager) outInitramfs(path string) error {
-	return utils.CopyFiles(utils.SourceDestination(i.initramfsPath, path))
+func (i *Imager) outInitramfs(path string, report *reporter.Reporter) error {
+	printf := progressPrintf(report, reporter.Update{Message: "copying initramfs...", Status: reporter.StatusRunning})
+
+	if err := utils.CopyFiles(printf, utils.SourceDestination(i.initramfsPath, path)); err != nil {
+		return err
+	}
+
+	report.Report(reporter.Update{Message: "initramfs output ready", Status: reporter.StatusSucceeded})
+
+	return nil
 }
 
-func (i *Imager) outKernel(path string) error {
-	return utils.CopyFiles(utils.SourceDestination(i.prof.Input.Kernel.Path, path))
+func (i *Imager) outKernel(path string, report *reporter.Reporter) error {
+	printf := progressPrintf(report, reporter.Update{Message: "copying kernel...", Status: reporter.StatusRunning})
+
+	if err := utils.CopyFiles(printf, utils.SourceDestination(i.prof.Input.Kernel.Path, path)); err != nil {
+		return err
+	}
+
+	report.Report(reporter.Update{Message: "kernel output ready", Status: reporter.StatusSucceeded})
+
+	return nil
 }
 
-func (i *Imager) outUKI(path string) error {
-	return utils.CopyFiles(utils.SourceDestination(i.ukiPath, path))
+func (i *Imager) outUKI(path string, report *reporter.Reporter) error {
+	printf := progressPrintf(report, reporter.Update{Message: "copying kernel...", Status: reporter.StatusRunning})
+
+	if err := utils.CopyFiles(printf, utils.SourceDestination(i.ukiPath, path)); err != nil {
+		return err
+	}
+
+	report.Report(reporter.Update{Message: "UKI output ready", Status: reporter.StatusSucceeded})
+
+	return nil
 }
 
-func (i *Imager) outISO(path string) error {
+func (i *Imager) outISO(path string, report *reporter.Reporter) error {
+	printf := progressPrintf(report, reporter.Update{Message: "building ISO...", Status: reporter.StatusRunning})
+
 	scratchSpace := filepath.Join(i.tempDir, "iso")
 
+	var err error
+
 	if i.prof.SecureBootEnabled() {
-		return iso.CreateUEFI(iso.UEFIOptions{
+		err = iso.CreateUEFI(printf, iso.UEFIOptions{
 			UKIPath:    i.ukiPath,
 			SDBootPath: i.sdBootPath,
 
@@ -60,47 +89,67 @@ func (i *Imager) outISO(path string) error {
 			ScratchDir: scratchSpace,
 			OutPath:    path,
 		})
+	} else {
+		err = iso.CreateGRUB(printf, iso.GRUBOptions{
+			KernelPath:    i.prof.Input.Kernel.Path,
+			InitramfsPath: i.initramfsPath,
+			Cmdline:       i.cmdline,
+
+			ScratchDir: scratchSpace,
+			OutPath:    path,
+		})
 	}
 
-	return iso.CreateGRUB(iso.GRUBOptions{
-		KernelPath:    i.prof.Input.Kernel.Path,
-		InitramfsPath: i.initramfsPath,
-		Cmdline:       i.cmdline,
+	if err != nil {
+		return err
+	}
 
-		ScratchDir: scratchSpace,
-		OutPath:    path,
-	})
+	report.Report(reporter.Update{Message: "ISO ready", Status: reporter.StatusSucceeded})
+
+	return nil
 }
 
-func (i *Imager) outImage(ctx context.Context, path string) error {
-	if err := i.buildImage(ctx, path); err != nil {
+func (i *Imager) outImage(ctx context.Context, path string, report *reporter.Reporter) error {
+	printf := progressPrintf(report, reporter.Update{Message: "creating disk image...", Status: reporter.StatusRunning})
+
+	if err := i.buildImage(ctx, path, printf); err != nil {
 		return err
 	}
 
 	switch i.prof.Output.ImageOptions.DiskFormat {
 	case profile.DiskFormatRaw:
-		return nil
+		// nothing to do
 	case profile.DiskFormatQCOW2:
-		return qemuimg.Convert("raw", "qcow2", i.prof.Output.ImageOptions.DiskFormatOptions, path)
+		if err := qemuimg.Convert("raw", "qcow2", i.prof.Output.ImageOptions.DiskFormatOptions, path, printf); err != nil {
+			return err
+		}
 	case profile.DiskFormatVPC:
-		return qemuimg.Convert("raw", "vpc", i.prof.Output.ImageOptions.DiskFormatOptions, path)
+		if err := qemuimg.Convert("raw", "vpc", i.prof.Output.ImageOptions.DiskFormatOptions, path, printf); err != nil {
+			return err
+		}
 	case profile.DiskFormatOVA:
 		scratchPath := filepath.Join(i.tempDir, "ova")
 
-		return ova.CreateOVAFromRAW(fmt.Sprintf("%s-%s", i.prof.Platform, i.prof.Arch), path, i.prof.Arch, scratchPath, i.prof.Output.ImageOptions.DiskSize)
+		if err := ova.CreateOVAFromRAW(fmt.Sprintf("%s-%s", i.prof.Platform, i.prof.Arch), path, i.prof.Arch, scratchPath, i.prof.Output.ImageOptions.DiskSize, printf); err != nil {
+			return err
+		}
 	case profile.DiskFormatUnknown:
 		fallthrough
 	default:
 		return fmt.Errorf("unsupported disk format: %s", i.prof.Output.ImageOptions.DiskFormat)
 	}
+
+	report.Report(reporter.Update{Message: "disk image ready", Status: reporter.StatusSucceeded})
+
+	return nil
 }
 
-func (i *Imager) buildImage(ctx context.Context, path string) error {
-	if err := utils.CreateRawDisk(path, i.prof.Output.ImageOptions.DiskSize); err != nil {
+func (i *Imager) buildImage(ctx context.Context, path string, printf func(string, ...any)) error {
+	if err := utils.CreateRawDisk(printf, path, i.prof.Output.ImageOptions.DiskSize); err != nil {
 		return err
 	}
 
-	log.Print("attaching loopback device")
+	printf("attaching loopback device")
 
 	var (
 		loDevice string
@@ -112,7 +161,7 @@ func (i *Imager) buildImage(ctx context.Context, path string) error {
 	}
 
 	defer func() {
-		log.Println("detaching loopback device")
+		printf("detaching loopback device")
 
 		if e := utils.Lodetach(loDevice); e != nil {
 			log.Println(e)
@@ -136,6 +185,7 @@ func (i *Imager) buildImage(ctx context.Context, path string) error {
 			UKIPath:       i.ukiPath,
 			SDBootPath:    i.sdBootPath,
 		},
+		Printf: printf,
 	}
 
 	if opts.Board == "" {
@@ -144,15 +194,21 @@ func (i *Imager) buildImage(ctx context.Context, path string) error {
 
 	installer, err := install.NewInstaller(ctx, cmdline, install.ModeImage, opts)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create installer: %w", err)
 	}
 
-	return installer.Install(ctx, install.ModeImage)
+	if err := installer.Install(ctx, install.ModeImage); err != nil {
+		return fmt.Errorf("failed to install: %w", err)
+	}
+
+	return nil
 }
 
 //nolint:gocyclo
-func (i *Imager) outInstaller(ctx context.Context, path string) error {
-	baseInstallerImg, err := i.prof.Input.BaseInstaller.Pull(ctx, i.prof.Arch)
+func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter.Reporter) error {
+	printf := progressPrintf(report, reporter.Update{Message: "building installer...", Status: reporter.StatusRunning})
+
+	baseInstallerImg, err := i.prof.Input.BaseInstaller.Pull(ctx, i.prof.Arch, printf)
 	if err != nil {
 		return err
 	}
@@ -168,6 +224,8 @@ func (i *Imager) outInstaller(ctx context.Context, path string) error {
 	}
 
 	config := *configFile.Config.DeepCopy()
+
+	printf("creating empty image")
 
 	newInstallerImg := mutate.MediaType(empty.Image, types.OCIManifestSchema1)
 	newInstallerImg = mutate.ConfigMediaType(newInstallerImg, types.OCIConfigJSON)
@@ -188,6 +246,8 @@ func (i *Imager) outInstaller(ctx context.Context, path string) error {
 	}
 
 	var artifacts []filemap.File
+
+	printf("generating artifacts layer")
 
 	if i.prof.SecureBootEnabled() {
 		artifacts = append(artifacts,
@@ -228,5 +288,13 @@ func (i *Imager) outInstaller(ctx context.Context, path string) error {
 		return fmt.Errorf("failed to parse image reference: %w", err)
 	}
 
-	return tarball.WriteToFile(path, ref, newInstallerImg)
+	printf("writing image tarball")
+
+	if err := tarball.WriteToFile(path, ref, newInstallerImg); err != nil {
+		return fmt.Errorf("failed to write image tarball: %w", err)
+	}
+
+	report.Report(reporter.Update{Message: "installer container image ready", Status: reporter.StatusSucceeded})
+
+	return nil
 }

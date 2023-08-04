@@ -7,7 +7,6 @@ package grub
 import (
 	"bytes"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -43,7 +42,7 @@ menuentry "Reset Talos installation and return to maintenance mode" {
 `
 
 // Write the grub configuration to the given file.
-func (c *Config) Write(path string) error {
+func (c *Config) Write(path string, printf func(string, ...any)) error {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, os.ModeDir); err != nil {
 		return err
@@ -56,7 +55,7 @@ func (c *Config) Write(path string) error {
 		return err
 	}
 
-	log.Printf("writing %s to disk", path)
+	printf("writing %s to disk", path)
 
 	return os.WriteFile(path, wr.Bytes(), 0o600)
 }

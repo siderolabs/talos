@@ -822,6 +822,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 	m := &installer.Manifest{
 		Devices: map[string]installer.Device{},
 		Targets: map[string][]*installer.Target{},
+		Printf:  logger.Printf,
 	}
 
 	for _, disk := range r.Config().Machine().Disks() {
@@ -1618,7 +1619,7 @@ func ResetSystemDiskSpec(_ runtime.Sequence, data any) (runtime.TaskExecutionFun
 		}
 
 		for _, target := range in.GetSystemDiskTargets() {
-			if err = target.Format(); err != nil {
+			if err = target.Format(logger.Printf); err != nil {
 				return fmt.Errorf("failed wiping partition %s: %w", target, err)
 			}
 		}

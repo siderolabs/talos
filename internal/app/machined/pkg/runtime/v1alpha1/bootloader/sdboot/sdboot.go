@@ -157,7 +157,7 @@ func (c *Config) Install(options options.InstallOptions) error {
 			continue
 		}
 
-		log.Printf("removing old UKI: %s", file)
+		options.Printf("removing old UKI: %s", file)
 
 		if err = os.Remove(file); err != nil {
 			return err
@@ -167,6 +167,7 @@ func (c *Config) Install(options options.InstallOptions) error {
 	options.BootAssets.FillDefaults(options.Arch)
 
 	if err := utils.CopyFiles(
+		options.Printf,
 		utils.SourceDestination(options.BootAssets.UKIPath, filepath.Join(constants.EFIMountPoint, "EFI", "Linux", ukiPath)),
 		utils.SourceDestination(options.BootAssets.SDBootPath, filepath.Join(constants.EFIMountPoint, "EFI", "boot", sdbootFilename)),
 	); err != nil {
@@ -175,6 +176,8 @@ func (c *Config) Install(options options.InstallOptions) error {
 
 	// don't update EFI variables if we're installing to a loop device
 	if !options.ImageMode {
+		options.Printf("updating EFI variables")
+
 		efiCtx := efivario.NewDefaultContext()
 
 		// set the new entry as a default one

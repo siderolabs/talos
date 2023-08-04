@@ -7,7 +7,6 @@ package uki
 import (
 	"debug/pe"
 	"fmt"
-	"log"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 )
@@ -23,8 +22,6 @@ func GetSBAT(path string) ([]byte, error) {
 
 	for _, section := range pefile.Sections {
 		if section.Name == string(secureboot.SBAT) {
-			log.Printf("section size: %d", section.Size)
-
 			data, err := section.Data()
 			if err != nil {
 				return nil, err

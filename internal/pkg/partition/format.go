@@ -7,7 +7,6 @@ package partition
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 
@@ -28,13 +27,13 @@ func NewFormatOptions(label string) *FormatOptions {
 }
 
 // Format zeroes the device and formats it using filesystem type provided.
-func Format(devname string, t *FormatOptions) error {
+func Format(devname string, t *FormatOptions, printf func(string, ...any)) error {
 	if t.FileSystemType == FilesystemTypeNone {
-		return zeroPartition(devname)
+		return zeroPartition(devname, printf)
 	}
 
 	opts := []makefs.Option{makefs.WithForce(t.Force), makefs.WithLabel(t.Label)}
-	log.Printf("formatting the partition %q as %q with label %q\n", devname, t.FileSystemType, t.Label)
+	printf("formatting the partition %q as %q with label %q\n", devname, t.FileSystemType, t.Label)
 
 	switch t.FileSystemType {
 	case FilesystemTypeVFAT:
@@ -47,8 +46,8 @@ func Format(devname string, t *FormatOptions) error {
 }
 
 // zeroPartition fills the partition with zeroes.
-func zeroPartition(devname string) (err error) {
-	log.Printf("zeroing out %q", devname)
+func zeroPartition(devname string, printf func(string, ...any)) (err error) {
+	printf("zeroing out %q", devname)
 
 	part, err := blockdevice.Open(devname, blockdevice.WithExclusiveLock(true))
 	if err != nil {

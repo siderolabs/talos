@@ -8,7 +8,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -37,15 +36,16 @@ var grubCfgTemplate string
 // CreateGRUB creates a GRUB-based ISO image.
 //
 // This iso supports both BIOS and UEFI booting.
-func CreateGRUB(options GRUBOptions) error {
+func CreateGRUB(printf func(string, ...any), options GRUBOptions) error {
 	if err := utils.CopyFiles(
+		printf,
 		utils.SourceDestination(options.KernelPath, filepath.Join(options.ScratchDir, "boot", "vmlinuz")),
 		utils.SourceDestination(options.InitramfsPath, filepath.Join(options.ScratchDir, "boot", "initramfs.xz")),
 	); err != nil {
 		return err
 	}
 
-	log.Println("creating grub.cfg")
+	printf("creating grub.cfg")
 
 	var grubCfg bytes.Buffer
 
@@ -76,11 +76,11 @@ func CreateGRUB(options GRUBOptions) error {
 		return err
 	}
 
-	if err = utils.TouchFiles(options.ScratchDir); err != nil {
+	if err = utils.TouchFiles(printf, options.ScratchDir); err != nil {
 		return err
 	}
 
-	log.Println("creating ISO")
+	printf("creating ISO image")
 
 	return grubMkrescue(options.OutPath, options.ScratchDir)
 }

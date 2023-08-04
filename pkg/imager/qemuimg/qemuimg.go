@@ -12,9 +12,11 @@ import (
 )
 
 // Convert converts an image from one format to another.
-func Convert(inputFmt, outputFmt, options, path string) error {
+func Convert(inputFmt, outputFmt, options, path string, printf func(string, ...any)) error {
 	src := path + ".in"
 	dest := path
+
+	printf("converting %s to %s", inputFmt, outputFmt)
 
 	if err := os.Rename(path, src); err != nil {
 		return err

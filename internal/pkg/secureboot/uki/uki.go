@@ -75,7 +75,7 @@ type Builder struct {
 //   - build ephemeral sections (uname, os-release), and other proposed sections
 //   - measure sections, generate signature, and append to the list of sections
 //   - assemble the final UKI file starting from sd-stub and appending generated section.
-func (builder *Builder) Build() error {
+func (builder *Builder) Build(printf func(string, ...any)) error {
 	var err error
 
 	builder.scratchDir, err = os.MkdirTemp("", "talos-uki")
@@ -89,6 +89,8 @@ func (builder *Builder) Build() error {
 		}
 	}()
 
+	printf("signing systemd-boot")
+
 	builder.peSigner, err = pesign.NewSigner(builder.SigningCertPath, builder.SigningKeyPath)
 	if err != nil {
 		return fmt.Errorf("error initilazing signer: %w", err)
@@ -98,6 +100,8 @@ func (builder *Builder) Build() error {
 	if err = builder.peSigner.Sign(builder.SdBootPath, builder.OutSdBootPath); err != nil {
 		return fmt.Errorf("error signing sd-boot: %w", err)
 	}
+
+	printf("generating UKI sections")
 
 	// generate and build list of all sections
 	for _, generateSection := range []func() error{
@@ -118,10 +122,14 @@ func (builder *Builder) Build() error {
 		}
 	}
 
+	printf("assembling UKI")
+
 	// assemble the final UKI file
 	if err = builder.assemble(); err != nil {
 		return fmt.Errorf("error assembling UKI: %w", err)
 	}
+
+	printf("signing UKI")
 
 	// sign the UKI file
 	return builder.peSigner.Sign(builder.unsignedUKIPath, builder.OutUKIPath)

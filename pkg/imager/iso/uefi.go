@@ -47,7 +47,7 @@ const (
 // The ISO created supports only booting in UEFI mode, and supports SecureBoot.
 //
 //nolint:gocyclo,cyclop
-func CreateUEFI(options UEFIOptions) error {
+func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 	if err := os.MkdirAll(options.ScratchDir, 0o755); err != nil {
 		return err
 	}
@@ -60,9 +60,11 @@ func CreateUEFI(options UEFIOptions) error {
 		isoSize = UKIISOSizeARM64
 	}
 
-	if err := utils.CreateRawDisk(efiBootImg, isoSize); err != nil {
+	if err := utils.CreateRawDisk(printf, efiBootImg, isoSize); err != nil {
 		return err
 	}
+
+	printf("creating vFAT EFI image")
 
 	fopts := []makefs.Option{
 		makefs.WithLabel(constants.EFIPartitionLabel),
@@ -130,9 +132,11 @@ func CreateUEFI(options UEFIOptions) error {
 	}
 
 	// fixup directory timestamps recursively
-	if err := utils.TouchFiles(options.ScratchDir); err != nil {
+	if err := utils.TouchFiles(printf, options.ScratchDir); err != nil {
 		return err
 	}
+
+	printf("creating ISO image")
 
 	if _, err := cmd.Run(
 		"xorriso",

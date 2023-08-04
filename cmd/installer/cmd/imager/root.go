@@ -7,7 +7,6 @@ package imager
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"runtime"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/imager"
 	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/reporter"
 )
 
 var cmdFlags struct {
@@ -38,12 +38,19 @@ var cmdFlags struct {
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
-	Use:   "imager <profile>|-",
-	Short: "Generate various boot assets and images.",
-	Long:  ``,
-	Args:  cobra.ExactArgs(1),
+	Use:          "imager <profile>|-",
+	Short:        "Generate various boot assets and images.",
+	Long:         ``,
+	Args:         cobra.ExactArgs(1),
+	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cli.WithContext(context.Background(), func(ctx context.Context) error {
+			report := reporter.New()
+			report.Report(reporter.Update{
+				Message: "assembling the finalized profile...",
+				Status:  reporter.StatusRunning,
+			})
+
 			baseProfile := args[0]
 
 			var prof profile.Profile
@@ -98,7 +105,12 @@ var rootCmd = &cobra.Command{
 				return err
 			}
 
-			if err = imager.Execute(ctx, cmdFlags.OutputPath); err != nil {
+			if err = imager.Execute(ctx, cmdFlags.OutputPath, report); err != nil {
+				report.Report(reporter.Update{
+					Message: err.Error(),
+					Status:  reporter.StatusError,
+				})
+
 				return err
 			}
 
@@ -115,7 +127,6 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

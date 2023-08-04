@@ -200,11 +200,11 @@ func (t *Target) Locate(pt *gpt.GPT) (*gpt.Partition, error) {
 }
 
 // partition creates a new partition on the specified device.
-func (t *Target) partition(pt *gpt.GPT, pos int) (err error) {
+func (t *Target) partition(pt *gpt.GPT, pos int, printf func(string, ...any)) (err error) {
 	if t.Skip {
 		part := pt.Partitions().FindByName(t.Label)
 		if part != nil {
-			log.Printf("skipped %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
+			printf("skipped %s (%s) size %d blocks", t.PartitionName, t.Label, part.Length())
 
 			t.PartitionName, err = part.Path()
 			if err != nil {
@@ -220,7 +220,7 @@ func (t *Target) partition(pt *gpt.GPT, pos int) (err error) {
 		PartitionType:      t.PartitionType,
 		Size:               t.Size,
 		LegacyBIOSBootable: t.LegacyBIOSBootable,
-	})
+	}, printf)
 	if err != nil {
 		return err
 	}
@@ -231,12 +231,12 @@ func (t *Target) partition(pt *gpt.GPT, pos int) (err error) {
 }
 
 // Format creates a filesystem on the device/partition.
-func (t *Target) Format() error {
+func (t *Target) Format(printf func(string, ...any)) error {
 	if t.Skip {
 		return nil
 	}
 
-	return partition.Format(t.PartitionName, t.FormatOptions)
+	return partition.Format(t.PartitionName, t.FormatOptions, printf)
 }
 
 // GetLabel returns the underlaying partition label.

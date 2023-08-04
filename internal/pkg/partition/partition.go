@@ -6,8 +6,6 @@
 package partition
 
 import (
-	"log"
-
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 
@@ -40,8 +38,8 @@ func Locate(pt *gpt.GPT, label string) (*gpt.Partition, error) {
 
 // Partition creates a new partition on the specified device.
 // Returns the path to the newly created partition.
-func Partition(pt *gpt.GPT, pos int, device string, partitionOpts Options) (string, error) {
-	log.Printf("partitioning %s - %s %q\n", device, partitionOpts.PartitionLabel, humanize.Bytes(partitionOpts.Size))
+func Partition(pt *gpt.GPT, pos int, device string, partitionOpts Options, printf func(string, ...any)) (string, error) {
+	printf("partitioning %s - %s %q\n", device, partitionOpts.PartitionLabel, humanize.Bytes(partitionOpts.Size))
 
 	opts := []gpt.PartitionOption{
 		gpt.WithPartitionType(partitionOpts.PartitionType),
@@ -66,7 +64,7 @@ func Partition(pt *gpt.GPT, pos int, device string, partitionOpts Options) (stri
 		return "", err
 	}
 
-	log.Printf("created %s (%s) size %d blocks", partitionName, partitionOpts.PartitionLabel, part.Length())
+	printf("created %s (%s) size %d blocks", partitionName, partitionOpts.PartitionLabel, part.Length())
 
 	return partitionName, nil
 }

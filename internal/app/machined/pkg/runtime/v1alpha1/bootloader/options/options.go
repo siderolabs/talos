@@ -27,6 +27,9 @@ type InstallOptions struct {
 
 	// Boot assets to install.
 	BootAssets BootAssets
+
+	// Printf-like function to use.
+	Printf func(format string, v ...any)
 }
 
 // BootAssets describes the assets to be installed by the booloader.

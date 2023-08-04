@@ -141,18 +141,18 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
 // CreateOVAFromRAW creates an OVA from a RAW disk.
 //
 //nolint:gocyclo
-func CreateOVAFromRAW(name, path, arch, scratchPath string, diskSize int64) error {
+func CreateOVAFromRAW(name, path, arch, scratchPath string, diskSize int64, printf func(string, ...any)) error {
 	if err := os.MkdirAll(scratchPath, 0o755); err != nil {
 		return err
 	}
 
 	vmdkPath := filepath.Join(scratchPath, name+".vmdk")
 
-	if err := utils.CopyFiles(utils.SourceDestination(path, vmdkPath)); err != nil {
+	if err := utils.CopyFiles(printf, utils.SourceDestination(path, vmdkPath)); err != nil {
 		return err
 	}
 
-	if err := qemuimg.Convert("raw", "vmdk", "compat6,subformat=streamOptimized,adapter_type=lsilogic", vmdkPath); err != nil {
+	if err := qemuimg.Convert("raw", "vmdk", "compat6,subformat=streamOptimized,adapter_type=lsilogic", vmdkPath, printf); err != nil {
 		return err
 	}
 

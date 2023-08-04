@@ -6,7 +6,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"syscall"
 
@@ -14,8 +13,8 @@ import (
 )
 
 // CreateRawDisk creates a raw disk image of the specified size.
-func CreateRawDisk(path string, diskSize int64) error {
-	log.Printf("creating raw disk of size %s", humanize.Bytes(uint64(diskSize)))
+func CreateRawDisk(printf func(string, ...any), path string, diskSize int64) error {
+	printf("creating raw disk of size %s", humanize.Bytes(uint64(diskSize)))
 
 	f, err := os.Create(path)
 	if err != nil {

@@ -7,7 +7,6 @@ package utils
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -23,7 +22,7 @@ func SourceDestination(src, dest string) CopyInstruction {
 }
 
 // CopyFiles copies files according to the given instructions.
-func CopyFiles(instructions ...CopyInstruction) error {
+func CopyFiles(printf func(string, ...any), instructions ...CopyInstruction) error {
 	for _, instruction := range instructions {
 		if err := func(instruction CopyInstruction) error {
 			src, dest := instruction.F1, instruction.F2
@@ -32,7 +31,7 @@ func CopyFiles(instructions ...CopyInstruction) error {
 				return err
 			}
 
-			log.Printf("copying %s to %s", src, dest)
+			printf("copying %s to %s", src, dest)
 
 			from, err := os.Open(src)
 			if err != nil {
@@ -52,7 +51,7 @@ func CopyFiles(instructions ...CopyInstruction) error {
 
 			return err
 		}(instruction); err != nil {
-			return fmt.Errorf("error copying %s -> %s", instruction.F1, instruction.F2)
+			return fmt.Errorf("error copying %s -> %s: %w", instruction.F1, instruction.F2, err)
 		}
 	}
 
