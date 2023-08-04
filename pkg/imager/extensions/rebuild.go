@@ -29,7 +29,7 @@ func (builder *Builder) rebuildInitramfs(tempDir string) error {
 	defer pipeW.Close() //nolint:errcheck
 
 	// build cpio image which contains .sqsh images and extensions.yaml
-	cmd1 := exec.Command("cpio", "-H", "newc", "--create", "--reproducible")
+	cmd1 := exec.Command("cpio", "-H", "newc", "--create", "--reproducible", "--quiet")
 	cmd1.Dir = tempDir
 	cmd1.Stdin = listing
 	cmd1.Stdout = pipeW
@@ -51,7 +51,7 @@ func (builder *Builder) rebuildInitramfs(tempDir string) error {
 	defer destination.Close() //nolint:errcheck
 
 	// append compressed initramfs.sysext to the original initramfs.xz, kernel can read such format
-	cmd2 := exec.Command("xz", "-v", "-C", "crc32", "-0", "-e", "-T", "0", "-z")
+	cmd2 := exec.Command("xz", "-v", "-C", "crc32", "-0", "-e", "-T", "0", "-z", "--quiet")
 	cmd2.Dir = tempDir
 	cmd2.Stdin = pipeR
 	cmd2.Stdout = destination

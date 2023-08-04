@@ -5,13 +5,18 @@
 package imager
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
+
+	"github.com/siderolabs/talos/pkg/reporter"
 )
 
-func (i *Imager) postProcessTar(filename string) error {
+func (i *Imager) postProcessTar(filename string, report *reporter.Reporter) error {
+	report.Report(reporter.Update{Message: "processing .tar.gz", Status: reporter.StatusRunning})
+
 	dir := filepath.Dir(filename)
 	src := "disk.raw"
 
@@ -25,21 +30,35 @@ func (i *Imager) postProcessTar(filename string) error {
 		return err
 	}
 
-	return os.Remove(filepath.Join(dir, src))
-}
-
-func (i *Imager) postProcessGz(filename string) error {
-	if _, err := cmd.Run("pigz", "-6", filename); err != nil {
+	if err := os.Remove(filepath.Join(dir, src)); err != nil {
 		return err
 	}
+
+	report.Report(reporter.Update{Message: fmt.Sprintf("archive is ready: %s", outPath), Status: reporter.StatusSucceeded})
 
 	return nil
 }
 
-func (i *Imager) postProcessXz(filename string) error {
-	if _, err := cmd.Run("xz", "-0", "-T", "0", filename); err != nil {
+func (i *Imager) postProcessGz(filename string, report *reporter.Reporter) error {
+	report.Report(reporter.Update{Message: "compressing .gz", Status: reporter.StatusRunning})
+
+	if _, err := cmd.Run("pigz", "-6", "-f", filename); err != nil {
 		return err
 	}
+
+	report.Report(reporter.Update{Message: fmt.Sprintf("compression done: %s.gz", filename), Status: reporter.StatusSucceeded})
+
+	return nil
+}
+
+func (i *Imager) postProcessXz(filename string, report *reporter.Reporter) error {
+	report.Report(reporter.Update{Message: "compressing .xz", Status: reporter.StatusRunning})
+
+	if _, err := cmd.Run("xz", "-0", "-f", "-T", "0", filename); err != nil {
+		return err
+	}
+
+	report.Report(reporter.Update{Message: fmt.Sprintf("compression done: %s.xz", filename), Status: reporter.StatusSucceeded})
 
 	return nil
 }

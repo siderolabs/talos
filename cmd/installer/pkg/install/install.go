@@ -42,6 +42,7 @@ type Options struct {
 	ImageSecureboot bool
 	Version         string
 	BootAssets      bootloaderoptions.BootAssets
+	Printf          func(string, ...any)
 }
 
 // Mode is the install mode.
@@ -107,7 +108,7 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		return err
 	}
 
-	log.Printf("installation of %s complete", version.Tag)
+	i.options.Printf("installation of %s complete", version.Tag)
 
 	return nil
 }
@@ -130,6 +131,10 @@ func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, mode Mode, opts 
 
 	if i.options.Version == "" {
 		i.options.Version = version.Tag
+	}
+
+	if i.options.Printf == nil {
+		i.options.Printf = log.Printf
 	}
 
 	if !i.options.Zero {
@@ -258,6 +263,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		Version:    i.options.Version,
 		ImageMode:  mode.IsImage(),
 		BootAssets: i.options.BootAssets,
+		Printf:     i.options.Printf,
 	}); err != nil {
 		return err
 	}
@@ -270,7 +276,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 			return err
 		}
 
-		log.Printf("installing U-Boot for %q", b.Name())
+		i.options.Printf("installing U-Boot for %q", b.Name())
 
 		if err = b.Install(i.options.Disk); err != nil {
 			return err

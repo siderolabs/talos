@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -69,7 +70,7 @@ func (c *Config) Revert(ctx context.Context) error {
 		return fmt.Errorf("cannot rollback to %q, label does not exist", "")
 	}
 
-	if err := c.Write(ConfigPath); err != nil {
+	if err := c.Write(ConfigPath, log.Printf); err != nil {
 		return fmt.Errorf("failed to revert bootloader: %v", err)
 	}
 

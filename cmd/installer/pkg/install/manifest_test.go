@@ -229,9 +229,10 @@ func (suite *manifestSuite) TestExecuteManifestClean() {
 	suite.skipUnderBuildkit()
 
 	manifest, err := install.NewManifest(install.ModeInstall, false, false, &install.Options{
-		Disk:  suite.loopbackDevice.Name(),
-		Force: true,
-		Board: constants.BoardNone,
+		Disk:   suite.loopbackDevice.Name(),
+		Force:  true,
+		Board:  constants.BoardNone,
+		Printf: suite.T().Logf,
 	})
 	suite.Require().NoError(err)
 
@@ -249,9 +250,10 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 	suite.skipUnderBuildkit()
 
 	manifest, err := install.NewManifest(install.ModeInstall, false, false, &install.Options{
-		Disk:  suite.loopbackDevice.Name(),
-		Force: true,
-		Board: constants.BoardNone,
+		Disk:   suite.loopbackDevice.Name(),
+		Force:  true,
+		Board:  constants.BoardNone,
+		Printf: suite.T().Logf,
 	})
 	suite.Require().NoError(err)
 
@@ -267,10 +269,11 @@ func (suite *manifestSuite) TestExecuteManifestForce() {
 	// reinstall
 
 	manifest, err = install.NewManifest(install.ModeUpgrade, false, true, &install.Options{
-		Disk:  suite.loopbackDevice.Name(),
-		Force: true,
-		Zero:  true,
-		Board: constants.BoardNone,
+		Disk:   suite.loopbackDevice.Name(),
+		Force:  true,
+		Zero:   true,
+		Board:  constants.BoardNone,
+		Printf: suite.T().Logf,
 	})
 	suite.Require().NoError(err)
 
@@ -288,9 +291,10 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 	suite.skipUnderBuildkit()
 
 	manifest, err := install.NewManifest(install.ModeInstall, false, false, &install.Options{
-		Disk:  suite.loopbackDevice.Name(),
-		Force: true,
-		Board: constants.BoardNone,
+		Disk:   suite.loopbackDevice.Name(),
+		Force:  true,
+		Board:  constants.BoardNone,
+		Printf: suite.T().Logf,
 	})
 	suite.Require().NoError(err)
 
@@ -306,9 +310,10 @@ func (suite *manifestSuite) TestExecuteManifestPreserve() {
 	// reinstall
 
 	manifest, err = install.NewManifest(install.ModeUpgrade, false, true, &install.Options{
-		Disk:  suite.loopbackDevice.Name(),
-		Force: false,
-		Board: constants.BoardNone,
+		Disk:   suite.loopbackDevice.Name(),
+		Force:  false,
+		Board:  constants.BoardNone,
+		Printf: suite.T().Logf,
 	})
 	suite.Require().NoError(err)
 

@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,6 +32,8 @@ type Manifest struct {
 	Devices           map[string]Device
 	Targets           map[string][]*Target
 	LegacyBIOSSupport bool
+
+	Printf func(string, ...any)
 }
 
 // Device represents device options.
@@ -53,6 +54,8 @@ func NewManifest(mode Mode, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Opt
 		Devices:           map[string]Device{},
 		Targets:           map[string][]*Target{},
 		LegacyBIOSSupport: opts.LegacyBIOSSupport,
+
+		Printf: opts.Printf,
 	}
 
 	if opts.Board != constants.BoardNone {
@@ -248,7 +251,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 	if device.Zero {
 		if err = partition.Format(device.Device, &partition.FormatOptions{
 			FileSystemType: partition.FilesystemTypeNone,
-		}); err != nil {
+		}, m.Printf); err != nil {
 			return err
 		}
 	}
@@ -272,7 +275,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			return err
 		}
 
-		log.Printf("creating new partition table on %s", device.Device)
+		m.Printf("creating new partition table on %s", device.Device)
 
 		gptOpts := []gpt.Option{
 			gpt.WithMarkMBRBootable(m.LegacyBIOSSupport),
@@ -287,8 +290,8 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			return err
 		}
 
-		log.Printf("logical/physical block size: %d/%d", pt.Header().LBA.LogicalBlockSize, pt.Header().LBA.PhysicalBlockSize)
-		log.Printf("minimum/optimal I/O size: %d/%d", pt.Header().LBA.MinimalIOSize, pt.Header().LBA.OptimalIOSize)
+		m.Printf("logical/physical block size: %d/%d", pt.Header().LBA.LogicalBlockSize, pt.Header().LBA.PhysicalBlockSize)
+		m.Printf("minimum/optimal I/O size: %d/%d", pt.Header().LBA.MinimalIOSize, pt.Header().LBA.OptimalIOSize)
 
 		if err = pt.Write(); err != nil {
 			return err
@@ -309,7 +312,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 
 	if !created {
 		if device.ResetPartitionTable {
-			log.Printf("resetting partition table on %s", device.Device)
+			m.Printf("resetting partition table on %s", device.Device)
 
 			// TODO: how should it work with zero option above?
 			if err = bd.Reset(); err != nil {
@@ -343,7 +346,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 			// delete all partitions which are not skipped
 			for _, part := range pt.Partitions().Items() {
 				if _, ok := keepPartitions[part.Name]; !ok {
-					log.Printf("deleting partition %s", part.Name)
+					m.Printf("deleting partition %s", part.Name)
 
 					if err = pt.Delete(part); err != nil {
 						return err
@@ -363,7 +366,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 	}
 
 	for i, target := range targets {
-		if err = target.partition(pt, i); err != nil {
+		if err = target.partition(pt, i, m.Printf); err != nil {
 			return fmt.Errorf("failed to partition device: %w", err)
 		}
 	}
@@ -376,7 +379,7 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 		target := target
 
 		err = retry.Constant(time.Minute, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
-			e := target.Format()
+			e := target.Format(m.Printf)
 			if e != nil {
 				if strings.Contains(e.Error(), "No such file or directory") {
 					// workaround problem with partition device not being visible immediately after partitioning
@@ -422,7 +425,7 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 
 	if bd, err = blockdevice.Open(device.Device); err != nil {
 		// failed to open the block device, probably it's damaged?
-		log.Printf("warning: skipping preserve contents on %q as block device failed: %s", device.Device, err)
+		m.Printf("warning: skipping preserve contents on %q as block device failed: %s", device.Device, err)
 
 		return nil
 	}
@@ -432,7 +435,7 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 
 	pt, err := bd.PartitionTable()
 	if err != nil {
-		log.Printf("warning: skipping preserve contents on %q as partition table failed: %s", device.Device, err)
+		m.Printf("warning: skipping preserve contents on %q as partition table failed: %s", device.Device, err)
 
 		return nil
 	}
@@ -473,13 +476,13 @@ func (m *Manifest) preserveContents(device Device, targets []*Target) (err error
 		}
 
 		if sourcePart == nil {
-			log.Printf("warning: failed to preserve contents of %q on %q, as source partition wasn't found", target.Label, device.Device)
+			m.Printf("warning: failed to preserve contents of %q on %q, as source partition wasn't found", target.Label, device.Device)
 
 			continue
 		}
 
 		if err = target.SaveContents(device, sourcePart, fileSystemType, fnmatchFilters); err != nil {
-			log.Printf("warning: failed to preserve contents of %q on %q: %s", target.Label, device.Device, err)
+			m.Printf("warning: failed to preserve contents of %q on %q: %s", target.Label, device.Device, err)
 		}
 	}
 

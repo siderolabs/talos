@@ -6,14 +6,13 @@ package utils
 
 import (
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
 )
 
 // TouchFiles updates mtime for all the files under root if SOURCE_DATE_EPOCH is set.
-func TouchFiles(root string) error {
+func TouchFiles(printf func(string, ...any), root string) error {
 	epochInt, ok, err := SourceDateEpoch()
 	if err != nil {
 		return err
@@ -25,7 +24,7 @@ func TouchFiles(root string) error {
 
 	timestamp := time.Unix(epochInt, 0)
 
-	log.Printf("changing timestamps under %q to %s", root, timestamp)
+	printf("changing timestamps under %q to %s", root, timestamp)
 
 	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {

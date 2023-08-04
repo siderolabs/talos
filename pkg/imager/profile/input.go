@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -144,8 +143,8 @@ func fileExists(path string) bool {
 }
 
 // Pull the container asset to the path.
-func (c *ContainerAsset) Pull(ctx context.Context, arch string) (v1.Image, error) {
-	log.Printf("pulling %s...", c.ImageRef)
+func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(string, ...any)) (v1.Image, error) {
+	printf("pulling %s...", c.ImageRef)
 
 	img, err := crane.Pull(c.ImageRef, crane.WithPlatform(&v1.Platform{
 		Architecture: arch,
@@ -159,8 +158,8 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string) (v1.Image, error
 }
 
 // Extract the container asset to the path.
-func (c *ContainerAsset) Extract(ctx context.Context, destination, arch string) error {
-	img, err := c.Pull(ctx, arch)
+func (c *ContainerAsset) Extract(ctx context.Context, destination, arch string, printf func(string, ...any)) error {
+	img, err := c.Pull(ctx, arch, printf)
 	if err != nil {
 		return err
 	}

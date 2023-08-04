@@ -136,7 +136,7 @@ type ResetOptions interface {
 // PartitionTarget provides interface to the disk partition.
 type PartitionTarget interface {
 	fmt.Stringer
-	Format() error
+	Format(func(string, ...any)) error
 	GetLabel() string
 }
 

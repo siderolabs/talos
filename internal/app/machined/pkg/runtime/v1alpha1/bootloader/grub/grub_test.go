@@ -103,7 +103,7 @@ func TestWrite(t *testing.T) {
 	config := grub.NewConfig()
 	require.NoError(t, config.Put(grub.BootA, "cmdline A", "v0.0.1"))
 
-	err := config.Write(tempFile.Name())
+	err := config.Write(tempFile.Name(), t.Logf)
 	assert.NoError(t, err)
 
 	written, _ := os.ReadFile(tempFile.Name())

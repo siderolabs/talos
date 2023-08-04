@@ -8,7 +8,6 @@ package imager
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -25,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	"github.com/siderolabs/talos/pkg/reporter"
 	"github.com/siderolabs/talos/pkg/version"
 )
 
@@ -80,7 +80,7 @@ func New(prof profile.Profile) (*Imager, error) {
 // Execute image generation.
 //
 //nolint:gocyclo,cyclop
-func (i *Imager) Execute(ctx context.Context, outputPath string) error {
+func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporter.Reporter) error {
 	var err error
 
 	i.tempDir, err = os.MkdirTemp("", "imager")
@@ -90,13 +90,18 @@ func (i *Imager) Execute(ctx context.Context, outputPath string) error {
 
 	defer os.RemoveAll(i.tempDir) //nolint:errcheck
 
+	report.Report(reporter.Update{
+		Message: "profile ready:",
+		Status:  reporter.StatusSucceeded,
+	})
+
 	// 0. Dump the profile.
 	if err = i.prof.Dump(os.Stderr); err != nil {
 		return err
 	}
 
 	// 1. Transform `initramfs.xz` with system extensions
-	if err = i.buildInitramfs(ctx); err != nil {
+	if err = i.buildInitramfs(ctx, report); err != nil {
 		return err
 	}
 
@@ -105,11 +110,14 @@ func (i *Imager) Execute(ctx context.Context, outputPath string) error {
 		return err
 	}
 
-	log.Printf("assembled kernel command line: %s", i.cmdline)
+	report.Report(reporter.Update{
+		Message: fmt.Sprintf("kernel command line: %s", i.cmdline),
+		Status:  reporter.StatusSucceeded,
+	})
 
 	// 3. Build UKI if Secure Boot is enabled.
 	if i.prof.SecureBootEnabled() {
-		if err = i.buildUKI(); err != nil {
+		if err = i.buildUKI(report); err != nil {
 			return err
 		}
 	}
@@ -117,21 +125,19 @@ func (i *Imager) Execute(ctx context.Context, outputPath string) error {
 	// 4. Build the output.
 	outputAssetPath := filepath.Join(outputPath, i.prof.OutputPath())
 
-	log.Printf("output path: %s", outputAssetPath)
-
 	switch i.prof.Output.Kind {
 	case profile.OutKindISO:
-		err = i.outISO(outputAssetPath)
+		err = i.outISO(outputAssetPath, report)
 	case profile.OutKindKernel:
-		err = i.outKernel(outputAssetPath)
+		err = i.outKernel(outputAssetPath, report)
 	case profile.OutKindUKI:
-		err = i.outUKI(outputAssetPath)
+		err = i.outUKI(outputAssetPath, report)
 	case profile.OutKindInitramfs:
-		err = i.outInitramfs(outputAssetPath)
+		err = i.outInitramfs(outputAssetPath, report)
 	case profile.OutKindImage:
-		err = i.outImage(ctx, outputAssetPath)
+		err = i.outImage(ctx, outputAssetPath, report)
 	case profile.OutKindInstaller:
-		err = i.outInstaller(ctx, outputAssetPath)
+		err = i.outInstaller(ctx, outputAssetPath, report)
 	case profile.OutKindUnknown:
 		fallthrough
 	default:
@@ -142,17 +148,22 @@ func (i *Imager) Execute(ctx context.Context, outputPath string) error {
 		return err
 	}
 
+	report.Report(reporter.Update{
+		Message: fmt.Sprintf("output asset path: %s", outputAssetPath),
+		Status:  reporter.StatusSucceeded,
+	})
+
 	// 5. Post-process the output.
 	switch i.prof.Output.OutFormat {
 	case profile.OutFormatRaw:
 		// do nothing
 		return nil
 	case profile.OutFormatXZ:
-		return i.postProcessXz(outputAssetPath)
+		return i.postProcessXz(outputAssetPath, report)
 	case profile.OutFormatGZ:
-		return i.postProcessGz(outputAssetPath)
+		return i.postProcessGz(outputAssetPath, report)
 	case profile.OutFormatTar:
-		return i.postProcessTar(outputAssetPath)
+		return i.postProcessTar(outputAssetPath, report)
 	case profile.OutFormatUnknown:
 		fallthrough
 	default:
@@ -161,18 +172,25 @@ func (i *Imager) Execute(ctx context.Context, outputPath string) error {
 }
 
 // buildInitramfs transforms `initramfs.xz` with system extensions.
-func (i *Imager) buildInitramfs(ctx context.Context) error {
+func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) error {
 	if len(i.prof.Input.SystemExtensions) == 0 {
+		report.Report(reporter.Update{
+			Message: "skipped initramfs rebuild (no system extensions)",
+			Status:  reporter.StatusSkip,
+		})
+
 		// no system extensions, happy path
 		i.initramfsPath = i.prof.Input.Initramfs.Path
 
 		return nil
 	}
 
+	printf := progressPrintf(report, reporter.Update{Message: "rebuilding initramfs with system extensions...", Status: reporter.StatusRunning})
+
 	// copy the initramfs to a temporary location, as it's going to be modified during the extension build process
 	tempInitramfsPath := filepath.Join(i.tempDir, "initramfs.xz")
 
-	if err := utils.CopyFiles(utils.SourceDestination(i.prof.Input.Initramfs.Path, tempInitramfsPath)); err != nil {
+	if err := utils.CopyFiles(printf, utils.SourceDestination(i.prof.Input.Initramfs.Path, tempInitramfsPath)); err != nil {
 		return fmt.Errorf("failed to copy initramfs: %w", err)
 	}
 
@@ -188,7 +206,7 @@ func (i *Imager) buildInitramfs(ctx context.Context) error {
 			return fmt.Errorf("failed to create extension directory: %w", err)
 		}
 
-		if err := ext.Extract(ctx, extensionDir, i.prof.Arch); err != nil {
+		if err := ext.Extract(ctx, extensionDir, i.prof.Arch, printf); err != nil {
 			return err
 		}
 	}
@@ -198,10 +216,19 @@ func (i *Imager) buildInitramfs(ctx context.Context) error {
 		InitramfsPath:     i.initramfsPath,
 		Arch:              i.prof.Arch,
 		ExtensionTreePath: extensionsCheckoutDir,
-		Printf:            log.Printf,
+		Printf:            printf,
 	}
 
-	return builder.Build()
+	if err := builder.Build(); err != nil {
+		return err
+	}
+
+	report.Report(reporter.Update{
+		Message: "initramfs ready",
+		Status:  reporter.StatusSucceeded,
+	})
+
+	return nil
 }
 
 // buildCmdline builds the kernel command line.
@@ -262,7 +289,9 @@ func (i *Imager) buildCmdline() error {
 }
 
 // buildUKI assembles the UKI and signs it.
-func (i *Imager) buildUKI() error {
+func (i *Imager) buildUKI(report *reporter.Reporter) error {
+	printf := progressPrintf(report, reporter.Update{Message: "building UKI...", Status: reporter.StatusRunning})
+
 	i.sdBootPath = filepath.Join(i.tempDir, "systemd-boot.efi.signed")
 	i.ukiPath = filepath.Join(i.tempDir, "vmlinuz.efi.signed")
 
@@ -283,5 +312,14 @@ func (i *Imager) buildUKI() error {
 		OutUKIPath:    i.ukiPath,
 	}
 
-	return builder.Build()
+	if err := builder.Build(printf); err != nil {
+		return err
+	}
+
+	report.Report(reporter.Update{
+		Message: "UKI ready",
+		Status:  reporter.StatusSucceeded,
+	})
+
+	return nil
 }

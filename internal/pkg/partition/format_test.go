@@ -137,7 +137,7 @@ func (suite *manifestSuite) TestZeroPartition() {
 
 	err = partition.Format(part, &partition.FormatOptions{
 		FileSystemType: partition.FilesystemTypeNone,
-	})
+	}, suite.T().Logf)
 	suite.Require().NoError(err)
 
 	// reading 10 times more than what we wrote should still return 0 since the partition is wiped

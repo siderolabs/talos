@@ -167,7 +167,7 @@ func SystemMountPointForLabel(ctx context.Context, device *blockdevice.BlockDevi
 		if !o.MountFlags.Check(SkipIfNoFilesystem) {
 			p.fstype = opts.FileSystemType
 
-			return partition.Format(p.source, opts)
+			return partition.Format(p.source, opts, log.Printf)
 		}
 
 		return nil

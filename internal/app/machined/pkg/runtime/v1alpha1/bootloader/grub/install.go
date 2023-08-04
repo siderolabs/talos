@@ -6,14 +6,12 @@ package grub
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
+	"github.com/siderolabs/go-cmd/pkg/cmd"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/pkg/imager/utils"
@@ -36,6 +34,7 @@ func (c *Config) Install(options options.InstallOptions) error {
 	options.BootAssets.FillDefaults(options.Arch)
 
 	if err := utils.CopyFiles(
+		options.Printf,
 		utils.SourceDestination(options.BootAssets.KernelPath, filepath.Join(constants.BootMountPoint, string(c.Default), constants.KernelAsset)),
 		utils.SourceDestination(options.BootAssets.InitramfsPath, filepath.Join(constants.BootMountPoint, string(c.Default), constants.InitramfsAsset)),
 	); err != nil {
@@ -46,7 +45,7 @@ func (c *Config) Install(options options.InstallOptions) error {
 		return err
 	}
 
-	if err := c.Write(ConfigPath); err != nil {
+	if err := c.Write(ConfigPath, options.Printf); err != nil {
 		return err
 	}
 
@@ -83,13 +82,9 @@ func (c *Config) Install(options options.InstallOptions) error {
 
 		args = append(args, blk)
 
-		log.Printf("executing: grub-install %s", strings.Join(args, " "))
+		options.Printf("executing: grub-install %s", strings.Join(args, " "))
 
-		cmd := exec.Command("grub-install", args...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		if err = cmd.Run(); err != nil {
+		if _, err := cmd.Run("grub-install", args...); err != nil {
 			return fmt.Errorf("failed to install grub: %w", err)
 		}
 	}
