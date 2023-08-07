@@ -75,7 +75,7 @@ func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 						continue
 					}
 
-					r, errCh, err := client.ReadStream(stream)
+					r, err := client.ReadStream(stream)
 					if err != nil {
 						fmt.Fprintf(out, "error getting service logs for %s: %s\n", svc.Id, err)
 
@@ -85,11 +85,6 @@ func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 					fmt.Fprintf(out, "\n> %s\n%s\n\n", svc.Id, strings.Repeat("-", len(svc.Id)+2))
 
 					_, err = io.Copy(out, r)
-					if err != nil {
-						fmt.Fprintf(out, "error streaming service logs: %s\n", err)
-					}
-
-					err = <-errCh
 					if err != nil {
 						fmt.Fprintf(out, "error streaming service logs: %s\n", err)
 					}

@@ -11,7 +11,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gopacket/gopacket"
@@ -90,26 +89,10 @@ e.g. by excluding packets with the port 50000.
 				return err
 			}
 
-			r, errCh, err := c.PacketCapture(ctx, &req)
+			r, err := c.PacketCapture(ctx, &req)
 			if err != nil {
 				return fmt.Errorf("error copying: %w", err)
 			}
-
-			var wg sync.WaitGroup
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for err := range errCh {
-					if client.StatusCode(err) == codes.DeadlineExceeded {
-						continue
-					}
-
-					fmt.Fprintln(os.Stderr, err.Error())
-				}
-			}()
-
-			defer wg.Wait()
 
 			if pcapCmdFlags.output == "" {
 				return dumpPackets(r)

@@ -128,7 +128,7 @@ func (suite *CGroupsSuite) TestCGroupsVersion() {
 
 //nolint:gocyclo
 func (suite *CGroupsSuite) readCmdline(ctx context.Context) (string, error) {
-	reader, errCh, err := suite.Client.Read(ctx, "/proc/cmdline")
+	reader, err := suite.Client.Read(ctx, "/proc/cmdline")
 	if err != nil {
 		return "", err
 	}
@@ -145,12 +145,6 @@ func (suite *CGroupsSuite) readCmdline(ctx context.Context) (string, error) {
 	_, err = io.Copy(io.Discard, reader)
 	if err != nil {
 		return "", err
-	}
-
-	for err = range errCh {
-		if err != nil {
-			return "", err
-		}
 	}
 
 	return bootID, reader.Close()

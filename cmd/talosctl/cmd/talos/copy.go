@@ -10,7 +10,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"github.com/spf13/cobra"
 
@@ -48,22 +47,10 @@ captures ownership and permission bits.`,
 				return err
 			}
 
-			r, errCh, err := c.Copy(ctx, args[0])
+			r, err := c.Copy(ctx, args[0])
 			if err != nil {
 				return fmt.Errorf("error copying: %w", err)
 			}
-
-			var wg sync.WaitGroup
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for err := range errCh {
-					fmt.Fprintln(os.Stderr, err.Error())
-				}
-			}()
-
-			defer wg.Wait()
 
 			localPath := args[1]
 

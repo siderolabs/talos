@@ -178,10 +178,13 @@ func (c *Client) Close() error {
 }
 
 // KubeconfigRaw returns K8s client config (kubeconfig).
-func (c *Client) KubeconfigRaw(ctx context.Context) (io.ReadCloser, <-chan error, error) {
+//
+// This method doesn't support multiplexing of the result:
+// * either client.WithNodes is not used, or it contains a single node in the list.
+func (c *Client) KubeconfigRaw(ctx context.Context) (io.ReadCloser, error) {
 	stream, err := c.MachineClient.Kubeconfig(ctx, &emptypb.Empty{})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return ReadStream(stream)
@@ -225,20 +228,12 @@ func (c *Client) extractKubeconfig(r io.ReadCloser) ([]byte, error) {
 
 // Kubeconfig returns K8s client config (kubeconfig).
 func (c *Client) Kubeconfig(ctx context.Context) ([]byte, error) {
-	r, errCh, err := c.KubeconfigRaw(ctx)
+	r, err := c.KubeconfigRaw(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	kubeconfig, err := c.extractKubeconfig(r)
-
-	if err2 := <-errCh; err2 != nil {
-		// prefer errCh (error from server) as if server failed,
-		// extractKubeconfig failed as well, but server failure is more descriptive
-		return nil, err2
-	}
-
-	return kubeconfig, err
+	return c.extractKubeconfig(r)
 }
 
 // ApplyConfiguration implements proto.MachineServiceClient interface.
@@ -532,12 +527,15 @@ func (c *Client) DiskUsage(ctx context.Context, req *machineapi.DiskUsageRequest
 }
 
 // Copy implements the proto.MachineServiceClient interface.
-func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, <-chan error, error) {
+//
+// This method doesn't support multiplexing of the result:
+// * either client.WithNodes is not used, or it contains a single node in the list.
+func (c *Client) Copy(ctx context.Context, rootPath string) (io.ReadCloser, error) {
 	stream, err := c.MachineClient.Copy(ctx, &machineapi.CopyRequest{
 		RootPath: rootPath,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return ReadStream(stream)
@@ -762,10 +760,13 @@ func (c *Client) TimeCheck(ctx context.Context, server string, callOptions ...gr
 }
 
 // Read reads a file.
-func (c *Client) Read(ctx context.Context, path string) (io.ReadCloser, <-chan error, error) {
+//
+// This method doesn't support multiplexing of the result:
+// * either client.WithNodes is not used, or it contains a single node in the list.
+func (c *Client) Read(ctx context.Context, path string) (io.ReadCloser, error) {
 	stream, err := c.MachineClient.Read(ctx, &machineapi.ReadRequest{Path: path})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return ReadStream(stream)
@@ -837,10 +838,13 @@ func (c *Client) EtcdMemberList(ctx context.Context, req *machineapi.EtcdMemberL
 }
 
 // EtcdSnapshot receives a snapshot of the etcd from the node.
-func (c *Client) EtcdSnapshot(ctx context.Context, req *machineapi.EtcdSnapshotRequest, callOptions ...grpc.CallOption) (io.ReadCloser, <-chan error, error) {
+//
+// This method doesn't support multiplexing of the result:
+// * either client.WithNodes is not used, or it contains a single node in the list.
+func (c *Client) EtcdSnapshot(ctx context.Context, req *machineapi.EtcdSnapshotRequest, callOptions ...grpc.CallOption) (io.ReadCloser, error) {
 	stream, err := c.MachineClient.EtcdSnapshot(ctx, req, callOptions...)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return ReadStream(stream)
@@ -960,10 +964,13 @@ func (c *Client) GenerateClientConfiguration(ctx context.Context, req *machineap
 }
 
 // PacketCapture implements the proto.MachineServiceClient interface.
-func (c *Client) PacketCapture(ctx context.Context, req *machineapi.PacketCaptureRequest) (io.ReadCloser, <-chan error, error) {
+//
+// This method doesn't support multiplexing of the result:
+// * either client.WithNodes is not used, or it contains a single node in the list.
+func (c *Client) PacketCapture(ctx context.Context, req *machineapi.PacketCaptureRequest) (io.ReadCloser, error) {
 	stream, err := c.MachineClient.PacketCapture(ctx, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	return ReadStream(stream)
@@ -978,19 +985,17 @@ type MachineStream interface {
 // ReadStream converts grpc stream into io.Reader.
 //
 //nolint:gocyclo
-func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
-	errCh := make(chan error, 1)
+func ReadStream(stream MachineStream) (io.ReadCloser, error) {
 	pr, pw := io.Pipe()
 
 	go func() {
 		//nolint:errcheck
 		defer pw.Close()
-		defer close(errCh)
 
 		for {
 			data, err := stream.Recv()
 			if err != nil {
-				if err == io.EOF || StatusCode(err) == codes.Canceled || StatusCode(err) == codes.DeadlineExceeded {
+				if errors.Is(err, io.EOF) || StatusCode(err) == codes.Canceled || StatusCode(err) == codes.DeadlineExceeded {
 					return
 				}
 				//nolint:errcheck
@@ -1007,16 +1012,27 @@ func ReadStream(stream MachineStream) (io.ReadCloser, <-chan error, error) {
 			}
 
 			if data.Metadata != nil && data.Metadata.Error != "" {
-				if data.Metadata.Status != nil {
-					errCh <- status.FromProto(data.Metadata.Status).Err()
-				} else {
-					errCh <- errors.New(data.Metadata.Error)
-				}
+				pw.CloseWithError(metaToErr(data.Metadata)) //nolint:errcheck
+
+				return
 			}
 		}
 	}()
 
-	return pr, errCh, stream.CloseSend()
+	return pr, stream.CloseSend()
+}
+
+func metaToErr(md *common.Metadata) error {
+	if md.Status == nil {
+		return errors.New(md.Error)
+	}
+
+	code := codes.Code(md.Status.Code)
+	if code == codes.Canceled || code == codes.DeadlineExceeded {
+		return nil
+	}
+
+	return status.FromProto(md.Status).Err()
 }
 
 // Netstat lists the network sockets on the current node.

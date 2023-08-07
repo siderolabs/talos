@@ -15,7 +15,6 @@ import (
 	"io"
 	"math/rand"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/siderolabs/go-retry/retry"
@@ -200,7 +199,7 @@ func (apiSuite *APISuite) ReadBootID(ctx context.Context) (string, error) {
 	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer reqCtxCancel()
 
-	reader, errCh, err := apiSuite.Client.Read(reqCtx, "/proc/sys/kernel/random/boot_id")
+	reader, err := apiSuite.Client.Read(reqCtx, "/proc/sys/kernel/random/boot_id")
 	if err != nil {
 		return "", err
 	}
@@ -217,12 +216,6 @@ func (apiSuite *APISuite) ReadBootID(ctx context.Context) (string, error) {
 	_, err = io.Copy(io.Discard, reader)
 	if err != nil {
 		return "", err
-	}
-
-	for err = range errCh {
-		if err != nil {
-			return "", err
-		}
 	}
 
 	return bootID, reader.Close()
@@ -411,7 +404,7 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 
 	reqCtx = client.WithNodes(reqCtx, node)
 
-	reader, errCh, err := apiSuite.Client.Read(reqCtx, "/var/lib/kubelet/pki/kubelet-client-current.pem")
+	reader, err := apiSuite.Client.Read(reqCtx, "/var/lib/kubelet/pki/kubelet-client-current.pem")
 	if err != nil {
 		return "", err
 	}
@@ -425,12 +418,6 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 		return "", err
 	}
 
-	for err = range errCh {
-		if err != nil {
-			return "", err
-		}
-	}
-
 	return hex.EncodeToString(hash.Sum(nil)), reader.Close()
 }
 
@@ -439,13 +426,13 @@ func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Pr
 	// Load the current node machine config
 	cfgData := new(bytes.Buffer)
 
-	reader, errCh, err := apiSuite.Client.Read(nodeCtx, constants.ConfigPath)
+	reader, err := apiSuite.Client.Read(nodeCtx, constants.ConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("error creating reader: %w", err)
 	}
 	defer reader.Close() //nolint:errcheck
 
-	if err = copyFromReaderWithErrChan(cfgData, reader, errCh); err != nil {
+	if _, err = io.Copy(cfgData, reader); err != nil {
 		return nil, fmt.Errorf("error reading: %w", err)
 	}
 
@@ -455,34 +442,6 @@ func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Pr
 	}
 
 	return provider, nil
-}
-
-func copyFromReaderWithErrChan(out io.Writer, in io.Reader, errCh <-chan error) (err error) {
-	var wg sync.WaitGroup
-
-	var chanErr error
-
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
-		// StreamReader is only singly-buffered, so we need to process any errors as we get them.
-		for chanErr = range errCh { //nolint:revive
-		}
-	}()
-
-	defer func() {
-		wg.Wait()
-
-		if err == nil {
-			err = chanErr
-		}
-	}()
-
-	_, err = io.Copy(out, in)
-
-	return err
 }
 
 // TearDownSuite closes Talos API client.

@@ -51,13 +51,11 @@ func (suite *DmesgSuite) TestNodeHasDmesg() {
 	)
 	suite.Require().NoError(err)
 
-	logReader, errCh, err := client.ReadStream(dmesgStream)
+	logReader, err := client.ReadStream(dmesgStream)
 	suite.Require().NoError(err)
 
 	n, err := io.Copy(io.Discard, logReader)
 	suite.Require().NoError(err)
-
-	suite.Require().NoError(<-errCh)
 
 	// dmesg shouldn't be empty
 	suite.Require().Greater(n, int64(1024))

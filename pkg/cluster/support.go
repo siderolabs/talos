@@ -627,7 +627,7 @@ func mounts(ctx context.Context, options *BundleOptions) ([]byte, error) {
 func devices(ctx context.Context, options *BundleOptions) ([]byte, error) {
 	options.Log("reading devices")
 
-	r, _, err := options.Client.Read(ctx, "/proc/bus/pci/devices")
+	r, err := options.Client.Read(ctx, "/proc/bus/pci/devices")
 	if err != nil {
 		return nil, err
 	}

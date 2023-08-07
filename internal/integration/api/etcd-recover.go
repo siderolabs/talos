@@ -11,7 +11,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"sync"
 	"testing"
 	"time"
 
@@ -184,26 +183,12 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 func (suite *EtcdRecoverSuite) snapshotEtcd(snapshotNode string, dest io.Writer) error {
 	ctx := client.WithNodes(suite.ctx, snapshotNode)
 
-	r, errCh, err := suite.Client.EtcdSnapshot(ctx, &machineapi.EtcdSnapshotRequest{})
+	r, err := suite.Client.EtcdSnapshot(ctx, &machineapi.EtcdSnapshotRequest{})
 	if err != nil {
 		return fmt.Errorf("error reading snapshot: %w", err)
 	}
 
 	defer r.Close() //nolint:errcheck
-
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
-		for err := range errCh {
-			suite.T().Logf("read error: %s", err)
-		}
-	}()
-
-	defer wg.Wait()
 
 	_, err = io.Copy(dest, r)
 

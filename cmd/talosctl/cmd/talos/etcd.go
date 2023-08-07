@@ -11,7 +11,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"text/tabwriter"
 
 	"github.com/dustin/go-humanize"
@@ -350,24 +349,12 @@ var etcdSnapshotCmd = &cobra.Command{
 
 			defer dest.Close() //nolint:errcheck
 
-			r, errCh, err := c.EtcdSnapshot(ctx, &machine.EtcdSnapshotRequest{})
+			r, err := c.EtcdSnapshot(ctx, &machine.EtcdSnapshotRequest{})
 			if err != nil {
 				return fmt.Errorf("error reading file: %w", err)
 			}
 
 			defer r.Close() //nolint:errcheck
-
-			var wg sync.WaitGroup
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for err := range errCh {
-					fmt.Fprintln(os.Stderr, err.Error())
-				}
-			}()
-
-			defer wg.Wait()
 
 			size, err := io.Copy(dest, r)
 			if err != nil {

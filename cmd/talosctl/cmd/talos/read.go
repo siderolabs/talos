@@ -11,7 +11,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -37,37 +36,19 @@ var readCmd = &cobra.Command{
 				return err
 			}
 
-			r, errCh, err := c.Read(ctx, args[0])
+			r, err := c.Read(ctx, args[0])
 			if err != nil {
 				return fmt.Errorf("error reading file: %w", err)
 			}
 
 			defer r.Close() //nolint:errcheck
 
-			var eg errgroup.Group
-
-			eg.Go(func() error {
-				var errors error
-
-				for err := range errCh {
-					if err != nil {
-						errors = helpers.AppendErrors(errors, err)
-					}
-				}
-
-				return errors
-			})
-
 			_, err = io.Copy(os.Stdout, r)
 			if err != nil {
 				return fmt.Errorf("error reading: %w", err)
 			}
 
-			if err = r.Close(); err != nil {
-				return err
-			}
-
-			return eg.Wait()
+			return r.Close()
 		})
 	},
 }

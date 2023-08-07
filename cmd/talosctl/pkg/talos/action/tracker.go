@@ -320,7 +320,7 @@ func (a *Tracker) processNodeUpdate(update nodeUpdate) reporter.Update {
 // getBootID reads the boot ID from the node.
 // It returns the node as the first return value and the boot ID as the second.
 func getBootID(ctx context.Context, c *client.Client) (string, error) {
-	reader, errCh, err := c.Read(ctx, "/proc/sys/kernel/random/boot_id")
+	reader, err := c.Read(ctx, "/proc/sys/kernel/random/boot_id")
 	if err != nil {
 		return "", err
 	}
@@ -333,12 +333,6 @@ func getBootID(ctx context.Context, c *client.Client) (string, error) {
 	}
 
 	bootID := strings.TrimSpace(string(body))
-
-	for err = range errCh {
-		if err != nil {
-			return "", err
-		}
-	}
 
 	return bootID, reader.Close()
 }

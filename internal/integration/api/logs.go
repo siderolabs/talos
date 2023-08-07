@@ -69,15 +69,13 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 		)
 		suite.Require().NoError(err)
 
-		logReader, errCh, err := client.ReadStream(logsStream)
+		logReader, err := client.ReadStream(logsStream)
 		suite.Require().NoError(err)
 
 		n, err := io.Copy(io.Discard, logReader)
 		suite.Require().NoError(err)
 
 		logsSize += n
-
-		suite.Require().NoError(<-errCh)
 	}
 
 	// overall logs shouldn't be empty
@@ -104,7 +102,7 @@ func (suite *LogsSuite) TestTail() {
 		)
 		suite.Require().NoError(err)
 
-		logReader, errCh, err := client.ReadStream(logsStream)
+		logReader, err := client.ReadStream(logsStream)
 		suite.Require().NoError(err)
 
 		scanner := bufio.NewScanner(logReader)
@@ -115,8 +113,6 @@ func (suite *LogsSuite) TestTail() {
 		}
 
 		suite.Require().NoError(scanner.Err())
-
-		suite.Require().NoError(<-errCh)
 
 		suite.Assert().EqualValues(tailLines, lines)
 	}

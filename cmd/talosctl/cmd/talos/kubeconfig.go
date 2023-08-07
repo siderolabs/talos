@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/mattn/go-isatty"
 	"github.com/siderolabs/go-kubeconfig"
@@ -92,22 +91,11 @@ Otherwise kubeconfig will be written to PWD or [local-path] if specified.`,
 				}
 			}
 
-			r, errCh, err := c.KubeconfigRaw(ctx)
+			r, err := c.KubeconfigRaw(ctx)
 			if err != nil {
 				return fmt.Errorf("error copying: %w", err)
 			}
 
-			var wg sync.WaitGroup
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				for err := range errCh {
-					fmt.Fprintln(os.Stderr, err.Error())
-				}
-			}()
-
-			defer wg.Wait()
 			defer r.Close() //nolint:errcheck
 
 			data, err := helpers.ExtractFileFromTarGz("kubeconfig", r)
