@@ -11,32 +11,11 @@ container runtimes, loading additional firmware, etc.
 System extensions are only activated during the installation or upgrade of Talos Linux.
 With system extensions installed, the Talos root filesystem is still immutable and read-only.
 
-## Configuration
+## Installing System Extensions
 
-System extensions are configured in the `.machine.install` section:
+> Note: the way to install system extensions in the `.machine.install` section of the machine configuration is now deprecated.
 
-```yaml
-machine:
-  install:
-    extensions:
-      - image: ghcr.io/siderolabs/gvisor:33f613e
-```
-
-During the initial install (e.g. when PXE booting or booting from an ISO), Talos will pull down container images for system extensions,
-validate them, and include them into the Talos `initramfs` image.
-System extensions will be activated on boot and overlaid on top of the Talos root filesystem.
-
-In order to update the system extensions for a running instance, update `.machine.install.extensions` and upgrade Talos.
-(Note: upgrading to the same version of Talos is fine).
-
-## Building a Talos Image with System Extensions
-
-System extensions can be installed into the Talos disk image (e.g. AWS AMI or VMWare OVF) by running the following command to generate the image
-from the Talos source tree:
-
-```sh
-make image-metal IMAGER_SYSTEM_EXTENSIONS="ghcr.io/siderolabs/amd-ucode:20220411 ghcr.io/siderolabs/gvisor:20220405.0-v1.0.0-10-g82b41ad"
-```
+A custom boot image of Talos can be generated with
 
 ## Authoring System Extensions
 

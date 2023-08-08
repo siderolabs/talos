@@ -93,7 +93,10 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+* `controlplane.apiServer.resources`, `controlplane.controllerManager.resources` and `controlplane.scheduler.resources` allow to configure resource requests and limits for the control plane components.
+* `machine.systemDiskEncryption` supports two new encryption key types: TPM and network KMS.
+* `machine.features.diskQuotaSupport` enables XFS disk quota for pod volumes.
+* `machine.features.kubePrism` enables [KubePrism]({{< relref "../kubernetes-guides/configuration/kubeprism" >}}) feature.
 
 ## Upgrade Sequence
 

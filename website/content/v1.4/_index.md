@@ -4,8 +4,8 @@ no_list: true
 linkTitle: "Documentation"
 cascade:
   type: docs
-lastRelease: v1.4.4
-kubernetesRelease: "1.27.1"
+lastRelease: v1.4.7
+kubernetesRelease: "1.27.4"
 prevKubernetesRelease: "1.26.3"
 theilaRelease: "v0.2.1"
 nvidiaContainerToolkitRelease: "v1.12.1"
