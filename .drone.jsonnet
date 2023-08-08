@@ -6,6 +6,7 @@
 // Sign with `drone sign siderolabs/talos --save`
 
 local build_container = 'autonomy/build-container:latest';
+local downstream_image = 'ghcr.io/siderolabs/drone-downstream:v1.2.0-33-g2306176';
 local local_registry = 'registry.dev.talos-systems.io';
 
 local volumes = {
@@ -100,6 +101,53 @@ local volumes = {
   ],
 };
 
+// Step standardizes the creation of build steps. The name of the step is used
+// as the target when building the make command unless with_make is set to false. For example, if name equals
+// "test", the resulting step command will be "make test". This is done to
+// encourage alignment between this file and the Makefile, and gives us a
+// standardized structure that should make things easier to reason about if we
+// know that each step is essentially a Makefile target.
+local Step(name, image='', target='', privileged=false, depends_on=[], environment={}, extra_volumes=[], with_make=true, entrypoint=null, extra_commands=[], resources={}, when={}) = {
+  local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
+
+  local commands = if with_make then [make] + extra_commands else extra_commands,
+
+  local common_env_vars = {
+    PLATFORM: 'linux/amd64,linux/arm64',
+  },
+
+  name: name,
+  image: if image == '' then build_container else image,
+  pull: 'always',
+  entrypoint: entrypoint,
+  commands: commands,
+  resources: resources,
+  privileged: privileged,
+  environment: common_env_vars + environment,
+  volumes: volumes.ForStep() + extra_volumes,
+  depends_on: [x.name for x in depends_on],
+  when: when,
+};
+
+// TriggerDownstream is a helper function for creating a step that triggers a
+// downstream pipeline. It is used to standardize the creation of these steps.
+local TriggerDownstream(name, target, repositories, image='', params=[], depends_on=[]) = {
+  name: name,
+  image: if image == '' then downstream_image else image,
+  settings: {
+    server: 'https://ci.dev.talos-systems.io/',
+    token: {
+      from_secret: 'drone_token',
+    },
+    repositories: repositories,
+    last_successful: true,
+    block: true,
+    params: params,
+    deploy: target,
+  },
+  depends_on: [x.name for x in depends_on],
+};
+
 // This provides the docker service.
 local docker = {
   name: 'docker',
@@ -122,46 +170,6 @@ local docker = {
     },
   },
   volumes: volumes.ForStep(),
-};
-
-// Sets up the CI environment
-local setup_ci = {
-  name: 'setup-ci',
-  image: 'autonomy/build-container:latest',
-  pull: 'always',
-  privileged: true,
-
-  commands: [
-    'setup-ci',
-  ],
-  environment: {
-    BUILDKIT_FLAVOR: 'cross',
-  },
-  volumes: volumes.ForStep(),
-};
-
-// Step standardizes the creation of build steps. The name of the step is used
-// as the target when building the make command. For example, if name equals
-// "test", the resulting step command will be "make test". This is done to
-// encourage alignment between this file and the Makefile, and gives us a
-// standardized structure that should make things easier to reason about if we
-// know that each step is essentially a Makefile target.
-local Step(name, image='', target='', privileged=false, depends_on=[], environment={}, extra_volumes=[], when={}) = {
-  local make = if target == '' then std.format('make %s', name) else std.format('make %s', target),
-
-  local common_env_vars = {
-    PLATFORM: 'linux/amd64,linux/arm64',
-  },
-
-  name: name,
-  image: if image == '' then build_container else image,
-  pull: 'always',
-  commands: [make],
-  privileged: privileged,
-  environment: common_env_vars + environment,
-  volumes: volumes.ForStep() + extra_volumes,
-  depends_on: [x.name for x in depends_on],
-  when: when,
 };
 
 // Pipeline is a way to standardize the creation of pipelines. It supports
@@ -194,10 +202,10 @@ local creds_env_vars = {
   AWS_SECRET_ACCESS_KEY: { from_secret: 'aws_secret_access_key' },
   AWS_SVC_ACCT: { from_secret: 'aws_svc_acct' },
   // Azure creds
-  AZURE_SVC_ACCT: { from_secret: 'azure_svc_acct' },
   AZURE_SUBSCRIPTION_ID: { from_secret: 'azure_subscription_id' },
-  AZURE_CLIENT_ID: { from_secret: 'azure_client_id' },
-  AZURE_CLIENT_SECRET: { from_secret: 'azure_client_secret' },
+  AZURE_STORAGE_ACCOUNT: { from_secret: 'az_storage_account' },
+  AZURE_CLIENT_ID: { from_secret: 'az_storage_user' },  // using old variable name not to break existing release branch pipelines
+  AZURE_CLIENT_SECRET: { from_secret: 'az_storage_pass' },  // using old variable name not to break existing release branch pipelines
   AZURE_TENANT_ID: { from_secret: 'azure_tenant_id' },
   // TODO(andrewrynhard): Rename this to the GCP convention.
   GCE_SVC_ACCT: { from_secret: 'gce_svc_acct' },
@@ -205,8 +213,20 @@ local creds_env_vars = {
   GITHUB_TOKEN: { from_secret: 'ghcr_token' },  // Use GitHub API token to avoid rate limiting on CAPI -> GitHub calls.
 };
 
-// Default pipeline.
+// Sets up the CI environment
+local setup_ci = Step(
+  'setup-ci',
+  with_make=false,
+  privileged=true,
+  extra_commands=[
+    'setup-ci',
+  ],
+  environment={
+    BUILDKIT_FLAVOR: 'cross',
+  },
+);
 
+// Default pipeline.
 local external_artifacts = Step('external-artifacts', depends_on=[setup_ci]);
 local generate = Step('generate', target='generate docs', depends_on=[setup_ci]);
 local uki_certs = Step('uki-certs', depends_on=[generate], environment={ PLATFORM: 'linux/amd64' });
@@ -222,34 +242,33 @@ local e2e_qemu = Step('e2e-qemu-short', privileged=true, target='e2e-qemu', depe
 local e2e_iso = Step('e2e-iso', privileged=true, target='e2e-iso', depends_on=[build, unit_tests, iso, talosctl_cni_bundle], when={ event: ['pull_request'] }, environment={ IMAGE_REGISTRY: local_registry });
 local release_notes = Step('release-notes', depends_on=[e2e_docker, e2e_qemu]);
 
-local coverage = {
-  name: 'coverage',
-  image: 'autonomy/build-container:latest',
-  pull: 'always',
-  environment: {
+local coverage = Step(
+  'coverage',
+  with_make=false,
+  environment={
     CODECOV_TOKEN: { from_secret: 'codecov_token' },
   },
-  commands: [
+  extra_commands=[
     '/usr/local/bin/codecov -f _out/coverage.txt -X fix',
   ],
-  when: {
+  when={
     event: ['pull_request'],
   },
-  depends_on: [unit_tests.name],
-};
+  depends_on=[unit_tests],
+);
 
-local push = {
-  name: 'push',
-  image: 'autonomy/build-container:latest',
-  pull: 'always',
-  environment: {
+local push = Step(
+  'push',
+  environment={
     GHCR_USERNAME: { from_secret: 'ghcr_username' },
     GHCR_PASSWORD: { from_secret: 'ghcr_token' },
     PLATFORM: 'linux/amd64,linux/arm64',
   },
-  commands: ['make push'],
-  volumes: volumes.ForStep(),
-  when: {
+  depends_on=[
+    e2e_docker,
+    e2e_qemu,
+  ],
+  when={
     event: {
       exclude: [
         'pull_request',
@@ -257,22 +276,20 @@ local push = {
         'cron',
       ],
     },
-  },
-  depends_on: [e2e_docker.name, e2e_qemu.name],
-};
+  }
+);
 
-local push_latest = {
-  name: 'push-latest',
-  image: 'autonomy/build-container:latest',
-  pull: 'always',
-  environment: {
+local push_latest = Step(
+  'push-latest',
+  environment={
     GHCR_USERNAME: { from_secret: 'ghcr_username' },
     GHCR_PASSWORD: { from_secret: 'ghcr_token' },
     PLATFORM: 'linux/amd64,linux/arm64',
   },
-  commands: ['make push-latest'],
-  volumes: volumes.ForStep(),
-  when: {
+  depends_on=[
+    push,
+  ],
+  when={
     branch: [
       'main',
     ],
@@ -280,97 +297,85 @@ local push_latest = {
       'push',
     ],
   },
-  depends_on: [push.name],
-};
+);
 
-local save_artifacts = {
-  name: 'save-artifacts',
-  image: 'autonomy/build-container:latest',
-  pull: 'always',
-  environment: {
-    AZURE_STORAGE_ACCOUNT: { from_secret: 'az_storage_account' },
-    AZURE_STORAGE_USER: { from_secret: 'az_storage_user' },
-    AZURE_STORAGE_PASS: { from_secret: 'az_storage_pass' },
-    AZURE_TENANT: { from_secret: 'az_tenant' },
-  },
-  commands: [
-    'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
+local save_artifacts = Step(
+  'save-artifacts',
+  with_make=false,
+  environment=creds_env_vars,
+  depends_on=[
+    build,
+    images_essential,
+    iso,
+    talosctl_cni_bundle,
+  ],
+  extra_commands=[
+    'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
     'az storage container create --metadata ci=true -n ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
     'az storage blob upload-batch --overwrite -s _out -d  ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-  ],
-  volumes: volumes.ForStep(),
-  depends_on: [build.name, images_essential.name, iso.name, talosctl_cni_bundle.name],
-};
+  ]
+);
 
-local load_artifacts = {
-  name: 'load-artifacts',
-  image: 'autonomy/build-container:latest',
-  pull: 'always',
-  environment: {
-    AZURE_STORAGE_ACCOUNT: { from_secret: 'az_storage_account' },
-    AZURE_STORAGE_USER: { from_secret: 'az_storage_user' },
-    AZURE_STORAGE_PASS: { from_secret: 'az_storage_pass' },
-    AZURE_TENANT: { from_secret: 'az_tenant' },
-  },
-  commands: [
+local load_artifacts = Step(
+  'load-artifacts',
+  with_make=false,
+  environment=creds_env_vars,
+  depends_on=[
+    setup_ci,
+  ],
+  extra_commands=[
+    'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
     'mkdir -p _out/',
-    'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
     'az storage blob download-batch --overwrite true -d _out -s ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
     'chmod +x _out/clusterctl _out/integration-test-linux-amd64 _out/module-sig-verify-linux-amd64 _out/kubectl _out/kubestr _out/helm _out/cilium _out/talosctl*',
-  ],
-  volumes: volumes.ForStep(),
-  depends_on: [setup_ci.name],
-};
+  ]
+);
 
 // builds the extensions
-local extensions_build = {
-  name: 'extensions-build',
-  image: 'ghcr.io/siderolabs/drone-downstream:v1.2.0-33-g2306176',
-  settings: {
-    server: 'https://ci.dev.talos-systems.io/',
-    token: {
-      from_secret: 'drone_token',
-    },
-    repositories: [
-      'siderolabs/extensions@main',
-    ],
-    last_successful: true,
-    block: true,
-    params: [
-      std.format('REGISTRY=%s', local_registry),
-      'PLATFORM=linux/amd64',
-      'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-      '_out/talos-metadata',
-    ],
-    deploy: 'e2e-talos',
-  },
-  depends_on: [load_artifacts.name],
-};
+local extensions_build = TriggerDownstream(
+  'extensions-build',
+  'e2e-talos',
+  ['siderolabs/extensions@main'],
+  params=[
+    std.format('REGISTRY=%s', local_registry),
+    'PLATFORM=linux/amd64',
+    'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    '_out/talos-metadata',
+  ],
+  depends_on=[load_artifacts],
+);
 
 // here we need to wait for the extensions build to finish
-local extensions_artifacts = load_artifacts {
-  name: 'extensions-artifacts',
-  commands: [
-    'az login --service-principal -u "$${AZURE_STORAGE_USER}" -p "$${AZURE_STORAGE_PASS}" --tenant "$${AZURE_TENANT}"',
-    'az storage blob download -f _out/extensions-metadata -n extensions-metadata -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+local extensions_artifacts = Step(
+  'extensions-artifacts',
+  with_make=false,
+  environment=creds_env_vars,
+  depends_on=[
+    setup_ci,
+    extensions_build,
   ],
-  depends_on: [setup_ci.name, extensions_build.name],
-};
+  extra_commands=[
+    'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
+    'az storage blob download -f _out/extensions-metadata -n extensions-metadata -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+  ]
+);
 
 // generates the extension list patch manifest
-local extensions_patch_manifest = {
-  name: 'extensions-patch-manifest',
-  image: 'autonomy/build-container:latest',
-  pull: 'always',
-  commands: [
+local extensions_patch_manifest = Step(
+  'extensions-patch-manifest',
+  with_make=false,
+  environment=creds_env_vars,
+  depends_on=[
+    extensions_artifacts,
+  ],
+  extra_commands=[
     // create a patch file to pass to the downstream build
     // ignore nvidia extensions, testing nvidia extensions needs a machine with nvidia graphics card
-    // ignore nut extensions, needs extra config files
     'jq -R < _out/extensions-metadata | jq -s -f hack/test/extensions/extension-patch-filter.jq > _out/extensions-patch.json',
     'cat _out/extensions-patch.json',
-  ],
-  depends_on: [extensions_artifacts.name],
-};
+  ]
+);
+
 
 local default_steps = [
   setup_ci,

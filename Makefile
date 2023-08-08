@@ -12,6 +12,8 @@ REGISTRY_AND_USERNAME := $(IMAGE_REGISTRY)/$(USERNAME)
 DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
+CLOUD_IMAGES_EXTRA_ARGS ?= ""
+
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0
 PKGS ?= v1.5.0
@@ -341,10 +343,9 @@ cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
 	@docker run --rm -v $(PWD):/src -w /src \
 		-e TAG=$(TAG) -e ARTIFACTS=$(ARTIFACTS) -e ABBREV_TAG=$(ABBREV_TAG) \
 		-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SVC_ACCT \
-		-e AZURE_SVC_ACCT -e GCE_SVC_ACCT -e PACKET_AUTH_TOKEN \
 		-e AZURE_SUBSCRIPTION_ID -e AZURE_CLIENT_ID -e AZURE_CLIENT_SECRET -e AZURE_TENANT_ID \
 		golang:$(GO_VERSION) \
-		./hack/cloud-image-uploader.sh
+		./hack/cloud-image-uploader.sh $(CLOUD_IMAGES_EXTRA_ARGS)
 
 .PHONY: uki-certs
 uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
