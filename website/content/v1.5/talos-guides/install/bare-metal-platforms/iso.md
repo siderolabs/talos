@@ -14,3 +14,8 @@ Please follow the [getting started guide]({{< relref "../../../introduction/gett
 > The boot order should prefer disk over ISO, or the ISO should be removed after the installation to make Talos boot from disk.
 
 See [kernel parameters reference]({{< relref "../../../reference/kernel" >}}) for the list of kernel parameters supported by Talos.
+
+There are two flavors of ISO images available:
+
+* `metal-<arch>.iso` supports booting on BIOS and UEFI systems (for x86, UEFI only for arm64)
+* `secureboot-metal-<arch>.iso` supports booting on only UEFI systems in SecureBoot mode

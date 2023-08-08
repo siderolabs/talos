@@ -64,6 +64,14 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"installer": {
+		Platform:   "metal",
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindInstaller,
+			OutFormat: OutFormatRaw,
+		},
+	},
 	"secureboot-installer": {
 		Platform:   "metal",
 		SecureBoot: pointer.To(true),

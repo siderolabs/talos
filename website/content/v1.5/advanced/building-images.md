@@ -1,6 +1,6 @@
 ---
-title: "Building Talos Images"
-description: "How to build Talos images from source."
+title: "Building Custom Talos Images"
+description: "How to build a custom Talos image from source."
 ---
 
 There might be several reasons to build Talos images from source:
