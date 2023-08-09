@@ -1123,9 +1123,12 @@ disk: /dev/nvme0
 {{< /highlight >}}</details> | |
 |`diskSelector` |<a href="#installdiskselector">InstallDiskSelector</a> |<details><summary>Look up disk using disk attributes like model, size, serial and others.</summary>Always has priority over `disk`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 diskSelector:
-    size: 4GB # Disk size.
+    size: '>= 1TB' # Disk size.
     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
-    busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
+
+    # # Disk bus path.
+    # busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
+    # busPath: /pci0000:00/*
 {{< /highlight >}}</details> | |
 |`extraKernelArgs` |[]string |Allows for supplying extra kernel args via the bootloader. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraKernelArgs:
@@ -1156,9 +1159,12 @@ Appears in:
 
 
 {{< highlight yaml >}}
-size: 4GB # Disk size.
+size: '>= 1TB' # Disk size.
 model: WDC* # Disk model `/sys/block/<dev>/device/model`.
-busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
+
+# # Disk bus path.
+# busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
+# busPath: /pci0000:00/*
 {{< /highlight >}}
 
 
@@ -2172,13 +2178,16 @@ bond:
     interfaces:
         - enp2s0
         - enp2s1
-    # Picks a network device using the selector.
-    deviceSelectors:
-        - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-        - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
-          driver: virtio # Kernel driver, supports matching by wildcard.
     mode: 802.3ad # A bond option.
     lacpRate: fast # A bond option.
+
+    # # Picks a network device using the selector.
+
+    # # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+    # deviceSelectors:
+    #     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
+    #     - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+    #       driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}</details> | |
 |`bridge` |<a href="#bridge">Bridge</a> |Bridge specific options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 bridge:
@@ -2393,13 +2402,16 @@ Appears in:
 interfaces:
     - enp2s0
     - enp2s1
-# Picks a network device using the selector.
-deviceSelectors:
-    - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
-    - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
-      driver: virtio # Kernel driver, supports matching by wildcard.
 mode: 802.3ad # A bond option.
 lacpRate: fast # A bond option.
+
+# # Picks a network device using the selector.
+
+# # select a device with bus prefix 00:*, a device with mac address matching `*:f0:ab` and `virtio` kernel driver.
+# deviceSelectors:
+#     - busPath: 00:* # PCI, USB bus prefix, supports matching by wildcard.
+#     - hardwareAddr: '*:f0:ab' # Device hardware address, supports matching by wildcard.
+#       driver: virtio # Kernel driver, supports matching by wildcard.
 {{< /highlight >}}
 
 

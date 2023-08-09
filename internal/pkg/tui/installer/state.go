@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/tui/components"
 	"github.com/siderolabs/talos/pkg/images"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -103,12 +104,12 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 	networkConfigItems := []*components.Item{
 		components.NewItem(
 			"Hostname",
-			v1alpha1.NetworkConfigDoc.Describe("hostname", true),
+			describe[v1alpha1.NetworkConfig]("hostname", true),
 			&opts.MachineConfig.NetworkConfig.Hostname,
 		),
 		components.NewItem(
 			"DNS Domain",
-			v1alpha1.ClusterNetworkConfigDoc.Describe("dnsDomain", true),
+			describe[v1alpha1.ClusterNetworkConfig]("dnsDomain", true),
 			&opts.ClusterConfig.ClusterNetwork.DnsDomain,
 		),
 	}
@@ -148,10 +149,10 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 
 	if !conn.ExpandingCluster() {
 		networkConfigItems = append(networkConfigItems,
-			components.NewSeparator(v1alpha1.ClusterNetworkConfigDoc.Describe("cni", true)),
+			components.NewSeparator(describe[v1alpha1.ClusterNetworkConfig]("cni", true)),
 			components.NewItem(
 				"Type",
-				v1alpha1.ClusterNetworkConfigDoc.Describe("cni", true),
+				describe[v1alpha1.ClusterNetworkConfig]("cni", true),
 				&state.cni,
 				components.NewTableHeaders("CNI", "description"),
 				constants.FlannelCNI, "CNI used by Talos by default",
@@ -164,11 +165,11 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 		NewPage("Installer Params",
 			components.NewItem(
 				"Image",
-				v1alpha1.InstallConfigDoc.Describe("image", true),
+				describe[v1alpha1.InstallConfig]("image", true),
 				&opts.MachineConfig.InstallConfig.InstallImage,
 			),
 			components.NewSeparator(
-				v1alpha1.InstallConfigDoc.Describe("disk", true),
+				describe[v1alpha1.InstallConfig]("disk", true),
 			),
 			components.NewItem(
 				"Install Disk",
@@ -180,18 +181,18 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 		NewPage("Machine Config",
 			components.NewItem(
 				"Machine Type",
-				v1alpha1.MachineConfigDoc.Describe("type", true),
+				describe[v1alpha1.MachineConfig]("type", true),
 				&opts.MachineConfig.Type,
 				machineTypes...,
 			),
 			components.NewItem(
 				"Cluster Name",
-				v1alpha1.ClusterConfigDoc.Describe("clusterName", true),
+				describe[v1alpha1.ClusterConfig]("clusterName", true),
 				&opts.ClusterConfig.Name,
 			),
 			components.NewItem(
 				"Control Plane Endpoint",
-				v1alpha1.ControlPlaneConfigDoc.Describe("endpoint", true),
+				describe[v1alpha1.ControlPlaneConfig]("endpoint", true),
 				&opts.ClusterConfig.ControlPlane.Endpoint,
 			),
 			components.NewItem(
@@ -201,7 +202,7 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 			),
 			components.NewItem(
 				"Allow Scheduling on Control Planes",
-				v1alpha1.ClusterConfigDoc.Describe("allowSchedulingOnControlPlanes", true),
+				describe[v1alpha1.ClusterConfig]("allowSchedulingOnControlPlanes", true),
 				&opts.ClusterConfig.AllowSchedulingOnControlPlanes,
 			),
 		),
@@ -268,27 +269,27 @@ func configureAdapter(installer *Installer, opts *machineapi.GenerateConfigurati
 				items := []*components.Item{
 					components.NewItem(
 						"Use DHCP",
-						v1alpha1.DeviceDoc.Describe("dhcp", true),
+						describe[v1alpha1.Device]("dhcp", true),
 						&adapterSettings.Dhcp,
 					),
 					components.NewItem(
 						"Ignore",
-						v1alpha1.DeviceDoc.Describe("ignore", true),
+						describe[v1alpha1.Device]("ignore", true),
 						&adapterSettings.Ignore,
 					),
 					components.NewItem(
 						"CIDR",
-						v1alpha1.DeviceDoc.Describe("cidr", true),
+						describe[v1alpha1.Device]("cidr", true),
 						&adapterSettings.Cidr,
 					),
 					components.NewItem(
 						"MTU",
-						v1alpha1.DeviceDoc.Describe("mtu", true),
+						describe[v1alpha1.Device]("mtu", true),
 						&adapterSettings.Mtu,
 					),
 					components.NewItem(
 						"Route Metric",
-						v1alpha1.DeviceDoc.Describe("dhcpOptions", true),
+						describe[v1alpha1.Device]("dhcpOptions", true),
 						&adapterSettings.DhcpOptions.RouteMetric,
 					),
 				}
@@ -338,4 +339,14 @@ func configureAdapter(installer *Installer, opts *machineapi.GenerateConfigurati
 				installer.app.SetFocus(adapterConfiguration)
 			})
 	}
+}
+
+type documentable interface {
+	Doc() *encoder.Doc
+}
+
+func describe[T documentable](field string, short bool) string {
+	var zeroT T
+
+	return zeroT.Doc().Describe(field, short)
 }
