@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/hashicorp/go-multierror"
 	sideronet "github.com/siderolabs/net"
@@ -308,14 +309,49 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 	return warnings, result.ErrorOrNil()
 }
 
-var rxDNSName = regexp.MustCompile(`^([a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62}){1}(\.[a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62})*[\._]?$`)
+// onceValue is a straight copy from Go 1.21, change to sync.OnceValue once upgraded to Go 1.21.
+func onceValue[T any](f func() T) func() T {
+	var (
+		once   sync.Once
+		valid  bool
+		p      any
+		result T
+	)
+
+	g := func() {
+		defer func() {
+			p = recover()
+
+			if !valid {
+				panic(p)
+			}
+		}()
+
+		result = f()
+		valid = true
+	}
+
+	return func() T {
+		once.Do(g)
+
+		if !valid {
+			panic(p)
+		}
+
+		return result
+	}
+}
+
+var rxDNSNameRegexp = onceValue(func() *regexp.Regexp {
+	return regexp.MustCompile(`^([a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62}){1}(\.[a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62})*[\._]?$`)
+})
 
 func isValidDNSName(name string) bool {
 	if name == "" || len(name)-strings.Count(name, ".") > 255 {
 		return false
 	}
 
-	return rxDNSName.MatchString(name)
+	return rxDNSNameRegexp().MatchString(name)
 }
 
 // Validate validates the config.
