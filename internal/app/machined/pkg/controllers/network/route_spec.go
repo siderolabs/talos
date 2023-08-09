@@ -7,7 +7,6 @@ package network
 import (
 	"context"
 	"fmt"
-	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -120,31 +119,35 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 	}
 }
 
-func findRoutes(routes []rtnetlink.RouteMessage, family nethelpers.Family, destination netip.Prefix, gateway netip.Addr, table nethelpers.RoutingTable) []*rtnetlink.RouteMessage {
+func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *network.RouteSpecSpec) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
-	for i, route := range routes {
-		if route.Family != uint8(family) {
+	for i, route := range existingRoutes {
+		if route.Family != uint8(expected.Family) {
 			continue
 		}
 
-		if int(route.DstLength) != destination.Bits() {
+		if int(route.DstLength) != expected.Destination.Bits() {
 			continue
 		}
 
-		if !route.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
+		if !route.Attributes.Dst.Equal(expected.Destination.Addr().AsSlice()) {
 			continue
 		}
 
-		if !route.Attributes.Gateway.Equal(gateway.AsSlice()) {
+		if !route.Attributes.Gateway.Equal(expected.Gateway.AsSlice()) {
 			continue
 		}
 
-		if nethelpers.RoutingTable(route.Table) != table {
+		if nethelpers.RoutingTable(route.Table) != expected.Table {
 			continue
 		}
 
-		result = append(result, &routes[i])
+		if route.Attributes.Priority != expected.Priority {
+			continue
+		}
+
+		result = append(result, &existingRoutes[i])
 	}
 
 	return result
@@ -173,7 +176,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 
 	switch route.Metadata().Phase() {
 	case resource.PhaseTearingDown:
-		for _, existing := range findRoutes(routes, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
+		for _, existing := range findMatchingRoutes(routes, route.TypedSpec()) {
 			// delete route
 			if err := conn.Route.Delete(existing); err != nil {
 				return fmt.Errorf("error removing route: %w", err)
@@ -184,6 +187,8 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				zap.String("gateway", gatewayStr),
 				zap.Stringer("table", route.TypedSpec().Table),
 				zap.String("link", route.TypedSpec().OutLinkName),
+				zap.Uint32("priority", route.TypedSpec().Priority),
+				zap.Stringer("family", route.TypedSpec().Family),
 			)
 		}
 
@@ -199,7 +204,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 
 		matchFound := false
 
-		for _, existing := range findRoutes(routes, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Table) {
+		for _, existing := range findMatchingRoutes(routes, route.TypedSpec()) {
 			var existingMTU uint32
 
 			if existing.Attributes.Metrics != nil {
@@ -209,7 +214,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			// check if existing route matches the spec: if it does, skip update
 			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
-				existing.Attributes.OutIface == linkIndex && existing.Attributes.Priority == route.TypedSpec().Priority &&
+				existing.Attributes.OutIface == linkIndex &&
 				(value.IsZero(route.TypedSpec().Source) ||
 					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) &&
 				existingMTU == route.TypedSpec().MTU {
@@ -228,6 +233,8 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				zap.String("gateway", gatewayStr),
 				zap.Stringer("table", route.TypedSpec().Table),
 				zap.String("link", route.TypedSpec().OutLinkName),
+				zap.Uint32("priority", route.TypedSpec().Priority),
+				zap.Stringer("family", route.TypedSpec().Family),
 				zap.Stringer("old_scope", nethelpers.Scope(existing.Scope)),
 				zap.Stringer("new_scope", route.TypedSpec().Scope),
 				zap.Stringer("old_flags", nethelpers.RouteFlags(existing.Flags)),
@@ -236,8 +243,6 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				zap.Stringer("new_protocol", route.TypedSpec().Protocol),
 				zap.Uint32("old_link_index", existing.Attributes.OutIface),
 				zap.Uint32("new_link_index", linkIndex),
-				zap.Uint32("old_priority", existing.Attributes.Priority),
-				zap.Uint32("new_priority", route.TypedSpec().Priority),
 				zap.Stringer("old_source", existing.Attributes.Src),
 				zap.String("new_source", sourceStr),
 			)
@@ -283,6 +288,8 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			zap.String("gateway", gatewayStr),
 			zap.Stringer("table", route.TypedSpec().Table),
 			zap.String("link", route.TypedSpec().OutLinkName),
+			zap.Uint32("priority", route.TypedSpec().Priority),
+			zap.Stringer("family", route.TypedSpec().Family),
 		)
 	}
 
