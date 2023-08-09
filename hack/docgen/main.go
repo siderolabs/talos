@@ -35,60 +35,68 @@ import (
 )
 
 {{ $tick := "` + "`" + `" -}}
-var (
-	{{ range $struct := .Structs -}}
-	{{ $struct.Name }}Doc encoder.Doc
-	{{ end -}}
-)
-
-func init() {
-	{{ range $struct := .Structs -}}
-	{{ $docVar := printf "%v%v" $struct.Name "Doc" }}
-	{{ $docVar }}.Type = "{{ $struct.Name }}"
-	{{ $docVar }}.Comments[encoder.LineComment] = "{{ $struct.Text.Comment }}"
-	{{ $docVar }}.Description = "{{ $struct.Text.Description }}"
-	{{ range $example := $struct.Text.Examples }}
-	{{ if $example.Value }}
-	{{ $docVar }}.AddExample("{{ $example.Name }}", {{ $example.Value }})
-	{{ end -}}
-	{{ end -}}
-	{{ if $struct.AppearsIn -}}
-	{{ $docVar }}.AppearsIn = []encoder.Appearance{
-	{{ range $value := $struct.AppearsIn -}}
-		{
-			TypeName: "{{ $value.Struct.Name }}",
-			FieldName: "{{ $value.FieldName }}",
-		},
-	{{ end -}}
-	}
-	{{ end -}}
-	{{ $docVar }}.Fields = make([]encoder.Doc,{{ len $struct.Fields }})
-	{{ range $index, $field := $struct.Fields }}{{ if $field.Tag -}}
-	{{ $docVar }}.Fields[{{ $index }}].Name = "{{ $field.Tag }}"
-	{{ $docVar }}.Fields[{{ $index }}].Type = "{{ $field.Type }}"
-	{{ $docVar }}.Fields[{{ $index }}].Note = "{{ $field.Note }}"
-	{{ $docVar }}.Fields[{{ $index }}].Description = "{{ $field.Text.Description }}"
-	{{ $docVar }}.Fields[{{ $index }}].Comments[encoder.LineComment] = "{{ $field.Text.Comment }}"
-	{{ range $example := $field.Text.Examples }}
-	{{ if $example.Value }}
-	{{ $docVar }}.Fields[{{ $index }}].AddExample("{{ $example.Name }}", {{ $example.Value }})
-	{{ end -}}
-	{{ end -}}
-	{{ if $field.Text.Values -}}
-	{{ $docVar }}.Fields[{{ $index }}].Values = []string{
-	{{ range $value := $field.Text.Values -}}
-		"{{ $value }}",
-	{{ end -}}
-	}
-	{{ end -}}
-	{{ end -}}
-	{{- end }}
-	{{ end }}
-}
 
 {{ range $struct := .Structs -}}
-func (_ {{ $struct.Name }}) Doc() *encoder.Doc {
-	return &{{ $struct.Name }}Doc
+func ({{ $struct.Name }}) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type : "{{ $struct.Name }}",
+		Comments: [3]string{ "" /* encoder.HeadComment */, "{{ $struct.Text.Comment }}" /* encoder.LineComment */,  "" /* encoder.FootComment */},
+		Description: "{{ $struct.Text.Description }}",
+		{{ if $struct.AppearsIn -}}
+		AppearsIn: []encoder.Appearance{
+		{{ range $value := $struct.AppearsIn -}}
+			{
+				TypeName: "{{ $value.Struct.Name }}",
+				FieldName: "{{ $value.FieldName }}",
+			},
+		{{ end -}}
+		},
+		{{ end -}}
+		Fields: []encoder.Doc{
+			{{ range $index, $field := $struct.Fields -}}
+				{{ if $field.Tag -}}
+					{
+					  Name: "{{ $field.Tag }}",
+					  Type: "{{ $field.Type }}",
+					  Note: "{{ $field.Note }}",
+					  Description: "{{ $field.Text.Description }}",
+					  Comments: [3]string{ "" /* encoder.HeadComment */, "{{ $field.Text.Comment }}" /* encoder.LineComment */,  "" /* encoder.FootComment */},
+	  				  {{ if $field.Text.Values -}}
+					  Values : []string{
+						{{ range $value := $field.Text.Values -}}
+							"{{ $value }}",
+						{{ end -}}
+					  },
+					  {{ end -}}
+					},
+				{{ else -}}
+					{},
+				{{- end }}
+			{{- end }}
+
+		},
+	}
+
+	{{ range $example := $struct.Text.Examples }}
+	{{ if $example.Value }}
+	doc.AddExample("{{ $example.Name }}", {{ $example.Value }})
+	{{ end -}}
+	{{ end }}
+
+	{{ range $index, $field := $struct.Fields -}}
+		{{ if $field.Tag -}}
+			{{ if $field.Text.Examples -}}
+				{{ range $example := $field.Text.Examples -}}
+					{{- if $example.Value }}
+						doc.Fields[{{ $index }}].AddExample("{{ $example.Name }}", {{ $example.Value }})
+					{{- end }}
+				{{- end }}
+			{{- end }}
+		{{- end }}
+	{{- end }}
+
+
+	return doc
 }
 {{ end -}}
 
@@ -99,7 +107,7 @@ func Get{{ .Name }}Doc() *encoder.FileDoc {
 		Description: "{{ .Header }}",
 		Structs: []*encoder.Doc{
 			{{ range $struct := .Structs -}}
-			&{{ $struct.Name }}Doc,
+			{{ $struct.Name }}{}.Doc(),
 			{{ end -}}
 		},
 	}
