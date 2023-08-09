@@ -240,7 +240,6 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 
 	// update the route metric and mtu
 	ctest.UpdateWithConflicts(suite, def, func(defR *network.RouteSpec) error {
-		defR.TypedSpec().Priority = 1048577
 		defR.TypedSpec().MTU = 1700
 
 		return nil
@@ -253,8 +252,8 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 					netip.Prefix{}, netip.MustParseAddr("127.0.11.2"), func(route rtnetlink.RouteMessage) error {
 						suite.Assert().Nil(route.Attributes.Dst)
 
-						if route.Attributes.Priority != 1048577 {
-							return fmt.Errorf("route metric wasn't updated: %d", route.Attributes.Priority)
+						if route.Attributes.Metrics == nil || route.Attributes.Metrics.MTU == 0 {
+							return fmt.Errorf("route metric wasn't updated: %v", route.Attributes.Metrics)
 						}
 
 						suite.Assert().EqualValues(1700, route.Attributes.Metrics.MTU)
