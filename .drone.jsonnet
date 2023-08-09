@@ -687,7 +687,7 @@ local conformance_pipelines = [
 // Release pipeline.
 
 local cloud_images = Step('cloud-images', depends_on=[e2e_docker, e2e_qemu], environment=creds_env_vars);
-local images = Step('images', target='images', depends_on=[iso, images_essential], environment={ IMAGE_REGISTRY: local_registry });
+local images = Step('images', target='images', depends_on=[iso, images_essential, save_artifacts], environment={ IMAGE_REGISTRY: local_registry });
 local sbcs = Step('sbcs', target='sbcs', depends_on=[images], environment={ IMAGE_REGISTRY: local_registry });
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
