@@ -79,6 +79,9 @@ cilium install \
     --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --helm-set=cgroup.autoMount.enabled=false \
+    --helm-set=extraHostPathMounts[0].name=cilium-bpf \
+    --helm-set=extraHostPathMounts[0].mountPath=/sys/fs/bpf \
+    --helm-set=extraHostPathMounts[0].hostPath=/sys/fs/bpf \
     --helm-set=cgroup.hostRoot=/sys/fs/cgroup
 ```
 
@@ -93,6 +96,9 @@ cilium install \
     --helm-set=bpf.autoMount.enabled=false \
     --helm-set=cgroup.autoMount.enabled=false \
     --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
+    --helm-set=extraHostPathMounts[0].name=cilium-bpf \
+    --helm-set=extraHostPathMounts[0].mountPath=/sys/fs/bpf \
+    --helm-set=extraHostPathMounts[0].hostPath=/sys/fs/bpf \
     --helm-set=k8sServiceHost=localhost \
     --helm-set=k8sServicePort=7445
 ```
@@ -128,7 +134,10 @@ helm install \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set=bpf.autoMount.enabled=false \
     --set=cgroup.autoMount.enabled=false \
-    --set=cgroup.hostRoot=/sys/fs/cgroup
+    --set=cgroup.hostRoot=/sys/fs/cgroup \
+    --set=extraHostPathMounts[0].name=cilium-bpf \
+    --set=extraHostPathMounts[0].mountPath=/sys/fs/bpf \
+    --set=extraHostPathMounts[0].hostPath=/sys/fs/bpf
 ```
 
 Or if you want to deploy Cilium in strict mode without kube-proxy, also set some extra paramaters:
@@ -146,6 +155,9 @@ helm install \
     --set=bpf.autoMount.enabled=false \
     --set=cgroup.autoMount.enabled=false \
     --set=cgroup.hostRoot=/sys/fs/cgroup \
+    --set=extraHostPathMounts[0].name=cilium-bpf \
+    --set=extraHostPathMounts[0].mountPath=/sys/fs/bpf \
+    --set=extraHostPathMounts[0].hostPath=/sys/fs/bpf \
     --set=k8sServiceHost=localhost \
     --set=k8sServicePort=7445
 ```
@@ -168,7 +180,10 @@ helm template \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set=bpf.autoMount.enabled=false \
     --set=cgroup.autoMount.enabled=false \
-    --set=cgroup.hostRoot=/sys/fs/cgroup > cilium.yaml
+    --set=cgroup.hostRoot=/sys/fs/cgroup \
+    --set=extraHostPathMounts[0].name=cilium-bpf \
+    --set=extraHostPathMounts[0].mountPath=/sys/fs/bpf \
+    --set=extraHostPathMounts[0].hostPath=/sys/fs/bpf > cilium.yaml
 
 kubectl apply -f cilium.yaml
 ```
@@ -191,6 +206,9 @@ helm template \
     --set=bpf.autoMount.enabled=false \
     --set=cgroup.autoMount.enabled=false \
     --set=cgroup.hostRoot=/sys/fs/cgroup \
+    --set=extraHostPathMounts[0].name=cilium-bpf \
+    --set=extraHostPathMounts[0].mountPath=/sys/fs/bpf \
+    --set=extraHostPathMounts[0].hostPath=/sys/fs/bpf \
     --set=k8sServiceHost=localhost \
     --set=k8sServicePort=7445 > cilium.yaml
 
