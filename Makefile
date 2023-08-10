@@ -13,9 +13,9 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-4-g78b2dc6
-PKGS ?= v1.4.1-16-g69266d9
-EXTRAS ?= v1.4.0-3-g2b5a1e6
+TOOLS ?= ghcr.io/siderolabs/tools:v1.4.0-5-g6889ef6
+PKGS ?= v1.4.1-19-g13103d6
+EXTRAS ?= v1.4.0-4-g9b41398
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20
 # renovate: datasource=go depName=golang.org/x/tools
