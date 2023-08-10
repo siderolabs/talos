@@ -1,3 +1,67 @@
+## [Talos 1.4.8](https://github.com/siderolabs/talos/releases/tag/v1.4.8) (2023-08-10)
+
+Welcome to the v1.4.8 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.1.44
+
+Talos is built with Go 1.20.7.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Andrey Smirnov
+
+### Changes
+<details><summary>2 commits</summary>
+<p>
+
+* [`371586180`](https://github.com/siderolabs/talos/commit/3715861803863f693fccde98574937886d150a8c) chore: update Go to 1.20.7, Linux to 6.1.44
+* [`85b5d1ddd`](https://github.com/siderolabs/talos/commit/85b5d1ddd1a9bf7fdf5b63c75ace23a5b571c903) fix: calculate log2i properly
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`9b41398`](https://github.com/siderolabs/extras/commit/9b4139844094c0b59a1223e9460f0ba5d5b03baa) chore: update go to 1.20.7
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`13103d6`](https://github.com/siderolabs/pkgs/commit/13103d6793841098d8cd348b79bea6301d1abeea) chore: update Go to 1.20.7
+* [`782d769`](https://github.com/siderolabs/pkgs/commit/782d7695ffea4ee91f410464e1e751c2d60c9293) feat: update Linux to 6.1.44
+* [`11860e5`](https://github.com/siderolabs/pkgs/commit/11860e576f15f191956f6a0cf34e071e8543ff0b) chore: enable pushing of non-free packages
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`6889ef6`](https://github.com/siderolabs/tools/commit/6889ef6f9ee5bdbc38e5ad4e03c0e0a7dd4289a6) feat: update Go to 1.20.7
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**  v1.4.0-3-g2b5a1e6 -> v1.4.0-4-g9b41398
+* **github.com/siderolabs/pkgs**    v1.4.1-16-g69266d9 -> v1.4.1-19-g13103d6
+* **github.com/siderolabs/tools**   v1.4.0-4-g78b2dc6 -> v1.4.0-5-g6889ef6
+
+Previous release can be found at [v1.4.7](https://github.com/siderolabs/talos/releases/tag/v1.4.7)
+
 ## [Talos 1.4.7](https://github.com/siderolabs/talos/releases/tag/v1.4.7) (2023-07-26)
 
 Welcome to the v1.4.7 release of Talos!
