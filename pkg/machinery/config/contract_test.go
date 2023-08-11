@@ -68,6 +68,30 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.DiskQuotaSupportEnabled())
 }
 
+func TestContract1_6(t *testing.T) {
+	contract := config.TalosVersion1_6
+
+	assert.True(t, contract.SupportsAggregatorCA())
+	assert.True(t, contract.SupportsECDSAKeys())
+	assert.True(t, contract.SupportsServiceAccount())
+	assert.True(t, contract.SupportsRBACFeature())
+	assert.True(t, contract.SupportsDynamicCertSANs())
+	assert.True(t, contract.SupportsECDSASHA256())
+	assert.True(t, contract.ClusterDiscoveryEnabled())
+	assert.False(t, contract.PodSecurityPolicyEnabled())
+	assert.True(t, contract.PodSecurityAdmissionEnabled())
+	assert.True(t, contract.StableHostnameEnabled())
+	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
+	assert.False(t, contract.KubernetesAlternateImageRegistries())
+	assert.True(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.True(t, contract.KubernetesDiscoveryBackendDisabled())
+	assert.True(t, contract.ApidExtKeyUsageCheckEnabled())
+	assert.True(t, contract.APIServerAuditPolicySupported())
+	assert.True(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.True(t, contract.SecretboxEncryptionSupported())
+	assert.True(t, contract.DiskQuotaSupportEnabled())
+}
+
 func TestContract1_5(t *testing.T) {
 	contract := config.TalosVersion1_5
 
