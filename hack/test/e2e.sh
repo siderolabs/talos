@@ -40,7 +40,7 @@ export TALOS_VERSION=v1.1
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
-export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.28.0-rc.0}
+export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.28.0-rc.1}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
@@ -325,7 +325,7 @@ function validate_rlimit_nofile {
 
 function validate_booted_secureboot {
   ${TALOSCTL} dmesg | grep "Secure boot enabled"
-  ${TALOSCTL} get securitystate -o json 
+  ${TALOSCTL} get securitystate -o json
   ${TALOSCTL} get securitystate -o json | jq -e '.spec.secureBoot == true'
 }
 
