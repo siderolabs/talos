@@ -11,6 +11,11 @@ import "github.com/stretchr/testify/suite"
 
 var allSuites []suite.TestingSuite
 
+const (
+	provisionerDocker = "docker"
+	provisionerQEMU   = "qemu"
+)
+
 // GetAllSuites returns all the suites for API test.
 //
 // Depending on build tags, this might return different lists.

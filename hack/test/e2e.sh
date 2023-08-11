@@ -150,7 +150,7 @@ function run_talos_integration_test {
       ;;
   esac
 
-  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_RUN[@]}" "${TEST_SHORT[@]}"
+  "${INTEGRATION_TEST}" -test.v -talos.failfast -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${EXTRA_TEST_ARGS[@]}" "${TEST_RUN[@]}" "${TEST_SHORT[@]}"
 }
 
 function run_talos_integration_test_docker {
@@ -170,7 +170,7 @@ function run_talos_integration_test_docker {
       ;;
   esac
 
-  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.k8sendpoint 127.0.0.1:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${TEST_RUN[@]}" "${TEST_SHORT[@]}"
+  "${INTEGRATION_TEST}" -test.v -talos.talosctlpath "${TALOSCTL}" -talos.kubectlpath "${KUBECTL}" -talos.k8sendpoint 127.0.0.1:6443 -talos.provisioner "${PROVISIONER}" -talos.name "${CLUSTER_NAME}" "${EXTRA_TEST_ARGS[@]}" "${TEST_RUN[@]}" "${TEST_SHORT[@]}"
 }
 
 function run_kubernetes_conformance_test {
@@ -221,81 +221,6 @@ function build_registry_mirrors {
   fi
 }
 
-function run_extensions_test {
-  # e2e-qemu creates 3 controlplanes
-  # use a worker node to test extensions
-  "${TALOSCTL}" config node 172.20.1.5
-
-  echo "Testing firmware extensions..."
-  ${TALOSCTL} ls /lib/firmware | grep amd-ucode
-  ${TALOSCTL} ls /lib/firmware | grep bnx2x
-  ${TALOSCTL} ls /lib/firmware | grep i915
-  ${TALOSCTL} ls /lib/firmware | grep intel-ucode
-
-  echo "Testing kernel modules tree extension..."
-  ${TALOSCTL} get extensions modules.dep
-  KERNEL_VERSION=$(${TALOSCTL} get extensions modules.dep -o json | jq -r '.spec.metadata.version')
-  ${TALOSCTL} ls "/lib/modules/${KERNEL_VERSION}/extras/" | grep gasket
-  ${TALOSCTL} read "/lib/modules/${KERNEL_VERSION}/modules.dep" | grep -E gasket
-  ${TALOSCTL} ls "/lib/modules/${KERNEL_VERSION}/extras/" | grep drbd
-  ${TALOSCTL} read "/lib/modules/${KERNEL_VERSION}/modules.dep" | grep -E drbd
-  ${TALOSCTL} ls "/lib/modules/${KERNEL_VERSION}/kernel/drivers/video/" | grep nvidia
-  ${TALOSCTL} read "/lib/modules/${KERNEL_VERSION}/modules.dep" | grep -E nvidia
-
-  echo "Testing drbd and gasket modules are loaded..."
-  ${TALOSCTL} read /proc/modules | grep -E drbd
-  ${TALOSCTL} read /proc/modules | grep -E gasket
-
-  echo "Testing kernel modules signature..."
-  ${TALOSCTL} read "/lib/modules/${KERNEL_VERSION}/extras/drbd.ko" | ${MODULE_SIG_VERIFY} -cert "${KERNEL_MODULE_SIGNING_PUBLIC_KEY}" -module -
-  ${TALOSCTL} read "/lib/modules/${KERNEL_VERSION}/extras/gasket.ko" | ${MODULE_SIG_VERIFY} -cert "${KERNEL_MODULE_SIGNING_PUBLIC_KEY}" -module -
-  ${TALOSCTL} read "/lib/modules/${KERNEL_VERSION}/kernel/drivers/video/nvidia.ko" | ${MODULE_SIG_VERIFY} -cert "${KERNEL_MODULE_SIGNING_PUBLIC_KEY}" -module -
-
-  echo "Testing iscsi-tools extensions service..."
-  ${TALOSCTL} services ext-iscsid | grep -E "STATE\s+Running"
-  ${TALOSCTL} services ext-tgtd | grep -E "STATE\s+Running"
-
-  echo "Testing nut-client extensions service..."
-  ${TALOSCTL} services ext-nut-client | grep -E "STATE\s+Running"
-
-  echo "Testing gVsisor..."
-  ${KUBECTL} apply -f "${PWD}/hack/test/gvisor/manifest.yaml"
-  sleep 10
-  ${KUBECTL} wait --for=condition=ready pod nginx-gvisor --timeout=2m
-
-  echo "Testing hello-world extension service..."
-  ${TALOSCTL} services ext-hello-world | grep -E "STATE\s+Running"
-  curl http://172.20.1.5/ | grep Hello
-
-  echo "Testing tailscale extension service..."
-  ${TALOSCTL} services ext-tailscale | grep -E "STATE\s+Running"
-  ${TALOSCTL} get links tailscale0
-
-  echo "Testing qemu-guest-agent extension service..."
-  ${TALOSCTL} services ext-qemu-guest-agent | grep -E "STATE\s+Running"
-  # get exisitng boot id
-  BOOT_ID=$(get_boot_id)
-  NODE_HOSTNAME=$(${TALOSCTL} get hostname -o json | jq -r '.spec.hostname')
-  CLUSTERNAME=$(cut -d '-' -f 1-2 <<< "${NODE_HOSTNAME}")
-  # issue a reboot via qemu-guest-agent
-  echo '{"execute":"guest-shutdown", "arguments": {"mode": "reboot"}}' | socat - unix-connect:"${HOME}/.talos/clusters/${CLUSTERNAME}/${NODE_HOSTNAME}.sock"
-  # wait for the node to reboot
-  ${TALOSCTL} -n 172.20.1.2 health
-  NEW_BOOT_ID=$(get_boot_id)
-  # verify that the boot id has changed
-  if [ "${BOOT_ID}" == "${NEW_BOOT_ID}" ]; then
-    echo "ERROR: boot id has not changed, reboot failed"
-    exit 1
-  fi
-
-  # set talosctl config back to the first controlplane
-  "${TALOSCTL}" config node 172.20.1.2
-}
-
-function get_boot_id() {
-  ${TALOSCTL} read /proc/sys/kernel/random/boot_id
-}
-
 function run_csi_tests {
   ${HELM} repo add rook-release https://charts.rook.io/release
   ${HELM} repo update
@@ -312,21 +237,6 @@ function run_csi_tests {
   ${KUBECTL} --namespace rook-ceph wait --timeout=900s --for=jsonpath='{.status.ceph.health}=HEALTH_OK' cephclusters.ceph.rook.io/rook-ceph
   # hack until https://github.com/kastenhq/kubestr/issues/101 is addressed
   KUBERNETES_SERVICE_HOST="" KUBECONFIG="${TMP}/kubeconfig" "${KUBESTR}" fio --storageclass ceph-block --size 10G
-}
-
-function validate_virtio_modules {
-  ${TALOSCTL} read /proc/modules | grep -q virtio
-}
-
-function validate_rlimit_nofile {
-  # verify that RLIMIT_NOFILE is set to 1048576
-  ${KUBECTL} run --rm --restart=Never -it rlimit-test --image=alpine -- /bin/sh -c "ulimit -n" | grep 1048576
-}
-
-function validate_booted_secureboot {
-  ${TALOSCTL} dmesg | grep "Secure boot enabled"
-  ${TALOSCTL} get securitystate -o json
-  ${TALOSCTL} get securitystate -o json | jq -e '.spec.secureBoot == true'
 }
 
 function install_and_run_cilium_cni_tests {

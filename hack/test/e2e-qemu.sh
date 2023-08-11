@@ -195,8 +195,6 @@ case "${TEST_MODE:-default}" in
     ;;
   *)
     get_kubeconfig
-    validate_virtio_modules
-    validate_rlimit_nofile
     run_talos_integration_test
     run_kubernetes_integration_test
 

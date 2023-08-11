@@ -4,7 +4,7 @@
         "path": "/machine/install/extensions",
         "value": [
             {
-                "image": map(select(. | contains("nvidia-container-toolkit") or contains("nvidia-fabricmanager") | not)) | .[]
+                "image": map(select(. | contains("nvidia") or contains("tailscale") | not)) | .[]
             }
         ]
     },
@@ -21,10 +21,67 @@
         "value": {
             "modules": [
                 {
+                    "name": "asix"
+                },
+                {
+                    "name": "ax88179_178a"
+                },
+                {
+                    "name": "ax88796b"
+                },
+                {
+                    "name": "cdc_ether"
+                },
+                {
+                    "name": "cdc_mbim"
+                },
+                {
+                    "name": "cdc_ncm"
+                },
+                {
+                    "name": "cdc_subset"
+                },
+                {
+                    "name": "cdc_wdm"
+                },
+                {
                     "name": "drbd"
                 },
                 {
                     "name": "gasket"
+                },
+                {
+                    "name": "net1080"
+                },
+                {
+                    "name": "option"
+                },
+                {
+                    "name": "qmi_wwan"
+                },
+                {
+                    "name": "r8153_ecm"
+                },
+                {
+                    "name": "thunderbolt"
+                },
+                {
+                    "name": "thunderbolt_net"
+                },
+                {
+                    "name": "usb_wwan"
+                },
+                {
+                    "name": "usbnet"
+                },
+                {
+                    "name": "usbserial"
+                },
+                {
+                    "name": "zaurus"
+                },
+                {
+                    "name": "zfs"
                 }
             ]
         }

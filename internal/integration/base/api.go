@@ -17,12 +17,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/backoff"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -32,6 +33,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
 )
@@ -147,7 +149,7 @@ type Capabilities struct {
 	RunsTalosKernel bool
 	SupportsReboot  bool
 	SupportsRecover bool
-	TrustedBoot     bool
+	SecureBooted    bool
 }
 
 // Capabilities returns a set of capabilities to skip tests for different environments.
@@ -167,12 +169,20 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 		}
 	}
 
-	if _, err = apiSuite.Client.LS(context.Background(), &machineapi.ListRequest{
-		Root:  sdboot.SystemdBootStubInfoPath,
-		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_REGULAR},
-	}); err == nil {
-		caps.TrustedBoot = true
-	}
+	ctx := context.Background()
+	ctx, ctxCancel := context.WithTimeout(ctx, 2*time.Minute)
+
+	defer ctxCancel()
+
+	securityResource, err := safe.StateWatchFor[*runtimeres.SecurityState](
+		ctx,
+		apiSuite.Client.COSI,
+		runtimeres.NewSecurityStateSpec(runtimeres.NamespaceName).Metadata(),
+		state.WithEventTypes(state.Created, state.Updated),
+	)
+	apiSuite.Require().NoError(err)
+
+	caps.SecureBooted = securityResource.TypedSpec().SecureBoot
 
 	return caps
 }

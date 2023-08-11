@@ -34,18 +34,20 @@ var allSuites []suite.TestingSuite
 
 // Flag values.
 var (
-	failFast          bool
-	crashdumpEnabled  bool
-	talosConfig       string
-	endpoint          string
-	k8sEndpoint       string
-	expectedVersion   string
-	expectedGoVersion string
-	talosctlPath      string
-	kubectlPath       string
-	provisionerName   string
-	clusterName       string
-	stateDir          string
+	failFast           bool
+	crashdumpEnabled   bool
+	trustedBoot        bool
+	talosConfig        string
+	endpoint           string
+	k8sEndpoint        string
+	expectedVersion    string
+	expectedGoVersion  string
+	talosctlPath       string
+	kubectlPath        string
+	extensionsTestType string
+	provisionerName    string
+	clusterName        string
+	stateDir           string
 )
 
 // TestIntegration ...
@@ -85,14 +87,16 @@ func TestIntegration(t *testing.T) {
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
 			configuredSuite.SetConfig(base.TalosSuite{
-				Endpoint:     endpoint,
-				K8sEndpoint:  k8sEndpoint,
-				Cluster:      cluster,
-				TalosConfig:  talosConfig,
-				Version:      expectedVersion,
-				GoVersion:    expectedGoVersion,
-				TalosctlPath: talosctlPath,
-				KubectlPath:  kubectlPath,
+				Endpoint:           endpoint,
+				K8sEndpoint:        k8sEndpoint,
+				Cluster:            cluster,
+				TalosConfig:        talosConfig,
+				Version:            expectedVersion,
+				GoVersion:          expectedGoVersion,
+				TalosctlPath:       talosctlPath,
+				KubectlPath:        kubectlPath,
+				ExtensionsTestType: extensionsTestType,
+				TrustedBoot:        trustedBoot,
 			})
 		}
 
@@ -129,6 +133,7 @@ func init() {
 
 	flag.BoolVar(&failFast, "talos.failfast", false, "fail the test run on the first failed test")
 	flag.BoolVar(&crashdumpEnabled, "talos.crashdump", true, "print crashdump on test failure (only if provisioner is enabled)")
+	flag.BoolVar(&trustedBoot, "talos.trustedboot", false, "enable tests for trusted boot mode")
 
 	flag.StringVar(
 		&talosConfig,
@@ -149,6 +154,7 @@ func init() {
 	flag.StringVar(&expectedGoVersion, "talos.go.version", constants.GoVersion, "expected Talos version")
 	flag.StringVar(&talosctlPath, "talos.talosctlpath", "talosctl", "The path to 'talosctl' binary")
 	flag.StringVar(&kubectlPath, "talos.kubectlpath", "kubectl", "The path to 'kubectl' binary")
+	flag.StringVar(&extensionsTestType, "talos.extensions.testtype", "none", "The type of extensions test to run (none, qemu, nvida, nvidia-fabricmanager)")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")

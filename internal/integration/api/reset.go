@@ -42,6 +42,14 @@ func (suite *ResetSuite) SetupTest() {
 		suite.T().Skip("skipping in short mode")
 	}
 
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboot (and reset)")
+	}
+
+	if suite.Cluster == nil {
+		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
+	}
+
 	// make sure we abort at some point in time, but give enough room for Resets
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Minute)
 }
@@ -55,17 +63,9 @@ func (suite *ResetSuite) TearDownTest() {
 
 // TestResetNodeByNode Resets cluster node by node, waiting for health between Resets.
 func (suite *ResetSuite) TestResetNodeByNode() {
-	if !suite.Capabilities().SupportsReboot {
-		suite.T().Skip("cluster doesn't support reboot (and reset)")
-	}
-
-	if suite.Capabilities().TrustedBoot {
-		// this is because with trusted boot the talos.config is only applied and cannot be passed as kernel args
-		suite.T().Skip("cluster has trusted boot enabled, doesn't support reset")
-	}
-
-	if suite.Cluster == nil {
-		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
+	if suite.Capabilities().SecureBooted {
+		// this is because in secure boot mode, the machine config is only applied and cannot be passed as kernel args
+		suite.T().Skip("skipping as talos is explicitly trusted booted")
 	}
 
 	initNodeAddress := ""
@@ -114,17 +114,9 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 }
 
 func (suite *ResetSuite) testResetNoGraceful(nodeType machine.Type) {
-	if !suite.Capabilities().SupportsReboot {
-		suite.T().Skip("cluster doesn't support reboot (and reset)")
-	}
-
-	if suite.Capabilities().TrustedBoot {
-		// this is because with trusted boot the talos.config is only applied and cannot be passed as kernel args
-		suite.T().Skip("cluster has trusted boot enabled, doesn't support reset")
-	}
-
-	if suite.Cluster == nil {
-		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
+	if suite.Capabilities().SecureBooted {
+		// this is because in secure boot mode, the machine config is only applied and cannot be passed as kernel args
+		suite.T().Skip("skipping as talos is explicitly trusted booted")
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP(nodeType)
@@ -165,14 +157,6 @@ func (suite *ResetSuite) TestResetNoGracefulControlplane() {
 //
 //nolint:dupl
 func (suite *ResetSuite) TestResetWithSpecEphemeral() {
-	if !suite.Capabilities().SupportsReboot {
-		suite.T().Skip("cluster doesn't support reboot (and reset)")
-	}
-
-	if suite.Cluster == nil {
-		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
-	}
-
 	node := suite.RandomDiscoveredNodeInternalIP()
 
 	suite.T().Log("Resetting node with spec=[EPHEMERAL]", node)
@@ -214,17 +198,9 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 //
 //nolint:dupl
 func (suite *ResetSuite) TestResetWithSpecState() {
-	if !suite.Capabilities().SupportsReboot {
-		suite.T().Skip("cluster doesn't support reboot (and reset)")
-	}
-
-	if suite.Capabilities().TrustedBoot {
-		// this is because with trusted boot the talos.config is only applied and cannot be passed as kernel args
-		suite.T().Skip("cluster has trusted boot enabled, doesn't support reset")
-	}
-
-	if suite.Cluster == nil {
-		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
+	if suite.Capabilities().SecureBooted {
+		// this is because in secure boot mode, the machine config is only applied and cannot be passed as kernel args
+		suite.T().Skip("skipping as talos is explicitly trusted booted")
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -281,14 +257,6 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 //
 //nolint:dupl
 func (suite *ResetSuite) TestResetDuringBoot() {
-	if !suite.Capabilities().SupportsReboot {
-		suite.T().Skip("cluster doesn't support reboot (and reset)")
-	}
-
-	if suite.Cluster == nil {
-		suite.T().Skip("without full cluster state reset test is not reliable (can't wait for cluster readiness in between resets)")
-	}
-
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNodes(suite.ctx, node)
 

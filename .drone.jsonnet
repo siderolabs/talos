@@ -443,7 +443,7 @@ local integration_qemu_trusted_boot = Step('e2e-qemu-trusted-boot', target='e2e-
   IMAGE_REGISTRY: local_registry,
   VIA_MAINTENANCE_MODE: 'true',
   WITH_TRUSTED_BOOT_ISO: 'true',
-  WITH_TEST: 'validate_booted_secureboot',
+  EXTRA_TEST_ARGS: '-talos.trustedboot',
 });
 
 local build_race = Step('build-race', target='initramfs installer', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry, PUSH: true, TAG_SUFFIX: '-race', WITH_RACE: '1', PLATFORM: 'linux/amd64' });
@@ -455,11 +455,10 @@ local integration_provision_tests_track_1 = Step('provision-tests-track-1', priv
 local integration_provision_tests_track_2 = Step('provision-tests-track-2', privileged=true, depends_on=[integration_provision_tests_prepare], environment={ IMAGE_REGISTRY: local_registry });
 
 local integration_extensions = Step('e2e-extensions', target='e2e-qemu', privileged=true, depends_on=[extensions_patch_manifest], environment={
-  SHORT_INTEGRATION_TEST: 'yes',
-  QEMU_MEMORY_WORKERS: '3072',
+  QEMU_MEMORY_WORKERS: '4096',
   WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.json',
-  WITH_TEST: 'run_extensions_test',
   IMAGE_REGISTRY: local_registry,
+  EXTRA_TEST_ARGS: '-talos.extensions.testtype=qemu',
 });
 local integration_cilium = Step('e2e-cilium', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
   SHORT_INTEGRATION_TEST: 'yes',

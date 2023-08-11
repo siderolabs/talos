@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
@@ -34,6 +35,7 @@ type K8sSuite struct {
 	Clientset       *kubernetes.Clientset
 	DynamicClient   dynamic.Interface
 	DiscoveryClient *discovery.DiscoveryClient
+	RestConfig      *rest.Config
 }
 
 // SetupSuite initializes Kubernetes client.
@@ -54,6 +56,7 @@ func (k8sSuite *K8sSuite) SetupSuite() {
 		config.Host = k8sSuite.K8sEndpoint
 	}
 
+	k8sSuite.RestConfig = config
 	k8sSuite.Clientset, err = kubernetes.NewForConfig(config)
 	k8sSuite.Require().NoError(err)
 
