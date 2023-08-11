@@ -59,7 +59,7 @@ func (suite *ResetSuite) TestResetNodeByNode() {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")
 	}
 
-	if suite.Capabilities().TrustedBoot {
+	if suite.Capabilities().SecureBoot {
 		// this is because with trusted boot the talos.config is only applied and cannot be passed as kernel args
 		suite.T().Skip("cluster has trusted boot enabled, doesn't support reset")
 	}
@@ -118,7 +118,7 @@ func (suite *ResetSuite) testResetNoGraceful(nodeType machine.Type) {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")
 	}
 
-	if suite.Capabilities().TrustedBoot {
+	if suite.Capabilities().SecureBoot {
 		// this is because with trusted boot the talos.config is only applied and cannot be passed as kernel args
 		suite.T().Skip("cluster has trusted boot enabled, doesn't support reset")
 	}
@@ -218,7 +218,7 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 		suite.T().Skip("cluster doesn't support reboot (and reset)")
 	}
 
-	if suite.Capabilities().TrustedBoot {
+	if suite.Capabilities().SecureBoot {
 		// this is because with trusted boot the talos.config is only applied and cannot be passed as kernel args
 		suite.T().Skip("cluster has trusted boot enabled, doesn't support reset")
 	}
