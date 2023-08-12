@@ -99,6 +99,26 @@ helm upgrade --install --create-namespace --namespace openebs --version 3.2.0 op
 This will create a storage class named `openebs-jiva-csi-default` which can be used for workloads.
 The storage class named `openebs-hostpath` is used by jiva to create persistent volumes backed by local storage and then used for replicated storage by the jiva controller.
 
+## Patching the Namespace
+
+when using the default Pod Security Admissions created by Talos you need the following labels on your namespace:
+
+```yaml
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/warn: privileged
+```
+
+or via kubectl:
+
+```bash
+kubectl label ns openebs pod-security.kubernetes.io/audit=privileged pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/warn=privileged
+```
+
+## Number of Replicas
+
+By Default Jiva uses 3 replicas if your cluster consists of lesser nodes consider setting `defaultPolicy.replicas` to the number of nodes in your cluster e.g. 2.
+
 ## Patching the jiva installation
 
 Since Jiva assumes `iscisd` to be running natively on the host and not as a Talos [extension service]({{< relref "../../advanced/extension-services.md" >}}), we need to modify the CSI node daemonset to enable it to find the PID of the `iscsid` service.
