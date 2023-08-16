@@ -139,11 +139,11 @@ rolling component update.
 
 ## Component Updates
 
-* Linux: 6.1.42
-* containerd: 1.6.22
-* runc: 1.1.8
+* Linux: 6.1.45
+* containerd: 1.6.23
+* runc: 1.1.9
 * etcd: 3.5.9
-* Kubernetes: 1.28.0-rc.1
+* Kubernetes: 1.28.0
 * Flannel: 0.22.1
 
 Talos is built with Go 1.20.7.
