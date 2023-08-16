@@ -9,12 +9,12 @@ aliases:
 > The Talos published NVIDIA OSS drivers are bound to a specific Talos release.
 > The extensions versions also needs to be updated when upgrading Talos.
 
-The published versions of the NVIDIA system extensions can be found here:
+The published versions of the NVIDIA OSS system extensions can be found here:
 
 - [nvidia-open-gpu-kernel-modules](https://github.com/siderolabs/extensions/pkgs/container/nvidia-open-gpu-kernel-modules)
 - [nvidia-container-toolkit](https://github.com/siderolabs/extensions/pkgs/container/nvidia-container-toolkit)
 
-## Upgrading Talos and enabling the NVIDIA modules and the system extension
+## Upgrading Talos and enabling the NVIDIA OSS modules and the system extension
 
 > Make sure to use `talosctl` version {{< release >}} or later
 

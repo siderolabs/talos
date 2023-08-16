@@ -6,72 +6,15 @@ aliases:
 ---
 
 > Enabling NVIDIA GPU support on Talos is bound by [NVIDIA EULA](https://www.nvidia.com/en-us/drivers/nvidia-license/).
+> The Talos published NVIDIA drivers are bound to a specific Talos release.
+> The extensions versions also needs to be updated when upgrading Talos.
 
-These are the steps to enabling NVIDIA support in Talos.
+The published versions of the NVIDIA system extensions can be found here:
 
-- Talos pre-installed on a node with NVIDIA GPU installed.
-- Building a custom Talos installer image with NVIDIA modules
-- Upgrading Talos with the custom installer and enabling NVIDIA modules and the system extension
+- [nonfree-kmod-nvidia](https://github.com/siderolabs/extensions/pkgs/container/nonfree-kmod-nvidia)
+- [nvidia-container-toolkit](https://github.com/siderolabs/extensions/pkgs/container/nvidia-container-toolkit)
 
-This requires that the user build and maintain their own Talos installer image.
-
-## Prerequisites
-
-This guide assumes the user has access to a container registry with `push` permissions, docker installed on the build machine and the Talos host has `pull` access to the container registry.
-
-Set the local registry, username and version environment variables:
-
-```bash
-export USERNAME=<username>
-export REGISTRY=<registry>
-export TAG={{< release >}}-nvidia
-```
-
-For eg:
-
-```bash
-export USERNAME=talos-user
-export REGISTRY=ghcr.io
-```
-
-> The examples below will use the sample variables set above.
-Modify accordingly for your environment.
-
-## Building the installer image
-
-Start by cloning the [pkgs](https://github.com/siderolabs/pkgs) repository.
-
-Now run the following command to build and push custom Talos kernel image and the NVIDIA image with the NVIDIA kernel modules signed by the kernel built along with it.
-
-```bash
-make kernel nonfree-kmod-nvidia PLATFORM=linux/amd64 PUSH=true
-```
-
-> Replace the platform with `linux/arm64` if building for ARM64
-
-Now we need to create a custom Talos installer image.
-
-Start by creating a `Dockerfile` with the following content:
-
-```Dockerfile
-FROM scratch as customization
-# this is needed so that Talos copies base kernel modules info and default modules shipped with Talos
-COPY --from=ghcr.io/talos-user/kernel:{{< release >}}-nvidia /lib/modules /kernel/lib/modules
-COPY --from=ghcr.io/talos-user/nonfree-kmod-nvidia:{{< release >}}-nvidia /lib/modules /lib/modules
-
-FROM ghcr.io/siderolabs/installer:{{< release >}}
-COPY --from=ghcr.io/talos-user/kernel:{{< release >}}-nvidia /boot/vmlinuz /usr/install/${TARGETARCH}/vmlinuz
-```
-
-Now build the image and push it to the registry.
-
-```bash
-DOCKER_BUILDKIT=0 docker build --squash -t ghcr.io/talos-user/installer:{{< release >}}-nvidia .
-docker push ghcr.io/talos-user/installer:{{< release >}}-nvidia
-```
-
-> Note: buildkit has a bug [#816](https://github.com/moby/buildkit/issues/816), to disable it use DOCKER_BUILDKIT=0
-> Replace the platform with `linux/arm64` if building for ARM64
+> To build a NVIDIA driver version not published by SideroLabs follow the instructions [here]({{< relref "../../../v1.4/talos-guides/configuration/nvidia-gpu-proprietary" >}})
 
 ## Upgrading Talos and enabling the NVIDIA modules and the system extension
 
@@ -83,6 +26,7 @@ First create a patch yaml `gpu-worker-patch.yaml` to update the machine config s
 - op: add
   path: /machine/install/extensions
   value:
+    - image: ghcr.io/siderolabs/nonfree-kmod-nvidia:{{< nvidia_driver_release >}}-{{< release >}}
     - image: ghcr.io/siderolabs/nvidia-container-toolkit:{{< nvidia_driver_release >}}-{{< nvidia_container_toolkit_release >}}
 - op: add
   path: /machine/kernel
@@ -98,16 +42,20 @@ First create a patch yaml `gpu-worker-patch.yaml` to update the machine config s
     net.core.bpf_jit_harden: 1
 ```
 
+> Update the driver version and Talos release in the above patch yaml from the published versions if there is a newer one available.
+> Make sure the driver version matches for both the `nonfree-kmod-nvidia` and `nvidia-container-toolkit` extensions.
+> The `nonfree-kmod-nvidia` extension is versioned as `<nvidia-driver-version>-<talos-release-version>` and the `nvidia-container-toolkit` extension is versioned as `<nvidia-driver-version>-<nvidia-container-toolkit-version>`.
+
 Now apply the patch to all Talos nodes in the cluster having NVIDIA GPU's installed:
 
 ```bash
 talosctl patch mc --patch @gpu-worker-patch.yaml
 ```
 
-Now we can proceed to upgrading Talos with the installer built previously:
+Now we can proceed to upgrading Talos to the same version to enable the system extension:
 
 ```bash
-talosctl upgrade --image=ghcr.io/talos-user/installer:{{< release >}}-nvidia
+talosctl upgrade --image=ghcr.io/siderolabs/installer:{{< release >}}
 ```
 
 Once the node reboots, the NVIDIA modules should be loaded and the system extension should be installed.

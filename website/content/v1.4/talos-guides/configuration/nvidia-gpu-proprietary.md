@@ -35,7 +35,63 @@ export REGISTRY=ghcr.io
 ```
 
 > The examples below will use the sample variables set above.
-Modify accordingly for your environment.
+> Modify accordingly for your environment.
+> If using Talos v1.4.8 or later follow the steps below and directly jump to [Verifying the NVIDIA modules and the system extension](#verifying-the-nvidia-modules-and-the-system-extension)
+
+## Building the NVIDIA extensions
+
+Start by cloning the `release-1.5` branch [extensions](https://github.com/siderolabs/extensions) repository.
+
+```bash
+git clone --depth=1 --branch=release-1.5 https://github.com/siderolabs/extensions.git
+```
+
+Lookup the version of [pkgs](https://github.com/siderolabs/pkgs) used for the particular Talos version [here](https://github.com/siderolabs/talos/blob/v1.4.8/pkg/machinery/gendata/data/pkgs)
+
+> Replace v1.4.8 with the Talos version you are using.
+
+Now run the following command to build and push custom NVIDIA extension.
+
+```bash
+make nonfree-kmod-nvidia PKGS=<pkgs-version-looked-up-above> PLATFORM=linux/amd64 PUSH=true
+```
+
+> Replace the platform with `linux/arm64` if building for ARM64
+> Make sure to use `talosctl` version {{< release >}} or later
+
+First create a patch yaml `gpu-worker-patch.yaml` to update the machine config similar to below:
+
+```yaml
+- op: add
+  path: /machine/install/extensions
+  value:
+    - image: ghcr.io/siderolabs/nonfree-kmod-nvidia:{{< nvidia_driver_release >}}-{{< release >}}
+    - image: ghcr.io/siderolabs/nvidia-container-toolkit:{{< nvidia_driver_release >}}-{{< nvidia_container_toolkit_release >}}
+- op: add
+  path: /machine/kernel
+  value:
+    modules:
+      - name: nvidia
+      - name: nvidia_uvm
+      - name: nvidia_drm
+      - name: nvidia_modeset
+- op: add
+  path: /machine/sysctls
+  value:
+    net.core.bpf_jit_harden: 1
+```
+
+Now apply the patch to all Talos nodes in the cluster having NVIDIA GPU's installed:
+
+```bash
+talosctl patch mc --patch @gpu-worker-patch.yaml
+```
+
+Now we can proceed to upgrading Talos to the same version to enable the system extension:
+
+```bash
+talosctl upgrade --image=ghcr.io/siderolabs/installer:{{< release >}}
+```
 
 ## Building the installer image
 
@@ -107,6 +163,8 @@ Now we can proceed to upgrading Talos with the installer built previously:
 ```bash
 talosctl upgrade --image=ghcr.io/talos-user/installer:{{< release >}}-nvidia
 ```
+
+## Verifying the NVIDIA modules and the system extension
 
 Once the node reboots, the NVIDIA modules should be loaded and the system extension should be installed.
 
