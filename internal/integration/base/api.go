@@ -168,11 +168,13 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 		}
 	}
 
-	if _, err = apiSuite.Client.LS(context.Background(), &machineapi.ListRequest{
+	if listClient, err := apiSuite.Client.LS(context.Background(), &machineapi.ListRequest{
 		Root:  sdboot.SystemdBootStubInfoPath,
 		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_REGULAR},
 	}); err == nil {
-		caps.TrustedBoot = true
+		if _, err = listClient.Recv(); err == nil {
+			caps.TrustedBoot = true
+		}
 	}
 
 	return caps
