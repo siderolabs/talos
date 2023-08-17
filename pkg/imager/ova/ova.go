@@ -161,9 +161,9 @@ func CreateOVAFromRAW(name, path, arch, scratchPath string, diskSize int64, prin
 		return err
 	}
 
-	size := f.Size()
+	imageSize := f.Size()
 
-	ovf, err := renderOVF(name, size, diskSize)
+	ovf, err := renderOVF(name, imageSize, diskSize)
 	if err != nil {
 		return err
 	}
@@ -241,15 +241,15 @@ func renderMF(name, vmdkSHA25Sum, ovfSHA25Sum string) (string, error) {
 	return buf.String(), nil
 }
 
-func renderOVF(name string, size, capacity int64) (string, error) {
+func renderOVF(name string, imageSize, diskSize int64) (string, error) {
 	cfg := struct {
 		VMDK     string
 		Size     int64
 		Capacity int64
 	}{
 		VMDK:     name + ".vmdk",
-		Size:     size,
-		Capacity: capacity,
+		Size:     imageSize,
+		Capacity: diskSize / (1 << 20),
 	}
 
 	templ := template.Must(template.New("ovf").Parse(ovfTpl))
