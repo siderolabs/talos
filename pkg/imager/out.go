@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -65,6 +66,10 @@ func (i *Imager) outUKI(path string, report *reporter.Reporter) error {
 	report.Report(reporter.Update{Message: "UKI output ready", Status: reporter.StatusSucceeded})
 
 	return nil
+}
+
+func (i *Imager) outCmdline(path string) error {
+	return os.WriteFile(path, []byte(i.cmdline), 0o644)
 }
 
 func (i *Imager) outISO(path string, report *reporter.Reporter) error {

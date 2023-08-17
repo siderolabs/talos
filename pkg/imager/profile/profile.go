@@ -55,7 +55,7 @@ func (p *Profile) SecureBootEnabled() bool {
 
 // Validate the profile.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (p *Profile) Validate() error {
 	if p.Arch != "amd64" && p.Arch != "arm64" {
 		return fmt.Errorf("invalid arch %q", p.Arch)
@@ -76,6 +76,8 @@ func (p *Profile) Validate() error {
 		return fmt.Errorf("unknown output kind")
 	case OutKindISO:
 		// ISO supports all kinds of customization
+	case OutKindCmdline:
+		// cmdline supports all kinds of customization
 	case OutKindImage:
 		// Image supports all kinds of customization
 		if p.Output.ImageOptions.DiskSize == 0 {
@@ -111,6 +113,8 @@ func (p *Profile) Validate() error {
 }
 
 // OutputPath generates the output path for the profile.
+//
+//nolint:gocyclo
 func (p *Profile) OutputPath() string {
 	path := p.Platform
 
@@ -132,13 +136,21 @@ func (p *Profile) OutputPath() string {
 	case OutKindImage:
 		path += "." + p.Output.ImageOptions.DiskFormat.String()
 	case OutKindInstaller:
-		path += "-installer.tar"
+		path = "installer-" + p.Arch
+
+		if p.SecureBootEnabled() {
+			path += "-secureboot"
+		}
+
+		path += ".tar"
 	case OutKindKernel:
 		path = "kernel-" + p.Arch
 	case OutKindInitramfs:
 		path = "initramfs-" + path + ".xz"
 	case OutKindUKI:
 		path += "-uki.efi"
+	case OutKindCmdline:
+		path = "cmdline-" + path
 	}
 
 	return path

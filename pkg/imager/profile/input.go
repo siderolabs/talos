@@ -48,6 +48,10 @@ type FileAsset struct {
 type ContainerAsset struct {
 	// ImageRef is a reference to the container image.
 	ImageRef string `yaml:"imageRef"`
+	// TarballPath is a path to the .tar format container image contents.
+	//
+	// If TarballPath is set, ImageRef is ignored.
+	TarballPath string `yaml:"tarballPath,omitempty"`
 }
 
 // SecureBootAssets describes secureboot assets.
@@ -144,6 +148,10 @@ func fileExists(path string) bool {
 
 // Pull the container asset to the path.
 func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(string, ...any)) (v1.Image, error) {
+	if c.TarballPath != "" {
+		return nil, fmt.Errorf("pulling tarball container image is not supported")
+	}
+
 	printf("pulling %s...", c.ImageRef)
 
 	img, err := crane.Pull(c.ImageRef, crane.WithPlatform(&v1.Platform{
@@ -159,6 +167,19 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(stri
 
 // Extract the container asset to the path.
 func (c *ContainerAsset) Extract(ctx context.Context, destination, arch string, printf func(string, ...any)) error {
+	if c.TarballPath != "" {
+		in, err := os.Open(c.TarballPath)
+		if err != nil {
+			return err
+		}
+
+		defer in.Close() //nolint:errcheck
+
+		printf("extracting %s...", c.TarballPath)
+
+		return archiver.Untar(ctx, in, destination)
+	}
+
 	img, err := c.Pull(ctx, arch, printf)
 	if err != nil {
 		return err

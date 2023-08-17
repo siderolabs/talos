@@ -105,7 +105,7 @@ var rootCmd = &cobra.Command{
 				return err
 			}
 
-			if err = imager.Execute(ctx, cmdFlags.OutputPath, report); err != nil {
+			if _, err = imager.Execute(ctx, cmdFlags.OutputPath, report); err != nil {
 				report.Report(reporter.Update{
 					Message: err.Error(),
 					Status:  reporter.StatusError,

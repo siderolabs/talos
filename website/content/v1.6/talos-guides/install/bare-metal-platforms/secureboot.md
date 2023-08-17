@@ -139,13 +139,13 @@ skipped initramfs rebuild (no system extensions)
 kernel command line: talos.platform=metal console=ttyS0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 lockdown=confidentiality
 UKI ready
 installer container image ready
-output asset path: /out/metal-amd64-secureboot-installer.tar
+output asset path: /out/installer-amd64-secureboot.tar
 ```
 
 The generated container image should be pushed to some container registry which Talos can access during the installation, e.g.:
 
 ```shell
-crane push _out/metal-amd64-secureboot-installer.tar ghcr.io/<user>/installer-amd64-secureboot:{{< release >}}
+crane push _out/installer-amd64-secureboot.tar ghcr.io/<user>/installer-amd64-secureboot:{{< release >}}
 ```
 
 The generated ISO and installer images might be further customized with system extensions, extra kernel command line arguments, etc.

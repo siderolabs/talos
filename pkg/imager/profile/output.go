@@ -51,6 +51,7 @@ const (
 	OutKindKernel                      // kernel
 	OutKindInitramfs                   // initramfs
 	OutKindUKI                         // uki
+	OutKindCmdline                     // cmdline
 )
 
 //go:generate enumer -type OutFormat -linecomment -text

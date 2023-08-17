@@ -80,12 +80,10 @@ func New(prof profile.Profile) (*Imager, error) {
 // Execute image generation.
 //
 //nolint:gocyclo,cyclop
-func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporter.Reporter) error {
-	var err error
-
+func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporter.Reporter) (outputAssetPath string, err error) {
 	i.tempDir, err = os.MkdirTemp("", "imager")
 	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %w", err)
+		return "", fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 
 	defer os.RemoveAll(i.tempDir) //nolint:errcheck
@@ -97,17 +95,17 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 
 	// 0. Dump the profile.
 	if err = i.prof.Dump(os.Stderr); err != nil {
-		return err
+		return "", err
 	}
 
 	// 1. Transform `initramfs.xz` with system extensions
 	if err = i.buildInitramfs(ctx, report); err != nil {
-		return err
+		return "", err
 	}
 
 	// 2. Prepare kernel arguments.
 	if err = i.buildCmdline(); err != nil {
-		return err
+		return "", err
 	}
 
 	report.Report(reporter.Update{
@@ -118,12 +116,12 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	// 3. Build UKI if Secure Boot is enabled.
 	if i.prof.SecureBootEnabled() {
 		if err = i.buildUKI(report); err != nil {
-			return err
+			return "", err
 		}
 	}
 
 	// 4. Build the output.
-	outputAssetPath := filepath.Join(outputPath, i.prof.OutputPath())
+	outputAssetPath = filepath.Join(outputPath, i.prof.OutputPath())
 
 	switch i.prof.Output.Kind {
 	case profile.OutKindISO:
@@ -134,6 +132,8 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		err = i.outUKI(outputAssetPath, report)
 	case profile.OutKindInitramfs:
 		err = i.outInitramfs(outputAssetPath, report)
+	case profile.OutKindCmdline:
+		err = i.outCmdline(outputAssetPath)
 	case profile.OutKindImage:
 		err = i.outImage(ctx, outputAssetPath, report)
 	case profile.OutKindInstaller:
@@ -141,11 +141,11 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	case profile.OutKindUnknown:
 		fallthrough
 	default:
-		return fmt.Errorf("unknown output kind: %s", i.prof.Output.Kind)
+		return "", fmt.Errorf("unknown output kind: %s", i.prof.Output.Kind)
 	}
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	report.Report(reporter.Update{
@@ -157,7 +157,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	switch i.prof.Output.OutFormat {
 	case profile.OutFormatRaw:
 		// do nothing
-		return nil
+		return outputAssetPath, nil
 	case profile.OutFormatXZ:
 		return i.postProcessXz(outputAssetPath, report)
 	case profile.OutFormatGZ:
@@ -167,7 +167,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	case profile.OutFormatUnknown:
 		fallthrough
 	default:
-		return fmt.Errorf("unknown output format: %s", i.prof.Output.OutFormat)
+		return "", fmt.Errorf("unknown output format: %s", i.prof.Output.OutFormat)
 	}
 }
 
@@ -182,6 +182,11 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 		// no system extensions, happy path
 		i.initramfsPath = i.prof.Input.Initramfs.Path
 
+		return nil
+	}
+
+	if i.prof.Output.Kind == profile.OutKindCmdline || i.prof.Output.Kind == profile.OutKindKernel {
+		// these outputs don't use initramfs image
 		return nil
 	}
 

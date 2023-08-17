@@ -14,51 +14,51 @@ import (
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
-func (i *Imager) postProcessTar(filename string, report *reporter.Reporter) error {
+func (i *Imager) postProcessTar(filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "processing .tar.gz", Status: reporter.StatusRunning})
 
 	dir := filepath.Dir(filename)
 	src := "disk.raw"
 
 	if err := os.Rename(filename, filepath.Join(dir, src)); err != nil {
-		return err
+		return "", err
 	}
 
 	outPath := filename + ".tar.gz"
 
 	if _, err := cmd.Run("tar", "-cvf", outPath, "-C", dir, "--sparse", "--use-compress-program=pigz -6", src); err != nil {
-		return err
+		return "", err
 	}
 
 	if err := os.Remove(filepath.Join(dir, src)); err != nil {
-		return err
+		return "", err
 	}
 
 	report.Report(reporter.Update{Message: fmt.Sprintf("archive is ready: %s", outPath), Status: reporter.StatusSucceeded})
 
-	return nil
+	return outPath, nil
 }
 
-func (i *Imager) postProcessGz(filename string, report *reporter.Reporter) error {
+func (i *Imager) postProcessGz(filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "compressing .gz", Status: reporter.StatusRunning})
 
 	if _, err := cmd.Run("pigz", "-6", "-f", filename); err != nil {
-		return err
+		return "", err
 	}
 
 	report.Report(reporter.Update{Message: fmt.Sprintf("compression done: %s.gz", filename), Status: reporter.StatusSucceeded})
 
-	return nil
+	return filename + ".gz", nil
 }
 
-func (i *Imager) postProcessXz(filename string, report *reporter.Reporter) error {
+func (i *Imager) postProcessXz(filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "compressing .xz", Status: reporter.StatusRunning})
 
 	if _, err := cmd.Run("xz", "-0", "-f", "-T", "0", filename); err != nil {
-		return err
+		return "", err
 	}
 
 	report.Report(reporter.Update{Message: fmt.Sprintf("compression done: %s.xz", filename), Status: reporter.StatusSucceeded})
 
-	return nil
+	return filename + ".xz", nil
 }

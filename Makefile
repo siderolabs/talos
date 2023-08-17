@@ -326,7 +326,7 @@ secureboot-installer: ## Builds UEFI only installer which uses UKI and push it t
 	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)"
 	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
 		arch=$$(basename "$${platform}") && \
-		crane push $(ARTIFACTS)/metal-$${arch}-secureboot-installer.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-$${arch}-secureboot ; \
+		crane push $(ARTIFACTS)/installer-$${arch}-secureboot.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-$${arch}-secureboot ; \
 	done
 
 .PHONY: talosctl-cni-bundle

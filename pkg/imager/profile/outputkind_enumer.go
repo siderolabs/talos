@@ -6,9 +6,9 @@ import (
 	"fmt"
 )
 
-const _OutputKindName = "unknownisoimageinstallerkernelinitramfsuki"
+const _OutputKindName = "unknownisoimageinstallerkernelinitramfsukicmdline"
 
-var _OutputKindIndex = [...]uint8{0, 7, 10, 15, 24, 30, 39, 42}
+var _OutputKindIndex = [...]uint8{0, 7, 10, 15, 24, 30, 39, 42, 49}
 
 func (i OutputKind) String() string {
 	if i < 0 || i >= OutputKind(len(_OutputKindIndex)-1) {
@@ -17,7 +17,7 @@ func (i OutputKind) String() string {
 	return _OutputKindName[_OutputKindIndex[i]:_OutputKindIndex[i+1]]
 }
 
-var _OutputKindValues = []OutputKind{0, 1, 2, 3, 4, 5, 6}
+var _OutputKindValues = []OutputKind{0, 1, 2, 3, 4, 5, 6, 7}
 
 var _OutputKindNameToValueMap = map[string]OutputKind{
 	_OutputKindName[0:7]:   0,
@@ -27,6 +27,7 @@ var _OutputKindNameToValueMap = map[string]OutputKind{
 	_OutputKindName[24:30]: 4,
 	_OutputKindName[30:39]: 5,
 	_OutputKindName[39:42]: 6,
+	_OutputKindName[42:49]: 7,
 }
 
 // OutputKindString retrieves an enum value from the enum constants string name.
