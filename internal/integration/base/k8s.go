@@ -7,6 +7,7 @@
 package base
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -24,6 +25,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/kubectl/pkg/scheme"
 
 	taloskubernetes "github.com/siderolabs/talos/pkg/kubernetes"
 )
@@ -172,4 +175,62 @@ func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, che
 
 		return nil
 	})
+}
+
+// WaitForPodToBeRunning waits for the pod with the given namespace and name to be running.
+func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout time.Duration, namespace, podName string) error {
+	return retry.Constant(timeout, retry.WithUnits(time.Second*10)).Retry(
+		func() error {
+			pod, err := k8sSuite.Clientset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+			if err != nil {
+				return retry.ExpectedErrorf("error getting pod: %s", err)
+			}
+
+			if pod.Status.Phase != corev1.PodRunning {
+				return retry.ExpectedErrorf("pod is not running yet: %s", pod.Status.Phase)
+			}
+
+			return nil
+		},
+	)
+}
+
+// ExecuteCommandInPod executes the given command in the pod with the given namespace and name.
+func (k8sSuite *K8sSuite) ExecuteCommandInPod(ctx context.Context, namespace, podName, command string) (string, string, error) {
+	cmd := []string{
+		"/bin/sh",
+		"-c",
+		command,
+	}
+	req := k8sSuite.Clientset.CoreV1().RESTClient().Post().Resource("pods").Name(podName).
+		Namespace(namespace).SubResource("exec")
+	option := &corev1.PodExecOptions{
+		Command: cmd,
+		Stdin:   false,
+		Stdout:  true,
+		Stderr:  true,
+		TTY:     false,
+	}
+
+	req.VersionedParams(
+		option,
+		scheme.ParameterCodec,
+	)
+
+	exec, err := remotecommand.NewSPDYExecutor(k8sSuite.RestConfig, "POST", req.URL())
+	if err != nil {
+		return "", "", err
+	}
+
+	var stdout, stderr bytes.Buffer
+
+	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if err != nil {
+		return "", "", err
+	}
+
+	return stdout.String(), stderr.String(), nil
 }

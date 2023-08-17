@@ -458,6 +458,7 @@ local integration_extensions = Step('e2e-extensions', target='e2e-qemu', privile
   QEMU_MEMORY_WORKERS: '4096',
   WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.json',
   IMAGE_REGISTRY: local_registry,
+  QEMU_EXTRA_DISKS: '1',
   EXTRA_TEST_ARGS: '-talos.extensions.testtype=qemu',
 });
 local integration_cilium = Step('e2e-cilium', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
@@ -718,7 +719,7 @@ local e2e_pipelines = [
   Pipeline('e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + e2e_trigger(['e2e-gcp']),
 
   // cron pipelines, triggered on schedule events
-  Pipeline('cron-e2e-aws', default_pipeline_steps + [capi_docker, e2e_capi, e2e_aws], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-e2e-aws', default_pipeline_steps + [e2e_aws_prepare, tf_apply, e2e_aws_tf_apply_post, e2e_aws, tf_destroy], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
 ];
 

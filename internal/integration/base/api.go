@@ -454,6 +454,32 @@ func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Pr
 	return provider, nil
 }
 
+// UserDisks returns list of user disks on the with size greater than sizeGreaterThanGB.
+func (apiSuite *APISuite) UserDisks(ctx context.Context, node string, sizeGreaterThanGB int) ([]string, error) {
+	nodeCtx := client.WithNodes(ctx, node)
+
+	resp, err := apiSuite.Client.Disks(nodeCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	var disks []string
+
+	for _, msg := range resp.Messages {
+		for _, disk := range msg.Disks {
+			if disk.SystemDisk {
+				continue
+			}
+
+			if disk.Size > uint64(sizeGreaterThanGB)*1024*1024*1024 {
+				disks = append(disks, disk.DeviceName)
+			}
+		}
+	}
+
+	return disks, nil
+}
+
 // TearDownSuite closes Talos API client.
 func (apiSuite *APISuite) TearDownSuite() {
 	if apiSuite.Client != nil {

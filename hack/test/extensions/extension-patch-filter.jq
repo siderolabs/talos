@@ -30,6 +30,9 @@
                     "name": "ax88796b"
                 },
                 {
+                    "name": "btrfs"
+                },
+                {
                     "name": "cdc_ether"
                 },
                 {

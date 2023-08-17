@@ -23,10 +23,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	nodev1 "k8s.io/api/node/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -35,7 +35,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // ExtensionsSuite verifies Talos is securebooted.
@@ -129,6 +128,7 @@ func (suite *ExtensionsSuite) TestExtensionsExpectedModules() {
 		"asix":            "asix.ko",
 		"ax88179_178a":    "ax88179_178a.ko",
 		"ax88796b":        "ax88796b.ko",
+		"btrfs":           "btrfs.ko",
 		"cdc_ether":       "cdc_ether.ko",
 		"cdc_mbim":        "cdc_mbim.ko",
 		"cdc_ncm":         "cdc_ncm.ko",
@@ -195,34 +195,23 @@ func (suite *ExtensionsSuite) TestExtensionsExpectedModules() {
 	}
 }
 
-// TestExtensionsExpectedServices verifies expected services are running.
-func (suite *ExtensionsSuite) TestExtensionsExpectedServices() {
-	expectedServices := []string{
-		"ext-hello-world",
-		"ext-iscsid",
-		"ext-nut-client",
-		"ext-qemu-guest-agent",
-		"ext-tgtd",
-	}
-
-	// Tailscale service keeps on restarting unless authed, so this test is disabled for now.
-	if ok := os.Getenv("TALOS_INTEGRATION_RUN_TAILSCALE"); ok != "" {
-		expectedServices = append(expectedServices, "ext-tailscale")
-	}
-
-	switch ExtensionsTestType(suite.ExtensionsTestType) {
-	case ExtensionsTestTypeNone:
-	case ExtensionsTestTypeQEMU:
-	case ExtensionsTestTypeNvidia:
-		expectedServices = []string{"ext-nvidia-persistenced"}
-	case ExtensionsTestTypeNvidiaFabricManager:
-		expectedServices = []string{
-			"ext-nvidia-persistenced",
-			"ext-nvidia-fabricmanager",
-		}
+// TestExtensionsISCSI verifies expected services are running.
+func (suite *ExtensionsSuite) TestExtensionsISCSI() {
+	expectedServices := map[string]string{
+		"ext-iscsid": "Running",
+		"ext-tgtd":   "Running",
 	}
 
 	suite.testServicesRunning(expectedServices)
+}
+
+// TestExtensionsNutClient verifies nut client is working.
+func (suite *ExtensionsSuite) TestExtensionsNutClient() {
+	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) {
+		suite.T().Skip("skipping as qemu extensions test are not enabled")
+	}
+
+	suite.testServicesRunning(map[string]string{"ext-nut-client": "Running"})
 }
 
 // TestExtensionsQEMUGuestAgent verifies qemu guest agent is working.
@@ -230,6 +219,8 @@ func (suite *ExtensionsSuite) TestExtensionsQEMUGuestAgent() {
 	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) || suite.Cluster.Provisioner() != "qemu" {
 		suite.T().Skip("skipping as qemu extensions test are not enabled")
 	}
+
+	suite.testServicesRunning(map[string]string{"ext-qemu-guest-agent": "Running"})
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	ctx := client.WithNode(suite.ctx, node)
@@ -242,9 +233,6 @@ func (suite *ExtensionsSuite) TestExtensionsQEMUGuestAgent() {
 	)
 	suite.Require().NoError(err)
 
-	bootID, err := suite.ReadBootID(ctx)
-	suite.Require().NoError(err)
-
 	clusterStatePath, err := suite.Cluster.StatePath()
 	suite.Require().NoError(err)
 
@@ -253,10 +241,14 @@ func (suite *ExtensionsSuite) TestExtensionsQEMUGuestAgent() {
 
 	defer conn.Close() //nolint:errcheck
 
-	_, err = conn.Write([]byte(`{"execute":"guest-shutdown", "arguments": {"mode": "reboot"}}`))
-	suite.Require().NoError(err)
+	// now we want to reboot the node using the guest agent
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			_, err = conn.Write([]byte(`{"execute":"guest-shutdown", "arguments": {"mode": "reboot"}}`))
 
-	suite.AssertBootIDChanged(ctx, bootID, node, time.Minute*5)
+			return err
+		}, 5*time.Minute,
+	)
 }
 
 // TestExtensionsTailscale verifies tailscale is working.
@@ -269,6 +261,8 @@ func (suite *ExtensionsSuite) TestExtensionsTailscale() {
 	if ok := os.Getenv("TALOS_INTEGRATION_RUN_TAILSCALE"); ok == "" {
 		suite.T().Skip("skipping as tailscale integration tests are not enabled")
 	}
+
+	suite.testServicesRunning(map[string]string{"ext-tailscale": "Running"})
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	ctx := client.WithNode(suite.ctx, node)
@@ -291,6 +285,10 @@ func (suite *ExtensionsSuite) TestExtensionsHelloWorldService() {
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	suite.testServicesRunning(map[string]string{
+		"ext-hello-world": "Running",
+	})
 
 	url := url.URL{
 		Scheme: "http",
@@ -342,38 +340,148 @@ func (suite *ExtensionsSuite) TestExtensionsGvisor() {
 	suite.Require().NoError(err)
 
 	// wait for the pod to be ready
-	suite.Require().NoError(retry.Constant(4*time.Minute, retry.WithUnits(time.Second*10)).Retry(
-		func() error {
-			pod, err := suite.Clientset.CoreV1().Pods("default").Get(suite.ctx, "nginx-gvisor", metav1.GetOptions{})
-			if err != nil {
-				return retry.ExpectedErrorf("error getting pod: %s", err)
-			}
-
-			if pod.Status.Phase != corev1.PodRunning {
-				return retry.ExpectedErrorf("pod is not running yet: %s", pod.Status.Phase)
-			}
-
-			return nil
-		},
-	))
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "nginx-gvisor"))
 }
 
-func (suite *ExtensionsSuite) testServicesRunning(services []string) {
+// TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
+func (suite *ExtensionsSuite) TestExtensionsZFS() {
+	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) {
+		suite.T().Skip("skipping as qemu extensions test are not enabled")
+	}
+
+	suite.testServicesRunning(map[string]string{"ext-zpool-importer": "Finished"})
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	ctx := client.WithNode(suite.ctx, node)
 
-	items, err := safe.StateListAll[*v1alpha1.Service](ctx, suite.Client.COSI)
+	var zfsPoolExists bool
+
+	userDisks, err := suite.UserDisks(suite.ctx, node, 4)
 	suite.Require().NoError(err)
 
-	for _, expected := range services {
-		svc, found := items.Find(func(s *v1alpha1.Service) bool {
-			return s.Metadata().ID() == expected
-		})
-		if !found {
-			suite.T().Fatalf("expected %s to be registered", expected)
+	suite.Require().NotEmpty(userDisks, "expected at least one user disk with size greater than 4GB to be available")
+
+	resp, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root: fmt.Sprintf("/dev/%s1", userDisks[0]),
+	})
+	suite.Require().NoError(err)
+
+	if _, err = resp.Recv(); err == nil {
+		zfsPoolExists = true
+	}
+
+	if !zfsPoolExists {
+		_, err = suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "zpool-create",
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  "zpool-create",
+						Image: "alpine",
+						Command: []string{
+							"tail",
+							"-f",
+							"/dev/null",
+						},
+						SecurityContext: &corev1.SecurityContext{
+							Privileged: pointer.Bool(true),
+						},
+					},
+				},
+				HostNetwork: true,
+				HostPID:     true,
+			},
+		}, metav1.CreateOptions{})
+		defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "zpool-create", metav1.DeleteOptions{}) //nolint:errcheck
+
+		suite.Require().NoError(err)
+
+		// wait for the pod to be ready
+		suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", "zpool-create"))
+
+		stdout, stderr, err := suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"zpool-create",
+			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- zpool create -m /var/tank tank %s", userDisks[0]),
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("", stderr)
+		suite.Require().Equal("", stdout)
+
+		stdout, stderr, err = suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"zpool-create",
+			"nsenter --mount=/proc/1/ns/mnt -- zfs create -V 1gb tank/vol",
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("", stderr)
+		suite.Require().Equal("", stdout)
+	}
+
+	checkZFSPoolMounted := func() bool {
+		mountsResp, err := suite.Client.Mounts(ctx)
+		suite.Require().NoError(err)
+
+		for _, msg := range mountsResp.Messages {
+			for _, stats := range msg.Stats {
+				if stats.MountedOn == "/var/tank" {
+					return true
+				}
+			}
 		}
 
-		suite.Require().True(svc.TypedSpec().Running, "expected %s to be running", expected)
+		return false
+	}
+
+	checkZFSVolumePathPopulatedByUdev := func() {
+		// this is the path that udev will populate, which is a symlink to the actual device
+		path := "/dev/zvol/tank/vol"
+
+		stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+			Root: path,
+		})
+
+		suite.Require().NoError(err)
+
+		suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
+			suite.Require().Equal("/dev/zd0", info.Name, "expected %s to exist", path)
+
+			return nil
+		}))
+	}
+
+	suite.Require().True(checkZFSPoolMounted())
+	checkZFSVolumePathPopulatedByUdev()
+
+	// now we want to reboot the node and make sure the pool is still mounted
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
+		}, 5*time.Minute,
+	)
+
+	suite.Require().True(checkZFSPoolMounted())
+	checkZFSVolumePathPopulatedByUdev()
+}
+
+func (suite *ExtensionsSuite) testServicesRunning(serviceStatus map[string]string) {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	ctx := client.WithNode(suite.ctx, node)
+
+	for svc, state := range serviceStatus {
+		resp, err := suite.Client.ServiceInfo(ctx, svc)
+		suite.Require().NoError(err)
+		suite.Require().NotNil(resp, "expected service %s to be registered", svc)
+
+		for _, svcInfo := range resp {
+			suite.Require().Equal(state, svcInfo.Service.State, "expected service %s to have state %s", svc, state)
+		}
 	}
 }
 

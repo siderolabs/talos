@@ -16,7 +16,7 @@ CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0
-PKGS ?= v1.6.0-alpha.0-5-g7717b7e
+PKGS ?= v1.6.0-alpha.0-7-g2e1c0b9
 EXTRAS ?= v1.5.0
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.20

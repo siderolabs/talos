@@ -8,16 +8,12 @@ package api
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"strings"
 	"time"
 
-	"github.com/siderolabs/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/kubectl/pkg/scheme"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -132,65 +128,13 @@ file locks                      (-x) unlimited
 	suite.Require().NoError(err)
 
 	// wait for the pod to be ready
-	suite.Require().NoError(retry.Constant(8*time.Minute, retry.WithUnits(time.Second*10)).Retry(
-		func() error {
-			pod, podErr := suite.Clientset.CoreV1().Pods("default").Get(suite.ctx, "defaults-test", metav1.GetOptions{})
-			if podErr != nil {
-				return retry.ExpectedErrorf("error getting pod: %s", podErr)
-			}
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 10*time.Minute, "default", "defaults-test"))
 
-			if pod.Status.Phase != corev1.PodRunning {
-				return retry.ExpectedErrorf("pod is not running yet: %s", pod.Status.Phase)
-			}
-
-			return nil
-		},
-	))
-
-	stdout, stderr, err := suite.executeRemoteCommand("default", "defaults-test", "ulimit -c -d -e -f -l -m -n -q -r -s -t -v -x")
+	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, "default", "defaults-test", "ulimit -c -d -e -f -l -m -n -q -r -s -t -v -x")
 	suite.Require().NoError(err)
 
 	suite.Require().Equal("", stderr)
 	suite.Require().Equal(strings.TrimPrefix(expectedUlimit, "\n"), stdout)
-}
-
-func (suite *CommonSuite) executeRemoteCommand(namespace, podName, command string) (string, string, error) {
-	cmd := []string{
-		"/bin/sh",
-		"-c",
-		command,
-	}
-	req := suite.Clientset.CoreV1().RESTClient().Post().Resource("pods").Name(podName).
-		Namespace(namespace).SubResource("exec")
-	option := &corev1.PodExecOptions{
-		Command: cmd,
-		Stdin:   false,
-		Stdout:  true,
-		Stderr:  true,
-		TTY:     false,
-	}
-
-	req.VersionedParams(
-		option,
-		scheme.ParameterCodec,
-	)
-
-	exec, err := remotecommand.NewSPDYExecutor(suite.RestConfig, "POST", req.URL())
-	if err != nil {
-		return "", "", err
-	}
-
-	var stdout, stderr bytes.Buffer
-
-	err = exec.StreamWithContext(suite.ctx, remotecommand.StreamOptions{
-		Stdout: &stdout,
-		Stderr: &stderr,
-	})
-	if err != nil {
-		return "", "", err
-	}
-
-	return stdout.String(), stderr.String(), nil
 }
 
 func init() {
