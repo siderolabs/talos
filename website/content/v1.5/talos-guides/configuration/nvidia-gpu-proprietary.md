@@ -14,7 +14,7 @@ The published versions of the NVIDIA system extensions can be found here:
 - [nonfree-kmod-nvidia](https://github.com/siderolabs/extensions/pkgs/container/nonfree-kmod-nvidia)
 - [nvidia-container-toolkit](https://github.com/siderolabs/extensions/pkgs/container/nvidia-container-toolkit)
 
-> To build a NVIDIA driver version not published by SideroLabs follow the instructions [here]({{< relref "../../../v1.4/talos-guides/configuration/nvidia-gpu-proprietary" >}})
+> To build a NVIDIA driver version not published by SideroLabs jump to [Building the NVIDIA extensions](#building-the-nvidia-extensions) and then use those in the steps below instead of the ones published by SideroLabs
 
 ## Upgrading Talos and enabling the NVIDIA modules and the system extension
 
@@ -160,3 +160,25 @@ kubectl run \
   --overrides '{"spec": {"runtimeClassName": "nvidia"}}' \
   nvidia-smi
 ```
+
+## Building the NVIDIA extensions
+
+If you want to build the NVIDIA extensions yourself instead of using the extensions
+published by SideroLabs start by cloning the `release-1.5` branch [extensions](https://github.com/siderolabs/extensions) repository.
+
+```bash
+git clone --depth=1 --branch=release-1.5 https://github.com/siderolabs/extensions.git
+```
+
+Lookup the version of [pkgs](https://github.com/siderolabs/pkgs) used for the particular Talos version at `https://github.com/siderolabs/talos/blob/<talos-version>/pkg/machinery/gendata/data/pkgs`.
+
+Now run the following command to build and push custom NVIDIA extension.
+
+```bash
+make nonfree-kmod-nvidia PKGS=<pkgs-version-looked-up-above> PLATFORM=linux/amd64 PUSH=true
+```
+
+> Replace the platform with `linux/arm64` if building for ARM64.
+> To change the NVIDIA driver version modify the build argument in
+> `nvidia-gpu/nonfree/kmod-nvidia/vars.yaml` accordingly.
+> Make sure to use `talosctl` version {{< release >}} or later
