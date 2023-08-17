@@ -4,12 +4,12 @@ weight: 60
 description: "Table of supported Talos Linux versions and respective platforms."
 ---
 
-| Talos Version                                                                                                  | 1.5                                | 1.4                                |
+| Talos Version                                                                                                  | 1.6                                | 1.5                                |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
-| Release Date                                                                                                   | 2023-08-17                         | 2023-04-18 (1.4.0)                 |
-| End of Community Support                                                                                       | 1.6.0 release (2023-12-15, TBD)    | 1.5.0 release (2023-08-17)         |
+| Release Date                                                                                                   | 2023-12-15 (TBD)                   | 2023-08-17 (1.5.0)                 |
+| End of Community Support                                                                                       | 1.7.0 release (2024-03-15, TBD)    | 1.6.0 release (2023-12-15)         |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) |
-| Kubernetes                                                                                                     | 1.28, 1.27, 1.26                   | 1.27, 1.26, 1.25                   |
+| Kubernetes                                                                                                     | 1.29, 1.28, 1.27                   | 1.28, 1.27, 1.26                   |
 | Architecture                                                                                                   | amd64, arm64                       | amd64, arm64                       |
 | **Platforms**                                                                                                  |                                    |                                    |
 | - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Exoscale, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Exoscale, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud |
@@ -18,8 +18,8 @@ description: "Table of supported Talos Linux versions and respective platforms."
 | - SBCs                                                                                                         | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Nano Pi R4S, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B, Raspberry Pi Compute Module 4 | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Nano Pi R4S, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B, Raspberry Pi Compute Module 4 |
 | - local                                                                                                        | Docker, QEMU                       | Docker, QEMU                       |
 | **Cluster API**                                                                                                |                                    |                                    |
-| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.6.1                           | >= 0.6.0                           |
-| [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.5.2                          | >= 0.4.10                          |
+| [CAPI Bootstrap Provider Talos](https://github.com/siderolabs/cluster-api-bootstrap-provider-talos)            | >= 0.6.2                           | >= 0.6.1                           |
+| [CAPI Control Plane Provider Talos](https://github.com/siderolabs/cluster-api-control-plane-provider-talos)    | >= 0.5.3                           | >= 0.5.2                           |
 | [Sidero](https://www.sidero.dev/)                                                                              | >= 0.6.0                           | >= 0.6.0                           |
 
 ## Platform Tiers
