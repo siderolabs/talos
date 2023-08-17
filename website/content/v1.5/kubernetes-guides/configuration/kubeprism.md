@@ -23,7 +23,7 @@ To enable KubePrism, apply the following machine config patch either during the 
 ```yaml
 machine:
   features:
-    kubeprism:
+    kubePrism:
       enabled: true
       port: 7445
 ```
