@@ -37,10 +37,6 @@ func (suite *TrustedBootSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *TrustedBootSuite) SetupTest() {
-	if suite.Cluster.Provisioner() == provisionerDocker {
-		suite.T().Skip("skipping trustedboot tests in docker")
-	}
-
 	if !suite.TrustedBoot {
 		suite.T().Skip("skipping since talos.trustedboot is false")
 	}

@@ -7,8 +7,8 @@
 package api
 
 import (
-	"bufio"
 	"context"
+	"os"
 	"strings"
 	"time"
 
@@ -16,7 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // CommonSuite verifies some default settings such as ulimits.
@@ -34,10 +33,6 @@ func (suite *CommonSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *CommonSuite) SetupTest() {
-	if suite.Cluster.Provisioner() == provisionerDocker {
-		suite.T().Skip("skipping default values tests in docker")
-	}
-
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 10*time.Minute)
 }
@@ -51,44 +46,27 @@ func (suite *CommonSuite) TearDownTest() {
 
 // TestVirtioModulesLoaded verifies that the virtio modules are loaded.
 func (suite *CommonSuite) TestVirtioModulesLoaded() {
-	if suite.Cluster.Provisioner() == provisionerQEMU {
-		suite.T().Skip("skipping virtio modules tests in qemu")
+	if provisioner := os.Getenv("PROVISIONER"); provisioner != "qemu" {
+		suite.T().Skip("skipping virtio test since provisioner is not qemu")
 	}
 
-	expectedVirtIOModules := []string{
-		"virtio_balloon",
-		"virtio_pci",
-		"virtio_pci_legacy_dev",
-		"virtio_pci_modern_dev",
+	expectedVirtIOModules := map[string]string{
+		"virtio_balloon":        "",
+		"virtio_pci":            "",
+		"virtio_pci_legacy_dev": "",
+		"virtio_pci_modern_dev": "",
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP()
-
-	ctx := client.WithNode(suite.ctx, node)
-
-	fileReader, err := suite.Client.Read(ctx, "/proc/modules")
-	defer func() {
-		err = fileReader.Close()
-	}()
-
-	suite.Require().NoError(err)
-
-	scanner := bufio.NewScanner(fileReader)
-
-	var loadedModules []string
-
-	for scanner.Scan() {
-		loadedModules = append(loadedModules, strings.Split(scanner.Text(), " ")[0])
-	}
-	suite.Require().NoError(scanner.Err())
-
-	for _, expectedModule := range expectedVirtIOModules {
-		suite.Require().Contains(loadedModules, expectedModule, "expected module %s to be loaded", expectedModule)
-	}
+	suite.AssertExpectedModules(suite.ctx, node, expectedVirtIOModules)
 }
 
 // TestCommonDefaults verifies that the default ulimits are set.
 func (suite *CommonSuite) TestCommonDefaults() {
+	if provisioner := os.Getenv("PROVISIONER"); provisioner == "docker" {
+		suite.T().Skip("skipping ulimits test since provisioner is docker")
+	}
+
 	expectedUlimit := `
 core file size (blocks)         (-c) 0
 data seg size (kb)              (-d) unlimited

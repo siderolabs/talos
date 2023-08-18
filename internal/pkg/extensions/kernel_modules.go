@@ -42,8 +42,8 @@ func (ext *Extension) KernelModuleDirectory() string {
 
 // GenerateKernelModuleDependencyTreeExtension generates a kernel module dependency tree extension.
 // nolint:gocyclo
-func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules []string, arch string) (*Extension, error) {
-	log.Println("preparing to run depmod to generate kernel modules dependency tree")
+func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules []string, arch string, printFunc func(format string, v ...any)) (*Extension, error) {
+	printFunc("preparing to run depmod to generate kernel modules dependency tree")
 
 	tempDir, err := os.MkdirTemp("", "ext-modules")
 	if err != nil {
@@ -132,7 +132,7 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 		return mount.Unmount(overlays)
 	})
 
-	log.Println("running depmod to generate kernel modules dependency tree")
+	printFunc("running depmod to generate kernel modules dependency tree")
 
 	if err = depmod(mp.Target()); err != nil {
 		return nil, err

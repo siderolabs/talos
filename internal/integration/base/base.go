@@ -33,8 +33,10 @@ type TalosSuite struct {
 	TalosctlPath string
 	// KubectlPath is a path to kubectl binary
 	KubectlPath string
-	// ExtensionsTestType the type of extensions test to run
-	ExtensionsTestType string
+	// ExtensionsQEMU runs tests with qemu and extensions enabled
+	ExtensionsQEMU bool
+	// ExtensionsNvidia runs tests with nvidia extensions enabled
+	ExtensionsNvidia bool
 	// TrustedBoot tells if the cluster is secure booted and disks are encrypted
 	TrustedBoot bool
 

@@ -234,3 +234,15 @@ func (k8sSuite *K8sSuite) ExecuteCommandInPod(ctx context.Context, namespace, po
 
 	return stdout.String(), stderr.String(), nil
 }
+
+// GetPodsWithLabel returns the pods with the given label in the specified namespace.
+func (k8sSuite *K8sSuite) GetPodsWithLabel(ctx context.Context, namespace, label string) (*corev1.PodList, error) {
+	podList, err := k8sSuite.Clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: label,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return podList, nil
+}

@@ -68,7 +68,9 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 	node, err := suite.GetK8sNodeByInternalIP(suite.ctx, nodeInternalIP)
 	suite.Require().NoError(err)
 
-	if strings.HasSuffix(node.Name, ".ec2.internal") {
+	// ec2.internal and compute.internal are reserved domains in AWS
+	// ref: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-naming.html#instance-naming-ipbn
+	if strings.HasSuffix(node.Name, ".ec2.internal") || strings.HasSuffix(node.Name, ".compute.internal") {
 		suite.T().Skip("aws does not support hostname changes")
 	}
 

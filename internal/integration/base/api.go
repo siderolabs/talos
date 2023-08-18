@@ -7,6 +7,7 @@
 package base
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -14,6 +15,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -478,6 +480,63 @@ func (apiSuite *APISuite) UserDisks(ctx context.Context, node string, sizeGreate
 	}
 
 	return disks, nil
+}
+
+// AssertServicesRunning verifies that services are running on the node.
+func (apiSuite *APISuite) AssertServicesRunning(ctx context.Context, node string, serviceStatus map[string]string) {
+	nodeCtx := client.WithNode(ctx, node)
+
+	for svc, state := range serviceStatus {
+		resp, err := apiSuite.Client.ServiceInfo(nodeCtx, svc)
+		apiSuite.Require().NoError(err)
+		apiSuite.Require().NotNil(resp, "expected service %s to be registered", svc)
+
+		for _, svcInfo := range resp {
+			apiSuite.Require().Equal(state, svcInfo.Service.State, "expected service %s to have state %s", svc, state)
+		}
+	}
+}
+
+// AssertExpectedModules verifies that expected kernel modules are loaded on the node.
+func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string, expectedModules map[string]string) {
+	nodeCtx := client.WithNode(ctx, node)
+
+	fileReader, err := apiSuite.Client.Read(nodeCtx, "/proc/modules")
+	apiSuite.Require().NoError(err)
+
+	defer func() {
+		apiSuite.Require().NoError(fileReader.Close())
+	}()
+
+	scanner := bufio.NewScanner(fileReader)
+
+	var loadedModules []string
+
+	for scanner.Scan() {
+		loadedModules = append(loadedModules, strings.Split(scanner.Text(), " ")[0])
+	}
+	apiSuite.Require().NoError(scanner.Err())
+
+	fileReader, err = apiSuite.Client.Read(nodeCtx, fmt.Sprintf("/lib/modules/%s/modules.dep", constants.DefaultKernelVersion))
+	apiSuite.Require().NoError(err)
+
+	defer func() {
+		apiSuite.Require().NoError(fileReader.Close())
+	}()
+
+	scanner = bufio.NewScanner(fileReader)
+
+	var modulesDep []string
+
+	for scanner.Scan() {
+		modulesDep = append(modulesDep, filepath.Base(strings.Split(scanner.Text(), ":")[0]))
+	}
+	apiSuite.Require().NoError(scanner.Err())
+
+	for module, moduleDep := range expectedModules {
+		apiSuite.Require().Contains(loadedModules, module, "expected %s to be loaded", module)
+		apiSuite.Require().Contains(modulesDep, moduleDep, "expected %s to be in modules.dep", moduleDep)
+	}
 }
 
 // TearDownSuite closes Talos API client.

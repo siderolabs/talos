@@ -7,7 +7,6 @@
 package api
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -16,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -32,45 +30,26 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-// ExtensionsSuite verifies Talos is securebooted.
-type ExtensionsSuite struct {
+// ExtensionsSuiteQEMU verifies Talos is securebooted.
+type ExtensionsSuiteQEMU struct {
 	base.K8sSuite
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
 }
 
-// ExtensionsTestType specifies the type of extensions test to run.
-type ExtensionsTestType string
-
-const (
-	// ExtensionsTestTypeNone disables extensions tests.
-	ExtensionsTestTypeNone ExtensionsTestType = "none"
-	// ExtensionsTestTypeQEMU enables qemu extensions tests.
-	ExtensionsTestTypeQEMU ExtensionsTestType = "qemu"
-	// ExtensionsTestTypeNvidia enables nvidia extensions tests.
-	ExtensionsTestTypeNvidia ExtensionsTestType = "nvidia"
-	// ExtensionsTestTypeNvidiaFabricManager enables nvidia fabric manager extensions tests.
-	ExtensionsTestTypeNvidiaFabricManager ExtensionsTestType = "nvidia-fabricmanager"
-)
-
 // SuiteName ...
-func (suite *ExtensionsSuite) SuiteName() string {
-	return "api.ExtensionsSuite"
+func (suite *ExtensionsSuiteQEMU) SuiteName() string {
+	return "api.ExtensionsSuiteQEMU"
 }
 
 // SetupTest ...
-func (suite *ExtensionsSuite) SetupTest() {
-	if suite.Cluster.Provisioner() == provisionerDocker {
-		suite.T().Skip("skipping extensions tests in docker")
-	}
-
-	if suite.ExtensionsTestType == string(ExtensionsTestTypeNone) {
-		suite.T().Skip("skipping as extensions test are not enabled")
+func (suite *ExtensionsSuiteQEMU) SetupTest() {
+	if !suite.ExtensionsQEMU {
+		suite.T().Skip("skipping as qemu extensions test are not enabled")
 	}
 
 	// make sure API calls have timeout
@@ -78,18 +57,14 @@ func (suite *ExtensionsSuite) SetupTest() {
 }
 
 // TearDownTest ...
-func (suite *ExtensionsSuite) TearDownTest() {
+func (suite *ExtensionsSuiteQEMU) TearDownTest() {
 	if suite.ctxCancel != nil {
 		suite.ctxCancel()
 	}
 }
 
 // TestExtensionsExpectedPaths verifies expected paths are present.
-func (suite *ExtensionsSuite) TestExtensionsExpectedPaths() {
-	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) {
-		suite.T().Skip("skipping as qemu extensions test are not enabled")
-	}
-
+func (suite *ExtensionsSuiteQEMU) TestExtensionsExpectedPaths() {
 	expectedPaths := []string{
 		"/lib/firmware/amd-ucode",
 		"/lib/firmware/bnx2x",
@@ -117,7 +92,7 @@ func (suite *ExtensionsSuite) TestExtensionsExpectedPaths() {
 }
 
 // TestExtensionsExpectedModules verifies expected modules are loaded and in modules.dep.
-func (suite *ExtensionsSuite) TestExtensionsExpectedModules() {
+func (suite *ExtensionsSuiteQEMU) TestExtensionsExpectedModules() {
 	// expectedModulesModDep is a map of module name to module.dep name
 	expectedModulesModDep := map[string]string{
 		"asix":            "asix.ko",
@@ -143,81 +118,32 @@ func (suite *ExtensionsSuite) TestExtensionsExpectedModules() {
 		"zfs":             "zfs.ko",
 	}
 
-	if suite.ExtensionsTestType == string(ExtensionsTestTypeNvidia) || suite.ExtensionsTestType == string(ExtensionsTestTypeNvidiaFabricManager) {
-		expectedModulesModDep = map[string]string{
-			"nvidia": "nvidia.ko",
-		}
-	}
-
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-	ctx := client.WithNode(suite.ctx, node)
-
-	fileReader, err := suite.Client.Read(ctx, "/proc/modules")
-	defer func() {
-		err = fileReader.Close()
-	}()
-
-	suite.Require().NoError(err)
-
-	scanner := bufio.NewScanner(fileReader)
-
-	var loadedModules []string
-
-	for scanner.Scan() {
-		loadedModules = append(loadedModules, strings.Split(scanner.Text(), " ")[0])
-	}
-	suite.Require().NoError(scanner.Err())
-
-	fileReader, err = suite.Client.Read(ctx, fmt.Sprintf("/lib/modules/%s/modules.dep", constants.DefaultKernelVersion))
-	defer func() {
-		err = fileReader.Close()
-	}()
-
-	suite.Require().NoError(err)
-
-	scanner = bufio.NewScanner(fileReader)
-
-	var modulesDep []string
-
-	for scanner.Scan() {
-		modulesDep = append(modulesDep, filepath.Base(strings.Split(scanner.Text(), ":")[0]))
-	}
-	suite.Require().NoError(scanner.Err())
-
-	for module, moduleDep := range expectedModulesModDep {
-		suite.Require().Contains(loadedModules, module, "expected %s to be loaded", module)
-		suite.Require().Contains(modulesDep, moduleDep, "expected %s to be in modules.dep", moduleDep)
-	}
+	suite.AssertExpectedModules(suite.ctx, node, expectedModulesModDep)
 }
 
 // TestExtensionsISCSI verifies expected services are running.
-func (suite *ExtensionsSuite) TestExtensionsISCSI() {
+func (suite *ExtensionsSuiteQEMU) TestExtensionsISCSI() {
 	expectedServices := map[string]string{
 		"ext-iscsid": "Running",
 		"ext-tgtd":   "Running",
 	}
 
-	suite.testServicesRunning(expectedServices)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.AssertServicesRunning(suite.ctx, node, expectedServices)
 }
 
 // TestExtensionsNutClient verifies nut client is working.
-func (suite *ExtensionsSuite) TestExtensionsNutClient() {
-	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) {
-		suite.T().Skip("skipping as qemu extensions test are not enabled")
-	}
-
-	suite.testServicesRunning(map[string]string{"ext-nut-client": "Running"})
+func (suite *ExtensionsSuiteQEMU) TestExtensionsNutClient() {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-nut-client": "Running"})
 }
 
 // TestExtensionsQEMUGuestAgent verifies qemu guest agent is working.
-func (suite *ExtensionsSuite) TestExtensionsQEMUGuestAgent() {
-	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) || suite.Cluster.Provisioner() != "qemu" {
-		suite.T().Skip("skipping as qemu extensions test are not enabled")
-	}
-
-	suite.testServicesRunning(map[string]string{"ext-qemu-guest-agent": "Running"})
-
+func (suite *ExtensionsSuiteQEMU) TestExtensionsQEMUGuestAgent() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-qemu-guest-agent": "Running"})
+
 	ctx := client.WithNode(suite.ctx, node)
 
 	hostnameSpec, err := safe.StateWatchFor[*network.HostnameStatus](
@@ -247,19 +173,15 @@ func (suite *ExtensionsSuite) TestExtensionsQEMUGuestAgent() {
 }
 
 // TestExtensionsTailscale verifies tailscale is working.
-func (suite *ExtensionsSuite) TestExtensionsTailscale() {
-	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) {
-		suite.T().Skip("skipping as qemu extensions test are not enabled")
-	}
-
+func (suite *ExtensionsSuiteQEMU) TestExtensionsTailscale() {
 	// Tailscale service keeps on restarting unless authed, so this test is disabled for now.
 	if ok := os.Getenv("TALOS_INTEGRATION_RUN_TAILSCALE"); ok == "" {
 		suite.T().Skip("skipping as tailscale integration tests are not enabled")
 	}
 
-	suite.testServicesRunning(map[string]string{"ext-tailscale": "Running"})
-
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-tailscale": "Running"})
+
 	ctx := client.WithNode(suite.ctx, node)
 
 	linkSpec, err := safe.StateWatchFor[*network.LinkStatus](
@@ -274,14 +196,9 @@ func (suite *ExtensionsSuite) TestExtensionsTailscale() {
 }
 
 // TestExtensionsHelloWorldService verifies hello world service is working.
-func (suite *ExtensionsSuite) TestExtensionsHelloWorldService() {
-	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) {
-		suite.T().Skip("skipping as qemu extensions test are not enabled")
-	}
-
+func (suite *ExtensionsSuiteQEMU) TestExtensionsHelloWorldService() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-
-	suite.testServicesRunning(map[string]string{
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{
 		"ext-hello-world": "Running",
 	})
 
@@ -302,11 +219,7 @@ func (suite *ExtensionsSuite) TestExtensionsHelloWorldService() {
 }
 
 // TestExtensionsGvisor verifies gvisor runtime class is working.
-func (suite *ExtensionsSuite) TestExtensionsGvisor() {
-	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) {
-		suite.T().Skip("skipping as qemu extensions test are not enabled")
-	}
-
+func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisor() {
 	_, err := suite.Clientset.NodeV1().RuntimeClasses().Create(suite.ctx, &nodev1.RuntimeClass{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "gvisor",
@@ -339,14 +252,10 @@ func (suite *ExtensionsSuite) TestExtensionsGvisor() {
 }
 
 // TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
-func (suite *ExtensionsSuite) TestExtensionsZFS() {
-	if suite.ExtensionsTestType != string(ExtensionsTestTypeQEMU) {
-		suite.T().Skip("skipping as qemu extensions test are not enabled")
-	}
-
-	suite.testServicesRunning(map[string]string{"ext-zpool-importer": "Finished"})
-
+func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-zpool-importer": "Finished"})
+
 	ctx := client.WithNode(suite.ctx, node)
 
 	var zfsPoolExists bool
@@ -465,21 +374,6 @@ func (suite *ExtensionsSuite) TestExtensionsZFS() {
 	checkZFSVolumePathPopulatedByUdev()
 }
 
-func (suite *ExtensionsSuite) testServicesRunning(serviceStatus map[string]string) {
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-	ctx := client.WithNode(suite.ctx, node)
-
-	for svc, state := range serviceStatus {
-		resp, err := suite.Client.ServiceInfo(ctx, svc)
-		suite.Require().NoError(err)
-		suite.Require().NotNil(resp, "expected service %s to be registered", svc)
-
-		for _, svcInfo := range resp {
-			suite.Require().Equal(state, svcInfo.Service.State, "expected service %s to have state %s", svc, state)
-		}
-	}
-}
-
 func init() {
-	allSuites = append(allSuites, &ExtensionsSuite{})
+	allSuites = append(allSuites, &ExtensionsSuiteQEMU{})
 }

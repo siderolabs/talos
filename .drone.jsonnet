@@ -386,7 +386,7 @@ local ExtensionsStep(with_e2e=true) =
     IMAGE_REGISTRY: local_registry,
     QEMU_EXTRA_DISKS: '1',
     SHORT_INTEGRATION_TEST: 'yes',
-    EXTRA_TEST_ARGS: '-talos.extensions.testtype=qemu',
+    EXTRA_TEST_ARGS: '-talos.extensions.qemu',
   });
 
   local step_targets = [extensions_build, extensions_artifacts, extensions_patch_manifest, e2e_extensions];
@@ -656,63 +656,84 @@ local capi_docker = Step('e2e-docker', depends_on=[load_artifacts], target='e2e-
 });
 local e2e_capi = Step('e2e-capi', depends_on=[capi_docker], environment=creds_env_vars);
 
-local e2e_aws_prepare = Step(
-  'cloud-images',
-  depends_on=[
-    load_artifacts,
-  ],
-  environment=creds_env_vars {
-    CLOUD_IMAGES_EXTRA_ARGS: '--name-prefix talos-e2e --target-clouds aws --architectures amd64 --aws-regions us-east-1',
-  },
-  extra_commands=[
-    'make e2e-aws-prepare',
-    'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
-    'az storage blob upload-batch --overwrite -s _out --pattern "e2e-aws-generated/*" -d "${CI_COMMIT_SHA}${DRONE_TAG//./-}"',
-  ]
-);
+local E2EAWS(target) =
+  local extensions_artifacts = [step for step in ExtensionsStep(with_e2e=false)];
+  local depends_on = if std.startsWith(target, 'nvidia') then [load_artifacts] + extensions_artifacts else [load_artifacts];
+  local test_num_nodes = if std.startsWith(target, 'nvidia') then 4 else 6;
+  local extra_test_args = if std.startsWith(target, 'nvidia') then '-talos.extensions.nvidia' else '';
 
-local tf_apply = TriggerDownstream(
-  'tf-apply',
-  'e2e-talos-tf-apply',
-  ['siderolabs/contrib@main'],
-  params=[
-    'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    'TYPE=aws',
-    'AWS_DEFAULT_REGION=us-east-1',
-  ],
-  depends_on=[e2e_aws_prepare],
-);
+  local e2e_aws_prepare = Step(
+    'e2e-aws-prepare',
+    depends_on=depends_on,
+    environment=creds_env_vars {
+      IMAGE_REGISTRY: local_registry,
+      E2E_AWS_TARGET: target,
+    },
+    extra_commands=[
+      'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
+      'az storage blob upload-batch --overwrite -s _out --pattern "e2e-aws-generated/*" -d "${CI_COMMIT_SHA}${DRONE_TAG//./-}"',
+    ]
+  );
 
-local e2e_aws_tf_apply_post = Step(
-  'e2e-aws-download-artifacts',
-  with_make=false,
-  environment=creds_env_vars,
-  extra_commands=[
-    'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
-    'az storage blob download -f _out/e2e-aws-talosconfig -n e2e-aws-talosconfig -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    'az storage blob download -f _out/e2e-aws-kubeconfig -n e2e-aws-kubeconfig -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-  ],
-  depends_on=[tf_apply],
-);
-
-local e2e_aws = Step('e2e-aws', depends_on=[e2e_aws_tf_apply_post], environment=creds_env_vars);
-
-local tf_destroy = TriggerDownstream(
-  'tf-destroy',
-  'e2e-talos-tf-destroy',
-  ['siderolabs/contrib@main'],
-  params=[
-    'TYPE=aws',
-    'AWS_DEFAULT_REGION=us-east-1',
-  ],
-  depends_on=[e2e_aws],
-  when={
-    status: [
-      'failure',
-      'success',
+  local tf_apply = TriggerDownstream(
+    'tf-apply',
+    'e2e-talos-tf-apply',
+    ['siderolabs/contrib@main'],
+    params=[
+      'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+      'TYPE=aws',
+      'AWS_DEFAULT_REGION=us-east-1',
     ],
-  },
-);
+    depends_on=[e2e_aws_prepare],
+  );
+
+  local e2e_aws_tf_apply_post = Step(
+    'e2e-aws-download-artifacts',
+    with_make=false,
+    environment=creds_env_vars,
+    extra_commands=[
+      'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
+      'az storage blob download -f _out/e2e-aws-talosconfig -n e2e-aws-talosconfig -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+      'az storage blob download -f _out/e2e-aws-kubeconfig -n e2e-aws-kubeconfig -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    ],
+    depends_on=[tf_apply],
+  );
+
+  local e2e_aws = Step(
+    'e2e-aws',
+    depends_on=[e2e_aws_tf_apply_post],
+    environment=creds_env_vars {
+      TEST_NUM_NODES: test_num_nodes,
+      EXTRA_TEST_ARGS: extra_test_args,
+    }
+  );
+
+  local tf_destroy = TriggerDownstream(
+    'tf-destroy',
+    'e2e-talos-tf-destroy',
+    ['siderolabs/contrib@main'],
+    params=[
+      'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+      'TYPE=aws',
+      'AWS_DEFAULT_REGION=us-east-1',
+    ],
+    depends_on=[e2e_aws],
+    when={
+      status: [
+        'failure',
+        'success',
+      ],
+    },
+  );
+
+  local step_targets = [e2e_aws_prepare, tf_apply, e2e_aws_tf_apply_post, e2e_aws, tf_destroy];
+  local targets = if std.startsWith(target, 'nvidia') then extensions_artifacts + step_targets else step_targets;
+
+  targets;
+
+
+local e2e_aws = [step for step in E2EAWS('default')];
+local e2e_aws_nvidia_oss = [step for step in E2EAWS('nvidia-oss')];
 
 local e2e_azure = Step('e2e-azure', depends_on=[e2e_capi], environment=creds_env_vars);
 local e2e_gcp = Step('e2e-gcp', depends_on=[e2e_capi], environment=creds_env_vars);
@@ -727,11 +748,12 @@ local e2e_trigger(names) = {
 
 local e2e_pipelines = [
   // regular pipelines, triggered on promote events
-  Pipeline('e2e-aws', default_pipeline_steps + [e2e_aws_prepare, tf_apply, e2e_aws_tf_apply_post, e2e_aws, tf_destroy]) + e2e_trigger(['e2e-aws']),
+  Pipeline('e2e-aws', default_pipeline_steps + e2e_aws) + e2e_trigger(['e2e-aws']),
+  Pipeline('e2e-aws-nvidia-oss', default_pipeline_steps + e2e_aws_nvidia_oss) + e2e_trigger(['e2e-aws-nvidia-oss']),
   Pipeline('e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + e2e_trigger(['e2e-gcp']),
 
   // cron pipelines, triggered on schedule events
-  Pipeline('cron-e2e-aws', default_pipeline_steps + [e2e_aws_prepare, tf_apply, e2e_aws_tf_apply_post, e2e_aws, tf_destroy], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-e2e-aws', default_pipeline_steps + e2e_aws, [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
 ];
 
