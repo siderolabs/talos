@@ -17,7 +17,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -66,10 +65,6 @@ func (suite *ExtensionsSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *ExtensionsSuite) SetupTest() {
-	if testing.Short() {
-		suite.T().Skip("skipping in short mode")
-	}
-
 	if suite.Cluster.Provisioner() == provisionerDocker {
 		suite.T().Skip("skipping extensions tests in docker")
 	}

@@ -332,50 +332,67 @@ local load_artifacts = Step(
   ]
 );
 
-// builds the extensions
-local extensions_build = TriggerDownstream(
-  'extensions-build',
-  'e2e-talos',
-  ['siderolabs/extensions@main'],
-  params=[
-    std.format('REGISTRY=%s', local_registry),
-    'PLATFORM=linux/amd64',
-    'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-    '_out/talos-metadata',  // params passed from file with KEY=VALUE format
-  ],
-  depends_on=[load_artifacts],
-);
+// ExtensionsStep is a helper function for creating a step that builds the
+// extensions and runs the e2e tests for the extensions which can be set to be skipped.
+local ExtensionsStep(with_e2e=true) =
+  // builds the extensions
+  local extensions_build = TriggerDownstream(
+    'extensions-build',
+    'e2e-talos',
+    ['siderolabs/extensions@main'],
+    params=[
+      std.format('REGISTRY=%s', local_registry),
+      'PLATFORM=linux/amd64',
+      'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+      '_out/talos-metadata',  // params passed from file with KEY=VALUE format
+    ],
+    depends_on=[load_artifacts],
+  );
 
-// here we need to wait for the extensions build to finish
-local extensions_artifacts = Step(
-  'extensions-artifacts',
-  with_make=false,
-  environment=creds_env_vars,
-  depends_on=[
-    setup_ci,
-    extensions_build,
-  ],
-  extra_commands=[
-    'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
-    'az storage blob download -f _out/extensions-metadata -n extensions-metadata -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
-  ]
-);
+  // here we need to wait for the extensions build to finish
+  local extensions_artifacts = Step(
+    'extensions-artifacts',
+    with_make=false,
+    environment=creds_env_vars,
+    depends_on=[
+      setup_ci,
+      extensions_build,
+    ],
+    extra_commands=[
+      'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
+      'az storage blob download -f _out/extensions-metadata -n extensions-metadata -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    ]
+  );
 
-// generates the extension list patch manifest
-local extensions_patch_manifest = Step(
-  'extensions-patch-manifest',
-  with_make=false,
-  environment=creds_env_vars,
-  depends_on=[
-    extensions_artifacts,
-  ],
-  extra_commands=[
-    // create a patch file to pass to the downstream build
-    // ignore nvidia extensions, testing nvidia extensions needs a machine with nvidia graphics card
-    'jq -R < _out/extensions-metadata | jq -s -f hack/test/extensions/extension-patch-filter.jq > _out/extensions-patch.json',
-    'cat _out/extensions-patch.json',
-  ]
-);
+  // generates the extension list patch manifest
+  local extensions_patch_manifest = Step(
+    'extensions-patch-manifest',
+    with_make=false,
+    environment=creds_env_vars,
+    depends_on=[
+      extensions_artifacts,
+    ],
+    extra_commands=[
+      // create a patch file to pass to the downstream build
+      // ignore nvidia extensions, testing nvidia extensions needs a machine with nvidia graphics card
+      'jq -R < _out/extensions-metadata | jq -s -f hack/test/extensions/extension-patch-filter.jq > _out/extensions-patch.json',
+      'cat _out/extensions-patch.json',
+    ]
+  );
+
+  local e2e_extensions = Step('e2e-extensions', target='e2e-qemu', privileged=true, depends_on=[extensions_patch_manifest], environment={
+    QEMU_MEMORY_WORKERS: '4096',
+    WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.json',
+    IMAGE_REGISTRY: local_registry,
+    QEMU_EXTRA_DISKS: '1',
+    SHORT_INTEGRATION_TEST: 'yes',
+    EXTRA_TEST_ARGS: '-talos.extensions.testtype=qemu',
+  });
+
+  local step_targets = [extensions_build, extensions_artifacts, extensions_patch_manifest, e2e_extensions];
+  local targets = if with_e2e then step_targets else [extensions_build, extensions_artifacts];
+
+  targets;
 
 
 local default_steps = [
@@ -439,6 +456,8 @@ local default_pipeline_steps = [
 
 local integration_qemu = Step('e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
 
+local integration_extensions = [step for step in ExtensionsStep()];
+
 local integration_qemu_trusted_boot = Step('e2e-qemu-trusted-boot', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
   IMAGE_REGISTRY: local_registry,
   VIA_MAINTENANCE_MODE: 'true',
@@ -454,13 +473,6 @@ local integration_provision_tests_track_0 = Step('provision-tests-track-0', priv
 local integration_provision_tests_track_1 = Step('provision-tests-track-1', privileged=true, depends_on=[integration_provision_tests_prepare], environment={ IMAGE_REGISTRY: local_registry });
 local integration_provision_tests_track_2 = Step('provision-tests-track-2', privileged=true, depends_on=[integration_provision_tests_prepare], environment={ IMAGE_REGISTRY: local_registry });
 
-local integration_extensions = Step('e2e-extensions', target='e2e-qemu', privileged=true, depends_on=[extensions_patch_manifest], environment={
-  QEMU_MEMORY_WORKERS: '4096',
-  WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.json',
-  IMAGE_REGISTRY: local_registry,
-  QEMU_EXTRA_DISKS: '1',
-  EXTRA_TEST_ARGS: '-talos.extensions.testtype=qemu',
-});
 local integration_cilium = Step('e2e-cilium', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
   SHORT_INTEGRATION_TEST: 'yes',
   WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: 'yes',
@@ -602,7 +614,7 @@ local integration_pipelines = [
     integration_kubespan,
     integration_default_hostname,
   ]) + integration_trigger(['integration-misc']),
-  Pipeline('integration-extensions', default_pipeline_steps + [extensions_build, extensions_artifacts, extensions_patch_manifest, integration_extensions]) + integration_trigger(['integration-extensions']),
+  Pipeline('integration-extensions', default_pipeline_steps + integration_extensions) + integration_trigger(['integration-extensions']),
   Pipeline('integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict]) + integration_trigger(['integration-cilium']),
   Pipeline('integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip]) + integration_trigger(['integration-qemu-encrypted-vip']),
   Pipeline('integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race]) + integration_trigger(['integration-qemu-race']),
@@ -626,7 +638,7 @@ local integration_pipelines = [
     integration_kubespan,
     integration_default_hostname,
   ], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
-  Pipeline('cron-integration-extensions', default_pipeline_steps + [extensions_build, extensions_artifacts, extensions_patch_manifest, integration_extensions], [default_cron_pipeline]) + cron_trigger(['nightly']),
+  Pipeline('cron-integration-extensions', default_pipeline_steps + integration_extensions, [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race], [default_cron_pipeline]) + cron_trigger(['nightly']),
