@@ -5,6 +5,7 @@
 package k8s_test
 
 import (
+	_ "embed"
 	"strings"
 	"testing"
 
@@ -49,4 +50,20 @@ rules:
 
 	assert.Len(t, adapter.Objects(), 1)
 	assert.Equal(t, adapter.Objects()[0].GetKind(), "Policy")
+}
+
+//go:embed testdata/list.yaml
+var listManifest []byte
+
+func TestManifestSetYAMLList(t *testing.T) {
+	manifest := k8s.NewManifest(k8s.ControlPlaneNamespaceName, "test")
+	adapter := k8sadapter.Manifest(manifest)
+
+	require.NoError(t, adapter.SetYAML(listManifest))
+
+	assert.Len(t, adapter.Objects(), 2)
+	assert.Equal(t, "ClusterRoleBinding", adapter.Objects()[0].GetKind())
+	assert.Equal(t, "system:cloud-node-controller", adapter.Objects()[0].GetName())
+	assert.Equal(t, "ClusterRoleBinding", adapter.Objects()[1].GetKind())
+	assert.Equal(t, "system:cloud-controller-manager", adapter.Objects()[1].GetName())
 }
