@@ -186,16 +186,7 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 }
 
 //nolint:gocyclo
-func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logger, imageService images.Store, expectedImages []string) error {
-	logger.Debug("running image cleanup")
-
-	ctx = namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
-
-	actualImages, err := imageService.List(ctx)
-	if err != nil {
-		return fmt.Errorf("error listing images: %w", err)
-	}
-
+func buildExpectedImageNames(logger *zap.Logger, actualImages []images.Image, expectedImages []string) (map[string]struct{}, error) {
 	var parseErrors []error
 
 	expectedReferences := slices.Map(expectedImages, func(ref string) docker.Named {
@@ -206,19 +197,16 @@ func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logge
 		return res
 	})
 
-	if err = errors.Join(parseErrors...); err != nil {
-		return fmt.Errorf("error parsing expected images: %w", err)
+	if err := errors.Join(parseErrors...); err != nil {
+		return nil, fmt.Errorf("error parsing expected images: %w", err)
 	}
 
 	expectedImageNames := map[string]struct{}{}
 
-	// first pass: scan actualImages and expand expectedReferences with other non-canonical refs
 	for _, image := range actualImages {
-		var imageRef docker.Reference
-
-		imageRef, err = docker.ParseAnyReference(image.Name)
+		imageRef, err := docker.ParseAnyReference(image.Name)
 		if err != nil {
-			logger.Debug("failed to parse image referencer", zap.Error(err), zap.String("image", image.Name))
+			logger.Debug("failed to parse image reference", zap.Error(err), zap.String("image", image.Name))
 
 			continue
 		}
@@ -235,7 +223,7 @@ func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logge
 				if expectedTagged, ok := expectedRef.(docker.Tagged); ok && ref.Tag() == expectedTagged.Tag() {
 					// this is expected image by tag, inject other forms of the ref
 					expectedImageNames[digest] = struct{}{}
-					expectedImageNames[expectedRef.String()] = struct{}{}
+					expectedImageNames[expectedRef.Name()+":"+expectedTagged.Tag()] = struct{}{}
 					expectedImageNames[expectedRef.Name()+"@"+digest] = struct{}{}
 				}
 			}
@@ -248,10 +236,34 @@ func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logge
 				if expectedDigested, ok := expectedRef.(docker.Digested); ok && ref.Digest() == expectedDigested.Digest() {
 					// this is expected image by digest, inject other forms of the ref
 					expectedImageNames[digest] = struct{}{}
-					expectedImageNames[expectedRef.String()] = struct{}{}
+					expectedImageNames[expectedRef.Name()+"@"+digest] = struct{}{}
+
+					// if the image is also tagged, inject the tagged version of it
+					if expectedTagged, ok := expectedRef.(docker.Tagged); ok {
+						expectedImageNames[expectedRef.Name()+":"+expectedTagged.Tag()] = struct{}{}
+					}
 				}
 			}
 		}
+	}
+
+	return expectedImageNames, nil
+}
+
+func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logger, imageService images.Store, expectedImages []string) error {
+	logger.Debug("running image cleanup")
+
+	ctx = namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
+
+	actualImages, err := imageService.List(ctx)
+	if err != nil {
+		return fmt.Errorf("error listing images: %w", err)
+	}
+
+	// first pass: scan actualImages and expand expectedReferences with other non-canonical refs
+	expectedImageNames, err := buildExpectedImageNames(logger, actualImages, expectedImages)
+	if err != nil {
+		return err
 	}
 
 	// second pass, drop whatever is not expected

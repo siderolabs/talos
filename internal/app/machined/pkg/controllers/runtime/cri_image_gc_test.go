@@ -7,6 +7,7 @@ package runtime_test
 import (
 	"context"
 	"reflect"
+	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -15,9 +16,13 @@ import (
 	"github.com/containerd/containerd/images"
 	"github.com/opencontainers/go-digest"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
@@ -161,7 +166,7 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), kubelet))
 
 	etcd := etcd.NewSpec(etcd.NamespaceName, etcd.SpecID)
-	etcd.TypedSpec().Image = "registry.io/org/image2@sha256:2f794176e9bd8a28501fa185693dc1073013a048c51585022ebce4f84b469db8"
+	etcd.TypedSpec().Image = "registry.io/org/image2:v3.5.9@sha256:2f794176e9bd8a28501fa185693dc1073013a048c51585022ebce4f84b469db8"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), etcd))
 
 	expectedImages := slices.Map(storedImages[2:7], func(i images.Image) string { return i.Name })
@@ -178,4 +183,114 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 
 		return retry.ExpectedErrorf("images don't match: expected %v actual %v", expectedImages, actualImages)
 	}))
+}
+
+func TestBuildExpectedImageNames(t *testing.T) {
+	actualImages := []images.Image{
+		{
+			Name: "registry.io/org/image1:v1.3.5@sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a",
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a")),
+			},
+		},
+		{
+			Name: "sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a",
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a")),
+			},
+		},
+		{
+			Name: "registry.io/org/image1:v1.3.7",
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135")),
+			},
+		},
+		{
+			Name: "registry.io/org/image1@sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135")),
+			},
+		},
+		{
+			Name: "sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135")),
+			},
+		},
+		{
+			Name: "registry.io/org/image1:v1.3.8",
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:fd03335dd2e7163e5e36e933a0c735d7fec6f42b33ddafad0bc54f333e4a23c0")),
+			},
+		},
+		{
+			Name: "registry.io/org/image2@sha256:2f794176e9bd8a28501fa185693dc1073013a048c51585022ebce4f84b469db8",
+			Target: v1.Descriptor{
+				Digest: must(digest.Parse("sha256:2f794176e9bd8a28501fa185693dc1073013a048c51585022ebce4f84b469db8")),
+			},
+		},
+	}
+
+	logger := zaptest.NewLogger(t)
+
+	for _, test := range []struct {
+		name           string
+		expectedImages []string
+
+		expectedImageNames []string
+	}{
+		{
+			name: "empty",
+		},
+		{
+			name: "by tag",
+			expectedImages: []string{
+				"registry.io/org/image1:v1.3.7",
+			},
+			expectedImageNames: []string{
+				"registry.io/org/image1:v1.3.7",
+				"registry.io/org/image1@sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+				"sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			},
+		},
+		{
+			name: "by digest",
+			expectedImages: []string{
+				"registry.io/org/image1@sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			},
+			expectedImageNames: []string{
+				"registry.io/org/image1@sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+				"sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			},
+		},
+		{
+			name: "by digest and tag",
+			expectedImages: []string{
+				"registry.io/org/image1:v1.3.7@sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			},
+			expectedImageNames: []string{
+				"registry.io/org/image1:v1.3.7",
+				"registry.io/org/image1@sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+				"sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
+			},
+		},
+		{
+			name: "not found",
+			expectedImages: []string{
+				"registry.io/org/image1:v1.3.9",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			expectedImages, err := runtimectrl.BuildExpectedImageNames(logger, actualImages, test.expectedImages)
+			require.NoError(t, err)
+
+			expectedImageNames := maps.Keys(expectedImages)
+
+			sort.Strings(test.expectedImageNames)
+			sort.Strings(expectedImageNames)
+
+			assert.Equal(t, test.expectedImageNames, expectedImageNames)
+		})
+	}
 }
