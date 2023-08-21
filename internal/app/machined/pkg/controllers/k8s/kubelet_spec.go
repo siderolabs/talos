@@ -110,7 +110,8 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 			"cert-dir": constants.KubeletPKIDir,
 
-			"hostname-override": expectedNodename,
+			"hostname-override":          expectedNodename,
+			"container-runtime-endpoint": "unix://" + constants.CRIContainerdAddress,
 		}
 
 		if !cfgSpec.SkipNodeRegistration {
@@ -264,7 +265,6 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec) (*kubeletconfig.Kub
 	config.KubeletCgroups = constants.CgroupKubelet
 	config.RotateCertificates = true
 	config.ProtectKernelDefaults = true
-	config.ContainerRuntimeEndpoint = "unix://" + constants.CRIContainerdAddress
 
 	// SeccompDefault feature gate is enabled by default Kubernetes 1.25+, GA in 1.27
 	if cfgSpec.DefaultRuntimeSeccompEnabled {
