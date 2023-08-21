@@ -29,7 +29,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.32
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.7
 	github.com/aws/smithy-go v1.14.0
-	github.com/beevik/ntp v1.2.0
+	github.com/beevik/ntp v1.3.0
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/containerd/cgroups v1.1.0

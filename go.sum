@@ -138,8 +138,8 @@ github.com/aws/aws-sdk-go-v2/service/sts v1.21.1 h1:pAOJj+80tC8sPVgSDHzMYD6KLWsa
 github.com/aws/aws-sdk-go-v2/service/sts v1.21.1/go.mod h1:G8SbvL0rFk4WOJroU8tKBczhsbhj2p/YY7qeJezJ3CI=
 github.com/aws/smithy-go v1.14.0 h1:+X90sB94fizKjDmwb4vyl2cTTPXTE5E2G/1mjByb0io=
 github.com/aws/smithy-go v1.14.0/go.mod h1:Tg+OJXh4MB2R/uN61Ko2f6hTZwB/ZYGOtib8J3gBHzA=
-github.com/beevik/ntp v1.2.0 h1:n1teVGbd4YM36FlGvWYfccBIdGzeaakHrTlo6RSL8mw=
-github.com/beevik/ntp v1.2.0/go.mod h1:vD6h1um4kzXpqmLTuu0cCLcC+NfvC0IC+ltmEDA8E78=
+github.com/beevik/ntp v1.3.0 h1:/w5VhpW5BGKS37vFm1p9oVk/t4HnnkKZAZIubHM6F7Q=
+github.com/beevik/ntp v1.3.0/go.mod h1:vD6h1um4kzXpqmLTuu0cCLcC+NfvC0IC+ltmEDA8E78=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/benbjohnson/clock v1.3.5 h1:VvXlSJBzZpA/zum6Sj74hxwYI2DIxRWuNIoXAzHZz5o=
 github.com/benbjohnson/clock v1.3.5/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
