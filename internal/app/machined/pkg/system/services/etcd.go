@@ -67,6 +67,8 @@ type Etcd struct {
 	args   []string
 	client *etcd.Client
 
+	imgRef string
+
 	// if the new member was added as a learner during the service start, its ID is kept here
 	learnerMemberID uint64
 
@@ -81,18 +83,18 @@ func (e *Etcd) ID(r runtime.Runtime) string {
 // PreFunc implements the Service interface.
 //
 //nolint:gocyclo
-func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
-	if err = os.MkdirAll(constants.EtcdDataPath, 0o700); err != nil {
+func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
+	if err := os.MkdirAll(constants.EtcdDataPath, 0o700); err != nil {
 		return err
 	}
 
 	// Data path might exist after upgrade from previous version of Talos.
-	if err = os.Chmod(constants.EtcdDataPath, 0o700); err != nil {
+	if err := os.Chmod(constants.EtcdDataPath, 0o700); err != nil {
 		return err
 	}
 
 	// Make sure etcd user can access files in the data directory.
-	if err = filetree.ChownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID); err != nil {
+	if err := filetree.ChownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID); err != nil {
 		return err
 	}
 
@@ -106,10 +108,12 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) (err error) {
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
-	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image(), image.WithSkipIfAlreadyPulled())
+	img, err := image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image(), image.WithSkipIfAlreadyPulled())
 	if err != nil {
 		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
 	}
+
+	e.imgRef = img.Target().Digest.String()
 
 	// Clear any previously set learner member ID
 	e.learnerMemberID = 0
@@ -213,7 +217,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
-		runner.WithContainerImage(r.Config().Cluster().Etcd().Image()),
+		runner.WithContainerImage(e.imgRef),
 		runner.WithEnv(env),
 		runner.WithOCISpecOpts(
 			oci.WithDroppedCapabilities(cap.Known()),
