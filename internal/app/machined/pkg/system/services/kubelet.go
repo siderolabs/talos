@@ -40,7 +40,9 @@ var _ system.HealthcheckedService = (*Kubelet)(nil)
 
 // Kubelet implements the Service interface. It serves as the concrete type with
 // the required methods.
-type Kubelet struct{}
+type Kubelet struct {
+	imgRef string
+}
 
 // ID implements the Service interface.
 func (k *Kubelet) ID(r runtime.Runtime) string {
@@ -66,10 +68,12 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
-	_, err = image.Pull(containerdctx, r.Config().Machine().Registries(), client, spec.Image, image.WithSkipIfAlreadyPulled())
+	img, err := image.Pull(containerdctx, r.Config().Machine().Registries(), client, spec.Image, image.WithSkipIfAlreadyPulled())
 	if err != nil {
 		return err
 	}
+
+	k.imgRef = img.Target().Digest.String()
 
 	// Create lifecycle resource to signal that the kubelet is about to start.
 	err = r.State().V1Alpha2().Resources().Create(ctx, k8s.NewKubeletLifecycle(k8s.NamespaceName, k8s.KubeletLifecycleID))
@@ -148,7 +152,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),
-		runner.WithContainerImage(spec.Image),
+		runner.WithContainerImage(k.imgRef),
 		runner.WithEnv(environment.Get(r.Config())),
 		runner.WithOCISpecOpts(
 			containerd.WithRootfsPropagation("shared"),
