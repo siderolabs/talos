@@ -7,15 +7,14 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/nodename"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -83,7 +82,7 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, l
 			continue
 		}
 
-		hostnameResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+		hostnameStatus, err := safe.ReaderGetByID[*network.HostnameStatus](ctx, r, network.HostnameID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -92,22 +91,26 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, l
 			return err
 		}
 
-		hostnameStatus := hostnameResource.(*network.HostnameStatus).TypedSpec()
-
-		if err = r.Modify(
+		if err = safe.WriterModify(
 			ctx,
+			r,
 			k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID),
-			func(r resource.Resource) error {
-				nodename := r.(*k8s.Nodename) //nolint:errcheck,forcetypeassert
+			func(res *k8s.Nodename) error {
+				var hostname string
 
 				if cfgProvider.Machine().Kubelet().RegisterWithFQDN() {
-					nodename.TypedSpec().Nodename = strings.ToLower(hostnameStatus.FQDN())
+					hostname = hostnameStatus.TypedSpec().FQDN()
 				} else {
-					nodename.TypedSpec().Nodename = strings.ToLower(hostnameStatus.Hostname)
+					hostname = hostnameStatus.TypedSpec().Hostname
 				}
 
-				nodename.TypedSpec().HostnameVersion = hostnameResource.Metadata().Version().String()
-				nodename.TypedSpec().SkipNodeRegistration = cfgProvider.Machine().Kubelet().SkipNodeRegistration()
+				res.TypedSpec().Nodename, err = nodename.FromHostname(hostname)
+				if err != nil {
+					return err
+				}
+
+				res.TypedSpec().HostnameVersion = hostnameStatus.Metadata().Version().String()
+				res.TypedSpec().SkipNodeRegistration = cfgProvider.Machine().Kubelet().SkipNodeRegistration()
 
 				return nil
 			},
