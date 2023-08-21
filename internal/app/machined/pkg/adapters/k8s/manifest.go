@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/gen/slices"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -32,6 +33,8 @@ type manifest struct {
 }
 
 // SetYAML parses manifest from YAML.
+//
+//nolint:gocyclo
 func (a manifest) SetYAML(yamlBytes []byte) error {
 	a.Manifest.TypedSpec().Items = nil
 	reader := yaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(yamlBytes)))
@@ -68,7 +71,23 @@ func (a manifest) SetYAML(yamlBytes []byte) error {
 			return fmt.Errorf("error loading JSON manifest into unstructured: %w", err)
 		}
 
-		a.Manifest.TypedSpec().Items = append(a.Manifest.TypedSpec().Items, k8s.SingleManifest{Object: obj.Object})
+		// if the manifest is a list, we will unwrap it
+		if obj.IsList() {
+			if err = obj.EachListItem(func(item runtime.Object) error {
+				obj, ok := item.(*unstructured.Unstructured)
+				if !ok {
+					return fmt.Errorf("list item is not Unstructured: %T", item)
+				}
+
+				a.Manifest.TypedSpec().Items = append(a.Manifest.TypedSpec().Items, k8s.SingleManifest{Object: obj.Object})
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error unwrapping a List: %w", err)
+			}
+		} else {
+			a.Manifest.TypedSpec().Items = append(a.Manifest.TypedSpec().Items, k8s.SingleManifest{Object: obj.Object})
+		}
 	}
 
 	return nil
