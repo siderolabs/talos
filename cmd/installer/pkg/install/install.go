@@ -79,6 +79,11 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 	}
 
 	if opts.Board != constants.BoardNone {
+		// board 'rpi_4' was removed in Talos 1.5 in favor of `rpi_generic`
+		if opts.Board == "rpi_4" {
+			opts.Board = constants.BoardRPiGeneric
+		}
+
 		var b runtime.Board
 
 		b, err = board.NewBoard(opts.Board)
