@@ -1,3 +1,54 @@
+## [Talos 1.5.1](https://github.com/siderolabs/talos/releases/tag/v1.5.1) (2023-08-22)
+
+Welcome to the v1.5.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.1.46
+
+
+### Contributors
+
+* Andrey Smirnov
+* Utku Ozdemir
+
+### Changes
+<details><summary>10 commits</summary>
+<p>
+
+* [`4fd4e16c0`](https://github.com/siderolabs/talos/commit/4fd4e16c02454e3e607a7272710c3d00fab999b2) fix: copy proper modules to arm64 squashfs
+* [`51c92e48a`](https://github.com/siderolabs/talos/commit/51c92e48a364089e165b76c2546501321578f4bc) feat: update Linux to 6.1.46
+* [`2d2b8c895`](https://github.com/siderolabs/talos/commit/2d2b8c89516ad7c6b3eeb2ec45f06e9ffd9b7d68) fix: prevent dashboard crashes when process info is not available
+* [`a79ed5e47`](https://github.com/siderolabs/talos/commit/a79ed5e47c5973619167b6f6a200e6eacc52b364) fix: properly GC images supplied with both tag and digest
+* [`024053a5c`](https://github.com/siderolabs/talos/commit/024053a5ce635af4aeee4cdf1ad50f9b67826d53) fix: automatically change `rpi_4` board on upgrade
+* [`5c82445d2`](https://github.com/siderolabs/talos/commit/5c82445d2734fea27ceeac707b556d7f697808ba) fix: support 'List' type manifests
+* [`7b36ada79`](https://github.com/siderolabs/talos/commit/7b36ada796c64613bc380b159b80cb06c34b822e) fix: use image digest when starting a container
+* [`106078295`](https://github.com/siderolabs/talos/commit/10607829592498040a9d0b33b69c90d732387a01) fix: ntp query error with bare IPv6 address
+* [`5b1d021d5`](https://github.com/siderolabs/talos/commit/5b1d021d5fa6c00a58d692e68445a35a3c257ab2) fix: write correct capacity to the ovf
+* [`3c8b0856b`](https://github.com/siderolabs/talos/commit/3c8b0856b23daea4da6351aa63090e4adb000615) fix: restore compatibility with Kubernetes 1.26
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`f62fa2c`](https://github.com/siderolabs/pkgs/commit/f62fa2cde68362c09aa88caee78423e7bd59e251) feat: update Linux to 6.1.46
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/beevik/ntp**       v1.2.0 -> v1.3.0
+* **github.com/siderolabs/pkgs**  v1.5.0-6-g2f2c9cd -> v1.5.0-7-gf62fa2c
+
+Previous release can be found at [v1.5.0](https://github.com/siderolabs/talos/releases/tag/v1.5.0)
+
 ## [Talos 1.5.0](https://github.com/siderolabs/talos/releases/tag/v1.5.0) (2023-08-16)
 
 Welcome to the v1.5.0 release of Talos!
