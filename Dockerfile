@@ -609,7 +609,7 @@ COPY --link --from=pkg-util-linux-arm64 /lib/libuuid.* /rootfs/lib/
 COPY --link --from=pkg-util-linux-arm64 /lib/libmount.* /rootfs/lib/
 COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/lib/
 COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/sbin/modprobe
-COPY --link --from=modules-amd64 /lib/modules /rootfs/lib/modules
+COPY --link --from=modules-arm64 /lib/modules /rootfs/lib/modules
 COPY --link --from=machined-build-arm64 /machined /rootfs/sbin/init
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
