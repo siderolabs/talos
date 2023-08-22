@@ -100,7 +100,7 @@ func (widget *ProcessTable) OnAPIDataChange(node string, data *apidata.Data) {
 			line := fmt.Sprintf("%7d  %s  %6.1f  %6.1f  %8s  %8s  %10s  %4d  %s",
 				proc.GetPid(),
 				proc.State,
-				nodeData.ProcsDiff[proc.Pid].CpuTime/totalWeightedCPU*100.0,
+				nodeData.ProcsDiff[proc.Pid].GetCpuTime()/totalWeightedCPU*100.0,
 				float64(proc.ResidentMemory)/float64(totalMem)*100.0,
 				humanize.Bytes(proc.VirtualMemory),
 				humanize.Bytes(proc.ResidentMemory),
