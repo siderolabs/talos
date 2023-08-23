@@ -275,7 +275,7 @@ outer:
 			matchesAny := false
 
 			for _, subnet := range includeSubnets {
-				if subnet.Overlaps(ip) {
+				if subnet.Contains(ip.Addr()) {
 					matchesAny = true
 
 					break
@@ -288,7 +288,7 @@ outer:
 		}
 
 		for _, subnet := range excludeSubnets {
-			if subnet.Overlaps(ip) {
+			if subnet.Contains(ip.Addr()) {
 				continue outer
 			}
 		}
