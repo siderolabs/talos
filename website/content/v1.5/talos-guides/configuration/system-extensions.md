@@ -15,7 +15,45 @@ With system extensions installed, the Talos root filesystem is still immutable a
 
 > Note: the way to install system extensions in the `.machine.install` section of the machine configuration is now deprecated.
 
-A custom boot image of Talos can be generated with
+Starting with Talos v1.5.0, Talos supports generation of boot media with system extensions included, this removes the need to rebuild
+the `initramfs.xz` on the machine itself during the installation or upgrade.
+
+There are two kinds of boot assets that Talos can generate:
+
+* initial boot assets (ISO, PXE, etc.) that are used to boot the machine
+* disk images that have Talos pre-installed
+* `installer` container images that can be used to install or upgrade Talos on a machine (installation happens when booted from ISO or PXE)
+
+Depending on the nature of the system extension (e.g. network device driver or `containerd` plugin), it may be necessary to include the extension in
+both initial boot assets and disk images/`installer`, or just the `installer`.
+
+The process of generating boot assets with extensions included is described in the [boot assets guide]({{< relref "../install/boot-assets" >}}).
+
+### Example: Booting from an ISO
+
+Let's assume NVIDIA extension is required on a bare metal machine which is going to be booted from an ISO.
+As NVIDIA extension is not required for the initial boot and install step, it is sufficient to include the extension in the `installer` image only.
+
+1. Use a generic Talos ISO to boot the machine.
+2. Prepare a custom `installer` container image with NVIDIA extension included, push the image to a registry.
+3. Ensure that machine configuration field `.machine.install.image` points to the custom `installer` image.
+4. Boot the machine using the ISO, apply the machine configuration.
+5. Talos pulls a custom installer image from the registry (containing NVIDIA extension), installs Talos on the machine, and reboots.
+
+When it's time to upgrade Talos, generate a custom `installer` container for a new version of Talos, push it to a registry, and perform upgrade
+pointing to the custom `installer` image.
+
+### Example: Disk Image
+
+Let's assume NVIDIA extension is required on AWS VM.
+
+1. Prepare an AWS disk image with NVIDIA extension included.
+2. Upload the image to AWS, register it as an AMI.
+3. Use the AMI to launch a VM.
+4. Talos boots with NVIDIA extension included.
+
+When it's time to upgrade Talos, either repeat steps 1-4 to replace the VM with a new AMI, or
+like in the previous example, generate a custom `installer` and use it to upgrade Talos in-place.
 
 ## Authoring System Extensions
 
