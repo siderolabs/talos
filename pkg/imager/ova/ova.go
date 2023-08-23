@@ -141,14 +141,14 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
 // CreateOVAFromRAW creates an OVA from a RAW disk.
 //
 //nolint:gocyclo
-func CreateOVAFromRAW(name, path, arch, scratchPath string, diskSize int64, printf func(string, ...any)) error {
+func CreateOVAFromRAW(outPath, arch, scratchPath string, diskSize int64, printf func(string, ...any)) error {
 	if err := os.MkdirAll(scratchPath, 0o755); err != nil {
 		return err
 	}
 
-	vmdkPath := filepath.Join(scratchPath, name+".vmdk")
+	vmdkPath := filepath.Join(scratchPath, "disk.vmdk")
 
-	if err := utils.CopyFiles(printf, utils.SourceDestination(path, vmdkPath)); err != nil {
+	if err := utils.CopyFiles(printf, utils.SourceDestination(outPath, vmdkPath)); err != nil {
 		return err
 	}
 
@@ -163,7 +163,7 @@ func CreateOVAFromRAW(name, path, arch, scratchPath string, diskSize int64, prin
 
 	imageSize := f.Size()
 
-	ovf, err := renderOVF(name, imageSize, diskSize)
+	ovf, err := renderOVF(imageSize, diskSize)
 	if err != nil {
 		return err
 	}
@@ -185,20 +185,20 @@ func CreateOVAFromRAW(name, path, arch, scratchPath string, diskSize int64, prin
 		return err
 	}
 
-	mf, err := renderMF(name, vmdkSHA25Sum, ovfSHA25Sum)
+	mf, err := renderMF(vmdkSHA25Sum, ovfSHA25Sum)
 	if err != nil {
 		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(scratchPath, name+".mf"), []byte(mf), 0o666); err != nil {
+	if err = os.WriteFile(filepath.Join(scratchPath, "disk.mf"), []byte(mf), 0o666); err != nil {
 		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(scratchPath, name+".ovf"), []byte(ovf), 0o666); err != nil {
+	if err = os.WriteFile(filepath.Join(scratchPath, "disk.ovf"), []byte(ovf), 0o666); err != nil {
 		return err
 	}
 
-	if _, err = cmd.Run("tar", "-cvf", path, "-C", scratchPath, name+".ovf", name+".mf", name+".vmdk"); err != nil {
+	if _, err = cmd.Run("tar", "-cvf", outPath, "-C", scratchPath, "disk.ovf", "disk.mf", "disk.vmdk"); err != nil {
 		return err
 	}
 
@@ -217,16 +217,16 @@ func sha256sum(input io.Reader) (string, error) {
 	return fmt.Sprintf("%x", sum), nil
 }
 
-func renderMF(name, vmdkSHA25Sum, ovfSHA25Sum string) (string, error) {
+func renderMF(vmdkSHA25Sum, ovfSHA25Sum string) (string, error) {
 	cfg := struct {
 		VMDK    string
 		VMDKSHA string
 		OVF     string
 		OVFSHA  string
 	}{
-		VMDK:    name + ".vmdk",
+		VMDK:    "disk.vmdk",
 		VMDKSHA: vmdkSHA25Sum,
-		OVF:     name + ".ovf",
+		OVF:     "disk.ovf",
 		OVFSHA:  ovfSHA25Sum,
 	}
 
@@ -241,13 +241,13 @@ func renderMF(name, vmdkSHA25Sum, ovfSHA25Sum string) (string, error) {
 	return buf.String(), nil
 }
 
-func renderOVF(name string, imageSize, diskSize int64) (string, error) {
+func renderOVF(imageSize, diskSize int64) (string, error) {
 	cfg := struct {
 		VMDK     string
 		Size     int64
 		Capacity int64
 	}{
-		VMDK:     name + ".vmdk",
+		VMDK:     "disk.vmdk",
 		Size:     imageSize,
 		Capacity: diskSize / (1 << 20),
 	}

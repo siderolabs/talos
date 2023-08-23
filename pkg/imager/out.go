@@ -130,7 +130,7 @@ func (i *Imager) outImage(ctx context.Context, path string, report *reporter.Rep
 	case profile.DiskFormatOVA:
 		scratchPath := filepath.Join(i.tempDir, "ova")
 
-		if err := ova.CreateOVAFromRAW(fmt.Sprintf("%s-%s", i.prof.Platform, i.prof.Arch), path, i.prof.Arch, scratchPath, i.prof.Output.ImageOptions.DiskSize, printf); err != nil {
+		if err := ova.CreateOVAFromRAW(path, i.prof.Arch, scratchPath, i.prof.Output.ImageOptions.DiskSize, printf); err != nil {
 			return err
 		}
 	case profile.DiskFormatUnknown:
