@@ -20,6 +20,8 @@ import (
 	types100 "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/containernetworking/plugins/pkg/testutils"
+	"github.com/containernetworking/plugins/pkg/utils"
+	"github.com/coreos/go-iptables/iptables"
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
@@ -159,6 +161,20 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 			"failed to parse VM network configuration from CNI output, ensure CNI is configured with a plugin " +
 				"that supports automatic VM network configuration such as tc-redirect-tap",
 		)
+	}
+
+	cniChain := utils.FormatChainName(config.NetworkConfig.Name, containerID)
+
+	ipt, err := iptables.New()
+	if err != nil {
+		return fmt.Errorf("failed to initialize iptables: %w", err)
+	}
+
+	// don't masquerade traffic with "broadcast" destination from the VM
+	//
+	// no need to clean up the rule, as CNI drops the whole chain
+	if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", "255.255.255.255/32", "-j", "ACCEPT"); err != nil {
+		return fmt.Errorf("failed to insert iptables rule to allow broadcast traffic: %w", err)
 	}
 
 	config.tapName = tapIface.Name

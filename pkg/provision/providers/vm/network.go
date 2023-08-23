@@ -18,6 +18,7 @@ import (
 
 	"github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/plugins/pkg/testutils"
+	"github.com/coreos/go-iptables/iptables"
 	"github.com/google/uuid"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/siderolabs/gen/slices"
@@ -130,11 +131,66 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		return fmt.Errorf("error parsing VM CNI config: %w", err)
 	}
 
+	// allow traffic on the bridge via `DOCKER-USER` chain
+	// Docker enables br-netfilter which causes layer2 packets to be filtered with iptables, but we'd like to skip that
+	// if Docker is not running, this will be no-op
+	//
+	// See https://serverfault.com/questions/963759/docker-breaks-libvirt-bridge-network for more details
+	if err = p.allowBridgeTraffic(state.BridgeName); err != nil {
+		return fmt.Errorf("error configuring DOCKER-USER chain: %w", err)
+	}
+
 	// configure bridge interface with network chaos if flag is set
 	if network.NetworkChaos {
 		if err = p.configureNetworkChaos(network, state, options); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (p *Provisioner) allowBridgeTraffic(bridgeName string) error {
+	ipt, err := iptables.New()
+	if err != nil {
+		return fmt.Errorf("error initializing iptables: %w", err)
+	}
+
+	chainExists, err := ipt.ChainExists("filter", "DOCKER-USER")
+	if err != nil {
+		return fmt.Errorf("error checking chain existence: %w", err)
+	}
+
+	if !chainExists {
+		if err = ipt.NewChain("filter", "DOCKER-USER"); err != nil {
+			return fmt.Errorf("error creating DOCKER-USER chain: %w", err)
+		}
+	}
+
+	if err := ipt.InsertUnique("filter", "DOCKER-USER", 1, "-i", bridgeName, "-o", bridgeName, "-j", "ACCEPT"); err != nil {
+		return fmt.Errorf("error inserting rule into DOCKER-USER chain: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Provisioner) dropBridgeTrafficRule(bridgeName string) error {
+	ipt, err := iptables.New()
+	if err != nil {
+		return fmt.Errorf("error initializing iptables: %w", err)
+	}
+
+	chainExists, err := ipt.ChainExists("filter", "DOCKER-USER")
+	if err != nil {
+		return fmt.Errorf("error checking chain existence: %w", err)
+	}
+
+	if !chainExists {
+		return nil
+	}
+
+	if err := ipt.DeleteIfExists("filter", "DOCKER-USER", "-i", bridgeName, "-o", bridgeName, "-j", "ACCEPT"); err != nil {
+		return fmt.Errorf("error deleting rule in DOCKER-USER chain: %w", err)
 	}
 
 	return nil
@@ -223,6 +279,10 @@ func (p *Provisioner) DestroyNetwork(state *State) error {
 
 	if err = rtconn.Link.Delete(uint32(iface.Index)); err != nil {
 		return fmt.Errorf("error deleting bridge interface: %w", err)
+	}
+
+	if err = p.dropBridgeTrafficRule(state.BridgeName); err != nil {
+		return fmt.Errorf("error dropping bridge traffic rule: %w", err)
 	}
 
 	return nil

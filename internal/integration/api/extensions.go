@@ -23,10 +23,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	corev1 "k8s.io/api/core/v1"
 	nodev1 "k8s.io/api/node/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -386,7 +386,7 @@ func (suite *ExtensionsSuite) TestExtensionsZFS() {
 							"/dev/null",
 						},
 						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.Bool(true),
+							Privileged: pointer.To(true),
 						},
 					},
 				},
