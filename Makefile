@@ -15,19 +15,19 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.5.0
+TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0-alpha.0
 PKGS ?= v1.6.0-alpha.0-7-g2e1c0b9
 EXTRAS ?= v1.5.0
 # renovate: datasource=github-tags depName=golang/go
-GO_VERSION ?= 1.20
+GO_VERSION ?= 1.21
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.11.0
+GOIMPORTS_VERSION ?= v0.12.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.5.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.53.3
+GOLANGCILINT_VERSION ?= v1.54.2
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.11.0
+STRINGER_VERSION ?= v0.12.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
@@ -58,7 +58,7 @@ KUBECTL_VERSION ?= v1.28.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.41
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.12.2
+HELM_VERSION ?= v3.12.3
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.5.0
 # renovate: datasource=github-releases depName=cilium/cilium-cli
@@ -359,7 +359,7 @@ api-descriptors: ## Generates API descriptors used to detect breaking API change
 	@$(MAKE) local-api-descriptors DEST=./ PLATFORM=linux/amd64
 
 fmt-go: ## Formats the source code.
-	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) bash -c "go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION) && goimports -w -local github.com/siderolabs/talos . && go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && gofumpt -w ."
+	@docker run --rm -it -v $(PWD):/src -w /src -e GOTOOLCHAIN=local golang:$(GO_VERSION) bash -c "go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION) && goimports -w -local github.com/siderolabs/talos . && go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && gofumpt -w ."
 
 fmt-protobuf: ## Formats protobuf files.
 	@$(MAKE) local-fmt-protobuf DEST=./ PLATFORM=linux/amd64

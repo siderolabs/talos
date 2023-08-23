@@ -7,6 +7,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -119,6 +120,17 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 	}
 }
 
+// netipPrefixBitsCorrected returns the number of bits in the prefix, corrected for zero value to have bits of 0.
+//
+// Go stdlib returns -1 for zero value, which is not what we want.
+func netipPrefixBitsCorrected(p netip.Prefix) int {
+	if p.Addr().AsSlice() == nil {
+		return 0
+	}
+
+	return p.Bits()
+}
+
 func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *network.RouteSpecSpec) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
@@ -127,7 +139,7 @@ func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *netwo
 			continue
 		}
 
-		if int(route.DstLength) != expected.Destination.Bits() {
+		if int(route.DstLength) != netipPrefixBitsCorrected(expected.Destination) {
 			continue
 		}
 
@@ -270,7 +282,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		// add route
 		msg := &rtnetlink.RouteMessage{
 			Family:     uint8(route.TypedSpec().Family),
-			DstLength:  uint8(route.TypedSpec().Destination.Bits()),
+			DstLength:  uint8(netipPrefixBitsCorrected(route.TypedSpec().Destination)),
 			SrcLength:  0,
 			Protocol:   uint8(route.TypedSpec().Protocol),
 			Scope:      uint8(route.TypedSpec().Scope),

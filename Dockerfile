@@ -93,6 +93,8 @@ FROM ghcr.io/siderolabs/talosctl-cni-bundle-install:${EXTRAS} AS extras-talosctl
 FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
 ENV PATH /toolchain/bin:/toolchain/go/bin
 ENV LD_LIBRARY_PATH /toolchain/lib
+ENV GOTOOLCHAIN local
+ENV GOEXPERIMENT loopvar
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]

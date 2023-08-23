@@ -59,3 +59,23 @@ mtu: 1400
 
 	assert.Equal(t, spec, spec2)
 }
+
+func TestRoutSpecNormalize(t *testing.T) {
+	spec := network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Destination: netip.MustParsePrefix("0.0.0.0/0"),
+		Source:      netip.MustParseAddr("0.0.0.0"),
+		Gateway:     netip.MustParseAddr("0.0.0.0"),
+		OutLinkName: "eth0",
+		Table:       nethelpers.TableLocal,
+		Priority:    1024,
+		ConfigLayer: network.ConfigPlatform,
+		MTU:         1400,
+	}
+
+	spec.Normalize()
+
+	assert.Equal(t, netip.Prefix{}, spec.Destination)
+	assert.Equal(t, netip.Addr{}, spec.Source)
+	assert.Equal(t, netip.Addr{}, spec.Gateway)
+}

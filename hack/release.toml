@@ -15,6 +15,12 @@ preface = """\
 
 [notes]
 
+    [notes.updates]
+        title = "Component Updates"
+        description = """\
+Talos is built with Go 1.21.
+"""
+
 [make_deps]
 
     [make_deps.tools]

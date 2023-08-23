@@ -101,7 +101,7 @@ func (suite *RouteSpecSuite) assertRoute(
 			continue
 		}
 
-		if int(route.DstLength) != destination.Bits() {
+		if !(int(route.DstLength) == destination.Bits() || (route.DstLength == 0 && destination.Bits() == -1)) {
 			continue
 		}
 
@@ -136,7 +136,9 @@ func (suite *RouteSpecSuite) assertNoRoute(destination netip.Prefix, gateway net
 	suite.Require().NoError(err)
 
 	for _, route := range routes {
-		if route.Attributes.Gateway.Equal(gateway.AsSlice()) && destination.Bits() == int(route.DstLength) && route.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
+		if route.Attributes.Gateway.Equal(gateway.AsSlice()) &&
+			(destination.Bits() == int(route.DstLength) || (destination.Bits() == -1 && route.DstLength == 0)) &&
+			route.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
 			return retry.ExpectedError(fmt.Errorf("route to %s via %s is present", destination, gateway))
 		}
 	}
