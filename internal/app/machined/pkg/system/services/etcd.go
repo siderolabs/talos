@@ -375,7 +375,6 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, pe
 	return initial, id, nil
 }
 
-//nolint:gocyclo
 func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdresource.SpecSpec) error {
 	var upgraded bool
 

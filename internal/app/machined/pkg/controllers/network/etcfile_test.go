@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:dupl
 package network_test
 
 import (
@@ -199,7 +198,7 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
 	suite.testFiles(
 		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
 		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
-		"127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n", //nolint:lll
+		"127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
 	)
 }
 

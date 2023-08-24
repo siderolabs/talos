@@ -13,7 +13,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-//nolint:lll
 //go:generate deep-copy -type SeccompProfileSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // SeccompProfileType is type of SeccompProfile resource.

@@ -190,7 +190,6 @@ func (p *processRunner) build() (commandWrapper, error) {
 	}, nil
 }
 
-//nolint:gocyclo
 func (p *processRunner) run(eventSink events.Recorder) error {
 	cmdWrapper, err := p.build()
 	if err != nil {

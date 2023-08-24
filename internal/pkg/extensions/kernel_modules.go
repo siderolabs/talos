@@ -41,7 +41,8 @@ func (ext *Extension) KernelModuleDirectory() string {
 }
 
 // GenerateKernelModuleDependencyTreeExtension generates a kernel module dependency tree extension.
-// nolint:gocyclo
+//
+//nolint:gocyclo
 func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules []string, arch string, printFunc func(format string, v ...any)) (*Extension, error) {
 	printFunc("preparing to run depmod to generate kernel modules dependency tree")
 

@@ -179,8 +179,6 @@ func isServiceAccount(raw map[string]any) bool {
 
 // injectToDocument takes a single YAML document and attempts to inject a ServiceAccount
 // into it if it is a known Kubernetes resource type which contains a corev1.PodSpec.
-//
-//nolint:gocyclo
 func injectToObject(raw map[string]any) (metav1.Object, error) {
 	var err error
 

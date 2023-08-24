@@ -153,7 +153,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 				}
 			}
 
-			buf.Write(tomlBytes) //nolint:errcheck
+			buf.Write(tomlBytes)
 		}
 
 		directory.Files = append(directory.Files,

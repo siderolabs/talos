@@ -21,8 +21,6 @@ import (
 )
 
 // EtcdConsistentAssertion checks that etcd membership is consistent across nodes.
-//
-//nolint:gocyclo
 func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
 	cli, err := cl.Client()
 	if err != nil {

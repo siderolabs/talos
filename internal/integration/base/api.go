@@ -122,8 +122,6 @@ func (apiSuite *APISuite) DiscoverNodeInternalIPsByType(ctx context.Context, mac
 }
 
 // RandomDiscoveredNodeInternalIP returns the internal IP a random node of the specified type (or any type if no types are specified).
-//
-//nolint:dupl
 func (apiSuite *APISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) string {
 	nodeInfo := apiSuite.DiscoverNodes(context.TODO())
 

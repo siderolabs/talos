@@ -59,7 +59,8 @@ func (ctrl *SecurityStateController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-// nolint:gocyclo
+//
+//nolint:gocyclo
 func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {

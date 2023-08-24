@@ -15,8 +15,6 @@ import (
 // Probe probes a block device for GRUB bootloader.
 //
 // If the 'disk' is passed, search happens on that disk only, otherwise searches all partitions.
-//
-//nolint:gocyclo
 func Probe(ctx context.Context, disk string) (*Config, error) {
 	var grubConf *Config
 

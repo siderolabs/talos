@@ -25,8 +25,6 @@ import (
 )
 
 // K8sAllNodesReportedAssertion checks whether all the nodes show up in node list.
-//
-//nolint:gocyclo
 func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
 	clientset, err := cl.K8sClient(ctx)
 	if err != nil {
@@ -387,8 +385,6 @@ func ReplicaSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespa
 }
 
 // K8sControlPlaneStaticPods checks whether all the controlplane nodes are running required Kubernetes static pods.
-//
-//nolint:gocyclo,cyclop
 func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
 	expectedNodes := append(cl.NodesByType(machine.TypeInit), cl.NodesByType(machine.TypeControlPlane)...)
 

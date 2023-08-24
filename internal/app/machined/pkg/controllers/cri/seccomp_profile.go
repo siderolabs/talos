@@ -49,8 +49,6 @@ func (ctrl *SeccompProfileController) Outputs() []controller.Output {
 }
 
 // Run implements controller.StatsController interface.
-//
-//nolint:gocyclo,cyclop
 func (ctrl *SeccompProfileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {

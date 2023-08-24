@@ -13,7 +13,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// nolint:gocyclo
 func (i *Installer) installExtensions() error {
 	builder := extensions.Builder{
 		InitramfsPath:     fmt.Sprintf(constants.InitramfsAssetPath, i.options.Arch),

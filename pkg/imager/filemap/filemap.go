@@ -42,7 +42,7 @@ func Layer(filemap []File) (v1.Layer, error) {
 				return err
 			}
 
-			defer in.Close() // nolint: errcheck
+			defer in.Close() //nolint:errcheck
 
 			st, err := in.Stat()
 			if err != nil {

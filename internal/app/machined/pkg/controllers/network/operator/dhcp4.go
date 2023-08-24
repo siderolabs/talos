@@ -136,7 +136,7 @@ func (d *DHCP4) waitForNetworkReady(ctx context.Context) error {
 
 // Run the operator loop.
 //
-//nolint:gocyclo,cyclop,dupl
+//nolint:gocyclo,cyclop
 func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 	const minRenewDuration = 5 * time.Second // Protect from renewing too often
 

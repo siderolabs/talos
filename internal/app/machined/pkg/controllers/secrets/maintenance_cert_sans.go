@@ -30,8 +30,6 @@ func (ctrl *MaintenanceCertSANsController) Name() string {
 }
 
 // Inputs implements controller.Controller interface.
-//
-//nolint:dupl
 func (ctrl *MaintenanceCertSANsController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
@@ -60,8 +58,6 @@ func (ctrl *MaintenanceCertSANsController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-//
-//nolint:gocyclo
 func (ctrl *MaintenanceCertSANsController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {

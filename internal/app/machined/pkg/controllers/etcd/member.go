@@ -56,7 +56,7 @@ func (ctrl *MemberController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {

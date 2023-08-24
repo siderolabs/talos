@@ -5,5 +5,4 @@
 // Package time provides time-related resources.
 package time
 
-//nolint:lll
 //go:generate deep-copy -type AdjtimeStatusSpec -type StatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .

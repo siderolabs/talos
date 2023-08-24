@@ -126,7 +126,6 @@ func (suite *CGroupsSuite) TestCGroupsVersion() {
 	}
 }
 
-//nolint:gocyclo
 func (suite *CGroupsSuite) readCmdline(ctx context.Context) (string, error) {
 	reader, err := suite.Client.Read(ctx, "/proc/cmdline")
 	if err != nil {

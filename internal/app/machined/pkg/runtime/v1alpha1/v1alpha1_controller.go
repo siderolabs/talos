@@ -72,8 +72,6 @@ func NewController() (*Controller, error) {
 
 // Run executes all phases known to the controller in serial. `Controller`
 // aborts immediately if any phase fails.
-//
-//nolint:gocyclo
 func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interface{}, setters ...runtime.LockOption) error {
 	// We must ensure that the runtime is configured since all sequences depend
 	// on the runtime.

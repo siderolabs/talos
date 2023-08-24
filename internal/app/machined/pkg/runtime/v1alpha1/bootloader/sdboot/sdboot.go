@@ -49,7 +49,8 @@ func New() *Config {
 }
 
 // Probe for existing sd-boot bootloader.
-// nolint:gocyclo
+//
+//nolint:gocyclo
 func Probe(ctx context.Context, disk string) (*Config, error) {
 	// if not UEFI boot, nothing to do
 	if !isUEFIBoot() {

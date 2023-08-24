@@ -89,7 +89,7 @@ func parse(r io.Reader) (decoded []config.Document, err error) {
 	}
 }
 
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func decode(manifest *yaml.Node) (target config.Document, err error) {
 	var (
 		version string

@@ -62,7 +62,7 @@ func (d *DHCP6) Prefix() string {
 
 // Run the operator loop.
 //
-//nolint:gocyclo,dupl
+//nolint:gocyclo
 func (d *DHCP6) Run(ctx context.Context, notifyCh chan<- struct{}) {
 	iface, err := net.InterfaceByName(d.linkName)
 	if err != nil {

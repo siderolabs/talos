@@ -277,7 +277,6 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 	}
 }
 
-//nolint:dupl
 func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.Member {
 	var result []*cluster.Member
 
@@ -300,7 +299,6 @@ func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.I
 	return identity
 }
 
-//nolint:dupl
 func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace resource.Namespace) []*cluster.Affiliate {
 	var result []*cluster.Affiliate
 
@@ -312,7 +310,6 @@ func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace re
 	return result
 }
 
-//nolint:dupl
 func (suite *DiscoverySuite) getKubeSpanPeerSpecs(nodeCtx context.Context) []*kubespan.PeerSpec {
 	var result []*kubespan.PeerSpec
 
@@ -328,7 +325,6 @@ func (suite *DiscoverySuite) getKubeSpanPeerSpecs(nodeCtx context.Context) []*ku
 	return result
 }
 
-//nolint:dupl
 func (suite *DiscoverySuite) getKubeSpanPeerStatuses(nodeCtx context.Context) []*kubespan.PeerStatus {
 	var result []*kubespan.PeerStatus
 

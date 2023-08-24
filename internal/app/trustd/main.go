@@ -52,7 +52,6 @@ func Main() {
 	}
 }
 
-//nolint:gocyclo
 func trustdMain() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
@@ -66,10 +65,6 @@ func trustdMain() error {
 	startup.LimitMaxProcs(constants.TrustdMaxProcs)
 
 	var err error
-
-	if err = startup.RandSeed(); err != nil {
-		return fmt.Errorf("startup: %s", err)
-	}
 
 	runtimeConn, err := grpc.Dial("unix://"+constants.TrustdRuntimeSocketPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

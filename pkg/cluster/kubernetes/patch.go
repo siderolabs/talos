@@ -18,8 +18,6 @@ import (
 )
 
 // patchNodeConfig updates node configuration by means of patch function.
-//
-//nolint:gocyclo
 func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, patchFunc func(config *v1alpha1config.Config) error) error {
 	c, err := cluster.Client()
 	if err != nil {

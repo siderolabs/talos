@@ -64,8 +64,6 @@ type NetworkConfigGrid struct {
 }
 
 // NewNetworkConfigGrid initializes NetworkConfigGrid.
-//
-//nolint:gocyclo
 func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkConfigGrid {
 	widget := &NetworkConfigGrid{
 		Grid:               *tview.NewGrid(),
@@ -336,7 +334,6 @@ func (widget *NetworkConfigGrid) clearForm() {
 func (widget *NetworkConfigGrid) updateNodeData(data resourcedata.Data) {
 	nodeData := widget.getOrCreateNodeData(data.Node)
 
-	//nolint:gocritic
 	switch res := data.Resource.(type) {
 	case *network.LinkStatus:
 		if data.Deleted {

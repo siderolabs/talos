@@ -144,7 +144,7 @@ type EventResult struct {
 // It blocks until the first (empty) event is received, then spawns a goroutine that sends events to the given channel.
 // EventResult objects sent into the channel contain either the errors or the received events.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (c *Client) EventsWatchV2(ctx context.Context, ch chan<- EventResult, opts ...EventsOptionFunc) error {
 	ctx, cancel := context.WithCancel(ctx)
 

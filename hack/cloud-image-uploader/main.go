@@ -8,12 +8,10 @@ package main
 import (
 	"context"
 	cryptorand "crypto/rand"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
@@ -76,8 +74,6 @@ func run() error {
 	if _, err = cryptorand.Read(seed); err != nil {
 		log.Fatalf("error seeding rand: %s", err)
 	}
-
-	rand.Seed(int64(binary.LittleEndian.Uint64(seed))) //nolint:staticcheck
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

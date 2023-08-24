@@ -297,8 +297,6 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 }
 
 // Reboot implements the machine.MachineServer interface.
-//
-//nolint:dupl
 func (s *Server) Reboot(ctx context.Context, in *machine.RebootRequest) (reply *machine.RebootResponse, err error) {
 	actorID := uuid.New().String()
 
@@ -330,8 +328,6 @@ func (s *Server) Reboot(ctx context.Context, in *machine.RebootRequest) (reply *
 }
 
 // Rollback implements the machine.MachineServer interface.
-//
-//nolint:gocyclo
 func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*machine.RollbackResponse, error) {
 	log.Printf("rollback via API received")
 
@@ -407,8 +403,6 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 }
 
 // Shutdown implements the machine.MachineServer interface.
-//
-//nolint:dupl
 func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (reply *machine.ShutdownResponse, err error) {
 	actorID := uuid.New().String()
 
@@ -563,7 +557,7 @@ func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
 
 // Reset resets the node.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
 	actorID := uuid.New().String()
 
@@ -2229,7 +2223,7 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		if err = srv.SendMsg(&common.Data{Bytes: data}); err != nil {
 			cancel()
 
-			pr.CloseWithError(err) //nolint:errcheck
+			pr.CloseWithError(err)
 		}
 	}
 
@@ -2244,7 +2238,7 @@ func capturePackets(pw *io.PipeWriter, handle *pcapgo.EthernetHandle, snapLen ui
 	pcapw := pcapgo.NewWriterNanos(pw)
 
 	if err := pcapw.WriteFileHeader(snapLen, linkType); err != nil {
-		pw.CloseWithError(err) //nolint:errcheck
+		pw.CloseWithError(err)
 
 		return
 	}
@@ -2263,7 +2257,7 @@ func capturePackets(pw *io.PipeWriter, handle *pcapgo.EthernetHandle, snapLen ui
 		packet, err := pkgsrc.NextPacket()
 		if err == nil {
 			if err = pcapw.WritePacket(packet.Metadata().CaptureInfo, packet.Data()); err != nil {
-				pw.CloseWithError(err) //nolint:errcheck
+				pw.CloseWithError(err)
 
 				return
 			}
@@ -2286,7 +2280,7 @@ func capturePackets(pw *io.PipeWriter, handle *pcapgo.EthernetHandle, snapLen ui
 			errors.Is(err, io.ErrNoProgress) || errors.Is(err, io.ErrClosedPipe) || errors.Is(err, io.ErrShortBuffer) ||
 			errors.Is(err, syscall.EBADF) ||
 			strings.Contains(err.Error(), "use of closed file") {
-			pw.CloseWithError(err) //nolint:errcheck
+			pw.CloseWithError(err)
 
 			return
 		}

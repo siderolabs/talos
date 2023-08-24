@@ -72,10 +72,6 @@ func apidMain() error {
 
 	startup.LimitMaxProcs(constants.ApidMaxProcs)
 
-	if err := startup.RandSeed(); err != nil {
-		return fmt.Errorf("failed to seed RNG: %w", err)
-	}
-
 	runtimeConn, err := grpc.Dial("unix://"+constants.APIRuntimeSocketPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("failed to dial runtime connection: %w", err)

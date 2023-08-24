@@ -139,7 +139,6 @@ func (ctrl *ProbeController) reconcileRunners(ctx context.Context, r controller.
 	return nil
 }
 
-//nolint:gocyclo,cyclop
 func (ctrl *ProbeController) reconcileOutputs(ctx context.Context, r controller.Runtime, ev probe.Notification) error {
 	if _, exists := ctrl.runners[ev.ID]; !exists {
 		// probe was already removed, late notification, ignore it

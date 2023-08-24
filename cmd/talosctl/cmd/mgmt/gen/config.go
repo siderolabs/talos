@@ -287,7 +287,6 @@ func validateFlags() error {
 	return err
 }
 
-// nolint:gocyclo
 func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPaths, commentsFlags encoder.CommentsFlags) error {
 	outputTypesSet := slices.ToSet(genConfigCmdFlags.outputTypes)
 

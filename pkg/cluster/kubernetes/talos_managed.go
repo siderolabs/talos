@@ -41,7 +41,7 @@ type UpgradeProvider interface {
 
 // Upgrade the Kubernetes control plane components, manifests, kubelets.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions) error {
 	if !options.Path.IsSupported() {
 		return fmt.Errorf("unsupported upgrade path %s (from %q to %q)", options.Path, options.Path.FromVersion(), options.Path.ToVersion())
@@ -405,7 +405,6 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 	}
 }
 
-//nolint:gocyclo
 func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured.Unstructured, error) {
 	talosclient, err := cluster.Client()
 	if err != nil {
@@ -422,7 +421,6 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 	return manifests.GetBootstrapManifests(ctx, talosclient.COSI, nil)
 }
 
-//nolint:gocyclo
 func syncManifests(ctx context.Context, objects []*unstructured.Unstructured, cluster UpgradeProvider, options UpgradeOptions) error {
 	config, err := cluster.K8sRestConfig(ctx)
 	if err != nil {

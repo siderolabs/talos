@@ -21,13 +21,14 @@ import (
 )
 
 // Unseal unseals a sealed blob using the TPM
-// nolint:gocyclo,cyclop
+//
+//nolint:gocyclo,cyclop
 func Unseal(sealed SealedResponse) ([]byte, error) {
 	t, err := transport.OpenTPM()
 	if err != nil {
 		return nil, err
 	}
-	defer t.Close() // nolint: errcheck
+	defer t.Close() //nolint:errcheck
 
 	// fail early if PCR banks are not present or filled with all zeroes or 0xff
 	if err = validatePCRBanks(t); err != nil {
@@ -106,7 +107,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		return nil, fmt.Errorf("failed to create policy session: %v", err)
 	}
 
-	defer policyCloseFunc() // nolint: errcheck
+	defer policyCloseFunc() //nolint:errcheck
 
 	pubKey, err := ParsePCRSigningPubKey(constants.PCRPublicKey)
 	if err != nil {

@@ -30,8 +30,6 @@ func (suite *HealthSuite) SuiteName() string {
 }
 
 // TestClientSideWithExplicitNodes does successful health check run from client-side, providing the explicit set of nodes.
-//
-//nolint:gocyclo
 func (suite *HealthSuite) TestClientSideWithExplicitNodes() {
 	info := suite.DiscoverNodes(context.TODO())
 
@@ -59,8 +57,6 @@ func (suite *HealthSuite) TestClientSideWithExplicitNodes() {
 
 // TestClientSideWithDiscovery does a health check run from client-side without explicitly specifying the nodes.
 // It verifies that the check still passes, because the nodes get populated by the discovery service.
-//
-//nolint:gocyclo
 func (suite *HealthSuite) TestClientSideWithDiscovery() {
 	discoveryEnabled, err := suite.isDiscoveryEnabled()
 	suite.Require().NoError(err)

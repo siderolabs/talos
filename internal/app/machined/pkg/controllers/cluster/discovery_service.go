@@ -273,7 +273,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 					Affiliate: localData,
 					Endpoints: localEndpoints,
 				}, otherEndpoints); err != nil {
-					return fmt.Errorf("error setting local affiliate data: %w", err) //nolint:govet
+					return fmt.Errorf("error setting local affiliate data: %w", err)
 				}
 
 				prevLocalData = localData
@@ -312,7 +312,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 				return nil
 			}); err != nil {
-				return err //nolint:govet
+				return err
 			}
 
 			touchedIDs[id] = struct{}{}

@@ -54,7 +54,6 @@ func (suite *MachineStatusSuite) TestMachineStatusReady() {
 	}
 }
 
-//nolint:gocyclo
 func (suite *MachineStatusSuite) waitMachineStatusReady(node string) error {
 	ctx, cancel := context.WithTimeout(client.WithNode(suite.ctx, node), 30*time.Second)
 	defer cancel()

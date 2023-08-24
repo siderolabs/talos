@@ -66,8 +66,6 @@ func AnnotationsFromAffiliate(affiliate *cluster.Affiliate) map[string]string {
 // AffiliateFromNode converts Kubernetes Node resource to Affiliate.
 //
 // If the Node resource doesn't have cluster discovery annotations, nil is returned.
-//
-//nolint:gocyclo
 func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 	nodeID, ok := node.Annotations[constants.ClusterNodeIDAnnotation]
 	if !ok {

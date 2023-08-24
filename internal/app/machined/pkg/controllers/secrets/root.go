@@ -68,8 +68,6 @@ func NewRootEtcdController() *RootEtcdController {
 type RootKubernetesController = transform.Controller[*config.MachineConfig, *secrets.KubernetesRoot]
 
 // NewRootKubernetesController instanciates the controller.
-//
-//nolint:gocyclo
 func NewRootKubernetesController() *RootKubernetesController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.KubernetesRoot]{

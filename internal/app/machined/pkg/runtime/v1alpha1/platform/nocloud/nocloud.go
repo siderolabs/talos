@@ -99,8 +99,6 @@ func (n *Nocloud) KernelArgs() procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-//
-//nolint:gocyclo
 func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	metadataConfigDl, metadataNetworkConfigDl, _, metadata, err := n.acquireConfig(ctx, st)
 	if stderrors.Is(err, errors.ErrNoConfigSource) {

@@ -166,7 +166,6 @@ func (suite *AddressMergeSuite) TestMerge() {
 	)
 }
 
-//nolint:gocyclo
 func (suite *AddressMergeSuite) TestMergeFlapping() {
 	// simulate two conflicting address definitions which are getting removed/added constantly
 	dhcp := network.NewAddressSpec(network.ConfigNamespaceName, "dhcp/eth0/10.0.0.1/8")

@@ -191,8 +191,6 @@ var ErrSkip = errors.New("service skipped")
 // Run returns an error when a service stops.
 //
 // Run should be run in a goroutine.
-//
-//nolint:gocyclo
 func (svcrunner *ServiceRunner) Run() error {
 	defer func() {
 		// reset context for the next run

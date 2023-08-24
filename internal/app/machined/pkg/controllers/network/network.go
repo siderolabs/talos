@@ -127,8 +127,6 @@ func SetBridgeSlave(link *network.LinkSpecSpec, bridge string) {
 }
 
 // SetBridgeMaster sets the bridge master spec.
-//
-//nolint:gocyclo
 func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.Bridge) error {
 	link.Logical = true
 	link.Kind = network.LinkKindBridge

@@ -18,7 +18,8 @@ import (
 )
 
 // PartitionOp mounts a partition with the specified label, executes the operation func, and unmounts the partition.
-// nolint:gocyclo
+//
+//nolint:gocyclo
 func PartitionOp(ctx context.Context, disk string, partitionLabel string, opFunc func() error) error {
 	var probedBlockDevice *blockdevice.BlockDevice
 

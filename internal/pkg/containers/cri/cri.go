@@ -185,7 +185,7 @@ func findContainer(cntID string, containers []*runtimeapi.Container) (*runtimeap
 	return nil, false
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (i *inspector) buildPod(sandbox *runtimeapi.PodSandbox) (*ctrs.Pod, error) {
 	sandboxStatus, sandboxInfo, err := i.client.PodSandboxStatus(i.ctx, sandbox.Id)
 	if err != nil {

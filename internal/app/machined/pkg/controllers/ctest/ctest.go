@@ -26,7 +26,7 @@ import (
 )
 
 // DefaultSuite is a base suite for controller testing.
-type DefaultSuite struct { //nolint:govet
+type DefaultSuite struct {
 	suite.Suite
 
 	state state.State

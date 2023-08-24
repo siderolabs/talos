@@ -154,8 +154,6 @@ func (suite *ResetSuite) TestResetNoGracefulControlplane() {
 }
 
 // TestResetWithSpecEphemeral resets only ephemeral partition on the node.
-//
-//nolint:dupl
 func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 
@@ -195,8 +193,6 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 // TestResetWithSpecState resets only state partition on the node.
 //
 // As ephemeral partition is not reset, so kubelet cert shouldn't change.
-//
-//nolint:dupl
 func (suite *ResetSuite) TestResetWithSpecState() {
 	if suite.Capabilities().SecureBooted {
 		// this is because in secure boot mode, the machine config is only applied and cannot be passed as kernel args
@@ -254,8 +250,6 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 
 // TestResetDuringBoot resets the node multiple times, second reset is done
 // before boot sequence is complete.
-//
-//nolint:dupl
 func (suite *ResetSuite) TestResetDuringBoot() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNodes(suite.ctx, node)

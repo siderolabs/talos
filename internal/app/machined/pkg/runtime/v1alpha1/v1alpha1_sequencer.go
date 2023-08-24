@@ -295,7 +295,7 @@ func (*Sequencer) Reboot(r runtime.Runtime) []runtime.Phase {
 
 // Reset is the reset sequence.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Phase {
 	phases := PhaseList{}
 

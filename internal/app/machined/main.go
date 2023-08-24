@@ -167,11 +167,6 @@ func run() error {
 	// Limit GOMAXPROCS.
 	startup.LimitMaxProcs(constants.MachinedMaxProcs)
 
-	// Ensure RNG is seeded.
-	if err := startup.RandSeed(); err != nil {
-		return err
-	}
-
 	// Set the PATH env var.
 	if err := os.Setenv("PATH", constants.PATH); err != nil {
 		return errors.New("error setting PATH")

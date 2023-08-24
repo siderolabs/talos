@@ -117,7 +117,7 @@ func (cl *clusterState) String() string {
 		}))
 }
 
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func buildClusterInfo(ctx context.Context,
 	req *clusterapi.HealthCheckRequest,
 	r runtime.Runtime,

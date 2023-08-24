@@ -158,8 +158,6 @@ func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (*machine.Versi
 }
 
 // Upgrade initiates an upgrade.
-//
-//nolint:gocyclo,cyclop
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
 	if err = assertPeerSideroLink(ctx); err != nil {
 		return nil, err

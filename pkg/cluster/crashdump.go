@@ -33,8 +33,6 @@ var LogLinesPerService = map[string]int32{
 // CrashDump produces information to help with debugging.
 //
 // CrashDump implements CrashDumper interface.
-//
-//nolint:gocyclo
 func (s *APICrashDumper) CrashDump(ctx context.Context, out io.Writer) {
 	cli, err := s.Client()
 	if err != nil {

@@ -82,8 +82,6 @@ func NewSecretsBundle(clock Clock, opts ...GenOption) (*SecretsBundle, error) {
 // of a Kubernetes PKI directory (typically `/etc/kubernetes/pki`) and using the provided bootstrapToken as input.
 //
 // Deprecated: use generate.NewSecretsBundleFromKubernetesPKI instead.
-//
-//nolint:gocyclo
 func NewSecretsBundleFromKubernetesPKI(pkiDir, bootstrapToken string, versionContract *config.VersionContract) (*SecretsBundle, error) {
 	return secrets.NewBundleFromKubernetesPKI(pkiDir, bootstrapToken, versionContract)
 }

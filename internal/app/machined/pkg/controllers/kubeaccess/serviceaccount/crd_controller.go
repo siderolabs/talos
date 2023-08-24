@@ -248,7 +248,7 @@ func (t *CRDController) Run(ctx context.Context, workers int) error {
 }
 
 func (t *CRDController) runWorker(ctx context.Context) {
-	for t.processNextWorkItem(ctx) { //nolint:revive
+	for t.processNextWorkItem(ctx) {
 	}
 }
 
@@ -293,7 +293,7 @@ func (t *CRDController) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
-//nolint:gocyclo,cyclop,dupl
+//nolint:gocyclo,cyclop
 func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {

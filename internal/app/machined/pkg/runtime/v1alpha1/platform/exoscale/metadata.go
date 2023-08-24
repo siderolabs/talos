@@ -29,7 +29,6 @@ type MetadataConfig struct {
 	Zone         string `json:"availability-zone,omitempty"`
 }
 
-//nolint:gocyclo
 func (e *Exoscale) getMetadata(ctx context.Context) (metadata *MetadataConfig, err error) {
 	getMetadataKey := func(key string) (string, error) {
 		res, metaerr := download.Download(ctx, fmt.Sprintf("%s/%s", ExoscaleMetadataEndpoint, key),

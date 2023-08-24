@@ -37,7 +37,7 @@ type MetadataConfig struct {
 }
 
 func (o *Oracle) getMetadata(ctx context.Context) (*MetadataConfig, error) {
-	metaConfigDl, err := download.Download(ctx, OracleMetadataEndpoint, //nolint:errcheck
+	metaConfigDl, err := download.Download(ctx, OracleMetadataEndpoint,
 		download.WithHeaders(map[string]string{"Authorization": "Bearer Oracle"}),
 		download.WithErrorOnNotFound(errors.ErrNoHostname),
 		download.WithErrorOnEmptyResponse(errors.ErrNoHostname))

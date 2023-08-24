@@ -784,7 +784,7 @@ func (c *Client) ClusterHealthCheck(ctx context.Context, waitTimeout time.Durati
 //
 // Deprecated: Use EtcdRemoveMemberByID instead.
 func (c *Client) EtcdRemoveMember(ctx context.Context, req *machineapi.EtcdRemoveMemberRequest, callOptions ...grpc.CallOption) error {
-	resp, err := c.MachineClient.EtcdRemoveMember(ctx, req, callOptions...) //nolint:staticcheck
+	resp, err := c.MachineClient.EtcdRemoveMember(ctx, req, callOptions...)
 
 	if err == nil {
 		_, err = FilterMessages(resp, err)
@@ -983,8 +983,6 @@ type MachineStream interface {
 }
 
 // ReadStream converts grpc stream into io.Reader.
-//
-//nolint:gocyclo
 func ReadStream(stream MachineStream) (io.ReadCloser, error) {
 	pr, pw := io.Pipe()
 
@@ -998,7 +996,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, error) {
 				if errors.Is(err, io.EOF) || StatusCode(err) == codes.Canceled || StatusCode(err) == codes.DeadlineExceeded {
 					return
 				}
-				//nolint:errcheck
+
 				pw.CloseWithError(err)
 
 				return
@@ -1012,7 +1010,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, error) {
 			}
 
 			if data.Metadata != nil && data.Metadata.Error != "" {
-				pw.CloseWithError(metaToErr(data.Metadata)) //nolint:errcheck
+				pw.CloseWithError(metaToErr(data.Metadata))
 
 				return
 			}

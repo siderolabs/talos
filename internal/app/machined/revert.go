@@ -19,7 +19,6 @@ func revertBootloader(ctx context.Context) {
 	}
 }
 
-//nolint:gocyclo
 func revertBootloadInternal(ctx context.Context) error {
 	metaState, err := meta.New(ctx, nil)
 	if err != nil {

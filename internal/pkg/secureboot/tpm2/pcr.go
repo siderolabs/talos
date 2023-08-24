@@ -77,7 +77,7 @@ func PCRExtent(pcr int, data []byte) error {
 		return err
 	}
 
-	defer t.Close() // nolint: errcheck
+	defer t.Close() //nolint:errcheck
 
 	// since we are using SHA256, we can assume that the PCR bank is SHA256
 	digest := sha256.Sum256(data)
@@ -127,7 +127,7 @@ func PolicyPCRDigest(t transport.TPM, policyHandle tpm2.TPMHandle, pcrSelection 
 	return &policyGetDigestResponse.PolicyDigest, nil
 }
 
-// nolint:gocyclo
+//nolint:gocyclo
 func validatePCRBanks(t transport.TPM) error {
 	pcrValue, err := ReadPCR(t, secureboot.UKIPCR)
 	if err != nil {

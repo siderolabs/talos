@@ -143,8 +143,8 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 // in proper order.
 func SortBonds(items []resource.Resource) {
 	sort.Slice(items, func(i, j int) bool {
-		left := items[i].(*network.LinkSpec).TypedSpec()  //nolint:errcheck
-		right := items[j].(*network.LinkSpec).TypedSpec() //nolint:errcheck
+		left := items[i].(*network.LinkSpec).TypedSpec()
+		right := items[j].(*network.LinkSpec).TypedSpec()
 
 		l := ordered.MakeTriple(left.Name, 0, "")
 		if left.BondSlave.MasterName != "" {

@@ -106,7 +106,6 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 	}
 }
 
-//nolint:gocyclo
 func (ctrl *EndpointController) watchEndpointsOnWorker(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	logger.Debug("waiting for kubelet client config", zap.String("file", constants.KubeletKubeconfig))
 
@@ -144,7 +143,6 @@ func (ctrl *EndpointController) watchEndpointsOnWorker(ctx context.Context, r co
 	}
 }
 
-//nolint:gocyclo
 func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if err := r.UpdateInputs([]controller.Input{
 		{

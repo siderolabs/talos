@@ -86,8 +86,6 @@ type Link struct {
 }
 
 // Links gets a list of network interfaces.
-//
-//nolint:gocyclo
 func (c *Connection) Links() ([]Link, error) {
 	ctx := c.nodeCtx
 

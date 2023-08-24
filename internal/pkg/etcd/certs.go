@@ -67,8 +67,6 @@ func (gen *CertificateGenerator) buildOptions(autoSANs, includeLocalhost bool) [
 }
 
 // GeneratePeerCert generates etcd peer certificate and key from etcd CA.
-//
-//nolint:dupl
 func (gen *CertificateGenerator) GeneratePeerCert() (*x509.PEMEncodedCertificateAndKey, error) {
 	opts := gen.buildOptions(true, false)
 
@@ -93,8 +91,6 @@ func (gen *CertificateGenerator) GeneratePeerCert() (*x509.PEMEncodedCertificate
 }
 
 // GenerateServerCert generates server etcd certificate and key from etcd CA.
-//
-//nolint:dupl
 func (gen *CertificateGenerator) GenerateServerCert() (*x509.PEMEncodedCertificateAndKey, error) {
 	opts := gen.buildOptions(true, true)
 

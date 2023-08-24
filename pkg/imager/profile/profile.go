@@ -111,8 +111,6 @@ func (p *Profile) Validate() error {
 }
 
 // OutputPath generates the output path for the profile.
-//
-//nolint:gocyclo
 func (p *Profile) OutputPath() string {
 	path := p.Platform
 

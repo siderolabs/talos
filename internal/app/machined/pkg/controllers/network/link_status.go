@@ -104,7 +104,7 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 	if err != nil {
 		logger.Warn("error dialing ethtool ioctl socket", zap.Error(err))
 	} else {
-		defer ethIoctlClient.Close() //nolint:errcheck
+		defer ethIoctlClient.Close()
 	}
 
 	wgClient, err := wgctrl.New()

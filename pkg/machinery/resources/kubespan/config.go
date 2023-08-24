@@ -14,7 +14,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
-//nolint:lll
 //go:generate deep-copy -type ConfigSpec -type EndpointSpec -type IdentitySpec -type PeerSpecSpec -type PeerStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // ConfigType is type of Config resource.

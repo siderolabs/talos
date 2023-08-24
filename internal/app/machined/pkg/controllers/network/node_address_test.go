@@ -67,7 +67,7 @@ func (suite *NodeAddressSuite) TestDefaults() {
 	)
 }
 
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (suite *NodeAddressSuite) TestFilters() {
 	var (
 		addressStatusController  netctrl.AddressStatusController

@@ -300,7 +300,7 @@ func (meta *Meta) DeleteTag(ctx context.Context, t uint8) (bool, error) {
 		return ok, nil
 	}
 
-	err := meta.state.Destroy(ctx, runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(t)).Metadata()) //nolint:errcheck
+	err := meta.state.Destroy(ctx, runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(t)).Metadata())
 	if state.IsNotFoundError(err) {
 		err = nil
 	}

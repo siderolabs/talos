@@ -65,8 +65,6 @@ type podList struct {
 }
 
 // Run implements controller.Controller interface.
-//
-//nolint:gocyclo,cyclop
 func (ctrl *StaticPodServerController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	ctrl.staticPodVersions = map[string]string{}
 

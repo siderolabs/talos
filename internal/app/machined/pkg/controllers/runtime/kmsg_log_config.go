@@ -56,7 +56,7 @@ func (ctrl *KmsgLogConfigController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (ctrl *KmsgLogConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) (err error) {
 	for {
 		select {

@@ -37,8 +37,8 @@ func Merge(parts []string) ([]byte, error) {
 
 	var out bytes.Buffer
 
-	_, _ = out.Write(header) //nolint:errcheck
-	_ = out.WriteByte('\n')  //nolint:errcheck
+	_, _ = out.Write(header)
+	_ = out.WriteByte('\n')
 
 	if err := toml.NewEncoder(&out).Encode(merged); err != nil {
 		return nil, fmt.Errorf("error encoding merged config: %w", err)

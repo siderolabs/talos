@@ -70,7 +70,7 @@ func (ctrl *KubernetesController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (ctrl *KubernetesController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	refreshTicker := time.NewTicker(KubernetesCertificateValidityDuration / 2)
 	defer refreshTicker.Stop()

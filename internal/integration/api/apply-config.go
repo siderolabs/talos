@@ -228,8 +228,6 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 }
 
 // TestApplyConfigRotateEncryptionSecrets verify key rotation by sequential apply config calls.
-//
-//nolint:gocyclo
 func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
@@ -248,11 +246,11 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 	encryption := machineConfig.MachineConfig.MachineSystemDiskEncryption
 
-	if encryption == nil { //nolint:staticcheck
+	if encryption == nil {
 		suite.T().Skip("skipped in not encrypted mode")
 	}
 
-	cfg := encryption.EphemeralPartition //nolint:staticcheck
+	cfg := encryption.EphemeralPartition
 
 	if cfg == nil {
 		suite.T().Skip("skipped in not encrypted mode")
@@ -458,8 +456,6 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 }
 
 // TestApplyTry applies the config in try mode with a short timeout.
-//
-//nolint:gocyclo
 func (suite *ApplyConfigSuite) TestApplyTry() {
 	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	suite.Require().NotEmpty(nodes)

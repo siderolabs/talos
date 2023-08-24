@@ -355,8 +355,6 @@ func isValidDNSName(name string) bool {
 }
 
 // Validate validates the config.
-//
-//nolint:gocyclo
 func (c *ClusterConfig) Validate() error {
 	var result *multierror.Error
 
@@ -472,8 +470,6 @@ func (manifests ClusterInlineManifests) Validate() error {
 }
 
 // Validate the discovery config.
-//
-//nolint:gocyclo
 func (c *ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 	var result *multierror.Error
 

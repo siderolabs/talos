@@ -70,8 +70,6 @@ func (suite *ServiceAccountSuite) TearDownTest() {
 }
 
 // TestValid tests Kubernetes service accounts.
-//
-//nolint:dupl
 func (suite *ServiceAccountSuite) TestValid() {
 	name := "test-valid"
 
@@ -160,8 +158,6 @@ func (suite *ServiceAccountSuite) TestNotAllowedRoles() {
 }
 
 // TestFeatureNotEnabled tests Kubernetes service accounts when API access feature is not enabled.
-//
-//nolint:dupl
 func (suite *ServiceAccountSuite) TestFeatureNotEnabled() {
 	name := "test-feature-not-enabled"
 

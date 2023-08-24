@@ -73,7 +73,7 @@ func (ctrl *KubeletStaticPodController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	var kubeletClient *kubelet.Client
 

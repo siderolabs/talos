@@ -32,7 +32,7 @@ import (
 // so that interface name is defined by network name, and different networks have
 // different bridge interfaces.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network provision.NetworkRequest, options provision.Options) error {
 	networkNameHash := sha256.Sum256([]byte(network.Name))
 	state.BridgeName = fmt.Sprintf("%s%s", "talos", hex.EncodeToString(networkNameHash[:])[:8])

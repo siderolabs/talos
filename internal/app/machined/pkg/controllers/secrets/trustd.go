@@ -119,7 +119,7 @@ func (ctrl *TrustdController) Run(ctx context.Context, r controller.Runtime, log
 	}
 }
 
-//nolint:gocyclo,cyclop,dupl
+//nolint:gocyclo,dupl
 func (ctrl *TrustdController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	inputs := []controller.Input{
 		{

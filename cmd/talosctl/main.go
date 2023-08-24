@@ -9,13 +9,9 @@ import (
 	"os"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd"
-	"github.com/siderolabs/talos/pkg/cli"
-	"github.com/siderolabs/talos/pkg/startup"
 )
 
 func main() {
-	cli.Should(startup.RandSeed())
-
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}

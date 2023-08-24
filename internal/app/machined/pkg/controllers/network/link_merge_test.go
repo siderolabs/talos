@@ -192,7 +192,6 @@ func (suite *LinkMergeSuite) TestMergeLogicalLink() {
 	)
 }
 
-//nolint:gocyclo
 func (suite *LinkMergeSuite) TestMergeFlapping() {
 	// simulate two conflicting link definitions which are getting removed/added constantly
 	dhcp := network.NewLinkSpec(network.ConfigNamespaceName, "dhcp/eth0")

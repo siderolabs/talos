@@ -21,7 +21,7 @@ func Seal(key []byte) (*SealedResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer t.Close() // nolint: errcheck
+	defer t.Close() //nolint:errcheck
 
 	// fail early if PCR banks are not present or filled with all zeroes or 0xff
 	if err = validatePCRBanks(t); err != nil {

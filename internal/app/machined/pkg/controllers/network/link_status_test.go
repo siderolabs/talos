@@ -147,7 +147,7 @@ func (suite *LinkStatusSuite) TestInterfaceHwInfo() {
 			suite.Require().NoError(err)
 
 			for _, res := range resources.Items {
-				spec := res.(*network.LinkStatus).TypedSpec() //nolint:errcheck,forcetypeassert
+				spec := res.(*network.LinkStatus).TypedSpec() //nolint:forcetypeassert
 
 				if !spec.Physical() {
 					continue

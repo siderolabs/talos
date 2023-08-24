@@ -66,7 +66,7 @@ func WriteVariable(c efivario.Context, name, value string) error {
 		return err
 	}
 
-	defer unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT|unix.MS_RDONLY, "") // nolint: errcheck
+	defer unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT|unix.MS_RDONLY, "") //nolint:errcheck
 
 	out := make([]byte, (len(value)+1)*2)
 

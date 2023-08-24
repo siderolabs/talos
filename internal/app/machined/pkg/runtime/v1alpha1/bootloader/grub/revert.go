@@ -20,7 +20,8 @@ import (
 )
 
 // Revert reverts the bootloader to the previous version.
-// nolint:gocyclo
+//
+//nolint:gocyclo
 func (c *Config) Revert(ctx context.Context) error {
 	if c == nil {
 		return fmt.Errorf("cannot revert bootloader: %w", bootloaderNotInstalledError{})

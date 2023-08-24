@@ -133,7 +133,7 @@ func NewHTTPServer(gatewayAddr netip.Addr, port int, config []byte, controller C
 		httpServer.AddHandler(
 			"/status", httpGetWrapper(
 				func(w io.Writer) {
-					json.NewEncoder(w).Encode(controller.Status()) //nolint:errcheck,errchkjson
+					json.NewEncoder(w).Encode(controller.Status()) //nolint:errcheck
 				},
 			),
 		)

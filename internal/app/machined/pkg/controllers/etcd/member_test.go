@@ -76,7 +76,7 @@ func (suite *MemberSuite) assertInexistentEtcdMember(member *etcd.Member) func()
 	}
 }
 
-func (suite *MemberSuite) TestEtcdRunning() { //nolint:dupl
+func (suite *MemberSuite) TestEtcdRunning() {
 	// given
 	suite.ctrl.GetLocalMemberIDFunc = func(ctx context.Context) (uint64, error) {
 		return 123, nil
@@ -98,7 +98,7 @@ func (suite *MemberSuite) TestEtcdRunning() { //nolint:dupl
 	)
 }
 
-func (suite *MemberSuite) TestEtcdNotRunning() { //nolint:dupl
+func (suite *MemberSuite) TestEtcdNotRunning() {
 	// given
 	suite.ctrl.GetLocalMemberIDFunc = func(ctx context.Context) (uint64, error) {
 		return 123, nil

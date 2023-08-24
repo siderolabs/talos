@@ -81,8 +81,6 @@ type BridgeSlave struct {
 }
 
 // Merge with other, overwriting fields from other if set.
-//
-//nolint:gocyclo
 func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	// prefer Logical, as it is defined for bonds/vlans, etc.
 	updateIfNotZero(&spec.Logical, other.Logical)
