@@ -19,6 +19,7 @@ preface = """\
         title = "Component Updates"
         description = """\
 Linux: 6.1.46
+CoreDNS: v1.11.1
 
 Talos is built with Go 1.21.
 """

@@ -333,7 +333,7 @@ const (
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
 	// renovate: datasource=github-releases depName=coredns/coredns
-	DefaultCoreDNSVersion = "v1.10.1"
+	DefaultCoreDNSVersion = "v1.11.1"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
