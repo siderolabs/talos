@@ -18,7 +18,15 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description = """\
+Linux: 6.1.46
+
 Talos is built with Go 1.21.
+"""
+
+    [notes.talosctl]
+        title = "talosctl CLI"
+        description = """\
+The command `images` deprecated in Talos 1.5 was removed, please use `talosctl images default` instead.
 """
 
 [make_deps]

@@ -28,11 +28,6 @@ func (suite *ImageSuite) TestDefault() {
 	suite.RunCLI([]string{"image", "default"},
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta("registry.k8s.io/kube-apiserver"))),
 	)
-
-	// Legacy alias, to be removed in Talos 1.6.
-	suite.RunCLI([]string{"images"},
-		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta("registry.k8s.io/kube-apiserver"))),
-	)
 }
 
 // TestList verifies listing images in the CRI.

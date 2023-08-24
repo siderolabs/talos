@@ -43,7 +43,7 @@ func (flags imageCmdFlagsType) apiNamespace() (common.ContainerdNamespace, error
 // imagesCmd represents the image command.
 var imageCmd = &cobra.Command{
 	Use:     "image",
-	Aliases: []string{},
+	Aliases: []string{"images"},
 	Short:   "Manage CRI containter images",
 	Long:    ``,
 	Args:    cobra.NoArgs,
