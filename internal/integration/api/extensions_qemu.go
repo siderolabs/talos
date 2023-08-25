@@ -66,9 +66,11 @@ func (suite *ExtensionsSuiteQEMU) TearDownTest() {
 // TestExtensionsExpectedPaths verifies expected paths are present.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsExpectedPaths() {
 	expectedPaths := []string{
+		"/lib/firmware/amdgpu",
 		"/lib/firmware/amd-ucode",
 		"/lib/firmware/bnx2x",
 		"/lib/firmware/i915",
+		"/lib/firmware/intel/ice/ddp",
 		"/lib/firmware/intel-ucode",
 	}
 
