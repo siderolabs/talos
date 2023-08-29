@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"math"
 	"math/bits"
 	"net"
 	"reflect"
@@ -23,6 +22,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/pkg/ntp/internal/spike"
 	"github.com/siderolabs/talos/internal/pkg/timex"
 )
 
@@ -42,10 +42,7 @@ type Syncer struct {
 
 	firstSync bool
 
-	packetCount   int64
-	samples       []sample
-	samplesIdx    int
-	samplesJitter float64
+	spikeDetector spike.Detector
 
 	MinPoll, MaxPoll, RetryPoll time.Duration
 
@@ -53,12 +50,6 @@ type Syncer struct {
 	CurrentTime CurrentTimeFunc
 	NTPQuery    QueryFunc
 	AdjustTime  AdjustTimeFunc
-}
-
-const sampleCount = 8
-
-type sample struct {
-	offset, rtt float64 // in seconds
 }
 
 // NewSyncer creates new Syncer with default configuration.
@@ -74,7 +65,7 @@ func NewSyncer(logger *zap.Logger, timeServers []string) *Syncer {
 
 		firstSync: true,
 
-		samples: make([]sample, sampleCount),
+		spikeDetector: spike.Detector{},
 
 		MinPoll:   MinAllowablePoll,
 		MaxPoll:   MaxAllowablePoll,
@@ -149,59 +140,8 @@ func absDuration(d time.Duration) time.Duration {
 	return d
 }
 
-func (syncer *Syncer) spikeDetector(resp *ntp.Response) bool {
-	syncer.packetCount++
-
-	if syncer.packetCount == 1 {
-		// ignore first packet
-		return false
-	}
-
-	var currentIndex int
-
-	currentIndex, syncer.samplesIdx = syncer.samplesIdx, (syncer.samplesIdx+1)%sampleCount
-
-	syncer.samples[syncer.samplesIdx].offset = resp.ClockOffset.Seconds()
-	syncer.samples[syncer.samplesIdx].rtt = resp.RTT.Seconds()
-
-	jitter := syncer.samplesJitter
-
-	indexMin := currentIndex
-
-	for i := range syncer.samples {
-		if syncer.samples[i].rtt == 0 {
-			continue
-		}
-
-		if syncer.samples[i].rtt < syncer.samples[indexMin].rtt {
-			indexMin = i
-		}
-	}
-
-	var j float64
-
-	for i := range syncer.samples {
-		j += math.Pow(syncer.samples[i].offset-syncer.samples[indexMin].offset, 2)
-	}
-
-	syncer.samplesJitter = math.Sqrt(j / (sampleCount - 1))
-
-	if absDuration(resp.ClockOffset) > resp.RTT {
-		// always accept clock offset if that is larger than rtt
-		return false
-	}
-
-	if syncer.packetCount < 4 {
-		// need more samples to make a decision
-		return false
-	}
-
-	if absDuration(resp.ClockOffset).Seconds() > syncer.samples[indexMin].rtt {
-		// do not accept anything worse than the maximum possible error of the best sample
-		return true
-	}
-
-	return math.Abs(resp.ClockOffset.Seconds()-syncer.samples[currentIndex].offset) > 3*jitter
+func (syncer *Syncer) isSpike(resp *ntp.Response) bool {
+	return syncer.spikeDetector.IsSpike(spike.SampleFromNTPResponse(resp))
 }
 
 // Run runs the sync process.
@@ -231,7 +171,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 		spike := false
 
 		if resp != nil && resp.Validate() == nil {
-			spike = syncer.spikeDetector(resp)
+			spike = syncer.isSpike(resp)
 		}
 
 		switch {
@@ -264,7 +204,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 		}
 
 		syncer.logger.Debug("sample stats",
-			zap.Duration("jitter", time.Duration(syncer.samplesJitter*float64(time.Second))),
+			zap.Duration("jitter", time.Duration(syncer.spikeDetector.Jitter()*float64(time.Second))),
 			zap.Duration("poll_interval", pollInterval),
 			zap.Bool("spike", spike),
 		)
