@@ -25,6 +25,9 @@ type InstallOptions struct {
 	// Are we running in image mode?
 	ImageMode bool
 
+	// Mount prefix for /boot-like partitions.
+	MountPrefix string
+
 	// Boot assets to install.
 	BootAssets BootAssets
 

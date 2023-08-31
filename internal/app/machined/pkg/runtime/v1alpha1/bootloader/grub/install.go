@@ -35,8 +35,14 @@ func (c *Config) Install(options options.InstallOptions) error {
 
 	if err := utils.CopyFiles(
 		options.Printf,
-		utils.SourceDestination(options.BootAssets.KernelPath, filepath.Join(constants.BootMountPoint, string(c.Default), constants.KernelAsset)),
-		utils.SourceDestination(options.BootAssets.InitramfsPath, filepath.Join(constants.BootMountPoint, string(c.Default), constants.InitramfsAsset)),
+		utils.SourceDestination(
+			options.BootAssets.KernelPath,
+			filepath.Join(options.MountPrefix, constants.BootMountPoint, string(c.Default), constants.KernelAsset),
+		),
+		utils.SourceDestination(
+			options.BootAssets.InitramfsPath,
+			filepath.Join(options.MountPrefix, constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
+		),
 	); err != nil {
 		return err
 	}
@@ -45,7 +51,7 @@ func (c *Config) Install(options options.InstallOptions) error {
 		return err
 	}
 
-	if err := c.Write(ConfigPath, options.Printf); err != nil {
+	if err := c.Write(filepath.Join(options.MountPrefix, ConfigPath), options.Printf); err != nil {
 		return err
 	}
 
@@ -69,8 +75,11 @@ func (c *Config) Install(options options.InstallOptions) error {
 	}
 
 	for _, platform := range platforms {
-		args := []string{"--boot-directory=" + constants.BootMountPoint, "--efi-directory=" +
-			constants.EFIMountPoint, "--removable"}
+		args := []string{
+			"--boot-directory=" + filepath.Join(options.MountPrefix, constants.BootMountPoint),
+			"--efi-directory=" + filepath.Join(options.MountPrefix, constants.EFIMountPoint),
+			"--removable",
+		}
 
 		if options.ImageMode {
 			args = append(args, "--no-nvram")

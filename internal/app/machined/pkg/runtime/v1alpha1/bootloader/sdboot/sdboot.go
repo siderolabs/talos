@@ -140,7 +140,7 @@ func (c *Config) Install(options options.InstallOptions) error {
 	}
 
 	// list existing UKIs, and clean up all but the current one (used to boot)
-	files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+	files, err := filepath.Glob(filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
 	if err != nil {
 		return err
 	}
@@ -169,8 +169,14 @@ func (c *Config) Install(options options.InstallOptions) error {
 
 	if err := utils.CopyFiles(
 		options.Printf,
-		utils.SourceDestination(options.BootAssets.UKIPath, filepath.Join(constants.EFIMountPoint, "EFI", "Linux", ukiPath)),
-		utils.SourceDestination(options.BootAssets.SDBootPath, filepath.Join(constants.EFIMountPoint, "EFI", "boot", sdbootFilename)),
+		utils.SourceDestination(
+			options.BootAssets.UKIPath,
+			filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", ukiPath),
+		),
+		utils.SourceDestination(
+			options.BootAssets.SDBootPath,
+			filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "boot", sdbootFilename),
+		),
 	); err != nil {
 		return err
 	}

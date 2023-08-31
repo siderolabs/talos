@@ -175,6 +175,8 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 
 	cmdline := procfs.NewCmdline(i.cmdline)
 
+	scratchSpace := filepath.Join(i.tempDir, "image")
+
 	opts := &install.Options{
 		Disk:       loDevice,
 		Platform:   i.prof.Platform,
@@ -190,7 +192,8 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 			UKIPath:       i.ukiPath,
 			SDBootPath:    i.sdBootPath,
 		},
-		Printf: printf,
+		MountPrefix: scratchSpace,
+		Printf:      printf,
 	}
 
 	if opts.Board == "" {

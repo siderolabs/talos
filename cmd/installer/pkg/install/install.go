@@ -43,6 +43,7 @@ type Options struct {
 	Version         string
 	BootAssets      bootloaderoptions.BootAssets
 	Printf          func(string, ...any)
+	MountPrefix     string
 }
 
 // Mode is the install mode.
@@ -234,7 +235,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 			var mountpoint *mount.Point
 
-			mountpoint, err = mount.SystemMountPointForLabel(ctx, bd, label)
+			mountpoint, err = mount.SystemMountPointForLabel(ctx, bd, label, mount.WithPrefix(i.options.MountPrefix))
 			if err != nil {
 				return err
 			}
@@ -262,13 +263,14 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 	// Install the bootloader.
 	if err = i.bootloader.Install(bootloaderoptions.InstallOptions{
-		BootDisk:   i.options.Disk,
-		Arch:       i.options.Arch,
-		Cmdline:    i.cmdline.String(),
-		Version:    i.options.Version,
-		ImageMode:  mode.IsImage(),
-		BootAssets: i.options.BootAssets,
-		Printf:     i.options.Printf,
+		BootDisk:    i.options.Disk,
+		Arch:        i.options.Arch,
+		Cmdline:     i.cmdline.String(),
+		Version:     i.options.Version,
+		ImageMode:   mode.IsImage(),
+		MountPrefix: i.options.MountPrefix,
+		BootAssets:  i.options.BootAssets,
+		Printf:      i.options.Printf,
 	}); err != nil {
 		return err
 	}
