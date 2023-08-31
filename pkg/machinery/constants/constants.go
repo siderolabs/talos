@@ -896,6 +896,21 @@ const (
 
 	// TcellMinimizeEnvironment is the environment variable to minimize tcell library memory usage (skips rune width calculation).
 	TcellMinimizeEnvironment = "TCELL_MINIMIZE=1"
+
+	// KubePrismDialTimeout is the timeout for the KubePrism loadbalancer dialing an endpoint.
+	KubePrismDialTimeout = 15 * time.Second
+
+	// KubePrismKeepAlivePeriod is the TCP keepalive period for the KubePrism loadbalancer.
+	KubePrismKeepAlivePeriod = 30 * time.Second
+
+	// KubePrismTCPUserTimeout is the TCP user timeout for the KubePrism loadbalancer.
+	KubePrismTCPUserTimeout = 30 * time.Second
+
+	// KubePrismHealthCheckInterval is the interval between health checks for the KubePrism loadbalancer.
+	KubePrismHealthCheckInterval = 20 * time.Second
+
+	// KubePrismHealthCheckTimeout is the timeout for health checks for the KubePrism loadbalancer.
+	KubePrismHealthCheckTimeout = 15 * time.Second
 )
 
 // See https://linux.die.net/man/3/klogctl

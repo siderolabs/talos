@@ -16,9 +16,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-loadbalancer/controlplane"
+	"github.com/siderolabs/go-loadbalancer/upstream"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
@@ -190,6 +192,13 @@ func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, logg
 
 	lb, err := controlplane.NewLoadBalancer(ctrl.balancerHost, ctrl.balancerPort,
 		logger.WithOptions(zap.IncreaseLevel(zap.ErrorLevel)), // silence the load balancer logs
+		controlplane.WithDialTimeout(constants.KubePrismDialTimeout),
+		controlplane.WithKeepAlivePeriod(constants.KubePrismKeepAlivePeriod),
+		controlplane.WithTCPUserTimeout(constants.KubePrismTCPUserTimeout),
+		controlplane.WithHealthCheckOptions(
+			upstream.WithHealthcheckInterval(constants.KubePrismHealthCheckInterval),
+			upstream.WithHealthcheckTimeout(constants.KubePrismHealthCheckTimeout),
+		),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create KubePrism: %w", err)
