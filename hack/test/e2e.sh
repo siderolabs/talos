@@ -245,31 +245,29 @@ function install_and_run_cilium_cni_tests {
   case "${CILIUM_INSTALL_TYPE:-none}" in
     strict)
       ${CILIUM_CLI} install \
-        --helm-set=ipam.mode=kubernetes \
-        --helm-set=kubeProxyReplacement=strict \
-        --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-        --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-        --helm-set=cgroup.autoMount.enabled=false \
-        --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
-        --helm-set=k8sServiceHost=localhost \
-        --helm-set=k8sServicePort=13336 \
-        --wait-duration=10m
+        --set=ipam.mode=kubernetes \
+        --set=kubeProxyReplacement=true \
+        --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+        --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+        --set=cgroup.autoMount.enabled=false \
+        --set=cgroup.hostRoot=/sys/fs/cgroup \
+        --set=k8sServiceHost=localhost \
+        --set=k8sServicePort=13336
       ;;
     *)
       # explicitly setting kubeProxyReplacement=disabled since by the time cilium cli runs talos
       # has not yet applied the kube-proxy manifests
       ${CILIUM_CLI} install \
-        --helm-set=ipam.mode=kubernetes \
-        --helm-set=kubeProxyReplacement=disabled \
-        --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-        --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-        --helm-set=cgroup.autoMount.enabled=false \
-        --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
-        --wait-duration=10m
+        --set=ipam.mode=kubernetes \
+        --set=kubeProxyReplacement=false \
+        --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+        --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+        --set=cgroup.autoMount.enabled=false \
+        --set=cgroup.hostRoot=/sys/fs/cgroup
       ;;
   esac
 
-  ${CILIUM_CLI} status
+  ${CILIUM_CLI} status --wait --wait-duration=10m
 
   ${KUBECTL} delete ns --ignore-not-found cilium-test
 

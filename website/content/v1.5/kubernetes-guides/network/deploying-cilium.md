@@ -40,7 +40,7 @@ talosctl gen config \
     --config-patch @patch.yaml
 ```
 
-Or if you want to deploy Cilium in strict mode without kube-proxy, you also need to disable kube proxy:
+Or if you want to deploy Cilium without kube-proxy, you also need to disable kube proxy:
 
 Create a `patch.yaml` file with the following contents:
 
@@ -87,7 +87,7 @@ cilium install \
 ```bash
 cilium install \
     --helm-set=ipam.mode=kubernetes \
-    --helm-set=kubeProxyReplacement=strict \
+    --helm-set=kubeProxyReplacement=true \
     --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --helm-set=cgroup.autoMount.enabled=false \
@@ -129,7 +129,7 @@ helm install \
     --set=cgroup.hostRoot=/sys/fs/cgroup
 ```
 
-Or if you want to deploy Cilium in strict mode without kube-proxy, also set some extra paramaters:
+Or if you want to deploy Cilium without kube-proxy, also set some extra paramaters:
 
 ```bash
 helm install \
@@ -138,7 +138,7 @@ helm install \
     --version 1.14.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
-    --set=kubeProxyReplacement=strict \
+    --set=kubeProxyReplacement=true \
     --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set=cgroup.autoMount.enabled=false \
@@ -181,7 +181,7 @@ helm template \
     --version 1.14.0 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
-    --set=kubeProxyReplacement=strict \
+    --set=kubeProxyReplacement=true \
     --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
     --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
     --set=cgroup.autoMount.enabled=false \
