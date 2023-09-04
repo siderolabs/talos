@@ -448,35 +448,50 @@ var configInfoCmdTemplate = template.Must(template.New("configInfoCmdTemplate").
 Current context:     {{ .Context }}
 Nodes:               {{ .Nodes }}
 Endpoints:           {{ .Endpoints }}
-Roles:               {{ .Roles }}
-Certificate expires: {{ .CertTTL }} ({{ .CertNotAfter }})
+{{- if .Roles }}
+Roles:               {{ .Roles }}{{ end }}
+{{- if .CertTTL }}
+Certificate expires: {{ .CertTTL }} ({{ .CertNotAfter }}){{ end }}
 `)))
 
 // configInfoCommand implements `config info` command logic.
-//
-//nolint:goconst
 func configInfoCommand(config *clientconfig.Config, now time.Time) (string, error) {
 	cfgContext, err := getContextData(config)
 	if err != nil {
 		return "", err
 	}
 
-	b, err := base64.StdEncoding.DecodeString(cfgContext.Crt)
-	if err != nil {
-		return "", err
-	}
+	var (
+		certTTL, certNotAfter string
+		roles                 role.Set
+		rolesS                string
+	)
 
-	block, _ := pem.Decode(b)
-	if block == nil {
-		return "", fmt.Errorf("error decoding PEM")
-	}
+	if cfgContext.Crt != "" {
+		var b []byte
 
-	crt, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		return "", err
-	}
+		b, err = base64.StdEncoding.DecodeString(cfgContext.Crt)
+		if err != nil {
+			return "", err
+		}
 
-	roles, _ := role.Parse(crt.Subject.Organization)
+		block, _ := pem.Decode(b)
+		if block == nil {
+			return "", fmt.Errorf("error decoding PEM")
+		}
+
+		var crt *x509.Certificate
+
+		crt, err = x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return "", err
+		}
+
+		roles, _ = role.Parse(crt.Subject.Organization)
+
+		certTTL = humanize.RelTime(crt.NotAfter, now, "ago", "from now")
+		certNotAfter = crt.NotAfter.UTC().Format("2006-01-02")
+	}
 
 	nodesS := "not defined"
 	if len(cfgContext.Nodes) > 0 {
@@ -488,7 +503,6 @@ func configInfoCommand(config *clientconfig.Config, now time.Time) (string, erro
 		endpointsS = strings.Join(cfgContext.Endpoints, ", ")
 	}
 
-	rolesS := "not defined"
 	if s := roles.Strings(); len(s) > 0 {
 		rolesS = strings.Join(s, ", ")
 	}
@@ -499,8 +513,8 @@ func configInfoCommand(config *clientconfig.Config, now time.Time) (string, erro
 		"Nodes":        nodesS,
 		"Endpoints":    endpointsS,
 		"Roles":        rolesS,
-		"CertTTL":      humanize.RelTime(crt.NotAfter, now, "ago", "from now"),
-		"CertNotAfter": crt.NotAfter.UTC().Format("2006-01-02"),
+		"CertTTL":      certTTL,
+		"CertNotAfter": certNotAfter,
 	})
 
 	return res.String() + "\n", err

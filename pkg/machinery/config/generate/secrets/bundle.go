@@ -351,6 +351,6 @@ func (bundle *Bundle) GenerateTalosAPIClientCertificate(roles role.Set) (*x509.P
 		bundle.Clock.Now(),
 		bundle.Certs.OS,
 		roles,
-		CAValidityTime,
+		constants.TalosAPIDefaultCertificateValidityDuration,
 	)
 }

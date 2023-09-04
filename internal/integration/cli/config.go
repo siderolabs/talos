@@ -35,6 +35,12 @@ func (suite *TalosconfigSuite) TestList() {
 		base.StdoutShouldMatch(regexp.MustCompile(`CURRENT`)))
 }
 
+// TestInfo checks `talosctl config info`.
+func (suite *TalosconfigSuite) TestInfo() {
+	suite.RunCLI([]string{"config", "info"}, // TODO: remove 10 years once the CABPT & TF providers are updated to 1.5.2+
+		base.StdoutShouldMatch(regexp.MustCompile(`(1 year|10 years) from now`)))
+}
+
 // TestMerge checks `talosctl config merge`.
 func (suite *TalosconfigSuite) TestMerge() {
 	tempDir := suite.T().TempDir()
