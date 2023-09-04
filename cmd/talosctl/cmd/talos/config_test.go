@@ -66,7 +66,6 @@ contexts:
 Current context:     no-roles
 Nodes:               not defined
 Endpoints:           172.20.1.2
-Roles:               not defined
 Certificate expires: 10 years from now (2031-07-03)
 `) + "\n",
 		},

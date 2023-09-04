@@ -78,7 +78,11 @@ func (suite *MaintenanceServiceSuite) TestRunService() {
 
 	// wait for the service to be up
 	suite.AssertWithin(time.Second, 10*time.Millisecond, func() error {
-		c, err := net.Dial("tcp", maintenanceConfig.TypedSpec().ListenAddress)
+		c, err := tls.Dial("tcp", maintenanceConfig.TypedSpec().ListenAddress,
+			&tls.Config{
+				InsecureSkipVerify: true,
+			},
+		)
 
 		if c != nil {
 			c.Close() //nolint:errcheck

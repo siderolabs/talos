@@ -911,6 +911,9 @@ const (
 
 	// KubePrismHealthCheckTimeout is the timeout for health checks for the KubePrism loadbalancer.
 	KubePrismHealthCheckTimeout = 15 * time.Second
+
+	// TalosAPIDefaultCertificateValidityDuration specifies default certificate duration for Talos API generated client certificates.
+	TalosAPIDefaultCertificateValidityDuration = time.Hour * 24 * 365
 )
 
 // See https://linux.die.net/man/3/klogctl

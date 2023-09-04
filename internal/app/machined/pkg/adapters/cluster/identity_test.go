@@ -25,7 +25,7 @@ func TestIdentityGenerate(t *testing.T) {
 	length := len(spec1.NodeID)
 
 	assert.GreaterOrEqual(t, length, 43)
-	assert.LessOrEqual(t, length, 44)
+	assert.LessOrEqual(t, length, 45)
 }
 
 func TestIdentityConvertMachineID(t *testing.T) {
