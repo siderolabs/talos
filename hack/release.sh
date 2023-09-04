@@ -22,7 +22,7 @@ function release-notes {
   release-tool "${2}" --gfm > "${1}"
 
   echo -e '\n## Images\n\n```' >> ${1}
-  ${ARTIFACTS}/talosctl-linux-amd64 images >> ${1}
+  ${ARTIFACTS}/talosctl-linux-amd64 image default >> ${1}
   echo -e '```\n' >> ${1}
 }
 
