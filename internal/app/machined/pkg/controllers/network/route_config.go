@@ -307,7 +307,7 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 		}
 
 		for _, vlan := range device.Vlans() {
-			vlanLinkName := fmt.Sprintf("%s.%d", device.Interface(), vlan.ID())
+			vlanLinkName := nethelpers.VLANLinkName(device.Interface(), vlan.ID())
 
 			for _, route := range vlan.Routes() {
 				routeSpec, err := convert(vlanLinkName, route)

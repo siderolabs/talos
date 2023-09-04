@@ -293,7 +293,7 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 				address := network.AddressSpecSpec{
 					Address:     ipPrefix,
 					Scope:       nethelpers.ScopeGlobal,
-					LinkName:    fmt.Sprintf("%s.%d", device.Interface(), vlan.ID()),
+					LinkName:    nethelpers.VLANLinkName(device.Interface(), vlan.ID()),
 					ConfigLayer: network.ConfigMachineConfiguration,
 					Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
 				}
