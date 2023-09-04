@@ -81,12 +81,32 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{
 				NetworkInterfaces: []*v1alpha1.Device{
+					// device selector selecing a single interface
 					{
 						DeviceSelector: &v1alpha1.NetworkDeviceSelector{
 							NetworkDeviceKernelDriver: kernelDriver,
 						},
 						DeviceAddresses: []string{"192.168.2.0/24"},
 						DeviceMTU:       1500,
+					},
+					// no device selector (explicit name)
+					{
+						DeviceInterface: "eth0",
+						DeviceAddresses: []string{"192.168.3.0/24"},
+					},
+					// device selector which doesn't match anything
+					{
+						DeviceSelector: &v1alpha1.NetworkDeviceSelector{
+							NetworkDeviceKernelDriver: "no-match",
+						},
+						DeviceAddresses: []string{"192.168.4.0/24"},
+					},
+					// device selector which matches multiple interfaces
+					{
+						DeviceSelector: &v1alpha1.NetworkDeviceSelector{
+							NetworkDeviceBus: "0000:01*",
+						},
+						DeviceAddresses: []string{"192.168.5.0/24"},
 					},
 				},
 			},
@@ -98,15 +118,29 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 
 	status := network.NewLinkStatus(network.NamespaceName, "eth0")
 	status.TypedSpec().Driver = kernelDriver
+	status.TypedSpec().BusPath = "0000:01:00.0"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), status))
 
 	status = network.NewLinkStatus(network.NamespaceName, "eth1")
+	status.TypedSpec().BusPath = "0000:01:01.0"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), status))
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"eth0/000"},
 		func(r *network.DeviceConfigSpec, assert *assert.Assertions) {
 			assert.Equal(1500, r.TypedSpec().Device.MTU())
 			assert.Equal([]string{"192.168.2.0/24"}, r.TypedSpec().Device.Addresses())
+		},
+	)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"eth0/001"},
+		func(r *network.DeviceConfigSpec, assert *assert.Assertions) {
+			assert.Equal([]string{"192.168.3.0/24"}, r.TypedSpec().Device.Addresses())
+		},
+	)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"eth0/003/000", "eth1/003/001"},
+		func(r *network.DeviceConfigSpec, assert *assert.Assertions) {
+			assert.Equal([]string{"192.168.5.0/24"}, r.TypedSpec().Device.Addresses())
 		},
 	)
 }

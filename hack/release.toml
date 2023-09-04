@@ -39,6 +39,14 @@ Talos is built with Go 1.21.
 The command `images` deprecated in Talos 1.5 was removed, please use `talosctl images default` instead.
 """
 
+    [notes.device-selectors]
+        title = "Network Device Selectors"
+        description = """\
+Previously, [network device selectors](https://www.talos.dev/v1.6/talos-guides/network/device-selector/) only matched the first link, now the configuration is applied to all matching links.
+"""
+
+
+
 [make_deps]
 
     [make_deps.tools]

@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	glob "github.com/ryanuber/go-glob"
@@ -100,28 +99,21 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 		r.StartTrackingOutputs()
 
 		if cfgProvider != nil && cfgProvider.Machine() != nil {
-			selectedInterfaces := map[string]struct{}{}
-
 			for index, device := range cfgProvider.Machine().Network().Devices() {
-				if device.Selector() != nil {
-					dev := device.(*v1alpha1.Device).DeepCopy()
-					device = dev
+				out := []talosconfig.Device{device}
 
-					err = ctrl.getDeviceBySelector(dev, links)
+				if device.Selector() != nil {
+					var matched []*v1alpha1.Device
+
+					matched, err = ctrl.getDevicesBySelector(device, links)
 					if err != nil {
 						logger.Warn("failed to select an interface for a device", zap.Error(err))
 
 						continue
 					}
 
-					if _, ok := selectedInterfaces[device.Interface()]; ok {
-						return fmt.Errorf("the device %s is already configured by a selector", device.Interface())
-					}
-
-					selectedInterfaces[device.Interface()] = struct{}{}
-				}
-
-				if device.Bond() != nil && len(device.Bond().Selectors()) > 0 {
+					out = slices.Map(matched, func(device *v1alpha1.Device) talosconfig.Device { return device })
+				} else if device.Bond() != nil && len(device.Bond().Selectors()) > 0 {
 					dev := device.(*v1alpha1.Device).DeepCopy()
 					device = dev
 
@@ -131,22 +123,29 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 
 						continue
 					}
+
+					out = []talosconfig.Device{device}
 				}
 
-				id := fmt.Sprintf("%s/%03d", device.Interface(), index)
+				for j, outDevice := range out {
+					id := fmt.Sprintf("%s/%03d", outDevice.Interface(), index)
 
-				config := network.NewDeviceConfig(id, device)
+					if len(out) > 1 {
+						id = fmt.Sprintf("%s/%03d", id, j)
+					}
 
-				if err = r.Modify(
-					ctx,
-					config,
-					func(r resource.Resource) error {
-						r.(*network.DeviceConfigSpec).TypedSpec().Device = device
+					if err = safe.WriterModify(
+						ctx,
+						r,
+						network.NewDeviceConfig(id, outDevice),
+						func(r *network.DeviceConfigSpec) error {
+							r.TypedSpec().Device = outDevice
 
-						return nil
-					},
-				); err != nil {
-					return err
+							return nil
+						},
+					); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -157,19 +156,22 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 	}
 }
 
-func (ctrl *DeviceConfigController) getDeviceBySelector(device *v1alpha1.Device, links safe.List[*network.LinkStatus]) error {
+func (ctrl *DeviceConfigController) getDevicesBySelector(device talosconfig.Device, links safe.List[*network.LinkStatus]) ([]*v1alpha1.Device, error) {
 	selector := device.Selector()
 
 	matches := ctrl.selectDevices(selector, links)
 	if len(matches) == 0 {
-		return fmt.Errorf("no matching network device for defined selector: %+v", selector)
+		return nil, fmt.Errorf("no matching network device for defined selector: %+v", selector)
 	}
 
-	link := matches[0]
+	out := make([]*v1alpha1.Device, len(matches))
 
-	device.DeviceInterface = link.Metadata().ID()
+	for i, link := range matches {
+		out[i] = device.(*v1alpha1.Device).DeepCopy()
+		out[i].DeviceInterface = link.Metadata().ID()
+	}
 
-	return nil
+	return out, nil
 }
 
 func (ctrl *DeviceConfigController) expandBondSelector(device *v1alpha1.Device, links safe.List[*network.LinkStatus]) error {
