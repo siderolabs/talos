@@ -26,7 +26,7 @@ This also ensures that the linux-firmware is not tied to a specific Talos versio
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.1.46
+Linux: 6.1.51
 CoreDNS: v1.11.1
 Kubernetes: v1.28.1
 

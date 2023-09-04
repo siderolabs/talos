@@ -132,7 +132,7 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 
 			for _, pod := range podList.Items {
 				if pod.Status.Phase != corev1.PodSucceeded {
-					return retry.ExpectedErrorf("pod is not completed yet: %s", pod.Status.Phase)
+					return retry.ExpectedErrorf("%s is not completed yet: %s", pod.Name, pod.Status.Phase)
 				}
 			}
 

@@ -376,6 +376,50 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	checkZFSVolumePathPopulatedByUdev()
 }
 
+// TestExtensionsUtilLinuxTools verifies util-linux-tools are working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
+	_, err := suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "util-linux-tools-test",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "util-linux-tools-test",
+					Image: "alpine",
+					Command: []string{
+						"tail",
+						"-f",
+						"/dev/null",
+					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: pointer.To(true),
+					},
+				},
+			},
+			HostNetwork: true,
+			HostPID:     true,
+		},
+	}, metav1.CreateOptions{})
+	defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "util-linux-tools-test", metav1.DeleteOptions{}) //nolint:errcheck
+
+	suite.Require().NoError(err)
+
+	// wait for the pod to be ready
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 10*time.Minute, "kube-system", "util-linux-tools-test"))
+
+	stdout, stderr, err := suite.ExecuteCommandInPod(
+		suite.ctx,
+		"kube-system",
+		"util-linux-tools-test",
+		"nsenter --mount=/proc/1/ns/mnt -- /usr/local/sbin/fstrim --version",
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal("", stderr)
+	suite.Require().Contains(stdout, "fstrim from util-linux")
+}
+
 func init() {
 	allSuites = append(allSuites, &ExtensionsSuiteQEMU{})
 }
