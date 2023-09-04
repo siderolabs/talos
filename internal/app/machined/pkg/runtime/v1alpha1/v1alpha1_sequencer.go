@@ -79,6 +79,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"etc",
 			CreateSystemCgroups,
 			CreateOSReleaseFile,
+			SetUserEnvVars,
 		).Append(
 			"machined",
 			StartMachined,
@@ -105,6 +106,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"etc",
 			CreateSystemCgroups,
 			CreateOSReleaseFile,
+			SetUserEnvVars,
 		).Append(
 			"earlyServices",
 			StartUdevd,
