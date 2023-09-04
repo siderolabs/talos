@@ -351,7 +351,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline) (CmdlineNetworking, error) {
 			Protocol: nethelpers.VLANProtocol8021Q,
 		}
 
-		vlanName = fmt.Sprintf("%s.%d", phyDevice, vlanID)
+		vlanName = nethelpers.VLANLinkName(phyDevice, uint16(vlanID))
 
 		linkSpecUpdated := false
 

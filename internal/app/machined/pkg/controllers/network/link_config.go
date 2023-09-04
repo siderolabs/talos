@@ -358,7 +358,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 		}
 
 		for _, vlan := range device.Vlans() {
-			vlanName := fmt.Sprintf("%s.%d", device.Interface(), vlan.ID())
+			vlanName := nethelpers.VLANLinkName(device.Interface(), vlan.ID())
 
 			linkMap[vlanName] = &network.LinkSpecSpec{
 				Name:        device.Interface(),
@@ -403,7 +403,7 @@ type vlaner interface {
 }
 
 func vlanLink(link *network.LinkSpecSpec, linkName string, vlan vlaner) {
-	link.Name = fmt.Sprintf("%s.%d", linkName, vlan.ID())
+	link.Name = nethelpers.VLANLinkName(linkName, vlan.ID())
 	link.Logical = true
 	link.Up = true
 	link.MTU = vlan.MTU()

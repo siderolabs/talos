@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -176,7 +177,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 
 						specs = append(specs, network.OperatorSpecSpec{
 							Operator:  network.OperatorDHCP4,
-							LinkName:  fmt.Sprintf("%s.%d", device.Interface(), vlan.ID()),
+							LinkName:  nethelpers.VLANLinkName(device.Interface(), vlan.ID()),
 							RequireUp: true,
 							DHCP4: network.DHCP4OperatorSpec{
 								RouteMetric: routeMetric,
@@ -193,7 +194,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 
 						specs = append(specs, network.OperatorSpecSpec{
 							Operator:  network.OperatorDHCP6,
-							LinkName:  fmt.Sprintf("%s.%d", device.Interface(), vlan.ID()),
+							LinkName:  nethelpers.VLANLinkName(device.Interface(), vlan.ID()),
 							RequireUp: true,
 							DHCP6: network.DHCP6OperatorSpec{
 								RouteMetric: routeMetric,

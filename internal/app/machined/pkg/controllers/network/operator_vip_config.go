@@ -19,6 +19,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/operator/vip"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -118,7 +119,7 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 
 				for _, vlan := range device.Vlans() {
 					if vlan.VIPConfig() != nil {
-						linkName := fmt.Sprintf("%s.%d", device.Interface(), vlan.ID())
+						linkName := nethelpers.VLANLinkName(device.Interface(), vlan.ID())
 						if spec, specErr := handleVIP(ctx, vlan.VIPConfig(), linkName, logger); specErr != nil {
 							specErrors = multierror.Append(specErrors, specErr)
 						} else {
