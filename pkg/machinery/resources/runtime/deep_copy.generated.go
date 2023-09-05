@@ -104,6 +104,10 @@ func (o MountStatusSpec) DeepCopy() MountStatusSpec {
 		cp.Options = make([]string, len(o.Options))
 		copy(cp.Options, o.Options)
 	}
+	if o.EncryptionProviders != nil {
+		cp.EncryptionProviders = make([]string, len(o.EncryptionProviders))
+		copy(cp.EncryptionProviders, o.EncryptionProviders)
+	}
 	return cp
 }
 

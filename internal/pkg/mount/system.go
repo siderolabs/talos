@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"golang.org/x/sys/unix"
@@ -234,6 +235,25 @@ func SystemPartitionMount(ctx context.Context, r runtime.Runtime, logger *log.Lo
 	mountStatus.TypedSpec().Target = mountpoint.Target()
 	mountStatus.TypedSpec().FilesystemType = mountpoint.Fstype()
 	mountStatus.TypedSpec().Encrypted = encrypted
+
+	if encrypted {
+		encryptionProviders := make(map[string]struct{})
+
+		for _, cfg := range o.Encryption.Keys() {
+			switch {
+			case cfg.Static() != nil:
+				encryptionProviders[cfg.Static().String()] = struct{}{}
+			case cfg.NodeID() != nil:
+				encryptionProviders[cfg.NodeID().String()] = struct{}{}
+			case cfg.KMS() != nil:
+				encryptionProviders[cfg.KMS().String()] = struct{}{}
+			case cfg.TPM() != nil:
+				encryptionProviders[cfg.TPM().String()] = struct{}{}
+			}
+		}
+
+		mountStatus.TypedSpec().EncryptionProviders = maps.Keys(encryptionProviders)
+	}
 
 	// ignore the error if the MountStatus already exists, as many mounts are silently skipped with the flag SkipIfMounted
 	if err = r.State().V1Alpha2().Resources().Create(context.Background(), mountStatus); err != nil && !state.IsConflictError(err) {

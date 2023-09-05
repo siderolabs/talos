@@ -556,6 +556,15 @@ func (m *MountStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.EncryptionProviders) > 0 {
+		for iNdEx := len(m.EncryptionProviders) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.EncryptionProviders[iNdEx])
+			copy(dAtA[i:], m.EncryptionProviders[iNdEx])
+			i = encodeVarint(dAtA, i, uint64(len(m.EncryptionProviders[iNdEx])))
+			i--
+			dAtA[i] = 0x32
+		}
+	}
 	if m.Encrypted {
 		i--
 		if m.Encrypted {
@@ -1015,6 +1024,12 @@ func (m *MountStatusSpec) SizeVT() (n int) {
 	}
 	if m.Encrypted {
 		n += 2
+	}
+	if len(m.EncryptionProviders) > 0 {
+		for _, s := range m.EncryptionProviders {
+			l = len(s)
+			n += 1 + l + sov(uint64(l))
+		}
 	}
 	n += len(m.unknownFields)
 	return n
@@ -2302,6 +2317,38 @@ func (m *MountStatusSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.Encrypted = bool(v != 0)
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EncryptionProviders", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EncryptionProviders = append(m.EncryptionProviders, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

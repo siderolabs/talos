@@ -19,12 +19,14 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // Data contains a resource, whether it is deleted and the node it came from.
@@ -111,6 +113,18 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 	eventCh := make(chan state.Event)
 
 	if err := source.COSI.Watch(ctx, runtime.NewMachineStatus().Metadata(), eventCh); err != nil {
+		return err
+	}
+
+	if err := source.COSI.Watch(ctx, runtime.NewSecurityStateSpec(v1alpha1.NamespaceName).Metadata(), eventCh); err != nil {
+		return err
+	}
+
+	if err := source.COSI.Watch(ctx, runtime.NewMountStatus(v1alpha1.NamespaceName, constants.StatePartitionLabel).Metadata(), eventCh); err != nil {
+		return err
+	}
+
+	if err := source.COSI.Watch(ctx, runtime.NewMountStatus(v1alpha1.NamespaceName, constants.EphemeralPartitionLabel).Metadata(), eventCh); err != nil {
 		return err
 	}
 

@@ -23,11 +23,12 @@ type MountStatus = typed.Resource[MountStatusSpec, MountStatusExtension]
 //
 //gotagsrewrite:gen
 type MountStatusSpec struct {
-	Source         string   `yaml:"source" protobuf:"1"`
-	Target         string   `yaml:"target" protobuf:"2"`
-	FilesystemType string   `yaml:"filesystemType" protobuf:"3"`
-	Options        []string `yaml:"options" protobuf:"4"`
-	Encrypted      bool     `yaml:"encrypted" protobuf:"5"`
+	Source              string   `yaml:"source" protobuf:"1"`
+	Target              string   `yaml:"target" protobuf:"2"`
+	FilesystemType      string   `yaml:"filesystemType" protobuf:"3"`
+	Options             []string `yaml:"options" protobuf:"4"`
+	Encrypted           bool     `yaml:"encrypted" protobuf:"5"`
+	EncryptionProviders []string `yaml:"encryptionProviders,omitempty" protobuf:"6"`
 }
 
 // NewMountStatus initializes a MountStatus resource.

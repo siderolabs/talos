@@ -1384,6 +1384,16 @@ func (e *EncryptionKey) TPM() config.EncryptionKeyTPM {
 	return e.KeyTPM
 }
 
+// String implements the config.Provider interface.
+func (e *EncryptionKeyNodeID) String() string {
+	return "nodeid"
+}
+
+// String implements the config.Provider interface.
+func (e *EncryptionKeyTPM) String() string {
+	return "tpm"
+}
+
 // Slot implements the config.Provider interface.
 func (e *EncryptionKey) Slot() int {
 	return e.KeySlot
@@ -1394,9 +1404,19 @@ func (e *EncryptionKeyStatic) Key() []byte {
 	return []byte(e.KeyData)
 }
 
+// String implements the config.Provider interface.
+func (e *EncryptionKeyStatic) String() string {
+	return "static"
+}
+
 // Endpoint implements the config.Provider interface.
 func (e *EncryptionKeyKMS) Endpoint() string {
 	return e.KMSEndpoint
+}
+
+// String implements the config.Provider interface.
+func (e *EncryptionKeyKMS) String() string {
+	return "kms"
 }
 
 // Get implements the config.Provider interface.

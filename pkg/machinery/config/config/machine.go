@@ -364,18 +364,24 @@ type EncryptionKey interface {
 // EncryptionKeyStatic ephemeral encryption key.
 type EncryptionKeyStatic interface {
 	Key() []byte
+	String() string
 }
 
 // EncryptionKeyKMS encryption key sealed by KMS.
 type EncryptionKeyKMS interface {
 	Endpoint() string
+	String() string
 }
 
 // EncryptionKeyNodeID deterministically generated encryption key.
-type EncryptionKeyNodeID interface{}
+type EncryptionKeyNodeID interface {
+	String() string
+}
 
 // EncryptionKeyTPM encryption key sealed by TPM.
-type EncryptionKeyTPM interface{}
+type EncryptionKeyTPM interface {
+	String() string
+}
 
 // Encryption defines settings for the partition encryption.
 type Encryption interface {
