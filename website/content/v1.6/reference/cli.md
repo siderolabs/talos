@@ -475,7 +475,8 @@ talosctl config info [flags]
 ### Options
 
 ```
-  -h, --help   help for info
+  -h, --help            help for info
+  -o, --output string   output format (json|yaml|text). Default text. (default "text")
 ```
 
 ### Options inherited from parent commands

@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -24,6 +25,7 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -444,27 +446,38 @@ var configNewCmd = &cobra.Command{
 }
 
 // configNewCmd represents the `config info` command output template.
-var configInfoCmdTemplate = template.Must(template.New("configInfoCmdTemplate").Option("missingkey=error").Parse(strings.TrimSpace(`
+var configInfoCmdTemplate = template.Must(template.New("configInfoCmdTemplate").
+	Funcs(template.FuncMap{"join": strings.Join}).
+	Option("missingkey=error").
+	Parse(strings.TrimSpace(`
 Current context:     {{ .Context }}
-Nodes:               {{ .Nodes }}
-Endpoints:           {{ .Endpoints }}
+Nodes:               {{ if .Nodes }}{{ join .Nodes ", " }}{{ else }}not defined{{ end }}
+Endpoints:           {{ if .Endpoints }}{{ join .Endpoints ", " }}{{ else }}not defined{{ end }}
 {{- if .Roles }}
-Roles:               {{ .Roles }}{{ end }}
+Roles:               {{ join .Roles ", " }}{{ end }}
 {{- if .CertTTL }}
 Certificate expires: {{ .CertTTL }} ({{ .CertNotAfter }}){{ end }}
 `)))
 
-// configInfoCommand implements `config info` command logic.
-func configInfoCommand(config *clientconfig.Config, now time.Time) (string, error) {
+type talosconfigInfo struct {
+	Context      string   `json:"context" yaml:"context"`
+	Nodes        []string `json:"nodes" yaml:"nodes"`
+	Endpoints    []string `json:"endpoints" yaml:"endpoints"`
+	Roles        []string `json:"roles" yaml:"roles"`
+	CertTTL      string   `json:"certTTL" yaml:"certTTL"`
+	CertNotAfter string   `json:"certNotAfter" yaml:"certNotAfter"`
+}
+
+// configInfo returns talosct config info.
+func configInfo(config *clientconfig.Config, now time.Time) (talosconfigInfo, error) {
 	cfgContext, err := getContextData(config)
 	if err != nil {
-		return "", err
+		return talosconfigInfo{}, err
 	}
 
 	var (
 		certTTL, certNotAfter string
 		roles                 role.Set
-		rolesS                string
 	)
 
 	if cfgContext.Crt != "" {
@@ -472,19 +485,19 @@ func configInfoCommand(config *clientconfig.Config, now time.Time) (string, erro
 
 		b, err = base64.StdEncoding.DecodeString(cfgContext.Crt)
 		if err != nil {
-			return "", err
+			return talosconfigInfo{}, err
 		}
 
 		block, _ := pem.Decode(b)
 		if block == nil {
-			return "", fmt.Errorf("error decoding PEM")
+			return talosconfigInfo{}, fmt.Errorf("error decoding PEM")
 		}
 
 		var crt *x509.Certificate
 
 		crt, err = x509.ParseCertificate(block.Bytes)
 		if err != nil {
-			return "", err
+			return talosconfigInfo{}, err
 		}
 
 		roles, _ = role.Parse(crt.Subject.Organization)
@@ -493,31 +506,31 @@ func configInfoCommand(config *clientconfig.Config, now time.Time) (string, erro
 		certNotAfter = crt.NotAfter.UTC().Format("2006-01-02")
 	}
 
-	nodesS := "not defined"
-	if len(cfgContext.Nodes) > 0 {
-		nodesS = strings.Join(cfgContext.Nodes, ", ")
-	}
+	return talosconfigInfo{
+		Context:      config.Context,
+		Nodes:        cfgContext.Nodes,
+		Endpoints:    cfgContext.Endpoints,
+		Roles:        roles.Strings(),
+		CertTTL:      certTTL,
+		CertNotAfter: certNotAfter,
+	}, nil
+}
 
-	endpointsS := "not defined"
-	if len(cfgContext.Endpoints) > 0 {
-		endpointsS = strings.Join(cfgContext.Endpoints, ", ")
-	}
-
-	if s := roles.Strings(); len(s) > 0 {
-		rolesS = strings.Join(s, ", ")
+// configInfoCommand implements `config info` command logic.
+func configInfoCommand(config *clientconfig.Config, now time.Time) (string, error) {
+	info, err := configInfo(config, now)
+	if err != nil {
+		return "", err
 	}
 
 	var res bytes.Buffer
-	err = configInfoCmdTemplate.Execute(&res, map[string]string{
-		"Context":      config.Context,
-		"Nodes":        nodesS,
-		"Endpoints":    endpointsS,
-		"Roles":        rolesS,
-		"CertTTL":      certTTL,
-		"CertNotAfter": certNotAfter,
-	})
+	err = configInfoCmdTemplate.Execute(&res, info)
 
 	return res.String() + "\n", err
+}
+
+var configInfoCmdFlags struct {
+	output string
 }
 
 // configInfoCmd represents the `config info` command.
@@ -531,14 +544,36 @@ var configInfoCmd = &cobra.Command{
 			return err
 		}
 
-		res, err := configInfoCommand(c, time.Now())
-		if err != nil {
-			return err
+		switch configInfoCmdFlags.output {
+		case "text":
+			res, err := configInfoCommand(c, time.Now())
+			if err != nil {
+				return err
+			}
+
+			fmt.Print(res)
+
+			return nil
+		case "json":
+			info, err := configInfo(c, time.Now())
+			if err != nil {
+				return err
+			}
+
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+
+			return enc.Encode(&info)
+		case "yaml":
+			info, err := configInfo(c, time.Now())
+			if err != nil {
+				return err
+			}
+
+			return yaml.NewEncoder(os.Stdout).Encode(&info)
+		default:
+			return fmt.Errorf("unknown output format: %q", configInfoCmdFlags.output)
 		}
-
-		fmt.Print(res)
-
-		return nil
 	},
 }
 
@@ -583,6 +618,8 @@ func init() {
 
 	configNewCmd.Flags().StringSliceVar(&configNewCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
 	configNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", 87600*time.Hour, "certificate TTL")
+
+	configInfoCmd.Flags().StringVarP(&configInfoCmdFlags.output, "output", "o", "text", "output format (json|yaml|text). Default text.")
 
 	addCommand(configCmd)
 }
