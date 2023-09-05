@@ -241,6 +241,6 @@ url = "https://github.com/siderolabs/talos"
 weight = 100
 
 [[menu.main]]
-name = "Sidero Metal"
-url = "https://sidero.dev"
+name = "Sidero Omni"
+url = "https://www.siderolabs.com/platform/saas-for-kubernetes/"
 weight = 99
