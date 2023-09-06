@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -252,22 +253,22 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 	if i.prof.SecureBootEnabled() {
 		artifacts = append(artifacts,
 			filemap.File{
-				ImagePath:  fmt.Sprintf(constants.UKIAssetPath, i.prof.Arch),
+				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.UKIAssetPath, i.prof.Arch), "/"),
 				SourcePath: i.ukiPath,
 			},
 			filemap.File{
-				ImagePath:  fmt.Sprintf(constants.SDBootAssetPath, i.prof.Arch),
+				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.SDBootAssetPath, i.prof.Arch), "/"),
 				SourcePath: i.sdBootPath,
 			},
 		)
 	} else {
 		artifacts = append(artifacts,
 			filemap.File{
-				ImagePath:  fmt.Sprintf(constants.KernelAssetPath, i.prof.Arch),
+				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.KernelAssetPath, i.prof.Arch), "/"),
 				SourcePath: i.prof.Input.Kernel.Path,
 			},
 			filemap.File{
-				ImagePath:  fmt.Sprintf(constants.InitramfsAssetPath, i.prof.Arch),
+				ImagePath:  strings.TrimLeft(fmt.Sprintf(constants.InitramfsAssetPath, i.prof.Arch), "/"),
 				SourcePath: i.initramfsPath,
 			},
 		)
