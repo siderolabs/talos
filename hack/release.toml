@@ -20,8 +20,9 @@ preface = """\
         description="""\
 Kubernetes: v1.28.1
 Linux: 6.1.51
-"""
 
+Talos is now built with Go 1.20.8.
+"""
 
 [make_deps]
 
