@@ -17,6 +17,7 @@ CLOUD_IMAGES_EXTRA_ARGS ?= ""
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0-alpha.0-1-gfa388de
 PKGS ?= v1.6.0-alpha.0-12-g518c441
+PKG_KERNEL ?= ghcr.io/siderolabs/kernel:$(PKGS)
 EXTRAS ?= v1.6.0-alpha.0
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.21
@@ -108,6 +109,7 @@ COMMON_ARGS += --platform=$(PLATFORM)
 COMMON_ARGS += --push=$(PUSH)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
+COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
 COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
 COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
 COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
