@@ -15,9 +15,9 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0-alpha.0
-PKGS ?= v1.6.0-alpha.0-10-gd3d7d29
-EXTRAS ?= v1.5.0
+TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0-alpha.0-1-gfa388de
+PKGS ?= v1.6.0-alpha.0-11-g7d9e60e
+EXTRAS ?= v1.6.0-alpha.0
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.21
 # renovate: datasource=go depName=golang.org/x/tools

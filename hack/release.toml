@@ -30,7 +30,7 @@ Linux: 6.1.51
 CoreDNS: v1.11.1
 Kubernetes: v1.28.1
 
-Talos is built with Go 1.21.
+Talos is built with Go 1.21.1.
 """
 
     [notes.talosctl]
