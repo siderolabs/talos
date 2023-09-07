@@ -701,6 +701,16 @@ RUN set -o pipefail \
     | cpio --reproducible -H newc -o \
     | xz -v -C crc32 -0 -e -T 0 -z \
     > /initramfs.xz
+COPY --from=ghcr.io/siderolabs/intel-ucode:20230808 /rootfs/lib/firmware/intel-ucode /intel-ucode
+RUN mkdir /UCODE \
+    && cd /UCODE \
+    && mkdir -p kernel/x86/microcode \
+    && cat /intel-ucode/* > kernel/x86/microcode/GenuineIntel.bin \
+    && find . | cpio -o -H newc > /ucode.cpio \
+    && mv /initramfs.xz /initramfs.xz.orig \
+    && cat /ucode.cpio /initramfs.xz.orig > /initramfs.xz \
+    && cd / \
+    && rm -rf /UCODE /intel-ucode /ucode.cpio /initramfs.xz.orig
 
 FROM initramfs-archive-${TARGETARCH} AS initramfs-archive
 
