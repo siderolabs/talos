@@ -1,3 +1,90 @@
+## [Talos 1.5.2](https://github.com/siderolabs/talos/releases/tag/v1.5.2) (2023-09-07)
+
+Welcome to the v1.5.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Kubernetes: v1.28.1
+Linux: 6.1.51
+
+Talos is now built with Go 1.20.8.
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`614e4e892`](https://github.com/siderolabs/talos/commit/614e4e8922df9d95243738c484539ae0690a855d) feat: update Go to 1.20.8
+* [`cb8eb9da1`](https://github.com/siderolabs/talos/commit/cb8eb9da19b947c993c04df5246f7f6889874f23) feat: update Linux to 6.1.51
+* [`45c88aedd`](https://github.com/siderolabs/talos/commit/45c88aeddc906811a00965b9a1ce1b3c1c213b03) fix: update kubernetes library for 1.28 upgrade pre-checks
+* [`b8bd8ee43`](https://github.com/siderolabs/talos/commit/b8bd8ee432ecdcafdb6df2b4d876aa64da2f8b54) fix: shorten VLAN link names to fit into the limit of 15 characters
+* [`2a2b64eee`](https://github.com/siderolabs/talos/commit/2a2b64eee5d6d8783cebae39d449440acc4e8b5b) feat: update default Kubernetes to 1.28.1
+* [`e713043ff`](https://github.com/siderolabs/talos/commit/e713043ffd4c8072891303f42799d2fae6404335) feat: set environment variables early in the boot
+* [`4552014b9`](https://github.com/siderolabs/talos/commit/4552014b93d52cba53280f8b7216d8501fa1f655) fix: set correct (1 year) talosconfig expiration
+* [`1804906c7`](https://github.com/siderolabs/talos/commit/1804906c7120e8fd4fc64411faa25cf85b19b8a2) fix: set proper timeouts for KubePrism loadbalancer
+* [`dbfbeb7c9`](https://github.com/siderolabs/talos/commit/dbfbeb7c9843a261eb203832c08eccc4bea15d94) refactor: update NTP spike detector
+* [`6ae5b1289`](https://github.com/siderolabs/talos/commit/6ae5b12891f7bf470dd31a7df7eef15da694ee39) fix: ova contents to be named `disk.*`
+* [`9d6d580f4`](https://github.com/siderolabs/talos/commit/9d6d580f4a2ccfade230d4a96450c86cc6605214) fix: properly calculate overal of node address with subnet filters
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`9d5f16f`](https://github.com/siderolabs/extras/commit/9d5f16ff794c55e04976b3368fe9e7d1f4432d0c) feat: update Go to 1.20.8
+</p>
+</details>
+
+### Changes from siderolabs/go-kubernetes
+<details><summary>1 commit</summary>
+<p>
+
+* [`44e26b3`](https://github.com/siderolabs/go-kubernetes/commit/44e26b35ffe85bc3e310d0b8dafd4db9bbe99db2) feat: update removed feature gates for 1.28
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`7f9d6eb`](https://github.com/siderolabs/pkgs/commit/7f9d6ebfbe0b133caefee0203a0f1e9da488d1ab) feat: update Go to 1.20.8
+* [`99b6ac1`](https://github.com/siderolabs/pkgs/commit/99b6ac136039f2ab035be6aa4898b7cf0c199efe) feat: update Linux to 6.1.51
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`4d58a1b`](https://github.com/siderolabs/tools/commit/4d58a1b2c8bae8500b452fb5cf96acd2f08b53d7) feat: update Go to 1.20.8
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**         v1.5.0 -> v1.5.0-1-g9d5f16f
+* **github.com/siderolabs/go-kubernetes**  v0.2.2 -> v0.2.3
+* **github.com/siderolabs/pkgs**           v1.5.0-7-gf62fa2c -> v1.5.0-9-g7f9d6eb
+* **github.com/siderolabs/tools**          v1.5.0 -> v1.5.0-1-g4d58a1b
+* **k8s.io/api**                           v0.28.0 -> v0.28.1
+* **k8s.io/apiserver**                     v0.28.0 -> v0.28.1
+* **k8s.io/client-go**                     v0.28.0 -> v0.28.1
+* **k8s.io/component-base**                v0.28.0 -> v0.28.1
+* **k8s.io/kubectl**                       v0.28.0 -> v0.28.1
+* **k8s.io/kubelet**                       v0.28.0 -> v0.28.1
+
+Previous release can be found at [v1.5.1](https://github.com/siderolabs/talos/releases/tag/v1.5.1)
+
 ## [Talos 1.5.1](https://github.com/siderolabs/talos/releases/tag/v1.5.1) (2023-08-22)
 
 Welcome to the v1.5.1 release of Talos!
