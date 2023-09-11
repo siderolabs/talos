@@ -59,7 +59,7 @@ require (
 	github.com/google/go-tpm v0.9.0
 	github.com/google/nftables v0.1.0
 	github.com/google/uuid v1.3.1
-	github.com/gopacket/gopacket v1.1.1
+	github.com/gopacket/gopacket v1.1.2-0.20230910070655-0d0aa7b3b2d7
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
