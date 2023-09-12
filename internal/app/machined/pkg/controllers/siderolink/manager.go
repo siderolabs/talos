@@ -181,7 +181,12 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			connCtx, connCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 			defer connCtxCancel()
 
-			conn, connErr := grpc.DialContext(connCtx, parsedEndpoint.Host, grpc.WithTransportCredentials(transportCredentials))
+			conn, connErr := grpc.DialContext(
+				connCtx,
+				parsedEndpoint.Host,
+				grpc.WithTransportCredentials(transportCredentials),
+				grpc.WithSharedWriteBuffer(true),
+			)
 			if connErr != nil {
 				return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", stringEndpoint, connErr)
 			}

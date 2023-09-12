@@ -133,5 +133,10 @@ func (h *KMSKeyHandler) getConn(ctx context.Context) (*grpc.ClientConn, error) {
 		transportCredentials = credentials.NewTLS(&tls.Config{})
 	}
 
-	return grpc.DialContext(ctx, endpoint.Host, grpc.WithTransportCredentials(transportCredentials))
+	return grpc.DialContext(
+		ctx,
+		endpoint.Host,
+		grpc.WithTransportCredentials(transportCredentials),
+		grpc.WithSharedWriteBuffer(true),
+	)
 }

@@ -61,7 +61,7 @@ func (l *Local) GetConnection(ctx context.Context, fullMethodName string) (conte
 		"unix:"+l.socketPath,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
-
+		grpc.WithSharedWriteBuffer(true),
 	)
 
 	return outCtx, l.conn, err

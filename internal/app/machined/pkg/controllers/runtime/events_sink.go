@@ -160,7 +160,12 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 			// establish connection
 			logger.Debug("establishing connection to event sink", zap.String("endpoint", cfg.TypedSpec().Endpoint))
 
-			conn, err = grpc.DialContext(ctx, cfg.TypedSpec().Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			conn, err = grpc.DialContext(
+				ctx,
+				cfg.TypedSpec().Endpoint,
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithSharedWriteBuffer(true),
+			)
 			if err != nil {
 				return fmt.Errorf("error establishing connection to event sink: %w", err)
 			}

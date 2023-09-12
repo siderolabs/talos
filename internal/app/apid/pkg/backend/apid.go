@@ -102,6 +102,7 @@ func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (contex
 			MinConnectTimeout: 20 * time.Second,
 		}),
 		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
+		grpc.WithSharedWriteBuffer(true),
 	)
 
 	return outCtx, a.conn, err

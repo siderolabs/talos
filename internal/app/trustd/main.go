@@ -66,7 +66,11 @@ func trustdMain() error {
 
 	var err error
 
-	runtimeConn, err := grpc.Dial("unix://"+constants.TrustdRuntimeSocketPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	runtimeConn, err := grpc.Dial(
+		"unix://"+constants.TrustdRuntimeSocketPath,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithSharedWriteBuffer(true),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to dial runtime connection: %w", err)
 	}

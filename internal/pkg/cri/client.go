@@ -39,6 +39,7 @@ func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error
 		grpc.WithBackoffMaxDelay(3*time.Second), //nolint:staticcheck
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
 		grpc.WithContextDialer(dialer.DialUnix()),
+		grpc.WithSharedWriteBuffer(true),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to CRI: %w", err)

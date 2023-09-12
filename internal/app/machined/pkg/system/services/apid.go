@@ -99,7 +99,9 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	o.runtimeServer = grpc.NewServer()
+	o.runtimeServer = grpc.NewServer(
+		grpc.SharedWriteBuffer(true),
+	)
 	v1alpha1.RegisterStateServer(o.runtimeServer, server.NewState(resources))
 
 	go o.runtimeServer.Serve(listener) //nolint:errcheck

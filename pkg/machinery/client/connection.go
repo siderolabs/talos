@@ -44,6 +44,7 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcCon
 			// grpc.UseCompressor(gzip.Name),
 			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
 		),
+		grpc.WithSharedWriteBuffer(true),
 	}
 	dialOpts = append(dialOpts, c.options.grpcDialOptions...)
 	dialOpts = append(dialOpts, opts...)

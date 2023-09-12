@@ -35,6 +35,7 @@ func NewConnection(address string, creds credentials.PerRPCCredentials, ca *x509
 	grpcOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithPerRPCCredentials(creds),
+		grpc.WithSharedWriteBuffer(true),
 	}
 
 	conn, err = grpc.Dial(address, grpcOpts...)
