@@ -98,7 +98,7 @@ func upgradeKubeletOnNode(ctx context.Context, cluster UpgradeProvider, options 
 
 	skipWait := false
 
-	err = patchNodeConfig(ctx, cluster, node, upgradeKubeletPatcher(options, kubeletSpec))
+	err = patchNodeConfig(ctx, cluster, node, options.EncoderOpt, upgradeKubeletPatcher(options, kubeletSpec))
 	if err != nil {
 		if errors.Is(err, errUpdateSkipped) {
 			skipWait = true

@@ -9,6 +9,8 @@ import (
 	"io"
 
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
+
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
 const (
@@ -28,6 +30,7 @@ type UpgradeOptions struct {
 	PrePullImages        bool
 	UpgradeKubelet       bool
 	DryRun               bool
+	EncoderOpt           encoder.Option
 
 	controlPlaneNodes []string
 	workerNodes       []string

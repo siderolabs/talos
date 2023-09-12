@@ -2889,6 +2889,8 @@ talosctl upgrade-k8s [flags]
       --pre-pull-images   pre-pull images before upgrade (default true)
       --to string         the Kubernetes control plane version to upgrade to (default "1.28.1")
       --upgrade-kubelet   upgrade kubelet service (default true)
+      --with-docs         patch all machine configs adding the documentation for each field (default true)
+      --with-examples     patch all machine configs with the commented examples (default true)
 ```
 
 ### Options inherited from parent commands

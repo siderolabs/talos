@@ -179,7 +179,7 @@ func upgradeKubeProxy(ctx context.Context, cluster UpgradeProvider, options Upgr
 	for _, node := range options.controlPlaneNodes {
 		options.Log(" > %q: starting update", node)
 
-		if err := patchNodeConfig(ctx, cluster, node, patchKubeProxy(options)); err != nil {
+		if err := patchNodeConfig(ctx, cluster, node, options.EncoderOpt, patchKubeProxy(options)); err != nil {
 			return fmt.Errorf("error updating node %q: %w", node, err)
 		}
 	}
@@ -261,7 +261,7 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 
 	skipConfigWait := false
 
-	err = patchNodeConfig(ctx, cluster, node, upgradeStaticPodPatcher(options, service, initialConfig))
+	err = patchNodeConfig(ctx, cluster, node, options.EncoderOpt, upgradeStaticPodPatcher(options, service, initialConfig))
 	if err != nil {
 		if errors.Is(err, errUpdateSkipped) {
 			skipConfigWait = true

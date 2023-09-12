@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/cluster"
 	k8s "github.com/siderolabs/talos/pkg/cluster/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -34,12 +35,17 @@ var upgradeOptions k8s.UpgradeOptions
 var upgradeK8sCmdFlags struct {
 	FromVersion string
 	ToVersion   string
+
+	withExamples bool
+	withDocs     bool
 }
 
 func init() {
 	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
 	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
+	upgradeK8sCmd.Flags().BoolVarP(&upgradeK8sCmdFlags.withExamples, "with-examples", "", true, "patch all machine configs with the commented examples")
+	upgradeK8sCmd.Flags().BoolVarP(&upgradeK8sCmdFlags.withDocs, "with-docs", "", true, "patch all machine configs adding the documentation for each field")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false, "skip the actual upgrade and show the upgrade plan instead")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.PrePullImages, "pre-pull-images", true, "pre-pull images before upgrade")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.UpgradeKubelet, "upgrade-kubelet", true, "upgrade kubelet service")
@@ -86,6 +92,17 @@ func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 	if err != nil {
 		return fmt.Errorf("error creating upgrade path %w", err)
 	}
+
+	commentsFlags := encoder.CommentsDisabled
+	if upgradeK8sCmdFlags.withDocs {
+		commentsFlags |= encoder.CommentsDocs
+	}
+
+	if upgradeK8sCmdFlags.withExamples {
+		commentsFlags |= encoder.CommentsExamples
+	}
+
+	upgradeOptions.EncoderOpt = encoder.WithComments(commentsFlags)
 
 	return k8s.Upgrade(ctx, &state, upgradeOptions)
 }

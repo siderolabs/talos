@@ -38,6 +38,7 @@ import (
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -699,6 +700,8 @@ func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string, skip
 
 		UpgradeKubelet: !skipKubeletUpgrade,
 		PrePullImages:  true,
+
+		EncoderOpt: encoder.WithComments(encoder.CommentsAll),
 	}
 
 	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, options))
