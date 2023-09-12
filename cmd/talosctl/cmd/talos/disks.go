@@ -62,6 +62,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 			"SIZE",
 			"BUS_PATH",
 			"SUBSYSTEM",
+			"READ_ONLY",
 			"SYSTEM_DISK",
 		}, "\t")
 
@@ -97,6 +98,12 @@ func printDisks(ctx context.Context, c *client.Client) error {
 				args = append(args, node)
 			}
 
+			isReadonly := ""
+
+			if disk.Readonly {
+				isReadonly = "*"
+			}
+
 			isSystemDisk := ""
 
 			if disk.SystemDisk {
@@ -115,6 +122,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 				humanize.Bytes(disk.Size),
 				getWithPlaceholder(disk.BusPath),
 				getWithPlaceholder(disk.Subsystem),
+				isReadonly,
 				isSystemDisk,
 			}...)
 

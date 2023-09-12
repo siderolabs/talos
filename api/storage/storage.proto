@@ -45,6 +45,8 @@ message Disk {
   bool system_disk = 11;
   // Subsystem is the symlink path in the `/sys/block/<dev>/subsystem`.
   string subsystem = 12;
+  // Readonly specifies if the disk is read only.
+  bool readonly = 13;
 }
 
 // DisksResponse represents the response of the `Disks` RPC.

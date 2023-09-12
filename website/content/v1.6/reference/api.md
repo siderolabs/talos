@@ -7357,6 +7357,7 @@ Disk represents a disk.
 | bus_path | [string](#string) |  | BusPath is the bus path of the disk. |
 | system_disk | [bool](#bool) |  | SystemDisk indicates that the disk is used as Talos system disk. |
 | subsystem | [string](#string) |  | Subsystem is the symlink path in the `/sys/block/<dev>/subsystem`. |
+| readonly | [bool](#bool) |  | Readonly specifies if the disk is read only. |
 
 
 
