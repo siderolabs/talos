@@ -19,6 +19,7 @@ kernel/drivers/net/ethernet/broadcom/bnx2x/bnx2x.ko
 kernel/drivers/net/ethernet/broadcom/bnxt/bnxt_en.ko
 kernel/drivers/net/ethernet/cisco/enic/enic.ko
 kernel/drivers/net/ethernet/emulex/benet/be2net.ko
+kernel/drivers/net/ethernet/google/gve/gve.ko
 kernel/drivers/net/ethernet/intel/e1000/e1000.ko
 kernel/drivers/net/ethernet/intel/e1000e/e1000e.ko
 kernel/drivers/net/ethernet/intel/e100.ko

@@ -15,6 +15,7 @@ kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
 kernel/drivers/irqchip/irq-imx-mu-msi.ko
 kernel/drivers/mailbox/bcm-flexrm-mailbox.ko
 kernel/drivers/net/ethernet/atheros/alx/alx.ko
+kernel/drivers/net/ethernet/google/gve/gve.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_en.ko
 kernel/drivers/net/ethernet/mellanox/mlx5/core/mlx5_core.ko
