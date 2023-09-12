@@ -58,6 +58,10 @@ func TestParseMetadata(t *testing.T) {
 
 			st := state.WrapCore(namespaced.NewState(inmem.Build))
 
+			eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
+			eth0.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf7}
+			require.NoError(t, st.Create(context.TODO(), eth0))
+
 			eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
 			eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf8}
 			require.NoError(t, st.Create(context.TODO(), eth1))

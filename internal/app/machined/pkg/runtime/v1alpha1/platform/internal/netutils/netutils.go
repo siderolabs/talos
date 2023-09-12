@@ -7,9 +7,12 @@ package netutils
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-retry/retry"
 
@@ -22,6 +25,36 @@ func Wait(ctx context.Context, r state.State) error {
 	log.Printf("waiting for network to be ready")
 
 	return network.NewReadyCondition(r, network.AddressReady).Wait(ctx)
+}
+
+// WaitInterfaces for the interfaces to be up to interact with platform metadata services.
+func WaitInterfaces(ctx context.Context, r state.State) error {
+	backoff := backoff.NewExponentialBackOff()
+	backoff.MaxInterval = 2 * time.Second
+	backoff.MaxElapsedTime = 30 * time.Second
+
+	for ctx.Err() == nil {
+		hostInterfaces, err := safe.StateListAll[*network.LinkStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing host interfaces: %w", err)
+		}
+
+		if hostInterfaces.Len() != 0 {
+			return nil
+		}
+
+		log.Printf("waiting for network interface appearse...")
+
+		interval := backoff.NextBackOff()
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.After(interval):
+		}
+	}
+
+	return nil
 }
 
 // RetryFetch retries fetching from metadata service.

@@ -270,8 +270,19 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataCon
 	return metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, metadata, err
 }
 
-//nolint:gocyclo
-func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *runtime.PlatformNetworkConfig) error {
+//nolint:gocyclo,cyclop
+func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, st state.State, networkConfig *runtime.PlatformNetworkConfig) error {
+	ctx := context.TODO()
+
+	if err := netutils.WaitInterfaces(ctx, st); err != nil {
+		return err
+	}
+
+	hostInterfaces, err := safe.StateListAll[*network.LinkStatus](ctx, st)
+	if err != nil {
+		return fmt.Errorf("error listing host interfaces: %w", err)
+	}
+
 	for _, ntwrk := range config.Config {
 		switch ntwrk.Type {
 		case "nameserver":
@@ -290,8 +301,29 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 				ConfigLayer: network.ConfigPlatform,
 			})
 		case "physical":
+			name := ntwrk.Interfaces
+
+			if ntwrk.Mac != "" {
+				macAddressMatched := false
+				hostInterfaceIter := hostInterfaces.Iterator()
+
+				for hostInterfaceIter.Next() {
+					macAddress := hostInterfaceIter.Value().TypedSpec().PermanentAddr.String()
+					if macAddress == ntwrk.Mac {
+						name = hostInterfaceIter.Value().Metadata().ID()
+						macAddressMatched = true
+
+						break
+					}
+				}
+
+				if !macAddressMatched {
+					log.Printf("nocloud: no link with matching MAC address %q, defaulted to use name %s instead", ntwrk.Mac, name)
+				}
+			}
+
 			networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
-				Name:        ntwrk.Interfaces,
+				Name:        name,
 				Up:          true,
 				ConfigLayer: network.ConfigPlatform,
 			})
@@ -301,7 +333,7 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 				case "dhcp", "dhcp4":
 					networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
 						Operator:  network.OperatorDHCP4,
-						LinkName:  ntwrk.Interfaces,
+						LinkName:  name,
 						RequireUp: true,
 						DHCP4: network.DHCP4OperatorSpec{
 							RouteMetric: 1024,
@@ -335,7 +367,7 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 					networkConfig.Addresses = append(networkConfig.Addresses,
 						network.AddressSpecSpec{
 							ConfigLayer: network.ConfigPlatform,
-							LinkName:    ntwrk.Interfaces,
+							LinkName:    name,
 							Address:     ipPrefix,
 							Scope:       nethelpers.ScopeGlobal,
 							Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
@@ -352,7 +384,7 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 						route := network.RouteSpecSpec{
 							ConfigLayer: network.ConfigPlatform,
 							Gateway:     gw,
-							OutLinkName: ntwrk.Interfaces,
+							OutLinkName: name,
 							Table:       nethelpers.TableMain,
 							Protocol:    nethelpers.ProtocolStatic,
 							Type:        nethelpers.TypeUnicast,
@@ -371,7 +403,7 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, networkConfig *run
 				case "ipv6_dhcpv6-stateful":
 					networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
 						Operator:  network.OperatorDHCP6,
-						LinkName:  ntwrk.Interfaces,
+						LinkName:  name,
 						RequireUp: true,
 						DHCP6: network.DHCP6OperatorSpec{
 							RouteMetric: 1024,

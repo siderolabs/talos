@@ -52,7 +52,7 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, st sta
 
 	switch unmarshalledNetworkConfig.Version {
 	case 1:
-		if err := n.applyNetworkConfigV1(unmarshalledNetworkConfig, networkConfig); err != nil {
+		if err := n.applyNetworkConfigV1(unmarshalledNetworkConfig, st, networkConfig); err != nil {
 			return nil, err
 		}
 	case 2:
