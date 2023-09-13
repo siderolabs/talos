@@ -525,7 +525,11 @@ image-list: ## Prints a list of all images built by this Makefile with digests.
 
 .PHONY: sign-images
 sign-images: ## Run cosign to sign all images built by this Makefile.
-	@$(MAKE) --quiet image-list | xargs -I{} sh -c 'cosign sign --yes {}'
+	@for image in $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG=$(IMAGE_TAG)); do \
+		echo '==>' $$image; \
+		cosign verify $$image --certificate-identity-regexp '@siderolabs\.com$$' --certificate-oidc-issuer https://accounts.google.com || \
+			cosign sign --yes $$image; \
+	done
 
 .PHONY: reproducibility-test
 reproducibility-test:
