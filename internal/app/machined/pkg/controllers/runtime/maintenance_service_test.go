@@ -104,6 +104,32 @@ func (suite *MaintenanceServiceSuite) TestRunService() {
 
 	suite.Require().NoError(mc.Close())
 
+	// change the listen address
+	oldListenAddress := maintenanceConfig.TypedSpec().ListenAddress
+	maintenanceConfig.TypedSpec().ListenAddress = suite.findListenAddr()
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), maintenanceConfig))
+
+	// wait for the service to be up on the new address
+	suite.AssertWithin(time.Second, 10*time.Millisecond, func() error {
+		var c *tls.Conn
+
+		c, err = tls.Dial("tcp", maintenanceConfig.TypedSpec().ListenAddress,
+			&tls.Config{
+				InsecureSkipVerify: true,
+			},
+		)
+
+		if c != nil {
+			c.Close() //nolint:errcheck
+		}
+
+		return retry.ExpectedError(err)
+	})
+
+	// verify that old address returns connection refused
+	_, err = net.Dial("tcp", oldListenAddress)
+	suite.Require().ErrorContains(err, "connection refused")
+
 	// teardown the maintenance service
 	_, err = suite.State().Teardown(suite.Ctx(), maintenanceRequest.Metadata())
 	suite.Require().NoError(err)
