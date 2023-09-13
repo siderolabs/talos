@@ -86,6 +86,7 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 		listener                   net.Listener
 		lastReachableAddresses     []string
 		lastCertificateFingerprint string
+		lastListenAddress          string
 		usagePrinted               bool
 	)
 
@@ -106,6 +107,7 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 
 			listener = nil
 			lastReachableAddresses = nil
+			lastListenAddress = ""
 		}
 	}
 
@@ -207,11 +209,18 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 			continue
 		}
 
+		if listener != nil && cfg.TypedSpec().ListenAddress != lastListenAddress {
+			// listen address changed, restart the server
+			shutdownServer(ctx)
+		}
+
 		if listener == nil {
 			listener, err = net.Listen("tcp", cfg.TypedSpec().ListenAddress)
 			if err != nil {
 				return fmt.Errorf("failed to listen: %w", err)
 			}
+
+			lastListenAddress = cfg.TypedSpec().ListenAddress
 		}
 
 		if server == nil {
