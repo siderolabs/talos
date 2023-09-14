@@ -20,6 +20,7 @@ routes:
       gateway: fe80::1
       outLinkName: eth0
       table: main
+      priority: 1024
       scope: global
       type: unicast
       flags: ""
