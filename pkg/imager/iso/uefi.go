@@ -36,10 +36,6 @@ type UEFIOptions struct {
 const (
 	// mib is the size of a megabyte.
 	mib = 1024 * 1024
-	// UKIISOSizeAMD64 is the size of the AMD64 UKI ISO.
-	UKIISOSizeAMD64 = 80 * mib
-	// UKIISOSizeARM64 is the size of the ARM64 UKI ISO.
-	UKIISOSizeARM64 = 120 * mib
 )
 
 // CreateUEFI creates an iso using a UKI, systemd-boot.
@@ -54,10 +50,19 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 
 	efiBootImg := filepath.Join(options.ScratchDir, "efiboot.img")
 
-	isoSize := int64(UKIISOSizeAMD64)
+	// initial size
+	isoSize := int64(10 * mib)
 
-	if options.Arch == "arm64" {
-		isoSize = UKIISOSizeARM64
+	for _, path := range []string{
+		options.SDBootPath,
+		options.UKIPath,
+	} {
+		st, err := os.Stat(path)
+		if err != nil {
+			return err
+		}
+
+		isoSize += (st.Size() + mib - 1) / mib * mib
 	}
 
 	if err := utils.CreateRawDisk(printf, efiBootImg, isoSize); err != nil {
