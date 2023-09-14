@@ -163,6 +163,15 @@ aws ec2 authorize-security-group-ingress \
     --cidr 0.0.0.0/0
 ```
 
+If you are using KubeSpan and will be adding workers outside of AWS, you need to allow inbound UDP for the Wireguard port:
+
+```bash
+aws ec2 authorize-security-group-ingress \
+    --region $REGION \
+    --group-name talos-aws-tutorial-sg \
+    --protocol udp --port 51820 --cidr 0.0.0.0/0
+```
+
 ### Create a Load Balancer
 
 ```bash
