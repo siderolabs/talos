@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"gopkg.in/yaml.v3"
 
+	networkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
@@ -75,7 +76,7 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadat
 					Operator: network.OperatorDHCP4,
 					LinkName: ntwrk.Interfaces,
 					DHCP4: network.DHCP4OperatorSpec{
-						RouteMetric: 1024,
+						RouteMetric: networkctrl.DefaultRouteMetric,
 					},
 					ConfigLayer: network.ConfigPlatform,
 				})
@@ -120,6 +121,7 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadat
 					Protocol:    nethelpers.ProtocolStatic,
 					Type:        nethelpers.TypeUnicast,
 					Family:      nethelpers.FamilyInet6,
+					Priority:    networkctrl.DefaultRouteMetric,
 				}
 
 				route.Normalize()
