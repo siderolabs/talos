@@ -6,7 +6,6 @@
 package extensions
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -16,19 +15,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/freddierice/go-losetup/v2"
 	"github.com/u-root/u-root/pkg/cpio"
 	"github.com/ulikunitz/xz"
-	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
 // ProvidesKernelModules returns true if the extension provides kernel modules.
 func (ext *Extension) ProvidesKernelModules() bool {
-	if _, err := os.Stat(filepath.Join(ext.rootfsPath, constants.DefaultKernelModulesPath)); os.IsNotExist(err) {
+	if _, err := os.Stat(ext.KernelModuleDirectory()); os.IsNotExist(err) {
 		return false
 	}
 
@@ -37,29 +33,30 @@ func (ext *Extension) ProvidesKernelModules() bool {
 
 // KernelModuleDirectory returns the path to the kernel modules directory.
 func (ext *Extension) KernelModuleDirectory() string {
-	return filepath.Join(ext.rootfsPath, constants.DefaultKernelModulesPath)
+	return filepath.Join(ext.rootfsPath, constants.KernelModulesPath)
 }
 
 // GenerateKernelModuleDependencyTreeExtension generates a kernel module dependency tree extension.
-// nolint:gocyclo
-func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules []string, arch string) (*Extension, error) {
-	log.Println("preparing to run depmod to generate kernel modules dependency tree")
+//
+//nolint:gocyclo
+func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules []string, initramfsPath string, printFunc func(format string, v ...any)) (*Extension, error) {
+	printFunc("preparing to run depmod to generate kernel modules dependency tree")
 
 	tempDir, err := os.MkdirTemp("", "ext-modules")
 	if err != nil {
 		return nil, err
 	}
 
-	defer logErr(func() error {
+	defer logErr("removing temporary directory", func() error {
 		return os.RemoveAll(tempDir)
 	})
 
-	initramfsxz, err := os.Open(fmt.Sprintf(constants.InitramfsAssetPath, arch))
+	initramfsxz, err := os.Open(initramfsPath)
 	if err != nil {
 		return nil, err
 	}
 
-	defer logErr(func() error {
+	defer logErr("closing initramfs", func() error {
 		return initramfsxz.Close()
 	})
 
@@ -68,74 +65,44 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 		return nil, err
 	}
 
-	var buff bytes.Buffer
-
-	if _, err = io.Copy(&buff, r); err != nil {
-		return nil, err
-	}
-
 	tempRootfsFile := filepath.Join(tempDir, constants.RootfsAsset)
 
-	if err = extractRootfsFromInitramfs(buff, tempRootfsFile); err != nil {
-		return nil, err
+	if err = extractRootfsFromInitramfs(r, tempRootfsFile); err != nil {
+		return nil, fmt.Errorf("error extacting cpio: %w", err)
 	}
 
-	// now we are ready to mount rootfs.sqsh
-	// create a mount point under tempDir
-	rootfsMountPath := filepath.Join(tempDir, "rootfs-mnt")
+	// extract /lib/modules from the squashfs under a temporary root to run depmod on it
+	tempLibModules := filepath.Join(tempDir, "modules")
 
-	// create the loopback device from the squashfs file
-	dev, err := losetup.Attach(tempRootfsFile, 0, true)
+	if err = unsquash(tempRootfsFile, tempLibModules, constants.KernelModulesPath); err != nil {
+		return nil, fmt.Errorf("error running unsquashfs: %w", err)
+	}
+
+	rootfsKernelModulesPath := filepath.Join(tempLibModules, constants.KernelModulesPath)
+
+	// under the /lib/modules there should be the only path which is the kernel version
+	contents, err := os.ReadDir(rootfsKernelModulesPath)
 	if err != nil {
 		return nil, err
 	}
 
-	defer logErr(func() error {
-		if err = dev.Detach(); err != nil {
-			return err
+	if len(contents) != 1 || !contents[0].IsDir() {
+		return nil, fmt.Errorf("invalid kernel modules path: %s", rootfsKernelModulesPath)
+	}
+
+	kernelVersionPath := contents[0].Name()
+
+	// copy to the same location modules from all extensions
+	for _, path := range extensionsPathWithKernelModules {
+		if err = copyFiles(filepath.Join(path, kernelVersionPath), filepath.Join(rootfsKernelModulesPath, kernelVersionPath)); err != nil {
+			return nil, fmt.Errorf("copying kernel modules from %s failed: %w", path, err)
 		}
-
-		return dev.Remove()
-	})
-
-	// setup a temporary mount point for the squashfs file and mount it
-	m := mount.NewMountPoint(dev.Path(), rootfsMountPath, "squashfs", unix.MS_RDONLY|unix.MS_I_VERSION, "", mount.WithFlags(mount.ReadOnly|mount.Shared))
-
-	if err = m.Mount(); err != nil {
-		return nil, err
 	}
 
-	defer logErr(func() error {
-		return m.Unmount()
-	})
+	printFunc("running depmod to generate kernel modules dependency tree")
 
-	// create an overlayfs which contains the rootfs squashfs mount as the base
-	// and the extension modules as subsequent lower directories
-	overlays := mount.NewMountPoints()
-	// writable overlayfs mount inside a container required a tmpfs mount
-	overlays.Set("overlays-tmpfs", mount.NewMountPoint("tmpfs", constants.VarSystemOverlaysPath, "tmpfs", unix.MS_I_VERSION, ""))
-
-	rootfsKernelModulesPath := filepath.Join(rootfsMountPath, constants.DefaultKernelModulesPath)
-
-	// append the rootfs mount point
-	extensionsPathWithKernelModules = append(extensionsPathWithKernelModules, rootfsKernelModulesPath)
-
-	// create the overlayfs mount point as read write
-	mp := mount.NewMountPoint(strings.Join(extensionsPathWithKernelModules, ":"), rootfsKernelModulesPath, "", unix.MS_I_VERSION, "", mount.WithFlags(mount.Overlay|mount.Shared))
-	overlays.Set("overlays-mnt", mp)
-
-	if err = mount.Mount(overlays); err != nil {
-		return nil, err
-	}
-
-	defer logErr(func() error {
-		return mount.Unmount(overlays)
-	})
-
-	log.Println("running depmod to generate kernel modules dependency tree")
-
-	if err = depmod(mp.Target()); err != nil {
-		return nil, err
+	if err = depmod(tempLibModules, kernelVersionPath); err != nil {
+		return nil, fmt.Errorf("error running depmod: %w", err)
 	}
 
 	// we want this temp directory to be present until the extension is compressed later on, so not removing it here
@@ -149,22 +116,22 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 		return nil, err
 	}
 
-	kernelModulesDepenencyTreeDirectory := filepath.Join(kernelModulesDependencyTreeStagingDir, constants.DefaultKernelModulesPath)
+	kernelModulesDepenencyTreeDirectory := filepath.Join(kernelModulesDependencyTreeStagingDir, constants.KernelModulesPath, kernelVersionPath)
 
 	if err := os.MkdirAll(kernelModulesDepenencyTreeDirectory, 0o755); err != nil {
 		return nil, err
 	}
 
-	if err := findAndMoveKernelModulesDepFiles(kernelModulesDepenencyTreeDirectory, mp.Target()); err != nil {
+	if err := findAndMoveKernelModulesDepFiles(kernelModulesDepenencyTreeDirectory, filepath.Join(rootfsKernelModulesPath, kernelVersionPath)); err != nil {
 		return nil, err
 	}
 
 	kernelModulesDepTreeExtension := newExtension(kernelModulesDependencyTreeStagingDir, "modules.dep")
 	kernelModulesDepTreeExtension.Manifest = extensions.Manifest{
-		Version: constants.DefaultKernelVersion,
+		Version: kernelVersionPath,
 		Metadata: extensions.Metadata{
 			Name:        "modules.dep",
-			Version:     constants.DefaultKernelVersion,
+			Version:     kernelVersionPath,
 			Author:      "Talos Machinery",
 			Description: "Combined modules.dep for all extensions",
 		},
@@ -173,15 +140,15 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 	return kernelModulesDepTreeExtension, nil
 }
 
-func logErr(f func() error) {
+func logErr(msg string, f func() error) {
 	// if file is already closed, ignore the error
 	if err := f(); err != nil && !errors.Is(err, os.ErrClosed) {
-		log.Println(err)
+		log.Println(msg, err)
 	}
 }
 
-func extractRootfsFromInitramfs(input bytes.Buffer, rootfsFilePath string) error {
-	recReader := cpio.Newc.Reader(bytes.NewReader(input.Bytes()))
+func extractRootfsFromInitramfs(r io.Reader, rootfsFilePath string) error {
+	recReader := cpio.Newc.Reader(&discarder{r: r})
 
 	return cpio.ForEachRecord(recReader, func(r cpio.Record) error {
 		if r.Name != constants.RootfsAsset {
@@ -194,7 +161,7 @@ func extractRootfsFromInitramfs(input bytes.Buffer, rootfsFilePath string) error
 			return err
 		}
 
-		defer logErr(func() error {
+		defer logErr("closing rootfs", func() error {
 			return f.Close()
 		})
 
@@ -207,10 +174,17 @@ func extractRootfsFromInitramfs(input bytes.Buffer, rootfsFilePath string) error
 	})
 }
 
-func depmod(kernelModulesPath string) error {
-	baseDir := strings.TrimSuffix(kernelModulesPath, constants.DefaultKernelModulesPath)
+func unsquash(squashfsPath, dest, path string) error {
+	cmd := exec.Command("unsquashfs", "-d", dest, "-f", "-n", squashfsPath, path)
+	cmd.Stderr = os.Stderr
 
-	cmd := exec.Command("depmod", "--all", "--basedir", baseDir, "--config", "/etc/modules.d/10-extra-modules.conf", constants.DefaultKernelVersion)
+	return cmd.Run()
+}
+
+func depmod(baseDir, kernelVersionPath string) error {
+	baseDir = strings.TrimSuffix(baseDir, constants.KernelModulesPath)
+
+	cmd := exec.Command("depmod", "--all", "--basedir", baseDir, "--config", "/etc/modules.d/10-extra-modules.conf", kernelVersionPath)
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()

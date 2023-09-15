@@ -15,8 +15,8 @@ const (
 	// DefaultKernelVersion is the default Linux kernel version.
 	DefaultKernelVersion = "6.1.51-talos"
 
-	// DefaultKernelModulesPath is the default path to the kernel modules.
-	DefaultKernelModulesPath = "/lib/modules" + "/" + DefaultKernelVersion
+	// KernelModulesPath is the default path to the kernel modules without the kernel version.
+	KernelModulesPath = "/lib/modules"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
