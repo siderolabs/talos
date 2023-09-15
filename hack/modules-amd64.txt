@@ -7,11 +7,14 @@ kernel/crypto/async_tx/async_raid6_recov.ko
 kernel/crypto/async_tx/async_tx.ko
 kernel/crypto/async_tx/async_xor.ko
 kernel/crypto/xor.ko
+kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
+kernel/drivers/md/dm-bio-prison.ko
 kernel/drivers/md/dm-multipath.ko
 kernel/drivers/md/dm-raid.ko
 kernel/drivers/md/dm-round-robin.ko
+kernel/drivers/md/dm-thin-pool.ko
+kernel/drivers/md/persistent-data/dm-persistent-data.ko
 kernel/drivers/md/raid456.ko
-kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
 kernel/drivers/net/ethernet/aquantia/atlantic/atlantic.ko
 kernel/drivers/net/ethernet/atheros/alx/alx.ko
 kernel/drivers/net/ethernet/broadcom/bnx2.ko
@@ -20,9 +23,9 @@ kernel/drivers/net/ethernet/broadcom/bnxt/bnxt_en.ko
 kernel/drivers/net/ethernet/cisco/enic/enic.ko
 kernel/drivers/net/ethernet/emulex/benet/be2net.ko
 kernel/drivers/net/ethernet/google/gve/gve.ko
+kernel/drivers/net/ethernet/intel/e100.ko
 kernel/drivers/net/ethernet/intel/e1000/e1000.ko
 kernel/drivers/net/ethernet/intel/e1000e/e1000e.ko
-kernel/drivers/net/ethernet/intel/e100.ko
 kernel/drivers/net/ethernet/intel/i40e/i40e.ko
 kernel/drivers/net/ethernet/intel/iavf/iavf.ko
 kernel/drivers/net/ethernet/intel/ice/ice.ko
@@ -58,9 +61,9 @@ kernel/drivers/scsi/vmw_pvscsi.ko
 kernel/drivers/virtio/virtio_balloon.ko
 kernel/drivers/virtio/virtio_input.ko
 kernel/drivers/virtio/virtio_mmio.ko
-kernel/drivers/virtio/virtio_pci.ko
 kernel/drivers/virtio/virtio_pci_legacy_dev.ko
 kernel/drivers/virtio/virtio_pci_modern_dev.ko
+kernel/drivers/virtio/virtio_pci.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko
