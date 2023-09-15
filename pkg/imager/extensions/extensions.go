@@ -49,7 +49,7 @@ func (builder *Builder) Build() error {
 	extensionsPathWithKernelModules := findExtensionsWithKernelModules(extensionsList)
 
 	if len(extensionsPathWithKernelModules) > 0 {
-		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules, builder.Arch, builder.Printf)
+		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules, builder.InitramfsPath, builder.Printf)
 		if genErr != nil {
 			return genErr
 		}

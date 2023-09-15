@@ -41,19 +41,31 @@ func (ext *Extension) Compress(squashPath, initramfsPath string) (string, error)
 }
 
 func moveFiles(srcPath, dstPath string) error {
+	return handleFilesOp(srcPath, dstPath, os.Remove)
+}
+
+func copyFiles(srcPath, dstPath string) error {
+	return handleFilesOp(srcPath, dstPath, nil)
+}
+
+func handleFilesOp(srcPath, dstPath string, op func(string) error) error {
 	st, err := os.Stat(srcPath)
 	if err != nil {
 		return err
 	}
 
 	if st.IsDir() {
-		return moveDirectory(st, srcPath, dstPath)
+		return handleDirectoryOp(st, srcPath, dstPath, op)
 	}
 
-	return moveFile(st, srcPath, dstPath)
+	return handleFileOp(st, srcPath, dstPath, op)
 }
 
 func moveFile(st fs.FileInfo, srcPath, dstPath string) error {
+	return handleFileOp(st, srcPath, dstPath, os.Remove)
+}
+
+func handleFileOp(st fs.FileInfo, srcPath, dstPath string, op func(string) error) error {
 	src, err := os.Open(srcPath)
 	if err != nil {
 		return err
@@ -73,10 +85,14 @@ func moveFile(st fs.FileInfo, srcPath, dstPath string) error {
 		return err
 	}
 
-	return os.Remove(srcPath)
+	if op != nil {
+		return op(srcPath)
+	}
+
+	return nil
 }
 
-func moveDirectory(st fs.FileInfo, srcPath, dstPath string) error {
+func handleDirectoryOp(st fs.FileInfo, srcPath, dstPath string, op func(string) error) error {
 	if err := os.MkdirAll(dstPath, st.Mode().Perm()); err != nil {
 		return err
 	}
@@ -87,10 +103,14 @@ func moveDirectory(st fs.FileInfo, srcPath, dstPath string) error {
 	}
 
 	for _, item := range contents {
-		if err = moveFiles(filepath.Join(srcPath, item.Name()), filepath.Join(dstPath, item.Name())); err != nil {
+		if err = handleFilesOp(filepath.Join(srcPath, item.Name()), filepath.Join(dstPath, item.Name()), op); err != nil {
 			return err
 		}
 	}
 
-	return os.Remove(srcPath)
+	if op != nil {
+		return op(srcPath)
+	}
+
+	return nil
 }
