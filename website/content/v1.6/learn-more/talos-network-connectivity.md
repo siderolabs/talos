@@ -32,14 +32,14 @@ This is not always possible, however, so this page lays out the minimal network 
       <td class="border px-4 py-2">Inbound</td>
       <td class="border px-4 py-2">50000*</td>
     <td class="border px-4 py-2"><a href="../../learn-more/components/#apid">apid</a></td>
-    <td class="border px-4 py-2">talosctl</td>
+    <td class="border px-4 py-2">talosctl, control plane nodes</td>
     </tr>
     <tr>
       <td class="border px-4 py-2">TCP</td>
       <td class="border px-4 py-2">Inbound</td>
       <td class="border px-4 py-2">50001*</td>
     <td class="border px-4 py-2"><a href="../../learn-more/components/#trustd">trustd</a></td>
-    <td class="border px-4 py-2">Control plane nodes, worker nodes</td>
+    <td class="border px-4 py-2">Worker nodes</td>
     </tr>
   </tbody>
 </table>
