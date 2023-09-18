@@ -83,7 +83,7 @@ The App registration only needs permissions to the Compute Gallery and the Stora
   - Select the `SideroLabs` Compute Gallery
   - Select Access control (IAM)
   - Select Add role assignment
-  - Select the **Contributer** role
+  - Select the **Contributor** role
 - Storage Account:
   - Select the `siderolabs` Storage Account
   - Select Access control (IAM)
