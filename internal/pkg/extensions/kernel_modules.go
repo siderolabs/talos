@@ -39,7 +39,7 @@ func (ext *Extension) KernelModuleDirectory() string {
 // GenerateKernelModuleDependencyTreeExtension generates a kernel module dependency tree extension.
 //
 //nolint:gocyclo
-func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules []string, initramfsPath string, printFunc func(format string, v ...any)) (*Extension, error) {
+func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules []string, initramfsPath, extensionTreePath string, printFunc func(format string, v ...any)) (*Extension, error) {
 	printFunc("preparing to run depmod to generate kernel modules dependency tree")
 
 	tempDir, err := os.MkdirTemp("", "ext-modules")
@@ -93,7 +93,7 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 	kernelVersionPath := contents[0].Name()
 
 	// copy to the same location modules from all extensions
-	for _, path := range extensionsPathWithKernelModules {
+	for _, path := range extensionPathsWithKernelModules {
 		if err = copyFiles(filepath.Join(path, kernelVersionPath), filepath.Join(rootfsKernelModulesPath, kernelVersionPath)); err != nil {
 			return nil, fmt.Errorf("copying kernel modules from %s failed: %w", path, err)
 		}
@@ -105,14 +105,11 @@ func GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules
 		return nil, fmt.Errorf("error running depmod: %w", err)
 	}
 
-	// we want this temp directory to be present until the extension is compressed later on, so not removing it here
-	kernelModulesDependencyTreeStagingDir, err := os.MkdirTemp("", "module-deps")
-	if err != nil {
-		return nil, err
-	}
+	// we want the extension to survive this function, so not storing in a temporary directory
+	kernelModulesDependencyTreeStagingDir := filepath.Join(extensionTreePath, "modules.dep")
 
 	// we want to make sure the root directory has the right permissions.
-	if err := os.Chmod(kernelModulesDependencyTreeStagingDir, 0o755); err != nil {
+	if err := os.MkdirAll(kernelModulesDependencyTreeStagingDir, 0o755); err != nil {
 		return nil, err
 	}
 

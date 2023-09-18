@@ -21,7 +21,7 @@ type Builder struct {
 	InitramfsPath string
 	// Architecture of the initramfs.
 	Arch string
-	// ExtensionTreePath is a path to the extracted exension tree.
+	// ExtensionTreePath is a path to the extracted extension tree.
 	ExtensionTreePath string
 	// Printf is used for logging.
 	Printf func(format string, v ...any)
@@ -46,10 +46,10 @@ func (builder *Builder) Build() error {
 		return err
 	}
 
-	extensionsPathWithKernelModules := findExtensionsWithKernelModules(extensionsList)
+	extensionPathsWithKernelModules := findExtensionsWithKernelModules(extensionsList)
 
-	if len(extensionsPathWithKernelModules) > 0 {
-		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionsPathWithKernelModules, builder.InitramfsPath, builder.Printf)
+	if len(extensionPathsWithKernelModules) > 0 {
+		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules, builder.InitramfsPath, builder.ExtensionTreePath, builder.Printf)
 		if genErr != nil {
 			return genErr
 		}

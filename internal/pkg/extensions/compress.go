@@ -15,6 +15,20 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
+// List of globs and destinations for early CPU ucode.
+//
+// See https://www.kernel.org/doc/html/v6.1/x86/microcode.html#early-load-microcode.
+//
+// We need to repackage the ucode blobs matching the glob into the destination concatenating
+// them all together.
+// The resulting blobs should be placed into uncompressed cpio archive prepended to the normal (compressed) initramfs.
+var earlyCPUUcode = []struct {
+	glob, dst string
+}{
+	{"/lib/firmware/intel-ucode/*", "kernel/x86/microcode/GenuineIntel.bin"},
+	{"/lib/firmware/amd-ucode/microcode_amd*.bin", "kernel/x86/microcode/AuthenticAMD.bin"},
+}
+
 // List of paths to be moved to the future initramfs.
 var initramfsPaths = []string{
 	constants.FirmwarePath,
@@ -23,7 +37,12 @@ var initramfsPaths = []string{
 // Compress builds the squashfs image in the specified destination folder.
 //
 // Components which should be placed to the initramfs are moved to the initramfsPath.
+// Ucode components are moved into a separate designated location.
 func (ext *Extension) Compress(squashPath, initramfsPath string) (string, error) {
+	if err := ext.handleUcode(initramfsPath); err != nil {
+		return "", err
+	}
+
 	for _, path := range initramfsPaths {
 		if _, err := os.Stat(filepath.Join(ext.rootfsPath, path)); err == nil {
 			if err = moveFiles(filepath.Join(ext.rootfsPath, path), filepath.Join(initramfsPath, path)); err != nil {
@@ -38,6 +57,62 @@ func (ext *Extension) Compress(squashPath, initramfsPath string) (string, error)
 	cmd.Stderr = os.Stderr
 
 	return squashPath, cmd.Run()
+}
+
+func appendBlob(dst io.Writer, srcPath string) error {
+	src, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+
+	defer src.Close() //nolint:errcheck
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return err
+	}
+
+	if err = src.Close(); err != nil {
+		return err
+	}
+
+	return os.Remove(srcPath)
+}
+
+func (ext *Extension) handleUcode(initramfsPath string) error {
+	for _, ucode := range earlyCPUUcode {
+		matches, err := filepath.Glob(filepath.Join(ext.rootfsPath, ucode.glob))
+		if err != nil {
+			return err
+		}
+
+		if len(matches) == 0 {
+			continue
+		}
+
+		// if some ucode is found, append it to the blob in the initramfs
+		if err = os.MkdirAll(filepath.Dir(filepath.Join(initramfsPath, ucode.dst)), 0o755); err != nil {
+			return err
+		}
+
+		dst, err := os.OpenFile(filepath.Join(initramfsPath, ucode.dst), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
+		if err != nil {
+			return err
+		}
+
+		defer dst.Close() //nolint:errcheck
+
+		for _, match := range matches {
+			if err = appendBlob(dst, match); err != nil {
+				return err
+			}
+		}
+
+		if err = dst.Close(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func moveFiles(srcPath, dstPath string) error {
