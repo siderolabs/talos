@@ -5,20 +5,42 @@
 package extensions
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 )
 
+// rebuildInitramfs rebuilds finalized initramfs with extensions.
+//
+// If uncompressedListing is not empty, contents will be prepended to the initramfs uncompressed.
+// Contents from compressedListing will be appended to the initramfs compressed (xz) as a second block.
+// Original initramfs.xz contents will stay without changes.
 func (builder *Builder) rebuildInitramfs(tempDir string) error {
+	compressedListing, uncompressedListing, err := buildInitramfsContents(tempDir)
+	if err != nil {
+		return err
+	}
+
+	if len(uncompressedListing) > 0 {
+		if err = builder.prependUncompressedInitramfs(tempDir, uncompressedListing); err != nil {
+			return fmt.Errorf("error prepending uncompressed initramfs: %w", err)
+		}
+	}
+
+	if err = builder.appendCompressedInitramfs(tempDir, compressedListing); err != nil {
+		return fmt.Errorf("error appending compressed initramfs: %w", err)
+	}
+
+	return nil
+}
+
+func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedListing []byte) error {
 	builder.Printf("creating system extensions initramfs archive and compressing it")
 
 	// the code below runs the equivalent of:
 	//   find $tempDir -print | cpio -H newc --create --reproducible | xz -v -C crc32 -0 -e -T 0 -z
-
-	listing, err := buildContents(tempDir)
-	if err != nil {
-		return err
-	}
 
 	pipeR, pipeW, err := os.Pipe()
 	if err != nil {
@@ -29,9 +51,9 @@ func (builder *Builder) rebuildInitramfs(tempDir string) error {
 	defer pipeW.Close() //nolint:errcheck
 
 	// build cpio image which contains .sqsh images and extensions.yaml
-	cmd1 := exec.Command("cpio", "-H", "newc", "--create", "--reproducible", "--quiet")
+	cmd1 := exec.Command("cpio", "-H", "newc", "--create", "--reproducible", "--quiet", "-R", "+0:+0")
 	cmd1.Dir = tempDir
-	cmd1.Stdin = listing
+	cmd1.Stdin = bytes.NewReader(compressedListing)
 	cmd1.Stdout = pipeW
 	cmd1.Stderr = os.Stderr
 
@@ -82,4 +104,58 @@ func (builder *Builder) rebuildInitramfs(tempDir string) error {
 	}
 
 	return destination.Sync()
+}
+
+func (builder *Builder) prependUncompressedInitramfs(tempDir string, uncompressedListing []byte) error {
+	builder.Printf("creating uncompressed initramfs archive")
+
+	// the code below runs the equivalent of:
+	//   mv initramfs.xz initramfs.xz-old
+	//   find $tempDir -print | cpio -H newc --create --reproducible > initramfs.xz
+	//   cat initramfs.xz-old >> initramfs.xz
+	//   rm initramfs.xz-old
+
+	initramfsOld := builder.InitramfsPath + "-old"
+
+	if err := os.Rename(builder.InitramfsPath, initramfsOld); err != nil {
+		return err
+	}
+
+	destination, err := os.OpenFile(builder.InitramfsPath, os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+
+	defer destination.Close() //nolint:errcheck
+
+	cmd := exec.Command("cpio", "-H", "newc", "--create", "--reproducible", "--quiet", "-R", "+0:+0")
+	cmd.Dir = tempDir
+	cmd.Stdin = bytes.NewReader(uncompressedListing)
+	cmd.Stdout = destination
+	cmd.Stderr = os.Stderr
+
+	if err = cmd.Run(); err != nil {
+		return err
+	}
+
+	old, err := os.Open(initramfsOld)
+	if err != nil {
+		return err
+	}
+
+	defer old.Close() //nolint:errcheck
+
+	if _, err = io.Copy(destination, old); err != nil {
+		return err
+	}
+
+	if err = destination.Close(); err != nil {
+		return err
+	}
+
+	if err = old.Close(); err != nil {
+		return err
+	}
+
+	return os.Remove(initramfsOld)
 }

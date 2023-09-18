@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/siderolabs/talos/internal/pkg/extensions"
 )
@@ -26,19 +27,28 @@ func findExtensionsWithKernelModules(extensions []*extensions.Extension) []strin
 	return modulesPath
 }
 
-func buildContents(path string) (io.Reader, error) {
-	var listing bytes.Buffer
+// buildInitramfsContents builds a list of files to be included into initramfs directly, bypassing extensions squashfs.
+//
+// Two listings are returned:
+// - uncompressedListing is a list of files that should be included into initramfs uncompressed prepended as a first section
+// - compressedListing is a list of files that should be included into initramfs compressed.
+func buildInitramfsContents(path string) (compressedListing, uncompressedListing []byte, err error) {
+	var compressedBuffer, uncompressedBuffer bytes.Buffer
 
-	if err := buildContentsRecursive(path, "", &listing); err != nil {
-		return nil, err
+	if err := buildInitramfsContentsRecursive(path, "", &compressedBuffer, &uncompressedBuffer); err != nil {
+		return nil, nil, err
 	}
 
-	return &listing, nil
+	return compressedBuffer.Bytes(), uncompressedBuffer.Bytes(), nil
 }
 
-func buildContentsRecursive(basePath, path string, w io.Writer) error {
+func buildInitramfsContentsRecursive(basePath, path string, compressedW, uncompressedW io.Writer) error {
 	if path != "" {
-		fmt.Fprintf(w, "%s\n", path)
+		if path == "kernel" || strings.HasPrefix(path, "kernel/") {
+			fmt.Fprintf(uncompressedW, "%s\n", path)
+		} else {
+			fmt.Fprintf(compressedW, "%s\n", path)
+		}
 	}
 
 	st, err := os.Stat(filepath.Join(basePath, path))
@@ -56,7 +66,7 @@ func buildContentsRecursive(basePath, path string, w io.Writer) error {
 	}
 
 	for _, item := range contents {
-		if err = buildContentsRecursive(basePath, filepath.Join(path, item.Name()), w); err != nil {
+		if err = buildInitramfsContentsRecursive(basePath, filepath.Join(path, item.Name()), compressedW, uncompressedW); err != nil {
 			return err
 		}
 	}
