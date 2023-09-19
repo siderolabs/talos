@@ -4,7 +4,7 @@
         "path": "/machine/install/extensions",
         "value": [
             {
-                "image": map(select(. | contains("nvidia") or contains("tailscale") | not)) | .[]
+                "image": map(select(. | contains("nvidia") or contains("tailscale") or contains("xe-guest-utilities") | not)) | .[]
             }
         ]
     },
@@ -30,6 +30,9 @@
                     "name": "ax88796b"
                 },
                 {
+                    "name": "binfmt_misc"
+                },
+                {
                     "name": "btrfs"
                 },
                 {
@@ -46,6 +49,18 @@
                 },
                 {
                     "name": "cdc_wdm"
+                },
+                {
+                    "name": "cxgb"
+                },
+                {
+                    "name": "cxgb3"
+                },
+                {
+                    "name": "cxgb4"
+                },
+                {
+                    "name": "cxgb4vf"
                 },
                 {
                     "name": "drbd"
