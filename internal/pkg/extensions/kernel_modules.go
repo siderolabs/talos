@@ -39,7 +39,7 @@ func (ext *Extension) KernelModuleDirectory() string {
 // GenerateKernelModuleDependencyTreeExtension generates a kernel module dependency tree extension.
 //
 //nolint:gocyclo
-func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules []string, initramfsPath, extensionTreePath string, printFunc func(format string, v ...any)) (*Extension, error) {
+func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules []string, initramfsPath, scratchPath string, printFunc func(format string, v ...any)) (*Extension, error) {
 	printFunc("preparing to run depmod to generate kernel modules dependency tree")
 
 	tempDir, err := os.MkdirTemp("", "ext-modules")
@@ -106,7 +106,7 @@ func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules
 	}
 
 	// we want the extension to survive this function, so not storing in a temporary directory
-	kernelModulesDependencyTreeStagingDir := filepath.Join(extensionTreePath, "modules.dep")
+	kernelModulesDependencyTreeStagingDir := filepath.Join(scratchPath, "modules.dep")
 
 	// we want to make sure the root directory has the right permissions.
 	if err := os.MkdirAll(kernelModulesDependencyTreeStagingDir, 0o755); err != nil {

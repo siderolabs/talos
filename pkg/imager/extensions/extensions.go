@@ -28,6 +28,8 @@ type Builder struct {
 }
 
 // Build rebuilds the initramfs.xz with extensions.
+//
+//nolint:gocyclo
 func (builder *Builder) Build() error {
 	extensionsList, err := extensions.List(builder.ExtensionTreePath)
 	if err != nil {
@@ -49,7 +51,17 @@ func (builder *Builder) Build() error {
 	extensionPathsWithKernelModules := findExtensionsWithKernelModules(extensionsList)
 
 	if len(extensionPathsWithKernelModules) > 0 {
-		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules, builder.InitramfsPath, builder.ExtensionTreePath, builder.Printf)
+		var scratchPath string
+
+		// create a temporary directory to store 'modules.dep' extension
+		scratchPath, err = os.MkdirTemp("", "ext-modules")
+		if err != nil {
+			return err
+		}
+
+		defer os.RemoveAll(scratchPath) //nolint:errcheck
+
+		kernelModuleDepExtension, genErr := extensions.GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules, builder.InitramfsPath, scratchPath, builder.Printf)
 		if genErr != nil {
 			return genErr
 		}
