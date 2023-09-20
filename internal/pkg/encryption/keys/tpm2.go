@@ -53,6 +53,9 @@ func (h *TPMKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 		return nil, nil, err
 	}
 
+	// explicitly clear key from memory since it's not needed anymore
+	clear(key)
+
 	token := &luks.Token[*TPMToken]{
 		Type: TokenTypeTPM,
 		UserData: &TPMToken{
