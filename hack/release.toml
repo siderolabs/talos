@@ -18,15 +18,15 @@ preface = """\
         title = "Linux Firmware"
         description = """\
 Starting with Talos 1.6, there is no Linux firmware included in the initramfs.
-Customers who need Linux firmware can pull them as extension during install time using the image service.
-If the initial boot requires firmware, a custom iso can be built with the firmware included using the imager service.
+Customers who need Linux firmware can pull them as extension during install time using the image factory service.
+If the initial boot requires firmware, a custom iso can be built with the firmware included using the image factory service.
 This also ensures that the linux-firmware is not tied to a specific Talos version.
 """
 
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.1.51
+Linux: 6.1.54
 CoreDNS: v1.11.1
 Kubernetes: v1.28.2
 Flannel: v0.22.3
