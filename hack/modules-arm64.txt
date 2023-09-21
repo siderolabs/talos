@@ -7,6 +7,7 @@ kernel/crypto/async_tx/async_raid6_recov.ko
 kernel/crypto/async_tx/async_tx.ko
 kernel/crypto/async_tx/async_xor.ko
 kernel/crypto/xor.ko
+kernel/drivers/hwmon/i5k_amb.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
 kernel/drivers/irqchip/irq-imx-mu-msi.ko
 kernel/drivers/mailbox/bcm-flexrm-mailbox.ko
