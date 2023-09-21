@@ -10,12 +10,12 @@ import (
 	"fmt"
 	"net/netip"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"

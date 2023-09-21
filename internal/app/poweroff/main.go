@@ -8,8 +8,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"slices"
 
-	"github.com/siderolabs/gen/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -60,13 +60,13 @@ func Main(args []string) {
 // ActionFromArgs returns the action to be performed based on the arguments.
 func ActionFromArgs(args []string) Action {
 	if len(args) > 1 {
-		if slices.Contains(args[1:], func(s string) bool {
+		if slices.ContainsFunc(args[1:], func(s string) bool {
 			return s == "--halt" || s == "-H" || s == "--poweroff" || s == "-P" || s == "-p"
 		}) {
 			return Shutdown
 		}
 
-		if slices.Contains(args[1:], func(s string) bool {
+		if slices.ContainsFunc(args[1:], func(s string) bool {
 			return s == "--reboot" || s == "-r"
 		}) {
 			return Reboot

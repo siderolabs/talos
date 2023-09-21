@@ -6,13 +6,13 @@
 package logind
 
 import (
+	"slices"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/godbus/dbus/v5"
 	"github.com/godbus/dbus/v5/prop"
-	"github.com/siderolabs/gen/slices"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )

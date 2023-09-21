@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
@@ -235,7 +235,7 @@ func (ctrl *ControlPlaneStaticPodController) teardownAll(ctx context.Context, r 
 }
 
 func volumeMounts(volumes []k8s.ExtraVolume) []v1.VolumeMount {
-	return slices.Map(volumes, func(vol k8s.ExtraVolume) v1.VolumeMount {
+	return xslices.Map(volumes, func(vol k8s.ExtraVolume) v1.VolumeMount {
 		return v1.VolumeMount{
 			Name:      vol.Name,
 			MountPath: vol.MountPath,
@@ -245,7 +245,7 @@ func volumeMounts(volumes []k8s.ExtraVolume) []v1.VolumeMount {
 }
 
 func volumes(volumes []k8s.ExtraVolume) []v1.Volume {
-	return slices.Map(volumes, func(vol k8s.ExtraVolume) v1.Volume {
+	return xslices.Map(volumes, func(vol k8s.ExtraVolume) v1.Volume {
 		return v1.Volume{
 			Name: vol.Name,
 			VolumeSource: v1.VolumeSource{
@@ -265,7 +265,7 @@ func envVars(environment map[string]string) []v1.EnvVar {
 	keys := maps.Keys(environment)
 	sort.Strings(keys)
 
-	return slices.Map(keys, func(key string) v1.EnvVar {
+	return xslices.Map(keys, func(key string) v1.EnvVar {
 		// Kubernetes supports variable references in variable values, so escape '$' to prevent that.
 		return v1.EnvVar{
 			Name:  key,

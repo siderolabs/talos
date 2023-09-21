@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
@@ -74,7 +74,7 @@ func (ctrl *OperatorVIPConfigController) Run(ctx context.Context, r controller.R
 			}
 		}
 
-		devices := slices.Map(items.Items, func(item resource.Resource) talosconfig.Device {
+		devices := xslices.Map(items.Items, func(item resource.Resource) talosconfig.Device {
 			return item.(*network.DeviceConfigSpec).TypedSpec().Device
 		})
 

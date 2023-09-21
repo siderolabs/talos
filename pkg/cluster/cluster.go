@@ -13,7 +13,7 @@ import (
 	"sort"
 
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -99,14 +99,14 @@ func IPToNodeInfo(ip string) (*NodeInfo, error) {
 //
 // Each expectedNode IPs should have a non-empty intersection with actualNode IPs.
 func NodesMatch(expected, actual []NodeInfo) error {
-	actualNodes := slices.ToMap(actual, func(n NodeInfo) (*NodeInfo, struct{}) { return &n, struct{}{} })
+	actualNodes := xslices.ToMap(actual, func(n NodeInfo) (*NodeInfo, struct{}) { return &n, struct{}{} })
 
 	for _, expectedNodeInfo := range expected {
 		found := false
 
 		for actualNodeInfo := range actualNodes {
 			// expectedNodeInfo.IPs intersection with actualNodeInfo.IPs is not empty
-			if len(maps.Intersect(slices.ToSet(actualNodeInfo.IPs), slices.ToSet(expectedNodeInfo.IPs))) > 0 {
+			if len(maps.Intersect(xslices.ToSet(actualNodeInfo.IPs), xslices.ToSet(expectedNodeInfo.IPs))) > 0 {
 				delete(actualNodes, actualNodeInfo)
 
 				found = true
@@ -121,7 +121,7 @@ func NodesMatch(expected, actual []NodeInfo) error {
 	}
 
 	if len(actualNodes) > 0 {
-		unexpectedIPs := slices.FlatMap(maps.Keys(actualNodes), func(n *NodeInfo) []netip.Addr { return n.IPs })
+		unexpectedIPs := xslices.FlatMap(maps.Keys(actualNodes), func(n *NodeInfo) []netip.Addr { return n.IPs })
 
 		sort.Slice(unexpectedIPs, func(i, j int) bool { return unexpectedIPs[i].Less(unexpectedIPs[j]) })
 

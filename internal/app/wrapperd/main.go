@@ -14,7 +14,7 @@ import (
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
 	"github.com/containerd/containerd/sys"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"golang.org/x/sys/unix"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
@@ -80,7 +80,7 @@ func Main() {
 		log.Printf("kernel.kexec_load_disabled is %v, skipping dropping capabilities", v)
 	} else if droppedCaps != "" {
 		caps := strings.Split(droppedCaps, ",")
-		dropCaps := slices.Map(caps, func(c string) cap.Value {
+		dropCaps := xslices.Map(caps, func(c string) cap.Value {
 			capability, capErr := cap.FromName(c)
 			if capErr != nil {
 				log.Fatalf("failed to parse capability: %v", capErr)

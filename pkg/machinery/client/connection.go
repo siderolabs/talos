@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -191,7 +191,7 @@ func CertificateFromConfigContext(context *clientconfig.Context) (*tls.Certifica
 }
 
 func reduceURLsToAddresses(endpoints []string) []string {
-	return slices.Map(endpoints, func(endpoint string) string {
+	return xslices.Map(endpoints, func(endpoint string) string {
 		u, err := url.Parse(endpoint)
 		if err != nil {
 			return endpoint

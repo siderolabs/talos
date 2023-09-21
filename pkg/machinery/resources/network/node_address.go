@@ -7,12 +7,13 @@ package network
 import (
 	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -82,12 +83,12 @@ func (NodeAddressExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func (spec *NodeAddressSpec) IPs() []netip.Addr {
 	// make sure addresses are unique, as different prefixes can have the same IP
 	// at the same we want to preserve order
-	ips := slices.Map(spec.Addresses, netip.Prefix.Addr)
+	ips := xslices.Map(spec.Addresses, netip.Prefix.Addr)
 
 	result := make([]netip.Addr, 0, len(ips))
 
 	for _, ip := range ips {
-		if slices.Contains(result, func(addr netip.Addr) bool {
+		if slices.ContainsFunc(result, func(addr netip.Addr) bool {
 			return addr == ip
 		}) {
 			continue

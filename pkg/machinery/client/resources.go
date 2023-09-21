@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -26,9 +26,7 @@ func (c *Client) ResolveResourceKind(ctx context.Context, resourceNamespace *res
 
 	matched := []*meta.ResourceDefinition{}
 
-	it := safe.IteratorFromList(registeredResources)
-
-	for it.Next() {
+	for it := registeredResources.Iterator(); it.Next(); {
 		rd := it.Value()
 
 		if strings.EqualFold(rd.Metadata().ID(), resourceType) {
@@ -56,7 +54,7 @@ func (c *Client) ResolveResourceKind(ctx context.Context, resourceNamespace *res
 
 		return matched[0], nil
 	case len(matched) > 1:
-		matchedTypes := slices.Map(matched, func(rd *meta.ResourceDefinition) string { return rd.Metadata().ID() })
+		matchedTypes := xslices.Map(matched, func(rd *meta.ResourceDefinition) string { return rd.Metadata().ID() })
 
 		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("resource type %q is ambiguous: %v", resourceType, matchedTypes))
 	default:

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -33,8 +33,8 @@ func (p *Provisioner) CreateLoadBalancer(state *State, clusterReq provision.Clus
 
 	defer logFile.Close() //nolint:errcheck
 
-	controlPlaneIPs := slices.Map(clusterReq.Nodes.ControlPlaneNodes(), func(req provision.NodeRequest) string { return req.IPs[0].String() })
-	ports := slices.Map(clusterReq.Network.LoadBalancerPorts, strconv.Itoa)
+	controlPlaneIPs := xslices.Map(clusterReq.Nodes.ControlPlaneNodes(), func(req provision.NodeRequest) string { return req.IPs[0].String() })
+	ports := xslices.Map(clusterReq.Network.LoadBalancerPorts, strconv.Itoa)
 
 	args := []string{
 		"loadbalancer-launch",

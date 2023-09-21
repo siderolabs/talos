@@ -109,7 +109,7 @@ func (ctrl *StaticPodServerController) buildPodList(ctx context.Context, r contr
 
 	touchedPodIDs := map[string]struct{}{}
 
-	for iter := safe.IteratorFromList(staticPods); iter.Next(); {
+	for iter := staticPods.Iterator(); iter.Next(); {
 		id := iter.Value().Metadata().ID()
 		version := iter.Value().Metadata().Version().String()
 

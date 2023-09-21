@@ -102,7 +102,7 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, log
 
 		allProbesSuccess := true
 
-		for iter := safe.IteratorFromList(probeStatuses); iter.Next(); {
+		for iter := probeStatuses.Iterator(); iter.Next(); {
 			if !iter.Value().TypedSpec().Success {
 				allProbesSuccess = false
 
@@ -120,7 +120,7 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, log
 				return fmt.Errorf("error getting routes: %w", err)
 			}
 
-			for iter := safe.IteratorFromList(routes); iter.Next(); {
+			for iter := routes.Iterator(); iter.Next(); {
 				if value.IsZero(iter.Value().TypedSpec().Destination) {
 					result.ConnectivityReady = true
 

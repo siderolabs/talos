@@ -63,7 +63,7 @@ func NewKubePrismEndpointsController() *KubePrismEndpointsController {
 					})
 				}
 
-				for it := safe.IteratorFromList(members); it.Next(); {
+				for it := members.Iterator(); it.Next(); {
 					memberSpec := it.Value().TypedSpec()
 
 					if len(memberSpec.Addresses) > 0 && memberSpec.ControlPlane != nil {

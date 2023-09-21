@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-loadbalancer/controlplane"
 	"github.com/siderolabs/go-loadbalancer/upstream"
 	"github.com/siderolabs/go-pointer"
@@ -172,7 +172,7 @@ func (ctrl *KubePrismController) writeKubePrismStatus(
 		return fmt.Errorf("error listing KubePrism resources: %w", err)
 	}
 
-	for it := safe.IteratorFromList(list); it.Next(); {
+	for it := list.Iterator(); it.Next(); {
 		res := it.Value()
 
 		if ctrl.lb == nil || res.Metadata().ID() != k8s.KubePrismStatusesID {
@@ -219,7 +219,7 @@ func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, logg
 }
 
 func makeEndpoints(spec *k8s.KubePrismConfigSpec) []string {
-	return slices.Map(spec.Endpoints, func(e k8s.KubePrismEndpoint) string {
+	return xslices.Map(spec.Endpoints, func(e k8s.KubePrismEndpoint) string {
 		return net.JoinHostPort(e.Host, strconv.FormatUint(uint64(e.Port), 10))
 	})
 }

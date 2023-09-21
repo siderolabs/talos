@@ -14,7 +14,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/dustin/go-humanize"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
@@ -55,11 +55,11 @@ func showCluster(cluster provision.Cluster) error {
 	fmt.Fprintf(w, "NAME\t%s\n", cluster.Info().ClusterName)
 	fmt.Fprintf(w, "NETWORK NAME\t%s\n", cluster.Info().Network.Name)
 
-	cidrs := slices.Map(cluster.Info().Network.CIDRs, netip.Prefix.String)
+	cidrs := xslices.Map(cluster.Info().Network.CIDRs, netip.Prefix.String)
 
 	fmt.Fprintf(w, "NETWORK CIDR\t%s\n", strings.Join(cidrs, ","))
 
-	gateways := slices.Map(cluster.Info().Network.GatewayAddrs, netip.Addr.String)
+	gateways := xslices.Map(cluster.Info().Network.GatewayAddrs, netip.Addr.String)
 
 	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", strings.Join(gateways, ","))
 	fmt.Fprintf(w, "NETWORK MTU\t%d\n", cluster.Info().Network.MTU)
@@ -93,7 +93,7 @@ func showCluster(cluster provision.Cluster) error {
 			disk = humanize.Bytes(node.DiskSize)
 		}
 
-		ips := slices.Map(node.IPs, netip.Addr.String)
+		ips := xslices.Map(node.IPs, netip.Addr.String)
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			node.Name,

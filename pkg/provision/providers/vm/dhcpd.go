@@ -21,7 +21,7 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/server6"
 	"github.com/insomniacslk/dhcp/iana"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/pkg/provision"
@@ -212,7 +212,7 @@ func handlerDHCP6(serverHwAddr net.HardwareAddr, statePath string) server6.Handl
 }
 
 func netipAddrsToIPs(addrs []netip.Addr) []net.IP {
-	return slices.Map(addrs, func(addr netip.Addr) net.IP {
+	return xslices.Map(addrs, func(addr netip.Addr) net.IP {
 		return addr.AsSlice()
 	})
 }
@@ -286,7 +286,7 @@ func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequ
 		return err
 	}
 
-	gatewayAddrs := slices.Map(clusterReq.Network.GatewayAddrs, netip.Addr.String)
+	gatewayAddrs := xslices.Map(clusterReq.Network.GatewayAddrs, netip.Addr.String)
 
 	args := []string{
 		"dhcpd-launch",

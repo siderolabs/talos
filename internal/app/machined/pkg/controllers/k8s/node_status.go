@@ -179,7 +179,7 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			return fmt.Errorf("error listing node statuses: %w", err)
 		}
 
-		for iter := safe.IteratorFromList(items); iter.Next(); {
+		for iter := items.Iterator(); iter.Next(); {
 			if _, touched := touchedIDs[iter.Value().Metadata().ID()]; touched {
 				continue
 			}

@@ -5,10 +5,10 @@
 package health
 
 import (
+	"slices"
 	"sync"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"

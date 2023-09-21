@@ -19,7 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/discovery-api/api/v1alpha1/client/pb"
 	discoveryclient "github.com/siderolabs/discovery-client/pkg/client"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -327,7 +327,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 }
 
 func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
-	addresses := slices.Map(affiliate.Addresses, func(address netip.Addr) []byte {
+	addresses := xslices.Map(affiliate.Addresses, func(address netip.Addr) []byte {
 		return takeResult(address.MarshalBinary())
 	})
 
@@ -337,7 +337,7 @@ func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
 		kubeSpan = &pb.KubeSpan{
 			PublicKey: affiliate.KubeSpan.PublicKey,
 			Address:   takeResult(affiliate.KubeSpan.Address.MarshalBinary()),
-			AdditionalAddresses: slices.Map(affiliate.KubeSpan.AdditionalAddresses, func(address netip.Prefix) *pb.IPPrefix {
+			AdditionalAddresses: xslices.Map(affiliate.KubeSpan.AdditionalAddresses, func(address netip.Prefix) *pb.IPPrefix {
 				return &pb.IPPrefix{
 					Bits: uint32(address.Bits()),
 					Ip:   takeResult(address.Addr().MarshalBinary()),
@@ -371,7 +371,7 @@ func pbEndpoints(affiliate *cluster.AffiliateSpec) []*pb.Endpoint {
 		return nil
 	}
 
-	return slices.Map(affiliate.KubeSpan.Endpoints, func(endpoint netip.AddrPort) *pb.Endpoint {
+	return xslices.Map(affiliate.KubeSpan.Endpoints, func(endpoint netip.AddrPort) *pb.Endpoint {
 		return &pb.Endpoint{
 			Port: uint32(endpoint.Port()),
 			Ip:   takeResult(endpoint.Addr().MarshalBinary()),
@@ -386,7 +386,7 @@ func pbOtherEndpoints(otherEndpointsList safe.List[*kubespan.Endpoint]) []discov
 
 	result := make([]discoveryclient.Endpoint, 0, otherEndpointsList.Len())
 
-	for it := safe.IteratorFromList(otherEndpointsList); it.Next(); {
+	for it := otherEndpointsList.Iterator(); it.Next(); {
 		endpoint := it.Value().TypedSpec()
 
 		result = append(result, discoveryclient.Endpoint{

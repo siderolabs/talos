@@ -14,8 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -87,8 +86,10 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 	kmsgCh := reader.Scan(ctx)
 
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok {
+		select {
+		case <-ctx.Done():
 			return nil
+		case <-r.EventCh():
 		}
 
 		cfg, err := safe.ReaderGetByID[*runtime.KmsgLogConfig](ctx, r, runtime.KmsgLogConfigID)
@@ -116,7 +117,7 @@ func (ctrl *KmsgLogDeliveryController) deliverLogs(ctx context.Context, r contro
 	}
 
 	// initialize all log senders
-	senders := slices.Map(destURLs, logging.NewJSONLines)
+	senders := xslices.Map(destURLs, logging.NewJSONLines)
 
 	defer func() {
 		closeCtx, closeCtxCancel := context.WithTimeout(context.Background(), logCloseTimeout)

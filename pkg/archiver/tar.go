@@ -13,10 +13,10 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"syscall"
 
 	multierror "github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/slices"
 )
 
 // Tar creates .tar archive and writes it to output for every item in paths channel.

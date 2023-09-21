@@ -5,14 +5,14 @@
 package v1alpha1
 
 import (
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 // Modules implements config.Kernel interface.
 func (kc *KernelConfig) Modules() []config.KernelModule {
-	return slices.Map(kc.KernelModules, func(kmc *KernelModuleConfig) config.KernelModule { return kmc })
+	return xslices.Map(kc.KernelModules, func(kmc *KernelModuleConfig) config.KernelModule { return kmc })
 }
 
 // Name implements config.KernelModule interface.

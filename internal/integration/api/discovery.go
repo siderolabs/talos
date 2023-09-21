@@ -16,8 +16,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/gen/value"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -80,18 +80,18 @@ func (suite *DiscoverySuite) TestMembers() {
 
 		// do basic check against discovered nodes
 		for _, expectedNode := range nodes {
-			nodeAddresses := slices.Map(expectedNode.IPs, func(t netip.Addr) string {
+			nodeAddresses := xslices.Map(expectedNode.IPs, func(t netip.Addr) string {
 				return t.String()
 			})
 
 			found := false
 
 			for _, member := range members {
-				memberAddresses := slices.Map(member.TypedSpec().Addresses, func(t netip.Addr) string {
+				memberAddresses := xslices.Map(member.TypedSpec().Addresses, func(t netip.Addr) string {
 					return t.String()
 				})
 
-				if maps.Contains(slices.ToSet(memberAddresses), nodeAddresses) {
+				if maps.Contains(xslices.ToSet(memberAddresses), nodeAddresses) {
 					found = true
 
 					break
@@ -110,7 +110,7 @@ func (suite *DiscoverySuite) TestMembers() {
 			continue
 		}
 
-		memberByName := slices.ToMap(members,
+		memberByName := xslices.ToMap(members,
 			func(member *cluster.Member) (string, *cluster.Member) {
 				return member.Metadata().ID(), member
 			},
@@ -283,7 +283,7 @@ func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.Memb
 	items, err := safe.StateListAll[*cluster.Member](nodeCtx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	it := safe.IteratorFromList(items)
+	it := items.Iterator()
 
 	for it.Next() {
 		result = append(result, it.Value())
@@ -316,7 +316,7 @@ func (suite *DiscoverySuite) getKubeSpanPeerSpecs(nodeCtx context.Context) []*ku
 	items, err := safe.StateListAll[*kubespan.PeerSpec](nodeCtx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	it := safe.IteratorFromList(items)
+	it := items.Iterator()
 
 	for it.Next() {
 		result = append(result, it.Value())
@@ -331,7 +331,7 @@ func (suite *DiscoverySuite) getKubeSpanPeerStatuses(nodeCtx context.Context) []
 	items, err := safe.StateListAll[*kubespan.PeerStatus](nodeCtx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	it := safe.IteratorFromList(items)
+	it := items.Iterator()
 
 	for it.Next() {
 		result = append(result, it.Value())

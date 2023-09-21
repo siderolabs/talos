@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -57,7 +57,7 @@ func (gen *CertificateGenerator) buildOptions(autoSANs, includeLocalhost bool) [
 		result = append(result,
 			x509.CommonName(hostname),
 			x509.DNSNames(dnsNames),
-			x509.IPAddresses(slices.Map(addresses, func(addr netip.Addr) net.IP {
+			x509.IPAddresses(xslices.Map(addresses, func(addr netip.Addr) net.IP {
 				return addr.AsSlice()
 			})),
 		)

@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -162,7 +162,7 @@ func (ctrl *CRIRegistryConfigController) syncHosts(shadowPath string, criHosts *
 			return err
 		}
 
-		fileListMap := slices.ToSetFunc(fileList, fs.DirEntry.Name)
+		fileListMap := xslices.ToSetFunc(fileList, fs.DirEntry.Name)
 
 		for _, file := range directory.Files {
 			delete(fileListMap, file.Name)

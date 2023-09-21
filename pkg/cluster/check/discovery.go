@@ -9,7 +9,7 @@ import (
 	"net/netip"
 
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -39,7 +39,7 @@ func NewDiscoveredClusterInfo(members []*clussterres.Member) (cluster.Info, erro
 		return nil, err
 	}
 
-	nodes := slices.FlatMap(maps.Values(m), func(t []cluster.NodeInfo) []cluster.NodeInfo { return t })
+	nodes := xslices.FlatMap(maps.Values(m), func(t []cluster.NodeInfo) []cluster.NodeInfo { return t })
 
 	return &DiscoveredClusterInfo{
 		nodes:       nodes,
@@ -67,7 +67,7 @@ func membersToNodeInfoMap(members []*clussterres.Member) (map[machine.Type][]clu
 }
 
 func memberToNodeInfo(member *clussterres.Member) (cluster.NodeInfo, error) {
-	ips, err := stringsToNetipAddrs(slices.Map(member.TypedSpec().Addresses, func(ip netip.Addr) string {
+	ips, err := stringsToNetipAddrs(xslices.Map(member.TypedSpec().Addresses, func(ip netip.Addr) string {
 		return ip.String()
 	}))
 	if err != nil {

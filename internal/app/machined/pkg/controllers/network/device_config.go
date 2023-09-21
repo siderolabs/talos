@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	glob "github.com/ryanuber/go-glob"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -112,7 +112,7 @@ func (ctrl *DeviceConfigController) Run(ctx context.Context, r controller.Runtim
 						continue
 					}
 
-					out = slices.Map(matched, func(device *v1alpha1.Device) talosconfig.Device { return device })
+					out = xslices.Map(matched, func(device *v1alpha1.Device) talosconfig.Device { return device })
 				} else if device.Bond() != nil && len(device.Bond().Selectors()) > 0 {
 					dev := device.(*v1alpha1.Device).DeepCopy()
 					device = dev
@@ -180,18 +180,18 @@ func (ctrl *DeviceConfigController) expandBondSelector(device *v1alpha1.Device, 
 	for _, selector := range device.Bond().Selectors() {
 		matches = append(matches,
 			// filter out bond device itself, as it will inherit the MAC address of the first link
-			slices.Filter(
+			xslices.Filter(
 				ctrl.selectDevices(selector, links),
 				func(link *network.LinkStatus) bool {
 					return link.Metadata().ID() != device.Interface()
 				})...)
 	}
 
-	device.DeviceBond.BondInterfaces = slices.Map(matches, func(link *network.LinkStatus) string { return link.Metadata().ID() })
+	device.DeviceBond.BondInterfaces = xslices.Map(matches, func(link *network.LinkStatus) string { return link.Metadata().ID() })
 
 	if len(device.DeviceBond.BondInterfaces) == 0 {
 		return fmt.Errorf("no matching network device for defined bond selectors: %v",
-			slices.Map(device.Bond().Selectors(),
+			xslices.Map(device.Bond().Selectors(),
 				func(selector talosconfig.NetworkDeviceSelector) string {
 					return fmt.Sprintf("%+v", selector)
 				},
@@ -207,7 +207,7 @@ func (ctrl *DeviceConfigController) expandBondSelector(device *v1alpha1.Device, 
 func (ctrl *DeviceConfigController) selectDevices(selector talosconfig.NetworkDeviceSelector, links safe.List[*network.LinkStatus]) []*network.LinkStatus {
 	var result []*network.LinkStatus
 
-	for iter := safe.IteratorFromList(links); iter.Next(); {
+	for iter := links.Iterator(); iter.Next(); {
 		linkStatus := iter.Value().TypedSpec()
 
 		match := false

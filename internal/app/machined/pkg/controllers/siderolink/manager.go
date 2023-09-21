@@ -321,7 +321,7 @@ func (ctrl *ManagerController) cleanupLinkSpecs(ctx context.Context, r controlle
 		return err
 	}
 
-	for iter := safe.IteratorFromList(list); iter.Next(); {
+	for iter := list.Iterator(); iter.Next(); {
 		link := iter.Value()
 
 		if link.Metadata().Owner() != ctrl.Name() {
@@ -349,7 +349,7 @@ func (ctrl *ManagerController) cleanupAddressSpecs(ctx context.Context, r contro
 		return err
 	}
 
-	for iter := safe.IteratorFromList(list); iter.Next(); {
+	for iter := list.Iterator(); iter.Next(); {
 		address := iter.Value()
 
 		if address.Metadata().Owner() != ctrl.Name() {

@@ -10,7 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -73,7 +73,7 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
 					"https://10.0.0.1:3333/logs",
 					"https://10.0.0.2:4444/logs",
 				},
-				slices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
+				xslices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
 			)
 		})
 }
@@ -90,7 +90,7 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigCmdline() {
 		func(cfg *runtime.KmsgLogConfig, asrt *assert.Assertions) {
 			asrt.Equal(
 				[]string{"https://10.0.0.1:3333/logs"},
-				slices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
+				xslices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
 			)
 		})
 }

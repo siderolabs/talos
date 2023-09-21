@@ -10,7 +10,7 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/conditions"
@@ -86,13 +86,13 @@ func Wait(ctx context.Context, cluster ClusterInfo, checks []ClusterCheck, repor
 }
 
 func flatMapNodeInfosToIPs(nodes []cluster.NodeInfo) []netip.Addr {
-	return slices.FlatMap(nodes, func(node cluster.NodeInfo) []netip.Addr { return node.IPs })
+	return xslices.FlatMap(nodes, func(node cluster.NodeInfo) []netip.Addr { return node.IPs })
 }
 
 func mapNodeInfosToInternalIPs(nodes []cluster.NodeInfo) []netip.Addr {
-	return slices.Map(nodes, func(node cluster.NodeInfo) netip.Addr { return node.InternalIP })
+	return xslices.Map(nodes, func(node cluster.NodeInfo) netip.Addr { return node.InternalIP })
 }
 
 func mapIPsToStrings(input []netip.Addr) []string {
-	return slices.Map(input, func(ip netip.Addr) string { return ip.String() })
+	return xslices.Map(input, func(ip netip.Addr) string { return ip.String() })
 }

@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
@@ -165,7 +165,7 @@ func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, che
 	return retry.Constant(15*time.Second).RetryWithContext(ctx, func(ctx context.Context) error {
 		events, err := k8sSuite.Clientset.EventsV1().Events(ns).List(ctx, metav1.ListOptions{})
 
-		filteredEvents := slices.Filter(events.Items, func(item eventsv1.Event) bool {
+		filteredEvents := xslices.Filter(events.Items, func(item eventsv1.Event) bool {
 			return checkFn(item)
 		})
 

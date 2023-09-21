@@ -11,9 +11,10 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv"
 )
@@ -190,7 +191,7 @@ func (a *ADV) ReadTagBytes(t uint8) (val []byte, ok bool) {
 
 // ListTags to get list of tags.
 func (a *ADV) ListTags() (tags []uint8) {
-	return slices.Map(maps.Keys(a.Tags), func(t Tag) uint8 { return uint8(t) })
+	return xslices.Map(maps.Keys(a.Tags), func(t Tag) uint8 { return uint8(t) })
 }
 
 // SetTag to set tag value.

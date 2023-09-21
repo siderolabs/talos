@@ -21,7 +21,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -954,7 +954,7 @@ func TestSortBonds(t *testing.T) {
 }
 
 func toResources(slice []network.LinkSpecSpec) []resource.Resource {
-	return slices.Map(slice, func(spec network.LinkSpecSpec) resource.Resource {
+	return xslices.Map(slice, func(spec network.LinkSpecSpec) resource.Resource {
 		link := network.NewLinkSpec(network.NamespaceName, "bar")
 		*link.TypedSpec() = spec
 
@@ -963,7 +963,7 @@ func toResources(slice []network.LinkSpecSpec) []resource.Resource {
 }
 
 func toSpecs(slice []resource.Resource) []network.LinkSpecSpec {
-	return slices.Map(slice, func(r resource.Resource) network.LinkSpecSpec {
+	return xslices.Map(slice, func(r resource.Resource) network.LinkSpecSpec {
 		v := r.Spec().(*network.LinkSpecSpec) //nolint:errcheck
 
 		return *v

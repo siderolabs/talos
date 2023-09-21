@@ -7,7 +7,7 @@ package v1alpha1
 import (
 	"fmt"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -31,7 +31,7 @@ func (s *SchedulerConfig) ExtraArgs() map[string]string {
 
 // ExtraVolumes implements the config.Scheduler interface.
 func (s *SchedulerConfig) ExtraVolumes() []config.VolumeMount {
-	return slices.Map(s.ExtraVolumesConfig, func(v VolumeMountConfig) config.VolumeMount { return v })
+	return xslices.Map(s.ExtraVolumesConfig, func(v VolumeMountConfig) config.VolumeMount { return v })
 }
 
 // Env implements the config.Scheduler interface.

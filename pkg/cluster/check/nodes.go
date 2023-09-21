@@ -8,12 +8,12 @@ import (
 	"context"
 	"errors"
 	fmt "fmt"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/slices"
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -218,7 +218,7 @@ func getEphemeralPartitionData(ctx context.Context, state state.State, nodeIP st
 		return mountData{}, fmt.Errorf("error listing mounts for node %q: %w", nodeIP, err)
 	}
 
-	for it := safe.IteratorFromList(items); it.Next(); {
+	for it := items.Iterator(); it.Next(); {
 		mount := it.Value()
 		mountID := mount.Metadata().ID()
 

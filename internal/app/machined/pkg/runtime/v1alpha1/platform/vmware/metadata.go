@@ -105,7 +105,7 @@ func (v *VMware) ApplyNetworkConfigV2(ctx context.Context, st state.State, confi
 			var availableMACAddresses []string
 
 			macAddressMatched := false
-			hostInterfaceIter := safe.IteratorFromList(hostInterfaces)
+			hostInterfaceIter := hostInterfaces.Iterator()
 
 			for hostInterfaceIter.Next() {
 				macAddress := hostInterfaceIter.Value().TypedSpec().PermanentAddr.String()

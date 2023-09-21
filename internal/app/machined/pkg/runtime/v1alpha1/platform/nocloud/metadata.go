@@ -544,7 +544,7 @@ func (n *Nocloud) applyNetworkConfigV2(config *NetworkConfig, st state.State, ne
 			var availableMACAddresses []string
 
 			macAddressMatched := false
-			hostInterfaceIter := safe.IteratorFromList(hostInterfaces)
+			hostInterfaceIter := hostInterfaces.Iterator()
 
 			for hostInterfaceIter.Next() {
 				macAddress := hostInterfaceIter.Value().TypedSpec().PermanentAddr.String()

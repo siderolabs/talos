@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"go.uber.org/zap"
@@ -115,7 +115,7 @@ func (ctrl *NodeApplyController) getNodeLabelSpecs(ctx context.Context, r contro
 
 	result := make(map[string]string, items.Len())
 
-	for iter := safe.IteratorFromList(items); iter.Next(); {
+	for iter := items.Iterator(); iter.Next(); {
 		result[iter.Value().TypedSpec().Key] = iter.Value().TypedSpec().Value
 	}
 
@@ -130,7 +130,7 @@ func (ctrl *NodeApplyController) getNodeTaintSpecs(ctx context.Context, r contro
 
 	result := make([]k8s.NodeTaintSpecSpec, 0, items.Len())
 
-	for iter := safe.IteratorFromList(items); iter.Next(); {
+	for iter := items.Iterator(); iter.Next(); {
 		result = append(result, *iter.Value().TypedSpec())
 	}
 
@@ -248,7 +248,7 @@ func umarshalOwnedAnnotation(node *v1.Node, annotation string) (map[string]struc
 		}
 	}
 
-	ownedMap := slices.ToSet(owned)
+	ownedMap := xslices.ToSet(owned)
 	if ownedMap == nil {
 		ownedMap = map[string]struct{}{}
 	}
@@ -400,7 +400,7 @@ func (ctrl *NodeApplyController) ApplyTaints(logger *zap.Logger, node *v1.Node, 
 	}
 
 	// remove taints which are owned but are not in the spec
-	node.Spec.Taints = slices.FilterInPlace(node.Spec.Taints,
+	node.Spec.Taints = xslices.FilterInPlace(node.Spec.Taints,
 		func(nodeTaint v1.Taint) bool {
 			if _, owned := ownedTaints[nodeTaint.Key]; !owned {
 				return true

@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 )
 
 type file string
@@ -49,7 +49,7 @@ func WaitForFileToExist(filename string) Condition {
 
 // WaitForFilesToExist is a service condition that will wait for the existence of all the files.
 func WaitForFilesToExist(filenames ...string) Condition {
-	conditions := slices.Map(filenames, WaitForFileToExist)
+	conditions := xslices.Map(filenames, WaitForFileToExist)
 
 	return WaitForAll(conditions...)
 }

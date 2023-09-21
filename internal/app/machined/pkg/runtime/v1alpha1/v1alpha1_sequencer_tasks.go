@@ -15,6 +15,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -27,7 +28,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	pprocfs "github.com/prometheus/procfs"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util"
@@ -1491,7 +1492,7 @@ func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecuti
 
 		logger.Printf("finished resetting system disks %s", diskTargets)
 
-		bootWiped := slices.Contains(diskTargets, func(t runtime.PartitionTarget) bool {
+		bootWiped := slices.ContainsFunc(diskTargets, func(t runtime.PartitionTarget) bool {
 			return t.GetLabel() == constants.BootPartitionLabel
 		})
 
@@ -1565,7 +1566,7 @@ type targets struct {
 }
 
 func (opt targets) GetSystemDiskTargets() []runtime.PartitionTarget {
-	return slices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
+	return xslices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
 }
 
 func parseTargets(r runtime.Runtime, wipeStr string) (targets, error) {

@@ -14,7 +14,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/dustin/go-humanize"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 	"google.golang.org/grpc/codes"
@@ -98,7 +98,7 @@ var etcdAlarmListCmd = &cobra.Command{
 				cli.Warning("%s", err)
 			}
 
-			return displayAlarms(slices.Map(response.Messages, func(v *machine.EtcdAlarm) alarmMessage {
+			return displayAlarms(xslices.Map(response.Messages, func(v *machine.EtcdAlarm) alarmMessage {
 				return v
 			}))
 		})
@@ -120,7 +120,7 @@ var etcdAlarmDisarmCmd = &cobra.Command{
 				cli.Warning("%s", err)
 			}
 
-			return displayAlarms(slices.Map(response.Messages, func(v *machine.EtcdAlarmDisarm) alarmMessage {
+			return displayAlarms(xslices.Map(response.Messages, func(v *machine.EtcdAlarmDisarm) alarmMessage {
 				return v
 			}))
 		})

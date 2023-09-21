@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 )
 
 const (
@@ -38,7 +38,7 @@ func (fg *fieldGroup) String() string {
 	width := fg.maxFieldNameLength()
 
 	return strings.Join(
-		slices.Map(fg.fields, func(t field) string {
+		xslices.Map(fg.fields, func(t field) string {
 			return t.render(width)
 		}),
 		"\n",

@@ -114,7 +114,7 @@ func (ctrl *SeccompProfileFileController) Run(ctx context.Context, r controller.
 
 		touchedIDs := make(map[string]struct{}, list.Len())
 
-		for iter := safe.IteratorFromList(list); iter.Next(); {
+		for iter := list.Iterator(); iter.Next(); {
 			profile := iter.Value()
 
 			profileName := profile.TypedSpec().Name

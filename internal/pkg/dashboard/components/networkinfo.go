@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -197,7 +197,7 @@ func (widget *NetworkInfo) setAddresses(data resourcedata.Data, nodeAddress *net
 			return notAvailable
 		}
 
-		strs := slices.Map(res.TypedSpec().Addresses, func(prefix netip.Prefix) string {
+		strs := xslices.Map(res.TypedSpec().Addresses, func(prefix netip.Prefix) string {
 			return prefix.String()
 		})
 
@@ -245,7 +245,7 @@ func (widget *NetworkInfo) gateway(statuses []*network.RouteStatus) string {
 }
 
 func (widget *NetworkInfo) resolvers(status *network.ResolverStatus) string {
-	strs := slices.Map(status.TypedSpec().DNSServers, func(t netip.Addr) string {
+	strs := xslices.Map(status.TypedSpec().DNSServers, func(t netip.Addr) string {
 		return t.String()
 	})
 

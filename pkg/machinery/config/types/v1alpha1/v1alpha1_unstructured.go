@@ -6,8 +6,7 @@ package v1alpha1
 
 import (
 	"fmt"
-
-	"github.com/siderolabs/gen/slices"
+	"slices"
 )
 
 // Unstructured allows wrapping any map[string]interface{} into a config object.

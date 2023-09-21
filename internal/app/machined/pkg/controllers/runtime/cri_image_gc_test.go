@@ -7,6 +7,7 @@ package runtime_test
 import (
 	"context"
 	"reflect"
+	"slices"
 	"sort"
 	"sync"
 	"testing"
@@ -17,7 +18,7 @@ import (
 	"github.com/opencontainers/go-digest"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,7 +89,7 @@ func (m *mockImageService) Delete(ctx context.Context, name string, opts ...imag
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.images = slices.FilterInPlace(m.images, func(i images.Image) bool { return i.Name != name })
+	m.images = xslices.FilterInPlace(m.images, func(i images.Image) bool { return i.Name != name })
 
 	return nil
 }
@@ -169,13 +170,13 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 	etcd.TypedSpec().Image = "registry.io/org/image2:v3.5.9@sha256:2f794176e9bd8a28501fa185693dc1073013a048c51585022ebce4f84b469db8"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), etcd))
 
-	expectedImages := slices.Map(storedImages[2:7], func(i images.Image) string { return i.Name })
+	expectedImages := xslices.Map(storedImages[2:7], func(i images.Image) string { return i.Name })
 
 	suite.Assert().NoError(retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		suite.fakeClock.Add(runtimectrl.ImageCleanupInterval)
 
 		imageList, _ := suite.mockImageService.List(suite.Ctx()) //nolint:errcheck
-		actualImages := slices.Map(imageList, func(i images.Image) string { return i.Name })
+		actualImages := xslices.Map(imageList, func(i images.Image) string { return i.Name })
 
 		if reflect.DeepEqual(expectedImages, actualImages) {
 			return nil

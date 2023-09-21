@@ -7,7 +7,7 @@ package mgmt
 import (
 	"fmt"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-loadbalancer/loadbalancer"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -33,7 +33,7 @@ var loadbalancerLaunchCmd = &cobra.Command{
 		lb := loadbalancer.TCP{Logger: makeLogger()}
 
 		for _, port := range loadbalancerLaunchCmdFlags.ports {
-			upstreams := slices.Map(loadbalancerLaunchCmdFlags.upstreams, func(upstream string) string {
+			upstreams := xslices.Map(loadbalancerLaunchCmdFlags.upstreams, func(upstream string) string {
 				return fmt.Sprintf("%s:%d", upstream, port)
 			})
 

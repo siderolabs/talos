@@ -150,7 +150,7 @@ func (o *Openstack) ParseMetadata(
 		case "phy", "vif", "ovs":
 			linkName := ""
 
-			for hostInterfaceIter := safe.IteratorFromList(hostInterfaces); hostInterfaceIter.Next(); {
+			for hostInterfaceIter := hostInterfaces.Iterator(); hostInterfaceIter.Next(); {
 				if strings.EqualFold(hostInterfaceIter.Value().TypedSpec().PermanentAddr.String(), netLink.Mac) {
 					linkName = hostInterfaceIter.Value().Metadata().ID()
 

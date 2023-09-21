@@ -405,7 +405,7 @@ func getResources(ctx context.Context, c *client.Client) ([]nodeCollector, error
 		return nil, err
 	}
 
-	it := safe.IteratorFromList(rds)
+	it := rds.Iterator()
 
 	cols := []nodeCollector{}
 

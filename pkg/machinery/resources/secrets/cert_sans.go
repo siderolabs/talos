@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -121,7 +121,7 @@ func (spec *CertSANSpec) AppendDNSNames(dnsNames ...string) {
 
 // StdIPs returns a list of converted std.IPs.
 func (spec *CertSANSpec) StdIPs() []net.IP {
-	return slices.Map(spec.IPs, func(ip netip.Addr) net.IP { return ip.AsSlice() })
+	return xslices.Map(spec.IPs, func(ip netip.Addr) net.IP { return ip.AsSlice() })
 }
 
 // Sort the CertSANs.

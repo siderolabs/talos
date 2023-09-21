@@ -6,10 +6,10 @@ package talos_test
 
 import (
 	"bytes"
+	"slices"
 	"sort"
 	"testing"
 
-	"github.com/siderolabs/gen/slices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

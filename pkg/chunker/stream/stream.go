@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/chunker"
 )
@@ -89,7 +89,7 @@ func (c *Stream) Read() <-chan []byte {
 
 			if n != 0 {
 				// Copy the buffer since we will modify it in the next loop.
-				b := slices.Copy(buf, n)
+				b := xslices.CopyN(buf, n)
 
 				select {
 				case <-c.ctx.Done():

@@ -58,9 +58,7 @@ func (suite *ResourcesSuite) TestListResources() {
 	nsList, err := safe.StateListAll[*meta.Namespace](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	nsIt := safe.IteratorFromList(nsList)
-
-	for nsIt.Next() {
+	for nsIt := nsList.Iterator(); nsIt.Next(); {
 		namespaces = append(namespaces, nsIt.Value().Metadata().ID())
 	}
 
@@ -69,9 +67,7 @@ func (suite *ResourcesSuite) TestListResources() {
 	rdList, err := safe.StateListAll[*meta.ResourceDefinition](ctx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
-	rdIt := safe.IteratorFromList(rdList)
-
-	for rdIt.Next() {
+	for rdIt := rdList.Iterator(); rdIt.Next(); {
 		resourceTypes = append(resourceTypes, rdIt.Value().TypedSpec().Type)
 	}
 

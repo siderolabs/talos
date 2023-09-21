@@ -13,7 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 )
 
 // Populate populates the config download URL with values replacing variables.
@@ -57,11 +57,11 @@ func PopulateVariables(ctx context.Context, downloadURL string, st state.State, 
 		}
 	}
 
-	pendingVariables := slices.ToSet(activeVariables)
+	pendingVariables := xslices.ToSet(activeVariables)
 
 	// wait for all variables to be populated
 	for len(pendingVariables) > 0 {
-		log.Printf("waiting for URL variables: %v", slices.Map(maps.Keys(pendingVariables), func(v *Variable) string { return v.Key }))
+		log.Printf("waiting for URL variables: %v", xslices.Map(maps.Keys(pendingVariables), func(v *Variable) string { return v.Key }))
 
 		var ev state.Event
 

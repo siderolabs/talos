@@ -10,7 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -66,7 +66,7 @@ func (suite *MachineStatusSuite) assertMachineStatus(stage runtime.MachineStage,
 			asrt.Equal(ready, machineStatus.TypedSpec().Status.Ready)
 
 			asrt.Equal(unmetConditions,
-				slices.Map(machineStatus.TypedSpec().Status.UnmetConditions, func(c runtime.UnmetCondition) string { return c.Name }))
+				xslices.Map(machineStatus.TypedSpec().Status.UnmetConditions, func(c runtime.UnmetCondition) string { return c.Name }))
 		})
 }
 

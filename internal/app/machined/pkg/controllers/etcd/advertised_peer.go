@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.uber.org/zap"
@@ -147,7 +147,7 @@ func (ctrl *AdvertisedPeerController) updateAdvertisedPeers(ctx context.Context,
 		return fmt.Errorf("local member not found in member list")
 	}
 
-	newPeerURLs := slices.Map(advertisedAddresses, func(addr netip.Addr) string {
+	newPeerURLs := xslices.Map(advertisedAddresses, func(addr netip.Addr) string {
 		return fmt.Sprintf("https://%s", nethelpers.JoinHostPort(addr.String(), constants.EtcdPeerPort))
 	})
 	currentPeerURLs := localMember.PeerURLs

@@ -17,7 +17,7 @@ import (
 	"github.com/gizak/termui/v3"
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
@@ -160,11 +160,11 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		return nil, err
 	}
 
-	screenKeyToName := slices.ToMap(dashboard.screenConfigs, func(t screenConfig) (string, string) {
+	screenKeyToName := xslices.ToMap(dashboard.screenConfigs, func(t screenConfig) (string, string) {
 		return t.screenKey, string(t.screen)
 	})
 
-	screenConfigByKeyCode := slices.ToMap(dashboard.screenConfigs, func(config screenConfig) (tcell.Key, screenConfig) {
+	screenConfigByKeyCode := xslices.ToMap(dashboard.screenConfigs, func(config screenConfig) (tcell.Key, screenConfig) {
 		return config.keyCode, config
 	})
 

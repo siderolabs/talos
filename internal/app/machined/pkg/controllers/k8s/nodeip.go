@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/net"
 	"go.uber.org/zap"
@@ -102,7 +102,7 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 
 		cidrs := make([]string, 0, len(cfgSpec.ValidSubnets)+len(cfgSpec.ExcludeSubnets))
 		cidrs = append(cidrs, cfgSpec.ValidSubnets...)
-		cidrs = append(cidrs, slices.Map(cfgSpec.ExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
+		cidrs = append(cidrs, xslices.Map(cfgSpec.ExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
 
 		ips, err := net.FilterIPs(addrs, cidrs)
 		if err != nil {

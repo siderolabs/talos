@@ -21,7 +21,7 @@ import (
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/google/uuid"
 	"github.com/jsimonetti/rtnetlink"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	sideronet "github.com/siderolabs/net"
 	"github.com/vishvananda/netlink"
 
@@ -85,7 +85,7 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *State, network p
 		fakeIPs[j] = sideronet.FormatCIDR(fakeIP, network.CIDRs[j])
 	}
 
-	gatewayAddrs := slices.Map(network.GatewayAddrs, netip.Addr.String)
+	gatewayAddrs := xslices.Map(network.GatewayAddrs, netip.Addr.String)
 
 	containerID := uuid.New().String()
 	runtimeConf := libcni.RuntimeConf{

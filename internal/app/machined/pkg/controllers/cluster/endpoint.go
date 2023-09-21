@@ -13,7 +13,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/siderolabs/gen/channel"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -53,8 +52,10 @@ func (ctrl *EndpointController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
 		memberList, err := safe.ReaderListAll[*cluster.Member](ctx, r)
@@ -64,7 +65,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 
 		var endpoints []netip.Addr
 
-		for it := safe.IteratorFromList(memberList); it.Next(); {
+		for it := memberList.Iterator(); it.Next(); {
 			member := it.Value().TypedSpec()
 
 			if !(member.MachineType == machine.TypeControlPlane || member.MachineType == machine.TypeInit) {

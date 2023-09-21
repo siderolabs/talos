@@ -20,7 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -293,7 +293,7 @@ func assertResources[R rtestutils.ResourceWithRD](
 		ctx,
 		t,
 		state,
-		slices.Map(requiredIDs, func(id string) resource.ID { return id }),
+		xslices.Map(requiredIDs, func(id string) resource.ID { return id }),
 		check,
 		opts...,
 	)

@@ -8,7 +8,7 @@ package internal
 import (
 	"context"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	bddisk "github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -48,7 +48,7 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 		}
 	}
 
-	diskList := slices.Map(disks, diskConv)
+	diskList := xslices.Map(disks, diskConv)
 
 	reply = &storage.DisksResponse{
 		Messages: []*storage.Disks{

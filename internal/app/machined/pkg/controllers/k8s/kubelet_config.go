@@ -14,8 +14,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/gen/xerrors"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -65,7 +65,7 @@ func NewKubeletConfigController() *KubeletConfigController {
 						return fmt.Errorf("error building DNS service IPs: %w", err)
 					}
 
-					kubeletConfig.ClusterDNS = slices.Map(addrs, netip.Addr.String)
+					kubeletConfig.ClusterDNS = xslices.Map(addrs, netip.Addr.String)
 				}
 
 				kubeletConfig.ClusterDomain = cfgProvider.Cluster().Network().DNSDomain()

@@ -8,11 +8,12 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
@@ -85,9 +86,9 @@ func (ctrl *KmsgLogConfigController) Run(ctx context.Context, r controller.Runti
 
 		if cfg != nil {
 			// remove duplicate URLs in case same destination is specified in both machine config and kernel args
-			destinations = append(destinations, slices.Filter(cfg.Config().Runtime().KmsgLogURLs(),
+			destinations = append(destinations, xslices.Filter(cfg.Config().Runtime().KmsgLogURLs(),
 				func(u *url.URL) bool {
-					return !slices.Contains(destinations, func(v *url.URL) bool {
+					return !slices.ContainsFunc(destinations, func(v *url.URL) bool {
 						return v.String() == u.String()
 					})
 				})...)

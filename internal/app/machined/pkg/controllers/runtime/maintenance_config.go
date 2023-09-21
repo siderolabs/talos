@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -90,7 +90,7 @@ func (ctrl *MaintenanceConfigController) Run(ctx context.Context, r controller.R
 		// * if it exists, find the SideroLink address and listen only on it
 		case err == nil:
 			if nodeAddresses != nil {
-				sideroLinkAddresses := slices.Filter(nodeAddresses.TypedSpec().IPs(), func(addr netip.Addr) bool {
+				sideroLinkAddresses := xslices.Filter(nodeAddresses.TypedSpec().IPs(), func(addr netip.Addr) bool {
 					return network.IsULA(addr, network.ULASideroLink)
 				})
 

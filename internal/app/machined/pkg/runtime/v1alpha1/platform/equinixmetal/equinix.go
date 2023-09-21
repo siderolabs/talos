@@ -145,7 +145,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 
 		found := false
 
-		hostInterfaceIter := safe.IteratorFromList(hostInterfaces)
+		hostInterfaceIter := hostInterfaces.Iterator()
 
 		for hostInterfaceIter.Next() {
 			// match using permanent MAC address:

@@ -9,10 +9,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -277,7 +278,7 @@ func validateFlags() error {
 	var err error
 
 	for _, outputType := range genConfigCmdFlags.outputTypes {
-		if !slices.Contains(allOutputTypes, func(t string) bool {
+		if !slices.ContainsFunc(allOutputTypes, func(t string) bool {
 			return t == outputType
 		}) {
 			err = multierror.Append(err, fmt.Errorf("invalid output type: %q", outputType))
@@ -288,7 +289,7 @@ func validateFlags() error {
 }
 
 func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPaths, commentsFlags encoder.CommentsFlags) error {
-	outputTypesSet := slices.ToSet(genConfigCmdFlags.outputTypes)
+	outputTypesSet := xslices.ToSet(genConfigCmdFlags.outputTypes)
 
 	if _, ok := outputTypesSet[controlPlaneOutputType]; ok {
 		data, err := configBundle.Serialize(commentsFlags, machine.TypeControlPlane)

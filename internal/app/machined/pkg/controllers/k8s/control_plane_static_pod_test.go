@@ -20,7 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/api/core/v1"
@@ -92,7 +92,7 @@ func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests 
 		return err
 	}
 
-	ids := slices.Map(resources.Items, func(r resource.Resource) string { return r.Metadata().ID() })
+	ids := xslices.Map(resources.Items, func(r resource.Resource) string { return r.Metadata().ID() })
 
 	if !reflect.DeepEqual(manifests, ids) {
 		return retry.ExpectedError(fmt.Errorf("expected %q, got %q", manifests, ids))

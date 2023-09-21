@@ -15,8 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,8 +78,10 @@ func (ctrl *KubeletSpecController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
 		cfg, err := safe.ReaderGetByID[*k8s.KubeletConfig](ctx, r, k8s.KubeletID)
@@ -140,7 +141,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 				return fmt.Errorf("error getting node IPs: %w", nodeErr)
 			}
 
-			nodeIPsString := slices.Map(nodeIP.TypedSpec().Addresses, netip.Addr.String)
+			nodeIPsString := xslices.Map(nodeIP.TypedSpec().Addresses, netip.Addr.String)
 			args["node-ip"] = strings.Join(nodeIPsString, ",")
 		}
 

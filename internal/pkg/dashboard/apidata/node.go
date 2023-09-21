@@ -5,7 +5,7 @@
 package apidata
 
 import (
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
@@ -198,11 +198,11 @@ func (node *Node) UpdateDiff(old *Node) {
 	}
 
 	if old.Processes != nil {
-		index := slices.ToMap(old.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
+		index := xslices.ToMap(old.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
 			return proc.Pid, proc
 		})
 
-		node.ProcsDiff = slices.ToMap(node.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
+		node.ProcsDiff = xslices.ToMap(node.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
 			return proc.Pid, procDiff(index[proc.Pid], proc)
 		})
 	}

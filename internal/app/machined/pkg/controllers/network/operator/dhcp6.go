@@ -18,7 +18,7 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/nclient6"
 	"github.com/jsimonetti/rtnetlink"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"go.uber.org/zap"
 	"go4.org/netipx"
@@ -184,7 +184,7 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 
 		d.resolvers = []network.ResolverSpecSpec{
 			{
-				DNSServers:  slices.Map(reply.Options.DNS(), convertIP),
+				DNSServers:  xslices.Map(reply.Options.DNS(), convertIP),
 				ConfigLayer: network.ConfigOperator,
 			},
 		}
@@ -213,7 +213,7 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 
 		d.timeservers = []network.TimeServerSpecSpec{
 			{
-				NTPServers:  slices.Map(reply.Options.NTPServers(), convertIP),
+				NTPServers:  xslices.Map(reply.Options.NTPServers(), convertIP),
 				ConfigLayer: network.ConfigOperator,
 			},
 		}

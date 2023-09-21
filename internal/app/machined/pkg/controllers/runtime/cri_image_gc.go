@@ -19,7 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -189,7 +189,7 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 func buildExpectedImageNames(logger *zap.Logger, actualImages []images.Image, expectedImages []string) (map[string]struct{}, error) {
 	var parseErrors []error
 
-	expectedReferences := slices.Map(expectedImages, func(ref string) docker.Named {
+	expectedReferences := xslices.Map(expectedImages, func(ref string) docker.Named {
 		res, parseErr := docker.ParseNamed(ref)
 
 		parseErrors = append(parseErrors, parseErr)

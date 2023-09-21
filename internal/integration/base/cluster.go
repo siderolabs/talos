@@ -7,7 +7,7 @@
 package base
 
 import (
-	"github.com/siderolabs/gen/slices"
+	"slices"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"

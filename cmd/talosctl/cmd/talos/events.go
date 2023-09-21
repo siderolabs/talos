@@ -13,7 +13,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
@@ -100,7 +100,7 @@ var eventsCmd = &cobra.Command{
 						msg.GetStage().String(),
 						fmt.Sprintf("ready: %v, unmet conditions: %v",
 							msg.GetStatus().Ready,
-							slices.Map(msg.GetStatus().GetUnmetConditions(),
+							xslices.Map(msg.GetStatus().GetUnmetConditions(),
 								func(c *machine.MachineStatusEvent_MachineStatus_UnmetCondition) string {
 									return c.Name
 								},

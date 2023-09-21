@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -166,7 +166,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 		if err = r.Modify(ctx, k8s.NewManifestStatus(k8s.ControlPlaneNamespaceName), func(r resource.Resource) error {
 			status := r.(*k8s.ManifestStatus).TypedSpec()
 
-			status.ManifestsApplied = slices.Map(manifests.Items, func(m resource.Resource) string {
+			status.ManifestsApplied = xslices.Map(manifests.Items, func(m resource.Resource) string {
 				return m.Metadata().ID()
 			})
 
@@ -182,7 +182,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 //nolint:gocyclo,cyclop
 func (ctrl *ManifestApplyController) apply(ctx context.Context, logger *zap.Logger, mapper *restmapper.DeferredDiscoveryRESTMapper, dyn dynamic.Interface, manifests resource.List) error {
 	// flatten list of objects to be applied
-	objects := slices.FlatMap(manifests.Items, func(m resource.Resource) []*unstructured.Unstructured {
+	objects := xslices.FlatMap(manifests.Items, func(m resource.Resource) []*unstructured.Unstructured {
 		return k8sadapter.Manifest(m.(*k8s.Manifest)).Objects()
 	})
 

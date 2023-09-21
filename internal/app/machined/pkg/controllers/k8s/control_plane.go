@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller/generic"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 
@@ -332,7 +332,7 @@ func NewControlPlaneExtraManifestsController() *ControlPlaneExtraManifestsContro
 }
 
 func convertVolumes(volumes []talosconfig.VolumeMount) []k8s.ExtraVolume {
-	return slices.Map(volumes, func(v talosconfig.VolumeMount) k8s.ExtraVolume {
+	return xslices.Map(volumes, func(v talosconfig.VolumeMount) k8s.ExtraVolume {
 		return k8s.ExtraVolume{
 			Name:      v.Name(),
 			HostPath:  v.HostPath(),

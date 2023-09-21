@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -82,7 +82,7 @@ func (ctrl *StaticEndpointController) Run(ctx context.Context, r controller.Runt
 				return fmt.Errorf("error resolving %q: %w", cpHostname, err)
 			}
 
-			addrs = slices.Map(addrs, netip.Addr.Unmap)
+			addrs = xslices.Map(addrs, netip.Addr.Unmap)
 
 			if err = safe.WriterModify(ctx, r, k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneKubernetesEndpointsID), func(endpoint *k8s.Endpoint) error {
 				endpoint.TypedSpec().Addresses = addrs

@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/net"
 	"go.uber.org/zap"
@@ -128,11 +128,11 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 
 		advertisedCIDRs := make([]string, 0, len(advertiseValidSubnets)+len(etcdConfig.TypedSpec().AdvertiseExcludeSubnets))
 		advertisedCIDRs = append(advertisedCIDRs, advertiseValidSubnets...)
-		advertisedCIDRs = append(advertisedCIDRs, slices.Map(etcdConfig.TypedSpec().AdvertiseExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
+		advertisedCIDRs = append(advertisedCIDRs, xslices.Map(etcdConfig.TypedSpec().AdvertiseExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
 
 		listenCIDRs := make([]string, 0, len(etcdConfig.TypedSpec().ListenValidSubnets)+len(etcdConfig.TypedSpec().ListenExcludeSubnets))
 		listenCIDRs = append(listenCIDRs, etcdConfig.TypedSpec().ListenValidSubnets...)
-		listenCIDRs = append(listenCIDRs, slices.Map(etcdConfig.TypedSpec().ListenExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
+		listenCIDRs = append(listenCIDRs, xslices.Map(etcdConfig.TypedSpec().ListenExcludeSubnets, func(cidr string) string { return "!" + cidr })...)
 
 		defaultListenAddress := netip.AddrFrom4([4]byte{0, 0, 0, 0})
 		loopbackAddress := netip.AddrFrom4([4]byte{127, 0, 0, 1})

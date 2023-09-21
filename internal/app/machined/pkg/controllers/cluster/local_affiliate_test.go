@@ -9,7 +9,7 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -49,7 +49,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 			"10.5.0.1",
 			"192.168.192.168",
 			"2001:123:4567::1",
-		}, slices.Map(spec.Addresses, netip.Addr.String))
+		}, xslices.Map(spec.Addresses, netip.Addr.String))
 		asrt.Equal("example1", spec.Hostname)
 		asrt.Equal("example1.com", spec.Nodename)
 		asrt.Equal(machine.TypeWorker, spec.MachineType)
@@ -120,7 +120,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 				"1.1.1.1:51820",
 				"[2001:123:4567::1]:51820",
 			},
-			slices.Map(spec.KubeSpan.Endpoints, netip.AddrPort.String),
+			xslices.Map(spec.KubeSpan.Endpoints, netip.AddrPort.String),
 		)
 	})
 
@@ -162,7 +162,7 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 			"10.5.0.1",
 			"192.168.192.168",
 			"2001:123:4567::1",
-		}, slices.Map(spec.Addresses, netip.Addr.String))
+		}, xslices.Map(spec.Addresses, netip.Addr.String))
 		asrt.Equal("example1", spec.Hostname)
 		asrt.Equal("example1.com", spec.Nodename)
 		asrt.Equal(machine.TypeControlPlane, spec.MachineType)

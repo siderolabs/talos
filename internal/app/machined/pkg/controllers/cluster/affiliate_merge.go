@@ -11,7 +11,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/siderolabs/gen/channel"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -51,8 +50,10 @@ func (ctrl *AffiliateMergeController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
 		rawAffiliates, err := safe.ReaderList[*cluster.Affiliate](ctx, r, resource.NewMetadata(cluster.RawNamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
@@ -62,7 +63,7 @@ func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runt
 
 		mergedAffiliates := make(map[resource.ID]*cluster.AffiliateSpec, rawAffiliates.Len())
 
-		for it := safe.IteratorFromList(rawAffiliates); it.Next(); {
+		for it := rawAffiliates.Iterator(); it.Next(); {
 			affiliateSpec := it.Value().TypedSpec()
 			id := affiliateSpec.NodeID
 
@@ -95,7 +96,7 @@ func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for it := safe.IteratorFromList(list); it.Next(); {
+		for it := list.Iterator(); it.Next(); {
 			res := it.Value()
 
 			if res.Metadata().Owner() != ctrl.Name() {

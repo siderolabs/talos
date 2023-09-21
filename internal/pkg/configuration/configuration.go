@@ -12,7 +12,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -57,7 +57,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 						DeviceCIDR:      device.Cidr,
 						DeviceDHCP:      pointer.To(device.Dhcp),
 						DeviceIgnore:    pointer.To(device.Ignore),
-						DeviceRoutes: slices.Map(device.Routes, func(route *machine.RouteConfig) *v1alpha1.Route {
+						DeviceRoutes: xslices.Map(device.Routes, func(route *machine.RouteConfig) *v1alpha1.Route {
 							return &v1alpha1.Route{
 								RouteNetwork: route.Network,
 								RouteGateway: route.Gateway,

@@ -13,7 +13,7 @@ import (
 
 	"github.com/prometheus/procfs"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -188,7 +188,7 @@ func (s *Server) CPUInfo(ctx context.Context, in *emptypb.Empty) (*machine.CPUIn
 	reply := &machine.CPUInfoResponse{
 		Messages: []*machine.CPUsInfo{
 			{
-				CpuInfo: slices.Map(info, translateCPUInfo),
+				CpuInfo: xslices.Map(info, translateCPUInfo),
 			},
 		},
 	}

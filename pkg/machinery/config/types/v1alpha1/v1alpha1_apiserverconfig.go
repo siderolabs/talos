@@ -7,7 +7,7 @@ package v1alpha1
 import (
 	"fmt"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -45,7 +45,7 @@ func (a *APIServerConfig) ExtraArgs() map[string]string {
 
 // ExtraVolumes implements the config.APIServer interface.
 func (a *APIServerConfig) ExtraVolumes() []config.VolumeMount {
-	return slices.Map(a.ExtraVolumesConfig, func(v VolumeMountConfig) config.VolumeMount { return v })
+	return xslices.Map(a.ExtraVolumesConfig, func(v VolumeMountConfig) config.VolumeMount { return v })
 }
 
 // Env implements the config.APIServer interface.
@@ -60,7 +60,7 @@ func (a *APIServerConfig) DisablePodSecurityPolicy() bool {
 
 // AdmissionControl implements the config.APIServer interface.
 func (a *APIServerConfig) AdmissionControl() []config.AdmissionPlugin {
-	return slices.Map(a.AdmissionControlConfig, func(c *AdmissionPluginConfig) config.AdmissionPlugin { return c })
+	return xslices.Map(a.AdmissionControlConfig, func(c *AdmissionPluginConfig) config.AdmissionPlugin { return c })
 }
 
 // AuditPolicy implements the config.APIServer interface.

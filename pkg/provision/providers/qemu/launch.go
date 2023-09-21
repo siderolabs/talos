@@ -23,7 +23,7 @@ import (
 	"github.com/containernetworking/plugins/pkg/utils"
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/google/uuid"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	sideronet "github.com/siderolabs/net"
 
@@ -120,7 +120,7 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 		ips[j] = sideronet.FormatCIDR(config.IPs[j], config.CIDRs[j])
 	}
 
-	gatewayAddrs := slices.Map(config.GatewayAddrs, netip.Addr.String)
+	gatewayAddrs := xslices.Map(config.GatewayAddrs, netip.Addr.String)
 
 	runtimeConf := libcni.RuntimeConf{
 		ContainerID: containerID,

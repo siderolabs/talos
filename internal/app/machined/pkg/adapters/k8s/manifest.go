@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -95,7 +95,7 @@ func (a manifest) SetYAML(yamlBytes []byte) error {
 
 // Objects returns list of unstructured object.
 func (a manifest) Objects() []*unstructured.Unstructured {
-	return slices.Map(a.Manifest.TypedSpec().Items, func(item k8s.SingleManifest) *unstructured.Unstructured {
+	return xslices.Map(a.Manifest.TypedSpec().Items, func(item k8s.SingleManifest) *unstructured.Unstructured {
 		return &unstructured.Unstructured{Object: item.Object}
 	})
 }

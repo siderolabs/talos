@@ -24,7 +24,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
@@ -695,7 +695,7 @@ func formatEtcdURL(addr netip.Addr, port int) string {
 }
 
 func getEtcdURLs(addrs []netip.Addr, port int) []string {
-	return slices.Map(addrs, func(addr netip.Addr) string {
+	return xslices.Map(addrs, func(addr netip.Addr) string {
 		return formatEtcdURL(addr, port)
 	})
 }
@@ -705,7 +705,7 @@ func formatEtcdURLs(addrs []netip.Addr, port int) string {
 }
 
 func formatClusterURLs(name string, urls []string) string {
-	return strings.Join(slices.Map(urls, func(url string) string {
+	return strings.Join(xslices.Map(urls, func(url string) string {
 		return fmt.Sprintf("%s=%s", name, url)
 	}), ",")
 }

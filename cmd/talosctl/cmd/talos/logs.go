@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 
@@ -136,7 +136,7 @@ func (slicer *lineSlicer) chopper(r io.Reader, hostname string) {
 
 	for scanner.Scan() {
 		line := scanner.Bytes()
-		line = slices.Copy(line, len(line))
+		line = xslices.CopyN(line, len(line))
 
 		slicer.respCh <- &common.Data{
 			Metadata: &common.Metadata{

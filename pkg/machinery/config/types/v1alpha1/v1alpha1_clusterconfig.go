@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 
@@ -159,7 +159,7 @@ func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
 
 // InlineManifests implements the config.ClusterConfig interface.
 func (c *ClusterConfig) InlineManifests() []config.InlineManifest {
-	return slices.Map(c.ClusterInlineManifests, func(m ClusterInlineManifest) config.InlineManifest { return m })
+	return xslices.Map(c.ClusterInlineManifests, func(m ClusterInlineManifest) config.InlineManifest { return m })
 }
 
 // AdminKubeconfig implements the config.ClusterConfig interface.

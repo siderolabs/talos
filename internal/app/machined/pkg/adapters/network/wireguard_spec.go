@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/netip"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
@@ -96,7 +96,7 @@ func (a wireguardSpec) Encode(existing *network.WireguardSpec) (*wgtypes.Config,
 				PresharedKey:                presharedKey,
 				PersistentKeepaliveInterval: &peer.PersistentKeepaliveInterval,
 				ReplaceAllowedIPs:           true,
-				AllowedIPs: slices.Map(peer.AllowedIPs, func(peerIP netip.Prefix) net.IPNet {
+				AllowedIPs: xslices.Map(peer.AllowedIPs, func(peerIP netip.Prefix) net.IPNet {
 					return *netipx.PrefixIPNet(peerIP)
 				}),
 			})
@@ -190,7 +190,7 @@ func (a wireguardSpec) Decode(dev *wgtypes.Device, isStatus bool) {
 		}
 
 		spec.Peers[i].PersistentKeepaliveInterval = dev.Peers[i].PersistentKeepaliveInterval
-		spec.Peers[i].AllowedIPs = slices.Map(dev.Peers[i].AllowedIPs, func(peerIP net.IPNet) netip.Prefix {
+		spec.Peers[i].AllowedIPs = xslices.Map(dev.Peers[i].AllowedIPs, func(peerIP net.IPNet) netip.Prefix {
 			res, _ := netipx.FromStdIPNet(&peerIP)
 
 			return res

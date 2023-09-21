@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/gen/value"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -124,15 +124,15 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 }
 
 func ipsToString(in []netip.Addr) string {
-	return strings.Join(slices.Map(in, netip.Addr.String), ",")
+	return strings.Join(xslices.Map(in, netip.Addr.String), ",")
 }
 
 func ipPrefixesToString(in []netip.Prefix) string {
-	return strings.Join(slices.Map(in, netip.Prefix.String), ",")
+	return strings.Join(xslices.Map(in, netip.Prefix.String), ",")
 }
 
 func ipPortsToString(in []netip.AddrPort) string {
-	return strings.Join(slices.Map(in, netip.AddrPort.String), ",")
+	return strings.Join(xslices.Map(in, netip.AddrPort.String), ",")
 }
 
 func parseIPs(in string) []netip.Addr {

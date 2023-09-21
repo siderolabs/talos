@@ -10,10 +10,11 @@ import (
 	"fmt"
 	"log"
 	"net/netip"
+	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc/metadata"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +65,7 @@ func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.C
 		Info:           clusterInfo,
 	}
 
-	nodeInternalIPs := slices.Map(clusterInfo.Nodes(), func(info cluster.NodeInfo) string {
+	nodeInternalIPs := xslices.Map(clusterInfo.Nodes(), func(info cluster.NodeInfo) string {
 		return info.InternalIP.String()
 	})
 
@@ -109,10 +110,10 @@ func (cl *clusterState) NodesByType(t machine.Type) []cluster.NodeInfo {
 
 func (cl *clusterState) String() string {
 	return fmt.Sprintf("control plane: %q, worker: %q",
-		slices.Map(cl.nodeInfosByType[machine.TypeControlPlane], func(info cluster.NodeInfo) string {
+		xslices.Map(cl.nodeInfosByType[machine.TypeControlPlane], func(info cluster.NodeInfo) string {
 			return info.InternalIP.String()
 		}),
-		slices.Map(cl.nodeInfosByType[machine.TypeWorker], func(info cluster.NodeInfo) string {
+		xslices.Map(cl.nodeInfosByType[machine.TypeWorker], func(info cluster.NodeInfo) string {
 			return info.InternalIP.String()
 		}))
 }
@@ -237,7 +238,7 @@ func getDiscoveryMemberList(ctx context.Context, runtime runtime.Runtime) ([]*cl
 
 	result := make([]*clusterres.Member, 0, list.Len())
 
-	for iter := safe.IteratorFromList(list); iter.Next(); {
+	for iter := list.Iterator(); iter.Next(); {
 		result = append(result, iter.Value())
 	}
 

@@ -27,7 +27,7 @@ func cleanupAffiliates(ctx context.Context, ctrl controller.Controller, r contro
 		return fmt.Errorf("error listing resources: %w", err)
 	}
 
-	for it := safe.IteratorFromList(list); it.Next(); {
+	for it := list.Iterator(); it.Next(); {
 		res := it.Value()
 		if res.Metadata().Owner() != ctrl.Name() {
 			continue

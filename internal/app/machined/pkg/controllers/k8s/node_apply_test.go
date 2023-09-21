@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zaptest"
 	v1 "k8s.io/api/core/v1"
@@ -120,7 +120,7 @@ func TestApplyLabels(t *testing.T) {
 			node := &v1.Node{}
 			node.Labels = tt.inputLabels
 
-			ownedLabels := slices.ToSet(tt.ownedLabels)
+			ownedLabels := xslices.ToSet(tt.ownedLabels)
 			if ownedLabels == nil {
 				ownedLabels = map[string]struct{}{}
 			}
@@ -305,7 +305,7 @@ func TestApplyTaints(t *testing.T) {
 			node := &v1.Node{}
 			node.Spec.Taints = tt.inputTaints
 
-			ownedTaints := slices.ToSet(tt.ownedTaints)
+			ownedTaints := xslices.ToSet(tt.ownedTaints)
 			if ownedTaints == nil {
 				ownedTaints = map[string]struct{}{}
 			}

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
@@ -19,7 +19,7 @@ type EventsSuite struct {
 }
 
 func (suite *EventsSuite) assertEvents(expectedMessages []string, evs []events.ServiceEvent) {
-	messages := slices.Map(evs, func(ev events.ServiceEvent) string { return ev.Message })
+	messages := xslices.Map(evs, func(ev events.ServiceEvent) string { return ev.Message })
 	suite.Assert().Equal(expectedMessages, messages)
 }
 

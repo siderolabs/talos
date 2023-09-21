@@ -239,7 +239,7 @@ func completeResourceDefinition(withAliases bool) ([]string, cobra.ShellCompDire
 			return err
 		}
 
-		for iter := safe.IteratorFromList(items); iter.Next(); {
+		for iter := items.Iterator(); iter.Next(); {
 			if withAliases {
 				result = append(result, iter.Value().TypedSpec().Aliases...)
 			}
@@ -296,9 +296,7 @@ func CompleteNodes(*cobra.Command, []string, string) ([]string, cobra.ShellCompD
 			return err
 		}
 
-		it := safe.IteratorFromList(items)
-
-		for it.Next() {
+		for it := items.Iterator(); it.Next(); {
 			if hostname := it.Value().TypedSpec().Hostname; hostname != "" {
 				nodes = append(nodes, hostname)
 			}

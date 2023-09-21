@@ -16,7 +16,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
@@ -352,7 +352,7 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 		go func(svcrunner *ServiceRunner, reverseDeps []string) {
 			defer shutdownWg.Done()
 
-			conds := slices.Map(reverseDeps, func(dep string) conditions.Condition { return WaitForService(StateEventDown, dep) })
+			conds := xslices.Map(reverseDeps, func(dep string) conditions.Condition { return WaitForService(StateEventDown, dep) })
 			allDeps := conditions.WaitForAll(conds...)
 
 			if err := allDeps.Wait(shutdownCtx); err != nil {

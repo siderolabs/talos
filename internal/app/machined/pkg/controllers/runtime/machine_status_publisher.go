@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
@@ -69,7 +69,7 @@ func (ctrl *MachineStatusPublisherController) Run(ctx context.Context, r control
 			Stage: machine.MachineStatusEvent_MachineStage(machineStatus.TypedSpec().Stage),
 			Status: &machine.MachineStatusEvent_MachineStatus{
 				Ready: machineStatus.TypedSpec().Status.Ready,
-				UnmetConditions: slices.Map(machineStatus.TypedSpec().Status.UnmetConditions,
+				UnmetConditions: xslices.Map(machineStatus.TypedSpec().Status.UnmetConditions,
 					func(unmetCondition runtime.UnmetCondition) *machine.MachineStatusEvent_MachineStatus_UnmetCondition {
 						return &machine.MachineStatusEvent_MachineStatus_UnmetCondition{
 							Name:   unmetCondition.Name,

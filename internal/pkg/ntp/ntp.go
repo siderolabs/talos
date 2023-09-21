@@ -12,11 +12,11 @@ import (
 	"math/bits"
 	"net"
 	"reflect"
+	"slices"
 	"sync"
 	"time"
 
 	"github.com/beevik/ntp"
-	"github.com/siderolabs/gen/slices"
 	"github.com/u-root/u-root/pkg/rtc"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

@@ -9,10 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"slices"
 	"sync"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
@@ -207,7 +208,7 @@ func (svcrunner *ServiceRunner) Run() error {
 
 	dependencies := svcrunner.service.DependsOn(svcrunner.runtime)
 	if len(dependencies) > 0 {
-		serviceConditions := slices.Map(dependencies, func(dep string) conditions.Condition { return WaitForService(StateEventUp, dep) })
+		serviceConditions := xslices.Map(dependencies, func(dep string) conditions.Condition { return WaitForService(StateEventUp, dep) })
 		serviceDependencies := conditions.WaitForAll(serviceConditions...)
 
 		if condition != nil {

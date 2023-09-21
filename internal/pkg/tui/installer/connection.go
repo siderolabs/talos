@@ -99,7 +99,7 @@ func (c *Connection) Links() ([]Link, error) {
 		return nil, err
 	}
 
-	it := safe.IteratorFromList(items)
+	it := items.Iterator()
 
 	var links []Link
 

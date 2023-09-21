@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
@@ -168,8 +168,8 @@ func (builder *Builder) generateKernel() error {
 }
 
 func (builder *Builder) generatePCRSig() error {
-	sectionsData := slices.ToMap(
-		slices.Filter(builder.sections,
+	sectionsData := xslices.ToMap(
+		xslices.Filter(builder.sections,
 			func(s section) bool {
 				return s.Measure
 			},

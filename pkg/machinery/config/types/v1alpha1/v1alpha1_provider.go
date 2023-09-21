@@ -9,12 +9,13 @@ import (
 	stdx509 "crypto/x509"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/siderolabs/go-pointer"
@@ -80,7 +81,7 @@ func (c *Config) Machine() config.MachineConfig {
 
 // SeccompProfiles implements the config.Provider interface.
 func (m *MachineConfig) SeccompProfiles() []config.SeccompProfile {
-	return slices.Map(m.MachineSeccompProfiles, func(m *MachineSeccompProfile) config.SeccompProfile { return m })
+	return xslices.Map(m.MachineSeccompProfiles, func(m *MachineSeccompProfile) config.SeccompProfile { return m })
 }
 
 // Name implements the config.Provider interface.
@@ -174,7 +175,7 @@ func (m *MachineConfig) Security() config.Security {
 
 // Disks implements the config.Provider interface.
 func (m *MachineConfig) Disks() []config.Disk {
-	return slices.Map(m.MachineDisks, func(d *MachineDisk) config.Disk { return d })
+	return xslices.Map(m.MachineDisks, func(d *MachineDisk) config.Disk { return d })
 }
 
 // Network implements the config.Provider interface.
@@ -206,7 +207,7 @@ func (m *MachineConfig) Controlplane() config.MachineControlPlane {
 
 // Pods implements the config.Provider interface.
 func (m *MachineConfig) Pods() []map[string]interface{} {
-	return slices.Map(m.MachinePods, func(u Unstructured) map[string]interface{} { return u.Object })
+	return xslices.Map(m.MachinePods, func(u Unstructured) map[string]interface{} { return u.Object })
 }
 
 // ControllerManager implements the config.Provider interface.
@@ -253,7 +254,7 @@ func (m *MachineConfig) Env() config.Env {
 
 // Files implements the config.Provider interface.
 func (m *MachineConfig) Files() ([]config.File, error) {
-	return slices.Map(m.MachineFiles, func(f *MachineFile) config.File { return f }), nil
+	return xslices.Map(m.MachineFiles, func(f *MachineFile) config.File { return f }), nil
 }
 
 // Type implements the config.Provider interface.
@@ -382,7 +383,7 @@ func (k *KubeletConfig) ExtraArgs() map[string]string {
 
 // ExtraMounts implements the config.Provider interface.
 func (k *KubeletConfig) ExtraMounts() []specs.Mount {
-	return slices.Map(k.KubeletExtraMounts, func(m ExtraMount) specs.Mount { return m.Mount })
+	return xslices.Map(k.KubeletExtraMounts, func(m ExtraMount) specs.Mount { return m.Mount })
 }
 
 // ExtraConfig implements the config.Provider interface.
@@ -536,7 +537,7 @@ func (n *NetworkConfig) DisableSearchDomain() bool {
 
 // Devices implements the config.Provider interface.
 func (n *NetworkConfig) Devices() []config.Device {
-	return slices.Map(n.NetworkInterfaces, func(d *Device) config.Device { return d })
+	return xslices.Map(n.NetworkInterfaces, func(d *Device) config.Device { return d })
 }
 
 // getDevice adds or returns existing Device by name.
@@ -563,7 +564,7 @@ func (n *NetworkConfig) Resolvers() []string {
 
 // ExtraHosts implements the config.Provider interface.
 func (n *NetworkConfig) ExtraHosts() []config.ExtraHost {
-	return slices.Map(n.ExtraHostEntries, func(e *ExtraHost) config.ExtraHost { return e })
+	return xslices.Map(n.ExtraHostEntries, func(e *ExtraHost) config.ExtraHost { return e })
 }
 
 // KubeSpan implements the config.Provider interface.
@@ -604,7 +605,7 @@ func (d *Device) Addresses() []string {
 
 // Routes implements the MachineNetwork interface.
 func (d *Device) Routes() []config.Route {
-	return slices.Map(d.DeviceRoutes, func(r *Route) config.Route { return r })
+	return xslices.Map(d.DeviceRoutes, func(r *Route) config.Route { return r })
 }
 
 // Bond implements the MachineNetwork interface.
@@ -627,7 +628,7 @@ func (d *Device) Bridge() config.Bridge {
 
 // Vlans implements the MachineNetwork interface.
 func (d *Device) Vlans() []config.Vlan {
-	return slices.Map(d.DeviceVlans, func(v *Vlan) config.Vlan { return v })
+	return xslices.Map(d.DeviceVlans, func(v *Vlan) config.Vlan { return v })
 }
 
 // MTU implements the MachineNetwork interface.
@@ -767,7 +768,7 @@ func (wc *DeviceWireguardConfig) FirewallMark() int {
 
 // Peers implements the MachineNetwork interface.
 func (wc *DeviceWireguardConfig) Peers() []config.WireguardPeer {
-	return slices.Map(wc.WireguardPeers, func(p *DeviceWireguardPeer) config.WireguardPeer { return p })
+	return xslices.Map(wc.WireguardPeers, func(p *DeviceWireguardPeer) config.WireguardPeer { return p })
 }
 
 // PublicKey implements the MachineNetwork interface.
@@ -850,7 +851,7 @@ func (b *Bond) Selectors() []config.NetworkDeviceSelector {
 		return nil
 	}
 
-	return slices.Map(b.BondDeviceSelectors, func(d NetworkDeviceSelector) config.NetworkDeviceSelector { return &d })
+	return xslices.Map(b.BondDeviceSelectors, func(d NetworkDeviceSelector) config.NetworkDeviceSelector { return &d })
 }
 
 // ARPIPTarget implements the MachineNetwork interface.
@@ -1042,7 +1043,7 @@ func (v *Vlan) VIPConfig() config.VIPConfig {
 
 // Routes implements the MachineNetwork interface.
 func (v *Vlan) Routes() []config.Route {
-	return slices.Map(v.VlanRoutes, func(r *Route) config.Route { return r })
+	return xslices.Map(v.VlanRoutes, func(r *Route) config.Route { return r })
 }
 
 // DHCP implements the MachineNetwork interface.
@@ -1128,7 +1129,7 @@ func (i *InstallConfig) Image() string {
 
 // Extensions implements the config.Provider interface.
 func (i *InstallConfig) Extensions() []config.Extension {
-	return slices.Map(i.InstallExtensions, func(e InstallExtensionConfig) config.Extension { return e })
+	return xslices.Map(i.InstallExtensions, func(e InstallExtensionConfig) config.Extension { return e })
 }
 
 // Disk implements the config.Provider interface.
@@ -1301,7 +1302,7 @@ func (d *MachineDisk) Device() string {
 
 // Partitions implements the config.Provider interface.
 func (d *MachineDisk) Partitions() []config.Partition {
-	return slices.Map(d.DiskPartitions, func(p *DiskPartition) config.Partition { return p })
+	return xslices.Map(d.DiskPartitions, func(p *DiskPartition) config.Partition { return p })
 }
 
 // Size implements the config.Provider interface.
@@ -1345,7 +1346,7 @@ func (e *EncryptionConfig) Options() []string {
 
 // Keys implements the config.Provider interface.
 func (e *EncryptionConfig) Keys() []config.EncryptionKey {
-	return slices.Map(e.EncryptionKeys, func(k *EncryptionKey) config.EncryptionKey { return k })
+	return xslices.Map(e.EncryptionKeys, func(k *EncryptionKey) config.EncryptionKey { return k })
 }
 
 // Static implements the config.Provider interface.

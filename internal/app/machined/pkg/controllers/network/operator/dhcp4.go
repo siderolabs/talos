@@ -19,7 +19,7 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	"go4.org/netipx"
 
@@ -237,7 +237,7 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 				d.lease = nil
 
 				d.logger.Debug("restarting DHCP sequence due to hostname change",
-					zap.Strings("dhcp_hostname", slices.Map(d.hostname, func(spec network.HostnameSpecSpec) string {
+					zap.Strings("dhcp_hostname", xslices.Map(d.hostname, func(spec network.HostnameSpecSpec) string {
 						return spec.Hostname
 					})),
 				)
@@ -422,7 +422,7 @@ func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) 
 
 		d.resolvers = []network.ResolverSpecSpec{
 			{
-				DNSServers:  slices.Map(ack.DNS(), convertIP),
+				DNSServers:  xslices.Map(ack.DNS(), convertIP),
 				ConfigLayer: network.ConfigOperator,
 			},
 		}
@@ -439,7 +439,7 @@ func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) 
 
 		d.timeservers = []network.TimeServerSpecSpec{
 			{
-				NTPServers:  slices.Map(ack.NTPServers(), convertIP),
+				NTPServers:  xslices.Map(ack.NTPServers(), convertIP),
 				ConfigLayer: network.ConfigOperator,
 			},
 		}

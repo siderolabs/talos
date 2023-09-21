@@ -10,7 +10,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
@@ -71,7 +71,7 @@ var rootCmd = &cobra.Command{
 					},
 				}
 
-				prof.Input.SystemExtensions = slices.Map(
+				prof.Input.SystemExtensions = xslices.Map(
 					cmdFlags.SystemExtensionImages,
 					func(imageRef string) profile.ContainerAsset {
 						return profile.ContainerAsset{

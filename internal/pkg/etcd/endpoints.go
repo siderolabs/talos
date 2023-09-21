@@ -25,7 +25,7 @@ func GetEndpoints(ctx context.Context, resources state.State) ([]string, error) 
 		return nil, fmt.Errorf("error getting endpoints resources: %w", err)
 	}
 
-	iter := safe.IteratorFromList(endpointResources)
+	iter := endpointResources.Iterator()
 
 	var endpointAddrs k8s.EndpointList
 

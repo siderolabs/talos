@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/siderolabs/go-retry/retry"
@@ -525,7 +525,7 @@ func (suite *UpgradeSuite) runE2E(k8sVersion string) {
 }
 
 func (suite *UpgradeSuite) assertSameVersionCluster(client *talosclient.Client, expectedVersion string) {
-	nodes := slices.Map(suite.Cluster.Info().Nodes, func(node provision.NodeInfo) string { return node.IPs[0].String() })
+	nodes := xslices.Map(suite.Cluster.Info().Nodes, func(node provision.NodeInfo) string { return node.IPs[0].String() })
 	ctx := talosclient.WithNodes(suite.ctx, nodes...)
 
 	var v *machineapi.VersionResponse

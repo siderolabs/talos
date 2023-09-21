@@ -11,9 +11,9 @@ import (
 	"errors"
 	"net/netip"
 	"net/url"
+	"slices"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-pointer"
 
 	coreconfig "github.com/siderolabs/talos/pkg/machinery/config"

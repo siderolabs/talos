@@ -9,10 +9,9 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
-
-	"github.com/siderolabs/gen/slices"
 )
 
 // Server is an in-memory http web server.

@@ -11,7 +11,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
@@ -58,8 +57,10 @@ func (ctrl *EndpointController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
 		peerStatuses, err := safe.ReaderListAll[*kubespan.PeerStatus](ctx, r)
@@ -75,7 +76,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		// build lookup table of affiliate's kubespan public key back to affiliate ID
 		affiliateLookup := make(map[string]string)
 
-		for it := safe.IteratorFromList(affiliates); it.Next(); {
+		for it := affiliates.Iterator(); it.Next(); {
 			affiliate := it.Value().TypedSpec()
 
 			if affiliate.KubeSpan.PublicKey != "" {
@@ -86,7 +87,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		// for every kubespan peer, if it's up and has endpoint, harvest that endpoint
 		touchedIDs := make(map[resource.ID]struct{})
 
-		for it := safe.IteratorFromList(peerStatuses); it.Next(); {
+		for it := peerStatuses.Iterator(); it.Next(); {
 			res := it.Value()
 			peerStatus := res.TypedSpec()
 
@@ -123,7 +124,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for it := safe.IteratorFromList(list); it.Next(); {
+		for it := list.Iterator(); it.Next(); {
 			res := it.Value()
 
 			if res.Metadata().Owner() != ctrl.Name() {

@@ -273,13 +273,11 @@ func (ctrl *MachineStatusController) servicesCheck(requiredServices []string) fu
 			return err
 		}
 
-		it := safe.IteratorFromList(serviceList)
-
 		var problems []string
 
 		runningServices := map[string]struct{}{}
 
-		for it.Next() {
+		for it := serviceList.Iterator(); it.Next(); {
 			service := it.Value()
 
 			if !service.TypedSpec().Running {
@@ -316,11 +314,9 @@ func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r cont
 		return err
 	}
 
-	it := safe.IteratorFromList(staticPodList)
-
 	var problems []string
 
-	for it.Next() {
+	for it := staticPodList.Iterator(); it.Next(); {
 		status, err := k8sadapter.StaticPodStatus(it.Value()).Status()
 		if err != nil {
 			return err

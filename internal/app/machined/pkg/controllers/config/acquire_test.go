@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -20,8 +21,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -186,8 +185,13 @@ func (suite *AcquireSuite) triggerAcquire() {
 }
 
 func (suite *AcquireSuite) waitForConfig() config.Provider {
-	cfg, ok := channel.RecvWithContext(suite.Ctx(), suite.configSetter.cfgCh)
-	suite.Require().True(ok)
+	var cfg config.Provider
+
+	select {
+	case cfg = <-suite.configSetter.cfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for config")
+	}
 
 	status := v1alpha1.NewAcquireConfigStatus()
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{status.Metadata().ID()}, func(*v1alpha1.AcquireConfigStatus, *assert.Assertions) {})
@@ -256,8 +260,13 @@ func (suite *AcquireSuite) TestFromDiskToMaintenance() {
 
 	suite.triggerAcquire()
 
-	cfg, ok := channel.RecvWithContext(suite.Ctx(), suite.configSetter.cfgCh)
-	suite.Require().True(ok)
+	var cfg config.Provider
+
+	select {
+	case cfg = <-suite.configSetter.cfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for config")
+	}
 
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
@@ -372,8 +381,13 @@ func (suite *AcquireSuite) TestFromPlatformToMaintenance() {
 
 	suite.triggerAcquire()
 
-	cfg, ok := channel.RecvWithContext(suite.Ctx(), suite.configSetter.cfgCh)
-	suite.Require().True(ok)
+	var cfg config.Provider
+
+	select {
+	case cfg = <-suite.configSetter.cfgCh:
+	case <-suite.Ctx().Done():
+		suite.Require().Fail("timed out waiting for config")
+	}
 
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 

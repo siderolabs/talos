@@ -8,11 +8,11 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
@@ -168,7 +168,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 				// we should start handing default address updates, but for now we're not ready
 				//
 				// at the same time check that recorded default address is still on the host, if it's not => replace it
-				if len(spec.Addresses) > 0 && slices.Contains(current, func(addr netip.Prefix) bool { return spec.Addresses[0] == addr }) {
+				if len(spec.Addresses) > 0 && slices.ContainsFunc(current, func(addr netip.Prefix) bool { return spec.Addresses[0] == addr }) {
 					return nil
 				}
 

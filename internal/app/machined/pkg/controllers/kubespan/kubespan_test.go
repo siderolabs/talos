@@ -17,7 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
@@ -66,7 +66,7 @@ func (suite *KubeSpanSuite) assertResourceIDs(md resource.Metadata, expectedIDs 
 			return err
 		}
 
-		actualIDs := slices.Map(l.Items, func(r resource.Resource) string { return r.Metadata().ID() })
+		actualIDs := xslices.Map(l.Items, func(r resource.Resource) string { return r.Metadata().ID() })
 
 		sort.Strings(expectedIDs)
 

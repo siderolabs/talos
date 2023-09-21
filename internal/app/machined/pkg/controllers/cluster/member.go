@@ -7,12 +7,11 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/gen/slices"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -52,8 +51,10 @@ func (ctrl *MemberController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
 		affiliates, err := safe.ReaderListAll[*cluster.Affiliate](ctx, r)
@@ -63,7 +64,7 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, _ *
 
 		touchedIDs := make(map[resource.ID]struct{})
 
-		for it := safe.IteratorFromList(affiliates); it.Next(); {
+		for it := affiliates.Iterator(); it.Next(); {
 			affiliateSpec := it.Value().TypedSpec()
 			if affiliateSpec.Nodename == "" {
 				// not a cluster member
@@ -94,7 +95,7 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, _ *
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for it := safe.IteratorFromList(list); it.Next(); {
+		for it := list.Iterator(); it.Next(); {
 			res := it.Value()
 
 			if res.Metadata().Owner() != ctrl.Name() {

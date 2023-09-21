@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -71,7 +71,7 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 				"fd50:8d60:4238:6302:f857:23ff:fe21:d1e0",
 				"fd50:8d60:4238:6302:f857:23ff:fe21:d1e1",
 			},
-			slices.Map(spec.Addresses, netip.Addr.String),
+			xslices.Map(spec.Addresses, netip.Addr.String),
 		)
 	})
 }

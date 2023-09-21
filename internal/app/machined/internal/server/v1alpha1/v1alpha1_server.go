@@ -36,7 +36,7 @@ import (
 	"github.com/nberlee/go-netstat/netstat"
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	bddisk "github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/siderolabs/go-kmsg"
@@ -552,7 +552,7 @@ func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
 		return nil
 	}
 
-	return slices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
+	return xslices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
 }
 
 // Reset resets the node.
@@ -579,7 +579,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 			return nil, err
 		}
 
-		disks := slices.ToMap(diskList, func(disk *bddisk.Disk) (string, *bddisk.Disk) {
+		disks := xslices.ToMap(diskList, func(disk *bddisk.Disk) (string, *bddisk.Disk) {
 			return disk.DeviceName, disk
 		})
 
@@ -661,7 +661,7 @@ func (s *Server) ServiceList(ctx context.Context, in *emptypb.Empty) (result *ma
 	result = &machine.ServiceListResponse{
 		Messages: []*machine.ServiceList{
 			{
-				Services: slices.Map(services, (*system.ServiceRunner).AsProto),
+				Services: xslices.Map(services, (*system.ServiceRunner).AsProto),
 			},
 		},
 	}
@@ -1706,8 +1706,8 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 	return &machine.EtcdMemberListResponse{
 		Messages: []*machine.EtcdMembers{
 			{
-				LegacyMembers: slices.Map(resp.Members, (*etcdserverpb.Member).GetName),
-				Members: slices.Map(resp.Members, func(member *etcdserverpb.Member) *machine.EtcdMember {
+				LegacyMembers: xslices.Map(resp.Members, (*etcdserverpb.Member).GetName),
+				Members: xslices.Map(resp.Members, func(member *etcdserverpb.Member) *machine.EtcdMember {
 					return &machine.EtcdMember{
 						Id:         member.GetID(),
 						Hostname:   member.GetName(),
@@ -1954,7 +1954,7 @@ func mapAlarms(alarms []*etcdserverpb.AlarmMember) []*machine.EtcdMemberAlarm {
 		}
 	}
 
-	return slices.Map(alarms, func(alarm *etcdserverpb.AlarmMember) *machine.EtcdMemberAlarm {
+	return xslices.Map(alarms, func(alarm *etcdserverpb.AlarmMember) *machine.EtcdMemberAlarm {
 		return &machine.EtcdMemberAlarm{
 			MemberId: alarm.MemberID,
 			Alarm:    mapAlarmType(alarm.Alarm),

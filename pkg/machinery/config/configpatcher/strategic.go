@@ -5,7 +5,7 @@
 package configpatcher
 
 import (
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	coreconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -37,7 +37,7 @@ func StrategicMerge(cfg coreconfig.Provider, patch StrategicMergePatch) (corecon
 		return id
 	}
 
-	leftIndex := slices.ToMap(left, func(d config.Document) (string, config.Document) {
+	leftIndex := xslices.ToMap(left, func(d config.Document) (string, config.Document) {
 		return documentID(d), d
 	})
 

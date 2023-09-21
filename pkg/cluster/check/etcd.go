@@ -12,7 +12,7 @@ import (
 	"sort"
 
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -73,7 +73,7 @@ func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
 
 		if len(message.Members) != len(knownMembers) {
 			expected := maps.ToSlice(knownMembers, func(k data, v struct{}) string { return k.hostname })
-			actual := slices.Map(message.Members, (*machineapi.EtcdMember).GetHostname)
+			actual := xslices.Map(message.Members, (*machineapi.EtcdMember).GetHostname)
 
 			return fmt.Errorf("%s: expected to have %v members, got %v", node, expected, actual)
 		}
@@ -120,7 +120,7 @@ func EtcdControlPlaneNodesAssertion(ctx context.Context, cl ClusterInfo) error {
 	}
 
 	controlPlaneNodeIPs := mapIPsToStrings(flatMapNodeInfosToIPs(nodes))
-	if !maps.Contains(slices.ToSet(controlPlaneNodeIPs), memberIPs) {
+	if !maps.Contains(xslices.ToSet(controlPlaneNodeIPs), memberIPs) {
 		return fmt.Errorf("etcd member ips %q are not subset of control plane node ips %q",
 			memberIPs, controlPlaneNodeIPs)
 	}

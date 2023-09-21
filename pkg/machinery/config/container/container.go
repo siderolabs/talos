@@ -8,9 +8,10 @@ package container
 import (
 	"bytes"
 	"fmt"
+	"slices"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	coreconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -91,7 +92,7 @@ func NewV1Alpha1(config *v1alpha1.Config) *Container {
 func (container *Container) Clone() coreconfig.Provider {
 	return &Container{
 		v1alpha1Config: container.v1alpha1Config.DeepCopy(),
-		documents:      slices.Map(container.documents, config.Document.Clone),
+		documents:      xslices.Map(container.documents, config.Document.Clone),
 	}
 }
 

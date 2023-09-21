@@ -13,12 +13,13 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	taloskubernetes "github.com/siderolabs/go-kubernetes/kubernetes"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -155,7 +156,7 @@ func NewCRDController(
 	controller := CRDController{
 		talosCA:                talosCA,
 		allowedNamespaces:      allowedNamespaces,
-		allowedRoles:           slices.ToSet(allowedRoles),
+		allowedRoles:           xslices.ToSet(allowedRoles),
 		dynamicInformerFactory: dynamicInformerFactory,
 		kubeInformerFactory:    kubeInformerFactory,
 		kubeClient:             kubeCli,
@@ -353,7 +354,7 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 
 	desiredRoleSet, _ := role.Parse(desiredRoles)
 
-	if !slices.Contains(t.allowedNamespaces, func(allowedNS string) bool {
+	if !slices.ContainsFunc(t.allowedNamespaces, func(allowedNS string) bool {
 		return allowedNS == namespace
 	}) {
 		msg := fmt.Sprintf(messageNamespaceNotAllowed, namespace)

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 )
 
 // Value represents a key/value pair for META.
@@ -50,7 +50,7 @@ type Values []Value
 // Each Value is encoded a k=v, split by ';' character.
 // The result is base64 encoded.
 func (v Values) Encode() string {
-	return base64.StdEncoding.EncodeToString([]byte(strings.Join(slices.Map(v, Value.String), ";")))
+	return base64.StdEncoding.EncodeToString([]byte(strings.Join(xslices.Map(v, Value.String), ";")))
 }
 
 // DecodeValues parses a string representation of Values for the environment variable.

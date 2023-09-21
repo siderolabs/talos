@@ -7,13 +7,13 @@ package kubespan
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go4.org/netipx"
@@ -69,8 +69,10 @@ func (ctrl *PeerSpecController) Outputs() []controller.Output {
 //nolint:gocyclo,cyclop
 func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
 		cfg, err := safe.ReaderGetByID[*kubespan.Config](ctx, r, kubespan.ConfigID)
@@ -96,7 +98,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 			peerIPSets := make(map[string]*netipx.IPSet, affiliates.Len())
 
 		affiliateLoop:
-			for it := safe.IteratorFromList(affiliates); it.Next(); {
+			for it := affiliates.Iterator(); it.Next(); {
 				affiliate := it.Value()
 
 				if affiliate.Metadata().ID() == localAffiliateID {
@@ -183,7 +185,7 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error listing resources: %w", err)
 		}
 
-		for it := safe.IteratorFromList(list); it.Next(); {
+		for it := list.Iterator(); it.Next(); {
 			res := it.Value()
 
 			if res.Metadata().Owner() != ctrl.Name() {
@@ -203,5 +205,5 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 // dumpSet converts IPSet to a form suitable for logging.
 func dumpSet(set *netipx.IPSet) []string {
-	return slices.Map(set.Ranges(), netipx.IPRange.String)
+	return xslices.Map(set.Ranges(), netipx.IPRange.String)
 }

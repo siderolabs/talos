@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc/resolver"
 )
 
@@ -55,7 +55,7 @@ type roundRobinResolver struct {
 
 // EnsureEndpointsHavePorts returns the list of endpoints with default port appended to those addresses that don't have a port.
 func EnsureEndpointsHavePorts(endpoints []string, defaultPort int) []string {
-	return slices.Map(endpoints, func(endpoint string) string {
+	return xslices.Map(endpoints, func(endpoint string) string {
 		_, _, err := net.SplitHostPort(endpoint)
 		if err != nil {
 			return net.JoinHostPort(endpoint, strconv.Itoa(defaultPort))

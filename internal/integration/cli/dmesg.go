@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 )
@@ -37,7 +37,7 @@ func (suite *DmesgSuite) TestClusterHasOutput() {
 	nodes := suite.DiscoverNodeInternalIPs(context.TODO())
 	suite.Require().NotEmpty(nodes)
 
-	matchers := slices.Map(nodes, func(node string) base.RunOption {
+	matchers := xslices.Map(nodes, func(node string) base.RunOption {
 		return base.StdoutShouldMatch(
 			regexp.MustCompile(fmt.Sprintf(`(?m)^%s:`, regexp.QuoteMeta(node))),
 		)

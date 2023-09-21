@@ -8,9 +8,9 @@ package director
 import (
 	"context"
 	"regexp"
+	"slices"
 	"strings"
 
-	"github.com/siderolabs/gen/slices"
 	"github.com/siderolabs/grpc-proxy/proxy"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -129,7 +129,7 @@ func (r *Router) aggregateDirector(targets []string) (proxy.Mode, []proxy.Backen
 
 // StreamedDetector implements proxy.StreamedDetector.
 func (r *Router) StreamedDetector(fullMethodName string) bool {
-	return slices.Contains(r.streamedMatchers, func(regex *regexp.Regexp) bool { return regex.MatchString(fullMethodName) })
+	return slices.ContainsFunc(r.streamedMatchers, func(regex *regexp.Regexp) bool { return regex.MatchString(fullMethodName) })
 }
 
 // RegisterStreamedRegex register regex for streamed method.

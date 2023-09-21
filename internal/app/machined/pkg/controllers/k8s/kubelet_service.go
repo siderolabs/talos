@@ -22,7 +22,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -93,8 +92,10 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 	}
 
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
 		_, err := r.Get(ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, "machine-id", resource.VersionUndefined))
@@ -143,8 +144,10 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 	r.QueueReconcile()
 
 	for {
-		if _, ok := channel.RecvWithContext(ctx, r.EventCh()); !ok && ctx.Err() != nil {
-			return nil //nolint:nilerr
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
 		}
 
 		cfg, err := safe.ReaderGetByID[*k8s.KubeletSpec](ctx, r, k8s.KubeletID)

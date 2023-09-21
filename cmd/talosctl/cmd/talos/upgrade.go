@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -152,7 +152,7 @@ func init() {
 		return machine.UpgradeRequest_RebootMode_value[rebootModes[i]] < machine.UpgradeRequest_RebootMode_value[rebootModes[j]]
 	})
 
-	rebootModes = slices.Map(rebootModes, strings.ToLower)
+	rebootModes = xslices.Map(rebootModes, strings.ToLower)
 
 	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i",
 		fmt.Sprintf("%s/%s/installer:%s", images.Registry, images.Username, version.Trim(version.Tag)),

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -210,8 +210,8 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 	suite.Require().NoError(err)
 	suite.Require().NotEmpty(disks.Messages)
 
-	userDisksToWipe := slices.Map(
-		slices.Filter(disks.Messages[0].Disks, func(disk *storage.Disk) bool {
+	userDisksToWipe := xslices.Map(
+		xslices.Filter(disks.Messages[0].Disks, func(disk *storage.Disk) bool {
 			return !disk.SystemDisk
 		}),
 		func(disk *storage.Disk) string {

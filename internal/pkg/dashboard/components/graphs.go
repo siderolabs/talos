@@ -6,7 +6,7 @@ package components
 
 import (
 	"github.com/gizak/termui/v3/widgets"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
@@ -27,7 +27,7 @@ func NewBaseGraph(title string, labels []string) *BaseGraph {
 	widget.DataLabels = labels
 	widget.ShowAxes = false
 	// TODO: looks to be a bug as it requires at least 2 points
-	widget.Data = slices.Map(labels, func(label string) []float64 { return []float64{0, 0} })
+	widget.Data = xslices.Map(labels, func(label string) []float64 { return []float64{0, 0} })
 
 	return widget
 }

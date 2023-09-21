@@ -18,7 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-debug"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -253,7 +253,7 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 		}
 
 		// print additional information for the user on important state changes
-		reachableAddresses := slices.Map(cfg.TypedSpec().ReachableAddresses, netip.Addr.String)
+		reachableAddresses := xslices.Map(cfg.TypedSpec().ReachableAddresses, netip.Addr.String)
 
 		if !reflect.DeepEqual(lastReachableAddresses, reachableAddresses) {
 			logger.Info("this machine is reachable at:")

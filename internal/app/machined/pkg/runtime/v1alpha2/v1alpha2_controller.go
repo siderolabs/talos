@@ -15,7 +15,7 @@ import (
 	osruntime "github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -406,7 +406,7 @@ func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosco
 	var prevSenders []runtime.LogSender
 
 	if len(loggingEndpoints) > 0 {
-		senders := slices.Map(loggingEndpoints, runtimelogging.NewJSONLines)
+		senders := xslices.Map(loggingEndpoints, runtimelogging.NewJSONLines)
 
 		ctrl.logger.Info("enabling JSON logging")
 		prevSenders = ctrl.loggingManager.SetSenders(senders)

@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -87,7 +87,7 @@ func (l EndpointList) Merge(endpoint *Endpoint) EndpointList {
 
 // Strings returns a slice of formatted endpoints to string.
 func (l EndpointList) Strings() []string {
-	return slices.Map(l, netip.Addr.String)
+	return xslices.Map(l, netip.Addr.String)
 }
 
 func init() {

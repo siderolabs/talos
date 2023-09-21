@@ -7,7 +7,7 @@ package events
 import (
 	"time"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
@@ -132,7 +132,7 @@ func (events *ServiceEvents) AsProto(count int) *machineapi.ServiceEvents {
 	}
 
 	return &machineapi.ServiceEvents{
-		Events: slices.Map(eventList, fn),
+		Events: xslices.Map(eventList, fn),
 	}
 }
 
