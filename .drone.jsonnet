@@ -332,7 +332,7 @@ local extensions_build = {
       from_secret: 'drone_token',
     },
     repositories: [
-      'siderolabs/extensions@main',
+      'siderolabs/extensions@release-1.5',
     ],
     last_successful: true,
     block: true,
@@ -450,7 +450,7 @@ local integration_provision_tests_track_2 = Step('provision-tests-track-2', priv
 
 local integration_extensions = Step('e2e-extensions', target='e2e-qemu', privileged=true, depends_on=[extensions_patch_manifest], environment={
   SHORT_INTEGRATION_TEST: 'yes',
-  QEMU_MEMORY_WORKERS: '3072',
+  QEMU_MEMORY_WORKERS: '4096',
   WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.json',
   WITH_TEST: 'run_extensions_test',
   IMAGE_REGISTRY: local_registry,
@@ -487,7 +487,8 @@ local integration_bios_cgroupsv1 = Step('e2e-bios-cgroupsv1', target='e2e-qemu',
   SHORT_INTEGRATION_TEST: 'yes',
   WITH_UEFI: 'false',
   IMAGE_REGISTRY: local_registry,
-  WITH_CONFIG_PATCH: '[{"op": "add", "path": "/machine/install/extraKernelArgs/-", "value": "talos.unified_cgroup_hierarchy=0"}]',  // use cgroupsv1
+  // disable cgroupsv1 due to https://github.com/kubernetes/kubernetes/issues/120813
+  // WITH_CONFIG_PATCH: '[{"op": "add", "path": "/machine/install/extraKernelArgs/-", "value": "talos.unified_cgroup_hierarchy=0"}]',  // use cgroupsv1
 });
 local integration_disk_image = Step('e2e-disk-image', target='e2e-qemu', privileged=true, depends_on=[integration_bios_cgroupsv1], environment={
   SHORT_INTEGRATION_TEST: 'yes',

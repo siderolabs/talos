@@ -4,7 +4,7 @@
         "path": "/machine/install/extensions",
         "value": [
             {
-                "image": map(select(. | contains("nvidia-container-toolkit") or contains("nvidia-fabricmanager") | not)) | .[]
+                "image": map(select(. | contains("nonfree") or contains("nvidia-container-toolkit") or contains("nvidia-fabricmanager") or contains("tailscale") or contains("xe-guest-utilities") | not)) | .[]
             }
         ]
     },

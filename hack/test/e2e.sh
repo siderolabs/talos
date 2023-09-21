@@ -267,10 +267,6 @@ function run_extensions_test {
   ${TALOSCTL} services ext-hello-world | grep -E "STATE\s+Running"
   curl http://172.20.1.5/ | grep Hello
 
-  echo "Testing tailscale extension service..."
-  ${TALOSCTL} services ext-tailscale | grep -E "STATE\s+Running"
-  ${TALOSCTL} get links tailscale0
-
   echo "Testing qemu-guest-agent extension service..."
   ${TALOSCTL} services ext-qemu-guest-agent | grep -E "STATE\s+Running"
   # get exisitng boot id
