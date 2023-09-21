@@ -7,46 +7,13 @@
 package provision
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"net/netip"
-	"os"
 	"path/filepath"
-	"strings"
-	"time"
-
-	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
-	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
-	"github.com/siderolabs/go-retry/retry"
-	sideronet "github.com/siderolabs/net"
-	"github.com/stretchr/testify/suite"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
-	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/cluster/check"
-	"github.com/siderolabs/talos/pkg/cluster/kubernetes"
-	"github.com/siderolabs/talos/pkg/cluster/sonobuoy"
 	"github.com/siderolabs/talos/pkg/images"
-	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
-	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
-	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
-	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
-	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
-	"github.com/siderolabs/talos/pkg/provision"
-	"github.com/siderolabs/talos/pkg/provision/access"
-	"github.com/siderolabs/talos/pkg/provision/providers/qemu"
 )
 
 //nolint:maligned
@@ -65,8 +32,8 @@ type upgradeSpec struct {
 
 	SkipKubeletUpgrade bool
 
-	MasterNodes int
-	WorkerNodes int
+	ControlplaneNodes int
+	WorkerNodes       int
 
 	UpgradePreserve bool
 	UpgradeStage    bool
@@ -86,8 +53,6 @@ const (
 	stableK8sVersion   = "1.28.1" // constants.DefaultKubernetesVersion in the stableRelease
 	currentK8sVersion  = constants.DefaultKubernetesVersion
 )
-
-var defaultNameservers = []netip.Addr{netip.MustParseAddr("8.8.8.8"), netip.MustParseAddr("1.1.1.1")}
 
 // upgradePreviousToStable upgrades from the previous Talos release to the stable release.
 func upgradePreviousToStable() upgradeSpec {
@@ -109,8 +74,8 @@ func upgradePreviousToStable() upgradeSpec {
 		TargetVersion:        stableRelease,
 		TargetK8sVersion:     stableK8sVersion,
 
-		MasterNodes: DefaultSettings.MasterNodes,
-		WorkerNodes: DefaultSettings.WorkerNodes,
+		ControlplaneNodes: DefaultSettings.ControlplaneNodes,
+		WorkerNodes:       DefaultSettings.WorkerNodes,
 	}
 }
 
@@ -134,8 +99,8 @@ func upgradeStableToCurrent() upgradeSpec {
 		TargetVersion:    DefaultSettings.CurrentVersion,
 		TargetK8sVersion: currentK8sVersion,
 
-		MasterNodes: DefaultSettings.MasterNodes,
-		WorkerNodes: DefaultSettings.WorkerNodes,
+		ControlplaneNodes: DefaultSettings.ControlplaneNodes,
+		WorkerNodes:       DefaultSettings.WorkerNodes,
 	}
 }
 
@@ -161,8 +126,8 @@ func upgradeCurrentToCurrent() upgradeSpec {
 		TargetVersion:        DefaultSettings.CurrentVersion,
 		TargetK8sVersion:     currentK8sVersion,
 
-		MasterNodes: DefaultSettings.MasterNodes,
-		WorkerNodes: DefaultSettings.WorkerNodes,
+		ControlplaneNodes: DefaultSettings.ControlplaneNodes,
+		WorkerNodes:       DefaultSettings.WorkerNodes,
 
 		WithEncryption: true,
 	}
@@ -188,9 +153,9 @@ func upgradeStableToCurrentPreserve() upgradeSpec {
 		TargetVersion:    DefaultSettings.CurrentVersion,
 		TargetK8sVersion: currentK8sVersion,
 
-		MasterNodes:     1,
-		WorkerNodes:     0,
-		UpgradePreserve: true,
+		ControlplaneNodes: 1,
+		WorkerNodes:       0,
+		UpgradePreserve:   true,
 	}
 }
 
@@ -214,36 +179,21 @@ func upgradeStableToCurrentPreserveStage() upgradeSpec {
 		TargetVersion:    DefaultSettings.CurrentVersion,
 		TargetK8sVersion: currentK8sVersion,
 
-		MasterNodes:     1,
-		WorkerNodes:     0,
-		UpgradePreserve: true,
-		UpgradeStage:    true,
+		ControlplaneNodes: 1,
+		WorkerNodes:       0,
+		UpgradePreserve:   true,
+		UpgradeStage:      true,
 	}
 }
 
 // UpgradeSuite ...
 type UpgradeSuite struct {
-	suite.Suite
-	base.TalosSuite
+	BaseSuite
 
 	specGen func() upgradeSpec
 	spec    upgradeSpec
 
 	track int
-
-	provisioner provision.Provisioner
-
-	configBundle *bundle.Bundle
-
-	clusterAccess        *access.Adapter
-	controlPlaneEndpoint string
-
-	//nolint:containedctx
-	ctx       context.Context
-	ctxCancel context.CancelFunc
-
-	stateDir string
-	cniDir   string
 }
 
 // SetupSuite ...
@@ -253,500 +203,35 @@ func (suite *UpgradeSuite) SetupSuite() {
 
 	suite.T().Logf("upgrade spec = %v", suite.spec)
 
-	// timeout for the whole test
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Minute)
-
-	var err error
-
-	suite.provisioner, err = qemu.NewProvisioner(suite.ctx)
-	suite.Require().NoError(err)
-}
-
-// TearDownSuite ...
-func (suite *UpgradeSuite) TearDownSuite() {
-	if suite.T().Failed() && DefaultSettings.CrashdumpEnabled && suite.Cluster != nil {
-		// for failed tests, produce crash dump for easier debugging,
-		// as cluster is going to be torn down below
-		suite.provisioner.CrashDump(suite.ctx, suite.Cluster, os.Stderr)
-
-		if suite.clusterAccess != nil {
-			suite.clusterAccess.CrashDump(suite.ctx, os.Stderr)
-		}
-	}
-
-	if suite.clusterAccess != nil {
-		suite.Assert().NoError(suite.clusterAccess.Close())
-	}
-
-	if suite.Cluster != nil {
-		suite.Assert().NoError(suite.provisioner.Destroy(suite.ctx, suite.Cluster))
-	}
-
-	suite.ctxCancel()
-
-	if suite.stateDir != "" {
-		suite.Assert().NoError(os.RemoveAll(suite.stateDir))
-	}
-
-	if suite.provisioner != nil {
-		suite.Assert().NoError(suite.provisioner.Close())
-	}
-}
-
-// setupCluster provisions source clusters and waits for health.
-func (suite *UpgradeSuite) setupCluster() {
-	defaultStateDir, err := clientconfig.GetTalosDirectory()
-	suite.Require().NoError(err)
-
-	suite.stateDir = filepath.Join(defaultStateDir, "clusters")
-	suite.cniDir = filepath.Join(defaultStateDir, "cni")
-
-	clusterName := suite.spec.ShortName
-
-	cidr, err := netip.ParsePrefix(DefaultSettings.CIDR)
-	suite.Require().NoError(err)
-
-	var gatewayIP netip.Addr
-
-	gatewayIP, err = sideronet.NthIPInNetwork(cidr, 1)
-	suite.Require().NoError(err)
-
-	ips := make([]netip.Addr, suite.spec.MasterNodes+suite.spec.WorkerNodes)
-
-	for i := range ips {
-		ips[i], err = sideronet.NthIPInNetwork(cidr, i+2)
-		suite.Require().NoError(err)
-	}
-
-	suite.T().Logf("initializing provisioner with cluster name %q, state directory %q", clusterName, suite.stateDir)
-
-	request := provision.ClusterRequest{
-		Name: clusterName,
-
-		Network: provision.NetworkRequest{
-			Name:         clusterName,
-			CIDRs:        []netip.Prefix{cidr},
-			GatewayAddrs: []netip.Addr{gatewayIP},
-			MTU:          DefaultSettings.MTU,
-			Nameservers:  defaultNameservers,
-			CNI: provision.CNIConfig{
-				BinPath:  []string{filepath.Join(suite.cniDir, "bin")},
-				ConfDir:  filepath.Join(suite.cniDir, "conf.d"),
-				CacheDir: filepath.Join(suite.cniDir, "cache"),
-
-				BundleURL: DefaultSettings.CNIBundleURL,
-			},
-		},
-
-		KernelPath:    suite.spec.SourceKernelPath,
-		InitramfsPath: suite.spec.SourceInitramfsPath,
-
-		SelfExecutable: suite.TalosctlPath,
-		StateDirectory: suite.stateDir,
-	}
-
-	defaultInternalLB, _ := suite.provisioner.GetLoadBalancers(request.Network)
-	suite.controlPlaneEndpoint = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultInternalLB, constants.DefaultControlPlanePort))
-
-	genOptions := suite.provisioner.GenOptions(request.Network)
-
-	for _, registryMirror := range DefaultSettings.RegistryMirrors {
-		parts := strings.SplitN(registryMirror, "=", 2)
-		suite.Require().Len(parts, 2)
-
-		genOptions = append(genOptions, generate.WithRegistryMirror(parts[0], parts[1]))
-	}
-
-	masterEndpoints := make([]string, suite.spec.MasterNodes)
-	for i := range masterEndpoints {
-		masterEndpoints[i] = ips[i].String()
-	}
-
-	if DefaultSettings.CustomCNIURL != "" {
-		genOptions = append(
-			genOptions, generate.WithClusterCNIConfig(
-				&v1alpha1.CNIConfig{
-					CNIName: constants.CustomCNI,
-					CNIUrls: []string{DefaultSettings.CustomCNIURL},
-				},
-			),
-		)
-	}
-
-	if suite.spec.WithEncryption {
-		genOptions = append(
-			genOptions, generate.WithSystemDiskEncryption(
-				&v1alpha1.SystemDiskEncryptionConfig{
-					StatePartition: &v1alpha1.EncryptionConfig{
-						EncryptionProvider: encryption.LUKS2,
-						EncryptionKeys: []*v1alpha1.EncryptionKey{
-							{
-								KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-								KeySlot:   0,
-							},
-						},
-					},
-					EphemeralPartition: &v1alpha1.EncryptionConfig{
-						EncryptionProvider: encryption.LUKS2,
-						EncryptionKeys: []*v1alpha1.EncryptionKey{
-							{
-								KeyNodeID: &v1alpha1.EncryptionKeyNodeID{},
-								KeySlot:   0,
-							},
-						},
-					},
-				},
-			),
-		)
-	}
-
-	versionContract, err := config.ParseContractFromVersion(suite.spec.SourceVersion)
-	suite.Require().NoError(err)
-
-	suite.configBundle, err = bundle.NewBundle(
-		bundle.WithInputOptions(
-			&bundle.InputOptions{
-				ClusterName: clusterName,
-				Endpoint:    suite.controlPlaneEndpoint,
-				KubeVersion: suite.spec.SourceK8sVersion,
-				GenOptions: append(
-					genOptions,
-					generate.WithEndpointList(masterEndpoints),
-					generate.WithInstallImage(suite.spec.SourceInstallerImage),
-					generate.WithDNSDomain("cluster.local"),
-					generate.WithVersionContract(versionContract),
-				),
-			},
-		),
-	)
-	suite.Require().NoError(err)
-
-	for i := 0; i < suite.spec.MasterNodes; i++ {
-		request.Nodes = append(
-			request.Nodes,
-			provision.NodeRequest{
-				Name:     fmt.Sprintf("master-%d", i+1),
-				Type:     machine.TypeControlPlane,
-				IPs:      []netip.Addr{ips[i]},
-				Memory:   DefaultSettings.MemMB * 1024 * 1024,
-				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
-				Disks: []*provision.Disk{
-					{
-						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
-					},
-				},
-				Config: suite.configBundle.ControlPlane(),
-			},
-		)
-	}
-
-	for i := 1; i <= suite.spec.WorkerNodes; i++ {
-		request.Nodes = append(
-			request.Nodes,
-			provision.NodeRequest{
-				Name:     fmt.Sprintf("worker-%d", i),
-				Type:     machine.TypeWorker,
-				IPs:      []netip.Addr{ips[suite.spec.MasterNodes+i-1]},
-				Memory:   DefaultSettings.MemMB * 1024 * 1024,
-				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
-				Disks: []*provision.Disk{
-					{
-						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
-					},
-				},
-				Config: suite.configBundle.Worker(),
-			},
-		)
-	}
-
-	suite.Cluster, err = suite.provisioner.Create(
-		suite.ctx, request,
-		provision.WithBootlader(true),
-		provision.WithUEFI(true),
-		provision.WithTalosConfig(suite.configBundle.TalosConfig()),
-	)
-	suite.Require().NoError(err)
-
-	c, err := clientconfig.Open("")
-	suite.Require().NoError(err)
-
-	c.Merge(suite.configBundle.TalosConfig())
-
-	suite.Require().NoError(c.Save(""))
-
-	suite.clusterAccess = access.NewAdapter(suite.Cluster, provision.WithTalosConfig(suite.configBundle.TalosConfig()))
-
-	suite.Require().NoError(suite.clusterAccess.Bootstrap(suite.ctx, os.Stdout))
-
-	suite.waitForClusterHealth()
-}
-
-// waitForClusterHealth asserts cluster health after any change.
-func (suite *UpgradeSuite) waitForClusterHealth() {
-	runs := 1
-
-	singleNodeCluster := len(suite.Cluster.Info().Nodes) == 1
-	if singleNodeCluster {
-		// run health check several times for single node clusters,
-		// as self-hosted control plane is not stable after reboot
-		runs = 3
-	}
-
-	for run := 0; run < runs; run++ {
-		if run > 0 {
-			time.Sleep(15 * time.Second)
-		}
-
-		checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 15*time.Minute)
-		defer checkCtxCancel()
-
-		suite.Require().NoError(
-			check.Wait(
-				checkCtx,
-				suite.clusterAccess,
-				check.DefaultClusterChecks(),
-				check.StderrReporter(),
-			),
-		)
-	}
+	suite.BaseSuite.SetupSuite()
 }
 
 // runE2E runs e2e test on the cluster.
 func (suite *UpgradeSuite) runE2E(k8sVersion string) {
 	if suite.spec.WorkerNodes == 0 {
 		// no worker nodes, should make masters schedulable
-		suite.untaint("master-1")
+		suite.untaint("control-plane-1")
 	}
 
-	options := sonobuoy.DefaultOptions()
-	options.KubernetesVersion = k8sVersion
-
-	suite.Assert().NoError(sonobuoy.Run(suite.ctx, suite.clusterAccess, options))
-}
-
-func (suite *UpgradeSuite) assertSameVersionCluster(client *talosclient.Client, expectedVersion string) {
-	nodes := xslices.Map(suite.Cluster.Info().Nodes, func(node provision.NodeInfo) string { return node.IPs[0].String() })
-	ctx := talosclient.WithNodes(suite.ctx, nodes...)
-
-	var v *machineapi.VersionResponse
-
-	err := retry.Constant(
-		time.Minute,
-	).Retry(
-		func() error {
-			var e error
-			v, e = client.Version(ctx)
-
-			return retry.ExpectedError(e)
-		},
-	)
-
-	suite.Require().NoError(err)
-
-	suite.Require().Len(v.Messages, len(nodes))
-
-	for _, version := range v.Messages {
-		suite.Assert().Equal(expectedVersion, version.Version.Tag)
-	}
-}
-
-func (suite *UpgradeSuite) readVersion(nodeCtx context.Context, client *talosclient.Client) (
-	version string,
-	err error,
-) {
-	var v *machineapi.VersionResponse
-
-	v, err = client.Version(nodeCtx)
-	if err != nil {
-		return
-	}
-
-	version = v.Messages[0].Version.Tag
-
-	return
-}
-
-//nolint:gocyclo
-func (suite *UpgradeSuite) upgradeNode(client *talosclient.Client, node provision.NodeInfo) {
-	suite.T().Logf("upgrading node %s", node.IPs[0])
-
-	ctx, cancel := context.WithCancel(suite.ctx)
-	defer cancel()
-
-	nodeCtx := talosclient.WithNodes(ctx, node.IPs[0].String())
-
-	var (
-		resp *machineapi.UpgradeResponse
-		err  error
-	)
-
-	err = retry.Constant(time.Minute, retry.WithUnits(10*time.Second)).Retry(
-		func() error {
-			resp, err = client.Upgrade(
-				nodeCtx,
-				suite.spec.TargetInstallerImage,
-				suite.spec.UpgradePreserve,
-				suite.spec.UpgradeStage,
-				false,
-			)
-			if err != nil {
-				if strings.Contains(err.Error(), "leader changed") {
-					return retry.ExpectedError(err)
-				}
-
-				if strings.Contains(err.Error(), "failed to acquire upgrade lock") {
-					return retry.ExpectedError(err)
-				}
-
-				return err
-			}
-
-			return nil
-		},
-	)
-
-	suite.Require().NoError(err)
-	suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)
-
-	actorID := resp.Messages[0].ActorId
-
-	eventCh := make(chan talosclient.EventResult)
-
-	// watch for events
-	suite.Require().NoError(client.EventsWatchV2(nodeCtx, eventCh, talosclient.WithActorID(actorID), talosclient.WithTailEvents(-1)))
-
-	waitTimer := time.NewTimer(5 * time.Minute)
-	defer waitTimer.Stop()
-
-waitLoop:
-	for {
-		select {
-		case ev := <-eventCh:
-			suite.Require().NoError(ev.Error)
-
-			switch msg := ev.Event.Payload.(type) {
-			case *machineapi.SequenceEvent:
-				if msg.Error != nil {
-					suite.FailNow("upgrade failed", "%s: %s", msg.Error.Message, msg.Error.Code)
-				}
-			case *machineapi.PhaseEvent:
-				if msg.Action == machineapi.PhaseEvent_START && msg.Phase == "kexec" {
-					// about to be rebooted
-					break waitLoop
-				}
-
-				if msg.Action == machineapi.PhaseEvent_STOP {
-					suite.T().Logf("upgrade phase %q finished", msg.Phase)
-				}
-			}
-		case <-waitTimer.C:
-			suite.FailNow("timeout waiting for upgrade to finish")
-		case <-ctx.Done():
-			suite.FailNow("context canceled")
-		}
-	}
-
-	// wait for the apid to be shut down
-	time.Sleep(10 * time.Second)
-
-	// wait for the version to be equal to target version
-	suite.Require().NoError(
-		retry.Constant(10 * time.Minute).Retry(
-			func() error {
-				var version string
-
-				version, err = suite.readVersion(nodeCtx, client)
-				if err != nil {
-					// API might be unresponsive during upgrade
-					return retry.ExpectedError(err)
-				}
-
-				if version != suite.spec.TargetVersion {
-					// upgrade not finished yet
-					return retry.ExpectedError(
-						fmt.Errorf(
-							"node %q version doesn't match expected: expected %q, got %q",
-							node.IPs[0].String(),
-							suite.spec.TargetVersion,
-							version,
-						),
-					)
-				}
-
-				return nil
-			},
-		),
-	)
-
-	suite.waitForClusterHealth()
-}
-
-func (suite *UpgradeSuite) upgradeKubernetes(fromVersion, toVersion string, skipKubeletUpgrade bool) {
-	if fromVersion == toVersion {
-		suite.T().Logf("skipping Kubernetes upgrade, as versions are equal %q -> %q", fromVersion, toVersion)
-
-		return
-	}
-
-	suite.T().Logf("upgrading Kubernetes: %q -> %q", fromVersion, toVersion)
-
-	path, err := upgrade.NewPath(fromVersion, toVersion)
-	suite.Require().NoError(err)
-
-	options := kubernetes.UpgradeOptions{
-		Path: path,
-
-		ControlPlaneEndpoint: suite.controlPlaneEndpoint,
-
-		UpgradeKubelet: !skipKubeletUpgrade,
-		PrePullImages:  true,
-
-		EncoderOpt: encoder.WithComments(encoder.CommentsAll),
-	}
-
-	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, options))
-}
-
-func (suite *UpgradeSuite) untaint(name string) {
-	client, err := suite.clusterAccess.K8sClient(suite.ctx)
-	suite.Require().NoError(err)
-
-	n, err := client.CoreV1().Nodes().Get(suite.ctx, name, metav1.GetOptions{})
-	suite.Require().NoError(err)
-
-	oldData, err := json.Marshal(n)
-	suite.Require().NoError(err)
-
-	k := 0
-
-	for _, taint := range n.Spec.Taints {
-		if taint.Key != constants.LabelNodeRoleControlPlane {
-			n.Spec.Taints[k] = taint
-			k++
-		}
-	}
-
-	n.Spec.Taints = n.Spec.Taints[:k]
-
-	newData, err := json.Marshal(n)
-	suite.Require().NoError(err)
-
-	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, corev1.Node{})
-	suite.Require().NoError(err)
-
-	_, err = client.CoreV1().Nodes().Patch(
-		suite.ctx,
-		n.Name,
-		types.StrategicMergePatchType,
-		patchBytes,
-		metav1.PatchOptions{},
-	)
-	suite.Require().NoError(err)
+	suite.BaseSuite.runE2E(k8sVersion)
 }
 
 // TestRolling performs rolling upgrade starting with master nodes.
 func (suite *UpgradeSuite) TestRolling() {
-	suite.setupCluster()
+	suite.setupCluster(clusterOptions{
+		ClusterName: suite.spec.ShortName,
+
+		ControlplaneNodes: suite.spec.ControlplaneNodes,
+		WorkerNodes:       suite.spec.WorkerNodes,
+
+		SourceKernelPath:     suite.spec.SourceKernelPath,
+		SourceInitramfsPath:  suite.spec.SourceInitramfsPath,
+		SourceInstallerImage: suite.spec.SourceInstallerImage,
+		SourceVersion:        suite.spec.SourceVersion,
+		SourceK8sVersion:     suite.spec.SourceK8sVersion,
+
+		WithEncryption: suite.spec.WithEncryption,
+	})
 
 	client, err := suite.clusterAccess.Client()
 	suite.Require().NoError(err)
@@ -754,17 +239,24 @@ func (suite *UpgradeSuite) TestRolling() {
 	// verify initial cluster version
 	suite.assertSameVersionCluster(client, suite.spec.SourceVersion)
 
+	options := upgradeOptions{
+		TargetInstallerImage: suite.spec.TargetInstallerImage,
+		UpgradePreserve:      suite.spec.UpgradePreserve,
+		UpgradeStage:         suite.spec.UpgradeStage,
+		TargetVersion:        suite.spec.TargetVersion,
+	}
+
 	// upgrade master nodes
 	for _, node := range suite.Cluster.Info().Nodes {
 		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
-			suite.upgradeNode(client, node)
+			suite.upgradeNode(client, node, options)
 		}
 	}
 
 	// upgrade worker nodes
 	for _, node := range suite.Cluster.Info().Nodes {
 		if node.Type == machine.TypeWorker {
-			suite.upgradeNode(client, node)
+			suite.upgradeNode(client, node, options)
 		}
 	}
 

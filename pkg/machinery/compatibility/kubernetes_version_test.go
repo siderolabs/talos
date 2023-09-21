@@ -161,6 +161,10 @@ func TestKubernetesCompatibility16(t *testing.T) {
 			target:            "1.6.0",
 		},
 		{
+			kubernetesVersion: "1.24.1",
+			target:            "1.6.0",
+		},
+		{
 			kubernetesVersion: "1.28.3",
 			target:            "1.6.0-beta.0",
 		},
@@ -174,9 +178,9 @@ func TestKubernetesCompatibility16(t *testing.T) {
 			expectedError:     "version of Kubernetes 1.30.0-alpha.0 is too new to be used with Talos 1.6.0",
 		},
 		{
-			kubernetesVersion: "1.26.1",
+			kubernetesVersion: "1.23.1",
 			target:            "1.6.0",
-			expectedError:     "version of Kubernetes 1.26.1 is too old to be used with Talos 1.6.0",
+			expectedError:     "version of Kubernetes 1.23.1 is too old to be used with Talos 1.6.0",
 		},
 	} {
 		runKubernetesVersionTest(t, tt)

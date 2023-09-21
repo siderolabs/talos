@@ -165,7 +165,7 @@ func init() {
 	flag.Int64Var(&provision_test.DefaultSettings.CPUs, "talos.provision.cpu", provision_test.DefaultSettings.CPUs, "CPU count for each VM (provision tests only)")
 	flag.Int64Var(&provision_test.DefaultSettings.MemMB, "talos.provision.mem", provision_test.DefaultSettings.MemMB, "memory (in MiB) for each VM (provision tests only)")
 	flag.Uint64Var(&provision_test.DefaultSettings.DiskGB, "talos.provision.disk", provision_test.DefaultSettings.DiskGB, "disk size (in GiB) for each VM (provision tests only)")
-	flag.IntVar(&provision_test.DefaultSettings.MasterNodes, "talos.provision.masters", provision_test.DefaultSettings.MasterNodes, "master node count (provision tests only)")
+	flag.IntVar(&provision_test.DefaultSettings.ControlplaneNodes, "talos.provision.controlplanes", provision_test.DefaultSettings.ControlplaneNodes, "controlplane node count (provision tests only)")
 	flag.IntVar(&provision_test.DefaultSettings.WorkerNodes, "talos.provision.workers", provision_test.DefaultSettings.WorkerNodes, "worker node count (provision tests only)")
 	flag.StringVar(&provision_test.DefaultSettings.TargetInstallImageRegistry, "talos.provision.target-installer-registry",
 		provision_test.DefaultSettings.TargetInstallImageRegistry, "image registry for target installer image (provision tests only)")

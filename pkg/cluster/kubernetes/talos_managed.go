@@ -13,18 +13,19 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
-	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/siderolabs/talos/pkg/cluster"
-	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -51,6 +52,8 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 	if err != nil {
 		return fmt.Errorf("error building kubernetes client: %w", err)
 	}
+
+	defer k8sClient.Close() //nolint:errcheck
 
 	options.controlPlaneNodes, err = k8sClient.NodeIPs(ctx, machinetype.TypeControlPlane)
 	if err != nil {
@@ -290,9 +293,7 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 		}
 	}
 
-	if err = retry.Constant(3*time.Minute, retry.WithUnits(10*time.Second)).Retry(func() error {
-		return checkPodStatus(ctx, cluster, service, node, expectedConfigVersion)
-	}); err != nil {
+	if err = checkPodStatus(ctx, cluster, options, service, node, expectedConfigVersion); err != nil {
 		return err
 	}
 
@@ -431,60 +432,86 @@ func syncManifests(ctx context.Context, objects []*unstructured.Unstructured, cl
 }
 
 //nolint:gocyclo
-func checkPodStatus(ctx context.Context, cluster UpgradeProvider, service, node, configVersion string) error {
+func checkPodStatus(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service, node, configVersion string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
 	k8sClient, err := cluster.K8sHelper(ctx)
 	if err != nil {
 		return fmt.Errorf("error building kubernetes client: %w", err)
 	}
 
-	pods, err := k8sClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("k8s-app = %s", service),
-	})
-	if err != nil {
-		if kubernetes.IsRetryableError(err) {
-			return retry.ExpectedError(err)
-		}
+	defer k8sClient.Close() //nolint:errcheck
 
-		return err
+	informerFactory := informers.NewSharedInformerFactoryWithOptions(
+		k8sClient, 10*time.Second,
+		informers.WithNamespace(namespace),
+		informers.WithTweakListOptions(func(options *metav1.ListOptions) {
+			options.LabelSelector = fmt.Sprintf("k8s-app = %s", service)
+		}),
+	)
+
+	notifyCh := make(chan *v1.Pod)
+
+	informer := informerFactory.Core().V1().Pods().Informer()
+
+	if err := informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+		options.Log("kubernetes endpoint watch error: %s", err)
+	}); err != nil {
+		return fmt.Errorf("error setting watch error handler: %w", err)
 	}
 
-	podFound := false
+	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    func(obj interface{}) { channel.SendWithContext(ctx, notifyCh, obj.(*v1.Pod)) },
+		DeleteFunc: func(_ interface{}) {},
+		UpdateFunc: func(_, obj interface{}) { channel.SendWithContext(ctx, notifyCh, obj.(*v1.Pod)) },
+	}); err != nil {
+		return fmt.Errorf("error adding watch event handler: %w", err)
+	}
 
-	for _, pod := range pods.Items {
-		if pod.Status.HostIP != node {
-			continue
-		}
+	informerFactory.Start(ctx.Done())
 
-		podFound = true
+	defer func() {
+		cancel()
+		informerFactory.Shutdown()
+	}()
 
-		if pod.Annotations[constants.AnnotationStaticPodConfigVersion] != configVersion {
-			return retry.ExpectedError(fmt.Errorf("config version mismatch: got %q, expected %q", pod.Annotations[constants.AnnotationStaticPodConfigVersion], configVersion))
-		}
-
-		ready := false
-
-		for _, condition := range pod.Status.Conditions {
-			if condition.Type != v1.PodReady {
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case pod := <-notifyCh:
+			if pod.Status.HostIP != node {
 				continue
 			}
 
-			if condition.Status == v1.ConditionTrue {
-				ready = true
+			if pod.Annotations[constants.AnnotationStaticPodConfigVersion] != configVersion {
+				options.Log(" > %q: %s: waiting, config version mismatch: got %q, expected %q", node, service, pod.Annotations[constants.AnnotationStaticPodConfigVersion], configVersion)
 
-				break
+				continue
 			}
+
+			ready := false
+
+			for _, condition := range pod.Status.Conditions {
+				if condition.Type != v1.PodReady {
+					continue
+				}
+
+				if condition.Status == v1.ConditionTrue {
+					ready = true
+
+					break
+				}
+			}
+
+			if !ready {
+				options.Log(" > %q: %s: pod is not ready, waiting", node, service)
+
+				continue
+			}
+
+			return nil
 		}
-
-		if !ready {
-			return retry.ExpectedError(fmt.Errorf("pod is not ready"))
-		}
-
-		break
 	}
-
-	if !podFound {
-		return retry.ExpectedError(fmt.Errorf("pod not found in the API server state"))
-	}
-
-	return nil
 }

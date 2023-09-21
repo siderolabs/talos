@@ -357,9 +357,7 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 		nil,
 		nil,
 		json.SerializerOptions{
-			Yaml:   true,
-			Pretty: true,
-			Strict: true,
+			Yaml: true,
 		},
 	)
 

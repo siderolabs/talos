@@ -22,7 +22,7 @@ var MaximumHostDowngradeVersion = semver.MustParse("1.8.0")
 var DeniedHostUpgradeVersions = []semver.Version{}
 
 // MinimumKubernetesVersion is the minimum version of Kubernetes is supported with 1.6.
-var MinimumKubernetesVersion = semver.MustParse("1.27.0")
+var MinimumKubernetesVersion = semver.MustParse("1.24.0")
 
 // MaximumKubernetesVersion is the maximum version of Kubernetes is supported with 1.6.
 var MaximumKubernetesVersion = semver.MustParse("1.29.99")

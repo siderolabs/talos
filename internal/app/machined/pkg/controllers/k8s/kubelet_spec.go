@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -95,6 +96,8 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 		cfgSpec := cfg.TypedSpec()
 
+		kubeletVersion := compatibility.VersionFromImageRef(cfgSpec.Image)
+
 		nodename, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -121,6 +124,10 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 		if cfgSpec.CloudProviderExternal {
 			args["cloud-provider"] = "external"
+		}
+
+		if !kubeletVersion.SupportsKubeletConfigContainerRuntimeEndpoint() {
+			args["container-runtime-endpoint"] = constants.CRIContainerdAddress
 		}
 
 		extraArgs := argsbuilder.Args(cfgSpec.ExtraArgs)
@@ -158,7 +165,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error merging arguments: %w", err)
 		}
 
-		kubeletConfig, err := NewKubeletConfiguration(cfgSpec)
+		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion)
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
 		}
@@ -226,7 +233,7 @@ func prepareExtraConfig(extraConfig map[string]interface{}) (*kubeletconfig.Kube
 // NewKubeletConfiguration builds kubelet configuration with defaults and overrides from extraConfig.
 //
 //nolint:gocyclo,cyclop
-func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec) (*kubeletconfig.KubeletConfiguration, error) {
+func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion compatibility.Version) (*kubeletconfig.KubeletConfiguration, error) {
 	config, err := prepareExtraConfig(cfgSpec.ExtraConfig)
 	if err != nil {
 		return nil, err
@@ -265,11 +272,22 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec) (*kubeletconfig.Kub
 	config.KubeletCgroups = constants.CgroupKubelet
 	config.RotateCertificates = true
 	config.ProtectKernelDefaults = true
-	config.ContainerRuntimeEndpoint = "unix://" + constants.CRIContainerdAddress
+
+	if kubeletVersion.SupportsKubeletConfigContainerRuntimeEndpoint() {
+		config.ContainerRuntimeEndpoint = "unix://" + constants.CRIContainerdAddress
+	}
 
 	// SeccompDefault feature gate is enabled by default Kubernetes 1.25+, GA in 1.27
 	if cfgSpec.DefaultRuntimeSeccompEnabled {
 		config.SeccompDefault = pointer.To(true)
+
+		if !kubeletVersion.FeatureFlagSeccompDefaultEnabledByDefault() {
+			if config.FeatureGates == nil {
+				config.FeatureGates = map[string]bool{}
+			}
+
+			config.FeatureGates["SeccompDefault"] = true
+		}
 	}
 
 	if cfgSpec.EnableFSQuotaMonitoring {
