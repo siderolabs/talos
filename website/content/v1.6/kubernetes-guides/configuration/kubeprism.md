@@ -14,6 +14,12 @@ A failure to access the Kubernetes API server might cause a series of issues in 
 
 KubePrism feature solves this problem by enabling in-cluster highly-available controlplane endpoint on every node in the cluster.
 
+## Video Walkthrough
+
+To see a live demo of this writeup, see the video below:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/VNRE64R5akM" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Enabling KubePrism
 
 > As of Talos 1.5, KubePrism is not enabled by default.
