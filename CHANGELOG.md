@@ -1,3 +1,73 @@
+## [Talos 1.5.3](https://github.com/siderolabs/talos/releases/tag/v1.5.3) (2023-09-22)
+
+Welcome to the v1.5.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### cgroups v1
+
+Talos Linux is incompatible with cgroups v1 due to the Kubernetes issue
+https://github.com/kubernetes/kubernetes/issues/120813 and new version of Linux kernel.
+
+Talos Linux doesn't use cgroups v1 by default, and it has to be explicitly enabled with
+a kernel argument: `talos.unified_cgroup_hierarchy=0`, so if you are not using cgroups v1,
+you are not affected.
+
+
+### Component Updates
+
+Kubernetes: v1.28.2
+Linux: 6.1.54
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>10 commits</summary>
+<p>
+
+* [`c4c33fb9e`](https://github.com/siderolabs/talos/commit/c4c33fb9e25c075311c943e69199cb881d5022b8) feat: update Linux to 6.1.54
+* [`88c97678c`](https://github.com/siderolabs/talos/commit/88c97678c3c4066144bcb14572bf8e1e4946860e) feat: update Kubernetes to 1.28.2
+* [`721b69b40`](https://github.com/siderolabs/talos/commit/721b69b40c4256cd75c10046cb45d2396cb614d7) fix: generate of modules.dep when on the machine
+* [`802aedd21`](https://github.com/siderolabs/talos/commit/802aedd21decf4f72180cc32074758442beacdda) fix: build CPU ucode correctly for early loader
+* [`1a1472033`](https://github.com/siderolabs/talos/commit/1a1472033ce94bc07744436dedacae278b876228) refactor: reimplement the depmod extension rebuilder
+* [`6e27fe3a6`](https://github.com/siderolabs/talos/commit/6e27fe3a6ec10014ae3e0e7831390f017b0cd3ba) fix: calculate UKI ISO size dynamically
+* [`43d4afc92`](https://github.com/siderolabs/talos/commit/43d4afc92c0d0edb0b26bf9bb58725ea43acb56c) fix: set default route priority for hcloud platform
+* [`63a4257a9`](https://github.com/siderolabs/talos/commit/63a4257a934db038cd2e851477a70a10393b147c) fix: handle correctly change of listen address for maintenance service
+* [`e9c9dc50d`](https://github.com/siderolabs/talos/commit/e9c9dc50dfd72b4f116fa2d68e472c27f0fdfabf) chore: improve image signing process
+* [`2e13558ac`](https://github.com/siderolabs/talos/commit/2e13558ac30a2431ce9a718f06744630fe0a5f79) fix: trim file path in the container image
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`d6d7236`](https://github.com/siderolabs/pkgs/commit/d6d7236ef3a08abcdff42e7a2c1335f3199f599c) chore: bump kernel to 6.1.54
+* [`9bfb39a`](https://github.com/siderolabs/pkgs/commit/9bfb39ae956461a0cda45c35aca56d29796ccbcf) chore: rename kconfig-hardened-check
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.5.0-9-g7f9d6eb -> v1.5.0-11-gd6d7236
+* **k8s.io/api**                  v0.28.1 -> v0.28.2
+* **k8s.io/apimachinery**         v0.28.1 -> v0.28.2
+* **k8s.io/apiserver**            v0.28.1 -> v0.28.2
+* **k8s.io/client-go**            v0.28.1 -> v0.28.2
+* **k8s.io/component-base**       v0.28.1 -> v0.28.2
+* **k8s.io/cri-api**              v0.28.1 -> v0.28.2
+* **k8s.io/kubectl**              v0.28.1 -> v0.28.2
+* **k8s.io/kubelet**              v0.28.1 -> v0.28.2
+
+Previous release can be found at [v1.5.2](https://github.com/siderolabs/talos/releases/tag/v1.5.2)
+
 ## [Talos 1.5.2](https://github.com/siderolabs/talos/releases/tag/v1.5.2) (2023-09-07)
 
 Welcome to the v1.5.2 release of Talos!
