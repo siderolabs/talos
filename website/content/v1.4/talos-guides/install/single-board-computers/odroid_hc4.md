@@ -11,6 +11,7 @@ You will need:
 - `talosctl`
 - A microSD card to prepare the unit with
 - An additional microSD card, USB stick, or SATA drive to boot Talos from
+- A USB keyboard or a UART module to use the serial console
 
 Download the latest `talosctl`:
 
@@ -47,7 +48,7 @@ flash_eraseall /dev/mtd2
 flash_eraseall /dev/mtd3
 ```
 
-- Power cycle the device
+- Power off the unit
 
 ### Install u-boot to SPI
 
@@ -79,6 +80,19 @@ dd if=_out/u-boot.bin of=/dev/mtdblock0 conv=fsync status=progress
 ```
 
 - Power off the unit
+- Insert the media that was previously flashed with Talos
+
+After these steps, Talos will boot and enter maintenance mode.
+Proceed to [bootstrapping the node](#bootstrapping-the-node).
+
+## Bootstrapping the Node
+
+Wait for the console to show you the instructions for bootstrapping the node.
+Following the instructions in the console output to connect to the interactive installer:
+
+```bash
+talosctl apply-config --insecure --mode=interactive --nodes <node IP or DNS name>
+```
 
 ## Recover Factory Bootloader
 
