@@ -165,3 +165,8 @@ func (contract *VersionContract) SecretboxEncryptionSupported() bool {
 func (contract *VersionContract) DiskQuotaSupportEnabled() bool {
 	return contract.Greater(TalosVersion1_4)
 }
+
+// KubePrismEnabled returns true if KubePrism should be enabled by default.
+func (contract *VersionContract) KubePrismEnabled() bool {
+	return contract.Greater(TalosVersion1_5)
+}

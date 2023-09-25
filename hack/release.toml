@@ -47,6 +47,11 @@ Previously, [network device selectors](https://www.talos.dev/v1.6/talos-guides/n
 """
 
 
+    [notes.kubeprism]
+        title = "KubePrism"
+        description = """\
+[KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/) is enabled by default on port 7445.
+"""
 
 [make_deps]
 

@@ -520,11 +520,9 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 			)
 		}
 
-		if kubePrismPort > 0 {
-			genOptions = append(genOptions,
-				generate.WithKubePrismPort(kubePrismPort),
-			)
-		}
+		genOptions = append(genOptions,
+			generate.WithKubePrismPort(kubePrismPort),
+		)
 
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
 
@@ -1000,7 +998,7 @@ func init() {
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
 	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
 	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
-	createCmd.Flags().IntVar(&kubePrismPort, kubePrismFlag, 0, "KubePrism port (defaults to 0 - disabled)")
+	createCmd.Flags().IntVar(&kubePrismPort, kubePrismFlag, constants.DefaultKubePrismPort, "KubePrism port (set to 0 to disable)")
 	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
 	createCmd.Flags().BoolVar(&skipBootPhaseFinishedCheck, "skip-boot-phase-finished-check", false, "skip waiting for node to finish boot phase")
 	createCmd.Flags().BoolVar(&networkChaos, "with-network-chaos", false, "enable to use network chaos parameters when creating a qemu cluster")

@@ -132,7 +132,7 @@ talosctl cluster create [flags]
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster (QEMU provisioner only)
       --iso-path string                          the ISO path to use for the initial boot (VM only)
-      --kubeprism-port int                       KubePrism port (defaults to 0 - disabled)
+      --kubeprism-port int                       KubePrism port (set to 0 to disable) (default 7445)
       --kubernetes-version string                desired kubernetes version to run (default "1.28.2")
       --memory int                               the limit on memory usage in MB (each control plane/VM) (default 2048)
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)

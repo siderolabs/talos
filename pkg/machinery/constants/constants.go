@@ -897,6 +897,9 @@ const (
 	// TcellMinimizeEnvironment is the environment variable to minimize tcell library memory usage (skips rune width calculation).
 	TcellMinimizeEnvironment = "TCELL_MINIMIZE=1"
 
+	// DefaultKubePrismPort is the default port for the KubePrism loadbalancer.
+	DefaultKubePrismPort = 7445
+
 	// KubePrismDialTimeout is the timeout for the KubePrism loadbalancer dialing an endpoint.
 	KubePrismDialTimeout = 15 * time.Second
 

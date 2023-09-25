@@ -74,10 +74,17 @@ func (in *Input) worker() ([]config.Document, error) {
 		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
 	}
 
-	if in.Options.KubePrismPort > 0 {
+	if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
+		if kubePrismPort > 0 {
+			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
+				ServerEnabled: pointer.To(true),
+				ServerPort:    kubePrismPort,
+			}
+		}
+	} else if in.Options.VersionContract.KubePrismEnabled() {
 		machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
 			ServerEnabled: pointer.To(true),
-			ServerPort:    in.Options.KubePrismPort,
+			ServerPort:    constants.DefaultKubePrismPort,
 		}
 	}
 

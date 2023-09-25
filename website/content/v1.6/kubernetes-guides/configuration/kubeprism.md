@@ -22,17 +22,7 @@ To see a live demo of this writeup, see the video below:
 
 ## Enabling KubePrism
 
-> As of Talos 1.5, KubePrism is not enabled by default.
-
-To enable KubePrism, apply the following machine config patch either during the machine config generation, or to a running cluster (the patch should be applied to all nodes):
-
-```yaml
-machine:
-  features:
-    kubeprism:
-      enabled: true
-      port: 7445
-```
+As of Talos 1.6, KubePrism is enabled by default with port 7445.
 
 > Note: the `port` specified should be available on every node in the cluster.
 

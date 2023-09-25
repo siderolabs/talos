@@ -5,6 +5,7 @@
 package generate
 
 import (
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -34,10 +35,13 @@ func WithLocalAPIServerPort(port int) Option {
 	}
 }
 
-// WithKubePrismPort specifies the KubePrism port. If 0, load balancer is disabled.
+// WithKubePrismPort specifies the KubePrism port.
+//
+// If 0, load balancer is disabled.
+// If not set, defaults to enabled with Talos 1.6+.
 func WithKubePrismPort(port int) Option {
 	return func(o *Options) error {
-		o.KubePrismPort = port
+		o.KubePrismPort = optional.Some(port)
 
 		return nil
 	}
@@ -295,7 +299,7 @@ type Options struct {
 	AdditionalSubjectAltNames      []string
 	DiscoveryEnabled               *bool
 
-	KubePrismPort int
+	KubePrismPort optional.Optional[int]
 
 	// Client options.
 	Roles        role.Set
