@@ -7,7 +7,6 @@ package containerd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -15,10 +14,10 @@ import (
 	"time"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
+	v2 "github.com/containerd/cgroups/v2/stats"
 	"github.com/containerd/containerd"
 	tasks "github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/errdefs"
-	v2 "github.com/containerd/containerd/metrics/types/v2"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/typeurl/v2"
 	"github.com/hashicorp/go-multierror"
@@ -206,7 +205,7 @@ func (i *inspector) containerInfo(
 				cp.Metrics.CPUUsage = cpu.UsageUsec * uint64(time.Microsecond/time.Nanosecond) // convert to nsec
 			}
 		default:
-			return nil, errors.New("failed to convert metric data to cgroups Metrics")
+			return nil, fmt.Errorf("failed to convert metric data to cgroups Metrics: %T", anydata)
 		}
 	}
 

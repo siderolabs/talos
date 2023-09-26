@@ -120,6 +120,8 @@ kubelet:
     #         - bind
     #         - rshared
     #         - rw
+    #       uidmappings: []
+    #       gidmappings: []
 
     # # The `extraConfig` field is used to provide kubelet configuration overrides.
     # extraConfig:
@@ -670,6 +672,8 @@ Appears in:
     - bind
     - rshared
     - rw
+  uidmappings: []
+  gidmappings: []
 {{< /highlight >}}
 
 
@@ -766,6 +770,8 @@ extraArgs:
 #         - bind
 #         - rshared
 #         - rw
+#       uidmappings: []
+#       gidmappings: []
 
 # # The `extraConfig` field is used to provide kubelet configuration overrides.
 # extraConfig:
@@ -804,6 +810,8 @@ extraMounts:
         - bind
         - rshared
         - rw
+      uidmappings: []
+      gidmappings: []
 {{< /highlight >}}</details> | |
 |`extraConfig` |Unstructured |<details><summary>The `extraConfig` field is used to provide kubelet configuration overrides.</summary><br />Some fields are not allowed to be overridden: authentication and authorization, cgroups<br />configuration, ports, etc.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraConfig:

@@ -44,7 +44,7 @@ esac
 
 case "${WITH_CLUSTER_DISCOVERY:-true}" in
   false)
-    QEMU_FLAGS+=("--with-cluster-discovery=false --kubeprism-port=0") # disable both KubePrism and cluster discovery
+    QEMU_FLAGS+=("--with-cluster-discovery=false" "--kubeprism-port=0") # disable both KubePrism and cluster discovery
     ;;
 esac
 

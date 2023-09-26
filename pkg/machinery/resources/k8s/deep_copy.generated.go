@@ -221,6 +221,14 @@ func (o KubeletSpecSpec) DeepCopy() KubeletSpecSpec {
 				cp.ExtraMounts[i2].Options = make([]string, len(o.ExtraMounts[i2].Options))
 				copy(cp.ExtraMounts[i2].Options, o.ExtraMounts[i2].Options)
 			}
+			if o.ExtraMounts[i2].UIDMappings != nil {
+				cp.ExtraMounts[i2].UIDMappings = make([]specs.LinuxIDMapping, len(o.ExtraMounts[i2].UIDMappings))
+				copy(cp.ExtraMounts[i2].UIDMappings, o.ExtraMounts[i2].UIDMappings)
+			}
+			if o.ExtraMounts[i2].GIDMappings != nil {
+				cp.ExtraMounts[i2].GIDMappings = make([]specs.LinuxIDMapping, len(o.ExtraMounts[i2].GIDMappings))
+				copy(cp.ExtraMounts[i2].GIDMappings, o.ExtraMounts[i2].GIDMappings)
+			}
 		}
 	}
 	if o.Config != nil {
@@ -298,6 +306,14 @@ func (o KubeletConfigSpec) DeepCopy() KubeletConfigSpec {
 			if o.ExtraMounts[i2].Options != nil {
 				cp.ExtraMounts[i2].Options = make([]string, len(o.ExtraMounts[i2].Options))
 				copy(cp.ExtraMounts[i2].Options, o.ExtraMounts[i2].Options)
+			}
+			if o.ExtraMounts[i2].UIDMappings != nil {
+				cp.ExtraMounts[i2].UIDMappings = make([]specs.LinuxIDMapping, len(o.ExtraMounts[i2].UIDMappings))
+				copy(cp.ExtraMounts[i2].UIDMappings, o.ExtraMounts[i2].UIDMappings)
+			}
+			if o.ExtraMounts[i2].GIDMappings != nil {
+				cp.ExtraMounts[i2].GIDMappings = make([]specs.LinuxIDMapping, len(o.ExtraMounts[i2].GIDMappings))
+				copy(cp.ExtraMounts[i2].GIDMappings, o.ExtraMounts[i2].GIDMappings)
 			}
 		}
 	}

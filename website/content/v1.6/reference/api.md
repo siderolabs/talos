@@ -185,6 +185,7 @@ description: Talos gRPC API reference.
     - [MemorySpec](#talos.resource.definitions.perf.MemorySpec)
   
 - [resource/definitions/proto/proto.proto](#resource/definitions/proto/proto.proto)
+    - [LinuxIDMapping](#talos.resource.definitions.proto.LinuxIDMapping)
     - [Mount](#talos.resource.definitions.proto.Mount)
   
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
@@ -3413,6 +3414,23 @@ MemorySpec represents the last Memory stats snapshot.
 
 
 
+<a name="talos.resource.definitions.proto.LinuxIDMapping"></a>
+
+### LinuxIDMapping
+LinuxIDMapping specifies UID/GID mappings.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| container_id | [uint32](#uint32) |  |  |
+| host_id | [uint32](#uint32) |  |  |
+| size | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.proto.Mount"></a>
 
 ### Mount
@@ -3425,6 +3443,8 @@ Mount specifies a mount for a container.
 | type | [string](#string) |  |  |
 | source | [string](#string) |  |  |
 | options | [string](#string) | repeated |  |
+| uid_mappings | [LinuxIDMapping](#talos.resource.definitions.proto.LinuxIDMapping) | repeated |  |
+| gid_mappings | [LinuxIDMapping](#talos.resource.definitions.proto.LinuxIDMapping) | repeated |  |
 
 
 

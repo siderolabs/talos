@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink v1.3.5
 	github.com/mdlayher/ethtool v0.1.0
-	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
+	github.com/opencontainers/runtime-spec v1.1.0-rc.1
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/siderolabs/crypto v0.4.1
 	github.com/siderolabs/gen v0.4.7

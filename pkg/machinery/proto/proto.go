@@ -12,6 +12,7 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/protoenc"
 	_ "google.golang.org/grpc/encoding/gzip" //nolint:depguard // enable compression server-side
 	"google.golang.org/protobuf/proto"       //nolint:depguard
@@ -79,10 +80,21 @@ func RegisterDefaultTypes() {
 //
 //gotagsrewrite:gen
 type Mount struct {
-	Destination string   `protobuf:"1"`
-	Type        string   `protobuf:"2"`
-	Source      string   `protobuf:"3"`
-	Options     []string `protobuf:"4"`
+	Destination string           `protobuf:"1"`
+	Type        string           `protobuf:"2"`
+	Source      string           `protobuf:"3"`
+	Options     []string         `protobuf:"4"`
+	UIDMappings []LinuxIDMapping `protobuf:"5"`
+	GIDMappings []LinuxIDMapping `protobuf:"6"`
+}
+
+// LinuxIDMapping specifies UID/GID mappings.
+//
+//gotagsrewrite:gen
+type LinuxIDMapping struct {
+	ContainerID uint32 `protobuf:"1"`
+	HostID      uint32 `protobuf:"2"`
+	Size        uint32 `protobuf:"3"`
 }
 
 //nolint:gocyclo
@@ -254,7 +266,30 @@ func registerDefaultTypes() {
 
 	protoenc.RegisterEncoderDecoder(
 		func(v specs.Mount) ([]byte, error) {
-			mount := Mount(v)
+			// use the intermediate type which is assignable to specs.Mount so that
+			// we can be sure that `specs.Mount` and `Mount` have exactly same fields.
+			//
+			// as in Go []T1 is not assignable to []T2, even if T1 and T2 are assignable, we cannot
+			// use direct conversion of Mount and specs.Mount
+			type mountConverter struct {
+				Destination string
+				Type        string
+				Source      string
+				Options     []string
+				UIDMappings []specs.LinuxIDMapping
+				GIDMappings []specs.LinuxIDMapping
+			}
+
+			mount := func(m mountConverter) Mount {
+				return Mount{
+					Destination: m.Destination,
+					Type:        m.Type,
+					Source:      m.Source,
+					Options:     m.Options,
+					UIDMappings: xslices.Map(m.UIDMappings, func(m specs.LinuxIDMapping) LinuxIDMapping { return LinuxIDMapping(m) }),
+					GIDMappings: xslices.Map(m.GIDMappings, func(m specs.LinuxIDMapping) LinuxIDMapping { return LinuxIDMapping(m) }),
+				}
+			}(mountConverter(v))
 
 			return protoenc.Marshal(&mount)
 		},
@@ -266,7 +301,14 @@ func registerDefaultTypes() {
 				return specs.Mount{}, err
 			}
 
-			return specs.Mount(result), nil
+			return specs.Mount{
+				Destination: result.Destination,
+				Type:        result.Type,
+				Source:      result.Source,
+				Options:     result.Options,
+				UIDMappings: xslices.Map(result.UIDMappings, func(v LinuxIDMapping) specs.LinuxIDMapping { return specs.LinuxIDMapping(v) }),
+				GIDMappings: xslices.Map(result.GIDMappings, func(v LinuxIDMapping) specs.LinuxIDMapping { return specs.LinuxIDMapping(v) }),
+			}, nil
 		},
 	)
 }
