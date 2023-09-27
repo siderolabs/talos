@@ -310,6 +310,9 @@ const (
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
 	DefaultKubernetesVersion = "1.29.0-alpha.1"
 
+	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernesVersion going backwards.
+	SupportedKubernetesVersions = 6
+
 	// DefaultControlPlanePort is the default port to use for the control plane.
 	DefaultControlPlanePort = 6443
 
