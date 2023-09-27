@@ -157,7 +157,7 @@ With the IP address above, you can now generate the machine configurations to us
 Issue the following command, updating the output directory, cluster name, and control plane IP as you see fit:
 
 ```bash
-talosctl gen config talos-vbox-cluster https://$CONTROL_PLANE_IP:6443 --output-dir _out
+talosctl gen config talos-proxmox-cluster https://$CONTROL_PLANE_IP:6443 --output-dir _out
 ```
 
 This will create several files in the `_out` directory: `controlplane.yaml`, `worker.yaml`, and `talosconfig`.
