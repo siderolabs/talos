@@ -29,6 +29,7 @@ kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_i2c.ko
 kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_minimal.ko
 kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_pci.ko
 kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_spectrum.ko
+kernel/drivers/net/ethernet/sfc/siena/sfc-siena.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko
