@@ -40,7 +40,7 @@ DEEPCOPY_VERSION ?= v0.5.5
 # renovate: datasource=go depName=github.com/siderolabs/importvet
 IMPORTVET_VERSION ?= v0.1.0
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.35.0
+MARKDOWNLINTCLI_VERSION ?= 0.37.0
 # renovate: datasource=npm depName=textlint
 TEXTLINT_VERSION ?= 13.3.3
 # renovate: datasource=npm depName=textlint-filter-rule-comments
@@ -59,11 +59,11 @@ KUBECTL_VERSION ?= v1.29.0-alpha.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.41
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.12.3
+HELM_VERSION ?= v3.13.0
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.5.0
+CLUSTERCTL_VERSION ?= 1.5.2
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.15.7
+CILIUM_CLI_VERSION ?= v0.15.8
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz

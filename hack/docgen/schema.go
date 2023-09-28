@@ -13,11 +13,11 @@ import (
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
-	"github.com/iancoleman/orderedmap"
 	"github.com/invopop/jsonschema"
 	"github.com/microcosm-cc/bluemonday"
 	validatejsonschema "github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/siderolabs/gen/slices"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 const ConfigSchemaURLFormat = "https://talos.dev/%s/schemas/v1alpha1_config.schema.json"
@@ -211,13 +211,14 @@ func structToSchema(st *Struct) *jsonschema.Schema {
 		AdditionalProperties: jsonschema.FalseSchema,
 	}
 
-	properties := orderedmap.New()
+	properties := orderedmap.New[string, *jsonschema.Schema]()
 
 	for _, field := range st.Fields {
 		if field.Tag == "" {
 			// skip unknown/untagged field
 			continue
 		}
+
 		properties.Set(field.Tag, fieldToSchema(field))
 	}
 
