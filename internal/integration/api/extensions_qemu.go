@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -140,6 +141,137 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsISCSI() {
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	suite.AssertServicesRunning(suite.ctx, node, expectedServices)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	iscsiTargetExists := func() bool {
+		var iscsiTargetExists bool
+
+		resp, err := suite.Client.Disks(ctx)
+		suite.Require().NoError(err)
+
+		for _, msg := range resp.Messages {
+			for _, disk := range msg.Disks {
+				if disk.Modalias == "scsi:t-0x00" {
+					iscsiTargetExists = true
+
+					break
+				}
+			}
+		}
+
+		return iscsiTargetExists
+	}
+
+	if !iscsiTargetExists() {
+		_, err := suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "iscsi-test",
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  "iscsi-test",
+						Image: "alpine",
+						Command: []string{
+							"tail",
+							"-f",
+							"/dev/null",
+						},
+						SecurityContext: &corev1.SecurityContext{
+							Privileged: pointer.To(true),
+						},
+					},
+				},
+				HostNetwork: true,
+				HostPID:     true,
+			},
+		}, metav1.CreateOptions{})
+		defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "iscsi-test", metav1.DeleteOptions{}) //nolint:errcheck
+
+		suite.Require().NoError(err)
+
+		// wait for the pod to be ready
+		suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", "iscsi-test"))
+
+		reader, err := suite.Client.Read(ctx, "/system/iscsi/initiatorname.iscsi")
+		suite.Require().NoError(err)
+
+		defer reader.Close() //nolint:errcheck
+
+		body, err := io.ReadAll(reader)
+		suite.Require().NoError(err)
+
+		initiatorName := strings.TrimPrefix(strings.TrimSpace(string(body)), "InitiatorName=")
+
+		stdout, stderr, err := suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"iscsi-test",
+			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op new --mode target --tid 1 -T %s", initiatorName),
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("", stderr)
+		suite.Require().Equal("", stdout)
+
+		stdout, stderr, err = suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"iscsi-test",
+			"/bin/sh -c 'dd if=/dev/zero of=/proc/$(pgrep tgtd)/root/var/run/tgtd/iscsi.disk bs=1M count=100'",
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("100+0 records in\n100+0 records out\n", stderr)
+		suite.Require().Equal("", stdout)
+
+		stdout, stderr, err = suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"iscsi-test",
+			"nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op new --mode logicalunit --tid 1 --lun 1 -b /var/run/tgtd/iscsi.disk",
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("", stderr)
+		suite.Require().Equal("", stdout)
+
+		stdout, stderr, err = suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"iscsi-test",
+			"nsenter --mount=/proc/1/ns/mnt -- tgtadm --lld iscsi --op bind --mode target --tid 1 -I ALL",
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("", stderr)
+		suite.Require().Equal("", stdout)
+
+		stdout, stderr, err = suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"iscsi-test",
+			fmt.Sprintf("/bin/sh -c 'nsenter --mount=/proc/$(pgrep iscsid)/ns/mnt --net=/proc/$(pgrep iscsid)/ns/net -- iscsiadm --mode discovery --type sendtargets --portal %s:3260'", node),
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("", stderr)
+		suite.Require().Equal(fmt.Sprintf("%s:3260,1 %s\n", node, initiatorName), stdout)
+
+		stdout, stderr, err = suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"iscsi-test",
+			fmt.Sprintf("/bin/sh -c 'nsenter --mount=/proc/$(pgrep iscsid)/ns/mnt --net=/proc/$(pgrep iscsid)/ns/net -- iscsiadm --mode node --targetname %s --portal %s:3260 --login'", initiatorName, node),
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Equal("", stderr)
+		suite.Require().Contains(stdout, "successful.")
+	}
+
+	suite.Assert().True(iscsiTargetExists())
 }
 
 // TestExtensionsNutClient verifies nut client is working.
