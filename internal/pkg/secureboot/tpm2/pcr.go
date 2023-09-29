@@ -7,7 +7,6 @@ package tpm2
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/sha256"
 	"fmt"
 	"log"
@@ -164,30 +163,18 @@ func validatePCRBanks(t transport.TPM) error {
 	}
 
 	for _, s := range assignedPCRs.PCRSelections {
-		h, err := s.Hash.Hash()
-		if err != nil {
-			return fmt.Errorf("failed to parse hash algorithm: %v", err)
+		if s.Hash != tpm2.TPMAlgSHA256 {
+			continue
 		}
 
-		switch h { //nolint:exhaustive
-		case crypto.SHA1:
-			continue
-		case crypto.SHA256:
-			// check if 24 banks are available
-			if len(s.PCRSelect) != 24/8 {
-				return fmt.Errorf("unexpected number of PCR banks: %d", len(s.PCRSelect))
-			}
+		// check if 24 banks are available
+		if len(s.PCRSelect) != 24/8 {
+			return fmt.Errorf("unexpected number of PCR banks: %d", len(s.PCRSelect))
+		}
 
-			// check if all banks are available
-			if s.PCRSelect[0] != 0xff || s.PCRSelect[1] != 0xff || s.PCRSelect[2] != 0xff {
-				return fmt.Errorf("unexpected PCR banks: %v", s.PCRSelect)
-			}
-		case crypto.SHA384:
-			continue
-		case crypto.SHA512:
-			continue
-		default:
-			return fmt.Errorf("unsupported hash algorithm: %s", h.String())
+		// check if all banks are available
+		if s.PCRSelect[0] != 0xff || s.PCRSelect[1] != 0xff || s.PCRSelect[2] != 0xff {
+			return fmt.Errorf("unexpected PCR banks: %v", s.PCRSelect)
 		}
 	}
 
