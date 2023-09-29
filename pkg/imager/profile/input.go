@@ -48,6 +48,8 @@ type FileAsset struct {
 type ContainerAsset struct {
 	// ImageRef is a reference to the container image.
 	ImageRef string `yaml:"imageRef"`
+	// ForceInsecure forces insecure registry communication.
+	ForceInsecure bool `yaml:"forceInsecure,omitempty"`
 	// TarballPath is a path to the .tar format container image contents.
 	//
 	// If TarballPath is set, ImageRef is ignored.
@@ -154,10 +156,19 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(stri
 
 	printf("pulling %s...", c.ImageRef)
 
-	img, err := crane.Pull(c.ImageRef, crane.WithPlatform(&v1.Platform{
-		Architecture: arch,
-		OS:           "linux",
-	}), crane.WithContext(ctx))
+	opts := []crane.Option{
+		crane.WithPlatform(&v1.Platform{
+			Architecture: arch,
+			OS:           "linux",
+		}),
+		crane.WithContext(ctx),
+	}
+
+	if c.ForceInsecure {
+		opts = append(opts, crane.Insecure)
+	}
+
+	img, err := crane.Pull(c.ImageRef, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error pulling image %s: %w", c.ImageRef, err)
 	}
