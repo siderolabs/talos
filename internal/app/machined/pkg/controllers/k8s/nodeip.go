@@ -111,6 +111,8 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 
 		if len(ips) == 0 {
 			logger.Warn("no suitable node IP found, please make sure .machine.kubelet.nodeIP filters and pod/service subnets are set up correctly")
+
+			continue
 		}
 
 		// filter down to make sure only one IPv4 and one IPv6 address stays

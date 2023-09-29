@@ -94,11 +94,19 @@ func (suite *KmsgLogDeliverySuite) SetupTest() {
 	suite.srv2, err = logreceiver.NewServer(logger, suite.listener2, suite.handler2.HandleLog)
 	suite.Require().NoError(err)
 
+	suite.wg.Add(1)
+
 	go func() {
+		defer suite.wg.Done()
+
 		suite.srv1.Serve() //nolint:errcheck
 	}()
 
+	suite.wg.Add(1)
+
 	go func() {
+		defer suite.wg.Done()
+
 		suite.srv2.Serve() //nolint:errcheck
 	}()
 
