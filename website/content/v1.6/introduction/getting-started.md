@@ -267,7 +267,7 @@ Thus it is recommended to explicitly pass in the configuration file while becomi
 Bootstrapping your Kubernetes cluster with Talos is as simple as calling `talosctl bootstrap` on your control plane node:
 
 ```sh
-talosctl bootstrap --nodes 192.168.0.2 --endpoint 192.168.0.2 \
+talosctl bootstrap --nodes 192.168.0.2 --endpoints 192.168.0.2 \
   --talosconfig=./talosconfig
 ```
 
@@ -279,7 +279,7 @@ At this point, Talos will form an `etcd` cluster, and start the Kubernetes contr
 After a few moments, you will be able to download your Kubernetes client configuration and get started:
 
 ```sh
-  talosctl kubeconfig --nodes 192.168.0.2 --endpoint 192.168.0.2
+  talosctl kubeconfig --nodes 192.168.0.2 --endpoints 192.168.0.2
 ```
 
 Running this command will add (merge) you new cluster into your local Kubernetes configuration.
@@ -287,7 +287,7 @@ Running this command will add (merge) you new cluster into your local Kubernetes
 If you would prefer the configuration to *not* be merged into your default Kubernetes configuration file, pass in a filename:
 
 ```sh
-  talosctl kubeconfig alternative-kubeconfig --nodes 192.168.0.2 --endpoint 192.168.0.2
+  talosctl kubeconfig alternative-kubeconfig --nodes 192.168.0.2 --endpoints 192.168.0.2
 ```
 
 You should now be able to connect to Kubernetes and see your nodes:
@@ -299,9 +299,9 @@ You should now be able to connect to Kubernetes and see your nodes:
 And use talosctl to explore your cluster:
 
 ```sh
-talosctl --nodes 192.168.0.2 --endpoint 192.168.0.2 health \
+talosctl --nodes 192.168.0.2 --endpoints 192.168.0.2 health \
    --talosconfig=./talosconfig
-talosctl--nodes 192.168.0.2 --endpoint 192.168.0.2 dashboard \
+talosctl --nodes 192.168.0.2 --endpoints 192.168.0.2 dashboard \
    --talosconfig=./talosconfig
 ```
 
