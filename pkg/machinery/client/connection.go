@@ -15,6 +15,8 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-api-signature/pkg/client/interceptor"
+	"github.com/siderolabs/go-api-signature/pkg/pgp/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -82,10 +84,16 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcCon
 			contextName = c.options.contextOverride
 		}
 
-		authInterceptor := newAuthInterceptorConfig(contextName, sideroV1.Identity)
+		authInterceptor := interceptor.New(interceptor.Options{
+			UserKeyProvider: client.NewKeyProvider("talos/keys"),
+			ContextName:     contextName,
+			Identity:        sideroV1.Identity,
+			ClientName:      "Talos",
+		})
+
 		dialOpts = append(dialOpts,
-			grpc.WithUnaryInterceptor(authInterceptor.Interceptor().Unary()),
-			grpc.WithStreamInterceptor(authInterceptor.Interceptor().Stream()),
+			grpc.WithUnaryInterceptor(authInterceptor.Unary()),
+			grpc.WithStreamInterceptor(authInterceptor.Stream()),
 		)
 	}
 

@@ -17,10 +17,9 @@ require (
 	github.com/jsimonetti/rtnetlink v1.3.5
 	github.com/mdlayher/ethtool v0.1.0
 	github.com/opencontainers/runtime-spec v1.1.0-rc.1
-	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/siderolabs/crypto v0.4.1
 	github.com/siderolabs/gen v0.4.7
-	github.com/siderolabs/go-api-signature v0.2.6
+	github.com/siderolabs/go-api-signature v0.3.0
 	github.com/siderolabs/go-blockdevice v0.4.6
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0
@@ -51,6 +50,7 @@ require (
 	github.com/mdlayher/socket v0.4.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.2.0 // indirect
 	github.com/onsi/gomega v1.20.1 // indirect
+	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
