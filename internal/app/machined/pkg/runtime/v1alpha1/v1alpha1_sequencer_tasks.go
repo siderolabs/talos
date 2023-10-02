@@ -1624,6 +1624,31 @@ func ResetSystemDiskSpec(_ runtime.Sequence, data any) (runtime.TaskExecutionFun
 			}
 		}
 
+		stateWiped := slices.Contains(in.GetSystemDiskTargets(), func(t runtime.PartitionTarget) bool {
+			return t.GetLabel() == constants.StatePartitionLabel
+		})
+
+		metaWiped := slices.Contains(in.GetSystemDiskTargets(), func(t runtime.PartitionTarget) bool {
+			return t.GetLabel() == constants.MetaPartitionLabel
+		})
+
+		if stateWiped && !metaWiped {
+			var removed bool
+
+			removed, err = r.State().Machine().Meta().DeleteTag(ctx, meta.StateEncryptionConfig)
+			if err != nil {
+				return fmt.Errorf("failed to remove state encryption META config tag: %w", err)
+			}
+
+			if removed {
+				if err = r.State().Machine().Meta().Flush(); err != nil {
+					return fmt.Errorf("failed to flush META: %w", err)
+				}
+
+				logger.Printf("reset the state encryption META config tag")
+			}
+		}
+
 		logger.Printf("successfully reset system disk by the spec")
 
 		return nil
