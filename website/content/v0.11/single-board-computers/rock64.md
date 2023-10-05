@@ -22,8 +22,8 @@ chmod +x /usr/local/bin/talosctl
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rock64-arm64.img.xz
-xz -d metal-rock64-arm64.img.xz
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rock64-arm64.raw.xz
+xz -d metal-rock64-arm64.raw.xz
 ```
 
 ## Writing the Image

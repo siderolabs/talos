@@ -24,8 +24,8 @@ chmod +x /usr/local/bin/talosctl
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4-arm64.img.xz
-xz -d metal-nanopi_r4s-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4-arm64.raw.xz
+xz -d metal-nanopi_r4s-arm64.raw.xz
 ```
 
 ## Writing the Image

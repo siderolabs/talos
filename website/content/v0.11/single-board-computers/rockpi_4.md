@@ -22,8 +22,8 @@ chmod +x /usr/local/bin/talosctl
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rockpi_4-arm64.img.xz
-xz -d metal-rockpi_4-arm64.img.xz
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rockpi_4-arm64.raw.xz
+xz -d metal-rockpi_4-arm64.raw.xz
 ```
 
 ## Writing the Image
@@ -82,9 +82,9 @@ sudo dd if=rkspi_loader-v20.11.2-trunk-v2.img of=/dev/mtdblock0 bs=4K
 - Optionally, you can also write Talos image to the SSD drive right from your Rock PI board:
 
 ```bash
-curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rockpi_4-arm64.img.xz
-xz -d metal-rockpi_4-arm64.img.xz
-sudo dd if=metal-rockpi_4-arm64.img.xz of=/dev/nvme0n1
+curl -LO https://github.com/talos-systems/talos/releases/latest/download/metal-rockpi_4-arm64.raw.xz
+xz -d metal-rockpi_4-arm64.raw.xz
+sudo dd if=metal-rockpi_4-arm64.raw.xz of=/dev/nvme0n1
 ```
 
 - remove SD card and reboot.

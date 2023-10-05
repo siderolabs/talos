@@ -85,8 +85,8 @@ Once the flashing is done you can disconnect the USB cable and power off the Jet
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-jetson_nano-arm64.img.xz
-xz -d metal-jetson_nano-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-jetson_nano-arm64.raw.xz
+xz -d metal-jetson_nano-arm64.raw.xz
 ```
 
 ## Writing the Image
