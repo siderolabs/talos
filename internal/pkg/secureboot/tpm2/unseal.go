@@ -104,7 +104,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		tpm2.Salted(createPrimaryResponse.ObjectHandle, *outPub),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create policy session: %v", err)
+		return nil, fmt.Errorf("failed to create policy session: %w", err)
 	}
 
 	defer policyCloseFunc() //nolint:errcheck
@@ -121,7 +121,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 
 	loadExternalResponse, err := loadExternal.Execute(t)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load external key: %v", err)
+		return nil, fmt.Errorf("failed to load external key: %w", err)
 	}
 
 	defer func() {
@@ -149,7 +149,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve policy digest: %v", err)
+		return nil, fmt.Errorf("failed to retrieve policy digest: %w", err)
 	}
 
 	sigJSON, err := ParsePCRSignature()
@@ -210,7 +210,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 
 	verifySignatureResponse, err := verifySignature.Execute(t)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify signature: %v", err)
+		return nil, fmt.Errorf("failed to verify signature: %w", err)
 	}
 
 	policyAuthorize := tpm2.PolicyAuthorize{
@@ -221,7 +221,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	}
 
 	if _, err = policyAuthorize.Execute(t); err != nil {
-		return nil, fmt.Errorf("failed to execute policy authorize: %v", err)
+		return nil, fmt.Errorf("failed to execute policy authorize: %w", err)
 	}
 
 	secureBootStatePCRSelector, err := CreateSelector([]int{secureboot.SecureBootStatePCR})
@@ -237,6 +237,9 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 			},
 		},
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate policy PCR digest: %w", err)
+	}
 
 	if !bytes.Equal(secureBootStatePolicyDigest.Buffer, sealed.PolicyDigest) {
 		return nil, fmt.Errorf("sealing policy digest does not match")
@@ -258,7 +261,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		tpm2.Bound(loadResponse.ObjectHandle, loadResponse.Name, nil),
 	))
 	if err != nil {
-		return nil, fmt.Errorf("failed to unseal op: %v", err)
+		return nil, fmt.Errorf("failed to unseal op: %w", err)
 	}
 
 	return unsealResponse.OutData.Buffer, nil
