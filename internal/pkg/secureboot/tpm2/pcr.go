@@ -40,7 +40,7 @@ func CreateSelector(pcrs []int) ([]byte, error) {
 func ReadPCR(t transport.TPM, pcr int) ([]byte, error) {
 	pcrSelector, err := CreateSelector([]int{pcr})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create PCR selection: %v", err)
+		return nil, fmt.Errorf("failed to create PCR selection: %w", err)
 	}
 
 	pcrRead := tpm2.PCRRead{
@@ -56,7 +56,7 @@ func ReadPCR(t transport.TPM, pcr int) ([]byte, error) {
 
 	pcrValue, err := pcrRead.Execute(t)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read PCR: %v", err)
+		return nil, fmt.Errorf("failed to read PCR: %w", err)
 	}
 
 	return pcrValue.PCRValues.Digests[0].Buffer, nil
@@ -111,7 +111,7 @@ func PolicyPCRDigest(t transport.TPM, policyHandle tpm2.TPMHandle, pcrSelection 
 	}
 
 	if _, err := policyPCR.Execute(t); err != nil {
-		return nil, fmt.Errorf("failed to execute policyPCR: %v", err)
+		return nil, fmt.Errorf("failed to execute policyPCR: %w", err)
 	}
 
 	policyGetDigest := tpm2.PolicyGetDigest{
@@ -120,7 +120,7 @@ func PolicyPCRDigest(t transport.TPM, policyHandle tpm2.TPMHandle, pcrSelection 
 
 	policyGetDigestResponse, err := policyGetDigest.Execute(t)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get policy digest: %v", err)
+		return nil, fmt.Errorf("failed to get policy digest: %w", err)
 	}
 
 	return &policyGetDigestResponse.PolicyDigest, nil
@@ -130,7 +130,7 @@ func PolicyPCRDigest(t transport.TPM, policyHandle tpm2.TPMHandle, pcrSelection 
 func validatePCRBanks(t transport.TPM) error {
 	pcrValue, err := ReadPCR(t, secureboot.UKIPCR)
 	if err != nil {
-		return fmt.Errorf("failed to read PCR: %v", err)
+		return fmt.Errorf("failed to read PCR: %w", err)
 	}
 
 	if err = validatePCRNotZeroAndNotFilled(pcrValue, secureboot.UKIPCR); err != nil {
@@ -139,7 +139,7 @@ func validatePCRBanks(t transport.TPM) error {
 
 	pcrValue, err = ReadPCR(t, secureboot.SecureBootStatePCR)
 	if err != nil {
-		return fmt.Errorf("failed to read PCR: %v", err)
+		return fmt.Errorf("failed to read PCR: %w", err)
 	}
 
 	if err = validatePCRNotZeroAndNotFilled(pcrValue, secureboot.SecureBootStatePCR); err != nil {
@@ -154,12 +154,12 @@ func validatePCRBanks(t transport.TPM) error {
 
 	capsResp, err := caps.Execute(t)
 	if err != nil {
-		return fmt.Errorf("failed to get PCR capabilities: %v", err)
+		return fmt.Errorf("failed to get PCR capabilities: %w", err)
 	}
 
 	assignedPCRs, err := capsResp.CapabilityData.Data.AssignedPCR()
 	if err != nil {
-		return fmt.Errorf("failed to parse assigned PCRs: %v", err)
+		return fmt.Errorf("failed to parse assigned PCRs: %w", err)
 	}
 
 	for _, s := range assignedPCRs.PCRSelections {
