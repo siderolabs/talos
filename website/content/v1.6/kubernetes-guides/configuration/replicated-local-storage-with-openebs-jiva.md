@@ -18,13 +18,19 @@ Refer to the OpenEBS Jiva [documentation](https://github.com/openebs/jiva-operat
 
 ## Preparing the nodes
 
+Find the matching `iscsi-tools` image reference for your Talos version by running the [following command](https://github.com/siderolabs/extensions):
+
+```bash
+crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-digests | grep iscsi-tools
+```
+
 Create a machine config patch with the contents below and save as `patch.yaml`
 
 ```yaml
 - op: add
   path: /machine/install/extensions
   value:
-    - image: ghcr.io/siderolabs/iscsi-tools:{{< iscsi_tools_system_extension_release >}}
+    - image: ghcr.io/siderolabs/iscsi-tools:<version>@sha256:<digest>
 - op: add
   path: /machine/kubelet/extraMounts
   value:
@@ -52,7 +58,7 @@ Run the following command on each nodes subsequently:
 talosctl -e <endpoint ip/hostname> -n <node ip/hostname> upgrade --image=ghcr.io/siderolabs/installer:{{< release >}}
 ```
 
-Once the node has upgraded and booted successfully the extension status can be verfied by running the following command:
+Once the node has upgraded and booted successfully the extension status can be verified by running the following command:
 
 ```bash
 talosctl -e <endpoint ip/hostname> -n <node ip/hostname> get extensions

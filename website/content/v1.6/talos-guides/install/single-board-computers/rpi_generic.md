@@ -47,8 +47,8 @@ Power off the Raspberry Pi and remove the SD card from it.
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rpi_generic-arm64.img.xz
-xz -d metal-rpi_generic-arm64.img.xz
+curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rpi_generic-arm64.raw.xz
+xz -d metal-rpi_generic-arm64.raw.xz
 ```
 
 ## Writing the Image
