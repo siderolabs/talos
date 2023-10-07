@@ -1,7 +1,7 @@
 ---
 title: "Oracle"
 description: "Creating a cluster via the CLI (oci) on OracleCloud.com."
-aliases: 
+aliases:
   - ../../../cloud-platforms/oracle
 ---
 
@@ -70,7 +70,7 @@ cat <<EOF > controlplane-health-checker.json
   "intervalInMillis": 10000,
   "port": 6443,
   "protocol": "HTTPS",
-  "returnCode": 200,
+  "returnCode": 401,
   "urlPath": "/readyz"
 }
 EOF

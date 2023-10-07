@@ -1,6 +1,18 @@
 addresses: []
 links: []
-routes: []
+routes:
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::a:b:c:d
+      outLinkName: eth0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
 hostnames:
     - hostname: talos
       domainname: ""
