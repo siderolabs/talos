@@ -12,8 +12,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	glob "github.com/ryanuber/go-glob"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -46,7 +46,7 @@ func (ctrl *DeviceConfigController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
+			ID:        optional.Some(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
 		{

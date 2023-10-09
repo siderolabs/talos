@@ -15,8 +15,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.uber.org/zap"
 
@@ -41,19 +41,19 @@ func (ctrl *AdvertisedPeerController) Inputs() []controller.Input {
 		{
 			Namespace: etcd.NamespaceName,
 			Type:      etcd.SpecType,
-			ID:        pointer.To(etcd.SpecID),
+			ID:        optional.Some(etcd.SpecID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: etcd.NamespaceName,
 			Type:      etcd.PKIStatusType,
-			ID:        pointer.To(etcd.PKIID),
+			ID:        optional.Some(etcd.PKIID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        pointer.To("etcd"),
+			ID:        optional.Some("etcd"),
 			Kind:      controller.InputWeak,
 		},
 	}

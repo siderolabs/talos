@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -35,19 +35,19 @@ func (ctrl *KubernetesCertSANsController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
-			ID:        pointer.To(secrets.KubernetesRootID),
+			ID:        optional.Some(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.HostnameStatusType,
-			ID:        pointer.To(network.HostnameID),
+			ID:        optional.Some(network.HostnameID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s)),
+			ID:        optional.Some(network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s)),
 			Kind:      controller.InputWeak,
 		},
 	}

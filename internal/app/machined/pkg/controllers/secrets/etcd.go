@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/etcd"
@@ -37,31 +37,31 @@ func (ctrl *EtcdController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdRootType,
-			ID:        pointer.To(secrets.EtcdRootID),
+			ID:        optional.Some(secrets.EtcdRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
+			ID:        optional.Some(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      time.StatusType,
-			ID:        pointer.To(time.StatusID),
+			ID:        optional.Some(time.StatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.HostnameStatusType,
-			ID:        pointer.To(network.HostnameID),
+			ID:        optional.Some(network.HostnameID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s)),
+			ID:        optional.Some(network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s)),
 			Kind:      controller.InputWeak,
 		},
 	}

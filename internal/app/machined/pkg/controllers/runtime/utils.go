@@ -10,7 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -24,7 +24,7 @@ func WaitForDevicesReady(ctx context.Context, r controller.Runtime, nextInputs [
 		{
 			Namespace: runtime.NamespaceName,
 			Type:      runtime.DevicesStatusType,
-			ID:        pointer.To(runtime.DevicesID),
+			ID:        optional.Some(runtime.DevicesID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {

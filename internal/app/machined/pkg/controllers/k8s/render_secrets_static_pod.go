@@ -17,7 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -39,31 +39,31 @@ func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
-			ID:        pointer.To(secrets.KubernetesRootID),
+			ID:        optional.Some(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdRootType,
-			ID:        pointer.To(secrets.EtcdRootID),
+			ID:        optional.Some(secrets.EtcdRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesType,
-			ID:        pointer.To(secrets.KubernetesID),
+			ID:        optional.Some(secrets.KubernetesID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesDynamicCertsType,
-			ID:        pointer.To(secrets.KubernetesDynamicCertsID),
+			ID:        optional.Some(secrets.KubernetesDynamicCertsID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdType,
-			ID:        pointer.To(secrets.EtcdID),
+			ID:        optional.Some(secrets.EtcdID),
 			Kind:      controller.InputWeak,
 		},
 	}

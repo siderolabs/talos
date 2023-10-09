@@ -16,8 +16,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -70,7 +70,7 @@ func (ctrl *ManagerController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubespan.ConfigType,
-			ID:        pointer.To(kubespan.ConfigID),
+			ID:        optional.Some(kubespan.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -81,7 +81,7 @@ func (ctrl *ManagerController) Inputs() []controller.Input {
 		{
 			Namespace: kubespan.NamespaceName,
 			Type:      kubespan.IdentityType,
-			ID:        pointer.To(kubespan.LocalIdentity),
+			ID:        optional.Some(kubespan.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 	}

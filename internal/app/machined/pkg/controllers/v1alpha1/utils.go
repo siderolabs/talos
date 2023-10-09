@@ -10,7 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -24,7 +24,7 @@ func WaitForServiceHealthy(ctx context.Context, r controller.Runtime, serviceID 
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        pointer.To(serviceID),
+			ID:        optional.Some(serviceID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {

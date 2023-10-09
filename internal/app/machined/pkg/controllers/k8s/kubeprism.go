@@ -14,10 +14,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-loadbalancer/controlplane"
 	"github.com/siderolabs/go-loadbalancer/upstream"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -45,7 +45,7 @@ func (ctrl *KubePrismController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.KubePrismConfigType,
-			ID:        pointer.To(k8s.KubePrismConfigID),
+			ID:        optional.Some(k8s.KubePrismConfigID),
 			Kind:      controller.InputWeak,
 		},
 	}

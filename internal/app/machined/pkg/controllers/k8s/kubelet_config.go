@@ -16,7 +16,6 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -86,7 +85,7 @@ func NewKubeletConfigController() *KubeletConfigController {
 			controller.Input{
 				Namespace: k8s.NamespaceName,
 				Type:      k8s.StaticPodServerStatusType,
-				ID:        pointer.To(k8s.StaticPodServerStatusResourceID),
+				ID:        optional.Some(k8s.StaticPodServerStatusResourceID),
 				Kind:      controller.InputWeak,
 			},
 		),

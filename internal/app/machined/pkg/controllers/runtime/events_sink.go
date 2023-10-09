@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/rs/xid"
 	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/siderolink/api/events"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -76,7 +76,7 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 			{
 				Namespace: runtime.NamespaceName,
 				Type:      runtime.EventSinkConfigType,
-				ID:        pointer.To(runtime.EventSinkConfigID),
+				ID:        optional.Some(runtime.EventSinkConfigID),
 				Kind:      controller.InputWeak,
 			},
 		},

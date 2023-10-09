@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
@@ -42,19 +42,19 @@ func (ctrl *IdentityController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubespan.ConfigType,
-			ID:        pointer.To(kubespan.ConfigID),
+			ID:        optional.Some(kubespan.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.HardwareAddrType,
-			ID:        pointer.To(network.FirstHardwareAddr),
+			ID:        optional.Some(network.FirstHardwareAddr),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      runtimeres.MountStatusType,
-			ID:        pointer.To(constants.StatePartitionLabel),
+			ID:        optional.Some(constants.StatePartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 	}

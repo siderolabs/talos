@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -44,13 +44,13 @@ func (ctrl *EndpointController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubeaccess.ConfigType,
-			ID:        pointer.To(kubeaccess.ConfigID),
+			ID:        optional.Some(kubeaccess.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesType,
-			ID:        pointer.To(secrets.KubernetesID),
+			ID:        optional.Some(secrets.KubernetesID),
 			Kind:      controller.InputWeak,
 		},
 		{

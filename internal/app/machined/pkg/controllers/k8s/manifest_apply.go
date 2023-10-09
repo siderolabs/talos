@@ -13,8 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
@@ -54,7 +54,7 @@ func (ctrl *ManifestApplyController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesType,
-			ID:        pointer.To(secrets.KubernetesID),
+			ID:        optional.Some(secrets.KubernetesID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -65,7 +65,7 @@ func (ctrl *ManifestApplyController) Inputs() []controller.Input {
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        pointer.To("etcd"),
+			ID:        optional.Some("etcd"),
 			Kind:      controller.InputWeak,
 		},
 	}

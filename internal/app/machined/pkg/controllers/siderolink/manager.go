@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 	pb "github.com/siderolabs/siderolink/api/siderolink"
 	"github.com/siderolabs/siderolink/pkg/wireguard"
@@ -80,13 +81,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			{
 				Namespace: config.NamespaceName,
 				Type:      siderolink.ConfigType,
-				ID:        pointer.To(siderolink.ConfigID),
+				ID:        optional.Some(siderolink.ConfigID),
 				Kind:      controller.InputWeak,
 			},
 			{
 				Namespace: hardware.NamespaceName,
 				Type:      hardware.SystemInformationType,
-				ID:        pointer.To(hardware.SystemInformationID),
+				ID:        optional.Some(hardware.SystemInformationID),
 				Kind:      controller.InputWeak,
 			},
 		},

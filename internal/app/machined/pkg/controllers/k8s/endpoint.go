@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,7 +66,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
-			ID:        pointer.To(config.MachineTypeID),
+			ID:        optional.Some(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {
@@ -148,13 +148,13 @@ func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
-			ID:        pointer.To(config.MachineTypeID),
+			ID:        optional.Some(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesType,
-			ID:        pointer.To(secrets.KubernetesID),
+			ID:        optional.Some(secrets.KubernetesID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {

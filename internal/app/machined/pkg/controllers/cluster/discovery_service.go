@@ -19,8 +19,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/discovery-api/api/v1alpha1/client/pb"
 	discoveryclient "github.com/siderolabs/discovery-client/pkg/client"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -52,13 +52,13 @@ func (ctrl *DiscoveryServiceController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      cluster.ConfigType,
-			ID:        pointer.To(cluster.ConfigID),
+			ID:        optional.Some(cluster.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: cluster.NamespaceName,
 			Type:      cluster.IdentityType,
-			ID:        pointer.To(cluster.LocalIdentity),
+			ID:        optional.Some(cluster.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -69,7 +69,7 @@ func (ctrl *DiscoveryServiceController) Inputs() []controller.Input {
 		{
 			Namespace: runtime.NamespaceName,
 			Type:      runtime.MachineStatusType,
-			ID:        pointer.To(runtime.MachineStatusID),
+			ID:        optional.Some(runtime.MachineStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -192,7 +192,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 				controller.Input{
 					Namespace: cluster.NamespaceName,
 					Type:      cluster.AffiliateType,
-					ID:        pointer.To(ctrl.localAffiliateID),
+					ID:        optional.Some(ctrl.localAffiliateID),
 					Kind:      controller.InputWeak,
 				},
 			)); err != nil {

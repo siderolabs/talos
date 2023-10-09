@@ -17,7 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -77,7 +77,7 @@ func (ctrl *AcquireController) Inputs() []controller.Input {
 		{
 			Namespace: configresource.NamespaceName,
 			Type:      configresource.MachineConfigType,
-			ID:        pointer.To(configresource.MaintenanceID),
+			ID:        optional.Some(configresource.MaintenanceID),
 			Kind:      controller.InputWeak,
 		},
 		{

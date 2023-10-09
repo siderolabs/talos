@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/martinlindhe/base36"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
@@ -41,19 +41,19 @@ func (ctrl *HostnameConfigController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
+			ID:        optional.Some(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.NodeAddressDefaultID),
+			ID:        optional.Some(network.NodeAddressDefaultID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: cluster.NamespaceName,
 			Type:      cluster.IdentityType,
-			ID:        pointer.To(cluster.LocalIdentity),
+			ID:        optional.Some(cluster.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 	}

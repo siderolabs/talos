@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -35,13 +35,13 @@ func (ctrl *MaintenanceCertSANsController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.HostnameStatusType,
-			ID:        pointer.To(network.HostnameID),
+			ID:        optional.Some(network.HostnameID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.NodeAddressAccumulativeID),
+			ID:        optional.Some(network.NodeAddressAccumulativeID),
 			Kind:      controller.InputWeak,
 		},
 	}

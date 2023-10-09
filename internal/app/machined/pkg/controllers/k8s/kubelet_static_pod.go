@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
@@ -37,25 +37,25 @@ func (ctrl *KubeletStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodenameType,
-			ID:        pointer.To(k8s.NodenameID),
+			ID:        optional.Some(k8s.NodenameID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        pointer.To("kubelet"),
+			ID:        optional.Some("kubelet"),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesDynamicCertsType,
-			ID:        pointer.To(secrets.KubernetesDynamicCertsID),
+			ID:        optional.Some(secrets.KubernetesDynamicCertsID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
-			ID:        pointer.To(secrets.KubernetesRootID),
+			ID:        optional.Some(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 	}

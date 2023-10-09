@@ -13,8 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
@@ -39,7 +39,7 @@ func (ctrl *KmsgLogConfigController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
+			ID:        optional.Some(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
 	}

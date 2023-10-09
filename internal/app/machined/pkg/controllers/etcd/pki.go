@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/filetree"
@@ -37,13 +37,13 @@ func (ctrl *PKIController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdRootType,
-			ID:        pointer.To(secrets.EtcdRootID),
+			ID:        optional.Some(secrets.EtcdRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdType,
-			ID:        pointer.To(secrets.EtcdID),
+			ID:        optional.Some(secrets.EtcdID),
 			Kind:      controller.InputWeak,
 		},
 	}

@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -57,7 +57,7 @@ func (ctrl *KubernetesDynamicCertsController) Run(ctx context.Context, r control
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
+			ID:        optional.Some(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {
@@ -90,19 +90,19 @@ func (ctrl *KubernetesDynamicCertsController) Run(ctx context.Context, r control
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
-			ID:        pointer.To(secrets.KubernetesRootID),
+			ID:        optional.Some(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      timeresource.StatusType,
-			ID:        pointer.To(timeresource.StatusID),
+			ID:        optional.Some(timeresource.StatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.CertSANType,
-			ID:        pointer.To(secrets.CertSANKubernetesID),
+			ID:        optional.Some(secrets.CertSANKubernetesID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {

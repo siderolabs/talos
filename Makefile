@@ -78,6 +78,7 @@ IMAGER_ARGS ?=
 
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
+GO_BUILDTAGS ?= tcell_minimal
 GO_LDFLAGS ?=
 GOAMD64 ?= v2
 
@@ -92,10 +93,12 @@ INSTALLER_ARCH = targetarch
 endif
 
 ifneq (, $(filter $(WITH_DEBUG), t true TRUE y yes 1))
-GO_BUILDFLAGS += -tags sidero.debug
+GO_BUILDTAGS := $(GO_BUILDTAGS),sidero.debug
 else
 GO_LDFLAGS += -s -w
 endif
+
+GO_BUILDFLAGS += -tags "$(GO_BUILDTAGS)"
 
 , := ,
 space := $(subst ,, )

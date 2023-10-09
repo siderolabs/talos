@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -38,7 +38,7 @@ func (ctrl *AddressEventController) Inputs() []controller.Input {
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
 			Kind:      controller.InputWeak,
-			ID: pointer.To(network.FilteredNodeAddressID(
+			ID: optional.Some(network.FilteredNodeAddressID(
 				network.NodeAddressCurrentID,
 				k8s.NodeAddressFilterNoK8s)),
 		},
@@ -46,7 +46,7 @@ func (ctrl *AddressEventController) Inputs() []controller.Input {
 			Namespace: network.NamespaceName,
 			Type:      network.HostnameStatusType,
 			Kind:      controller.InputWeak,
-			ID:        pointer.To(network.HostnameID),
+			ID:        optional.Some(network.HostnameID),
 		},
 	}
 }

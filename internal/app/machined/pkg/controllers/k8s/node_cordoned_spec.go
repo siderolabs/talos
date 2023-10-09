@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -32,7 +32,7 @@ func (ctrl *NodeCordonedSpecController) Inputs() []controller.Input {
 		{
 			Namespace: runtime.NamespaceName,
 			Type:      runtime.MachineStatusType,
-			ID:        pointer.To(runtime.MachineStatusID),
+			ID:        optional.Some(runtime.MachineStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}

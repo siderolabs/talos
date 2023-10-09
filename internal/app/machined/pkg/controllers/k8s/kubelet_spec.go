@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"github.com/siderolabs/go-pointer"
@@ -46,19 +47,19 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.KubeletConfigType,
-			ID:        pointer.To(k8s.KubeletID),
+			ID:        optional.Some(k8s.KubeletID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodenameType,
-			ID:        pointer.To(k8s.NodenameID),
+			ID:        optional.Some(k8s.NodenameID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodeIPType,
-			ID:        pointer.To(k8s.KubeletID),
+			ID:        optional.Some(k8s.KubeletID),
 			Kind:      controller.InputWeak,
 		},
 	}

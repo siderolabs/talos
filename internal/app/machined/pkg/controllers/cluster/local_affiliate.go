@@ -14,8 +14,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/net"
 	"go.uber.org/zap"
 
@@ -42,25 +42,25 @@ func (ctrl *LocalAffiliateController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      cluster.ConfigType,
-			ID:        pointer.To(cluster.ConfigID),
+			ID:        optional.Some(cluster.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: cluster.NamespaceName,
 			Type:      cluster.IdentityType,
-			ID:        pointer.To(cluster.LocalIdentity),
+			ID:        optional.Some(cluster.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.HostnameStatusType,
-			ID:        pointer.To(network.HostnameID),
+			ID:        optional.Some(network.HostnameID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodenameType,
-			ID:        pointer.To(k8s.NodenameID),
+			ID:        optional.Some(k8s.NodenameID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -71,19 +71,19 @@ func (ctrl *LocalAffiliateController) Inputs() []controller.Input {
 		{
 			Namespace: kubespan.NamespaceName,
 			Type:      kubespan.IdentityType,
-			ID:        pointer.To(kubespan.LocalIdentity),
+			ID:        optional.Some(kubespan.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubespan.ConfigType,
-			ID:        pointer.To(kubespan.ConfigID),
+			ID:        optional.Some(kubespan.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
-			ID:        pointer.To(config.MachineTypeID),
+			ID:        optional.Some(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -94,7 +94,7 @@ func (ctrl *LocalAffiliateController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.APIServerConfigType,
-			ID:        pointer.To(k8s.APIServerConfigID),
+			ID:        optional.Some(k8s.APIServerConfigID),
 			Kind:      controller.InputWeak,
 		},
 	}

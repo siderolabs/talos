@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
@@ -38,25 +38,25 @@ func (ctrl *EtcFileController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
+			ID:        optional.Some(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.HostnameStatusType,
-			ID:        pointer.To(network.HostnameID),
+			ID:        optional.Some(network.HostnameID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.ResolverStatusType,
-			ID:        pointer.To(network.ResolverID),
+			ID:        optional.Some(network.ResolverID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.NodeAddressDefaultID),
+			ID:        optional.Some(network.NodeAddressDefaultID),
 			Kind:      controller.InputWeak,
 		},
 	}

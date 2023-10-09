@@ -18,7 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
@@ -51,7 +51,7 @@ func (ctrl *PlatformConfigController) Inputs() []controller.Input {
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      runtimeres.MountStatusType,
-			ID:        pointer.To(constants.StatePartitionLabel),
+			ID:        optional.Some(constants.StatePartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 	}

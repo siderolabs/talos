@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,7 +38,7 @@ func (ctrl *NodeStatusController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodenameType,
-			ID:        pointer.To(k8s.NodenameID),
+			ID:        optional.Some(k8s.NodenameID),
 			Kind:      controller.InputWeak,
 		},
 	}

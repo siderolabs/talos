@@ -11,7 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -25,7 +25,7 @@ func WaitForNetworkReady(ctx context.Context, r controller.Runtime, condition fu
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
+			ID:        optional.Some(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {

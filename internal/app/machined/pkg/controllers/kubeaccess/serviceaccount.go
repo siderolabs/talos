@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -42,19 +42,19 @@ func (ctrl *CRDController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      kubeaccess.ConfigType,
-			ID:        pointer.To(kubeaccess.ConfigID),
+			ID:        optional.Some(kubeaccess.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesType,
-			ID:        pointer.To(secrets.KubernetesID),
+			ID:        optional.Some(secrets.KubernetesID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.OSRootType,
-			ID:        pointer.To(secrets.OSRootID),
+			ID:        optional.Some(secrets.OSRootID),
 			Kind:      controller.InputWeak,
 		},
 	}

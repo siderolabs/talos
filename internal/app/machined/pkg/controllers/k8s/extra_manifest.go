@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-getter/v2"
 	"github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
@@ -45,7 +45,7 @@ func (ctrl *ExtraManifestController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
+			ID:        optional.Some(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}

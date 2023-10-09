@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/grpc/gen"
@@ -43,13 +43,13 @@ func (ctrl *APIController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,
-			ID:        pointer.To(network.StatusID),
+			ID:        optional.Some(network.StatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
-			ID:        pointer.To(config.MachineTypeID),
+			ID:        optional.Some(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -137,19 +137,19 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.OSRootType,
-			ID:        pointer.To(secrets.OSRootID),
+			ID:        optional.Some(secrets.OSRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.CertSANType,
-			ID:        pointer.To(secrets.CertSANAPIID),
+			ID:        optional.Some(secrets.CertSANAPIID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineTypeType,
-			ID:        pointer.To(config.MachineTypeID),
+			ID:        optional.Some(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
 		// time status isn't fetched, but the fact that it is in dependencies means
@@ -157,7 +157,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      timeresource.StatusType,
-			ID:        pointer.To(timeresource.StatusID),
+			ID:        optional.Some(timeresource.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}

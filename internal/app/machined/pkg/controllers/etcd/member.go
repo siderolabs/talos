@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	pkgetcd "github.com/siderolabs/talos/internal/pkg/etcd"
@@ -38,7 +38,7 @@ func (ctrl *MemberController) Inputs() []controller.Input {
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        pointer.To(etcdServiceID),
+			ID:        optional.Some(etcdServiceID),
 			Kind:      controller.InputStrong,
 		},
 	}

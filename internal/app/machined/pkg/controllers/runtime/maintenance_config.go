@@ -12,8 +12,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -38,12 +38,12 @@ func (ctrl *MaintenanceConfigController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      siderolink.ConfigType,
-			ID:        pointer.To(siderolink.ConfigID),
+			ID:        optional.Some(siderolink.ConfigID),
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.NodeAddressCurrentID),
+			ID:        optional.Some(network.NodeAddressCurrentID),
 		},
 	}
 }

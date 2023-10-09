@@ -18,7 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -57,7 +57,7 @@ func (ctrl *SeccompProfileFileController) Run(ctx context.Context, r controller.
 		{
 			Namespace: runtimeres.NamespaceName,
 			Type:      runtimeres.MountStatusType,
-			ID:        pointer.To(constants.EphemeralPartitionLabel),
+			ID:        optional.Some(constants.EphemeralPartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {

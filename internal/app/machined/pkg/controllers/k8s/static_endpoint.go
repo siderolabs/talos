@@ -13,8 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -35,7 +35,7 @@ func (ctrl *StaticEndpointController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
-			ID:        pointer.To(config.V1Alpha1ID),
+			ID:        optional.Some(config.V1Alpha1ID),
 			Kind:      controller.InputWeak,
 		},
 	}

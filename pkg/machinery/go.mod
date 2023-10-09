@@ -9,7 +9,7 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.9
-	github.com/cosi-project/runtime v0.3.11
+	github.com/cosi-project/runtime v0.3.13
 	github.com/dustin/go-humanize v1.0.1
 	github.com/evanphx/json-patch v5.7.0+incompatible
 	github.com/ghodss/yaml v1.0.0

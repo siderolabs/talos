@@ -23,7 +23,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -78,13 +77,13 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 		{
 			Namespace: files.NamespaceName,
 			Type:      files.EtcFileStatusType,
-			ID:        pointer.To("machine-id"),
+			ID:        optional.Some("machine-id"),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: runtimeres.NamespaceName,
 			Type:      runtimeres.MountStatusType,
-			ID:        pointer.To(constants.EphemeralPartitionLabel),
+			ID:        optional.Some(constants.EphemeralPartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {
@@ -128,13 +127,13 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.KubeletSpecType,
-			ID:        pointer.To(k8s.KubeletID),
+			ID:        optional.Some(k8s.KubeletID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubeletType,
-			ID:        pointer.To(secrets.KubeletID),
+			ID:        optional.Some(secrets.KubeletID),
 			Kind:      controller.InputWeak,
 		},
 	}); err != nil {

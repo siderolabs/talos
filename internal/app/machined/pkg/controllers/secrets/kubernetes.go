@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/kubeconfig"
@@ -46,13 +46,13 @@ func (ctrl *KubernetesController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.KubernetesRootType,
-			ID:        pointer.To(secrets.KubernetesRootID),
+			ID:        optional.Some(secrets.KubernetesRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      timeresource.StatusType,
-			ID:        pointer.To(timeresource.StatusID),
+			ID:        optional.Some(timeresource.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}

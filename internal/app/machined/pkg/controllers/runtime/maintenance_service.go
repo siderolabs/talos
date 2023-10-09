@@ -18,9 +18,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-debug"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -48,19 +48,19 @@ func (ctrl *MaintenanceServiceController) Inputs() []controller.Input {
 		{
 			Namespace: runtime.NamespaceName,
 			Type:      runtime.MaintenanceServiceRequestType,
-			ID:        pointer.To(runtime.MaintenanceServiceRequestID),
+			ID:        optional.Some(runtime.MaintenanceServiceRequestID),
 			Kind:      controller.InputStrong,
 		},
 		{
 			Namespace: runtime.NamespaceName,
 			Type:      runtime.MaintenanceServiceConfigType,
-			ID:        pointer.To(runtime.MaintenanceServiceConfigID),
+			ID:        optional.Some(runtime.MaintenanceServiceConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.MaintenanceServiceCertsType,
-			ID:        pointer.To(secrets.MaintenanceServiceCertsID),
+			ID:        optional.Some(secrets.MaintenanceServiceCertsID),
 			Kind:      controller.InputWeak,
 		},
 	}

@@ -19,8 +19,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -58,19 +58,19 @@ func (ctrl *CRIImageGCController) Inputs() []controller.Input {
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        pointer.To("cri"),
+			ID:        optional.Some("cri"),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.KubeletSpecType,
-			ID:        pointer.To(k8s.KubeletID),
+			ID:        optional.Some(k8s.KubeletID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: etcd.NamespaceName,
 			Type:      etcd.SpecType,
-			ID:        pointer.To(etcd.SpecID),
+			ID:        optional.Some(etcd.SpecID),
 			Kind:      controller.InputWeak,
 		},
 	}

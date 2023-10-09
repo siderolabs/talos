@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -63,19 +64,19 @@ func (ctrl *ControlPlaneStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.SecretsStatusType,
-			ID:        pointer.To(k8s.StaticPodSecretsStaticPodID),
+			ID:        optional.Some(k8s.StaticPodSecretsStaticPodID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.ConfigStatusType,
-			ID:        pointer.To(k8s.ConfigStatusStaticPodID),
+			ID:        optional.Some(k8s.ConfigStatusStaticPodID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        pointer.To("etcd"),
+			ID:        optional.Some("etcd"),
 			Kind:      controller.InputWeak,
 		},
 	}

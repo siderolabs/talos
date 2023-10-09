@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/discovery/registry"
@@ -40,13 +40,13 @@ func (ctrl *KubernetesPushController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      cluster.ConfigType,
-			ID:        pointer.To(cluster.ConfigID),
+			ID:        optional.Some(cluster.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: cluster.NamespaceName,
 			Type:      cluster.IdentityType,
-			ID:        pointer.To(cluster.LocalIdentity),
+			ID:        optional.Some(cluster.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -109,7 +109,7 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 					controller.Input{
 						Namespace: cluster.NamespaceName,
 						Type:      cluster.AffiliateType,
-						ID:        pointer.To(ctrl.localAffiliateID),
+						ID:        optional.Some(ctrl.localAffiliateID),
 						Kind:      controller.InputWeak,
 					},
 				)); err != nil {

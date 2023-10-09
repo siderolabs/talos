@@ -13,8 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/net"
 	"go.uber.org/zap"
 
@@ -36,13 +36,13 @@ func (ctrl *NodeIPController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodeIPConfigType,
-			ID:        pointer.To(k8s.KubeletID),
+			ID:        optional.Some(k8s.KubeletID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s)),
+			ID:        optional.Some(network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s)),
 			Kind:      controller.InputWeak,
 		},
 	}

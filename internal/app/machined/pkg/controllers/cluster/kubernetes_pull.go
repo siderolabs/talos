@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/discovery/registry"
@@ -38,13 +38,13 @@ func (ctrl *KubernetesPullController) Inputs() []controller.Input {
 		{
 			Namespace: config.NamespaceName,
 			Type:      cluster.ConfigType,
-			ID:        pointer.To(cluster.ConfigID),
+			ID:        optional.Some(cluster.ConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodenameType,
-			ID:        pointer.To(k8s.NodenameID),
+			ID:        optional.Some(k8s.NodenameID),
 			Kind:      controller.InputWeak,
 		},
 	}

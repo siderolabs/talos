@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -36,13 +36,13 @@ func (ctrl *MaintenanceController) Inputs() []controller.Input {
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.MaintenanceRootType,
-			ID:        pointer.To(secrets.MaintenanceRootID),
+			ID:        optional.Some(secrets.MaintenanceRootID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.CertSANType,
-			ID:        pointer.To(secrets.CertSANMaintenanceID),
+			ID:        optional.Some(secrets.CertSANMaintenanceID),
 			Kind:      controller.InputWeak,
 		},
 		// time status isn't fetched, but the fact that it is in dependencies means
@@ -50,7 +50,7 @@ func (ctrl *MaintenanceController) Inputs() []controller.Input {
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      timeresource.StatusType,
-			ID:        pointer.To(timeresource.StatusID),
+			ID:        optional.Some(timeresource.StatusID),
 			Kind:      controller.InputWeak,
 		},
 	}

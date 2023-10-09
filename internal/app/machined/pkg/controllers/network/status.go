@@ -12,8 +12,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -34,7 +34,7 @@ func (ctrl *StatusController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        pointer.To(network.NodeAddressCurrentID),
+			ID:        optional.Some(network.NodeAddressCurrentID),
 			Kind:      controller.InputWeak,
 		},
 		{

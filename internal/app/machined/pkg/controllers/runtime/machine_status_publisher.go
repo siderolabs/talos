@@ -11,8 +11,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -36,7 +36,7 @@ func (ctrl *MachineStatusPublisherController) Inputs() []controller.Input {
 		{
 			Namespace: runtime.NamespaceName,
 			Type:      runtime.MachineStatusType,
-			ID:        pointer.To(runtime.MachineStatusID),
+			ID:        optional.Some(runtime.MachineStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}

@@ -14,9 +14,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-kmsg"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -67,7 +67,7 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 			{
 				Namespace: runtime.NamespaceName,
 				Type:      runtime.KmsgLogConfigType,
-				ID:        pointer.To(runtime.KmsgLogConfigID),
+				ID:        optional.Some(runtime.KmsgLogConfigID),
 				Kind:      controller.InputWeak,
 			},
 		},
