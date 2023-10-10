@@ -32,7 +32,7 @@ CoreDNS: 1.11.1
 Kubernetes: 1.29.0-alpha.1
 Flannel: 0.22.3
 
-Talos is built with Go 1.21.1.
+Talos is built with Go 1.21.3.
 """
 
     [notes.talosctl]
