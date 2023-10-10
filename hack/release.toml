@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.5.2"
+previous = "v1.5.3"
 
 pre_release = false
 
@@ -18,19 +18,7 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-Kubernetes: v1.28.2
-Linux: 6.1.54
-"""
-
-    [notes.cgroupsv1]
-        title = "cgroups v1"
-        description="""\
-Talos Linux is incompatible with cgroups v1 due to the Kubernetes issue
-https://github.com/kubernetes/kubernetes/issues/120813 and new version of Linux kernel.
-
-Talos Linux doesn't use cgroups v1 by default, and it has to be explicitly enabled with
-a kernel argument: `talos.unified_cgroup_hierarchy=0`, so if you are not using cgroups v1,
-you are not affected.
+Talos is built with Go 1.21.3.
 """
 
 [make_deps]
