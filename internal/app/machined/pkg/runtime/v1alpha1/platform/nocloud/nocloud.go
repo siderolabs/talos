@@ -33,12 +33,17 @@ func (n *Nocloud) Name() string {
 func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, st state.State, metadata *MetadataConfig) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	if metadata.Hostname != "" {
+	hostname := metadata.Hostname
+	if hostname == "" {
+		hostname = metadata.LocalHostname
+	}
+
+	if hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 		}
 
-		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
+		if err := hostnameSpec.ParseFQDN(hostname); err != nil {
 			return nil, err
 		}
 
@@ -60,7 +65,7 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, st sta
 
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:     n.Name(),
-		Hostname:     metadata.Hostname,
+		Hostname:     hostname,
 		InstanceID:   metadata.InstanceID,
 		InstanceType: metadata.InstanceType,
 		ProviderID:   metadata.ProviderID,

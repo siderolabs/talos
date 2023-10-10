@@ -74,16 +74,25 @@ func TestParseMetadata(t *testing.T) {
 				Hostname:   "talos.fqdn",
 				InstanceID: "0",
 			}
+			mc2 := nocloud.MetadataConfig{
+				LocalHostname: "talos.fqdn",
+				InstanceID:    "0",
+			}
 
 			networkConfig, err := n.ParseMetadata(&m, st, &mc)
 			require.NoError(t, err)
+			networkConfig2, err := n.ParseMetadata(&m, st, &mc2)
+			require.NoError(t, err)
 
 			marshaled, err := yaml.Marshal(networkConfig)
+			require.NoError(t, err)
+			marshaled2, err := yaml.Marshal(networkConfig2)
 			require.NoError(t, err)
 
 			fmt.Print(string(marshaled))
 
 			assert.Equal(t, tt.expected, string(marshaled))
+			assert.Equal(t, tt.expected, string(marshaled2))
 		})
 	}
 }
