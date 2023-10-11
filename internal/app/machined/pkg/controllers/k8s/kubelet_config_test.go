@@ -96,11 +96,9 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 						},
 						KubeletExtraMounts: []v1alpha1.ExtraMount{
 							{
-								Mount: specs.Mount{
-									Destination: "/tmp",
-									Source:      "/var",
-									Type:        "tmpfs",
-								},
+								Destination: "/tmp",
+								Source:      "/var",
+								Type:        "tmpfs",
 							},
 						},
 						KubeletExtraConfig: v1alpha1.Unstructured{

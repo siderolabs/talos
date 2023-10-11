@@ -113,15 +113,14 @@ kubelet:
 
     # # The `extraMounts` field is used to add additional mounts to the kubelet container.
     # extraMounts:
-    #     - destination: /var/lib/example
-    #       type: bind
-    #       source: /var/lib/example
+    #     - destination: /var/lib/example # Destination is the absolute path where the mount will be placed in the container.
+    #       type: bind # Type specifies the mount kind.
+    #       source: /var/lib/example # Source specifies the source path of the mount.
+    #       # Options are fstab style mount options.
     #       options:
     #         - bind
     #         - rshared
     #         - rw
-    #       uidmappings: []
-    #       gidmappings: []
 
     # # The `extraConfig` field is used to provide kubelet configuration overrides.
     # extraConfig:
@@ -655,6 +654,26 @@ allowSchedulingOnControlPlanes: true
 
 
 ---
+## LinuxIDMapping
+LinuxIDMapping represents the Linux ID mapping.
+
+Appears in:
+
+- <code><a href="#extramount">ExtraMount</a>.uidMappings</code>
+- <code><a href="#extramount">ExtraMount</a>.gidMappings</code>
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`containerID` |uint32 |ContainerID is the starting UID/GID in the container.  | |
+|`hostID` |uint32 |HostID is the starting UID/GID on the host to be mapped to 'ContainerID'.  | |
+|`size` |uint32 |Size is the number of IDs to be mapped.  | |
+
+
+
+---
 ## ExtraMount
 ExtraMount wraps OCI Mount specification.
 
@@ -665,17 +684,25 @@ Appears in:
 
 
 {{< highlight yaml >}}
-- destination: /var/lib/example
-  type: bind
-  source: /var/lib/example
+- destination: /var/lib/example # Destination is the absolute path where the mount will be placed in the container.
+  type: bind # Type specifies the mount kind.
+  source: /var/lib/example # Source specifies the source path of the mount.
+  # Options are fstab style mount options.
   options:
     - bind
     - rshared
     - rw
-  uidmappings: []
-  gidmappings: []
 {{< /highlight >}}
 
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`destination` |string |Destination is the absolute path where the mount will be placed in the container.  | |
+|`type` |string |Type specifies the mount kind.  | |
+|`source` |string |Source specifies the source path of the mount.  | |
+|`options` |[]string |Options are fstab style mount options.  | |
+|`uidMappings` |[]<a href="#linuxidmapping">LinuxIDMapping</a> |<details><summary>UID/GID mappings used for changing file owners w/o calling chown, fs should support it.</summary><br />Every mount point could have its own mapping.</details>  | |
+|`gidMappings` |[]<a href="#linuxidmapping">LinuxIDMapping</a> |<details><summary>UID/GID mappings used for changing file owners w/o calling chown, fs should support it.</summary><br />Every mount point could have its own mapping.</details>  | |
 
 
 
@@ -763,15 +790,14 @@ extraArgs:
 
 # # The `extraMounts` field is used to add additional mounts to the kubelet container.
 # extraMounts:
-#     - destination: /var/lib/example
-#       type: bind
-#       source: /var/lib/example
+#     - destination: /var/lib/example # Destination is the absolute path where the mount will be placed in the container.
+#       type: bind # Type specifies the mount kind.
+#       source: /var/lib/example # Source specifies the source path of the mount.
+#       # Options are fstab style mount options.
 #       options:
 #         - bind
 #         - rshared
 #         - rw
-#       uidmappings: []
-#       gidmappings: []
 
 # # The `extraConfig` field is used to provide kubelet configuration overrides.
 # extraConfig:
@@ -803,15 +829,14 @@ extraArgs:
 {{< /highlight >}}</details> | |
 |`extraMounts` |[]<a href="#extramount">ExtraMount</a> |<details><summary>The `extraMounts` field is used to add additional mounts to the kubelet container.</summary>Note that either `bind` or `rbind` are required in the `options`.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraMounts:
-    - destination: /var/lib/example
-      type: bind
-      source: /var/lib/example
+    - destination: /var/lib/example # Destination is the absolute path where the mount will be placed in the container.
+      type: bind # Type specifies the mount kind.
+      source: /var/lib/example # Source specifies the source path of the mount.
+      # Options are fstab style mount options.
       options:
         - bind
         - rshared
         - rw
-      uidmappings: []
-      gidmappings: []
 {{< /highlight >}}</details> | |
 |`extraConfig` |Unstructured |<details><summary>The `extraConfig` field is used to provide kubelet configuration overrides.</summary><br />Some fields are not allowed to be overridden: authentication and authorization, cgroups<br />configuration, ports, etc.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraConfig:

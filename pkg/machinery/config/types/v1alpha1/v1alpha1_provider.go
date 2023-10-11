@@ -383,7 +383,33 @@ func (k *KubeletConfig) ExtraArgs() map[string]string {
 
 // ExtraMounts implements the config.Provider interface.
 func (k *KubeletConfig) ExtraMounts() []specs.Mount {
-	return xslices.Map(k.KubeletExtraMounts, func(m ExtraMount) specs.Mount { return m.Mount })
+	// use the intermediate type which is assignable to specs.Mount so that
+	// we can be sure that `specs.Mount` and `Mount` have exactly same fields.
+	//
+	// as in Go []T1 is not assignable to []T2, even if T1 and T2 are assignable, we cannot
+	// use direct conversion of Mount and specs.Mount
+	type mountConverter struct {
+		Destination string
+		Type        string
+		Source      string
+		Options     []string
+		UIDMappings []specs.LinuxIDMapping
+		GIDMappings []specs.LinuxIDMapping
+	}
+
+	return xslices.Map(k.KubeletExtraMounts,
+		func(m ExtraMount) specs.Mount {
+			return specs.Mount(func() mountConverter {
+				return mountConverter{
+					Destination: m.Destination,
+					Type:        m.Type,
+					Source:      m.Source,
+					Options:     m.Options,
+					UIDMappings: xslices.Map(m.UIDMappings, func(m LinuxIDMapping) specs.LinuxIDMapping { return specs.LinuxIDMapping(m) }),
+					GIDMappings: xslices.Map(m.GIDMappings, func(m LinuxIDMapping) specs.LinuxIDMapping { return specs.LinuxIDMapping(m) }),
+				}
+			}())
+		})
 }
 
 // ExtraConfig implements the config.Provider interface.

@@ -1353,7 +1353,59 @@
       "type": "object"
     },
     "ExtraMount": {
-      "properties": {},
+      "properties": {
+        "destination": {
+          "type": "string",
+          "title": "destination",
+          "description": "Destination is the absolute path where the mount will be placed in the container.\n",
+          "markdownDescription": "Destination is the absolute path where the mount will be placed in the container.",
+          "x-intellij-html-description": "\u003cp\u003eDestination is the absolute path where the mount will be placed in the container.\u003c/p\u003e\n"
+        },
+        "type": {
+          "type": "string",
+          "title": "type",
+          "description": "Type specifies the mount kind.\n",
+          "markdownDescription": "Type specifies the mount kind.",
+          "x-intellij-html-description": "\u003cp\u003eType specifies the mount kind.\u003c/p\u003e\n"
+        },
+        "source": {
+          "type": "string",
+          "title": "source",
+          "description": "Source specifies the source path of the mount.\n",
+          "markdownDescription": "Source specifies the source path of the mount.",
+          "x-intellij-html-description": "\u003cp\u003eSource specifies the source path of the mount.\u003c/p\u003e\n"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "options",
+          "description": "Options are fstab style mount options.\n",
+          "markdownDescription": "Options are fstab style mount options.",
+          "x-intellij-html-description": "\u003cp\u003eOptions are fstab style mount options.\u003c/p\u003e\n"
+        },
+        "uidMappings": {
+          "items": {
+            "$ref": "#/$defs/LinuxIDMapping"
+          },
+          "type": "array",
+          "title": "uidMappings",
+          "description": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.\n",
+          "markdownDescription": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
+          "x-intellij-html-description": "\u003cp\u003eUID/GID mappings used for changing file owners w/o calling chown, fs should support it.\u003c/p\u003e\n\n\u003cp\u003eEvery mount point could have its own mapping.\u003c/p\u003e\n"
+        },
+        "gidMappings": {
+          "items": {
+            "$ref": "#/$defs/LinuxIDMapping"
+          },
+          "type": "array",
+          "title": "gidMappings",
+          "description": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.\n",
+          "markdownDescription": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
+          "x-intellij-html-description": "\u003cp\u003eUID/GID mappings used for changing file owners w/o calling chown, fs should support it.\u003c/p\u003e\n\n\u003cp\u003eEvery mount point could have its own mapping.\u003c/p\u003e\n"
+        }
+      },
       "additionalProperties": false,
       "type": "object"
     },
@@ -1766,6 +1818,33 @@
           "description": "The list of Kubernetes namespaces Talos API access is available from.\n",
           "markdownDescription": "The list of Kubernetes namespaces Talos API access is available from.",
           "x-intellij-html-description": "\u003cp\u003eThe list of Kubernetes namespaces Talos API access is available from.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LinuxIDMapping": {
+      "properties": {
+        "containerID": {
+          "type": "integer",
+          "title": "containerID",
+          "description": "ContainerID is the starting UID/GID in the container.\n",
+          "markdownDescription": "ContainerID is the starting UID/GID in the container.",
+          "x-intellij-html-description": "\u003cp\u003eContainerID is the starting UID/GID in the container.\u003c/p\u003e\n"
+        },
+        "hostID": {
+          "type": "integer",
+          "title": "hostID",
+          "description": "HostID is the starting UID/GID on the host to be mapped to ‘ContainerID’.\n",
+          "markdownDescription": "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'.",
+          "x-intellij-html-description": "\u003cp\u003eHostID is the starting UID/GID on the host to be mapped to \u0026lsquo;ContainerID\u0026rsquo;.\u003c/p\u003e\n"
+        },
+        "size": {
+          "type": "integer",
+          "title": "size",
+          "description": "Size is the number of IDs to be mapped.\n",
+          "markdownDescription": "Size is the number of IDs to be mapped.",
+          "x-intellij-html-description": "\u003cp\u003eSize is the number of IDs to be mapped.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

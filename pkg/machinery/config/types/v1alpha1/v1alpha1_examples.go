@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-pointer"
 	"gopkg.in/yaml.v3"
@@ -475,15 +474,13 @@ func clusterEndpointExample2() *Endpoint {
 func kubeletExtraMountsExample() []ExtraMount {
 	return []ExtraMount{
 		{
-			specs.Mount{
-				Source:      "/var/lib/example",
-				Destination: "/var/lib/example",
-				Type:        "bind",
-				Options: []string{
-					"bind",
-					"rshared",
-					"rw",
-				},
+			Source:      "/var/lib/example",
+			Destination: "/var/lib/example",
+			Type:        "bind",
+			Options: []string{
+				"bind",
+				"rshared",
+				"rw",
 			},
 		},
 	}

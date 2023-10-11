@@ -545,6 +545,49 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	return doc
 }
 
+func (LinuxIDMapping) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LinuxIDMapping",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LinuxIDMapping represents the Linux ID mapping." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LinuxIDMapping represents the Linux ID mapping.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExtraMount",
+				FieldName: "uidMappings",
+			},
+			{
+				TypeName:  "ExtraMount",
+				FieldName: "gidMappings",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "containerID",
+				Type:        "uint32",
+				Note:        "",
+				Description: "ContainerID is the starting UID/GID in the container.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerID is the starting UID/GID in the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hostID",
+				Type:        "uint32",
+				Note:        "",
+				Description: "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "size",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Size is the number of IDs to be mapped.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Size is the number of IDs to be mapped." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (ExtraMount) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExtraMount",
@@ -556,7 +599,50 @@ func (ExtraMount) Doc() *encoder.Doc {
 				FieldName: "extraMounts",
 			},
 		},
-		Fields: []encoder.Doc{},
+		Fields: []encoder.Doc{
+			{
+				Name:        "destination",
+				Type:        "string",
+				Note:        "",
+				Description: "Destination is the absolute path where the mount will be placed in the container.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Destination is the absolute path where the mount will be placed in the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "type",
+				Type:        "string",
+				Note:        "",
+				Description: "Type specifies the mount kind.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Type specifies the mount kind." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "source",
+				Type:        "string",
+				Note:        "",
+				Description: "Source specifies the source path of the mount.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Source specifies the source path of the mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "options",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Options are fstab style mount options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Options are fstab style mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "uidMappings",
+				Type:        "[]LinuxIDMapping",
+				Note:        "",
+				Description: "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "UID/GID mappings used for changing file owners w/o calling chown, fs should support it." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "gidMappings",
+				Type:        "[]LinuxIDMapping",
+				Note:        "",
+				Description: "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "UID/GID mappings used for changing file owners w/o calling chown, fs should support it." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
 	}
 
 	doc.AddExample("", kubeletExtraMountsExample())
@@ -3833,6 +3919,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			MachineConfig{}.Doc(),
 			MachineSeccompProfile{}.Doc(),
 			ClusterConfig{}.Doc(),
+			LinuxIDMapping{}.Doc(),
 			ExtraMount{}.Doc(),
 			MachineControlPlaneConfig{}.Doc(),
 			MachineControllerManagerConfig{}.Doc(),
