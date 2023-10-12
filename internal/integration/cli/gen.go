@@ -225,39 +225,26 @@ func (suite *GenSuite) TestSecrets() {
 
 	suite.RunCLI([]string{"gen", "secrets", "--force"}, base.StdoutEmpty())
 
-	defer os.Remove("secrets.yaml") //nolint:errcheck
-
-	suite.RunCLI([]string{"gen", "secrets", "--output-file", "/tmp/secrets2.yaml"}, base.StdoutEmpty())
-	suite.Assert().FileExists("/tmp/secrets2.yaml")
-
-	defer os.Remove("/tmp/secrets2.yaml") //nolint:errcheck
+	suite.RunCLI([]string{"gen", "secrets", "--output-file", "secrets2.yaml"}, base.StdoutEmpty())
+	suite.Assert().FileExists("secrets2.yaml")
 
 	suite.RunCLI([]string{"gen", "secrets", "-o", "secrets3.yaml", "--talos-version", "v0.8"}, base.StdoutEmpty())
 	suite.Assert().FileExists("secrets3.yaml")
-
-	defer os.Remove("secrets3.yaml") //nolint:errcheck
 }
 
 // TestSecretsWithPKIDirAndToken ...
 func (suite *GenSuite) TestSecretsWithPKIDirAndToken() {
-	path := "/tmp/secrets-with-pki-dir-and-token.yaml"
+	path := "secrets-with-pki-dir-and-token.yaml"
 
-	tempDir := suite.T().TempDir()
-
-	dir, err := writeKubernetesPKIFiles(tempDir)
-	suite.Assert().NoError(err)
-
-	defer os.RemoveAll(dir) //nolint:errcheck
+	suite.Require().NoError(writeKubernetesPKIFiles("k8s-pki/"))
 
 	suite.RunCLI([]string{
-		"gen", "secrets", "--from-kubernetes-pki", dir,
+		"gen", "secrets", "--from-kubernetes-pki", "k8s-pki/",
 		"--kubernetes-bootstrap-token", "test-token",
 		"--output-file", path,
 	}, base.StdoutEmpty())
 
 	suite.Assert().FileExists(path)
-
-	defer os.Remove(path) //nolint:errcheck
 
 	secretsYaml, err := os.ReadFile(path)
 	suite.Assert().NoError(err)

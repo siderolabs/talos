@@ -27,41 +27,39 @@ var (
 	pkiEtcdCAKey []byte
 )
 
-func writeKubernetesPKIFiles(dir string) (string, error) {
-	var err error
-
-	if err = os.WriteFile(filepath.Join(dir, "ca.crt"), pkiCACrt, 0o777); err != nil {
-		return "", err
+func writeKubernetesPKIFiles(dir string) error {
+	if err := os.Mkdir(dir, 0o777); err != nil {
+		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(dir, "ca.key"), pkiCAKey, 0o777); err != nil {
-		return "", err
+	if err := os.WriteFile(filepath.Join(dir, "ca.crt"), pkiCACrt, 0o777); err != nil {
+		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(dir, "front-proxy-ca.crt"), pkiFrontProxyCACrt, 0o777); err != nil {
-		return "", err
+	if err := os.WriteFile(filepath.Join(dir, "ca.key"), pkiCAKey, 0o777); err != nil {
+		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(dir, "front-proxy-ca.key"), pkiFrontProxyCAKey, 0o777); err != nil {
-		return "", err
+	if err := os.WriteFile(filepath.Join(dir, "front-proxy-ca.crt"), pkiFrontProxyCACrt, 0o777); err != nil {
+		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(dir, "sa.key"), pkiSAKey, 0o777); err != nil {
-		return "", err
+	if err := os.WriteFile(filepath.Join(dir, "front-proxy-ca.key"), pkiFrontProxyCAKey, 0o777); err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(filepath.Join(dir, "sa.key"), pkiSAKey, 0o777); err != nil {
+		return err
 	}
 
 	etcdDir := filepath.Join(dir, "etcd")
-	if err = os.Mkdir(etcdDir, 0o777); err != nil {
-		return "", err
+	if err := os.Mkdir(etcdDir, 0o777); err != nil {
+		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(etcdDir, "ca.crt"), pkiEtcdCACrt, 0o777); err != nil {
-		return "", err
+	if err := os.WriteFile(filepath.Join(etcdDir, "ca.crt"), pkiEtcdCACrt, 0o777); err != nil {
+		return err
 	}
 
-	if err = os.WriteFile(filepath.Join(etcdDir, "ca.key"), pkiEtcdCAKey, 0o777); err != nil {
-		return "", err
-	}
-
-	return dir, nil
+	return os.WriteFile(filepath.Join(etcdDir, "ca.key"), pkiEtcdCAKey, 0o777)
 }
