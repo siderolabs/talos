@@ -29,7 +29,7 @@ This also ensures that the linux-firmware is not tied to a specific Talos versio
 Linux: 6.1.55
 containerd: 1.7.6
 CoreDNS: 1.11.1
-Kubernetes: 1.29.0-alpha.1
+Kubernetes: 1.29.0-alpha.2
 Flannel: 0.22.3
 
 Talos is built with Go 1.21.3.
