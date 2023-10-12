@@ -57,6 +57,15 @@ func ParseContractFromVersion(version string) (*VersionContract, error) {
 	return &contract, nil
 }
 
+// String returns string representation of the contract.
+func (contract *VersionContract) String() string {
+	if contract == nil {
+		return "current"
+	}
+
+	return fmt.Sprintf("v%d.%d", contract.Major, contract.Minor)
+}
+
 // Greater compares contract to another contract.
 func (contract *VersionContract) Greater(other *VersionContract) bool {
 	if contract == nil {
