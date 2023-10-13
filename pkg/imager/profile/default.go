@@ -150,7 +150,7 @@ var Default = map[string]Profile{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatXZ,
 			ImageOptions: &ImageOptions{
-				DiskSize:   DefaultRAWDiskSize,
+				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
 			},
 		},
@@ -162,7 +162,7 @@ var Default = map[string]Profile{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatXZ,
 			ImageOptions: &ImageOptions{
-				DiskSize:   DefaultRAWDiskSize,
+				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
 			},
 		},
@@ -174,7 +174,7 @@ var Default = map[string]Profile{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatXZ,
 			ImageOptions: &ImageOptions{
-				DiskSize:   DefaultRAWDiskSize,
+				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
 			},
 		},
@@ -199,7 +199,7 @@ var Default = map[string]Profile{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatXZ,
 			ImageOptions: &ImageOptions{
-				DiskSize:   DefaultRAWDiskSize,
+				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
 			},
 		},

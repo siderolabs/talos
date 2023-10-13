@@ -7,9 +7,11 @@ package imager
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"runtime"
 
+	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -27,6 +29,7 @@ var cmdFlags struct {
 	Platform              string
 	Arch                  string
 	Board                 string
+	ImageDiskSize         string
 	ExtraKernelArgs       []string
 	MetaValues            install.MetaValues
 	SystemExtensionImages []string
@@ -94,6 +97,23 @@ var rootCmd = &cobra.Command{
 						ImageRef: cmdFlags.BaseInstallerImage,
 					}
 				}
+
+				if cmdFlags.ImageDiskSize != "" {
+					size, err := humanize.ParseBytes(cmdFlags.ImageDiskSize)
+					if err != nil {
+						return fmt.Errorf("error parsing disk image size: %w", err)
+					}
+
+					if size < profile.MinRAWDiskSize {
+						return fmt.Errorf("disk image size must be at least %s", humanize.Bytes(profile.MinRAWDiskSize))
+					}
+
+					if prof.Output.ImageOptions == nil {
+						prof.Output.ImageOptions = &profile.ImageOptions{}
+					}
+
+					prof.Output.ImageOptions.DiskSize = int64(size)
+				}
 			}
 
 			if err := os.MkdirAll(cmdFlags.OutputPath, 0o755); err != nil {
@@ -136,6 +156,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Arch, "arch", runtime.GOARCH, "The target architecture")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.BaseInstallerImage, "base-installer-image", "", "Base installer image to use")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Board, "board", "", "The value of "+constants.KernelParamBoard)
+	rootCmd.PersistentFlags().StringVar(&cmdFlags.ImageDiskSize, "image-disk-size", "", "Set custom disk image size (accepts human readable values, e.g. 6GiB)")
 	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.ExtraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.PersistentFlags().Var(&cmdFlags.MetaValues, "meta", "A key/value pair for META")
 	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.SystemExtensionImages, "system-extension-image", []string{}, "The image reference to the system extension to install")
