@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/crane"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/pkg/archiver"
@@ -54,6 +55,10 @@ type ContainerAsset struct {
 	//
 	// If TarballPath is set, ImageRef is ignored.
 	TarballPath string `yaml:"tarballPath,omitempty"`
+	// OCIPath is a path to the OCI format container image contents.
+	//
+	// If OCIPath is set, ImageRef is ignored.
+	OCIPath string `yaml:"ociPath,omitempty"`
 }
 
 // SecureBootAssets describes secureboot assets.
@@ -154,6 +159,12 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(stri
 		return nil, fmt.Errorf("pulling tarball container image is not supported")
 	}
 
+	if c.OCIPath != "" {
+		printf("using OCI image from %s...", c.OCIPath)
+
+		return c.pullFromOCI(arch)
+	}
+
 	printf("pulling %s...", c.ImageRef)
 
 	opts := []crane.Option{
@@ -174,6 +185,40 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(stri
 	}
 
 	return img, nil
+}
+
+func (c *ContainerAsset) pullFromOCI(arch string) (v1.Image, error) {
+	ociLayout, err := layout.FromPath(c.OCIPath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening OCI layout: %w", err)
+	}
+
+	ociIndex, err := ociLayout.ImageIndex()
+	if err != nil {
+		return nil, fmt.Errorf("error opening OCI index: %w", err)
+	}
+
+	ociManifest, err := ociIndex.IndexManifest()
+	if err != nil {
+		return nil, fmt.Errorf("error opening OCI manifest: %w", err)
+	}
+
+	for _, manifest := range ociManifest.Manifests {
+		if manifest.Platform == nil {
+			continue
+		}
+
+		if manifest.Platform.OS == "linux" && manifest.Platform.Architecture == arch {
+			img, err := ociLayout.Image(manifest.Digest)
+			if err != nil {
+				return nil, fmt.Errorf("error opening OCI image: %w", err)
+			}
+
+			return img, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no OCI image found for %s", arch)
 }
 
 // Extract the container asset to the path.
