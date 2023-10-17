@@ -76,5 +76,5 @@ docker run --rm -it \
   --mount type=volume,destination=/usr/etc/udev \
   --mount type=volume,destination=/opt \
   -e PLATFORM=container \
-  ghcr.io/siderolabs/talos:v1.3.0
+  ghcr.io/siderolabs/talos:{{< release >}}
 ```

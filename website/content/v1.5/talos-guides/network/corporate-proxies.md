@@ -52,3 +52,9 @@ machine:
       - <ip ...>
       - <ip n>
 ```
+
+If a proxy is required before Talos machine configuration is applied, use [kernel command line arguments]({{< relref "../../reference/kernel" >}}):
+
+```text
+talos.environment=http_proxy=<http-proxy> talos.environment=https_proxy=<https-proxy>
+```

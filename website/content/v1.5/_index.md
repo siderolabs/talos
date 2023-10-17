@@ -4,7 +4,7 @@ no_list: true
 linkTitle: "Documentation"
 cascade:
   type: docs
-lastRelease: v1.5.3
+lastRelease: v1.5.4
 kubernetesRelease: "1.28.2"
 prevKubernetesRelease: "1.27.4"
 theilaRelease: "v0.2.1"

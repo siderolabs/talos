@@ -84,7 +84,22 @@ machine:
 ```
 
 For your own environment, the interface and the DHCP setting may differ, or you may
-use static addressing (`cidr`) instead of DHCP.
+use static addressing (`adresses`) instead of DHCP.
+
+When using [predictable interface names]({{< relref "./predictable-interface-names" >}}), the interface name might not be `eth0`.
+
+If the machine has a single network interface, it can be selected using a dummy device selector:
+
+```yaml
+machine:
+  network:
+    interfaces:
+      - deviceSelector:
+          busPath: "0*" # should select any hardware network device, if you have just one, it will be selected
+      dhcp: true
+      vip:
+        ip: 192.168.0.15
+```
 
 ## Caveats
 
