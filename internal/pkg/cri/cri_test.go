@@ -12,8 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containerd/cgroups"
-	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -66,20 +67,20 @@ func (suite *CRISuite) SetupSuite() {
 	if cgroups.Mode() == cgroups.Unified {
 		var (
 			groupPath string
-			manager   *cgroupsv2.Manager
+			manager   *cgroup2.Manager
 		)
 
-		groupPath, err = cgroupsv2.NestedGroupPath(suite.tmpDir)
+		groupPath, err = cgroup2.NestedGroupPath(suite.tmpDir)
 		suite.Require().NoError(err)
 
-		manager, err = cgroupsv2.NewManager(constants.CgroupMountPath, groupPath, &cgroupsv2.Resources{})
+		manager, err = cgroup2.NewManager(constants.CgroupMountPath, groupPath, &cgroup2.Resources{})
 		suite.Require().NoError(err)
 
 		defer manager.Delete() //nolint:errcheck
 	} else {
-		var manager cgroups.Cgroup
+		var manager cgroup1.Cgroup
 
-		manager, err = cgroups.New(cgroups.V1, cgroups.NestedPath(suite.tmpDir), &specs.LinuxResources{})
+		manager, err = cgroup1.New(cgroup1.NestedPath(suite.tmpDir), &specs.LinuxResources{})
 		suite.Require().NoError(err)
 
 		defer manager.Delete() //nolint:errcheck

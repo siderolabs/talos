@@ -17,8 +17,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containerd/cgroups"
-	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
@@ -74,9 +75,9 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.Require().NoError(os.Mkdir(rootDir, 0o777))
 
 	if cgroups.Mode() == cgroups.Unified {
-		var manager *cgroupsv2.Manager
+		var manager *cgroup2.Manager
 
-		manager, err = cgroupsv2.NewManager(constants.CgroupMountPath, "/"+suite.T().Name(), &cgroupsv2.Resources{})
+		manager, err = cgroup2.NewManager(constants.CgroupMountPath, "/"+suite.T().Name(), &cgroup2.Resources{})
 		suite.Require().NoError(err)
 
 		// when using buildkit runner, parent `cgroup.type` is set to `domain threaded`, so child cgroups have to explicitly specify
@@ -85,9 +86,9 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 		defer manager.Delete() //nolint:errcheck
 	} else {
-		var manager cgroups.Cgroup
+		var manager cgroup1.Cgroup
 
-		manager, err = cgroups.New(cgroups.V1, cgroups.NestedPath(suite.tmpDir), &specs.LinuxResources{})
+		manager, err = cgroup1.New(cgroup1.NestedPath(suite.tmpDir), &specs.LinuxResources{})
 		suite.Require().NoError(err)
 
 		defer manager.Delete() //nolint:errcheck

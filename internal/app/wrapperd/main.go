@@ -11,15 +11,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containerd/cgroups"
-	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/containerd/containerd/sys"
 	"github.com/siderolabs/gen/xslices"
 	"golang.org/x/sys/unix"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
 	krnl "github.com/siderolabs/talos/pkg/kernel"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
@@ -53,7 +53,7 @@ func Main() {
 	// load the cgroup and put the process into the cgroup
 	if cgroupPath != "" {
 		if cgroups.Mode() == cgroups.Unified {
-			cgv2, err := cgroupsv2.LoadManager(constants.CgroupMountPath, cgroupPath)
+			cgv2, err := cgroup2.Load(cgroupPath)
 			if err != nil {
 				log.Fatalf("failed to load cgroup %s: %v", cgroupPath, err)
 			}
@@ -62,12 +62,12 @@ func Main() {
 				log.Fatalf("Failed to move process %s to cgroup: %v", name, err)
 			}
 		} else {
-			cgv1, err := cgroups.Load(cgroups.V1, cgroups.StaticPath(cgroupPath))
+			cgv1, err := cgroup1.Load(cgroup1.StaticPath(cgroupPath))
 			if err != nil {
 				log.Fatalf("failed to load cgroup %s: %v", cgroupPath, err)
 			}
 
-			if err := cgv1.Add(cgroups.Process{
+			if err := cgv1.Add(cgroup1.Process{
 				Pid: currentPid,
 			}); err != nil {
 				log.Fatalf("Failed to move process %s to cgroup: %v", name, err)

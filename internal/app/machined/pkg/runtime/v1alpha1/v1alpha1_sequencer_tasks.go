@@ -20,8 +20,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/cgroups"
-	cgroupsv2 "github.com/containerd/cgroups/v2"
+	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
@@ -163,12 +164,12 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 
 		groups := []struct {
 			name      string
-			resources *cgroupsv2.Resources
+			resources *cgroup2.Resources
 		}{
 			{
 				name: constants.CgroupInit,
-				resources: &cgroupsv2.Resources{
-					Memory: &cgroupsv2.Memory{
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
 						Min: pointer.To[int64](constants.CgroupInitReservedMemory),
 						Low: pointer.To[int64](constants.CgroupInitReservedMemory * 2),
 					},
@@ -176,8 +177,8 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 			},
 			{
 				name: constants.CgroupSystem,
-				resources: &cgroupsv2.Resources{
-					Memory: &cgroupsv2.Memory{
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
 						Min: pointer.To[int64](constants.CgroupSystemReservedMemory),
 						Low: pointer.To[int64](constants.CgroupSystemReservedMemory * 2),
 					},
@@ -185,12 +186,12 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 			},
 			{
 				name:      constants.CgroupSystemRuntime,
-				resources: &cgroupsv2.Resources{},
+				resources: &cgroup2.Resources{},
 			},
 			{
 				name: constants.CgroupPodRuntime,
-				resources: &cgroupsv2.Resources{
-					Memory: &cgroupsv2.Memory{
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
 						Min: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory),
 						Low: pointer.To[int64](constants.CgroupPodRuntimeReservedMemory * 2),
 					},
@@ -198,8 +199,8 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 			},
 			{
 				name: constants.CgroupKubelet,
-				resources: &cgroupsv2.Resources{
-					Memory: &cgroupsv2.Memory{
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
 						Min: pointer.To[int64](constants.CgroupKubeletReservedMemory),
 						Low: pointer.To[int64](constants.CgroupKubeletReservedMemory * 2),
 					},
@@ -207,8 +208,8 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 			},
 			{
 				name: constants.CgroupDashboard,
-				resources: &cgroupsv2.Resources{
-					Memory: &cgroupsv2.Memory{
+				resources: &cgroup2.Resources{
+					Memory: &cgroup2.Memory{
 						Min: pointer.To[int64](constants.CgroupDashboardReservedMemory),
 						Low: pointer.To[int64](constants.CgroupDashboardLowMemory),
 					},
@@ -222,10 +223,10 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 
 				if r.State().Platform().Mode() == runtime.ModeContainer {
 					// don't attempt to set resources in container mode, as they might conflict with the parent cgroup tree
-					resources = &cgroupsv2.Resources{}
+					resources = &cgroup2.Resources{}
 				}
 
-				cg, err := cgroupsv2.NewManager(constants.CgroupMountPath, c.name, resources)
+				cg, err := cgroup2.NewManager(constants.CgroupMountPath, c.name, resources)
 				if err != nil {
 					return fmt.Errorf("failed to create cgroup: %w", err)
 				}
@@ -236,13 +237,13 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 					}
 				}
 			} else {
-				cg, err := cgroups.New(cgroups.V1, cgroups.StaticPath(c.name), &specs.LinuxResources{})
+				cg, err := cgroup1.New(cgroup1.StaticPath(c.name), &specs.LinuxResources{})
 				if err != nil {
 					return fmt.Errorf("failed to create cgroup: %w", err)
 				}
 
 				if c.name == constants.CgroupInit {
-					if err := cg.Add(cgroups.Process{
+					if err := cg.Add(cgroup1.Process{
 						Pid: os.Getpid(),
 					}); err != nil {
 						return fmt.Errorf("failed to move init process to cgroup: %w", err)
