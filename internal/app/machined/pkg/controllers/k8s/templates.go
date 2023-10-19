@@ -357,6 +357,9 @@ spec:
             requests:
               cpu: 100m
               memory: 70Mi
+          env:
+            - name: GOMEMLIMIT
+              value: "161MiB"
           args: [ "-conf", "/etc/coredns/Corefile" ]
           volumeMounts:
             - name: config-volume

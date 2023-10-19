@@ -332,6 +332,38 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 							},
 						},
 					},
+					ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
+						ResourcesConfig: &v1alpha1.ResourcesConfig{
+							Requests: v1alpha1.Unstructured{
+								Object: map[string]interface{}{
+									"cpu":    "50m",
+									"memory": "500Mi",
+								},
+							},
+							Limits: v1alpha1.Unstructured{
+								Object: map[string]interface{}{
+									"cpu":    1,
+									"memory": "1000Mi",
+								},
+							},
+						},
+					},
+					SchedulerConfig: &v1alpha1.SchedulerConfig{
+						ResourcesConfig: &v1alpha1.ResourcesConfig{
+							Requests: v1alpha1.Unstructured{
+								Object: map[string]interface{}{
+									"cpu":    "150m",
+									"memory": "2Gi",
+								},
+							},
+							Limits: v1alpha1.Unstructured{
+								Object: map[string]interface{}{
+									"cpu":    3,
+									"memory": "2000Mi",
+								},
+							},
+						},
+					},
 				},
 			},
 		),
@@ -354,6 +386,44 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 						"memory": "1500Mi",
 					},
 				}, apiServerCfg.Resources,
+			)
+		},
+	)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ControllerManagerConfigID},
+		func(controllerManager *k8s.ControllerManagerConfig, assert *assert.Assertions) {
+			controllerManagerCfg := controllerManager.TypedSpec()
+
+			assert.Equal(
+				k8s.Resources{
+					Requests: map[string]string{
+						"cpu":    "50m",
+						"memory": "500Mi",
+					},
+					Limits: map[string]string{
+						"cpu":    "1",
+						"memory": "1000Mi",
+					},
+				}, controllerManagerCfg.Resources,
+			)
+		},
+	)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.SchedulerConfigID},
+		func(scheduler *k8s.SchedulerConfig, assert *assert.Assertions) {
+			schedulerCfg := scheduler.TypedSpec()
+
+			assert.Equal(
+				k8s.Resources{
+					Requests: map[string]string{
+						"cpu":    "150m",
+						"memory": "2Gi",
+					},
+					Limits: map[string]string{
+						"cpu":    "3",
+						"memory": "2000Mi",
+					},
+				}, schedulerCfg.Resources,
 			)
 		},
 	)

@@ -15,7 +15,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/siderolabs/gen/slices"
+	"github.com/siderolabs/gen/xslices"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -184,10 +184,10 @@ var Template = []byte(`+"`", url)
 
 			ds.Spec.Template.Spec.Containers[0].Image = "{{ .FlannelImage }}"
 
-			ds.Spec.Template.Spec.Volumes = slices.FilterInPlace(ds.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
+			ds.Spec.Template.Spec.Volumes = xslices.FilterInPlace(ds.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
 				return v.Name != "xtables-lock"
 			})
-			ds.Spec.Template.Spec.Containers[0].VolumeMounts = slices.FilterInPlace(
+			ds.Spec.Template.Spec.Containers[0].VolumeMounts = xslices.FilterInPlace(
 				ds.Spec.Template.Spec.Containers[0].VolumeMounts, func(v corev1.VolumeMount) bool {
 					return v.Name != "xtables-lock"
 				})

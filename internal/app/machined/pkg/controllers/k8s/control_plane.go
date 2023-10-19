@@ -167,6 +167,7 @@ func NewControlPlaneControllerManagerController() *ControlPlaneControllerManager
 					ExtraArgs:            cfgProvider.Cluster().ControllerManager().ExtraArgs(),
 					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
 					EnvironmentVariables: cfgProvider.Cluster().ControllerManager().Env(),
+					Resources:            convertResources(cfgProvider.Cluster().ControllerManager().Resources()),
 				}
 
 				return nil
@@ -193,6 +194,7 @@ func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 					ExtraArgs:            cfgProvider.Cluster().Scheduler().ExtraArgs(),
 					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
 					EnvironmentVariables: cfgProvider.Cluster().Scheduler().Env(),
+					Resources:            convertResources(cfgProvider.Cluster().Scheduler().Resources()),
 				}
 
 				return nil

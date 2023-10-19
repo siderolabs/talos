@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -34,6 +34,9 @@ import (
 
 // systemCriticalPriority is copied from scheduling.SystemCriticalPriority in Kubernetes internals.
 const systemCriticalPriority int32 = 2000000000
+
+// GoGCMemLimitPercentage set the percentage of memorylimit to use for the golang garbage collection target limit.
+const GoGCMemLimitPercentage = 95
 
 // ControlPlaneStaticPodController manages k8s.StaticPod based on control plane configuration.
 type ControlPlaneStaticPodController struct{}
@@ -264,7 +267,7 @@ func envVars(environment map[string]string) []v1.EnvVar {
 	}
 
 	keys := maps.Keys(environment)
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	return xslices.Map(keys, func(key string) v1.EnvVar {
 		// Kubernetes supports variable references in variable values, so escape '$' to prevent that.
@@ -321,6 +324,19 @@ func resources(resourcesConfig k8s.Resources, defaultCPU, defaultMemory string) 
 	}
 
 	return resources, nil
+}
+
+func goGCEnvFromResources(resources v1.ResourceRequirements) (envVar v1.EnvVar) {
+	memoryLimit := resources.Limits[v1.ResourceMemory]
+	if memoryLimit.Value() > 0 {
+		gcMemLimit := memoryLimit.Value() * GoGCMemLimitPercentage / 100
+		envVar = v1.EnvVar{
+			Name:  "GOMEMLIMIT",
+			Value: strconv.FormatInt(gcMemLimit, 10),
+		}
+	}
+
+	return envVar
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
@@ -424,6 +440,11 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		return "", err
 	}
 
+	env := envVars(cfg.EnvironmentVariables)
+	if goGCEnv := goGCEnvFromResources(resources); goGCEnv.Name != "" {
+		env = append(env, goGCEnv)
+	}
+
 	return k8s.APIServerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.APIServerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
@@ -462,7 +483,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 									},
 								},
 							},
-							envVars(cfg.EnvironmentVariables)...),
+							env...),
 						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
@@ -593,6 +614,11 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		return "", err
 	}
 
+	env := envVars(cfg.EnvironmentVariables)
+	if goGCEnv := goGCEnvFromResources(resources); goGCEnv.Name != "" {
+		env = append(env, goGCEnv)
+	}
+
 	//nolint:dupl
 	return k8s.ControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.ControllerManagerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
@@ -620,7 +646,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 						Name:    k8s.ControllerManagerID,
 						Image:   cfg.Image,
 						Command: args,
-						Env:     envVars(cfg.EnvironmentVariables),
+						Env:     env,
 						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",
@@ -727,6 +753,11 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		return "", err
 	}
 
+	env := envVars(cfg.EnvironmentVariables)
+	if goGCEnv := goGCEnvFromResources(resources); goGCEnv.Name != "" {
+		env = append(env, goGCEnv)
+	}
+
 	//nolint:dupl
 	return k8s.SchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
@@ -754,7 +785,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 						Name:    k8s.SchedulerID,
 						Image:   cfg.Image,
 						Command: args,
-						Env:     envVars(cfg.EnvironmentVariables),
+						Env:     env,
 						VolumeMounts: append([]v1.VolumeMount{
 							{
 								Name:      "secrets",

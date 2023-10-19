@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -634,8 +635,9 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 	suite.Require().NoError(suite.state.Create(suite.ctx, secretStatus))
 
 	tests := []struct {
-		resources k8s.Resources
-		expected  v1.ResourceRequirements
+		resources   k8s.Resources
+		expected    v1.ResourceRequirements
+		expectedEnv v1.EnvVar
 	}{
 		{
 			resources: k8s.Resources{
@@ -671,6 +673,10 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 					v1.ResourceCPU:    apiresource.MustParse("1"),
 					v1.ResourceMemory: apiresource.MustParse("1Gi"),
 				},
+			},
+			expectedEnv: v1.EnvVar{
+				Name:  "GOMEMLIMIT",
+				Value: strconv.FormatInt(1024*1024*1024*k8sctrl.GoGCMemLimitPercentage/100, 10),
 			},
 		},
 	}
@@ -737,6 +743,12 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 		suite.Assert().Equal(test.expected, apiServerPod.Spec.Containers[0].Resources)
 		suite.Assert().Equal(test.expected, controllerManagerPod.Spec.Containers[0].Resources)
 		suite.Assert().Equal(test.expected, schedulerPod.Spec.Containers[0].Resources)
+
+		if test.expectedEnv.Name != "" {
+			suite.Assert().Contains(apiServerPod.Spec.Containers[0].Env, test.expectedEnv)
+			suite.Assert().Contains(controllerManagerPod.Spec.Containers[0].Env, test.expectedEnv)
+			suite.Assert().Contains(schedulerPod.Spec.Containers[0].Env, test.expectedEnv)
+		}
 
 		suite.Require().NoError(suite.state.Destroy(suite.ctx, configAPIServer.Metadata()))
 		suite.Require().NoError(suite.state.Destroy(suite.ctx, configControllerManager.Metadata()))
