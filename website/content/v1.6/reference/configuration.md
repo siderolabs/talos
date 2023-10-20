@@ -320,6 +320,7 @@ time:
 sysctls:
     kernel.domainname: talos.dev
     net.ipv4.ip_forward: "0"
+    net/ipv6/conf/eth0.100/disable_ipv6: "1"
 {{< /highlight >}}</details> | |
 |`sysfs` |map[string]string |Used to configure the machine's sysfs. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 sysfs:

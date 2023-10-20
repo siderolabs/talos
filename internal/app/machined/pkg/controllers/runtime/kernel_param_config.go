@@ -7,7 +7,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -71,7 +70,7 @@ func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.R
 		r.StartTrackingOutputs()
 
 		setKernelParam := func(kind, key, value string) error {
-			item := runtime.NewKernelParamSpec(runtime.NamespaceName, strings.Join([]string{kind, key}, "."))
+			item := runtime.NewKernelParamSpec(runtime.NamespaceName, kind+"."+key)
 
 			return r.Modify(ctx, item, func(res resource.Resource) error {
 				res.(*runtime.KernelParamSpec).TypedSpec().Value = value

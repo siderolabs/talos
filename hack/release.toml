@@ -54,6 +54,24 @@ Previously, [network device selectors](https://www.talos.dev/v1.6/talos-guides/n
 [KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/) is enabled by default on port 7445.
 """
 
+    [notes.sysctl]
+        title = "Sysctl"
+        description = """\
+Talos now handles sysctl/sysfs key names in line with sysctl.conf(5):
+
+* if the first separator is '/', no conversion is done
+* if the first separator is '.', dots and slashes are remapped
+
+Example (both sysctls are equivalent):
+
+```yaml
+machine:
+  sysctls:
+    net/ipv6/conf/eth0.100/disable_ipv6: "1"
+    net.ipv6.conf.eth0/100.disable_ipv6: "1"
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

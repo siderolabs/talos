@@ -5,6 +5,8 @@
 package kernel
 
 import (
+	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -44,5 +46,52 @@ type Param struct {
 
 // Path returns the path to the systctl file under /proc/sys or /sys.
 func (prop *Param) Path() string {
-	return "/" + strings.ReplaceAll(prop.Key, ".", "/")
+	// From: https://man7.org/linux/man-pages/man5/sysctl.d.5.html
+	//
+	// Note that either "/" or "."  may be used as separators within
+	// sysctl variable names. If the first separator is a slash,
+	// remaining slashes and dots are left intact. If the first
+	// separator is a dot, dots and slashes are interchanged.
+	// "kernel.domainname=foo" and "kernel/domainname=foo" are
+	// equivalent and will cause "foo" to be written to
+	// /proc/sys/kernel/domainname. Either
+	// "net.ipv4.conf.enp3s0/200.forwarding" or
+	// "net/ipv4/conf/enp3s0.200/forwarding" may be used to refer to
+	// /proc/sys/net/ipv4/conf/enp3s0.200/forwarding
+	//
+	// detect the first separator, either '.' or '/'
+	// according to the sysctl man page, if the first separator is '/', we keep slashes intact,
+	// otherwise we convert dots to slashes
+	keyPath := prop.Key
+	prefix := ""
+
+	// trim standard prefix
+	for _, stdPrefix := range []string{Sysctl, Sysfs} {
+		if strings.HasPrefix(prop.Key, stdPrefix+".") {
+			keyPath = keyPath[len(stdPrefix)+1:]
+			prefix = stdPrefix
+
+			break
+		}
+	}
+
+	firstSepIndex := strings.IndexAny(keyPath, "./")
+	// if the first separator is a dot, remap '.' to '/', and '/' to '.'
+	if firstSepIndex != -1 && keyPath[firstSepIndex] == '.' {
+		keyPath = strings.Map(
+			func(r rune) rune {
+				switch r {
+				case '.':
+					return '/'
+				case '/':
+					return '.'
+				default:
+					return r
+				}
+			},
+			keyPath,
+		)
+	}
+
+	return path.Clean("/" + filepath.Join(strings.ReplaceAll(prefix, ".", "/"), keyPath))
 }

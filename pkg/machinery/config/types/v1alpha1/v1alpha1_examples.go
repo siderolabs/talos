@@ -258,8 +258,9 @@ func machineTimeExample() *TimeConfig {
 
 func machineSysctlsExample() map[string]string {
 	return map[string]string{
-		"kernel.domainname":   "talos.dev",
-		"net.ipv4.ip_forward": "0",
+		"kernel.domainname":                   "talos.dev",
+		"net.ipv4.ip_forward":                 "0",
+		"net/ipv6/conf/eth0.100/disable_ipv6": "1",
 	}
 }
 
