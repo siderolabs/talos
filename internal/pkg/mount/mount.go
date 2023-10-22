@@ -7,6 +7,7 @@ package mount
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -67,6 +68,14 @@ func mountMountpoint(mountpoint *Point) (skipMount bool, err error) {
 
 	if !skipMount {
 		if err = mountpoint.Mount(); err != nil {
+			if mountpoint.MountFlags.Check(SkipIfNoDevice) && errors.Is(err, unix.ENODEV) {
+				if mountpoint.Logger != nil {
+					mountpoint.Logger.Printf("error mounting: %q: %s", mountpoint.Source(), err)
+				}
+
+				return true, nil
+			}
+
 			return false, fmt.Errorf("error mounting: %w", err)
 		}
 	}

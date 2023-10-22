@@ -33,6 +33,8 @@ const (
 	SkipIfMounted
 	// SkipIfNoFilesystem is a flag for skipping formatting and mounting if the mountpoint has not filesystem.
 	SkipIfNoFilesystem
+	// SkipIfNoDevice is a flag for skipping errors when the device is not found.
+	SkipIfNoDevice
 )
 
 // Flags is the mount flags.

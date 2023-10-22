@@ -35,7 +35,9 @@ func PseudoSubMountPoints() (mountpoints *Points, err error) {
 
 	if _, err := os.Stat(constants.EFIVarsMountPoint); err == nil {
 		// mount EFI vars if they exist
-		pseudo.Set("efivars", NewMountPoint("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME|unix.MS_RDONLY, ""))
+		pseudo.Set("efivars", NewMountPoint("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME|unix.MS_RDONLY, "",
+			WithFlags(SkipIfNoDevice),
+		))
 	}
 
 	return pseudo, nil
