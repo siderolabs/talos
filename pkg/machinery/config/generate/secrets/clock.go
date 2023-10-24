@@ -36,10 +36,3 @@ func (c *SystemClock) Now() time.Time {
 
 	return c.fixedTime
 }
-
-// SetFixedTimestamp freezes the clock by setting a timestamp.
-//
-// Deprecated: use NewFixedClock instead.
-func (c *SystemClock) SetFixedTimestamp(t time.Time) {
-	c.fixedTime = t
-}

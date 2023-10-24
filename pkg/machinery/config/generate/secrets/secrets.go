@@ -28,10 +28,6 @@ type Bundle struct {
 
 // Certs holds the base64 encoded keys and certificates.
 type Certs struct {
-	// Admin is Talos admin talosconfig client certificate and key.
-	//
-	// Deprecated: should not be used anymore.
-	Admin *x509.PEMEncodedCertificateAndKey `json:"Admin,omitempty" yaml:",omitempty"`
 	// Etcd is etcd CA certificate and key.
 	Etcd *x509.PEMEncodedCertificateAndKey `json:"Etcd"`
 	// K8s is Kubernetes CA certificate and key.
