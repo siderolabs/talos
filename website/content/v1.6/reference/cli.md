@@ -1495,6 +1495,7 @@ talosctl gen secrets [flags]
 ### Options
 
 ```
+      --from-controlplane-config string     use the provided controlplane Talos machine configuration as input
   -p, --from-kubernetes-pki string          use a Kubernetes PKI directory (e.g. /etc/kubernetes/pki) as input
   -h, --help                                help for secrets
   -t, --kubernetes-bootstrap-token string   use the provided bootstrap token as input

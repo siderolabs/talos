@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 )
 
@@ -20,6 +21,7 @@ var genSecretsCmdFlags struct {
 	outputFile               string
 	talosVersion             string
 	fromKubernetesPki        string
+	fromControlplaneConfig   string
 	kubernetesBootstrapToken string
 }
 
@@ -43,19 +45,25 @@ var genSecretsCmd = &cobra.Command{
 			}
 		}
 
-		if genSecretsCmdFlags.fromKubernetesPki != "" {
+		switch {
+		case genSecretsCmdFlags.fromKubernetesPki != "":
 			secretsBundle, err = secrets.NewBundleFromKubernetesPKI(genSecretsCmdFlags.fromKubernetesPki,
 				genSecretsCmdFlags.kubernetesBootstrapToken, versionContract)
+		case genSecretsCmdFlags.fromControlplaneConfig != "":
+			var cfg config.Provider
+
+			cfg, err = configloader.NewFromFile(genSecretsCmdFlags.fromControlplaneConfig)
 			if err != nil {
-				return fmt.Errorf("failed to create secrets bundle: %w", err)
+				return fmt.Errorf("failed to load controlplane config: %w", err)
 			}
 
-			return writeSecretsBundleToFile(secretsBundle)
+			secretsBundle = secrets.NewBundleFromConfig(secrets.NewFixedClock(time.Now()), cfg)
+		default:
+			secretsBundle, err = secrets.NewBundle(secrets.NewFixedClock(time.Now()),
+				versionContract,
+			)
 		}
 
-		secretsBundle, err = secrets.NewBundle(secrets.NewFixedClock(time.Now()),
-			versionContract,
-		)
 		if err != nil {
 			return fmt.Errorf("failed to create secrets bundle: %w", err)
 		}
@@ -80,6 +88,7 @@ func writeSecretsBundleToFile(bundle *secrets.Bundle) error {
 func init() {
 	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.outputFile, "output-file", "o", "secrets.yaml", "path of the output file")
 	genSecretsCmd.Flags().StringVar(&genSecretsCmdFlags.talosVersion, "talos-version", "", "the desired Talos version to generate secrets bundle for (backwards compatibility, e.g. v0.8)")
+	genSecretsCmd.Flags().StringVar(&genSecretsCmdFlags.fromControlplaneConfig, "from-controlplane-config", "", "use the provided controlplane Talos machine configuration as input")
 	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.fromKubernetesPki, "from-kubernetes-pki", "p", "", "use a Kubernetes PKI directory (e.g. /etc/kubernetes/pki) as input")
 	genSecretsCmd.Flags().StringVarP(&genSecretsCmdFlags.kubernetesBootstrapToken, "kubernetes-bootstrap-token", "t", "", "use the provided bootstrap token as input")
 

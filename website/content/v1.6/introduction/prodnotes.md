@@ -181,6 +181,9 @@ This bundle can be used to generate machine or client configurations at any time
 talosctl gen secrets -o secrets.yaml
 ```
 
+> The `secrets.yaml` can also be extracted from the existing controlplane machine configuration with
+> `talosctl gen secrets --from-controlplane-config controlplane.yaml -o secrets.yaml` command.
+
 Now, we can generate the machine configuration for each node:
 
 ```sh

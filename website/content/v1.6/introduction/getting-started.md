@@ -178,7 +178,7 @@ install:
 
 to reflect `vda` instead of `sda`.
 
->For information on customizing your machine configurations (such as to  specify the version of Kubernetes), using [machine configuration patches]({{< relref "../talos-guides/configuration/patching" >}}), or customizing  configurations for individual machines (such as setting static IP addresses), see the [Production Notes]({{< relref "prodnotes#customizing-machine-configuration" >}}).
+> For information on customizing your machine configurations (such as to  specify the version of Kubernetes), using [machine configuration patches]({{< relref "../talos-guides/configuration/patching" >}}), or customizing  configurations for individual machines (such as setting static IP addresses), see the [Production Notes]({{< relref "prodnotes#customizing-machine-configuration" >}}).
 
 ## Understand talosctl, endpoints and nodes
 

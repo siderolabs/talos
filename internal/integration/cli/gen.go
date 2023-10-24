@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -277,14 +276,14 @@ func (suite *GenSuite) TestConfigWithSecrets() {
 		base.StderrNotEmpty(),
 	)
 
-	config, err := configloader.NewFromFile("controlplane.yaml")
+	suite.RunCLI([]string{"gen", "secrets", "--from-controlplane-config", "controlplane.yaml", "--output-file", "secrets-from-config.yaml"},
+		base.StdoutEmpty(),
+	)
+
+	configSecretsBundle, err := os.ReadFile("secrets-from-config.yaml")
 	suite.Assert().NoError(err)
 
-	configSecretsBundle := secrets.NewBundleFromConfig(secrets.NewFixedClock(time.Now()), config)
-	configSecretsBundleBytes, err := yaml.Marshal(configSecretsBundle)
-
-	suite.Assert().NoError(err)
-	suite.Assert().YAMLEq(string(secretsYaml), string(configSecretsBundleBytes))
+	suite.Assert().YAMLEq(string(secretsYaml), string(configSecretsBundle))
 }
 
 // TestGenConfigWithDeprecatedOutputDirFlag tests that gen config command still works with the deprecated --output-dir flag.
