@@ -19,7 +19,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/siderolabs/crypto v0.4.1
 	github.com/siderolabs/gen v0.4.5
-	github.com/siderolabs/go-api-signature v0.3.0
+	github.com/siderolabs/go-api-signature v0.3.1
 	github.com/siderolabs/go-blockdevice v0.4.6
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0

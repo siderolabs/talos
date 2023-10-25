@@ -266,7 +266,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/sethgrid/pester v1.2.0 // indirect
-	github.com/siderolabs/go-api-signature v0.3.0 // indirect
+	github.com/siderolabs/go-api-signature v0.3.1 // indirect
 	github.com/siderolabs/protoenc v0.2.0 // indirect
 	github.com/siderolabs/tcpproxy v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
