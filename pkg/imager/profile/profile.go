@@ -57,7 +57,7 @@ func (p *Profile) SecureBootEnabled() bool {
 //
 //nolint:gocyclo,cyclop
 func (p *Profile) Validate() error {
-	if p.Arch != "amd64" && p.Arch != "arm64" {
+	if p.Arch != amd64 && p.Arch != arm64 {
 		return fmt.Errorf("invalid arch %q", p.Arch)
 	}
 
@@ -66,7 +66,7 @@ func (p *Profile) Validate() error {
 	}
 
 	if p.Board != "" {
-		if !(p.Arch == "arm64" && p.Platform == "metal") {
+		if !(p.Arch == arm64 && p.Platform == "metal") {
 			return fmt.Errorf("board is only supported for metal arm64")
 		}
 	}

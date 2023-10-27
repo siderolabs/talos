@@ -6,8 +6,6 @@
 package rockpi4c
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -20,10 +18,10 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("/usr/install/arm64/u-boot/%s/u-boot-rockchip.bin", constants.BoardRockpi4)
+	bin       = constants.BoardRockpi4 + "/u-boot-rockchip.bin"
 	off int64 = 512 * 64
 	// https://github.com/u-boot/u-boot/blob/4de720e98d552dfda9278516bf788c4a73b3e56f/configs/rock-pi-4c-rk3399_defconfig#L7=
-	dtb = "/dtb/rockchip/rk3399-rock-pi-4c.dtb"
+	dtb = "rockchip/rk3399-rock-pi-4c.dtb"
 )
 
 // Rockpi4c represents the Radxa rock pi board.
@@ -37,21 +35,21 @@ func (r *Rockpi4c) Name() string {
 }
 
 // Install implements the runtime.Board.
-func (r *Rockpi4c) Install(disk string) (err error) {
+func (r *Rockpi4c) Install(options runtime.BoardInstallOptions) (err error) {
 	var f *os.File
 
-	if f, err = os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
+	if f, err = os.OpenFile(options.InstallDisk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
 		return err
 	}
 
 	defer f.Close() //nolint:errcheck
 
-	uboot, err := os.ReadFile(bin)
+	uboot, err := os.ReadFile(filepath.Join(options.UBootPath, bin))
 	if err != nil {
 		return err
 	}
 
-	log.Printf("writing %s at offset %d", bin, off)
+	options.Printf("writing %s at offset %d", bin, off)
 
 	var n int
 
@@ -60,7 +58,7 @@ func (r *Rockpi4c) Install(disk string) (err error) {
 		return err
 	}
 
-	log.Printf("wrote %d bytes", n)
+	options.Printf("wrote %d bytes", n)
 
 	// NB: In the case that the block device is a loopback device, we sync here
 	// to esure that the file is written before the loopback device is
@@ -70,8 +68,8 @@ func (r *Rockpi4c) Install(disk string) (err error) {
 		return err
 	}
 
-	src := "/usr/install/arm64" + dtb
-	dst := "/boot/EFI" + dtb
+	src := filepath.Join(options.DTBPath, dtb)
+	dst := filepath.Join("/boot/EFI/dtb", dtb)
 
 	err = os.MkdirAll(filepath.Dir(dst), 0o600)
 	if err != nil {

@@ -6,8 +6,6 @@
 package nanopir4s
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -20,9 +18,9 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("/usr/install/arm64/u-boot/%s/u-boot-rockchip.bin", constants.BoardNanoPiR4S)
+	bin       = constants.BoardNanoPiR4S + "u-boot-rockchip.bin"
 	off int64 = 512 * 64
-	dtb       = "/dtb/rockchip/rk3399-nanopi-r4s.dtb"
+	dtb       = "rockchip/rk3399-nanopi-r4s.dtb"
 )
 
 // NanoPiR4S represents the Friendlyelec Nano Pi R4S board.
@@ -36,27 +34,27 @@ func (n *NanoPiR4S) Name() string {
 }
 
 // Install implements the runtime.Board.
-func (n *NanoPiR4S) Install(disk string) (err error) {
-	file, err := os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666)
+func (n *NanoPiR4S) Install(options runtime.BoardInstallOptions) (err error) {
+	file, err := os.OpenFile(options.InstallDisk, os.O_RDWR|unix.O_CLOEXEC, 0o666)
 	if err != nil {
 		return err
 	}
 
 	defer file.Close() //nolint:errcheck
 
-	uboot, err := os.ReadFile(bin)
+	uboot, err := os.ReadFile(filepath.Join(options.UBootPath, bin))
 	if err != nil {
 		return err
 	}
 
-	log.Printf("writing %s at offset %d", bin, off)
+	options.Printf("writing %s at offset %d", bin, off)
 
 	amount, err := file.WriteAt(uboot, off)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("wrote %d bytes", amount)
+	options.Printf("wrote %d bytes", amount)
 
 	// NB: In the case that the block device is a loopback device, we sync here
 	// to esure that the file is written before the loopback device is
@@ -65,8 +63,8 @@ func (n *NanoPiR4S) Install(disk string) (err error) {
 		return err
 	}
 
-	src := "/usr/install/arm64" + dtb
-	dst := "/boot/EFI" + dtb
+	src := filepath.Join(options.DTBPath, dtb)
+	dst := filepath.Join("/boot/EFI/dtb", dtb)
 
 	if err := os.MkdirAll(filepath.Dir(dst), 0o600); err != nil {
 		return err

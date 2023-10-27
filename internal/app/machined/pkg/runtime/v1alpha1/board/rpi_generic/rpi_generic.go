@@ -8,6 +8,7 @@ package rpigeneric
 import (
 	_ "embed"
 	"os"
+	"path/filepath"
 
 	"github.com/siderolabs/go-procfs/procfs"
 
@@ -30,13 +31,13 @@ func (r *RPiGeneric) Name() string {
 }
 
 // Install implements the runtime.Board.
-func (r *RPiGeneric) Install(disk string) (err error) {
-	err = copy.Dir("/usr/install/arm64/raspberrypi-firmware/boot", "/boot/EFI")
+func (r *RPiGeneric) Install(options runtime.BoardInstallOptions) (err error) {
+	err = copy.Dir(filepath.Join(options.RPiFirmwarePath, "boot"), "/boot/EFI")
 	if err != nil {
 		return err
 	}
 
-	err = copy.File("/usr/install/arm64/u-boot/rpi_generic/u-boot.bin", "/boot/EFI/u-boot.bin")
+	err = copy.File(filepath.Join(options.UBootPath, "rpi_generic/u-boot.bin"), "/boot/EFI/u-boot.bin")
 	if err != nil {
 		return err
 	}

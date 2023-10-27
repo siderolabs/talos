@@ -21,6 +21,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
+const (
+	arm64 = "arm64"
+	amd64 = "amd64"
+)
+
 // Input describes inputs for image generation.
 type Input struct {
 	// Kernel is a vmlinuz file.
@@ -31,6 +36,12 @@ type Input struct {
 	SDStub FileAsset `yaml:"sdStub,omitempty"`
 	// SDBoot is a sd-boot file (only for SecureBoot).
 	SDBoot FileAsset `yaml:"sdBoot,omitempty"`
+	// DTB is a path to the device tree blobs (arm64 only).
+	DTB FileAsset `yaml:"dtb,omitempty"`
+	// UBoot is a path to the u-boot binary (arm64 only).
+	UBoot FileAsset `yaml:"uBoot,omitempty"`
+	// RPiFirmware is a path to the Raspberry Pi firmware (arm64 only).
+	RPiFirmware FileAsset `yaml:"rpiFirmware,omitempty"`
 	// Base installer image to mutate.
 	BaseInstaller ContainerAsset `yaml:"baseInstaller,omitempty"`
 	// SecureBoot is a section with secureboot keys, only for SecureBoot enabled builds.
@@ -79,7 +90,7 @@ const defaultSecureBootPrefix = "/secureboot"
 
 // FillDefaults fills default values for the input.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 	var (
 		zeroFileAsset      FileAsset
@@ -92,6 +103,20 @@ func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 
 	if i.Initramfs == zeroFileAsset {
 		i.Initramfs.Path = fmt.Sprintf(constants.InitramfsAssetPath, arch)
+	}
+
+	if arch == arm64 {
+		if i.DTB == zeroFileAsset {
+			i.DTB.Path = fmt.Sprintf(constants.DTBAssetPath, arch)
+		}
+
+		if i.UBoot == zeroFileAsset {
+			i.UBoot.Path = fmt.Sprintf(constants.UBootAssetPath, arch)
+		}
+
+		if i.RPiFirmware == zeroFileAsset {
+			i.RPiFirmware.Path = fmt.Sprintf(constants.RPiFirmwareAssetPath, arch)
+		}
 	}
 
 	if i.BaseInstaller == zeroContainerAsset {

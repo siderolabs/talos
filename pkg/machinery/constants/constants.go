@@ -529,6 +529,15 @@ const (
 	// SDBootAssetPath is the path to the SDBoot in the installer.
 	SDBootAssetPath = "/usr/install/%s/" + SDBootAsset
 
+	// DTBAssetPath is the path to the device tree blobs in the installer.
+	DTBAssetPath = "/usr/install/%s/dtb"
+
+	// UBootAssetPath is the path to the u-boot in the installer.
+	UBootAssetPath = "/usr/install/%s/u-boot"
+
+	// RPiFirmwareAssetPath is the path to the raspberrypi firmware in the installer.
+	RPiFirmwareAssetPath = "/usr/install/%s/raspberrypi-firmware"
+
 	// PlatformKeyAsset defines a well known name for the platform key filename used for auto-enrolling.
 	PlatformKeyAsset = "PK.auth"
 

@@ -6,8 +6,6 @@
 package pine64
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -20,9 +18,9 @@ import (
 )
 
 var (
-	bin       = fmt.Sprintf("usr/install/arm64/u-boot/%s/u-boot-sunxi-with-spl.bin", constants.BoardPine64)
+	bin       = constants.BoardPine64 + "/u-boot-sunxi-with-spl.bin"
 	off int64 = 1024 * 8
-	dtb       = "/dtb/allwinner/sun50i-a64-pine64-plus.dtb"
+	dtb       = "allwinner/sun50i-a64-pine64-plus.dtb"
 )
 
 // Pine64 represents the Pine64 board
@@ -37,10 +35,10 @@ func (b *Pine64) Name() string {
 }
 
 // Install implements the runtime.Board.
-func (b Pine64) Install(disk string) (err error) {
+func (b Pine64) Install(options runtime.BoardInstallOptions) (err error) {
 	var f *os.File
 
-	if f, err = os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
+	if f, err = os.OpenFile(options.InstallDisk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
 		return err
 	}
 	//nolint:errcheck
@@ -48,12 +46,12 @@ func (b Pine64) Install(disk string) (err error) {
 
 	var uboot []byte
 
-	uboot, err = os.ReadFile(bin)
+	uboot, err = os.ReadFile(filepath.Join(options.UBootPath, bin))
 	if err != nil {
 		return err
 	}
 
-	log.Printf("writing %s at offset %d", bin, off)
+	options.Printf("writing %s at offset %d", bin, off)
 
 	var n int
 
@@ -62,7 +60,7 @@ func (b Pine64) Install(disk string) (err error) {
 		return err
 	}
 
-	log.Printf("wrote %d bytes", n)
+	options.Printf("wrote %d bytes", n)
 
 	// NB: In the case that the block device is a loopback device, we sync here
 	// to esure that the file is written before the loopback device is
@@ -72,8 +70,8 @@ func (b Pine64) Install(disk string) (err error) {
 		return err
 	}
 
-	src := "/usr/install/arm64" + dtb
-	dst := "/boot/EFI" + dtb
+	src := filepath.Join(options.DTBPath, dtb)
+	dst := filepath.Join("/boot/EFI/dtb", dtb)
 
 	err = os.MkdirAll(filepath.Dir(dst), 0o600)
 	if err != nil {

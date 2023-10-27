@@ -21,7 +21,7 @@ import (
 // - https://github.com/u-boot/u-boot/blob/v2021.10/configs/p3450-0000_defconfig#L8
 // - https://github.com/u-boot/u-boot/blob/v2021.10/include/configs/tegra-common.h#L53
 // - https://github.com/u-boot/u-boot/blob/v2021.10/include/configs/tegra210-common.h#L49
-var dtb = "/dtb/nvidia/tegra210-p3450-0000.dtb"
+var dtb = "nvidia/tegra210-p3450-0000.dtb"
 
 // JetsonNano represents the JetsonNano board
 //
@@ -35,10 +35,10 @@ func (b *JetsonNano) Name() string {
 }
 
 // Install implements the runtime.Board.
-func (b JetsonNano) Install(disk string) (err error) {
+func (b JetsonNano) Install(options runtime.BoardInstallOptions) (err error) {
 	var f *os.File
 
-	if f, err = os.OpenFile(disk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
+	if f, err = os.OpenFile(options.InstallDisk, os.O_RDWR|unix.O_CLOEXEC, 0o666); err != nil {
 		return err
 	}
 	//nolint:errcheck
@@ -52,8 +52,8 @@ func (b JetsonNano) Install(disk string) (err error) {
 		return err
 	}
 
-	src := "/usr/install/arm64" + dtb
-	dst := "/boot/EFI" + dtb
+	src := filepath.Join(options.DTBPath, dtb)
+	dst := filepath.Join("/boot/EFI/dtb", dtb)
 
 	err = os.MkdirAll(filepath.Dir(dst), 0o600)
 	if err != nil {

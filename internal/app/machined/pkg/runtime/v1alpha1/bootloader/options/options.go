@@ -35,13 +35,17 @@ type InstallOptions struct {
 	Printf func(format string, v ...any)
 }
 
-// BootAssets describes the assets to be installed by the booloader.
+// BootAssets describes the assets to be installed by the bootloader.
 type BootAssets struct {
 	KernelPath    string
 	InitramfsPath string
 
 	UKIPath    string
 	SDBootPath string
+
+	DTBPath         string
+	UBootPath       string
+	RPiFirmwarePath string
 }
 
 // FillDefaults fills in default paths to be used when in the context of the installer.
@@ -60,5 +64,19 @@ func (assets *BootAssets) FillDefaults(arch string) {
 
 	if assets.SDBootPath == "" {
 		assets.SDBootPath = fmt.Sprintf(constants.SDBootAssetPath, arch)
+	}
+
+	if arch == "arm64" {
+		if assets.DTBPath == "" {
+			assets.DTBPath = fmt.Sprintf(constants.DTBAssetPath, arch)
+		}
+
+		if assets.UBootPath == "" {
+			assets.UBootPath = fmt.Sprintf(constants.UBootAssetPath, arch)
+		}
+
+		if assets.RPiFirmwarePath == "" {
+			assets.RPiFirmwarePath = fmt.Sprintf(constants.RPiFirmwareAssetPath, arch)
+		}
 	}
 }

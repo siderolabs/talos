@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -20,6 +21,35 @@ import (
 type File struct {
 	ImagePath  string
 	SourcePath string
+}
+
+// Walk the filesystem generating a filemap.
+func Walk(sourceBasePath, imageBasePath string) ([]File, error) {
+	var filemap []File
+
+	err := filepath.WalkDir(sourceBasePath, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		rel, err := filepath.Rel(sourceBasePath, path)
+		if err != nil {
+			return err
+		}
+
+		filemap = append(filemap, File{
+			ImagePath:  filepath.Join(imageBasePath, rel),
+			SourcePath: path,
+		})
+
+		return nil
+	})
+
+	return filemap, err
 }
 
 // Layer creates a layer from a single file map.

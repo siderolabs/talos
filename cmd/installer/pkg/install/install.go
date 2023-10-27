@@ -285,7 +285,13 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 		i.options.Printf("installing U-Boot for %q", b.Name())
 
-		if err = b.Install(i.options.Disk); err != nil {
+		if err = b.Install(runtime.BoardInstallOptions{
+			InstallDisk:     i.options.Disk,
+			UBootPath:       i.options.BootAssets.UBootPath,
+			DTBPath:         i.options.BootAssets.DTBPath,
+			RPiFirmwarePath: i.options.BootAssets.RPiFirmwarePath,
+			Printf:          i.options.Printf,
+		}); err != nil {
 			return err
 		}
 	}

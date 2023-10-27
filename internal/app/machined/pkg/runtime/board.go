@@ -12,10 +12,19 @@ type PartitionOptions struct {
 	PartitionsOffset uint64
 }
 
+// BoardInstallOptions are the board specific options for installation of various boot assets.
+type BoardInstallOptions struct {
+	InstallDisk     string
+	DTBPath         string
+	UBootPath       string
+	RPiFirmwarePath string
+	Printf          func(string, ...any)
+}
+
 // Board defines the requirements for a SBC.
 type Board interface {
 	Name() string
-	Install(string) error
+	Install(options BoardInstallOptions) error
 	KernelArgs() procfs.Parameters
 	PartitionOptions() *PartitionOptions
 }
