@@ -31,6 +31,7 @@ containerd: 1.7.7
 CoreDNS: 1.11.1
 Kubernetes: 1.29.0-alpha.2
 Flannel: 0.22.3
+etcd: 3.5.10
 
 Talos is built with Go 1.21.3.
 """
