@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -154,6 +155,10 @@ func (a *Tracker) Run() error {
 		eg.Go(func() error {
 			return a.runReporter(ctx)
 		})
+
+		// Reporter is started, it will print the errors if there is any.
+		// So from here on we can suppress the command error to be printed to avoid it being printed twice.
+		common.SuppressErrors = true
 
 		var trackEg errgroup.Group
 

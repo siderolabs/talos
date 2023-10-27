@@ -13,7 +13,6 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -139,8 +138,6 @@ var resetCmd = &cobra.Command{
 				return action.BootIDChangedPostCheckFn(ctx, c, preActionBootID)
 			}
 		}
-
-		common.SuppressErrors = true
 
 		return action.NewTracker(
 			&GlobalArgs,

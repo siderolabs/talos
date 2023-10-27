@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -49,8 +48,6 @@ var shutdownCmd = &cobra.Command{
 				return nil
 			})
 		}
-
-		common.SuppressErrors = true
 
 		return action.NewTracker(
 			&GlobalArgs,

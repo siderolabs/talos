@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
@@ -72,8 +71,6 @@ var upgradeCmd = &cobra.Command{
 		if !upgradeCmdFlags.wait {
 			return runUpgradeNoWait(opts)
 		}
-
-		common.SuppressErrors = true
 
 		return action.NewTracker(
 			&GlobalArgs,

@@ -9,6 +9,7 @@ package cli
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -80,6 +81,32 @@ func (suite *RebootSuite) TestReboot() {
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
 	)
+}
+
+// TestRebootEarlyFailPrintsOutput tests the action tracker used by reboot command to track reboot status
+// does not suppress the stderr output if there is an error occurring at an early stage, i.e. before the
+// action status reporting starts.
+func (suite *RebootSuite) TestRebootEarlyFailPrintsOutput() {
+	controlPlaneNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	invalidTalosconfig := filepath.Join(suite.T().TempDir(), "talosconfig.yaml")
+
+	suite.T().Logf("attempting to reboot node %q using talosconfig %q", controlPlaneNode, invalidTalosconfig)
+
+	suite.RunCLI([]string{"--talosconfig", invalidTalosconfig, "reboot", "-n", controlPlaneNode},
+		base.ShouldFail(),
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrMatchFunc(func(stdout string) error {
+			if strings.Contains(stdout, "method is not supported") {
+				suite.T().Skip("reboot is not supported")
+			}
+
+			if !strings.Contains(stdout, "failed to determine endpoints") {
+				return fmt.Errorf("expected to find 'failed to determine endpoints' in stderr")
+			}
+
+			return nil
+		}))
 }
 
 func init() {
