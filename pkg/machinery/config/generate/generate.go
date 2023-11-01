@@ -61,11 +61,7 @@ func (in *Input) GetAPIServerSANs() []string {
 
 // NewInput prepares a new Input struct to perform machine config generation.
 func NewInput(clustername, endpoint, kubernetesVersion string, opts ...Option) (*Input, error) {
-	input := &Input{
-		ClusterName:          clustername,
-		ControlPlaneEndpoint: endpoint,
-		KubernetesVersion:    kubernetesVersion,
-	}
+	input := &Input{}
 	input.Options = DefaultOptions()
 
 	for _, opt := range opts {
