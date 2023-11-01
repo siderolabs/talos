@@ -297,9 +297,30 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	}
 
 	if mode == ModeUpgrade || len(i.options.MetaValues.values) > 0 {
-		var metaState *meta.Meta
+		var (
+			metaState         *meta.Meta
+			metaPartitionName string
+		)
 
-		if metaState, err = meta.New(context.Background(), nil); err != nil {
+		for _, targets := range i.manifest.Targets {
+			for _, target := range targets {
+				if target.Label == constants.MetaPartitionLabel {
+					metaPartitionName = target.PartitionName
+
+					break
+				}
+			}
+
+			if metaPartitionName != "" {
+				break
+			}
+		}
+
+		if metaPartitionName == "" {
+			return fmt.Errorf("failed to detect META partition")
+		}
+
+		if metaState, err = meta.New(context.Background(), nil, meta.WithPrinter(i.options.Printf), meta.WithFixedPath(metaPartitionName)); err != nil {
 			return err
 		}
 
