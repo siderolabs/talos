@@ -15,7 +15,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 
-	networkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -132,7 +131,7 @@ func (v *VMware) ApplyNetworkConfigV2(ctx context.Context, st state.State, confi
 		})
 
 		if eth.DHCPv4 {
-			routeMetric := uint32(networkctrl.DefaultRouteMetric)
+			routeMetric := uint32(network.DefaultRouteMetric)
 
 			if eth.DHCP4Overrides.RouteMetric != 0 {
 				routeMetric = eth.DHCP4Overrides.RouteMetric
@@ -150,7 +149,7 @@ func (v *VMware) ApplyNetworkConfigV2(ctx context.Context, st state.State, confi
 		}
 
 		if eth.DHCPv6 {
-			routeMetric := uint32(2 * networkctrl.DefaultRouteMetric)
+			routeMetric := uint32(2 * network.DefaultRouteMetric)
 
 			if eth.DHCP4Overrides.RouteMetric != 0 {
 				routeMetric = eth.DHCP6Overrides.RouteMetric
@@ -205,7 +204,7 @@ func (v *VMware) ApplyNetworkConfigV2(ctx context.Context, st state.State, confi
 				Protocol:    nethelpers.ProtocolStatic,
 				Type:        nethelpers.TypeUnicast,
 				Family:      nethelpers.FamilyInet4,
-				Priority:    networkctrl.DefaultRouteMetric,
+				Priority:    network.DefaultRouteMetric,
 			}
 
 			route.Normalize()
@@ -227,7 +226,7 @@ func (v *VMware) ApplyNetworkConfigV2(ctx context.Context, st state.State, confi
 				Protocol:    nethelpers.ProtocolStatic,
 				Type:        nethelpers.TypeUnicast,
 				Family:      nethelpers.FamilyInet6,
-				Priority:    2 * networkctrl.DefaultRouteMetric,
+				Priority:    2 * network.DefaultRouteMetric,
 			}
 
 			route.Normalize()

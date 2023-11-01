@@ -111,7 +111,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					LinkName:  linkConfig.LinkName,
 					RequireUp: true,
 					DHCP4: network.DHCP4OperatorSpec{
-						RouteMetric: DefaultRouteMetric,
+						RouteMetric: network.DefaultRouteMetric,
 					},
 					ConfigLayer: network.ConfigCmdline,
 				})
@@ -136,7 +136,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 				if device.DHCP() && device.DHCPOptions().IPv4() {
 					routeMetric := device.DHCPOptions().RouteMetric()
 					if routeMetric == 0 {
-						routeMetric = DefaultRouteMetric
+						routeMetric = network.DefaultRouteMetric
 					}
 
 					specs = append(specs, network.OperatorSpecSpec{
@@ -153,7 +153,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 				if device.DHCP() && device.DHCPOptions().IPv6() {
 					routeMetric := device.DHCPOptions().RouteMetric()
 					if routeMetric == 0 {
-						routeMetric = DefaultRouteMetric
+						routeMetric = network.DefaultRouteMetric
 					}
 
 					specs = append(specs, network.OperatorSpecSpec{
@@ -172,7 +172,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					if vlan.DHCP() && vlan.DHCPOptions().IPv4() {
 						routeMetric := vlan.DHCPOptions().RouteMetric()
 						if routeMetric == 0 {
-							routeMetric = DefaultRouteMetric
+							routeMetric = network.DefaultRouteMetric
 						}
 
 						specs = append(specs, network.OperatorSpecSpec{
@@ -189,7 +189,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					if vlan.DHCP() && vlan.DHCPOptions().IPv6() {
 						routeMetric := vlan.DHCPOptions().RouteMetric()
 						if routeMetric == 0 {
-							routeMetric = DefaultRouteMetric
+							routeMetric = network.DefaultRouteMetric
 						}
 
 						specs = append(specs, network.OperatorSpecSpec{
@@ -248,7 +248,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 							LinkName:  linkStatus.Metadata().ID(),
 							RequireUp: true,
 							DHCP4: network.DHCP4OperatorSpec{
-								RouteMetric: DefaultRouteMetric,
+								RouteMetric: network.DefaultRouteMetric,
 							},
 							ConfigLayer: network.ConfigDefault,
 						})

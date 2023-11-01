@@ -197,7 +197,7 @@ func (ctrl *RouteConfigController) parseCmdline(logger *zap.Logger) (routes []ne
 			Gateway:     linkConfig.Gateway,
 			Scope:       nethelpers.ScopeGlobal,
 			Table:       nethelpers.TableMain,
-			Priority:    DefaultRouteMetric + uint32(idx), // set different priorities to avoid a conflict
+			Priority:    network.DefaultRouteMetric + uint32(idx), // set different priorities to avoid a conflict
 			Protocol:    nethelpers.ProtocolBoot,
 			Type:        nethelpers.TypeUnicast,
 			OutLinkName: linkConfig.LinkName,
@@ -262,7 +262,7 @@ func (ctrl *RouteConfigController) processDevicesConfiguration(logger *zap.Logge
 
 		route.Priority = in.Metric()
 		if route.Priority == 0 {
-			route.Priority = DefaultRouteMetric
+			route.Priority = network.DefaultRouteMetric
 		}
 
 		route.MTU = in.MTU()

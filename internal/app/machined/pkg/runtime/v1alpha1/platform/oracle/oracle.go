@@ -17,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
 
-	networkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
@@ -72,7 +71,7 @@ func (o *Oracle) ParseMetadata(interfaceAddresses []NetworkConfig, metadata *Met
 				LinkName:  ifname,
 				RequireUp: true,
 				DHCP6: network.DHCP6OperatorSpec{
-					RouteMetric: networkctrl.DefaultRouteMetric,
+					RouteMetric: network.DefaultRouteMetric,
 				},
 				ConfigLayer: network.ConfigPlatform,
 			})
@@ -90,7 +89,7 @@ func (o *Oracle) ParseMetadata(interfaceAddresses []NetworkConfig, metadata *Met
 				Protocol:    nethelpers.ProtocolStatic,
 				Type:        nethelpers.TypeUnicast,
 				Family:      nethelpers.FamilyInet6,
-				Priority:    2 * networkctrl.DefaultRouteMetric,
+				Priority:    2 * network.DefaultRouteMetric,
 			}
 
 			route.Normalize()

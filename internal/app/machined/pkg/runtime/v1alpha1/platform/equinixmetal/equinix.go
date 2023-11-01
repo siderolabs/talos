@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
-	networkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
@@ -280,11 +279,11 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 				Protocol:    nethelpers.ProtocolStatic,
 				Type:        nethelpers.TypeUnicast,
 				Family:      family,
-				Priority:    networkctrl.DefaultRouteMetric,
+				Priority:    network.DefaultRouteMetric,
 			}
 
 			if addr.Family == 6 {
-				route.Priority = 2 * networkctrl.DefaultRouteMetric
+				route.Priority = 2 * network.DefaultRouteMetric
 			}
 
 			route.Normalize()

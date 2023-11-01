@@ -124,7 +124,7 @@ func (suite *OperatorConfigSuite) TestDefaultDHCP() {
 		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
 			asrt.True(r.TypedSpec().RequireUp)
-			asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+			asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 
 			switch r.Metadata().ID() {
 			case "default/dhcp4/eth0":
@@ -163,7 +163,7 @@ func (suite *OperatorConfigSuite) TestDefaultDHCPCmdline() {
 		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
 			asrt.Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
 			asrt.True(r.TypedSpec().RequireUp)
-			asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+			asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 
 			switch r.Metadata().ID() {
 			case "default/dhcp4/eth0":
@@ -304,16 +304,16 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 			switch r.Metadata().ID() {
 			case "configuration/dhcp4/eth1":
 				asrt.Equal("eth1", r.TypedSpec().LinkName)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 			case "configuration/dhcp4/eth3":
 				asrt.Equal("eth3", r.TypedSpec().LinkName)
 				asrt.EqualValues(256, r.TypedSpec().DHCP4.RouteMetric)
 			case "configuration/dhcp4/eth4.25":
 				asrt.Equal("eth4.25", r.TypedSpec().LinkName)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 			case "configuration/dhcp4/eth4.26":
 				asrt.Equal("eth4.26", r.TypedSpec().LinkName)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 			case "configuration/dhcp4/eth4.27":
 				asrt.Equal("eth4.27", r.TypedSpec().LinkName)
 				asrt.EqualValues(256, r.TypedSpec().DHCP4.RouteMetric)
@@ -402,7 +402,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 			switch r.Metadata().ID() {
 			case "configuration/dhcp6/eth2":
 				asrt.Equal("eth2", r.TypedSpec().LinkName)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().DHCP6.RouteMetric)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP6.RouteMetric)
 			case "configuration/dhcp6/eth3":
 				asrt.Equal("eth3", r.TypedSpec().LinkName)
 				asrt.EqualValues(512, r.TypedSpec().DHCP6.RouteMetric)

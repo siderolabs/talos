@@ -22,6 +22,9 @@ const NamespaceName resource.Namespace = "network"
 // Resources in the ConfigNamespaceName namespace are merged to produce final versions in the NamespaceName namespace.
 const ConfigNamespaceName resource.Namespace = "network-config"
 
+// DefaultRouteMetric is the default route metric if no metric was specified explicitly.
+const DefaultRouteMetric = 1024
+
 // AddressID builds ID (primary key) for the address.
 func AddressID(linkName string, addr netip.Prefix) string {
 	return fmt.Sprintf("%s/%s", linkName, addr)

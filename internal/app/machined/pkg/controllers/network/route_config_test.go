@@ -93,10 +93,10 @@ func (suite *RouteConfigSuite) TestCmdline() {
 			switch r.Metadata().ID() {
 			case "cmdline/inet4/172.20.0.1//1024":
 				asrt.Equal("eth1", r.TypedSpec().OutLinkName)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 			case "cmdline/inet4/10.3.5.1//1025":
 				asrt.Equal("eth4", r.TypedSpec().OutLinkName)
-				asrt.EqualValues(netctrl.DefaultRouteMetric+2, r.TypedSpec().Priority)
+				asrt.EqualValues(network.DefaultRouteMetric+2, r.TypedSpec().Priority)
 			}
 		},
 	)
@@ -124,12 +124,12 @@ func (suite *RouteConfigSuite) TestCmdlineNotReachable() {
 			switch r.Metadata().ID() {
 			case "cmdline/inet4/172.20.0.1//1024":
 				asrt.Equal("eth1", r.TypedSpec().OutLinkName)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 			case "cmdline/inet4//172.20.0.1/32/1024":
 				asrt.Equal("eth1", r.TypedSpec().OutLinkName)
 				asrt.Equal(netip.Addr{}, r.TypedSpec().Gateway)
 				asrt.Equal(netip.MustParsePrefix("172.20.0.1/32"), r.TypedSpec().Destination)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 			}
 		},
 	)
@@ -240,11 +240,11 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 			case "configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024":
 				asrt.Equal("eth2", r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet6, r.TypedSpec().Family)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 			case "configuration/inet4/10.0.3.1/10.0.3.0/24/1024":
 				asrt.Equal("eth0.24", r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 			case "configuration/inet4/192.168.0.25/192.168.0.0/18/25":
 				asrt.Equal("eth3", r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
@@ -252,12 +252,12 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 			case "configuration/inet4/192.244.0.1/192.244.0.0/24/1024":
 				asrt.Equal("eth1", r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 				asrt.EqualValues(netip.MustParseAddr("192.244.0.10"), r.TypedSpec().Source)
 			case "configuration/inet4//169.254.254.254/32/1024":
 				asrt.Equal("eth3", r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
-				asrt.EqualValues(netctrl.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 				asrt.Equal(nethelpers.ScopeLink, r.TypedSpec().Scope)
 				asrt.Equal("169.254.254.254/32", r.TypedSpec().Destination.String())
 			}

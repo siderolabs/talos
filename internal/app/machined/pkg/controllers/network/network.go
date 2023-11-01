@@ -16,9 +16,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-// DefaultRouteMetric is the default route metric if no metric was specified explicitly.
-const DefaultRouteMetric = 1024
-
 // SetBondSlave sets the bond slave spec.
 func SetBondSlave(link *network.LinkSpecSpec, bond ordered.Pair[string, int]) {
 	link.BondSlave = network.BondSlave{

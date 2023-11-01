@@ -26,7 +26,6 @@ import (
 	yaml "gopkg.in/yaml.v3"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
-	networkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
@@ -389,11 +388,11 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, st state.State, ne
 							Protocol:    nethelpers.ProtocolStatic,
 							Type:        nethelpers.TypeUnicast,
 							Family:      family,
-							Priority:    networkctrl.DefaultRouteMetric,
+							Priority:    network.DefaultRouteMetric,
 						}
 
 						if family == nethelpers.FamilyInet6 {
-							route.Priority = 2 * networkctrl.DefaultRouteMetric
+							route.Priority = 2 * network.DefaultRouteMetric
 						}
 
 						route.Normalize()
@@ -426,7 +425,7 @@ func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runt
 			LinkName:  name,
 			RequireUp: true,
 			DHCP4: network.DHCP4OperatorSpec{
-				RouteMetric: uint32(networkctrl.DefaultRouteMetric),
+				RouteMetric: network.DefaultRouteMetric,
 			},
 			ConfigLayer: network.ConfigPlatform,
 		})
@@ -438,7 +437,7 @@ func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runt
 			LinkName:  name,
 			RequireUp: true,
 			DHCP6: network.DHCP6OperatorSpec{
-				RouteMetric: uint32(networkctrl.DefaultRouteMetric),
+				RouteMetric: network.DefaultRouteMetric,
 			},
 			ConfigLayer: network.ConfigPlatform,
 		})
@@ -482,7 +481,7 @@ func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runt
 			Protocol:    nethelpers.ProtocolStatic,
 			Type:        nethelpers.TypeUnicast,
 			Family:      nethelpers.FamilyInet4,
-			Priority:    networkctrl.DefaultRouteMetric,
+			Priority:    network.DefaultRouteMetric,
 		}
 
 		route.Normalize()
@@ -504,7 +503,7 @@ func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runt
 			Protocol:    nethelpers.ProtocolStatic,
 			Type:        nethelpers.TypeUnicast,
 			Family:      nethelpers.FamilyInet6,
-			Priority:    2 * networkctrl.DefaultRouteMetric,
+			Priority:    2 * network.DefaultRouteMetric,
 		}
 
 		route.Normalize()
