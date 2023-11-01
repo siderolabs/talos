@@ -5,6 +5,8 @@
 package gen
 
 import (
+	stdlibx509 "crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io/fs"
 	"os"
@@ -45,7 +47,7 @@ var genSecurebootUKICmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "uki", genSecurebootUKICmdFlags.commonName, 4096, true)
+		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "uki", genSecurebootUKICmdFlags.commonName, 4096, true, false)
 	},
 }
 
@@ -56,7 +58,7 @@ var genSecurebootPCRCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "pcr", "dummy", 2048, false)
+		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "pcr", "dummy", 2048, false, true)
 	},
 }
 
@@ -97,7 +99,8 @@ func checkedWrite(path string, data []byte, perm fs.FileMode) error { //nolint:u
 	return os.WriteFile(path, data, perm)
 }
 
-func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCert bool) error {
+//nolint:gocyclo
+func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCert, outputDER bool) error {
 	currentTime := time.Now()
 
 	opts := []x509.Option{
@@ -118,6 +121,12 @@ func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCe
 		if err = checkedWrite(filepath.Join(path, prefix+"-signing-cert.pem"), signingKey.CrtPEM, 0o600); err != nil {
 			return err
 		}
+
+		if outputDER {
+			if err = saveAsDER(filepath.Join(path, prefix+"-signing-cert.der"), signingKey.CrtPEM); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err = checkedWrite(filepath.Join(path, prefix+"-signing-key.pem"), signingKey.KeyPEM, 0o600); err != nil {
@@ -137,9 +146,24 @@ func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCe
 		if err = checkedWrite(filepath.Join(path, prefix+"-signing-public-key.pem"), privKey.PublicKeyPEM, 0o600); err != nil {
 			return err
 		}
+
+		if outputDER {
+			if err = saveAsDER(filepath.Join(path, prefix+"-signing-public-key.der"), privKey.PublicKeyPEM); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
+}
+
+func saveAsDER(file string, pem []byte) error {
+	publicKeyDER, err := convertPEMToDER(pem)
+	if err != nil {
+		return err
+	}
+
+	return checkedWrite(file, publicKeyDER, 0o600)
 }
 
 // generateSecureBootDatabase generates a UEFI database to enroll the signing certificate.
@@ -231,4 +255,18 @@ func init() {
 	genSecurebootDatabaseCmd.Flags().StringVar(
 		&genSecurebootDatabaseCmdFlags.signingKeyPath, "signing-key", helpers.ArtifactPath(constants.SecureBootSigningKeyAsset), "path to the key used to sign the database")
 	genSecurebootCmd.AddCommand(genSecurebootDatabaseCmd)
+}
+
+func convertPEMToDER(data []byte) ([]byte, error) {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, fmt.Errorf("failed to decode PEM data")
+	}
+
+	key, err := stdlibx509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return stdlibx509.MarshalPKIXPublicKey(key)
 }
