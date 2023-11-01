@@ -40,6 +40,7 @@ type Meta struct {
 // Options configures the META.
 type Options struct {
 	fixedPath string
+	printer   func(string, ...any)
 }
 
 // Option is a functional option.
@@ -52,10 +53,20 @@ func WithFixedPath(path string) Option {
 	}
 }
 
+// WithPrinter sets the function to print the logs, default is log.Printf.
+func WithPrinter(printer func(string, ...any)) Option {
+	return func(o *Options) {
+		o.printer = printer
+	}
+}
+
 // New initializes empty META, trying to probe the existing META first.
 func New(ctx context.Context, st state.State, opts ...Option) (*Meta, error) {
 	meta := &Meta{
 		state: st,
+		opts: Options{
+			printer: log.Printf,
+		},
 	}
 
 	for _, opt := range opts {
@@ -128,7 +139,7 @@ func (meta *Meta) Reload(ctx context.Context) error {
 		adv.SetTagBytes(t, val)
 	}
 
-	log.Printf("META: loaded %d keys", len(adv.ListTags()))
+	meta.opts.printer("META: loaded %d keys", len(adv.ListTags()))
 
 	meta.talos = adv
 	meta.legacy = legacyAdv
@@ -221,7 +232,7 @@ func (meta *Meta) Flush() error {
 		return fmt.Errorf("expected to write %d bytes, wrote %d", len(serialized), n)
 	}
 
-	log.Printf("META: saved %d keys", len(meta.talos.ListTags()))
+	meta.opts.printer("META: saved %d keys", len(meta.talos.ListTags()))
 
 	return f.Sync()
 }
