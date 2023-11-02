@@ -35,6 +35,8 @@ type Builder struct {
 	//
 	// Arch of the UKI file.
 	Arch string
+	// Version of Talos.
+	Version string
 	// Path to the sd-stub.
 	SdStubPath string
 	// Path to the sd-boot.

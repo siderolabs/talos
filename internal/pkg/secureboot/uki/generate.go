@@ -19,7 +19,7 @@ import (
 )
 
 func (builder *Builder) generateOSRel() error {
-	osRelease, err := version.OSRelease()
+	osRelease, err := version.OSReleaseFor(version.Name, builder.Version)
 	if err != nil {
 		return err
 	}
@@ -94,9 +94,26 @@ func (builder *Builder) generateSplash() error {
 }
 
 func (builder *Builder) generateUname() error {
+	// it is not always possible to get the kernel version from the kernel image, so we
+	// do a bit of pre-checks
+	var kernelVersion string
+
+	if builder.Version == version.Tag {
+		// if building from the same version of Talos, use default kernel version
+		kernelVersion = constants.DefaultKernelVersion
+	} else {
+		// otherwise, try to get the kernel version from the kernel image
+		kernelVersion, _ = DiscoverKernelVersion(builder.KernelPath) //nolint:errcheck
+	}
+
+	if kernelVersion == "" {
+		// we haven't got the kernel version, skip the uname section
+		return nil
+	}
+
 	path := filepath.Join(builder.scratchDir, "uname")
 
-	if err := os.WriteFile(path, []byte(constants.DefaultKernelVersion), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(kernelVersion), 0o600); err != nil {
 		return err
 	}
 

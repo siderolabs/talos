@@ -302,6 +302,7 @@ func (i *Imager) buildUKI(report *reporter.Reporter) error {
 
 	builder := uki.Builder{
 		Arch:       i.prof.Arch,
+		Version:    i.prof.Version,
 		SdStubPath: i.prof.Input.SDStub.Path,
 		SdBootPath: i.prof.Input.SDBoot.Path,
 		KernelPath: i.prof.Input.Kernel.Path,

@@ -14,10 +14,7 @@ import (
 
 // OSRelease returns the contents of /etc/os-release.
 func OSRelease() ([]byte, error) {
-	var (
-		v    string
-		tmpl *template.Template
-	)
+	var v string
 
 	switch Tag {
 	case "none":
@@ -26,14 +23,19 @@ func OSRelease() ([]byte, error) {
 		v = Tag
 	}
 
+	return OSReleaseFor(Name, v)
+}
+
+// OSReleaseFor returns the contents of /etc/os-release for a given name and version.
+func OSReleaseFor(name, version string) ([]byte, error) {
 	data := struct {
 		Name    string
 		ID      string
 		Version string
 	}{
-		Name:    Name,
-		ID:      strings.ToLower(Name),
-		Version: v,
+		Name:    name,
+		ID:      strings.ToLower(name),
+		Version: version,
 	}
 
 	tmpl, err := template.New("").Parse(constants.OSReleaseTemplate)
