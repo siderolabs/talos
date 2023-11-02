@@ -8,7 +8,131 @@ can be customized further for a specific use case:
 
 * adding [system extensions]({{< relref "../configuration/system-extensions" >}})
 * updating [kernel command line arguments]({{< relref "../../reference/kernel" >}})
+* using custom `META` contents, e.g. for [metal network configuration]({{< relref "../../advanced/metal-network-configuration" >}})
 * generating [SecureBoot]({{< relref "../install/bare-metal-platforms/secureboot" >}}) images signed with a custom key
+
+There are two ways to generate Talos boot assets:
+
+* using [Image Factory]({{< relref "#image-factory" >}}) service (recommended)
+* manually using [imager]({{< relref "#imager" >}}) container image (advanced)
+
+Image Factory is easier to use, but it only produces images for official Talos Linux releases and official Talos Linux system extensions.
+The `imager` container can be used to generate images from `main` branch, with local changes, or with custom system extensions.
+
+## Image Factory
+
+[Image Factory]({{< relref "../../learn-more/image-factory" >}}) is a service that generates Talos boot assets on-demand.
+Image Factory allows to generate boot assets for the official Talos Linux releases and official Talos Linux system extensions.
+
+The main concept of the Image Factory is a *schematic* which defines the customization of the boot asset.
+Once the schematic is configured, Image Factory can be used to pull various Talos Linux images, ISOs, installer images, PXE booting bare-metal machines across different architectures,
+versions of Talos and platforms.
+
+Sidero Labs maintains a public Image Factory instance at [https://factory.talos.dev](https://factory.talos.dev).
+Image Factory provides a simple [UI](https://factory.talos.dev) to prepare schematics and retrieve asset links.
+
+### Example: Bare-metal with Image Factory
+
+Let's assume we want to boot Talos on a bare-metal machine with Intel CPU and add a `gvisor` container runtime to the image.
+Also we want to disable predictable network interface names with `net.ifnames=0` kernel argument.
+
+First, let's create the schematic file `bare-metal.yaml`:
+
+```yaml
+# bare-metal.yaml
+customization:
+  extraKernelArgs:
+    - net.ifnames=0
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/gvisor
+      - siderolabs/intel-ucode
+```
+
+> The schematic doesn't contain system extension versions, Image Factory will pick the correct version matching Talos Linux release.
+
+And now we can upload the schematic to the Image Factory to retrieve its ID:
+
+```shell
+$ curl -X POST --data-binary @bare-metal.yaml https://factory.talos.dev/schematics
+{"id":"b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176"}
+```
+
+The returned schematic ID `b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176` we will use to generate the boot assets.
+
+> The schematic ID is based on the schematic contents, so uploading the same schematic will return the same ID.
+
+Now we have two options to boot our bare-metal machine:
+
+* using ISO image: https://factory.talos.dev/image/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176/{{< release >}}/metal-amd64.iso (download it and burn to a CD/DVD or USB stick)
+* PXE booting via iPXE script:  https://factory.talos.dev/pxe/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176/{{< release >}}/metal-amd64
+
+> The Image Factory URL contains both schematic ID and Talos version, and both can be changed to generate different boot assets.
+
+Once the bare-metal machine is booted up for the first time, it will require Talos Linux `installer` image to be installed on the disk.
+The `installer` image will be produced by the Image Factory as well:
+
+```yaml
+# Talos machine configuration patch
+machine:
+  install:
+    image: factory.talos.dev/installer/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176:{{< release >}}
+```
+
+Once installed, the machine can be upgraded to a new version of Talos by referencing new installer image:
+
+```shell
+talosctl upgrade --image factory.talos.dev/installer/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176:<new_version>
+```
+
+Same way upgrade process can be used to transition to a new set of system extensions: generate new schematic with the new set of system extensions, and upgrade the machine to the new schematic ID:
+
+```shell
+talosctl upgrade --image factory.talos.dev/installer/<new_schematic_id>:{{< release >}}
+```
+
+### Example: AWS with Image Factory
+
+Talos Linux is installed on AWS from a disk image (AWS AMI), so only a single boot asset is required.
+Let's assume we want to boot Talos on AWS with `gvisor` container runtime system extension.
+
+First, let's create the schematic file `aws.yaml`:
+
+```yaml
+# aws.yaml
+customization:
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/gvisor
+```
+
+And now we can upload the schematic to the Image Factory to retrieve its ID:
+
+```shell
+$ curl -X POST --data-binary @aws.yaml https://factory.talos.dev/schematics
+{"id":"d9ff89777e246792e7642abd3220a616afb4e49822382e4213a2e528ab826fe5"}
+```
+
+The returned schematic ID `d9ff89777e246792e7642abd3220a616afb4e49822382e4213a2e528ab826fe5` we will use to generate the boot assets.
+
+Now we can download the AWS disk image from the Image Factory:
+
+```shell
+curl -LO https://factory.talos.dev/image/d9ff89777e246792e7642abd3220a616afb4e49822382e4213a2e528ab826fe5/{{< release >}}/aws-amd64.raw.xz
+```
+
+Now the `aws-amd64.raw.xz` file contains the customized Talos AWS disk image which can be uploaded as an AMI to the [AWS]({{< relref "../install/cloud-platforms/aws" >}}).
+
+Once the AWS VM is created from the AMI, it can be upgraded to a different Talos version or a different schematic using `talosctl upgrade`:
+
+```shell
+# upgrade to a new Talos version
+talosctl upgrade --image factory.talos.dev/installer/d9ff89777e246792e7642abd3220a616afb4e49822382e4213a2e528ab826fe5:<new_version>
+# upgrade to a new schematic
+talosctl upgrade --image factory.talos.dev/installer/<new_schematic_id>:{{< release >}}
+```
+
+## Imager
 
 A custom disk image, boot asset can be generated by using the Talos Linux `imager` container: `ghcr.io/siderolabs/imager:{{<  release >}}`.
 The `imager` container image can be checked by [verifying its signature]({{< relref "../../advanced/verifying-images" >}}).
@@ -44,7 +168,7 @@ The base profile can be customized with the additional flags to the imager:
 * `--extra-kernel-arg` allows to customize the kernel command line arguments
 * `--system-extension-image` allows to install a system extension into the image
 
-## Example: Bare-metal
+### Example: Bare-metal with Imager
 
 Let's assume we want to boot Talos on a bare-metal machine with Intel CPU and add a `gvisor` container runtime to the image.
 Also we want to disable predictable network interface names with `net.ifnames=0` kernel argument.
@@ -64,7 +188,7 @@ profile ready:
 arch: amd64
 platform: metal
 secureboot: false
-version: v1.5.0-alpha.3-35-ge0f383598-dirty
+version: {{ < release > }}
 customization:
   extraKernelArgs:
     - net.ifnames=0
@@ -74,7 +198,7 @@ input:
   initramfs:
     path: /usr/install/amd64/initramfs.xz
   baseInstaller:
-    imageRef: ghcr.io/siderolabs/installer:v1.5.0-alpha.3-35-ge0f383598-dirty
+    imageRef: ghcr.io/siderolabs/installer:{{< release >}}
   systemExtensions:
     - imageRef: ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0
     - imageRef: ghcr.io/siderolabs/intel-ucode:20230613
@@ -119,7 +243,7 @@ Now we can use the customized `installer` image to install Talos on the bare-met
 When it's time to upgrade a machine, a new `installer` image can be generated using the new version of `imager`, and updating the system extension images to the matching versions.
 The custom `installer` image can now be used to upgrade Talos machine.
 
-## Example: AWS
+### Example: AWS with Imager
 
 Talos is installed on AWS from a disk image (AWS AMI), so only a single boot asset is required.
 
