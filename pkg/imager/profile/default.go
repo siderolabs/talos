@@ -84,6 +84,18 @@ var Default = map[string]Profile{
 		},
 	},
 	// Clouds
+	"akamai": {
+		Platform:   "akamai",
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatGZ,
+			ImageOptions: &ImageOptions{
+				DiskSize:   MinRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
 	"aws": {
 		Platform:   "aws",
 		SecureBoot: pointer.To(false),

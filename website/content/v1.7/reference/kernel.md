@@ -12,7 +12,7 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 
 **Required** parameters:
 
-* `talos.platform`: can be one of `aws`, `azure`, `container`, `digitalocean`, `equinixMetal`, `gcp`, `hcloud`, `metal`, `nocloud`, `openstack`, `oracle`, `scaleway`, `upcloud`, `vmware` or `vultr`
+* `talos.platform`: can be one of `akamai`, `aws`, `azure`, `container`, `digitalocean`, `equinixMetal`, `gcp`, `hcloud`, `metal`, `nocloud`, `openstack`, `oracle`, `scaleway`, `upcloud`, `vmware` or `vultr`
 * `slab_nomerge`: required by KSPP
 * `pti=on`: required by KSPP
 
@@ -151,6 +151,7 @@ The platform name on which Talos will run.
 
 Valid options are:
 
+* `akamai`
 * `aws`
 * `azure`
 * `container`

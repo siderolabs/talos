@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/akamai"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/aws"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/azure"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/container"
@@ -90,6 +91,8 @@ func NewPlatform(platform string) (p runtime.Platform, err error) {
 //nolint:gocyclo
 func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
+	case "akamai":
+		p = &akamai.Akamai{}
 	case "aws":
 		return aws.NewAWS()
 	case "azure":

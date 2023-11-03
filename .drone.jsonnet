@@ -1054,6 +1054,8 @@ local release = {
     draft: true,
     note: '_out/RELEASE_NOTES.md',
     files: [
+      '_out/akamai-amd64.raw.gz',
+      '_out/akamai-arm64.raw.gz',
       '_out/aws-amd64.raw.xz',
       '_out/aws-arm64.raw.xz',
       '_out/azure-amd64.vhd.xz',

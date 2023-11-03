@@ -195,6 +195,12 @@ machine:
 ```
 """
 
+    [notes.platforms]
+        title = "Platforms"
+        description = """\
+Talos Linux now supports [Akamai Connected Cloud](https://www.linode.com/) provider (platform `akamai`).
+"""
+
 [make_deps]
 
     [make_deps.tools]
