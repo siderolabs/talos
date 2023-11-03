@@ -929,7 +929,7 @@ RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-pat
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:20.8.1-alpine AS lint-markdown
+FROM node:21.1.0-alpine AS lint-markdown
 ARG MARKDOWNLINTCLI_VERSION
 ARG TEXTLINT_VERSION
 ARG TEXTLINT_FILTER_RULE_COMMENTS_VERSION
