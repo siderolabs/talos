@@ -206,6 +206,19 @@ func (ctrl *AcquireController) stateDisk(ctx context.Context, r controller.Runti
 	}
 }
 
+// validationModeDiskConfig is a "fake" validation mode for config loaded from disk.
+type validationModeDiskConfig struct{}
+
+// RequiresInstall implements validation.RuntimeMode interface.
+func (validationModeDiskConfig) RequiresInstall() bool {
+	return false
+}
+
+// String implements validation.RuntimeMode interface.
+func (validationModeDiskConfig) String() string {
+	return "diskConfig"
+}
+
 // loadFromDisk is a helper function for stateDisk.
 func (ctrl *AcquireController) loadFromDisk(logger *zap.Logger) (config.Provider, error) {
 	logger.Debug("loading config from STATE", zap.String("path", ctrl.ConfigPath))
@@ -232,7 +245,8 @@ func (ctrl *AcquireController) loadFromDisk(logger *zap.Logger) (config.Provider
 		return nil, nil
 	}
 
-	warnings, err := cfg.Validate(ctrl.ValidationMode)
+	// if the STATE partition is present & contains machine config, Talos is already installed
+	warnings, err := cfg.Validate(validationModeDiskConfig{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate on-disk config: %w", err)
 	}
