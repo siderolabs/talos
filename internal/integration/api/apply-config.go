@@ -385,7 +385,7 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	nodeCtx := client.WithNodes(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
 	cfg := provider.RawV1Alpha1()
 	suite.Require().NotNil(cfg)
@@ -397,7 +397,7 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	suite.Require().NoError(err)
 
 	cfgDataOut, err := provider.Bytes()
-	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
+	suite.Require().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
 
 	_, err = suite.Client.ApplyConfiguration(
 		nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -431,7 +431,7 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 	nodeCtx := client.WithNodes(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
 	cfg := provider.RawV1Alpha1()
 	suite.Require().NotNil(cfg)
@@ -443,7 +443,7 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 	suite.Require().NoError(err)
 
 	cfgDataOut, err := provider.Bytes()
-	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
+	suite.Require().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
 
 	reply, err := suite.Client.ApplyConfiguration(
 		nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -453,8 +453,8 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 		},
 	)
 
-	suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
-	suite.Require().Contains(reply.Messages[0].ModeDetails, "Dry run summary")
+	suite.Require().Nilf(err, "failed to apply configuration (node %q): %s", node, err)
+	suite.Assert().Contains(reply.Messages[0].ModeDetails, "Dry run summary")
 }
 
 // TestApplyTry applies the config in try mode with a short timeout.
@@ -500,7 +500,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	)
 
 	cfgDataOut, err := container.NewV1Alpha1(cfg).Bytes()
-	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
+	suite.Require().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
 
 	_, err = suite.Client.ApplyConfiguration(
 		nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -512,7 +512,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	suite.Assert().Nilf(err, "failed to apply configuration (node %q): %s", node, err)
 
 	provider, err = getMachineConfig(nodeCtx)
-	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+	suite.Require().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
 	suite.Assert().NotNil(provider.Config().Machine().Network())
 	suite.Assert().NotNil(provider.Config().Machine().Network().Devices())

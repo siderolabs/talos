@@ -152,6 +152,16 @@ func (s *Server) Register(obj *grpc.Server) {
 	timeapi.RegisterTimeServiceServer(obj, &TimeServer{ConfigProvider: s.Controller.Runtime()})
 }
 
+// modeWrapper overrides RequiresInstall() based on actual installed status.
+type modeWrapper struct {
+	runtime.Mode
+	installed bool
+}
+
+func (m modeWrapper) RequiresInstall() bool {
+	return m.Mode.RequiresInstall() && !m.installed
+}
+
 // ApplyConfiguration implements machine.MachineService.
 //
 //nolint:gocyclo,cyclop
@@ -169,7 +179,12 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	warnings, err := cfgProvider.Validate(s.Controller.Runtime().State().Platform().Mode())
+	warnings, err := cfgProvider.Validate(
+		modeWrapper{
+			Mode:      s.Controller.Runtime().State().Platform().Mode(),
+			installed: s.Controller.Runtime().State().Machine().Installed(),
+		},
+	)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
