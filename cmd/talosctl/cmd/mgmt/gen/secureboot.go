@@ -5,6 +5,7 @@
 package gen
 
 import (
+	"context"
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -13,14 +14,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/foxboron/go-uefi/efi"
-	"github.com/foxboron/go-uefi/efi/signature"
-	"github.com/foxboron/go-uefi/efi/util"
-	"github.com/google/uuid"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/database"
+	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -99,7 +98,6 @@ func checkedWrite(path string, data []byte, perm fs.FileMode) error { //nolint:u
 	return os.WriteFile(path, data, perm)
 }
 
-//nolint:gocyclo
 func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCert, outputDER bool) error {
 	currentTime := time.Now()
 
@@ -129,32 +127,7 @@ func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCe
 		}
 	}
 
-	if err = checkedWrite(filepath.Join(path, prefix+"-signing-key.pem"), signingKey.KeyPEM, 0o600); err != nil {
-		return err
-	}
-
-	if !outputCert {
-		pemKey := x509.PEMEncodedKey{
-			Key: signingKey.KeyPEM,
-		}
-
-		privKey, err := pemKey.GetRSAKey()
-		if err != nil {
-			return err
-		}
-
-		if err = checkedWrite(filepath.Join(path, prefix+"-signing-public-key.pem"), privKey.PublicKeyPEM, 0o600); err != nil {
-			return err
-		}
-
-		if outputDER {
-			if err = saveAsDER(filepath.Join(path, prefix+"-signing-public-key.der"), privKey.PublicKeyPEM); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return checkedWrite(filepath.Join(path, prefix+"-signing-key.pem"), signingKey.KeyPEM, 0o600)
 }
 
 func saveAsDER(file string, pem []byte) error {
@@ -169,30 +142,15 @@ func saveAsDER(file string, pem []byte) error {
 // generateSecureBootDatabase generates a UEFI database to enroll the signing certificate.
 //
 // ref: https://blog.hansenpartnership.com/the-meaning-of-all-the-uefi-keys/
-//
-//nolint:gocyclo
 func generateSecureBootDatabase(path, enrolledCertificatePath, signingKeyPath, signingCertificatePath string) error {
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		return err
+	in := profile.SigningKeyAndCertificate{
+		KeyPath:  signingKeyPath,
+		CertPath: signingCertificatePath,
 	}
 
-	efiGUID := util.StringToGUID(uuid.String())
-
-	// Reuse the generated test signing key for secure boot
-	signingPEM, err := x509.NewCertificateAndKeyFromFiles(signingCertificatePath, signingKeyPath)
+	signer, err := in.GetSigner(context.Background()) // context not used
 	if err != nil {
-		return err
-	}
-
-	cert, err := signingPEM.GetCert()
-	if err != nil {
-		return err
-	}
-
-	key, err := signingPEM.GetRSAKey()
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to create signer: %w", err)
 	}
 
 	enrolledPEM, err := os.ReadFile(enrolledCertificatePath)
@@ -200,38 +158,14 @@ func generateSecureBootDatabase(path, enrolledCertificatePath, signingKeyPath, s
 		return err
 	}
 
-	// Create ESL
-	db := signature.NewSignatureDatabase()
-	if err = db.Append(signature.CERT_X509_GUID, *efiGUID, enrolledPEM); err != nil {
-		return err
-	}
-
-	// Sign the ESL, but for each EFI variable
-	signedDB, err := efi.SignEFIVariable(key, cert, "db", db.Bytes())
+	db, err := database.Generate(enrolledPEM, signer)
 	if err != nil {
-		return err
-	}
-
-	signedKEK, err := efi.SignEFIVariable(key, cert, "KEK", db.Bytes())
-	if err != nil {
-		return err
-	}
-
-	signedPK, err := efi.SignEFIVariable(key, cert, "PK", db.Bytes())
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to generate database: %w", err)
 	}
 
 	// output all files with sd-boot conventional names for auto-enrolment
-	for _, out := range []struct {
-		name string
-		data []byte
-	}{
-		{constants.SignatureKeyAsset, signedDB},
-		{constants.KeyExchangeKeyAsset, signedKEK},
-		{constants.PlatformKeyAsset, signedPK},
-	} {
-		if err = checkedWrite(filepath.Join(path, out.name), out.data, 0o600); err != nil {
+	for _, entry := range db {
+		if err = checkedWrite(filepath.Join(path, entry.Name), entry.Contents, 0o600); err != nil {
 			return err
 		}
 	}

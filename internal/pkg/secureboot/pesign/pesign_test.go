@@ -5,6 +5,8 @@
 package pesign_test
 
 import (
+	"crypto"
+	stdx509 "crypto/x509"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,6 +18,18 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 )
+
+type certificateProvider struct {
+	*x509.CertificateAuthority
+}
+
+func (c *certificateProvider) Signer() crypto.Signer {
+	return c.CertificateAuthority.Key.(crypto.Signer)
+}
+
+func (c *certificateProvider) Certificate() *stdx509.Certificate {
+	return c.CertificateAuthority.Crt
+}
 
 func TestSign(t *testing.T) {
 	currentTime := time.Now()
@@ -29,15 +43,12 @@ func TestSign(t *testing.T) {
 		x509.Organization("test-sign"),
 	}
 
+	tmpDir := t.TempDir()
+
 	signingKey, err := x509.NewSelfSignedCertificateAuthority(opts...)
 	require.NoError(t, err)
 
-	tmpDir := t.TempDir()
-
-	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "test-sign.key"), signingKey.KeyPEM, 0o600))
-	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "test-sign.crt"), signingKey.CrtPEM, 0o600))
-
-	signer, err := pesign.NewSigner(filepath.Join(tmpDir, "test-sign.crt"), filepath.Join(tmpDir, "test-sign.key"))
+	signer, err := pesign.NewSigner(&certificateProvider{signingKey})
 	require.NoError(t, err)
 
 	require.NoError(t, signer.Sign("testdata/systemd-bootx64.efi", filepath.Join(tmpDir, "boot.efi")))

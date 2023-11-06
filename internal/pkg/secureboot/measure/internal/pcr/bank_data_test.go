@@ -5,6 +5,7 @@
 package pcr_test
 
 import (
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"os"
@@ -17,6 +18,14 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure/internal/pcr"
 	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 )
+
+type keyWrapper struct {
+	*rsa.PrivateKey
+}
+
+func (k keyWrapper) PublicRSAKey() *rsa.PublicKey {
+	return &k.PrivateKey.PublicKey
+}
 
 func TestCalculateBankData(t *testing.T) {
 	t.Parallel()
@@ -36,7 +45,7 @@ func TestCalculateBankData(t *testing.T) {
 			secureboot.Linux:  "testdata/b",
 			secureboot.DTB:    "testdata/c",
 		},
-		key)
+		keyWrapper{key})
 	require.NoError(t, err)
 
 	require.Equal(t,

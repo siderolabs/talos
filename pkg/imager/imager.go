@@ -115,7 +115,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 
 	// 3. Build UKI if Secure Boot is enabled.
 	if i.prof.SecureBootEnabled() {
-		if err = i.buildUKI(report); err != nil {
+		if err = i.buildUKI(ctx, report); err != nil {
 			return "", err
 		}
 	}
@@ -125,7 +125,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 
 	switch i.prof.Output.Kind {
 	case profile.OutKindISO:
-		err = i.outISO(outputAssetPath, report)
+		err = i.outISO(ctx, outputAssetPath, report)
 	case profile.OutKindKernel:
 		err = i.outKernel(outputAssetPath, report)
 	case profile.OutKindUKI:
@@ -294,11 +294,21 @@ func (i *Imager) buildCmdline() error {
 }
 
 // buildUKI assembles the UKI and signs it.
-func (i *Imager) buildUKI(report *reporter.Reporter) error {
+func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error {
 	printf := progressPrintf(report, reporter.Update{Message: "building UKI...", Status: reporter.StatusRunning})
 
 	i.sdBootPath = filepath.Join(i.tempDir, "systemd-boot.efi.signed")
 	i.ukiPath = filepath.Join(i.tempDir, "vmlinuz.efi.signed")
+
+	pcrSigner, err := i.prof.Input.SecureBoot.PCRSigner.GetSigner(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get PCR signer: %w", err)
+	}
+
+	securebootSigner, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get SecureBoot signer: %w", err)
+	}
 
 	builder := uki.Builder{
 		Arch:       i.prof.Arch,
@@ -309,10 +319,8 @@ func (i *Imager) buildUKI(report *reporter.Reporter) error {
 		InitrdPath: i.initramfsPath,
 		Cmdline:    i.cmdline,
 
-		SigningKeyPath:    i.prof.Input.SecureBoot.SigningKeyPath,
-		SigningCertPath:   i.prof.Input.SecureBoot.SigningCertPath,
-		PCRSigningKeyPath: i.prof.Input.SecureBoot.PCRSigningKeyPath,
-		PCRPublicKeyPath:  i.prof.Input.SecureBoot.PCRPublicKeyPath,
+		SecureBootSigner: securebootSigner,
+		PCRSigner:        pcrSigner,
 
 		OutSdBootPath: i.sdBootPath,
 		OutUKIPath:    i.ukiPath,

@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
 )
 
@@ -47,14 +48,10 @@ type Builder struct {
 	InitrdPath string
 	// Kernel cmdline.
 	Cmdline string
-	// SecureBoot signing key path.
-	SigningKeyPath string
-	// SecureBoot signing cert path.
-	SigningCertPath string
-	// PCR signing key path.
-	PCRSigningKeyPath string
-	// PCR signing public key path.
-	PCRPublicKeyPath string
+	// SecureBoot certificate and signer.
+	SecureBootSigner pesign.CertificateSigner
+	// PCR signer.
+	PCRSigner measure.RSAKey
 
 	// Output options:
 	//
@@ -93,9 +90,9 @@ func (builder *Builder) Build(printf func(string, ...any)) error {
 
 	printf("signing systemd-boot")
 
-	builder.peSigner, err = pesign.NewSigner(builder.SigningCertPath, builder.SigningKeyPath)
+	builder.peSigner, err = pesign.NewSigner(builder.SecureBootSigner)
 	if err != nil {
-		return fmt.Errorf("error initilazing signer: %w", err)
+		return fmt.Errorf("error initializing signer: %w", err)
 	}
 
 	// sign sd-boot

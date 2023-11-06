@@ -5,6 +5,7 @@
 package pcr
 
 import (
+	"crypto"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -18,12 +19,18 @@ import (
 	tpm2internal "github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 )
 
+// RSAKey is the input for the CalculateBankData function.
+type RSAKey interface {
+	crypto.Signer
+	PublicRSAKey() *rsa.PublicKey
+}
+
 // CalculateBankData calculates the PCR bank data for a given set of UKI file sections.
 //
 // This mimics the process happening happening in the TPM when the UKI is being loaded.
-func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureboot.Section]string, rsaKey *rsa.PrivateKey) ([]tpm2internal.BankData, error) {
+func CalculateBankData(pcrNumber int, alg tpm2.TPMAlgID, sectionData map[secureboot.Section]string, rsaKey RSAKey) ([]tpm2internal.BankData, error) {
 	// get fingerprint of public key
-	pubKeyFingerprint := sha256.Sum256(x509.MarshalPKCS1PublicKey(&rsaKey.PublicKey))
+	pubKeyFingerprint := sha256.Sum256(x509.MarshalPKCS1PublicKey(rsaKey.PublicRSAKey()))
 
 	hashAlg, err := alg.Hash()
 	if err != nil {

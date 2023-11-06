@@ -6,6 +6,7 @@ package imager
 
 import (
 	"context"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"os"
@@ -23,6 +24,8 @@ import (
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/database"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
 	"github.com/siderolabs/talos/pkg/imager/filemap"
 	"github.com/siderolabs/talos/pkg/imager/iso"
 	"github.com/siderolabs/talos/pkg/imager/ova"
@@ -73,7 +76,8 @@ func (i *Imager) outCmdline(path string) error {
 	return os.WriteFile(path, []byte(i.cmdline), 0o644)
 }
 
-func (i *Imager) outISO(path string, report *reporter.Reporter) error {
+//nolint:gocyclo
+func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Reporter) error {
 	printf := progressPrintf(report, reporter.Update{Message: "building ISO...", Status: reporter.StatusRunning})
 
 	scratchSpace := filepath.Join(i.tempDir, "iso")
@@ -81,7 +85,7 @@ func (i *Imager) outISO(path string, report *reporter.Reporter) error {
 	var err error
 
 	if i.prof.SecureBootEnabled() {
-		err = iso.CreateUEFI(printf, iso.UEFIOptions{
+		options := iso.UEFIOptions{
 			UKIPath:    i.ukiPath,
 			SDBootPath: i.sdBootPath,
 
@@ -94,7 +98,56 @@ func (i *Imager) outISO(path string, report *reporter.Reporter) error {
 
 			ScratchDir: scratchSpace,
 			OutPath:    path,
-		})
+		}
+
+		if i.prof.Input.SecureBoot.PlatformKeyPath == "" {
+			report.Report(reporter.Update{Message: "generating SecureBoot database...", Status: reporter.StatusRunning})
+
+			// generate the database automatically from provided values
+			var signer pesign.CertificateSigner
+
+			signer, err = i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get SecureBoot signer: %w", err)
+			}
+
+			enrolledPEM := pem.EncodeToMemory(&pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: signer.Certificate().Raw,
+			})
+
+			var entries []database.Entry
+
+			entries, err = database.Generate(enrolledPEM, signer)
+			if err != nil {
+				return fmt.Errorf("failed to generate database: %w", err)
+			}
+
+			for _, entry := range entries {
+				entryPath := filepath.Join(i.tempDir, entry.Name)
+
+				if err = os.WriteFile(entryPath, entry.Contents, 0o600); err != nil {
+					return err
+				}
+
+				switch entry.Name {
+				case constants.PlatformKeyAsset:
+					options.PlatformKeyPath = entryPath
+				case constants.KeyExchangeKeyAsset:
+					options.KeyExchangeKeyPath = entryPath
+				case constants.SignatureKeyAsset:
+					options.SignatureKeyPath = entryPath
+				default:
+					return fmt.Errorf("unknown database entry: %s", entry.Name)
+				}
+			}
+		} else {
+			options.PlatformKeyPath = i.prof.Input.SecureBoot.PlatformKeyPath
+			options.KeyExchangeKeyPath = i.prof.Input.SecureBoot.KeyExchangeKeyPath
+			options.SignatureKeyPath = i.prof.Input.SecureBoot.SignatureKeyPath
+		}
+
+		err = iso.CreateUEFI(printf, options)
 	} else {
 		err = iso.CreateGRUB(printf, iso.GRUBOptions{
 			KernelPath:    i.prof.Input.Kernel.Path,

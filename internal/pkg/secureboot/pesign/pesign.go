@@ -8,44 +8,27 @@ package pesign
 import (
 	"crypto"
 	"crypto/x509"
-	"fmt"
 	"os"
 
 	"github.com/foxboron/go-uefi/efi"
-	siderox509 "github.com/siderolabs/crypto/x509"
 )
 
 // Signer sigs PE (portable executable) files.
 type Signer struct {
-	key  crypto.Signer
-	cert *x509.Certificate
+	provider CertificateSigner
+}
+
+// CertificateSigner is a provider of the certificate and the signer.
+type CertificateSigner interface {
+	Signer() crypto.Signer
+	Certificate() *x509.Certificate
 }
 
 // NewSigner creates a new Signer.
-func NewSigner(certFile, keyFile string) (*Signer, error) {
-	pem, err := siderox509.NewCertificateAndKeyFromFiles(certFile, keyFile)
-	if err != nil {
-		return nil, err
-	}
-
-	cert, err := pem.GetCert()
-	if err != nil {
-		return nil, err
-	}
-
-	key, err := pem.GetKey()
-	if err != nil {
-		return nil, err
-	}
-
-	if signer, ok := key.(crypto.Signer); ok {
-		return &Signer{
-			key:  signer,
-			cert: cert,
-		}, nil
-	}
-
-	return nil, fmt.Errorf("key is not a crypto.Signer")
+func NewSigner(provider CertificateSigner) (*Signer, error) {
+	return &Signer{
+		provider: provider,
+	}, nil
 }
 
 // Sign signs the input file and writes the output to the output file.
@@ -55,7 +38,7 @@ func (s *Signer) Sign(input, output string) error {
 		return err
 	}
 
-	signed, err := efi.SignEFIExecutable(s.key, s.cert, unsigned)
+	signed, err := efi.SignEFIExecutable(s.provider.Signer(), s.provider.Certificate(), unsigned)
 	if err != nil {
 		return err
 	}

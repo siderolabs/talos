@@ -5,10 +5,13 @@
 package uki
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"os"
 	"path/filepath"
 
+	talosx509 "github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
@@ -153,10 +156,26 @@ func (builder *Builder) generateSBAT() error {
 }
 
 func (builder *Builder) generatePCRPublicKey() error {
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(builder.PCRSigner.PublicRSAKey())
+	if err != nil {
+		return err
+	}
+
+	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  talosx509.PEMTypeRSAPublic,
+		Bytes: publicKeyBytes,
+	})
+
+	path := filepath.Join(builder.scratchDir, "pcr-public.pem")
+
+	if err = os.WriteFile(path, publicKeyPEM, 0o600); err != nil {
+		return err
+	}
+
 	builder.sections = append(builder.sections,
 		section{
 			Name:    secureboot.PCRPKey,
-			Path:    builder.PCRPublicKeyPath,
+			Path:    path,
 			Append:  true,
 			Measure: true,
 		},
@@ -195,7 +214,7 @@ func (builder *Builder) generatePCRSig() error {
 			return s.Name, s.Path
 		})
 
-	pcrData, err := measure.GenerateSignedPCR(sectionsData, builder.PCRSigningKeyPath)
+	pcrData, err := measure.GenerateSignedPCR(sectionsData, builder.PCRSigner)
 	if err != nil {
 		return err
 	}

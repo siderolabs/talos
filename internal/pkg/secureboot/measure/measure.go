@@ -8,11 +8,8 @@
 package measure
 
 import (
+	"crypto"
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
-	"fmt"
-	"os"
 
 	"github.com/google/go-tpm/tpm2"
 
@@ -24,33 +21,14 @@ import (
 // SectionsData holds a map of Section to file path to the corresponding section.
 type SectionsData map[secureboot.Section]string
 
-func loadRSAKey(path string) (*rsa.PrivateKey, error) {
-	keyData, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	// convert private key to rsa.PrivateKey
-	rsaPrivateKeyBlock, _ := pem.Decode(keyData)
-	if rsaPrivateKeyBlock == nil {
-		return nil, err
-	}
-
-	rsaKey, err := x509.ParsePKCS1PrivateKey(rsaPrivateKeyBlock.Bytes)
-	if err != nil {
-		return nil, fmt.Errorf("parse private key failed: %v", err)
-	}
-
-	return rsaKey, nil
+// RSAKey is the input for the CalculateBankData function.
+type RSAKey interface {
+	crypto.Signer
+	PublicRSAKey() *rsa.PublicKey
 }
 
 // GenerateSignedPCR generates the PCR signed data for a given set of UKI file sections.
-func GenerateSignedPCR(sectionsData SectionsData, rsaKeyPath string) (*tpm2internal.PCRData, error) {
-	rsaKey, err := loadRSAKey(rsaKeyPath)
-	if err != nil {
-		return nil, err
-	}
-
+func GenerateSignedPCR(sectionsData SectionsData, rsaKey RSAKey) (*tpm2internal.PCRData, error) {
 	data := &tpm2internal.PCRData{}
 
 	for _, algo := range []struct {

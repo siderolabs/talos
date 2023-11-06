@@ -47,10 +47,9 @@ PCR signing key can be generated with:
 ```shell
 $ talosctl gen secureboot pcr
 writing _out/pcr-signing-key.pem
-writing _out/pcr-signing-public-key.pem
 ```
 
-Two files containing the private and public key are written to disk in PEM-encoded format (RSA 2048-bit key).
+The file containing the private key is written to disk in PEM-encoded format (RSA 2048-bit key).
 
 Optionally, UEFI automatic key enrollment database can be generated using the `_out/uki-signing-*` files as input:
 

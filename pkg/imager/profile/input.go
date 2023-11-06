@@ -14,9 +14,14 @@ import (
 	"github.com/google/go-containerregistry/pkg/crane"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
+	"github.com/siderolabs/gen/value"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
 	"github.com/siderolabs/talos/pkg/archiver"
+	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/azure"
+	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/file"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -75,22 +80,66 @@ type ContainerAsset struct {
 // SecureBootAssets describes secureboot assets.
 type SecureBootAssets struct {
 	// SecureBoot signing key & cert.
-	SigningKeyPath  string `yaml:"signingKeyPath"`
-	SigningCertPath string `yaml:"signingCertPath"`
-	// PCR signing key & public key.
-	PCRSigningKeyPath string `yaml:"pcrSigningKeyPath"`
-	PCRPublicKeyPath  string `yaml:"pcrPublicKeyPath"`
+	SecureBootSigner SigningKeyAndCertificate `yaml:"secureBootSigner"`
+	// PCR signing key.
+	PCRSigner SigningKey `yaml:"pcrSigner"`
 	// Optional, auto-enrollment paths.
 	PlatformKeyPath    string `yaml:"platformKeyPath,omitempty"`
 	KeyExchangeKeyPath string `yaml:"keyExchangeKeyPath,omitempty"`
 	SignatureKeyPath   string `yaml:"signatureKeyPath,omitempty"`
 }
 
+// SigningKeyAndCertificate describes a signing key & certificate.
+type SigningKeyAndCertificate struct {
+	// File-based:
+	KeyPath  string `yaml:"keyPath,omitempty"`
+	CertPath string `yaml:"certPath,omitempty"`
+	// Azure:
+	AzureVaultURL      string `yaml:"azureVaultURL,omitempty"`
+	AzureCertificateID string `yaml:"azureCertificateID,omitempty"`
+}
+
+// SigningKey describes a signing key.
+type SigningKey struct {
+	// File-based:
+	KeyPath string `yaml:"keyPath,omitempty"`
+	// Azure:
+	//
+	// AzureKeyVersion might be left empty to use the latest key version.
+	AzureVaultURL   string `yaml:"azureVaultURL,omitempty"`
+	AzureKeyID      string `yaml:"azureKeyID,omitempty"`
+	AzureKeyVersion string `yaml:"azureKeyVersion,omitempty"`
+}
+
+// GetSigner returns the signer.
+func (key SigningKey) GetSigner(ctx context.Context) (measure.RSAKey, error) {
+	switch {
+	case key.KeyPath != "":
+		return file.NewPCRSigner(key.KeyPath)
+	case key.AzureVaultURL != "" && key.AzureKeyID != "":
+		return azure.NewPCRSigner(ctx, key.AzureVaultURL, key.AzureKeyID, key.AzureKeyVersion)
+	default:
+		return nil, fmt.Errorf("unsupported PCR signer")
+	}
+}
+
+// GetSigner returns the signer.
+func (keyAndCert SigningKeyAndCertificate) GetSigner(ctx context.Context) (pesign.CertificateSigner, error) {
+	switch {
+	case keyAndCert.KeyPath != "" && keyAndCert.CertPath != "":
+		return file.NewSecureBootSigner(keyAndCert.CertPath, keyAndCert.KeyPath)
+	case keyAndCert.AzureVaultURL != "" && keyAndCert.AzureCertificateID != "":
+		return azure.NewSecureBootSigner(ctx, keyAndCert.AzureVaultURL, keyAndCert.AzureCertificateID, keyAndCert.AzureCertificateID)
+	default:
+		return nil, fmt.Errorf("unsupported PCR signer")
+	}
+}
+
 const defaultSecureBootPrefix = "/secureboot"
 
 // FillDefaults fills default values for the input.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 	var (
 		zeroFileAsset      FileAsset
@@ -136,20 +185,13 @@ func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 			i.SecureBoot = &SecureBootAssets{}
 		}
 
-		if i.SecureBoot.SigningKeyPath == "" {
-			i.SecureBoot.SigningKeyPath = filepath.Join(defaultSecureBootPrefix, constants.SecureBootSigningKeyAsset)
+		if value.IsZero(i.SecureBoot.SecureBootSigner) {
+			i.SecureBoot.SecureBootSigner.KeyPath = filepath.Join(defaultSecureBootPrefix, constants.SecureBootSigningKeyAsset)
+			i.SecureBoot.SecureBootSigner.CertPath = filepath.Join(defaultSecureBootPrefix, constants.SecureBootSigningCertAsset)
 		}
 
-		if i.SecureBoot.SigningCertPath == "" {
-			i.SecureBoot.SigningCertPath = filepath.Join(defaultSecureBootPrefix, constants.SecureBootSigningCertAsset)
-		}
-
-		if i.SecureBoot.PCRSigningKeyPath == "" {
-			i.SecureBoot.PCRSigningKeyPath = filepath.Join(defaultSecureBootPrefix, constants.PCRSigningKeyAsset)
-		}
-
-		if i.SecureBoot.PCRPublicKeyPath == "" {
-			i.SecureBoot.PCRPublicKeyPath = filepath.Join(defaultSecureBootPrefix, constants.PCRSigningPublicKeyAsset)
+		if value.IsZero(i.SecureBoot.PCRSigner) {
+			i.SecureBoot.PCRSigner.KeyPath = filepath.Join(defaultSecureBootPrefix, constants.PCRSigningKeyAsset)
 		}
 
 		if i.SecureBoot.PlatformKeyPath == "" {

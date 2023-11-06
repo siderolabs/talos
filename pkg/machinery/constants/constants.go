@@ -559,9 +559,6 @@ const (
 	// PCRSigningKeyAsset defines a well known name for the PCR signing key filename.
 	PCRSigningKeyAsset = "pcr-signing-key.pem"
 
-	// PCRSigningPublicKeyAsset defines a well known name for the PCR signing public key filename.
-	PCRSigningPublicKeyAsset = "pcr-signing-public-key.pem"
-
 	// SDStubDynamicInitrdPath is the path where dynamically generated initrds are placed by systemd-stub.
 	// https://www.mankier.com/7/systemd-stub#Description
 	SDStubDynamicInitrdPath = "/.extra"
