@@ -29,9 +29,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/gopacket/gopacket"
-	"github.com/gopacket/gopacket/layers"
-	"github.com/gopacket/gopacket/pcapgo"
+	"github.com/gopacket/gopacket/afpacket"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/nberlee/go-netstat/netstat"
 	"github.com/prometheus/procfs"
@@ -66,6 +64,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/miniprocfs"
+	"github.com/siderolabs/talos/internal/pkg/pcap"
 	"github.com/siderolabs/talos/pkg/archiver"
 	"github.com/siderolabs/talos/pkg/chunker"
 	"github.com/siderolabs/talos/pkg/chunker/stream"
@@ -2169,13 +2168,13 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		return err
 	}
 
-	var linkType layers.LinkType
+	var linkType pcap.LinkType
 
 	switch linkInfo.TypedSpec().Type { //nolint:exhaustive
 	case nethelpers.LinkEther, nethelpers.LinkLoopbck:
-		linkType = layers.LinkTypeEthernet
+		linkType = pcap.LinkTypeEthernet
 	case nethelpers.LinkNone:
-		linkType = layers.LinkTypeRaw
+		linkType = pcap.LinkTypeRaw
 	default:
 		return status.Errorf(codes.InvalidArgument, "unsupported link type %s", linkInfo.TypedSpec().Type)
 	}
@@ -2197,27 +2196,25 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		})
 	}
 
-	handle, err := pcapgo.NewEthernetHandle(in.Interface)
+	handle, err := afpacket.NewTPacket(
+		afpacket.OptInterface(in.Interface),
+		afpacket.OptFrameSize(int(in.SnapLen)),
+		afpacket.OptBlockSize(int(in.SnapLen)*128),
+	)
 	if err != nil {
-		return fmt.Errorf("error setting up packet capture on %q: %w", in.Interface, err)
-	}
-
-	if err = handle.SetCaptureLength(int(in.SnapLen)); err != nil {
-		handle.Close() //nolint:errcheck
-
-		return fmt.Errorf("error setting capture length %q: %w", in.SnapLen, err)
+		return fmt.Errorf("error creating afpacket handle: %w", err)
 	}
 
 	if len(filter) > 0 {
 		if err = handle.SetBPF(filter); err != nil {
-			handle.Close() //nolint:errcheck
+			handle.Close()
 
 			return fmt.Errorf("error setting BPF filter: %w", err)
 		}
 	}
 
 	if err = handle.SetPromiscuous(in.Promiscuous); err != nil {
-		handle.Close() //nolint:errcheck
+		handle.Close()
 
 		return fmt.Errorf("error setting promiscuous mode %v: %w", in.Promiscuous, err)
 	}
@@ -2246,11 +2243,11 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 }
 
 //nolint:gocyclo
-func capturePackets(pw *io.PipeWriter, handle *pcapgo.EthernetHandle, snapLen uint32, linkType layers.LinkType) {
-	defer pw.Close()     //nolint:errcheck
-	defer handle.Close() //nolint:errcheck
+func capturePackets(pw *io.PipeWriter, handle *afpacket.TPacket, snapLen uint32, linkType pcap.LinkType) {
+	defer pw.Close() //nolint:errcheck
+	defer handle.Close()
 
-	pcapw := pcapgo.NewWriterNanos(pw)
+	pcapw := pcap.NewWriter(pw)
 
 	if err := pcapw.WriteFileHeader(snapLen, linkType); err != nil {
 		pw.CloseWithError(err)
@@ -2259,19 +2256,25 @@ func capturePackets(pw *io.PipeWriter, handle *pcapgo.EthernetHandle, snapLen ui
 	}
 
 	defer func() {
-		stats, err := handle.Stats()
-		if err == nil {
-			log.Printf("pcap: packets captured %d, dropped %d", stats.Packets, stats.Drops)
+		infoMessage := "pcap: "
+
+		stats, errStats := handle.Stats()
+		if errStats == nil {
+			infoMessage += fmt.Sprintf("packets captured %d, polls %d", stats.Packets, stats.Polls)
 		}
+
+		_, socketStatsV3, socketStatsErr := handle.SocketStats()
+		if socketStatsErr == nil {
+			infoMessage += fmt.Sprintf(", socket stats: drops %d, packets %d, queue freezes %d", socketStatsV3.Drops(), socketStatsV3.Packets(), socketStatsV3.QueueFreezes())
+		}
+
+		log.Print(infoMessage)
 	}()
 
-	pkgsrc := gopacket.NewPacketSource(handle, layers.LayerTypeEthernet)
-	pkgsrc.Lazy = true
-
 	for {
-		packet, err := pkgsrc.NextPacket()
+		data, captureData, err := handle.ZeroCopyReadPacketData()
 		if err == nil {
-			if err = pcapw.WritePacket(packet.Metadata().CaptureInfo, packet.Data()); err != nil {
+			if err = pcapw.WritePacket(captureData, data); err != nil {
 				pw.CloseWithError(err)
 
 				return
