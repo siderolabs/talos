@@ -186,8 +186,11 @@ const (
 	// KubernetesDefaultCertificateValidityDuration specifies default certificate duration for Kubernetes generated certificates.
 	KubernetesDefaultCertificateValidityDuration = time.Hour * 24 * 365
 
+	// KubernetesConfigBaseDir is the path to the base Kubernetes configuration directory.
+	KubernetesConfigBaseDir = "/etc/kubernetes"
+
 	// DefaultCertificatesDir is the path the Kubernetes PKI directory.
-	DefaultCertificatesDir = "/etc/kubernetes/pki"
+	DefaultCertificatesDir = KubernetesConfigBaseDir + "/" + "pki"
 
 	// KubernetesCACert is the path to the root CA certificate.
 	KubernetesCACert = DefaultCertificatesDir + "/" + "ca.crt"
@@ -284,7 +287,13 @@ const (
 
 	// KubeletBootstrapKubeconfig is the path to the kubeconfig required to
 	// bootstrap the kubelet.
-	KubeletBootstrapKubeconfig = "/etc/kubernetes/bootstrap-kubeconfig"
+	KubeletBootstrapKubeconfig = KubernetesConfigBaseDir + "/" + "bootstrap-kubeconfig"
+
+	// KubeletCredentialProviderBinDir is the path to the directory where kubelet credential provider binaries are stored.
+	KubeletCredentialProviderBinDir = "/usr/local/lib/kubelet/credentialproviders"
+
+	// KubeletCredentialProviderConfig is the path to the kubelet credential provider config.
+	KubeletCredentialProviderConfig = KubernetesConfigBaseDir + "/" + "kubelet-credentialproviderconfig.yaml"
 
 	// KubeletPort is the kubelet port for secure API.
 	KubeletPort = 10250
@@ -345,13 +354,13 @@ const (
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
 
 	// ManifestsDirectory is the directory that contains all static manifests.
-	ManifestsDirectory = "/etc/kubernetes/manifests"
+	ManifestsDirectory = KubernetesConfigBaseDir + "/" + "manifests"
 
 	// TalosManifestPrefix is the prefix for static pod files created in ManifestsDirectory by Talos.
 	TalosManifestPrefix = "talos-"
 
 	// KubeletKubeconfig is the generated kubeconfig for kubelet.
-	KubeletKubeconfig = "/etc/kubernetes/kubeconfig-kubelet"
+	KubeletKubeconfig = KubernetesConfigBaseDir + "/" + "kubeconfig-kubelet"
 
 	// KubeletSystemReservedCPU cpu system reservation value for kubelet kubeconfig.
 	KubeletSystemReservedCPU = "50m"
@@ -421,13 +430,13 @@ const (
 	VMwareGuestInfoOvfEnvKey = "ovfenv"
 
 	// AuditPolicyPath is the path to the audit-policy.yaml relative to initramfs.
-	AuditPolicyPath = "/etc/kubernetes/audit-policy.yaml"
+	AuditPolicyPath = KubernetesConfigBaseDir + "/" + "audit-policy.yaml"
 
 	// EncryptionConfigPath is the path to the EncryptionConfig relative to initramfs.
-	EncryptionConfigPath = "/etc/kubernetes/encryptionconfig.yaml"
+	EncryptionConfigPath = KubernetesConfigBaseDir + "/" + "encryptionconfig.yaml"
 
 	// EncryptionConfigRootfsPath is the path to the EncryptionConfig relative to rootfs.
-	EncryptionConfigRootfsPath = "/etc/kubernetes/encryptionconfig.yaml"
+	EncryptionConfigRootfsPath = KubernetesConfigBaseDir + "/" + "encryptionconfig.yaml"
 
 	// ApidPort is the port for the apid service.
 	ApidPort = 50000
@@ -956,7 +965,7 @@ const (
 // Overlays is the set of paths to create overlay mounts for.
 var Overlays = []string{
 	"/etc/cni",
-	"/etc/kubernetes",
+	KubernetesConfigBaseDir,
 	"/usr/libexec/kubernetes",
 	"/opt",
 }

@@ -77,6 +77,7 @@ func NewKubeletConfigController() *KubeletConfigController {
 				kubeletConfig.StaticPodListURL = staticPodURL.TypedSpec().URL
 				kubeletConfig.DisableManifestsDirectory = cfgProvider.Machine().Kubelet().DisableManifestsDirectory()
 				kubeletConfig.EnableFSQuotaMonitoring = cfgProvider.Machine().Features().DiskQuotaSupportEnabled()
+				kubeletConfig.CredentialProviderConfig = cfgProvider.Machine().Kubelet().CredentialProviderConfig()
 
 				return nil
 			},

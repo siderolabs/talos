@@ -298,12 +298,15 @@ type Time interface {
 
 // Kubelet defines the requirements for a config that pertains to kubelet
 // related options.
+//
+//nolint:interfacebloat
 type Kubelet interface {
 	Image() string
 	ClusterDNS() []string
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
 	ExtraConfig() map[string]interface{}
+	CredentialProviderConfig() map[string]interface{}
 	DefaultRuntimeSeccompProfileEnabled() bool
 	RegisterWithFQDN() bool
 	NodeIP() KubeletNodeIP

@@ -1319,6 +1319,7 @@ func (in *KubeletConfig) DeepCopyInto(out *KubeletConfig) {
 		}
 	}
 	in.KubeletExtraConfig.DeepCopyInto(&out.KubeletExtraConfig)
+	in.KubeletCredentialProviderConfig.DeepCopyInto(&out.KubeletCredentialProviderConfig)
 	if in.KubeletDefaultRuntimeSeccompProfileEnabled != nil {
 		in, out := &in.KubeletDefaultRuntimeSeccompProfileEnabled, &out.KubeletDefaultRuntimeSeccompProfileEnabled
 		*out = new(bool)

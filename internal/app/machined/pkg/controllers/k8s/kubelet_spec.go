@@ -77,7 +77,7 @@ func (ctrl *KubeletSpecController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -166,6 +166,12 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error merging arguments: %w", err)
 		}
 
+		// these flags are present from v1.24
+		if cfgSpec.CredentialProviderConfig != nil {
+			args["image-credential-provider-bin-dir"] = constants.KubeletCredentialProviderBinDir
+			args["image-credential-provider-config"] = constants.KubeletCredentialProviderConfig
+		}
+
 		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion)
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
@@ -195,6 +201,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 				kubeletSpec.Args = args.Args()
 				kubeletSpec.Config = unstructuredConfig
 				kubeletSpec.ExpectedNodename = expectedNodename
+				kubeletSpec.CredentialProviderConfig = cfgSpec.CredentialProviderConfig
 
 				return nil
 			},

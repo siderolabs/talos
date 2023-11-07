@@ -23,6 +23,15 @@ If the initial boot requires firmware, a custom iso can be built with the firmwa
 This also ensures that the linux-firmware is not tied to a specific Talos version.
 """
 
+    [notes.Kubelet]
+        title = "Kubelet Credential Provider Configuration"
+        description = """\
+Talos now supports specifying the kubelet credential provider configuration in the Talos configuration file.
+It can be set under `machine.kubelet.credentialProviderConfig` and kubelet will be automatically configured to with the correct flags.
+The credential binaries are expected to be present under `/usr/local/lib/kubelet/credentialproviders`.
+Talos System Extensions can be used to install the credential binaries.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description = """\

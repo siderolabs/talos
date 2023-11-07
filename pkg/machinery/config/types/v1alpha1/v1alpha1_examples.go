@@ -639,6 +639,29 @@ func kubeletExtraConfigExample() Unstructured {
 	}
 }
 
+func kubeletCredentialProviderConfigExample() Unstructured {
+	return Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "kubelet.config.k8s.io/v1",
+			"kind":       "CredentialProviderConfig",
+			"providers": []interface{}{
+				map[string]interface{}{
+					"name":       "ecr-credential-provider",
+					"apiVersion": "credentialprovider.kubelet.k8s.io/v1",
+					"matchImages": []interface{}{
+						"*.dkr.ecr.*.amazonaws.com",
+						"*.dkr.ecr.*.amazonaws.com.cn",
+						"*.dkr.ecr-fips.*.amazonaws.com",
+						"*.dkr.ecr.us-iso-east-1.c2s.ic.gov",
+						"*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov",
+					},
+					"defaultCacheDuration": "12h",
+				},
+			},
+		},
+	}
+}
+
 func loggingEndpointExample1() *Endpoint {
 	return &Endpoint{
 		mustParseURL("udp://127.0.0.1:12345"),

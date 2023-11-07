@@ -592,6 +592,13 @@ type KubeletConfig struct {
 	//     type: object
 	KubeletExtraConfig Unstructured `yaml:"extraConfig,omitempty"`
 	//  description: |
+	//   The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.
+	//  examples:
+	//    - value: kubeletCredentialProviderConfigExample()
+	//  schema:
+	//    type: object
+	KubeletCredentialProviderConfig Unstructured `yaml:"credentialProviderConfig,omitempty"`
+	//  description: |
 	//    Enable container runtime default Seccomp profile.
 	//  values:
 	//    - true

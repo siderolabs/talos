@@ -179,6 +179,10 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error writing kubelet configuration: %w", err)
 		}
 
+		if err = ctrl.writeKubeletCredentialProviderConfig(cfgSpec); err != nil {
+			return fmt.Errorf("error writing kubelet credential provider configuration: %w", err)
+		}
+
 		_, running, err := ctrl.V1Alpha1Services.IsRunning("kubelet")
 		if err != nil {
 			ctrl.V1Alpha1Services.Load(&services.Kubelet{})
@@ -367,6 +371,35 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 	}
 
 	return os.WriteFile("/etc/kubernetes/kubelet.yaml", buf.Bytes(), 0o600)
+}
+
+func (ctrl *KubeletServiceController) writeKubeletCredentialProviderConfig(cfgSpec *k8s.KubeletSpecSpec) error {
+	if cfgSpec.CredentialProviderConfig == nil {
+		return os.RemoveAll(constants.KubeletCredentialProviderConfig)
+	}
+
+	var kubeletCredentialProviderConfig kubeletconfig.CredentialProviderConfig
+
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(cfgSpec.CredentialProviderConfig, &kubeletCredentialProviderConfig); err != nil {
+		return fmt.Errorf("error converting kubelet credentialprovider configuration from unstructured: %w", err)
+	}
+
+	serializer := json.NewSerializerWithOptions(
+		json.DefaultMetaFactory,
+		nil,
+		nil,
+		json.SerializerOptions{
+			Yaml: true,
+		},
+	)
+
+	var buf bytes.Buffer
+
+	if err := serializer.Encode(&kubeletCredentialProviderConfig, &buf); err != nil {
+		return err
+	}
+
+	return os.WriteFile(constants.KubeletCredentialProviderConfig, buf.Bytes(), 0o600)
 }
 
 // updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.

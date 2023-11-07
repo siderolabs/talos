@@ -39,6 +39,7 @@ type KubeletConfigSpec struct {
 	StaticPodListURL             string            `yaml:"staticPodListURL" protobuf:"10"`
 	DisableManifestsDirectory    bool              `yaml:"disableManifestsDirectory" protobuf:"11"`
 	EnableFSQuotaMonitoring      bool              `yaml:"enableFSQuotaMonitoring" protobuf:"12"`
+	CredentialProviderConfig     map[string]any    `yaml:"credentialProviderConfig,omitempty" protobuf:"13"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.

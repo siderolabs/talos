@@ -1735,6 +1735,13 @@
           "markdownDescription": "The `extraConfig` field is used to provide kubelet configuration overrides.\n\nSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.",
           "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eextraConfig\u003c/code\u003e field is used to provide kubelet configuration overrides.\u003c/p\u003e\n\n\u003cp\u003eSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.\u003c/p\u003e\n"
         },
+        "credentialProviderConfig": {
+          "type": "object",
+          "title": "credentialProviderConfig",
+          "description": "The KubeletCredentialProviderConfig field is used to provide kubelet credential configuration.\n",
+          "markdownDescription": "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eKubeletCredentialProviderConfig\u003c/code\u003e field is used to provide kubelet credential configuration.\u003c/p\u003e\n"
+        },
         "defaultRuntimeSeccompProfileEnabled": {
           "type": "boolean",
           "title": "defaultRuntimeSeccompProfileEnabled",

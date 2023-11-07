@@ -568,7 +568,7 @@ COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
     mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
-    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
+    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
@@ -632,7 +632,7 @@ COPY ./hack/cleanup.sh /toolchain/bin/cleanup.sh
 RUN <<END
     cleanup.sh /rootfs
     mkdir -pv /rootfs/{boot/EFI,etc/cri/conf.d/hosts,lib/firmware,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
-    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes}
+    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
 END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC

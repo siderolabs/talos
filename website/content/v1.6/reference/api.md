@@ -2079,6 +2079,7 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | static_pod_list_url | [string](#string) |  |  |
 | disable_manifests_directory | [bool](#bool) |  |  |
 | enable_fs_quota_monitoring | [bool](#bool) |  |  |
+| credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 
 
 
@@ -2114,6 +2115,7 @@ KubeletSpecSpec holds the source of kubelet configuration.
 | extra_mounts | [talos.resource.definitions.proto.Mount](#talos.resource.definitions.proto.Mount) | repeated |  |
 | expected_nodename | [string](#string) |  |  |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 
 
 

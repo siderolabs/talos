@@ -143,6 +143,7 @@ message KubeletConfigSpec {
   string static_pod_list_url = 10;
   bool disable_manifests_directory = 11;
   bool enable_fs_quota_monitoring = 12;
+  google.protobuf.Struct credential_provider_config = 13;
 }
 
 // KubeletSpecSpec holds the source of kubelet configuration.
@@ -152,6 +153,7 @@ message KubeletSpecSpec {
   repeated talos.resource.definitions.proto.Mount extra_mounts = 3;
   string expected_nodename = 4;
   google.protobuf.Struct config = 5;
+  google.protobuf.Struct credential_provider_config = 6;
 }
 
 // ManifestSpec holds the Kubernetes resources spec.

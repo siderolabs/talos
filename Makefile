@@ -47,6 +47,8 @@ TEXTLINT_VERSION ?= 13.3.3
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
 TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
+# renovate: datasource=docker depName=klakegg/hugo
+HUGO_VERSION ?= 0.99.1-ext-alpine
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
@@ -235,9 +237,10 @@ docs: ## Generates the documentation for machine config, and talosctl.
 .PHONY: docs-preview
 docs-preview: ## Starts a local preview of the documentation using Hugo in docker
 	@docker run --rm --interactive --tty \
+	--user $(shell id -u):$(shell id -g) \
 	--volume $(PWD):/src --workdir /src/website \
 	--publish 1313:1313 \
-	klakegg/hugo:0.95.0-ext-alpine \
+	klakegg/hugo:$(HUGO_VERSION) \
 	server
 
 # Local Artifacts

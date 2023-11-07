@@ -126,6 +126,21 @@ kubelet:
     # extraConfig:
     #     serverTLSBootstrap: true
 
+    # # The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.
+    # credentialProviderConfig:
+    #     apiVersion: kubelet.config.k8s.io/v1
+    #     kind: CredentialProviderConfig
+    #     providers:
+    #         - apiVersion: credentialprovider.kubelet.k8s.io/v1
+    #           defaultCacheDuration: 12h
+    #           matchImages:
+    #             - '*.dkr.ecr.*.amazonaws.com'
+    #             - '*.dkr.ecr.*.amazonaws.com.cn'
+    #             - '*.dkr.ecr-fips.*.amazonaws.com'
+    #             - '*.dkr.ecr.us-iso-east-1.c2s.ic.gov'
+    #             - '*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov'
+    #           name: ecr-credential-provider
+
     # # The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
     # nodeIP:
     #     # The `validSubnets` field configures the networks to pick kubelet node IP from.
@@ -804,6 +819,21 @@ extraArgs:
 # extraConfig:
 #     serverTLSBootstrap: true
 
+# # The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.
+# credentialProviderConfig:
+#     apiVersion: kubelet.config.k8s.io/v1
+#     kind: CredentialProviderConfig
+#     providers:
+#         - apiVersion: credentialprovider.kubelet.k8s.io/v1
+#           defaultCacheDuration: 12h
+#           matchImages:
+#             - '*.dkr.ecr.*.amazonaws.com'
+#             - '*.dkr.ecr.*.amazonaws.com.cn'
+#             - '*.dkr.ecr-fips.*.amazonaws.com'
+#             - '*.dkr.ecr.us-iso-east-1.c2s.ic.gov'
+#             - '*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov'
+#           name: ecr-credential-provider
+
 # # The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
 # nodeIP:
 #     # The `validSubnets` field configures the networks to pick kubelet node IP from.
@@ -842,6 +872,21 @@ extraMounts:
 |`extraConfig` |Unstructured |<details><summary>The `extraConfig` field is used to provide kubelet configuration overrides.</summary><br />Some fields are not allowed to be overridden: authentication and authorization, cgroups<br />configuration, ports, etc.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraConfig:
     serverTLSBootstrap: true
+{{< /highlight >}}</details> | |
+|`credentialProviderConfig` |Unstructured |The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+credentialProviderConfig:
+    apiVersion: kubelet.config.k8s.io/v1
+    kind: CredentialProviderConfig
+    providers:
+        - apiVersion: credentialprovider.kubelet.k8s.io/v1
+          defaultCacheDuration: 12h
+          matchImages:
+            - '*.dkr.ecr.*.amazonaws.com'
+            - '*.dkr.ecr.*.amazonaws.com.cn'
+            - '*.dkr.ecr-fips.*.amazonaws.com'
+            - '*.dkr.ecr.us-iso-east-1.c2s.ic.gov'
+            - '*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov'
+          name: ecr-credential-provider
 {{< /highlight >}}</details> | |
 |`defaultRuntimeSeccompProfileEnabled` |bool |Enable container runtime default Seccomp profile.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`registerWithFQDN` |bool |<details><summary>The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.</summary>This is required in clouds like AWS.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |

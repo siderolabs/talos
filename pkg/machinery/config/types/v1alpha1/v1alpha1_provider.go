@@ -417,6 +417,11 @@ func (k *KubeletConfig) ExtraConfig() map[string]interface{} {
 	return k.KubeletExtraConfig.Object
 }
 
+// CredentialProviderConfig implements the config.Provider interface.
+func (k *KubeletConfig) CredentialProviderConfig() map[string]interface{} {
+	return k.KubeletCredentialProviderConfig.Object
+}
+
 // DefaultRuntimeSeccompProfileEnabled implements the config.Provider interface.
 func (k *KubeletConfig) DefaultRuntimeSeccompProfileEnabled() bool {
 	return pointer.SafeDeref(k.KubeletDefaultRuntimeSeccompProfileEnabled)

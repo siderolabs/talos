@@ -782,6 +782,13 @@ func (KubeletConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The `extraConfig` field is used to provide kubelet configuration overrides." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "credentialProviderConfig",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "defaultRuntimeSeccompProfileEnabled",
 				Type:        "bool",
 				Note:        "",
@@ -852,7 +859,8 @@ func (KubeletConfig) Doc() *encoder.Doc {
 	})
 	doc.Fields[3].AddExample("", kubeletExtraMountsExample())
 	doc.Fields[4].AddExample("", kubeletExtraConfigExample())
-	doc.Fields[7].AddExample("", kubeletNodeIPExample())
+	doc.Fields[5].AddExample("", kubeletCredentialProviderConfigExample())
+	doc.Fields[8].AddExample("", kubeletNodeIPExample())
 
 	return doc
 }
