@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	bin       = constants.BoardNanoPiR4S + "u-boot-rockchip.bin"
+	bin       = constants.BoardNanoPiR4S + "/u-boot-rockchip.bin"
 	off int64 = 512 * 64
 	dtb       = "rockchip/rk3399-nanopi-r4s.dtb"
 )
