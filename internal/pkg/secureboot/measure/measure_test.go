@@ -6,8 +6,6 @@ package measure_test
 
 import (
 	"bytes"
-	"crypto/sha512"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -16,19 +14,23 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
 )
 
 const (
-	// ExpectedSignatureHex is output of `go test go test -v ./...` when systemd-measure binary is available.
-	ExpectedSignatureHex = "e5fbb57a24951ad4c1621c7b1aa3071d0220d71cb8b498ff7f68ef431d70ee82ab12e6355259253366c839e2ec3dbb92caedb3398f5ceb6aa973666317d4a7f7"
+	// ExpectedSignatureJSON is pre-calculated signature.
+	//nolint:lll
+	ExpectedSignatureJSON = `{"sha256":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"88b9f03a2edc4960894b5fa460169282749aff60d0b491ca71a2bde937f63f28","sig":"JBOKtBN2YAvugIqpPK6aulzCOAscdFojCqkawL9xa43tmhCj2wnfbrskym1QLlozYyiD6/6HpEYB91J71vWtTQTNUiJP910+qvcPkREHUdiPdzBTEDXDklvB9ACXfzcEl1lEhqlYfjJ9nxTmapWjOOL/iV/GgamkAtEwT91HE0ITf6ESedSt0+0T9lft6W10i7nO6WPJfQ2WDAZ6tGZUJLpvf36ZPloxRKXCCGkhtI1FYetT2ZJHgamrm6rGWa+IkOwFBydBjdSg20HDqNPFqzPlXLagx1SxXIPlH9Et+ebiFBRhevgD2GDL52wY3XS88G0AuYAlFrkrmx72wNZ7v/f16srXGOUSLwIzVE10z88nS+TYEUugKtIwrj1h165thMwcQONPSj/tL2OKcmM6jpAtIpApZUYOKip+sS5cKBloqhNbVuu6lzexi7THYWpn+Bzlj5zu7VO6yDLb8FaCxgTdoCiR8/q5yzXa8+LBJX1wfdvktDYGdmO0h/nGQYjOfKCSV2WCZLxIiNPedWkUX7hMIggTaaYiaxwYJHIZNKS0N3H1FGkSSFnYNJFHyW0S7BSi8dF9l0VlgXh6HrwSbMyv1avNQiL/pP7CwyA/dyYdsON6neWFRoYfaKRZdrQRKvH4VhjdB4CGLgxB7Pom8BQc8Vi68sAsKLKsNXY8GSs="}],"sha384":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"532380d1bfae365cca029f2e4a57601d528a346bfd9feae1e1f3f994260fb56d","sig":"qKilaBxg/goIw3TXfd+kIMqfA1EOcWngv+iH/xUliHLyxzTVHxx4vF4+wVJUNmS7vj10ffU876cySqyV9S9EFSPn3EEHLKza5n4skf++IZj3UvBXRwXTKKnE+iLDvj3r8maEorOD5J9rlv7nZZ95HESNxy0J2lXa0ik+vGKaKqySkyqFF2xM22M9Ko3iGr2bTSK8faGcorORNe/Hjr3GeJWm66Ea1EJvlIR9HjwDdeY+RMF/WEtSYMVkRM6ZYp/j2epTOTWsjUqYECxcWxjydrXm+Sf1ZDrHGURBDVHxpfTDWfrdpQ33tyappjwSnwH2zVLqThG6DEUqXmvn0/uYnSjLlKjRVuJyMotrcHSymot2oPQ/olfReOUAOkQR2TqiFEN5NeYAEghMDzwyYv1Rr5ahOJPcPMpEPnztUem4+kaAlOW4aAhuKcrgoiNle4G68CE0d3SEL3JvF3pyg9zSqai59vN8dd7Gw3vDYETPsOFWL7UJKb0DCCDCEFBN9kSvRScjjsz18NfJ0C5df7VhJC+P0WukxAPxQPvaK99HnD4JPpa9P0lEqubb+bvzZ+YuR6zblLVEt+4AISt/4Td0F8ylyMaz4+Rj+zm+VCCrNz3zqIjbLMQ/k1v6rRd/Yjre8DyQjSh7vD2eZr0BopUmimv5gGXvCranbHaq2jSXI5w="}],"sha512":[{"pcrs":[11],"pkfp":"58f58f625bd8a8b6681e4b40688cf99b26419b6b2c5f6e14a2c7c67a3b0b1620","pol":"2ea15476710c3d5e2ac70b6cee68a6a7619c91f69cf2d1387ad567f3fb5076fe","sig":"2SuhxgPM5hjb//gqud9Lomsjss/UTHz8B6wpcyUQHCroGHxd7OoDfzUd3nuXOf7BRbzDRiwo/sX4cR1CDDer9R4ut6QpQ6BHjPdcPxnH06BZvNTDubmU3gWJA49vZDD3IBnEWp/cMyGtVVbYuidy790EP+D9nBs247Cx4B1cepVcO3T5UHrrXst7oOt7OvTC+j3tPrGedhuEmRI0g+ms3VBeX4fcTFkqsjJmEI8kEz+otc388o9m/Edd5jxj42nf+Fu3RKH6GaLicQOr8Eat2RfMwfnv6ZxLhlwolwb/56DGgOJ0yuNEUuLvNru60KBXPjpTurUVSvYqL7qxrz7LqOOm+TMOgUjDV481GFwma6RvVOaAxlbPKwFwJSeMGqyhZBCOXRUraFfD0vJNwhB+BCaEmgXpFLjhX7IsUwieLq73vy9zRp4x+/fyhj2rnAfNku04JovBy7PYI/1nfjmdBoSvCyPmLCu5pznU61aMgpm1O1VgNdsSEqCu/pej724WGJ8tMjlhPHDgzsPnKu68m/0K+Kh5oYlP4uy04NtHXsif37bhdLmg09NcPmI7UEl+h1CGLNT2jf9tklvtDqVfzLyXnnbIoJFasO542Xx9RwlvAWYgs95jZIMYSpE+8o+Eg+rMyW7H/ej2M87HfQltv+R2Jb5Fm99D5kmrdnoH1vc="}]}`
 )
 
 func TestMeasureMatchesExpectedOutput(t *testing.T) {
-	expectedSignatureHex := ExpectedSignatureHex
+	expectedSignatureHex := ExpectedSignatureJSON
 
 	if _, err := exec.LookPath("systemd-measure"); err == nil {
+		t.Log("systemd-measure binary found, using it to get expected signature")
 		expectedSignatureHex = getSignatureUsingSDMeasure(t)
 	}
 
@@ -57,11 +59,7 @@ func TestMeasureMatchesExpectedOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pcrDataJSONHash := sha512.Sum512(pcrDataJSON)
-
-	if hex.EncodeToString(pcrDataJSONHash[:]) != expectedSignatureHex {
-		t.Fatalf("expected: %v, got: %v", expectedSignatureHex, hex.EncodeToString(pcrDataJSONHash[:]))
-	}
+	assert.Equal(t, expectedSignatureHex, string(pcrDataJSON))
 }
 
 func getSignatureUsingSDMeasure(t *testing.T) string {
@@ -88,6 +86,9 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 			"sign",
 			"--private-key",
 			"testdata/pcr-signing-key.pem",
+			"--bank=sha256",
+			"--bank=sha384",
+			"--bank=sha512",
 			"--phase=enter-initrd:leave-initrd:enter-machined",
 			"--json=short",
 		},
@@ -102,11 +103,5 @@ func getSignatureUsingSDMeasure(t *testing.T) string {
 
 	s := bytes.TrimSpace(signature.Bytes())
 
-	signatureHash := sha512.Sum512(s)
-
-	hexEncoded := hex.EncodeToString(signatureHash[:])
-
-	t.Log(hexEncoded)
-
-	return hexEncoded
+	return string(s)
 }
