@@ -70,9 +70,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.Append(
-			"logger",
-			SetupLogger,
-		).Append(
 			"systemRequirements",
 			SetupSystemDirectory,
 		).Append(
@@ -89,9 +86,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		)
 	default:
 		phases = phases.Append(
-			"logger",
-			SetupLogger,
-		).Append(
 			"systemRequirements",
 			EnforceKSPPRequirements,
 			SetupSystemDirectory,
@@ -111,6 +105,9 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"earlyServices",
 			StartUdevd,
 			StartMachined,
+		).Append(
+			"usb",
+			WaitForUSB,
 		).Append(
 			"meta",
 			ReloadMeta,

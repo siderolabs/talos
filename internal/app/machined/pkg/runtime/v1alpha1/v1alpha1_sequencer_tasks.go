@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -35,7 +36,6 @@ import (
 	"github.com/siderolabs/go-blockdevice/blockdevice/util"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc"
-	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
@@ -63,7 +63,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
-	krnl "github.com/siderolabs/talos/pkg/kernel"
 	"github.com/siderolabs/talos/pkg/kernel/kspp"
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -71,7 +70,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -81,41 +79,43 @@ import (
 	"github.com/siderolabs/talos/pkg/version"
 )
 
-// SetupLogger represents the SetupLogger task.
-func SetupLogger(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		machinedLog, err := r.Logging().ServiceLog("machined").Writer()
+// WaitForUSB represents the WaitForUSB task.
+func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		// Wait for USB storage in the case that the install disk is supplied over
+		// USB. If we don't wait, there is the chance that we will fail to detect the
+		// install disk.
+		file := "/sys/module/usb_storage/parameters/delay_use"
+
+		_, err := os.Stat(file)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+
+			return err
+		}
+
+		b, err := os.ReadFile(file)
 		if err != nil {
 			return err
 		}
 
-		if r.State().Platform().Mode() == runtime.ModeContainer {
-			// send all the logs to machinedLog as well, but skip /dev/kmsg logging
-			log.SetOutput(io.MultiWriter(log.Writer(), machinedLog))
-			log.SetPrefix("[talos] ")
+		val := strings.TrimSuffix(string(b), "\n")
 
-			return nil
+		var i int
+
+		i, err = strconv.Atoi(val)
+		if err != nil {
+			return err
 		}
 
-		// disable ratelimiting for kmsg, otherwise logs might be not visible.
-		// this should be set via kernel arg, but in case it's not set, try to force it.
-		if err = krnl.WriteParam(&kernel.Param{
-			Key:   "proc.sys.kernel.printk_devkmsg",
-			Value: "on\n",
-		}); err != nil {
-			var serr syscall.Errno
+		logger.Printf("waiting %d second(s) for USB storage", i)
 
-			if !(errors.As(err, &serr) && serr == syscall.EINVAL) { // ignore EINVAL which is returned when kernel arg is set
-				log.Printf("failed setting kernel.printk_devkmsg: %s, error ignored", err)
-			}
-		}
-
-		if err = kmsg.SetupLogger(nil, "[talos]", machinedLog); err != nil {
-			return fmt.Errorf("failed to setup logging: %w", err)
-		}
+		time.Sleep(time.Duration(i) * time.Second)
 
 		return nil
-	}, "setupLogger"
+	}, "waitForUSB"
 }
 
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.

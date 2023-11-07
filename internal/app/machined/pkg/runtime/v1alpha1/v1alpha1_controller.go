@@ -8,22 +8,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
+	"github.com/siderolabs/go-kmsg"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/acpi"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha2"
+	krnl "github.com/siderolabs/talos/pkg/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/kernel"
 )
 
 // Controller represents the controller responsible for managing the execution
@@ -38,14 +40,6 @@ type Controller struct {
 
 // NewController intializes and returns a controller.
 func NewController() (*Controller, error) {
-	// Wait for USB storage in the case that the install disk is supplied over
-	// USB. If we don't wait, there is the chance that we will fail to detect the
-	// install disk.
-	err := waitForUSBDelay()
-	if err != nil {
-		return nil, err
-	}
-
 	s, err := NewState()
 	if err != nil {
 		return nil, err
@@ -67,7 +61,45 @@ func NewController() (*Controller, error) {
 		return nil, err
 	}
 
+	if err := ctlr.setupLogging(); err != nil {
+		return nil, err
+	}
+
 	return ctlr, nil
+}
+
+func (c *Controller) setupLogging() error {
+	machinedLog, err := c.r.Logging().ServiceLog("machined").Writer()
+	if err != nil {
+		return err
+	}
+
+	if c.r.State().Platform().Mode() == runtime.ModeContainer {
+		// send all the logs to machinedLog as well, but skip /dev/kmsg logging
+		log.SetOutput(io.MultiWriter(log.Writer(), machinedLog))
+		log.SetPrefix("[talos] ")
+
+		return nil
+	}
+
+	// disable ratelimiting for kmsg, otherwise logs might be not visible.
+	// this should be set via kernel arg, but in case it's not set, try to force it.
+	if err = krnl.WriteParam(&kernel.Param{
+		Key:   "proc.sys.kernel.printk_devkmsg",
+		Value: "on\n",
+	}); err != nil {
+		var serr syscall.Errno
+
+		if !(errors.As(err, &serr) && serr == syscall.EINVAL) { // ignore EINVAL which is returned when kernel arg is set
+			log.Printf("failed setting kernel.printk_devkmsg: %s, error ignored", err)
+		}
+	}
+
+	if err = kmsg.SetupLogger(nil, "[talos]", machinedLog); err != nil {
+		return fmt.Errorf("failed to setup logging: %w", err)
+	}
+
+	return nil
 }
 
 // Run executes all phases known to the controller in serial. `Controller`
@@ -384,43 +416,4 @@ func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.P
 	}
 
 	return phases, nil
-}
-
-func waitForUSBDelay() (err error) {
-	wait := true
-
-	file := "/sys/module/usb_storage/parameters/delay_use"
-
-	_, err = os.Stat(file)
-	if err != nil {
-		if os.IsNotExist(err) {
-			wait = false
-		} else {
-			return err
-		}
-	}
-
-	if wait {
-		var b []byte
-
-		b, err = os.ReadFile(file)
-		if err != nil {
-			return err
-		}
-
-		val := strings.TrimSuffix(string(b), "\n")
-
-		var i int
-
-		i, err = strconv.Atoi(val)
-		if err != nil {
-			return err
-		}
-
-		log.Printf("waiting %d second(s) for USB storage", i)
-
-		time.Sleep(time.Duration(i) * time.Second)
-	}
-
-	return nil
 }
