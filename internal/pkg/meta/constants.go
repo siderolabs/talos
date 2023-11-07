@@ -23,4 +23,8 @@ const (
 	UserReserved2
 	// UserReserved3 is reserved for user-defined metadata.
 	UserReserved3
+	// UUIDOverride stores the UUID that this machine will use instead of the one from the hardware.
+	UUIDOverride
+	// UniqueMachineToken store the unique token for this machine. It's useful because UUID may repeat or be filled with zeros.
+	UniqueMachineToken
 )

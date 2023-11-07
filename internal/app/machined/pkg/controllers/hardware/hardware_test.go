@@ -46,21 +46,6 @@ func (suite *HardwareSuite) SetupTest() {
 	suite.Require().NoError(err)
 }
 
-func (suite *HardwareSuite) assertResource(md resource.Metadata, check func(res resource.Resource) error) func() error {
-	return func() error {
-		r, err := suite.state.Get(suite.ctx, md)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				return retry.ExpectedError(err)
-			}
-
-			return err
-		}
-
-		return check(r)
-	}
-}
-
 func (suite *HardwareSuite) assertNoResource(md resource.Metadata) func() error {
 	return func() error {
 		_, err := suite.state.Get(suite.ctx, md)
@@ -82,4 +67,12 @@ func (suite *HardwareSuite) TearDownTest() {
 	suite.ctxCancel()
 
 	suite.wg.Wait()
+}
+
+func (suite *HardwareSuite) State() state.State {
+	return suite.state
+}
+
+func (suite *HardwareSuite) Ctx() context.Context {
+	return suite.ctx
 }

@@ -199,9 +199,11 @@ description: Talos gRPC API reference.
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
     - [MaintenanceServiceConfigSpec](#talos.resource.definitions.runtime.MaintenanceServiceConfigSpec)
     - [MetaKeySpec](#talos.resource.definitions.runtime.MetaKeySpec)
+    - [MetaLoadedSpec](#talos.resource.definitions.runtime.MetaLoadedSpec)
     - [MountStatusSpec](#talos.resource.definitions.runtime.MountStatusSpec)
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
+    - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
   
 - [resource/definitions/secrets/secrets.proto](#resource/definitions/secrets/secrets.proto)
@@ -3624,6 +3626,21 @@ MetaKeySpec describes status of the defined sysctls.
 
 
 
+<a name="talos.resource.definitions.runtime.MetaLoadedSpec"></a>
+
+### MetaLoadedSpec
+MetaLoadedSpec is the spec for meta loaded. The Done field is always true when resource exists.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| done | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.runtime.MountStatusSpec"></a>
 
 ### MountStatusSpec
@@ -3677,6 +3694,21 @@ SecurityStateSpec describes the security state resource properties.
 | secure_boot | [bool](#bool) |  |  |
 | uki_signing_key_fingerprint | [string](#string) |  |  |
 | pcr_signing_key_fingerprint | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.UniqueMachineTokenSpec"></a>
+
+### UniqueMachineTokenSpec
+UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| token | [string](#string) |  |  |
 
 
 

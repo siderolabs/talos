@@ -36,9 +36,11 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.MaintenanceServiceConfig{},
 		&runtime.MaintenanceServiceRequest{},
 		&runtime.MetaKey{},
+		&runtime.MetaLoaded{},
 		&runtime.MountStatus{},
 		&runtime.PlatformMetadata{},
 		&runtime.SecurityState{},
+		&runtime.UniqueMachineToken{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

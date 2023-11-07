@@ -24,18 +24,18 @@ type systemInformation struct {
 }
 
 // Update current systemInformation info.
-func (p systemInformation) Update(systemInformation *smbios.SystemInformation) {
-	translateSystemInformationInfo := func(in *smbios.SystemInformation) hardware.SystemInformationSpec {
-		return hardware.SystemInformationSpec{
-			Manufacturer: in.Manufacturer,
-			ProductName:  in.ProductName,
-			Version:      in.Version,
-			SerialNumber: in.SerialNumber,
-			UUID:         in.UUID,
-			WakeUpType:   in.WakeUpType.String(),
-			SKUNumber:    in.SKUNumber,
-		}
+func (p systemInformation) Update(systemInformation *smbios.SystemInformation, uuidRewrite string) {
+	if uuidRewrite == "" {
+		uuidRewrite = systemInformation.UUID
 	}
 
-	*p.SystemInformation.TypedSpec() = translateSystemInformationInfo(systemInformation)
+	*p.SystemInformation.TypedSpec() = hardware.SystemInformationSpec{
+		Manufacturer: systemInformation.Manufacturer,
+		ProductName:  systemInformation.ProductName,
+		Version:      systemInformation.Version,
+		SerialNumber: systemInformation.SerialNumber,
+		UUID:         uuidRewrite,
+		WakeUpType:   systemInformation.WakeUpType.String(),
+		SKUNumber:    systemInformation.SKUNumber,
+	}
 }

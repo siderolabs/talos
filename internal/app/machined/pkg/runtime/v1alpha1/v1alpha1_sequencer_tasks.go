@@ -25,6 +25,7 @@ import (
 	"github.com/containerd/cgroups/v3/cgroup1"
 	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
@@ -2190,6 +2191,8 @@ func CleanupLegacyStaticPodFiles(runtime.Sequence, any) (runtime.TaskExecutionFu
 }
 
 // ReloadMeta reloads META partition after disk mount, installer run, etc.
+//
+//nolint:gocyclo
 func ReloadMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		err := r.State().Machine().Meta().Reload(ctx)
@@ -2219,6 +2222,25 @@ func ReloadMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 						return fmt.Errorf("error setting meta tag %x: %w", value.Key, err)
 					}
 				}
+			}
+		}
+
+		if _, err := safe.ReaderGetByID[*resourceruntime.MetaLoaded](
+			ctx,
+			r.State().V1Alpha2().Resources(),
+			resourceruntime.MetaLoadedID,
+		); err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error reading MetaLoaded resource: %w", err)
+			}
+
+			// create MetaLoaded resource signaling that META is now loaded
+			loaded := resourceruntime.NewMetaLoaded()
+			loaded.TypedSpec().Done = true
+
+			err = r.State().V1Alpha2().Resources().Create(ctx, loaded)
+			if err != nil {
+				return fmt.Errorf("error creating MetaLoaded resource: %w", err)
 			}
 		}
 

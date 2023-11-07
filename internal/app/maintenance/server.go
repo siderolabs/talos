@@ -6,7 +6,9 @@ package maintenance
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"strings"
 
@@ -34,7 +36,7 @@ import (
 	"github.com/siderolabs/talos/pkg/version"
 )
 
-// Server implements machine.MachineService, network.NetworkService, and storage.StorageService.
+// Server implements [machine.MachineServiceServer], network.NetworkService, and [storage.StorageServiceServer].
 type Server struct {
 	machine.UnimplementedMachineServiceServer
 
@@ -43,7 +45,7 @@ type Server struct {
 	server     *grpc.Server
 }
 
-// New initializes and returns a `Server`.
+// New initializes and returns a [Server].
 func New(cfgCh chan<- config.Provider) *Server {
 	if runtimeController == nil {
 		panic("runtime controller is not set")
@@ -68,7 +70,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 }
 
-// ApplyConfiguration implements machine.MachineService.
+// ApplyConfiguration implements [machine.MachineServiceServer].
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	//nolint:exhaustive
 	switch in.Mode {
@@ -112,7 +114,7 @@ Node is running in maintenance mode and does not have a config yet.`
 	return reply, nil
 }
 
-// GenerateConfiguration implements the machine.MachineServer interface.
+// GenerateConfiguration implements the [machine.MachineServiceServer] interface.
 func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (*machine.GenerateConfigurationResponse, error) {
 	if in.MachineConfig == nil {
 		return nil, fmt.Errorf("invalid generate request")
@@ -127,7 +129,7 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 	return configuration.Generate(ctx, in)
 }
 
-// GenerateClientConfiguration implements the machine.MachineServer interface.
+// GenerateClientConfiguration implements the [machine.MachineServiceServer] interface.
 func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "client configuration (talosconfig) can't be generated in the maintenance mode")
 }
@@ -287,4 +289,66 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 	}
 
 	return reply, nil
+}
+
+// MetaWrite implements the [machine.MachineServiceServer] interface.
+func (s *Server) MetaWrite(ctx context.Context, req *machine.MetaWriteRequest) (*machine.MetaWriteResponse, error) {
+	if err := assertPeerSideroLink(ctx); err != nil {
+		return nil, err
+	}
+
+	if uint32(uint8(req.Key)) != req.Key {
+		return nil, status.Errorf(codes.InvalidArgument, "key must be a uint8")
+	}
+
+	ok, err := s.controller.Runtime().State().Machine().Meta().SetTagBytes(ctx, uint8(req.Key), req.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		// META overflowed
+		return nil, status.Errorf(codes.ResourceExhausted, "meta write failed")
+	}
+
+	err = s.controller.Runtime().State().Machine().Meta().Flush()
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		// ignore not exist error, as it's possible that the meta partition is not created yet
+		return nil, err
+	}
+
+	return &machine.MetaWriteResponse{
+		Messages: []*machine.MetaWrite{{}},
+	}, nil
+}
+
+// MetaDelete implements the [machine.MachineServiceServer] interface.
+func (s *Server) MetaDelete(ctx context.Context, req *machine.MetaDeleteRequest) (*machine.MetaDeleteResponse, error) {
+	if err := assertPeerSideroLink(ctx); err != nil {
+		return nil, err
+	}
+
+	if uint32(uint8(req.Key)) != req.Key {
+		return nil, status.Errorf(codes.InvalidArgument, "key must be a uint8")
+	}
+
+	ok, err := s.controller.Runtime().State().Machine().Meta().DeleteTag(ctx, uint8(req.Key))
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		// META key not found
+		return nil, status.Errorf(codes.NotFound, "meta key not found")
+	}
+
+	err = s.controller.Runtime().State().Machine().Meta().Flush()
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		// ignore not exist error, as it's possible that the meta partition is not created yet
+		return nil, err
+	}
+
+	return &machine.MetaDeleteResponse{
+		Messages: []*machine.MetaDelete{{}},
+	}, nil
 }

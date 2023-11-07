@@ -64,6 +64,11 @@ message MetaKeySpec {
   string value = 1;
 }
 
+// MetaLoadedSpec is the spec for meta loaded. The Done field is always true when resource exists.
+message MetaLoadedSpec {
+  bool done = 1;
+}
+
 // MountStatusSpec describes status of the defined sysctls.
 message MountStatusSpec {
   string source = 1;
@@ -91,6 +96,11 @@ message SecurityStateSpec {
   bool secure_boot = 1;
   string uki_signing_key_fingerprint = 2;
   string pcr_signing_key_fingerprint = 3;
+}
+
+// UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
+message UniqueMachineTokenSpec {
+  string token = 1;
 }
 
 // UnmetCondition is a failure which prevents machine from being ready at the stage.

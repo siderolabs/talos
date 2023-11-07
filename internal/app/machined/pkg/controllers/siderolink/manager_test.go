@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
 )
 
@@ -88,6 +89,11 @@ func (suite *ManagerSuite) TestReconcile() {
 	systemInformation.TypedSpec().UUID = "71233efd-7a07-43f8-b6ba-da90fae0e88b"
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), systemInformation))
+
+	uniqToken := runtime.NewUniqueMachineToken()
+	uniqToken.TypedSpec().Token = "random-token"
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), uniqToken))
 
 	nodeAddress := netip.MustParsePrefix(mockNodeAddressPrefix)
 

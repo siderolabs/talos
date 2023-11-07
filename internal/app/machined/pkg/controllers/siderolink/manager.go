@@ -36,7 +36,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
+	"github.com/siderolabs/talos/pkg/version"
 )
 
 // ManagerController interacts with SideroLink API and brings up the SideroLink Wireguard interface.
@@ -90,6 +92,12 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				ID:        optional.Some(hardware.SystemInformationID),
 				Kind:      controller.InputWeak,
 			},
+			{
+				Namespace: runtime.NamespaceName,
+				Type:      runtime.UniqueMachineTokenType,
+				ID:        optional.Some(runtime.UniqueMachineTokenID),
+				Kind:      controller.InputWeak,
+			},
 		},
 	); err != nil {
 		return fmt.Errorf("error waiting for network: %w", err)
@@ -138,7 +146,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-r.EventCh():
 		}
 
-		cfg, err := safe.ReaderGet[*siderolink.Config](ctx, r, siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID).Metadata())
+		cfg, err := safe.ReaderGetByID[*siderolink.Config](ctx, r, siderolink.ConfigID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if cleanupErr := ctrl.cleanup(ctx, r, nil, nil, logger); cleanupErr != nil {
@@ -152,7 +160,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("failed to get siderolink config: %w", err)
 		}
 
-		sysInfo, err := safe.ReaderGet[*hardware.SystemInformation](ctx, r, hardware.NewSystemInformation(hardware.SystemInformationID).Metadata())
+		sysInfo, err := safe.ReaderGetByID[*hardware.SystemInformation](ctx, r, hardware.SystemInformationID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				// no system information
@@ -198,10 +206,17 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				}
 			}()
 
+			uniqTokenRes, rdrErr := safe.ReaderGetByID[*runtime.UniqueMachineToken](ctx, r, runtime.UniqueMachineTokenID)
+			if rdrErr != nil {
+				return nil, fmt.Errorf("failed to get unique token: %w", rdrErr)
+			}
+
 			sideroLinkClient := pb.NewProvisionServiceClient(conn)
 			request := &pb.ProvisionRequest{
-				NodeUuid:      nodeUUID,
-				NodePublicKey: ctrl.nodeKey.PublicKey().String(),
+				NodeUuid:        nodeUUID,
+				NodePublicKey:   ctrl.nodeKey.PublicKey().String(),
+				NodeUniqueToken: pointer.To(uniqTokenRes.TypedSpec().Token),
+				TalosVersion:    pointer.To(version.Tag),
 			}
 
 			token := parsedEndpoint.GetParam("jointoken")
@@ -231,7 +246,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		linkSpec := network.NewLinkSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.LinkID(constants.SideroLinkName)))
 		addressSpec := network.NewAddressSpec(network.ConfigNamespaceName, network.LayeredID(network.ConfigOperator, network.AddressID(constants.SideroLinkName, nodeAddress)))
 
-		if err = safe.WriterModify(ctx, r, linkSpec,
+		if err := safe.WriterModify(ctx, r, linkSpec,
 			func(res *network.LinkSpec) error {
 				spec := res.TypedSpec()
 
@@ -265,7 +280,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error creating siderolink spec: %w", err)
 		}
 
-		if err = safe.WriterModify(ctx, r, addressSpec,
+		if err := safe.WriterModify(ctx, r, addressSpec,
 			func(res *network.AddressSpec) error {
 				spec := res.TypedSpec()
 
@@ -289,7 +304,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			addressSpec.Metadata().ID(): {},
 		}
 
-		if err = ctrl.cleanup(ctx, r, keepLinkSpecSet, keepAddressSpecSet, logger); err != nil {
+		if err := ctrl.cleanup(ctx, r, keepLinkSpecSet, keepAddressSpecSet, logger); err != nil {
 			return err
 		}
 

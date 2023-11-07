@@ -10,14 +10,18 @@ import (
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-smbios/smbios"
 	"go.uber.org/zap"
 
 	hwadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/hardware"
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/meta"
 	pkgSMBIOS "github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // SystemInfoController populates CPU information of the underlying hardware.
@@ -33,7 +37,19 @@ func (ctrl *SystemInfoController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *SystemInfoController) Inputs() []controller.Input {
-	return nil
+	return []controller.Input{
+		{
+			Namespace: runtime.NamespaceName,
+			Type:      runtime.MetaKeyType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtime.NamespaceName,
+			Type:      runtime.MetaLoadedType,
+			ID:        optional.Some(runtime.MetaLoadedID),
+			Kind:      controller.InputWeak,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -58,59 +74,83 @@ func (ctrl *SystemInfoController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *SystemInfoController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	select {
-	case <-ctx.Done():
-		return nil
-	case <-r.EventCh():
-	}
-
 	// smbios info is not available inside container, so skip the controller
 	if ctrl.V1Alpha1Mode == runtimetalos.ModeContainer {
 		return nil
 	}
-	// controller runs only once
-	if ctrl.SMBIOS == nil {
-		s, err := pkgSMBIOS.GetSMBIOSInfo()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
+		}
+
+		_, err := safe.ReaderGetByID[*runtime.MetaLoaded](ctx, r, runtime.MetaLoadedID)
 		if err != nil {
-			return err
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting meta loaded resource: %w", err)
 		}
 
-		ctrl.SMBIOS = s
-	}
+		if ctrl.SMBIOS == nil {
+			var s *smbios.SMBIOS
 
-	if err := r.Modify(ctx, hardware.NewSystemInformation(hardware.SystemInformationID), func(res resource.Resource) error {
-		hwadapter.SystemInformation(res.(*hardware.SystemInformation)).Update(&ctrl.SMBIOS.SystemInformation)
+			s, err = pkgSMBIOS.GetSMBIOSInfo()
+			if err != nil {
+				return err
+			}
 
-		return nil
-	}); err != nil {
-		return fmt.Errorf("error updating objects: %w", err)
-	}
+			ctrl.SMBIOS = s
+		}
 
-	for _, p := range ctrl.SMBIOS.ProcessorInformation {
-		// replaces `CPU 0` with `CPU-0`
-		id := strings.ReplaceAll(p.SocketDesignation, " ", "-")
+		uuidRewriteRes, err := safe.ReaderGetByID[*runtime.MetaKey](ctx, r, runtime.MetaKeyTagToID(meta.UUIDOverride))
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting meta key resource: %w", err)
+		}
 
-		if err := r.Modify(ctx, hardware.NewProcessorInfo(id), func(res resource.Resource) error {
-			hwadapter.Processor(res.(*hardware.Processor)).Update(&p)
+		var uuidRewrite string
+
+		if uuidRewriteRes != nil && uuidRewriteRes.TypedSpec().Value != "" {
+			uuidRewrite = uuidRewriteRes.TypedSpec().Value
+
+			logger.Info("using UUID rewrite", zap.String("uuid", uuidRewrite))
+		}
+
+		if err := safe.WriterModify(ctx, r, hardware.NewSystemInformation(hardware.SystemInformationID), func(res *hardware.SystemInformation) error {
+			hwadapter.SystemInformation(res).Update(&ctrl.SMBIOS.SystemInformation, uuidRewrite)
 
 			return nil
 		}); err != nil {
 			return fmt.Errorf("error updating objects: %w", err)
 		}
-	}
 
-	for _, m := range ctrl.SMBIOS.MemoryDevices {
-		// replaces `SIMM 0` with `SIMM-0`
-		id := strings.ReplaceAll(m.DeviceLocator, " ", "-")
+		for _, p := range ctrl.SMBIOS.ProcessorInformation {
+			// replaces `CPU 0` with `CPU-0`
+			id := strings.ReplaceAll(p.SocketDesignation, " ", "-")
 
-		if err := r.Modify(ctx, hardware.NewMemoryModuleInfo(id), func(res resource.Resource) error {
-			hwadapter.MemoryModule(res.(*hardware.MemoryModule)).Update(&m)
+			if err := safe.WriterModify(ctx, r, hardware.NewProcessorInfo(id), func(res *hardware.Processor) error {
+				hwadapter.Processor(res).Update(&p)
 
-			return nil
-		}); err != nil {
-			return fmt.Errorf("error updating objects: %w", err)
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error updating objects: %w", err)
+			}
+		}
+
+		for _, m := range ctrl.SMBIOS.MemoryDevices {
+			// replaces `SIMM 0` with `SIMM-0`
+			id := strings.ReplaceAll(m.DeviceLocator, " ", "-")
+
+			if err := safe.WriterModify(ctx, r, hardware.NewMemoryModuleInfo(id), func(res *hardware.MemoryModule) error {
+				hwadapter.MemoryModule(res).Update(&m)
+
+				return nil
+			}); err != nil {
+				return fmt.Errorf("error updating objects: %w", err)
+			}
 		}
 	}
-
-	return nil
 }

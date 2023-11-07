@@ -5,19 +5,21 @@
 package hardware_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/siderolabs/go-smbios/smbios"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hardwarectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hardware"
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type SystemInfoSuite struct {
@@ -28,8 +30,7 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	stream, err := os.Open("testdata/SuperMicro-Dual-Xeon.dmi")
 	suite.Require().NoError(err)
 
-	//nolint: errcheck
-	defer stream.Close()
+	suite.T().Cleanup(func() { suite.NoError(stream.Close()) })
 
 	version := smbios.Version{Major: 3, Minor: 3, Revision: 0} // dummy version
 	s, err := smbios.Decode(stream, version)
@@ -44,6 +45,8 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	)
 
 	suite.startRuntime()
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
 
 	cpuSpecs := map[string]hardware.ProcessorSpec{
 		"CPU-1": {
@@ -95,34 +98,48 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	}
 
 	for k, v := range cpuSpecs {
-		suite.Assert().NoError(
-			retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				suite.assertResource(*hardware.NewProcessorInfo(k).Metadata(), func(r resource.Resource) error {
-					status := *r.(*hardware.Processor).TypedSpec()
-					if !suite.Assert().Equal(v, status) {
-						return retry.ExpectedError(fmt.Errorf("cpu status doesn't match: %v != %v", v, status))
-					}
-
-					return nil
-				}),
-			),
-		)
+		ctest.AssertResource(suite, k, func(r *hardware.Processor, assertions *assert.Assertions) {
+			assertions.Equal(v, *r.TypedSpec())
+		})
 	}
 
 	for k, v := range memorySpecs {
-		suite.Assert().NoError(
-			retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				suite.assertResource(*hardware.NewMemoryModuleInfo(k).Metadata(), func(r resource.Resource) error {
-					status := *r.(*hardware.MemoryModule).TypedSpec()
-					if !suite.Assert().Equal(v, status) {
-						return retry.ExpectedError(fmt.Errorf("memory status doesn't match: %v != %v", v, status))
-					}
-
-					return nil
-				}),
-			),
-		)
+		ctest.AssertResource(suite, k, func(r *hardware.MemoryModule, assertions *assert.Assertions) {
+			assertions.Equal(v, *r.TypedSpec())
+		})
 	}
+}
+
+func (suite *SystemInfoSuite) TestUUIDOverwrite() {
+	stream, err := os.Open("testdata/SuperMicro-Dual-Xeon.dmi")
+	suite.Require().NoError(err)
+
+	suite.T().Cleanup(func() { suite.NoError(stream.Close()) })
+
+	version := smbios.Version{Major: 3, Minor: 3, Revision: 0} // dummy version
+	s, err := smbios.Decode(stream, version)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&hardwarectrl.SystemInfoController{
+				SMBIOS: s,
+			},
+		),
+	)
+
+	suite.startRuntime()
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
+
+	key := runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(meta.UUIDOverride))
+	key.TypedSpec().Value = "00000000-0000-0000-0000-000000000001"
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, key))
+
+	ctest.AssertResource(suite, hardware.SystemInformationID, func(r *hardware.SystemInformation, assertions *assert.Assertions) {
+		assertions.Equal("00000000-0000-0000-0000-000000000001", r.TypedSpec().UUID)
+	})
 }
 
 func (suite *SystemInfoSuite) TestPopulateSystemInformationIsDisabledInContainerMode() {
@@ -135,6 +152,8 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformationIsDisabledInContainer
 	)
 
 	suite.startRuntime()
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
 
 	suite.Assert().NoError(retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(suite.assertNoResource(*hardware.NewSystemInformation("systeminformation").Metadata())))
 }
