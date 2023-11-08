@@ -30,7 +30,7 @@ var genKeyCmd = &cobra.Command{
 			return fmt.Errorf("error generating key: %w", err)
 		}
 
-		keyFile := genKeyCmdFlags.name + ".key"
+		keyFile := genKeyCmdFlags.name + keyExt
 
 		if err = validateFileExists(keyFile); err != nil {
 			return err

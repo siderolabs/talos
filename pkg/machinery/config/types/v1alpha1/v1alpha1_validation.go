@@ -794,7 +794,7 @@ func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) ([]str
 
 // CheckDeviceRoutes ensures that the specified routes are valid.
 //
-//nolint:gocyclo
+//nolint:gocyclo,goconst
 func CheckDeviceRoutes(d *Device, _ map[string]string) ([]string, error) {
 	var result *multierror.Error
 

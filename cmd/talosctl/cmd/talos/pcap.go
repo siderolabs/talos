@@ -95,7 +95,7 @@ e.g. by excluding packets with the port 50000.
 			}
 
 			if pcapCmdFlags.output == "" {
-				return dumpPackets(r)
+				return dumpPackets(ctx, r)
 			}
 
 			var out io.Writer
@@ -120,15 +120,20 @@ e.g. by excluding packets with the port 50000.
 	},
 }
 
-func dumpPackets(r io.Reader) error {
+func dumpPackets(ctx context.Context, r io.Reader) error {
 	src, err := pcapgo.NewReader(r)
 	if err != nil {
+		if errors.Is(err, io.EOF) {
+			// nothing in the capture at all
+			return nil
+		}
+
 		return fmt.Errorf("error opening pcap reader: %w", err)
 	}
 
 	packetSource := gopacket.NewPacketSource(src, src.LinkType())
 
-	for packet := range packetSource.Packets() {
+	for packet := range packetSource.PacketsCtx(ctx) {
 		fmt.Println(packet)
 	}
 
@@ -178,7 +183,7 @@ func parseBPFInstructions(in string) ([]*machine.BPFInstruction, error) {
 func init() {
 	pcapCmd.Flags().StringVarP(&pcapCmdFlags.iface, "interface", "i", "eth0", "interface name to capture packets on")
 	pcapCmd.Flags().BoolVar(&pcapCmdFlags.promisc, "promiscuous", false, "put interface into promiscuous mode")
-	pcapCmd.Flags().IntVarP(&pcapCmdFlags.snaplen, "snaplen", "s", 65536, "maximum packet size to capture")
+	pcapCmd.Flags().IntVarP(&pcapCmdFlags.snaplen, "snaplen", "s", 4096, "maximum packet size to capture")
 	pcapCmd.Flags().StringVarP(&pcapCmdFlags.output, "output", "o", "", "if not set, decode packets to stdout; if set write raw pcap data to a file, use '-' for stdout")
 	pcapCmd.Flags().StringVar(&pcapCmdFlags.bpfFilter, "bpf-filter", "", "bpf filter to apply, tcpdump -dd format")
 	pcapCmd.Flags().DurationVar(&pcapCmdFlags.duration, "duration", 0, "duration of the capture")

@@ -41,9 +41,9 @@ var genCACmd = &cobra.Command{
 			return fmt.Errorf("error generating CA: %w", err)
 		}
 
-		caCertFile := genCACmdFlags.organization + ".crt"
+		caCertFile := genCACmdFlags.organization + crtExt
 		caHashFile := genCACmdFlags.organization + ".sha256"
-		caKeyFile := genCACmdFlags.organization + ".key"
+		caKeyFile := genCACmdFlags.organization + keyExt
 
 		if err := validateFilesExists([]string{caCertFile, caHashFile, caKeyFile}); err != nil {
 			return err

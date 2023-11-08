@@ -37,6 +37,8 @@ const (
 	talosconfigOutputType  = "talosconfig"
 
 	stdoutOutput = "-"
+
+	yamlExt = ".yaml"
 )
 
 var allOutputTypes = []string{
@@ -365,8 +367,8 @@ func outputPaths() (configOutputPaths, error) {
 			return configOutputPaths{}, err
 		}
 
-		controlPlane := filepath.Join(cwd, machine.TypeControlPlane.String()+".yaml")
-		worker := filepath.Join(cwd, machine.TypeWorker.String()+".yaml")
+		controlPlane := filepath.Join(cwd, machine.TypeControlPlane.String()+yamlExt)
+		worker := filepath.Join(cwd, machine.TypeWorker.String()+yamlExt)
 		talosconfig := filepath.Join(cwd, "talosconfig")
 
 		return configOutputPaths{controlPlane: controlPlane, worker: worker, talosconfig: talosconfig}, nil
@@ -385,8 +387,8 @@ func outputPaths() (configOutputPaths, error) {
 	}
 
 	// treat --output as a directory
-	controlPlane := filepath.Join(genConfigCmdFlags.output, machine.TypeControlPlane.String()+".yaml")
-	worker := filepath.Join(genConfigCmdFlags.output, machine.TypeWorker.String()+".yaml")
+	controlPlane := filepath.Join(genConfigCmdFlags.output, machine.TypeControlPlane.String()+yamlExt)
+	worker := filepath.Join(genConfigCmdFlags.output, machine.TypeWorker.String()+yamlExt)
 	talosconfig := filepath.Join(genConfigCmdFlags.output, "talosconfig")
 
 	return configOutputPaths{controlPlane: controlPlane, worker: worker, talosconfig: talosconfig}, nil

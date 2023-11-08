@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"text/tabwriter"
 
 	"github.com/dustin/go-humanize"
@@ -73,7 +74,7 @@ var duCmd = &cobra.Command{
 					return humanize.Bytes(uint64(s))
 				}
 
-				return fmt.Sprintf("%d", s)
+				return strconv.FormatInt(s, 10)
 			}
 
 			defer w.Flush() //nolint:errcheck

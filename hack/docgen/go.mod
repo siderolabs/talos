@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos-hack-docgen
 
-go 1.21.3
+go 1.21.4
 
 // forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 // which are then encoded as a valid YAML blocks with proper indentiation

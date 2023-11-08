@@ -6,9 +6,9 @@ package archiver_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -98,7 +98,7 @@ func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
 		},
 	} {
 		test := test
-		suite.Run(fmt.Sprint(test.maxDepth), func() {
+		suite.Run(strconv.Itoa(test.maxDepth), func() {
 			suite.T().Parallel()
 
 			ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithMaxRecurseDepth(test.maxDepth))

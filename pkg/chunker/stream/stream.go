@@ -6,6 +6,7 @@ package stream
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -80,7 +81,7 @@ func (c *Stream) Read() <-chan []byte {
 
 			n, err := c.source.Read(buf)
 			if err != nil {
-				if err != io.EOF {
+				if !(errors.Is(err, io.EOF) || errors.Is(err, io.ErrClosedPipe)) {
 					fmt.Printf("read error: %s\n", err.Error())
 				}
 

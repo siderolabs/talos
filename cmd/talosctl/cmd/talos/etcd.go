@@ -62,7 +62,7 @@ func displayAlarms(messages []alarmMessage) error {
 			if i == 0 && j == 0 {
 				if node != "" {
 					header = "NODE\t" + header
-					pattern = "%s\t" + pattern
+					pattern = "%s\t" + pattern //nolint:goconst
 				}
 
 				fmt.Fprintln(w, header)

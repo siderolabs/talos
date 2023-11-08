@@ -30,16 +30,18 @@ const (
 	configNetworkDataPath = "openstack/latest/network_data.json"
 	configUserDataPath    = "openstack/latest/user_data"
 
+	endpoint = "http://169.254.169.254/"
+
 	// OpenstackExternalIPEndpoint is the local Openstack endpoint for the external IP.
-	OpenstackExternalIPEndpoint = "http://169.254.169.254/latest/meta-data/public-ipv4"
+	OpenstackExternalIPEndpoint = endpoint + "latest/meta-data/public-ipv4"
 	// OpenstackInstanceTypeEndpoint is the local Openstack endpoint for the instance-type.
-	OpenstackInstanceTypeEndpoint = "http://169.254.169.254/latest/meta-data/instance-type"
+	OpenstackInstanceTypeEndpoint = endpoint + "latest/meta-data/instance-type"
 	// OpenstackMetaDataEndpoint is the local Openstack endpoint for the meta config.
-	OpenstackMetaDataEndpoint = "http://169.254.169.254/" + configMetadataPath
+	OpenstackMetaDataEndpoint = endpoint + configMetadataPath
 	// OpenstackNetworkDataEndpoint is the local Openstack endpoint for the network config.
-	OpenstackNetworkDataEndpoint = "http://169.254.169.254/" + configNetworkDataPath
+	OpenstackNetworkDataEndpoint = endpoint + configNetworkDataPath
 	// OpenstackUserDataEndpoint is the local Openstack endpoint for the config.
-	OpenstackUserDataEndpoint = "http://169.254.169.254/" + configUserDataPath
+	OpenstackUserDataEndpoint = endpoint + configUserDataPath
 )
 
 // NetworkConfig holds NetworkData config.

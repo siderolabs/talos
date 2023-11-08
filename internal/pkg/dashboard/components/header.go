@@ -7,6 +7,7 @@ package components
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -146,7 +147,7 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 	if data.CPUsInfo != nil {
 		numCPUs := len(data.CPUsInfo.GetCpuInfo())
 
-		nodeData.numCPUs = fmt.Sprintf("%d", numCPUs)
+		nodeData.numCPUs = strconv.Itoa(numCPUs)
 
 		if numCPUs > 0 {
 			nodeData.cpuFreq = widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz())
@@ -154,7 +155,7 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 	}
 
 	if data.Processes != nil {
-		nodeData.numProcesses = fmt.Sprintf("%d", len(data.Processes.GetProcesses()))
+		nodeData.numProcesses = strconv.Itoa(len(data.Processes.GetProcesses()))
 	}
 
 	if data.Memory != nil {

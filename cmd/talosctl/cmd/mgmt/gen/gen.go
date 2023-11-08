@@ -12,6 +12,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	crtExt = ".crt"
+	keyExt = ".key"
+)
+
 var genCmdFlags struct {
 	force bool
 }

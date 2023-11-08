@@ -52,6 +52,7 @@ var options = &install.Options{}
 
 var bootloader bool
 
+//nolint:goconst
 func init() {
 	rootCmd.PersistentFlags().StringVar(&options.ConfigSource, "config", "", "The value of "+constants.KernelParamConfig)
 	rootCmd.PersistentFlags().StringVar(&options.Disk, "disk", "", "The path to the disk to install to")

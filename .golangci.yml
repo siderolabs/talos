@@ -132,6 +132,7 @@ linters-settings:
     replace-allow-list:
       - gopkg.in/yaml.v3
       - github.com/vmware-tanzu/sonobuoy
+      - golang.org/x/sys
     retract-allow-no-explanation: false
     exclude-forbidden: true
 
@@ -170,6 +171,9 @@ linters:
     - nakedret # too annoying
     - depguard
     - tagalign # too annoying
+    - testifylint # too annoying
+    - inamedparam # too annoying
+    - protogetter # too annoying
 
     # abandoned linters for which golangci shows the warning that the repo is archived by the owner
     - golint

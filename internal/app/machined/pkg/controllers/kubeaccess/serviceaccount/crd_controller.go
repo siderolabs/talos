@@ -336,7 +336,7 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 
 	desiredRoles, found, err := unstructured.NestedStringSlice(talosSA.UnstructuredContent(), "spec", "roles")
 	if err != nil || !found {
-		msg := fmt.Sprint(messageRolesNotFound)
+		msg := messageRolesNotFound
 
 		updateErr := t.updateTalosSAStatus(ctx, talosSA, msg)
 		if updateErr != nil {

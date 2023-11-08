@@ -13,6 +13,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -193,7 +194,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	runConfig.PluginEnvOverrides = map[string]map[string]string{
 		"e2e": {
 			"E2E_FOCUS":      strings.Join(options.RunTests, "|"),
-			"E2E_PARALLEL":   fmt.Sprintf("%v", options.Parallel),
+			"E2E_PARALLEL":   strconv.FormatBool(options.Parallel),
 			"E2E_EXTRA_ARGS": "--ginkgo.v",
 		},
 	}

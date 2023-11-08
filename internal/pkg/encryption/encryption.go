@@ -229,7 +229,7 @@ func (h *Handler) syncKeys(ctx context.Context, path string, handlers []keys.Han
 	visited := map[string]bool{}
 
 	for _, handler := range handlers {
-		slot := fmt.Sprintf("%d", handler.Slot())
+		slot := strconv.Itoa(handler.Slot())
 		visited[slot] = true
 		// no need to update the key which we already detected as unchanged
 		if k.Slot == handler.Slot() {

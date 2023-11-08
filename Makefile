@@ -15,10 +15,10 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0-alpha.0-5-g9c09b00
-PKGS ?= v1.6.0-alpha.0-23-g2e892fd
+TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0-alpha.0-12-gff7fe96
+PKGS ?= v1.6.0-alpha.0-29-g252a59f
 PKG_KERNEL ?= ghcr.io/siderolabs/kernel:$(PKGS)
-EXTRAS ?= v1.6.0-alpha.0-2-g6d48418
+EXTRAS ?= v1.6.0-alpha.0-5-ge8e801b
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.21
 # renovate: datasource=go depName=golang.org/x/tools
@@ -26,13 +26,13 @@ GOIMPORTS_VERSION ?= v0.14.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.5.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.54.2
+GOLANGCILINT_VERSION ?= v1.55.2
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.14.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.28.2
+DEEPCOPY_GEN_VERSION ?= v0.28.3
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.5.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
@@ -61,9 +61,9 @@ KUBESTR_VERSION ?= v0.4.41
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.13.1
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.5.2
+CLUSTERCTL_VERSION ?= 1.5.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.15.11
+CILIUM_CLI_VERSION ?= v0.15.13
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz

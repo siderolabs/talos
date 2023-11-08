@@ -31,7 +31,7 @@ var genCrtCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		caBytes, err := os.ReadFile(genCrtCmdFlags.ca + ".crt")
+		caBytes, err := os.ReadFile(genCrtCmdFlags.ca + crtExt)
 		if err != nil {
 			return fmt.Errorf("error reading CA cert: %s", err)
 		}
@@ -46,7 +46,7 @@ var genCrtCmd = &cobra.Command{
 			return fmt.Errorf("error parsing cert: %s", err)
 		}
 
-		keyBytes, err := os.ReadFile(genCrtCmdFlags.ca + ".key")
+		keyBytes, err := os.ReadFile(genCrtCmdFlags.ca + keyExt)
 		if err != nil {
 			return fmt.Errorf("error reading key file: %s", err)
 		}
@@ -85,7 +85,7 @@ var genCrtCmd = &cobra.Command{
 			return fmt.Errorf("error signing certificate: %s", err)
 		}
 
-		certFile := genCrtCmdFlags.name + ".crt"
+		certFile := genCrtCmdFlags.name + crtExt
 
 		if err = validateFileExists(certFile); err != nil {
 			return err

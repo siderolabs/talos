@@ -18,6 +18,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -2155,6 +2156,22 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	return reply, nil
 }
 
+type packetStreamWriter struct {
+	stream machine.MachineService_PacketCaptureServer
+}
+
+func (w *packetStreamWriter) Write(data []byte) (int, error) {
+	// copy the data as the stream may not send it immediately
+	data = slices.Clone(data)
+
+	err := w.stream.Send(&common.Data{Bytes: data})
+	if err != nil {
+		return 0, err
+	}
+
+	return len(data), nil
+}
+
 // PacketCapture performs packet capture and streams the pcap file.
 //
 //nolint:gocyclo
@@ -2179,10 +2196,8 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		return status.Errorf(codes.InvalidArgument, "unsupported link type %s", linkInfo.TypedSpec().Type)
 	}
 
-	pr, pw := io.Pipe()
-
 	if in.SnapLen == 0 {
-		in.SnapLen = 65536
+		in.SnapLen = afpacket.DefaultFrameSize
 	}
 
 	filter := make([]bpf.RawInstruction, 0, len(in.BpfFilter))
@@ -2199,7 +2214,7 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 	handle, err := afpacket.NewTPacket(
 		afpacket.OptInterface(in.Interface),
 		afpacket.OptFrameSize(int(in.SnapLen)),
-		afpacket.OptBlockSize(int(in.SnapLen)*128),
+		afpacket.OptPollTimeout(100*time.Millisecond),
 	)
 	if err != nil {
 		return fmt.Errorf("error creating afpacket handle: %w", err)
@@ -2219,40 +2234,17 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		return fmt.Errorf("error setting promiscuous mode %v: %w", in.Promiscuous, err)
 	}
 
-	// start packet capture in a goroutine which writes to a pipe back
-	go capturePackets(pw, handle, in.SnapLen, linkType)
-
-	// main goroutine reads the .pcap from the file and delivers it to the client in chunks
-	defer pr.Close() //nolint:errcheck
-
-	ctx, cancel := context.WithCancel(srv.Context())
-	defer cancel()
-
-	chunker := stream.NewChunker(ctx, pr)
-	chunkCh := chunker.Read()
-
-	for data := range chunkCh {
-		if err = srv.SendMsg(&common.Data{Bytes: data}); err != nil {
-			cancel()
-
-			pr.CloseWithError(err)
-		}
-	}
-
-	return nil
+	return capturePackets(srv.Context(), &packetStreamWriter{srv}, handle, in.SnapLen, linkType)
 }
 
-//nolint:gocyclo
-func capturePackets(pw *io.PipeWriter, handle *afpacket.TPacket, snapLen uint32, linkType pcap.LinkType) {
-	defer pw.Close() //nolint:errcheck
+//nolint:gocyclo,cyclop
+func capturePackets(ctx context.Context, w io.Writer, handle *afpacket.TPacket, snapLen uint32, linkType pcap.LinkType) error {
 	defer handle.Close()
 
-	pcapw := pcap.NewWriter(pw)
+	pcapw := pcap.NewWriter(w)
 
 	if err := pcapw.WriteFileHeader(snapLen, linkType); err != nil {
-		pw.CloseWithError(err)
-
-		return
+		return err
 	}
 
 	defer func() {
@@ -2272,12 +2264,16 @@ func capturePackets(pw *io.PipeWriter, handle *afpacket.TPacket, snapLen uint32,
 	}()
 
 	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
 		data, captureData, err := handle.ZeroCopyReadPacketData()
 		if err == nil {
 			if err = pcapw.WritePacket(captureData, data); err != nil {
-				pw.CloseWithError(err)
-
-				return
+				return err
 			}
 
 			continue
@@ -2288,19 +2284,17 @@ func capturePackets(pw *io.PipeWriter, handle *afpacket.TPacket, snapLen uint32,
 			continue
 		}
 
-		// Immediately retry for EAGAIN
-		if errors.Is(err, syscall.EAGAIN) {
+		// Immediately retry for EAGAIN and poll timeout
+		if errors.Is(err, syscall.EAGAIN) || errors.Is(err, afpacket.ErrTimeout) {
 			continue
 		}
 
 		// Immediately break for known unrecoverable errors
 		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) ||
 			errors.Is(err, io.ErrNoProgress) || errors.Is(err, io.ErrClosedPipe) || errors.Is(err, io.ErrShortBuffer) ||
-			errors.Is(err, syscall.EBADF) ||
+			errors.Is(err, syscall.EBADF) || errors.Is(err, afpacket.ErrPoll) ||
 			strings.Contains(err.Error(), "use of closed file") {
-			pw.CloseWithError(err)
-
-			return
+			return err
 		}
 
 		time.Sleep(5 * time.Millisecond) // short sleep before retrying some errors

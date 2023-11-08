@@ -8,7 +8,7 @@ package ova
 import (
 	"bytes"
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 	"io"
 	"os"
 	"path/filepath"
@@ -214,7 +214,7 @@ func sha256sum(input io.Reader) (string, error) {
 
 	sum := hash.Sum(nil)
 
-	return fmt.Sprintf("%x", sum), nil
+	return hex.EncodeToString(sum), nil
 }
 
 func renderMF(vmdkSHA25Sum, ovfSHA25Sum string) (string, error) {

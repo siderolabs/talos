@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -127,7 +128,7 @@ var lsCmd = &cobra.Command{
 					display += " -> " + info.Link
 				}
 
-				size := fmt.Sprintf("%d", info.Size)
+				size := strconv.FormatInt(info.Size, 10)
 
 				if humanizeFlag {
 					size = humanize.Bytes(uint64(info.Size))

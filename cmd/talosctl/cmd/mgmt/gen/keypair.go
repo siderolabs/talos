@@ -44,8 +44,8 @@ var genKeypairCmd = &cobra.Command{
 			return fmt.Errorf("error generating CA: %s", err)
 		}
 
-		certFile := genKeypairCmdFlags.organization + ".crt"
-		keyFile := genKeypairCmdFlags.organization + ".key"
+		certFile := genKeypairCmdFlags.organization + crtExt
+		keyFile := genKeypairCmdFlags.organization + keyExt
 
 		if err = validateFilesExists([]string{certFile, keyFile}); err != nil {
 			return err
