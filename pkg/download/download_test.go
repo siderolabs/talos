@@ -54,6 +54,7 @@ func TestDownload(t *testing.T) {
 			w.Write([]byte("ZGF0YQ==")) //nolint:errcheck
 		case "/404":
 			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintln(w, "not found")
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -109,7 +110,7 @@ func TestDownload(t *testing.T) {
 			name:          "failure 404",
 			path:          "/404",
 			opts:          []download.Option{download.WithTimeout(2 * time.Second)},
-			expectedError: "failed to download config, received 404",
+			expectedError: "failed to download config, status code 404, body \"not found\\n\"",
 		},
 		{
 			name: "retry endpoint change",

@@ -6,6 +6,7 @@
 package download
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -238,7 +239,12 @@ func download(req *http.Request, options *downloadOptions) (data []byte, err err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return data, retry.ExpectedError(fmt.Errorf("failed to download config, received %d", resp.StatusCode))
+		// try to read first 32 bytes of the response body
+		// to provide more context in case of error
+		data, _ = io.ReadAll(io.LimitReader(resp.Body, 32)) //nolint:errcheck // as error already happened, we don't care much about this one
+		data = bytes.ToValidUTF8(data, nil)
+
+		return data, retry.ExpectedError(fmt.Errorf("failed to download config, status code %d, body %q", resp.StatusCode, string(data)))
 	}
 
 	data, err = io.ReadAll(resp.Body)
