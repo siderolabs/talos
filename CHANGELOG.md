@@ -1,3 +1,88 @@
+## [Talos 1.5.5](https://github.com/siderolabs/talos/releases/tag/v1.5.5) (2023-11-09)
+
+Welcome to the v1.5.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.1.61
+Kubernetes: 1.28.3
+etcd: 3.5.10
+
+Talos is built with Go 1.20.11.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Utku Ozdemir
+* Artem Chernyshev
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`5f70f05e9`](https://github.com/siderolabs/talos/commit/5f70f05e9cbc19fbefe63716904a398aea4fbb96) fix: don't validate machine.install if installed
+* [`0b18d7403`](https://github.com/siderolabs/talos/commit/0b18d7403c58ee0ed12cee4a1d2356ffd054369d) fix: when writing to META in the installer/imager, use fixed name
+* [`6be1e5836`](https://github.com/siderolabs/talos/commit/6be1e5836ca9e339404a535bbbc5bb11f41dd5dc) fix: fix error output of cli action tracker
+* [`059823c4b`](https://github.com/siderolabs/talos/commit/059823c4b523aa00fc7953236666234405468f2b) feat: update etcd to 3.5.10
+* [`8c503f0df`](https://github.com/siderolabs/talos/commit/8c503f0dfe2679d7038a90b44c0754b48a4d959a) chore: bump go-api-signature dependency to v0.3.1
+* [`61413ed11`](https://github.com/siderolabs/talos/commit/61413ed1193815b291a522c751fbf1963462f5b3) fix: make Talos work on Rockpi 4c boards again
+* [`6fd9a71b3`](https://github.com/siderolabs/talos/commit/6fd9a71b33e69e91c5b30887e4f9f9065d9dfa23) feat: update Go 1.20.11, Linux 6.1.61, Kubernetes 1.28.3
+* [`9fe31bd42`](https://github.com/siderolabs/talos/commit/9fe31bd428c9b64601ec3fca4da4cae4f4dfd133) fix: update gRPC library to 1.57.2
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`b43c4e4`](https://github.com/siderolabs/extras/commit/b43c4e4f7a6fe6b90f7191490e4354bd8237ac0f) feat: update Go to 1.20.11
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`ab5b0e5`](https://github.com/siderolabs/pkgs/commit/ab5b0e5063908daaab728928990e969c554e4011) feat: update Linux to 6.1.61
+* [`cd687eb`](https://github.com/siderolabs/pkgs/commit/cd687ebff1e13bdda81375725eec328af2767562) feat: update Go to 1.20.11
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`c95372c`](https://github.com/siderolabs/tools/commit/c95372cbbaaef6111811dcedb9befb32cee1487b) feat: update Go to 1.20.11
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/extras**   v1.5.0-2-g6241ac7 -> v1.5.0-3-gb43c4e4
+* **github.com/siderolabs/pkgs**     v1.5.0-13-g45cf9b0 -> v1.5.0-15-gab5b0e5
+* **github.com/siderolabs/tools**    v1.5.0-2-g8adf637 -> v1.5.0-3-gc95372c
+* **go.etcd.io/etcd/api/v3**         v3.5.9 -> v3.5.10
+* **go.etcd.io/etcd/client/pkg/v3**  v3.5.9 -> v3.5.10
+* **go.etcd.io/etcd/client/v3**      v3.5.9 -> v3.5.10
+* **go.etcd.io/etcd/etcdutl/v3**     v3.5.9 -> v3.5.10
+* **google.golang.org/grpc**         v1.57.1 -> v1.58.3
+* **k8s.io/api**                     v0.28.2 -> v0.28.3
+* **k8s.io/apimachinery**            v0.28.2 -> v0.28.3
+* **k8s.io/apiserver**               v0.28.2 -> v0.28.3
+* **k8s.io/client-go**               v0.28.2 -> v0.28.3
+* **k8s.io/component-base**          v0.28.2 -> v0.28.3
+* **k8s.io/cri-api**                 v0.28.2 -> v0.28.3
+* **k8s.io/kubectl**                 v0.28.2 -> v0.28.3
+* **k8s.io/kubelet**                 v0.28.2 -> v0.28.3
+
+Previous release can be found at [v1.5.4](https://github.com/siderolabs/talos/releases/tag/v1.5.4)
+
 ## [Talos 1.5.4](https://github.com/siderolabs/talos/releases/tag/v1.5.4) (2023-10-17)
 
 Welcome to the v1.5.4 release of Talos!
