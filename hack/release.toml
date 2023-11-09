@@ -32,6 +32,13 @@ The credential binaries are expected to be present under `/usr/local/lib/kubelet
 Talos System Extensions can be used to install the credential binaries.
 """
 
+    [notes.kube-scheduler]
+        title = "Kube-Scheduler Configuration"
+        description = """\
+Talos now supports specifying the kube-scheduler configuration in the Talos configuration file.
+It can be set under `cluster.scheduler.config` and kube-scheduler will be automatically configured to with the correct flags.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description = """\

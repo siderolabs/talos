@@ -619,7 +619,6 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		env = append(env, goGCEnv)
 	}
 
-	//nolint:dupl
 	return k8s.ControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.ControllerManagerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
@@ -726,7 +725,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	}
 
 	builder := argsbuilder.Args{
-		"kubeconfig":                             filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
+		"config":                                 filepath.Join(constants.KubernetesSchedulerConfigDir, "scheduler-config.yaml"),
 		"authentication-tolerate-lookup-failure": "false",
 		"authentication-kubeconfig":              filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
 		"authorization-kubeconfig":               filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
@@ -740,6 +739,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		"kubeconfig":                argsbuilder.MergeDenied,
 		"authentication-kubeconfig": argsbuilder.MergeDenied,
 		"authorization-kubeconfig":  argsbuilder.MergeDenied,
+		"config":                    argsbuilder.MergeDenied,
 	}
 
 	if err := builder.Merge(cfg.ExtraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
@@ -758,7 +758,6 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		env = append(env, goGCEnv)
 	}
 
-	//nolint:dupl
 	return k8s.SchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r resource.Resource) error {
 		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
@@ -790,6 +789,11 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 							{
 								Name:      "secrets",
 								MountPath: constants.KubernetesSchedulerSecretsDir,
+								ReadOnly:  true,
+							},
+							{
+								Name:      "config",
+								MountPath: constants.KubernetesSchedulerConfigDir,
 								ReadOnly:  true,
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
@@ -842,6 +846,14 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 						VolumeSource: v1.VolumeSource{
 							HostPath: &v1.HostPathVolumeSource{
 								Path: constants.KubernetesSchedulerSecretsDir,
+							},
+						},
+					},
+					{
+						Name: "config",
+						VolumeSource: v1.VolumeSource{
+							HostPath: &v1.HostPathVolumeSource{
+								Path: constants.KubernetesSchedulerConfigDir,
 							},
 						},
 					},

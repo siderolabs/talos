@@ -1696,6 +1696,7 @@ image: registry.k8s.io/kube-scheduler:v1.29.0-alpha.3
 |`extraVolumes` |[]<a href="#volumemountconfig">VolumeMountConfig</a> |Extra volumes to mount to the scheduler static pod.  | |
 |`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
 |`resources` |<a href="#resourcesconfig">ResourcesConfig</a> |Configure the scheduler resources.  | |
+|`config` |Unstructured |Specify custom kube-scheduler configuration.  | |
 
 
 

@@ -44,6 +44,11 @@ func (s *SchedulerConfig) Resources() config.Resources {
 	return s.ResourcesConfig
 }
 
+// Config implements the config.Scheduler interface.
+func (s *SchedulerConfig) Config() map[string]any {
+	return s.SchedulerConfig.Object
+}
+
 // Validate performs config validation.
 func (s *SchedulerConfig) Validate() error {
 	if s == nil {

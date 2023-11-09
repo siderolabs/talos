@@ -1655,6 +1655,13 @@ func (SchedulerConfig) Doc() *encoder.Doc {
 				Description: "Configure the scheduler resources.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the scheduler resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "config",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Specify custom kube-scheduler configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specify custom kube-scheduler configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

@@ -2346,6 +2346,7 @@ SchedulerConfigSpec is configuration for kube-scheduler.
 | extra_volumes | [ExtraVolume](#talos.resource.definitions.k8s.ExtraVolume) | repeated |  |
 | environment_variables | [SchedulerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
+| config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 
 
 

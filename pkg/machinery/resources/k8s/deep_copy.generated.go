@@ -417,6 +417,12 @@ func (o SchedulerConfigSpec) DeepCopy() SchedulerConfigSpec {
 			cp.Resources.Limits[k3] = v3
 		}
 	}
+	if o.Config != nil {
+		cp.Config = make(map[string]any, len(o.Config))
+		for k2, v2 := range o.Config {
+			cp.Config[k2] = v2
+		}
+	}
 	return cp
 }
 

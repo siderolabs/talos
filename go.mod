@@ -22,6 +22,7 @@ require (
 	k8s.io/client-go v0.29.0-alpha.3
 	k8s.io/component-base v0.29.0-alpha.3
 	k8s.io/cri-api v0.29.0-alpha.3
+	k8s.io/kube-scheduler v0.29.0-alpha.3
 	k8s.io/kubectl v0.29.0-alpha.3
 	k8s.io/kubelet v0.29.0-alpha.3
 )
@@ -111,7 +112,7 @@ require (
 	github.com/siderolabs/go-debug v0.2.3
 	github.com/siderolabs/go-kmsg v0.1.3
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-kubernetes v0.2.7
+	github.com/siderolabs/go-kubernetes v0.2.8
 	github.com/siderolabs/go-loadbalancer v0.3.2
 	github.com/siderolabs/go-pcidb v0.2.0
 	github.com/siderolabs/go-pointer v1.0.0

@@ -2189,6 +2189,7 @@ func (in *SchedulerConfig) DeepCopyInto(out *SchedulerConfig) {
 		*out = new(ResourcesConfig)
 		(*in).DeepCopyInto(*out)
 	}
+	in.SchedulerConfig.DeepCopyInto(&out.SchedulerConfig)
 	return
 }
 

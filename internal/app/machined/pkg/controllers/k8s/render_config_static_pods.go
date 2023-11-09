@@ -15,11 +15,13 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+	schedulerv1 "k8s.io/kube-scheduler/config/v1"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -44,6 +46,11 @@ func (ctrl *RenderConfigsStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.AuditPolicyConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.SchedulerConfigType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -92,6 +99,19 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		auditConfig := auditRes.(*k8s.AuditPolicyConfig).TypedSpec()
 
+		kubeSchedulerRes, err := r.Get(ctx, k8s.NewSchedulerConfig().Metadata())
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting scheduler config resource: %w", err)
+		}
+
+		kubeSchedulerConfig := kubeSchedulerRes.(*k8s.SchedulerConfig).TypedSpec()
+
+		kubeSchedulerVersion := compatibility.VersionFromImageRef(kubeSchedulerConfig.Image)
+
 		type configFile struct {
 			filename string
 			f        func() (runtime.Object, error)
@@ -129,6 +149,18 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 					},
 				},
 			},
+			{
+				name:      "kube-scheduler",
+				directory: constants.KubernetesSchedulerConfigDir,
+				uid:       constants.KubernetesSchedulerRunUser,
+				gid:       constants.KubernetesSchedulerRunGroup,
+				configs: []configFile{
+					{
+						filename: "scheduler-config.yaml",
+						f:        schedulerConfig(kubeSchedulerConfig, kubeSchedulerVersion),
+					},
+				},
+			},
 		} {
 			if err = os.MkdirAll(pod.directory, 0o755); err != nil {
 				return fmt.Errorf("error creating config directory for %q: %w", pod.name, err)
@@ -160,7 +192,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		if err = r.Modify(ctx, k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID), func(r resource.Resource) error {
 			r.(*k8s.ConfigStatus).TypedSpec().Ready = true
-			r.(*k8s.ConfigStatus).TypedSpec().Version = admissionRes.Metadata().Version().String() + auditRes.Metadata().Version().String()
+			r.(*k8s.ConfigStatus).TypedSpec().Version = admissionRes.Metadata().Version().String() + auditRes.Metadata().Version().String() + kubeSchedulerRes.Metadata().Version().String()
 
 			return nil
 		}); err != nil {
@@ -206,6 +238,22 @@ func auditPolicyConfig(spec *k8s.AuditPolicyConfigSpec) func() (runtime.Object, 
 		if err := runtime.DefaultUnstructuredConverter.FromUnstructuredWithValidation(spec.Config, &cfg, true); err != nil {
 			return nil, fmt.Errorf("error unmarshaling audit policy configuration: %w", err)
 		}
+
+		return &cfg, nil
+	}
+}
+
+func schedulerConfig(spec *k8s.SchedulerConfigSpec, kubeSchedulerVersion compatibility.Version) func() (runtime.Object, error) {
+	return func() (runtime.Object, error) {
+		var cfg schedulerv1.KubeSchedulerConfiguration
+
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructuredWithValidation(spec.Config, &cfg, false); err != nil {
+			return nil, fmt.Errorf("error unmarshaling scheduler configuration: %w", err)
+		}
+
+		cfg.APIVersion = kubeSchedulerVersion.KubeSchedulerConfigurationAPIVersion()
+		cfg.Kind = "KubeSchedulerConfiguration"
+		cfg.ClientConnection.Kubeconfig = filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")
 
 		return &cfg, nil
 	}

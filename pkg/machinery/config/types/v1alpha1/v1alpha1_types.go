@@ -1275,6 +1275,11 @@ type SchedulerConfig struct {
 	//   schema:
 	//     type: object
 	ResourcesConfig *ResourcesConfig `yaml:"resources,omitempty"`
+	//   description: |
+	//     Specify custom kube-scheduler configuration.
+	//   schema:
+	//     type: object
+	SchedulerConfig Unstructured `yaml:"config,omitempty"`
 }
 
 var _ config.Etcd = (*EtcdConfig)(nil)

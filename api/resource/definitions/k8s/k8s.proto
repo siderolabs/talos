@@ -220,6 +220,7 @@ message SchedulerConfigSpec {
   repeated ExtraVolume extra_volumes = 4;
   map<string, string> environment_variables = 5;
   Resources resources = 6;
+  google.protobuf.Struct config = 7;
 }
 
 // SecretsStatusSpec describes status of rendered secrets.

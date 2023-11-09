@@ -267,6 +267,9 @@ const (
 	// KubernetesSchedulerSecretsDir defines ephemeral directory with kube-scheduler secrets.
 	KubernetesSchedulerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-scheduler"
 
+	// KubernetesSchedulerConfigDir defines ephemeral directory with kube-scheduler configs.
+	KubernetesSchedulerConfigDir = KubebernetesStaticConfigDir + "/" + "kube-scheduler"
+
 	// KubernetesAPIServerRunUser defines UID to the API Server.
 	KubernetesAPIServerRunUser = 65534
 

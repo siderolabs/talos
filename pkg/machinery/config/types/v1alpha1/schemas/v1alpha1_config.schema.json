@@ -2719,6 +2719,13 @@
           "description": "Configure the scheduler resources.\n",
           "markdownDescription": "Configure the scheduler resources.",
           "x-intellij-html-description": "\u003cp\u003eConfigure the scheduler resources.\u003c/p\u003e\n"
+        },
+        "config": {
+          "type": "object",
+          "title": "config",
+          "description": "Specify custom kube-scheduler configuration.\n",
+          "markdownDescription": "Specify custom kube-scheduler configuration.",
+          "x-intellij-html-description": "\u003cp\u003eSpecify custom kube-scheduler configuration.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -195,6 +195,7 @@ func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
 					EnvironmentVariables: cfgProvider.Cluster().Scheduler().Env(),
 					Resources:            convertResources(cfgProvider.Cluster().Scheduler().Resources()),
+					Config:               cfgProvider.Cluster().Scheduler().Config(),
 				}
 
 				return nil

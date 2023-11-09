@@ -117,6 +117,7 @@ type Scheduler interface {
 	ExtraVolumes() []VolumeMount
 	Env() Env
 	Resources() Resources
+	Config() map[string]any
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related
