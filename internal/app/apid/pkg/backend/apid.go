@@ -101,6 +101,9 @@ func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (contex
 			// see: https://github.com/grpc/grpc-go/blob/d5dee5fdbdeb52f6ea10b37b2cc7ce37814642d7/clientconn.go#L55-L56
 			MinConnectTimeout: 20 * time.Second,
 		}),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
+		),
 		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 	)
 

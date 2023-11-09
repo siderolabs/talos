@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var _ proxy.Backend = (*Local)(nil)
@@ -60,6 +61,9 @@ func (l *Local) GetConnection(ctx context.Context, fullMethodName string) (conte
 		ctx,
 		"unix:"+l.socketPath,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
+		),
 		grpc.WithCodec(proxy.Codec()), //nolint:staticcheck
 
 	)
