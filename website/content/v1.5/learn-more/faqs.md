@@ -8,7 +8,6 @@ description: "Frequently Asked Questions about Talos Linux."
 
 ## How is Talos different from other container optimized Linux distros?
 
-Talos shares a lot of attributes with other distros, but there are some important differences.
 Talos integrates tightly with Kubernetes, and is not meant to be a general-purpose operating system.
 The most important difference is that Talos is fully controlled by an API via a gRPC interface, instead of an ordinary shell.
 We don't ship SSH, and there is no console access.
@@ -17,7 +16,7 @@ It's a big change from how operating systems have been managed in the past, but 
 
 ## Why no shell or SSH?
 
-Since Talos is fully API-driven, all maintenance and debugging operations should be possible via the OS API.
+Since Talos is fully API-driven, all maintenance and debugging operations are possible via the OS API.
 We would like for Talos users to start thinking about what a "machine" is in the context of a Kubernetes cluster.
 That is, that a Kubernetes _cluster_ can be thought of as one massive machine, and the _nodes_ are merely additional, undifferentiated resources.
 We don't want humans to focus on the _nodes_, but rather on the _machine_ that is the Kubernetes cluster.
@@ -38,7 +37,7 @@ Sometimes Kubernetes might be down for a number of reasons (etcd issues, misconf
 The Talos API is a way to access the operating system and fix issues, e.g. fixing access to Kubernetes.
 When Talos Linux is running fine, using the Kubernetes APIs (via `kubeconfig`) is all you should need to deploy and manage Kubernetes workloads.
 
-## How Talos handles certificates ?
+## How does Talos handle certificates?
 
 During the machine config generation process, Talos generates a set of certificate authorities (CAs) that remains valid for 10 years.
 Talos is responsible for managing certificates for `etcd`, Talos API (`apid`), node certificates (`kubelet`), and other components.
@@ -48,3 +47,9 @@ However, client certificates such as `talosconfig` and `kubeconfig` are the user
 
 To renew the `talosconfig` certificate, the follow [this process]({{< relref "../talos-guides/configuration/managing-pki" >}}).
 To renew `kubeconfig`, use `talosctl kubeconfig` command, and the time-to-live (TTL) is defined in the [configuration]({{< relref "../reference/configuration/#adminkubeconfigconfig" >}}).
+
+## How can I set the timezone of my Talos Linux clusters?
+
+Talos doesn't support timezones, and will always run in UTC.
+This ensures consistency of log timestamps for all Talos Linux clusters, simplifying debugging.
+Your containers can run with any timezone configuration you desire, but the timezone of Talos Linux is not configurable.
