@@ -287,3 +287,46 @@ compression done: /out/aws-amd64.raw.xz
 Now the `_out/aws-amd64.raw.xz` contains the customized Talos AWS disk image which can be uploaded as an AMI to the [AWS]({{< relref "../install/cloud-platforms/aws" >}}).
 
 If the AWS machine is later going to be upgraded to a new version of Talos (or a new set of system extensions), generate a customized `installer` image following the steps above, and upgrade Talos to that `installer` image.
+
+### Example: Assets with system extensions from image tarballs with Imager
+
+Some advanced features of `imager` are currently not exposed via command line arguments like `--system-extension-image`.
+To access them nonetheless it is possible to supply `imager` with a `profile.yaml` instead.
+
+Let's use these advanced features to build a bare-metal installer using a system extension from a private registry.
+First use `crane` on a host with access to the private registry to export the extension image into a tarball.
+
+```shell
+crane export <your-private-registry>/<your-extension>:latest <your-extension>
+```
+
+When can then reference the tarball in a suitable `profile.yaml` for our intended architecture and output.
+In this case we want to build an `amd64`, bare-metal installer.
+
+```yaml
+# profile.yaml
+arch: amd64
+platform: metal
+secureboot: false
+version: {{< release >}}
+input:
+  kernel:
+    path: /usr/install/amd64/vmlinuz
+  initramfs:
+    path: /usr/install/amd64/initramfs.xz
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer:{{< release >}}
+  systemExtensions:
+    - tarballPath: <your-extension>  # notice we use 'tarballPath' instead of 'imageRef'
+output:
+  kind: installer
+  outFormat: raw
+ ```
+
+To build the asset we pass `profile.yaml` to `imager` via stdin
+
+```shell
+$ cat profile.yaml | docker run --rm -i \
+-v $PWD/_out:/out -v $PWD/<your-extension>:/<your-extension> \
+ghcr.io/siderolabs/imager:{{< release>}} -
+```
