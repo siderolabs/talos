@@ -82,8 +82,8 @@ func (p *Profile) Validate() error {
 			return fmt.Errorf("disk size is required for image output")
 		}
 	case OutKindInstaller:
-		if len(p.Customization.ExtraKernelArgs) > 0 {
-			return fmt.Errorf("customization of kernel args is not supported for %s output", p.Output.Kind)
+		if !p.SecureBootEnabled() && len(p.Customization.ExtraKernelArgs) > 0 {
+			return fmt.Errorf("customization of kernel args is not supported for %s output in !secureboot mode", p.Output.Kind)
 		}
 
 		if len(p.Customization.MetaContents) > 0 {
