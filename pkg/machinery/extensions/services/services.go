@@ -58,6 +58,8 @@ type Security struct {
 	ReadonlyPaths []string `yaml:"readonlyPaths"`
 	// WriteableRootfs
 	WriteableRootfs bool `yaml:"writeableRootfs"`
+	// RootfsPropagation is the propagation mode for the rootfs mount.
+	RootfsPropagation string `yaml:"rootfsPropagation,omitempty"`
 }
 
 // Dependency describes a service Dependency.

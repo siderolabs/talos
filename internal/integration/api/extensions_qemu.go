@@ -392,6 +392,30 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisor() {
 	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "nginx-gvisor"))
 }
 
+// TestExtensionsStargz verifies stargz snapshotter.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsStargz() {
+	_, err := suite.Clientset.CoreV1().Pods("default").Create(suite.ctx, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "stargz-hello",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "stargz-hello",
+					Image: "ghcr.io/stargz-containers/alpine:3.15.3-esgz",
+					Args:  []string{"sleep", "inf"},
+				},
+			},
+		},
+	}, metav1.CreateOptions{})
+	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, "stargz-hello", metav1.DeleteOptions{}) //nolint:errcheck
+
+	suite.Require().NoError(err)
+
+	// wait for the pod to be ready
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "stargz-hello"))
+}
+
 // TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)

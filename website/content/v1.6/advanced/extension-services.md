@@ -90,6 +90,7 @@ readonlyPaths:
   - "/another/readonly/path"
 writeableRootfs: true
 writeableSysfs: true
+rootfsPropagation: shared
 ```
 
 > * The rootfs is readonly by default unless `writeableRootfs: true` is set.
@@ -113,6 +114,8 @@ To set empty read only paths use:
 >   security:
 >     readonlyPaths: []
 > ```
+>
+> * Rootfs propagation is not set by default (container mounts are private).
 
 ### `depends`
 

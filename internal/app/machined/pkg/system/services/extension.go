@@ -106,6 +106,7 @@ func (svc *Extension) DependsOn(r runtime.Runtime) []string {
 func (svc *Extension) getOCIOptions(envVars []string) []oci.SpecOpts {
 	ociOpts := []oci.SpecOpts{
 		oci.WithRootFSPath(filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name)),
+		containerd.WithRootfsPropagation(svc.Spec.Container.Security.RootfsPropagation),
 		oci.WithCgroup(constants.CgroupExtensions),
 		oci.WithMounts(svc.Spec.Container.Mounts),
 		oci.WithHostNamespace(specs.NetworkNamespace),
