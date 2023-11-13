@@ -6,7 +6,7 @@ cascade:
   type: docs
 lastRelease: v1.6.0-alpha.1
 kubernetesRelease: "1.29.0"
-prevKubernetesRelease: "1.28.2"
+prevKubernetesRelease: "1.28.3"
 theilaRelease: "v0.2.1"
 nvidiaContainerToolkitRelease: "v1.13.5"
 nvidiaDriverRelease: "535.54.03"
