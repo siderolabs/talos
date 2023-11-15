@@ -77,7 +77,7 @@ The extension waits for the file to be present before starting the service.
 
 ### TPM-based Disk Encryption
 
-Talos now supports encrypting `STATE`/`EPHEMERAL` with [keys bound to a TPM device]{{< relref "../../talos-guides/install/bare-metal-platforms/secureboot" >}}().
+Talos now supports encrypting `STATE`/`EPHEMERAL` with [keys bound to a TPM device]({{< relref "../../talos-guides/install/bare-metal-platforms/secureboot" >}}).
 The TPM device must be TPM2.0 compatible.
 This type of disk encryption should be used when booting Talos in SecureBoot mode.
 
