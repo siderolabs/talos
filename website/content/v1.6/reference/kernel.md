@@ -141,6 +141,10 @@ cp config.yaml iso/
 mkisofs -joliet -rock -volid 'metal-iso' -output config.iso iso/
 ```
 
+#### `talos.config.auth.*`
+
+Kernel parameters prefixed with `talos.config.auth.` are used to configure [OAuth2 authentication for the machine configuration]({{< relref "../advanced/machine-config-oauth" >}}).
+
 #### `talos.platform`
 
 The platform name on which Talos will run.

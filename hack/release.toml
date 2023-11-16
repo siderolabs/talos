@@ -90,6 +90,12 @@ machine:
 ```
 """
 
+    [note.auth2]
+        title = "OAuth2 Machine Config Flow"
+        description = """\
+Talos Linux when running on the `metal` platform can be configured to authenticate the machine configuration download using [OAuth2 device flow](https://www.talos.dev/v1.6/advanced/machine-config-oauth/).
+"""
+
 [make_deps]
 
     [make_deps.tools]

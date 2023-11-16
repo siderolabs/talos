@@ -25,6 +25,27 @@ const (
 	// to the config.
 	KernelParamConfig = "talos.config"
 
+	// KernelParamConfigOAuthClientID is the kernel parameter name for specifying the OAuth2 client ID.
+	KernelParamConfigOAuthClientID = "talos.config.oauth.client_id"
+
+	// KernelParamConfigOAuthClientSecret is the kernel parameter name for specifying the OAuth2 client secret.
+	KernelParamConfigOAuthClientSecret = "talos.config.oauth.client_secret"
+
+	// KernelParamConfigOAuthAudience is the kernel parameter name for specifying the OAuth2 audience.
+	KernelParamConfigOAuthAudience = "talos.config.oauth.audience"
+
+	// KernelParamConfigOAuthScope is the kernel parameter name for specifying the OAuth2 scopes (might be repeated).
+	KernelParamConfigOAuthScope = "talos.config.oauth.scope"
+
+	// KernelParamConfigOAuthDeviceAuthURL is the kernel parameter name for specifying the OAuth2 device auth URL.
+	KernelParamConfigOAuthDeviceAuthURL = "talos.config.oauth.device_auth_url"
+
+	// KernelParamConfigOAuthTokenURL is the kernel parameter name for specifying the OAuth2 token URL.
+	KernelParamConfigOAuthTokenURL = "talos.config.oauth.token_url"
+
+	// KernelParamConfigOAuthExtraVariable is the kernel parameter name for specifying the OAuth2 extra variable (might be repeated).
+	KernelParamConfigOAuthExtraVariable = "talos.config.oauth.extra_variable"
+
 	// ConfigNone indicates no config is required.
 	ConfigNone = "none"
 

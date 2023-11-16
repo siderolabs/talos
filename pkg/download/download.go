@@ -72,7 +72,17 @@ func WithFormat(format string) Option {
 // the config.
 func WithHeaders(headers map[string]string) Option {
 	return func(d *downloadOptions) {
-		d.Headers = headers
+		if headers == nil {
+			return
+		}
+
+		if d.Headers == nil {
+			d.Headers = map[string]string{}
+		}
+
+		for k, v := range headers {
+			d.Headers[k] = v
+		}
 	}
 }
 

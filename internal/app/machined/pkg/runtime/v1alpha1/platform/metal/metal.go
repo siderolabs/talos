@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/channel"
@@ -25,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/oauth2"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal/url"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/download"
@@ -79,6 +81,24 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 			return nil, err
 		}
 
+		oauth2Cfg, err := oauth2.NewConfig(procfs.ProcCmdline(), *option)
+		if err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("failed to parse OAuth2 config: %w", err)
+		}
+
+		var extraHeaders map[string]string
+
+		// perform OAuth2 device auth flow first to acquire extra headers
+		if oauth2Cfg != nil {
+			if err = retry.Constant(constants.ConfigLoadTimeout, retry.WithUnits(30*time.Second)).RetryWithContext(ctx, func(ctx context.Context) error {
+				return oauth2Cfg.DeviceAuthFlow(ctx, r)
+			}); err != nil {
+				return nil, fmt.Errorf("OAuth2 device auth flow failed: %w", err)
+			}
+
+			extraHeaders = oauth2Cfg.ExtraHeaders()
+		}
+
 		return download.Download(
 			ctx,
 			*option,
@@ -88,6 +108,7 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 				// give a timeout per attempt, max 50% of that is dedicated for URL interpolation, the rest is for the actual download
 				retry.WithAttemptTimeout(constants.ConfigLoadAttemptTimeout),
 			),
+			download.WithHeaders(extraHeaders),
 		)
 	}
 }
