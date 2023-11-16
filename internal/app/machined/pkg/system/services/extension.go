@@ -174,8 +174,14 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	ociSpecOpts := svc.getOCIOptions(envVars)
 
+	debug := false
+
+	if r.Config() != nil {
+		debug = r.Config().Debug()
+	}
+
 	return restart.New(containerd.NewRunner(
-		r.Config().Debug(),
+		debug,
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithNamespace(constants.SystemContainerdNamespace),

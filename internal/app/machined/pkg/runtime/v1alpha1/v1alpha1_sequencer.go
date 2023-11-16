@@ -80,6 +80,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		).Append(
 			"machined",
 			StartMachined,
+			StartContainerd,
 		).Append(
 			"config",
 			LoadConfig,
@@ -105,6 +106,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"earlyServices",
 			StartUdevd,
 			StartMachined,
+			StartContainerd,
 		).Append(
 			"usb",
 			WaitForUSB,
@@ -161,9 +163,6 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 			phases = phases.Append(
 				"env",
 				SetUserEnvVars,
-			).Append(
-				"containerd",
-				StartContainerd,
 			).Append(
 				"install",
 				Install,
@@ -227,9 +226,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"env",
 		SetUserEnvVars,
-	).Append(
-		"containerd",
-		StartContainerd,
 	).Append(
 		"dbus",
 		StartDBus,
@@ -434,9 +430,6 @@ func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, in *machineapi.UpgradeRe
 		return nil
 	default:
 		phases = phases.Append(
-			"containerd",
-			StartContainerd,
-		).Append(
 			"verifyDisk",
 			VerifyDiskAvailability,
 		).Append(
