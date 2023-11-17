@@ -33,6 +33,7 @@ func TestRegisterResource(t *testing.T) {
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
 		&network.LinkSpec{},
+		&network.NfTablesChain{},
 		&network.NodeAddress{},
 		&network.NodeAddressFilter{},
 		&network.OperatorSpec{},

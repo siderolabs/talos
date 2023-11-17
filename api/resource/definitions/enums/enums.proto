@@ -186,6 +186,46 @@ enum NethelpersLinkType {
   LINK_NONE = 65534;
 }
 
+// NethelpersMatchOperator is a netfilter match operator.
+enum NethelpersMatchOperator {
+  OPERATOR_EQUAL = 0;
+  OPERATOR_NOT_EQUAL = 1;
+}
+
+// NethelpersNfTablesChainHook wraps nftables.ChainHook for YAML marshaling.
+enum NethelpersNfTablesChainHook {
+  CHAIN_HOOK_PREROUTING = 0;
+  CHAIN_HOOK_INPUT = 1;
+  CHAIN_HOOK_FORWARD = 2;
+  CHAIN_HOOK_OUTPUT = 3;
+  CHAIN_HOOK_POSTROUTING = 4;
+}
+
+// NethelpersNfTablesChainPriority wraps nftables.ChainPriority for YAML marshaling.
+enum NethelpersNfTablesChainPriority {
+  option allow_alias = true;
+  NETHELPERS_NFTABLESCHAINPRIORITY_UNSPECIFIED = 0;
+  CHAIN_PRIORITY_FIRST = -2147483648;
+  CHAIN_PRIORITY_CONNTRACK_DEFRAG = -400;
+  CHAIN_PRIORITY_RAW = -300;
+  CHAIN_PRIORITY_SE_LINUX_FIRST = -225;
+  CHAIN_PRIORITY_CONNTRACK = -200;
+  CHAIN_PRIORITY_MANGLE = -150;
+  CHAIN_PRIORITY_NAT_DEST = -100;
+  CHAIN_PRIORITY_FILTER = 0;
+  CHAIN_PRIORITY_SECURITY = 50;
+  CHAIN_PRIORITY_NAT_SOURCE = 100;
+  CHAIN_PRIORITY_SE_LINUX_LAST = 225;
+  CHAIN_PRIORITY_CONNTRACK_HELPER = 300;
+  CHAIN_PRIORITY_LAST = 2147483647;
+}
+
+// NethelpersNfTablesVerdict wraps nftables.Verdict for YAML marshaling.
+enum NethelpersNfTablesVerdict {
+  VERDICT_DROP = 0;
+  VERDICT_ACCEPT = 1;
+}
+
 // NethelpersOperationalState wraps rtnetlink.OperationalState for YAML marshaling.
 enum NethelpersOperationalState {
   OPER_STATE_UNKNOWN = 0;
@@ -214,6 +254,13 @@ enum NethelpersPrimaryReselect {
   PRIMARY_RESELECT_ALWAYS = 0;
   PRIMARY_RESELECT_BETTER = 1;
   PRIMARY_RESELECT_FAILURE = 2;
+}
+
+// NethelpersProtocol is a inet protocol.
+enum NethelpersProtocol {
+  NETHELPERS_PROTOCOL_UNSPECIFIED = 0;
+  PROTOCOL_TCP = 6;
+  PROTOCOL_UDP = 17;
 }
 
 // NethelpersRouteFlag wraps RTM_F_* constants.

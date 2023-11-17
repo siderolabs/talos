@@ -51,9 +51,14 @@ description: Talos gRPC API reference.
     - [NethelpersFamily](#talos.resource.definitions.enums.NethelpersFamily)
     - [NethelpersLACPRate](#talos.resource.definitions.enums.NethelpersLACPRate)
     - [NethelpersLinkType](#talos.resource.definitions.enums.NethelpersLinkType)
+    - [NethelpersMatchOperator](#talos.resource.definitions.enums.NethelpersMatchOperator)
+    - [NethelpersNfTablesChainHook](#talos.resource.definitions.enums.NethelpersNfTablesChainHook)
+    - [NethelpersNfTablesChainPriority](#talos.resource.definitions.enums.NethelpersNfTablesChainPriority)
+    - [NethelpersNfTablesVerdict](#talos.resource.definitions.enums.NethelpersNfTablesVerdict)
     - [NethelpersOperationalState](#talos.resource.definitions.enums.NethelpersOperationalState)
     - [NethelpersPort](#talos.resource.definitions.enums.NethelpersPort)
     - [NethelpersPrimaryReselect](#talos.resource.definitions.enums.NethelpersPrimaryReselect)
+    - [NethelpersProtocol](#talos.resource.definitions.enums.NethelpersProtocol)
     - [NethelpersRouteFlag](#talos.resource.definitions.enums.NethelpersRouteFlag)
     - [NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol)
     - [NethelpersRouteType](#talos.resource.definitions.enums.NethelpersRouteType)
@@ -158,9 +163,18 @@ description: Talos gRPC API reference.
     - [LinkRefreshSpec](#talos.resource.definitions.network.LinkRefreshSpec)
     - [LinkSpecSpec](#talos.resource.definitions.network.LinkSpecSpec)
     - [LinkStatusSpec](#talos.resource.definitions.network.LinkStatusSpec)
+    - [NfTablesAddressMatch](#talos.resource.definitions.network.NfTablesAddressMatch)
+    - [NfTablesChainSpec](#talos.resource.definitions.network.NfTablesChainSpec)
+    - [NfTablesClampMSS](#talos.resource.definitions.network.NfTablesClampMSS)
+    - [NfTablesIfNameMatch](#talos.resource.definitions.network.NfTablesIfNameMatch)
+    - [NfTablesLayer4Match](#talos.resource.definitions.network.NfTablesLayer4Match)
+    - [NfTablesMark](#talos.resource.definitions.network.NfTablesMark)
+    - [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch)
+    - [NfTablesRule](#talos.resource.definitions.network.NfTablesRule)
     - [NodeAddressFilterSpec](#talos.resource.definitions.network.NodeAddressFilterSpec)
     - [NodeAddressSpec](#talos.resource.definitions.network.NodeAddressSpec)
     - [OperatorSpecSpec](#talos.resource.definitions.network.OperatorSpecSpec)
+    - [PortRange](#talos.resource.definitions.network.PortRange)
     - [ProbeSpecSpec](#talos.resource.definitions.network.ProbeSpecSpec)
     - [ProbeStatusSpec](#talos.resource.definitions.network.ProbeStatusSpec)
     - [ResolverSpecSpec](#talos.resource.definitions.network.ResolverSpecSpec)
@@ -1152,6 +1166,69 @@ NethelpersLinkType is a link type.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersMatchOperator"></a>
+
+### NethelpersMatchOperator
+NethelpersMatchOperator is a netfilter match operator.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| OPERATOR_EQUAL | 0 |  |
+| OPERATOR_NOT_EQUAL | 1 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersNfTablesChainHook"></a>
+
+### NethelpersNfTablesChainHook
+NethelpersNfTablesChainHook wraps nftables.ChainHook for YAML marshaling.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CHAIN_HOOK_PREROUTING | 0 |  |
+| CHAIN_HOOK_INPUT | 1 |  |
+| CHAIN_HOOK_FORWARD | 2 |  |
+| CHAIN_HOOK_OUTPUT | 3 |  |
+| CHAIN_HOOK_POSTROUTING | 4 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersNfTablesChainPriority"></a>
+
+### NethelpersNfTablesChainPriority
+NethelpersNfTablesChainPriority wraps nftables.ChainPriority for YAML marshaling.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_NFTABLESCHAINPRIORITY_UNSPECIFIED | 0 |  |
+| CHAIN_PRIORITY_FIRST | -2147483648 |  |
+| CHAIN_PRIORITY_CONNTRACK_DEFRAG | -400 |  |
+| CHAIN_PRIORITY_RAW | -300 |  |
+| CHAIN_PRIORITY_SE_LINUX_FIRST | -225 |  |
+| CHAIN_PRIORITY_CONNTRACK | -200 |  |
+| CHAIN_PRIORITY_MANGLE | -150 |  |
+| CHAIN_PRIORITY_NAT_DEST | -100 |  |
+| CHAIN_PRIORITY_FILTER | 0 |  |
+| CHAIN_PRIORITY_SECURITY | 50 |  |
+| CHAIN_PRIORITY_NAT_SOURCE | 100 |  |
+| CHAIN_PRIORITY_SE_LINUX_LAST | 225 |  |
+| CHAIN_PRIORITY_CONNTRACK_HELPER | 300 |  |
+| CHAIN_PRIORITY_LAST | 2147483647 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersNfTablesVerdict"></a>
+
+### NethelpersNfTablesVerdict
+NethelpersNfTablesVerdict wraps nftables.Verdict for YAML marshaling.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VERDICT_DROP | 0 |  |
+| VERDICT_ACCEPT | 1 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersOperationalState"></a>
 
 ### NethelpersOperationalState
@@ -1197,6 +1274,19 @@ NethelpersPrimaryReselect is an ARP targets mode.
 | PRIMARY_RESELECT_ALWAYS | 0 |  |
 | PRIMARY_RESELECT_BETTER | 1 |  |
 | PRIMARY_RESELECT_FAILURE | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersProtocol"></a>
+
+### NethelpersProtocol
+NethelpersProtocol is a inet protocol.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_PROTOCOL_UNSPECIFIED | 0 |  |
+| PROTOCOL_TCP | 6 |  |
+| PROTOCOL_UDP | 17 |  |
 
 
 
@@ -2922,6 +3012,154 @@ LinkStatusSpec describes status of rendered secrets.
 
 
 
+<a name="talos.resource.definitions.network.NfTablesAddressMatch"></a>
+
+### NfTablesAddressMatch
+NfTablesAddressMatch describes the match on the IP address.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| include_subnets | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
+| exclude_subnets | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
+| invert | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesChainSpec"></a>
+
+### NfTablesChainSpec
+NfTablesChainSpec describes status of rendered secrets.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
+| hook | [talos.resource.definitions.enums.NethelpersNfTablesChainHook](#talos.resource.definitions.enums.NethelpersNfTablesChainHook) |  |  |
+| priority | [talos.resource.definitions.enums.NethelpersNfTablesChainPriority](#talos.resource.definitions.enums.NethelpersNfTablesChainPriority) |  |  |
+| rules | [NfTablesRule](#talos.resource.definitions.network.NfTablesRule) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesClampMSS"></a>
+
+### NfTablesClampMSS
+NfTablesClampMSS describes the TCP MSS clamping operation.
+
+MSS is limited by the `MaxMTU` so that:
+- IPv4: MSS = MaxMTU - 40
+- IPv6: MSS = MaxMTU - 60.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mtu | [fixed32](#fixed32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesIfNameMatch"></a>
+
+### NfTablesIfNameMatch
+NfTablesIfNameMatch describes the match on the interface name.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| interface_name | [string](#string) |  |  |
+| operator | [talos.resource.definitions.enums.NethelpersMatchOperator](#talos.resource.definitions.enums.NethelpersMatchOperator) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesLayer4Match"></a>
+
+### NfTablesLayer4Match
+NfTablesLayer4Match describes the match on the transport layer protocol.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| protocol | [talos.resource.definitions.enums.NethelpersProtocol](#talos.resource.definitions.enums.NethelpersProtocol) |  |  |
+| match_source_port | [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch) |  |  |
+| match_destination_port | [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesMark"></a>
+
+### NfTablesMark
+NfTablesMark encodes packet mark match/update operation.
+
+When used as a match computes the following condition:
+(mark & mask) ^ xor == value
+
+When used as an update computes the following operation:
+mark = (mark & mask) ^ xor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mask | [uint32](#uint32) |  |  |
+| xor | [uint32](#uint32) |  |  |
+| value | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesPortMatch"></a>
+
+### NfTablesPortMatch
+NfTablesPortMatch describes the match on the transport layer port.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ranges | [PortRange](#talos.resource.definitions.network.PortRange) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesRule"></a>
+
+### NfTablesRule
+NfTablesRule describes a single rule in the nftables chain.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| match_o_if_name | [NfTablesIfNameMatch](#talos.resource.definitions.network.NfTablesIfNameMatch) |  |  |
+| verdict | [talos.resource.definitions.enums.NethelpersNfTablesVerdict](#talos.resource.definitions.enums.NethelpersNfTablesVerdict) |  |  |
+| match_mark | [NfTablesMark](#talos.resource.definitions.network.NfTablesMark) |  |  |
+| set_mark | [NfTablesMark](#talos.resource.definitions.network.NfTablesMark) |  |  |
+| match_source_address | [NfTablesAddressMatch](#talos.resource.definitions.network.NfTablesAddressMatch) |  |  |
+| match_destination_address | [NfTablesAddressMatch](#talos.resource.definitions.network.NfTablesAddressMatch) |  |  |
+| match_layer4 | [NfTablesLayer4Match](#talos.resource.definitions.network.NfTablesLayer4Match) |  |  |
+| match_i_if_name | [NfTablesIfNameMatch](#talos.resource.definitions.network.NfTablesIfNameMatch) |  |  |
+| clamp_mss | [NfTablesClampMSS](#talos.resource.definitions.network.NfTablesClampMSS) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.NodeAddressFilterSpec"></a>
 
 ### NodeAddressFilterSpec
@@ -2968,6 +3206,24 @@ OperatorSpecSpec describes DNS resolvers.
 | dhcp6 | [DHCP6OperatorSpec](#talos.resource.definitions.network.DHCP6OperatorSpec) |  |  |
 | vip | [VIPOperatorSpec](#talos.resource.definitions.network.VIPOperatorSpec) |  |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.PortRange"></a>
+
+### PortRange
+PortRange describes a range of ports.
+
+Range is [lo, hi].
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| lo | [fixed32](#fixed32) |  |  |
+| hi | [fixed32](#fixed32) |  |  |
 
 
 

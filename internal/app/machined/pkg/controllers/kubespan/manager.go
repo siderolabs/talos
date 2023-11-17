@@ -15,9 +15,11 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
+	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -40,7 +42,6 @@ const DefaultPeerReconcileInterval = 30 * time.Second
 type ManagerController struct {
 	WireguardClientFactory WireguardClientFactory
 	RulesManagerFactory    RulesManagerFactory
-	NfTablesManagerFactory NfTablesManagerFactory
 	PeerReconcileInterval  time.Duration
 }
 
@@ -60,9 +61,6 @@ type WireguardClient interface {
 
 // RulesManagerFactory allows mocking RulesManager.
 type RulesManagerFactory func(targetTable, internalMark, markMask int) RulesManager
-
-// NfTablesManagerFactory allows mocking NfTablesManager.
-type NfTablesManagerFactory func(externalMark, internalMark, markMask uint32) NfTablesManager
 
 // Inputs implements controller.Controller interface.
 func (ctrl *ManagerController) Inputs() []controller.Input {
@@ -103,6 +101,10 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 			Kind: controller.OutputShared,
 		},
 		{
+			Type: network.NfTablesChainType,
+			Kind: controller.OutputShared,
+		},
+		{
 			Type: kubespan.PeerStatusType,
 			Kind: controller.OutputExclusive,
 		},
@@ -128,10 +130,6 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		ctrl.RulesManagerFactory = NewRulesManager
 	}
 
-	if ctrl.NfTablesManagerFactory == nil {
-		ctrl.NfTablesManagerFactory = NewNfTablesManager
-	}
-
 	if ctrl.PeerReconcileInterval == 0 {
 		ctrl.PeerReconcileInterval = DefaultPeerReconcileInterval
 	}
@@ -150,16 +148,6 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		if rulesMgr != nil {
 			if err := rulesMgr.Cleanup(); err != nil {
 				logger.Error("failed cleaning up routing rules", zap.Error(err))
-			}
-		}
-	}()
-
-	var nfTablesMgr NfTablesManager
-
-	defer func() {
-		if nfTablesMgr != nil {
-			if err := nfTablesMgr.Cleanup(); err != nil {
-				logger.Error("failed cleaning up nftables rules", zap.Error(err))
 			}
 		}
 	}()
@@ -200,14 +188,6 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				rulesMgr = nil
 			}
 
-			if nfTablesMgr != nil {
-				if err = nfTablesMgr.Cleanup(); err != nil {
-					logger.Error("failed cleaning up nftables rules", zap.Error(err))
-				}
-
-				nfTablesMgr = nil
-			}
-
 			continue
 		}
 
@@ -223,19 +203,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			tickerC = ticker.C
 		}
 
-		if rulesMgr == nil {
-			rulesMgr = ctrl.RulesManagerFactory(constants.KubeSpanDefaultRoutingTable, constants.KubeSpanDefaultForceFirewallMark, constants.KubeSpanDefaultFirewallMask)
-
-			if err = rulesMgr.Install(); err != nil {
-				return fmt.Errorf("failed setting up routing rules: %w", err)
-			}
-		}
-
 		cfgSpec := cfg.(*kubespan.Config).TypedSpec()
-
-		if nfTablesMgr == nil {
-			nfTablesMgr = ctrl.NfTablesManagerFactory(constants.KubeSpanDefaultFirewallMark, constants.KubeSpanDefaultForceFirewallMark, constants.KubeSpanDefaultFirewallMask)
-		}
 
 		localIdentity, err := r.Get(ctx, resource.NewMetadata(kubespan.NamespaceName, kubespan.IdentityType, kubespan.LocalIdentity, resource.VersionUndefined))
 		if err != nil {
@@ -373,13 +341,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		for pubKey, peerStatus := range peerStatuses {
 			peerStatus := peerStatus
 
-			if err = r.Modify(ctx,
+			if err = safe.WriterModify(ctx, r,
 				kubespan.NewPeerStatus(
 					kubespan.NamespaceName,
 					pubKey,
 				),
-				func(r resource.Resource) error {
-					*r.(*kubespan.PeerStatus).TypedSpec() = *peerStatus
+				func(r *kubespan.PeerStatus) error {
+					*r.TypedSpec() = *peerStatus
 
 					return nil
 				},
@@ -395,13 +363,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			continue
 		}
 
-		if err = r.Modify(ctx,
+		if err = safe.WriterModify(ctx, r,
 			network.NewAddressSpec(
 				network.ConfigNamespaceName,
 				network.LayeredID(network.ConfigOperator, network.AddressID(constants.KubeSpanLinkName, localSpec.Address)),
 			),
-			func(r resource.Resource) error {
-				spec := r.(*network.AddressSpec).TypedSpec()
+			func(r *network.AddressSpec) error {
+				spec := r.TypedSpec()
 
 				spec.Address = netip.PrefixFrom(localSpec.Address.Addr(), localSpec.Subnet.Bits())
 				spec.ConfigLayer = network.ConfigOperator
@@ -452,13 +420,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		} {
 			spec := spec
 
-			if err = r.Modify(ctx,
+			if err = safe.WriterModify(ctx, r,
 				network.NewRouteSpec(
 					network.ConfigNamespaceName,
 					network.LayeredID(network.ConfigOperator, network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority)),
 				),
-				func(r resource.Resource) error {
-					*r.(*network.RouteSpec).TypedSpec() = spec
+				func(r *network.RouteSpec) error {
+					*r.TypedSpec() = spec
 
 					return nil
 				},
@@ -467,13 +435,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		}
 
-		if err = r.Modify(ctx,
+		if err = safe.WriterModify(ctx, r,
 			network.NewLinkSpec(
 				network.ConfigNamespaceName,
 				network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
 			),
-			func(r resource.Resource) error {
-				spec := r.(*network.LinkSpec).TypedSpec()
+			func(r *network.LinkSpec) error {
+				spec := r.TypedSpec()
 
 				spec.ConfigLayer = network.ConfigOperator
 				spec.Name = constants.KubeSpanLinkName
@@ -497,8 +465,102 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error modifying link spec: %w", err)
 		}
 
-		if err = nfTablesMgr.Update(allowedIPsSet, mtu); err != nil {
-			return fmt.Errorf("failed updating nftables: %w", err)
+		if err = safe.WriterModify(ctx, r,
+			network.NewNfTablesChain(
+				network.NamespaceName,
+				"kubespan_prerouting",
+			),
+			func(r *network.NfTablesChain) error {
+				spec := r.TypedSpec()
+
+				spec.Type = nethelpers.ChainTypeFilter
+				spec.Hook = nethelpers.ChainHookPrerouting
+				spec.Priority = nethelpers.ChainPriorityFilter
+
+				spec.Rules = []network.NfTablesRule{
+					{
+						MatchMark: &network.NfTablesMark{
+							Mask:  constants.KubeSpanDefaultFirewallMask,
+							Value: constants.KubeSpanDefaultFirewallMark,
+						},
+						Verdict: pointer.To(nethelpers.VerdictAccept),
+					},
+					{
+						MatchDestinationAddress: &network.NfTablesAddressMatch{
+							IncludeSubnets: allowedIPsSet.Prefixes(),
+						},
+						SetMark: &network.NfTablesMark{
+							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+							Xor:  constants.KubeSpanDefaultForceFirewallMark,
+						},
+						Verdict: pointer.To(nethelpers.VerdictAccept),
+					},
+				}
+
+				return nil
+			},
+		); err != nil {
+			return fmt.Errorf("error modifying nftables chain: %w", err)
+		}
+
+		if err = safe.WriterModify(ctx, r,
+			network.NewNfTablesChain(
+				network.NamespaceName,
+				"kubespan_outgoing",
+			),
+			func(r *network.NfTablesChain) error {
+				spec := r.TypedSpec()
+
+				spec.Type = nethelpers.ChainTypeRoute
+				spec.Hook = nethelpers.ChainHookOutput
+				spec.Priority = nethelpers.ChainPriorityFilter
+
+				spec.Rules = []network.NfTablesRule{
+					{
+						MatchMark: &network.NfTablesMark{
+							Mask:  constants.KubeSpanDefaultFirewallMask,
+							Value: constants.KubeSpanDefaultFirewallMark,
+						},
+						Verdict: pointer.To(nethelpers.VerdictAccept),
+					},
+					{
+						MatchOIfName: &network.NfTablesIfNameMatch{
+							InterfaceName: "lo",
+						},
+						Verdict: pointer.To(nethelpers.VerdictAccept),
+					},
+					{
+						MatchDestinationAddress: &network.NfTablesAddressMatch{
+							IncludeSubnets: allowedIPsSet.Prefixes(),
+						},
+						ClampMSS: &network.NfTablesClampMSS{
+							MTU: uint16(mtu),
+						},
+					},
+					{
+						MatchDestinationAddress: &network.NfTablesAddressMatch{
+							IncludeSubnets: allowedIPsSet.Prefixes(),
+						},
+						SetMark: &network.NfTablesMark{
+							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+							Xor:  constants.KubeSpanDefaultForceFirewallMark,
+						},
+						Verdict: pointer.To(nethelpers.VerdictAccept),
+					},
+				}
+
+				return nil
+			},
+		); err != nil {
+			return fmt.Errorf("error modifying nftables chain: %w", err)
+		}
+
+		if rulesMgr == nil {
+			rulesMgr = ctrl.RulesManagerFactory(constants.KubeSpanDefaultRoutingTable, constants.KubeSpanDefaultForceFirewallMark, constants.KubeSpanDefaultFirewallMask)
+
+			if err = rulesMgr.Install(); err != nil {
+				return fmt.Errorf("failed setting up routing rules: %w", err)
+			}
 		}
 
 		r.ResetRestartBackoff()
@@ -521,6 +583,10 @@ func (ctrl *ManagerController) cleanup(ctx context.Context, r controller.Runtime
 		{
 			namespace: network.ConfigNamespaceName,
 			typ:       network.RouteSpecType,
+		},
+		{
+			namespace: network.NamespaceName,
+			typ:       network.NfTablesChainType,
 		},
 		{
 			namespace: kubespan.NamespaceName,

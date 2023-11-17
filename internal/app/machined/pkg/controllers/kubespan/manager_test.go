@@ -4,7 +4,6 @@
 package kubespan_test
 
 import (
-	"fmt"
 	"net"
 	"net/netip"
 	"os"
@@ -12,13 +11,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/siderolabs/go-pointer"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -28,26 +28,18 @@ import (
 )
 
 type ManagerSuite struct {
-	KubeSpanSuite
+	ctest.DefaultSuite
+
+	mockWireguard *mockWireguardClient
 }
 
 func (suite *ManagerSuite) TestDisabled() {
-	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.ManagerController{}))
-
-	suite.startRuntime()
-
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = false
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertNoResourceType(
-				resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerStatusType, "", resource.VersionUndefined),
-			),
-		),
-	)
+	ctest.AssertNoResource[*network.NfTablesChain](suite, "kubespan_outgoing")
 }
 
 type mockWireguardClient struct {
@@ -87,60 +79,12 @@ func (mock mockRulesManager) Cleanup() error {
 	return nil
 }
 
-type mockNftablesManager struct {
-	mu    sync.Mutex
-	ipSet *netipx.IPSet
-}
-
-func (mock *mockNftablesManager) Update(ipSet *netipx.IPSet, mtu uint32) error {
-	mock.mu.Lock()
-	defer mock.mu.Unlock()
-
-	mock.ipSet = ipSet
-
-	return nil
-}
-
-func (mock *mockNftablesManager) Cleanup() error {
-	return nil
-}
-
-func (mock *mockNftablesManager) IPSet() *netipx.IPSet {
-	mock.mu.Lock()
-	defer mock.mu.Unlock()
-
-	return mock.ipSet
-}
-
-//nolint:gocyclo
 func (suite *ManagerSuite) TestReconcile() {
-	mockWireguard := &mockWireguardClient{}
-	mockNfTables := &mockNftablesManager{}
-
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&kubespanctrl.ManagerController{
-				WireguardClientFactory: func() (kubespanctrl.WireguardClient, error) {
-					return mockWireguard, nil
-				},
-				RulesManagerFactory: func(_, _, _ int) kubespanctrl.RulesManager {
-					return mockRulesManager{}
-				},
-				NfTablesManagerFactory: func(_, _, _ uint32) kubespanctrl.NfTablesManager {
-					return mockNfTables
-				},
-				PeerReconcileInterval: time.Second,
-			},
-		),
-	)
-
-	suite.startRuntime()
-
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = true
 	cfg.TypedSpec().SharedSecret = "TPbGXrYlvuXgAl8dERpwjlA5tnEMoihPDPxlovcLtVg="
 	cfg.TypedSpec().ForceRouting = true
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
 	mac, err := net.ParseMAC("ea:71:1b:b2:cc:ee")
 	suite.Require().NoError(err)
@@ -153,109 +97,73 @@ func (suite *ManagerSuite) TestReconcile() {
 			mac,
 		),
 	)
-	suite.Require().NoError(suite.state.Create(suite.ctx, localIdentity))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), localIdentity))
 
 	// initial setup: link should be created without any peers
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertResource(
-				resource.NewMetadata(
-					network.ConfigNamespaceName,
-					network.LinkSpecType,
-					network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
-					resource.VersionUndefined,
-				),
-				func(res resource.Resource) error {
-					spec := res.(*network.LinkSpec).TypedSpec()
+	ctest.AssertResource(suite,
+		network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
+		func(res *network.LinkSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-					suite.Assert().Equal(network.ConfigOperator, spec.ConfigLayer)
-					suite.Assert().Equal(constants.KubeSpanLinkName, spec.Name)
-					suite.Assert().Equal(nethelpers.LinkNone, spec.Type)
-					suite.Assert().Equal("wireguard", spec.Kind)
-					suite.Assert().True(spec.Up)
-					suite.Assert().True(spec.Logical)
+			asrt.Equal(network.ConfigOperator, spec.ConfigLayer)
+			asrt.Equal(constants.KubeSpanLinkName, spec.Name)
+			asrt.Equal(nethelpers.LinkNone, spec.Type)
+			asrt.Equal("wireguard", spec.Kind)
+			asrt.True(spec.Up)
+			asrt.True(spec.Logical)
 
-					suite.Assert().Equal(localIdentity.TypedSpec().PrivateKey, spec.Wireguard.PrivateKey)
-					suite.Assert().Equal(constants.KubeSpanDefaultPort, spec.Wireguard.ListenPort)
-					suite.Assert().Equal(constants.KubeSpanDefaultFirewallMark, spec.Wireguard.FirewallMark)
-					suite.Assert().Len(spec.Wireguard.Peers, 0)
-
-					return nil
-				},
-			),
-		),
+			asrt.Equal(localIdentity.TypedSpec().PrivateKey, spec.Wireguard.PrivateKey)
+			asrt.Equal(constants.KubeSpanDefaultPort, spec.Wireguard.ListenPort)
+			asrt.Equal(constants.KubeSpanDefaultFirewallMark, spec.Wireguard.FirewallMark)
+			asrt.Len(spec.Wireguard.Peers, 0)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertResource(
-				resource.NewMetadata(
-					network.ConfigNamespaceName,
-					network.AddressSpecType,
-					network.LayeredID(
-						network.ConfigOperator,
-						network.AddressID(constants.KubeSpanLinkName, localIdentity.TypedSpec().Address),
-					),
-					resource.VersionUndefined,
-				),
-				func(res resource.Resource) error {
-					spec := res.(*network.AddressSpec).TypedSpec()
+	ctest.AssertResource(suite,
+		network.LayeredID(
+			network.ConfigOperator,
+			network.AddressID(constants.KubeSpanLinkName, localIdentity.TypedSpec().Address),
+		), func(res *network.AddressSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-					suite.Assert().Equal(localIdentity.TypedSpec().Address.Addr(), spec.Address.Addr())
-					suite.Assert().Equal(localIdentity.TypedSpec().Subnet.Bits(), spec.Address.Bits())
-					suite.Assert().Equal(network.ConfigOperator, spec.ConfigLayer)
-					suite.Assert().Equal(nethelpers.FamilyInet6, spec.Family)
-					suite.Assert().Equal(nethelpers.AddressFlags(nethelpers.AddressPermanent), spec.Flags)
-					suite.Assert().Equal(constants.KubeSpanLinkName, spec.LinkName)
-					suite.Assert().Equal(nethelpers.ScopeGlobal, spec.Scope)
+			asrt.Equal(localIdentity.TypedSpec().Address.Addr(), spec.Address.Addr())
+			asrt.Equal(localIdentity.TypedSpec().Subnet.Bits(), spec.Address.Bits())
+			asrt.Equal(network.ConfigOperator, spec.ConfigLayer)
+			asrt.Equal(nethelpers.FamilyInet6, spec.Family)
+			asrt.Equal(nethelpers.AddressFlags(nethelpers.AddressPermanent), spec.Flags)
+			asrt.Equal(constants.KubeSpanLinkName, spec.LinkName)
+			asrt.Equal(nethelpers.ScopeGlobal, spec.Scope)
+		}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 
-					return nil
-				},
+	ctest.AssertResource(suite,
+		network.LayeredID(
+			network.ConfigOperator,
+			network.RouteID(
+				constants.KubeSpanDefaultRoutingTable,
+				nethelpers.FamilyInet4,
+				netip.Prefix{},
+				netip.Addr{},
+				1,
 			),
 		),
+		func(res *network.RouteSpec, asrt *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertResourceIDs(
-				resource.NewMetadata(
-					network.ConfigNamespaceName,
-					network.RouteSpecType,
-					"",
-					resource.VersionUndefined,
-				),
-				[]resource.ID{
-					network.LayeredID(
-						network.ConfigOperator,
-						network.RouteID(
-							constants.KubeSpanDefaultRoutingTable,
-							nethelpers.FamilyInet4,
-							netip.Prefix{},
-							netip.Addr{},
-							1,
-						),
-					),
-					network.LayeredID(
-						network.ConfigOperator,
-						network.RouteID(
-							constants.KubeSpanDefaultRoutingTable,
-							nethelpers.FamilyInet6,
-							netip.Prefix{},
-							netip.Addr{},
-							1,
-						),
-					),
-				},
+	ctest.AssertResource(suite,
+		network.LayeredID(
+			network.ConfigOperator,
+			network.RouteID(
+				constants.KubeSpanDefaultRoutingTable,
+				nethelpers.FamilyInet6,
+				netip.Prefix{},
+				netip.Addr{},
+				1,
 			),
 		),
-	)
-
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertNoResourceType(
-				resource.NewMetadata(kubespan.NamespaceName, kubespan.PeerStatusType, "", resource.VersionUndefined),
-			),
-		),
+		func(res *network.RouteSpec, asrt *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	// add two peers, they should be added to the wireguard link spec and should be tracked in peer statuses
@@ -268,7 +176,7 @@ func (suite *ManagerSuite) TestReconcile() {
 	peer1.TypedSpec().Endpoints = []netip.AddrPort{
 		netip.MustParseAddrPort("172.20.0.3:51280"),
 	}
-	suite.Require().NoError(suite.state.Create(suite.ctx, peer1))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), peer1))
 
 	key1, err := wgtypes.ParseKey(peer1.Metadata().ID())
 	suite.Require().NoError(err)
@@ -282,113 +190,120 @@ func (suite *ManagerSuite) TestReconcile() {
 	peer2.TypedSpec().Endpoints = []netip.AddrPort{
 		netip.MustParseAddrPort("172.20.0.4:51280"),
 	}
-	suite.Require().NoError(suite.state.Create(suite.ctx, peer2))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), peer2))
 
 	key2, err := wgtypes.ParseKey(peer2.Metadata().ID())
 	suite.Require().NoError(err)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertResource(
-				resource.NewMetadata(
-					network.ConfigNamespaceName,
-					network.LinkSpecType,
-					network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
-					resource.VersionUndefined,
-				),
-				func(res resource.Resource) error {
-					spec := res.(*network.LinkSpec).TypedSpec()
+	ctest.AssertResource(suite,
+		network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
+		func(res *network.LinkSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-					if len(spec.Wireguard.Peers) != 2 {
-						return retry.ExpectedErrorf("peers not set up yet")
-					}
+			asrt.Len(spec.Wireguard.Peers, 2)
+			if len(spec.Wireguard.Peers) != 2 {
+				return
+			}
 
-					for i, peer := range []*kubespan.PeerSpec{peer1, peer2} {
-						suite.Assert().Equal(peer.Metadata().ID(), spec.Wireguard.Peers[i].PublicKey)
-						suite.Assert().Equal(cfg.TypedSpec().SharedSecret, spec.Wireguard.Peers[i].PresharedKey)
-						suite.Assert().Equal(peer.TypedSpec().AllowedIPs, spec.Wireguard.Peers[i].AllowedIPs)
-						suite.Assert().Equal(peer.TypedSpec().Endpoints[0].String(), spec.Wireguard.Peers[i].Endpoint)
-					}
-
-					return nil
-				},
-			),
-		),
+			for i, peer := range []*kubespan.PeerSpec{peer1, peer2} {
+				asrt.Equal(peer.Metadata().ID(), spec.Wireguard.Peers[i].PublicKey)
+				asrt.Equal(cfg.TypedSpec().SharedSecret, spec.Wireguard.Peers[i].PresharedKey)
+				asrt.Equal(peer.TypedSpec().AllowedIPs, spec.Wireguard.Peers[i].AllowedIPs)
+				asrt.Equal(peer.TypedSpec().Endpoints[0].String(), spec.Wireguard.Peers[i].Endpoint)
+			}
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	for _, peer := range []*kubespan.PeerSpec{peer1, peer2} {
 		peer := peer
 
-		suite.Assert().NoError(
-			retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				suite.assertResource(
-					resource.NewMetadata(
-						kubespan.NamespaceName,
-						kubespan.PeerStatusType,
-						peer.Metadata().ID(),
-						resource.VersionUndefined,
-					),
-					func(res resource.Resource) error {
-						spec := res.(*kubespan.PeerStatus).TypedSpec()
+		ctest.AssertResource(suite,
+			peer.Metadata().ID(),
+			func(res *kubespan.PeerStatus, asrt *assert.Assertions) {
+				spec := res.TypedSpec()
 
-						suite.Assert().Equal(peer.TypedSpec().Label, spec.Label)
-						suite.Assert().Equal(kubespan.PeerStateUnknown, spec.State)
-						suite.Assert().Equal(peer.TypedSpec().Endpoints[0], spec.Endpoint)
-						suite.Assert().Equal(peer.TypedSpec().Endpoints[0], spec.LastUsedEndpoint)
-						suite.Assert().WithinDuration(time.Now(), spec.LastEndpointChange, 3*time.Second)
-
-						return nil
-					},
-				),
-			),
+				asrt.Equal(peer.TypedSpec().Label, spec.Label)
+				asrt.Equal(kubespan.PeerStateUnknown, spec.State)
+				asrt.Equal(peer.TypedSpec().Endpoints[0], spec.Endpoint)
+				asrt.Equal(peer.TypedSpec().Endpoints[0], spec.LastUsedEndpoint)
+				asrt.WithinDuration(time.Now(), spec.LastEndpointChange, 3*time.Second)
+			},
 		)
 	}
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				ipSet := mockNfTables.IPSet()
+	// check firewall rules
+	ctest.AssertResource(suite,
+		"kubespan_prerouting",
+		func(res *network.NfTablesChain, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-				if ipSet == nil {
-					return retry.ExpectedErrorf("ipset is nil")
-				}
+			asrt.Equal(nethelpers.ChainTypeFilter, spec.Type)
+			asrt.Equal(nethelpers.ChainHookPrerouting, spec.Hook)
+			asrt.Equal(nethelpers.ChainPriorityFilter, spec.Priority)
 
-				ranges := fmt.Sprintf("%v", ipSet.Ranges())
-				expected := "[10.244.1.0-10.244.2.255]"
+			asrt.Len(spec.Rules, 2)
+			if len(spec.Rules) != 2 {
+				return
+			}
 
-				if ranges != expected {
-					return retry.ExpectedErrorf("ranges %s != expected %s", ranges, expected)
-				}
+			asrt.Equal(
+				network.NfTablesRule{
+					MatchMark: &network.NfTablesMark{
+						Mask:  constants.KubeSpanDefaultFirewallMask,
+						Value: constants.KubeSpanDefaultFirewallMark,
+					},
+					Verdict: pointer.To(nethelpers.VerdictAccept),
+				},
+				spec.Rules[0],
+			)
 
-				return nil
-			},
-		),
+			asrt.Equal(
+				network.NfTablesRule{
+					MatchDestinationAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("10.244.1.0/24"),
+							netip.MustParsePrefix("10.244.2.0/24"),
+						},
+					},
+					SetMark: &network.NfTablesMark{
+						Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+						Xor:  constants.KubeSpanDefaultForceFirewallMark,
+					},
+					Verdict: pointer.To(nethelpers.VerdictAccept),
+				},
+				spec.Rules[1],
+			)
+		},
 	)
 
 	// update config and disable force routing, nothing should be routed
 	cfg.TypedSpec().ForceRouting = false
-	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				ipSet := mockNfTables.IPSet()
+	ctest.AssertResource(suite,
+		"kubespan_prerouting",
+		func(res *network.NfTablesChain, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-				if ipSet == nil {
-					return retry.ExpectedErrorf("ipset is nil")
-				}
-
-				if len(ipSet.Prefixes()) != 0 {
-					return retry.ExpectedErrorf("expected empty ipset: %v", ipSet.Ranges())
-				}
-
-				return nil
-			},
-		),
+			asrt.Equal(
+				network.NfTablesRule{
+					MatchDestinationAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{},
+					},
+					SetMark: &network.NfTablesMark{
+						Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+						Xor:  constants.KubeSpanDefaultForceFirewallMark,
+					},
+					Verdict: pointer.To(nethelpers.VerdictAccept),
+				},
+				spec.Rules[1],
+			)
+		},
 	)
 
 	// report up status via wireguard mock
-	mockWireguard.update(
+	suite.mockWireguard.update(
 		&wgtypes.Device{
 			Peers: []wgtypes.Peer{
 				{
@@ -408,66 +323,52 @@ func (suite *ManagerSuite) TestReconcile() {
 	for _, peer := range []*kubespan.PeerSpec{peer1, peer2} {
 		peer := peer
 
-		suite.Assert().NoError(
-			retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-				suite.assertResource(
-					resource.NewMetadata(
-						kubespan.NamespaceName,
-						kubespan.PeerStatusType,
-						peer.Metadata().ID(),
-						resource.VersionUndefined,
-					),
-					func(res resource.Resource) error {
-						spec := res.(*kubespan.PeerStatus).TypedSpec()
+		ctest.AssertResource(suite,
+			peer.Metadata().ID(),
+			func(res *kubespan.PeerStatus, asrt *assert.Assertions) {
+				spec := res.TypedSpec()
 
-						if spec.State != kubespan.PeerStateUp {
-							return retry.ExpectedErrorf("peer state is not up yet: %s", spec.State)
-						}
-
-						return nil
-					},
-				),
-			),
+				asrt.Equal(kubespan.PeerStateUp, spec.State)
+			},
 		)
 	}
 
-	// as the peers are now up, all traffic should be routed via KubeSpan
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				ipSet := mockNfTables.IPSet()
+	ctest.AssertResource(suite,
+		"kubespan_prerouting",
+		func(res *network.NfTablesChain, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
 
-				if ipSet == nil {
-					return retry.ExpectedErrorf("ipset is nil")
-				}
-
-				ranges := fmt.Sprintf("%v", ipSet.Ranges())
-				expected := "[10.244.1.0-10.244.2.255]"
-
-				if ranges != expected {
-					return retry.ExpectedErrorf("ranges %s != expected %s", ranges, expected)
-				}
-
-				return nil
-			},
-		),
+			asrt.Equal(
+				network.NfTablesRule{
+					MatchDestinationAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{
+							netip.MustParsePrefix("10.244.1.0/24"),
+							netip.MustParsePrefix("10.244.2.0/24"),
+						},
+					},
+					SetMark: &network.NfTablesMark{
+						Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
+						Xor:  constants.KubeSpanDefaultForceFirewallMark,
+					},
+					Verdict: pointer.To(nethelpers.VerdictAccept),
+				},
+				spec.Rules[1],
+			)
+		},
 	)
 
 	// update config and disable wireguard, everything should be cleaned up
 	cfg.TypedSpec().Enabled = false
-	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			suite.assertNoResource(
-				resource.NewMetadata(
-					network.ConfigNamespaceName,
-					network.LinkSpecType,
-					network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
-					resource.VersionUndefined,
-				),
-			),
-		),
+	ctest.AssertNoResource[*network.LinkSpec](
+		suite,
+		network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+	ctest.AssertNoResource[*network.NfTablesChain](
+		suite,
+		"kubespan_prerouting",
 	)
 }
 
@@ -484,5 +385,23 @@ func TestManagerSuite(t *testing.T) {
 		t.Skip("requires root")
 	}
 
-	suite.Run(t, new(ManagerSuite))
+	mockWireguard := &mockWireguardClient{}
+
+	suite.Run(t, &ManagerSuite{
+		mockWireguard: mockWireguard,
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(s *ctest.DefaultSuite) {
+				s.Require().NoError(s.Runtime().RegisterController(&kubespanctrl.ManagerController{
+					WireguardClientFactory: func() (kubespanctrl.WireguardClient, error) {
+						return mockWireguard, nil
+					},
+					RulesManagerFactory: func(_, _, _ int) kubespanctrl.RulesManager {
+						return mockRulesManager{}
+					},
+					PeerReconcileInterval: time.Second,
+				}))
+			},
+		},
+	})
 }

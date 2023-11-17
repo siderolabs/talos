@@ -93,21 +93,6 @@ func (suite *KubeSpanSuite) assertNoResource(md resource.Metadata) func() error 
 	}
 }
 
-func (suite *KubeSpanSuite) assertNoResourceType(md resource.Metadata) func() error {
-	return func() error {
-		list, err := suite.state.List(suite.ctx, md)
-		if err != nil {
-			return err
-		}
-
-		if len(list.Items) > 0 {
-			return retry.ExpectedErrorf("resource list is not empty: %d items", len(list.Items))
-		}
-
-		return nil
-	}
-}
-
 func (suite *KubeSpanSuite) assertResource(md resource.Metadata, check func(res resource.Resource) error) func() error {
 	return func() error {
 		r, err := suite.state.Get(suite.ctx, md)

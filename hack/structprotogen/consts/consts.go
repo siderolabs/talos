@@ -12,6 +12,7 @@ import (
 	"go/types"
 	"io"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -237,7 +238,9 @@ func (b *ConstBlocks) FormatProtoFile(w io.Writer) error {
 
 		fmt.Fprintf(w, "enum %s {\n", block.ProtoMessageName())
 
-		if hasDuplicates(block.Consts, func(c Constant) string { return c.Value }) {
+		hasZeroNotFirstConstValue := slices.IndexFunc(block.Consts, func(c Constant) bool { return c.Value == "0" }) > 0
+
+		if hasDuplicates(block.Consts, func(c Constant) string { return c.Value }) || hasZeroNotFirstConstValue {
 			fmt.Fprintln(w, "  option allow_alias = true;")
 		}
 

@@ -166,6 +166,74 @@ message LinkStatusSpec {
   bytes permanent_addr = 30;
 }
 
+// NfTablesAddressMatch describes the match on the IP address.
+message NfTablesAddressMatch {
+  repeated common.NetIPPrefix include_subnets = 1;
+  repeated common.NetIPPrefix exclude_subnets = 2;
+  bool invert = 3;
+}
+
+// NfTablesChainSpec describes status of rendered secrets.
+message NfTablesChainSpec {
+  string type = 1;
+  talos.resource.definitions.enums.NethelpersNfTablesChainHook hook = 2;
+  talos.resource.definitions.enums.NethelpersNfTablesChainPriority priority = 3;
+  repeated NfTablesRule rules = 4;
+}
+
+// NfTablesClampMSS describes the TCP MSS clamping operation.
+//
+// MSS is limited by the `MaxMTU` so that:
+// - IPv4: MSS = MaxMTU - 40
+// - IPv6: MSS = MaxMTU - 60.
+message NfTablesClampMSS {
+  fixed32 mtu = 1;
+}
+
+// NfTablesIfNameMatch describes the match on the interface name.
+message NfTablesIfNameMatch {
+  string interface_name = 1;
+  talos.resource.definitions.enums.NethelpersMatchOperator operator = 2;
+}
+
+// NfTablesLayer4Match describes the match on the transport layer protocol.
+message NfTablesLayer4Match {
+  talos.resource.definitions.enums.NethelpersProtocol protocol = 1;
+  NfTablesPortMatch match_source_port = 2;
+  NfTablesPortMatch match_destination_port = 3;
+}
+
+// NfTablesMark encodes packet mark match/update operation.
+//
+// When used as a match computes the following condition:
+// (mark & mask) ^ xor == value
+//
+// When used as an update computes the following operation:
+// mark = (mark & mask) ^ xor.
+message NfTablesMark {
+  uint32 mask = 1;
+  uint32 xor = 2;
+  uint32 value = 3;
+}
+
+// NfTablesPortMatch describes the match on the transport layer port.
+message NfTablesPortMatch {
+  repeated PortRange ranges = 1;
+}
+
+// NfTablesRule describes a single rule in the nftables chain.
+message NfTablesRule {
+  NfTablesIfNameMatch match_o_if_name = 1;
+  talos.resource.definitions.enums.NethelpersNfTablesVerdict verdict = 2;
+  NfTablesMark match_mark = 3;
+  NfTablesMark set_mark = 4;
+  NfTablesAddressMatch match_source_address = 5;
+  NfTablesAddressMatch match_destination_address = 6;
+  NfTablesLayer4Match match_layer4 = 7;
+  NfTablesIfNameMatch match_i_if_name = 8;
+  NfTablesClampMSS clamp_mss = 9;
+}
+
 // NodeAddressFilterSpec describes a filter for NodeAddresses.
 message NodeAddressFilterSpec {
   repeated common.NetIPPrefix include_subnets = 1;
@@ -186,6 +254,14 @@ message OperatorSpecSpec {
   DHCP6OperatorSpec dhcp6 = 5;
   VIPOperatorSpec vip = 6;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 7;
+}
+
+// PortRange describes a range of ports.
+//
+// Range is [lo, hi].
+message PortRange {
+  fixed32 lo = 1;
+  fixed32 hi = 2;
 }
 
 // ProbeSpecSpec describes the Probe.

@@ -962,6 +962,9 @@ const (
 
 	// TalosAPIDefaultCertificateValidityDuration specifies default certificate duration for Talos API generated client certificates.
 	TalosAPIDefaultCertificateValidityDuration = time.Hour * 24 * 365
+
+	// DefaultNfTablesTableName is the default name of the nftables table created by Talos.
+	DefaultNfTablesTableName = "talos"
 )
 
 // See https://linux.die.net/man/3/klogctl
