@@ -7251,11 +7251,7 @@ The machine service definition.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ApplyConfiguration | [ApplyConfigurationRequest](#machine.ApplyConfigurationRequest) | [ApplyConfigurationResponse](#machine.ApplyConfigurationResponse) |  |
-| Bootstrap | [BootstrapRequest](#machine.BootstrapRequest) | [BootstrapResponse](#machine.BootstrapResponse) | Bootstrap method makes control plane node enter etcd bootstrap mode.
-
-Node aborts etcd join sequence and creates single-node etcd cluster.
-
-If recover_etcd argument is specified, etcd is recovered from a snapshot uploaded with EtcdRecover. |
+| Bootstrap | [BootstrapRequest](#machine.BootstrapRequest) | [BootstrapResponse](#machine.BootstrapResponse) | Bootstrap method makes control plane node enter etcd bootstrap mode. Node aborts etcd join sequence and creates single-node etcd cluster. If recover_etcd argument is specified, etcd is recovered from a snapshot uploaded with EtcdRecover. |
 | Containers | [ContainersRequest](#machine.ContainersRequest) | [ContainersResponse](#machine.ContainersResponse) |  |
 | Copy | [CopyRequest](#machine.CopyRequest) | [.common.Data](#common.Data) stream |  |
 | CPUInfo | [.google.protobuf.Empty](#google.protobuf.Empty) | [CPUInfoResponse](#machine.CPUInfoResponse) |  |
@@ -7263,34 +7259,16 @@ If recover_etcd argument is specified, etcd is recovered from a snapshot uploade
 | Dmesg | [DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |
 | Events | [EventsRequest](#machine.EventsRequest) | [Event](#machine.Event) stream |  |
 | EtcdMemberList | [EtcdMemberListRequest](#machine.EtcdMemberListRequest) | [EtcdMemberListResponse](#machine.EtcdMemberListResponse) |  |
-| EtcdRemoveMember | [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest) | [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse) | EtcdRemoveMember removes a member from the etcd cluster by hostname.
-
-Please use EtcdRemoveMemberByID instead. |
-| EtcdRemoveMemberByID | [EtcdRemoveMemberByIDRequest](#machine.EtcdRemoveMemberByIDRequest) | [EtcdRemoveMemberByIDResponse](#machine.EtcdRemoveMemberByIDResponse) | EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
-
-This API should be used to remove members which don't have an associated Talos node anymore. To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed. |
+| EtcdRemoveMember | [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest) | [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse) | EtcdRemoveMember removes a member from the etcd cluster by hostname. Please use EtcdRemoveMemberByID instead. |
+| EtcdRemoveMemberByID | [EtcdRemoveMemberByIDRequest](#machine.EtcdRemoveMemberByIDRequest) | [EtcdRemoveMemberByIDResponse](#machine.EtcdRemoveMemberByIDResponse) | EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID. This API should be used to remove members which don't have an associated Talos node anymore. To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed. |
 | EtcdLeaveCluster | [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest) | [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse) |  |
 | EtcdForfeitLeadership | [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest) | [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse) |  |
-| EtcdRecover | [.common.Data](#common.Data) stream | [EtcdRecoverResponse](#machine.EtcdRecoverResponse) | EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot to the node.
-
-Snapshot can be later used to recover the cluster via Bootstrap method. |
-| EtcdSnapshot | [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest) | [.common.Data](#common.Data) stream | EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance and streams it back to the client.
-
-This method is available only on control plane nodes (which run etcd). |
-| EtcdAlarmList | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdAlarmListResponse](#machine.EtcdAlarmListResponse) | EtcdAlarmList lists etcd alarms for the current node.
-
-This method is available only on control plane nodes (which run etcd). |
-| EtcdAlarmDisarm | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdAlarmDisarmResponse](#machine.EtcdAlarmDisarmResponse) | EtcdAlarmDisarm disarms etcd alarms for the current node.
-
-This method is available only on control plane nodes (which run etcd). |
-| EtcdDefragment | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdDefragmentResponse](#machine.EtcdDefragmentResponse) | EtcdDefragment defragments etcd data directory for the current node.
-
-Defragmentation is a resource-heavy operation, so it should only run on a specific node.
-
-This method is available only on control plane nodes (which run etcd). |
-| EtcdStatus | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdStatusResponse](#machine.EtcdStatusResponse) | EtcdStatus returns etcd status for the current member.
-
-This method is available only on control plane nodes (which run etcd). |
+| EtcdRecover | [.common.Data](#common.Data) stream | [EtcdRecoverResponse](#machine.EtcdRecoverResponse) | EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot to the node. Snapshot can be later used to recover the cluster via Bootstrap method. |
+| EtcdSnapshot | [EtcdSnapshotRequest](#machine.EtcdSnapshotRequest) | [.common.Data](#common.Data) stream | EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance and streams it back to the client. This method is available only on control plane nodes (which run etcd). |
+| EtcdAlarmList | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdAlarmListResponse](#machine.EtcdAlarmListResponse) | EtcdAlarmList lists etcd alarms for the current node. This method is available only on control plane nodes (which run etcd). |
+| EtcdAlarmDisarm | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdAlarmDisarmResponse](#machine.EtcdAlarmDisarmResponse) | EtcdAlarmDisarm disarms etcd alarms for the current node. This method is available only on control plane nodes (which run etcd). |
+| EtcdDefragment | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdDefragmentResponse](#machine.EtcdDefragmentResponse) | EtcdDefragment defragments etcd data directory for the current node. Defragmentation is a resource-heavy operation, so it should only run on a specific node. This method is available only on control plane nodes (which run etcd). |
+| EtcdStatus | [.google.protobuf.Empty](#google.protobuf.Empty) | [EtcdStatusResponse](#machine.EtcdStatusResponse) | EtcdStatus returns etcd status for the current member. This method is available only on control plane nodes (which run etcd). |
 | GenerateConfiguration | [GenerateConfigurationRequest](#machine.GenerateConfigurationRequest) | [GenerateConfigurationResponse](#machine.GenerateConfigurationResponse) |  |
 | Hostname | [.google.protobuf.Empty](#google.protobuf.Empty) | [HostnameResponse](#machine.HostnameResponse) |  |
 | Kubeconfig | [.google.protobuf.Empty](#google.protobuf.Empty) | [.common.Data](#common.Data) stream |  |

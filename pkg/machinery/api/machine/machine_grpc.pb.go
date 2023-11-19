@@ -82,9 +82,7 @@ const (
 type MachineServiceClient interface {
 	ApplyConfiguration(ctx context.Context, in *ApplyConfigurationRequest, opts ...grpc.CallOption) (*ApplyConfigurationResponse, error)
 	// Bootstrap method makes control plane node enter etcd bootstrap mode.
-	//
 	// Node aborts etcd join sequence and creates single-node etcd cluster.
-	//
 	// If recover_etcd argument is specified, etcd is recovered from a snapshot
 	// uploaded with EtcdRecover.
 	Bootstrap(ctx context.Context, in *BootstrapRequest, opts ...grpc.CallOption) (*BootstrapResponse, error)
@@ -97,11 +95,9 @@ type MachineServiceClient interface {
 	EtcdMemberList(ctx context.Context, in *EtcdMemberListRequest, opts ...grpc.CallOption) (*EtcdMemberListResponse, error)
 	// Deprecated: Do not use.
 	// EtcdRemoveMember removes a member from the etcd cluster by hostname.
-	//
 	// Please use EtcdRemoveMemberByID instead.
 	EtcdRemoveMember(ctx context.Context, in *EtcdRemoveMemberRequest, opts ...grpc.CallOption) (*EtcdRemoveMemberResponse, error)
 	// EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
-	//
 	// This API should be used to remove members which don't have an associated Talos node anymore.
 	// To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed.
 	EtcdRemoveMemberByID(ctx context.Context, in *EtcdRemoveMemberByIDRequest, opts ...grpc.CallOption) (*EtcdRemoveMemberByIDResponse, error)
@@ -109,31 +105,24 @@ type MachineServiceClient interface {
 	EtcdForfeitLeadership(ctx context.Context, in *EtcdForfeitLeadershipRequest, opts ...grpc.CallOption) (*EtcdForfeitLeadershipResponse, error)
 	// EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot
 	// to the node.
-	//
 	// Snapshot can be later used to recover the cluster via Bootstrap method.
 	EtcdRecover(ctx context.Context, opts ...grpc.CallOption) (MachineService_EtcdRecoverClient, error)
 	// EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
 	// and streams it back to the client.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdSnapshot(ctx context.Context, in *EtcdSnapshotRequest, opts ...grpc.CallOption) (MachineService_EtcdSnapshotClient, error)
 	// EtcdAlarmList lists etcd alarms for the current node.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdAlarmList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdAlarmListResponse, error)
 	// EtcdAlarmDisarm disarms etcd alarms for the current node.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdAlarmDisarm(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdAlarmDisarmResponse, error)
 	// EtcdDefragment defragments etcd data directory for the current node.
-	//
 	// Defragmentation is a resource-heavy operation, so it should only run on a specific
 	// node.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdDefragment(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdDefragmentResponse, error)
 	// EtcdStatus returns etcd status for the current member.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdStatusResponse, error)
 	GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error)
@@ -929,9 +918,7 @@ func (c *machineServiceClient) ImagePull(ctx context.Context, in *ImagePullReque
 type MachineServiceServer interface {
 	ApplyConfiguration(context.Context, *ApplyConfigurationRequest) (*ApplyConfigurationResponse, error)
 	// Bootstrap method makes control plane node enter etcd bootstrap mode.
-	//
 	// Node aborts etcd join sequence and creates single-node etcd cluster.
-	//
 	// If recover_etcd argument is specified, etcd is recovered from a snapshot
 	// uploaded with EtcdRecover.
 	Bootstrap(context.Context, *BootstrapRequest) (*BootstrapResponse, error)
@@ -944,11 +931,9 @@ type MachineServiceServer interface {
 	EtcdMemberList(context.Context, *EtcdMemberListRequest) (*EtcdMemberListResponse, error)
 	// Deprecated: Do not use.
 	// EtcdRemoveMember removes a member from the etcd cluster by hostname.
-	//
 	// Please use EtcdRemoveMemberByID instead.
 	EtcdRemoveMember(context.Context, *EtcdRemoveMemberRequest) (*EtcdRemoveMemberResponse, error)
 	// EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
-	//
 	// This API should be used to remove members which don't have an associated Talos node anymore.
 	// To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed.
 	EtcdRemoveMemberByID(context.Context, *EtcdRemoveMemberByIDRequest) (*EtcdRemoveMemberByIDResponse, error)
@@ -956,31 +941,24 @@ type MachineServiceServer interface {
 	EtcdForfeitLeadership(context.Context, *EtcdForfeitLeadershipRequest) (*EtcdForfeitLeadershipResponse, error)
 	// EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot
 	// to the node.
-	//
 	// Snapshot can be later used to recover the cluster via Bootstrap method.
 	EtcdRecover(MachineService_EtcdRecoverServer) error
 	// EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
 	// and streams it back to the client.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdSnapshot(*EtcdSnapshotRequest, MachineService_EtcdSnapshotServer) error
 	// EtcdAlarmList lists etcd alarms for the current node.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdAlarmList(context.Context, *emptypb.Empty) (*EtcdAlarmListResponse, error)
 	// EtcdAlarmDisarm disarms etcd alarms for the current node.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdAlarmDisarm(context.Context, *emptypb.Empty) (*EtcdAlarmDisarmResponse, error)
 	// EtcdDefragment defragments etcd data directory for the current node.
-	//
 	// Defragmentation is a resource-heavy operation, so it should only run on a specific
 	// node.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdDefragment(context.Context, *emptypb.Empty) (*EtcdDefragmentResponse, error)
 	// EtcdStatus returns etcd status for the current member.
-	//
 	// This method is available only on control plane nodes (which run etcd).
 	EtcdStatus(context.Context, *emptypb.Empty) (*EtcdStatusResponse, error)
 	GenerateConfiguration(context.Context, *GenerateConfigurationRequest) (*GenerateConfigurationResponse, error)
