@@ -1183,11 +1183,9 @@ type BootstrapRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Enable etcd recovery from the snapshot.
-	//
 	// Snapshot should be uploaded before this call via EtcdRecover RPC.
 	RecoverEtcd bool `protobuf:"varint,1,opt,name=recover_etcd,json=recoverEtcd,proto3" json:"recover_etcd,omitempty"`
 	// Skip hash check on the snapshot (etcd).
-	//
 	// Enable this when recovering from data directory copy to skip integrity check.
 	RecoverSkipHashCheck bool `protobuf:"varint,2,opt,name=recover_skip_hash_check,json=recoverSkipHashCheck,proto3" json:"recover_skip_hash_check,omitempty"`
 }
