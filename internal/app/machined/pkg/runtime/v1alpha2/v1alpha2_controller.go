@@ -244,7 +244,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			MetaProvider: ctrl.v1alpha1Runtime.State().Machine(),
 		},
 		&runtimecontrollers.EventsSinkConfigController{
-			Cmdline: procfs.ProcCmdline(),
+			Cmdline:      procfs.ProcCmdline(),
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&runtimecontrollers.EventsSinkController{
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
@@ -296,7 +297,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		secrets.NewRootOSController(),
 		&secrets.TrustdController{},
 		&siderolink.ConfigController{
-			Cmdline: procfs.ProcCmdline(),
+			Cmdline:      procfs.ProcCmdline(),
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&siderolink.ManagerController{},
 		&timecontrollers.SyncController{
