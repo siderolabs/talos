@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
@@ -22,7 +23,8 @@ import (
 
 // ConfigController interacts with SideroLink API and brings up the SideroLink Wireguard interface.
 type ConfigController struct {
-	Cmdline *procfs.Cmdline
+	Cmdline      *procfs.Cmdline
+	V1Alpha1Mode v1alpha1runtime.Mode
 }
 
 // Name implements controller.Controller interface.
@@ -87,6 +89,10 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, _ *
 func (ctrl *ConfigController) apiEndpoint(machineConfig *config.MachineConfig) string {
 	if machineConfig != nil && machineConfig.Config().SideroLink() != nil && machineConfig.Config().SideroLink().APIUrl() != nil {
 		return machineConfig.Config().SideroLink().APIUrl().String()
+	}
+
+	if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
+		return ""
 	}
 
 	if ctrl.Cmdline == nil || ctrl.Cmdline.Get(constants.KernelParamSideroLink).First() == nil {

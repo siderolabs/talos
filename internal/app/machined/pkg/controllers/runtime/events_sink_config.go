@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -22,7 +23,8 @@ import (
 
 // EventsSinkConfigController generates configuration for kmsg log delivery.
 type EventsSinkConfigController struct {
-	Cmdline *procfs.Cmdline
+	Cmdline      *procfs.Cmdline
+	V1Alpha1Mode v1alpha1runtime.Mode
 }
 
 // Name implements controller.Controller interface.
@@ -65,7 +67,7 @@ func (ctrl *EventsSinkConfigController) Run(ctx context.Context, r controller.Ru
 
 		var endpoint string
 
-		if ctrl.Cmdline != nil {
+		if ctrl.Cmdline != nil && ctrl.V1Alpha1Mode != v1alpha1runtime.ModeContainer {
 			if val := ctrl.Cmdline.Get(constants.KernelParamEventsSink).First(); val != nil {
 				endpoint = *val
 			}
