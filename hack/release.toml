@@ -42,8 +42,8 @@ It can be set under `cluster.scheduler.config` and kube-scheduler will be automa
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.1.61
-containerd: 1.7.8
+Linux: 6.1.63
+containerd: 1.7.9
 CoreDNS: 1.11.1
 Kubernetes: 1.29.0-alpha.3
 Flannel: 0.22.3

@@ -11,7 +11,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.2.0
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
-	github.com/aws/aws-sdk-go v1.47.5
+	github.com/aws/aws-sdk-go v1.48.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/google/uuid v1.4.0
 	github.com/siderolabs/gen v0.4.7
