@@ -33,7 +33,7 @@ cluster: # ...
 |-------|------|-------------|----------|
 |`version` |string |Indicates the schema used to decode the contents.  |`v1alpha1`<br /> |
 |`debug` |bool |<details><summary>Enable verbose logging to the console.</summary>All system containers logs will flow into serial console.<br /><br />**Note:** To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`persist` |bool |<details><summary>description: |</summary>    Indicates whether to pull the machine config upon every boot.<br /><br />   **Note**: this option is deprecated and it will be removed in Talos 1.6.<br />  values:<br />    - true<br />    - yes<br />    - false<br />    - no<br /></details>  | |
+|`persist` |bool |  | |
 |`machine` |<a href="#machineconfig">MachineConfig</a> |Provides machine specific configuration options.  | |
 |`cluster` |<a href="#clusterconfig">ClusterConfig</a> |Provides cluster specific configuration options.  | |
 
@@ -1221,7 +1221,6 @@ image: ghcr.io/siderolabs/installer:latest
 extensions:
     - image: ghcr.io/siderolabs/gvisor:20220117.0-v1.0.0 # System extension image.
 {{< /highlight >}}</details> | |
-|`bootloader` |bool |Indicates if a bootloader should be installed.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`wipe` |bool |<details><summary>Indicates if the installation disk should be wiped at installation time.</summary>Defaults to `true`.</details>  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`legacyBIOSSupport` |bool |<details><summary>Indicates if MBR partition should be marked as bootable (active).</summary>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.</details>  | |
 

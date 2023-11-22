@@ -8,7 +8,6 @@ package config
 // Config defines the interface to access contents of the machine configuration.
 type Config interface {
 	Debug() bool
-	Persist() bool
 	Machine() MachineConfig
 	Cluster() ClusterConfig
 	SideroLink() SideroLinkConfig

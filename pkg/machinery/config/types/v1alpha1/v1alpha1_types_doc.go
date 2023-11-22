@@ -46,8 +46,8 @@ func (Config) Doc() *encoder.Doc {
 				Name:        "persist",
 				Type:        "bool",
 				Note:        "",
-				Description: "description: |\n    Indicates whether to pull the machine config upon every boot.\n\n   **Note**: this option is deprecated and it will be removed in Talos 1.6.\n  values:\n    - true\n    - yes\n    - false\n    - no\n",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "machine",
@@ -1012,19 +1012,7 @@ func (InstallConfig) Doc() *encoder.Doc {
 				Description: "Allows for supplying additional system extension images to install on top of base Talos image.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying additional system extension images to install on top of base Talos image." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "bootloader",
-				Type:        "bool",
-				Note:        "",
-				Description: "Indicates if a bootloader should be installed.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if a bootloader should be installed." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
+			{},
 			{
 				Name:        "wipe",
 				Type:        "bool",

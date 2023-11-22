@@ -276,6 +276,10 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 
 			extensions[ext.Image()] = struct{}{}
 		}
+
+		if len(extensions) > 0 {
+			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/")
+		}
 	}
 
 	if err := labels.Validate(c.MachineConfig.MachineNodeLabels); err != nil {
@@ -298,6 +302,10 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 	}
 
+	if c.ConfigPersist != nil && !*c.ConfigPersist {
+		result = multierror.Append(result, fmt.Errorf(".persist should be enabled"))
+	}
+
 	if opts.Strict {
 		for _, w := range warnings {
 			result = multierror.Append(result, fmt.Errorf("warning: %s", w))
@@ -309,40 +317,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 	return warnings, result.ErrorOrNil()
 }
 
-// onceValue is a straight copy from Go 1.21, change to sync.OnceValue once upgraded to Go 1.21.
-func onceValue[T any](f func() T) func() T {
-	var (
-		once   sync.Once
-		valid  bool
-		p      any
-		result T
-	)
-
-	g := func() {
-		defer func() {
-			p = recover()
-
-			if !valid {
-				panic(p)
-			}
-		}()
-
-		result = f()
-		valid = true
-	}
-
-	return func() T {
-		once.Do(g)
-
-		if !valid {
-			panic(p)
-		}
-
-		return result
-	}
-}
-
-var rxDNSNameRegexp = onceValue(func() *regexp.Regexp {
+var rxDNSNameRegexp = sync.OnceValue(func() *regexp.Regexp {
 	return regexp.MustCompile(`^([a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62}){1}(\.[a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62})*[\._]?$`)
 })
 

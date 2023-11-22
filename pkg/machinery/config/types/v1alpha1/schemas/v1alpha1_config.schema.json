@@ -697,9 +697,8 @@
         "persist": {
           "type": "boolean",
           "title": "persist",
-          "description": "description: |\n    Indicates whether to pull the machine config upon every boot.\n\nNote: this option is deprecated and it will be removed in Talos 1.6.\n  values:\n    - true\n    - yes\n    - false\n    - no\n",
-          "markdownDescription": "description: |\n    Indicates whether to pull the machine config upon every boot.\n\n   **Note**: this option is deprecated and it will be removed in Talos 1.6.\n  values:\n    - true\n    - yes\n    - false\n    - no",
-          "x-intellij-html-description": "\u003cp\u003edescription: |\n    Indicates whether to pull the machine config upon every boot.\u003c/p\u003e\n\n\u003cp\u003e\u003cstrong\u003eNote\u003c/strong\u003e: this option is deprecated and it will be removed in Talos 1.6.\n  values:\n    - true\n    - yes\n    - false\n    - no\u003c/p\u003e\n"
+          "markdownDescription": "",
+          "x-intellij-html-description": ""
         },
         "machine": {
           "$ref": "#/$defs/MachineConfig",
@@ -1499,13 +1498,6 @@
           "description": "Allows for supplying additional system extension images to install on top of base Talos image.\n",
           "markdownDescription": "Allows for supplying additional system extension images to install on top of base Talos image.",
           "x-intellij-html-description": "\u003cp\u003eAllows for supplying additional system extension images to install on top of base Talos image.\u003c/p\u003e\n"
-        },
-        "bootloader": {
-          "type": "boolean",
-          "title": "bootloader",
-          "description": "Indicates if a bootloader should be installed.\n",
-          "markdownDescription": "Indicates if a bootloader should be installed.",
-          "x-intellij-html-description": "\u003cp\u003eIndicates if a bootloader should be installed.\u003c/p\u003e\n"
         },
         "wipe": {
           "type": "boolean",

@@ -61,15 +61,6 @@ func (c *Config) Debug() bool {
 	return pointer.SafeDeref(c.ConfigDebug)
 }
 
-// Persist implements the config.Provider interface.
-func (c *Config) Persist() bool {
-	if c == nil {
-		return true
-	}
-
-	return pointer.SafeDeref(c.ConfigPersist)
-}
-
 // Machine implements the config.Provider interface.
 func (c *Config) Machine() config.MachineConfig {
 	if c == nil || c.MachineConfig == nil {

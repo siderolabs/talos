@@ -110,15 +110,6 @@ func (container *Container) Debug() bool {
 	return container.v1alpha1Config.Debug()
 }
 
-// Persist implements config.Config interface.
-func (container *Container) Persist() bool {
-	if container.v1alpha1Config == nil {
-		return true
-	}
-
-	return container.v1alpha1Config.Persist()
-}
-
 // Machine implements config.Config interface.
 func (container *Container) Machine() config.MachineConfig {
 	if container.v1alpha1Config == nil {

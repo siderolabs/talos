@@ -37,10 +37,6 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 		return fmt.Errorf("config is not v1alpha1 config")
 	}
 
-	if !cfg.Persist() {
-		return fmt.Errorf("config persistence is disabled, patching is not supported")
-	}
-
 	if err = patchFunc(cfg); err != nil {
 		return fmt.Errorf("error patching config: %w", err)
 	}

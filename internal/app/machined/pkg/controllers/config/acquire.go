@@ -238,13 +238,6 @@ func (ctrl *AcquireController) loadFromDisk(logger *zap.Logger) (config.Provider
 		return nil, fmt.Errorf("failed to load config from STATE: %w", err)
 	}
 
-	// TODO: this is legacy flow with persistence, it should be deprecated & removed
-	if !cfg.Persist() {
-		logger.Info("config persistence is disabled, ignoring stored machine config")
-
-		return nil, nil
-	}
-
 	// if the STATE partition is present & contains machine config, Talos is already installed
 	warnings, err := cfg.Validate(validationModeDiskConfig{})
 	if err != nil {

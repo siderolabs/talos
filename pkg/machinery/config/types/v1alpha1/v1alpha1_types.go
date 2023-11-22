@@ -63,15 +63,7 @@ type Config struct {
 	//     - false
 	//     - no
 	ConfigDebug *bool `yaml:"debug,omitempty"`
-	//   description: |
-	//     Indicates whether to pull the machine config upon every boot.
-	//
-	//	   **Note**: this option is deprecated and it will be removed in Talos 1.6.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	//docgen:nodoc
 	ConfigPersist *bool `yaml:"persist,omitempty"`
 	//   description: |
 	//     Provides machine specific configuration options.
@@ -775,13 +767,9 @@ type InstallConfig struct {
 	//   examples:
 	//     - value: installExtensionsExample()
 	InstallExtensions []InstallExtensionConfig `yaml:"extensions,omitempty"`
-	//   description: |
-	//     Indicates if a bootloader should be installed.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	// docgen:nodoc
+	//
+	// Deprecated: It never worked.
 	InstallBootloader *bool `yaml:"bootloader,omitempty"`
 	//   description: |
 	//     Indicates if the installation disk should be wiped at installation time.
