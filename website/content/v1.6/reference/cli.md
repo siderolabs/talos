@@ -1937,7 +1937,7 @@ Inspect controller-resource dependencies as graphviz graph.
 Pipe the output of the command through the "dot" program (part of graphviz package)
 to render the graph:
 
-  talosctl inspect dependencies | dot -Tpng > graph.png
+    talosctl inspect dependencies | dot -Tpng > graph.png
 
 
 ```

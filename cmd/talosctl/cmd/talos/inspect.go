@@ -36,7 +36,7 @@ var inspectDependenciesCmd = &cobra.Command{
 Pipe the output of the command through the "dot" program (part of graphviz package)
 to render the graph:
 
-  talosctl inspect dependencies | dot -Tpng > graph.png
+    talosctl inspect dependencies | dot -Tpng > graph.png
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
