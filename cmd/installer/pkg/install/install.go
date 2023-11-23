@@ -101,6 +101,7 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		opts.ExtraKernelArgs,
 		procfs.WithOverwriteArgs("console"),
 		procfs.WithOverwriteArgs(constants.KernelParamPlatform),
+		procfs.WithDeleteNegatedArgs(),
 	); err != nil {
 		return err
 	}

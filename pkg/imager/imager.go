@@ -284,6 +284,7 @@ func (i *Imager) buildCmdline() error {
 		i.prof.Customization.ExtraKernelArgs,
 		procfs.WithOverwriteArgs("console"),
 		procfs.WithOverwriteArgs(constants.KernelParamPlatform),
+		procfs.WithDeleteNegatedArgs(),
 	); err != nil {
 		return err
 	}

@@ -165,13 +165,15 @@ The base profile can be customized with the additional flags to the imager:
 
 * `--arch` specifies the architecture of the image to be generated (default: host architecture)
 * `--meta` allows to set initial `META` values
-* `--extra-kernel-arg` allows to customize the kernel command line arguments
+* `--extra-kernel-arg` allows to customize the kernel command line arguments.
+  Default kernel arg can be removed by prefixing the argument with a `-`.
+  For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.
 * `--system-extension-image` allows to install a system extension into the image
 
 ### Example: Bare-metal with Imager
 
 Let's assume we want to boot Talos on a bare-metal machine with Intel CPU and add a `gvisor` container runtime to the image.
-Also we want to disable predictable network interface names with `net.ifnames=0` kernel argument.
+Also we want to disable predictable network interface names with `net.ifnames=0` kernel argument and replace the Talos default `console` arguments and add a custom `console` arg.
 
 First, let's lookup extension images for Intel CPU microcode updates and `gvisor` container runtime in the [extensions repository](https://github.com/siderolabs/extensions):
 
@@ -183,7 +185,7 @@ ghcr.io/siderolabs/intel-ucode:20230613
 Now we can generate the ISO image with the following command:
 
 ```shell
-$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} iso --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0 --system-extension-image ghcr.io/siderolabs/intel-ucode:20230613 --extra-kernel-arg net.ifnames=0
+$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} iso --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0 --system-extension-image ghcr.io/siderolabs/intel-ucode:20230613 --extra-kernel-arg net.ifnames=0 --extra-kernel-arg=-console --extra-kernel-arg=console=ttyS1
 profile ready:
 arch: amd64
 platform: metal
@@ -206,7 +208,7 @@ output:
   kind: iso
   outFormat: raw
 initramfs ready
-kernel command line: talos.platform=metal console=ttyS0 console=tty0 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 net.ifnames=0
+kernel command line: talos.platform=metal console=ttyS1 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512 net.ifnames=0
 ISO ready
 output asset path: /out/metal-amd64.iso
 ```

@@ -39,6 +39,19 @@ Talos now supports specifying the kube-scheduler configuration in the Talos conf
 It can be set under `cluster.scheduler.config` and kube-scheduler will be automatically configured to with the correct flags.
 """
 
+    [notes.extensions]
+        title = "Extension Services"
+        description = """\
+Talos now starts Extension Services early in the boot process, this allows guest agents to be started in maintenance mode.
+"""
+
+    [notes.kernel-args]
+        title = "Kernel Arguments"
+        description = """\
+Talos and Imager now supports dropping kernel arguments specified in `.machine.install.extraKernelArgs` or as `--extra-kernel-arg` to imager.
+Any kernel argument that starts with a `-` is dropped. Kernel arguments to be dropped can be specified either as `-<key>` which would remove all arguments that start with `<key>` or as `-<key>=<value>` which would remove the exact argument.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description = """\

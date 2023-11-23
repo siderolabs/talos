@@ -758,6 +758,8 @@ type InstallConfig struct {
 	InstallDiskSelector *InstallDiskSelector `yaml:"diskSelector,omitempty"`
 	//   description: |
 	//     Allows for supplying extra kernel args via the bootloader.
+	//     Existing kernel args can be removed by prefixing the argument with a `-`.
+	//     For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.
 	//   examples:
 	//     - value: '[]string{"talos.platform=metal", "reboot=k"}'
 	InstallExtraKernelArgs []string `yaml:"extraKernelArgs,omitempty"`
