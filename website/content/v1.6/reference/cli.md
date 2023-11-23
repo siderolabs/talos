@@ -2423,7 +2423,7 @@ Default behavior is to decode the packets with internal decoder to stdout:
 
     talosctl pcap -i eth0
 
-Raw pcap file can be saved with --output flag:
+Raw pcap file can be saved with `--output` flag:
 
     talosctl pcap -i eth0 --output eth0.pcap
 
