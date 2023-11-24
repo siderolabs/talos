@@ -1005,6 +1005,13 @@ var UdevdDroppedCapabilities = map[string]struct{}{
 	"cap_sys_boot": {},
 }
 
+// ValidEffects is the set of valid taint effects.
+var ValidEffects = []string{
+	"NoSchedule",
+	"PreferNoSchedule",
+	"NoExecute",
+}
+
 // OSReleaseTemplate is the template for /etc/os-release.
 const OSReleaseTemplate = `NAME="{{ .Name }}"
 ID={{ .ID }}

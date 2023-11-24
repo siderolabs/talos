@@ -10,11 +10,13 @@ package labels
 import (
 	"fmt"
 	"regexp"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/maps"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Validate validates that a set of labels are correctly defined.
@@ -22,7 +24,7 @@ func Validate(labels map[string]string) error {
 	var multiErr *multierror.Error
 
 	keys := maps.Keys(labels)
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	for _, k := range keys {
 		if err := ValidateQualifiedName(k); err != nil {
@@ -129,4 +131,42 @@ func ValidateLabelValue(value string) error {
 	}
 
 	return nil
+}
+
+// ValidateTaints validates that a set of taints is correctly defined.
+func ValidateTaints(taints map[string]string) error {
+	var multiErr *multierror.Error
+
+	keys := maps.Keys(taints)
+	slices.Sort(keys)
+
+	for _, k := range keys {
+		if err := ValidateQualifiedName(k); err != nil {
+			multiErr = multierror.Append(multiErr, err)
+
+			continue
+		}
+
+		val, effect, found := strings.Cut(taints[k], ":")
+		if !found {
+			effect = val
+		}
+
+		// validate that the taint has a valid effect, which is required to add the taint
+		if !slices.Contains(constants.ValidEffects, effect) {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("invalid taint effect: %q", effect))
+
+			continue
+		}
+
+		if found {
+			if err := ValidateLabelValue(val); err != nil {
+				multiErr = multierror.Append(multiErr, err)
+
+				continue
+			}
+		}
+	}
+
+	return multiErr.ErrorOrNil()
 }

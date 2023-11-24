@@ -281,6 +281,12 @@ type MachineConfig struct {
 	//    - name: node labels example.
 	//      value: 'map[string]string{"exampleLabel": "exampleLabelValue"}'
 	MachineNodeLabels map[string]string `yaml:"nodeLabels,omitempty"`
+	//  description: |
+	//    Configures the node taints for the machine. Effect is optional.
+	//  examples:
+	//    - name: node taints example.
+	//      value: 'map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"}'
+	MachineNodeTaints map[string]string `yaml:"nodeTaints,omitempty"`
 }
 
 // MachineSeccompProfile defines seccomp profiles for the machine.

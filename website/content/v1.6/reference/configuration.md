@@ -433,6 +433,10 @@ seccompProfiles:
 nodeLabels:
     exampleLabel: exampleLabelValue
 {{< /highlight >}}</details> | |
+|`nodeTaints` |map[string]string |Configures the node taints for the machine. Effect is optional. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+nodeTaints:
+    exampleTaint: exampleTaintValue:NoSchedule
+{{< /highlight >}}</details> | |
 
 
 

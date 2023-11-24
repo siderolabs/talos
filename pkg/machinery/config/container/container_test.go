@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +35,7 @@ func TestNew(t *testing.T) {
 	}
 
 	sideroLinkCfg := siderolink.NewConfigV1Alpha1()
-	sideroLinkCfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
+	sideroLinkCfg.APIUrlConfig.URL = must.Value(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))(t)
 
 	cfg, err := container.New(v1alpha1Cfg, sideroLinkCfg)
 	require.NoError(t, err)
@@ -81,7 +82,7 @@ func TestValidate(t *testing.T) {
 	t.Parallel()
 
 	sideroLinkCfg := siderolink.NewConfigV1Alpha1()
-	sideroLinkCfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api/?jointoken=secret&user=alice"))
+	sideroLinkCfg.APIUrlConfig.URL = must.Value(url.Parse("https://siderolink.api/?jointoken=secret&user=alice"))(t)
 
 	invalidSideroLinkCfg := siderolink.NewConfigV1Alpha1()
 
@@ -89,7 +90,7 @@ func TestValidate(t *testing.T) {
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ControlPlane: &v1alpha1.ControlPlaneConfig{
 				Endpoint: &v1alpha1.Endpoint{
-					URL: must(url.Parse("https://localhost:6443")),
+					URL: must.Value(url.Parse("https://localhost:6443"))(t),
 				},
 			},
 		},
@@ -157,14 +158,6 @@ func TestValidate(t *testing.T) {
 			require.Equal(t, tt.expecetedWarnings, warnings)
 		})
 	}
-}
-
-func must[T any](t T, err error) T {
-	if err != nil {
-		panic(err)
-	}
-
-	return t
 }
 
 type validationMode struct{}

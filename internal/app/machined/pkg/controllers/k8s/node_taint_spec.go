@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -53,7 +54,7 @@ func (ctrl *NodeTaintSpecController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *NodeTaintSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *NodeTaintSpecController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -68,16 +69,24 @@ func (ctrl *NodeTaintSpecController) Run(ctx context.Context, r controller.Runti
 
 		r.StartTrackingOutputs()
 
-		if cfg != nil && cfg.Config().Machine() != nil && cfg.Config().Cluster() != nil {
-			if cfg.Config().Machine().Type().IsControlPlane() && !cfg.Config().Cluster().ScheduleOnControlPlanes() {
-				if err = safe.WriterModify(ctx, r, k8s.NewNodeTaintSpec(constants.LabelNodeRoleControlPlane), func(k *k8s.NodeTaintSpec) error {
-					k.TypedSpec().Key = constants.LabelNodeRoleControlPlane
-					k.TypedSpec().Value = ""
-					k.TypedSpec().Effect = string(v1.TaintEffectNoSchedule)
+		if cfg != nil && cfg.Config().Machine() != nil {
+			if cfg.Config().Cluster() != nil {
+				if cfg.Config().Machine().Type().IsControlPlane() && !cfg.Config().Cluster().ScheduleOnControlPlanes() {
+					if err = createTaint(ctx, r, constants.LabelNodeRoleControlPlane, "", string(v1.TaintEffectNoSchedule)); err != nil {
+						return err
+					}
+				}
+			}
 
-					return nil
-				}); err != nil {
-					return fmt.Errorf("error updating node taint spec: %w", err)
+			for key, val := range cfg.Config().Machine().NodeTaints() {
+				value, effect, found := strings.Cut(val, ":")
+				if !found {
+					effect = value
+					value = ""
+				}
+
+				if err = createTaint(ctx, r, key, value, effect); err != nil {
+					return err
 				}
 			}
 		}
@@ -86,4 +95,18 @@ func (ctrl *NodeTaintSpecController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 	}
+}
+
+func createTaint(ctx context.Context, r controller.Runtime, key string, val string, effect string) error {
+	if err := safe.WriterModify(ctx, r, k8s.NewNodeTaintSpec(key), func(k *k8s.NodeTaintSpec) error {
+		k.TypedSpec().Key = key
+		k.TypedSpec().Value = val
+		k.TypedSpec().Effect = effect
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error updating node taint spec: %w", err)
+	}
+
+	return nil
 }

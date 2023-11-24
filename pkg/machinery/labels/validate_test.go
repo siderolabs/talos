@@ -55,3 +55,44 @@ func TestValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateTaints(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		taints map[string]string
+
+		expectedError string
+	}{
+		{
+			name: "empty",
+		},
+		{
+			name: "valid",
+			taints: map[string]string{
+				"foor": "bar:NoExecute",
+				"doo":  "NoExecute",
+			},
+		},
+		{
+			name: "invalid",
+			taints: map[string]string{
+				strings.Repeat("a", 64): "bar",
+				"bar":                   strings.Repeat("a", 64),
+				"foo":                   "bar:NoExecute:NoSchedule",
+				"loo":                   "bar:",
+				"zoo":                   "bar:NoExocute",
+				"koo":                   "key",
+			},
+			expectedError: "6 errors occurred:\n\t* name is too long: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" (limit is 63)\n\t* invalid taint effect: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n\t* invalid taint effect: \"NoExecute:NoSchedule\"\n\t* invalid taint effect: \"key\"\n\t* invalid taint effect: \"\"\n\t* invalid taint effect: \"NoExocute\"\n\n", //nolint:lll
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			err := labels.ValidateTaints(tt.taints)
+			if tt.expectedError != "" {
+				assert.EqualError(t, err, tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

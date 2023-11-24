@@ -90,6 +90,11 @@ func (m *MachineConfig) NodeLabels() config.NodeLabels {
 	return m.MachineNodeLabels
 }
 
+// NodeTaints implements the config.Provider interface.
+func (m *MachineConfig) NodeTaints() config.NodeTaints {
+	return m.MachineNodeTaints
+}
+
 // Cluster implements the config.Provider interface.
 func (c *Config) Cluster() config.ClusterConfig {
 	if c == nil || c.ClusterConfig == nil {

@@ -286,6 +286,10 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		result = multierror.Append(result, fmt.Errorf("invalid machine node labels: %w", err))
 	}
 
+	if err := labels.ValidateTaints(c.MachineConfig.MachineNodeTaints); err != nil {
+		result = multierror.Append(result, fmt.Errorf("invalid machine node taints: %w", err))
+	}
+
 	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() {
 		if !c.Machine().Features().RBACEnabled() {
 			result = multierror.Append(result, fmt.Errorf("feature API RBAC should be enabled when Kubernetes Talos API Access feature is enabled"))

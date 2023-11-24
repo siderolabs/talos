@@ -2096,6 +2096,18 @@
           "description": "Configures the node labels for the machine.\n",
           "markdownDescription": "Configures the node labels for the machine.",
           "x-intellij-html-description": "\u003cp\u003eConfigures the node labels for the machine.\u003c/p\u003e\n"
+        },
+        "nodeTaints": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "nodeTaints",
+          "description": "Configures the node taints for the machine. Effect is optional.\n",
+          "markdownDescription": "Configures the node taints for the machine. Effect is optional.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the node taints for the machine. Effect is optional.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

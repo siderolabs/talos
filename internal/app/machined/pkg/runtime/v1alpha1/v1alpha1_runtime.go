@@ -147,6 +147,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachinePods = currentConfig.MachineConfig.MachinePods
 		newConfig.MachineConfig.MachineSeccompProfiles = currentConfig.MachineConfig.MachineSeccompProfiles
 		newConfig.MachineConfig.MachineNodeLabels = currentConfig.MachineConfig.MachineNodeLabels
+		newConfig.MachineConfig.MachineNodeTaints = currentConfig.MachineConfig.MachineNodeTaints
 
 		if newConfig.MachineConfig.MachineFeatures != nil {
 			if currentConfig.MachineConfig.MachineFeatures != nil {

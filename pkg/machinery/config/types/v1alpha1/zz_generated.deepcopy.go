@@ -1600,6 +1600,13 @@ func (in *MachineConfig) DeepCopyInto(out *MachineConfig) {
 			(*out)[key] = val
 		}
 	}
+	if in.MachineNodeTaints != nil {
+		in, out := &in.MachineNodeTaints, &out.MachineNodeTaints
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

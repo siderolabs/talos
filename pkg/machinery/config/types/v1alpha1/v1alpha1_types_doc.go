@@ -255,6 +255,13 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Configures the node labels for the machine.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node labels for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "nodeTaints",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Configures the node taints for the machine. Effect is optional.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node taints for the machine. Effect is optional." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -284,6 +291,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[20].AddExample("", machineKernelExample())
 	doc.Fields[21].AddExample("", machineSeccompExample())
 	doc.Fields[22].AddExample("node labels example.", map[string]string{"exampleLabel": "exampleLabelValue"})
+	doc.Fields[23].AddExample("node taints example.", map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"})
 
 	return doc
 }

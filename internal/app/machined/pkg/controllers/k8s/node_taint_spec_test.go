@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -43,16 +44,19 @@ func TestNodeTaintsSuite(t *testing.T) {
 	})
 }
 
-func (suite *NodeTaintsSuite) updateMachineConfig(machineType machine.Type, allowScheduling bool) {
+func (suite *NodeTaintsSuite) updateMachineConfig(machineType machine.Type, allowScheduling bool, taints ...customTaint) {
 	cfg, err := safe.StateGetByID[*config.MachineConfig](suite.Ctx(), suite.State(), config.V1Alpha1ID)
 	if err != nil && !state.IsNotFoundError(err) {
 		suite.Require().NoError(err)
 	}
 
+	nodeTaints := xslices.ToMap(taints, func(t customTaint) (string, string) { return t.key, t.value })
+
 	if cfg == nil {
 		cfg = config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
-				MachineType: machineType.String(),
+				MachineType:       machineType.String(),
+				MachineNodeTaints: nodeTaints,
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
 				AllowSchedulingOnControlPlanes: pointer.To(allowScheduling),
@@ -63,6 +67,7 @@ func (suite *NodeTaintsSuite) updateMachineConfig(machineType machine.Type, allo
 	} else {
 		cfg.Container().RawV1Alpha1().ClusterConfig.AllowSchedulingOnControlPlanes = pointer.To(allowScheduling)
 		cfg.Container().RawV1Alpha1().MachineConfig.MachineType = machineType.String()
+		cfg.Container().RawV1Alpha1().MachineConfig.MachineNodeTaints = nodeTaints
 		suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 	}
 }
@@ -85,4 +90,29 @@ func (suite *NodeTaintsSuite) TestControlplane() {
 	suite.updateMachineConfig(machine.TypeControlPlane, true)
 
 	rtestutils.AssertNoResource[*k8s.NodeTaintSpec](suite.Ctx(), suite.T(), suite.State(), constants.LabelNodeRoleControlPlane)
+}
+
+func (suite *NodeTaintsSuite) TestCustomTaints() {
+	const customTaintKey = "key1"
+
+	suite.updateMachineConfig(machine.TypeControlPlane, false, customTaint{
+		key:   customTaintKey,
+		value: "value1:NoSchedule",
+	})
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{customTaintKey},
+		func(labelSpec *k8s.NodeTaintSpec, asrt *assert.Assertions) {
+			asrt.Equal(customTaintKey, labelSpec.TypedSpec().Key)
+			asrt.Equal("value1", labelSpec.TypedSpec().Value)
+			asrt.Equal(string(v1.TaintEffectNoSchedule), labelSpec.TypedSpec().Effect)
+		})
+
+	suite.updateMachineConfig(machine.TypeControlPlane, false)
+
+	rtestutils.AssertNoResource[*k8s.NodeTaintSpec](suite.Ctx(), suite.T(), suite.State(), customTaintKey)
+}
+
+type customTaint struct {
+	key   string
+	value string
 }

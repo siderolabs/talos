@@ -42,6 +42,7 @@ type MachineConfig interface {
 	Kernel() Kernel
 	SeccompProfiles() []SeccompProfile
 	NodeLabels() NodeLabels
+	NodeTaints() NodeTaints
 }
 
 // SeccompProfile defines the requirements for a config that pertains to seccomp
@@ -53,6 +54,9 @@ type SeccompProfile interface {
 
 // NodeLabels defines the labels that should be set on a node.
 type NodeLabels map[string]string
+
+// NodeTaints defines the taints that should be set on a node.
+type NodeTaints map[string]string
 
 // Disk represents the options available for partitioning, formatting, and
 // mounting extra disks.

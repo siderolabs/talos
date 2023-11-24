@@ -63,6 +63,8 @@ func (suite *NodeLabelsSuite) TestUpdateWorker() {
 	suite.testUpdate(node, false)
 }
 
+const metadataKeyName = "metadata.name="
+
 // testUpdate cycles through a set of node label updates reverting the change in the end.
 func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
@@ -71,7 +73,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	suite.T().Logf("updating labels on node %q (%q)", node, k8sNode.Name)
 
 	watcher, err := suite.Clientset.CoreV1().Nodes().Watch(suite.ctx, metav1.ListOptions{
-		FieldSelector: "metadata.name=" + k8sNode.Name,
+		FieldSelector: metadataKeyName + k8sNode.Name,
 		Watch:         true,
 	})
 	suite.Require().NoError(err)
@@ -135,7 +137,7 @@ func (suite *NodeLabelsSuite) TestAllowScheduling() {
 	suite.T().Logf("updating taints on node %q (%q)", node, k8sNode.Name)
 
 	watcher, err := suite.Clientset.CoreV1().Nodes().Watch(suite.ctx, metav1.ListOptions{
-		FieldSelector: "metadata.name=" + k8sNode.Name,
+		FieldSelector: metadataKeyName + k8sNode.Name,
 		Watch:         true,
 	})
 	suite.Require().NoError(err)
@@ -160,9 +162,9 @@ outer:
 		select {
 		case ev := <-watcher.ResultChan():
 			k8sNode, ok := ev.Object.(*v1.Node)
-			suite.Require().True(ok, "watch event is not of type v1.Node")
+			suite.Require().Truef(ok, "watch event is not of type v1.Node but was %T", ev.Object)
 
-			suite.T().Logf("labels %v, taints %v", k8sNode.Labels, k8sNode.Spec.Taints)
+			suite.T().Logf("labels %#v, taints %#v", k8sNode.Labels, k8sNode.Spec.Taints)
 
 			for k, v := range expectedLabels {
 				if v == "" {
@@ -175,7 +177,7 @@ outer:
 				}
 
 				if k8sNode.Labels[k] != v {
-					suite.T().Logf("label %q is not %q", k, v)
+					suite.T().Logf("label %q is %q but expected %q", k, k8sNode.Labels[k], v)
 
 					continue outer
 				}
