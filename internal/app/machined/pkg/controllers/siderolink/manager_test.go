@@ -72,7 +72,7 @@ const (
 
 func (srv mockServer) Provision(_ context.Context, _ *pb.ProvisionRequest) (*pb.ProvisionResponse, error) {
 	return &pb.ProvisionResponse{
-		ServerEndpoint:    mockServerEndpoint,
+		ServerEndpoint:    pb.MakeEndpoints(mockServerEndpoint),
 		ServerAddress:     mockServerAddress,
 		ServerPublicKey:   mockServerPublicKey,
 		NodeAddressPrefix: mockNodeAddressPrefix,
