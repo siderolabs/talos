@@ -384,7 +384,7 @@ local ExtensionsStep(with_e2e=true) =
     QEMU_MEMORY_WORKERS: '4096',
     WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.json',
     IMAGE_REGISTRY: local_registry,
-    QEMU_EXTRA_DISKS: '1',
+    QEMU_EXTRA_DISKS: '3',
     SHORT_INTEGRATION_TEST: 'yes',
     EXTRA_TEST_ARGS: '-talos.extensions.qemu',
   });

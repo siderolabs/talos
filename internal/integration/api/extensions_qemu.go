@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"net"
@@ -271,7 +272,9 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsISCSI() {
 		suite.Require().Contains(stdout, "successful.")
 	}
 
-	suite.Assert().True(iscsiTargetExists())
+	suite.Eventually(func() bool {
+		return iscsiTargetExists()
+	}, 5*time.Second, 1*time.Second)
 }
 
 // TestExtensionsNutClient verifies nut client is working.
@@ -416,6 +419,127 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsStargz() {
 	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "stargz-hello"))
 }
 
+// TestExtensionsMdADM verifies mdadm is working, udev rules work and the raid is mounted on reboot.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	var mdADMArrayExists bool
+
+	uuid := suite.mdADMScan()
+	if uuid != "" {
+		mdADMArrayExists = true
+	}
+
+	if !mdADMArrayExists {
+		userDisks, err := suite.UserDisks(suite.ctx, node, 4)
+		suite.Require().NoError(err)
+
+		suite.Require().GreaterOrEqual(len(userDisks), 2, "expected at least two user disks with size greater than 4GB to be available")
+
+		_, err = suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "mdadm-create",
+			},
+			Spec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  "mdadm-create",
+						Image: "alpine",
+						Command: []string{
+							"tail",
+							"-f",
+							"/dev/null",
+						},
+						SecurityContext: &corev1.SecurityContext{
+							Privileged: pointer.To(true),
+						},
+					},
+				},
+				HostNetwork: true,
+				HostPID:     true,
+			},
+		}, metav1.CreateOptions{})
+		defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "mdadm-create", metav1.DeleteOptions{}) //nolint:errcheck
+
+		suite.Require().NoError(err)
+
+		// wait for the pod to be ready
+		suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", "mdadm-create"))
+
+		_, stderr, err := suite.ExecuteCommandInPod(
+			suite.ctx,
+			"kube-system",
+			"mdadm-create",
+			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- mdadm --create --verbose /dev/md0 --metadata=0.90 --level=1 --raid-devices=2 %s", strings.Join(userDisks[:2], " ")),
+		)
+		suite.Require().NoError(err)
+
+		suite.Require().Contains(stderr, "mdadm: array /dev/md0 started.")
+	}
+
+	// now we want to reboot the node and make sure the array is still mounted
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
+		}, 5*time.Minute,
+	)
+
+	suite.Require().NotEmpty(suite.mdADMScan())
+}
+
+func (suite *ExtensionsSuiteQEMU) mdADMScan() string {
+	// create a random suffix for the mdadm-scan pod
+	randomSuffix := make([]byte, 4)
+	_, err := rand.Read(randomSuffix)
+	suite.Require().NoError(err)
+
+	podName := fmt.Sprintf("mdadm-scan-%x", randomSuffix)
+
+	_, err = suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: podName,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  podName,
+					Image: "alpine",
+					Command: []string{
+						"tail",
+						"-f",
+						"/dev/null",
+					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: pointer.To(true),
+					},
+				},
+			},
+			HostNetwork: true,
+			HostPID:     true,
+		},
+	}, metav1.CreateOptions{})
+	defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, podName, metav1.DeleteOptions{}) //nolint:errcheck
+
+	suite.Require().NoError(err)
+
+	// wait for the pod to be ready
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", podName))
+
+	stdout, stderr, err := suite.ExecuteCommandInPod(
+		suite.ctx,
+		"kube-system",
+		podName,
+		"nsenter --mount=/proc/1/ns/mnt -- mdadm --detail --scan",
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().Equal("", stderr)
+
+	stdOutSplit := strings.Split(stdout, " ")
+
+	return strings.TrimPrefix(stdOutSplit[len(stdOutSplit)-1], "UUID=")
+}
+
 // TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
@@ -425,21 +549,57 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 
 	var zfsPoolExists bool
 
-	userDisks, err := suite.UserDisks(suite.ctx, node, 4)
+	_, err := suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "zpool-list",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "zpool-list",
+					Image: "alpine",
+					Command: []string{
+						"tail",
+						"-f",
+						"/dev/null",
+					},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: pointer.To(true),
+					},
+				},
+			},
+			HostNetwork: true,
+			HostPID:     true,
+		},
+	}, metav1.CreateOptions{})
+	defer suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, "zpool-list", metav1.DeleteOptions{}) //nolint:errcheck
+
 	suite.Require().NoError(err)
 
-	suite.Require().NotEmpty(userDisks, "expected at least one user disk with size greater than 4GB to be available")
+	// wait for the pod to be ready
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "kube-system", "zpool-list"))
 
-	resp, err := suite.Client.LS(ctx, &machineapi.ListRequest{
-		Root: fmt.Sprintf("/dev/%s1", userDisks[0]),
-	})
+	stdout, stderr, err := suite.ExecuteCommandInPod(
+		suite.ctx,
+		"kube-system",
+		"zpool-list",
+		"nsenter --mount=/proc/1/ns/mnt -- zpool list",
+	)
 	suite.Require().NoError(err)
 
-	if _, err = resp.Recv(); err == nil {
+	suite.Require().Equal("", stderr)
+	suite.Require().NotEmpty(stdout)
+
+	if stdout != "no pools available\n" {
 		zfsPoolExists = true
 	}
 
 	if !zfsPoolExists {
+		userDisks, err := suite.UserDisks(suite.ctx, node, 4)
+		suite.Require().NoError(err)
+
+		suite.Require().NotEmpty(userDisks, "expected at least one user disk with size greater than 4GB to be available")
+
 		_, err = suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "zpool-create",

@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/backoff"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
@@ -454,7 +455,9 @@ func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Pr
 	return provider, nil
 }
 
-// UserDisks returns list of user disks on the with size greater than sizeGreaterThanGB.
+// UserDisks returns list of user disks on with size greater than sizeGreaterThanGB and not having any partitions present.
+//
+//nolint:gocyclo
 func (apiSuite *APISuite) UserDisks(ctx context.Context, node string, sizeGreaterThanGB int) ([]string, error) {
 	nodeCtx := client.WithNodes(ctx, node)
 
@@ -465,13 +468,47 @@ func (apiSuite *APISuite) UserDisks(ctx context.Context, node string, sizeGreate
 
 	var disks []string
 
+	blockDeviceInUse := func(deviceName string) (bool, error) {
+		devicePart := strings.Split(deviceName, "/dev/")[1]
+
+		// https://unix.stackexchange.com/questions/111779/how-to-find-out-easily-whether-a-block-device-or-a-part-of-it-is-mounted-someh
+		// this was the only easy way I could find to check if the block device is already in use by something like raid
+		stream, err := apiSuite.Client.LS(nodeCtx, &machineapi.ListRequest{
+			Root: fmt.Sprintf("/sys/block/%s/holders", devicePart),
+		})
+		if err != nil {
+			return false, err
+		}
+
+		counter := 0
+
+		if err = helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
+			counter++
+
+			return nil
+		}); err != nil {
+			return false, err
+		}
+
+		if counter > 1 {
+			return true, nil
+		}
+
+		return false, nil
+	}
+
 	for _, msg := range resp.Messages {
 		for _, disk := range msg.Disks {
 			if disk.SystemDisk {
 				continue
 			}
 
-			if disk.Size > uint64(sizeGreaterThanGB)*1024*1024*1024 {
+			blockDeviceUsed, err := blockDeviceInUse(disk.DeviceName)
+			if err != nil {
+				return nil, err
+			}
+
+			if disk.Size > uint64(sizeGreaterThanGB)*1024*1024*1024 && !blockDeviceUsed {
 				disks = append(disks, disk.DeviceName)
 			}
 		}
