@@ -100,20 +100,13 @@ func (suite *ApplyConfigSuite) TestApply() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
 
-	cfg := provider.RawV1Alpha1()
-	suite.Require().NotNil(cfg)
+	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+		if cfg.MachineConfig.MachineSysctls == nil {
+			cfg.MachineConfig.MachineSysctls = make(map[string]string)
+		}
 
-	if cfg.MachineConfig.MachineSysctls == nil {
-		cfg.MachineConfig.MachineSysctls = make(map[string]string)
-	}
-
-	cfg.MachineConfig.MachineSysctls[applyConfigTestSysctl] = applyConfigTestSysctlVal
-
-	provider, err = container.New(cfg)
-	suite.Require().NoError(err)
-
-	cfgDataOut, err := provider.Bytes()
-	suite.Assert().Nilf(err, "failed to marshal updated machine config data (node %q): %w", node, err)
+		cfg.MachineConfig.MachineSysctls[applyConfigTestSysctl] = applyConfigTestSysctlVal
+	})
 
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
@@ -170,20 +163,13 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 		provider, err := suite.ReadConfigFromNode(nodeCtx)
 		suite.Require().NoError(err, "failed to read existing config from node %q", node)
 
-		cfg := provider.RawV1Alpha1()
-		suite.Require().NotNil(cfg)
+		cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+			if cfg.MachineConfig.MachineSysctls == nil {
+				cfg.MachineConfig.MachineSysctls = make(map[string]string)
+			}
 
-		if cfg.MachineConfig.MachineSysctls == nil {
-			cfg.MachineConfig.MachineSysctls = make(map[string]string)
-		}
-
-		cfg.MachineConfig.MachineSysctls[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
-
-		provider, err = container.New(cfg)
-		suite.Require().NoError(err)
-
-		cfgDataOut, err := provider.Bytes()
-		suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
+			cfg.MachineConfig.MachineSysctls[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
+		})
 
 		_, err = suite.Client.ApplyConfiguration(
 			nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -205,17 +191,10 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 			applyConfigNoRebootTestSysctlVal,
 		)
 
-		cfg = newProvider.RawV1Alpha1()
-		suite.Require().NotNil(cfg)
-
-		// revert back
-		delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl)
-
-		provider, err = container.New(cfg)
-		suite.Require().NoError(err)
-
-		cfgDataOut, err = provider.Bytes()
-		suite.Require().NoError(err, "failed to marshal updated machine config data (node %q)", node)
+		cfgDataOut = suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+			// revert back
+			delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl)
+		})
 
 		_, err = suite.Client.ApplyConfiguration(
 			nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -385,17 +364,10 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
-	cfg := provider.RawV1Alpha1()
-	suite.Require().NotNil(cfg)
-
-	// this won't be possible without a reboot
-	cfg.MachineConfig.MachineType = "controlplane"
-
-	provider, err = container.New(cfg)
-	suite.Require().NoError(err)
-
-	cfgDataOut, err := provider.Bytes()
-	suite.Require().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
+	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+		// this won't be possible without a reboot
+		cfg.MachineConfig.MachineType = "controlplane"
+	})
 
 	_, err = suite.Client.ApplyConfiguration(
 		nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -431,17 +403,10 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
-	cfg := provider.RawV1Alpha1()
-	suite.Require().NotNil(cfg)
-
-	// this won't be possible without a reboot
-	cfg.MachineConfig.MachineType = "controlplane"
-
-	provider, err = container.New(cfg)
-	suite.Require().NoError(err)
-
-	cfgDataOut, err := provider.Bytes()
-	suite.Require().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
+	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+		// this won't be possible without a reboot
+		cfg.MachineConfig.MachineType = "controlplane"
+	})
 
 	reply, err := suite.Client.ApplyConfiguration(
 		nodeCtx, &machineapi.ApplyConfigurationRequest{
@@ -480,23 +445,18 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	provider, err := getMachineConfig(nodeCtx)
 	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 
-	cfg := provider.Container().RawV1Alpha1()
-	suite.Require().NotNil(cfg)
+	cfgDataOut := suite.PatchV1Alpha1Config(provider.Provider(), func(cfg *v1alpha1.Config) {
+		if cfg.MachineConfig.MachineNetwork == nil {
+			cfg.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
+		}
 
-	// this won't be possible without a reboot
-	if cfg.MachineConfig.MachineNetwork == nil {
-		cfg.MachineConfig.MachineNetwork = &v1alpha1.NetworkConfig{}
-	}
-
-	cfg.MachineConfig.MachineNetwork.NetworkInterfaces = append(cfg.MachineConfig.MachineNetwork.NetworkInterfaces,
-		&v1alpha1.Device{
-			DeviceInterface: "dummy0",
-			DeviceDummy:     pointer.To(true),
-		},
-	)
-
-	cfgDataOut, err := container.NewV1Alpha1(cfg).Bytes()
-	suite.Require().Nilf(err, "failed to marshal updated machine config data (node %q): %s", node, err)
+		cfg.MachineConfig.MachineNetwork.NetworkInterfaces = append(cfg.MachineConfig.MachineNetwork.NetworkInterfaces,
+			&v1alpha1.Device{
+				DeviceInterface: "dummy0",
+				DeviceDummy:     pointer.To(true),
+			},
+		)
+	})
 
 	_, err = suite.Client.ApplyConfiguration(
 		nodeCtx, &machineapi.ApplyConfigurationRequest{

@@ -109,6 +109,12 @@ machine:
 Talos Linux when running on the `metal` platform can be configured to authenticate the machine configuration download using [OAuth2 device flow](https://www.talos.dev/v1.6/advanced/machine-config-oauth/).
 """
 
+    [note.ingress]
+        title = "Ingress Firewall"
+        description = """\
+Talos Linux now supports configuring the [ingress firewall rules](https://talos.dev/v1.6/talos-guides/network/ingress-firewall/).
+"""
+
 [make_deps]
 
     [make_deps.tools]

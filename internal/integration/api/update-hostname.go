@@ -8,7 +8,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -19,8 +18,8 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 // UpdateHostnameSuite verifies UpdateHostname API.
@@ -142,17 +141,9 @@ func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, newHos
 		return err
 	}
 
-	nodeConfigRaw := nodeConfig.RawV1Alpha1()
-	if nodeConfigRaw == nil {
-		return fmt.Errorf("unexpected node config type %T", nodeConfig)
-	}
-
-	nodeConfigRaw.MachineConfig.MachineNetwork.NetworkHostname = newHostname
-
-	bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
-	if err != nil {
-		return err
-	}
+	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
+		nodeConfigRaw.MachineConfig.MachineNetwork.NetworkHostname = newHostname
+	})
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 		Data: bytes,

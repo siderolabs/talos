@@ -18,8 +18,8 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -214,13 +214,9 @@ func (suite *NodeLabelsSuite) setNodeLabels(nodeIP string, nodeLabels map[string
 	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	nodeConfigRaw := nodeConfig.RawV1Alpha1()
-	suite.Require().NotNil(nodeConfigRaw, "node config is not of type v1alpha1.Config")
-
-	nodeConfigRaw.MachineConfig.MachineNodeLabels = nodeLabels
-
-	bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
-	suite.Require().NoError(err)
+	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
+		nodeConfigRaw.MachineConfig.MachineNodeLabels = nodeLabels
+	})
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 		Data: bytes,
@@ -236,17 +232,13 @@ func (suite *NodeLabelsSuite) setAllowScheduling(nodeIP string, allowScheduling 
 	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	nodeConfigRaw := nodeConfig.RawV1Alpha1()
-	suite.Require().NotNil(nodeConfigRaw, "node config is not of type v1alpha1.Config")
-
-	if allowScheduling {
-		nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = pointer.To(true)
-	} else {
-		nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = nil
-	}
-
-	bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
-	suite.Require().NoError(err)
+	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
+		if allowScheduling {
+			nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = pointer.To(true)
+		} else {
+			nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = nil
+		}
+	})
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 		Data: bytes,

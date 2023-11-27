@@ -30,23 +30,3 @@ func (w runtimeConfigWrapper) KmsgLogURLs() []*url.URL {
 		return c.KmsgLogURLs()
 	})
 }
-
-func findFirstValue[T any, R any](documents []T, getter func(T) *R) *R {
-	for _, document := range documents {
-		if value := getter(document); value != nil {
-			return value
-		}
-	}
-
-	return nil
-}
-
-func aggregateValues[T any, R any](documents []T, getter func(T) []R) []R {
-	var result []R
-
-	for _, document := range documents {
-		result = append(result, getter(document)...)
-	}
-
-	return result
-}

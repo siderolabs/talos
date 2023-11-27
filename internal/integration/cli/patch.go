@@ -29,11 +29,9 @@ func (suite *PatchSuite) SuiteName() string {
 func (suite *PatchSuite) TestSuccess() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
-	patch := []map[string]interface{}{
-		{
-			"op":   "replace",
-			"path": "/cluster/proxy",
-			"value": map[string]interface{}{
+	patch := map[string]any{
+		"cluster": map[string]any{
+			"proxy": map[string]any{
 				"image": fmt.Sprintf("%s:v%s", constants.KubeProxyImage, constants.DefaultKubernetesVersion),
 			},
 		},

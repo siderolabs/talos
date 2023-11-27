@@ -201,6 +201,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.LinkMergeController{},
 		&network.LinkSpecController{},
 		&network.LinkStatusController{},
+		&network.NfTablesChainConfigController{},
 		&network.NfTablesChainController{},
 		&network.NodeAddressController{},
 		&network.OperatorConfigController{

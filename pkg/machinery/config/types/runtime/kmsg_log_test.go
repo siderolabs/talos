@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/siderolabs/gen/ensure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,7 +23,7 @@ var expectedKmsgLogDocument []byte
 func TestKmsgLogMarshalStability(t *testing.T) {
 	cfg := runtime.NewKmsgLogV1Alpha1()
 	cfg.MetaName = "apiSink"
-	cfg.KmsgLogURL.URL = must(url.Parse("https://kmsglog.api/logs"))
+	cfg.KmsgLogURL.URL = ensure.Value(url.Parse("https://kmsglog.api/logs"))
 
 	marshaled, err := encoder.NewEncoder(cfg).Encode()
 	require.NoError(t, err)
@@ -64,7 +65,7 @@ func TestKmsgLogValidate(t *testing.T) {
 			cfg: func() *runtime.KmsgLogV1Alpha1 {
 				cfg := runtime.NewKmsgLogV1Alpha1()
 				cfg.MetaName = "name2"
-				cfg.KmsgLogURL.URL = must(url.Parse("https://some.destination/path"))
+				cfg.KmsgLogURL.URL = ensure.Value(url.Parse("https://some.destination/path"))
 
 				return cfg
 			},
@@ -76,7 +77,7 @@ func TestKmsgLogValidate(t *testing.T) {
 			cfg: func() *runtime.KmsgLogV1Alpha1 {
 				cfg := runtime.NewKmsgLogV1Alpha1()
 				cfg.MetaName = "name5"
-				cfg.KmsgLogURL.URL = must(url.Parse("tcp://some.destination:34/path"))
+				cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://some.destination:34/path"))
 
 				return cfg
 			},
@@ -88,7 +89,7 @@ func TestKmsgLogValidate(t *testing.T) {
 			cfg: func() *runtime.KmsgLogV1Alpha1 {
 				cfg := runtime.NewKmsgLogV1Alpha1()
 				cfg.MetaName = "name6"
-				cfg.KmsgLogURL.URL = must(url.Parse("tcp://some.destination/"))
+				cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://some.destination/"))
 
 				return cfg
 			},
@@ -100,7 +101,7 @@ func TestKmsgLogValidate(t *testing.T) {
 			cfg: func() *runtime.KmsgLogV1Alpha1 {
 				cfg := runtime.NewKmsgLogV1Alpha1()
 				cfg.MetaName = "name3"
-				cfg.KmsgLogURL.URL = must(url.Parse("tcp://10.2.3.4:5000/"))
+				cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://10.2.3.4:5000/"))
 
 				return cfg
 			},
@@ -110,7 +111,7 @@ func TestKmsgLogValidate(t *testing.T) {
 			cfg: func() *runtime.KmsgLogV1Alpha1 {
 				cfg := runtime.NewKmsgLogV1Alpha1()
 				cfg.MetaName = "name4"
-				cfg.KmsgLogURL.URL = must(url.Parse("udp://10.2.3.4:5000/"))
+				cfg.KmsgLogURL.URL = ensure.Value(url.Parse("udp://10.2.3.4:5000/"))
 
 				return cfg
 			},

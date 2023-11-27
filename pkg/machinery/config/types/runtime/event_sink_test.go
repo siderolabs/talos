@@ -85,14 +85,6 @@ func TestEventSinkValidate(t *testing.T) {
 	}
 }
 
-func must[T any](t T, err error) T {
-	if err != nil {
-		panic(err)
-	}
-
-	return t
-}
-
 type validationMode struct{}
 
 func (validationMode) String() string {

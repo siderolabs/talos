@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/siderolabs/gen/ensure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +21,7 @@ func TestRedact(t *testing.T) {
 	t.Parallel()
 
 	cfg := siderolink.NewConfigV1Alpha1()
-	cfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
+	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
 
 	assert.Equal(t, "https://siderolink.api/join?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 
@@ -36,7 +37,7 @@ func TestMarshalStability(t *testing.T) {
 	t.Parallel()
 
 	cfg := siderolink.NewConfigV1Alpha1()
-	cfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
+	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
 
 	marshaled, err := encoder.NewEncoder(cfg).Encode()
 	require.NoError(t, err)
@@ -64,7 +65,7 @@ func TestValidate(t *testing.T) {
 			name: "wrong scheme",
 			cfg: func() *siderolink.ConfigV1Alpha1 {
 				cfg := siderolink.NewConfigV1Alpha1()
-				cfg.APIUrlConfig.URL = must(url.Parse("http://siderolink.api/"))
+				cfg.APIUrlConfig.URL = ensure.Value(url.Parse("http://siderolink.api/"))
 
 				return cfg
 			},
@@ -75,7 +76,7 @@ func TestValidate(t *testing.T) {
 			name: "extra path",
 			cfg: func() *siderolink.ConfigV1Alpha1 {
 				cfg := siderolink.NewConfigV1Alpha1()
-				cfg.APIUrlConfig.URL = must(url.Parse("grpc://siderolink.api/path?jointoken=foo"))
+				cfg.APIUrlConfig.URL = ensure.Value(url.Parse("grpc://siderolink.api/path?jointoken=foo"))
 
 				return cfg
 			},
@@ -86,7 +87,7 @@ func TestValidate(t *testing.T) {
 			name: "valid",
 			cfg: func() *siderolink.ConfigV1Alpha1 {
 				cfg := siderolink.NewConfigV1Alpha1()
-				cfg.APIUrlConfig.URL = must(url.Parse("https://siderolink.api:434/?jointoken=foo"))
+				cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api:434/?jointoken=foo"))
 
 				return cfg
 			},
@@ -108,14 +109,6 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func must[T any](t T, err error) T {
-	if err != nil {
-		panic(err)
-	}
-
-	return t
 }
 
 type validationMode struct{}

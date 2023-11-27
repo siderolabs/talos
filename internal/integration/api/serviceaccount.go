@@ -24,7 +24,6 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -245,23 +244,15 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 			return err
 		}
 
-		nodeConfigRaw := nodeConfig.RawV1Alpha1()
-		if nodeConfigRaw == nil {
-			return fmt.Errorf("unexpected node config type %T", nodeConfig)
-		}
+		bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
+			accessConfig := v1alpha1.KubernetesTalosAPIAccessConfig{
+				AccessEnabled:                     pointer.To(enabled),
+				AccessAllowedRoles:                allowedRoles,
+				AccessAllowedKubernetesNamespaces: allowedNamespaces,
+			}
 
-		accessConfig := v1alpha1.KubernetesTalosAPIAccessConfig{
-			AccessEnabled:                     pointer.To(enabled),
-			AccessAllowedRoles:                allowedRoles,
-			AccessAllowedKubernetesNamespaces: allowedNamespaces,
-		}
-
-		nodeConfigRaw.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = &accessConfig
-
-		bytes, err := container.NewV1Alpha1(nodeConfigRaw).Bytes()
-		if err != nil {
-			return err
-		}
+			nodeConfigRaw.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = &accessConfig
+		})
 
 		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 			Data: bytes,

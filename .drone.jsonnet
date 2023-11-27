@@ -491,7 +491,12 @@ local integration_cilium_strict = Step('e2e-cilium-strict', target='e2e-qemu', p
   IMAGE_REGISTRY: local_registry,
 });
 
-local integration_network_chaos = Step('e2e-network-chaos', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
+local integration_firewall = Step('e2e-firewall', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
+  SHORT_INTEGRATION_TEST: 'yes',
+  WITH_FIREWALL: 'block',
+  REGISTRY: local_registry,
+});
+local integration_network_chaos = Step('e2e-network-chaos', target='e2e-qemu', privileged=true, depends_on=[integration_firewall], environment={
   SHORT_INTEGRATION_TEST: 'yes',
   WITH_NETWORK_CHAOS: 'true',
   REGISTRY: local_registry,
@@ -605,6 +610,7 @@ local integration_pipelines = [
   Pipeline('integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1]) + integration_trigger(['integration-provision', 'integration-provision-1']),
   Pipeline('integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2]) + integration_trigger(['integration-provision', 'integration-provision-2']),
   Pipeline('integration-misc', default_pipeline_steps + [
+    integration_firewall,
     integration_network_chaos,
     integration_canal_reset,
     integration_bios_cgroupsv1,
@@ -629,6 +635,7 @@ local integration_pipelines = [
   Pipeline('cron-integration-provision-1', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_1], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-provision-2', default_pipeline_steps + [integration_provision_tests_prepare, integration_provision_tests_track_2], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-misc', default_pipeline_steps + [
+    integration_firewall,
     integration_network_chaos,
     integration_canal_reset,
     integration_bios_cgroupsv1,

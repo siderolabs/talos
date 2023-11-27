@@ -19,10 +19,11 @@ There are three `talosctl` commands which facilitate machine configuration updat
 
 Each of these commands can operate in one of four modes:
 
-* apply change in automatic mode(default): reboot if the change can't be applied without a reboot, otherwise apply the change immediately
+* apply change in automatic mode (default): reboot if the change can't be applied without a reboot, otherwise apply the change immediately
 * apply change with a reboot (`--mode=reboot`): update configuration, reboot Talos node to apply configuration change
 * apply change immediately (`--mode=no-reboot` flag): change is applied immediately without a reboot, fails if the change contains any fields that can not be updated without a reboot
 * apply change on next reboot (`--mode=staged`): change is staged to be applied after a reboot, but node is not rebooted
+* apply change with automatic revert (`--mode=try`): change is applied immediately (if not possible, returns an error), and reverts it automatically in 1 minute if no configuration update is applied
 * apply change in the interactive mode (`--mode=interactive`; only for `talosctl apply-config`): launches TUI based interactive installer
 
 > Note: applying change on next reboot (`--mode=staged`) doesn't modify current node configuration, so next call to

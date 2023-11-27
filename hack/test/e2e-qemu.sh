@@ -87,6 +87,14 @@ case "${WITH_NETWORK_CHAOS:-false}" in
     ;;
 esac
 
+case "${WITH_FIREWALL:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--with-firewall=${WITH_FIREWALL}")
+    ;;
+esac
+
 case "${USE_DISK_IMAGE:-false}" in
   false)
     ;;

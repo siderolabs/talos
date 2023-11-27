@@ -5,6 +5,7 @@
 package encoder
 
 import (
+	"encoding"
 	"reflect"
 	"sort"
 	"strings"
@@ -132,6 +133,10 @@ func toYamlNode(in interface{}, options *Options) (*yaml.Node, error) {
 		}
 
 		in = res
+	}
+
+	if _, ok := in.(encoding.TextMarshaler); ok && !isNil(reflect.ValueOf(in)) {
+		return node, node.Encode(in)
 	}
 
 	v := reflect.ValueOf(in)

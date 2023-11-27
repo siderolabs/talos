@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/internal/firewallpatch"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/cluster/check"
@@ -84,6 +85,7 @@ const (
 	kubePrismFlag                 = "kubeprism-port"
 	tpm2EnabledFlag               = "with-tpm2"
 	diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
+	firewallFlag                  = "with-firewall"
 )
 
 var (
@@ -161,6 +163,7 @@ var (
 	packetCorrupt              float64
 	bandwidth                  int
 	diskEncryptionKeyTypes     []string
+	withFirewall               string
 )
 
 // createCmd represents the cluster up command.
@@ -595,6 +598,26 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 		return err
 	}
 
+	if withFirewall != "" {
+		var defaultAction nethelpers.DefaultAction
+
+		defaultAction, err = nethelpers.DefaultActionString(withFirewall)
+		if err != nil {
+			return err
+		}
+
+		var controlplaneIPs []netip.Addr
+
+		for i := range ips {
+			controlplaneIPs = append(controlplaneIPs, ips[i][:controlplanes]...)
+		}
+
+		configBundleOpts = append(configBundleOpts,
+			bundle.WithPatchControlPlane([]configpatcher.Patch{firewallpatch.ControlPlane(defaultAction, cidrs, gatewayIPs, controlplaneIPs)}),
+			bundle.WithPatchWorker([]configpatcher.Patch{firewallpatch.Worker(defaultAction, cidrs, gatewayIPs)}),
+		)
+	}
+
 	configBundle, err := bundle.NewBundle(configBundleOpts...)
 	if err != nil {
 		return err
@@ -1010,6 +1033,7 @@ func init() {
 	createCmd.Flags().Float64Var(&packetCorrupt, "with-network-packet-corrupt", 0.0,
 		"specify percent of corrupt packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)")
 	createCmd.Flags().IntVar(&bandwidth, "with-network-bandwidth", 0, "specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster")
+	createCmd.Flags().StringVar(&withFirewall, firewallFlag, "", "inject firewall rules into the cluster, value is default policy - accept/block (QEMU only)")
 
 	Cmd.AddCommand(createCmd)
 }
@@ -1040,6 +1064,7 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 		forceEndpointFlag,
 		controlPlanePortFlag,
 		kubePrismFlag,
+		firewallFlag,
 	}
 	for _, genFlag := range genOptionFlags {
 		if flags.Lookup(genFlag).Changed {

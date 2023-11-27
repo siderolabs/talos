@@ -155,6 +155,11 @@ func (container *Container) Runtime() config.RuntimeConfig {
 	return config.WrapRuntimeConfigList(findMatchingDocs[config.RuntimeConfig](container.documents)...)
 }
 
+// NetworkRules implements config.Config interface.
+func (container *Container) NetworkRules() config.NetworkRuleConfig {
+	return config.WrapNetworkRuleConfigList(findMatchingDocs[config.NetworkRuleConfigSignal](container.documents)...)
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

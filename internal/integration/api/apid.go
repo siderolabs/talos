@@ -10,11 +10,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // ApidSuite verifies Discovery API.
@@ -99,6 +101,15 @@ func (suite *ApidSuite) TestControlPlaneRouting() {
 func (suite *ApidSuite) TestWorkerNoRouting() {
 	endpoints := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
+
+	if len(endpoints) == 0 {
+		suite.T().Skip("no worker nodes found")
+	}
+
+	_, err := safe.StateGetByID[*network.NfTablesChain](client.WithNode(suite.ctx, endpoints[0]), suite.Client.COSI, "ingress")
+	if err == nil {
+		suite.T().Skip("worker nodes have ingress firewall enabled, skipping")
+	}
 
 	for _, endpoint := range endpoints {
 		endpoint := endpoint

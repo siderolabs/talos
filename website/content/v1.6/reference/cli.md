@@ -155,6 +155,7 @@ talosctl cluster create [flags]
       --with-bootloader                          enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-cluster-discovery                   enable cluster discovery (default true)
       --with-debug                               enable debug in Talos config to send service logs to the console
+      --with-firewall string                     inject firewall rules into the cluster, value is default policy - accept/block (QEMU only)
       --with-init-node                           create the cluster with an init node
       --with-kubespan                            enable KubeSpan system
       --with-network-bandwidth int               specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster

@@ -22,8 +22,8 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -171,12 +171,9 @@ func (suite *NodeTaintsSuite) setNodeTaints(nodeIP string, nodeTaints map[string
 
 	nodeConfig := must.Value(suite.ReadConfigFromNode(nodeCtx))(suite.T())
 
-	nodeConfigRaw := nodeConfig.RawV1Alpha1()
-	suite.Require().NotNil(nodeConfigRaw, "node config is not of type v1alpha1.Config")
-
-	nodeConfigRaw.MachineConfig.MachineNodeTaints = nodeTaints
-
-	bytes := must.Value(container.NewV1Alpha1(nodeConfigRaw).Bytes())(suite.T())
+	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
+		nodeConfigRaw.MachineConfig.MachineNodeTaints = nodeTaints
+	})
 
 	must.Value(suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 		Data: bytes,

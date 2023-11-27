@@ -12,4 +12,5 @@ type Config interface {
 	Cluster() ClusterConfig
 	SideroLink() SideroLinkConfig
 	Runtime() RuntimeConfig
+	NetworkRules() NetworkRuleConfig
 }
