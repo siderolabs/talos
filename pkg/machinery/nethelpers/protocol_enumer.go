@@ -7,31 +7,41 @@ import (
 )
 
 const (
-	_ProtocolName_0 = "tcp"
-	_ProtocolName_1 = "udp"
+	_ProtocolName_0 = "icmp"
+	_ProtocolName_1 = "tcp"
+	_ProtocolName_2 = "udp"
+	_ProtocolName_3 = "icmpv6"
 )
 
 var (
-	_ProtocolIndex_0 = [...]uint8{0, 3}
+	_ProtocolIndex_0 = [...]uint8{0, 4}
 	_ProtocolIndex_1 = [...]uint8{0, 3}
+	_ProtocolIndex_2 = [...]uint8{0, 3}
+	_ProtocolIndex_3 = [...]uint8{0, 6}
 )
 
 func (i Protocol) String() string {
 	switch {
-	case i == 6:
+	case i == 1:
 		return _ProtocolName_0
-	case i == 17:
+	case i == 6:
 		return _ProtocolName_1
+	case i == 17:
+		return _ProtocolName_2
+	case i == 58:
+		return _ProtocolName_3
 	default:
 		return fmt.Sprintf("Protocol(%d)", i)
 	}
 }
 
-var _ProtocolValues = []Protocol{6, 17}
+var _ProtocolValues = []Protocol{1, 6, 17, 58}
 
 var _ProtocolNameToValueMap = map[string]Protocol{
-	_ProtocolName_0[0:3]: 6,
-	_ProtocolName_1[0:3]: 17,
+	_ProtocolName_0[0:4]: 1,
+	_ProtocolName_1[0:3]: 6,
+	_ProtocolName_2[0:3]: 17,
+	_ProtocolName_3[0:6]: 58,
 }
 
 // ProtocolString retrieves an enum value from the enum constants string name.

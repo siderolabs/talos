@@ -29,6 +29,7 @@ type NfTablesChainSpec struct {
 	Type     nethelpers.NfTablesChainType     `yaml:"type" protobuf:"1"`
 	Hook     nethelpers.NfTablesChainHook     `yaml:"hook" protobuf:"2"`
 	Priority nethelpers.NfTablesChainPriority `yaml:"priority" protobuf:"3"`
+	Policy   nethelpers.NfTablesVerdict       `yaml:"policy" protobuf:"5"`
 
 	Rules []NfTablesRule `yaml:"rules" protobuf:"4"`
 }
@@ -37,24 +38,27 @@ type NfTablesChainSpec struct {
 //
 //gotagsrewrite:gen
 type NfTablesRule struct {
-	MatchIIfName            *NfTablesIfNameMatch  `yaml:"matchIIfName,omitempty" protobuf:"8"`
-	MatchOIfName            *NfTablesIfNameMatch  `yaml:"matchOIfName,omitempty" protobuf:"1"`
-	MatchMark               *NfTablesMark         `yaml:"matchMark,omitempty" protobuf:"3"`
-	MatchSourceAddress      *NfTablesAddressMatch `yaml:"matchSourceAddress,omitempty" protobuf:"5"`
-	MatchDestinationAddress *NfTablesAddressMatch `yaml:"matchDestinationAddress,omitempty" protobuf:"6"`
-	MatchLayer4             *NfTablesLayer4Match  `yaml:"matchLayer4,omitempty" protobuf:"7"`
+	MatchIIfName            *NfTablesIfNameMatch         `yaml:"matchIIfName,omitempty" protobuf:"8"`
+	MatchOIfName            *NfTablesIfNameMatch         `yaml:"matchOIfName,omitempty" protobuf:"1"`
+	MatchMark               *NfTablesMark                `yaml:"matchMark,omitempty" protobuf:"3"`
+	MatchConntrackState     *NfTablesConntrackStateMatch `yaml:"matchConntrackState,omitempty" protobuf:"11"`
+	MatchSourceAddress      *NfTablesAddressMatch        `yaml:"matchSourceAddress,omitempty" protobuf:"5"`
+	MatchDestinationAddress *NfTablesAddressMatch        `yaml:"matchDestinationAddress,omitempty" protobuf:"6"`
+	MatchLayer4             *NfTablesLayer4Match         `yaml:"matchLayer4,omitempty" protobuf:"7"`
+	MatchLimit              *NfTablesLimitMatch          `yaml:"matchLimit,omitempty" protobuf:"10"`
 
-	ClampMSS *NfTablesClampMSS           `yaml:"clampMSS,omitempty" protobuf:"9"`
-	SetMark  *NfTablesMark               `yaml:"setMark,omitempty" protobuf:"4"`
-	Verdict  *nethelpers.NfTablesVerdict `yaml:"verdict,omitempty" protobuf:"2"`
+	ClampMSS    *NfTablesClampMSS           `yaml:"clampMSS,omitempty" protobuf:"9"`
+	SetMark     *NfTablesMark               `yaml:"setMark,omitempty" protobuf:"4"`
+	AnonCounter bool                        `yaml:"anonymousCounter,omitempty" protobuf:"12"`
+	Verdict     *nethelpers.NfTablesVerdict `yaml:"verdict,omitempty" protobuf:"2"`
 }
 
 // NfTablesIfNameMatch describes the match on the interface name.
 //
 //gotagsrewrite:gen
 type NfTablesIfNameMatch struct {
-	InterfaceName string                   `yaml:"interfaceName" protobuf:"1"`
-	Operator      nethelpers.MatchOperator `yaml:"operator" protobuf:"2"`
+	InterfaceNames []string                 `yaml:"interfaceName" protobuf:"3"`
+	Operator       nethelpers.MatchOperator `yaml:"operator" protobuf:"2"`
 }
 
 // NfTablesMark encodes packet mark match/update operation.
@@ -118,6 +122,21 @@ type NfTablesClampMSS struct {
 	MTU uint16 `yaml:"mtu" protobuf:"1"`
 }
 
+// NfTablesLimitMatch describes the match on the packet rate.
+//
+//gotagsrewrite:gen
+type NfTablesLimitMatch struct {
+	PacketRatePerSecond uint64 `yaml:"packetRatePerSecond" protobuf:"1"`
+}
+
+// NfTablesConntrackStateMatch describes the match on the connection tracking state.
+//
+//gotagsrewrite:gen
+type NfTablesConntrackStateMatch struct {
+	// TODO: should be []nethelpers.ConntrackState, but structprotogen needs to be fixed to support it.
+	States []uint32 `yaml:"states" protobuf:"1"`
+}
+
 // NewNfTablesChain initializes a NfTablesChain resource.
 func NewNfTablesChain(namespace resource.Namespace, id resource.ID) *NfTablesChain {
 	return typed.NewResource[NfTablesChainSpec, NfTablesChainExtension](
@@ -135,8 +154,25 @@ func (NfTablesChainExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             NfTablesChainType,
 		Aliases:          []resource.Type{"chain", "chains"},
 		DefaultNamespace: NamespaceName,
-		PrintColumns:     []meta.PrintColumn{},
-		Sensitivity:      meta.NonSensitive,
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Type",
+				JSONPath: `{.type}`,
+			},
+			{
+				Name:     "Hook",
+				JSONPath: `{.hook}`,
+			},
+			{
+				Name:     "Priority",
+				JSONPath: `{.priority}`,
+			},
+			{
+				Name:     "Policy",
+				JSONPath: `{.policy}`,
+			},
+		},
+		Sensitivity: meta.NonSensitive,
 	}
 }
 

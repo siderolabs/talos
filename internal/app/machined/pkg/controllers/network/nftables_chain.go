@@ -115,6 +115,7 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 				Hooknum:  pointer.To(nftables.ChainHook(chain.TypedSpec().Hook)),
 				Priority: pointer.To(nftables.ChainPriority(chain.TypedSpec().Priority)),
 				Type:     nftables.ChainType(chain.TypedSpec().Type),
+				Policy:   pointer.To(nftables.ChainPolicy(chain.TypedSpec().Policy)),
 			})
 
 			for _, rule := range chain.TypedSpec().Rules {
@@ -127,14 +128,12 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 					// check for lookup rules and add/fix up the set ID if needed
 					for i := range compiledRule {
 						if lookup, ok := compiledRule[i].(*expr.Lookup); ok {
-							setID++
-
 							if lookup.SetID >= uint32(len(compiled.Sets)) {
 								return fmt.Errorf("invalid set ID %d in lookup", lookup.SetID)
 							}
 
 							set := compiled.Sets[lookup.SetID]
-							setName := "_set" + strconv.Itoa(int(setID))
+							setName := "__set" + strconv.Itoa(int(setID))
 
 							if err = conn.AddSet(&nftables.Set{
 								Table:     talosTable,
@@ -142,14 +141,19 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 								Name:      setName,
 								Anonymous: true,
 								Constant:  true,
-								Interval:  true,
+								Interval:  set.IsInterval(),
 								KeyType:   set.KeyType(),
 							}, set.SetElements()); err != nil {
 								return fmt.Errorf("error adding nftables set for chain %s: %w", nfChain.Name, err)
 							}
 
-							lookup.SetID = setID
-							lookup.SetName = setName
+							lookupOp := *lookup
+							lookupOp.SetID = setID
+							lookupOp.SetName = setName
+
+							compiledRule[i] = &lookupOp
+
+							setID++
 						}
 					}
 

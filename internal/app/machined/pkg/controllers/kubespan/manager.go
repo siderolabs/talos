@@ -476,6 +476,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec.Type = nethelpers.ChainTypeFilter
 				spec.Hook = nethelpers.ChainHookPrerouting
 				spec.Priority = nethelpers.ChainPriorityFilter
+				spec.Policy = nethelpers.VerdictAccept
 
 				spec.Rules = []network.NfTablesRule{
 					{
@@ -514,6 +515,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec.Type = nethelpers.ChainTypeRoute
 				spec.Hook = nethelpers.ChainHookOutput
 				spec.Priority = nethelpers.ChainPriorityFilter
+				spec.Policy = nethelpers.VerdictAccept
 
 				spec.Rules = []network.NfTablesRule{
 					{
@@ -525,7 +527,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 					},
 					{
 						MatchOIfName: &network.NfTablesIfNameMatch{
-							InterfaceName: "lo",
+							InterfaceNames: []string{"lo"},
 						},
 						Verdict: pointer.To(nethelpers.VerdictAccept),
 					},

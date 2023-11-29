@@ -77,6 +77,15 @@ enum NethelpersBondXmitHashPolicy {
   BOND_XMIT_POLICY_ENCAP34 = 4;
 }
 
+// NethelpersConntrackState is a conntrack state.
+enum NethelpersConntrackState {
+  NETHELPERS_CONNTRACKSTATE_UNSPECIFIED = 0;
+  CONNTRACK_STATE_NEW = 8;
+  CONNTRACK_STATE_RELATED = 4;
+  CONNTRACK_STATE_ESTABLISHED = 2;
+  CONNTRACK_STATE_INVALID = 1;
+}
+
 // NethelpersDuplex wraps ethtool.Duplex for YAML marshaling.
 enum NethelpersDuplex {
   HALF = 0;
@@ -259,8 +268,10 @@ enum NethelpersPrimaryReselect {
 // NethelpersProtocol is a inet protocol.
 enum NethelpersProtocol {
   NETHELPERS_PROTOCOL_UNSPECIFIED = 0;
+  PROTOCOL_ICMP = 1;
   PROTOCOL_TCP = 6;
   PROTOCOL_UDP = 17;
+  PROTOCOL_ICM_PV6 = 58;
 }
 
 // NethelpersRouteFlag wraps RTM_F_* constants.

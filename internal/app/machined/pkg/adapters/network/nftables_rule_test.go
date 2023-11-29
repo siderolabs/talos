@@ -38,8 +38,8 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 			name: "match oifname",
 			spec: networkres.NfTablesRule{
 				MatchOIfName: &networkres.NfTablesIfNameMatch{
-					InterfaceName: "eth0",
-					Operator:      nethelpers.OperatorEqual,
+					InterfaceNames: []string{"eth0"},
+					Operator:       nethelpers.OperatorEqual,
 				},
 			},
 			expectedRules: [][]expr.Any{
@@ -57,8 +57,8 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 			name: "match iifname",
 			spec: networkres.NfTablesRule{
 				MatchIIfName: &networkres.NfTablesIfNameMatch{
-					InterfaceName: "lo",
-					Operator:      nethelpers.OperatorNotEqual,
+					InterfaceNames: []string{"lo"},
+					Operator:       nethelpers.OperatorNotEqual,
 				},
 			},
 			expectedRules: [][]expr.Any{
@@ -73,11 +73,38 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 			},
 		},
 		{
+			name: "match multiple iifname",
+			spec: networkres.NfTablesRule{
+				MatchIIfName: &networkres.NfTablesIfNameMatch{
+					InterfaceNames: []string{"siderolink", "kubespan"},
+					Operator:       nethelpers.OperatorEqual,
+				},
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Meta{Key: expr.MetaKeyIIFNAME, Register: 1},
+					&expr.Lookup{
+						SourceRegister: 1,
+						SetID:          0,
+					},
+				},
+			},
+			expectedSets: []network.NfTablesSet{
+				{
+					Kind: network.SetKindIfName,
+					Strings: [][]byte{
+						[]byte("siderolink\000\000\000\000\000\000"),
+						[]byte("kubespan\000\000\000\000\000\000\000\000"),
+					},
+				},
+			},
+		},
+		{
 			name: "verdict accept",
 			spec: networkres.NfTablesRule{
 				MatchOIfName: &networkres.NfTablesIfNameMatch{
-					InterfaceName: "eth0",
-					Operator:      nethelpers.OperatorNotEqual,
+					InterfaceNames: []string{"eth0"},
+					Operator:       nethelpers.OperatorNotEqual,
 				},
 				Verdict: pointer.To(nethelpers.VerdictAccept),
 			},
@@ -581,6 +608,97 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 					Kind: network.SetKindPort,
 					Ports: [][2]uint16{
 						{2000, 2000},
+					},
+				},
+			},
+		},
+		{
+			name: "limit",
+			spec: networkres.NfTablesRule{
+				MatchLimit: &networkres.NfTablesLimitMatch{
+					PacketRatePerSecond: 5,
+				},
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Limit{
+						Type:  expr.LimitTypePkts,
+						Rate:  5,
+						Burst: 5,
+						Unit:  expr.LimitTimeSecond,
+					},
+				},
+			},
+		},
+		{
+			name: "counter",
+			spec: networkres.NfTablesRule{
+				AnonCounter: true,
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Counter{},
+				},
+			},
+		},
+		{
+			name: "ct state",
+			spec: networkres.NfTablesRule{
+				MatchConntrackState: &networkres.NfTablesConntrackStateMatch{
+					States: []uint32{
+						uint32(nethelpers.ConntrackStateInvalid),
+					},
+				},
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Ct{
+						Key:      expr.CtKeySTATE,
+						Register: 1,
+					},
+					&expr.Bitwise{
+						DestRegister:   1,
+						SourceRegister: 1,
+						Len:            4,
+						Mask:           []byte{0x01, 0x00, 0x00, 0x00},
+						Xor:            []byte{0x00, 0x00, 0x00, 0x00},
+					},
+					&expr.Cmp{
+						Op:       expr.CmpOpNeq,
+						Register: 1,
+						Data:     []byte{0x00, 0x00, 0x00, 0x00},
+					},
+				},
+			},
+		},
+		{
+			name: "ct states",
+			spec: networkres.NfTablesRule{
+				MatchConntrackState: &networkres.NfTablesConntrackStateMatch{
+					States: []uint32{
+						uint32(nethelpers.ConntrackStateRelated),
+						uint32(nethelpers.ConntrackStateEstablished),
+					},
+				},
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Ct{
+						Key:      expr.CtKeySTATE,
+						Register: 1,
+					},
+					&expr.Lookup{
+						SourceRegister: 1,
+						SetID:          0,
+					},
+				},
+			},
+			expectedSets: []network.NfTablesSet{
+				{
+					Kind: network.SetKindConntrackState,
+					ConntrackStates: []nethelpers.ConntrackState{
+						nethelpers.ConntrackStateRelated,
+						nethelpers.ConntrackStateEstablished,
 					},
 				},
 			},

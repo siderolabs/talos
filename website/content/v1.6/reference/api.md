@@ -46,6 +46,7 @@ description: Talos gRPC API reference.
     - [NethelpersAddressFlag](#talos.resource.definitions.enums.NethelpersAddressFlag)
     - [NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode)
     - [NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy)
+    - [NethelpersConntrackState](#talos.resource.definitions.enums.NethelpersConntrackState)
     - [NethelpersDuplex](#talos.resource.definitions.enums.NethelpersDuplex)
     - [NethelpersFailOverMAC](#talos.resource.definitions.enums.NethelpersFailOverMAC)
     - [NethelpersFamily](#talos.resource.definitions.enums.NethelpersFamily)
@@ -166,8 +167,10 @@ description: Talos gRPC API reference.
     - [NfTablesAddressMatch](#talos.resource.definitions.network.NfTablesAddressMatch)
     - [NfTablesChainSpec](#talos.resource.definitions.network.NfTablesChainSpec)
     - [NfTablesClampMSS](#talos.resource.definitions.network.NfTablesClampMSS)
+    - [NfTablesConntrackStateMatch](#talos.resource.definitions.network.NfTablesConntrackStateMatch)
     - [NfTablesIfNameMatch](#talos.resource.definitions.network.NfTablesIfNameMatch)
     - [NfTablesLayer4Match](#talos.resource.definitions.network.NfTablesLayer4Match)
+    - [NfTablesLimitMatch](#talos.resource.definitions.network.NfTablesLimitMatch)
     - [NfTablesMark](#talos.resource.definitions.network.NfTablesMark)
     - [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch)
     - [NfTablesRule](#talos.resource.definitions.network.NfTablesRule)
@@ -1028,6 +1031,21 @@ NethelpersBondXmitHashPolicy is a bond hash policy.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersConntrackState"></a>
+
+### NethelpersConntrackState
+NethelpersConntrackState is a conntrack state.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_CONNTRACKSTATE_UNSPECIFIED | 0 |  |
+| CONNTRACK_STATE_NEW | 8 |  |
+| CONNTRACK_STATE_RELATED | 4 |  |
+| CONNTRACK_STATE_ESTABLISHED | 2 |  |
+| CONNTRACK_STATE_INVALID | 1 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersDuplex"></a>
 
 ### NethelpersDuplex
@@ -1285,8 +1303,10 @@ NethelpersProtocol is a inet protocol.
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | NETHELPERS_PROTOCOL_UNSPECIFIED | 0 |  |
+| PROTOCOL_ICMP | 1 |  |
 | PROTOCOL_TCP | 6 |  |
 | PROTOCOL_UDP | 17 |  |
+| PROTOCOL_ICM_PV6 | 58 |  |
 
 
 
@@ -3041,6 +3061,7 @@ NfTablesChainSpec describes status of rendered secrets.
 | hook | [talos.resource.definitions.enums.NethelpersNfTablesChainHook](#talos.resource.definitions.enums.NethelpersNfTablesChainHook) |  |  |
 | priority | [talos.resource.definitions.enums.NethelpersNfTablesChainPriority](#talos.resource.definitions.enums.NethelpersNfTablesChainPriority) |  |  |
 | rules | [NfTablesRule](#talos.resource.definitions.network.NfTablesRule) | repeated |  |
+| policy | [talos.resource.definitions.enums.NethelpersNfTablesVerdict](#talos.resource.definitions.enums.NethelpersNfTablesVerdict) |  |  |
 
 
 
@@ -3066,6 +3087,21 @@ MSS is limited by the `MaxMTU` so that:
 
 
 
+<a name="talos.resource.definitions.network.NfTablesConntrackStateMatch"></a>
+
+### NfTablesConntrackStateMatch
+NfTablesConntrackStateMatch describes the match on the connection tracking state.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| states | [uint32](#uint32) | repeated |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.NfTablesIfNameMatch"></a>
 
 ### NfTablesIfNameMatch
@@ -3074,8 +3110,8 @@ NfTablesIfNameMatch describes the match on the interface name.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| interface_name | [string](#string) |  |  |
 | operator | [talos.resource.definitions.enums.NethelpersMatchOperator](#talos.resource.definitions.enums.NethelpersMatchOperator) |  |  |
+| interface_names | [string](#string) | repeated |  |
 
 
 
@@ -3093,6 +3129,21 @@ NfTablesLayer4Match describes the match on the transport layer protocol.
 | protocol | [talos.resource.definitions.enums.NethelpersProtocol](#talos.resource.definitions.enums.NethelpersProtocol) |  |  |
 | match_source_port | [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch) |  |  |
 | match_destination_port | [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesLimitMatch"></a>
+
+### NfTablesLimitMatch
+NfTablesLimitMatch describes the match on the packet rate.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| packet_rate_per_second | [uint64](#uint64) |  |  |
 
 
 
@@ -3154,6 +3205,9 @@ NfTablesRule describes a single rule in the nftables chain.
 | match_layer4 | [NfTablesLayer4Match](#talos.resource.definitions.network.NfTablesLayer4Match) |  |  |
 | match_i_if_name | [NfTablesIfNameMatch](#talos.resource.definitions.network.NfTablesIfNameMatch) |  |  |
 | clamp_mss | [NfTablesClampMSS](#talos.resource.definitions.network.NfTablesClampMSS) |  |  |
+| match_limit | [NfTablesLimitMatch](#talos.resource.definitions.network.NfTablesLimitMatch) |  |  |
+| match_conntrack_state | [NfTablesConntrackStateMatch](#talos.resource.definitions.network.NfTablesConntrackStateMatch) |  |  |
+| anon_counter | [bool](#bool) |  |  |
 
 
 

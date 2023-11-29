@@ -6,6 +6,7 @@ package network
 
 import (
 	"fmt"
+	"net/netip"
 	"os"
 	"slices"
 
@@ -16,6 +17,7 @@ import (
 	"go4.org/netipx"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -40,13 +42,29 @@ const (
 	SetKindIPv4 SetKind = iota
 	SetKindIPv6
 	SetKindPort
+	SetKindIfName
+	SetKindConntrackState
 )
 
 // NfTablesSet is a compiled representation of the set.
 type NfTablesSet struct {
-	Kind      SetKind
-	Addresses []netipx.IPRange
-	Ports     [][2]uint16
+	Kind            SetKind
+	Addresses       []netipx.IPRange
+	Ports           [][2]uint16
+	Strings         [][]byte
+	ConntrackStates []nethelpers.ConntrackState
+}
+
+// IsInterval returns true if the set is an interval set.
+func (set NfTablesSet) IsInterval() bool {
+	switch set.Kind {
+	case SetKindIPv4, SetKindIPv6, SetKindPort:
+		return true
+	case SetKindIfName, SetKindConntrackState:
+		return false
+	default:
+		panic(fmt.Sprintf("unknown set kind: %d", set.Kind))
+	}
 }
 
 // KeyType returns the type of the set.
@@ -58,6 +76,10 @@ func (set NfTablesSet) KeyType() nftables.SetDatatype {
 		return nftables.TypeIP6Addr
 	case SetKindPort:
 		return nftables.TypeInetService
+	case SetKindIfName:
+		return nftables.TypeIFName
+	case SetKindConntrackState:
+		return nftables.TypeCTState
 	default:
 		panic(fmt.Sprintf("unknown set kind: %d", set.Kind))
 	}
@@ -91,7 +113,7 @@ func (set NfTablesSet) SetElements() []nftables.SetElement {
 
 		for _, p := range set.Ports {
 			from := binaryutil.BigEndian.PutUint16(p[0])
-			to := binaryutil.BigEndian.PutUint16(p[1])
+			to := binaryutil.BigEndian.PutUint16(p[1] + 1)
 
 			elements = append(elements,
 				nftables.SetElement{
@@ -101,6 +123,30 @@ func (set NfTablesSet) SetElements() []nftables.SetElement {
 				nftables.SetElement{
 					Key:         to,
 					IntervalEnd: true,
+				},
+			)
+		}
+
+		return elements
+	case SetKindIfName:
+		elements := make([]nftables.SetElement, 0, len(set.Strings))
+
+		for _, s := range set.Strings {
+			elements = append(elements,
+				nftables.SetElement{
+					Key: s,
+				},
+			)
+		}
+
+		return elements
+	case SetKindConntrackState:
+		elements := make([]nftables.SetElement, 0, len(set.ConntrackStates))
+
+		for _, s := range set.ConntrackStates {
+			elements = append(elements,
+				nftables.SetElement{
+					Key: binaryutil.NativeEndian.PutUint32(uint32(s)),
 				},
 			)
 		}
@@ -145,6 +191,12 @@ var (
 			Data:     []byte{byte(nftables.TableFamilyIPv6)},
 		},
 	}
+
+	firstIPv4 = netip.MustParseAddr("0.0.0.0")
+	lastIPv4  = netip.MustParseAddr("255.255.255.255")
+
+	firstIPv6 = netip.MustParseAddr("::")
+	lastIPv6  = netip.MustParseAddr("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
 )
 
 // Compile translates the rule into the set of nftables instructions.
@@ -161,6 +213,34 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		result NfTablesCompiled
 	)
 
+	matchIfNames := func(operator nethelpers.MatchOperator, ifnames []string) {
+		if len(ifnames) == 1 {
+			rulePre = append(rulePre,
+				// [ cmp eq/neq reg 1 <ifname> ]
+				&expr.Cmp{
+					Op:       expr.CmpOp(operator),
+					Register: 1,
+					Data:     ifname(ifnames[0]),
+				},
+			)
+		} else {
+			result.Sets = append(result.Sets,
+				NfTablesSet{
+					Kind:    SetKindIfName,
+					Strings: xslices.Map(ifnames, ifname),
+				})
+
+			rulePre = append(rulePre,
+				// Match from target set
+				&expr.Lookup{
+					SourceRegister: 1,
+					SetID:          uint32(len(result.Sets) - 1), // reference will be fixed up by the controller
+					Invert:         operator == nethelpers.OperatorNotEqual,
+				},
+			)
+		}
+	}
+
 	if a.NfTablesRule.MatchIIfName != nil {
 		match := a.NfTablesRule.MatchIIfName
 
@@ -170,13 +250,9 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 				Key:      expr.MetaKeyIIFNAME,
 				Register: 1,
 			},
-			// [ cmp eq/neq reg 1 <ifname> ]
-			&expr.Cmp{
-				Op:       expr.CmpOp(match.Operator),
-				Register: 1,
-				Data:     ifname(match.InterfaceName),
-			},
 		)
+
+		matchIfNames(match.Operator, match.InterfaceNames)
 	}
 
 	if a.NfTablesRule.MatchOIfName != nil {
@@ -188,13 +264,9 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 				Key:      expr.MetaKeyOIFNAME,
 				Register: 1,
 			},
-			// [ cmp eq/neq reg 1 <ifname> ]
-			&expr.Cmp{
-				Op:       expr.CmpOp(match.Operator),
-				Register: 1,
-				Data:     ifname(match.InterfaceName),
-			},
 		)
+
+		matchIfNames(match.Operator, match.InterfaceNames)
 	}
 
 	if a.NfTablesRule.MatchMark != nil {
@@ -224,6 +296,53 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		)
 	}
 
+	if a.NfTablesRule.MatchConntrackState != nil {
+		match := a.NfTablesRule.MatchConntrackState
+
+		if len(match.States) == 1 {
+			rulePre = append(rulePre,
+				// [ ct load state => reg 1 ]
+				&expr.Ct{
+					Key:      expr.CtKeySTATE,
+					Register: 1,
+				},
+				// [ bitwise reg 1 = ( reg 1 & state ) ^ 0x00000000 ]
+				&expr.Bitwise{
+					SourceRegister: 1,
+					DestRegister:   1,
+					Len:            4,
+					Mask:           binaryutil.NativeEndian.PutUint32(match.States[0]),
+					Xor:            []byte{0x0, 0x0, 0x0, 0x0},
+				},
+				// [ cmp neq reg 1 0x00000000 ]
+				&expr.Cmp{
+					Op:       expr.CmpOpNeq,
+					Register: 1,
+					Data:     []byte{0x0, 0x0, 0x0, 0x0},
+				},
+			)
+		} else {
+			result.Sets = append(result.Sets,
+				NfTablesSet{
+					Kind:            SetKindConntrackState,
+					ConntrackStates: xslices.Map(match.States, func(s uint32) nethelpers.ConntrackState { return nethelpers.ConntrackState(s) }),
+				})
+
+			rulePre = append(rulePre,
+				// [ ct load state => reg 1 ]
+				&expr.Ct{
+					Key:      expr.CtKeySTATE,
+					Register: 1,
+				},
+				// [ lookup reg 1 set <set> ]
+				&expr.Lookup{
+					SourceRegister: 1,
+					SetID:          uint32(len(result.Sets) - 1), // reference will be fixed up by the controller
+				},
+			)
+		}
+	}
+
 	addressMatchExpression := func(match *network.NfTablesAddressMatch, label string, offV4, offV6 uint32) error {
 		ipSet, err := BuildIPSet(match.IncludeSubnets, match.ExcludeSubnets)
 		if err != nil {
@@ -237,71 +356,77 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 			return os.ErrNotExist
 		}
 
-		// skip v4 rule if there are not IPs to match for and not inverted
-		if v4Set != nil || match.Invert {
-			if v4Set == nil && match.Invert {
-				// match any v4 IP
-				if rule4 == nil {
-					rule4 = []expr.Any{}
-				}
-			} else {
-				// match specific v4 IPs
-				result.Sets = append(result.Sets,
-					NfTablesSet{
-						Kind:      SetKindIPv4,
-						Addresses: v4Set,
-					},
-				)
+		v4SetCoversAll := len(v4Set) == 1 && v4Set[0].From() == firstIPv4 && v4Set[0].To() == lastIPv4
+		v6SetCoversAll := len(v6Set) == 1 && v6Set[0].From() == firstIPv6 && v6Set[0].To() == lastIPv6
 
-				rule4 = append(rule4,
-					// Store the destination IP address to register 1
-					&expr.Payload{
-						DestRegister: 1,
-						Base:         expr.PayloadBaseNetworkHeader,
-						Offset:       offV4,
-						Len:          4,
-					},
-					// Match from target set
-					&expr.Lookup{
-						SourceRegister: 1,
-						SetID:          uint32(len(result.Sets) - 1), // reference will be fixed up by the controller
-						Invert:         match.Invert,
-					},
-				)
-			}
+		if v4SetCoversAll && v6SetCoversAll && match.Invert {
+			// this rule doesn't match anything
+			return os.ErrNotExist
 		}
 
-		// skip v6 rule if there are not IPs to match for and not inverted
-		if v6Set != nil || match.Invert {
-			if v6Set == nil && match.Invert {
-				// match any v6 IP
-				if rule6 == nil {
-					rule6 = []expr.Any{}
-				}
-			} else {
-				// match specific v6 IPs
-				result.Sets = append(result.Sets,
-					NfTablesSet{
-						Kind:      SetKindIPv6,
-						Addresses: v6Set,
-					})
-
-				rule6 = append(rule6,
-					// Store the destination IP address to register 1
-					&expr.Payload{
-						DestRegister: 1,
-						Base:         expr.PayloadBaseNetworkHeader,
-						Offset:       offV6,
-						Len:          16,
-					},
-					// Match from target set
-					&expr.Lookup{
-						SourceRegister: 1,
-						SetID:          uint32(len(result.Sets) - 1), // reference will be fixed up by the controller
-						Invert:         match.Invert,
-					},
-				)
+		switch { //nolint:dupl
+		case v4SetCoversAll && !match.Invert, match.Invert && v4Set == nil:
+			// match any v4 IP
+			if rule4 == nil {
+				rule4 = []expr.Any{}
 			}
+		case !v4SetCoversAll && match.Invert, !match.Invert && v4Set != nil:
+			// match specific v4 IPs
+			result.Sets = append(result.Sets,
+				NfTablesSet{
+					Kind:      SetKindIPv4,
+					Addresses: v4Set,
+				},
+			)
+
+			rule4 = append(rule4,
+				// Store the destination IP address to register 1
+				&expr.Payload{
+					DestRegister: 1,
+					Base:         expr.PayloadBaseNetworkHeader,
+					Offset:       offV4,
+					Len:          4,
+				},
+				// Match from target set
+				&expr.Lookup{
+					SourceRegister: 1,
+					SetID:          uint32(len(result.Sets) - 1), // reference will be fixed up by the controller
+					Invert:         match.Invert,
+				},
+			)
+		default: // otherwise skip generating v4 rule, as it doesn't match anything
+		}
+
+		switch { //nolint:dupl
+		case v6SetCoversAll && !match.Invert, match.Invert && v6Set == nil:
+			// match any v6 IP
+			if rule6 == nil {
+				rule6 = []expr.Any{}
+			}
+		case !v6SetCoversAll && match.Invert, !match.Invert && v6Set != nil:
+			// match specific v6 IPs
+			result.Sets = append(result.Sets,
+				NfTablesSet{
+					Kind:      SetKindIPv6,
+					Addresses: v6Set,
+				})
+
+			rule6 = append(rule6,
+				// Store the destination IP address to register 1
+				&expr.Payload{
+					DestRegister: 1,
+					Base:         expr.PayloadBaseNetworkHeader,
+					Offset:       offV6,
+					Len:          16,
+				},
+				// Match from target set
+				&expr.Lookup{
+					SourceRegister: 1,
+					SetID:          uint32(len(result.Sets) - 1), // reference will be fixed up by the controller
+					Invert:         match.Invert,
+				},
+			)
+		default: // otherwise skip generating v6 rule, as it doesn't match anything
 		}
 
 		return nil
@@ -379,6 +504,20 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		if match.MatchDestinationPort != nil {
 			portMatch(2, match.MatchDestinationPort.Ranges)
 		}
+	}
+
+	if a.NfTablesRule.MatchLimit != nil {
+		match := a.NfTablesRule.MatchLimit
+
+		rulePost = append(rulePost,
+			// [ limit rate <rate> ]
+			&expr.Limit{
+				Type:  expr.LimitTypePkts,
+				Rate:  match.PacketRatePerSecond,
+				Burst: uint32(match.PacketRatePerSecond),
+				Unit:  expr.LimitTimeSecond,
+			},
+		)
 	}
 
 	clampMSS := func(family nftables.TableFamily, mtu uint16) []expr.Any {
@@ -484,6 +623,13 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 				SourceRegister: true,
 				Register:       1,
 			},
+		)
+	}
+
+	if a.NfTablesRule.AnonCounter {
+		rulePost = append(rulePost,
+			// [ counter ]
+			&expr.Counter{},
 		)
 	}
 

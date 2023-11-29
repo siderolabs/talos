@@ -179,6 +179,7 @@ message NfTablesChainSpec {
   talos.resource.definitions.enums.NethelpersNfTablesChainHook hook = 2;
   talos.resource.definitions.enums.NethelpersNfTablesChainPriority priority = 3;
   repeated NfTablesRule rules = 4;
+  talos.resource.definitions.enums.NethelpersNfTablesVerdict policy = 5;
 }
 
 // NfTablesClampMSS describes the TCP MSS clamping operation.
@@ -190,10 +191,15 @@ message NfTablesClampMSS {
   fixed32 mtu = 1;
 }
 
+// NfTablesConntrackStateMatch describes the match on the connection tracking state.
+message NfTablesConntrackStateMatch {
+  repeated uint32 states = 1;
+}
+
 // NfTablesIfNameMatch describes the match on the interface name.
 message NfTablesIfNameMatch {
-  string interface_name = 1;
   talos.resource.definitions.enums.NethelpersMatchOperator operator = 2;
+  repeated string interface_names = 3;
 }
 
 // NfTablesLayer4Match describes the match on the transport layer protocol.
@@ -201,6 +207,11 @@ message NfTablesLayer4Match {
   talos.resource.definitions.enums.NethelpersProtocol protocol = 1;
   NfTablesPortMatch match_source_port = 2;
   NfTablesPortMatch match_destination_port = 3;
+}
+
+// NfTablesLimitMatch describes the match on the packet rate.
+message NfTablesLimitMatch {
+  uint64 packet_rate_per_second = 1;
 }
 
 // NfTablesMark encodes packet mark match/update operation.
@@ -232,6 +243,9 @@ message NfTablesRule {
   NfTablesLayer4Match match_layer4 = 7;
   NfTablesIfNameMatch match_i_if_name = 8;
   NfTablesClampMSS clamp_mss = 9;
+  NfTablesLimitMatch match_limit = 10;
+  NfTablesConntrackStateMatch match_conntrack_state = 11;
+  bool anon_counter = 12;
 }
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.

@@ -241,6 +241,7 @@ func (suite *ManagerSuite) TestReconcile() {
 			asrt.Equal(nethelpers.ChainTypeFilter, spec.Type)
 			asrt.Equal(nethelpers.ChainHookPrerouting, spec.Hook)
 			asrt.Equal(nethelpers.ChainPriorityFilter, spec.Priority)
+			asrt.Equal(nethelpers.VerdictAccept, spec.Policy)
 
 			asrt.Len(spec.Rules, 2)
 			if len(spec.Rules) != 2 {

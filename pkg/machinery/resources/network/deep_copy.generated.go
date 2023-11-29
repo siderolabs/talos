@@ -106,14 +106,30 @@ func (o NfTablesChainSpec) DeepCopy() NfTablesChainSpec {
 			if o.Rules[i2].MatchIIfName != nil {
 				cp.Rules[i2].MatchIIfName = new(NfTablesIfNameMatch)
 				*cp.Rules[i2].MatchIIfName = *o.Rules[i2].MatchIIfName
+				if o.Rules[i2].MatchIIfName.InterfaceNames != nil {
+					cp.Rules[i2].MatchIIfName.InterfaceNames = make([]string, len(o.Rules[i2].MatchIIfName.InterfaceNames))
+					copy(cp.Rules[i2].MatchIIfName.InterfaceNames, o.Rules[i2].MatchIIfName.InterfaceNames)
+				}
 			}
 			if o.Rules[i2].MatchOIfName != nil {
 				cp.Rules[i2].MatchOIfName = new(NfTablesIfNameMatch)
 				*cp.Rules[i2].MatchOIfName = *o.Rules[i2].MatchOIfName
+				if o.Rules[i2].MatchOIfName.InterfaceNames != nil {
+					cp.Rules[i2].MatchOIfName.InterfaceNames = make([]string, len(o.Rules[i2].MatchOIfName.InterfaceNames))
+					copy(cp.Rules[i2].MatchOIfName.InterfaceNames, o.Rules[i2].MatchOIfName.InterfaceNames)
+				}
 			}
 			if o.Rules[i2].MatchMark != nil {
 				cp.Rules[i2].MatchMark = new(NfTablesMark)
 				*cp.Rules[i2].MatchMark = *o.Rules[i2].MatchMark
+			}
+			if o.Rules[i2].MatchConntrackState != nil {
+				cp.Rules[i2].MatchConntrackState = new(NfTablesConntrackStateMatch)
+				*cp.Rules[i2].MatchConntrackState = *o.Rules[i2].MatchConntrackState
+				if o.Rules[i2].MatchConntrackState.States != nil {
+					cp.Rules[i2].MatchConntrackState.States = make([]uint32, len(o.Rules[i2].MatchConntrackState.States))
+					copy(cp.Rules[i2].MatchConntrackState.States, o.Rules[i2].MatchConntrackState.States)
+				}
 			}
 			if o.Rules[i2].MatchSourceAddress != nil {
 				cp.Rules[i2].MatchSourceAddress = new(NfTablesAddressMatch)
@@ -158,6 +174,10 @@ func (o NfTablesChainSpec) DeepCopy() NfTablesChainSpec {
 						copy(cp.Rules[i2].MatchLayer4.MatchDestinationPort.Ranges, o.Rules[i2].MatchLayer4.MatchDestinationPort.Ranges)
 					}
 				}
+			}
+			if o.Rules[i2].MatchLimit != nil {
+				cp.Rules[i2].MatchLimit = new(NfTablesLimitMatch)
+				*cp.Rules[i2].MatchLimit = *o.Rules[i2].MatchLimit
 			}
 			if o.Rules[i2].ClampMSS != nil {
 				cp.Rules[i2].ClampMSS = new(NfTablesClampMSS)

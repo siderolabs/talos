@@ -13,6 +13,8 @@ type Protocol uint8
 //
 //structprotogen:gen_enum
 const (
-	ProtocolTCP Protocol = 0x6  // tcp
-	ProtocolUDP Protocol = 0x11 // udp
+	ProtocolICMP   Protocol = 0x1  // icmp
+	ProtocolTCP    Protocol = 0x6  // tcp
+	ProtocolUDP    Protocol = 0x11 // udp
+	ProtocolICMPv6 Protocol = 0x3a // icmpv6
 )
