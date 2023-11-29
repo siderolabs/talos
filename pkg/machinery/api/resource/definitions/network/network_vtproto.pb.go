@@ -1534,7 +1534,8 @@ func (m *NfTablesConntrackStateMatch) MarshalToSizedBufferVT(dAtA []byte) (int, 
 		}
 		i -= pksize2
 		j1 := i
-		for _, num := range m.States {
+		for _, num1 := range m.States {
+			num := uint64(num1)
 			for num >= 1<<7 {
 				dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
 				num >>= 7
@@ -8564,7 +8565,7 @@ func (m *NfTablesConntrackStateMatch) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType == 0 {
-				var v uint32
+				var v enums.NethelpersConntrackState
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return ErrIntOverflow
@@ -8574,7 +8575,7 @@ func (m *NfTablesConntrackStateMatch) UnmarshalVT(dAtA []byte) error {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					v |= uint32(b&0x7F) << shift
+					v |= enums.NethelpersConntrackState(b&0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -8607,18 +8608,11 @@ func (m *NfTablesConntrackStateMatch) UnmarshalVT(dAtA []byte) error {
 					return io.ErrUnexpectedEOF
 				}
 				var elementCount int
-				var count int
-				for _, integer := range dAtA[iNdEx:postIndex] {
-					if integer < 128 {
-						count++
-					}
-				}
-				elementCount = count
 				if elementCount != 0 && len(m.States) == 0 {
-					m.States = make([]uint32, 0, elementCount)
+					m.States = make([]enums.NethelpersConntrackState, 0, elementCount)
 				}
 				for iNdEx < postIndex {
-					var v uint32
+					var v enums.NethelpersConntrackState
 					for shift := uint(0); ; shift += 7 {
 						if shift >= 64 {
 							return ErrIntOverflow
@@ -8628,7 +8622,7 @@ func (m *NfTablesConntrackStateMatch) UnmarshalVT(dAtA []byte) error {
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						v |= uint32(b&0x7F) << shift
+						v |= enums.NethelpersConntrackState(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}

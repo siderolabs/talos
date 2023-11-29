@@ -270,7 +270,12 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 			if fieldTyp, ok := types.MatchTypeData[types.Slice](fieldTypeData); ok {
 				var importName, typeName string
 
+				block, isEnum := constants.Get(fieldTyp.Pkg, fieldTyp.Name)
+
 				switch {
+				case isEnum:
+					importName = "resource/definitions/enums/enums.proto"
+					typeName = "repeated talos.resource.definitions.enums." + block.ProtoMessageName()
 				case fieldTyp.Pkg == "" && fieldTyp.Name == "byte" && fieldTyp.Is2DSlice: //nolint:goconst
 					typeName = "repeated bytes"
 				case fieldTyp.Pkg == "" && fieldTyp.Name == "byte":
@@ -345,7 +350,7 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 func mustFormatTypeName(fieldTypePkg string, fieldType string, declPkg string) (string, string) {
 	importPath, name := formatTypeName(fieldTypePkg, fieldType, declPkg)
 	if name == "" {
-		panic(fmt.Errorf("unknown type %s.%s", fieldType, fieldTypePkg))
+		panic(fmt.Errorf("unknown type %s.%s", fieldTypePkg, fieldType))
 	}
 
 	return importPath, name

@@ -311,7 +311,7 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 					SourceRegister: 1,
 					DestRegister:   1,
 					Len:            4,
-					Mask:           binaryutil.NativeEndian.PutUint32(match.States[0]),
+					Mask:           binaryutil.NativeEndian.PutUint32(uint32(match.States[0])),
 					Xor:            []byte{0x0, 0x0, 0x0, 0x0},
 				},
 				// [ cmp neq reg 1 0x00000000 ]
@@ -325,7 +325,7 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 			result.Sets = append(result.Sets,
 				NfTablesSet{
 					Kind:            SetKindConntrackState,
-					ConntrackStates: xslices.Map(match.States, func(s uint32) nethelpers.ConntrackState { return nethelpers.ConntrackState(s) }),
+					ConntrackStates: match.States,
 				})
 
 			rulePre = append(rulePre,

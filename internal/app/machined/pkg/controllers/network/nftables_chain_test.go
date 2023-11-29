@@ -169,17 +169,17 @@ func (s *NfTablesChainSuite) TestConntrackCounter() {
 	chain.TypedSpec().Rules = []network.NfTablesRule{
 		{
 			MatchConntrackState: &network.NfTablesConntrackStateMatch{
-				States: []uint32{
-					uint32(nethelpers.ConntrackStateEstablished),
-					uint32(nethelpers.ConntrackStateRelated),
+				States: []nethelpers.ConntrackState{
+					nethelpers.ConntrackStateEstablished,
+					nethelpers.ConntrackStateRelated,
 				},
 			},
 			Verdict: pointer.To(nethelpers.VerdictAccept),
 		},
 		{
 			MatchConntrackState: &network.NfTablesConntrackStateMatch{
-				States: []uint32{
-					uint32(nethelpers.ConntrackStateInvalid),
+				States: []nethelpers.ConntrackState{
+					nethelpers.ConntrackStateInvalid,
 				},
 			},
 			AnonCounter: true,

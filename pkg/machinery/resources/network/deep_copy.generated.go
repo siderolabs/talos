@@ -127,7 +127,7 @@ func (o NfTablesChainSpec) DeepCopy() NfTablesChainSpec {
 				cp.Rules[i2].MatchConntrackState = new(NfTablesConntrackStateMatch)
 				*cp.Rules[i2].MatchConntrackState = *o.Rules[i2].MatchConntrackState
 				if o.Rules[i2].MatchConntrackState.States != nil {
-					cp.Rules[i2].MatchConntrackState.States = make([]uint32, len(o.Rules[i2].MatchConntrackState.States))
+					cp.Rules[i2].MatchConntrackState.States = make([]nethelpers.ConntrackState, len(o.Rules[i2].MatchConntrackState.States))
 					copy(cp.Rules[i2].MatchConntrackState.States, o.Rules[i2].MatchConntrackState.States)
 				}
 			}

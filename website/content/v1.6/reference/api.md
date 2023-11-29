@@ -3095,7 +3095,7 @@ NfTablesConntrackStateMatch describes the match on the connection tracking state
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| states | [uint32](#uint32) | repeated |  |
+| states | [talos.resource.definitions.enums.NethelpersConntrackState](#talos.resource.definitions.enums.NethelpersConntrackState) | repeated |  |
 
 
 

@@ -133,8 +133,7 @@ type NfTablesLimitMatch struct {
 //
 //gotagsrewrite:gen
 type NfTablesConntrackStateMatch struct {
-	// TODO: should be []nethelpers.ConntrackState, but structprotogen needs to be fixed to support it.
-	States []uint32 `yaml:"states" protobuf:"1"`
+	States []nethelpers.ConntrackState `yaml:"states" protobuf:"1"`
 }
 
 // NewNfTablesChain initializes a NfTablesChain resource.

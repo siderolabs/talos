@@ -193,7 +193,7 @@ message NfTablesClampMSS {
 
 // NfTablesConntrackStateMatch describes the match on the connection tracking state.
 message NfTablesConntrackStateMatch {
-  repeated uint32 states = 1;
+  repeated talos.resource.definitions.enums.NethelpersConntrackState states = 1;
 }
 
 // NfTablesIfNameMatch describes the match on the interface name.

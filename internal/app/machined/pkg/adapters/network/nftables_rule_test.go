@@ -645,8 +645,8 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 			name: "ct state",
 			spec: networkres.NfTablesRule{
 				MatchConntrackState: &networkres.NfTablesConntrackStateMatch{
-					States: []uint32{
-						uint32(nethelpers.ConntrackStateInvalid),
+					States: []nethelpers.ConntrackState{
+						nethelpers.ConntrackStateInvalid,
 					},
 				},
 			},
@@ -675,9 +675,9 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 			name: "ct states",
 			spec: networkres.NfTablesRule{
 				MatchConntrackState: &networkres.NfTablesConntrackStateMatch{
-					States: []uint32{
-						uint32(nethelpers.ConntrackStateRelated),
-						uint32(nethelpers.ConntrackStateEstablished),
+					States: []nethelpers.ConntrackState{
+						nethelpers.ConntrackStateRelated,
+						nethelpers.ConntrackStateEstablished,
 					},
 				},
 			},
