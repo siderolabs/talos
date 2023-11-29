@@ -15,20 +15,20 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0-alpha.0-12-gff7fe96
-PKGS ?= v1.6.0-alpha.0-31-g3aea711
+TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0
+PKGS ?= v1.6.0-alpha.0-33-ge61c784
 PKG_KERNEL ?= ghcr.io/siderolabs/kernel:$(PKGS)
 EXTRAS ?= v1.6.0-alpha.0-5-ge8e801b
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.21
 # renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.15.0
+GOIMPORTS_VERSION ?= v0.16.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.5.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
 GOLANGCILINT_VERSION ?= v1.55.2
 # renovate: datasource=go depName=golang.org/x/tools
-STRINGER_VERSION ?= v0.15.0
+STRINGER_VERSION ?= v0.16.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
@@ -57,7 +57,7 @@ INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
 MODULE_SIG_VERIFY_DEFAULT_TARGET := module-sig-verify-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.29.0-alpha.3
+KUBECTL_VERSION ?= v1.29.0-rc.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.41
 # renovate: datasource=github-releases depName=helm/helm
@@ -65,7 +65,7 @@ HELM_VERSION ?= v3.13.2
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.5.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.15.14
+CILIUM_CLI_VERSION ?= v0.15.15
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz

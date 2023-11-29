@@ -10,7 +10,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/pin/tftp"
+	"github.com/pin/tftp/v3"
 )
 
 // NewTFTPTransport returns an http.RoundTripper capable of handling the TFTP

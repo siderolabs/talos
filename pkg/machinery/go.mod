@@ -9,23 +9,23 @@ replace gopkg.in/yaml.v3 => github.com/unix4ever/yaml v0.0.0-20220527175918-f17b
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.9
-	github.com/cosi-project/runtime v0.3.17
+	github.com/cosi-project/runtime v0.3.19
 	github.com/dustin/go-humanize v1.0.1
 	github.com/evanphx/json-patch v5.7.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink v1.3.5
+	github.com/jsimonetti/rtnetlink v1.4.0
 	github.com/mdlayher/ethtool v0.1.0
 	github.com/opencontainers/runtime-spec v1.1.0-rc.1
 	github.com/siderolabs/crypto v0.4.1
 	github.com/siderolabs/gen v0.4.7
 	github.com/siderolabs/go-api-signature v0.3.1
-	github.com/siderolabs/go-blockdevice v0.4.6
+	github.com/siderolabs/go-blockdevice v0.4.7
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/stretchr/testify v1.8.4
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231030173426-d783a09b4405
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231127180814-3a041ad873d4
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -42,7 +42,7 @@ require (
 	github.com/gertd/go-pluralize v0.2.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/mdlayher/genetlink v1.3.2 // indirect
@@ -58,9 +58,9 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231012201019-e917dd12ba7a // indirect
+	golang.org/x/sync v0.5.0 // indirect
+	golang.org/x/sys v0.14.1-0.20231108175955-e4099bfacb8c // indirect
+	golang.org/x/text v0.14.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
