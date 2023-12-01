@@ -151,6 +151,8 @@ func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, mode Mode, opts 
 		}
 	}
 
+	i.options.BootAssets.FillDefaults(opts.Arch)
+
 	bootLoaderPresent := i.bootloader != nil
 	if !bootLoaderPresent {
 		if mode.IsImage() {

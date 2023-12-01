@@ -31,8 +31,6 @@ func (c *Config) Install(options options.InstallOptions) error {
 		return err
 	}
 
-	options.BootAssets.FillDefaults(options.Arch)
-
 	if err := utils.CopyFiles(
 		options.Printf,
 		utils.SourceDestination(
