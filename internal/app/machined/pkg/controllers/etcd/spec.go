@@ -49,7 +49,6 @@ func (ctrl *SpecController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
-			ID:        optional.Some(network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s)),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -94,7 +93,7 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 			return fmt.Errorf("error getting hostname status: %w", err)
 		}
 
-		nodeAddrs, err := safe.ReaderGet[*network.NodeAddress](
+		nodeRoutedAddrs, err := safe.ReaderGet[*network.NodeAddress](
 			ctx,
 			r,
 			resource.NewMetadata(
@@ -112,10 +111,29 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 			return fmt.Errorf("error getting addresses: %w", err)
 		}
 
-		addrs := nodeAddrs.TypedSpec().IPs()
+		nodeCurrentAddrs, err := safe.ReaderGet[*network.NodeAddress](
+			ctx,
+			r,
+			resource.NewMetadata(
+				network.NamespaceName,
+				network.NodeAddressType,
+				network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s),
+				resource.VersionUndefined,
+			),
+		)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting addresses: %w", err)
+		}
+
+		routedAddrs := nodeRoutedAddrs.TypedSpec().IPs()
+		currentAddrs := nodeCurrentAddrs.TypedSpec().IPs()
 
 		// need at least a single address
-		if len(addrs) == 0 {
+		if len(routedAddrs) == 0 {
 			continue
 		}
 
@@ -137,7 +155,7 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 		defaultListenAddress := netip.AddrFrom4([4]byte{0, 0, 0, 0})
 		loopbackAddress := netip.AddrFrom4([4]byte{127, 0, 0, 1})
 
-		for _, ip := range addrs {
+		for _, ip := range routedAddrs {
 			if ip.Is6() {
 				defaultListenAddress = netip.IPv6Unspecified()
 				loopbackAddress = netip.MustParseAddr("::1")
@@ -152,20 +170,25 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, logge
 			listenClientIPs []netip.Addr
 		)
 
-		advertisedIPs, err = net.FilterIPs(addrs, advertisedCIDRs)
-		if err != nil {
-			return fmt.Errorf("error filtering IPs: %w", err)
-		}
-
 		if len(etcdConfig.TypedSpec().AdvertiseValidSubnets) == 0 {
+			advertisedIPs, err = net.FilterIPs(routedAddrs, advertisedCIDRs)
+			if err != nil {
+				return fmt.Errorf("error filtering IPs: %w", err)
+			}
+
 			// if advertise subnet is not set, advertise the first address
 			if len(advertisedIPs) > 0 {
 				advertisedIPs = advertisedIPs[:1]
 			}
+		} else {
+			advertisedIPs, err = net.FilterIPs(currentAddrs, advertisedCIDRs)
+			if err != nil {
+				return fmt.Errorf("error filtering IPs: %w", err)
+			}
 		}
 
 		if len(listenCIDRs) > 0 {
-			listenPeerIPs, err = net.FilterIPs(addrs, listenCIDRs)
+			listenPeerIPs, err = net.FilterIPs(routedAddrs, listenCIDRs)
 			if err != nil {
 				return fmt.Errorf("error filtering IPs: %w", err)
 			}

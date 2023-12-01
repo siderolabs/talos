@@ -9,9 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -26,6 +24,7 @@ func TestSpecSuite(t *testing.T) {
 
 	suite.Run(t, &SpecSuite{
 		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 3 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&etcdctrl.SpecController{}))
 			},
@@ -43,12 +42,12 @@ func (suite *SpecSuite) TestReconcile() {
 	hostnameStatus.TypedSpec().Domainname = "some.domain"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), hostnameStatus))
 
-	addresses := network.NewNodeAddress(
+	routedAddresses := network.NewNodeAddress(
 		network.NamespaceName,
 		network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s),
 	)
 
-	addresses.TypedSpec().Addresses = []netip.Prefix{
+	routedAddresses.TypedSpec().Addresses = []netip.Prefix{
 		netip.MustParsePrefix("10.0.0.5/24"),
 		netip.MustParsePrefix("192.168.1.1/24"),
 		netip.MustParsePrefix("192.168.1.50/32"),
@@ -56,7 +55,19 @@ func (suite *SpecSuite) TestReconcile() {
 		netip.MustParsePrefix("2002:0db8:85a3:0000:0000:8a2e:0370:7335/64"),
 	}
 
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), addresses))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), routedAddresses))
+
+	currentAddrs := network.NewNodeAddress(
+		network.NamespaceName,
+		network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s),
+	)
+
+	currentAddrs.TypedSpec().Addresses = append(
+		[]netip.Prefix{netip.MustParsePrefix("1.3.5.7/32")},
+		routedAddresses.TypedSpec().Addresses...,
+	)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), currentAddrs))
 
 	for _, tt := range []struct {
 		name     string
@@ -116,6 +127,7 @@ func (suite *SpecSuite) TestReconcile() {
 				Image: "foo/bar:v1.0.0",
 				AdvertiseValidSubnets: []string{
 					"192.168.0.0/16",
+					"1.3.5.7/32",
 				},
 			},
 			expected: etcd.SpecSpec{
@@ -124,6 +136,7 @@ func (suite *SpecSuite) TestReconcile() {
 				AdvertisedAddresses: []netip.Addr{
 					netip.MustParseAddr("192.168.1.1"),
 					netip.MustParseAddr("192.168.1.50"),
+					netip.MustParseAddr("1.3.5.7"),
 				},
 				ListenPeerAddresses: []netip.Addr{
 					netip.IPv6Unspecified(),
@@ -197,16 +210,9 @@ func (suite *SpecSuite) TestReconcile() {
 
 			suite.Require().NoError(suite.State().Create(suite.Ctx(), etcdConfig))
 
-			suite.AssertWithin(3*time.Second, 100*time.Millisecond, ctest.WrapRetry(func(assert *assert.Assertions, require *require.Assertions) {
-				etcdSpec, err := safe.StateGet[*etcd.Spec](suite.Ctx(), suite.State(), etcd.NewSpec(etcd.NamespaceName, etcd.SpecID).Metadata())
-				if err != nil {
-					assert.NoError(err)
-
-					return
-				}
-
-				assert.Equal(tt.expected, *etcdSpec.TypedSpec(), "spec %v", *etcdSpec.TypedSpec())
-			}))
+			ctest.AssertResource(suite, etcd.SpecID, func(etcdSpec *etcd.Spec, asrt *assert.Assertions) {
+				asrt.Equal(tt.expected, *etcdSpec.TypedSpec(), "spec %v", *etcdSpec.TypedSpec())
+			})
 
 			suite.Require().NoError(suite.State().Destroy(suite.Ctx(), etcdConfig.Metadata()))
 		})
