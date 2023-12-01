@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Code generated from the manifest https://raw.githubusercontent.com/flannel-io/flannel/v0.22.3/Documentation/kube-flannel.yml DO NOT EDIT
+// Code generated from the manifest https://raw.githubusercontent.com/flannel-io/flannel/v0.23.0/Documentation/kube-flannel.yml DO NOT EDIT
 
 package flannel
 
@@ -147,6 +147,9 @@ spec:
       - args:
         - --ip-masq
         - --kube-subnet-mgr
+        {{- range $arg := .FlannelExtraArgs }}
+        - {{ $arg | json }}
+        {{- end }}
         command:
         - /opt/bin/flanneld
         env:

@@ -374,6 +374,8 @@ func (c *ClusterConfig) Validate() error {
 }
 
 // ValidateCNI validates CNI config.
+//
+//nolint:gocyclo
 func ValidateCNI(cni config.CNI) ([]string, error) {
 	var (
 		warnings []string
@@ -382,10 +384,19 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 
 	switch cni.Name() {
 	case constants.FlannelCNI:
-		fallthrough
+		if len(cni.URLs()) != 0 {
+			err := fmt.Errorf(`"urls" field should be empty for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
 	case constants.NoneCNI:
 		if len(cni.URLs()) != 0 {
 			err := fmt.Errorf(`"urls" field should be empty for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
+		if len(cni.Flannel().ExtraArgs()) != 0 {
+			err := fmt.Errorf(`"flanneldExtraArgs" field should be empty for %q CNI`, cni.Name())
 			result = multierror.Append(result, err)
 		}
 
@@ -393,6 +404,11 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 		if len(cni.URLs()) == 0 {
 			warn := fmt.Sprintf(`"urls" field should not be empty for %q CNI`, cni.Name())
 			warnings = append(warnings, warn)
+		}
+
+		if len(cni.Flannel().ExtraArgs()) != 0 {
+			err := fmt.Errorf(`"flanneldExtraArgs" field should be empty for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
 		}
 
 		for _, u := range cni.URLs() {

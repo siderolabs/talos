@@ -1812,10 +1812,44 @@ func (CNIConfig) Doc() *encoder.Doc {
 				Description: "URLs containing manifests to apply for the CNI.\nShould be present for \"custom\", must be empty for \"flannel\" and \"none\".",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "URLs containing manifests to apply for the CNI." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "flannel",
+				Type:        "FlannelCNIConfig",
+				Note:        "",
+				Description: "description: |\nFlannel configuration options.\n",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.AddExample("", clusterCustomCNIExample())
+
+	return doc
+}
+
+func (FlannelCNIConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "FlannelCNIConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "FlannelCNIConfig represents the Flannel CNI configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "FlannelCNIConfig represents the Flannel CNI configuration options.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CNIConfig",
+				FieldName: "flannel",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "extraArgs",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Extra arguments for 'flanneld'.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments for 'flanneld'." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", []string{"--iface-can-reach=192.168.1.1"})
 
 	return doc
 }
@@ -3955,6 +3989,7 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			EtcdConfig{}.Doc(),
 			ClusterNetworkConfig{}.Doc(),
 			CNIConfig{}.Doc(),
+			FlannelCNIConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),
 			MachineDisk{}.Doc(),

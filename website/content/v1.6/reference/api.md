@@ -1945,6 +1945,7 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | flannel_cni_image | [string](#string) |  |  |
 | pod_security_policy_enabled | [bool](#bool) |  |  |
 | talos_api_service_enabled | [bool](#bool) |  |  |
+| flannel_extra_args | [string](#string) | repeated |  |
 
 
 

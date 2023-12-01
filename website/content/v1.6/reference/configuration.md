@@ -1817,6 +1817,27 @@ urls:
 |-------|------|-------------|----------|
 |`name` |string |Name of CNI to use.  |`flannel`<br />`custom`<br />`none`<br /> |
 |`urls` |[]string |<details><summary>URLs containing manifests to apply for the CNI.</summary>Should be present for "custom", must be empty for "flannel" and "none".</details>  | |
+|`flannel` |<a href="#flannelcniconfig">FlannelCNIConfig</a> |<details><summary>description: |</summary>Flannel configuration options.<br /></details>  | |
+
+
+
+---
+## FlannelCNIConfig
+FlannelCNIConfig represents the Flannel CNI configuration options.
+
+Appears in:
+
+- <code><a href="#cniconfig">CNIConfig</a>.flannel</code>
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`extraArgs` |[]string |Extra arguments for 'flanneld'. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+extraArgs:
+    - --iface-can-reach=192.168.1.1
+{{< /highlight >}}</details> | |
 
 
 

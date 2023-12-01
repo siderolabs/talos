@@ -370,6 +370,17 @@ func (m *BootstrapManifestsConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int,
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.FlannelExtraArgs) > 0 {
+		for iNdEx := len(m.FlannelExtraArgs) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.FlannelExtraArgs[iNdEx])
+			copy(dAtA[i:], m.FlannelExtraArgs[iNdEx])
+			i = encodeVarint(dAtA, i, uint64(len(m.FlannelExtraArgs[iNdEx])))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0x82
+		}
+	}
 	if m.TalosApiServiceEnabled {
 		i--
 		if m.TalosApiServiceEnabled {
@@ -2564,6 +2575,12 @@ func (m *BootstrapManifestsConfigSpec) SizeVT() (n int) {
 	if m.TalosApiServiceEnabled {
 		n += 2
 	}
+	if len(m.FlannelExtraArgs) > 0 {
+		for _, s := range m.FlannelExtraArgs {
+			l = len(s)
+			n += 2 + l + sov(uint64(l))
+		}
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -4664,6 +4681,38 @@ func (m *BootstrapManifestsConfigSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.TalosApiServiceEnabled = bool(v != 0)
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FlannelExtraArgs", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FlannelExtraArgs = append(m.FlannelExtraArgs, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

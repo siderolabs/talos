@@ -381,6 +381,13 @@
           "description": "URLs containing manifests to apply for the CNI.\nShould be present for “custom”, must be empty for “flannel” and “none”.\n",
           "markdownDescription": "URLs containing manifests to apply for the CNI.\nShould be present for \"custom\", must be empty for \"flannel\" and \"none\".",
           "x-intellij-html-description": "\u003cp\u003eURLs containing manifests to apply for the CNI.\nShould be present for \u0026ldquo;custom\u0026rdquo;, must be empty for \u0026ldquo;flannel\u0026rdquo; and \u0026ldquo;none\u0026rdquo;.\u003c/p\u003e\n"
+        },
+        "flannel": {
+          "$ref": "#/$defs/FlannelCNIConfig",
+          "title": "flannel",
+          "description": "description: |\nFlannel configuration options.\n",
+          "markdownDescription": "description: |\nFlannel configuration options.",
+          "x-intellij-html-description": "\u003cp\u003edescription: |\nFlannel configuration options.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1451,6 +1458,22 @@
           "description": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\n",
           "markdownDescription": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
           "x-intellij-html-description": "\u003cp\u003eKubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "FlannelCNIConfig": {
+      "properties": {
+        "extraArgs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "extraArgs",
+          "description": "Extra arguments for ‘flanneld’.\n",
+          "markdownDescription": "Extra arguments for 'flanneld'.",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments for \u0026lsquo;flanneld\u0026rsquo;.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

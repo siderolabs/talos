@@ -95,6 +95,10 @@ func (o BootstrapManifestsConfigSpec) DeepCopy() BootstrapManifestsConfigSpec {
 		cp.ProxyArgs = make([]string, len(o.ProxyArgs))
 		copy(cp.ProxyArgs, o.ProxyArgs)
 	}
+	if o.FlannelExtraArgs != nil {
+		cp.FlannelExtraArgs = make([]string, len(o.FlannelExtraArgs))
+		copy(cp.FlannelExtraArgs, o.FlannelExtraArgs)
+	}
 	return cp
 }
 

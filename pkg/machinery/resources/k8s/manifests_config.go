@@ -42,9 +42,10 @@ type BootstrapManifestsConfigSpec struct {
 	DNSServiceIP   string `yaml:"dnsServiceIP" protobuf:"9"`
 	DNSServiceIPv6 string `yaml:"dnsServiceIPv6" protobuf:"10"`
 
-	FlannelEnabled  bool   `yaml:"flannelEnabled" protobuf:"11"`
-	FlannelImage    string `yaml:"flannelImage" protobuf:"12"`
-	FlannelCNIImage string `yaml:"flannelCNIImage" protobuf:"13"`
+	FlannelEnabled   bool     `yaml:"flannelEnabled" protobuf:"11"`
+	FlannelImage     string   `yaml:"flannelImage" protobuf:"12"`
+	FlannelCNIImage  string   `yaml:"flannelCNIImage" protobuf:"13"`
+	FlannelExtraArgs []string `yaml:"flannelExtraArgs" protobuf:"16"`
 
 	PodSecurityPolicyEnabled bool `yaml:"podSecurityPolicyEnabled" protobuf:"14"`
 

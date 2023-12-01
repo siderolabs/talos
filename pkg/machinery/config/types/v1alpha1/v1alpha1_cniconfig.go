@@ -4,6 +4,8 @@
 
 package v1alpha1
 
+import "github.com/siderolabs/talos/pkg/machinery/config/config"
+
 // Name implements the config.CNI interface.
 func (c *CNIConfig) Name() string {
 	return c.CNIName
@@ -12,4 +14,18 @@ func (c *CNIConfig) Name() string {
 // URLs implements the config.CNI interface.
 func (c *CNIConfig) URLs() []string {
 	return c.CNIUrls
+}
+
+// Flannel implements the config.CNI interface.
+func (c *CNIConfig) Flannel() config.FlannelCNI {
+	return c.CNIFlannel
+}
+
+// ExtraArgs implements the config.FlannelCNI interface.
+func (c *FlannelCNIConfig) ExtraArgs() []string {
+	if c == nil {
+		return nil
+	}
+
+	return c.FlanneldExtraArgs
 }

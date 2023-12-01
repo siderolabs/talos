@@ -264,9 +264,10 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					DNSServiceIP:   dnsServiceIP,
 					DNSServiceIPv6: dnsServiceIPv6,
 
-					FlannelEnabled:  cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
-					FlannelImage:    images.Flannel,
-					FlannelCNIImage: images.FlannelCNI,
+					FlannelEnabled:   cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
+					FlannelImage:     images.Flannel,
+					FlannelCNIImage:  images.FlannelCNI,
+					FlannelExtraArgs: cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
 
 					PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 

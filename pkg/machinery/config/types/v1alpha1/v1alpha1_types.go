@@ -1397,6 +1397,19 @@ type CNIConfig struct {
 	//     URLs containing manifests to apply for the CNI.
 	//     Should be present for "custom", must be empty for "flannel" and "none".
 	CNIUrls []string `yaml:"urls,omitempty"`
+	//   description: |
+	//		Flannel configuration options.
+	CNIFlannel *FlannelCNIConfig `yaml:"flannel,omitempty"`
+}
+
+// FlannelCNIConfig represents the Flannel CNI configuration options.
+type FlannelCNIConfig struct {
+	//   description: |
+	//     Extra arguments for 'flanneld'.
+	//   examples:
+	//     - value: >
+	//         []string{"--iface-can-reach=192.168.1.1"}
+	FlanneldExtraArgs []string `yaml:"extraArgs,omitempty"`
 }
 
 var _ config.ExternalCloudProvider = (*ExternalCloudProviderConfig)(nil)

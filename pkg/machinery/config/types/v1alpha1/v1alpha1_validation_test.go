@@ -1515,6 +1515,15 @@ func TestValidateCNI(t *testing.T) {
 			expectedError: "1 error occurred:\n\t* \"urls\" field should be empty for \"flannel\" CNI\n\n",
 		},
 		{
+			name: "FlannelExtraArgs",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.FlannelCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlanneldExtraArgs: []string{"--foo"},
+				},
+			},
+		},
+		{
 			name: "CustomNoManifests",
 			config: &v1alpha1.CNIConfig{
 				CNIName: constants.CustomCNI,
@@ -1522,6 +1531,19 @@ func TestValidateCNI(t *testing.T) {
 			expectedWarnings: []string{
 				"\"urls\" field should not be empty for \"custom\" CNI",
 			},
+		},
+		{
+			name: "CustomFlannelExtraArgs",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.CustomCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlanneldExtraArgs: []string{"--foo"},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"flanneldExtraArgs\" field should be empty for \"custom\" CNI\n\n",
 		},
 		{
 			name: "CustomManifests",

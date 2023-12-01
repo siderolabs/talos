@@ -64,6 +64,12 @@ type ClusterNetwork interface {
 type CNI interface {
 	Name() string
 	URLs() []string
+	Flannel() FlannelCNI
+}
+
+// FlannelCNI defines the requirements for a config that pertains to configure Flannel.
+type FlannelCNI interface {
+	ExtraArgs() []string
 }
 
 // APIServer defines the requirements for a config that pertains to apiserver related

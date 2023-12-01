@@ -115,6 +115,21 @@ Talos Linux when running on the `metal` platform can be configured to authentica
 Talos Linux now supports configuring the [ingress firewall rules](https://talos.dev/v1.6/talos-guides/network/ingress-firewall/).
 """
 
+    [note.flannel]
+        title = "Flannel Configuration"
+        description = """\
+Talos Linux now supports customizing default Flannel manifest with extra arguments for flanneld.
+
+```yaml
+cluster:
+  network:
+    cni:
+      flannel:
+        extraArgs:
+          - --iface-can-reach=192.168.1.1
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]
