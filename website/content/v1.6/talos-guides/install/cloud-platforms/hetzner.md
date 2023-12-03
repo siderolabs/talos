@@ -60,8 +60,8 @@ Create a config file for packer to use:
 packer {
   required_plugins {
     hcloud = {
-      version = ">= 1.0.0"
-      source  = "github.com/hashicorp/hcloud"
+      source  = "github.com/hetznercloud/hcloud"
+      version = "~> 1"
     }
   }
 }
@@ -71,22 +71,38 @@ variable "talos_version" {
   default = "{{< release >}}"
 }
 
+variable "arch" {
+  type    = string
+  default = "amd64"
+}
+
+variable "server_type" {
+  type    = string
+  default = "cx11"
+}
+
+variable "server_location" {
+  type    = string
+  default = "hel1"
+}
+
 locals {
-  image = "https://github.com/siderolabs/talos/releases/download/${var.talos_version}/hcloud-amd64.raw.xz"
+  image = "https://github.com/siderolabs/talos/releases/download/${var.talos_version}/hcloud-${var.arch}.raw.xz"
 }
 
 source "hcloud" "talos" {
   rescue       = "linux64"
   image        = "debian-11"
-  location     = "hel1"
-  server_type  = "cx11"
+  location     = "${var.server_location}"
+  server_type  = "${var.server_type}"
   ssh_username = "root"
 
-  snapshot_name = "talos system disk"
+  snapshot_name   = "talos system disk - ${var.arch} - ${var.talos_version}"
   snapshot_labels = {
     type    = "infra",
     os      = "talos",
     version = "${var.talos_version}",
+    arch    = "${var.arch}",
   }
 }
 
@@ -102,6 +118,16 @@ build {
   }
 }
 ```
+
+Additionally you could create a file containing
+
+```hcl
+arch            = "arm64"
+server_type     = "cax11"
+server_location = "fsn1"
+``````
+
+and build the snapshot for arm64.
 
 Create a new image by issuing the commands shown below.
 Note that to create a new API token for your Project, switch into the Hetzner Cloud Console choose a Project, go to Access → Security, and create a new token.
