@@ -534,6 +534,13 @@ func (ctrl *PlatformConfigController) runWithRestarts(ctx context.Context, logge
 			return
 		}
 
+		// skip restarting if context is already done
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
 		interval := backoff.NextBackOff()
 
 		logger.Error("restarting platform network config", zap.Duration("interval", interval), zap.Error(err))

@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/apid"
 	"github.com/siderolabs/talos/internal/app/dashboard"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
@@ -95,7 +96,7 @@ func syncNonVolatileStorageBuffers() {
 
 //nolint:gocyclo
 func handle(ctx context.Context, err error) {
-	rebootCmd := unix.LINUX_REBOOT_CMD_RESTART
+	rebootCmd := int(emergency.RebootCmd.Load())
 
 	var rebootErr runtime.RebootError
 

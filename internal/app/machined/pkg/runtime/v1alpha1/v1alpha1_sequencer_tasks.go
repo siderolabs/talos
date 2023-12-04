@@ -47,6 +47,7 @@ import (
 	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
@@ -2253,6 +2254,17 @@ func FlushMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		return r.State().Machine().Meta().Flush()
 	}, "flushMeta"
+}
+
+// StoreShutdownEmergency stores shutdown emergency state.
+func StoreShutdownEmergency(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		// for shutdown sequence, store power_off as the intent, it will be picked up
+		// by emergency handled in machined/main.go if the Shutdown sequence fails
+		emergency.RebootCmd.Store(unix.LINUX_REBOOT_CMD_POWER_OFF)
+
+		return nil
+	}, "storeShutdownEmergency"
 }
 
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),
