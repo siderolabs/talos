@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:dupl
 package configpatcher_test
 
 import (
@@ -20,13 +19,16 @@ import (
 var config []byte
 
 //go:embed testdata/apply/expected.yaml
-var expected []byte
+var expected string
 
 //go:embed testdata/multidoc/config.yaml
 var configMultidoc []byte
 
 //go:embed testdata/multidoc/expected.yaml
-var expectedMultidoc []byte
+var expectedMultidoc string
+
+//go:embed testdata/apply/expected_manifests.yaml
+var expectedManifests string
 
 func TestApply(t *testing.T) {
 	patches, err := configpatcher.LoadPatches([]string{
@@ -61,7 +63,7 @@ func TestApply(t *testing.T) {
 			bytes, err := out.Bytes()
 			require.NoError(t, err)
 
-			assert.Equal(t, string(expected), string(bytes))
+			assert.Equal(t, expected, string(bytes))
 		})
 	}
 }
@@ -126,7 +128,7 @@ func TestApplyMultiDoc(t *testing.T) {
 			bytes, err := out.Bytes()
 			require.NoError(t, err)
 
-			assert.Equal(t, string(expectedMultidoc), string(bytes))
+			assert.Equal(t, expectedMultidoc, string(bytes))
 		})
 	}
 }
@@ -167,6 +169,44 @@ func TestApplyAuditPolicy(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, string(expectedAudit), string(bytes))
+		})
+	}
+}
+
+func TestApplyWithManifestNewline(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{
+		"@testdata/apply/strategic4.yaml",
+	})
+	require.NoError(t, err)
+
+	cfg, err := configloader.NewFromBytes(config)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		input configpatcher.Input
+	}{
+		{
+			name:  "WithConfig",
+			input: configpatcher.WithConfig(cfg),
+		},
+		{
+			name:  "WithBytes",
+			input: configpatcher.WithBytes(config),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := configpatcher.Apply(tt.input, patches)
+			require.NoError(t, err)
+
+			bytes, err := out.Bytes()
+			require.NoError(t, err)
+
+			// Verify that after all our transformations the YAML is still valid and newline is removed
+			_, err = configloader.NewFromBytes(bytes)
+			require.NoError(t, err)
+
+			assert.Equal(t, expectedManifests, string(bytes))
 		})
 	}
 }
