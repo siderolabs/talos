@@ -23,7 +23,7 @@ If the initial boot requires firmware, a custom iso can be built with the firmwa
 This also ensures that the linux-firmware is not tied to a specific Talos version.
 """
 
-    [notes.Kubelet]
+    [notes.kubelet]
         title = "Kubelet Credential Provider Configuration"
         description = """\
 Talos now supports specifying the kubelet credential provider configuration in the Talos configuration file.
@@ -103,19 +103,19 @@ machine:
 ```
 """
 
-    [note.auth2]
+    [notes.auth2]
         title = "OAuth2 Machine Config Flow"
         description = """\
 Talos Linux when running on the `metal` platform can be configured to authenticate the machine configuration download using [OAuth2 device flow](https://www.talos.dev/v1.6/advanced/machine-config-oauth/).
 """
 
-    [note.ingress]
+    [notes.ingress]
         title = "Ingress Firewall"
         description = """\
 Talos Linux now supports configuring the [ingress firewall rules](https://talos.dev/v1.6/talos-guides/network/ingress-firewall/).
 """
 
-    [note.flannel]
+    [notes.flannel]
         title = "Flannel Configuration"
         description = """\
 Talos Linux now supports customizing default Flannel manifest with extra arguments for flanneld.
