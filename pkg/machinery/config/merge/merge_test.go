@@ -33,7 +33,7 @@ type Struct struct {
 
 type CustomSlice []string
 
-func (s *CustomSlice) Merge(other interface{}) error {
+func (s *CustomSlice) Merge(other any) error {
 	otherSlice, ok := other.(CustomSlice)
 	if !ok {
 		return fmt.Errorf("other is not CustomSlice: %v", other)
@@ -45,13 +45,13 @@ func (s *CustomSlice) Merge(other interface{}) error {
 	return nil
 }
 
-type Unstructured map[string]interface{}
+type Unstructured map[string]any
 
 func TestMerge(t *testing.T) {
 	for _, tt := range []struct {
 		name        string
-		left, right interface{}
-		expected    interface{}
+		left, right any
+		expected    any
 	}{
 		{
 			name: "zero",
@@ -249,8 +249,8 @@ func TestMerge(t *testing.T) {
 			name: "unstructured",
 			left: &Unstructured{
 				"a": "aa",
-				"map": map[string]interface{}{
-					"slice": []interface{}{
+				"map": map[string]any{
+					"slice": []any{
 						"s1",
 					},
 					"some": "value",
@@ -258,8 +258,8 @@ func TestMerge(t *testing.T) {
 			},
 			right: &Unstructured{
 				"b": "bb",
-				"map": map[string]interface{}{
-					"slice": []interface{}{
+				"map": map[string]any{
+					"slice": []any{
 						"s2",
 					},
 					"other": "thing",
@@ -268,13 +268,43 @@ func TestMerge(t *testing.T) {
 			expected: &Unstructured{
 				"a": "aa",
 				"b": "bb",
-				"map": map[string]interface{}{
-					"slice": []interface{}{
+				"map": map[string]any{
+					"slice": []any{
 						"s1",
 						"s2",
 					},
 					"some":  "value",
 					"other": "thing",
+				},
+			},
+		},
+		{
+			name: "unstructed with nil value",
+			left: Unstructured{
+				"a": nil,
+				"b": []any{
+					"c",
+					"d",
+				},
+			},
+			right: Unstructured{
+				"a": Unstructured{
+					"b": []any{
+						"c",
+						"d",
+					},
+				},
+			},
+			expected: Unstructured{
+				"a": Unstructured{
+					"b": []any{
+						"c",
+						"d",
+					},
+				},
+				"b": []any{
+					"c",
+					"d",
 				},
 			},
 		},
