@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -54,7 +53,7 @@ func (ctrl *StaticPodServerController) Outputs() []controller.Output {
 	}
 }
 
-type pod map[string]interface{}
+type pod map[string]any
 
 type podList struct {
 	Kind string `json:"kind,omitempty" protobuf:"bytes,1,opt,name=kind"`
@@ -191,10 +190,10 @@ func (ctrl *StaticPodServerController) createServer(ctx context.Context, r contr
 		shutdownServer()
 	}()
 
-	if err := r.Modify(ctx, k8s.NewStaticPodServerStatus(k8s.NamespaceName, k8s.StaticPodServerStatusResourceID), func(r resource.Resource) error {
+	if err := safe.WriterModify(ctx, r, k8s.NewStaticPodServerStatus(k8s.NamespaceName, k8s.StaticPodServerStatusResourceID), func(r *k8s.StaticPodServerStatus) error {
 		url := fmt.Sprintf("http://%s", listener.Addr().String())
 
-		r.(*k8s.StaticPodServerStatus).TypedSpec().URL = url
+		r.TypedSpec().URL = url
 
 		return nil
 	}); err != nil {

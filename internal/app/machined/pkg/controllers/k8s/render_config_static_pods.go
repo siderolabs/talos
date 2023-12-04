@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
@@ -77,7 +77,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 		case <-r.EventCh():
 		}
 
-		admissionRes, err := r.Get(ctx, k8s.NewAdmissionControlConfig().Metadata())
+		admissionRes, err := safe.ReaderGetByID[*k8s.AdmissionControlConfig](ctx, r, k8s.AdmissionControlConfigID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -86,9 +86,9 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting admission config resource: %w", err)
 		}
 
-		admissionConfig := admissionRes.(*k8s.AdmissionControlConfig).TypedSpec()
+		admissionConfig := admissionRes.TypedSpec()
 
-		auditRes, err := r.Get(ctx, k8s.NewAuditPolicyConfig().Metadata())
+		auditRes, err := safe.ReaderGetByID[*k8s.AuditPolicyConfig](ctx, r, k8s.AuditPolicyConfigID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -97,9 +97,9 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting audit config resource: %w", err)
 		}
 
-		auditConfig := auditRes.(*k8s.AuditPolicyConfig).TypedSpec()
+		auditConfig := auditRes.TypedSpec()
 
-		kubeSchedulerRes, err := r.Get(ctx, k8s.NewSchedulerConfig().Metadata())
+		kubeSchedulerRes, err := safe.ReaderGetByID[*k8s.SchedulerConfig](ctx, r, k8s.SchedulerConfigID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -108,7 +108,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			return fmt.Errorf("error getting scheduler config resource: %w", err)
 		}
 
-		kubeSchedulerConfig := kubeSchedulerRes.(*k8s.SchedulerConfig).TypedSpec()
+		kubeSchedulerConfig := kubeSchedulerRes.TypedSpec()
 
 		kubeSchedulerVersion := compatibility.VersionFromImageRef(kubeSchedulerConfig.Image)
 
@@ -190,9 +190,9 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			}
 		}
 
-		if err = r.Modify(ctx, k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID), func(r resource.Resource) error {
-			r.(*k8s.ConfigStatus).TypedSpec().Ready = true
-			r.(*k8s.ConfigStatus).TypedSpec().Version = admissionRes.Metadata().Version().String() + auditRes.Metadata().Version().String() + kubeSchedulerRes.Metadata().Version().String()
+		if err = safe.WriterModify(ctx, r, k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID), func(r *k8s.ConfigStatus) error {
+			r.TypedSpec().Ready = true
+			r.TypedSpec().Version = admissionRes.Metadata().Version().String() + auditRes.Metadata().Version().String() + kubeSchedulerRes.Metadata().Version().String()
 
 			return nil
 		}); err != nil {

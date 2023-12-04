@@ -11,7 +11,6 @@ import (
 	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -97,20 +96,16 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 				serviceCIDRs = append(serviceCIDRs, ipPrefix)
 			}
 
-			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterNoK8s), func(r resource.Resource) error {
-				spec := r.(*network.NodeAddressFilter).TypedSpec()
-
-				spec.ExcludeSubnets = append(slices.Clone(podCIDRs), serviceCIDRs...)
+			if err = safe.WriterModify(ctx, r, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterNoK8s), func(r *network.NodeAddressFilter) error {
+				r.TypedSpec().ExcludeSubnets = append(slices.Clone(podCIDRs), serviceCIDRs...)
 
 				return nil
 			}); err != nil {
 				return fmt.Errorf("error updating output resource: %w", err)
 			}
 
-			if err = r.Modify(ctx, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterOnlyK8s), func(r resource.Resource) error {
-				spec := r.(*network.NodeAddressFilter).TypedSpec()
-
-				spec.IncludeSubnets = append(slices.Clone(podCIDRs), serviceCIDRs...)
+			if err = safe.WriterModify(ctx, r, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterOnlyK8s), func(r *network.NodeAddressFilter) error {
+				r.TypedSpec().IncludeSubnets = append(slices.Clone(podCIDRs), serviceCIDRs...)
 
 				return nil
 			}); err != nil {

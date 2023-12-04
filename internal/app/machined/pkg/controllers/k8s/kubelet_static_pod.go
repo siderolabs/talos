@@ -210,8 +210,8 @@ func (ctrl *KubeletStaticPodController) refreshPodStatus(ctx context.Context, r 
 
 		podsSeen[statusID] = struct{}{}
 
-		if err = r.Modify(ctx, k8s.NewStaticPodStatus(k8s.NamespaceName, statusID), func(r resource.Resource) error {
-			return k8sadapter.StaticPodStatus(r.(*k8s.StaticPodStatus)).SetStatus(&pod.Status)
+		if err = safe.WriterModify(ctx, r, k8s.NewStaticPodStatus(k8s.NamespaceName, statusID), func(r *k8s.StaticPodStatus) error {
+			return k8sadapter.StaticPodStatus(r).SetStatus(&pod.Status)
 		}); err != nil {
 			return fmt.Errorf("error updating pod status: %w", err)
 		}

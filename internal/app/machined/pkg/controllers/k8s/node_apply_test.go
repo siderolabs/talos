@@ -5,7 +5,7 @@
 package k8s_test
 
 import (
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/siderolabs/gen/maps"
@@ -132,7 +132,7 @@ func TestApplyLabels(t *testing.T) {
 				newOwnedLabels = []string{}
 			}
 
-			sort.Strings(newOwnedLabels)
+			slices.Sort(newOwnedLabels)
 
 			assert.Equal(t, tt.expectedLabels, node.Labels)
 			assert.Equal(t, tt.expectedOwnedLabels, newOwnedLabels)
@@ -317,7 +317,7 @@ func TestApplyTaints(t *testing.T) {
 				newOwnedTaints = []string{}
 			}
 
-			sort.Strings(newOwnedTaints)
+			slices.Sort(newOwnedTaints)
 
 			assert.Equal(t, tt.expectedTaints, node.Spec.Taints)
 			assert.Equal(t, tt.expectedOwnedTaints, newOwnedTaints)

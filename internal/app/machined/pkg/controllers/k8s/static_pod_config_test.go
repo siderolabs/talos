@@ -107,15 +107,15 @@ func (suite *StaticPodConfigSuite) TestReconcile() {
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachinePods: []v1alpha1.Unstructured{
 						{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"apiVersion": "v1",
 								"kind":       "pod",
-								"metadata": map[string]interface{}{
+								"metadata": map[string]any{
 									"name": "nginx",
 								},
-								"spec": map[string]interface{}{
-									"containers": []interface{}{
-										map[string]interface{}{
+								"spec": map[string]any{
+									"containers": []any{
+										map[string]any{
 											"name":  "nginx",
 											"image": "nginx",
 										},
@@ -148,7 +148,7 @@ func (suite *StaticPodConfigSuite) TestReconcile() {
 	)
 
 	// update the pod changing the namespace
-	cfg.Container().RawV1Alpha1().MachineConfig.MachinePods[0].Object["metadata"].(map[string]interface{})["namespace"] = "custom"
+	cfg.Container().RawV1Alpha1().MachineConfig.MachinePods[0].Object["metadata"].(map[string]any)["namespace"] = "custom"
 	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
 
 	suite.Assert().NoError(

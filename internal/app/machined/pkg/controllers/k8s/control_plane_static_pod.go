@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
@@ -107,7 +108,7 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 		}
 
 		// wait for etcd to be healthy as kube-apiserver is using local etcd instance
-		etcdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "etcd", resource.VersionUndefined))
+		etcdResource, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "etcd")
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -120,11 +121,11 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 			return err
 		}
 
-		if !etcdResource.(*v1alpha1.Service).TypedSpec().Healthy {
+		if !etcdResource.TypedSpec().Healthy {
 			continue
 		}
 
-		secretsStatusResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.SecretsStatusType, k8s.StaticPodSecretsStaticPodID, resource.VersionUndefined))
+		secretsStatusResource, err := safe.ReaderGetByID[*k8s.SecretsStatus](ctx, r, k8s.StaticPodSecretsStaticPodID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -137,9 +138,9 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 			return err
 		}
 
-		secretsVersion := secretsStatusResource.(*k8s.SecretsStatus).TypedSpec().Version
+		secretsVersion := secretsStatusResource.TypedSpec().Version
 
-		configStatusResource, err := r.Get(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusType, k8s.ConfigStatusStaticPodID, resource.VersionUndefined))
+		configStatusResource, err := safe.ReaderGetByID[*k8s.ConfigStatus](ctx, r, k8s.ConfigStatusStaticPodID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -152,7 +153,7 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 			return err
 		}
 
-		configVersion := configStatusResource.(*k8s.ConfigStatus).TypedSpec().Version
+		configVersion := configStatusResource.TypedSpec().Version
 
 		touchedIDs := map[string]struct{}{}
 
@@ -339,7 +340,7 @@ func goGCEnvFromResources(resources v1.ResourceRequirements) (envVar v1.EnvVar) 
 	return envVar
 }
 
-func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, logger *zap.Logger,
+func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, _ *zap.Logger,
 	configResource resource.Resource, secretsVersion, configVersion string,
 ) (string, error) {
 	cfg := configResource.(*k8s.APIServerConfig).TypedSpec()
@@ -445,8 +446,8 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		env = append(env, goGCEnv)
 	}
 
-	return k8s.APIServerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.APIServerID), func(r resource.Resource) error {
-		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
+	return k8s.APIServerID, safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.APIServerID), func(r *k8s.StaticPod) error {
+		return k8sadapter.StaticPod(r).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",
@@ -555,7 +556,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource resource.Resource, secretsVersion, configVersion string,
+	_ *zap.Logger, configResource resource.Resource, secretsVersion, _ string,
 ) (string, error) {
 	cfg := configResource.(*k8s.ControllerManagerConfig).TypedSpec()
 
@@ -619,8 +620,8 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		env = append(env, goGCEnv)
 	}
 
-	return k8s.ControllerManagerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.ControllerManagerID), func(r resource.Resource) error {
-		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
+	return k8s.ControllerManagerID, safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.ControllerManagerID), func(r *k8s.StaticPod) error {
+		return k8sadapter.StaticPod(r).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",
@@ -712,7 +713,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
-	logger *zap.Logger, configResource resource.Resource, secretsVersion, configVersion string,
+	_ *zap.Logger, configResource resource.Resource, secretsVersion, _ string,
 ) (string, error) {
 	cfg := configResource.(*k8s.SchedulerConfig).TypedSpec()
 
@@ -758,8 +759,8 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		env = append(env, goGCEnv)
 	}
 
-	return k8s.SchedulerID, r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r resource.Resource) error {
-		return k8sadapter.StaticPod(r.(*k8s.StaticPod)).SetPod(&v1.Pod{
+	return k8s.SchedulerID, safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r *k8s.StaticPod) error {
+		return k8sadapter.StaticPod(r).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "Pod",

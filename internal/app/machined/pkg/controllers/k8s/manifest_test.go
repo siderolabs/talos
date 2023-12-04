@@ -225,8 +225,8 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 	suite.Assert().Equal("DaemonSet", k8sadapter.Manifest(manifest).Objects()[0].GetKind())
 
 	ds := k8sadapter.Manifest(manifest).Objects()[0].Object
-	containerSpec := ds["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["containers"].([]interface{})[0]
-	args := containerSpec.(map[string]interface{})["command"].([]interface{}) //nolint:errcheck,forcetypeassert
+	containerSpec := ds["spec"].(map[string]any)["template"].(map[string]any)["spec"].(map[string]any)["containers"].([]any)[0]
+	args := containerSpec.(map[string]any)["command"].([]any) //nolint:errcheck,forcetypeassert
 
 	suite.Assert().Equal("--bind-address=\"::\"", args[len(args)-1])
 }

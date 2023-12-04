@@ -327,9 +327,9 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			}
 		}
 
-		if err = r.Modify(ctx, k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID), func(r resource.Resource) error {
-			r.(*k8s.SecretsStatus).TypedSpec().Ready = true
-			r.(*k8s.SecretsStatus).TypedSpec().Version = secretsRes.Metadata().Version().String()
+		if err = safe.WriterModify(ctx, r, k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID), func(r *k8s.SecretsStatus) error {
+			r.TypedSpec().Ready = true
+			r.TypedSpec().Version = secretsRes.Metadata().Version().String()
 
 			return nil
 		}); err != nil {

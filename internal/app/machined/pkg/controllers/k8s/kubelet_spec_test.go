@@ -78,7 +78,7 @@ func (suite *KubeletSpecSuite) TestReconcileDefault() {
 		)
 		asrt.Equal(cfg.TypedSpec().ExtraMounts, spec.ExtraMounts)
 
-		asrt.Equal([]interface{}{"10.96.0.10"}, spec.Config["clusterDNS"])
+		asrt.Equal([]any{"10.96.0.10"}, spec.Config["clusterDNS"])
 		asrt.Equal("cluster.local", spec.Config["clusterDomain"])
 	})
 }
@@ -164,7 +164,7 @@ func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
 	cfg.TypedSpec().Image = "kubelet:v2.0.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.11"}
 	cfg.TypedSpec().ClusterDomain = "some.local"
-	cfg.TypedSpec().ExtraConfig = map[string]interface{}{
+	cfg.TypedSpec().ExtraConfig = map[string]any{
 		"serverTLSBootstrap": true,
 	}
 
@@ -270,7 +270,7 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 			cfgSpec: &k8s.KubeletConfigSpec{
 				ClusterDNS:    []string{"10.96.0.10"},
 				ClusterDomain: "cluster.svc",
-				ExtraConfig: map[string]interface{}{
+				ExtraConfig: map[string]any{
 					"API":  "v1",
 					"foo":  "bar",
 					"Port": "xyz",
@@ -283,7 +283,7 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 			cfgSpec: &k8s.KubeletConfigSpec{
 				ClusterDNS:    []string{"10.96.0.10"},
 				ClusterDomain: "cluster.svc",
-				ExtraConfig: map[string]interface{}{
+				ExtraConfig: map[string]any{
 					"oomScoreAdj": "v1",
 				},
 			},
@@ -294,7 +294,7 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 			cfgSpec: &k8s.KubeletConfigSpec{
 				ClusterDNS:    []string{"10.96.0.10"},
 				ClusterDomain: "cluster.svc",
-				ExtraConfig: map[string]interface{}{
+				ExtraConfig: map[string]any{
 					"oomScoreAdj":    -300,
 					"port":           81,
 					"authentication": nil,
@@ -380,7 +380,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			cfgSpec: &k8s.KubeletConfigSpec{
 				ClusterDNS:    []string{"10.0.0.5"},
 				ClusterDomain: "cluster.local",
-				ExtraConfig: map[string]interface{}{
+				ExtraConfig: map[string]any{
 					"oomScoreAdj":             -300,
 					"enableDebuggingHandlers": true,
 				},
@@ -396,7 +396,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			cfgSpec: &k8s.KubeletConfigSpec{
 				ClusterDNS:    []string{"10.0.0.5"},
 				ClusterDomain: "cluster.local",
-				ExtraConfig: map[string]interface{}{
+				ExtraConfig: map[string]any{
 					"shutdownGracePeriod":             "0s",
 					"shutdownGracePeriodCriticalPods": "0s",
 				},

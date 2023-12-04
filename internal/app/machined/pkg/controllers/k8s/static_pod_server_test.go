@@ -110,7 +110,7 @@ func (suite *StaticPodListSuite) getResource(
 func newTestPod(name string) *k8s.StaticPod {
 	testPod := k8s.NewStaticPod(k8s.NamespaceName, name)
 
-	testPod.TypedSpec().Pod = map[string]interface{}{
+	testPod.TypedSpec().Pod = map[string]any{
 		"metadata": name,
 		"spec":     "testSpec",
 	}

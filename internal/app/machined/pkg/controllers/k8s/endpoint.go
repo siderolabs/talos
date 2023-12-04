@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"net/netip"
 	"reflect"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
@@ -80,7 +80,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		case <-r.EventCh():
 		}
 
-		machineTypeRes, err := r.Get(ctx, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
+		machineTypeRes, err := safe.ReaderGetByID[*config.MachineType](ctx, r, config.MachineTypeID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -89,7 +89,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error getting machine type: %w", err)
 		}
 
-		machineType := machineTypeRes.(*config.MachineType).MachineType()
+		machineType := machineTypeRes.MachineType()
 
 		switch machineType { //nolint:exhaustive
 		case machine.TypeWorker:
@@ -170,7 +170,7 @@ func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context
 			return nil
 		}
 
-		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
+		secretsResources, err := safe.ReaderGetByID[*secrets.Kubernetes](ctx, r, secrets.KubernetesID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return nil
@@ -179,7 +179,7 @@ func (ctrl *EndpointController) watchEndpointsOnControlPlane(ctx context.Context
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Kubernetes).TypedSpec()
+		secrets := secretsResources.TypedSpec()
 
 		kubeconfig, err := clientcmd.BuildConfigFromKubeconfigGetter("", func() (*clientcmdapi.Config, error) {
 			// using here kubeconfig with cluster control plane endpoint, as endpoint discovery should work before local API server is ready
@@ -207,16 +207,17 @@ func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r c
 		}
 	}
 
-	sort.Slice(addrs, func(i, j int) bool { return addrs[i].Compare(addrs[j]) < 0 })
+	slices.SortFunc(addrs, func(a, b netip.Addr) int { return a.Compare(b) })
 
-	if err := r.Modify(ctx,
+	if err := safe.WriterModify(ctx,
+		r,
 		k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneAPIServerEndpointsID),
-		func(r resource.Resource) error {
-			if !reflect.DeepEqual(r.(*k8s.Endpoint).TypedSpec().Addresses, addrs) {
+		func(r *k8s.Endpoint) error {
+			if !reflect.DeepEqual(r.TypedSpec().Addresses, addrs) {
 				logger.Debug("updated controlplane endpoints", zap.Any("endpoints", addrs))
 			}
 
-			r.(*k8s.Endpoint).TypedSpec().Addresses = addrs
+			r.TypedSpec().Addresses = addrs
 
 			return nil
 		},
@@ -287,9 +288,9 @@ func kubernetesEndpointWatcher(ctx context.Context, logger *zap.Logger, client *
 	}
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj interface{}) { notifyCh <- obj.(*corev1.Endpoints) },
-		DeleteFunc: func(_ interface{}) { notifyCh <- &corev1.Endpoints{} },
-		UpdateFunc: func(_, obj interface{}) { notifyCh <- obj.(*corev1.Endpoints) },
+		AddFunc:    func(obj any) { notifyCh <- obj.(*corev1.Endpoints) },
+		DeleteFunc: func(_ any) { notifyCh <- &corev1.Endpoints{} },
+		UpdateFunc: func(_, obj any) { notifyCh <- obj.(*corev1.Endpoints) },
 	}); err != nil {
 		return nil, nil, fmt.Errorf("error adding watch event handler: %w", err)
 	}

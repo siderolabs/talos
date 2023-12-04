@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -100,8 +99,8 @@ func (ctrl *StaticPodConfigController) Run(ctx context.Context, r controller.Run
 
 				id := fmt.Sprintf("%s-%s", namespace, name)
 
-				if err = r.Modify(ctx, k8s.NewStaticPod(k8s.NamespaceName, id), func(r resource.Resource) error {
-					r.(*k8s.StaticPod).TypedSpec().Pod = pod
+				if err = safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, id), func(r *k8s.StaticPod) error {
+					r.TypedSpec().Pod = pod
 
 					return nil
 				}); err != nil {

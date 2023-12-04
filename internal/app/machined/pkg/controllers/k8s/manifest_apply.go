@@ -5,12 +5,15 @@
 package k8s
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/optional"
@@ -92,7 +95,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesType, secrets.KubernetesID, resource.VersionUndefined))
+		secretsResources, err := safe.ReaderGetByID[*secrets.Kubernetes](ctx, r, secrets.KubernetesID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -101,10 +104,10 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.Kubernetes).TypedSpec()
+		secrets := secretsResources.TypedSpec()
 
 		// wait for etcd to be healthy as controller relies on etcd for locking
-		etcdResource, err := r.Get(ctx, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "etcd", resource.VersionUndefined))
+		etcdResource, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "etcd")
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -113,7 +116,7 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		if !etcdResource.(*v1alpha1.Service).TypedSpec().Healthy {
+		if !etcdResource.TypedSpec().Healthy {
 			continue
 		}
 
@@ -122,8 +125,8 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			return fmt.Errorf("error listing manifests: %w", err)
 		}
 
-		sort.Slice(manifests.Items, func(i, j int) bool {
-			return manifests.Items[i].Metadata().ID() < manifests.Items[j].Metadata().ID()
+		slices.SortFunc(manifests.Items, func(a, b resource.Resource) int {
+			return cmp.Compare(a.Metadata().ID(), b.Metadata().ID())
 		})
 
 		if len(manifests.Items) > 0 {
@@ -163,8 +166,8 @@ func (ctrl *ManifestApplyController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
-		if err = r.Modify(ctx, k8s.NewManifestStatus(k8s.ControlPlaneNamespaceName), func(r resource.Resource) error {
-			status := r.(*k8s.ManifestStatus).TypedSpec()
+		if err = safe.WriterModify(ctx, r, k8s.NewManifestStatus(k8s.ControlPlaneNamespaceName), func(r *k8s.ManifestStatus) error {
+			status := r.TypedSpec()
 
 			status.ManifestsApplied = xslices.Map(manifests.Items, func(m resource.Resource) string {
 				return m.Metadata().ID()

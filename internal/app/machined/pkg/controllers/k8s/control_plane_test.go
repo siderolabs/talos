@@ -319,13 +319,13 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 					APIServerConfig: &v1alpha1.APIServerConfig{
 						ResourcesConfig: &v1alpha1.ResourcesConfig{
 							Requests: v1alpha1.Unstructured{
-								Object: map[string]interface{}{
+								Object: map[string]any{
 									"cpu":    "100m",
 									"memory": "1Gi",
 								},
 							},
 							Limits: v1alpha1.Unstructured{
-								Object: map[string]interface{}{
+								Object: map[string]any{
 									"cpu":    2,
 									"memory": "1500Mi",
 								},
@@ -335,13 +335,13 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 					ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
 						ResourcesConfig: &v1alpha1.ResourcesConfig{
 							Requests: v1alpha1.Unstructured{
-								Object: map[string]interface{}{
+								Object: map[string]any{
 									"cpu":    "50m",
 									"memory": "500Mi",
 								},
 							},
 							Limits: v1alpha1.Unstructured{
-								Object: map[string]interface{}{
+								Object: map[string]any{
 									"cpu":    1,
 									"memory": "1000Mi",
 								},
@@ -351,13 +351,13 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 					SchedulerConfig: &v1alpha1.SchedulerConfig{
 						ResourcesConfig: &v1alpha1.ResourcesConfig{
 							Requests: v1alpha1.Unstructured{
-								Object: map[string]interface{}{
+								Object: map[string]any{
 									"cpu":    "150m",
 									"memory": "2Gi",
 								},
 							},
 							Limits: v1alpha1.Unstructured{
-								Object: map[string]interface{}{
+								Object: map[string]any{
 									"cpu":    3,
 									"memory": "2000Mi",
 								},

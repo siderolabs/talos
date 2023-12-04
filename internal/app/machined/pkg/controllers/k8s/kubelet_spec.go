@@ -213,7 +213,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 	}
 }
 
-func prepareExtraConfig(extraConfig map[string]interface{}) (*kubeletconfig.KubeletConfiguration, error) {
+func prepareExtraConfig(extraConfig map[string]any) (*kubeletconfig.KubeletConfiguration, error) {
 	// check for fields that can't be overridden via extraConfig
 	var multiErr *multierror.Error
 

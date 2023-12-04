@@ -102,7 +102,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 							},
 						},
 						KubeletExtraConfig: v1alpha1.Unstructured{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"serverTLSBootstrap": true,
 							},
 						},
@@ -170,7 +170,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 					spec.ExtraMounts,
 				)
 				suite.Assert().Equal(
-					map[string]interface{}{
+					map[string]any{
 						"serverTLSBootstrap": true,
 					},
 					spec.ExtraConfig,

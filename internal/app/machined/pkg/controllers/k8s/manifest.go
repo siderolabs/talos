@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
@@ -70,7 +71,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 		case <-r.EventCh():
 		}
 
-		configResource, err := r.Get(ctx, k8s.NewBootstrapManifestsConfig().Metadata())
+		configResource, err := safe.ReaderGetByID[*k8s.BootstrapManifestsConfig](ctx, r, k8s.BootstrapManifestsConfigID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -83,9 +84,9 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 			return err
 		}
 
-		config := *configResource.(*k8s.BootstrapManifestsConfig).TypedSpec()
+		config := *configResource.TypedSpec()
 
-		secretsResources, err := r.Get(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.KubernetesRootType, secrets.KubernetesRootID, resource.VersionUndefined))
+		secretsResources, err := safe.ReaderGetByID[*secrets.KubernetesRoot](ctx, r, secrets.KubernetesRootID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -98,7 +99,7 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 			return err
 		}
 
-		secrets := secretsResources.(*secrets.KubernetesRoot).TypedSpec()
+		secrets := secretsResources.TypedSpec()
 
 		renderedManifests, err := ctrl.render(config, secrets)
 		if err != nil {
@@ -108,9 +109,9 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 		for _, renderedManifest := range renderedManifests {
 			renderedManifest := renderedManifest
 
-			if err = r.Modify(ctx, k8s.NewManifest(k8s.ControlPlaneNamespaceName, renderedManifest.name),
-				func(r resource.Resource) error {
-					return k8sadapter.Manifest(r.(*k8s.Manifest)).SetYAML(renderedManifest.data)
+			if err = safe.WriterModify(ctx, r, k8s.NewManifest(k8s.ControlPlaneNamespaceName, renderedManifest.name),
+				func(r *k8s.Manifest) error {
+					return k8sadapter.Manifest(r).SetYAML(renderedManifest.data)
 				}); err != nil {
 				return fmt.Errorf("error updating manifests: %w", err)
 			}

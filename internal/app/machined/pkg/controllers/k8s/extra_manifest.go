@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-getter/v2"
@@ -73,7 +74,7 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 		}
 
 		// wait for network to be ready as networking is required to download extra manifests
-		networkResource, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
+		networkResource, err := safe.ReaderGetByID[*network.Status](ctx, r, network.StatusID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -82,13 +83,13 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		networkStatus := networkResource.(*network.Status).TypedSpec()
+		networkStatus := networkResource.TypedSpec()
 
 		if !(networkStatus.AddressReady && networkStatus.ConnectivityReady) {
 			continue
 		}
 
-		configResource, err := r.Get(ctx, k8s.NewExtraManifestsConfig().Metadata())
+		configResource, err := safe.ReaderGetByID[*k8s.ExtraManifestsConfig](ctx, r, k8s.ExtraManifestsConfigID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -101,7 +102,7 @@ func (ctrl *ExtraManifestController) Run(ctx context.Context, r controller.Runti
 			return err
 		}
 
-		config := *configResource.(*k8s.ExtraManifestsConfig).TypedSpec()
+		config := *configResource.TypedSpec()
 
 		var multiErr *multierror.Error
 
@@ -211,9 +212,9 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 		return
 	}
 
-	if err = r.Modify(ctx, k8s.NewManifest(k8s.ControlPlaneNamespaceName, id),
-		func(r resource.Resource) error {
-			return k8sadapter.Manifest(r.(*k8s.Manifest)).SetYAML(contents)
+	if err = safe.WriterModify(ctx, r, k8s.NewManifest(k8s.ControlPlaneNamespaceName, id),
+		func(r *k8s.Manifest) error {
+			return k8sadapter.Manifest(r).SetYAML(contents)
 		}); err != nil {
 		err = fmt.Errorf("error updating manifests: %w", err)
 
@@ -224,11 +225,12 @@ func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controlle
 }
 
 func (ctrl *ExtraManifestController) processInline(ctx context.Context, r controller.Runtime, manifest k8s.ExtraManifest, id resource.ID) error {
-	err := r.Modify(
+	err := safe.WriterModify(
 		ctx,
+		r,
 		k8s.NewManifest(k8s.ControlPlaneNamespaceName, id),
-		func(r resource.Resource) error {
-			return k8sadapter.Manifest(r.(*k8s.Manifest)).SetYAML([]byte(manifest.InlineManifest))
+		func(r *k8s.Manifest) error {
+			return k8sadapter.Manifest(r).SetYAML([]byte(manifest.InlineManifest))
 		},
 	)
 	if err != nil {

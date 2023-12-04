@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -258,7 +258,7 @@ func umarshalOwnedAnnotation(node *v1.Node, annotation string) (map[string]struc
 
 func marshalOwnedAnnotation(node *v1.Node, annotation string, ownedMap map[string]struct{}) error {
 	owned := maps.Keys(ownedMap)
-	sort.Strings(owned)
+	slices.Sort(owned)
 
 	if len(owned) > 0 {
 		ownedJSON, err := json.Marshal(owned)

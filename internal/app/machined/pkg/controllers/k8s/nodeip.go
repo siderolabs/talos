@@ -139,11 +139,12 @@ func (ctrl *NodeIPController) Run(ctx context.Context, r controller.Runtime, log
 			}
 		}
 
-		if err = r.Modify(
+		if err = safe.WriterModify(
 			ctx,
+			r,
 			k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID),
-			func(r resource.Resource) error {
-				spec := r.(*k8s.NodeIP).TypedSpec()
+			func(r *k8s.NodeIP) error {
+				spec := r.TypedSpec()
 
 				spec.Addresses = nodeIPs
 
