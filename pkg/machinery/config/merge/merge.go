@@ -27,12 +27,12 @@ import (
 //   - if it is a struct, merge is performed for each field of the struct.
 //   - if the type implements 'merger' interface, Merge function is called to handle the merge process.
 //   - merger interface should be implemented on the pointer to the type.
-func Merge(left, right interface{}) error {
+func Merge(left, right any) error {
 	return merge(reflect.ValueOf(left), reflect.ValueOf(right), false)
 }
 
 type merger interface {
-	Merge(other interface{}) error
+	Merge(other any) error
 }
 
 var (
@@ -105,7 +105,7 @@ func merge(vl, vr reflect.Value, replace bool) error {
 		}
 
 		for _, k := range vr.MapKeys() {
-			if vl.MapIndex(k) != zeroValue {
+			if !isNilOrZero(vl.MapIndex(k)) {
 				valueType := tl.Elem()
 
 				var v, rightV reflect.Value
@@ -192,4 +192,20 @@ func merge(vl, vr reflect.Value, replace bool) error {
 	}
 
 	return nil
+}
+
+// isNilOrZero returns true if the [reflect.Value] is zero [reflect.Value] or something that is nil.
+// We need it because if map contains a key with `nil` value, simply comparing that result to the `zeroValue`
+// is not enough.
+func isNilOrZero(idx reflect.Value) bool {
+	if idx == zeroValue {
+		return true
+	}
+
+	switch idx.Kind() { //nolint:exhaustive
+	case reflect.Interface, reflect.Pointer, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
+		return idx.IsNil()
+	default:
+		return false
+	}
 }
