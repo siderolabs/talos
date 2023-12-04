@@ -11,17 +11,21 @@ import (
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	extservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // ServiceManager is the interface to the v1alpha1 services subsystems.
 type ServiceManager interface {
+	IsRunning(id string) (system.Service, bool, error)
 	Load(services ...system.Service) []string
+	Stop(ctx context.Context, serviceIDs ...string) (err error)
 	Start(serviceIDs ...string) error
 }
 
@@ -29,6 +33,8 @@ type ServiceManager interface {
 type ExtensionServiceController struct {
 	V1Alpha1Services ServiceManager
 	ConfigPath       string
+
+	configStatusCache map[string]string
 }
 
 // Name implements controller.Controller interface.
@@ -38,7 +44,13 @@ func (ctrl *ExtensionServiceController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *ExtensionServiceController) Inputs() []controller.Input {
-	return nil
+	return []controller.Input{
+		{
+			Namespace: runtime.NamespaceName,
+			Type:      runtime.ExtensionServicesConfigStatusType,
+			Kind:      controller.InputStrong,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -48,15 +60,16 @@ func (ctrl *ExtensionServiceController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	// wait for controller runtime to be ready
 	select {
 	case <-ctx.Done():
 		return nil
 	case <-r.EventCh():
 	}
 
-	// controller runs only once, as services are static
+	// extensions loading only needs to run once, as services are static
 	serviceFiles, err := os.ReadDir(ctrl.ConfigPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -69,6 +82,21 @@ func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Ru
 		return err
 	}
 
+	// load initial state of configStatuses
+	if ctrl.configStatusCache == nil {
+		configStatuses, err := safe.ReaderListAll[*runtime.ExtensionServicesConfigStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing extension services config: %w", err)
+		}
+
+		ctrl.configStatusCache = make(map[string]string, configStatuses.Len())
+
+		for iter := configStatuses.Iterator(); iter.Next(); {
+			ctrl.configStatusCache[iter.Value().Metadata().ID()] = iter.Value().TypedSpec().SpecVersion
+		}
+	}
+
+	// load services from definitions into the service runner framework
 	extServices := map[string]struct{}{}
 
 	for _, serviceFile := range serviceFiles {
@@ -110,7 +138,46 @@ func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Ru
 		}
 	}
 
-	return nil
+	// watch for changes in the configStatuses
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
+		}
+
+		configStatuses, err := safe.ReaderListAll[*runtime.ExtensionServicesConfigStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing extension services config: %w", err)
+		}
+
+		configStatusesPresent := map[string]struct{}{}
+
+		for iter := configStatuses.Iterator(); iter.Next(); {
+			configStatusesPresent[iter.Value().Metadata().ID()] = struct{}{}
+
+			if ctrl.configStatusCache[iter.Value().Metadata().ID()] == iter.Value().TypedSpec().SpecVersion {
+				continue
+			}
+
+			if err = ctrl.handleRestart(ctx, logger, "ext-"+iter.Value().Metadata().ID(), iter.Value().TypedSpec().SpecVersion); err != nil {
+				return err
+			}
+
+			ctrl.configStatusCache[iter.Value().Metadata().ID()] = iter.Value().TypedSpec().SpecVersion
+		}
+
+		// cleanup configStatusesCache
+		for id := range ctrl.configStatusCache {
+			if _, ok := configStatusesPresent[id]; !ok {
+				if err = ctrl.handleRestart(ctx, logger, "ext-"+id, "nan"); err != nil {
+					return err
+				}
+
+				delete(ctrl.configStatusCache, id)
+			}
+		}
+	}
 }
 
 func (ctrl *ExtensionServiceController) loadSpec(path string) (extservices.Spec, error) {
@@ -128,4 +195,31 @@ func (ctrl *ExtensionServiceController) loadSpec(path string) (extservices.Spec,
 	}
 
 	return spec, nil
+}
+
+func (ctrl *ExtensionServiceController) handleRestart(ctx context.Context, logger *zap.Logger, svcName, specVersion string) error {
+	_, running, err := ctrl.V1Alpha1Services.IsRunning(svcName)
+	if err != nil {
+		return nil //nolint:nilerr // IsRunning returns an error only if the service is not found, so ignore it
+	}
+
+	// this means it's a new config and the service runner is already waiting for the config to start the service
+	// we don't need restart it again since it will be started automatically
+	if running && specVersion == "1" {
+		return nil
+	}
+
+	logger.Warn("extension service config changed, restarting", zap.String("service", svcName))
+
+	if running {
+		if err = ctrl.V1Alpha1Services.Stop(ctx, svcName); err != nil {
+			return fmt.Errorf("error stopping extension service %s: %w", svcName, err)
+		}
+	}
+
+	if err = ctrl.V1Alpha1Services.Start(svcName); err != nil {
+		return fmt.Errorf("error starting extension service %s: %w", svcName, err)
+	}
+
+	return nil
 }

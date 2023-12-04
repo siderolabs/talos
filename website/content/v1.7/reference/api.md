@@ -209,6 +209,9 @@ description: Talos gRPC API reference.
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [EventSinkConfigSpec](#talos.resource.definitions.runtime.EventSinkConfigSpec)
+    - [ExtensionServicesConfigFile](#talos.resource.definitions.runtime.ExtensionServicesConfigFile)
+    - [ExtensionServicesConfigSpec](#talos.resource.definitions.runtime.ExtensionServicesConfigSpec)
+    - [ExtensionServicesConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServicesConfigStatusSpec)
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
@@ -3825,6 +3828,52 @@ EventSinkConfigSpec describes configuration of Talos event log streaming.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | endpoint | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.ExtensionServicesConfigFile"></a>
+
+### ExtensionServicesConfigFile
+ExtensionServicesConfigFile describes extensions service config files.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| content | [string](#string) |  |  |
+| mount_path | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.ExtensionServicesConfigSpec"></a>
+
+### ExtensionServicesConfigSpec
+ExtensionServicesConfigSpec describes status of rendered extensions service config files.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| files | [ExtensionServicesConfigFile](#talos.resource.definitions.runtime.ExtensionServicesConfigFile) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.ExtensionServicesConfigStatusSpec"></a>
+
+### ExtensionServicesConfigStatusSpec
+ExtensionServicesConfigStatusSpec describes status of rendered extensions service config files.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec_version | [string](#string) |  |  |
 
 
 

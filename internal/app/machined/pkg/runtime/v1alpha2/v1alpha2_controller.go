@@ -253,6 +253,11 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.DropUpgradeFallbackController{
 			MetaProvider: ctrl.v1alpha1Runtime.State().Machine(),
 		},
+		&runtimecontrollers.ExtensionServicesConfigController{},
+		&runtimecontrollers.ExtensionServicesConfigFilesController{
+			V1Alpha1Mode:            ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			ExtensionsConfigBaseDir: constants.ExtensionServicesUserConfigPath,
+		},
 		&runtimecontrollers.EventsSinkConfigController{
 			Cmdline:      procfs.ProcCmdline(),
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),

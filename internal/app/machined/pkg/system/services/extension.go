@@ -10,8 +10,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/containerd/containerd/oci"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-envparse"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/gen/maps"
@@ -28,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	extservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
 
@@ -80,6 +84,8 @@ func (svc *Extension) Condition(r runtime.Runtime) conditions.Condition {
 			conds = append(conds, network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.StatusChecksFromStatuses(dep.Network...)...))
 		case dep.Time:
 			conds = append(conds, time.NewSyncCondition(r.State().V1Alpha2().Resources()))
+		case dep.Configuration:
+			conds = append(conds, runtimeres.NewExtensionServiceConfigStatusCondition(r.State().V1Alpha2().Resources(), svc.Spec.Name))
 		}
 	}
 
@@ -103,12 +109,12 @@ func (svc *Extension) DependsOn(r runtime.Runtime) []string {
 	return deps
 }
 
-func (svc *Extension) getOCIOptions(envVars []string) []oci.SpecOpts {
+func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oci.SpecOpts {
 	ociOpts := []oci.SpecOpts{
 		oci.WithRootFSPath(filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name)),
 		containerd.WithRootfsPropagation(svc.Spec.Container.Security.RootfsPropagation),
 		oci.WithCgroup(filepath.Join(constants.CgroupExtensions, svc.Spec.Name)),
-		oci.WithMounts(svc.Spec.Container.Mounts),
+		oci.WithMounts(mounts),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithSelinuxLabel(""),
 		oci.WithApparmorProfile(""),
@@ -137,6 +143,8 @@ func (svc *Extension) getOCIOptions(envVars []string) []oci.SpecOpts {
 }
 
 // Runner implements the Service interface.
+//
+//nolint:gocyclo
 func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 	args := runner.Args{
 		ID:          svc.ID(r),
@@ -156,6 +164,24 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		}
 	}
 
+	mounts := append([]specs.Mount{}, svc.Spec.Container.Mounts...)
+
+	configSpec, err := safe.StateGetByID[*runtimeres.ExtensionServicesConfig](context.Background(), r.State().V1Alpha2().Resources(), svc.Spec.Name)
+	if err == nil {
+		spec := configSpec.TypedSpec()
+
+		for _, ext := range spec.Files {
+			mounts = append(mounts, specs.Mount{
+				Source:      filepath.Join(constants.ExtensionServicesUserConfigPath, svc.Spec.Name, strings.ReplaceAll(strings.TrimPrefix(ext.MountPath, "/"), "/", "-")),
+				Destination: ext.MountPath,
+				Type:        "bind",
+				Options:     []string{"ro", "bind"},
+			})
+		}
+	} else if !state.IsNotFoundError(err) {
+		return nil, err
+	}
+
 	var restartType restart.Type
 
 	switch svc.Spec.Restart {
@@ -172,7 +198,7 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		return nil, err
 	}
 
-	ociSpecOpts := svc.getOCIOptions(envVars)
+	ociSpecOpts := svc.getOCIOptions(envVars, mounts)
 
 	debug := false
 

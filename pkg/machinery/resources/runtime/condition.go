@@ -57,3 +57,32 @@ func (condition *KernelParamsSetCondition) Wait(ctx context.Context) error {
 
 	return nil
 }
+
+// ExtensionServiceConfigStatusCondition implements condition which waits for extension service config to be available.
+type ExtensionServiceConfigStatusCondition struct {
+	state       state.State
+	serviceName string
+}
+
+// NewExtensionServiceConfigStatusCondition builds a coondition which waits for extension service config to be available.
+func NewExtensionServiceConfigStatusCondition(state state.State, serviceName string) *ExtensionServiceConfigStatusCondition {
+	return &ExtensionServiceConfigStatusCondition{
+		state:       state,
+		serviceName: serviceName,
+	}
+}
+
+func (condition *ExtensionServiceConfigStatusCondition) String() string {
+	return "extension service config"
+}
+
+// Wait implements condition interface.
+func (condition *ExtensionServiceConfigStatusCondition) Wait(ctx context.Context) error {
+	_, err := condition.state.WatchFor(
+		ctx,
+		resource.NewMetadata(NamespaceName, ExtensionServicesConfigStatusType, condition.serviceName, resource.VersionUndefined),
+		state.WithEventTypes(state.Created, state.Updated),
+	)
+
+	return err
+}

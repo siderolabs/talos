@@ -5,7 +5,9 @@
 package runtime
 
 import (
+	"bytes"
 	"context"
+	"os"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -62,4 +64,15 @@ func WaitForDevicesReady(ctx context.Context, r controller.Runtime, nextInputs [
 	r.QueueReconcile()
 
 	return nil
+}
+
+// updateFile is like `os.WriteFile`, but it will only update the file if the
+// contents have changed.
+func updateFile(filename string, contents []byte, mode os.FileMode) error {
+	oldContents, err := os.ReadFile(filename)
+	if err == nil && bytes.Equal(oldContents, contents) {
+		return nil
+	}
+
+	return os.WriteFile(filename, contents, mode)
 }

@@ -1,0 +1,10 @@
+name: frr
+container:
+  entrypoint: ./frr
+  args:
+    - --msg
+    - BGP FRR
+depends:
+  - network:
+    - addresses
+restart: always

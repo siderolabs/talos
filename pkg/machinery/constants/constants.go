@@ -858,6 +858,9 @@ const (
 	// ExtensionServicesRootfsPath is the path to the extracted rootfs files of extension services.
 	ExtensionServicesRootfsPath = "/usr/local/lib/containers"
 
+	// ExtensionServicesUserConfigPath is the path to the user provider extension services config directory.
+	ExtensionServicesUserConfigPath = SystemOverlaysPath + "/extensions"
+
 	// DBusServiceSocketPath is the path to the D-Bus socket for the logind mock to connect to.
 	DBusServiceSocketPath = SystemRunPath + "/dbus/service.socket"
 

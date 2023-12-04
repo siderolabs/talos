@@ -85,29 +85,6 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 		})
 	}
 
-	suite.AssertWithin(1*time.Second, 100*time.Millisecond, func() error {
-		seccompProfile, err := ctest.Get[*criseccompresource.SeccompProfile](
-			suite,
-			criseccompresource.NewSeccompProfile("audit.json").Metadata(),
-		)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				return retry.ExpectedError(err)
-			}
-
-			return err
-		}
-
-		spec := seccompProfile.TypedSpec()
-
-		suite.Assert().Equal("audit.json", spec.Name)
-		suite.Assert().Equal(map[string]interface{}{
-			"defaultAction": "SCMP_ACT_LOG",
-		}, spec.Value)
-
-		return nil
-	})
-
 	// test deletion
 	cfg = config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{

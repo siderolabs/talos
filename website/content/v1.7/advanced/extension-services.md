@@ -36,6 +36,7 @@ container:
   mounts:
      - # OCI Mount Spec
 depends:
+   - configuration: true
    - service: cri
    - path: /run/machined/machined.sock
    - network:
@@ -127,6 +128,8 @@ Available dependencies:
 * `path: <path>`: wait for the `<path>` to exist
 * `network: [addresses, connectivity, hostname, etcfiles]`: wait for the specified network readiness checks to succeed
 * `time: true`: wait for the NTP time sync
+* `configuration: true`: wait for `ExtensionServicesConfig` resource with a name matching the extension name to be available.
+  The mounts specified in the `ExtensionServicesConfig` will be added as extra mounts to the extension service.
 
 ### `restart`
 

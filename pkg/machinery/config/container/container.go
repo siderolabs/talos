@@ -150,6 +150,16 @@ func (container *Container) SideroLink() config.SideroLinkConfig {
 	return matching[0]
 }
 
+// ExtensionServicesConfig implements config.Config interface.
+func (container *Container) ExtensionServicesConfig() config.ExtensionServicesConfigConfig {
+	matching := findMatchingDocs[config.ExtensionServicesConfigConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // Runtime implements config.Config interface.
 func (container *Container) Runtime() config.RuntimeConfig {
 	return config.WrapRuntimeConfigList(findMatchingDocs[config.RuntimeConfig](container.documents)...)

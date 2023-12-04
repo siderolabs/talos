@@ -76,6 +76,8 @@ type Dependency struct {
 	Network []nethelpers.Status `yaml:"network,omitempty"`
 	// Time sync check.
 	Time bool `yaml:"time,omitempty"`
+	// Depends on configuration files to be present.
+	Configuration bool `yaml:"configuration,omitempty"`
 }
 
 var nameRe = regexp.MustCompile(`^[-_a-z0-9]{1,}$`)
@@ -113,6 +115,8 @@ func (ctr *Container) Validate() error {
 }
 
 // Validate the dependency spec.
+//
+//nolint:gocyclo
 func (dep *Dependency) Validate() error {
 	var multiErr *multierror.Error
 
@@ -141,6 +145,10 @@ func (dep *Dependency) Validate() error {
 	}
 
 	if dep.Time {
+		nonZeroDeps++
+	}
+
+	if dep.Configuration {
 		nonZeroDeps++
 	}
 

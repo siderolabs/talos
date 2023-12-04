@@ -17,6 +17,22 @@ message EventSinkConfigSpec {
   string endpoint = 1;
 }
 
+// ExtensionServicesConfigFile describes extensions service config files.
+message ExtensionServicesConfigFile {
+  string content = 1;
+  string mount_path = 2;
+}
+
+// ExtensionServicesConfigSpec describes status of rendered extensions service config files.
+message ExtensionServicesConfigSpec {
+  repeated ExtensionServicesConfigFile files = 2;
+}
+
+// ExtensionServicesConfigStatusSpec describes status of rendered extensions service config files.
+message ExtensionServicesConfigStatusSpec {
+  string spec_version = 1;
+}
+
 // KernelModuleSpecSpec describes Linux kernel module to load.
 message KernelModuleSpecSpec {
   string name = 1;

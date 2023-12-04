@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/extensionservicesconfig"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
@@ -37,7 +38,20 @@ func TestNew(t *testing.T) {
 	sideroLinkCfg := siderolink.NewConfigV1Alpha1()
 	sideroLinkCfg.APIUrlConfig.URL = must.Value(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))(t)
 
-	cfg, err := container.New(v1alpha1Cfg, sideroLinkCfg)
+	extensionsCfg := extensionservicesconfig.NewExtensionServicesConfigV1Alpha1()
+	extensionsCfg.Config = []extensionservicesconfig.ExtensionServiceConfig{
+		{
+			ExtensionName: "test-extension",
+			ExtensionServiceConfigFiles: []extensionservicesconfig.ExtensionServiceConfigFile{
+				{
+					ExtensionContent:   "test",
+					ExtensionMountPath: "/etc/test",
+				},
+			},
+		},
+	}
+
+	cfg, err := container.New(v1alpha1Cfg, sideroLinkCfg, extensionsCfg)
 	require.NoError(t, err)
 
 	assert.False(t, cfg.Readonly())
@@ -45,8 +59,9 @@ func TestNew(t *testing.T) {
 	assert.True(t, cfg.Machine().Features().RBACEnabled())
 	assert.Equal(t, "topsecret", cfg.Cluster().Secret())
 	assert.Equal(t, "https://siderolink.api/join?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
+	assert.Equal(t, "test-extension", cfg.ExtensionServicesConfig().ConfigData()[0].Name())
 	assert.Same(t, v1alpha1Cfg, cfg.RawV1Alpha1())
-	assert.Equal(t, []config.Document{v1alpha1Cfg, sideroLinkCfg}, cfg.Documents())
+	assert.Equal(t, []config.Document{v1alpha1Cfg, sideroLinkCfg, extensionsCfg}, cfg.Documents())
 
 	bytes, err := cfg.Bytes()
 	require.NoError(t, err)

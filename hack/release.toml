@@ -63,6 +63,24 @@ Talos Linux starting from this release uses RSA key for Kubernetes API Server Se
 Talos Linux now supports OpenNebula platform.
 """
 
+    [notes.extensions]
+        title = "Extension Services Config"
+        description = """\
+Talos now supports supplying configuration files for extension services that can be mounted into the extension service container.
+The extension service configuration is a separate config document. An example is shown below:
+
+```yaml
+---
+apiVersion: v1alpha1
+kind: ExtensionServicesConfig
+config:
+    - name: nut-client
+      configFiles:
+        - content: MONITOR ${upsmonHost} 1 remote pass password
+          mountPath: /usr/local/etc/nut/upsmon.conf
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

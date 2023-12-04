@@ -13,5 +13,5 @@ func (svc *Extension) GetOCIOptions() ([]oci.SpecOpts, error) {
 		return nil, err
 	}
 
-	return svc.getOCIOptions(envVars), nil
+	return svc.getOCIOptions(envVars, svc.Spec.Container.Mounts), nil
 }

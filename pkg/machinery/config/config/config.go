@@ -11,6 +11,7 @@ type Config interface {
 	Machine() MachineConfig
 	Cluster() ClusterConfig
 	SideroLink() SideroLinkConfig
+	ExtensionServicesConfig() ExtensionServicesConfigConfig
 	Runtime() RuntimeConfig
 	NetworkRules() NetworkRuleConfig
 }
