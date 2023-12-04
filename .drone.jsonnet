@@ -477,6 +477,7 @@ local integration_cilium = Step('e2e-cilium', target='e2e-qemu', privileged=true
   SHORT_INTEGRATION_TEST: 'yes',
   WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: 'yes',
   WITH_CUSTOM_CNI: 'cilium',
+  WITH_FIREWALL: 'accept',
   QEMU_WORKERS: '2',
   WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}]',
   IMAGE_REGISTRY: local_registry,
@@ -485,6 +486,18 @@ local integration_cilium_strict = Step('e2e-cilium-strict', target='e2e-qemu', p
   SHORT_INTEGRATION_TEST: 'yes',
   WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: 'yes',
   WITH_CUSTOM_CNI: 'cilium',
+  WITH_FIREWALL: 'accept',
+  QEMU_WORKERS: '2',
+  CILIUM_INSTALL_TYPE: 'strict',
+  WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]',
+  IMAGE_REGISTRY: local_registry,
+});
+local integration_cilium_strict_kubespan = Step('e2e-cilium-strict-kubespan', target='e2e-qemu', privileged=true, depends_on=[integration_cilium_strict], environment={
+  SHORT_INTEGRATION_TEST: 'yes',
+  WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: 'yes',
+  WITH_CUSTOM_CNI: 'cilium',
+  WITH_FIREWALL: 'accept',
+  WITH_KUBESPAN: 'true',
   QEMU_WORKERS: '2',
   CILIUM_INSTALL_TYPE: 'strict',
   WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]',
@@ -532,6 +545,7 @@ local integration_no_cluster_discovery = Step('e2e-no-cluster-discovery', target
 local integration_kubespan = Step('e2e-kubespan', target='e2e-qemu', privileged=true, depends_on=[integration_no_cluster_discovery], environment={
   SHORT_INTEGRATION_TEST: 'yes',
   WITH_CLUSTER_DISCOVERY: 'true',
+  WITH_KUBESPAN: 'true',
   IMAGE_REGISTRY: local_registry,
   WITH_CONFIG_PATCH: '[{"op": "replace", "path": "/cluster/discovery/registries/kubernetes/disabled", "value": false}]',  // use Kubernetes discovery backend
 });
@@ -621,7 +635,7 @@ local integration_pipelines = [
     integration_default_hostname,
   ]) + integration_trigger(['integration-misc']),
   Pipeline('integration-extensions', default_pipeline_steps + integration_extensions) + integration_trigger(['integration-extensions']),
-  Pipeline('integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict]) + integration_trigger(['integration-cilium']),
+  Pipeline('integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict, integration_cilium_strict_kubespan]) + integration_trigger(['integration-cilium']),
   Pipeline('integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip]) + integration_trigger(['integration-qemu-encrypted-vip']),
   Pipeline('integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race]) + integration_trigger(['integration-qemu-race']),
   Pipeline('integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi]) + integration_trigger(['integration-qemu-csi']),
@@ -646,7 +660,7 @@ local integration_pipelines = [
     integration_default_hostname,
   ], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-extensions', default_pipeline_steps + integration_extensions, [default_cron_pipeline]) + cron_trigger(['nightly']),
-  Pipeline('cron-integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict], [default_cron_pipeline]) + cron_trigger(['nightly']),
+  Pipeline('cron-integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict, integration_cilium_strict_kubespan], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi], [default_cron_pipeline]) + cron_trigger(['nightly']),

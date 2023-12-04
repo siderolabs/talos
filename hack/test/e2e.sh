@@ -242,11 +242,23 @@ function run_csi_tests {
 function install_and_run_cilium_cni_tests {
   get_kubeconfig
 
+  case "${WITH_KUBESPAN:-false}" in
+    true)
+      CILIUM_NODE_ENCRYPTION=no
+      CILIUM_TEST_EXTRA_ARGS=("--test="!node-to-node-encryption"")
+      ;;
+    *)
+      CILIUM_NODE_ENCRYPTION=yes
+      CILIUM_TEST_EXTRA_ARGS=()
+      ;;
+  esac
+
   case "${CILIUM_INSTALL_TYPE:-none}" in
     strict)
       ${CILIUM_CLI} install \
         --set=ipam.mode=kubernetes \
         --set=kubeProxyReplacement=true \
+        --set=encryption.nodeEncryption=${CILIUM_NODE_ENCRYPTION} \
         --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
         --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
         --set=cgroup.autoMount.enabled=false \
@@ -260,6 +272,7 @@ function install_and_run_cilium_cni_tests {
       ${CILIUM_CLI} install \
         --set=ipam.mode=kubernetes \
         --set=kubeProxyReplacement=false \
+        --set=encryption.nodeEncryption=${CILIUM_NODE_ENCRYPTION} \
         --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
         --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
         --set=cgroup.autoMount.enabled=false \
@@ -275,5 +288,5 @@ function install_and_run_cilium_cni_tests {
   ${KUBECTL} label ns cilium-test pod-security.kubernetes.io/enforce=privileged
 
   # --external-target added, as default 'one.one.one.one' is buggy, and CloudFlare status is of course "all healthy"
-  ${CILIUM_CLI} connectivity test --test-namespace cilium-test --external-target google.com; ${KUBECTL} delete ns cilium-test
+  ${CILIUM_CLI} connectivity test --test-namespace cilium-test --external-target google.com "${CILIUM_TEST_EXTRA_ARGS[@]}"; ${KUBECTL} delete ns cilium-test
 }
