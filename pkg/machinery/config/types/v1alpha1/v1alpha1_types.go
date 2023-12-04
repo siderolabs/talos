@@ -2183,6 +2183,23 @@ type VolumeMountConfig struct {
 // ClusterInlineManifests is a list of ClusterInlineManifest.
 type ClusterInlineManifests []ClusterInlineManifest
 
+// UnmarshalYAML implements yaml.Unmarshaler.
+func (manifests *ClusterInlineManifests) UnmarshalYAML(value *yaml.Node) error {
+	var result []ClusterInlineManifest
+
+	if err := value.Decode(&result); err != nil {
+		return err
+	}
+
+	for i := range result {
+		result[i].InlineManifestContents = strings.TrimLeft(result[i].InlineManifestContents, "\t\n\v\f\r")
+	}
+
+	*manifests = result
+
+	return nil
+}
+
 // ClusterInlineManifest struct describes inline bootstrap manifests for the user.
 type ClusterInlineManifest struct {
 	//   description: |
