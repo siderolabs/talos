@@ -701,12 +701,6 @@
           "markdownDescription": "Enable verbose logging to the console.\nAll system containers logs will flow into serial console.\n\n**Note:** To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.",
           "x-intellij-html-description": "\u003cp\u003eEnable verbose logging to the console.\nAll system containers logs will flow into serial console.\u003c/p\u003e\n\n\u003cp\u003e\u003cstrong\u003eNote:\u003c/strong\u003e To avoid breaking Talos bootstrap flow enable this option only if serial console can handle high message throughput.\u003c/p\u003e\n"
         },
-        "persist": {
-          "type": "boolean",
-          "title": "persist",
-          "markdownDescription": "",
-          "x-intellij-html-description": ""
-        },
         "machine": {
           "$ref": "#/$defs/MachineConfig",
           "title": "machine",
@@ -2390,19 +2384,6 @@
           "description": "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node.\n",
           "markdownDescription": "KubeSpan advanced filtering of network addresses .\n\nSettings in this section are optional, and settings apply only to the node.",
           "x-intellij-html-description": "\u003cp\u003eKubeSpan advanced filtering of network addresses .\u003c/p\u003e\n\n\u003cp\u003eSettings in this section are optional, and settings apply only to the node.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object"
-    },
-    "PodCheckpointer": {
-      "properties": {
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "The image field is an override to the default pod-checkpointer image.\n",
-          "markdownDescription": "The `image` field is an override to the default pod-checkpointer image.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eimage\u003c/code\u003e field is an override to the default pod-checkpointer image.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

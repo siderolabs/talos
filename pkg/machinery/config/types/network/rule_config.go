@@ -41,27 +41,78 @@ var (
 )
 
 // RuleConfigV1Alpha1 is a network firewall rule config document.
+//
+//	examples:
+//	  - value: exampleRuleConfigV1Alpha1()
+//	alias: NetworkRuleConfig
 type RuleConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-	MetaName  string `yaml:"name"`
-
+	//   description: |
+	//     Name of the config document.
+	MetaName string `yaml:"name"`
+	//   description: |
+	//     Port selector defines which ports and protocols on the host are affected by the rule.
 	PortSelector RulePortSelector `yaml:"portSelector"`
-	Ingress      IngressConfig    `yaml:"ingress"`
+	//   description: |
+	//     Ingress defines which source subnets are allowed to access the host ports/protocols defined by the `portSelector`.
+	Ingress IngressConfig `yaml:"ingress"`
 }
 
 // RulePortSelector is a port selector for the network rule.
 type RulePortSelector struct {
-	Ports    PortRanges          `yaml:"ports"`
+	//   description: |
+	//     Ports defines a list of port ranges or single ports.
+	//     The port ranges are inclusive, and should not overlap.
+	//   examples:
+	//    - value: >
+	//       examplePortRanges1()
+	//    - value: >
+	//       examplePortRanges2()
+	Ports PortRanges `yaml:"ports"`
+	//   description: |
+	//     Protocol defines traffic protocol (e.g. TCP or UDP).
+	//   values:
+	//    - "tcp"
+	//    - "udp"
+	//    - "icmp"
+	//    - "icmpv6"
 	Protocol nethelpers.Protocol `yaml:"protocol"`
 }
 
 // IngressConfig is a ingress config.
+//
+//docgen:alias
 type IngressConfig []IngressRule
 
 // IngressRule is a ingress rule.
 type IngressRule struct {
+	//   description: |
+	//     Subnet defines a source subnet.
+	//   examples:
+	//    - value: >
+	//       netip.MustParsePrefix("10.3.4.0/24")
+	//    - value: >
+	//       netip.MustParsePrefix("2001:db8::/32")
+	//    - value: >
+	//       netip.MustParsePrefix("1.3.4.5/32")
 	Subnet netip.Prefix `yaml:"subnet"`
-	Except netip.Prefix `yaml:"except,omitempty"`
+	//   description: |
+	//     Except defines a source subnet to exclude from the rule, it gets excluded from the `subnet`.
+	Except Prefix `yaml:"except,omitempty"`
+}
+
+// Prefix is a wrapper for netip.Prefix.
+//
+// It implements IsZero() so that yaml.Marshal correctly skips empty values.
+//
+//docgen:nodoc
+type Prefix struct {
+	netip.Prefix
+}
+
+// IsZero implements yaml.IsZeroer interface.
+func (n Prefix) IsZero() bool {
+	return n.Prefix == netip.Prefix{}
 }
 
 // NewRuleConfigV1Alpha1 creates a new RuleConfig config document.
@@ -72,6 +123,22 @@ func NewRuleConfigV1Alpha1() *RuleConfigV1Alpha1 {
 			MetaAPIVersion: "v1alpha1",
 		},
 	}
+}
+
+func exampleRuleConfigV1Alpha1() *RuleConfigV1Alpha1 {
+	cfg := NewRuleConfigV1Alpha1()
+	cfg.MetaName = "ingress-apid"
+	cfg.PortSelector.Protocol = nethelpers.ProtocolTCP
+	cfg.PortSelector.Ports = PortRanges{
+		{Lo: 50000, Hi: 50000},
+	}
+	cfg.Ingress = IngressConfig{
+		{
+			Subnet: netip.MustParsePrefix("192.168.0.0/16"),
+		},
+	}
+
+	return cfg
 }
 
 // Name implements config.NamedDocument interface.
@@ -148,7 +215,7 @@ func (s *RuleConfigV1Alpha1) ExceptSubnets() []netip.Prefix {
 			},
 		),
 		func(rule IngressRule) netip.Prefix {
-			return rule.Except
+			return rule.Except.Prefix
 		},
 	)
 }

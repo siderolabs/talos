@@ -41,7 +41,7 @@ func (suite *NfTablesChainConfigTestSuite) injectConfig(block bool) {
 	kubeletIngressCfg.Ingress = []networkcfg.IngressRule{
 		{
 			Subnet: netip.MustParsePrefix("10.0.0.0/8"),
-			Except: netip.MustParsePrefix("10.3.0.0/16"),
+			Except: networkcfg.Prefix{Prefix: netip.MustParsePrefix("10.3.0.0/16")},
 		},
 		{
 			Subnet: netip.MustParsePrefix("192.168.0.0/16"),

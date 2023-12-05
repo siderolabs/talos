@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/siderolabs/gen/ensure"
+
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
@@ -36,9 +38,23 @@ var (
 )
 
 // KmsgLogV1Alpha1 is a event sink config document.
+//
+//	examples:
+//	  - value: exampleKmsgLogV1Alpha1()
+//	alias: KmsgLogConfig
 type KmsgLogV1Alpha1 struct {
-	meta.Meta  `yaml:",inline"`
-	MetaName   string   `yaml:"name"`
+	meta.Meta `yaml:",inline"`
+	//   description: |
+	//     Name of the config document.
+	MetaName string `yaml:"name"`
+	//   description: |
+	//     The URL encodes the log destination.
+	//     The scheme must be tcp:// or udp://.
+	//     The path must be empty.
+	//     The port is required.
+	//   examples:
+	//     - value: >
+	//        "udp://10.3.7.3:2810"
 	KmsgLogURL meta.URL `yaml:"url"`
 }
 
@@ -50,6 +66,14 @@ func NewKmsgLogV1Alpha1() *KmsgLogV1Alpha1 {
 			MetaAPIVersion: "v1alpha1",
 		},
 	}
+}
+
+func exampleKmsgLogV1Alpha1() *KmsgLogV1Alpha1 {
+	cfg := NewKmsgLogV1Alpha1()
+	cfg.MetaName = "remote-log"
+	cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://192.168.3.7:3478/"))
+
+	return cfg
 }
 
 // Name implements config.NamedDocument interface.

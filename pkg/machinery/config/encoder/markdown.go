@@ -6,51 +6,19 @@ package encoder
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
+	"slices"
 	"strings"
 	"text/template"
 
 	yaml "gopkg.in/yaml.v3"
 )
 
-var markdownTemplate = `
-{{ .Description }}
-{{- $anchors := .Anchors -}}
-{{- $tick := "` + "`" + `" -}}
-{{ range $struct := .Structs }}
----
-## {{ $struct.Type }}
-{{ if $struct.Description -}}
-{{ $struct.Description }}
-{{ end }}
-{{ if $struct.AppearsIn -}}
-Appears in:
-
-{{ range $appearance := $struct.AppearsIn -}}
-- <code>{{ encodeType $appearance.TypeName }}.{{ $appearance.FieldName }}</code>
-{{ end -}}
-{{ end }}
-
-{{ range $example := $struct.Examples }}
-{{ yaml $example.GetValue "" }}
-{{ end }}
-
-{{ if $struct.Fields -}}
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-{{ range $field := $struct.Fields -}}
-{{ if $field.Name -}}
-| {{- $tick }}{{ $field.Name }}{{ $tick }} |
-{{- encodeType $field.Type }} |
-{{- fmtDesc $field.Description }} {{ with $field.Examples }}<details><summary>Show example(s)</summary>{{ range . }}{{ yaml .GetValue $field.Name }}{{ end }}</details>{{ end }} |
-{{- range $value := $field.Values }}{{ $tick }}{{ $value }}{{ $tick }}<br />{{ end }} |
-{{ end -}}
-{{ end }}
-{{ end }}
-{{ end }}`
+//go:embed "markdown.tmpl"
+var markdownTemplate string
 
 // FileDoc represents a single go file documentation.
 type FileDoc struct {
@@ -60,31 +28,33 @@ type FileDoc struct {
 	Description string
 	// Structs structs defined in the file.
 	Structs []*Doc
-	Anchors map[string]string
-
-	t *template.Template
+	// Types is map of all non-trivial types defined in the file.
+	Types map[string]*Doc
 }
 
 // Encode encodes file documentation as MD file.
-func (fd *FileDoc) Encode() ([]byte, error) {
-	anchors := map[string]string{}
-	for _, t := range fd.Structs {
-		anchors[t.Type] = strings.ToLower(t.Type)
-	}
-
-	fd.Anchors = anchors
-
-	fd.t = template.Must(template.New("file_markdown.tpl").
+func (fd *FileDoc) Encode(root *Doc, frontmatter func(title, description string) string) ([]byte, error) {
+	t := template.Must(template.New("markdown.tmpl").
 		Funcs(template.FuncMap{
-			"yaml":       encodeYaml,
-			"fmtDesc":    formatDescription,
-			"encodeType": fd.encodeType,
+			"yaml":        encodeYaml,
+			"fmtDesc":     formatDescription,
+			"dict":        tmplDict,
+			"repeat":      strings.Repeat,
+			"trimPrefix":  strings.TrimPrefix,
+			"add":         func(a, b int) int { return a + b },
+			"frontmatter": frontmatter,
 		}).
 		Parse(markdownTemplate))
 
-	buf := bytes.Buffer{}
+	var buf bytes.Buffer
 
-	if err := fd.t.Execute(&buf, fd); err != nil {
+	if err := t.Execute(&buf, struct {
+		Root  *Doc
+		Types map[string]*Doc
+	}{
+		Root:  root,
+		Types: fd.Types,
+	}); err != nil {
 		return nil, err
 	}
 
@@ -92,54 +62,85 @@ func (fd *FileDoc) Encode() ([]byte, error) {
 }
 
 // Write dumps documentation string to folder.
-func (fd *FileDoc) Write(path, frontmatter string) error {
-	data, err := fd.Encode()
-	if err != nil {
-		return err
-	}
-
-	if stat, e := os.Stat(path); !os.IsNotExist(e) {
+//
+//nolint:gocyclo
+func (fd *FileDoc) Write(path string, frontmatter func(title, description string) string) error {
+	if stat, err := os.Stat(path); !os.IsNotExist(err) {
 		if !stat.IsDir() {
 			return fmt.Errorf("destination path should be a directory")
 		}
 	} else {
-		if e := os.MkdirAll(path, 0o777); e != nil {
-			return e
+		if err := os.MkdirAll(path, 0o777); err != nil {
+			return err
 		}
 	}
 
-	f, err := os.Create(filepath.Join(path, fmt.Sprintf("%s.%s", strings.ToLower(fd.Name), "md")))
-	if err != nil {
+	// generate _index.md
+	if err := os.WriteFile(filepath.Join(path, "_index.md"), []byte(frontmatter(fd.Name, fd.Description)), 0o666); err != nil {
 		return err
 	}
 
-	if _, err := f.WriteString(frontmatter); err != nil {
-		return err
+	// find map of all types
+	fd.Types = map[string]*Doc{}
+
+	for _, t := range fd.Structs {
+		if t.Type == "" || strings.ToLower(t.Type) == t.Type {
+			continue
+		}
+
+		fd.Types[t.Type] = t
 	}
 
-	if _, err := f.Write(data); err != nil {
-		return err
+	// find root nodes
+	var roots []*Doc
+
+	for _, t := range fd.Structs {
+		if len(t.AppearsIn) == 0 {
+			roots = append(roots, t)
+		}
+	}
+
+	for _, root := range roots {
+		contents, err := fd.Encode(root, frontmatter)
+		if err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(filepath.Join(path, fmt.Sprintf("%s.%s", strings.ToLower(root.Type), "md")), contents, 0o666); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (fd *FileDoc) encodeType(t string) string {
-	re := regexp.MustCompile(`\w+`)
+//nolint:gocyclo
+func encodeYaml(in any, path string) string {
+	if path != "" {
+		parts := strings.Split(path, ".")
 
-	for _, s := range re.FindAllString(t, -1) {
-		if anchor, ok := fd.Anchors[s]; ok {
-			t = strings.ReplaceAll(t, s, formatLink(s, "#"+anchor))
+		parts = parts[1:] // strip first segment, it's root element
+
+		// if the last element is ""/"-", it means we're at the root of the slice, so we don't need to wrap it once again
+		if len(parts) > 0 && (parts[len(parts)-1] == "" || parts[len(parts)-1] == "-") {
+			parts = parts[:len(parts)-1]
 		}
-	}
 
-	return t
-}
+		slices.Reverse(parts)
 
-func encodeYaml(in interface{}, name string) string {
-	if name != "" {
-		in = map[string]interface{}{
-			name: in,
+		for _, part := range parts {
+			switch part {
+			case "":
+				in = []any{in}
+			case "-":
+				in = map[string]any{
+					"example.com": in,
+				}
+			default:
+				in = map[string]any{
+					part: in,
+				}
+			}
 		}
 	}
 
@@ -161,10 +162,6 @@ func encodeYaml(in interface{}, name string) string {
 	return fmt.Sprintf("{{< highlight yaml >}}\n%s{{< /highlight >}}", strings.Join(lines, "\n"))
 }
 
-func formatLink(text, link string) string {
-	return fmt.Sprintf(`<a href="%s">%s</a>`, link, text)
-}
-
 func formatDescription(description string) string {
 	lines := strings.Split(description, "\n")
 	if len(lines) <= 1 {
@@ -172,4 +169,23 @@ func formatDescription(description string) string {
 	}
 
 	return fmt.Sprintf("<details><summary>%s</summary>%s</details>", lines[0], strings.Join(lines[1:], "<br />"))
+}
+
+func tmplDict(vals ...any) (map[string]any, error) {
+	if len(vals)%2 != 0 {
+		return nil, fmt.Errorf("invalid number of arguments: %d", len(vals))
+	}
+
+	res := map[string]any{}
+
+	for i := 0; i < len(vals); i += 2 {
+		key, ok := vals[i].(string)
+		if !ok {
+			return nil, fmt.Errorf("invalid key type: %T", vals[i])
+		}
+
+		res[key] = vals[i+1]
+	}
+
+	return res, nil
 }

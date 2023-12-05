@@ -68,6 +68,11 @@ style = "solarized-dark"
 # Uncomment if you want your chosen highlight style used for code blocks without a specified language
 # guessSyntax = "true"
 
+  [markup.tableOfContents]
+    endLevel = 6
+    ordered = false
+    startLevel = 2
+
 # Everything below this are Site Params
 
 # Comment out if you don't want the "print entire section" link enabled.

@@ -3,17 +3,17 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /*
-Package v1alpha1 configuration file contains all the options available for configuring a machine.
+Package v1alpha1 contains definition of the `v1alpha1` configuration document.
 
-To generate a set of basic configuration files, run:
+Even though the machine configuration in Talos Linux is multi-document, at the moment
+this configuration document contains most of the configuration options.
 
-	talosctl gen config --version v1alpha1 <cluster name> <cluster endpoint>
-
-This will generate a machine config for each node type, and a talosconfig for the CLI.
+It is expected that new configuration options will be added as new documents, and existing ones
+migrated to their own documents.
 */
 package v1alpha1
 
-//go:generate docgen ./v1alpha1_types.go ./v1alpha1_types_doc.go Configuration ./schemas/v1alpha1_config.schema.json ../../../gendata/data/tag
+//go:generate docgen -output ./v1alpha1_types_doc.go -json-schema-output ./schemas/v1alpha1_config.schema.json -version-tag-file ../../../gendata/data/tag ./v1alpha1_types.go
 
 //go:generate deepcopy-gen --input-dirs ../v1alpha1/ --go-header-file ../../../../../hack/boilerplate.txt --bounding-dirs ../v1alpha1 -O zz_generated.deepcopy
 
@@ -42,7 +42,7 @@ func init() {
 	})
 }
 
-// Config defines the v1alpha1 configuration file.
+// Config defines the v1alpha1.Config Talos machine configuration document.
 //
 //	examples:
 //	   - value: configExample()
@@ -63,7 +63,9 @@ type Config struct {
 	//     - false
 	//     - no
 	ConfigDebug *bool `yaml:"debug,omitempty"`
-	//docgen:nodoc
+	// docgen:nodoc
+	//
+	// Deprecated: Not supported anymore.
 	ConfigPersist *bool `yaml:"persist,omitempty"`
 	//   description: |
 	//     Provides machine specific configuration options.
@@ -1002,6 +1004,8 @@ type RegistriesConfig struct {
 }
 
 // PodCheckpointer represents the pod-checkpointer config values.
+//
+//docgen:nodoc
 type PodCheckpointer struct {
 	//   description: |
 	//     The `image` field is an override to the default pod-checkpointer image.
@@ -2181,6 +2185,8 @@ type VolumeMountConfig struct {
 }
 
 // ClusterInlineManifests is a list of ClusterInlineManifest.
+//
+//docgen:alias
 type ClusterInlineManifests []ClusterInlineManifest
 
 // UnmarshalYAML implements yaml.Unmarshaler.

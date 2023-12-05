@@ -969,7 +969,7 @@ ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /src
 COPY --from=talosctl-targetarch /talosctl-${TARGETOS}-${TARGETARCH} /bin/talosctl
-RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp \
+RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp/configuration \
     && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
 COPY ./pkg/machinery/config/types/v1alpha1/schemas/ /tmp/schemas/
 
@@ -998,7 +998,7 @@ RUN protoc \
     /protos/time/*.proto
 
 FROM scratch AS docs
-COPY --from=docs-build /tmp/configuration.md /website/content/v1.6/reference/
+COPY --from=docs-build /tmp/configuration/ /website/content/v1.6/reference/configuration/
 COPY --from=docs-build /tmp/cli.md /website/content/v1.6/reference/
 COPY --from=docs-build /tmp/schemas /website/content/v1.6/schemas/
 COPY --from=proto-docs-build /tmp/api.md /website/content/v1.6/reference/

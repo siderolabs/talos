@@ -16,8 +16,8 @@ import (
 func (Config) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "Config",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "Config defines the v1alpha1 configuration file." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "Config defines the v1alpha1 configuration file.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "Config defines the v1alpha1.Config Talos machine configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "Config defines the v1alpha1.Config Talos machine configuration document.",
 		Fields: []encoder.Doc{
 			{
 				Name:        "version",
@@ -42,13 +42,7 @@ func (Config) Doc() *encoder.Doc {
 					"no",
 				},
 			},
-			{
-				Name:        "persist",
-				Type:        "bool",
-				Note:        "",
-				Description: "",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "machine",
 				Type:        "MachineConfig",
@@ -491,7 +485,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "inlineManifests",
-				Type:        "ClusterInlineManifests",
+				Type:        "[]ClusterInlineManifest",
 				Note:        "",
 				Description: "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of inline Kubernetes manifests." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -1256,25 +1250,6 @@ func (RegistriesConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-func (PodCheckpointer) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "PodCheckpointer",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "PodCheckpointer represents the pod-checkpointer config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "PodCheckpointer represents the pod-checkpointer config values.",
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The `image` field is an override to the default pod-checkpointer image.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `image` field is an override to the default pod-checkpointer image." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
 func (CoreDNS) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "CoreDNS",
@@ -1324,7 +1299,9 @@ func (Endpoint) Doc() *encoder.Doc {
 				FieldName: "endpoint",
 			},
 		},
-		Fields: []encoder.Doc{},
+		Fields: []encoder.Doc{
+			{},
+		},
 	}
 
 	doc.AddExample("", clusterEndpointExample1())
@@ -3516,6 +3493,12 @@ func (ClusterInlineManifest) Doc() *encoder.Doc {
 		Type:        "ClusterInlineManifest",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ClusterInlineManifest struct describes inline bootstrap manifests for the user." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "ClusterInlineManifest struct describes inline bootstrap manifests for the user.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ClusterConfig",
+				FieldName: "inlineManifests",
+			},
+		},
 		Fields: []encoder.Doc{
 			{
 				Name:        "name",
@@ -3533,6 +3516,8 @@ func (ClusterInlineManifest) Doc() *encoder.Doc {
 			},
 		},
 	}
+
+	doc.AddExample("", clusterInlineManifestsExample())
 
 	doc.Fields[0].AddExample("", "csi")
 	doc.Fields[1].AddExample("", "/etc/kubernetes/auth")
@@ -3954,11 +3939,11 @@ func (KernelModuleConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-// GetConfigurationDoc returns documentation for the file ./v1alpha1_types_doc.go.
-func GetConfigurationDoc() *encoder.FileDoc {
+// GetFileDoc returns documentation for the file ./v1alpha1_types_doc.go.
+func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
-		Name:        "Configuration",
-		Description: "Package v1alpha1 configuration file contains all the options available for configuring a machine.\n\nTo generate a set of basic configuration files, run:\n\n	talosctl gen config --version v1alpha1 <cluster name> <cluster endpoint>\n\nThis will generate a machine config for each node type, and a talosconfig for the CLI.\n",
+		Name:        "v1alpha1",
+		Description: "Package v1alpha1 contains definition of the `v1alpha1` configuration document.\n\nEven though the machine configuration in Talos Linux is multi-document, at the moment\nthis configuration document contains most of the configuration options.\n\nIt is expected that new configuration options will be added as new documents, and existing ones\nmigrated to their own documents.\n",
 		Structs: []*encoder.Doc{
 			Config{}.Doc(),
 			MachineConfig{}.Doc(),
@@ -3977,7 +3962,6 @@ func GetConfigurationDoc() *encoder.FileDoc {
 			InstallExtensionConfig{}.Doc(),
 			TimeConfig{}.Doc(),
 			RegistriesConfig{}.Doc(),
-			PodCheckpointer{}.Doc(),
 			CoreDNS{}.Doc(),
 			Endpoint{}.Doc(),
 			ControlPlaneConfig{}.Doc(),

@@ -12,6 +12,7 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -39,7 +40,7 @@ import (
 {{ range $struct := .Structs -}}
 func ({{ $struct.Name }}) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
-		Type : "{{ $struct.Name }}",
+		Type : "{{ if $struct.Text.Alias }}{{ $struct.Text.Alias}}{{ else }}{{ $struct.Name }}{{ end }}",
 		Comments: [3]string{ "" /* encoder.HeadComment */, "{{ $struct.Text.Comment }}" /* encoder.LineComment */,  "" /* encoder.FootComment */},
 		Description: "{{ $struct.Text.Description }}",
 		{{ if $struct.AppearsIn -}}
@@ -100,8 +101,8 @@ func ({{ $struct.Name }}) Doc() *encoder.Doc {
 }
 {{ end -}}
 
-// Get{{ .Name }}Doc returns documentation for the file {{ .File }}.
-func Get{{ .Name }}Doc() *encoder.FileDoc {
+// GetFileDoc returns documentation for the file {{ .File }}.
+func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
 		Name: "{{ .Name }}",
 		Description: "{{ .Header }}",
@@ -153,6 +154,7 @@ type Text struct {
 	Comment     string         `json:"-"`
 	Description string         `json:"description"`
 	Examples    []*Example     `json:"examples"`
+	Alias       string         `json:"alias"`
 	Values      []string       `json:"values"`
 	Schema      *SchemaWrapper `json:"schema"`
 }
@@ -346,6 +348,8 @@ func collectFields(s *structType, aliases map[string]aliasType) (fields []*Field
 	for _, f := range s.node.Fields.List {
 		if f.Names == nil {
 			// This is an embedded struct.
+			fields = append(fields, &Field{Type: "unknown"})
+
 			continue
 		}
 
@@ -433,34 +437,52 @@ func render(doc *Doc, dest string) {
 	}
 }
 
-func processFile(inputFile, outputFile, schemaOutputFile, versionTagFile, typeName string) {
-	abs, err := in(inputFile)
-	if err != nil {
-		log.Fatal(err)
+func processFile(inputFiles []string, outputFile, schemaOutputFile, versionTagFile string) {
+	var (
+		packageName string
+		packageDoc  string
+		structs     []*structType
+	)
+
+	aliases := map[string]aliasType{}
+
+	for _, inputFile := range inputFiles {
+		abs, err := in(inputFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("creating package file set: %q\n", abs)
+
+		fset := token.NewFileSet()
+
+		node, err := parser.ParseFile(fset, abs, nil, parser.ParseComments)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		packageName = node.Name.Name
+
+		if node.Doc != nil && node.Doc.Text() != "" {
+			packageDoc = node.Doc.Text()
+		}
+
+		tokenFile := fset.File(node.Pos())
+		if tokenFile == nil {
+			log.Fatalf("No token")
+		}
+
+		fmt.Printf("parsing file in package %q: %s\n", packageName, tokenFile.Name())
+
+		fileStructs, fileAliases := collectStructs(node)
+
+		structs = append(structs, fileStructs...)
+
+		maps.Copy(aliases, fileAliases)
 	}
-
-	fmt.Printf("creating package file set: %q\n", abs)
-
-	fset := token.NewFileSet()
-
-	node, err := parser.ParseFile(fset, abs, nil, parser.ParseComments)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	packageName := node.Name.Name
-
-	tokenFile := fset.File(node.Pos())
-	if tokenFile == nil {
-		log.Fatalf("No token")
-	}
-
-	fmt.Printf("parsing file in package %q: %s\n", packageName, tokenFile.Name())
-
-	structs, aliases := collectStructs(node)
 
 	if len(structs) == 0 {
-		log.Fatalf("failed to find types that could be documented in %s", abs)
+		log.Fatalf("failed to find types that could be documented in %v", inputFiles)
 	}
 
 	doc := &Doc{
@@ -501,6 +523,11 @@ func processFile(inputFile, outputFile, schemaOutputFile, versionTagFile, typeNa
 	}
 
 	for _, s := range doc.Structs {
+		if s.Text.Alias != "" {
+			s.Text.Description = strings.ReplaceAll(s.Text.Description, s.Name, s.Text.Alias)
+			s.Text.Comment = strings.ReplaceAll(s.Text.Comment, s.Name, s.Text.Alias)
+		}
+
 		if extra, ok := extraExamples[s.Name]; ok {
 			s.Text.Examples = append(s.Text.Examples, extra...)
 		}
@@ -510,14 +537,9 @@ func processFile(inputFile, outputFile, schemaOutputFile, versionTagFile, typeNa
 		}
 	}
 
-	if err == nil {
-		doc.Package = node.Name.Name
-		doc.Name = typeName
-
-		if node.Doc != nil {
-			doc.Header = escape(node.Doc.Text())
-		}
-	}
+	doc.Package = packageName
+	doc.Name = doc.Package
+	doc.Header = escape(packageDoc)
 
 	doc.File = outputFile
 	render(doc, outputFile)
@@ -528,17 +550,14 @@ func processFile(inputFile, outputFile, schemaOutputFile, versionTagFile, typeNa
 }
 
 func main() {
+	outputFile := flag.String("output", "doc.go", "output file name")
+	jsonSchemaOutputFile := flag.String("json-schema-output", "", "output file name for json schema")
+	versionTagFile := flag.String("version-tag-file", "", "file name for version tag")
 	flag.Parse()
 
-	if flag.NArg() != 3 && flag.NArg() != 5 {
-		log.Fatalf("unexpected number of args: %d", flag.NArg())
+	if flag.NArg() == 0 {
+		log.Fatalf("no input files")
 	}
 
-	inputFile := flag.Arg(0)
-	outputFile := flag.Arg(1)
-	typeName := flag.Arg(2)
-	jsonSchemaOutputFile := flag.Arg(3)
-	versionTagFile := flag.Arg(4)
-
-	processFile(inputFile, outputFile, jsonSchemaOutputFile, versionTagFile, typeName)
+	processFile(flag.Args(), *outputFile, *jsonSchemaOutputFile, *versionTagFile)
 }

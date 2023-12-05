@@ -15,6 +15,5 @@ func TestProcessFile(t *testing.T) {
 	outputFile := filepath.Join(t.TempDir(), "out.go")
 	schemaOutputFile := filepath.Join(t.TempDir(), "out.schema.json")
 	versionTagFile := filepath.Join("..", "..", "pkg", "machinery", "gendata", "data", "tag")
-	typeName := "Configuration"
-	processFile(inputFile, outputFile, schemaOutputFile, versionTagFile, typeName)
+	processFile([]string{inputFile}, outputFile, schemaOutputFile, versionTagFile)
 }

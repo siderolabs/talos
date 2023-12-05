@@ -53,8 +53,10 @@ There are some special rules:
 
 When patching a multi-document machine configuration, following rules apply:
 
-- for each document in the patch, the document is merged with the respective document in the machine configuration (matching by `kind`, `apiVersion` and `name` for named documentes)
+- for each document in the patch, the document is merged with the respective document in the machine configuration (matching by `kind`, `apiVersion` and `name` for named documents)
 - if the patch document doesn't exist in the machine configuration, it is appended to the machine configuration
+
+The strategic merge patch itself might be a multi-document YAML, and each document will be applied as a patch to the base machine configuration.
 
 ### RFC6902 (JSON Patches)
 

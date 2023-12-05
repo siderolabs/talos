@@ -30,12 +30,10 @@ func mustParseURL(uri string) *url.URL {
 func configExample() any {
 	return struct {
 		Version string `yaml:"version"`
-		Persist bool
 		Machine *yaml.Node
 		Cluster *yaml.Node
 	}{
 		Version: "v1alpha1",
-		Persist: true,
 		Machine: &yaml.Node{Kind: yaml.ScalarNode, LineComment: "..."},
 		Cluster: &yaml.Node{Kind: yaml.ScalarNode, LineComment: "..."},
 	}
