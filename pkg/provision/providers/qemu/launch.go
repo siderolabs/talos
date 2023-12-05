@@ -279,8 +279,14 @@ func launchVM(config *LaunchConfig) error {
 		"virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
 	}
 
-	for _, disk := range config.DiskPaths {
-		args = append(args, "-drive", fmt.Sprintf("format=raw,if=virtio,file=%s,cache=unsafe", disk))
+	for i, disk := range config.DiskPaths {
+		driver := "virtio"
+
+		if i > 0 {
+			driver = "ide"
+		}
+
+		args = append(args, "-drive", fmt.Sprintf("format=raw,if=%s,file=%s,cache=unsafe", driver, disk))
 	}
 
 	machineArg := config.MachineType

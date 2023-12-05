@@ -130,6 +130,12 @@ cluster:
 ```
 """
 
+    [notes.user-disks]
+        title = "User Disks"
+        description = """\
+Talos Linux now supports specifying user disks in `.machine.disks` machine configuration links via `udev` symlinks, e.g. `/dev/disk/by-id/XXXX`.
+"""
+
 [make_deps]
 
     [make_deps.tools]

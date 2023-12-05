@@ -14,24 +14,11 @@ import (
 
 // UserDiskName returns disk device path.
 func (p *Provisioner) UserDiskName(index int) string {
-	res := "/dev/vd"
-
-	var convert func(i int) string
-
-	convert = func(i int) string {
-		remainder := i % 26
-		divider := i / 26
-
-		prefix := ""
-
-		if divider != 0 {
-			prefix = convert(divider - 1)
-		}
-
-		return fmt.Sprintf("%s%s", prefix, string(rune('a'+remainder)))
-	}
-
-	return res + convert(index)
+	// the disk IDs are assigned in the following way:
+	// * ata-QEMU_HARDDISK_QM00001
+	// * ata-QEMU_HARDDISK_QM00003
+	// * ata-QEMU_HARDDISK_QM00005
+	return fmt.Sprintf("/dev/disk/by-id/ata-QEMU_HARDDISK_QM%05d", (index-1)*2+1)
 }
 
 // CreateDisks creates empty disk files for each disk.
