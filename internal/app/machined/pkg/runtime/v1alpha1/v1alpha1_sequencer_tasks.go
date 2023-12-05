@@ -816,7 +816,7 @@ func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			return err
 		}
 
-		return mountDisks(r)
+		return mountDisks(logger, r)
 	}, "mountUserDisks"
 }
 
@@ -838,6 +838,12 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 				return err
 			}
 
+			deviceName := bd.Device().Name()
+
+			if disk.Device() != deviceName {
+				logger.Printf("using device name %q instead of %q", deviceName, disk.Device())
+			}
+
 			//nolint:errcheck
 			defer bd.Close()
 
@@ -857,21 +863,21 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 
 			if pt != nil {
 				if len(pt.Partitions().Items()) > 0 {
-					logger.Printf(("skipping setup of %q, found existing partitions"), disk.Device())
+					logger.Printf(("skipping setup of %q, found existing partitions"), deviceName)
 
 					return nil
 				}
 			}
 
-			m.Devices[disk.Device()] = installer.Device{
-				Device:                 disk.Device(),
+			m.Devices[deviceName] = installer.Device{
+				Device:                 deviceName,
 				ResetPartitionTable:    true,
 				SkipOverlayMountsCheck: true,
 			}
 
 			for _, part := range disk.Partitions() {
 				extraTarget := &installer.Target{
-					Device: disk.Device(),
+					Device: deviceName,
 					FormatOptions: &partition.FormatOptions{
 						Force:          true,
 						FileSystemType: partition.FilesystemTypeXFS,
@@ -882,7 +888,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 					},
 				}
 
-				m.Targets[disk.Device()] = append(m.Targets[disk.Device()], extraTarget)
+				m.Targets[deviceName] = append(m.Targets[deviceName], extraTarget)
 			}
 
 			return nil
@@ -894,14 +900,29 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 	return m.Execute()
 }
 
-func mountDisks(r runtime.Runtime) (err error) {
+func mountDisks(logger *log.Logger, r runtime.Runtime) (err error) {
 	mountpoints := mount.NewMountPoints()
 
 	for _, disk := range r.Config().Machine().Disks() {
+		bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode))
+		if err != nil {
+			return err
+		}
+
+		deviceName := bd.Device().Name()
+
+		if disk.Device() != deviceName {
+			logger.Printf("using device name %q instead of %q", deviceName, disk.Device())
+		}
+
+		if err = bd.Close(); err != nil {
+			return err
+		}
+
 		for i, part := range disk.Partitions() {
 			var partname string
 
-			partname, err = util.PartPath(disk.Device(), i+1)
+			partname, err = util.PartPath(deviceName, i+1)
 			if err != nil {
 				return err
 			}
@@ -1137,10 +1158,25 @@ func UnmountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 		mountpoints := mount.NewMountPoints()
 
 		for _, disk := range r.Config().Machine().Disks() {
+			bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode))
+			if err != nil {
+				return err
+			}
+
+			deviceName := bd.Device().Name()
+
+			if deviceName != disk.Device() {
+				logger.Printf("using device name %q instead of %q", deviceName, disk.Device())
+			}
+
+			if err = bd.Close(); err != nil {
+				return err
+			}
+
 			for i, part := range disk.Partitions() {
 				var partname string
 
-				partname, err = util.PartPath(disk.Device(), i+1)
+				partname, err = util.PartPath(deviceName, i+1)
 				if err != nil {
 					return err
 				}
