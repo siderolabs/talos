@@ -2457,7 +2457,6 @@ talosctl pcap [flags]
   -i, --interface string    interface name to capture packets on (default "eth0")
   -o, --output string       if not set, decode packets to stdout; if set write raw pcap data to a file, use '-' for stdout
       --promiscuous         put interface into promiscuous mode
-  -s, --snaplen int         maximum packet size to capture (default 4096)
 ```
 
 ### Options inherited from parent commands
