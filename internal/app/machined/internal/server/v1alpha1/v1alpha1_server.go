@@ -2213,7 +2213,6 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 
 	handle, err := afpacket.NewTPacket(
 		afpacket.OptInterface(in.Interface),
-		afpacket.OptFrameSize(int(in.SnapLen)),
 		afpacket.OptPollTimeout(100*time.Millisecond),
 	)
 	if err != nil {

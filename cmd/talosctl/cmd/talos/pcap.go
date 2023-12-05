@@ -9,8 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gopacket/gopacket"
@@ -79,7 +81,6 @@ e.g. by excluding packets with the port 50000.
 			req := machine.PacketCaptureRequest{
 				Interface:   pcapCmdFlags.iface,
 				Promiscuous: pcapCmdFlags.promisc,
-				SnapLen:     uint32(pcapCmdFlags.snaplen),
 			}
 
 			var err error
@@ -120,6 +121,12 @@ e.g. by excluding packets with the port 50000.
 	},
 }
 
+// snapLength defines a snap length for the packet reading. For some reason
+// TF_PACKET captures more than the snap length. Tools like tcpdump ignore snaplen entirely and set their own
+// (https://github.com/the-tcpdump-group/tcpdump/blob/9fad826b0e487e8939325d62b7a461619b2722eb/netdissect.h#L342)
+// so it makes sense to do the same.
+const snapLength = 262144
+
 func dumpPackets(ctx context.Context, r io.Reader) error {
 	src, err := pcapgo.NewReader(r)
 	if err != nil {
@@ -131,11 +138,20 @@ func dumpPackets(ctx context.Context, r io.Reader) error {
 		return fmt.Errorf("error opening pcap reader: %w", err)
 	}
 
-	packetSource := gopacket.NewPacketSource(src, src.LinkType())
+	src.SetSnaplen(snapLength)
 
-	for packet := range packetSource.PacketsCtx(ctx) {
-		fmt.Println(packet)
-	}
+	forEachPacket(
+		ctx,
+		gopacket.NewZeroCopyPacketSource(src, src.LinkType(), gopacket.WithPool(true)),
+		func(packet gopacket.Packet, err error) {
+			switch err {
+			case nil:
+				fmt.Println(packet)
+			default:
+				fmt.Println("packet capture error:", err)
+			}
+		},
+	)
 
 	return nil
 }
@@ -187,5 +203,57 @@ func init() {
 	pcapCmd.Flags().StringVarP(&pcapCmdFlags.output, "output", "o", "", "if not set, decode packets to stdout; if set write raw pcap data to a file, use '-' for stdout")
 	pcapCmd.Flags().StringVar(&pcapCmdFlags.bpfFilter, "bpf-filter", "", "bpf filter to apply, tcpdump -dd format")
 	pcapCmd.Flags().DurationVar(&pcapCmdFlags.duration, "duration", 0, "duration of the capture")
+	pcapCmd.Flags().MarkDeprecated("snaplen", "support of snap length is removed") //nolint:errcheck
+
 	addCommand(pcapCmd)
+}
+
+// forEachPacket reads packets from the packet source and calls the provided function for each packet. fn should not
+// store the packet as it will be reused for the next packet. It will also call fn with nil packet and non nill
+// error if the error is not known. If the context is canceled, the function will return as soon as
+// [gopacket.PacketSource.NextPacket] returns.
+//
+// This function is more or less direct copy of [gopacket.PacketSource.PacketsCtx] minus the sleeps.
+//
+//nolint:gocyclo
+func forEachPacket(ctx context.Context, p *gopacket.PacketSource, fn func(gopacket.Packet, error)) {
+	for ctx.Err() == nil {
+		packet, err := p.NextPacket()
+		if err == nil {
+			fn(packet, nil)
+
+			if ctx.Err() != nil {
+				break
+			}
+
+			// If we use pooled packets, we need to send them back to the pool
+			if pooled, ok := packet.(gopacket.PooledPacket); ok {
+				pooled.Dispose()
+			}
+
+			continue
+		}
+
+		// if timeout error -> retry
+		var netErr net.Error
+		if ok := errors.As(err, &netErr); ok && netErr.Timeout() {
+			continue
+		}
+
+		// Immediately break for known unrecoverable errors
+		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) ||
+			errors.Is(err, io.ErrNoProgress) || errors.Is(err, io.ErrClosedPipe) || errors.Is(err, io.ErrShortBuffer) ||
+			errors.Is(err, syscall.EBADF) ||
+			strings.Contains(err.Error(), "use of closed file") {
+			break
+		}
+
+		// Otherwise, send error to the caller
+		fn(nil, err)
+
+		// and try again if context is not canceled
+		if ctx.Err() != nil {
+			break
+		}
+	}
 }
