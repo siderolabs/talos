@@ -39,7 +39,7 @@ func TestMarshalStability(t *testing.T) {
 	cfg := siderolink.NewConfigV1Alpha1()
 	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/join?jointoken=secret&user=alice"))
 
-	marshaled, err := encoder.NewEncoder(cfg).Encode()
+	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
 
 	assert.Equal(t, expectedDocument, marshaled)

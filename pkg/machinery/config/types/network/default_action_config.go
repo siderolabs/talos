@@ -31,10 +31,18 @@ var (
 	_ config.NetworkRuleConfigSignal        = &DefaultActionConfigV1Alpha1{}
 )
 
-// DefaultActionConfigV1Alpha1 is a event sink config document.
+// DefaultActionConfigV1Alpha1 is a ingress firewall default action configuration document.
+//
+//	examples:
+//	  - value: exampleDefaultActionConfigV1Alpha1()
+//	alias: NetworkDefaultActionConfig
 type DefaultActionConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-
+	//   description: |
+	//     Default action for all not explicitly configured ingress traffic: accept or block.
+	//   values:
+	//     - "accept"
+	//     - "block"
 	Ingress nethelpers.DefaultAction `yaml:"ingress"`
 }
 
@@ -46,6 +54,13 @@ func NewDefaultActionConfigV1Alpha1() *DefaultActionConfigV1Alpha1 {
 			MetaAPIVersion: "v1alpha1",
 		},
 	}
+}
+
+func exampleDefaultActionConfigV1Alpha1() *DefaultActionConfigV1Alpha1 {
+	cfg := NewDefaultActionConfigV1Alpha1()
+	cfg.Ingress = nethelpers.DefaultActionAccept
+
+	return cfg
 }
 
 // Clone implements config.Document interface.

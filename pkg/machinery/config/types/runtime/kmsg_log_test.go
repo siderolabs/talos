@@ -25,7 +25,7 @@ func TestKmsgLogMarshalStability(t *testing.T) {
 	cfg.MetaName = "apiSink"
 	cfg.KmsgLogURL.URL = ensure.Value(url.Parse("https://kmsglog.api/logs"))
 
-	marshaled, err := encoder.NewEncoder(cfg).Encode()
+	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
 
 	t.Log(string(marshaled))

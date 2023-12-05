@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package runtime provides Talos runtime config documents.
+// Package runtime provides runtime machine configuration documents.
 package runtime
+
+//go:generate docgen -output runtime_doc.go runtime.go kmsg_log.go event_sink.go
 
 //go:generate deep-copy -type EventSinkV1Alpha1 -type KmsgLogV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .

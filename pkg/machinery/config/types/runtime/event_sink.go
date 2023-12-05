@@ -38,9 +38,18 @@ var (
 )
 
 // EventSinkV1Alpha1 is a event sink config document.
+//
+//	examples:
+//	  - value: exampleEventSinkV1Alpha1()
+//	alias: EventSinkConfig
 type EventSinkV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-	Endpoint  string `yaml:"endpoint"`
+	//   description: |
+	//     The endpoint for the event sink as 'host:port'.
+	//   examples:
+	//     - value: >
+	//        "10.3.7.3:2810"
+	Endpoint string `yaml:"endpoint"`
 }
 
 // NewEventSinkV1Alpha1 creates a new eventsink config document.
@@ -51,6 +60,13 @@ func NewEventSinkV1Alpha1() *EventSinkV1Alpha1 {
 			MetaAPIVersion: "v1alpha1",
 		},
 	}
+}
+
+func exampleEventSinkV1Alpha1() *EventSinkV1Alpha1 {
+	cfg := NewEventSinkV1Alpha1()
+	cfg.Endpoint = "192.168.10.3:3247"
+
+	return cfg
 }
 
 // Clone implements config.Document interface.

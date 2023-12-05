@@ -27,7 +27,7 @@ func TestDefaultActionConfigMarshalStability(t *testing.T) {
 	cfg := network.NewDefaultActionConfigV1Alpha1()
 	cfg.Ingress = nethelpers.DefaultActionBlock
 
-	marshaled, err := encoder.NewEncoder(cfg).Encode()
+	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
 
 	t.Log(string(marshaled))

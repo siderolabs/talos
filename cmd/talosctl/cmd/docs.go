@@ -16,19 +16,32 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 func frontmatter(title, description string) string {
-	frontmatter := "---\n"
+	var buf bytes.Buffer
 
-	frontmatter += "title: " + title + "\n"
-	frontmatter += "desription: " + description + "\n"
+	buf.WriteString("---\n")
 
-	frontmatter += "---\n\n"
+	if err := yaml.NewEncoder(&buf).Encode(map[string]string{
+		"title":       title,
+		"description": description,
+	}); err != nil {
+		panic(err)
+	}
 
-	return frontmatter + "<!-- markdownlint-disable -->\n\n"
+	buf.WriteString("---\n")
+	buf.WriteString("\n")
+	buf.WriteString("<!-- markdownlint-disable -->\n\n")
+
+	return buf.String()
 }
 
 func linkHandler(name string) string {
@@ -39,10 +52,7 @@ func linkHandler(name string) string {
 	return "#" + strings.ToLower(base)
 }
 
-const (
-	cliDescription           = "Talosctl CLI tool reference."
-	configurationDescription = "Talos node configuration file reference."
-)
+const cliDescription = "Talosctl CLI tool reference."
 
 var (
 	cliDocs    bool
@@ -90,8 +100,36 @@ var docsCmd = &cobra.Command{
 		}
 
 		if configDocs || all {
-			if err := v1alpha1.GetConfigurationDoc().Write(dir, frontmatter("Configuration", configurationDescription)); err != nil {
-				return fmt.Errorf("failed to generate docs: %w", err)
+			for _, pkg := range []struct {
+				name    string
+				fileDoc *encoder.FileDoc
+			}{
+				{
+					name:    "network",
+					fileDoc: network.GetFileDoc(),
+				},
+				{
+					name:    "runtime",
+					fileDoc: runtime.GetFileDoc(),
+				},
+				{
+					name:    "siderolink",
+					fileDoc: siderolink.GetFileDoc(),
+				},
+				{
+					name:    "v1alpha1",
+					fileDoc: v1alpha1.GetFileDoc(),
+				},
+			} {
+				path := filepath.Join(dir, pkg.name)
+
+				if err := os.MkdirAll(path, 0o777); err != nil {
+					return fmt.Errorf("failed to create output directory %q", path)
+				}
+
+				if err := pkg.fileDoc.Write(path, frontmatter); err != nil {
+					return fmt.Errorf("failed to generate docs: %w", err)
+				}
 			}
 		}
 

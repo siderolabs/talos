@@ -2,18 +2,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package siderolink provides siderolink config documents.
+// Package siderolink provides SideroLink machine configuration documents.
 package siderolink
 
 import (
 	"fmt"
 	"net/url"
 
+	"github.com/siderolabs/gen/ensure"
+
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
+
+//go:generate docgen -output ./siderolink_doc.go ./siderolink.go
 
 //go:generate deep-copy -type ConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
@@ -38,9 +42,18 @@ var (
 	_ config.Validator        = &ConfigV1Alpha1{}
 )
 
-// ConfigV1Alpha1 is a siderolink config document.
+// ConfigV1Alpha1 is a SideroLink connection machine configuration document.
+//
+//	examples:
+//	  - value: exampleConfigV1Alpha1()
+//	alias: SideroLinkConfig
 type ConfigV1Alpha1 struct {
-	meta.Meta    `yaml:",inline"`
+	meta.Meta `yaml:",inline"`
+	//   description: |
+	//     SideroLink API URL to connect to.
+	//   examples:
+	//     - value: >
+	//        "https://siderolink.api/join?token=secret"
 	APIUrlConfig meta.URL `yaml:"apiUrl"`
 }
 
@@ -52,6 +65,13 @@ func NewConfigV1Alpha1() *ConfigV1Alpha1 {
 			MetaAPIVersion: "v1alpha1",
 		},
 	}
+}
+
+func exampleConfigV1Alpha1() *ConfigV1Alpha1 {
+	cfg := NewConfigV1Alpha1()
+	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/join?token=secret"))
+
+	return cfg
 }
 
 // Clone implements config.Document interface.

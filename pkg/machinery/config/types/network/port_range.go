@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package network provides Talos network config documents.
 package network
 
 import (
@@ -14,6 +13,8 @@ import (
 )
 
 // PortRange is a port range.
+//
+//docgen:nodoc
 type PortRange struct {
 	Lo uint16
 	Hi uint16
@@ -71,6 +72,8 @@ func (pr PortRange) String() string {
 }
 
 // PortRanges is a slice of port ranges.
+//
+//docgen:nodoc
 type PortRanges []PortRange
 
 // Validate the port ranges.
@@ -99,4 +102,18 @@ func (prs PortRanges) Validate() error {
 	}
 
 	return nil
+}
+
+func examplePortRanges1() PortRanges {
+	return PortRanges{
+		{Lo: 80, Hi: 80},
+		{Lo: 443, Hi: 443},
+	}
+}
+
+func examplePortRanges2() PortRanges {
+	return PortRanges{
+		{Lo: 1200, Hi: 1299},
+		{Lo: 8080, Hi: 8080},
+	}
 }

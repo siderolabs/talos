@@ -22,7 +22,7 @@ func TestEventSinkMarshalStability(t *testing.T) {
 	cfg := runtime.NewEventSinkV1Alpha1()
 	cfg.Endpoint = "10.0.0.1:3333"
 
-	marshaled, err := encoder.NewEncoder(cfg).Encode()
+	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
 
 	t.Log(string(marshaled))
