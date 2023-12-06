@@ -523,9 +523,11 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 			)
 		}
 
-		genOptions = append(genOptions,
-			generate.WithKubePrismPort(kubePrismPort),
-		)
+		if kubePrismPort != constants.DefaultKubePrismPort {
+			genOptions = append(genOptions,
+				generate.WithKubePrismPort(kubePrismPort),
+			)
+		}
 
 		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
 
