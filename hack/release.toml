@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.5.0"
+previous = "v1.6.0-beta.0"
 
 pre_release = true
 
@@ -14,126 +14,13 @@ preface = """\
 """
 
 [notes]
-    [notes.firmware]
-        title = "Linux Firmware"
-        description = """\
-Starting with Talos 1.6, there is no Linux firmware included in the initramfs.
-Customers who need Linux firmware can pull them as extension during install time using the image factory service.
-If the initial boot requires firmware, a custom iso can be built with the firmware included using the image factory service.
-This also ensures that the linux-firmware is not tied to a specific Talos version.
-"""
-
-    [notes.kubelet]
-        title = "Kubelet Credential Provider Configuration"
-        description = """\
-Talos now supports specifying the kubelet credential provider configuration in the Talos configuration file.
-It can be set under `machine.kubelet.credentialProviderConfig` and kubelet will be automatically configured to with the correct flags.
-The credential binaries are expected to be present under `/usr/local/lib/kubelet/credentialproviders`.
-Talos System Extensions can be used to install the credential binaries.
-"""
-
-    [notes.kube-scheduler]
-        title = "Kube-Scheduler Configuration"
-        description = """\
-Talos now supports specifying the kube-scheduler configuration in the Talos configuration file.
-It can be set under `cluster.scheduler.config` and kube-scheduler will be automatically configured to with the correct flags.
-"""
-
-    [notes.extensions]
-        title = "Extension Services"
-        description = """\
-Talos now starts Extension Services early in the boot process, this allows guest agents to be started in maintenance mode.
-"""
-
-    [notes.kernel-args]
-        title = "Kernel Arguments"
-        description = """\
-Talos and Imager now supports dropping kernel arguments specified in `.machine.install.extraKernelArgs` or as `--extra-kernel-arg` to imager.
-Any kernel argument that starts with a `-` is dropped. Kernel arguments to be dropped can be specified either as `-<key>` which would remove all arguments that start with `<key>` or as `-<key>=<value>` which would remove the exact argument.
-"""
-
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.1.64
-containerd: 1.7.10
-CoreDNS: 1.11.1
-Kubernetes: 1.29.0-rc.1
-Flannel: 0.23.0
-etcd: 3.5.10
-runc: 1.1.10
+Linux: 6.1.65
+etcd: 3.5.11
 
-Talos is built with Go 1.21.4.
-"""
-
-    [notes.talosctl]
-        title = "talosctl CLI"
-        description = """\
-The command `images` deprecated in Talos 1.5 was removed, please use `talosctl images default` instead.
-"""
-
-    [notes.device-selectors]
-        title = "Network Device Selectors"
-        description = """\
-Previously, [network device selectors](https://www.talos.dev/v1.6/talos-guides/network/device-selector/) only matched the first link, now the configuration is applied to all matching links.
-"""
-
-
-    [notes.kubeprism]
-        title = "KubePrism"
-        description = """\
-[KubePrism](https://www.talos.dev/v1.6/kubernetes-guides/configuration/kubeprism/) is enabled by default on port 7445.
-"""
-
-    [notes.sysctl]
-        title = "Sysctl"
-        description = """\
-Talos now handles sysctl/sysfs key names in line with sysctl.conf(5):
-
-* if the first separator is '/', no conversion is done
-* if the first separator is '.', dots and slashes are remapped
-
-Example (both sysctls are equivalent):
-
-```yaml
-machine:
-  sysctls:
-    net/ipv6/conf/eth0.100/disable_ipv6: "1"
-    net.ipv6.conf.eth0/100.disable_ipv6: "1"
-```
-"""
-
-    [notes.auth2]
-        title = "OAuth2 Machine Config Flow"
-        description = """\
-Talos Linux when running on the `metal` platform can be configured to authenticate the machine configuration download using [OAuth2 device flow](https://www.talos.dev/v1.6/advanced/machine-config-oauth/).
-"""
-
-    [notes.ingress]
-        title = "Ingress Firewall"
-        description = """\
-Talos Linux now supports configuring the [ingress firewall rules](https://talos.dev/v1.6/talos-guides/network/ingress-firewall/).
-"""
-
-    [notes.flannel]
-        title = "Flannel Configuration"
-        description = """\
-Talos Linux now supports customizing default Flannel manifest with extra arguments for flanneld.
-
-```yaml
-cluster:
-  network:
-    cni:
-      flannel:
-        extraArgs:
-          - --iface-can-reach=192.168.1.1
-```
-"""
-
-    [notes.user-disks]
-        title = "User Disks"
-        description = """\
-Talos Linux now supports specifying user disks in `.machine.disks` machine configuration links via `udev` symlinks, e.g. `/dev/disk/by-id/XXXX`.
+Talos is built with Go 1.21.5.
 """
 
 [make_deps]
