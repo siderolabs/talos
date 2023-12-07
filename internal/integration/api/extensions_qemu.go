@@ -364,36 +364,47 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsHelloWorldService() {
 
 // TestExtensionsGvisor verifies gvisor runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisor() {
+	suite.testRuntimeClass("gvisor", "runsc")
+}
+
+// TestExtensionsKataContainers verifies gvisor runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainers() {
+	suite.testRuntimeClass("kata", "kata")
+}
+
+func (suite *ExtensionsSuiteQEMU) testRuntimeClass(runtimeClassName, handlerName string) {
+	testName := "nginx-" + runtimeClassName
+
 	_, err := suite.Clientset.NodeV1().RuntimeClasses().Create(suite.ctx, &nodev1.RuntimeClass{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "gvisor",
+			Name: runtimeClassName,
 		},
-		Handler: "runsc",
+		Handler: handlerName,
 	}, metav1.CreateOptions{})
-	defer suite.Clientset.NodeV1().RuntimeClasses().Delete(suite.ctx, "gvisor", metav1.DeleteOptions{}) //nolint:errcheck
+	defer suite.Clientset.NodeV1().RuntimeClasses().Delete(suite.ctx, runtimeClassName, metav1.DeleteOptions{}) //nolint:errcheck
 
 	suite.Require().NoError(err)
 
 	_, err = suite.Clientset.CoreV1().Pods("default").Create(suite.ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "nginx-gvisor",
+			Name: testName,
 		},
 		Spec: corev1.PodSpec{
-			RuntimeClassName: pointer.To("gvisor"),
+			RuntimeClassName: pointer.To(runtimeClassName),
 			Containers: []corev1.Container{
 				{
-					Name:  "nginx-gvisor",
+					Name:  testName,
 					Image: "nginx",
 				},
 			},
 		},
 	}, metav1.CreateOptions{})
-	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, "nginx-gvisor", metav1.DeleteOptions{}) //nolint:errcheck
+	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, testName, metav1.DeleteOptions{}) //nolint:errcheck
 
 	suite.Require().NoError(err)
 
 	// wait for the pod to be ready
-	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "nginx-gvisor"))
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", testName))
 }
 
 // TestExtensionsStargz verifies stargz snapshotter.
