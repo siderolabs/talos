@@ -1,6 +1,6 @@
 ---
 description: |
-  Package network provides network machine configuration documents.
+    Package network provides network machine configuration documents.
 title: network
 ---
 

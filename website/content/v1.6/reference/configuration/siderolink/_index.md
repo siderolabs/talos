@@ -1,6 +1,6 @@
 ---
 description: |
-  Package siderolink provides SideroLink machine configuration documents.
+    Package siderolink provides SideroLink machine configuration documents.
 title: siderolink
 ---
 
