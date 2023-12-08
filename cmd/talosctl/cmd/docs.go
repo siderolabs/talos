@@ -16,7 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"sigs.k8s.io/kustomize/kyaml/yaml"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
