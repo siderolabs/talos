@@ -10,7 +10,6 @@ prevKubernetesRelease: "1.27.4"
 theilaRelease: "v0.2.1"
 nvidiaContainerToolkitRelease: "v1.13.5"
 nvidiaDriverRelease: "535.54.03"
-menu: main
 ---
 
 ## Welcome

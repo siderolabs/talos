@@ -35,3 +35,5 @@ talos.config=https://metadata.service/talos/config?mac=${mac}
 ```
 
 > Note: The `talos.config` kernel parameter supports other substitution variables, see [kernel parameters reference]({{< relref "../../../reference/kernel" >}}) for the full list.
+
+PXE booting can be also performed via [Image Factory]({{< relref "../../../learn-more/image-factory" >}}).

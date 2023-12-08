@@ -27,9 +27,15 @@ If the disk encryption is enabled for the EPHEMERAL partition, the system will:
 
 This occurs only if the EPHEMERAL partition is empty and has no filesystem.
 
-> Note: Talos Linux disk encryption is designed to guard against data being leaked or recovered from a drive that has been removed from a Talos Linux node.
-It uses the hardware characteristics of the machine in order to decrypt the data, so drives that have been removed, or recycled from a cloud environment or attached to a different virtual machine, will maintain their protection and encryption.
-It is not designed to protect against attacks where physical access to the machine, including the drive, is available.
+Talos Linux supports four encryption methods, which can be combined together for a single partition:
+
+- `static` - encrypt with the static passphrase (weakest protection, for `STATE` partition encryption it means that the passphrase will be stored in the `META` partition).
+- `nodeID` - encrypt with the key derived from the node UUID (weak, it is designed to protect against data being leaked or recovered from a drive that has been removed from a Talos Linux node).
+- `kms` - encrypt using key sealed with network KMS (strong, but requires network access to decrypt the data.)
+- `tpm` - encrypt with the key derived from the TPM (strong, when used with [SecureBoot]({{< relref "../install/bare-metal-platforms/secureboot" >}})).
+
+> Note: `nodeID` encryption is not designed to protect against attacks where physical access to the machine, including the drive, is available.
+> It uses the hardware characteristics of the machine in order to decrypt the data, so drives that have been removed, or recycled from a cloud environment or attached to a different virtual machine, will maintain their protection and encryption.
 
 ## Configuration
 
@@ -87,6 +93,8 @@ Talos supports two kinds of keys:
 
 - `nodeID` which is generated using the node UUID and the partition label (note that if the node UUID is not really random it will fail the entropy check).
 - `static` which you define right in the configuration.
+- `kms` which is sealed with the network KMS.
+- `tpm` which is sealed using the TPM and protected with SecureBoot.
 
 > Note: Use static keys only if your STATE partition is encrypted and only for the EPHEMERAL partition.
 > For the STATE partition it will be stored in the META partition, which is not encrypted.

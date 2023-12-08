@@ -12,27 +12,26 @@ The published versions of the NVIDIA fabricmanager system extensions is availabl
 
 > The `nvidia-fabricmanager` extension version has to match with the NVIDIA driver version in use.
 
-## Upgrading Talos and enabling the NVIDIA fabricmanager system extension
+## Enabling the NVIDIA fabricmanager system extension
 
-In addition to the patch defined in the [NVIDIA drivers]({{< relref "nvidia-gpu" >}}#upgrading-talos-and-enabling-the-nvidia-modules-and-the-system-extension) guide, we need to add the `nvidia-fabricmanager` system extension to the patch yaml `gpu-worker-patch.yaml`:
+Create the [boot assets]({{< relref "../install/boot-assets" >}}) or a custom installer and perform a machine upgrade which include the following system extensions:
+
+```text
+ghcr.io/siderolabs/nvidia-open-gpu-kernel-modules:{{< nvidia_driver_release >}}-{{< release >}}
+ghcr.io/siderolabs/nvidia-container-toolkit:{{< nvidia_driver_release >}}-{{< nvidia_container_toolkit_release >}}
+ghcr.io/siderolabs/nvidia-fabricmanager:{{< nvidia_driver_release >}}
+```
+
+Patch the machine configuration to load the required modules:
 
 ```yaml
-- op: add
-  path: /machine/install/extensions
-  value:
-    - image: ghcr.io/siderolabs/nvidia-open-gpu-kernel-modules:{{< nvidia_driver_release >}}-{{< release >}}
-    - image: ghcr.io/siderolabs/nvidia-container-toolkit:{{< nvidia_driver_release >}}-{{< nvidia_container_toolkit_release >}}
-    - image: ghcr.io/siderolabs/nvidia-fabricmanager:525.85.12
-- op: add
-  path: /machine/kernel
-  value:
+machine:
+  kernel:
     modules:
       - name: nvidia
       - name: nvidia_uvm
       - name: nvidia_drm
       - name: nvidia_modeset
-- op: add
-  path: /machine/sysctls
-  value:
+  sysctls:
     net.core.bpf_jit_harden: 1
 ```

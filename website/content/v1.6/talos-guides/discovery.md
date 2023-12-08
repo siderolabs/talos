@@ -58,6 +58,9 @@ Annotations:        cluster.talos.dev/node-id: Utoh3O0ZneV0kT2IUBrh7TgdouRcUW2yz
 
 The `Service` registry by default uses a public external Discovery Service to exchange encrypted information about cluster members.
 
+> Note: Talos supports operations when Discovery Service is disabled, but some features will rely on Kubernetes API availability to discover
+> controlplane endpoints, so in case of a failure disabled Discovery Service makes troubleshooting much harder.
+
 ## Discovery Service
 
 Sidero Labs maintains a public discovery service at `https://discovery.talos.dev/` whereby cluster members use a shared key that is globally unique to coordinate basic connection information (i.e. the set of possible "endpoints", or IP:port pairs).

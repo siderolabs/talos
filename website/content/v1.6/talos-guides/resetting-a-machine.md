@@ -7,7 +7,7 @@ aliases:
 
 From time to time, it may be beneficial to reset a Talos machine to its "original" state.
 Bear in mind that this is a destructive action for the given machine.
-Doing this means removing the machine from Kubernetes, Etcd (if applicable), and clears any data on the machine that would normally persist a reboot.
+Doing this means removing the machine from Kubernetes, `etcd` (if applicable), and clears any data on the machine that would normally persist a reboot.
 
 ## CLI
 

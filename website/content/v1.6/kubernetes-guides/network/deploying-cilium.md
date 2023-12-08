@@ -10,10 +10,9 @@ aliases:
 This documentation will outline installing Cilium CNI v1.14.0 on Talos in six different ways.
 Adhering to Talos principles we'll deploy Cilium with IPAM mode set to Kubernetes, and using the `cgroupv2` and `bpffs` mount that talos already provides.
 As Talos does not allow loading kernel modules by Kubernetes workloads, `SYS_MODULE` capability needs to be dropped from the Cilium default set of values, this override can be seen in the helm/cilium cli install commands.
-Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.13/network/kubernetes/kubeproxy-free/)
+Each method can either install Cilium using kube proxy (default) or without: [Kubernetes Without kube-proxy](https://docs.cilium.io/en/v1.14/network/kubernetes/kubeproxy-free/)
 
-From Talos 1.5 we can use Cilium in combination with KubePrism.
-You can read more about it in Talos 1.5 release notes.
+In this guide we assume that [KubePrism]({{< relref "../configuration/kubeprism" >}}) is enabled and configured to use the port 7445.
 
 ## Machine config preparation
 
@@ -27,11 +26,6 @@ cluster:
   network:
     cni:
       name: none
-machine:
-  features:
-    kubePrism:
-      enabled: true
-      port: 7445
 ```
 
 ```bash
@@ -51,11 +45,6 @@ cluster:
       name: none
   proxy:
     disabled: true
-machine:
-  features:
-    kubePrism:
-      enabled: true
-      port: 7445
 ```
 
 ```bash
@@ -172,9 +161,6 @@ kubectl apply -f cilium.yaml
 Without kube-proxy:
 
 ```bash
-export KUBERNETES_API_SERVER_ADDRESS=<replace with api server endpoint here> # e.g. 10.96.0.1
-export KUBERNETES_API_SERVER_PORT=6443
-
 helm template \
     cilium \
     cilium/cilium \
@@ -207,11 +193,6 @@ cluster:
       name: custom
       urls:
         - https://server.yourdomain.tld/some/path/cilium.yaml
-machine:
-  features:
-    kubePrism:
-      enabled: true
-      port: 7445
 ```
 
 ```bash
@@ -235,11 +216,6 @@ cluster:
   network:
     cni:
       name: none
-machine:
-  features:
-    kubePrism:
-      enabled: true
-      port: 7445
 ```
 
 ```bash
@@ -312,6 +288,6 @@ For more details: [GCP ILB support / support scope local routes to be configured
 ## Other things to know
 
 - Talos has full kernel module support for eBPF, See:
-  - [Cilium System Requirements](https://docs.cilium.io/en/v1.13/operations/system_requirements/)
+  - [Cilium System Requirements](https://docs.cilium.io/en/v1.14/operations/system_requirements/)
   - [Talos Kernel Config AMD64](https://github.com/siderolabs/pkgs/blob/main/kernel/build/config-amd64)
   - [Talos Kernel Config ARM64](https://github.com/siderolabs/pkgs/blob/main/kernel/build/config-arm64)

@@ -18,4 +18,4 @@ See [kernel parameters reference]({{< relref "../../../reference/kernel" >}}) fo
 There are two flavors of ISO images available:
 
 * `metal-<arch>.iso` supports booting on BIOS and UEFI systems (for x86, UEFI only for arm64)
-* `secureboot-metal-<arch>.iso` supports booting on only UEFI systems in SecureBoot mode
+* `metal-<arch>-secureboot.iso` supports booting on only UEFI systems in SecureBoot mode (via [Image Factory]({{< relref "../../../learn-more/image-factory" >}}))

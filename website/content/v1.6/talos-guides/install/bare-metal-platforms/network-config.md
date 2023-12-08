@@ -40,7 +40,8 @@ Some platforms (e.g. AWS, Google Cloud, etc.) have their own network configurati
 There is no such mechanism for bare-metal platforms, so Talos provides a way to use platform network config on the `metal` platform to submit the initial network configuration.
 
 The platform network configuration is a YAML document which contains resource specifications for various network resources.
-For the `metal` platform, the [interactive dashboard]({{< relref "../../interactive-dashboard" >}}) can be used to edit the platform network configuration.
+For the `metal` platform, the [interactive dashboard]({{< relref "../../interactive-dashboard" >}}) can be used to edit the platform network configuration, also the configuration can be
+created [manually]({{< relref "../../../advanced/metal-network-configuration" >}}).
 
 The current value of the platform network configuration can be retrieved using the `MetaKeys` resource (key `0xa`):
 

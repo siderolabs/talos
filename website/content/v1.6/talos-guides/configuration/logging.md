@@ -101,6 +101,15 @@ machine:
       - talos.logging.kernel=tcp://host:5044/
 ```
 
+Also kernel logs delivery can be configured using the [document]({{< relref "../../reference/configuration/runtime/kmsglogconfig.md" >}}) in machine configuration:
+
+```yaml
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: remote-log
+url: tcp://host:5044/
+```
+
 Kernel log destination is specified in the same way as service log endpoint.
 The only supported format is `json_lines`.
 

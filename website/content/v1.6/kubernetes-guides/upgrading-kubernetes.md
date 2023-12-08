@@ -23,7 +23,7 @@ The recommended method to upgrade Kubernetes is to use the `talosctl upgrade-k8s
 This will automatically update the components needed to upgrade Kubernetes safely.
 Upgrading Kubernetes is non-disruptive to the cluster workloads.
 
-To trigger a Kubernetes upgrade, issue a command specifiying the version of Kubernetes to ugprade to, such as:
+To trigger a Kubernetes upgrade, issue a command specifying the version of Kubernetes to ugprade to, such as:
 
 `talosctl --nodes <controlplane node> upgrade-k8s --to {{< k8s_release >}}`
 
@@ -91,16 +91,18 @@ updating "kube-apiserver" to version "{{< k8s_release >}}"
 
 This command runs in several phases:
 
-1. Every control plane node machine configuration is patched with the new image version for each control plane component.
+1. Images for new Kubernetes components are pre-pulled to the nodes to minimize downtime and test for image availability.
+2. Every control plane node machine configuration is patched with the new image version for each control plane component.
    Talos renders new static pod definitions on the configuration update which is picked up by the kubelet.
    The command waits for the change to propagate to the API server state.
-2. The command updates the `kube-proxy` daemonset with the new image version.
-3. On every node in the cluster, the `kubelet` version is updated.
+3. The command updates the `kube-proxy` daemonset with the new image version.
+4. On every node in the cluster, the `kubelet` version is updated.
    The command then waits for the `kubelet` service to be restarted and become healthy.
    The update is verified by checking the `Node` resource state.
-4. Kubernetes bootstrap manifests are re-applied to the cluster.
+5. Kubernetes bootstrap manifests are re-applied to the cluster.
    Updated bootstrap manifests might come with a new Talos version (e.g. CoreDNS version update), or might be the result of machine configuration change.
-   Note: The `upgrade-k8s` command never deletes any resources from the cluster: they should be deleted manually.
+
+> Note: The `upgrade-k8s` command never deletes any resources from the cluster: they should be deleted manually.
 
 If the command fails for any reason, it can be safely restarted to continue the upgrade process from the moment of the failure.
 

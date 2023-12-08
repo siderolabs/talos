@@ -8,9 +8,6 @@ aliases:
 Talos node state is fully defined by [machine configuration]({{< relref "../../reference/configuration" >}}).
 Initial configuration is delivered to the node at bootstrap time, but configuration can be updated while the node is running.
 
-> Note: Be sure that config is persisted so that configuration updates are not overwritten on reboots.
-> Configuration persistence was enabled by default since Talos 0.5 (`persist: true` in machine configuration).
-
 There are three `talosctl` commands which facilitate machine configuration updates:
 
 * `talosctl apply-config` to apply configuration from the file
@@ -29,7 +26,7 @@ Each of these commands can operate in one of four modes:
 > Note: applying change on next reboot (`--mode=staged`) doesn't modify current node configuration, so next call to
 > `talosctl edit machineconfig --mode=staged` will not see changes
 
-Additionally, there is also `talosctl get machineconfig`, which retrieves the current node configuration API resource and contains the machine configuration in the `.spec` field.
+Additionally, there is also `talosctl get machineconfig -o yaml`, which retrieves the current node configuration API resource and contains the machine configuration in the `.spec` field.
 It can be used to modify the configuration locally before being applied to the node.
 
 The list of config changes allowed to be applied immediately in Talos {{< release >}}:

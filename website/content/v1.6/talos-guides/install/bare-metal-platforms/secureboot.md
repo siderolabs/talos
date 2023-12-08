@@ -19,7 +19,7 @@ As Talos Linux is fully contained in the UKI image, the full operating system is
 
 ## Acquiring the SecureBoot Assets
 
-Sidero Labs is going to provide Talos images signed with the Sidero Labs Secureboot key in August 2023, but until then, you can use the following instructions to build your own.
+Sidero Labs is going to provide Talos images signed with the Sidero Labs SecureBoot key early 2024 via [Image Factory]({{< relref "../../../learn-more/image-factory" >}}), but until then, you can use the following instructions to build your own.
 
 ## SecureBoot with Custom Keys
 

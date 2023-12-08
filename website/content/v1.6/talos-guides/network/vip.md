@@ -47,7 +47,7 @@ IP addresses:
 
 We then choose our shared IP to be:
 
-> 192.168.0.15
+- `192.168.0.15`
 
 ## Configure your Talos Machines
 
@@ -105,7 +105,5 @@ machine:
 
 Since VIP functionality relies on `etcd` for elections, the shared IP will not come
 alive until after you have bootstrapped Kubernetes.
-This does mean that you cannot use the
-shared IP when issuing the `talosctl bootstrap` command (although, as noted above, it is not recommended to access the Talos API via the VIP).
-Instead, the `bootstrap` command will need to target one of the controlplane nodes
-directly.
+
+Don't use the VIP as the `endpoint` in the `talosconfig`, as the VIP is bound to `etcd` and `kube-apiserver` health, and you will not be able to recover from a failure of either of those components using Talos API.

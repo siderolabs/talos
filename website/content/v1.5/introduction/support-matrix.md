@@ -7,7 +7,7 @@ description: "Table of supported Talos Linux versions and respective platforms."
 | Talos Version                                                                                                  | 1.5                                | 1.4                                |
 |----------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------|
 | Release Date                                                                                                   | 2023-08-17                         | 2023-04-18 (1.4.0)                 |
-| End of Community Support                                                                                       | 1.6.0 release (2023-12-15, TBD)    | 1.5.0 release (2023-08-17)         |
+| End of Community Support                                                                                       | 1.6.0 release (2023-12-15)         | 1.5.0 release (2023-08-17)         |
 | Enterprise Support                                                                                             | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) | [offered by Sidero Labs Inc.](https://www.siderolabs.com/support/) |
 | Kubernetes                                                                                                     | 1.28, 1.27, 1.26                   | 1.27, 1.26, 1.25                   |
 | Architecture                                                                                                   | amd64, arm64                       | amd64, arm64                       |

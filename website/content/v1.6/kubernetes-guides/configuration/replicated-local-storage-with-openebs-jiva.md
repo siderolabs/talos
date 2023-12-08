@@ -1,12 +1,12 @@
 ---
-title: "Local Storage"
+title: "Replicated Local Storage"
 description: "Using local storage with OpenEBS Jiva"
 aliases:
   - ../../guides/storage
 ---
 
 If you want to use replicated storage leveraging disk space from a local disk with Talos Linux installed, OpenEBS Jiva is a great option.
-This requires installing the [iscsi-tools](https://github.com/orgs/siderolabs/packages?tab=packages&q=iscsi-tools) [system extension]({{< relref "../../talos-guides/configuration/system-extensions" >}}).
+This requires installing the `iscsi-tools` [system extension]({{< relref "../../talos-guides/configuration/system-extensions" >}}).
 
 Since OpenEBS Jiva is a replicated storage, it's recommended to have at least three nodes where sufficient local disk space is available.
 The documentation will follow installing OpenEBS Jiva via the offical Helm chart.
@@ -18,29 +18,21 @@ Refer to the OpenEBS Jiva [documentation](https://github.com/openebs/jiva-operat
 
 ## Preparing the nodes
 
-Find the matching `iscsi-tools` image reference for your Talos version by running the [following command](https://github.com/siderolabs/extensions):
-
-```bash
-crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-digests | grep iscsi-tools
-```
+Create the [boot assets]({{< relref "../../talos-guides/install/boot-assets" >}}) which includes the `iscsi-tools` system extensions (or create a custom installer and perform a machine upgrade if Talos is already installed).
 
 Create a machine config patch with the contents below and save as `patch.yaml`
 
 ```yaml
-- op: add
-  path: /machine/install/extensions
-  value:
-    - image: ghcr.io/siderolabs/iscsi-tools:<version>@sha256:<digest>
-- op: add
-  path: /machine/kubelet/extraMounts
-  value:
-    - destination: /var/openebs/local
-      type: bind
-      source: /var/openebs/local
-      options:
-        - bind
-        - rshared
-        - rw
+machine:
+  kubelet:
+    extraMounts:
+      - destination: /var/openebs/local
+        type: bind
+        source: /var/openebs/local
+        options:
+          - bind
+          - rshared
+          - rw
 ```
 
 Apply the machine config to all the nodes using talosctl:
@@ -49,16 +41,7 @@ Apply the machine config to all the nodes using talosctl:
 talosctl -e <endpoint ip/hostname> -n <node ip/hostname> patch mc -p @patch.yaml
 ```
 
-To install the system extension, the node needs to be upgraded.
-If there is no new release of Talos, the node can be upgraded to the same version as the existing Talos version.
-
-Run the following command on each nodes subsequently:
-
-```bash
-talosctl -e <endpoint ip/hostname> -n <node ip/hostname> upgrade --image=ghcr.io/siderolabs/installer:{{< release >}}
-```
-
-Once the node has upgraded and booted successfully the extension status can be verified by running the following command:
+The extension status can be verified by running the following command:
 
 ```bash
 talosctl -e <endpoint ip/hostname> -n <node ip/hostname> get extensions

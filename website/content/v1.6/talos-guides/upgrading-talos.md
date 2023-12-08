@@ -38,6 +38,8 @@ For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade
 
 There are no specific actions to be taken before an upgrade.
 
+Please review the [release notes]({{< relref "../introduction/what-is-new" >}}) for any changes that may affect your cluster.
+
 ## Video Walkthrough
 
 To see a live demo of an upgrade of Talos Linux, see the video below:
@@ -93,7 +95,19 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+New configuration documents:
+
+* [Ingress Firewall]({{< relref "../talos-guides/network/ingress-firewall" >}}) configuration: [NetworkRuleConfig]({{< relref "../reference/configuration/network/networkruleconfig" >}}) and [NetworkDefaultActionConfig]({{< relref "../reference/configuration/network/networkdefaultactionconfig" >}}).
+
+Updates in [v1alpha1 Config]({{< relref "../reference/configuration/v1alpha1/config" >}}):
+
+* `.persist` option was removed
+* `.machine.nodeTaints` configures Kubernetes node taints
+* `.machine.kubelet.extraMounts` supports new fields `uidMappings` and `gidMappings`
+* `.machine.kubelet.credendtialProviderConfig` configures `kubelet` credential provider
+* `.machine.network.kubespan.harvestExtraEndpoints` to disable harvesting extra endpoints
+* `.cluster.cni.flannel` provides customization for the default Flannel CNI manifest
+* `.cluster.scheduler.config` provides custom `kube-scheduler` configuration
 
 ## Upgrade Sequence
 

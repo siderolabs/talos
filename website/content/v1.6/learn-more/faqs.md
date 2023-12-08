@@ -53,3 +53,20 @@ To renew `kubeconfig`, use `talosctl kubeconfig` command, and the time-to-live (
 Talos doesn't support timezones, and will always run in UTC.
 This ensures consistency of log timestamps for all Talos Linux clusters, simplifying debugging.
 Your containers can run with any timezone configuration you desire, but the timezone of Talos Linux is not configurable.
+
+## How do I see Talos kernel configuration?
+
+### Using Talos API
+
+Current kernel config can be read with `talosctl -n <NODE> read /proc/config.gz`.
+
+For example:
+
+```shell
+talosctl -n NODE read /proc/config.gz | zgrep E1000
+```
+
+### Using GitHub
+
+For `amd64`, see https://github.com/siderolabs/pkgs/blob/main/kernel/build/config-amd64.
+Use appropriate branch to see the kernel config matching your Talos release.

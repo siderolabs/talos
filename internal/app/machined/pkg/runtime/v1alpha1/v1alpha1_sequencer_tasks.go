@@ -1468,7 +1468,7 @@ func stopAndRemoveAllPods(stopAction cri.StopAction) runtime.TaskExecutionFunc {
 
 		// We remove pods with POD network mode first so that the CNI can perform
 		// any cleanup tasks. If we don't do this, we run the risk of killing the
-		// CNI, preventing the CRI from cleaning up the pod's netwokring.
+		// CNI, preventing the CRI from cleaning up the pod's networking.
 
 		if err = client.StopAndRemovePodSandboxes(ctx, stopAction, runtimeapi.NamespaceMode_POD, runtimeapi.NamespaceMode_CONTAINER); err != nil {
 			return err

@@ -101,4 +101,4 @@ network:
 
 When `networkd` gets this configuration it will create the device, configure it and will bring it up (equivalent to `ip link set up dev wg0`).
 
-All supported config parameters are described in the [Machine Config Reference]({{< relref "../../reference/configuration#devicewireguardconfig" >}}).
+All supported config parameters are described in the [Machine Config Reference]({{< relref "../../reference/configuration/v1alpha1/config#Config.machine.network.interfaces..wireguard" >}}).

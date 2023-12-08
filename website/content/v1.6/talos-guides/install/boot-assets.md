@@ -170,6 +170,22 @@ The base profile can be customized with the additional flags to the imager:
   For example `-console` removes all `console=<value>` arguments, whereas `-console=tty0` removes the `console=tty0` default argument.
 * `--system-extension-image` allows to install a system extension into the image
 
+### Extension Image Reference
+
+While Image Factory automatically resolves the extension name into a matching container image for a specific version of Talos, `imager` requires the full explicit container image reference.
+The `imager` also allows to install custom extensions which are not part of the official Talos Linux system extensions.
+
+To get the official Talos Linux system extension container image reference matching a Talos release, use the [following command](https://github.com/siderolabs/extensions?tab=readme-ov-file#installing-extensions):
+
+```shell
+crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-digests | grep EXTENSION-NAME
+```
+
+> Note: this command is using [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) tool, but any other tool which allows
+> to export the image contents can be used.
+
+For each Talos release, the `ghcr.io/siderolabs/extensions:VERSION` image contains a pinned reference to each system extension container image.
+
 ### Example: Bare-metal with Imager
 
 Let's assume we want to boot Talos on a bare-metal machine with Intel CPU and add a `gvisor` container runtime to the image.
@@ -177,20 +193,21 @@ Also we want to disable predictable network interface names with `net.ifnames=0`
 
 First, let's lookup extension images for Intel CPU microcode updates and `gvisor` container runtime in the [extensions repository](https://github.com/siderolabs/extensions):
 
-```text
-ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0
-ghcr.io/siderolabs/intel-ucode:20230613
+```shell
+$ crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-digests | egrep 'gvisor|intel-ucode'
+ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e
+ghcr.io/siderolabs/intel-ucode:20231114@sha256:ea564094402b12a51045173c7523f276180d16af9c38755a894cf355d72c249d
 ```
 
 Now we can generate the ISO image with the following command:
 
 ```shell
-$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} iso --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0 --system-extension-image ghcr.io/siderolabs/intel-ucode:20230613 --extra-kernel-arg net.ifnames=0 --extra-kernel-arg=-console --extra-kernel-arg=console=ttyS1
+$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} iso --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --system-extension-image ghcr.io/siderolabs/intel-ucode:20231114@sha256:ea564094402b12a51045173c7523f276180d16af9c38755a894cf355d72c249d --extra-kernel-arg net.ifnames=0 --extra-kernel-arg=-console --extra-kernel-arg=console=ttyS1
 profile ready:
 arch: amd64
 platform: metal
 secureboot: false
-version: {{ < release > }}
+version: {{< release >}}
 customization:
   extraKernelArgs:
     - net.ifnames=0
@@ -202,8 +219,8 @@ input:
   baseInstaller:
     imageRef: ghcr.io/siderolabs/installer:{{< release >}}
   systemExtensions:
-    - imageRef: ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0
-    - imageRef: ghcr.io/siderolabs/intel-ucode:20230613
+    - imageRef: ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e
+    - imageRef: ghcr.io/siderolabs/intel-ucode:20231114@sha256:ea564094402b12a51045173c7523f276180d16af9c38755a894cf355d72c249d
 output:
   kind: iso
   outFormat: raw
@@ -219,7 +236,7 @@ If the machine is going to be booted using PXE, we can instead generate kernel a
 
 ```shell
 docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} iso --output-kind kernel
-docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} iso --output-kind initramfs --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0 --system-extension-image ghcr.io/siderolabs/intel-ucode:20230613
+docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} iso --output-kind initramfs --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --system-extension-image ghcr.io/siderolabs/intel-ucode:20231114@sha256:ea564094402b12a51045173c7523f276180d16af9c38755a894cf355d72c249d
 ```
 
 Now the `_out/kernel-amd64` and `_out/initramfs-amd64` contain the customized Talos kernel and initramfs images.
@@ -229,7 +246,7 @@ Now the `_out/kernel-amd64` and `_out/initramfs-amd64` contain the customized Ta
 As the next step, we should generate a custom `installer` image which contains all required system extensions (kernel args can't be specified with the installer image, but they are set in the machine configuration):
 
 ```shell
-$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} installer --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0 --system-extension-image ghcr.io/siderolabs/intel-ucode:20230613
+$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} installer --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --system-extension-image ghcr.io/siderolabs/intel-ucode:20231114@sha256:ea564094402b12a51045173c7523f276180d16af9c38755a894cf355d72c249d
 ...
 output asset path: /out/metal-amd64-installer.tar
 ```
@@ -253,14 +270,15 @@ Let's assume we want to boot Talos on AWS with `gvisor` container runtime system
 
 First, let's lookup extension images for the `gvisor` container runtime in the [extensions repository](https://github.com/siderolabs/extensions):
 
-```text
-ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0
+```shell
+$ crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-digests | grep gvisor
+ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e
 ```
 
 Next, let's generate AWS disk image with that system extension:
 
 ```shell
-$ docker run --rm -t -v $PWD/_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} aws --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-v1.5.0-beta.0
+$ docker run --rm -t -v $PWD/_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} aws --system-extension-image ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e
 ...
 output asset path: /out/aws-amd64.raw
 compression done: /out/aws-amd64.raw.xz

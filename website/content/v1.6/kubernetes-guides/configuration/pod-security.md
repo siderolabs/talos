@@ -5,12 +5,20 @@ aliases:
   - ../../guides/pod-security
 ---
 
-Kubernetes deprecated [Pod Security Policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) as of v1.21, and it is
-going to be removed in v1.25.
-Pod Security Policy was replaced with [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/).
-Pod Security Admission is alpha in v1.22 (requires a feature gate) and beta in v1.23 (enabled by default).
+Kubernetes deprecated [Pod Security Policy](https://kubernetes.io/docs/concepts/policy/pod-security-policy/) as of v1.21, and it was removed in v1.25.
 
-In this guide we are going to enable and configure Pod Security Admission in Talos.
+Pod Security Policy was replaced with [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/), which is enabled by default
+starting with Kubernetes v1.23.
+
+Talos Linux by default enables and configures Pod Security Admission plugin to enforce [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) with the
+`baseline` profile as the default enforced with the exception of `kube-system` namespace which enforces `privileged` profile.
+
+Some applications (e.g. Prometheus node exporter or storage solutions) require more relaxed Pod Security Standards, which can be configured by either updating the Pod Security Admission plugin configuration,
+or by using the `pod-security.kubernetes.io/enforce` label on the namespace level:
+
+```shell
+kubectl label namespace NAMESPACE-NAME pod-security.kubernetes.io/enforce=privileged
+```
 
 ## Configuration
 

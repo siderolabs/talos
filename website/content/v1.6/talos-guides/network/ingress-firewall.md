@@ -9,7 +9,7 @@ Talos Linux Ingress Firewall doesn't affect the traffic between the Kubernetes p
 
 ## Configuration
 
-Ingress rules are configured as extra documents [NetwokDefaultActionConfig]({{< relref "../../reference/configuration/network/networkdefaultactionconfig.md" >}}) and
+Ingress rules are configured as extra documents [NetworkDefaultActionConfig]({{< relref "../../reference/configuration/network/networkdefaultactionconfig.md" >}}) and
 [NetworkRuleConfig]({{< relref "../../reference/configuration/network/networkruleconfig.md" >}}) in the Talos machine configuration:
 
 ```yaml
