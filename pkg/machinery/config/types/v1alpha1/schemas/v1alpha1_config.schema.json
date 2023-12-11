@@ -2371,6 +2371,13 @@
           "markdownDescription": "Skip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can't be established.",
           "x-intellij-html-description": "\u003cp\u003eSkip sending traffic via KubeSpan if the peer connection state is not up.\nThis provides configurable choice between connectivity and security: either traffic is always\nforced to go via KubeSpan (even if Wireguard peer connection is not up), or traffic can go directly\nto the peer if Wireguard connection can\u0026rsquo;t be established.\u003c/p\u003e\n"
         },
+        "harvestExtraEndpoints": {
+          "type": "boolean",
+          "title": "harvestExtraEndpoints",
+          "description": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u0026gt;50) in the KubeSpan network it can cause performance issues.\n",
+          "markdownDescription": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u003e50) in the KubeSpan network it can cause performance issues.",
+          "x-intellij-html-description": "\u003cp\u003eKubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u0026gt;50) in the KubeSpan network it can cause performance issues.\u003c/p\u003e\n"
+        },
         "mtu": {
           "type": "integer",
           "title": "mtu",

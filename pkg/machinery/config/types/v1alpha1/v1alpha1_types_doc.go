@@ -3559,6 +3559,13 @@ func (NetworkKubeSpan) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Skip sending traffic via KubeSpan if the peer connection state is not up." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "harvestExtraEndpoints",
+				Type:        "bool",
+				Note:        "",
+				Description: "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (>50) in the KubeSpan network it can cause performance issues.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpan can collect and publish extra endpoints for each member of the cluster" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "mtu",
 				Type:        "uint32",
 				Note:        "",

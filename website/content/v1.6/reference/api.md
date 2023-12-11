@@ -2636,6 +2636,7 @@ ConfigSpec describes KubeSpan configuration..
 | advertise_kubernetes_networks | [bool](#bool) |  |  |
 | mtu | [uint32](#uint32) |  |  |
 | endpoint_filters | [string](#string) | repeated |  |
+| harvest_extra_endpoints | [bool](#bool) |  |  |
 
 
 

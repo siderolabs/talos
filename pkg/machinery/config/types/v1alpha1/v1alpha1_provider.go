@@ -1110,6 +1110,15 @@ func (k *NetworkKubeSpan) AdvertiseKubernetesNetworks() bool {
 	return pointer.SafeDeref(k.KubeSpanAdvertiseKubernetesNetworks)
 }
 
+// HarvestExtraEndpoints implements KubeSpan interface.
+func (k *NetworkKubeSpan) HarvestExtraEndpoints() bool {
+	if k.KubeSpanHarvestExtraEndpoints == nil {
+		return true
+	}
+
+	return pointer.SafeDeref(k.KubeSpanHarvestExtraEndpoints)
+}
+
 // MTU implements the KubeSpan interface.
 func (k *NetworkKubeSpan) MTU() uint32 {
 	mtu := pointer.SafeDeref(k.KubeSpanMTU)

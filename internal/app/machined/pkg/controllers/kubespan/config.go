@@ -48,6 +48,7 @@ func NewConfigController() *ConfigController {
 					res.TypedSpec().SharedSecret = c.Cluster().Secret()
 					res.TypedSpec().ForceRouting = c.Machine().Network().KubeSpan().ForceRouting()
 					res.TypedSpec().AdvertiseKubernetesNetworks = c.Machine().Network().KubeSpan().AdvertiseKubernetesNetworks()
+					res.TypedSpec().HarvestExtraEndpoints = c.Machine().Network().KubeSpan().HarvestExtraEndpoints()
 					res.TypedSpec().MTU = c.Machine().Network().KubeSpan().MTU()
 					res.TypedSpec().EndpointFilters = c.Machine().Network().KubeSpan().Filters().Endpoints()
 				}

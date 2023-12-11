@@ -15,6 +15,7 @@ import (
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
@@ -26,6 +27,10 @@ func (suite *EndpointSuite) TestReconcile() {
 	suite.Require().NoError(suite.runtime.RegisterController(&kubespanctrl.EndpointController{}))
 
 	suite.startRuntime()
+
+	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
+	cfg.TypedSpec().HarvestExtraEndpoints = true
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
 
 	// create some affiliates and peer statuses
 	affiliate1 := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
