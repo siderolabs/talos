@@ -121,7 +121,7 @@ require (
 	github.com/siderolabs/grpc-proxy v0.4.0
 	github.com/siderolabs/kms-client v0.1.0
 	github.com/siderolabs/net v0.4.0
-	github.com/siderolabs/siderolink v0.3.3
+	github.com/siderolabs/siderolink v0.3.4
 	github.com/siderolabs/talos/pkg/machinery v1.6.0-alpha.2
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
