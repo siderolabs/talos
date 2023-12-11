@@ -2242,6 +2242,12 @@ type NetworkKubeSpan struct {
 	//   to the peer if Wireguard connection can't be established.
 	KubeSpanAllowDownPeerBypass *bool `yaml:"allowDownPeerBypass,omitempty"`
 	// description: |
+	//   KubeSpan can collect and publish extra endpoints for each member of the cluster
+	//   based on Wireguard endpoint information for each peer.
+	//   This feature is enabled by default to help discover additional endpoints,
+	//   but with high number of peers (>50) in the KubeSpan network it can cause performance issues.
+	KubeSpanHarvestExtraEndpoints *bool `yaml:"harvestExtraEndpoints,omitempty"`
+	// description: |
 	//   KubeSpan link MTU size.
 	//   Default value is 1420.
 	KubeSpanMTU *uint32 `yaml:"mtu,omitempty"`

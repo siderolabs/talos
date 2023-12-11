@@ -9,12 +9,14 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
@@ -29,6 +31,12 @@ func (ctrl *EndpointController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *EndpointController) Inputs() []controller.Input {
 	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      kubespan.ConfigType,
+			ID:        optional.Some(kubespan.ConfigID),
+			Kind:      controller.InputWeak,
+		},
 		{
 			Namespace: cluster.NamespaceName,
 			Type:      cluster.AffiliateType,
@@ -63,6 +71,23 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 		case <-r.EventCh():
 		}
 
+		cfg, err := safe.ReaderGetByID[*kubespan.Config](ctx, r, kubespan.ConfigID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting kubespan configuration: %w", err)
+		}
+
+		r.StartTrackingOutputs()
+
+		if cfg == nil || !cfg.TypedSpec().HarvestExtraEndpoints {
+			// not enabled, short-circuit early
+			if err = safe.CleanupOutputs[*kubespan.Endpoint](ctx, r); err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		// for every kubespan peer, if it's up and has endpoint, harvest that endpoint
 		peerStatuses, err := safe.ReaderListAll[*kubespan.PeerStatus](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing cluster affiliates: %w", err)
@@ -83,9 +108,6 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 				affiliateLookup[affiliate.KubeSpan.PublicKey] = affiliate.NodeID
 			}
 		}
-
-		// for every kubespan peer, if it's up and has endpoint, harvest that endpoint
-		touchedIDs := make(map[resource.ID]struct{})
 
 		for it := peerStatuses.Iterator(); it.Next(); {
 			res := it.Value()
@@ -114,30 +136,10 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			}); err != nil {
 				return err
 			}
-
-			touchedIDs[res.Metadata().ID()] = struct{}{}
 		}
 
-		// list keys for cleanup
-		list, err := safe.ReaderListAll[*kubespan.Endpoint](ctx, r)
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
+		if err = safe.CleanupOutputs[*kubespan.Endpoint](ctx, r); err != nil {
+			return err
 		}
-
-		for it := list.Iterator(); it.Next(); {
-			res := it.Value()
-
-			if res.Metadata().Owner() != ctrl.Name() {
-				continue
-			}
-
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up specs: %w", err)
-				}
-			}
-		}
-
-		r.ResetRestartBackoff()
 	}
 }

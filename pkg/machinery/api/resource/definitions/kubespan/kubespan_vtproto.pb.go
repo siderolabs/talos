@@ -54,6 +54,16 @@ func (m *ConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.HarvestExtraEndpoints {
+		i--
+		if m.HarvestExtraEndpoints {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x40
+	}
 	if len(m.EndpointFilters) > 0 {
 		for iNdEx := len(m.EndpointFilters) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.EndpointFilters[iNdEx])
@@ -564,6 +574,9 @@ func (m *ConfigSpec) SizeVT() (n int) {
 			n += 1 + l + sov(uint64(l))
 		}
 	}
+	if m.HarvestExtraEndpoints {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -951,6 +964,26 @@ func (m *ConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.EndpointFilters = append(m.EndpointFilters, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HarvestExtraEndpoints", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.HarvestExtraEndpoints = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

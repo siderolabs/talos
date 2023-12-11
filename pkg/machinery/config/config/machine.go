@@ -275,6 +275,7 @@ type KubeSpan interface {
 	Enabled() bool
 	ForceRouting() bool
 	AdvertiseKubernetesNetworks() bool
+	HarvestExtraEndpoints() bool
 	MTU() uint32
 	Filters() KubeSpanFilters
 }
