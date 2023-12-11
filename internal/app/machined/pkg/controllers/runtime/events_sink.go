@@ -119,8 +119,9 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 			}
 
 			req := &events.EventRequest{
-				Id:   event.ID.String(),
-				Data: data,
+				Id:      event.ID.String(),
+				Data:    data,
+				ActorId: event.ActorID,
 			}
 
 			_, err = client.Publish(ctx, req)
