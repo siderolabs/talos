@@ -1,7 +1,7 @@
 {{ frontmatter .Root.Type .Root.Description }}
 
 {{ block "struct" dict "Struct" .Root "Level" 1 "Name" .Root.Type "Path" .Root.Type  "Types" .Types }}
-{{ if gt .Level 1 }}{{ repeat "#" .Level }} {{ .Name }} {#{{ .Path }}}{{ end }}
+{{ if gt .Level 1 }}{{ repeat "#" (min .Level 6) }} {{ .Name }} {#{{ .Path }}}{{ end }}
 
 {{ if and .Struct.Description (gt .Level 1) -}}
 {{ .Struct.Description }}
