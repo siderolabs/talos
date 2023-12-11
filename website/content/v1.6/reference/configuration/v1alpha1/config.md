@@ -1454,7 +1454,7 @@ machine:
 
 
 
-####### equinixMetal {#Config.machine.network.interfaces..vlans..vip.equinixMetal}
+###### equinixMetal {#Config.machine.network.interfaces..vlans..vip.equinixMetal}
 
 VIPEquinixMetalConfig contains settings for Equinix Metal VIP management.
 
@@ -1470,7 +1470,7 @@ VIPEquinixMetalConfig contains settings for Equinix Metal VIP management.
 
 
 
-####### hcloud {#Config.machine.network.interfaces..vlans..vip.hcloud}
+###### hcloud {#Config.machine.network.interfaces..vlans..vip.hcloud}
 
 VIPHCloudConfig contains settings for Hetzner Cloud VIP management.
 

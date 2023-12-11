@@ -43,6 +43,7 @@ func (fd *FileDoc) Encode(root *Doc, frontmatter func(title, description string)
 			"trimPrefix":  strings.TrimPrefix,
 			"add":         func(a, b int) int { return a + b },
 			"frontmatter": frontmatter,
+			"min":         minInt,
 		}).
 		Parse(markdownTemplate))
 
@@ -188,4 +189,8 @@ func tmplDict(vals ...any) (map[string]any, error) {
 	}
 
 	return res, nil
+}
+
+func minInt(a, b int) int {
+	return min(a, b)
 }
