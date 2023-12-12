@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos14"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos15"
 	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos16"
+	"github.com/siderolabs/talos/pkg/machinery/compatibility/talos17"
 )
 
 // TalosVersion embeds Talos version.
@@ -51,6 +52,8 @@ func (v *TalosVersion) DisablePredictableNetworkInterfaces() bool {
 }
 
 // UpgradeableFrom checks if the current version of Talos can be used as an upgrade for the given host version.
+//
+//nolint:gocyclo
 func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 	var (
 		minHostUpgradeVersion, maxHostDowngradeVersion semver.Version
@@ -73,6 +76,9 @@ func (v *TalosVersion) UpgradeableFrom(host *TalosVersion) error {
 	case talos16.MajorMinor: // upgrades to 1.6.x
 		minHostUpgradeVersion, maxHostDowngradeVersion = talos16.MinimumHostUpgradeVersion, talos16.MaximumHostDowngradeVersion
 		deniedHostUpgradeVersions = talos16.DeniedHostUpgradeVersions
+	case talos17.MajorMinor: // upgrades to 1.7.x
+		minHostUpgradeVersion, maxHostDowngradeVersion = talos17.MinimumHostUpgradeVersion, talos17.MaximumHostDowngradeVersion
+		deniedHostUpgradeVersions = talos17.DeniedHostUpgradeVersions
 	default:
 		return fmt.Errorf("upgrades to version %s are not supported", v.version.String())
 	}
