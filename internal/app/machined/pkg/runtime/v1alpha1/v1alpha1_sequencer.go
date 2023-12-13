@@ -342,6 +342,9 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeWorker),
 			"leave",
 			LeaveEtcd,
+		).Append(
+			"preReset",
+			SendResetSignal,
 		).AppendList(
 			phaseListErrorHandler(logError, stopAllPhaselist(r, withKexec)...),
 		).Append(

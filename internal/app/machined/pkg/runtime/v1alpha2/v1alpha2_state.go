@@ -179,6 +179,7 @@ func NewState() (*State, error) {
 		&runtime.KmsgLogConfig{},
 		&runtime.MaintenanceServiceConfig{},
 		&runtime.MaintenanceServiceRequest{},
+		&runtime.MachineResetSignal{},
 		&runtime.MachineStatus{},
 		&runtime.MetaKey{},
 		&runtime.MetaLoaded{},

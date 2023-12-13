@@ -68,8 +68,8 @@ func (ctrl *DiscoveryServiceController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: runtime.NamespaceName,
-			Type:      runtime.MachineStatusType,
-			ID:        optional.Some(runtime.MachineStatusID),
+			Type:      runtime.MachineResetSignalType,
+			ID:        optional.Some(runtime.MachineResetSignalID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -218,9 +218,9 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 			return fmt.Errorf("error listing endpoints: %w", err)
 		}
 
-		machineStatus, err := safe.ReaderGet[*runtime.MachineStatus](ctx, r, resource.NewMetadata(runtime.NamespaceName, runtime.MachineStatusType, runtime.MachineStatusID, resource.VersionUndefined))
+		machineResetSginal, err := safe.ReaderGetByID[*runtime.MachineResetSignal](ctx, r, runtime.MachineResetSignalID)
 		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error getting machine status: %w", err)
+			return fmt.Errorf("error getting machine reset signal: %w", err)
 		}
 
 		if client == nil {
@@ -257,9 +257,9 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 		// delete/update local affiliate
 		//
-		// if the node enters resetting stage, cleanup the local affiliate
+		// if the node enters final resetting stage, cleanup the local affiliate
 		// otherwise, update local affiliate data
-		if machineStatus != nil && machineStatus.TypedSpec().Stage == runtime.MachineStageResetting {
+		if machineResetSginal != nil {
 			client.DeleteLocalAffiliate()
 		} else {
 			localData := pbAffiliate(affiliateSpec)

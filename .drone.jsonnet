@@ -547,7 +547,6 @@ local integration_kubespan = Step('e2e-kubespan', target='e2e-qemu', privileged=
   WITH_CLUSTER_DISCOVERY: 'true',
   WITH_KUBESPAN: 'true',
   IMAGE_REGISTRY: local_registry,
-  WITH_CONFIG_PATCH: '[{"op": "replace", "path": "/cluster/discovery/registries/kubernetes/disabled", "value": false}]',  // use Kubernetes discovery backend
 });
 local integration_default_hostname = Step('e2e-default-hostname', target='e2e-qemu', privileged=true, depends_on=[integration_kubespan], environment={
   // regression test: make sure Talos works in maintenance mode when no hostname is set
@@ -557,9 +556,10 @@ local integration_default_hostname = Step('e2e-default-hostname', target='e2e-qe
   DISABLE_DHCP_HOSTNAME: 'true',
 });
 
-local integration_qemu_encrypted_vip = Step('e2e-encrypted-vip', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
+local integration_qemu_encrypted_vip = Step('e2e-encrypted-kubespan-vip', target='e2e-qemu', privileged=true, depends_on=[load_artifacts], environment={
   WITH_DISK_ENCRYPTION: 'true',
   WITH_VIRTUAL_IP: 'true',
+  WITH_KUBESPAN: 'true',
   IMAGE_REGISTRY: local_registry,
 });
 
