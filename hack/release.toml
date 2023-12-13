@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.6.0-beta.0"
+previous = "v1.6.0-beta.1"
 
 pre_release = true
 
@@ -17,7 +17,7 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.1.65
+Linux: 6.1.67
 etcd: 3.5.11
 
 Talos is built with Go 1.21.5.
