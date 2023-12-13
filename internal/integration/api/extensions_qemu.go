@@ -379,6 +379,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisor() {
 			Name: "nginx-gvisor",
 		},
 		Spec: corev1.PodSpec{
+			RuntimeClassName: pointer.To("gvisor"),
 			Containers: []corev1.Container{
 				{
 					Name:  "nginx-gvisor",
