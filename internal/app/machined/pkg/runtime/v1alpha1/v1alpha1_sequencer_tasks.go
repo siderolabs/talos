@@ -2303,6 +2303,13 @@ func StoreShutdownEmergency(runtime.Sequence, any) (runtime.TaskExecutionFunc, s
 	}, "storeShutdownEmergency"
 }
 
+// SendResetSignal func represents the task to send the final reset signal.
+func SendResetSignal(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		return r.State().V1Alpha2().Resources().Create(ctx, resourceruntime.NewMachineResetSignal())
+	}, "sendResetSignal"
+}
+
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),
 	timeout time.Duration,
 ) func(seq runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {

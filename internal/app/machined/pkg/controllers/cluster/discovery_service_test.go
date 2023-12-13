@@ -242,9 +242,8 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	)
 
 	// pretend that machine is being reset
-	machineStatus := runtime.NewMachineStatus()
-	machineStatus.TypedSpec().Stage = runtime.MachineStageResetting
-	suite.Require().NoError(suite.state.Create(suite.ctx, machineStatus))
+	machineResetSignal := runtime.NewMachineResetSignal()
+	suite.Require().NoError(suite.state.Create(suite.ctx, machineResetSignal))
 
 	// client should see the affiliate being deleted
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(

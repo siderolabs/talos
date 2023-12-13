@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -399,7 +400,11 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 				continue
 			}
 
-			if strings.Contains(err.Error(), "connection refused") {
+			if client.StatusCode(err) == codes.Unavailable {
+				return retry.ExpectedError(err)
+			}
+
+			if strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "connection reset by peer") {
 				return retry.ExpectedError(err)
 			}
 

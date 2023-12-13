@@ -14,10 +14,12 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -262,18 +264,16 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 	for _, node := range nodes {
 		nodeCtx := client.WithNode(suite.ctx, node)
 
-		peerSpecs := suite.getKubeSpanPeerSpecs(nodeCtx)
-		suite.Assert().Len(peerSpecs, len(nodes)-1)
+		rtestutils.AssertLength[*kubespan.PeerSpec](nodeCtx, suite.T(), suite.Client.COSI, len(nodes)-1)
+		rtestutils.AssertLength[*kubespan.PeerStatus](nodeCtx, suite.T(), suite.Client.COSI, len(nodes)-1)
 
-		peerStatuses := suite.getKubeSpanPeerStatuses(nodeCtx)
-		suite.Assert().Len(peerStatuses, len(nodes)-1)
-
-		for _, status := range peerStatuses {
-			suite.Assert().Equal(kubespan.PeerStateUp, status.TypedSpec().State)
-			suite.Assert().False(value.IsZero(status.TypedSpec().Endpoint))
-			suite.Assert().Greater(status.TypedSpec().ReceiveBytes, int64(0))
-			suite.Assert().Greater(status.TypedSpec().TransmitBytes, int64(0))
-		}
+		rtestutils.AssertAll[*kubespan.PeerStatus](nodeCtx, suite.T(), suite.Client.COSI,
+			func(status *kubespan.PeerStatus, asrt *assert.Assertions) {
+				asrt.Equal(kubespan.PeerStateUp, status.TypedSpec().State)
+				asrt.False(value.IsZero(status.TypedSpec().Endpoint))
+				asrt.Greater(status.TypedSpec().ReceiveBytes, int64(0))
+				asrt.Greater(status.TypedSpec().TransmitBytes, int64(0))
+			})
 	}
 }
 
@@ -306,36 +306,6 @@ func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace re
 	suite.Require().NoError(err)
 
 	items.ForEach(func(item *cluster.Affiliate) { result = append(result, item) })
-
-	return result
-}
-
-func (suite *DiscoverySuite) getKubeSpanPeerSpecs(nodeCtx context.Context) []*kubespan.PeerSpec {
-	var result []*kubespan.PeerSpec
-
-	items, err := safe.StateListAll[*kubespan.PeerSpec](nodeCtx, suite.Client.COSI)
-	suite.Require().NoError(err)
-
-	it := items.Iterator()
-
-	for it.Next() {
-		result = append(result, it.Value())
-	}
-
-	return result
-}
-
-func (suite *DiscoverySuite) getKubeSpanPeerStatuses(nodeCtx context.Context) []*kubespan.PeerStatus {
-	var result []*kubespan.PeerStatus
-
-	items, err := safe.StateListAll[*kubespan.PeerStatus](nodeCtx, suite.Client.COSI)
-	suite.Require().NoError(err)
-
-	it := items.Iterator()
-
-	for it.Next() {
-		result = append(result, it.Value())
-	}
 
 	return result
 }

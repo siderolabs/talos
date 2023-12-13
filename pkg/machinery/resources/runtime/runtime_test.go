@@ -33,6 +33,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.KernelParamStatus{},
 		&runtime.KmsgLogConfig{},
 		&runtime.MachineStatus{},
+		&runtime.MachineResetSignal{},
 		&runtime.MaintenanceServiceConfig{},
 		&runtime.MaintenanceServiceRequest{},
 		&runtime.MetaKey{},
