@@ -16,7 +16,7 @@ CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.6.0-1-g336d248
-PKGS ?= v1.6.0-3-g617d342
+PKGS ?= v1.6.0-5-g3ae2450
 PKG_KERNEL ?= ghcr.io/siderolabs/kernel:$(PKGS)
 EXTRAS ?= v1.6.0-1-g113887a
 # renovate: datasource=github-tags depName=golang/go
