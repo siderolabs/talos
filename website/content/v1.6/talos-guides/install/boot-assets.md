@@ -194,7 +194,7 @@ Also we want to disable predictable network interface names with `net.ifnames=0`
 First, let's lookup extension images for Intel CPU microcode updates and `gvisor` container runtime in the [extensions repository](https://github.com/siderolabs/extensions):
 
 ```shell
-$ crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-digests | egrep 'gvisor|intel-ucode'
+$ crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-digests | grep -E 'gvisor|intel-ucode'
 ghcr.io/siderolabs/gvisor:20231214.0-{{< release >}}@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e
 ghcr.io/siderolabs/intel-ucode:20231114@sha256:ea564094402b12a51045173c7523f276180d16af9c38755a894cf355d72c249d
 ```

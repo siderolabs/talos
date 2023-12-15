@@ -16,7 +16,7 @@ Users that need Linux firmware can pull them as an extension during install time
 If the initial boot requires firmware, a [custom ISO can be built]({{< relref "../../talos-guides/install/boot-assets" >}}) with the firmware included using the Image Factory service or using the `imager`.
 This also ensures that the linux-firmware is not tied to a specific Talos version.
 
-The list of firmware packages which are now available as extensions:
+The list of firmware packages which were removed from the default `initramfs` and are now available as extensions:
 
 * [bnx2 and bnx2x firmware (Broadcom NetXtreme II)](https://github.com/siderolabs/extensions/tree/main/firmware/bnx2-bnx2x)
 * [Intel ICE firmware (Intel(R) Ethernet Controller 800 Series)](https://github.com/siderolabs/extensions/tree/main/firmware/intel-ice-firmware)
