@@ -15,6 +15,7 @@ type PartitionOptions struct {
 // BoardInstallOptions are the board specific options for installation of various boot assets.
 type BoardInstallOptions struct {
 	InstallDisk     string
+	MountPrefix     string
 	DTBPath         string
 	UBootPath       string
 	RPiFirmwarePath string

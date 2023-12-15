@@ -32,17 +32,17 @@ func (r *RPiGeneric) Name() string {
 
 // Install implements the runtime.Board.
 func (r *RPiGeneric) Install(options runtime.BoardInstallOptions) (err error) {
-	err = copy.Dir(filepath.Join(options.RPiFirmwarePath, "boot"), "/boot/EFI")
+	err = copy.Dir(filepath.Join(options.RPiFirmwarePath, "boot"), filepath.Join(options.MountPrefix, "/boot/EFI"))
 	if err != nil {
 		return err
 	}
 
-	err = copy.File(filepath.Join(options.UBootPath, "rpi_generic/u-boot.bin"), "/boot/EFI/u-boot.bin")
+	err = copy.File(filepath.Join(options.UBootPath, "rpi_generic/u-boot.bin"), filepath.Join(options.MountPrefix, "/boot/EFI/u-boot.bin"))
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile("/boot/EFI/config.txt", configTxt, 0o600)
+	return os.WriteFile(filepath.Join(options.MountPrefix, "/boot/EFI/config.txt"), configTxt, 0o600)
 }
 
 // KernelArgs implements the runtime.Board.

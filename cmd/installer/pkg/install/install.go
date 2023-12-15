@@ -290,6 +290,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 		if err = b.Install(runtime.BoardInstallOptions{
 			InstallDisk:     i.options.Disk,
+			MountPrefix:     i.options.MountPrefix,
 			UBootPath:       i.options.BootAssets.UBootPath,
 			DTBPath:         i.options.BootAssets.DTBPath,
 			RPiFirmwarePath: i.options.BootAssets.RPiFirmwarePath,
