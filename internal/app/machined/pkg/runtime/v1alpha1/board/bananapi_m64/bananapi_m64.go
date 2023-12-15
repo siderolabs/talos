@@ -73,7 +73,7 @@ func (b *BananaPiM64) Install(options runtime.BoardInstallOptions) (err error) {
 	}
 
 	src := filepath.Join(options.DTBPath, dtb)
-	dst := filepath.Join("/boot/EFI/dtb", dtb)
+	dst := filepath.Join(options.MountPrefix, "/boot/EFI/dtb", dtb)
 
 	err = os.MkdirAll(filepath.Dir(dst), 0o600)
 	if err != nil {
