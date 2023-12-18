@@ -99,6 +99,7 @@ var (
 	nodeInitramfsPath          string
 	nodeISOPath                string
 	nodeDiskImagePath          string
+	nodeIPXEBootScript         string
 	applyConfigEnabled         bool
 	bootloaderEnabled          bool
 	uefiEnabled                bool
@@ -322,11 +323,12 @@ func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
 			Bandwidth:         bandwidth,
 		},
 
-		Image:         nodeImage,
-		KernelPath:    nodeVmlinuzPath,
-		InitramfsPath: nodeInitramfsPath,
-		ISOPath:       nodeISOPath,
-		DiskImagePath: nodeDiskImagePath,
+		Image:          nodeImage,
+		KernelPath:     nodeVmlinuzPath,
+		InitramfsPath:  nodeInitramfsPath,
+		ISOPath:        nodeISOPath,
+		IPXEBootScript: nodeIPXEBootScript,
+		DiskImagePath:  nodeDiskImagePath,
 
 		SelfExecutable: os.Args[0],
 		StateDirectory: stateDir,
@@ -958,6 +960,7 @@ func init() {
 	createCmd.Flags().StringVar(&nodeISOPath, "iso-path", "", "the ISO path to use for the initial boot (VM only)")
 	createCmd.Flags().StringVar(&nodeInitramfsPath, "initrd-path", helpers.ArtifactPath(constants.InitramfsAssetWithArch), "initramfs image to use")
 	createCmd.Flags().StringVar(&nodeDiskImagePath, "disk-image-path", "", "disk image to use")
+	createCmd.Flags().StringVar(&nodeIPXEBootScript, "ipxe-boot-script", "", "iPXE boot script (URL) to use")
 	createCmd.Flags().BoolVar(&applyConfigEnabled, "with-apply-config", false, "enable apply config when the VM is starting in maintenance mode")
 	createCmd.Flags().BoolVar(&bootloaderEnabled, bootloaderEnabledFlag, true, "enable bootloader to load kernel and initramfs from disk image after install")
 	createCmd.Flags().BoolVar(&uefiEnabled, "with-uefi", true, "enable UEFI on x86_64 architecture")

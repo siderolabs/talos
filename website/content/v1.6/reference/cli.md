@@ -131,6 +131,7 @@ talosctl cluster create [flags]
       --install-image string                     the installer image to use (default "ghcr.io/siderolabs/installer:latest")
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster (QEMU provisioner only)
+      --ipxe-boot-script string                  iPXE boot script (URL) to use
       --iso-path string                          the ISO path to use for the initial boot (VM only)
       --kubeprism-port int                       KubePrism port (set to 0 to disable) (default 7445)
       --kubernetes-version string                desired kubernetes version to run (default "1.29.0")

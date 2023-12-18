@@ -23,12 +23,18 @@ type ClusterRequest struct {
 	Network NetworkRequest
 	Nodes   NodeRequests
 
-	Image         string
-	KernelPath    string
-	InitramfsPath string
-	ISOPath       string
-	DiskImagePath string
-	KMSEndpoint   string
+	// Docker specific parameters.
+	Image string
+
+	// Boot options (QEMU).
+	KernelPath     string
+	InitramfsPath  string
+	ISOPath        string
+	DiskImagePath  string
+	IPXEBootScript string
+
+	// Encryption
+	KMSEndpoint string
 
 	// Path to talosctl executable to re-execute itself as needed.
 	SelfExecutable string

@@ -90,6 +90,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.1.0-rc.1
 	github.com/packethost/packngo v0.30.0
 	github.com/pelletier/go-toml v1.9.5
+	github.com/pin/tftp v2.1.1-0.20200117065540-2f79be2dba4e+incompatible
 	github.com/pin/tftp/v3 v3.1.0
 	github.com/pmorjan/kmod v1.1.0
 	github.com/prometheus/procfs v0.12.0

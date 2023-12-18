@@ -36,6 +36,9 @@ FROM --platform=arm64 ghcr.io/siderolabs/sd-boot:${PKGS} AS pkg-sd-boot-arm64
 FROM --platform=amd64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/iptables:${PKGS} AS pkg-iptables-arm64
 
+FROM --platform=amd64 ghcr.io/siderolabs/ipxe:${PKGS} AS pkg-ipxe-amd64
+FROM --platform=arm64 ghcr.io/siderolabs/ipxe:${PKGS} AS pkg-ipxe-arm64
+
 FROM --platform=amd64 ghcr.io/siderolabs/libinih:${PKGS} AS pkg-libinih-amd64
 FROM --platform=arm64 ghcr.io/siderolabs/libinih:${PKGS} AS pkg-libinih-arm64
 
@@ -275,6 +278,10 @@ COPY --from=embed-abbrev-generate /src/pkg/machinery/gendata/data /pkg/machinery
 COPY --from=embed-abbrev-generate /src/_out/talos-metadata /_out/talos-metadata
 COPY --from=embed-abbrev-generate /src/_out/signing_key.x509 /_out/signing_key.x509
 
+FROM scratch AS ipxe-generate
+COPY --from=pkg-ipxe-amd64 /usr/libexec/snp.efi /amd64/snp.efi
+COPY --from=pkg-ipxe-arm64 /usr/libexec/snp.efi /arm64/snp.efi
+
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --from=proto-format-build /src/api /api/
 COPY --from=generate-build /api/common/*.pb.go /pkg/machinery/api/common/
@@ -295,6 +302,7 @@ COPY --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
 COPY --from=go-generate /src/pkg/machinery/config/types/ /pkg/machinery/config/types/
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
+COPY --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
 COPY --from=embed-abbrev / /
 
 # The base target provides a container that can be used to build all Talos
