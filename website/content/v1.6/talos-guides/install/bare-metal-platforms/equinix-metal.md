@@ -1,7 +1,7 @@
 ---
 title: "Equinix Metal"
 description: "Creating Talos clusters with Equinix Metal."
-aliases: 
+aliases:
   - ../../../bare-metal-platforms/equinix-metal
 ---
 
@@ -103,20 +103,8 @@ Repeat this to create each control plane node desired: there should usually be 3
 
 ### Network Booting via iPXE
 
-You may install Talos over the network using TFTP and iPXE.
-You would first need a working TFTP and iPXE server.
-
-In general this requires a Talos kernel vmlinuz and initramfs.
-These assets can be downloaded from a given [release](https://github.com/siderolabs/talos/releases).
-
-#### PXE Boot Kernel Parameters
-
-The following is a list of kernel parameters required by Talos:
-
-* `talos.platform`: set this to `equinixMetal`
-* `init_on_alloc=1`: required by KSPP
-* `slab_nomerge`: required by KSPP
-* `pti=on`: required by KSPP
+Talos Linux can be PXE-booted on Equinix Metal using [Image Factory]({{< relref "../../../learn-more/image-factory" >}}), using the `equinixMetal` platform: e.g.
+`https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64` (this URL references the default schematic and `amd64` architecture).
 
 #### Create the Control Plane Nodes
 

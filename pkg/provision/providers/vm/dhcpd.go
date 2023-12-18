@@ -91,12 +91,14 @@ func handlerDHCP4(serverIP net.IP, statePath string) server4.Handler {
 
 		if m.IsOptionRequested(dhcpv4.OptionBootfileName) {
 			log.Printf("received PXE boot request from %s", m.ClientHWAddr)
+			log.Printf("sending PXE response to %s: %s/%s", m.ClientHWAddr, match.TFTPServer, match.IPXEBootFilename)
 
 			if match.TFTPServer != "" {
-				log.Printf("sending PXE response to %s: %s/%s", m.ClientHWAddr, match.TFTPServer, match.IPXEBootFilename)
-
 				resp.ServerIPAddr = net.ParseIP(match.TFTPServer)
 				resp.UpdateOption(dhcpv4.OptTFTPServerName(match.TFTPServer))
+			}
+
+			if match.IPXEBootFilename != "" {
 				resp.UpdateOption(dhcpv4.OptBootFileName(match.IPXEBootFilename))
 			}
 		}
@@ -293,6 +295,7 @@ func (p *Provisioner) CreateDHCPd(state *State, clusterReq provision.ClusterRequ
 		"--state-path", statePath,
 		"--addr", strings.Join(gatewayAddrs, ","),
 		"--interface", state.BridgeName,
+		"--ipxe-next-handler", clusterReq.IPXEBootScript,
 	}
 
 	cmd := exec.Command(clusterReq.SelfExecutable, args...)

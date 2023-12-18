@@ -12,7 +12,9 @@ This guide will demonstrate how to create a highly-available Kubernetes cluster 
 [Vultr](https://www.vultr.com/) have a very well documented REST API, and an open-source [CLI](https://github.com/vultr/vultr-cli) tool to interact with the API which will be used in this guide.
 Make sure to follow installation and authentication instructions for the `vultr-cli` tool.
 
-### Upload image
+### Boot Options
+
+#### Upload an ISO Image
 
 First step is to make the Talos ISO available to Vultr by uploading the latest release of the ISO to the Vultr ISO server.
 
@@ -21,6 +23,11 @@ vultr-cli iso create --url https://github.com/siderolabs/talos/releases/download
 ```
 
 Make a note of the `ID` in the output, it will be needed later when creating the instances.
+
+#### PXE Booting via Image Factory
+
+Talos Linux can be PXE-booted on Vultr using [Image Factory]({{< relref "../../../learn-more/image-factory" >}}), using the `vultr` platform: e.g.
+`https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/vultr-amd64` (this URL references the default schematic and `amd64` architecture).
 
 ### Create a Load Balancer
 

@@ -139,6 +139,11 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		APIPort:           apiPort,
 	}
 
+	if clusterReq.IPXEBootScript != "" {
+		launchConfig.TFTPServer = clusterReq.Network.GatewayAddrs[0].String()
+		launchConfig.IPXEBootFileName = fmt.Sprintf("ipxe/%s/snp.efi", string(arch))
+	}
+
 	nodeInfo := provision.NodeInfo{
 		ID:   pidPath,
 		UUID: nodeUUID,
@@ -168,7 +173,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		launchConfig.Hostname = nodeReq.Name
 	}
 
-	if !nodeReq.PXEBooted {
+	if !(nodeReq.PXEBooted || launchConfig.IPXEBootFileName != "") {
 		launchConfig.KernelImagePath = strings.ReplaceAll(clusterReq.KernelPath, constants.ArchVariable, opts.TargetArch)
 		launchConfig.InitrdPath = strings.ReplaceAll(clusterReq.InitramfsPath, constants.ArchVariable, opts.TargetArch)
 		launchConfig.ISOPath = strings.ReplaceAll(clusterReq.ISOPath, constants.ArchVariable, opts.TargetArch)
