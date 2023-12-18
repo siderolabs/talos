@@ -8,6 +8,8 @@ kernel/crypto/async_tx/async_tx.ko
 kernel/crypto/async_tx/async_xor.ko
 kernel/crypto/xor.ko
 kernel/drivers/hwmon/i5k_amb.ko
+kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
+kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
 kernel/drivers/irqchip/irq-imx-mu-msi.ko
 kernel/drivers/mailbox/bcm-flexrm-mailbox.ko
@@ -30,6 +32,11 @@ kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_minimal.ko
 kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_pci.ko
 kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_spectrum.ko
 kernel/drivers/net/ethernet/sfc/siena/sfc-siena.ko
+kernel/drivers/vfio/pci/vfio-pci-core.ko
+kernel/drivers/vfio/pci/vfio-pci.ko
+kernel/drivers/vfio/vfio_iommu_type1.ko
+kernel/drivers/vfio/vfio_virqfd.ko
+kernel/drivers/vfio/vfio.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko

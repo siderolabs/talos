@@ -46,6 +46,8 @@ kernel/drivers/hwmon/k10temp.ko
 kernel/drivers/hwmon/k8temp.ko
 kernel/drivers/i2c/busses/i2c-i801.ko
 kernel/drivers/i2c/i2c-smbus.ko
+kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
+kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
 kernel/drivers/md/dm-bio-prison.ko
 kernel/drivers/md/dm-multipath.ko
@@ -118,6 +120,11 @@ kernel/drivers/usb/serial/ch341.ko
 kernel/drivers/usb/serial/cp210x.ko
 kernel/drivers/usb/serial/ftdi_sio.ko
 kernel/drivers/usb/serial/pl2303.ko
+kernel/drivers/vfio/pci/vfio-pci-core.ko
+kernel/drivers/vfio/pci/vfio-pci.ko
+kernel/drivers/vfio/vfio_iommu_type1.ko
+kernel/drivers/vfio/vfio_virqfd.ko
+kernel/drivers/vfio/vfio.ko
 kernel/drivers/virtio/virtio_balloon.ko
 kernel/drivers/virtio/virtio_input.ko
 kernel/drivers/virtio/virtio_mmio.ko
