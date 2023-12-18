@@ -18,7 +18,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys"
-	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 )
 
 type authenticationMethod string
@@ -161,13 +160,4 @@ func getCertsClient(vaultURL string) (*azcertificates.Client, error) {
 	}
 
 	return azcertificates.NewClient(vaultURL, credAndError.cred, nil)
-}
-
-func getSecretsClient(vaultURL string) (*azsecrets.Client, error) {
-	credAndError := azureCredentialsOnce()
-	if credAndError.err != nil {
-		return nil, credAndError.err
-	}
-
-	return azsecrets.NewClient(vaultURL, credAndError.cred, nil)
 }
