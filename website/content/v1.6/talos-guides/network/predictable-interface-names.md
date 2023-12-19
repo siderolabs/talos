@@ -32,7 +32,9 @@ There are two ways to solve this:
     network:
       interfaces:
         - deviceSelector:
-            busPath: "0*" # should select any hardware network device, if you have just one, it will be selected
-          # any configuration can follow, e.g:
+            # This should select any hardware ethernet interface. If you have just one, it will be selected.
+            type: ether
+            kind: ''
+          # Any configuration can follow, e.g.:
           addresses: [10.3.4.5/24]
   ```
