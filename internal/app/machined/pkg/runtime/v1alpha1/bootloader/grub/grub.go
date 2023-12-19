@@ -15,9 +15,10 @@ import (
 
 // Config represents a grub configuration file (grub.cfg).
 type Config struct {
-	Default  BootLabel
-	Fallback BootLabel
-	Entries  map[BootLabel]MenuEntry
+	Default        BootLabel
+	Fallback       BootLabel
+	Entries        map[BootLabel]MenuEntry
+	AddResetOption bool
 }
 
 // MenuEntry represents a grub menu entry in the grub config file.
@@ -35,8 +36,9 @@ func (e bootloaderNotInstalledError) Error() string {
 // NewConfig creates a new grub configuration (nothing is written to disk).
 func NewConfig() *Config {
 	return &Config{
-		Default: BootA,
-		Entries: map[BootLabel]MenuEntry{},
+		Default:        BootA,
+		Entries:        map[BootLabel]MenuEntry{},
+		AddResetOption: true,
 	}
 }
 

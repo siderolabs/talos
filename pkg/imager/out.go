@@ -153,6 +153,7 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			KernelPath:    i.prof.Input.Kernel.Path,
 			InitramfsPath: i.initramfsPath,
 			Cmdline:       i.cmdline,
+			Version:       i.prof.Version,
 
 			ScratchDir: scratchSpace,
 			OutPath:    path,

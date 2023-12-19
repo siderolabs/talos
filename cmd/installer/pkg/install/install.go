@@ -157,7 +157,7 @@ func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, mode Mode, opts 
 	if !bootLoaderPresent {
 		if mode.IsImage() {
 			// on image creation, use the bootloader based on options
-			i.bootloader = bootloader.New(opts.ImageSecureboot)
+			i.bootloader = bootloader.New(opts.ImageSecureboot, opts.Version)
 		} else {
 			// on install/upgrade perform automatic detection
 			i.bootloader = bootloader.NewAuto()

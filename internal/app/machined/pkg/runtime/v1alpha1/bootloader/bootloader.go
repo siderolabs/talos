@@ -12,6 +12,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
+	"github.com/siderolabs/talos/pkg/imager/quirks"
 )
 
 // Bootloader describes a bootloader.
@@ -62,10 +63,13 @@ func NewAuto() Bootloader {
 }
 
 // New returns a new bootloader based on the secureboot flag.
-func New(secureboot bool) Bootloader {
+func New(secureboot bool, talosVersion string) Bootloader {
 	if secureboot {
 		return sdboot.New()
 	}
 
-	return grub.NewConfig()
+	g := grub.NewConfig()
+	g.AddResetOption = quirks.New(talosVersion).SupportsResetGRUBOption()
+
+	return g
 }
