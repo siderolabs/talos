@@ -95,7 +95,7 @@ machine:
   network:
     interfaces:
       - deviceSelector:
-          # This should select any hardware ethernet interface. If you have just one, it will be selected.
+          # This should select any hardware Ethernet interface. If you have just one, it will be selected.
           type: ether
           kind: ''
       dhcp: true
