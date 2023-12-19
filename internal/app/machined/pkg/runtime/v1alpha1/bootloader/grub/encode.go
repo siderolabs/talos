@@ -32,6 +32,7 @@ menuentry "{{ $entry.Name }}" {
 }
 {{ end -}}
 
+{{ if .AddResetOption -}}
 {{ $defaultEntry := index .Entries .Default -}}
 menuentry "Reset Talos installation and return to maintenance mode" {
   set gfxmode=auto
@@ -39,6 +40,7 @@ menuentry "Reset Talos installation and return to maintenance mode" {
   linux {{ $defaultEntry.Linux }} {{ quote $defaultEntry.Cmdline }} talos.experimental.wipe=system:EPHEMERAL,STATE
   initrd {{ $defaultEntry.Initrd }}
 }
+{{ end -}}
 `
 
 // Write the grub configuration to the given file.

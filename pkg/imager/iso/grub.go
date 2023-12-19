@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
+	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 )
 
@@ -24,6 +25,7 @@ type GRUBOptions struct {
 	KernelPath    string
 	InitramfsPath string
 	Cmdline       string
+	Version       string
 
 	ScratchDir string
 
@@ -59,9 +61,11 @@ func CreateGRUB(printf func(string, ...any), options GRUBOptions) error {
 	}
 
 	if err = tmpl.Execute(&grubCfg, struct {
-		Cmdline string
+		Cmdline        string
+		AddResetOption bool
 	}{
-		Cmdline: options.Cmdline,
+		Cmdline:        options.Cmdline,
+		AddResetOption: quirks.New(options.Version).SupportsResetGRUBOption(),
 	}); err != nil {
 		return err
 	}

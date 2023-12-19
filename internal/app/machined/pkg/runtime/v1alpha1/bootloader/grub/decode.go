@@ -69,44 +69,48 @@ func Decode(c []byte) (*Config, error) {
 		return nil, err
 	}
 
-	entries, err := parseEntries(c)
+	entries, hasResetOption, err := parseEntries(c)
 	if err != nil {
 		return nil, err
 	}
 
 	conf := Config{
-		Default:  defaultEntry,
-		Fallback: fallbackEntry,
-		Entries:  entries,
+		Default:        defaultEntry,
+		Fallback:       fallbackEntry,
+		Entries:        entries,
+		AddResetOption: hasResetOption,
 	}
 
 	return &conf, nil
 }
 
-func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
+func parseEntries(conf []byte) (map[BootLabel]MenuEntry, bool, error) {
 	entries := make(map[BootLabel]MenuEntry)
+	hasResetOption := false
 
 	matches := menuEntryRegex.FindAllSubmatch(conf, -1)
 	for _, m := range matches {
 		if len(m) != 3 {
-			return nil, fmt.Errorf("conf block: expected 3 matches, got %d", len(m))
+			return nil, false, fmt.Errorf("conf block: expected 3 matches, got %d", len(m))
 		}
 
 		confBlock := m[2]
 
 		linux, cmdline, initrd, err := parseConfBlock(confBlock)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		name := string(m[1])
 
 		bootEntry, err := ParseBootLabel(name)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		if bootEntry == BootReset {
+			hasResetOption = true
+
 			continue
 		}
 
@@ -118,7 +122,7 @@ func parseEntries(conf []byte) (map[BootLabel]MenuEntry, error) {
 		}
 	}
 
-	return entries, nil
+	return entries, hasResetOption, nil
 }
 
 func parseConfBlock(block []byte) (linux, cmdline, initrd string, err error) {

@@ -28,6 +28,9 @@ var (
 
 	//go:embed testdata/grub_write_test.cfg
 	newConfig string
+
+	//go:embed testdata/grub_write_no_reset_test.cfg
+	newNoResetConfig string
 )
 
 func TestDecode(t *testing.T) {
@@ -50,6 +53,8 @@ func TestDecode(t *testing.T) {
 	assert.Equal(t, "cmdline B", b.Cmdline)
 	assert.True(t, strings.HasPrefix(b.Linux, "/B/"))
 	assert.True(t, strings.HasPrefix(b.Initrd, "/B/"))
+
+	assert.True(t, conf.AddResetOption)
 }
 
 func TestEncodeDecode(t *testing.T) {
@@ -108,6 +113,31 @@ func TestWrite(t *testing.T) {
 
 	written, _ := os.ReadFile(tempFile.Name())
 	assert.Equal(t, newConfig, string(written))
+}
+
+//nolint:errcheck
+func TestWriteNoReset(t *testing.T) {
+	oldName := version.Name
+
+	t.Cleanup(func() {
+		version.Name = oldName
+	})
+
+	version.Name = "TestOld"
+
+	tempFile, _ := os.CreateTemp("", "talos-test-grub-*.cfg")
+
+	t.Cleanup(func() { require.NoError(t, os.Remove(tempFile.Name())) })
+
+	config := grub.NewConfig()
+	config.AddResetOption = false
+	require.NoError(t, config.Put(grub.BootA, "cmdline A", "v0.0.1"))
+
+	err := config.Write(tempFile.Name(), t.Logf)
+	assert.NoError(t, err)
+
+	written, _ := os.ReadFile(tempFile.Name())
+	assert.Equal(t, newNoResetConfig, string(written))
 }
 
 func TestPut(t *testing.T) {
