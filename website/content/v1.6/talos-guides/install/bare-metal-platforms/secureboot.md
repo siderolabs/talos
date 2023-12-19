@@ -26,7 +26,7 @@ As Talos Linux is fully contained in the UKI image, the full operating system is
 The easiest way to get started with SecureBoot is to download the [ISO](https://factory.talos.dev/image/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/metal-amd64-secureboot.iso), and
 boot it on a UEFI-enabled system which has SecureBoot enabled in setup mode.
 
-The ISO bootloader will roll the keys in the UEFI firmware, and boot the Talos Linux in SecureBoot mode.
+The ISO bootloader will enroll the keys in the UEFI firmware, and boot the Talos Linux in SecureBoot mode.
 The install should performed using SecureBoot installer (put it Talos machine configuration): `factory.talos.dev/installer-secureboot/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:{{< release >}}`.
 
 > Note: SecureBoot images can also be generated with [custom keys](#secureboot-with-custom-keys).
@@ -38,6 +38,7 @@ We will use one the ways to generate and submit machine configuration to the nod
 
 First, make sure SecureBoot is enabled in the UEFI firmware.
 For the first boot, the UEFI firmware should be in the setup mode, so that the keys can be enrolled into the UEFI firmware automatically.
+If the UEFI firmware does not support automatic enrollment, you may need to hit Esc to force the boot menu to appear, and select the `Enroll Secure Boot keys: auto` option.
 
 > Note: There are other ways to enroll the keys into the UEFI firmware, but this is out of scope of this guide.
 
