@@ -5,6 +5,9 @@
 package iso
 
 import (
+	"bytes"
+	"context"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -37,6 +40,9 @@ const (
 	// mib is the size of a megabyte.
 	mib = 1024 * 1024
 )
+
+//go:embed loader.conf
+var loaderConfig []byte
 
 // CreateUEFI creates an iso using a UKI, systemd-boot.
 //
@@ -115,6 +121,13 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 	}
 
 	if _, err := cmd.Run("mcopy", "-i", efiBootImg, options.UKIPath, fmt.Sprintf("::EFI/Linux/Talos-%s.efi", options.Version)); err != nil {
+		return err
+	}
+
+	if _, err := cmd.RunContext(
+		cmd.WithStdin(context.Background(), bytes.NewReader(loaderConfig)),
+		"mcopy", "-i", efiBootImg, "-", "::loader/loader.conf",
+	); err != nil {
 		return err
 	}
 
