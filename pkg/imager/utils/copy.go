@@ -40,7 +40,7 @@ func CopyFiles(printf func(string, ...any), instructions ...CopyInstruction) err
 			//nolint:errcheck
 			defer from.Close()
 
-			to, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE, 0o666)
+			to, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o666)
 			if err != nil {
 				return err
 			}
