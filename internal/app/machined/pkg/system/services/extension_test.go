@@ -94,6 +94,7 @@ func TestGetOCIOptions(t *testing.T) {
 			"/proc/timer_stats",
 			"/proc/sched_debug",
 			"/sys/firmware",
+			"/sys/devices/virtual/powercap",
 			"/proc/scsi",
 		}, spec.Linux.MaskedPaths)
 		assert.Equal(t, []string{
