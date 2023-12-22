@@ -217,7 +217,7 @@ function build_registry_mirrors {
     done
   else
     # use the value from the environment, if present
-    REGISTRY_MIRROR_FLAGS=("${REGISTRY_MIRROR_FLAGS:-}")
+    REGISTRY_MIRROR_FLAGS=(${REGISTRY_MIRROR_FLAGS:-})
   fi
 }
 

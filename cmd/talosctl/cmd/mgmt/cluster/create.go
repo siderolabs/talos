@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/netip"
+	"net/url"
 	"os"
 	"path/filepath"
 	stdruntime "runtime"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/hashicorp/go-getter/v2"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-kubeconfig"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -180,8 +182,82 @@ var createCmd = &cobra.Command{
 	},
 }
 
+func downloadBootAssets(ctx context.Context) error {
+	// download & cache images if provides as URLs
+	for _, downloadableImage := range []*string{
+		&nodeVmlinuzPath,
+		&nodeInitramfsPath,
+		&nodeISOPath,
+		&nodeDiskImagePath,
+	} {
+		if *downloadableImage == "" {
+			continue
+		}
+
+		u, err := url.Parse(*downloadableImage)
+		if err != nil || !(u.Scheme == "http" || u.Scheme == "https") {
+			// not a URL
+			continue
+		}
+
+		defaultStateDir, err := clientconfig.GetTalosDirectory()
+		if err != nil {
+			return err
+		}
+
+		cacheDir := filepath.Join(defaultStateDir, "cache")
+
+		if os.MkdirAll(cacheDir, 0o755) != nil {
+			return err
+		}
+
+		destPath := strings.ReplaceAll(
+			strings.ReplaceAll(u.String(), "/", "-"),
+			":", "-")
+
+		_, err = os.Stat(filepath.Join(cacheDir, destPath))
+		if err == nil {
+			*downloadableImage = filepath.Join(cacheDir, destPath)
+
+			// already cached
+			continue
+		}
+
+		fmt.Fprintf(os.Stderr, "downloading asset from %q to %q\n", u.String(), filepath.Join(cacheDir, destPath))
+
+		client := getter.Client{
+			Getters: []getter.Getter{
+				&getter.HttpGetter{
+					HeadFirstTimeout: 30 * time.Minute,
+					ReadTimeout:      30 * time.Minute,
+				},
+			},
+		}
+
+		_, err = client.Get(ctx, &getter.Request{
+			Src:     u.String(),
+			Dst:     filepath.Join(cacheDir, destPath),
+			GetMode: getter.ModeFile,
+		})
+		if err != nil {
+			// clean up the destination on failure
+			os.Remove(filepath.Join(cacheDir, destPath)) //nolint:errcheck
+
+			return err
+		}
+
+		*downloadableImage = filepath.Join(cacheDir, destPath)
+	}
+
+	return nil
+}
+
 //nolint:gocyclo,cyclop
-func create(ctx context.Context, flags *pflag.FlagSet) (err error) {
+func create(ctx context.Context, flags *pflag.FlagSet) error {
+	if err := downloadBootAssets(ctx); err != nil {
+		return err
+	}
+
 	if controlplanes < 1 {
 		return fmt.Errorf("number of controlplanes can't be less than 1")
 	}

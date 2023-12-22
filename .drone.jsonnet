@@ -465,6 +465,71 @@ local integration_qemu_trusted_boot = Step('e2e-qemu-trusted-boot', target='e2e-
   EXTRA_TEST_ARGS: '-talos.trustedboot',
 });
 
+local integration_factory_16_iso = Step('factory-1.6-iso', target='e2e-image-factory', privileged=true, depends_on=[load_artifacts], environment={
+  FACTORY_BOOT_METHOD: 'iso',
+  FACTORY_VERSION: 'v1.6.0',
+  FACTORY_SCHEMATIC: '376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba',
+  KUBERNETES_VERSION: '1.29.0',
+  FACTORY_UPGRADE: 'true',
+  FACTORY_UPGRADE_SCHEMATIC: 'cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f',
+  FACTORY_UPGRADE_VERSION: 'v1.6.1',
+});
+
+local integration_factory_16_image = Step('factory-1.6-image', depends_on=[integration_factory_16_iso], target='e2e-image-factory', privileged=true, environment={
+  FACTORY_BOOT_METHOD: 'disk-image',
+  FACTORY_VERSION: 'v1.6.0',
+  FACTORY_SCHEMATIC: '376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba',
+  KUBERNETES_VERSION: '1.29.0',
+  FACTORY_UPGRADE: 'true',
+  FACTORY_UPGRADE_SCHEMATIC: 'cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f',
+  FACTORY_UPGRADE_VERSION: 'v1.6.1',
+});
+
+local integration_factory_16_pxe = Step('factory-1.6-pxe', depends_on=[integration_factory_16_image], target='e2e-image-factory', privileged=true, environment={
+  FACTORY_BOOT_METHOD: 'pxe',
+  FACTORY_VERSION: 'v1.6.1',
+  FACTORY_SCHEMATIC: '376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba',
+  KUBERNETES_VERSION: '1.29.0',
+});
+
+local integration_factory_16_secureboot = Step('factory-1.6-secureboot', depends_on=[integration_factory_16_pxe], target='e2e-image-factory', privileged=true, environment={
+  FACTORY_BOOT_METHOD: 'secureboot-iso',
+  FACTORY_VERSION: 'v1.6.0',
+  FACTORY_SCHEMATIC: 'cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f',
+  KUBERNETES_VERSION: '1.29.0',
+  FACTORY_UPGRADE: 'true',
+  FACTORY_UPGRADE_SCHEMATIC: '376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba',
+  FACTORY_UPGRADE_VERSION: 'v1.6.1',
+});
+
+local integration_factory_15_iso = Step('factory-1.5-iso', depends_on=[integration_factory_16_secureboot], target='e2e-image-factory', privileged=true, environment={
+  FACTORY_BOOT_METHOD: 'iso',
+  FACTORY_VERSION: 'v1.5.5',
+  FACTORY_SCHEMATIC: '376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba',
+  KUBERNETES_VERSION: '1.28.5',
+  FACTORY_UPGRADE: 'true',
+  FACTORY_UPGRADE_SCHEMATIC: 'cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f',
+  FACTORY_UPGRADE_VERSION: 'v1.5.5',
+});
+
+local integration_factory_13_iso = Step('factory-1.3-iso', depends_on=[integration_factory_15_iso], target='e2e-image-factory', privileged=true, environment={
+  FACTORY_BOOT_METHOD: 'iso',
+  FACTORY_VERSION: 'v1.3.7',
+  FACTORY_SCHEMATIC: '376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba',
+  KUBERNETES_VERSION: '1.26.5',
+  FACTORY_UPGRADE: 'true',
+  FACTORY_UPGRADE_SCHEMATIC: 'cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f',
+  FACTORY_UPGRADE_VERSION: 'v1.3.7',
+});
+
+local integration_factory_13_image = Step('factory-1.3-image', depends_on=[integration_factory_13_iso], target='e2e-image-factory', privileged=true, environment={
+  FACTORY_BOOT_METHOD: 'disk-image',
+  FACTORY_VERSION: 'v1.3.7',
+  FACTORY_SCHEMATIC: '376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba',
+  KUBERNETES_VERSION: '1.26.5',
+});
+
+
 local build_race = Step('build-race', target='initramfs installer', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry, PUSH: true, TAG_SUFFIX: '-race', WITH_RACE: '1', PLATFORM: 'linux/amd64' });
 local integration_qemu_race = Step('e2e-qemu-race', target='e2e-qemu', privileged=true, depends_on=[build_race], environment={ IMAGE_REGISTRY: local_registry, TAG_SUFFIX: '-race' });
 
@@ -642,6 +707,15 @@ local integration_pipelines = [
   Pipeline('integration-images', default_pipeline_steps + [integration_images, integration_sbcs]) + integration_trigger(['integration-images']),
   Pipeline('integration-reproducibility-test', default_pipeline_steps + [integration_reproducibility_test]) + integration_trigger(['integration-reproducibility']),
   Pipeline('integration-cloud-images', default_pipeline_steps + [integration_images, integration_cloud_images]) + literal_trigger(['integration-cloud-images']),
+  Pipeline('image-factory', default_pipeline_steps + [
+    integration_factory_16_iso,
+    integration_factory_16_image,
+    integration_factory_16_pxe,
+    integration_factory_16_secureboot,
+    integration_factory_15_iso,
+    integration_factory_13_iso,
+    integration_factory_13_image,
+  ]) + literal_trigger(['image-factory']),
 
   // cron pipelines, triggered on schedule events
   Pipeline('cron-integration-qemu', default_pipeline_steps + [integration_qemu, push_edge], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
@@ -666,6 +740,16 @@ local integration_pipelines = [
   Pipeline('cron-integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-images', default_pipeline_steps + [integration_images, integration_sbcs], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-reproducibility-test', default_pipeline_steps + [integration_reproducibility_test], [default_cron_pipeline]) + cron_trigger(['nightly']),
+  Pipeline('cron-image-factory', default_pipeline_steps + [
+    integration_factory_16_iso,
+    integration_factory_16_image,
+    integration_factory_16_pxe,
+    integration_factory_16_secureboot,
+    integration_factory_15_iso,
+    integration_factory_13_iso,
+    integration_factory_13_image,
+  ],
+    [default_cron_pipeline]) + cron_trigger(['nightly']),
 ];
 
 
