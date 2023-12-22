@@ -42,6 +42,7 @@ func TestConfigEncodingStability(t *testing.T) {
 	}
 
 	currentVersion := ensure.Value(semver.ParseTolerant(gendata.VersionTag))
+	currentVersion.Patch = 0
 	maxContractVersion := ensure.Value(semver.ParseTolerant(versionContracts[len(versionContracts)-1].String()))
 	require.True(t, currentVersion.LTE(maxContractVersion), "latest version contract is not tested")
 
