@@ -1,3 +1,54 @@
+## [Talos 1.6.1](https://github.com/siderolabs/talos/releases/tag/v1.6.1) (2023-12-22)
+
+Welcome to the v1.6.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.1.69
+containerd: 1.7.11
+
+Talos is built with Go 1.21.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Radosław Piliszek
+
+### Changes
+<details><summary>4 commits</summary>
+<p>
+
+* [`8355c9eef`](https://github.com/siderolabs/talos/commit/8355c9eef04fcfd7115b9410b2ac4d2a2f1b4315) fix: properly overwrite files on install
+* [`2e9901751`](https://github.com/siderolabs/talos/commit/2e9901751bc7a36171953ffebb89d75988f6f7f1) fix: update the way secureboot signer fetches certificate (azure)
+* [`4caffd383`](https://github.com/siderolabs/talos/commit/4caffd383c8509bd14bdcff028f09d418c2c250a) fix: use correct prefix when installing SBC files
+* [`9e56d539b`](https://github.com/siderolabs/talos/commit/9e56d539b17a95567e34bdfa92dc9d848db3ac78) feat: update Linux to 6.1.69, containerd to 1.7.11
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>4 commits</summary>
+<p>
+
+* [`8fa73db`](https://github.com/siderolabs/pkgs/commit/8fa73db461aaab2ad180baf08df3ceda8eae3454) feat: update Linux to 6.1.69
+* [`f36484e`](https://github.com/siderolabs/pkgs/commit/f36484ec1143586ea0e499dbc1b9d5bba7e8822d) feat: update containerd to 1.7.11
+* [`6fdc79a`](https://github.com/siderolabs/pkgs/commit/6fdc79abcdd2f86de6e479263285893ccd15ab3e) feat: enable IRQ remapping on amd64
+* [`22cd9b4`](https://github.com/siderolabs/pkgs/commit/22cd9b49b0d967e36c4d16e9095708555c44ded4) chore: disable one commit check
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**  v1.7.9 -> v1.7.11
+* **github.com/siderolabs/pkgs**        v1.6.0-5-g3ae2450 -> v1.6.0-9-g8fa73db
+
+Previous release can be found at [v1.6.0](https://github.com/siderolabs/talos/releases/tag/v1.6.0)
+
 ## [Talos 1.6.0](https://github.com/siderolabs/talos/releases/tag/v1.6.0) (2023-12-14)
 
 Welcome to the v1.6.0 release of Talos!
