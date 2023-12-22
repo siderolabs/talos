@@ -306,7 +306,14 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 		return fmt.Errorf("failed to set created at: %w", err)
 	}
 
-	newInstallerImg, err = mutate.AppendLayers(newInstallerImg, baseLayers[0])
+	// Talos v1.5+ optimizes the install layers to be easily replaceable with new artifacts
+	// other Talos versions will have an overhead of artifacts being stored twice
+	if len(baseLayers) == 2 {
+		// optimized for installer image for artifacts replacements
+		baseLayers = baseLayers[:1]
+	}
+
+	newInstallerImg, err = mutate.AppendLayers(newInstallerImg, baseLayers...)
 	if err != nil {
 		return fmt.Errorf("failed to append layers: %w", err)
 	}
