@@ -7,7 +7,6 @@ package filemap
 
 import (
 	"archive/tar"
-	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -52,57 +51,64 @@ func Walk(sourceBasePath, imageBasePath string) ([]File, error) {
 	return filemap, err
 }
 
+func build(filemap []File) io.ReadCloser {
+	pr, pw := io.Pipe()
+
+	go func() {
+		pw.CloseWithError(func() error {
+			w := tar.NewWriter(pw)
+
+			for _, entry := range filemap {
+				if err := func(entry File) error {
+					in, err := os.Open(entry.SourcePath)
+					if err != nil {
+						return err
+					}
+
+					defer in.Close() //nolint:errcheck
+
+					st, err := in.Stat()
+					if err != nil {
+						return err
+					}
+
+					if err = w.WriteHeader(&tar.Header{
+						Name: entry.ImagePath,
+						Size: st.Size(),
+					}); err != nil {
+						return err
+					}
+
+					_, err = io.Copy(w, in)
+					if err != nil {
+						return err
+					}
+
+					return in.Close()
+				}(entry); err != nil {
+					return err
+				}
+			}
+
+			return w.Close()
+		}())
+	}()
+
+	return pr
+}
+
 // Layer creates a layer from a single file map.
 //
 // These layers are reproducible and consistent.
 //
 // A filemap is a path -> file content map representing a file system.
 func Layer(filemap []File) (v1.Layer, error) {
-	b := &bytes.Buffer{}
-	w := tar.NewWriter(b)
-
 	sort.Slice(filemap, func(i, j int) bool {
 		return filemap[i].ImagePath < filemap[j].ImagePath
 	})
 
-	for _, entry := range filemap {
-		if err := func(entry File) error {
-			in, err := os.Open(entry.SourcePath)
-			if err != nil {
-				return err
-			}
-
-			defer in.Close() //nolint:errcheck
-
-			st, err := in.Stat()
-			if err != nil {
-				return err
-			}
-
-			if err = w.WriteHeader(&tar.Header{
-				Name: entry.ImagePath,
-				Size: st.Size(),
-			}); err != nil {
-				return err
-			}
-
-			_, err = io.Copy(w, in)
-			if err != nil {
-				return err
-			}
-
-			return in.Close()
-		}(entry); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := w.Close(); err != nil {
-		return nil, err
-	}
-
 	// Return a new copy of the buffer each time it's opened.
 	return tarball.LayerFromOpener(func() (io.ReadCloser, error) {
-		return io.NopCloser(bytes.NewReader(b.Bytes())), nil
+		return build(filemap), nil
 	})
 }
