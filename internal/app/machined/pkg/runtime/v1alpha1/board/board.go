@@ -22,6 +22,7 @@ import (
 	rockpi4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4"
 	rockpi4c "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rockpi4c"
 	rpigeneric "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/rpi_generic"
+	soquartzcm4 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/soquartz_cm4"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -70,6 +71,8 @@ func newBoard(board string) (b runtime.Board, err error) {
 		b = &jetsonnano.JetsonNano{}
 	case constants.BoardNanoPiR4S:
 		b = &nanopir4s.NanoPiR4S{}
+	case constants.BoardSOQuartzCM4:
+		b = &soquartzcm4.SOQuartzCM4{}
 	default:
 		return nil, fmt.Errorf("unsupported board: %q", board)
 	}

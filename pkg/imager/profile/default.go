@@ -367,4 +367,18 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	constants.BoardSOQuartzCM4: {
+		Arch:       "arm64",
+		Platform:   constants.PlatformMetal,
+		Board:      constants.BoardSOQuartzCM4,
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatXZ,
+			ImageOptions: &ImageOptions{
+				DiskSize:   MinRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
 }

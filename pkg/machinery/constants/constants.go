@@ -112,6 +112,9 @@ const (
 	// BoardNanoPiR4S is the name of the Friendlyelec Nano Pi R4S.
 	BoardNanoPiR4S = "nanopi_r4s"
 
+	// BoardSOQuartzCM4 is the name of the SOQuartz on a CM4 carrier board.
+	BoardSOQuartzCM4 = "soquartz_cm4"
+
 	// KernelParamHostname is the kernel parameter name for specifying the
 	// hostname.
 	KernelParamHostname = "talos.hostname"
