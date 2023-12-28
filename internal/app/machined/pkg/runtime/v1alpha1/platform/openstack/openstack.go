@@ -200,7 +200,7 @@ func (o *Openstack) ParseMetadata(
 				LinkName:  iface,
 				RequireUp: true,
 				DHCP4: network.DHCP4OperatorSpec{
-					RouteMetric:         1024,
+					RouteMetric:         network.DefaultRouteMetric,
 					SkipHostnameRequest: true,
 				},
 				ConfigLayer: network.ConfigPlatform,
@@ -211,7 +211,7 @@ func (o *Openstack) ParseMetadata(
 				LinkName:  iface,
 				RequireUp: true,
 				DHCP6: network.DHCP6OperatorSpec{
-					RouteMetric:         1024,
+					RouteMetric:         2 * network.DefaultRouteMetric,
 					SkipHostnameRequest: true,
 				},
 				ConfigLayer: network.ConfigPlatform,
@@ -260,7 +260,7 @@ func (o *Openstack) ParseMetadata(
 					Protocol:    nethelpers.ProtocolStatic,
 					Type:        nethelpers.TypeUnicast,
 					Family:      family,
-					Priority:    1024,
+					Priority:    network.DefaultRouteMetric,
 				}
 
 				route.Normalize()
@@ -294,7 +294,7 @@ func (o *Openstack) ParseMetadata(
 				Protocol:    nethelpers.ProtocolStatic,
 				Type:        nethelpers.TypeUnicast,
 				Family:      family,
-				Priority:    1024,
+				Priority:    network.DefaultRouteMetric,
 			}
 
 			route.Normalize()

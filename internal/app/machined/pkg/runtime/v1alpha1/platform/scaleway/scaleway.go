@@ -74,7 +74,7 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 		Protocol:    nethelpers.ProtocolStatic,
 		Type:        nethelpers.TypeUnicast,
 		Family:      nethelpers.FamilyInet4,
-		Priority:    1024,
+		Priority:    network.DefaultRouteMetric,
 	}
 
 	route.Normalize()
@@ -85,7 +85,7 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 		LinkName:  "eth0",
 		RequireUp: true,
 		DHCP4: network.DHCP4OperatorSpec{
-			RouteMetric: 1024,
+			RouteMetric: network.DefaultRouteMetric,
 		},
 		ConfigLayer: network.ConfigPlatform,
 	})
@@ -128,7 +128,7 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 			Protocol:    nethelpers.ProtocolStatic,
 			Type:        nethelpers.TypeUnicast,
 			Family:      nethelpers.FamilyInet6,
-			Priority:    1024,
+			Priority:    2 * network.DefaultRouteMetric,
 		}
 
 		route.Normalize()

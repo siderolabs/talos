@@ -125,7 +125,7 @@ func (v *Vultr) ParseMetadata(metadata *metadata.MetaData) (*runtime.PlatformNet
 				LinkName:  iface,
 				RequireUp: true,
 				DHCP4: network.DHCP4OperatorSpec{
-					RouteMetric: 1024,
+					RouteMetric: network.DefaultRouteMetric,
 				},
 				ConfigLayer: network.ConfigPlatform,
 			})

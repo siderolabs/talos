@@ -335,7 +335,7 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, st state.State, ne
 						LinkName:  name,
 						RequireUp: true,
 						DHCP4: network.DHCP4OperatorSpec{
-							RouteMetric: 1024,
+							RouteMetric: network.DefaultRouteMetric,
 						},
 						ConfigLayer: network.ConfigPlatform,
 					})
@@ -405,7 +405,7 @@ func (n *Nocloud) applyNetworkConfigV1(config *NetworkConfig, st state.State, ne
 						LinkName:  name,
 						RequireUp: true,
 						DHCP6: network.DHCP6OperatorSpec{
-							RouteMetric: 1024,
+							RouteMetric: 2 * network.DefaultRouteMetric,
 						},
 						ConfigLayer: network.ConfigPlatform,
 					})
@@ -530,11 +530,6 @@ func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runt
 			return fmt.Errorf("failed to parse route destination: %w", err)
 		}
 
-		family := nethelpers.FamilyInet4
-		if gw.Is6() {
-			family = nethelpers.FamilyInet6
-		}
-
 		route := network.RouteSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 			Destination: dest,
@@ -543,8 +538,13 @@ func applyNetworkConfigV2Ethernet(name string, eth Ethernet, networkConfig *runt
 			Table:       nethelpers.RoutingTable(route.Table),
 			Protocol:    nethelpers.ProtocolStatic,
 			Type:        nethelpers.TypeUnicast,
-			Family:      family,
-			Priority:    1024,
+			Family:      nethelpers.FamilyInet4,
+			Priority:    network.DefaultRouteMetric,
+		}
+
+		if gw.Is6() {
+			route.Family = nethelpers.FamilyInet6
+			route.Priority = 2 * network.DefaultRouteMetric
 		}
 
 		route.Normalize()

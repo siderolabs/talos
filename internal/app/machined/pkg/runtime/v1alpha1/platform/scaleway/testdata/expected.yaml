@@ -32,7 +32,7 @@ routes:
       gateway: '2001:111:222:3333::'
       outLinkName: eth0
       table: main
-      priority: 1024
+      priority: 2048
       scope: global
       type: unicast
       flags: ""

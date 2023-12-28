@@ -1,6 +1,18 @@
 addresses: []
 links: []
-routes: []
+routes:
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::1234:5678:9abc
+      outLinkName: eth0
+      table: main
+      priority: 4096
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
 hostnames:
     - hostname: some
       domainname: fqdn
@@ -12,7 +24,7 @@ operators:
       linkName: eth0
       requireUp: true
       dhcp6:
-        routeMetric: 1024
+        routeMetric: 2048
       layer: default
 externalIPs:
     - 1.2.3.4
