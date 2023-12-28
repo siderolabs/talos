@@ -109,7 +109,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 					Protocol:    nethelpers.ProtocolStatic,
 					Type:        nethelpers.TypeUnicast,
 					Family:      nethelpers.FamilyInet4,
-					Priority:    1024,
+					Priority:    network.DefaultRouteMetric,
 				}
 
 				route.Normalize()
@@ -164,7 +164,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 					Protocol:    nethelpers.ProtocolStatic,
 					Type:        nethelpers.TypeUnicast,
 					Family:      nethelpers.FamilyInet6,
-					Priority:    1024,
+					Priority:    2 * network.DefaultRouteMetric,
 				}
 
 				route.Normalize()

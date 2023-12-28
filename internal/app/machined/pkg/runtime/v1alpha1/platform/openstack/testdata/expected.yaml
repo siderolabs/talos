@@ -187,7 +187,7 @@ operators:
       linkName: eth2
       requireUp: true
       dhcp6:
-        routeMetric: 1024
+        routeMetric: 2048
         skipHostnameRequest: true
       layer: platform
 externalIPs:

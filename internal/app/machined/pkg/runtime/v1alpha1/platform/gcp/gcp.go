@@ -85,7 +85,7 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig, interfaces []NetworkInterf
 			Operator: network.OperatorDHCP4,
 			LinkName: ifname,
 			DHCP4: network.DHCP4OperatorSpec{
-				RouteMetric: 1024,
+				RouteMetric: network.DefaultRouteMetric,
 			},
 			RequireUp:   true,
 			ConfigLayer: network.ConfigPlatform,
@@ -125,6 +125,7 @@ func (g *GCP) ParseMetadata(metadata *MetadataConfig, interfaces []NetworkInterf
 				Protocol:    nethelpers.ProtocolStatic,
 				Type:        nethelpers.TypeUnicast,
 				Family:      nethelpers.FamilyInet6,
+				Priority:    2 * network.DefaultRouteMetric,
 			}
 
 			route.Normalize()

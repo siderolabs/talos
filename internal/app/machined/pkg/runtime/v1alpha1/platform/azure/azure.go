@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -113,14 +114,32 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 		}
 
 		if ipv6 {
+			ifname := fmt.Sprintf("eth%d", idx)
+
 			networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
 				Operator:  network.OperatorDHCP6,
-				LinkName:  fmt.Sprintf("eth%d", idx),
+				LinkName:  ifname,
 				RequireUp: true,
 				DHCP6: network.DHCP6OperatorSpec{
-					RouteMetric: 1024,
+					RouteMetric: 2 * network.DefaultRouteMetric,
 				},
 			})
+
+			// If accept_ra is not set, use the default gateway.
+			route := network.RouteSpecSpec{
+				ConfigLayer: network.ConfigPlatform,
+				Gateway:     netip.MustParseAddr("fe80::1234:5678:9abc"),
+				OutLinkName: ifname,
+				Table:       nethelpers.TableMain,
+				Protocol:    nethelpers.ProtocolStatic,
+				Type:        nethelpers.TypeUnicast,
+				Family:      nethelpers.FamilyInet6,
+				Priority:    4 * network.DefaultRouteMetric,
+			}
+
+			route.Normalize()
+
+			networkConfig.Routes = append(networkConfig.Routes, route)
 		}
 	}
 
