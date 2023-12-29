@@ -13,6 +13,7 @@ kernel/drivers/ata/pata_amd.ko
 kernel/drivers/ata/pata_marvell.ko
 kernel/drivers/ata/pata_oldpiix.ko
 kernel/drivers/ata/pata_sch.ko
+kernel/drivers/block/nbd.ko
 kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 kernel/drivers/gpu/drm/display/drm_display_helper.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
