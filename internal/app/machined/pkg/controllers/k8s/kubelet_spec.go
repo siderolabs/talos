@@ -369,5 +369,7 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 		config.TLSMinVersion = "VersionTLS13"
 	}
 
+	config.ResolverConfig = pointer.To(constants.PodResolvConfPath)
+
 	return config, nil
 }

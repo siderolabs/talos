@@ -128,7 +128,10 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// * .machine.pods
 	// * .machine.seccompProfiles
 	// * .machine.nodeLabels
+	// * .machine.nodeTaints
 	// * .machine.features.kubernetesTalosAPIAccess
+	// * .machine.features.kubePrism
+	// * .machine.features.localDNS
 	newConfig.ConfigDebug = currentConfig.ConfigDebug
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
@@ -149,14 +152,10 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineNodeLabels = currentConfig.MachineConfig.MachineNodeLabels
 		newConfig.MachineConfig.MachineNodeTaints = currentConfig.MachineConfig.MachineNodeTaints
 
-		if newConfig.MachineConfig.MachineFeatures != nil {
-			if currentConfig.MachineConfig.MachineFeatures != nil {
-				newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
-			}
-
-			if currentConfig.MachineConfig.MachineFeatures != nil {
-				newConfig.MachineConfig.MachineFeatures.KubePrismSupport = currentConfig.MachineConfig.MachineFeatures.KubePrismSupport
-			}
+		if newConfig.MachineConfig.MachineFeatures != nil && currentConfig.MachineConfig.MachineFeatures != nil {
+			newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
+			newConfig.MachineConfig.MachineFeatures.KubePrismSupport = currentConfig.MachineConfig.MachineFeatures.KubePrismSupport
+			newConfig.MachineConfig.MachineFeatures.LocalDNS = currentConfig.MachineConfig.MachineFeatures.LocalDNS
 		}
 	}
 

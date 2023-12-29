@@ -39,6 +39,18 @@ Talos Linux now supports `physical: true` qualifier for device selectors, it sel
 ZFS and DRBD extensions are disabled in this release due to incompatibility with the latest Linux kernel.
 """
 
+    [notes.dns-resolve-cache]
+        title = "DNS Caching"
+        description = """\
+Talos Linux now  provides a caching DNS resolver for host workloads (including host networking pods). It can be disabled with:
+
+```yaml
+machine:
+   features:
+       localDNS: false
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

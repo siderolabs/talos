@@ -82,12 +82,12 @@ func TestSchemaValidation(t *testing.T) {
 		{
 			name: "network/RuleConfigV1Alpha1_invalid-cidr-prefix",
 			config: newRuleConfigV1Alpha1(t, nil, func(rawConfig map[string]any) {
-				rawConfig["ingress"] = []interface{}{
-					map[string]interface{}{
+				rawConfig["ingress"] = []any{
+					map[string]any{
 						"subnet": "10.42.0.0/16",
 						"except": "10.42.43.0/24",
 					},
-					map[string]interface{}{
+					map[string]any{
 						"subnet": "192.168.178.0/24",
 						"except": "invalid-except/12343",
 					},

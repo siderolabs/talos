@@ -16,6 +16,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
@@ -87,10 +88,7 @@ func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVers
 		return retry.ExpectedErrorf("contents don't match %q != %q", string(b), contents)
 	}
 
-	r, err := suite.state.Get(
-		suite.ctx,
-		resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, filename, resource.VersionUndefined),
-	)
+	r, err := safe.ReaderGet[*files.EtcFileStatus](suite.ctx, suite.state, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, filename, resource.VersionUndefined))
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return retry.ExpectedError(err)
@@ -99,7 +97,7 @@ func (suite *EtcFileSuite) assertEtcFile(filename, contents string, expectedVers
 		return err
 	}
 
-	version := r.(*files.EtcFileStatus).TypedSpec().SpecVersion
+	version := r.TypedSpec().SpecVersion
 
 	expected, err := strconv.Atoi(expectedVersion.String())
 	suite.Require().NoError(err)

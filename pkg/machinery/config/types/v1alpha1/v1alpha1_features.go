@@ -39,6 +39,11 @@ func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {
 	return pointer.SafeDeref(f.DiskQuotaSupport)
 }
 
+// LocalDNSEnabled implements config.Features interface.
+func (f *FeaturesConfig) LocalDNSEnabled() bool {
+	return pointer.SafeDeref(f.LocalDNS)
+}
+
 // KubePrism implements config.Features interface.
 func (f *FeaturesConfig) KubePrism() config.KubePrism {
 	if f.KubePrismSupport == nil {

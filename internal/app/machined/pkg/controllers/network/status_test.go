@@ -87,11 +87,9 @@ func (suite *StatusSuite) TestHostname() {
 }
 
 func (suite *StatusSuite) TestEtcFiles() {
-	hosts := files.NewEtcFileStatus(files.NamespaceName, "hosts")
-	resolv := files.NewEtcFileStatus(files.NamespaceName, "resolv.conf")
-
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), hosts))
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), resolv))
+	for _, f := range []string{"hosts", "resolv.conf"} {
+		suite.Require().NoError(suite.State().Create(suite.Ctx(), files.NewEtcFileStatus(files.NamespaceName, f)))
+	}
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{network.StatusID}, func(r *network.Status, assert *assert.Assertions) {
 		assert.Equal(network.StatusSpec{EtcFilesReady: true}, *r.TypedSpec())

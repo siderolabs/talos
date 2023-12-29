@@ -3354,6 +3354,13 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 				Description: "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism - local proxy/load balancer on defined port that will distribute" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "localDNS",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enables local dns which routes all dns requests to the local caching router.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enables local dns which routes all dns requests to the local caching router." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -3380,8 +3387,8 @@ func (KubePrism) Doc() *encoder.Doc {
 				Name:        "enabled",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable KubePrism support - will start local load balacing proxy.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable KubePrism support - will start local load balacing proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Enable KubePrism support - will start local load balancing proxy.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable KubePrism support - will start local load balancing proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "port",

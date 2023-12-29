@@ -367,6 +367,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		TLSMinVersion:                   "VersionTLS13",
 		StaticPodPath:                   constants.ManifestsDirectory,
 		ContainerRuntimeEndpoint:        "unix://" + constants.CRIContainerdAddress,
+		ResolverConfig:                  pointer.To(constants.PodResolvConfPath),
 	}
 
 	for _, tt := range []struct {

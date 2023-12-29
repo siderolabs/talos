@@ -414,6 +414,7 @@ type Features interface {
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	ApidCheckExtKeyUsageEnabled() bool
 	DiskQuotaSupportEnabled() bool
+	LocalDNSEnabled() bool
 	KubePrism() KubePrism
 }
 

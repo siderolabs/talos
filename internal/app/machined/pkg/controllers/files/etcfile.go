@@ -133,7 +133,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 
 				logger.Debug("writing file contents", zap.String("dst", dst), zap.Stringer("version", spec.Metadata().Version()))
 
-				if err = updateFile(dst, spec.TypedSpec().Contents, spec.TypedSpec().Mode); err != nil {
+				if err = UpdateFile(dst, spec.TypedSpec().Contents, spec.TypedSpec().Mode); err != nil {
 					return fmt.Errorf("error updating %q: %w", dst, err)
 				}
 
@@ -192,9 +192,9 @@ func createBindMount(src, dst string, mode os.FileMode) (err error) {
 	return nil
 }
 
-// updateFile is like `os.WriteFile`, but it will only update the file if the
+// UpdateFile is like `os.WriteFile`, but it will only update the file if the
 // contents have changed.
-func updateFile(filename string, contents []byte, mode os.FileMode) error {
+func UpdateFile(filename string, contents []byte, mode os.FileMode) error {
 	oldContents, err := os.ReadFile(filename)
 	if err == nil && bytes.Equal(oldContents, contents) {
 		return nil

@@ -133,6 +133,7 @@ linters-settings:
       - gopkg.in/yaml.v3
       - github.com/vmware-tanzu/sonobuoy
       - golang.org/x/sys
+      - github.com/coredns/coredns
     retract-allow-no-explanation: false
     exclude-forbidden: true
 

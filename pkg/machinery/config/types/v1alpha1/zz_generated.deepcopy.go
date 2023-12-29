@@ -1058,6 +1058,11 @@ func (in *FeaturesConfig) DeepCopyInto(out *FeaturesConfig) {
 		*out = new(KubePrism)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.LocalDNS != nil {
+		in, out := &in.LocalDNS, &out.LocalDNS
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

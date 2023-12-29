@@ -8,16 +8,19 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/netip"
+	"os"
+	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -25,7 +28,9 @@ import (
 )
 
 // EtcFileController creates /etc/hostname and /etc/resolv.conf files based on finalized network configuration.
-type EtcFileController struct{}
+type EtcFileController struct {
+	PodResolvConfPath string
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *EtcFileController) Name() string {
@@ -55,6 +60,11 @@ func (ctrl *EtcFileController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: network.NamespaceName,
+			Type:      network.DNSResolveCacheType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: network.NamespaceName,
 			Type:      network.NodeAddressType,
 			ID:        optional.Some(network.NodeAddressDefaultID),
 			Kind:      controller.InputWeak,
@@ -74,7 +84,7 @@ func (ctrl *EtcFileController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -94,44 +104,42 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			cfgProvider = cfg.Config()
 		}
 
-		var resolverStatus *network.ResolverStatusSpec
-
-		rStatus, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.ResolverStatusType, network.ResolverID, resource.VersionUndefined))
-		if err != nil {
-			if !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting resolver status: %w", err)
-			}
-		} else {
-			resolverStatus = rStatus.(*network.ResolverStatus).TypedSpec()
-		}
-
-		var hostnameStatus *network.HostnameStatusSpec
-
-		hStatus, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.HostnameStatusType, network.HostnameID, resource.VersionUndefined))
+		hostnameStatus, err := safe.ReaderGetByID[*network.HostnameStatus](ctx, r, network.HostnameID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting hostname status: %w", err)
 			}
-		} else {
-			hostnameStatus = hStatus.(*network.HostnameStatus).TypedSpec()
 		}
 
-		var nodeAddressStatus *network.NodeAddressSpec
-
-		naStatus, err := r.Get(ctx, resource.NewMetadata(network.NamespaceName, network.NodeAddressType, network.NodeAddressDefaultID, resource.VersionUndefined))
+		nodeAddressStatus, err := safe.ReaderGetByID[*network.NodeAddress](ctx, r, network.NodeAddressDefaultID)
 		if err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting network address status: %w", err)
 			}
-		} else {
-			nodeAddressStatus = naStatus.(*network.NodeAddress).TypedSpec()
 		}
 
-		if resolverStatus != nil {
-			if err = r.Modify(ctx, files.NewEtcFileSpec(files.NamespaceName, "resolv.conf"),
-				func(r resource.Resource) error {
-					r.(*files.EtcFileSpec).TypedSpec().Contents = ctrl.renderResolvConf(resolverStatus, hostnameStatus, cfgProvider)
-					r.(*files.EtcFileSpec).TypedSpec().Mode = 0o644
+		resolverStatus, err := safe.ReaderGetByID[*network.ResolverStatus](ctx, r, network.ResolverID)
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error resolver status: %w", err)
+			}
+		}
+
+		dList, err := safe.ReaderListAll[*network.DNSResolveCache](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error getting dns server list: %w", err)
+		}
+
+		var hostnameStatusSpec *network.HostnameStatusSpec
+		if hostnameStatus != nil {
+			hostnameStatusSpec = hostnameStatus.TypedSpec()
+		}
+
+		if dList.Len() > 0 || resolverStatus != nil {
+			if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "resolv.conf"),
+				func(r *files.EtcFileSpec) error {
+					r.TypedSpec().Contents = renderResolvConf(pickNameservers(dList, resolverStatus), hostnameStatusSpec, cfgProvider)
+					r.TypedSpec().Mode = 0o644
 
 					return nil
 				}); err != nil {
@@ -139,15 +147,28 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		}
 
+		if resolverStatus != nil {
+			conf := renderResolvConf(resolverStatus.TypedSpec().DNSServers, hostnameStatusSpec, cfgProvider)
+
+			if err = os.MkdirAll(filepath.Dir(ctrl.PodResolvConfPath), 0o755); err != nil {
+				return fmt.Errorf("error creating pod resolv.conf dir: %w", err)
+			}
+
+			err = efiles.UpdateFile(ctrl.PodResolvConfPath, conf, 0o644)
+			if err != nil {
+				return fmt.Errorf("error writing pod resolv.conf: %w", err)
+			}
+		}
+
 		if hostnameStatus != nil && nodeAddressStatus != nil {
-			if err = r.Modify(ctx, files.NewEtcFileSpec(files.NamespaceName, "hosts"),
-				func(r resource.Resource) error {
-					r.(*files.EtcFileSpec).TypedSpec().Contents, err = ctrl.renderHosts(hostnameStatus, nodeAddressStatus, cfgProvider)
-					r.(*files.EtcFileSpec).TypedSpec().Mode = 0o644
+			if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "hosts"),
+				func(r *files.EtcFileSpec) error {
+					r.TypedSpec().Contents, err = ctrl.renderHosts(hostnameStatus.TypedSpec(), nodeAddressStatus.TypedSpec(), cfgProvider)
+					r.TypedSpec().Mode = 0o644
 
 					return err
 				}); err != nil {
-				return fmt.Errorf("error modifying resolv.conf: %w", err)
+				return fmt.Errorf("error modifying hosts: %w", err)
 			}
 		}
 
@@ -155,16 +176,27 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-func (ctrl *EtcFileController) renderResolvConf(resolverStatus *network.ResolverStatusSpec, hostnameStatus *network.HostnameStatusSpec, cfgProvider talosconfig.Config) []byte {
+var localDNS = netip.MustParseAddr("127.0.0.1")
+
+func pickNameservers(list safe.List[*network.DNSResolveCache], resolverStatus *network.ResolverStatus) []netip.Addr {
+	if list.Len() > 0 {
+		// local dns resolve cache enabled, route host dns requests to 127.0.0.1
+		return []netip.Addr{localDNS}
+	}
+
+	return resolverStatus.TypedSpec().DNSServers
+}
+
+func renderResolvConf(nameservers []netip.Addr, hostnameStatus *network.HostnameStatusSpec, cfgProvider talosconfig.Config) []byte {
 	var buf bytes.Buffer
 
-	for i, resolver := range resolverStatus.DNSServers {
+	for i, ns := range nameservers {
 		if i >= 3 {
-			// only use firt 3 nameservers, see MAXNS in https://linux.die.net/man/5/resolv.conf
+			// only use first 3 nameservers, see MAXNS in https://linux.die.net/man/5/resolv.conf
 			break
 		}
 
-		fmt.Fprintf(&buf, "nameserver %s\n", resolver)
+		fmt.Fprintf(&buf, "nameserver %s\n", ns)
 	}
 
 	var disableSearchDomain bool

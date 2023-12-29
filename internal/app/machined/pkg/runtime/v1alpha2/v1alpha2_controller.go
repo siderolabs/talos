@@ -64,15 +64,12 @@ func NewController(v1alpha1Runtime runtime.Runtime) (*Controller, error) {
 		v1alpha1Runtime: v1alpha1Runtime,
 	}
 
-	logWriter, err := ctrl.loggingManager.ServiceLog("controller-runtime").Writer()
+	var err error
+
+	ctrl.logger, err = ctrl.makeLogger("controller-runtime")
 	if err != nil {
 		return nil, err
 	}
-
-	ctrl.logger = logging.ZapLogger(
-		logging.NewLogDestination(logWriter, zapcore.DebugLevel, logging.WithColoredLevels()),
-		logging.NewLogDestination(logging.StdWriter, ctrl.consoleLogLevel, logging.WithoutTimestamp(), logging.WithoutLogLevels()),
-	).With(logging.Component("controller-runtime"))
 
 	ctrl.controllerRuntime, err = osruntime.NewRuntime(v1alpha1Runtime.State().V1Alpha2().Resources(), ctrl.logger)
 
@@ -83,6 +80,11 @@ func NewController(v1alpha1Runtime runtime.Runtime) (*Controller, error) {
 func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error {
 	// adjust the log level based on machine configuration
 	go ctrl.watchMachineConfig(ctx)
+
+	dnsCacheLogger, err := ctrl.makeLogger("dns-resolve-cache")
+	if err != nil {
+		return err
+	}
 
 	for _, c := range []controller.Controller{
 		&cluster.AffiliateMergeController{},
@@ -186,7 +188,13 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.AddressSpecController{},
 		&network.AddressStatusController{},
 		&network.DeviceConfigController{},
-		&network.EtcFileController{},
+		&network.DNSResolveCacheController{
+			Addr:   "127.0.0.1:53",
+			Logger: dnsCacheLogger,
+		},
+		&network.EtcFileController{
+			PodResolvConfPath: constants.PodResolvConfPath,
+		},
 		&network.HardwareAddrController{},
 		&network.HostnameConfigController{
 			Cmdline: procfs.ProcCmdline(),
@@ -439,4 +447,16 @@ func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosco
 	}
 
 	wg.Wait()
+}
+
+func (ctrl *Controller) makeLogger(s string) (*zap.Logger, error) {
+	logWriter, err := ctrl.loggingManager.ServiceLog(s).Writer()
+	if err != nil {
+		return nil, err
+	}
+
+	return logging.ZapLogger(
+		logging.NewLogDestination(logWriter, zapcore.DebugLevel, logging.WithColoredLevels()),
+		logging.NewLogDestination(logging.StdWriter, ctrl.consoleLogLevel, logging.WithoutTimestamp(), logging.WithoutLogLevels()),
+	).With(logging.Component(s)), nil
 }

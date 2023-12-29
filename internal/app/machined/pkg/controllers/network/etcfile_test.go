@@ -6,9 +6,12 @@ package network_test
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/netip"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -19,6 +22,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -46,6 +50,9 @@ type EtcFileConfigSuite struct {
 	defaultAddress *network.NodeAddress
 	hostnameStatus *network.HostnameStatus
 	resolverStatus *network.ResolverStatus
+	dnsServer      *network.DNSResolveCache
+
+	podResolvConfPath string
 }
 
 func (suite *EtcFileConfigSuite) SetupTest() {
@@ -60,7 +67,13 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 
 	suite.startRuntime()
 
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.EtcFileController{}))
+	suite.podResolvConfPath = filepath.Join(suite.T().TempDir(), "resolv.conf")
+
+	suite.Assert().NoFileExists(suite.podResolvConfPath)
+
+	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.EtcFileController{
+		PodResolvConfPath: suite.podResolvConfPath,
+	}))
 
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -108,6 +121,9 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 		netip.MustParseAddr("3.3.3.3"),
 		netip.MustParseAddr("4.4.4.4"),
 	}
+
+	suite.dnsServer = network.NewDNSResolveCache("udp")
+	suite.dnsServer.TypedSpec().Status = "running"
 }
 
 func (suite *EtcFileConfigSuite) startRuntime() {
@@ -120,65 +136,103 @@ func (suite *EtcFileConfigSuite) startRuntime() {
 	}()
 }
 
-func (suite *EtcFileConfigSuite) assertEtcFiles(requiredIDs []string, check func(*files.EtcFileSpec, *assert.Assertions)) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
+type etcFileContents struct {
+	hosts            string
+	resolvConf       string
+	resolvGlobalConf string
 }
 
-func (suite *EtcFileConfigSuite) assertNoEtcFile(id string) {
-	assertNoResource[*files.EtcFileSpec](suite.ctx, suite.T(), suite.state, id)
-}
-
-func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, resolvConf, hosts string) {
+//nolint:gocyclo
+func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, contents etcFileContents) {
 	for _, r := range resources {
 		suite.Require().NoError(suite.state.Create(suite.ctx, r))
 	}
 
-	expectedIds, unexpectedIds := []string{}, []string{}
+	var (
+		expectedIds   []string
+		unexpectedIds []string
+	)
 
-	if resolvConf != "" {
+	if contents.resolvConf != "" {
 		expectedIds = append(expectedIds, "resolv.conf")
 	} else {
 		unexpectedIds = append(unexpectedIds, "resolv.conf")
 	}
 
-	if hosts != "" {
+	if contents.hosts != "" {
 		expectedIds = append(expectedIds, "hosts")
 	} else {
 		unexpectedIds = append(unexpectedIds, "hosts")
 	}
 
-	suite.assertEtcFiles(
+	assertResources(
+		suite.ctx,
+		suite.T(),
+		suite.state,
 		expectedIds,
 		func(r *files.EtcFileSpec, asrt *assert.Assertions) {
 			switch r.Metadata().ID() {
 			case "hosts":
-				asrt.Equal(hosts, string(r.TypedSpec().Contents))
+				asrt.Equal(contents.hosts, string(r.TypedSpec().Contents))
 			case "resolv.conf":
-				asrt.Equal(resolvConf, string(r.TypedSpec().Contents))
+				asrt.Equal(contents.resolvConf, string(r.TypedSpec().Contents))
 			}
 		},
+	)
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
+			if contents.resolvGlobalConf == "" {
+				_, err := os.Lstat(suite.podResolvConfPath)
+				switch {
+				case err == nil:
+					return retry.ExpectedErrorf("unexpected pod %s", suite.podResolvConfPath)
+				case errors.Is(err, os.ErrNotExist):
+					return nil
+				default:
+					return err
+				}
+			}
+
+			file, err := os.ReadFile(suite.podResolvConfPath)
+			switch {
+			case errors.Is(err, os.ErrNotExist):
+				return retry.ExpectedErrorf("missing pod %s", suite.podResolvConfPath)
+			case err != nil:
+				return err
+			default:
+				suite.Assert().Equal(contents.resolvGlobalConf, string(file))
+
+				return nil
+			}
+		}),
 	)
 
 	for _, id := range unexpectedIds {
 		id := id
 
-		suite.assertNoEtcFile(id)
+		assertNoResource[*files.EtcFileSpec](suite.ctx, suite.T(), suite.state, id)
 	}
 }
 
 func (suite *EtcFileConfigSuite) TestComplete() {
 	suite.testFiles(
-		[]resource.Resource{suite.cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
-		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
-		"127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n10.0.0.1    a b\n10.0.0.2    c d\n", //nolint:lll
+		[]resource.Resource{suite.cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.dnsServer},
+		etcFileContents{
+			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n10.0.0.1    a b\n10.0.0.2    c d\n", //nolint:lll
+			resolvConf:       "nameserver 127.0.0.1\n\nsearch example.com\n",
+			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
+		},
 	)
 }
 
 func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 	suite.testFiles(
-		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
-		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
-		"127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.dnsServer},
+		etcFileContents{
+			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+			resolvConf:       "nameserver 127.0.0.1\n\nsearch example.com\n",
+			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
+		},
 	)
 }
 
@@ -196,9 +250,12 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
 		),
 	)
 	suite.testFiles(
-		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
-		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
-		"127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.dnsServer},
+		etcFileContents{
+			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+			resolvConf:       "nameserver 127.0.0.1\n",
+			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
+		},
 	)
 }
 
@@ -206,25 +263,34 @@ func (suite *EtcFileConfigSuite) TestNoDomainname() {
 	suite.hostnameStatus.TypedSpec().Domainname = ""
 
 	suite.testFiles(
-		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus},
-		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
-		"127.0.0.1   localhost\n33.11.22.44 foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.dnsServer},
+		etcFileContents{
+			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+			resolvConf:       "nameserver 127.0.0.1\n",
+			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
+		},
 	)
 }
 
 func (suite *EtcFileConfigSuite) TestOnlyResolvers() {
 	suite.testFiles(
-		[]resource.Resource{suite.resolverStatus},
-		"nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
-		"",
+		[]resource.Resource{suite.resolverStatus, suite.dnsServer},
+		etcFileContents{
+			hosts:            "",
+			resolvConf:       "nameserver 127.0.0.1\n",
+			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
+		},
 	)
 }
 
 func (suite *EtcFileConfigSuite) TestOnlyHostname() {
 	suite.testFiles(
 		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus},
-		"",
-		"127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+		etcFileContents{
+			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
+			resolvConf:       "",
+			resolvGlobalConf: "",
+		},
 	)
 }
 
@@ -232,6 +298,10 @@ func (suite *EtcFileConfigSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
 	suite.ctxCancel()
+
+	if _, err := os.Lstat(suite.podResolvConfPath); err == nil {
+		suite.Require().NoError(os.Remove(suite.podResolvConfPath))
+	}
 
 	suite.wg.Wait()
 }

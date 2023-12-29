@@ -127,6 +127,7 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/nfsmount.conf", Source: "/etc/nfsmount.conf", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/machine-id", Source: "/etc/machine-id", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: constants.PodResolvConfPath, Source: constants.PodResolvConfPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rshared", "rw"}},

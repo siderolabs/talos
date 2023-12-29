@@ -1713,6 +1713,13 @@
           "description": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\n",
           "markdownDescription": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
           "x-intellij-html-description": "\u003cp\u003eKubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
+        },
+        "localDNS": {
+          "type": "boolean",
+          "title": "localDNS",
+          "description": "Enables local dns which routes all dns requests to the local caching router.\n",
+          "markdownDescription": "Enables local dns which routes all dns requests to the local caching router.",
+          "x-intellij-html-description": "\u003cp\u003eEnables local dns which routes all dns requests to the local caching router.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1926,9 +1933,9 @@
         "enabled": {
           "type": "boolean",
           "title": "enabled",
-          "description": "Enable KubePrism support - will start local load balacing proxy.\n",
-          "markdownDescription": "Enable KubePrism support - will start local load balacing proxy.",
-          "x-intellij-html-description": "\u003cp\u003eEnable KubePrism support - will start local load balacing proxy.\u003c/p\u003e\n"
+          "description": "Enable KubePrism support - will start local load balancing proxy.\n",
+          "markdownDescription": "Enable KubePrism support - will start local load balancing proxy.",
+          "x-intellij-html-description": "\u003cp\u003eEnable KubePrism support - will start local load balancing proxy.\u003c/p\u003e\n"
         },
         "port": {
           "type": "integer",

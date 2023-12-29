@@ -179,3 +179,8 @@ func (contract *VersionContract) DiskQuotaSupportEnabled() bool {
 func (contract *VersionContract) KubePrismEnabled() bool {
 	return contract.Greater(TalosVersion1_5)
 }
+
+// LocalDNSEnabled returns true if local dns router should be enabled by default.
+func (contract *VersionContract) LocalDNSEnabled() bool {
+	return contract.Greater(TalosVersion1_6)
+}

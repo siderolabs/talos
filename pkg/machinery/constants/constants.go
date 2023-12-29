@@ -968,6 +968,9 @@ const (
 
 	// DefaultNfTablesTableName is the default name of the nftables table created by Talos.
 	DefaultNfTablesTableName = "talos"
+
+	// PodResolvConfPath is the path to the pod resolv.conf file.
+	PodResolvConfPath = "/system/resolved/resolv.conf"
 )
 
 // See https://linux.die.net/man/3/klogctl

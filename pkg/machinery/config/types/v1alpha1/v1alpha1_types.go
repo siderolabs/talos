@@ -2151,12 +2151,15 @@ type FeaturesConfig struct {
 	//     KubePrism - local proxy/load balancer on defined port that will distribute
 	//     requests to all API servers in the cluster.
 	KubePrismSupport *KubePrism `yaml:"kubePrism,omitempty"`
+	//   description: |
+	//     Enables local dns which routes all dns requests to the local caching router.
+	LocalDNS *bool `yaml:"localDNS,omitempty"`
 }
 
 // KubePrism describes the configuration for the KubePrism load balancer.
 type KubePrism struct {
 	//   description: |
-	//     Enable KubePrism support - will start local load balacing proxy.
+	//     Enable KubePrism support - will start local load balancing proxy.
 	ServerEnabled *bool `yaml:"enabled,omitempty"`
 	//   description: |
 	//     KubePrism port.

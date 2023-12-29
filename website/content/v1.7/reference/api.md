@@ -158,6 +158,7 @@ description: Talos gRPC API reference.
     - [BridgeSlave](#talos.resource.definitions.network.BridgeSlave)
     - [DHCP4OperatorSpec](#talos.resource.definitions.network.DHCP4OperatorSpec)
     - [DHCP6OperatorSpec](#talos.resource.definitions.network.DHCP6OperatorSpec)
+    - [DNSResolveCacheSpec](#talos.resource.definitions.network.DNSResolveCacheSpec)
     - [HardwareAddrSpec](#talos.resource.definitions.network.HardwareAddrSpec)
     - [HostnameSpecSpec](#talos.resource.definitions.network.HostnameSpecSpec)
     - [HostnameStatusSpec](#talos.resource.definitions.network.HostnameStatusSpec)
@@ -2892,6 +2893,22 @@ DHCP6OperatorSpec describes DHCP6 operator options.
 | duid | [string](#string) |  |  |
 | route_metric | [uint32](#uint32) |  |  |
 | skip_hostname_request | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.DNSResolveCacheSpec"></a>
+
+### DNSResolveCacheSpec
+DNSResolveCacheSpec describes DNS servers status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  |  |
+| servers | [common.NetIP](#common.NetIP) | repeated |  |
 
 
 

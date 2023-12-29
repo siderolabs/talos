@@ -2549,6 +2549,7 @@ kubernetesTalosAPIAccess:
 |`apidCheckExtKeyUsage` |bool |Enable checks for extended key usage of client certificates in apid.  | |
 |`diskQuotaSupport` |bool |<details><summary>Enable XFS project quota support for EPHEMERAL partition and user disks.</summary>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.</details>  | |
 |`kubePrism` |<a href="#Config.machine.features.kubePrism">KubePrism</a> |<details><summary>KubePrism - local proxy/load balancer on defined port that will distribute</summary>requests to all API servers in the cluster.</details>  | |
+|`localDNS` |bool |Enables local dns which routes all dns requests to the local caching router.  | |
 
 
 
@@ -2593,7 +2594,7 @@ KubePrism describes the configuration for the KubePrism load balancer.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`enabled` |bool |Enable KubePrism support - will start local load balacing proxy.  | |
+|`enabled` |bool |Enable KubePrism support - will start local load balancing proxy.  | |
 |`port` |int |KubePrism port.  | |
 
 
