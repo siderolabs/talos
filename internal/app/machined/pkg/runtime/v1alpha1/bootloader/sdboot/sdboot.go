@@ -65,13 +65,13 @@ func Probe(ctx context.Context, disk string) (*Config, error) {
 	// this is to make sure sd-boot from Talos is being used and not sd-boot from another distro
 	if err := mount.PartitionOp(ctx, disk, constants.EFIPartitionLabel, func() error {
 		// list existing boot*.efi files in boot folder
-		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "boot", "BOOT*.efi"))
+		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "boot", "BOOT*.efi"))
 		if err != nil {
 			return err
 		}
 
 		if len(files) == 0 {
-			return fmt.Errorf("no boot*.efi files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "boot"))
+			return fmt.Errorf("no boot*.efi files found in %q", filepath.Join(constants.EFIMountPoint, "boot"))
 		}
 
 		return nil
@@ -95,7 +95,7 @@ func Probe(ctx context.Context, disk string) (*Config, error) {
 
 	if opErr := mount.PartitionOp(ctx, disk, constants.EFIPartitionLabel, func() error {
 		// list existing UKIs, and check if the current one is present
-		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "Linux", "Talos-*.efi"))
 		if err != nil {
 			return err
 		}
@@ -140,7 +140,7 @@ func (c *Config) Install(options options.InstallOptions) error {
 	}
 
 	// list existing UKIs, and clean up all but the current one (used to boot)
-	files, err := filepath.Glob(filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+	files, err := filepath.Glob(filepath.Join(options.MountPrefix, constants.EFIMountPoint, "Linux", "Talos-*.efi"))
 	if err != nil {
 		return err
 	}
@@ -169,11 +169,11 @@ func (c *Config) Install(options options.InstallOptions) error {
 		options.Printf,
 		utils.SourceDestination(
 			options.BootAssets.UKIPath,
-			filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", ukiPath),
+			filepath.Join(options.MountPrefix, constants.EFIMountPoint, "Linux", ukiPath),
 		),
 		utils.SourceDestination(
 			options.BootAssets.SDBootPath,
-			filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "boot", sdbootFilename),
+			filepath.Join(options.MountPrefix, constants.EFIMountPoint, "boot", sdbootFilename),
 		),
 	); err != nil {
 		return err
@@ -208,7 +208,7 @@ func (c *Config) PreviousLabel() string {
 func (c *Config) Revert(ctx context.Context) error {
 	if err := mount.PartitionOp(ctx, "", constants.EFIPartitionLabel, func() error {
 		// use c.Default as the current entry, list other UKIs, find the one which is not c.Default, and update EFI var
-		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "Linux", "Talos-*.efi"))
 		if err != nil {
 			return err
 		}
