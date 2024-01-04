@@ -27,7 +27,7 @@ type Footer struct {
 }
 
 // NewFooter initializes Footer.
-func NewFooter(screenKeyToName map[string]string) *Footer {
+func NewFooter(screenKeyToName map[string]string, nodes []string) *Footer {
 	var initialScreen string
 	for _, name := range screenKeyToName {
 		initialScreen = name
@@ -39,6 +39,7 @@ func NewFooter(screenKeyToName map[string]string) *Footer {
 		TextView:        *tview.NewTextView(),
 		screenKeyToName: screenKeyToName,
 		selectedScreen:  initialScreen,
+		nodes:           nodes,
 	}
 
 	widget.SetDynamicColors(true)
@@ -63,13 +64,6 @@ func NewFooter(screenKeyToName map[string]string) *Footer {
 	widget.refresh()
 
 	return widget
-}
-
-// OnNodeSetChange implements the NodeSetListener interface.
-func (widget *Footer) OnNodeSetChange(nodes []string) {
-	widget.nodes = nodes
-
-	widget.refresh()
 }
 
 // OnNodeSelect implements the NodeSelectListener interface.
