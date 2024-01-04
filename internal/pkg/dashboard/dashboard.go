@@ -9,7 +9,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"net/netip"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -18,7 +20,9 @@ import (
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-api-signature/pkg/message"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/components"
@@ -69,11 +73,6 @@ type LogDataListener interface {
 	OnLogDataChange(node string, logLine string)
 }
 
-// NodeSetListener is a listener which is notified when the set of nodes changes.
-type NodeSetListener interface {
-	OnNodeSetChange(nodes []string)
-}
-
 // NodeSelectListener is a listener which is notified when a node is selected.
 type NodeSelectListener interface {
 	OnNodeSelect(node string)
@@ -103,11 +102,10 @@ type Dashboard struct {
 	resourceDataSource *resourcedata.Source
 	logDataSource      *logdata.Source
 
-	apiDataListeners       []APIDataListener
-	resourceDataListeners  []ResourceDataListener
-	logDataListeners       []LogDataListener
-	nodeSelectListeners    []NodeSelectListener
-	nodeSetChangeListeners []NodeSetListener
+	apiDataListeners      []APIDataListener
+	resourceDataListeners []ResourceDataListener
+	logDataListeners      []LogDataListener
+	nodeSelectListeners   []NodeSelectListener
 
 	app *tview.Application
 
@@ -124,6 +122,7 @@ type Dashboard struct {
 	selectedNodeIndex int
 	selectedNode      string
 	nodeSet           map[string]struct{}
+	ipsToNodeAliases  map[string]string
 	nodes             []string
 }
 
@@ -137,11 +136,22 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		opt(defOptions)
 	}
 
+	// map node IPs to their aliases (names/IPs - as specified "nodes" in context).
+	// this will also trigger the interactive API authentication if needed - e.g., when the API is used through Omni.
+	ipsToNodeAliases, err := collectNodeIPsToNodeAliases(ctx, cli)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes := getSortedNodeAliases(ipsToNodeAliases)
+
 	dashboard := &Dashboard{
-		cli:      cli,
-		interval: defOptions.interval,
-		app:      tview.NewApplication(),
-		nodeSet:  make(map[string]struct{}),
+		cli:              cli,
+		interval:         defOptions.interval,
+		app:              tview.NewApplication(),
+		nodeSet:          make(map[string]struct{}),
+		nodes:            nodes,
+		ipsToNodeAliases: ipsToNodeAliases,
 	}
 
 	dashboard.mainGrid = tview.NewGrid().
@@ -155,8 +165,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	header := components.NewHeader()
 	dashboard.mainGrid.AddItem(header, 0, 0, 1, 1, 0, 0, false)
 
-	err := dashboard.initScreenConfigs(ctx, defOptions.screens)
-	if err != nil {
+	if err = dashboard.initScreenConfigs(ctx, defOptions.screens); err != nil {
 		return nil, err
 	}
 
@@ -168,7 +177,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		return config.keyCode, config
 	})
 
-	dashboard.footer = components.NewFooter(screenKeyToName)
+	dashboard.footer = components.NewFooter(screenKeyToName, nodes)
 
 	dashboard.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		config, screenOk := screenConfigByKeyCode[event.Key()]
@@ -214,10 +223,6 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		dashboard.footer,
 	}
 
-	dashboard.nodeSetChangeListeners = []NodeSetListener{
-		dashboard.footer,
-	}
-
 	for _, config := range dashboard.screenConfigs {
 		screenPrimitive := config.primitive
 
@@ -239,11 +244,6 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		nodeSelectListener, ok := screenPrimitive.(NodeSelectListener)
 		if ok {
 			dashboard.nodeSelectListeners = append(dashboard.nodeSelectListeners, nodeSelectListener)
-		}
-
-		nodeSetListener, ok := screenPrimitive.(NodeSetListener)
-		if ok {
-			dashboard.nodeSetChangeListeners = append(dashboard.nodeSetChangeListeners, nodeSetListener)
 		}
 	}
 
@@ -312,6 +312,8 @@ func Run(ctx context.Context, cli *client.Client, opts ...Option) (runErr error)
 	if err != nil {
 		return err
 	}
+
+	dashboard.selectNodeByIndex(0)
 
 	// handle panic & stop dashboard gracefully on exit
 	defer func() {
@@ -387,18 +389,24 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 			case <-ctx.Done():
 				return ctx.Err()
 			case nodeLog := <-d.logDataSource.LogCh:
+				nodeAlias := d.attemptResolveIPToAlias(nodeLog.Node)
+
 				if time.Since(lastLogTime) < 50*time.Millisecond {
 					d.app.QueueUpdate(func() {
-						d.processLog(nodeLog.Node, nodeLog.Log)
+						d.processLog(nodeAlias, nodeLog.Log)
 					})
 				} else {
 					d.app.QueueUpdateDraw(func() {
-						d.processLog(nodeLog.Node, nodeLog.Log)
+						d.processLog(nodeAlias, nodeLog.Log)
 					})
 				}
 
 				lastLogTime = time.Now()
 			case d.data = <-dataCh:
+				d.data.Nodes = maps.Map(d.data.Nodes, func(key string, v *apidata.Node) (string, *apidata.Node) {
+					return d.attemptResolveIPToAlias(key), v
+				})
+
 				d.app.QueueUpdateDraw(func() {
 					d.processAPIData()
 				})
@@ -440,10 +448,6 @@ func (d *Dashboard) processAPIData() {
 		return
 	}
 
-	for _, node := range maps.Keys(d.data.Nodes) {
-		d.processSeenNode(node)
-	}
-
 	for _, component := range d.apiDataListeners {
 		component.OnAPIDataChange(d.selectedNode, d.data)
 	}
@@ -451,8 +455,6 @@ func (d *Dashboard) processAPIData() {
 
 // processNodeResource re-renders the components with new resource data.
 func (d *Dashboard) processNodeResource(nodeResource resourcedata.Data) {
-	d.processSeenNode(nodeResource.Node)
-
 	for _, component := range d.resourceDataListeners {
 		component.OnResourceDataChange(nodeResource)
 	}
@@ -463,28 +465,6 @@ func (d *Dashboard) processLog(node, line string) {
 	for _, component := range d.logDataListeners {
 		component.OnLogDataChange(node, line)
 	}
-}
-
-func (d *Dashboard) processSeenNode(node string) {
-	_, exists := d.nodeSet[node]
-	if exists {
-		return
-	}
-
-	d.nodeSet[node] = struct{}{}
-
-	nodes := maps.Keys(d.nodeSet)
-
-	sort.Strings(nodes)
-
-	d.nodes = nodes
-
-	for _, listener := range d.nodeSetChangeListeners {
-		listener.OnNodeSetChange(nodes)
-	}
-
-	// we received a new node, so we re-select the first node
-	d.selectNodeByIndex(0)
 }
 
 func (d *Dashboard) selectScreen(screen Screen) {
@@ -505,4 +485,104 @@ func (d *Dashboard) selectScreen(screen Screen) {
 	}
 
 	d.footer.SelectScreen(string(screen))
+}
+
+// attemptResolveIPToAlias attempts to resolve the given node IP to its alias as it appears in "nodes" in the context.
+// If the IP is not found in the context, the IP is returned as-is.
+func (d *Dashboard) attemptResolveIPToAlias(node string) string {
+	if resolved, ok := d.ipsToNodeAliases[node]; ok {
+		return resolved
+	}
+
+	return node
+}
+
+// collectNodeIPsToNodeAliases probes all nodes in the context for their IP addresses by calling their .Version endpoint and maps them to the node aliases in the context.
+//
+// Sample output:
+//
+// 172.20.0.6 -> node-1
+//
+// 10.42.0.1 -> node-1
+//
+// 172.20.0.7 -> node-2
+//
+// 10.42.0.2 -> node-2.
+func collectNodeIPsToNodeAliases(ctx context.Context, c *client.Client) (map[string]string, error) {
+	ipsToNodeAliases := make(map[string]string)
+
+	nodes := nodeAliasesInContext(ctx)
+	for _, node := range nodes {
+		ctx = client.WithNodes(ctx, node) // do not replace this with "WithNode" - it would not return the IP in the response metadata
+
+		resp, err := c.Version(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get node %q version: %w", node, err)
+		}
+
+		if len(resp.GetMessages()) == 0 {
+			return nil, fmt.Errorf("node %q returned no messages in version response", node)
+		}
+
+		nodeIP := resp.GetMessages()[0].GetMetadata().GetHostname()
+		if nodeIP == "" {
+			return nil, fmt.Errorf("node %q returned no IP in version response", node)
+		}
+
+		ipsToNodeAliases[nodeIP] = node
+	}
+
+	return ipsToNodeAliases, nil
+}
+
+// nodeAliasesInContext extracts the node aliases (IP, name etc.) from the given context which are stored in the "node" or "nodes" GRPC metadata.
+func nodeAliasesInContext(ctx context.Context) []string {
+	md, mdOk := metadata.FromOutgoingContext(ctx)
+	if !mdOk {
+		return nil
+	}
+
+	nodeVal := md.Get("node")
+	if len(nodeVal) > 0 {
+		return []string{nodeVal[0]}
+	}
+
+	nodesVal := md.Get(message.NodesHeaderKey)
+
+	return xslices.FlatMap(nodesVal, func(node string) []string {
+		return strings.Split(node, ",")
+	})
+}
+
+// getSortedNodeAliases returns the unique node aliases sorted by their IP address.
+func getSortedNodeAliases(ipToNodeAliases map[string]string) []string {
+	if len(ipToNodeAliases) == 0 { // assume that it is the local node (running on TTY)
+		return []string{""}
+	}
+
+	nodeAliases := maps.Keys(xslices.ToSet(maps.Values(ipToNodeAliases))) // eliminate duplicates
+
+	// if the aliases are IP addresses, compare them as IPs
+	// otherwise, compare them as strings
+	// all IPs come before non-IPs
+	slices.SortFunc(nodeAliases, func(a, b string) int {
+		addrA, aErr := netip.ParseAddr(a)
+		addrB, bErr := netip.ParseAddr(b)
+
+		if aErr != nil && bErr != nil {
+			return strings.Compare(a, b)
+		}
+
+		if aErr != nil {
+			return 1
+		}
+
+		if bErr != nil {
+			return -1
+		}
+
+		return addrA.Compare(addrB)
+	})
+
+	return nodeAliases
 }
