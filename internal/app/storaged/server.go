@@ -40,6 +40,8 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 			Name:       d.Name,
 			Serial:     d.Serial,
 			Modalias:   d.Modalias,
+			Uuid:       d.UUID,
+			Wwid:       d.WWID,
 			Type:       storage.Disk_DiskType(d.Type),
 			BusPath:    d.BusPath,
 			SystemDisk: systemDisk != nil && d.DeviceName == systemDisk.Device().Name(),
