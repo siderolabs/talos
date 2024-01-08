@@ -55,7 +55,7 @@ type RuleConfigV1Alpha1 struct {
 	PortSelector RulePortSelector `yaml:"portSelector"`
 	//   description: |
 	//     Ingress defines which source subnets are allowed to access the host ports/protocols defined by the `portSelector`.
-	Ingress IngressConfig `yaml:"ingress"`
+	Ingress IngressConfig `yaml:"ingress" merge:"replace"`
 }
 
 // RulePortSelector is a port selector for the network rule.
@@ -68,7 +68,7 @@ type RulePortSelector struct {
 	//       examplePortRanges1()
 	//    - value: >
 	//       examplePortRanges2()
-	Ports PortRanges `yaml:"ports"`
+	Ports PortRanges `yaml:"ports" merge:"replace"`
 	//   description: |
 	//     Protocol defines traffic protocol (e.g. TCP or UDP).
 	//   values:
