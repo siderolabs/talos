@@ -4,6 +4,8 @@
 
 package runtime
 
+//docgen:jsonschema
+
 import (
 	"fmt"
 	"net/url"
@@ -42,6 +44,8 @@ var (
 //	examples:
 //	  - value: exampleKmsgLogV1Alpha1()
 //	alias: KmsgLogConfig
+//	schemaRoot: true
+//	schemaMeta: v1alpha1/KmsgLogConfig
 type KmsgLogV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 	//   description: |
@@ -55,6 +59,9 @@ type KmsgLogV1Alpha1 struct {
 	//   examples:
 	//     - value: >
 	//        "udp://10.3.7.3:2810"
+	//   schema:
+	//     type: string
+	//     pattern: "^(tcp|udp)://"
 	KmsgLogURL meta.URL `yaml:"url"`
 }
 

@@ -13,9 +13,11 @@ migrated to their own documents.
 */
 package v1alpha1
 
-//go:generate docgen -output ./v1alpha1_types_doc.go -json-schema-output ./schemas/v1alpha1_config.schema.json -version-tag-file ../../../gendata/data/tag ./v1alpha1_types.go
+//go:generate docgen -output ./v1alpha1_types_doc.go ./v1alpha1_types.go
 
 //go:generate deepcopy-gen --input-dirs ../v1alpha1/ --go-header-file ../../../../../hack/boilerplate.txt --bounding-dirs ../v1alpha1 -O zz_generated.deepcopy
+
+//docgen:jsonschema
 
 import (
 	"fmt"
@@ -46,6 +48,7 @@ func init() {
 //
 //	examples:
 //	   - value: configExample()
+//	schemaRoot: true
 type Config struct {
 	//   description: |
 	//     Indicates the schema used to decode the contents.
@@ -467,7 +470,7 @@ type ClusterConfig struct {
 	//   schema:
 	//     type: array
 	//     items:
-	//       $ref: "#/$defs/ClusterInlineManifest"
+	//       $ref: "#/$defs/v1alpha1.ClusterInlineManifest"
 	ClusterInlineManifests ClusterInlineManifests `yaml:"inlineManifests,omitempty" talos:"omitonlyifnil"`
 	//   description: |
 	//     Settings for admin kubeconfig generation.
@@ -1605,12 +1608,16 @@ type ResourcesConfig struct {
 	//   examples:
 	//     - name: resources requests.
 	//       value: resourcesConfigRequestsExample()
+	//   schema:
+	//     type: object
 	Requests Unstructured `yaml:"requests,omitempty"`
 	//   description: |
 	//     Limits configures the maximum cpu/memory resources a container can use.
 	//   examples:
 	//     - name: resources requests.
 	//       value: resourcesConfigLimitsExample()
+	//   schema:
+	//     type: object
 	Limits Unstructured `yaml:"limits,omitempty"`
 }
 

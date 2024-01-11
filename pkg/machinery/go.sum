@@ -106,6 +106,8 @@ github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjR
 github.com/rogpeppe/go-internal v1.10.0/go.mod h1:UQnix2H7Ngw/k4C5ijL5+65zddjncjaFoBhdsK/akog=
 github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkBk=
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
+github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 h1:lZUw3E0/J3roVtGQ+SCrUrg3ON6NgVqpn3+iol9aGu4=
+github.com/santhosh-tekuri/jsonschema/v5 v5.3.1/go.mod h1:uToXkOrWAZ6/Oc07xWQrPOhJotwFIyu2bBVN41fcDUY=
 github.com/siderolabs/crypto v0.4.1 h1:PP84WSDDyCCbjYKePcc0IaMSPXDndz8V3cQ9hMRSvpA=
 github.com/siderolabs/crypto v0.4.1/go.mod h1:nJmvkqWy1Hngbzw3eg2TdtJ/ZYHHofQK1NbmmYywW8k=
 github.com/siderolabs/gen v0.4.7 h1:lM69UYggT7yzpubf7hEFaNujPdY55Y9zvQf/NC18GvA=

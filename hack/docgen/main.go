@@ -16,8 +16,11 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"text/template"
+
+	"github.com/siderolabs/gen/xslices"
 
 	"gopkg.in/yaml.v3"
 	"mvdan.cc/gofumpt/format"
@@ -151,12 +154,15 @@ type Field struct {
 }
 
 type Text struct {
-	Comment     string         `json:"-"`
-	Description string         `json:"description"`
-	Examples    []*Example     `json:"examples"`
-	Alias       string         `json:"alias"`
-	Values      []string       `json:"values"`
-	Schema      *SchemaWrapper `json:"schema"`
+	Comment        string         `json:"-"`
+	Description    string         `json:"description"`
+	Examples       []*Example     `json:"examples"`
+	Alias          string         `json:"alias"`
+	Values         []string       `json:"values"`
+	Schema         *SchemaWrapper `json:"schema"`
+	SchemaRoot     bool           `json:"schemaRoot" yaml:"schemaRoot"`
+	SchemaRequired bool           `json:"schemaRequired" yaml:"schemaRequired"`
+	SchemaMeta     string         `json:"schemaMeta" yaml:"schemaMeta"`
 }
 
 func in(p string) (string, error) {
@@ -170,6 +176,13 @@ func out(p string) (*os.File, error) {
 	}
 
 	return os.Create(abs)
+}
+
+type packageType struct {
+	name    string
+	doc     string
+	file    string
+	structs []*structType
 }
 
 type structType struct {
@@ -409,7 +422,7 @@ func collectFields(s *structType, aliases map[string]aliasType) (fields []*Field
 	return fields
 }
 
-func render(doc *Doc, dest string) {
+func renderDoc(doc *Doc, dest string) {
 	t := template.Must(template.New("docfile.tpl").Parse(tpl))
 	buf := bytes.Buffer{}
 
@@ -437,13 +450,10 @@ func render(doc *Doc, dest string) {
 	}
 }
 
-func processFile(inputFiles []string, outputFile, schemaOutputFile, versionTagFile string) {
-	var (
-		packageName string
-		packageDoc  string
-		structs     []*structType
-	)
+func processFiles(inputFiles []string, outputFile, schemaOutputFile, versionTagFile string) {
+	var packageNames []string
 
+	packageNameToType := map[string]*packageType{}
 	aliases := map[string]aliasType{}
 
 	for _, inputFile := range inputFiles {
@@ -452,7 +462,7 @@ func processFile(inputFiles []string, outputFile, schemaOutputFile, versionTagFi
 			log.Fatal(err)
 		}
 
-		fmt.Printf("creating package file set: %q\n", abs)
+		log.Printf("creating package file set: %q", abs)
 
 		fset := token.NewFileSet()
 
@@ -461,10 +471,21 @@ func processFile(inputFiles []string, outputFile, schemaOutputFile, versionTagFi
 			log.Fatal(err)
 		}
 
-		packageName = node.Name.Name
+		packageName := node.Name.Name
+
+		if _, ok := packageNameToType[packageName]; !ok {
+			packageNameToType[packageName] = &packageType{
+				name: packageName,
+				file: outputFile,
+			}
+
+			packageNames = append(packageNames, packageName)
+		}
+
+		pkg := packageNameToType[packageName]
 
 		if node.Doc != nil && node.Doc.Text() != "" {
-			packageDoc = node.Doc.Text()
+			pkg.doc = node.Doc.Text()
 		}
 
 		tokenFile := fset.File(node.Pos())
@@ -472,29 +493,51 @@ func processFile(inputFiles []string, outputFile, schemaOutputFile, versionTagFi
 			log.Fatalf("No token")
 		}
 
-		fmt.Printf("parsing file in package %q: %s\n", packageName, tokenFile.Name())
+		log.Printf("parsing file in package %q: %s", packageName, tokenFile.Name())
 
 		fileStructs, fileAliases := collectStructs(node)
 
-		structs = append(structs, fileStructs...)
+		pkg.structs = append(pkg.structs, fileStructs...)
 
 		maps.Copy(aliases, fileAliases)
 	}
 
-	if len(structs) == 0 {
-		log.Fatalf("failed to find types that could be documented in %v", inputFiles)
+	slices.Sort(packageNames)
+
+	docs := xslices.Map(packageNames, func(name string) *Doc {
+		return packageToDoc(packageNameToType[name], aliases)
+	})
+
+	if schemaOutputFile != "" {
+		renderSchema(docs, schemaOutputFile, versionTagFile)
+	}
+
+	if outputFile == "" {
+		return
+	}
+
+	if len(docs) != 1 {
+		log.Fatalf("expected exactly one package to generate docs, got %d", len(docs))
+	}
+
+	renderDoc(docs[0], outputFile)
+}
+
+func packageToDoc(pkg *packageType, aliases map[string]aliasType) *Doc {
+	if len(pkg.structs) == 0 {
+		log.Fatalf("failed to find types that could be documented in %v", pkg.file)
 	}
 
 	doc := &Doc{
-		Package: packageName,
+		Package: pkg.name,
 		Structs: []*Struct{},
 	}
 
 	extraExamples := map[string][]*Example{}
 	backReferences := map[string][]Appearance{}
 
-	for _, s := range structs {
-		fmt.Printf("generating docs for type: %q\n", s.name)
+	for _, s := range pkg.structs {
+		log.Printf("generating docs for type: %q", s.name)
 
 		fields := collectFields(s, aliases)
 
@@ -537,27 +580,71 @@ func processFile(inputFiles []string, outputFile, schemaOutputFile, versionTagFi
 		}
 	}
 
-	doc.Package = packageName
+	doc.Package = pkg.name
 	doc.Name = doc.Package
-	doc.Header = escape(packageDoc)
+	doc.Header = escape(pkg.doc)
 
-	doc.File = outputFile
-	render(doc, outputFile)
+	doc.File = pkg.file
 
-	if schemaOutputFile != "" {
-		renderSchema(doc, schemaOutputFile, versionTagFile)
-	}
+	return doc
 }
 
-func main() {
-	outputFile := flag.String("output", "doc.go", "output file name")
-	jsonSchemaOutputFile := flag.String("json-schema-output", "", "output file name for json schema")
-	versionTagFile := flag.String("version-tag-file", "", "file name for version tag")
-	flag.Parse()
+func sourcesWithJSONSchema(dir string) []string {
+	var sources []string
 
-	if flag.NArg() == 0 {
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() || !strings.HasSuffix(info.Name(), ".go") {
+			return nil
+		}
+
+		fileBytes, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		if strings.Contains(string(fileBytes), "//docgen:jsonschema") {
+			sources = append(sources, path)
+		}
+
+		return nil
+	}); err != nil {
+		log.Fatalf("failed to walk directory %q: %v", dir, err)
+	}
+
+	return sources
+}
+
+func determineFiles(generateSchemaFromDir string, args []string) []string {
+	if generateSchemaFromDir != "" {
+		if len(args) > 0 {
+			log.Fatalf("cannot specify both -generate-schema-from-dir and input files as args")
+		}
+
+		files := sourcesWithJSONSchema(generateSchemaFromDir)
+
+		if len(files) == 0 {
+			log.Fatalf("no Go files annotated with //docgen:jsonschema found in %q", generateSchemaFromDir)
+		}
+
+		return files
+	}
+
+	if len(args) == 0 {
 		log.Fatalf("no input files")
 	}
 
-	processFile(flag.Args(), *outputFile, *jsonSchemaOutputFile, *versionTagFile)
+	return args
+}
+
+func main() {
+	outputFile := flag.String("output", "", "output file name")
+	jsonSchemaOutputFile := flag.String("json-schema-output", "", "output file name for json schema")
+	versionTagFile := flag.String("version-tag-file", "", "file name for version tag")
+	generateSchemaFromDir := flag.String("generate-schema-from-dir", "", "generate a JSON schema by recursively parsing the sources in the specified directory")
+
+	flag.Parse()
+
+	files := determineFiles(*generateSchemaFromDir, flag.Args())
+
+	processFiles(files, *outputFile, *jsonSchemaOutputFile, *versionTagFile)
 }

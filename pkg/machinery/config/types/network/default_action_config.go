@@ -4,6 +4,8 @@
 
 package network
 
+//docgen:jsonschema
+
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
@@ -36,6 +38,8 @@ var (
 //	examples:
 //	  - value: exampleDefaultActionConfigV1Alpha1()
 //	alias: NetworkDefaultActionConfig
+//	schemaRoot: true
+//	schemaMeta: v1alpha1/NetworkDefaultActionConfig
 type DefaultActionConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 	//   description: |

@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/gomarkdown/markdown"
@@ -16,11 +18,10 @@ import (
 	"github.com/invopop/jsonschema"
 	"github.com/microcosm-cc/bluemonday"
 	validatejsonschema "github.com/santhosh-tekuri/jsonschema/v5"
-	"github.com/siderolabs/gen/slices"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
-const ConfigSchemaURLFormat = "https://talos.dev/%s/schemas/v1alpha1_config.schema.json"
+const ConfigSchemaURLFormat = "https://talos.dev/%s/schemas/%s"
 
 // SchemaWrapper wraps jsonschema.Schema to provide correct YAML unmarshalling using its internal JSON marshaller.
 type SchemaWrapper struct {
@@ -59,7 +60,7 @@ type SchemaDefinitionInfo struct {
 	enumValues         []any
 }
 
-func goTypeToTypeInfo(goType string) *SchemaTypeInfo {
+func goTypeToTypeInfo(pkg, goType string) *SchemaTypeInfo {
 	switch goType {
 	case "string":
 		return &SchemaTypeInfo{typeName: "string"}
@@ -68,11 +69,11 @@ func goTypeToTypeInfo(goType string) *SchemaTypeInfo {
 	case "bool":
 		return &SchemaTypeInfo{typeName: "boolean"}
 	default:
-		return &SchemaTypeInfo{ref: "#/$defs/" + goType}
+		return &SchemaTypeInfo{ref: "#/$defs/" + pkg + "." + goType}
 	}
 }
 
-func fieldToDefinitionInfo(field *Field) SchemaDefinitionInfo {
+func fieldToDefinitionInfo(pkg string, field *Field) SchemaDefinitionInfo {
 	goType := field.Type
 
 	if field.Text != nil {
@@ -91,19 +92,19 @@ func fieldToDefinitionInfo(field *Field) SchemaDefinitionInfo {
 	if strings.HasPrefix(goType, "[]") {
 		return SchemaDefinitionInfo{
 			typeInfo:           SchemaTypeInfo{typeName: "array"},
-			arrayItemsTypeInfo: goTypeToTypeInfo(strings.TrimPrefix(goType, "[]")),
+			arrayItemsTypeInfo: goTypeToTypeInfo(pkg, strings.TrimPrefix(goType, "[]")),
 		}
 	}
 
 	if strings.HasPrefix(goType, "map[string]") {
 		return SchemaDefinitionInfo{
 			typeInfo:         SchemaTypeInfo{typeName: "object"},
-			mapValueTypeInfo: goTypeToTypeInfo(strings.TrimPrefix(goType, "map[string]")),
+			mapValueTypeInfo: goTypeToTypeInfo(pkg, strings.TrimPrefix(goType, "map[string]")),
 		}
 	}
 
 	return SchemaDefinitionInfo{
-		typeInfo: *goTypeToTypeInfo(goType),
+		typeInfo: *goTypeToTypeInfo(pkg, goType),
 	}
 }
 
@@ -121,7 +122,7 @@ func typeInfoToSchema(typeInfo *SchemaTypeInfo) *jsonschema.Schema {
 	return &schema
 }
 
-func fieldToSchema(field *Field) *jsonschema.Schema {
+func fieldToSchema(pkg string, field *Field) *jsonschema.Schema {
 	schema := jsonschema.Schema{}
 
 	if field.Text != nil {
@@ -135,7 +136,7 @@ func fieldToSchema(field *Field) *jsonschema.Schema {
 			schema.Title = strings.ReplaceAll(field.Tag, "\\n", "\n")
 		}
 
-		populateDescriptionFields(field, &schema)
+		populateDescriptionFields(field.Text.Description, &schema)
 
 		// if an explicit schema was provided, return it
 		if field.Text.Schema != nil {
@@ -145,7 +146,7 @@ func fieldToSchema(field *Field) *jsonschema.Schema {
 
 	// schema was not explicitly provided, generate it from the comment
 
-	info := fieldToDefinitionInfo(field)
+	info := fieldToDefinitionInfo(pkg, field)
 
 	if info.typeInfo.ref != "" {
 		schema.Ref = info.typeInfo.ref
@@ -172,12 +173,12 @@ func fieldToSchema(field *Field) *jsonschema.Schema {
 	return &schema
 }
 
-func populateDescriptionFields(field *Field, schema *jsonschema.Schema) {
+func populateDescriptionFields(description string, schema *jsonschema.Schema) {
 	if schema.Extras == nil {
 		schema.Extras = make(map[string]any)
 	}
 
-	markdownDescription := normalizeDescription(field.Text.Description)
+	markdownDescription := normalizeDescription(description)
 
 	htmlFlags := html.CommonFlags | html.HrefTargetBlank
 	opts := html.RendererOptions{Flags: htmlFlags}
@@ -205,13 +206,43 @@ func populateDescriptionFields(field *Field, schema *jsonschema.Schema) {
 	}
 }
 
-func structToSchema(st *Struct) *jsonschema.Schema {
+func structToSchema(pkg string, st *Struct) *jsonschema.Schema {
 	schema := jsonschema.Schema{
 		Type:                 "object",
 		AdditionalProperties: jsonschema.FalseSchema,
 	}
 
+	var requiredFields []string
+
 	properties := orderedmap.New[string, *jsonschema.Schema]()
+
+	if st.Text != nil && st.Text.SchemaMeta != "" {
+		parts := strings.Split(st.Text.SchemaMeta, "/")
+		if len(parts) != 2 {
+			log.Fatalf("invalid schema meta: %s", st.Text.SchemaMeta)
+		}
+
+		apiVersionVal := parts[0]
+		kindVal := parts[1]
+
+		apiVersionSchema := &jsonschema.Schema{
+			Title: "apiVersion",
+			Enum:  []any{apiVersionVal},
+		}
+
+		kindSchema := &jsonschema.Schema{
+			Title: "kind",
+			Enum:  []any{kindVal},
+		}
+
+		populateDescriptionFields("apiVersion is the API version of the resource.", apiVersionSchema)
+		populateDescriptionFields("kind is the kind of the resource.", kindSchema)
+
+		properties.Set("apiVersion", apiVersionSchema)
+		properties.Set("kind", kindSchema)
+
+		requiredFields = append(requiredFields, "apiVersion", "kind")
+	}
 
 	for _, field := range st.Fields {
 		if field.Tag == "" {
@@ -219,34 +250,51 @@ func structToSchema(st *Struct) *jsonschema.Schema {
 			continue
 		}
 
-		properties.Set(field.Tag, fieldToSchema(field))
+		if field.Text != nil && field.Text.SchemaRequired {
+			requiredFields = append(requiredFields, field.Tag)
+		}
+
+		properties.Set(field.Tag, fieldToSchema(pkg, field))
 	}
+
+	slices.Sort(requiredFields)
 
 	schema.Properties = properties
+	schema.Required = requiredFields
 
 	return &schema
 }
 
-func docToSchema(doc *Doc, schemaURL string) *jsonschema.Schema {
+func docsToSchema(docs []*Doc, schemaURL string) *jsonschema.Schema {
 	schema := jsonschema.Schema{
-		Version: jsonschema.Version,
-		ID:      jsonschema.ID(schemaURL),
-		Ref:     "#/$defs/Config",
+		Version:     jsonschema.Version,
+		ID:          jsonschema.ID(schemaURL),
+		Definitions: make(jsonschema.Definitions),
 	}
 
-	schema.Definitions = slices.ToMap(doc.Structs, func(st *Struct) (string, *jsonschema.Schema) {
-		return st.Name, structToSchema(st)
-	})
+	for _, doc := range docs {
+		for _, docStruct := range doc.Structs {
+			name := doc.Package + "." + docStruct.Name
+
+			if docStruct.Text != nil && docStruct.Text.SchemaRoot {
+				schema.OneOf = append(schema.OneOf, &jsonschema.Schema{
+					Ref: "#/$defs/" + name,
+				})
+			}
+
+			schema.Definitions[name] = structToSchema(doc.Package, docStruct)
+		}
+	}
 
 	return &schema
 }
 
-func renderSchema(doc *Doc, destinationFile, versionTagFile string) {
+func renderSchema(docs []*Doc, destinationFile, versionTagFile string) {
 	version := readMajorMinorVersion(versionTagFile)
+	schemaFileName := filepath.Base(destinationFile)
+	schemaURL := fmt.Sprintf(ConfigSchemaURLFormat, version, schemaFileName)
 
-	schemaURL := fmt.Sprintf(ConfigSchemaURLFormat, version)
-
-	schema := docToSchema(doc, schemaURL)
+	schema := docsToSchema(docs, schemaURL)
 
 	marshaled, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
@@ -254,6 +302,12 @@ func renderSchema(doc *Doc, destinationFile, versionTagFile string) {
 	}
 
 	validateSchema(string(marshaled), schemaURL)
+
+	destDir := filepath.Dir(destinationFile)
+
+	if err = os.MkdirAll(destDir, 0o755); err != nil {
+		log.Fatalf("failed to create destination directory %q: %v", destDir, err)
+	}
 
 	err = os.WriteFile(destinationFile, marshaled, 0o644)
 	if err != nil {

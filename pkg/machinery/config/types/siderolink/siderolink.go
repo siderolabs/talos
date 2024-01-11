@@ -5,6 +5,8 @@
 // Package siderolink provides SideroLink machine configuration documents.
 package siderolink
 
+//docgen:jsonschema
+
 import (
 	"fmt"
 	"net/url"
@@ -47,6 +49,8 @@ var (
 //	examples:
 //	  - value: exampleConfigV1Alpha1()
 //	alias: SideroLinkConfig
+//	schemaRoot: true
+//	schemaMeta: v1alpha1/SideroLinkConfig
 type ConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 	//   description: |
@@ -54,6 +58,9 @@ type ConfigV1Alpha1 struct {
 	//   examples:
 	//     - value: >
 	//        "https://siderolink.api/join?token=secret"
+	//   schema:
+	//     type: string
+	//     pattern: "^(https|grpc)://"
 	APIUrlConfig meta.URL `yaml:"apiUrl"`
 }
 

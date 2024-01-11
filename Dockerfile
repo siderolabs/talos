@@ -979,7 +979,7 @@ WORKDIR /src
 COPY --from=talosctl-targetarch /talosctl-${TARGETOS}-${TARGETARCH} /bin/talosctl
 RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp/configuration \
     && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
-COPY ./pkg/machinery/config/types/v1alpha1/schemas/ /tmp/schemas/
+COPY ./pkg/machinery/config/schemas/*.schema.json /tmp/schemas/
 
 FROM pseudomuto/protoc-gen-doc as proto-docs-build
 COPY --from=generate-build /api /protos

@@ -4,6 +4,8 @@
 
 package runtime
 
+//docgen:jsonschema
+
 import (
 	"fmt"
 	"net"
@@ -42,6 +44,8 @@ var (
 //	examples:
 //	  - value: exampleEventSinkV1Alpha1()
 //	alias: EventSinkConfig
+//	schemaRoot: true
+//	schemaMeta: v1alpha1/EventSinkConfig
 type EventSinkV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 	//   description: |

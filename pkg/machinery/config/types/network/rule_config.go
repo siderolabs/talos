@@ -4,6 +4,8 @@
 
 package network
 
+//docgen:jsonschema
+
 import (
 	"fmt"
 	"net/netip"
@@ -45,10 +47,13 @@ var (
 //	examples:
 //	  - value: exampleRuleConfigV1Alpha1()
 //	alias: NetworkRuleConfig
+//	schemaRoot: true
+//	schemaMeta: v1alpha1/NetworkRuleConfig
 type RuleConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 	//   description: |
 	//     Name of the config document.
+	//   schemaRequired: true
 	MetaName string `yaml:"name"`
 	//   description: |
 	//     Port selector defines which ports and protocols on the host are affected by the rule.
@@ -68,6 +73,12 @@ type RulePortSelector struct {
 	//       examplePortRanges1()
 	//    - value: >
 	//       examplePortRanges2()
+	//   schema:
+	//     type: array
+	//     items:
+	//       oneOf:
+	//         - type: integer
+	//         - type: string
 	Ports PortRanges `yaml:"ports" merge:"replace"`
 	//   description: |
 	//     Protocol defines traffic protocol (e.g. TCP or UDP).
@@ -95,9 +106,15 @@ type IngressRule struct {
 	//       netip.MustParsePrefix("2001:db8::/32")
 	//    - value: >
 	//       netip.MustParsePrefix("1.3.4.5/32")
+	//   schema:
+	//     type: string
+	//     pattern: ^[0-9a-f.:]+/\d{1,3}$
 	Subnet netip.Prefix `yaml:"subnet"`
 	//   description: |
 	//     Except defines a source subnet to exclude from the rule, it gets excluded from the `subnet`.
+	//   schema:
+	//     type: string
+	//     pattern: ^[0-9a-f.:]+/\d{1,3}$
 	Except Prefix `yaml:"except,omitempty"`
 }
 
