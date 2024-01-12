@@ -108,7 +108,7 @@ require (
 	github.com/siderolabs/go-circular v0.1.0
 	github.com/siderolabs/go-cmd v0.1.1
 	github.com/siderolabs/go-debug v0.2.3
-	github.com/siderolabs/go-kmsg v0.1.3
+	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
 	github.com/siderolabs/go-kubernetes v0.2.8
 	github.com/siderolabs/go-loadbalancer v0.3.2
@@ -141,7 +141,7 @@ require (
 	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.15.0
 	golang.org/x/sync v0.5.0
-	golang.org/x/sys v0.15.0
+	golang.org/x/sys v0.16.0
 	golang.org/x/term v0.15.0
 	golang.org/x/text v0.14.0
 	golang.org/x/time v0.5.0
