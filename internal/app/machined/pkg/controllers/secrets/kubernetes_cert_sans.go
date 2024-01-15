@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -135,6 +136,7 @@ func (ctrl *KubernetesCertSANsController) Run(ctx context.Context, r controller.
 
 			spec.AppendIPs(k8sRoot.APIServerIPs...)
 			spec.AppendIPs(nodeAddresses.IPs()...)
+			spec.AppendIPs(netip.MustParseAddr("127.0.0.1"))
 
 			spec.Sort()
 
