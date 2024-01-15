@@ -101,7 +101,7 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 				"some.url",
 			}, spec.DNSNames,
 		)
-		suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", spec.IPs))
+		suite.Assert().Equal("[10.2.1.3 10.4.3.2 127.0.0.1 172.16.0.1]", fmt.Sprintf("%v", spec.IPs))
 
 		return nil
 	})

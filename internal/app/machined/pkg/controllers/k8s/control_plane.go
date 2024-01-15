@@ -243,7 +243,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 				var server string
 				if cfgProvider.Machine().Features().KubePrism().Enabled() {
-					server = fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().KubePrism().Port())
+					server = fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port())
 				} else {
 					server = cfgProvider.Cluster().Endpoint().String()
 				}

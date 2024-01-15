@@ -55,7 +55,7 @@ func NewKubePrismConfigController() *KubePrismConfigController {
 
 				spec := res.TypedSpec()
 				spec.Endpoints = endpt.TypedSpec().Endpoints
-				spec.Host = "localhost"
+				spec.Host = "127.0.0.1"
 				spec.Port = cfg.Config().Machine().Features().KubePrism().Port()
 
 				return nil

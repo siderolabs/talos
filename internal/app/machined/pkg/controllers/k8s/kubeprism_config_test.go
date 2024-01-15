@@ -61,7 +61,7 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 	ctest.AssertResource(suite, k8s.KubePrismConfigID, func(e *k8s.KubePrismConfig, asrt *assert.Assertions) {
 		asrt.Equal(
 			&k8s.KubePrismConfigSpec{
-				Host: "localhost",
+				Host: "127.0.0.1",
 				Port: 7445,
 				Endpoints: []k8s.KubePrismEndpoint{
 					{Host: "example.com", Port: 443},
@@ -94,7 +94,7 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 	ctest.AssertResource(suite, k8s.KubePrismConfigID, func(e *k8s.KubePrismConfig, asrt *assert.Assertions) {
 		asrt.Equal(
 			&k8s.KubePrismConfigSpec{
-				Host: "localhost",
+				Host: "127.0.0.1",
 				Port: 7446,
 				Endpoints: []k8s.KubePrismEndpoint{
 					{Host: "example.com", Port: 443},
@@ -115,7 +115,7 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 	ctest.AssertResource(suite, k8s.KubePrismConfigID, func(e *k8s.KubePrismConfig, asrt *assert.Assertions) {
 		asrt.Equal(
 			&k8s.KubePrismConfigSpec{
-				Host: "localhost",
+				Host: "127.0.0.1",
 				Port: 7445,
 				Endpoints: []k8s.KubePrismEndpoint{
 					{Host: "example.com", Port: 443},

@@ -44,7 +44,7 @@ func NewKubeletController() *KubeletController {
 				switch {
 				case cfgProvider.Machine().Features().KubePrism().Enabled():
 					// use cluster endpoint for controlplane nodes with loadbalancer support
-					localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Machine().Features().KubePrism().Port()))
+					localEndpoint, err := url.Parse(fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port()))
 					if err != nil {
 						return err
 					}
