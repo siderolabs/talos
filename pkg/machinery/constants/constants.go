@@ -799,6 +799,9 @@ const (
 	// NetworkSelfIPsAnnotation is the node annotation used to list the (comma-separated) IP addresses of the host, as discovered by Talos tooling.
 	NetworkSelfIPsAnnotation = "networking.talos.dev/self-ips"
 
+	// NetworkAPIServerPortAnnotation is the node annotation used to report the control plane API server port.
+	NetworkAPIServerPortAnnotation = "networking.talos.dev/api-server-port"
+
 	// ClusterNodeIDAnnotation is the node annotation used to represent node ID.
 	ClusterNodeIDAnnotation = "cluster.talos.dev/node-id"
 

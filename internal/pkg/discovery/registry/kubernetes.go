@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/netip"
+	"strconv"
 	"strings"
 	"time"
 
@@ -53,9 +54,16 @@ func AnnotationsFromAffiliate(affiliate *cluster.Affiliate) map[string]string {
 		kubeSpanAddress = affiliate.TypedSpec().KubeSpan.Address.String()
 	}
 
+	var apiServerPort string
+
+	if affiliate.TypedSpec().ControlPlane != nil {
+		apiServerPort = strconv.Itoa(affiliate.TypedSpec().ControlPlane.APIServerPort)
+	}
+
 	return map[string]string{
 		constants.ClusterNodeIDAnnotation:            affiliate.Metadata().ID(),
 		constants.NetworkSelfIPsAnnotation:           ipsToString(affiliate.TypedSpec().Addresses),
+		constants.NetworkAPIServerPortAnnotation:     apiServerPort,
 		constants.KubeSpanIPAnnotation:               kubeSpanAddress,
 		constants.KubeSpanPublicKeyAnnotation:        affiliate.TypedSpec().KubeSpan.PublicKey,
 		constants.KubeSpanAssignedPrefixesAnnotation: ipPrefixesToString(affiliate.TypedSpec().KubeSpan.AdditionalAddresses),
@@ -66,6 +74,8 @@ func AnnotationsFromAffiliate(affiliate *cluster.Affiliate) map[string]string {
 // AffiliateFromNode converts Kubernetes Node resource to Affiliate.
 //
 // If the Node resource doesn't have cluster discovery annotations, nil is returned.
+//
+//nolint:gocyclo
 func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 	nodeID, ok := node.Annotations[constants.ClusterNodeIDAnnotation]
 	if !ok {
@@ -118,6 +128,14 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 
 	if endpoints, ok := node.Annotations[constants.KubeSpanKnownEndpointsAnnotation]; ok {
 		affiliate.KubeSpan.Endpoints = parseIPPorts(endpoints)
+	}
+
+	if apiServerPort, ok := node.Annotations[constants.NetworkAPIServerPortAnnotation]; ok {
+		if port, err := strconv.Atoi(apiServerPort); err == nil {
+			affiliate.ControlPlane = &cluster.ControlPlane{
+				APIServerPort: port,
+			}
+		}
 	}
 
 	return affiliate
