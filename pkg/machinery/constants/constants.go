@@ -16,7 +16,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.69-talos"
+	DefaultKernelVersion = "6.1.73-talos"
 
 	// KernelModulesPath is the default path to the kernel modules without the kernel version.
 	KernelModulesPath = "/lib/modules"
@@ -479,7 +479,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.7.11"
+	DefaultContainerdVersion = "1.7.12"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
@@ -865,7 +865,7 @@ const (
 	DBusClientSocketPath = "/run/dbus/system_bus_socket"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.21.5 X:loopvar"
+	GoVersion = "go1.21.6 X:loopvar"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
@@ -928,7 +928,7 @@ const (
 	DashboardTTY = 2
 
 	// FlannelVersion is the version of flannel to use.
-	FlannelVersion = "v0.23.0"
+	FlannelVersion = "v0.24.1"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
