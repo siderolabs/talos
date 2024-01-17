@@ -36,17 +36,21 @@ func LinkID(linkName string) string {
 }
 
 // RouteID builds ID (primary key) for the route.
-func RouteID(table nethelpers.RoutingTable, family nethelpers.Family, destination netip.Prefix, gateway netip.Addr, priority uint32) string {
+func RouteID(table nethelpers.RoutingTable, family nethelpers.Family, destination netip.Prefix, gateway netip.Addr, priority uint32, outLinkName string) string {
 	dst, _ := destination.MarshalText() //nolint:errcheck
 	gw, _ := gateway.MarshalText()      //nolint:errcheck
 
-	tablePrefix := ""
+	prefix := ""
 
 	if table != nethelpers.TableMain {
-		tablePrefix = fmt.Sprintf("%s/", table)
+		prefix = fmt.Sprintf("%s/", table)
 	}
 
-	return fmt.Sprintf("%s%s/%s/%s/%d", tablePrefix, family, string(gw), string(dst), priority)
+	if family == nethelpers.FamilyInet6 {
+		prefix += fmt.Sprintf("%s/", outLinkName)
+	}
+
+	return fmt.Sprintf("%s%s/%s/%s/%d", prefix, family, string(gw), string(dst), priority)
 }
 
 // OperatorID builds ID (primary key) for the operators.

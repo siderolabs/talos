@@ -281,7 +281,10 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 			idBuilder: func(spec interface{}) (resource.ID, error) {
 				routeSpec := spec.(network.RouteSpecSpec) //nolint:errcheck,forcetypeassert
 
-				return network.LayeredID(network.ConfigPlatform, network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority)), nil
+				return network.LayeredID(
+					network.ConfigPlatform,
+					network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority, routeSpec.OutLinkName),
+				), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
 				return network.NewRouteSpec(network.ConfigNamespaceName, id)

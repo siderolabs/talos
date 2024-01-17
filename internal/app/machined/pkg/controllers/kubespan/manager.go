@@ -423,7 +423,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			if err = safe.WriterModify(ctx, r,
 				network.NewRouteSpec(
 					network.ConfigNamespaceName,
-					network.LayeredID(network.ConfigOperator, network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority)),
+					network.LayeredID(network.ConfigOperator, network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority, spec.OutLinkName)),
 				),
 				func(r *network.RouteSpec) error {
 					*r.TypedSpec() = spec
