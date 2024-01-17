@@ -16,8 +16,9 @@ CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-alpha.0
+PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.7.0-alpha.0-11-g2d3ca68
-PKG_KERNEL ?= ghcr.io/siderolabs/kernel:$(PKGS)
+PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
 EXTRAS ?= v1.7.0-alpha.0
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.21
@@ -144,6 +145,7 @@ COMMON_ARGS += --build-arg=NAME=$(NAME)
 COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
 COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
+COMMON_ARGS += --build-arg=PKGS_PREFIX=$(PKGS_PREFIX)
 COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
 
 CI_ARGS ?=
