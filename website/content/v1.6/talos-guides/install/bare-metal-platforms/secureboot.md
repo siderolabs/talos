@@ -37,10 +37,12 @@ Talos provides a utility to generate the keys, but existing PKI infrastructure c
 ```shell
 $ talosctl gen secureboot uki --common-name "SecureBoot Key"
 writing _out/uki-signing-cert.pem
+writing _out/uki-signing-cert.der
 writing _out/uki-signing-key.pem
 ```
 
 The generated certificate and private key are written to disk in PEM-encoded format (RSA 4096-bit key).
+The certificate is also written in DER format for the systems which expect the certificate in DER format.
 
 PCR signing key can be generated with:
 

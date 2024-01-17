@@ -6,7 +6,6 @@ package gen
 
 import (
 	"context"
-	stdlibx509 "crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/fs"
@@ -46,7 +45,7 @@ var genSecurebootUKICmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "uki", genSecurebootUKICmdFlags.commonName, 4096, true, false)
+		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "uki", genSecurebootUKICmdFlags.commonName, 4096, true)
 	},
 }
 
@@ -57,7 +56,7 @@ var genSecurebootPCRCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "pcr", "dummy", 2048, false, true)
+		return generateSigningCerts(genSecurebootCmdFlags.outputDirectory, "pcr", "dummy", 2048, false)
 	},
 }
 
@@ -98,7 +97,7 @@ func checkedWrite(path string, data []byte, perm fs.FileMode) error { //nolint:u
 	return os.WriteFile(path, data, perm)
 }
 
-func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCert, outputDER bool) error {
+func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCert bool) error {
 	currentTime := time.Now()
 
 	opts := []x509.Option{
@@ -120,10 +119,8 @@ func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCe
 			return err
 		}
 
-		if outputDER {
-			if err = saveAsDER(filepath.Join(path, prefix+"-signing-cert.der"), signingKey.CrtPEM); err != nil {
-				return err
-			}
+		if err = saveAsDER(filepath.Join(path, prefix+"-signing-cert.der"), signingKey.CrtPEM); err != nil {
+			return err
 		}
 	}
 
@@ -192,15 +189,14 @@ func init() {
 }
 
 func convertPEMToDER(data []byte) ([]byte, error) {
-	block, _ := pem.Decode(data)
+	block, rest := pem.Decode(data)
 	if block == nil {
 		return nil, fmt.Errorf("failed to decode PEM data")
 	}
 
-	key, err := stdlibx509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, err
+	if len(rest) > 0 {
+		return nil, fmt.Errorf("more than one PEM block found in PEM data")
 	}
 
-	return stdlibx509.MarshalPKIXPublicKey(key)
+	return block.Bytes, nil
 }
