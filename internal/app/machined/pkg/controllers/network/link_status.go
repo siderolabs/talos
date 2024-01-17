@@ -72,14 +72,14 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 	// create watch connections to rtnetlink and ethtool via genetlink
 	// these connections are used only to join multicast groups and receive notifications on changes
 	// other connections are used to send requests and receive responses, as we can't mix the notifications and request/responses
-	rtnetlinkWatcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK)
+	rtnetlinkWatcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_LINK)
 	if err != nil {
 		return err
 	}
 
 	defer rtnetlinkWatcher.Done()
 
-	ethtoolWatcher, err := watch.NewEthtool(r)
+	ethtoolWatcher, err := watch.NewEthtool(watch.NewDefaultRateLimitedTrigger(ctx, r))
 	if err != nil {
 		logger.Warn("ethtool watcher failed to start", zap.Error(err))
 	} else {

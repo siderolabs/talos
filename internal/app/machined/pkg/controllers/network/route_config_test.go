@@ -231,7 +231,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 
 	suite.assertRoutes(
 		[]string{
-			"configuration/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024",
+			"configuration/eth2/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//1024",
 			"configuration/inet4/10.0.3.1/10.0.3.0/24/1024",
 			"configuration/inet4/192.168.0.25/192.168.0.0/18/25",
 			"configuration/inet4/192.244.0.1/192.244.0.0/24/1024",

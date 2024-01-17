@@ -73,7 +73,7 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 
 		for _, res := range list.Items {
 			route := res.(*network.RouteSpec) //nolint:errcheck,forcetypeassert
-			id := network.RouteID(route.TypedSpec().Table, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Priority)
+			id := network.RouteID(route.TypedSpec().Table, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Priority, route.TypedSpec().OutLinkName)
 
 			existing, ok := routes[id]
 			if ok && existing.TypedSpec().ConfigLayer > route.TypedSpec().ConfigLayer {

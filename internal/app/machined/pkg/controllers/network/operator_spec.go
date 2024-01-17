@@ -302,7 +302,10 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 			if err := apply(
 				network.NewRouteSpec(
 					network.ConfigNamespaceName,
-					fmt.Sprintf("%s/%s", op.Operator.Prefix(), network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority)),
+					fmt.Sprintf("%s/%s",
+						op.Operator.Prefix(),
+						network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority, routeSpec.OutLinkName),
+					),
 				),
 				func(r resource.Resource) {
 					*r.(*network.RouteSpec).TypedSpec() = routeSpec

@@ -455,7 +455,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			if err = r.Modify(ctx,
 				network.NewRouteSpec(
 					network.ConfigNamespaceName,
-					network.LayeredID(network.ConfigOperator, network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority)),
+					network.LayeredID(network.ConfigOperator, network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority, spec.OutLinkName)),
 				),
 				func(r resource.Resource) error {
 					*r.(*network.RouteSpec).TypedSpec() = spec

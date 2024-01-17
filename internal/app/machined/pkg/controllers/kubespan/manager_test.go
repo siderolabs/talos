@@ -233,6 +233,7 @@ func (suite *ManagerSuite) TestReconcile() {
 							netip.Prefix{},
 							netip.Addr{},
 							1,
+							"kubespan",
 						),
 					),
 					network.LayeredID(
@@ -243,6 +244,7 @@ func (suite *ManagerSuite) TestReconcile() {
 							netip.Prefix{},
 							netip.Addr{},
 							1,
+							"kubespan",
 						),
 					),
 				},
