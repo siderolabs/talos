@@ -47,7 +47,7 @@ func (ctrl *AddressStatusController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK|unix.RTMGRP_IPV4_IFADDR|unix.RTMGRP_IPV6_IFADDR)
+	watcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_LINK|unix.RTMGRP_IPV4_IFADDR|unix.RTMGRP_IPV6_IFADDR)
 	if err != nil {
 		return err
 	}

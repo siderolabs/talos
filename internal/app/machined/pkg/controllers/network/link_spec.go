@@ -67,7 +67,7 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 	}
 
 	// watch link changes as some routes might need to be re-applied if the link appears
-	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_LINK)
+	watcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_LINK)
 	if err != nil {
 		return err
 	}

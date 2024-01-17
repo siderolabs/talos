@@ -47,7 +47,7 @@ func (ctrl *RouteStatusController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	watcher, err := watch.NewRtNetlink(r, unix.RTMGRP_IPV4_MROUTE|unix.RTMGRP_IPV4_ROUTE|unix.RTMGRP_IPV6_MROUTE|unix.RTMGRP_IPV6_ROUTE)
+	watcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_IPV4_MROUTE|unix.RTMGRP_IPV4_ROUTE|unix.RTMGRP_IPV6_MROUTE|unix.RTMGRP_IPV6_ROUTE)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,9 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 			dstPrefix := netip.PrefixFrom(dstAddr, int(route.DstLength))
 			srcAddr, _ := netip.AddrFromSlice(route.Attributes.Src)
 			gatewayAddr, _ := netip.AddrFromSlice(route.Attributes.Gateway)
-			id := network.RouteID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority)
+			outLinkName := linkLookup[route.Attributes.OutIface]
+
+			id := network.RouteID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority, outLinkName)
 
 			if err = r.Modify(ctx, network.NewRouteStatus(network.NamespaceName, id), func(r resource.Resource) error {
 				status := r.(*network.RouteStatus).TypedSpec()
@@ -114,7 +116,7 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 				status.Source = srcAddr
 				status.Gateway = gatewayAddr
 				status.OutLinkIndex = route.Attributes.OutIface
-				status.OutLinkName = linkLookup[route.Attributes.OutIface]
+				status.OutLinkName = outLinkName
 				status.Priority = route.Attributes.Priority
 				status.Table = nethelpers.RoutingTable(route.Table)
 				status.Scope = nethelpers.Scope(route.Scope)
