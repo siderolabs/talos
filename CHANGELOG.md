@@ -1,3 +1,89 @@
+## [Talos 1.6.2](https://github.com/siderolabs/talos/releases/tag/v1.6.2) (2024-01-18)
+
+Welcome to the v1.6.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.1.73
+
+Talos is built with Go 1.21.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Utku Ozdemir
+* Dmitriy Matrenichev
+* Drew Hess
+* Hervé Werner
+* JJGadgets
+* Jonomir
+* Serge Logvinov
+
+### Changes
+<details><summary>15 commits</summary>
+<p>
+
+* [`f87a0468b`](https://github.com/siderolabs/talos/commit/f87a0468b6558d13dbdb343b5c0c8cd917788979) fix: strategic patch merging for audit policy
+* [`36b913dba`](https://github.com/siderolabs/talos/commit/36b913dba4813f96caa69df74568ada78ff09762) fix: watch bufer overrun for RouteStatus
+* [`3576d113c`](https://github.com/siderolabs/talos/commit/3576d113c44fac6f752a3628f85bb7b37be50221) fix: fix .der output in `talosctl gen secureboot`
+* [`0191c3b2c`](https://github.com/siderolabs/talos/commit/0191c3b2cb988dd759b7e447d03b8b060bf92646) fix: support KubePrism settings in Kubernetes Discovery
+* [`8fa6e93f0`](https://github.com/siderolabs/talos/commit/8fa6e93f04ffe9b599f2a71ded4f85bae99e652f) fix: force KubePrism to connect using IPv4
+* [`e05eebca1`](https://github.com/siderolabs/talos/commit/e05eebca19c687ad3159f8904321ff70f96d5b47) fix: update kmsg with utf-8 fix
+* [`37bfa60dd`](https://github.com/siderolabs/talos/commit/37bfa60dd6ad83840f0118ab7b84e6bc40e36cf4) fix: merge ports and ingress configs correctly in NetworkRuleConfig
+* [`306c5cad2`](https://github.com/siderolabs/talos/commit/306c5cad2d269c78126bdf34998ebe84de94c1fb) fix: fix nodes on dashboard footer when node names are used in `--nodes`
+* [`530332d24`](https://github.com/siderolabs/talos/commit/530332d245b740fdccb12e40ca0df58c5a5c7194) fix: disk UUID & WWID always empty in `talosctl disks`
+* [`440f56341`](https://github.com/siderolabs/talos/commit/440f563410c1959d2ddc63e8f1f7a5bdb48cdb00) chore: pull in NBD modules
+* [`3ebdbabaf`](https://github.com/siderolabs/talos/commit/3ebdbabaff6038572bd67920252067141ea1f9e0) fix: default priority for ipv6
+* [`b47619543`](https://github.com/siderolabs/talos/commit/b47619543687f5db464b6e8c82beab29502e03b1) fix: replace the filemap implementation to not buffer in memory
+* [`0ec551597`](https://github.com/siderolabs/talos/commit/0ec5515977957214473608a8113eb9632db25f36) fix: imager should support different Talos versions
+* [`4b3168624`](https://github.com/siderolabs/talos/commit/4b31686243c2a9caf0126d3f2c15224d0cb2e493) feat: support iPXE direct booting in `talosctl cluster create`
+* [`d98699c07`](https://github.com/siderolabs/talos/commit/d98699c07ffe00438e15b1a9767f65321d52cf72) feat: update Linux 6.1.73, go 1.21.6
+</p>
+</details>
+
+### Changes from siderolabs/go-kmsg
+<details><summary>2 commits</summary>
+<p>
+
+* [`e358d13`](https://github.com/siderolabs/go-kmsg/commit/e358d13e5bdab79568d6ffea4b071c1530aa8e3d) fix: decode escape sequences while reading from kmsg
+* [`4297bd5`](https://github.com/siderolabs/go-kmsg/commit/4297bd599c918a5a874fb3b9f3119b394bd70899) feat: add BSD support
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`0078a66`](https://github.com/siderolabs/pkgs/commit/0078a6680e8abdad8ec639b32f0ba9589ed4dbd0) feat: enable NBD
+* [`31b9d61`](https://github.com/siderolabs/pkgs/commit/31b9d61ba94407ddaf6517f175837c6f516784cd) feat: enable nct6683 sensors as module
+* [`f8c6a35`](https://github.com/siderolabs/pkgs/commit/f8c6a35d08db197c67d6b7cb7b4ee2221a2aa754) feat: go 1.21.6, linux 6.1.73
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`5e034ec`](https://github.com/siderolabs/tools/commit/5e034ec90f8d3cdb32ab4ec636c249b645e95fc7) feat: update Go to 1.21.6
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/pin/tftp**            2f79be2dba4e **_new_**
+* **github.com/siderolabs/go-kmsg**  v0.1.3 -> v0.1.4
+* **github.com/siderolabs/pkgs**     v1.6.0-9-g8fa73db -> v1.6.0-12-g0078a66
+* **github.com/siderolabs/tools**    v1.6.0-1-g336d248 -> v1.6.0-2-g5e034ec
+* **golang.org/x/sys**               v0.15.0 -> v0.16.0
+
+Previous release can be found at [v1.6.1](https://github.com/siderolabs/talos/releases/tag/v1.6.1)
+
 ## [Talos 1.6.1](https://github.com/siderolabs/talos/releases/tag/v1.6.1) (2023-12-22)
 
 Welcome to the v1.6.1 release of Talos!
