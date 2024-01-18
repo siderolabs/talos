@@ -141,6 +141,11 @@ func merge(vl, vr reflect.Value, replace bool) error {
 		}
 	case reflect.Struct:
 		if replace {
+			// if the right-hand struct is zero value, skip replacing the left-hand struct
+			if vr.IsZero() {
+				return nil
+			}
+
 			vl.Set(vr)
 
 			return nil
