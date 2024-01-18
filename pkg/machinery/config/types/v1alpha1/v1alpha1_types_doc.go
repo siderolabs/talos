@@ -3658,6 +3658,13 @@ func (NetworkDeviceSelector) Doc() *encoder.Doc {
 				Description: "Kernel driver, supports matching by wildcard.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Kernel driver, supports matching by wildcard." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "physical",
+				Type:        "bool",
+				Note:        "",
+				Description: "Select only physical devices.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Select only physical devices." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

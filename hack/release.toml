@@ -27,6 +27,12 @@ Flannel: 0.24.1
 Talos is built with Go 1.21.6.
 """
 
+    [notes.device_selectors]
+        title = "Device Selectors"
+        description = """\
+Talos Linux now supports `physical: true` qualifier for device selectors, it selects non-virtual network interfaces (i.e. `en0` is selected, while `bond0` is not).
+"""
+
 [make_deps]
 
     [make_deps.tools]

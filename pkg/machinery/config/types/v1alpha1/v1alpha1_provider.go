@@ -838,6 +838,11 @@ func (s *NetworkDeviceSelector) KernelDriver() string {
 	return s.NetworkDeviceKernelDriver
 }
 
+// Physical implements config.NetworkDeviceSelector interface.
+func (s *NetworkDeviceSelector) Physical() *bool {
+	return s.NetworkDevicePhysical
+}
+
 // Network implements the MachineNetwork interface.
 func (r *Route) Network() string {
 	return r.RouteNetwork

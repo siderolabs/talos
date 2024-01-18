@@ -210,7 +210,7 @@ func (ctrl *DeviceConfigController) selectDevices(selector talosconfig.NetworkDe
 	for iter := links.Iterator(); iter.Next(); {
 		linkStatus := iter.Value().TypedSpec()
 
-		match := false
+		var match optional.Optional[bool]
 
 		for _, pair := range [][]string{
 			{selector.HardwareAddress(), linkStatus.HardwareAddr.String()},
@@ -223,15 +223,19 @@ func (ctrl *DeviceConfigController) selectDevices(selector talosconfig.NetworkDe
 			}
 
 			if !glob.Glob(pair[0], pair[1]) {
-				match = false
+				match = optional.Some(false)
 
 				break
 			}
 
-			match = true
+			match = optional.Some(true)
 		}
 
-		if match {
+		if selector.Physical() != nil && match.ValueOr(true) {
+			match = optional.Some(*selector.Physical() == linkStatus.Physical())
+		}
+
+		if match.ValueOrZero() {
 			result = append(result, iter.Value())
 		}
 	}

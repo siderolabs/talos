@@ -39,6 +39,16 @@ spec:
   pciID: 1969:E0B1
 ```
 
+The following qualifiers are available:
+
+- `driver` - matches a device by its driver name
+- `hardwareAddr` - matches a device by its hardware address
+- `busPath` - matches a device by its PCI bus path
+- `pciID` - matches a device by its PCI vendor and device ID
+- `physical` - matches only physical devices (vs. virtual devices, e.g. bonds and VLANs)
+
+All qualifiers except for `physical` support wildcard matching using `*` character.
+
 ## Using Device Selector for Bonding
 
 Device selectors can be used to configure bonded interfaces:

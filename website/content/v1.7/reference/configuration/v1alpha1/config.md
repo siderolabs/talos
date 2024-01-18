@@ -1175,6 +1175,7 @@ machine:
 |`hardwareAddr` |string |Device hardware address, supports matching by wildcard.  | |
 |`pciID` |string |PCI ID (vendor ID, product ID), supports matching by wildcard.  | |
 |`driver` |string |Kernel driver, supports matching by wildcard.  | |
+|`physical` |bool |Select only physical devices.  | |
 
 
 
@@ -1322,6 +1323,7 @@ machine:
 |`hardwareAddr` |string |Device hardware address, supports matching by wildcard.  | |
 |`pciID` |string |PCI ID (vendor ID, product ID), supports matching by wildcard.  | |
 |`driver` |string |Kernel driver, supports matching by wildcard.  | |
+|`physical` |bool |Select only physical devices.  | |
 
 
 

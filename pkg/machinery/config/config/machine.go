@@ -291,6 +291,7 @@ type NetworkDeviceSelector interface {
 	HardwareAddress() string
 	PCIID() string
 	KernelDriver() string
+	Physical() *bool
 }
 
 // Time defines the requirements for a config that pertains to time related

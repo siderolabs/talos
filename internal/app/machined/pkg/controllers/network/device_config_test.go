@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -108,6 +109,13 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 						},
 						DeviceAddresses: []string{"192.168.5.0/24"},
 					},
+					// device selector which matches physical interfaces
+					{
+						DeviceSelector: &v1alpha1.NetworkDeviceSelector{
+							NetworkDevicePhysical: pointer.To(true),
+						},
+						DeviceAddresses: []string{"192.168.6.0/24"},
+					},
 				},
 			},
 		},
@@ -119,6 +127,7 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 	status := network.NewLinkStatus(network.NamespaceName, "eth0")
 	status.TypedSpec().Driver = kernelDriver
 	status.TypedSpec().BusPath = "0000:01:00.0"
+	status.TypedSpec().Type = nethelpers.LinkEther // physical
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), status))
 
 	status = network.NewLinkStatus(network.NamespaceName, "eth1")
@@ -141,6 +150,12 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"eth0/003/000", "eth1/003/001"},
 		func(r *network.DeviceConfigSpec, assert *assert.Assertions) {
 			assert.Equal([]string{"192.168.5.0/24"}, r.TypedSpec().Device.Addresses())
+		},
+	)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{"eth0/004"},
+		func(r *network.DeviceConfigSpec, assert *assert.Assertions) {
+			assert.Equal([]string{"192.168.6.0/24"}, r.TypedSpec().Device.Addresses())
 		},
 	)
 }

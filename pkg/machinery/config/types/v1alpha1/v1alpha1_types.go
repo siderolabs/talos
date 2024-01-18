@@ -2289,6 +2289,8 @@ type NetworkDeviceSelector struct {
 	NetworkDevicePCIID string `yaml:"pciID,omitempty"`
 	// description: Kernel driver, supports matching by wildcard.
 	NetworkDeviceKernelDriver string `yaml:"driver,omitempty"`
+	// description: Select only physical devices.
+	NetworkDevicePhysical *bool `yaml:"physical,omitempty"`
 }
 
 // ClusterDiscoveryConfig struct configures cluster membership discovery.
