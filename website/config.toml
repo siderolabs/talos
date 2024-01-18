@@ -141,6 +141,10 @@ offlineSearch = false
 prism_syntax_highlighting = false
 
 [[params.versions]]
+url = "/v1.7/"
+version = "v1.7 (pre-release)"
+
+[[params.versions]]
 url = "/v1.6/"
 version = "v1.6 (latest)"
 
