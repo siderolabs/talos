@@ -108,21 +108,21 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
-	img, err := image.Pull(containerdctx, r.Config().Machine().Registries(), client, r.Config().Cluster().Etcd().Image(), image.WithSkipIfAlreadyPulled())
+	spec, err := safe.ReaderGet[*etcdresource.Spec](ctx, r.State().V1Alpha2().Resources(), etcdresource.NewSpec(etcdresource.NamespaceName, etcdresource.SpecID).Metadata())
 	if err != nil {
-		return fmt.Errorf("failed to pull image %q: %w", r.Config().Cluster().Etcd().Image(), err)
+		// spec should be ready
+		return fmt.Errorf("failed to get etcd spec: %w", err)
+	}
+
+	img, err := image.Pull(containerdctx, r.Config().Machine().Registries(), client, spec.TypedSpec().Image, image.WithSkipIfAlreadyPulled())
+	if err != nil {
+		return fmt.Errorf("failed to pull image %q: %w", spec.TypedSpec().Image, err)
 	}
 
 	e.imgRef = img.Target().Digest.String()
 
 	// Clear any previously set learner member ID
 	e.learnerMemberID = 0
-
-	spec, err := safe.ReaderGet[*etcdresource.Spec](ctx, r.State().V1Alpha2().Resources(), etcdresource.NewSpec(etcdresource.NamespaceName, etcdresource.SpecID).Metadata())
-	if err != nil {
-		// spec should be ready
-		return fmt.Errorf("failed to get etcd spec: %w", err)
-	}
 
 	switch t := r.Config().Machine().Type(); t {
 	case machine.TypeInit:
@@ -400,7 +400,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 		"experimental-compact-hash-check-enabled":     "true",
 	}
 
-	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
+	extraArgs := argsbuilder.Args(spec.ExtraArgs)
 
 	denyList := argsbuilder.WithDenyList(denyListArgs)
 
@@ -477,7 +477,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 		"experimental-compact-hash-check-enabled":     "true",
 	}
 
-	extraArgs := argsbuilder.Args(r.Config().Cluster().Etcd().ExtraArgs())
+	extraArgs := argsbuilder.Args(spec.ExtraArgs)
 
 	denyList := argsbuilder.WithDenyList(denyListArgs)
 
