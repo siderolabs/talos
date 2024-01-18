@@ -31,6 +31,7 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
@@ -617,7 +618,7 @@ func init() {
 	)
 
 	configNewCmd.Flags().StringSliceVar(&configNewCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
-	configNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", 87600*time.Hour, "certificate TTL")
+	configNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", constants.TalosAPIDefaultCertificateValidityDuration, "certificate TTL")
 
 	configInfoCmd.Flags().StringVarP(&configInfoCmdFlags.output, "output", "o", "text", "output format (json|yaml|text). Default text.")
 

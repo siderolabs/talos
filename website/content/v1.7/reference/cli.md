@@ -538,7 +538,7 @@ talosctl config new [<path>] [flags]
 ### Options
 
 ```
-      --crt-ttl duration   certificate TTL (default 87600h0m0s)
+      --crt-ttl duration   certificate TTL (default 8760h0m0s)
   -h, --help               help for new
       --roles strings      roles (default [os:admin])
 ```
