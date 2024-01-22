@@ -1,7 +1,7 @@
 ---
 title: "VMware"
 description: "Creating Talos Kubernetes cluster using VMware."
-aliases: 
+aliases:
   - ../../../virtualized-platforms/vmware
 ---
 
@@ -296,7 +296,7 @@ The talos-vmtoolsd application was deployed as a daemonset as part of the cluste
 Create a new talosconfig with:
 
 ```bash
-talosctl -n <control plane IP> config new vmtoolsd-secret.yaml --roles os:admin
+talosctl --talosconfig talosconfig -n <control plane IP> config new vmtoolsd-secret.yaml --roles os:admin
 ```
 
 Create a secret from the talosconfig:
