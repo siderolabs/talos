@@ -24,7 +24,7 @@ The recommended maximum size is 8 GiB.
 To increase the space quota, edit the `etcd` section in the machine configuration:
 
 ```yaml
-machine:
+cluster:
   etcd:
     extraArgs:
       quota-backend-bytes: 4294967296 # 4 GiB
