@@ -35,3 +35,31 @@ func TestSupportsResetOption(t *testing.T) {
 		})
 	}
 }
+
+func TestSupportsCompressedEncodedMETA(t *testing.T) {
+	for _, test := range []struct {
+		version string
+
+		expected bool
+	}{
+		{
+			version:  "1.6.3",
+			expected: true,
+		},
+		{
+			version:  "1.7.0",
+			expected: true,
+		},
+		{
+			expected: true,
+		},
+		{
+			version:  "1.6.2",
+			expected: false,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			assert.Equal(t, test.expected, quirks.New(test.version).SupportsCompressedEncodedMETA())
+		})
+	}
+}

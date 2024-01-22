@@ -6,8 +6,11 @@
 package meta
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
@@ -49,8 +52,29 @@ type Values []Value
 //
 // Each Value is encoded a k=v, split by ';' character.
 // The result is base64 encoded.
-func (v Values) Encode() string {
-	return base64.StdEncoding.EncodeToString([]byte(strings.Join(xslices.Map(v, Value.String), ";")))
+func (v Values) Encode(allowGzip bool) string {
+	raw := []byte(strings.Join(xslices.Map(v, Value.String), ";"))
+
+	if allowGzip && len(raw) > 256 {
+		var buf bytes.Buffer
+
+		gzW, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+		if err != nil {
+			panic(err)
+		}
+
+		if _, err := gzW.Write(raw); err != nil {
+			panic(err)
+		}
+
+		if err := gzW.Close(); err != nil {
+			panic(err)
+		}
+
+		raw = buf.Bytes()
+	}
+
+	return base64.StdEncoding.EncodeToString(raw)
 }
 
 // DecodeValues parses a string representation of Values for the environment variable.
@@ -64,6 +88,25 @@ func DecodeValues(s string) (Values, error) {
 
 	if len(b) == 0 {
 		return nil, nil
+	}
+
+	// do un-gzip if needed
+	if hasGzipMagic(b) {
+		gzR, err := gzip.NewReader(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+
+		defer gzR.Close() //nolint:errcheck
+
+		b, err = io.ReadAll(gzR)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := gzR.Close(); err != nil {
+			return nil, err
+		}
 	}
 
 	parts := strings.Split(string(b), ";")
@@ -81,4 +124,13 @@ func DecodeValues(s string) (Values, error) {
 	}
 
 	return result, nil
+}
+
+func hasGzipMagic(b []byte) bool {
+	if len(b) < 10 {
+		return false
+	}
+
+	// See https://en.wikipedia.org/wiki/Gzip#File_format.
+	return b[0] == 0x1f && b[1] == 0x8b
 }
