@@ -5,6 +5,8 @@
 package meta_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,15 +37,74 @@ func TestValue(t *testing.T) {
 func TestEncodeDecodeValues(t *testing.T) {
 	t.Parallel()
 
-	values := make(meta.Values, 2)
+	for _, allowGzip := range []bool{false, true} {
+		allowGzip := allowGzip
 
-	require.NoError(t, values[0].Parse("10=foo"))
-	require.NoError(t, values[1].Parse("0xb=bar"))
+		t.Run(fmt.Sprintf("allowGzip=%v", allowGzip), func(t *testing.T) {
+			t.Parallel()
 
-	encoded := values.Encode()
+			for _, test := range []struct {
+				name string
 
-	decoded, err := meta.DecodeValues(encoded)
-	require.NoError(t, err)
+				values []string
 
-	assert.Equal(t, values, decoded)
+				expectedEncodedSize int
+				expectedGzippedSize int
+			}{
+				{
+					name: "empty",
+				},
+				{
+					name: "simple",
+					values: []string{
+						"10=foo",
+						"0xb=bar",
+					},
+
+					expectedEncodedSize: 20,
+					expectedGzippedSize: 20,
+				},
+				{
+					name: "huge",
+					values: []string{
+						"10=" + strings.Repeat("foobar", 256),
+						"0xb=" + strings.Repeat("baz", 256),
+					},
+
+					expectedEncodedSize: 3084,
+					expectedGzippedSize: 80,
+				},
+			} {
+				test := test
+
+				t.Run(test.name, func(t *testing.T) {
+					t.Parallel()
+
+					values := make(meta.Values, len(test.values))
+
+					for i, v := range test.values {
+						require.NoError(t, values[i].Parse(v))
+					}
+
+					if len(values) == 0 {
+						values = nil
+					}
+
+					encoded := values.Encode(allowGzip)
+
+					switch {
+					case test.expectedEncodedSize > 0 && !allowGzip:
+						assert.Equal(t, test.expectedEncodedSize, len(encoded))
+					case test.expectedGzippedSize > 0 && allowGzip:
+						assert.Equal(t, test.expectedGzippedSize, len(encoded))
+					}
+
+					decoded, err := meta.DecodeValues(encoded)
+					require.NoError(t, err)
+
+					assert.Equal(t, values, decoded)
+				})
+			}
+		})
+	}
 }

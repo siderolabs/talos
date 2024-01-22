@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot/uki"
 	"github.com/siderolabs/talos/pkg/imager/extensions"
 	"github.com/siderolabs/talos/pkg/imager/profile"
+	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -276,7 +277,10 @@ func (i *Imager) buildCmdline() error {
 	// meta values can be written only to the "image" output
 	if len(i.prof.Customization.MetaContents) > 0 && i.prof.Output.Kind != profile.OutKindImage {
 		// pass META values as kernel talos.environment args which will be passed via the environment to the installer
-		cmdline.Append(constants.KernelParamEnvironment, constants.MetaValuesEnvVar+"="+i.prof.Customization.MetaContents.Encode())
+		cmdline.Append(
+			constants.KernelParamEnvironment,
+			constants.MetaValuesEnvVar+"="+i.prof.Customization.MetaContents.Encode(quirks.New(i.prof.Version).SupportsCompressedEncodedMETA()),
+		)
 	}
 
 	// apply customization

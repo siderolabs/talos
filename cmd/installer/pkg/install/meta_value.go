@@ -103,7 +103,7 @@ func (s *MetaValues) GetSlice() []string {
 
 // Encode returns the encoded values.
 func (s *MetaValues) Encode() string {
-	return s.values.Encode()
+	return s.values.Encode(false)
 }
 
 // Decode the values from the given string.

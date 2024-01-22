@@ -33,3 +33,15 @@ func (q Quirks) SupportsResetGRUBOption() bool {
 
 	return q.v.GTE(minVersionResetOption)
 }
+
+var minVersionCompressedMETA = semver.MustParse("1.6.3")
+
+// SupportsCompressedEncodedMETA returns true if the Talos version supports compressed and encoded META as an environment variable.
+func (q Quirks) SupportsCompressedEncodedMETA() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionCompressedMETA)
+}

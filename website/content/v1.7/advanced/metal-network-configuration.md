@@ -403,7 +403,7 @@ kernel command line: ... talos.environment=INSTALLER_META_BASE64=MHhhPWZvbw==
 When PXE booting, the value of `INSTALLER_META_BASE64` should be set manually:
 
 ```bash
-echo -n "0xa=$(cat network.yaml)" | base64
+echo -n "0xa=$(cat network.yaml)" | gzip -9 | base64
 ```
 
 The resulting base64 string should be passed as an environment variable `INSTALLER_META_BASE64` to the initial boot of Talos: `talos.environment=INSTALLER_META_BASE64=<base64-encoded value>`.
