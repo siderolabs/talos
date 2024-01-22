@@ -60,6 +60,7 @@ kernel/drivers/md/raid456.ko
 kernel/drivers/message/fusion/mptbase.ko
 kernel/drivers/message/fusion/mptsas.ko
 kernel/drivers/message/fusion/mptscsih.ko
+kernel/drivers/message/fusion/mptspi.ko
 kernel/drivers/misc/hpilo.ko
 kernel/drivers/mmc/host/sdhci_f_sdh30.ko
 kernel/drivers/mmc/host/sdhci-acpi.ko
