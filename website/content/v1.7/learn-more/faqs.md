@@ -45,7 +45,7 @@ It also handles the automatic rotation of server-side certificates.
 
 However, client certificates such as `talosconfig` and `kubeconfig` are the user's responsibility, and by default, they have a validity period of 1 year.
 
-To renew the `talosconfig` certificate, the follow [this process]({{< relref "../talos-guides/configuration/managing-pki" >}}).
+To renew the `talosconfig` certificate, the follow [this process]({{< relref "../talos-guides/howto/cert-management" >}}).
 To renew `kubeconfig`, use `talosctl kubeconfig` command, and the time-to-live (TTL) is defined in the [configuration]({{< relref "../reference/configuration/#adminkubeconfigconfig" >}}).
 
 ## How can I set the timezone of my Talos Linux clusters?
