@@ -417,11 +417,11 @@ seccompProfiles:
       value:
         defaultAction: SCMP_ACT_LOG
 {{< /highlight >}}</details> | |
-|`nodeLabels` |map[string]string |Configures the node labels for the machine. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`nodeLabels` |map[string]string |<details><summary>Configures the node labels for the machine.</summary><br />Note: In the default Kubernetes configuration, worker nodes are restricted to set<br />labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeLabels:
     exampleLabel: exampleLabelValue
 {{< /highlight >}}</details> | |
-|`nodeTaints` |map[string]string |Configures the node taints for the machine. Effect is optional. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`nodeTaints` |map[string]string |<details><summary>Configures the node taints for the machine. Effect is optional.</summary><br />Note: In the default Kubernetes configuration, worker nodes are not allowed to<br />modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 nodeTaints:
     exampleTaint: exampleTaintValue:NoSchedule
 {{< /highlight >}}</details> | |

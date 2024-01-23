@@ -282,12 +282,18 @@ type MachineConfig struct {
 	MachineSeccompProfiles []*MachineSeccompProfile `yaml:"seccompProfiles,omitempty" talos:"omitonlyifnil"`
 	//  description: |
 	//    Configures the node labels for the machine.
+	//
+	//    Note: In the default Kubernetes configuration, worker nodes are restricted to set
+	//    labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).
 	//  examples:
 	//    - name: node labels example.
 	//      value: 'map[string]string{"exampleLabel": "exampleLabelValue"}'
 	MachineNodeLabels map[string]string `yaml:"nodeLabels,omitempty"`
 	//  description: |
 	//    Configures the node taints for the machine. Effect is optional.
+	//
+	//    Note: In the default Kubernetes configuration, worker nodes are not allowed to
+	//    modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).
 	//  examples:
 	//    - name: node taints example.
 	//      value: 'map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"}'
