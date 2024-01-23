@@ -2110,9 +2110,9 @@
           },
           "type": "object",
           "title": "nodeLabels",
-          "description": "Configures the node labels for the machine.\n",
-          "markdownDescription": "Configures the node labels for the machine.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures the node labels for the machine.\u003c/p\u003e\n"
+          "description": "Configures the node labels for the machine.\n\nNote: In the default Kubernetes configuration, worker nodes are restricted to set\nlabels with some prefixes (see NodeRestriction admission plugin).\n",
+          "markdownDescription": "Configures the node labels for the machine.\n\nNote: In the default Kubernetes configuration, worker nodes are restricted to set\nlabels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the node labels for the machine.\u003c/p\u003e\n\n\u003cp\u003eNote: In the default Kubernetes configuration, worker nodes are restricted to set\nlabels with some prefixes (see \u003ca href=\"https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction\" target=\"_blank\"\u003eNodeRestriction\u003c/a\u003e admission plugin).\u003c/p\u003e\n"
         },
         "nodeTaints": {
           "patternProperties": {
@@ -2122,9 +2122,9 @@
           },
           "type": "object",
           "title": "nodeTaints",
-          "description": "Configures the node taints for the machine. Effect is optional.\n",
-          "markdownDescription": "Configures the node taints for the machine. Effect is optional.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures the node taints for the machine. Effect is optional.\u003c/p\u003e\n"
+          "description": "Configures the node taints for the machine. Effect is optional.\n\nNote: In the default Kubernetes configuration, worker nodes are not allowed to\nmodify the taints (see NodeRestriction admission plugin).\n",
+          "markdownDescription": "Configures the node taints for the machine. Effect is optional.\n\nNote: In the default Kubernetes configuration, worker nodes are not allowed to\nmodify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
+          "x-intellij-html-description": "\u003cp\u003eConfigures the node taints for the machine. Effect is optional.\u003c/p\u003e\n\n\u003cp\u003eNote: In the default Kubernetes configuration, worker nodes are not allowed to\nmodify the taints (see \u003ca href=\"https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction\" target=\"_blank\"\u003eNodeRestriction\u003c/a\u003e admission plugin).\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
