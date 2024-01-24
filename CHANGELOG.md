@@ -1,3 +1,59 @@
+## [Talos 1.6.3](https://github.com/siderolabs/talos/releases/tag/v1.6.3) (2024-01-24)
+
+Welcome to the v1.6.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.1.74
+Kubernetes: 1.29.1
+
+Talos is built with Go 1.21.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>3 commits</summary>
+<p>
+
+* [`815fef8c3`](https://github.com/siderolabs/talos/commit/815fef8c3e04e7d52647f3dd1547fbcef3f5d3b5) fix: allow META encoded values to be compressed
+* [`56e87f55b`](https://github.com/siderolabs/talos/commit/56e87f55b1b92f37b700b4be256f3d56eccc0dbb) feat: update Kubernetes default to 1.29.1
+* [`63fc46f0a`](https://github.com/siderolabs/talos/commit/63fc46f0a65f402bd852748cda7ec1ac9c69331c) feat: update Linux to 6.1.74
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`f51aedb`](https://github.com/siderolabs/pkgs/commit/f51aedb5e120e7484f72424e41cf1b738f572dc5) fix: disable nct6883 on arm64
+* [`7ddbdb4`](https://github.com/siderolabs/pkgs/commit/7ddbdb485d04ccab05b46574761a7178632fd789) fix: enable FUSION_SPI driver
+* [`00d2978`](https://github.com/siderolabs/pkgs/commit/00d29784b7cbe59137ee8631c02ba8b4ed85f087) feat: update Linux to 6.1.74
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**  v1.6.0-12-g0078a66 -> v1.6.0-15-gf51aedb
+* **k8s.io/api**                  v0.29.0 -> v0.29.1
+* **k8s.io/apimachinery**         v0.29.0 -> v0.29.1
+* **k8s.io/apiserver**            v0.29.0 -> v0.29.1
+* **k8s.io/client-go**            v0.29.0 -> v0.29.1
+* **k8s.io/component-base**       v0.29.0 -> v0.29.1
+* **k8s.io/cri-api**              v0.29.0 -> v0.29.1
+* **k8s.io/kube-scheduler**       v0.29.0 -> v0.29.1
+* **k8s.io/kubectl**              v0.29.0 -> v0.29.1
+* **k8s.io/kubelet**              v0.29.0 -> v0.29.1
+
+Previous release can be found at [v1.6.2](https://github.com/siderolabs/talos/releases/tag/v1.6.2)
+
 ## [Talos 1.6.2](https://github.com/siderolabs/talos/releases/tag/v1.6.2) (2024-01-18)
 
 Welcome to the v1.6.2 release of Talos!
