@@ -15,8 +15,11 @@ kernel/drivers/ata/pata_oldpiix.ko
 kernel/drivers/ata/pata_sch.ko
 kernel/drivers/block/nbd.ko
 kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
+kernel/drivers/gpu/drm/amd/amdxcp/amdxcp.ko
 kernel/drivers/gpu/drm/display/drm_display_helper.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
+kernel/drivers/gpu/drm/drm_exec.ko
+kernel/drivers/gpu/drm/drm_suballoc_helper.ko
 kernel/drivers/gpu/drm/drm_ttm_helper.ko
 kernel/drivers/gpu/drm/i915/i915.ko
 kernel/drivers/gpu/drm/scheduler/gpu-sched.ko
@@ -45,6 +48,7 @@ kernel/drivers/hwmon/i5500_temp.ko
 kernel/drivers/hwmon/i5k_amb.ko
 kernel/drivers/hwmon/k10temp.ko
 kernel/drivers/hwmon/k8temp.ko
+kernel/drivers/i2c/algos/i2c-algo-bit.ko
 kernel/drivers/i2c/busses/i2c-i801.ko
 kernel/drivers/i2c/i2c-smbus.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
@@ -86,7 +90,6 @@ kernel/drivers/net/ethernet/intel/ice/ice.ko
 kernel/drivers/net/ethernet/intel/igb/igb.ko
 kernel/drivers/net/ethernet/intel/igbvf/igbvf.ko
 kernel/drivers/net/ethernet/intel/igc/igc.ko
-kernel/drivers/net/ethernet/intel/ixgb/ixgb.ko
 kernel/drivers/net/ethernet/intel/ixgbe/ixgbe.ko
 kernel/drivers/net/ethernet/intel/ixgbevf/ixgbevf.ko
 kernel/drivers/net/ethernet/marvell/sky2.ko
@@ -125,7 +128,6 @@ kernel/drivers/usb/serial/pl2303.ko
 kernel/drivers/vfio/pci/vfio-pci-core.ko
 kernel/drivers/vfio/pci/vfio-pci.ko
 kernel/drivers/vfio/vfio_iommu_type1.ko
-kernel/drivers/vfio/vfio_virqfd.ko
 kernel/drivers/vfio/vfio.ko
 kernel/drivers/virtio/virtio_balloon.ko
 kernel/drivers/virtio/virtio_input.ko

@@ -101,32 +101,32 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsExpectedPaths() {
 func (suite *ExtensionsSuiteQEMU) TestExtensionsExpectedModules() {
 	// expectedModulesModDep is a map of module name to module.dep name
 	expectedModulesModDep := map[string]string{
-		"asix":            "asix.ko",
-		"ax88179_178a":    "ax88179_178a.ko",
-		"ax88796b":        "ax88796b.ko",
-		"binfmt_misc":     "binfmt_misc.ko",
-		"btrfs":           "btrfs.ko",
-		"cdc_ether":       "cdc_ether.ko",
-		"cdc_mbim":        "cdc_mbim.ko",
-		"cdc_ncm":         "cdc_ncm.ko",
-		"cdc_subset":      "cdc_subset.ko",
-		"cdc_wdm":         "cdc-wdm.ko",
-		"cxgb":            "cxgb.ko",
-		"cxgb3":           "cxgb3.ko",
-		"cxgb4":           "cxgb4.ko",
-		"cxgb4vf":         "cxgb4vf.ko",
-		"drbd":            "drbd.ko",
+		"asix":         "asix.ko",
+		"ax88179_178a": "ax88179_178a.ko",
+		"ax88796b":     "ax88796b.ko",
+		"binfmt_misc":  "binfmt_misc.ko",
+		"btrfs":        "btrfs.ko",
+		"cdc_ether":    "cdc_ether.ko",
+		"cdc_mbim":     "cdc_mbim.ko",
+		"cdc_ncm":      "cdc_ncm.ko",
+		"cdc_subset":   "cdc_subset.ko",
+		"cdc_wdm":      "cdc-wdm.ko",
+		"cxgb":         "cxgb.ko",
+		"cxgb3":        "cxgb3.ko",
+		"cxgb4":        "cxgb4.ko",
+		"cxgb4vf":      "cxgb4vf.ko",
+		// "drbd":            "drbd.ko", // disabled, see https://github.com/siderolabs/pkgs/pull/873
 		"gasket":          "gasket.ko",
 		"net1080":         "net1080.ko",
 		"option":          "option.ko",
 		"qmi_wwan":        "qmi_wwan.ko",
 		"r8153_ecm":       "r8153_ecm.ko",
 		"thunderbolt":     "thunderbolt.ko",
-		"thunderbolt_net": "thunderbolt-net.ko",
+		"thunderbolt_net": "thunderbolt_net.ko",
 		"usb_wwan":        "usb_wwan.ko",
 		"usbnet":          "usbnet.ko",
 		"zaurus":          "zaurus.ko",
-		"zfs":             "zfs.ko",
+		// "zfs":             "zfs.ko", // disabled, see https://github.com/siderolabs/pkgs/pull/873
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
@@ -543,6 +543,8 @@ func (suite *ExtensionsSuiteQEMU) mdADMScan() string {
 
 // TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
+	suite.T().Skip("skipping due to https://github.com/siderolabs/pkgs/pull/873")
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-zpool-importer": "Finished"})
 

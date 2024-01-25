@@ -6,11 +6,12 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/pmorjan/kmod"
 	"go.uber.org/zap"
 
@@ -61,20 +62,27 @@ func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Ru
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-			modules, err := r.List(ctx, resource.NewMetadata(runtime.NamespaceName, runtime.KernelModuleSpecType, "", resource.VersionUndefined))
-			if err != nil {
-				return err
-			}
+		}
 
-			// note: this code doesn't support module unloading in any way for now
-			for _, res := range modules.Items {
-				module := res.(*runtime.KernelModuleSpec).TypedSpec()
-				parameters := strings.Join(module.Parameters, " ")
+		modules, err := safe.ReaderListAll[*runtime.KernelModuleSpec](ctx, r)
+		if err != nil {
+			return err
+		}
 
-				if err = manager.Load(module.Name, parameters, 0); err != nil {
-					return fmt.Errorf("error loading module %q: %w", module.Name, err)
-				}
+		var multiErr error
+
+		// note: this code doesn't support module unloading in any way for now
+		for iter := modules.Iterator(); iter.Next(); {
+			module := iter.Value().TypedSpec()
+			parameters := strings.Join(module.Parameters, " ")
+
+			if err = manager.Load(module.Name, parameters, 0); err != nil {
+				multiErr = errors.Join(multiErr, fmt.Errorf("error loading module %q: %w", module.Name, err))
 			}
+		}
+
+		if multiErr != nil {
+			return multiErr
 		}
 
 		r.ResetRestartBackoff()

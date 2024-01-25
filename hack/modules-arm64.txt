@@ -36,7 +36,6 @@ kernel/drivers/net/ethernet/sfc/siena/sfc-siena.ko
 kernel/drivers/vfio/pci/vfio-pci-core.ko
 kernel/drivers/vfio/pci/vfio-pci.ko
 kernel/drivers/vfio/vfio_iommu_type1.ko
-kernel/drivers/vfio/vfio_virqfd.ko
 kernel/drivers/vfio/vfio.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
