@@ -746,6 +746,39 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
 	suite.Require().Contains(stdout, "fstrim from util-linux")
 }
 
+// TestExtensionsWasmEdge verifies wasmedge runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsWasmEdge() {
+	_, err := suite.Clientset.NodeV1().RuntimeClasses().Create(suite.ctx, &nodev1.RuntimeClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "wasmedge",
+		},
+		Handler: "wasmedge",
+	}, metav1.CreateOptions{})
+	defer suite.Clientset.NodeV1().RuntimeClasses().Delete(suite.ctx, "wasmedge", metav1.DeleteOptions{}) //nolint:errcheck
+
+	suite.Require().NoError(err)
+
+	_, err = suite.Clientset.CoreV1().Pods("default").Create(suite.ctx, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "wasmedge-test",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "wasmedge-test",
+					Image: "wasmedge/example-wasi:latest",
+				},
+			},
+		},
+	}, metav1.CreateOptions{})
+	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, "wasmedge-test", metav1.DeleteOptions{}) //nolint:errcheck
+
+	suite.Require().NoError(err)
+
+	// wait for the pod to be ready
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "wasmedge-test"))
+}
+
 func init() {
 	allSuites = append(allSuites, &ExtensionsSuiteQEMU{})
 }
