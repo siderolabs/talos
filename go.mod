@@ -35,6 +35,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.0
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.15.0
+	github.com/aws/aws-sdk-go-v2/service/kms v1.28.1
 	github.com/aws/smithy-go v1.20.0
 	github.com/beevik/ntp v1.3.1
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
