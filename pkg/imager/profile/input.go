@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
 	"github.com/siderolabs/talos/pkg/archiver"
+	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/aws"
 	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/azure"
 	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/file"
 	"github.com/siderolabs/talos/pkg/images"
@@ -91,24 +92,43 @@ type SecureBootAssets struct {
 
 // SigningKeyAndCertificate describes a signing key & certificate.
 type SigningKeyAndCertificate struct {
-	// File-based:
+	// File-based.
+	//
+	// Static key and certificate paths.
 	KeyPath  string `yaml:"keyPath,omitempty"`
 	CertPath string `yaml:"certPath,omitempty"`
-	// Azure:
+	// Azure.
+	//
+	// Azure Vault URL and certificate ID, key will be found from the certificate.
 	AzureVaultURL      string `yaml:"azureVaultURL,omitempty"`
 	AzureCertificateID string `yaml:"azureCertificateID,omitempty"`
+	// AWS.
+	//
+	// AWS KMS Key ID and region.
+	// AWS doesn't have a good way to store a certificate, so it's expected to be a file.
+	AwsKMSKeyID string `yaml:"awsKMSKeyID,omitempty"`
+	AwsRegion   string `yaml:"awsRegion,omitempty"`
+	AwsCertPath string `yaml:"awsCertPath,omitempty"`
 }
 
 // SigningKey describes a signing key.
 type SigningKey struct {
-	// File-based:
-	KeyPath string `yaml:"keyPath,omitempty"`
-	// Azure:
+	// File-based.
 	//
+	// Static key path.
+	KeyPath string `yaml:"keyPath,omitempty"`
+	// Azure.
+	//
+	// Azure Vault URL and key ID.
 	// AzureKeyVersion might be left empty to use the latest key version.
 	AzureVaultURL   string `yaml:"azureVaultURL,omitempty"`
 	AzureKeyID      string `yaml:"azureKeyID,omitempty"`
 	AzureKeyVersion string `yaml:"azureKeyVersion,omitempty"`
+	// AWS.
+	//
+	// AWS KMS Key ID and region.
+	AwsKMSKeyID string `yaml:"awsKMSKeyID,omitempty"`
+	AwsRegion   string `yaml:"awsRegion,omitempty"`
 }
 
 // GetSigner returns the signer.
@@ -118,6 +138,8 @@ func (key SigningKey) GetSigner(ctx context.Context) (measure.RSAKey, error) {
 		return file.NewPCRSigner(key.KeyPath)
 	case key.AzureVaultURL != "" && key.AzureKeyID != "":
 		return azure.NewPCRSigner(ctx, key.AzureVaultURL, key.AzureKeyID, key.AzureKeyVersion)
+	case key.AwsKMSKeyID != "":
+		return aws.NewPCRSigner(ctx, key.AwsKMSKeyID, key.AwsRegion)
 	default:
 		return nil, fmt.Errorf("unsupported PCR signer")
 	}
@@ -130,6 +152,8 @@ func (keyAndCert SigningKeyAndCertificate) GetSigner(ctx context.Context) (pesig
 		return file.NewSecureBootSigner(keyAndCert.CertPath, keyAndCert.KeyPath)
 	case keyAndCert.AzureVaultURL != "" && keyAndCert.AzureCertificateID != "":
 		return azure.NewSecureBootSigner(ctx, keyAndCert.AzureVaultURL, keyAndCert.AzureCertificateID, keyAndCert.AzureCertificateID)
+	case keyAndCert.AwsKMSKeyID != "" && keyAndCert.AwsCertPath != "":
+		return aws.NewSecureBootSigner(ctx, keyAndCert.AwsKMSKeyID, keyAndCert.AwsRegion, keyAndCert.AwsCertPath)
 	default:
 		return nil, fmt.Errorf("unsupported PCR signer")
 	}
