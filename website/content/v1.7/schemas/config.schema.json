@@ -2604,6 +2604,13 @@
           "description": "Kernel driver, supports matching by wildcard.\n",
           "markdownDescription": "Kernel driver, supports matching by wildcard.",
           "x-intellij-html-description": "\u003cp\u003eKernel driver, supports matching by wildcard.\u003c/p\u003e\n"
+        },
+        "physical": {
+          "type": "boolean",
+          "title": "physical",
+          "description": "Select only physical devices.\n",
+          "markdownDescription": "Select only physical devices.",
+          "x-intellij-html-description": "\u003cp\u003eSelect only physical devices.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

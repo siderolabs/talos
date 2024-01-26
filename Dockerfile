@@ -300,6 +300,7 @@ COPY --from=generate-build /api/inspect/*.pb.go /pkg/machinery/api/inspect/
 COPY --from=go-generate /src/pkg/flannel/ /pkg/flannel/
 COPY --from=go-generate /src/pkg/imager/profile/ /pkg/imager/profile/
 COPY --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
+COPY --from=go-generate /src/pkg/machinery/config/schemas/ /pkg/machinery/config/schemas/
 COPY --from=go-generate /src/pkg/machinery/config/types/ /pkg/machinery/config/types/
 COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
