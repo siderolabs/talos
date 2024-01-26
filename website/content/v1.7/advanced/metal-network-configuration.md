@@ -9,7 +9,7 @@ Talos Linux when running on a cloud platform (e.g. AWS or Azure), uses the platf
 When running on bare-metal, there is no metadata server, so there are several options to provide initial network configuration (before machine configuration is acquired):
 
 - use automatic network configuration via DHCP (Talos default)
-- use initial boot [kernel command line parameters](<{{ relref "../reference/kernel" }}>) to configure networking
+- use initial boot [kernel command line parameters]({{< relref "../reference/kernel" >}}) to configure networking
 - use automatic network configuration via DHCP just enough to fetch machine configuration and then use machine configuration to set desired advanced configuration.
 
 If DHCP option is available, it is by far the easiest way to configure networking.
@@ -19,7 +19,7 @@ Talos starting with version 1.4.0 offers a new option to configure networking on
 
 > Note: `META`-based network configuration is only available on Talos Linux `metal` platform.
 
-Talos [dashboard](<{{ relref "../talos-guides/interactive-dashboard" }}>) provides a way to configure `META`-based network configuration for a machine using the console, but
+Talos [dashboard]({{< relref "../talos-guides/interactive-dashboard" >}}) provides a way to configure `META`-based network configuration for a machine using the console, but
 it doesn't support all kinds of network configuration.
 
 ## Network Configuration Format
@@ -117,7 +117,7 @@ timeServers: []
 ```
 
 Every section is optional, so you can configure only the parts you need.
-The format of each section matches the respective network [`*Spec` resource](<{{ relref "../learn-more/networking-resources" }}>) `.spec` part, e.g the `addresses:`
+The format of each section matches the respective network [`*Spec` resource]({{< relref "../learn-more/networking-resources" >}}) `.spec` part, e.g the `addresses:`
 section matches the `.spec` of `AddressSpec` resource:
 
 ```yaml
@@ -381,7 +381,7 @@ talosctl meta write 0xa "$(cat network.yaml)"
 
 ### Supplying Network Configuration to a Talos Disk Image
 
-Following the [boot assets](<{{ relref "../talos-guides/install/boot-assets" }}>) guide, create a disk image passing the network configuration as a `--meta` flag:
+Following the [boot assets]({{< relref "../talos-guides/install/boot-assets" >}}) guide, create a disk image passing the network configuration as a `--meta` flag:
 
 ```bash
 docker run --rm -t -v $PWD/_out:/out -v /dev:/dev --privileged ghcr.io/siderolabs/imager:{{< release >}} metal --meta "0xa=$(cat network.yaml)"
