@@ -10,6 +10,7 @@ set -e
 # export GOVC_INSECURE=true
 # export GOVC_URL='https://172.16.199.151'
 # export GOVC_DATASTORE='xxx'
+# export GOVC_NETWORK='PortGroup Name'
 
 CLUSTER_NAME=${CLUSTER_NAME:=vmware-test}
 TALOS_VERSION=v1.1.0
@@ -55,6 +56,13 @@ create () {
 
         govc vm.disk.change -vm ${CLUSTER_NAME}-control-plane-${i} -disk.name disk-1000-0 -size ${CONTROL_PLANE_DISK}
 
+        if [ -z "${GOVC_NETWORK+x}" ]; then
+             echo "GOVC_NETWORK is unset, assuming default VM Network";
+        else
+            echo "GOVC_NETWORK set to ${GOVC_NETWORK}";
+            govc vm.network.change -vm ${CLUSTER_NAME}-control-plane-${i} -net ${GOVC_NETWORK} ethernet-0
+        fi
+
         govc vm.power -on ${CLUSTER_NAME}-control-plane-${i}
     done
 
@@ -74,6 +82,14 @@ create () {
         -vm ${CLUSTER_NAME}-worker-${i}
 
         govc vm.disk.change -vm ${CLUSTER_NAME}-worker-${i} -disk.name disk-1000-0 -size ${WORKER_DISK}
+
+        if [ -z "${GOVC_NETWORK+x}" ]; then
+             echo "GOVC_NETWORK is unset, assuming default VM Network";
+        else
+            echo "GOVC_NETWORK set to ${GOVC_NETWORK}";
+            govc vm.network.change -vm ${CLUSTER_NAME}-worker-${i} -net ${GOVC_NETWORK} ethernet-0
+        fi
+
 
         govc vm.power -on ${CLUSTER_NAME}-worker-${i}
     done
