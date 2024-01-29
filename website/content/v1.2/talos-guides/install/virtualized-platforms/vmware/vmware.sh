@@ -12,7 +12,7 @@ set -e
 # export GOVC_DATASTORE='xxx'
 
 CLUSTER_NAME=${CLUSTER_NAME:=vmware-test}
-TALOS_VERSION=v1.1.0
+TALOS_VERSION=v1.2.9
 OVA_PATH=${OVA_PATH:="https://github.com/siderolabs/talos/releases/download/${TALOS_VERSION}/vmware-amd64.ova"}
 
 CONTROL_PLANE_COUNT=${CONTROL_PLANE_COUNT:=3}
