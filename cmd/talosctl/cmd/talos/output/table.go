@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -42,7 +43,7 @@ func (table *Table) WriteHeader(definition *meta.ResourceDefinition, withEvents 
 	fields := []string{"NAMESPACE", "TYPE", "ID", "VERSION"}
 
 	if withEvents {
-		fields = append([]string{"*"}, fields...)
+		fields = slices.Insert(fields, 0, "*")
 	}
 
 	table.displayType = definition.TypedSpec().DisplayType
@@ -70,7 +71,7 @@ func (table *Table) WriteHeader(definition *meta.ResourceDefinition, withEvents 
 		})
 	}
 
-	fields = append([]string{"NODE"}, fields...)
+	fields = slices.Insert(fields, 0, "NODE")
 
 	_, err := fmt.Fprintln(&table.w, strings.Join(fields, "\t"))
 
