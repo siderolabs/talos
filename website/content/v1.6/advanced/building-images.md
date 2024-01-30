@@ -33,6 +33,14 @@ make <target> PLATFORM=linux/arm64 # build for arm64 only
 make <target> PLATFORM=linux/arm64,linux/amd64 # build for arm64 and amd64, container images will be multi-arch
 ```
 
+## Custom `PKGS`
+
+When [customizing Linux kernel]({{< relref "customizing-the-kernel" >}}), the source for the [`siderolabs/pkgs`](https://github.com/siderolabs/pkgs) repository can
+be overridden with:
+
+* if you built and pushed only a custom `kernel` package, the reference can be overridden with `PKG_KERNEL` variable: `make <target> PKG_KERNEL=<registry>/<username>/kernel:<tag>`
+* otherwise, patch the `Dockerfile` to account for the new `pkgs` repository reference
+
 ## Customizations
 
 Some of the build parameters can be customized by passing environment variables to `make`, e.g. `GOAMD64=v1` can be used to build
@@ -67,12 +75,24 @@ Building and pushing the image can be done with:
 
 ```bash
 make installer PUSH=true IMAGE_REGISTRY=docker.io USERNAME=<username> # ghcr.io/siderolabs/installer
-make imager PUSH=true IMAGE_REGISTRY=docker.io USERNAME=<username> # ghcr.io/siderolabs/installer
+make imager PUSH=true IMAGE_REGISTRY=docker.io USERNAME=<username> # ghcr.io/siderolabs/imager
+```
+
+The [local registry]({{< relref "developing-talos" >}}) running on `127.0.0.1:5005` can be used as well to avoid pushing/pulling over the network:
+
+```bash
+make installer PUSH=true REGISTRY=127.0.0.1:5005
+```
+
+When building `imager` container, by default Talos will include the boot assets for both `amd64` and `arm64` architectures, if building only for single architecture, specify `INSTALLER_ARCH` variable:
+
+```bash
+make imager INSTALLER_ARCH=targetarch PLATFORM=linux/amd64
 ```
 
 ## Building ISO
 
-The ISO image is built with the help of `imager` container image, by default `ghcr.io/siderolabs/imager` will be used with the matching tag:
+The [ISO image]({{< relref "../talos-guides/install/boot-assets" >}}) is built with the help of `imager` container image, by default `ghcr.io/siderolabs/imager` will be used with the matching tag:
 
 ```bash
 make iso

@@ -3,6 +3,7 @@ title: "System Extensions"
 description: "Customizing the Talos Linux immutable root file system."
 aliases:
   - ../../guides/system-extensions
+  - ../../advanced/customizing-the-root-filesystem
 ---
 
 System extensions allow extending the Talos root filesystem, which enables a variety of features, such as including custom

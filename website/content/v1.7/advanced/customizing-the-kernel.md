@@ -5,50 +5,91 @@ aliases:
   - ../guides/customizing-the-kernel
 ---
 
-The installer image contains [`ONBUILD`](https://docs.docker.com/engine/reference/builder/#onbuild) instructions that handle the following:
+Talos Linux configures the kernel to allow loading only cryptographically signed modules.
+The signing key is generated during the build process, it is unique to each build, and it is not available to the user.
+The public key is embedded in the kernel, and it is used to verify the signature of the modules.
+So if you want to use a custom kernel module, you will need to build your own kernel, and all required kernel modules in order to get the signature in sync with the kernel.
 
-- the decompression, and unpacking of the `initramfs.xz`
-- the unsquashing of the rootfs
-- the copying of new rootfs files
-- the squashing of the new rootfs
-- and the packing, and compression of the new `initramfs.xz`
+## Overview
 
-When used as a base image, the installer will perform the above steps automatically with the requirement that a `customization` stage be defined in the `Dockerfile`.
+In order to build a custom kernel (or a custom kernel module), the following steps are required:
 
-Build and push your own kernel:
+- build a new Linux kernel and modules, push the artifacts to a registry
+- build a new Talos base artifacts: kernel and initramfs image
+- produce a new Talos boot artifact (ISO, installer image, disk image, etc.)
 
- ```sh
- git clone https://github.com/talos-systems/pkgs.git
- cd pkgs
- make kernel-menuconfig USERNAME=_your_github_user_name_
+We will go through each step in detail.
 
- docker login ghcr.io --username _your_github_user_name_
- make kernel USERNAME=_your_github_user_name_ PUSH=true
- ```
+## Building a Custom Kernel
 
-Using a multi-stage `Dockerfile` we can define the `customization` stage and build `FROM` the installer image:
+First, you might need to prepare the build environment, follow the [Building Custom Images]({{< relref "building-images" >}}) guide.
 
-```docker
-FROM scratch AS customization
-# this is needed so that Talos copies base kernel modules info and default modules shipped with Talos
-COPY --from=<custom kernel image> /lib/modules /kernel/lib/modules
-# this copies over the custom modules
-COPY --from=<custom kernel image> /lib/modules /lib/modules
+Checkout the [`siderolabs/pkgs`](https://github.com/siderolabs/pkgs) repository:
 
-FROM ghcr.io/siderolabs/installer:latest
-COPY --from=<custom kernel image> /boot/vmlinuz /usr/install/${TARGETARCH}/vmlinuz
+```shell
+git clone https://github.com/siderolabs/pkgs.git
+cd pkgs
+git checkout {{< release_branch >}}
 ```
 
-When building the image, the `customization` stage will automatically be copied into the rootfs.
-The `customization` stage is not limited to a single `COPY` instruction.
-In fact, you can do whatever you would like in this stage, but keep in mind that everything in `/` will be copied into the rootfs.
+The kernel configuration is located in the files `kernel/build/config-ARCH` files.
+It can be modified using the text editor, or by using the Linux kernel `menuconfig` tool:
 
-To build the image, run:
-
-```bash
-DOCKER_BUILDKIT=0 docker build --build-arg RM="/lib/modules" -t installer:kernel .
+```shell
+make kernel-menuconfig
 ```
 
-> Note: buildkit has a bug [#816](https://github.com/moby/buildkit/issues/816), to disable it use `DOCKER_BUILDKIT=0`
+The kernel configuration can be cleaned up by running:
 
-Now that we have a custom installer we can build Talos for the specific platform we wish to deploy to.
+```shell
+make kernel-olddefconfig
+```
+
+Both commands will output the new configuration to the `kernel/build/config-ARCH` files.
+
+Once ready, build the kernel any out-of-tree modules (if required, e.g. `zfs`) and push the artifacts to a registry:
+
+```shell
+make kernel REGISTRY=127.0.0.1:5005 PUSH=true
+```
+
+By default, this command will compile and push the kernel both for `amd64` and `arm64` architectures, but you can specify a single architecture by overriding
+a variable `PLATFORM`:
+
+```shell
+make kernel REGISTRY=127.0.0.1:5005 PUSH=true PLATFORM=linux/amd64
+```
+
+This will create a container image `127.0.0.1:5005/siderolabs/kernel:$TAG` with the kernel and modules.
+
+## Building Talos Base Artifacts
+
+Follow the [Building Custom Images]({{< relref "building-images" >}}) guide to set up the Talos source code checkout.
+
+If some new kernel modules were introduced, adjust the list of the default modules compiled into the Talos `initramfs` by
+editing the file `hack/modules-ARCH.txt`.
+
+Try building base Talos artifacts:
+
+```shell
+make kernel initramfs PKG_KERNEL=127.0.0.1:5005/siderolabs/kernel:$TAG PLATFORM=linux/amd64
+```
+
+This should create a new image of the kernel and initramfs in `_out/vmlinuz-amd64` and `_out/initramfs-amd64.xz` respectively.
+
+> Note: if building for `arm64`, replace `amd64` with `arm64` in the commands above.
+
+As a final step, produce the new `imager` container image which can generate Talos boot assets:
+
+```shell
+make imager PKG_KERNEL=127.0.0.1:5005/siderolabs/kernel:$TAG PLATFORM=linux/amd64 INSTALLER_ARCH=targetarch
+```
+
+> Note: if you built the kernel for both `amd64` and `arm64`, a multi-arch `imager` container can be built as well by specifying `INSTALLER_ARCH=all` and `PLATFORM=linux/amd64,linux/arm64`.
+
+## Building Talos Boot Assets
+
+Follow the [Boot Assets]({{< relref "../talos-guides/install/boot-assets" >}}) guide to build Talos boot assets you might need to boot Talos: ISO, `installer` image, etc.
+Replace the reference to the `imager` in guide with the reference to the `imager` container built above.
+
+> Note: if you update the `imager` container, don't forget to `docker pull` it, as `docker` caches pulled images and won't pull the updated image automatically.
