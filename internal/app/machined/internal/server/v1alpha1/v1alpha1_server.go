@@ -1075,25 +1075,19 @@ func (s *Server) Mounts(ctx context.Context, in *emptypb.Empty) (reply *machine.
 		filesystem := fields[0]
 		mountpoint := fields[1]
 
-		f, err := os.Stat(mountpoint)
-		if err != nil {
-			multiErr = multierror.Append(multiErr, err)
+		var (
+			totalSize  uint64
+			totalAvail uint64
+		)
 
-			continue
+		if statInfo, err := os.Stat(mountpoint); err == nil && statInfo.Mode().IsDir() {
+			if err := unix.Statfs(mountpoint, &stat); err != nil {
+				multiErr = multierror.Append(multiErr, err)
+			} else {
+				totalSize = uint64(stat.Bsize) * stat.Blocks
+				totalAvail = uint64(stat.Bsize) * stat.Bavail
+			}
 		}
-
-		if mode := f.Mode(); !mode.IsDir() {
-			continue
-		}
-
-		if err := unix.Statfs(mountpoint, &stat); err != nil {
-			multiErr = multierror.Append(multiErr, err)
-
-			continue
-		}
-
-		totalSize := uint64(stat.Bsize) * stat.Blocks
-		totalAvail := uint64(stat.Bsize) * stat.Bavail
 
 		stat := &machine.MountStat{
 			Filesystem: filesystem,
