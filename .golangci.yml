@@ -131,6 +131,7 @@ linters-settings:
     replace-local: true
     replace-allow-list:
       - gopkg.in/yaml.v3
+      - github.com/siderolabs/gen
     retract-allow-no-explanation: false
     exclude-forbidden: true
 

@@ -39,6 +39,8 @@ const ImageGCGracePeriod = 4 * ImageCleanupInterval
 type CRIImageGCController struct {
 	ImageServiceProvider func() (ImageServiceProvider, error)
 	Clock                clock.Clock
+
+	imageFirstSeenUnreferenced map[string]time.Time
 }
 
 // ImageServiceProvider wraps the containerd image service.
@@ -114,6 +116,10 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 
 	if ctrl.Clock == nil {
 		ctrl.Clock = clock.New()
+	}
+
+	if ctrl.imageFirstSeenUnreferenced == nil {
+		ctrl.imageFirstSeenUnreferenced = map[string]time.Time{}
 	}
 
 	var (
@@ -273,10 +279,26 @@ func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logge
 		if shouldKeep {
 			logger.Debug("image is referenced, skipping garbage collection", zap.String("image", image.Name))
 
+			delete(ctrl.imageFirstSeenUnreferenced, image.Name)
+
 			continue
 		}
 
-		imageAge := ctrl.Clock.Since(image.CreatedAt)
+		if _, ok := ctrl.imageFirstSeenUnreferenced[image.Name]; !ok {
+			ctrl.imageFirstSeenUnreferenced[image.Name] = ctrl.Clock.Now()
+		}
+
+		// calculate image age two ways, and pick the minimum:
+		//  * as CRI reports it, which is the time image got pulled
+		//  * as we see it, this means the image won't be deleted until it reaches the age of ImageGCGracePeriod from the moment it became unreferenced
+		imageAgeCRI := ctrl.Clock.Since(image.CreatedAt)
+		imageAgeInternal := ctrl.Clock.Since(ctrl.imageFirstSeenUnreferenced[image.Name])
+
+		imageAge := imageAgeCRI
+		if imageAgeInternal < imageAge {
+			imageAge = imageAgeInternal
+		}
+
 		if imageAge < ImageGCGracePeriod {
 			logger.Debug("skipping image cleanup, as it's below minimum age", zap.String("image", image.Name), zap.Duration("age", imageAge))
 
@@ -287,6 +309,7 @@ func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logge
 			return fmt.Errorf("failed to delete an image %s: %w", image.Name, err)
 		}
 
+		delete(ctrl.imageFirstSeenUnreferenced, image.Name)
 		logger.Info("deleted an image", zap.String("image", image.Name))
 	}
 

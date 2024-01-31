@@ -55,7 +55,7 @@ func (p *Profile) SecureBootEnabled() bool {
 
 // Validate the profile.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (p *Profile) Validate() error {
 	if p.Arch != "amd64" && p.Arch != "arm64" {
 		return fmt.Errorf("invalid arch %q", p.Arch)
