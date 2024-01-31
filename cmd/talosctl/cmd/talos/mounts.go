@@ -31,7 +31,7 @@ var mountsCmd = &cobra.Command{
 			resp, err := c.Mounts(ctx, grpc.Peer(&remotePeer))
 			if err != nil {
 				if resp == nil {
-					return fmt.Errorf("error getting interfaces: %s", err)
+					return fmt.Errorf("error getting mount information: %s", err)
 				}
 
 				cli.Warning("%s", err)
