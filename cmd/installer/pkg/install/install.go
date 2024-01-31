@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-procfs/procfs"
+	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
@@ -229,7 +231,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 			var bd *blockdevice.BlockDevice
 
-			bd, err = blockdevice.Open(device)
+			bd, err = retryBlockdeviceOpen(device)
 			if err != nil {
 				return err
 			}
@@ -367,4 +369,21 @@ func (i *Installer) runPreflightChecks(mode Mode) error {
 	defer checks.Close() //nolint:errcheck
 
 	return checks.Run(ctx)
+}
+
+func retryBlockdeviceOpen(device string) (*blockdevice.BlockDevice, error) {
+	var bd *blockdevice.BlockDevice
+
+	err := retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
+		var openErr error
+
+		bd, openErr = blockdevice.Open(device)
+		if openErr != nil && os.IsNotExist(openErr) {
+			return retry.ExpectedError(openErr)
+		}
+
+		return openErr
+	})
+
+	return bd, err
 }
