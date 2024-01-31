@@ -111,8 +111,9 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 			},
 		}, // ok to be gc'd
 		{
-			Name:      "sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a",
-			CreatedAt: suite.fakeClock.Now().Add(-2 * runtimectrl.ImageGCGracePeriod),
+			Name: "sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a",
+			// the image age is more than the grace period, but the controller won't remove due to the check on the last seen unreferenced timestamp
+			CreatedAt: suite.fakeClock.Now().Add(-4 * runtimectrl.ImageGCGracePeriod),
 			Target: v1.Descriptor{
 				Digest: must(digest.Parse("sha256:6b094bd0b063a1172eec7da249eccbb48cc48333800569363d67c747960cfa0a")),
 			},
@@ -123,7 +124,7 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 			Target: v1.Descriptor{
 				Digest: must(digest.Parse("sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135")),
 			},
-		}, // current image
+		}, // current image``
 		{
 			Name:      "registry.io/org/image1@sha256:7051a34bcd2522e58a2291d1aa065667f225fd07e4445590b091e86c6799b135",
 			CreatedAt: suite.fakeClock.Now().Add(-2 * runtimectrl.ImageGCGracePeriod),
@@ -140,7 +141,7 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 		}, // current image, digest ref
 		{
 			Name:      "registry.io/org/image1:v1.3.8",
-			CreatedAt: suite.fakeClock.Now(),
+			CreatedAt: suite.fakeClock.Now().Add(runtimectrl.ImageGCGracePeriod),
 			Target: v1.Descriptor{
 				Digest: must(digest.Parse("sha256:fd03335dd2e7163e5e36e933a0c735d7fec6f42b33ddafad0bc54f333e4a23c0")),
 			},
