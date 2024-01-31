@@ -24,6 +24,7 @@ type VersionContract struct {
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
+	TalosVersion1_7     = &VersionContract{1, 7}
 	TalosVersion1_6     = &VersionContract{1, 6}
 	TalosVersion1_5     = &VersionContract{1, 5}
 	TalosVersion1_4     = &VersionContract{1, 4}
@@ -182,5 +183,10 @@ func (contract *VersionContract) KubePrismEnabled() bool {
 
 // LocalDNSEnabled returns true if local dns router should be enabled by default.
 func (contract *VersionContract) LocalDNSEnabled() bool {
+	return contract.Greater(TalosVersion1_6)
+}
+
+// UseRSAServiceAccountKey returns true if version of Talos should use RSA Service Account key for the kube-apiserver.
+func (contract *VersionContract) UseRSAServiceAccountKey() bool {
 	return contract.Greater(TalosVersion1_6)
 }

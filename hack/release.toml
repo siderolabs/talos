@@ -51,6 +51,12 @@ machine:
 ```
 """
 
+    [notes.rsa-service-account]
+        title = "Kubernetes API Server Service Account Key"
+        description = """\
+Talos Linux starting from this release uses RSA key for Kubernetes API Server Service Account instead of ECDSA key to provide better compatibility with external OpenID Connect implementations.
+"""
+
 [make_deps]
 
     [make_deps.tools]

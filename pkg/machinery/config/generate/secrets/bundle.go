@@ -252,13 +252,24 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 	}
 
 	if versionContract.SupportsServiceAccount() && bundle.Certs.K8sServiceAccount == nil {
-		serviceAccount, err := x509.NewECDSAKey()
-		if err != nil {
-			return err
-		}
+		if versionContract.UseRSAServiceAccountKey() {
+			serviceAccount, err := x509.NewRSAKey()
+			if err != nil {
+				return err
+			}
 
-		bundle.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
-			Key: serviceAccount.KeyPEM,
+			bundle.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
+				Key: serviceAccount.KeyPEM,
+			}
+		} else {
+			serviceAccount, err := x509.NewECDSAKey()
+			if err != nil {
+				return err
+			}
+
+			bundle.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
+				Key: serviceAccount.KeyPEM,
+			}
 		}
 	}
 
