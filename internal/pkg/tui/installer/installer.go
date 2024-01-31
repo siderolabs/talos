@@ -9,10 +9,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/internal/pkg/tui/components"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -38,8 +38,6 @@ type Page struct {
 type Installer struct {
 	pages      *tview.Pages
 	app        *tview.Application
-	wg         sync.WaitGroup
-	err        error
 	ctx        context.Context //nolint:containedctx
 	cancel     context.CancelFunc
 	addedPages map[string]bool
@@ -73,85 +71,78 @@ const (
 
 // Run starts interactive installer.
 func (installer *Installer) Run(conn *Connection) error {
-	installer.startApp()
-	defer installer.stopApp()
-
-	var (
-		err         error
-		description string
-	)
-
-	for phase := phaseInit; phase <= phaseApply; {
-		switch phase {
-		case phaseInit:
-			description = "get the node information"
-			err = installer.init(conn)
-		case phaseConfigure:
-			description = "generate the configuration"
-			err = installer.configure()
-		case phaseApply:
-			description = "apply the configuration"
-			err = installer.apply(conn)
-		}
-
-		if err != nil && err != context.Canceled {
-			choice := installer.showModal(
-				fmt.Sprintf("Failed to %s", description),
-				err.Error(),
-				"Quit", "Retry",
-			)
-
-			if choice == 1 {
-				// apply should be retried from configure
-				if phase == phaseApply {
-					phase = phaseConfigure
-				}
-
-				continue
-			}
-		}
-
-		if err != nil {
-			return err
-		}
-
-		phase++
-	}
-
-	return nil
-}
-
-func (installer *Installer) startApp() {
-	if installer.app != nil {
-		return
-	}
-
-	installer.wg.Add(1)
 	installer.app = tview.NewApplication()
 
-	go func() {
-		defer installer.wg.Done()
+	var eg *errgroup.Group
+
+	eg, installer.ctx = errgroup.WithContext(installer.ctx)
+
+	eg.Go(func() error {
 		defer installer.cancel()
 
-		if err := installer.app.SetRoot(installer.pages, true).EnableMouse(true).Run(); err != nil {
-			installer.err = err
+		return installer.app.SetRoot(installer.pages, true).EnableMouse(true).Run()
+	})
+
+	eg.Go(func() error {
+		defer installer.app.Stop()
+
+		<-installer.ctx.Done()
+
+		return nil
+	})
+
+	eg.Go(func() error {
+		defer installer.cancel()
+
+		var (
+			err         error
+			description string
+		)
+
+		for phase := phaseInit; phase <= phaseApply; {
+			switch phase {
+			case phaseInit:
+				description = "get the node information"
+				err = installer.init(conn)
+			case phaseConfigure:
+				description = "generate the configuration"
+				err = installer.configure()
+			case phaseApply:
+				description = "apply the configuration"
+				err = installer.apply(conn)
+			}
+
+			if err != nil && err != context.Canceled {
+				choice := installer.showModal(
+					fmt.Sprintf("Failed to %s", description),
+					err.Error(),
+					"Quit", "Retry",
+				)
+
+				if choice == 1 {
+					// apply should be retried from configure
+					if phase == phaseApply {
+						phase = phaseConfigure
+					}
+
+					continue
+				}
+			}
+
+			if err != nil {
+				return err
+			}
+
+			phase++
 		}
-	}()
-}
 
-func (installer *Installer) stopApp() {
-	if installer.app == nil {
-		return
-	}
+		return nil
+	})
 
-	installer.app.Stop()
-	installer.wg.Wait()
-	installer.app = nil
+	return eg.Wait()
 }
 
 func (installer *Installer) init(conn *Connection) (err error) {
-	installer.startApp()
-
 	s := components.NewSpinner(
 		fmt.Sprintf("Connecting to the maintenance service at [green::]%s[white::]", conn.nodeEndpoint),
 		spinner,
