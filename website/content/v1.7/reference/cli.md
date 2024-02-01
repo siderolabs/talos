@@ -1123,10 +1123,9 @@ Remove the node from etcd cluster
 Use this command only if you want to remove a member which is in broken state.
 If there is no access to the node, or the node can't access etcd to call etcd leave.
 Always prefer etcd leave over this command.
-It's always better to use member ID than hostname, as hostname might not be set consistently.
 
 ```
-talosctl etcd remove-member <member ID>|<hostname> [flags]
+talosctl etcd remove-member <member ID> [flags]
 ```
 
 ### Options

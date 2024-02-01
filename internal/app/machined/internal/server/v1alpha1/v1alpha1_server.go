@@ -1730,32 +1730,6 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 	}, nil
 }
 
-// EtcdRemoveMember implements the machine.MachineServer interface.
-func (s *Server) EtcdRemoveMember(ctx context.Context, in *machine.EtcdRemoveMemberRequest) (*machine.EtcdRemoveMemberResponse, error) {
-	if err := s.checkControlplane("etcd remove member"); err != nil {
-		return nil, err
-	}
-
-	client, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create etcd client: %w", err)
-	}
-
-	defer client.Close() //nolint:errcheck
-
-	ctx = clientv3.WithRequireLeader(ctx)
-
-	if err = client.RemoveMemberByHostname(ctx, in.Member); err != nil { //nolint:staticcheck // deprecated, remove in v1.7
-		return nil, fmt.Errorf("failed to remove member: %w", err)
-	}
-
-	return &machine.EtcdRemoveMemberResponse{
-		Messages: []*machine.EtcdRemoveMember{
-			{},
-		},
-	}, nil
-}
-
 // EtcdRemoveMemberByID implements the machine.MachineServer interface.
 func (s *Server) EtcdRemoveMemberByID(ctx context.Context, in *machine.EtcdRemoveMemberByIDRequest) (*machine.EtcdRemoveMemberByIDResponse, error) {
 	if err := s.checkControlplane("etcd remove member"); err != nil {

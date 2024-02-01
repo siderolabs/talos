@@ -52,7 +52,6 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/EtcdLeaveCluster":            role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdMemberList":              role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/EtcdRecover":                 role.MakeSet(role.Admin),
-	"/machine.MachineService/EtcdRemoveMember":            role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdRemoveMemberByID":        role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdSnapshot":                role.MakeSet(role.Admin, role.Operator, role.EtcdBackup),
 	"/machine.MachineService/EtcdStatus":                  role.MakeSet(role.Admin, role.Operator),

@@ -7584,7 +7584,6 @@ The machine service definition.
 | Dmesg | [DmesgRequest](#machine.DmesgRequest) | [.common.Data](#common.Data) stream |  |
 | Events | [EventsRequest](#machine.EventsRequest) | [Event](#machine.Event) stream |  |
 | EtcdMemberList | [EtcdMemberListRequest](#machine.EtcdMemberListRequest) | [EtcdMemberListResponse](#machine.EtcdMemberListResponse) |  |
-| EtcdRemoveMember | [EtcdRemoveMemberRequest](#machine.EtcdRemoveMemberRequest) | [EtcdRemoveMemberResponse](#machine.EtcdRemoveMemberResponse) | EtcdRemoveMember removes a member from the etcd cluster by hostname. Please use EtcdRemoveMemberByID instead. |
 | EtcdRemoveMemberByID | [EtcdRemoveMemberByIDRequest](#machine.EtcdRemoveMemberByIDRequest) | [EtcdRemoveMemberByIDResponse](#machine.EtcdRemoveMemberByIDResponse) | EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID. This API should be used to remove members which don't have an associated Talos node anymore. To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed. |
 | EtcdLeaveCluster | [EtcdLeaveClusterRequest](#machine.EtcdLeaveClusterRequest) | [EtcdLeaveClusterResponse](#machine.EtcdLeaveClusterResponse) |  |
 | EtcdForfeitLeadership | [EtcdForfeitLeadershipRequest](#machine.EtcdForfeitLeadershipRequest) | [EtcdForfeitLeadershipResponse](#machine.EtcdForfeitLeadershipResponse) |  |

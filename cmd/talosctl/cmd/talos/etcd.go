@@ -17,7 +17,6 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
-	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
@@ -162,30 +161,21 @@ var etcdLeaveCmd = &cobra.Command{
 }
 
 var etcdMemberRemoveCmd = &cobra.Command{
-	Use:   "remove-member <member ID>|<hostname>",
+	Use:   "remove-member <member ID>",
 	Short: "Remove the node from etcd cluster",
 	Long: `Use this command only if you want to remove a member which is in broken state.
 If there is no access to the node, or the node can't access etcd to call etcd leave.
-Always prefer etcd leave over this command.
-It's always better to use member ID than hostname, as hostname might not be set consistently.`,
+Always prefer etcd leave over this command.`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			// first, try to parse argument as member ID
-			if memberID, err := etcdresource.ParseMemberID(args[0]); err == nil {
-				err = c.EtcdRemoveMemberByID(ctx, &machine.EtcdRemoveMemberByIDRequest{
-					MemberId: memberID,
-				})
-
-				// in the unlikely event that the hostname parses as member ID, try to proceed with remove by hostname
-				if client.StatusCode(err) != codes.NotFound {
-					return err
-				}
+			memberID, err := etcdresource.ParseMemberID(args[0])
+			if err != nil {
+				return fmt.Errorf("error parsing member ID: %w", err)
 			}
 
-			// try to remove by hostname
-			return c.EtcdRemoveMember(ctx, &machine.EtcdRemoveMemberRequest{ //nolint:staticcheck // deprecated method, remove in v1.7
-				Member: args[0],
+			return c.EtcdRemoveMemberByID(ctx, &machine.EtcdRemoveMemberByIDRequest{
+				MemberId: memberID,
 			})
 		})
 	},

@@ -199,40 +199,6 @@ func (c *Client) GetMemberID(ctx context.Context) (uint64, error) {
 	return resp.Header.MemberId, nil
 }
 
-func (c *Client) getMemberIDByHostname(ctx context.Context, hostname string) (uint64, error) {
-	resp, err := c.MemberList(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, member := range resp.Members {
-		if member.Name == hostname {
-			member := member
-
-			return member.ID, nil
-		}
-	}
-
-	return 0, fmt.Errorf("could not get member ID for hostname %q", hostname)
-}
-
-// RemoveMemberByHostname removes the member from the etcd cluster.
-//
-// Deprecated: use RemoveMemberByMemberID instead.
-func (c *Client) RemoveMemberByHostname(ctx context.Context, hostname string) error {
-	id, err := c.getMemberIDByHostname(ctx, hostname)
-	if err != nil {
-		return err
-	}
-
-	err = c.RemoveMemberByMemberID(ctx, id)
-	if err != nil {
-		return fmt.Errorf("failed to remove member %d: %w", id, err)
-	}
-
-	return nil
-}
-
 // RemoveMemberByMemberID removes the member from the etcd cluster.
 func (c *Client) RemoveMemberByMemberID(ctx context.Context, memberID uint64) error {
 	_, err := c.MemberRemove(ctx, memberID)

@@ -32,7 +32,6 @@ const (
 	MachineService_Dmesg_FullMethodName                       = "/machine.MachineService/Dmesg"
 	MachineService_Events_FullMethodName                      = "/machine.MachineService/Events"
 	MachineService_EtcdMemberList_FullMethodName              = "/machine.MachineService/EtcdMemberList"
-	MachineService_EtcdRemoveMember_FullMethodName            = "/machine.MachineService/EtcdRemoveMember"
 	MachineService_EtcdRemoveMemberByID_FullMethodName        = "/machine.MachineService/EtcdRemoveMemberByID"
 	MachineService_EtcdLeaveCluster_FullMethodName            = "/machine.MachineService/EtcdLeaveCluster"
 	MachineService_EtcdForfeitLeadership_FullMethodName       = "/machine.MachineService/EtcdForfeitLeadership"
@@ -93,10 +92,6 @@ type MachineServiceClient interface {
 	Dmesg(ctx context.Context, in *DmesgRequest, opts ...grpc.CallOption) (MachineService_DmesgClient, error)
 	Events(ctx context.Context, in *EventsRequest, opts ...grpc.CallOption) (MachineService_EventsClient, error)
 	EtcdMemberList(ctx context.Context, in *EtcdMemberListRequest, opts ...grpc.CallOption) (*EtcdMemberListResponse, error)
-	// Deprecated: Do not use.
-	// EtcdRemoveMember removes a member from the etcd cluster by hostname.
-	// Please use EtcdRemoveMemberByID instead.
-	EtcdRemoveMember(ctx context.Context, in *EtcdRemoveMemberRequest, opts ...grpc.CallOption) (*EtcdRemoveMemberResponse, error)
 	// EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
 	// This API should be used to remove members which don't have an associated Talos node anymore.
 	// To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed.
@@ -318,16 +313,6 @@ func (x *machineServiceEventsClient) Recv() (*Event, error) {
 func (c *machineServiceClient) EtcdMemberList(ctx context.Context, in *EtcdMemberListRequest, opts ...grpc.CallOption) (*EtcdMemberListResponse, error) {
 	out := new(EtcdMemberListResponse)
 	err := c.cc.Invoke(ctx, MachineService_EtcdMemberList_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// Deprecated: Do not use.
-func (c *machineServiceClient) EtcdRemoveMember(ctx context.Context, in *EtcdRemoveMemberRequest, opts ...grpc.CallOption) (*EtcdRemoveMemberResponse, error) {
-	out := new(EtcdRemoveMemberResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdRemoveMember_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -929,10 +914,6 @@ type MachineServiceServer interface {
 	Dmesg(*DmesgRequest, MachineService_DmesgServer) error
 	Events(*EventsRequest, MachineService_EventsServer) error
 	EtcdMemberList(context.Context, *EtcdMemberListRequest) (*EtcdMemberListResponse, error)
-	// Deprecated: Do not use.
-	// EtcdRemoveMember removes a member from the etcd cluster by hostname.
-	// Please use EtcdRemoveMemberByID instead.
-	EtcdRemoveMember(context.Context, *EtcdRemoveMemberRequest) (*EtcdRemoveMemberResponse, error)
 	// EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
 	// This API should be used to remove members which don't have an associated Talos node anymore.
 	// To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed.
@@ -1033,9 +1014,6 @@ func (UnimplementedMachineServiceServer) Events(*EventsRequest, MachineService_E
 }
 func (UnimplementedMachineServiceServer) EtcdMemberList(context.Context, *EtcdMemberListRequest) (*EtcdMemberListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EtcdMemberList not implemented")
-}
-func (UnimplementedMachineServiceServer) EtcdRemoveMember(context.Context, *EtcdRemoveMemberRequest) (*EtcdRemoveMemberResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method EtcdRemoveMember not implemented")
 }
 func (UnimplementedMachineServiceServer) EtcdRemoveMemberByID(context.Context, *EtcdRemoveMemberByIDRequest) (*EtcdRemoveMemberByIDResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EtcdRemoveMemberByID not implemented")
@@ -1340,24 +1318,6 @@ func _MachineService_EtcdMemberList_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MachineServiceServer).EtcdMemberList(ctx, req.(*EtcdMemberListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _MachineService_EtcdRemoveMember_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EtcdRemoveMemberRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MachineServiceServer).EtcdRemoveMember(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MachineService_EtcdRemoveMember_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MachineServiceServer).EtcdRemoveMember(ctx, req.(*EtcdRemoveMemberRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2162,10 +2122,6 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EtcdMemberList",
 			Handler:    _MachineService_EtcdMemberList_Handler,
-		},
-		{
-			MethodName: "EtcdRemoveMember",
-			Handler:    _MachineService_EtcdRemoveMember_Handler,
 		},
 		{
 			MethodName: "EtcdRemoveMemberByID",

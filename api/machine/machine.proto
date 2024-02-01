@@ -25,12 +25,6 @@ service MachineService {
   rpc Dmesg(DmesgRequest) returns (stream common.Data);
   rpc Events(EventsRequest) returns (stream Event);
   rpc EtcdMemberList(EtcdMemberListRequest) returns (EtcdMemberListResponse);
-  // EtcdRemoveMember removes a member from the etcd cluster by hostname.
-  // Please use EtcdRemoveMemberByID instead.
-  rpc EtcdRemoveMember(EtcdRemoveMemberRequest) returns (EtcdRemoveMemberResponse) {
-    option (common.remove_deprecated_method) = "v1.7";
-    option deprecated = true;
-  }
   // EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
   // This API should be used to remove members which don't have an associated Talos node anymore.
   // To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed.
