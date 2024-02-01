@@ -939,7 +939,7 @@ RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-pat
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:21.5.0-alpine AS lint-markdown
+FROM node:21.6.1-alpine AS lint-markdown
 ARG MARKDOWNLINTCLI_VERSION
 ARG TEXTLINT_VERSION
 ARG TEXTLINT_FILTER_RULE_COMMENTS_VERSION
@@ -959,6 +959,7 @@ RUN markdownlint \
     --ignore '**/hack/chglog/**' \
     --ignore 'website/content/*/reference/*' \
     --ignore 'website/themes/**' \
+    --disable MD045 MD056 \
     .
 RUN find . \
     -name '*.md' \

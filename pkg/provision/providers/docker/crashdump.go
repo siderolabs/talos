@@ -10,7 +10,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -24,11 +24,11 @@ func (p *provisioner) CrashDump(ctx context.Context, cluster provision.Cluster, 
 		return
 	}
 
-	for _, container := range containers {
-		name := container.Names[0][1:]
+	for _, ctr := range containers {
+		name := ctr.Names[0][1:]
 		fmt.Fprintf(out, "%s\n%s\n\n", name, strings.Repeat("=", len(name)))
 
-		logs, err := p.client.ContainerLogs(ctx, container.ID, types.ContainerLogsOptions{
+		logs, err := p.client.ContainerLogs(ctx, ctr.ID, container.LogsOptions{
 			ShowStdout: true,
 			ShowStderr: true,
 			Tail:       "1000",

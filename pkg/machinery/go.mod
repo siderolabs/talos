@@ -11,10 +11,10 @@ require (
 	github.com/containerd/go-cni v1.1.9
 	github.com/cosi-project/runtime v0.3.20
 	github.com/dustin/go-humanize v1.0.1
-	github.com/evanphx/json-patch v5.8.1+incompatible
+	github.com/evanphx/json-patch v5.9.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink v1.4.0
+	github.com/jsimonetti/rtnetlink v1.4.1
 	github.com/mdlayher/ethtool v0.1.0
 	github.com/opencontainers/runtime-spec v1.1.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
@@ -26,8 +26,8 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.1
 	github.com/stretchr/testify v1.8.4
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac
-	google.golang.org/grpc v1.60.1
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe
+	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -57,11 +57,11 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.14.1-0.20231108175955-e4099bfacb8c // indirect
+	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240102182953-50ed04b92917 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

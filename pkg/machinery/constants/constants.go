@@ -16,7 +16,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.6.13-talos"
+	DefaultKernelVersion = "6.6.14-talos"
 
 	// KernelModulesPath is the default path to the kernel modules without the kernel version.
 	KernelModulesPath = "/lib/modules"
@@ -400,7 +400,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=github-releases depName=etcd-io/etcd
-	DefaultEtcdVersion = "v3.5.11"
+	DefaultEtcdVersion = "v3.5.12"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
@@ -479,7 +479,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "1.7.12"
+	DefaultContainerdVersion = "1.7.13"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"

@@ -15,9 +15,9 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-alpha.0-3-gc7076eb
+TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-alpha.0-5-gf4b41d1
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.7.0-alpha.0-17-gefbbd23
+PKGS ?= v1.7.0-alpha.0-19-g96cc841
 PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
 EXTRAS ?= v1.7.0-alpha.0
 # renovate: datasource=github-tags depName=golang/go
@@ -41,9 +41,9 @@ DEEPCOPY_VERSION ?= v0.5.5
 # renovate: datasource=go depName=github.com/siderolabs/importvet
 IMPORTVET_VERSION ?= v0.1.0
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.37.0
+MARKDOWNLINTCLI_VERSION ?= 0.39.0
 # renovate: datasource=npm depName=textlint
-TEXTLINT_VERSION ?= 13.3.3
+TEXTLINT_VERSION ?= 13.4.1
 # renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
 # renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
@@ -62,18 +62,18 @@ KUBECTL_VERSION ?= v1.29.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.41
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.13.3
+HELM_VERSION ?= v3.14.0
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.6.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.15.20
+CILIUM_CLI_VERSION ?= v0.15.21
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CLUSTERCTL_URL ?= https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 TESTPKGS ?= github.com/siderolabs/talos/...
-RELEASES ?= v1.4.8 v1.5.2
+RELEASES ?= v1.5.5 v1.6.3
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
 INSTALLER_ARCH ?= all

@@ -171,7 +171,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	}
 
 	// Start the container.
-	err = p.client.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{})
+	err = p.client.ContainerStart(ctx, resp.ID, container.StartOptions{})
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
@@ -217,7 +217,7 @@ func (p *provisioner) listNodes(ctx context.Context, clusterName string) ([]type
 	filters.Add("label", "talos.owned=true")
 	filters.Add("label", "talos.cluster.name="+clusterName)
 
-	return p.client.ContainerList(ctx, types.ContainerListOptions{All: true, Filters: filters})
+	return p.client.ContainerList(ctx, container.ListOptions{All: true, Filters: filters})
 }
 
 func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, options *provision.Options) error {
@@ -228,12 +228,12 @@ func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, opti
 
 	errCh := make(chan error)
 
-	for _, container := range containers {
-		go func(container types.Container) {
-			fmt.Fprintln(options.LogWriter, "destroying node", container.Names[0][1:])
+	for _, ctr := range containers {
+		go func(ctr types.Container) {
+			fmt.Fprintln(options.LogWriter, "destroying node", ctr.Names[0][1:])
 
-			errCh <- p.client.ContainerRemove(ctx, container.ID, types.ContainerRemoveOptions{RemoveVolumes: true, Force: true})
-		}(container)
+			errCh <- p.client.ContainerRemove(ctx, ctr.ID, container.RemoveOptions{RemoveVolumes: true, Force: true})
+		}(ctr)
 	}
 
 	var multiErr *multierror.Error

@@ -1,11 +1,11 @@
 module github.com/siderolabs/structprotogen
 
-go 1.21.5
+go 1.21.6
 
 require (
 	github.com/fatih/structtag v1.2.0
 	github.com/spf13/cobra v1.8.0
-	golang.org/x/tools v0.16.1
+	golang.org/x/tools v0.17.0
 	gopkg.in/typ.v4 v4.3.0
 )
 
