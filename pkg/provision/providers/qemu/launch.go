@@ -394,6 +394,8 @@ func launchVM(config *LaunchConfig) error {
 				return fmt.Errorf("failed to kill process %w", err)
 			}
 
+			<-done
+
 			return fmt.Errorf("process stopped")
 		case err := <-done:
 			if err != nil {
