@@ -1,3 +1,88 @@
+## [Talos 1.6.4](https://github.com/siderolabs/talos/releases/tag/v1.6.4) (2024-02-01)
+
+Welcome to the v1.6.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+containerd: 1.7.13
+runc: 1.1.12
+
+See [CVE-2024-21626](https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv) for the runc update.
+
+Talos is built with Go 1.21.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Utku Ozdemir
+* Noel Georgi
+* Artem Chernyshev
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`040c535c6`](https://github.com/siderolabs/talos/commit/040c535c63adee06e4afa261e5ed488f7bee878f) fix: retry blockdevice open in the installer
+* [`00b34b254`](https://github.com/siderolabs/talos/commit/00b34b25450f34d09956940cf74bb4301e84d23c) fix: take into account the moment seen when cleaning up CRI images
+* [`c5ad166be`](https://github.com/siderolabs/talos/commit/c5ad166beaef5de62adb6968b9814072a6b2b805) fix: be more tolerant to error handling in Mounts API
+* [`b438f8a9b`](https://github.com/siderolabs/talos/commit/b438f8a9b922f0b5cb7489abc69880ba32597247) fix: run the interactive installer loop to report errors
+* [`12e83b7e3`](https://github.com/siderolabs/talos/commit/12e83b7e3740fe30abc3c09e80bbc39520ec2acb) docs: clarify node taints/labels for worker nodes
+* [`7840f8a89`](https://github.com/siderolabs/talos/commit/7840f8a89bd86c761f4fb19f3106eca34dd7948c) feat: update containerd 1.7.13, runc 1.1.12
+</p>
+</details>
+
+### Changes from siderolabs/go-api-signature
+<details><summary>20 commits</summary>
+<p>
+
+* [`370cebf`](https://github.com/siderolabs/go-api-signature/commit/370cebf63d5b26a3b711ec05b0dedc283d94b136) fix: always print the login URL on key renew flow
+* [`d28609a`](https://github.com/siderolabs/go-api-signature/commit/d28609aa214f364166cf60533d03a811f9ce2af6) feat: move in the cli grpc interceptor logic, support service account in env
+* [`4602acc`](https://github.com/siderolabs/go-api-signature/commit/4602acc2f06134aed4940c6c45f3a5fbd9332a72) chore: add a dummy workflow
+* [`cfd21b6`](https://github.com/siderolabs/go-api-signature/commit/cfd21b6a51d21a344e98b7f434bf3e9198e12b42) fix: support validating signatures generated with the time in the future
+* [`74dd3dc`](https://github.com/siderolabs/go-api-signature/commit/74dd3dcc1d980837eced68e47d897b03945dd4ee) chore: bump deps
+* [`d78bedb`](https://github.com/siderolabs/go-api-signature/commit/d78bedb1a7d348832ba9db0438b1fc099aa2dd99) chore: bump deps
+* [`a034e9f`](https://github.com/siderolabs/go-api-signature/commit/a034e9ff315ba4a56115acc7ad0fb99d0dc77800) feat: replace scopes with roles
+* [`5b4f3bb`](https://github.com/siderolabs/go-api-signature/commit/5b4f3bb291b7bbec70b690f2969954255ccb8a22) chore: run rekres
+* [`9dba116`](https://github.com/siderolabs/go-api-signature/commit/9dba116c0838ecc0342a9af1e81e68e04b133623) chore: remove time.Sleep hack
+* [`e84e686`](https://github.com/siderolabs/go-api-signature/commit/e84e68658095aecead59982255b242ba8bef0fc5) chore: bump dependencies
+* [`8baaf8a`](https://github.com/siderolabs/go-api-signature/commit/8baaf8a99a28adda6dbdc0d7c38e78b290c84d96) chore: bump deps
+* [`5f27e1e`](https://github.com/siderolabs/go-api-signature/commit/5f27e1ebc06e26dea6a8102630a5b3529283eb9e) chore: add renovate bot and bump deps
+* [`69886dc`](https://github.com/siderolabs/go-api-signature/commit/69886dcc1343561add3b4b86ef160e0a1876d97f) feat: allow custom validations on PGP key
+* [`63d4da3`](https://github.com/siderolabs/go-api-signature/commit/63d4da31ae67052129c5ec795b61fb9c05a52441) fix: limit clock skew for short-lived keys
+* [`cdb9722`](https://github.com/siderolabs/go-api-signature/commit/cdb9722becf1aaeeaa1e9529dac19f3d5281f0a1) feat: add support for +-5 min clock skew
+* [`7b80a50`](https://github.com/siderolabs/go-api-signature/commit/7b80a50eea28d9273a49445cc3d39492db2e085b) refactor: use options pattern in RegisterPGPPublicKey
+* [`c647861`](https://github.com/siderolabs/go-api-signature/commit/c6478610d97a99967e903bdba1a4b7fab20e64b9) feat: add scopes to RegisterPublicKeyRequest
+* [`5d3647e`](https://github.com/siderolabs/go-api-signature/commit/5d3647e1d988e3162d0e851757fec951f6bb00c9) feat: provide more client PGP functions
+* [`2b682ec`](https://github.com/siderolabs/go-api-signature/commit/2b682ec61e83260b11cdf65d2f3723a89e4afa88) feat: initial version
+* [`a4c2943`](https://github.com/siderolabs/go-api-signature/commit/a4c294367c35d1234470d09c6151eed616a0c031) chore: initial commit
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`b77ffb7`](https://github.com/siderolabs/pkgs/commit/b77ffb7d4c57f05c2dfe2df2647e8adc7c129ad5) chore: bump runc+containerd
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**        v1.7.11 -> v1.7.13
+* **github.com/opencontainers/runtime-spec**  v1.1.0-rc.1 -> v1.1.0
+* **github.com/siderolabs/go-api-signature**  v0.3.1 **_new_**
+* **github.com/siderolabs/pkgs**              v1.6.0-15-gf51aedb -> v1.6.0-16-gb77ffb7
+
+Previous release can be found at [v1.6.3](https://github.com/siderolabs/talos/releases/tag/v1.6.3)
+
 ## [Talos 1.6.3](https://github.com/siderolabs/talos/releases/tag/v1.6.3) (2024-01-24)
 
 Welcome to the v1.6.3 release of Talos!

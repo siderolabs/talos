@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.6.2"
+previous = "v1.6.3"
 
 pre_release = false
 
