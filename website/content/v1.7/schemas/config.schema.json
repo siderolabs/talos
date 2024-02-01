@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://talos.dev/v1.6/schemas/config.schema.json",
+  "$id": "https://talos.dev/v1.7/schemas/config.schema.json",
   "$defs": {
     "network.DefaultActionConfigV1Alpha1": {
       "properties": {

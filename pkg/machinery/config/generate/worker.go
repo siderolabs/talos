@@ -96,6 +96,10 @@ func (in *Input) worker() ([]config.Document, error) {
 		machine.MachineKubelet.KubeletDisableManifestsDirectory = pointer.To(true)
 	}
 
+	if in.Options.VersionContract.LocalDNSEnabled() {
+		machine.MachineFeatures.LocalDNS = pointer.To(true)
+	}
+
 	controlPlaneURL, err := url.Parse(in.ControlPlaneEndpoint)
 	if err != nil {
 		return nil, err
