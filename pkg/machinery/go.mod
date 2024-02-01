@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/pkg/machinery
 
-go 1.21.4
+go 1.21.6
 
 // forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 // which are then encoded as a valid YAML blocks with proper indentiation
@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink v1.4.0
 	github.com/mdlayher/ethtool v0.1.0
-	github.com/opencontainers/runtime-spec v1.1.0-rc.1
+	github.com/opencontainers/runtime-spec v1.1.0
 	github.com/siderolabs/crypto v0.4.1
 	github.com/siderolabs/gen v0.4.7
 	github.com/siderolabs/go-api-signature v0.3.1

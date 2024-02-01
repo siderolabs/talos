@@ -17,8 +17,10 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.1.74
-Kubernetes: 1.29.1
+containerd: 1.7.13
+runc: 1.1.12
+
+See [CVE-2024-21626](https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv) for the runc update.
 
 Talos is built with Go 1.21.6.
 """
