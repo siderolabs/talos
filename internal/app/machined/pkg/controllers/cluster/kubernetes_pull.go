@@ -138,7 +138,8 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 
 		if notifyCh == nil {
 			var watchCtx context.Context
-			watchCtx, watchCtxCancel = context.WithCancel(ctx) //nolint:govet
+			watchCtx, watchCtxCancel = context.WithCancel(ctx)
+			defer watchCtxCancel()
 
 			notifyCh, notifyCloser, err = kubernetesRegistry.Watch(watchCtx, logger)
 			if err != nil {

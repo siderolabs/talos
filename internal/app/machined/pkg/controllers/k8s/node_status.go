@@ -135,7 +135,8 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 
 		if notifyCh == nil {
 			var watchCtx context.Context
-			watchCtx, watchCtxCancel = context.WithCancel(ctx) //nolint:govet
+			watchCtx, watchCtxCancel = context.WithCancel(ctx)
+			defer watchCtxCancel()
 
 			notifyCh, notifyCloser, err = nodewatcher.Watch(watchCtx, logger)
 			if err != nil {

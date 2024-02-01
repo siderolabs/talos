@@ -246,7 +246,8 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 			var clientCtx context.Context
 
-			clientCtx, clientCtxCancel = context.WithCancel(ctx) //nolint:govet
+			clientCtx, clientCtxCancel = context.WithCancel(ctx)
+			defer clientCtxCancel()
 
 			ctrl.discoveryConfigVersion = discoveryConfig.Metadata().Version()
 
