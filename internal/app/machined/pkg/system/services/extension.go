@@ -33,7 +33,7 @@ import (
 
 // Extension service is a generic wrapper around extension services spec.
 type Extension struct {
-	Spec *extservices.Spec
+	Spec extservices.Spec
 
 	overlay *mount.Point
 }
@@ -107,7 +107,7 @@ func (svc *Extension) getOCIOptions(envVars []string) []oci.SpecOpts {
 	ociOpts := []oci.SpecOpts{
 		oci.WithRootFSPath(filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name)),
 		containerd.WithRootfsPropagation(svc.Spec.Container.Security.RootfsPropagation),
-		oci.WithCgroup(constants.CgroupExtensions),
+		oci.WithCgroup(filepath.Join(constants.CgroupExtensions, svc.Spec.Name)),
 		oci.WithMounts(svc.Spec.Container.Mounts),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithSelinuxLabel(""),

@@ -47,7 +47,7 @@ func TestGetOCIOptions(t *testing.T) {
 	t.Run("default configurations are cleared away if user passes empty arrays for MaskedPaths and ReadonlyPaths", func(t *testing.T) {
 		// given
 		svc := &services.Extension{
-			Spec: &extservices.Spec{
+			Spec: extservices.Spec{
 				Container: extservices.Container{
 					Security: extservices.Security{
 						MaskedPaths:   []string{},
@@ -69,7 +69,7 @@ func TestGetOCIOptions(t *testing.T) {
 	t.Run("default configuration applies if user passes nil for MaskedPaths and ReadonlyPaths", func(t *testing.T) {
 		// given
 		svc := &services.Extension{
-			Spec: &extservices.Spec{
+			Spec: extservices.Spec{
 				Container: extservices.Container{
 					Security: extservices.Security{
 						MaskedPaths:   nil,
@@ -109,7 +109,7 @@ func TestGetOCIOptions(t *testing.T) {
 	t.Run("root fs is readonly unless explicitly enabled", func(t *testing.T) {
 		// given
 		svc := &services.Extension{
-			Spec: &extservices.Spec{
+			Spec: extservices.Spec{
 				Container: extservices.Container{
 					Security: extservices.Security{
 						WriteableRootfs: true,
@@ -129,7 +129,7 @@ func TestGetOCIOptions(t *testing.T) {
 	t.Run("root fs is readonly by default", func(t *testing.T) {
 		// given
 		svc := &services.Extension{
-			Spec: &extservices.Spec{
+			Spec: extservices.Spec{
 				Container: extservices.Container{
 					Security: extservices.Security{},
 				},
@@ -147,7 +147,7 @@ func TestGetOCIOptions(t *testing.T) {
 	t.Run("allows setting extra env vars", func(t *testing.T) {
 		// given
 		svc := &services.Extension{
-			Spec: &extservices.Spec{
+			Spec: extservices.Spec{
 				Container: extservices.Container{
 					Environment: []string{
 						"FOO=BAR",
@@ -172,7 +172,7 @@ func TestGetOCIOptions(t *testing.T) {
 
 		// given
 		svc := &services.Extension{
-			Spec: &extservices.Spec{
+			Spec: extservices.Spec{
 				Container: extservices.Container{
 					EnvironmentFile: envFile,
 				},
