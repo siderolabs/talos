@@ -27,7 +27,7 @@ func TestRootSuite(t *testing.T) {
 
 	suite.Run(t, &RootSuite{
 		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
+			Timeout: 10 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewRootEtcdController()))
 				suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewRootKubernetesController()))

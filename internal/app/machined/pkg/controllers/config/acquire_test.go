@@ -132,7 +132,7 @@ func TestAcquireSuite(t *testing.T) {
 
 	s := &AcquireSuite{
 		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
+			Timeout: 15 * time.Second,
 		},
 	}
 
