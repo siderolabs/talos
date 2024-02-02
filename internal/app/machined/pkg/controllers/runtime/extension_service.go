@@ -113,19 +113,19 @@ func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Ru
 	return nil
 }
 
-func (ctrl *ExtensionServiceController) loadSpec(path string) (*extservices.Spec, error) {
+func (ctrl *ExtensionServiceController) loadSpec(path string) (extservices.Spec, error) {
 	var spec extservices.Spec
 
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return spec, err
 	}
 
 	defer f.Close() //nolint:errcheck
 
 	if err = yaml.NewDecoder(f).Decode(&spec); err != nil {
-		return nil, fmt.Errorf("error unmarshalling extension service config: %w", err)
+		return spec, fmt.Errorf("error unmarshalling extension service config: %w", err)
 	}
 
-	return &spec, nil
+	return spec, nil
 }
