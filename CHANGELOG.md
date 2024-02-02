@@ -1,3 +1,101 @@
+## [Talos 1.5.6](https://github.com/siderolabs/talos/releases/tag/v1.5.6) (2024-02-02)
+
+Welcome to the v1.5.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.1.74
+containerd: 1.6.28
+runc: 1.1.12
+
+See [CVE-2024-21626](https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv) for the runc update.
+
+Talos is built with Go 1.20.13.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Hervé Werner
+* Jonomir
+* Noel Georgi
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`e7475d8fd`](https://github.com/siderolabs/talos/commit/e7475d8fd3ad4a5b774c798af05e857abc50a706) fix: take into account the moment seen when cleaning up CRI images
+* [`9b819ee1e`](https://github.com/siderolabs/talos/commit/9b819ee1e1a370135b6e8b2bbb4a8c490439437d) fix: watch bufer overrun for RouteStatus
+* [`730913fdb`](https://github.com/siderolabs/talos/commit/730913fdb9bfc68c316a4d36ac517327ae1abd46) fix: update kmsg with utf-8 fix
+* [`a3b48c696`](https://github.com/siderolabs/talos/commit/a3b48c696b4d90affa8b597699a3c2c3dd8b4b94) fix: disk UUID & WWID always empty in `talosctl disks`
+* [`e4a23412f`](https://github.com/siderolabs/talos/commit/e4a23412f6efe8b72284efa2770e342c7fa8b876) fix: skip writing the file if the contents haven't changed
+* [`8516708a5`](https://github.com/siderolabs/talos/commit/8516708a5b1a2fd0a264b95c420a7de124cb3168) fix: retry blockdevice open in the installer
+* [`d82b14eae`](https://github.com/siderolabs/talos/commit/d82b14eae043891ca731d88886240edf57582682) fix: be more tolerant to error handling in Mounts API
+* [`d35002777`](https://github.com/siderolabs/talos/commit/d35002777ef64cfec8dd8fc429fb95b8d5a530ff) fix: ignore kernel command line in container mode
+* [`06424ad5d`](https://github.com/siderolabs/talos/commit/06424ad5dfd2b7ef2cb1c3936e95adc4ee4322ab) fix: allow extra kernel args for secureboot installer
+* [`985ed8de6`](https://github.com/siderolabs/talos/commit/985ed8de63b23a57627cc620863a02c16750d051) fix: set max msg recv size when proxying
+* [`1e5913806`](https://github.com/siderolabs/talos/commit/1e5913806ffa70722a4b72501536bb1a8dc9ae8a) feat: update runc 1.1.12, containerd 1.6.28, Linux 6.1.74
+</p>
+</details>
+
+### Changes from siderolabs/gen
+<details><summary>2 commits</summary>
+<p>
+
+* [`efca710`](https://github.com/siderolabs/gen/commit/efca710d509e6088d7a1a825bd49317df1427639) chore: add `FilterInPlace` method to maps and update module
+* [`36a3ae3`](https://github.com/siderolabs/gen/commit/36a3ae312ce03876b2c961a1bcb4ef4c221593d7) feat: update module
+</p>
+</details>
+
+### Changes from siderolabs/go-kmsg
+<details><summary>2 commits</summary>
+<p>
+
+* [`e358d13`](https://github.com/siderolabs/go-kmsg/commit/e358d13e5bdab79568d6ffea4b071c1530aa8e3d) fix: decode escape sequences while reading from kmsg
+* [`4297bd5`](https://github.com/siderolabs/go-kmsg/commit/4297bd599c918a5a874fb3b9f3119b394bd70899) feat: add BSD support
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`a550ab9`](https://github.com/siderolabs/pkgs/commit/a550ab9bcf3c76c67f4d6b45d2accaaf927fd130) feat: update Go to 1.20.13
+* [`ae26536`](https://github.com/siderolabs/pkgs/commit/ae2653672e1bc87fd2d3f28220c218725f4ace9e) feat: update containerd 1.6.28, runc 1.1.12, Linux 6.1.74
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`02895ed`](https://github.com/siderolabs/tools/commit/02895ed429c072b5ad6c7a9d954a928b3d849d20) feat: update Go to 1.20.13
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**  v1.6.23 -> v1.6.28
+* **github.com/google/go-cmp**          v0.5.9 -> v0.6.0
+* **github.com/google/uuid**            v1.3.0 -> v1.3.1
+* **github.com/siderolabs/gen**         v0.4.5 -> v0.4.7
+* **github.com/siderolabs/go-kmsg**     v0.1.3 -> v0.1.4
+* **github.com/siderolabs/pkgs**        v1.5.0-15-gab5b0e5 -> v1.5.0-17-ga550ab9
+* **github.com/siderolabs/tools**       v1.5.0-3-gc95372c -> v1.5.0-4-g02895ed
+* **golang.org/x/net**                  v0.17.0 -> v0.18.0
+* **golang.org/x/sys**                  v0.13.0 -> v0.16.0
+* **golang.org/x/term**                 v0.13.0 -> v0.16.0
+* **golang.org/x/text**                 v0.13.0 -> v0.14.0
+* **google.golang.org/grpc**            v1.58.3 -> v1.59.0
+
+Previous release can be found at [v1.5.5](https://github.com/siderolabs/talos/releases/tag/v1.5.5)
+
 ## [Talos 1.5.5](https://github.com/siderolabs/talos/releases/tag/v1.5.5) (2023-11-09)
 
 Welcome to the v1.5.5 release of Talos!
