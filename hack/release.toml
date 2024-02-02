@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.5.4"
+previous = "v1.5.5"
 
 pre_release = false
 
@@ -18,11 +18,13 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description="""\
-Linux: 6.1.61
-Kubernetes: 1.28.3
-etcd: 3.5.10
+Linux: 6.1.74
+containerd: 1.6.28
+runc: 1.1.12
 
-Talos is built with Go 1.20.11.
+See [CVE-2024-21626](https://github.com/opencontainers/runc/security/advisories/GHSA-xr7r-f8xq-vfvv) for the runc update.
+
+Talos is built with Go 1.20.13.
 """
 
 [make_deps]
