@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/siderolabs/crypto/x509"
 	"gopkg.in/yaml.v3"
@@ -358,10 +359,15 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 
 // GenerateTalosAPIClientCertificate generates the admin certificate.
 func (bundle *Bundle) GenerateTalosAPIClientCertificate(roles role.Set) (*x509.PEMEncodedCertificateAndKey, error) {
+	return bundle.GenerateTalosAPIClientCertificateWithTTL(roles, constants.TalosAPIDefaultCertificateValidityDuration)
+}
+
+// GenerateTalosAPIClientCertificateWithTTL generates the admin certificate with specified TTL.
+func (bundle *Bundle) GenerateTalosAPIClientCertificateWithTTL(roles role.Set, crtTTL time.Duration) (*x509.PEMEncodedCertificateAndKey, error) {
 	return NewAdminCertificateAndKey(
 		bundle.Clock.Now(),
 		bundle.Certs.OS,
 		roles,
-		constants.TalosAPIDefaultCertificateValidityDuration,
+		crtTTL,
 	)
 }

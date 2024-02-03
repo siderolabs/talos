@@ -125,6 +125,20 @@ func (suite *TalosconfigSuite) TestMerge() {
 	suite.Require().NotNil(c.Contexts["foo-1"])
 }
 
+// TestNewTTL checks `talosctl config new --crt-ttl`.
+func (suite *TalosconfigSuite) TestNewTTL() {
+	tempDir := suite.T().TempDir()
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	talosconfig := filepath.Join(tempDir, "talosconfig")
+	suite.RunCLI([]string{"--nodes", node, "config", "new", "--roles", "os:reader", talosconfig, "--crt-ttl", "17520h"},
+		base.StdoutEmpty())
+
+	suite.RunCLI([]string{"config", "info", "--talosconfig", talosconfig},
+		base.StdoutShouldMatch(regexp.MustCompile(`2 years from now`)))
+}
+
 // TestNew checks `talosctl config new`.
 func (suite *TalosconfigSuite) TestNew() {
 	stdout, _ := suite.RunCLI([]string{"version", "--json", "--nodes", suite.RandomDiscoveredNodeInternalIP()})

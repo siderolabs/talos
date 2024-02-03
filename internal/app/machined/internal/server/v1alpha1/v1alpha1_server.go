@@ -2092,7 +2092,7 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 
 	secretsBundle := secrets.NewBundleFromConfig(secrets.NewFixedClock(time.Now()), s.Controller.Runtime().Config())
 
-	cert, err := secretsBundle.GenerateTalosAPIClientCertificate(roles)
+	cert, err := secretsBundle.GenerateTalosAPIClientCertificateWithTTL(roles, crtTTL)
 	if err != nil {
 		return nil, err
 	}
