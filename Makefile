@@ -16,10 +16,40 @@ CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-alpha.0-5-gf4b41d1
+
 PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.7.0-alpha.0-19-g96cc841
-PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
 EXTRAS ?= v1.7.0-alpha.0
+
+PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
+PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
+PKG_CRYPTSETUP ?= $(PKGS_PREFIX)/cryptsetup:$(PKGS)
+PKG_CONTAINERD ?= $(PKGS_PREFIX)/containerd:$(PKGS)
+PKG_DOSFSTOOLS ?= $(PKGS_PREFIX)/dosfstools:$(PKGS)
+PKG_EUDEV ?= $(PKGS_PREFIX)/eudev:$(PKGS)
+PKG_GRUB ?= $(PKGS_PREFIX)/grub:$(PKGS)
+PKG_SD_BOOT ?= $(PKGS_PREFIX)/sd-boot:$(PKGS)
+PKG_IPTABLES ?= $(PKGS_PREFIX)/iptables:$(PKGS)
+PKG_IPXE ?= $(PKGS_PREFIX)/ipxe:$(PKGS)
+PKG_LIBINIH ?= $(PKGS_PREFIX)/libinih:$(PKGS)
+PKG_LIBJSON_C ?= $(PKGS_PREFIX)/libjson-c:$(PKGS)
+PKG_LIBPOPT ?= $(PKGS_PREFIX)/libpopt:$(PKGS)
+PKG_LIBURCU ?= $(PKGS_PREFIX)/liburcu:$(PKGS)
+PKG_OPENSSL ?= $(PKGS_PREFIX)/openssl:$(PKGS)
+PKG_LIBSECCOMP ?= $(PKGS_PREFIX)/libseccomp:$(PKGS)
+PKG_LINUX_FIRMWARE ?= $(PKGS_PREFIX)/linux-firmware:$(PKGS)
+PKG_LVM2 ?= $(PKGS_PREFIX)/lvm2:$(PKGS)
+PKG_LIBAIO ?= $(PKGS_PREFIX)/libaio:$(PKGS)
+PKG_MUSL ?= $(PKGS_PREFIX)/musl:$(PKGS)
+PKG_RUNC ?= $(PKGS_PREFIX)/runc:$(PKGS)
+PKG_XFSPROGS ?= $(PKGS_PREFIX)/xfsprogs:$(PKGS)
+PKG_UTIL_LINUX ?= $(PKGS_PREFIX)/util-linux:$(PKGS)
+PKG_KMOD ?= $(PKGS_PREFIX)/kmod:$(PKGS)
+PKG_U_BOOT ?= $(PKGS_PREFIX)/u-boot:$(PKGS)
+PKG_RASPBERY_PI_FIRMWARE ?= $(PKGS_PREFIX)/raspberry-pi-firmware:$(PKGS)
+PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
+PKG_TALOSCTL_CNI_BUNDLE_INSTALL ?= $(PKGS_PREFIX)/talosctl-cni-bundle-install:$(EXTRA)
+
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.21
 # renovate: datasource=go depName=golang.org/x/tools
