@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/hcloud"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/nocloud"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/opennebula"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/openstack"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/oracle"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/scaleway"
@@ -103,6 +104,8 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 		p = &hcloud.Hcloud{}
 	case constants.PlatformMetal:
 		p = &metal.Metal{}
+	case "opennebula":
+		p = &opennebula.OpenNebula{}
 	case "openstack":
 		p = &openstack.Openstack{}
 	case "oracle":

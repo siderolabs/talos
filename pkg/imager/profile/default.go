@@ -167,6 +167,18 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"opennebula": {
+		Platform:   "opennebula",
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatXZ,
+			ImageOptions: &ImageOptions{
+				DiskSize:   MinRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
 	"openstack": {
 		Platform:   "openstack",
 		SecureBoot: pointer.To(false),

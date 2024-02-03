@@ -12,7 +12,7 @@ description: "Table of supported Talos Linux versions and respective platforms."
 | Kubernetes                                                                                                     | 1.30, 1.29, 1.28, 1.27, 1.26, 1.25 | 1.29, 1.28, 1.27, 1.26, 1.25, 1.24 |
 | Architecture                                                                                                   | amd64, arm64                       | amd64, arm64                       |
 | **Platforms**                                                                                                  |                                    |                                    |
-| - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Exoscale, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Exoscale, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud |
+| - cloud                                                                                                        | AWS, GCP, Azure, Digital Ocean, Exoscale, Hetzner, OpenNebula, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud | AWS, GCP, Azure, Digital Ocean, Exoscale, Hetzner, OpenStack, Oracle Cloud, Scaleway, Vultr, Upcloud |
 | - bare metal                                                                                                   | x86: BIOS, UEFI, SecureBoot; arm64: UEFI, SecureBoot; boot: ISO, PXE, disk image | x86: BIOS, UEFI; arm64: UEFI; boot: ISO, PXE, disk image |
 | - virtualized                                                                                                  | VMware, Hyper-V, KVM, Proxmox, Xen | VMware, Hyper-V, KVM, Proxmox, Xen |
 | - SBCs                                                                                                         | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Nano Pi R4S, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B, Raspberry Pi Compute Module 4 | Banana Pi M64, Jetson Nano, Libre Computer Board ALL-H3-CC, Nano Pi R4S, Pine64, Pine64 Rock64, Radxa ROCK Pi 4c, Raspberry Pi 4B, Raspberry Pi Compute Module 4 |
@@ -46,6 +46,7 @@ description: "Table of supported Talos Linux versions and respective platforms."
 * Exoscale
 * Hetzner
 * nocloud
+* OpenNebula
 * Oracle Cloud
 * Scaleway
 * Vultr

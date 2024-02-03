@@ -57,6 +57,12 @@ machine:
 Talos Linux starting from this release uses RSA key for Kubernetes API Server Service Account instead of ECDSA key to provide better compatibility with external OpenID Connect implementations.
 """
 
+    [notes.opennebula]
+        title = "OpenNebula"
+        description = """\
+Talos Linux now supports OpenNebula platform.
+"""
+
 [make_deps]
 
     [make_deps.tools]

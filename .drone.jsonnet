@@ -932,6 +932,8 @@ local release = {
       '_out/metal-nanopi_r4s-arm64.raw.xz',
       '_out/nocloud-amd64.raw.xz',
       '_out/nocloud-arm64.raw.xz',
+      '_out/opennebula-amd64.raw.xz',
+      '_out/opennebula-arm64.raw.xz',
       '_out/openstack-amd64.raw.xz',
       '_out/openstack-arm64.raw.xz',
       '_out/oracle-amd64.qcow2.xz',
