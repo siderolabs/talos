@@ -44,15 +44,25 @@ Set the source machine config through the serial number on Proxmox GUI.
 
 <img src="/images/no-cloud/proxmox-smbios.png" width="920px">
 
-The Proxmox stores the VM config at `/etc/pve/qemu-server/$ID.conf` (```$ID``` - VM ID number of virtual machine), you will see something like:
+You can read the VM config from a `root` shell with the command `qm config $ID` (```$ID``` - VM ID number of virtual machine), you will see something like:
 
-```conf
+```shellsession
+# qm config $ID
 ...
-smbios1: uuid=ceae4d10,serial=ZHM9bm9jbG91ZC1uZXQ7cz1odHRwOi8vMTAuMTAuMC4xL2NvbmZpZ3Mv,base64=1
+smbios1: uuid=5b0f7dcf-cfe3-4bf3-87a2-1cad29bd51f9,serial=ZHM9bm9jbG91ZC1uZXQ7cz1odHRwOi8vMTAuMTAuMC4xL2NvbmZpZ3Mv,base64=1
 ...
 ```
 
 Where serial holds the base64-encoded string version of `ds=nocloud-net;s=http://10.10.0.1/configs/`.
+
+The serial can also be set from a `root` shell on the Proxmox server:
+
+```shellsession
+# qm set $VM --smbios1 "uuid=5b0f7dcf-cfe3-4bf3-87a2-1cad29bd51f9,serial=$(printf '%s' 'ds=nocloud-net;s=http://10.10.0.1/configs/' | base64),base64=1"
+update VM 105: -smbios1 uuid=5b0f7dcf-cfe3-4bf3-87a2-1cad29bd51f9,serial=ZHM9bm9jbG91ZC1uZXQ7cz1odHRwOi8vMTAuMTAuMC4xL2NvbmZpZ3Mv,base64=1
+```
+
+Keep in mind that if you set the serial from the command line, you must encode it as base64, and you must include the UUID and any other settings that are already set for the `smbios1` option or they will be removed.
 
 ### CDROM/USB
 
@@ -113,13 +123,11 @@ Edit the cloud-init config information in Proxmox as follows, substitute your ow
 
 <img src="/images/no-cloud/proxmox-cloudinit.png" width="600px">
 
-and then update ```cicustom``` param at `/etc/pve/qemu-server/$ID.conf`.
+and then add a ```cicustom``` param to the virtual machine's configuration from a ```root``` shell:
 
-```config
-cicustom: user=local:snippets/controlplane-1.yml
-ipconfig0: ip=192.168.1.10/24,gw=192.168.10.254
-nameserver: 1.1.1.1
-searchdomain: local
+```shellsession
+# qm set 100 --cicustom user=local:snippets/controlplane-1.yml
+update VM 100: -cicustom user=local:snippets/controlplane-1.yml
 ```
 
 > Note: `snippets/controlplane-1.yml` is Talos machine config.
