@@ -35,6 +35,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/poweroff"
 	"github.com/siderolabs/talos/internal/app/trustd"
 	"github.com/siderolabs/talos/internal/app/wrapperd"
+	"github.com/siderolabs/talos/internal/pkg/ctxutil"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -163,8 +164,6 @@ func runDebugServer(ctx context.Context) {
 
 //nolint:gocyclo
 func run() error {
-	errCh := make(chan error)
-
 	// Limit GOMAXPROCS.
 	startup.LimitMaxProcs(constants.MachinedMaxProcs)
 
@@ -179,8 +178,8 @@ func run() error {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx, cancel := context.WithCancelCause(context.Background())
+	defer cancel(nil)
 
 	drainer := runtime.NewDrainer()
 	defer func() {
@@ -195,7 +194,13 @@ func run() error {
 	go runDebugServer(ctx)
 
 	// Schedule service shutdown on any return.
-	defer system.Services(c.Runtime()).Shutdown(ctx)
+	s := system.Services(c.Runtime())
+	defer func() {
+		shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), time.Minute)
+		defer shutdownCtxCancel()
+
+		s.Shutdown(shutdownCtx)
+	}()
 
 	// Start signal and ACPI listeners.
 	go func() {
@@ -211,7 +216,7 @@ func run() error {
 
 			log.Printf("controller runtime goroutine error: %s", ctrlErr)
 
-			errCh <- ctrlErr
+			cancel(ctrlErr)
 		}
 
 		log.Printf("controller runtime finished")
@@ -269,21 +274,23 @@ func run() error {
 								continue
 							}
 
-							errCh <- fmt.Errorf(
+							cancel(fmt.Errorf(
 								"fatal sequencer error in %q sequence: %v",
 								msg.GetSequence(),
 								msg.GetError().String(),
-							)
+							))
 						}
 					case *machine.RestartEvent:
-						errCh <- runtime.RebootError{Cmd: int(msg.Cmd)}
+						cancel(runtime.RebootError{Cmd: int(msg.Cmd)})
 					}
 				}
 			}
 		},
 	)
 
-	return <-errCh
+	<-ctx.Done()
+
+	return ctxutil.Cause(ctx)
 }
 
 func main() {
