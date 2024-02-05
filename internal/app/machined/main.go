@@ -207,7 +207,11 @@ func run() error {
 	// Start v2 controller runtime.
 	go func() {
 		if e := c.V1Alpha2().Run(ctx, drainer); e != nil {
-			errCh <- fmt.Errorf("fatal controller runtime error: %s", e)
+			ctrlErr := fmt.Errorf("fatal controller runtime error: %s", e)
+
+			log.Printf("controller runtime goroutine error: %s", ctrlErr)
+
+			errCh <- ctrlErr
 		}
 
 		log.Printf("controller runtime finished")
