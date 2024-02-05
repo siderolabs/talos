@@ -959,7 +959,7 @@ RUN markdownlint \
     --ignore '**/hack/chglog/**' \
     --ignore 'website/content/*/reference/*' \
     --ignore 'website/themes/**' \
-    --disable MD045 MD056 \
+    --disable MD045 MD056 -- \
     .
 RUN find . \
     -name '*.md' \
