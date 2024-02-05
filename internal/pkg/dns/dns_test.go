@@ -7,12 +7,13 @@ package dns_test
 import (
 	"context"
 	"errors"
-	"net/netip"
+	"net"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/coredns/coredns/plugin/pkg/proxy"
 	dnssrv "github.com/miekg/dns"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/check"
@@ -105,12 +106,18 @@ func newServer(t *testing.T, nameservers ...string) (context.Context, func()) {
 	handler := dns.NewHandler(l)
 	t.Cleanup(handler.Stop)
 
-	pxy := xslices.Map(nameservers, netip.MustParseAddr)
+	pxs := xslices.Map(nameservers, func(ns string) *proxy.Proxy {
+		p := proxy.NewProxy(ns, net.JoinHostPort(ns, "53"), "dns")
+		p.Start(500 * time.Millisecond)
 
-	err := handler.SetProxy(pxy)
-	require.NoError(t, err)
+		t.Cleanup(func() {
+			p.Stop()
+		})
 
-	require.Equal(t, pxy, handler.ProxyList())
+		return p
+	})
+
+	handler.SetProxy(pxs)
 
 	runner := dns.NewRunner(dns.NewServer(dns.ServerOptins{
 		Addr:    ":10700",

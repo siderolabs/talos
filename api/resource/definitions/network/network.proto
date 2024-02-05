@@ -93,7 +93,6 @@ message DHCP6OperatorSpec {
 // DNSResolveCacheSpec describes DNS servers status.
 message DNSResolveCacheSpec {
   string status = 1;
-  repeated common.NetIP servers = 2;
 }
 
 // HardwareAddrSpec describes spec for the link.

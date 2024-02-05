@@ -192,6 +192,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Addr:   "127.0.0.1:53",
 			Logger: dnsCacheLogger,
 		},
+		&network.DNSUpstreamController{},
 		&network.EtcFileController{
 			PodResolvConfPath: constants.PodResolvConfPath,
 		},

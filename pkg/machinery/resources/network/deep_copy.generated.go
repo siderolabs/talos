@@ -27,10 +27,6 @@ func (o AddressStatusSpec) DeepCopy() AddressStatusSpec {
 // DeepCopy generates a deep copy of DNSResolveCacheSpec.
 func (o DNSResolveCacheSpec) DeepCopy() DNSResolveCacheSpec {
 	var cp DNSResolveCacheSpec = o
-	if o.Servers != nil {
-		cp.Servers = make([]netip.Addr, len(o.Servers))
-		copy(cp.Servers, o.Servers)
-	}
 	return cp
 }
 

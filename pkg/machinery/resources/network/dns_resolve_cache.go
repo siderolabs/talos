@@ -5,8 +5,6 @@
 package network
 
 import (
-	"net/netip"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -25,8 +23,7 @@ type DNSResolveCache = typed.Resource[DNSResolveCacheSpec, DNSResolveCacheExtens
 //
 //gotagsrewrite:gen
 type DNSResolveCacheSpec struct {
-	Status  string       `yaml:"status" protobuf:"1"`
-	Servers []netip.Addr `yaml:"servers" protobuf:"2"`
+	Status string `yaml:"status" protobuf:"1"`
 }
 
 // NewDNSResolveCache initializes a DNSResolveCache resource.

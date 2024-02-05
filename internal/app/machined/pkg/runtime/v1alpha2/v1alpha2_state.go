@@ -149,6 +149,7 @@ func NewState() (*State, error) {
 		&network.AddressSpec{},
 		&network.DeviceConfigSpec{},
 		&network.DNSResolveCache{},
+		&network.DNSUpstream{},
 		&network.HardwareAddr{},
 		&network.HostnameStatus{},
 		&network.HostnameSpec{},

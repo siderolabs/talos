@@ -9,16 +9,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/coredns/coredns/plugin/pkg/proxy"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/ctxutil"
 	"github.com/siderolabs/talos/internal/pkg/dns"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -36,18 +35,7 @@ func (ctrl *DNSResolveCacheController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *DNSResolveCacheController) Inputs() []controller.Input {
 	return []controller.Input{
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.ResolverStatusType,
-			ID:        optional.Some(network.ResolverID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        optional.Some(config.V1Alpha1ID),
-			Kind:      controller.InputWeak,
-		},
+		safe.Input[*network.DNSUpstream](controller.InputWeak),
 	}
 }
 
@@ -70,22 +58,18 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 		case <-r.EventCh():
 		}
 
-		mc, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		upstreams, err := safe.ReaderListAll[*network.DNSUpstream](ctx, r)
 		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return err
+			return fmt.Errorf("error getting resolver status: %w", err)
 		}
 
-		if !mc.Config().Machine().Features().LocalDNSEnabled() {
+		if upstreams.Len() == 0 {
 			continue
 		}
 
 		err = func() error {
-			ctrl.Logger.Info("starting dns cache resolve")
-			defer ctrl.Logger.Info("stopping dns cache resolve")
+			ctrl.Logger.Info("starting dns caching resolver")
+			defer ctrl.Logger.Info("stopping dns caching resolver")
 
 			return ctrl.runServer(ctx, r)
 		}()
@@ -95,10 +79,9 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 	}
 }
 
-func (ctrl *DNSResolveCacheController) writeDNSStatus(ctx context.Context, r controller.Runtime, net resource.ID, handler *dns.Handler) error {
+func (ctrl *DNSResolveCacheController) writeDNSStatus(ctx context.Context, r controller.Runtime, net resource.ID) error {
 	return safe.WriterModify(ctx, r, network.NewDNSResolveCache(net), func(drc *network.DNSResolveCache) error {
 		drc.TypedSpec().Status = "running"
-		drc.TypedSpec().Servers = handler.ProxyList()
 
 		return nil
 	})
@@ -140,7 +123,7 @@ func (ctrl *DNSResolveCacheController) runServer(originCtx context.Context, r co
 
 		runner := dns.NewRunner(dns.NewServer(opt), l)
 
-		err := ctrl.writeDNSStatus(ctx, r, opt.Net, handler)
+		err := ctrl.writeDNSStatus(ctx, r, opt.Net)
 		if err != nil {
 			return err
 		}
@@ -164,33 +147,31 @@ func (ctrl *DNSResolveCacheController) runServer(originCtx context.Context, r co
 
 		eventCh = r.EventCh()
 
-		mc, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+		upstreams, err := safe.ReaderListAll[*network.DNSUpstream](ctx, r)
 		if err != nil {
-			return err
-		}
-
-		if !mc.Config().Machine().Features().LocalDNSEnabled() {
-			return nil
-		}
-
-		resolverStatus, err := safe.ReaderGetByID[*network.ResolverStatus](ctx, r, network.ResolverID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
 			return fmt.Errorf("error getting resolver status: %w", err)
 		}
 
-		ctrl.Logger.Info("updating dns server nameservers", zap.Stringers("data", resolverStatus.TypedSpec().DNSServers))
+		if upstreams.Len() == 0 {
+			return nil
+		}
 
-		err = handler.SetProxy(resolverStatus.TypedSpec().DNSServers)
-		if err != nil {
-			return fmt.Errorf("error setting dns server nameservers: %w", err)
+		addrs := make([]string, 0, upstreams.Len())
+		prxs := make([]*proxy.Proxy, 0, len(addrs))
+
+		for it := upstreams.Iterator(); it.Next(); {
+			upstream := it.Value()
+
+			addrs = append(addrs, upstream.TypedSpec().Value.Prx.Addr())
+			prxs = append(prxs, upstream.TypedSpec().Value.Prx.(*proxy.Proxy)) //nolint:forcetypeassert
+		}
+
+		if handler.SetProxy(prxs) {
+			ctrl.Logger.Info("updated dns server nameservers", zap.Strings("addrs", addrs))
 		}
 
 		for _, n := range []string{"udp", "tcp"} {
-			err = ctrl.writeDNSStatus(ctx, r, n, handler)
+			err = ctrl.writeDNSStatus(ctx, r, n)
 			if err != nil {
 				return err
 			}

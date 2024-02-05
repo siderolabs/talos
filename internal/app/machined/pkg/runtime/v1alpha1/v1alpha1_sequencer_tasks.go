@@ -1359,8 +1359,7 @@ func LeaveEtcd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				continue
 			}
 
-			//nolint:exhaustive
-			switch service.GetState() {
+			switch service.GetState() { //nolint:exhaustive
 			case events.StateRunning:
 				fallthrough
 			case events.StateStopping:

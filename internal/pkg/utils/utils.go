@@ -7,57 +7,8 @@ package utils
 
 import (
 	"errors"
-	"slices"
 	"sync/atomic"
-
-	"github.com/siderolabs/gen/pair"
 )
-
-// UpdatePairSet updates a set of pairs. It removes pairs that are not in toAdd and adds pairs that are not in old.
-func UpdatePairSet[T comparable, H any](
-	old []pair.Pair[T, H],
-	toAdd []T,
-	add func(T) (H, error),
-	remove func(pair.Pair[T, H]) error,
-) ([]pair.Pair[T, H], error) {
-	var err error
-
-	result := slices.DeleteFunc(old, func(h pair.Pair[T, H]) bool {
-		if err != nil {
-			return false
-		}
-
-		if slices.Contains(toAdd, h.F1) {
-			return false
-		}
-
-		err = remove(h)
-		if err != nil { //nolint:gosimple
-			return false
-		}
-
-		return true
-	})
-
-	if err != nil {
-		return result, err
-	}
-
-	for _, val := range toAdd {
-		if slices.ContainsFunc(old, func(h pair.Pair[T, H]) bool { return h.F1 == val }) {
-			continue
-		}
-
-		h, err := add(val)
-		if err != nil {
-			return result, err
-		}
-
-		result = append(result, pair.MakePair(val, h))
-	}
-
-	return result, nil
-}
 
 const (
 	notRunning = iota

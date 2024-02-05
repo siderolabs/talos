@@ -9,8 +9,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
-	"net"
-	"net/netip"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -20,8 +19,6 @@ import (
 	"github.com/coredns/coredns/plugin/pkg/proxy"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
-	"github.com/siderolabs/gen/pair"
-	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/utils"
@@ -96,7 +93,7 @@ func (c *Cache) ServeDNS(wr dns.ResponseWriter, msg *dns.Msg) {
 // Handler is a dns proxy selector.
 type Handler struct {
 	mx     sync.RWMutex
-	dests  []pair.Pair[netip.Addr, *proxy.Proxy]
+	dests  []*proxy.Proxy
 	logger *zap.Logger
 }
 
@@ -121,7 +118,7 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 
 	h.logger.Debug("dns request", zap.Stringer("data", msg))
 
-	upstreams := xslices.Map(h.dests, func(h pair.Pair[netip.Addr, *proxy.Proxy]) *proxy.Proxy { return h.F2 })
+	upstreams := slices.Clone(h.dests)
 
 	if len(upstreams) == 0 {
 		emptyProxyErr := new(dns.Msg).SetRcode(req.Req, dns.RcodeServerFailure)
@@ -185,43 +182,21 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 }
 
 // SetProxy sets destination dns proxy servers.
-func (h *Handler) SetProxy(servers []netip.Addr) error {
+func (h *Handler) SetProxy(prxs []*proxy.Proxy) bool {
 	h.mx.Lock()
 	defer h.mx.Unlock()
 
-	var err error
+	if slices.Equal(h.dests, prxs) {
+		return false
+	}
 
-	h.dests, err = utils.UpdatePairSet(h.dests, servers, onAdd, onRemove)
+	h.dests = prxs
 
-	return err
-}
-
-func onAdd(addr netip.Addr) (*proxy.Proxy, error) {
-	dst := addr.String()
-
-	result := proxy.NewProxy(dst, net.JoinHostPort(dst, "53"), "dns")
-
-	result.Start(500 * time.Millisecond)
-
-	return result, nil
-}
-
-func onRemove(h pair.Pair[netip.Addr, *proxy.Proxy]) error {
-	h.F2.Stop()
-
-	return nil
+	return true
 }
 
 // Stop stops and clears dns proxy selector.
-func (h *Handler) Stop() { h.SetProxy(nil) } //nolint:errcheck
-
-// ProxyList returns a list of destination dns proxy servers.
-func (h *Handler) ProxyList() []netip.Addr {
-	h.mx.RLock()
-	defer h.mx.RUnlock()
-
-	return xslices.Map(h.dests, func(h pair.Pair[netip.Addr, *proxy.Proxy]) netip.Addr { return h.F1 })
-}
+func (h *Handler) Stop() { h.SetProxy(nil) }
 
 // ServerOptins is a Server options.
 type ServerOptins struct {

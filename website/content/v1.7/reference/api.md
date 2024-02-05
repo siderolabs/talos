@@ -2911,7 +2911,6 @@ DNSResolveCacheSpec describes DNS servers status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | status | [string](#string) |  |  |
-| servers | [common.NetIP](#common.NetIP) | repeated |  |
 
 
 

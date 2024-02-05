@@ -56,8 +56,9 @@ func (suite *DNSServer) TestResolving() {
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{"tcp", "udp"}, func(r *network.DNSResolveCache, assert *assert.Assertions) {
 		assert.Equal("running", r.TypedSpec().Status)
-		assert.Equal(dnsSlice, xslices.Map(r.TypedSpec().Servers, netip.Addr.String))
 	})
+
+	rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(dnsSlice))
 
 	msg := &dns.Msg{
 		MsgHdr: dns.MsgHdr{
@@ -111,9 +112,9 @@ func (suite *DNSServer) TestSetupStartStop() {
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{"tcp", "udp"}, func(r *network.DNSResolveCache, assert *assert.Assertions) {
 		assert.Equal("running", r.TypedSpec().Status)
-		assert.Equal(dnsSlice, xslices.Map(r.TypedSpec().Servers, netip.Addr.String))
 	})
 
+	rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(dnsSlice))
 	// stop dns resolver
 
 	cfg.Container().RawV1Alpha1().MachineConfig.MachineFeatures.LocalDNS = pointer.To(false)
@@ -123,6 +124,10 @@ func (suite *DNSServer) TestSetupStartStop() {
 	ctest.AssertNoResource[*network.DNSResolveCache](suite, "tcp")
 	ctest.AssertNoResource[*network.DNSResolveCache](suite, "udp")
 
+	for _, d := range dnsSlice {
+		ctest.AssertNoResource[*network.DNSUpstream](suite, d)
+	}
+
 	// start dns resolver again
 
 	cfg.Container().RawV1Alpha1().MachineConfig.MachineFeatures.LocalDNS = pointer.To(true)
@@ -131,8 +136,9 @@ func (suite *DNSServer) TestSetupStartStop() {
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{"tcp", "udp"}, func(r *network.DNSResolveCache, assert *assert.Assertions) {
 		assert.Equal("running", r.TypedSpec().Status)
-		assert.Equal(dnsSlice, xslices.Map(r.TypedSpec().Servers, netip.Addr.String))
 	})
+
+	rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(dnsSlice))
 }
 
 func TestDNSServer(t *testing.T) {
@@ -140,6 +146,7 @@ func TestDNSServer(t *testing.T) {
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 10 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{
 					Addr:   ":10700",
 					Logger: zaptest.NewLogger(t),
