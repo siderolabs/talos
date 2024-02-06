@@ -255,10 +255,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.DropUpgradeFallbackController{
 			MetaProvider: ctrl.v1alpha1Runtime.State().Machine(),
 		},
-		&runtimecontrollers.ExtensionServicesConfigController{},
-		&runtimecontrollers.ExtensionServicesConfigFilesController{
+		&runtimecontrollers.ExtensionServiceConfigController{},
+		&runtimecontrollers.ExtensionServiceConfigFilesController{
 			V1Alpha1Mode:            ctrl.v1alpha1Runtime.State().Platform().Mode(),
-			ExtensionsConfigBaseDir: constants.ExtensionServicesUserConfigPath,
+			ExtensionsConfigBaseDir: constants.ExtensionServiceUserConfigPath,
 		},
 		&runtimecontrollers.EventsSinkConfigController{
 			Cmdline:      procfs.ProcCmdline(),
@@ -270,7 +270,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&runtimecontrollers.ExtensionServiceController{
 			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
-			ConfigPath:       constants.ExtensionServicesConfigPath,
+			ConfigPath:       constants.ExtensionServiceConfigPath,
 		},
 		&runtimecontrollers.ExtensionStatusController{},
 		&runtimecontrollers.KernelModuleConfigController{},

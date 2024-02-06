@@ -172,7 +172,7 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 		svcMock.getTimesStartedStopped(),
 	)
 
-	helloConfig := runtime.NewExtensionServicesConfigStatusSpec(runtime.NamespaceName, "hello-world")
+	helloConfig := runtime.NewExtensionServiceConfigStatusSpec(runtime.NamespaceName, "hello-world")
 	helloConfig.TypedSpec().SpecVersion = "1"
 	suite.Require().NoError(suite.state.Create(suite.ctx, helloConfig))
 
@@ -201,7 +201,7 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 		},
 	})
 
-	unexpectedConfig := runtime.NewExtensionServicesConfigStatusSpec(runtime.NamespaceName, "unexpected")
+	unexpectedConfig := runtime.NewExtensionServiceConfigStatusSpec(runtime.NamespaceName, "unexpected")
 	unexpectedConfig.TypedSpec().SpecVersion = "1"
 	suite.Require().NoError(suite.state.Create(suite.ctx, unexpectedConfig))
 

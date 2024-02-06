@@ -47,7 +47,7 @@ func (ctrl *ExtensionServiceController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: runtime.NamespaceName,
-			Type:      runtime.ExtensionServicesConfigStatusType,
+			Type:      runtime.ExtensionServiceConfigStatusType,
 			Kind:      controller.InputStrong,
 		},
 	}
@@ -84,7 +84,7 @@ func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Ru
 
 	// load initial state of configStatuses
 	if ctrl.configStatusCache == nil {
-		configStatuses, err := safe.ReaderListAll[*runtime.ExtensionServicesConfigStatus](ctx, r)
+		configStatuses, err := safe.ReaderListAll[*runtime.ExtensionServiceConfigStatus](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing extension services config: %w", err)
 		}
@@ -146,7 +146,7 @@ func (ctrl *ExtensionServiceController) Run(ctx context.Context, r controller.Ru
 		case <-r.EventCh():
 		}
 
-		configStatuses, err := safe.ReaderListAll[*runtime.ExtensionServicesConfigStatus](ctx, r)
+		configStatuses, err := safe.ReaderListAll[*runtime.ExtensionServiceConfigStatus](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing extension services config: %w", err)
 		}

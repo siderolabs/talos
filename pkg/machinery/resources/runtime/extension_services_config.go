@@ -13,42 +13,43 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-// ExtensionServicesConfigType is a type of ExtensionServicesConfig.
-const ExtensionServicesConfigType = resource.Type("ExtensionServicesConfigs.runtime.talos.dev")
+// ExtensionServiceConfigType is a type of ExtensionServiceConfig.
+const ExtensionServiceConfigType = resource.Type("ExtensionServiceConfigs.runtime.talos.dev")
 
-// ExtensionServicesConfig represents a resource that describes status of rendered extensions service config files.
-type ExtensionServicesConfig = typed.Resource[ExtensionServicesConfigSpec, ExtensionServicesConfigExtension]
+// ExtensionServiceConfig represents a resource that describes status of rendered extensions service config files.
+type ExtensionServiceConfig = typed.Resource[ExtensionServiceConfigSpec, ExtensionServiceConfigExtension]
 
-// ExtensionServicesConfigSpec describes status of rendered extensions service config files.
+// ExtensionServiceConfigSpec describes status of rendered extensions service config files.
 //
 //gotagsrewrite:gen
-type ExtensionServicesConfigSpec struct {
-	Files []ExtensionServicesConfigFile `yaml:"files" protobuf:"2"`
+type ExtensionServiceConfigSpec struct {
+	Files       []ExtensionServiceConfigFile `yaml:"files,omitempty" protobuf:"1"`
+	Environment []string                     `yaml:"environment,omitempty" protobuf:"2"`
 }
 
-// ExtensionServicesConfigFile describes extensions service config files.
+// ExtensionServiceConfigFile describes extensions service config files.
 //
 //gotagsrewrite:gen
-type ExtensionServicesConfigFile struct {
+type ExtensionServiceConfigFile struct {
 	Content   string `yaml:"content" protobuf:"1"`
 	MountPath string `yaml:"mountPath" protobuf:"2"`
 }
 
-// NewExtensionServicesConfigSpec initializes a new ExtensionServiceConfigSpec.
-func NewExtensionServicesConfigSpec(namespace resource.Namespace, id resource.ID) *ExtensionServicesConfig {
-	return typed.NewResource[ExtensionServicesConfigSpec, ExtensionServicesConfigExtension](
-		resource.NewMetadata(namespace, ExtensionServicesConfigType, id, resource.VersionUndefined),
-		ExtensionServicesConfigSpec{},
+// NewExtensionServiceConfigSpec initializes a new ExtensionServiceConfigSpec.
+func NewExtensionServiceConfigSpec(namespace resource.Namespace, id resource.ID) *ExtensionServiceConfig {
+	return typed.NewResource[ExtensionServiceConfigSpec, ExtensionServiceConfigExtension](
+		resource.NewMetadata(namespace, ExtensionServiceConfigType, id, resource.VersionUndefined),
+		ExtensionServiceConfigSpec{},
 	)
 }
 
-// ExtensionServicesConfigExtension provides auxiliary methods for ExtensionServiceConfig.
-type ExtensionServicesConfigExtension struct{}
+// ExtensionServiceConfigExtension provides auxiliary methods for ExtensionServiceConfig.
+type ExtensionServiceConfigExtension struct{}
 
 // ResourceDefinition implements meta.ResourceDefinitionProvider interface.
-func (ExtensionServicesConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (ExtensionServiceConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
-		Type:             ExtensionServicesConfigType,
+		Type:             ExtensionServiceConfigType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
@@ -58,7 +59,7 @@ func (ExtensionServicesConfigExtension) ResourceDefinition() meta.ResourceDefini
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[ExtensionServicesConfigSpec](ExtensionServicesConfigType, &ExtensionServicesConfig{})
+	err := protobuf.RegisterDynamic[ExtensionServiceConfigSpec](ExtensionServiceConfigType, &ExtensionServiceConfig{})
 	if err != nil {
 		panic(err)
 	}

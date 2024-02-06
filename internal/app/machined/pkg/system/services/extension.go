@@ -52,7 +52,7 @@ func (svc *Extension) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// re-mount service rootfs as overlay rw mount to allow containerd to mount there /dev, /proc, etc.
 	svc.overlay = mount.NewMountPoint(
 		"",
-		filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name),
+		filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name),
 		"",
 		0,
 		"",
@@ -111,7 +111,7 @@ func (svc *Extension) DependsOn(r runtime.Runtime) []string {
 
 func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oci.SpecOpts {
 	ociOpts := []oci.SpecOpts{
-		oci.WithRootFSPath(filepath.Join(constants.ExtensionServicesRootfsPath, svc.Spec.Name)),
+		oci.WithRootFSPath(filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name)),
 		containerd.WithRootfsPropagation(svc.Spec.Container.Security.RootfsPropagation),
 		oci.WithCgroup(filepath.Join(constants.CgroupExtensions, svc.Spec.Name)),
 		oci.WithMounts(mounts),
@@ -166,18 +166,25 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	mounts := append([]specs.Mount{}, svc.Spec.Container.Mounts...)
 
-	configSpec, err := safe.StateGetByID[*runtimeres.ExtensionServicesConfig](context.Background(), r.State().V1Alpha2().Resources(), svc.Spec.Name)
+	envVars, err := svc.parseEnvironment()
+	if err != nil {
+		return nil, err
+	}
+
+	configSpec, err := safe.StateGetByID[*runtimeres.ExtensionServiceConfig](context.Background(), r.State().V1Alpha2().Resources(), svc.Spec.Name)
 	if err == nil {
 		spec := configSpec.TypedSpec()
 
 		for _, ext := range spec.Files {
 			mounts = append(mounts, specs.Mount{
-				Source:      filepath.Join(constants.ExtensionServicesUserConfigPath, svc.Spec.Name, strings.ReplaceAll(strings.TrimPrefix(ext.MountPath, "/"), "/", "-")),
+				Source:      filepath.Join(constants.ExtensionServiceUserConfigPath, svc.Spec.Name, strings.ReplaceAll(strings.TrimPrefix(ext.MountPath, "/"), "/", "-")),
 				Destination: ext.MountPath,
 				Type:        "bind",
 				Options:     []string{"ro", "bind"},
 			})
 		}
+
+		envVars = append(envVars, spec.Environment...)
 	} else if !state.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -191,11 +198,6 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		restartType = restart.Once
 	case extservices.RestartUntilSuccess:
 		restartType = restart.UntilSuccess
-	}
-
-	envVars, err := svc.parseEnvironment()
-	if err != nil {
-		return nil, err
 	}
 
 	ociSpecOpts := svc.getOCIOptions(envVars, mounts)

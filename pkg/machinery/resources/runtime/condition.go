@@ -80,7 +80,7 @@ func (condition *ExtensionServiceConfigStatusCondition) String() string {
 func (condition *ExtensionServiceConfigStatusCondition) Wait(ctx context.Context) error {
 	_, err := condition.state.WatchFor(
 		ctx,
-		resource.NewMetadata(NamespaceName, ExtensionServicesConfigStatusType, condition.serviceName, resource.VersionUndefined),
+		resource.NewMetadata(NamespaceName, ExtensionServiceConfigStatusType, condition.serviceName, resource.VersionUndefined),
 		state.WithEventTypes(state.Created, state.Updated),
 	)
 

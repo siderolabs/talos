@@ -209,9 +209,9 @@ description: Talos gRPC API reference.
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [EventSinkConfigSpec](#talos.resource.definitions.runtime.EventSinkConfigSpec)
-    - [ExtensionServicesConfigFile](#talos.resource.definitions.runtime.ExtensionServicesConfigFile)
-    - [ExtensionServicesConfigSpec](#talos.resource.definitions.runtime.ExtensionServicesConfigSpec)
-    - [ExtensionServicesConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServicesConfigStatusSpec)
+    - [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile)
+    - [ExtensionServiceConfigSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigSpec)
+    - [ExtensionServiceConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec)
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
@@ -3833,10 +3833,10 @@ EventSinkConfigSpec describes configuration of Talos event log streaming.
 
 
 
-<a name="talos.resource.definitions.runtime.ExtensionServicesConfigFile"></a>
+<a name="talos.resource.definitions.runtime.ExtensionServiceConfigFile"></a>
 
-### ExtensionServicesConfigFile
-ExtensionServicesConfigFile describes extensions service config files.
+### ExtensionServiceConfigFile
+ExtensionServiceConfigFile describes extensions service config files.
 
 
 | Field | Type | Label | Description |
@@ -3849,25 +3849,26 @@ ExtensionServicesConfigFile describes extensions service config files.
 
 
 
-<a name="talos.resource.definitions.runtime.ExtensionServicesConfigSpec"></a>
+<a name="talos.resource.definitions.runtime.ExtensionServiceConfigSpec"></a>
 
-### ExtensionServicesConfigSpec
-ExtensionServicesConfigSpec describes status of rendered extensions service config files.
+### ExtensionServiceConfigSpec
+ExtensionServiceConfigSpec describes status of rendered extensions service config files.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| files | [ExtensionServicesConfigFile](#talos.resource.definitions.runtime.ExtensionServicesConfigFile) | repeated |  |
+| files | [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile) | repeated |  |
+| environment | [string](#string) | repeated |  |
 
 
 
 
 
 
-<a name="talos.resource.definitions.runtime.ExtensionServicesConfigStatusSpec"></a>
+<a name="talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec"></a>
 
-### ExtensionServicesConfigStatusSpec
-ExtensionServicesConfigStatusSpec describes status of rendered extensions service config files.
+### ExtensionServiceConfigStatusSpec
+ExtensionServiceConfigStatusSpec describes status of rendered extensions service config files.
 
 
 | Field | Type | Label | Description |

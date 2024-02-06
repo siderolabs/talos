@@ -20,33 +20,33 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-// ExtensionServicesConfigFilesController writes down the config files for extension services.
-type ExtensionServicesConfigFilesController struct {
+// ExtensionServiceConfigFilesController writes down the config files for extension services.
+type ExtensionServiceConfigFilesController struct {
 	V1Alpha1Mode            v1alpha1runtime.Mode
 	ExtensionsConfigBaseDir string
 }
 
 // Name implements controller.Controller interface.
-func (ctrl *ExtensionServicesConfigFilesController) Name() string {
-	return "runtime.ExtensionServicesConfigFilesController"
+func (ctrl *ExtensionServiceConfigFilesController) Name() string {
+	return "runtime.ExtensionServiceConfigFilesController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *ExtensionServicesConfigFilesController) Inputs() []controller.Input {
+func (ctrl *ExtensionServiceConfigFilesController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: runtime.NamespaceName,
-			Type:      runtime.ExtensionServicesConfigType,
+			Type:      runtime.ExtensionServiceConfigType,
 			Kind:      controller.InputStrong,
 		},
 	}
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *ExtensionServicesConfigFilesController) Outputs() []controller.Output {
+func (ctrl *ExtensionServiceConfigFilesController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: runtime.ExtensionServicesConfigStatusType,
+			Type: runtime.ExtensionServiceConfigStatusType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -55,7 +55,7 @@ func (ctrl *ExtensionServicesConfigFilesController) Outputs() []controller.Outpu
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *ExtensionServicesConfigFilesController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ExtensionServiceConfigFilesController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
 		return nil
 	}
@@ -67,7 +67,7 @@ func (ctrl *ExtensionServicesConfigFilesController) Run(ctx context.Context, r c
 		case <-r.EventCh():
 		}
 
-		list, err := safe.ReaderListAll[*runtime.ExtensionServicesConfig](ctx, r)
+		list, err := safe.ReaderListAll[*runtime.ExtensionServiceConfig](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing extension services config: %w", err)
 		}
@@ -95,7 +95,7 @@ func (ctrl *ExtensionServicesConfigFilesController) Run(ctx context.Context, r c
 				touchedFiles[fileName] = struct{}{}
 			}
 
-			if err = safe.WriterModify(ctx, r, runtime.NewExtensionServicesConfigStatusSpec(runtime.NamespaceName, iter.Value().Metadata().ID()), func(spec *runtime.ExtensionServicesConfigStatus) error {
+			if err = safe.WriterModify(ctx, r, runtime.NewExtensionServiceConfigStatusSpec(runtime.NamespaceName, iter.Value().Metadata().ID()), func(spec *runtime.ExtensionServiceConfigStatus) error {
 				spec.TypedSpec().SpecVersion = iter.Value().Metadata().Version().String()
 
 				return nil
@@ -117,7 +117,7 @@ func (ctrl *ExtensionServicesConfigFilesController) Run(ctx context.Context, r c
 			return err
 		}
 
-		if err = safe.CleanupOutputs[*runtime.ExtensionServicesConfigStatus](ctx, r); err != nil {
+		if err = safe.CleanupOutputs[*runtime.ExtensionServiceConfigStatus](ctx, r); err != nil {
 			return err
 		}
 	}

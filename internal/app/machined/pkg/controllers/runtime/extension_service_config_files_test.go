@@ -18,18 +18,18 @@ import (
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-type ExtensionServicesConfigFilesSuite struct {
+type ExtensionServiceConfigFilesSuite struct {
 	ctest.DefaultSuite
 	extensionsConfigDir string
 }
 
-func TestExtensionServicesConfigFilesSuite(t *testing.T) {
+func TestExtensionServiceConfigFilesSuite(t *testing.T) {
 	extensionsConfigDir := t.TempDir()
 
-	suite.Run(t, &ExtensionServicesConfigFilesSuite{
+	suite.Run(t, &ExtensionServiceConfigFilesSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtime.ExtensionServicesConfigFilesController{
+				suite.Require().NoError(suite.Runtime().RegisterController(&runtime.ExtensionServiceConfigFilesController{
 					ExtensionsConfigBaseDir: extensionsConfigDir,
 				}))
 			},
@@ -38,7 +38,7 @@ func TestExtensionServicesConfigFilesSuite(t *testing.T) {
 	})
 }
 
-func (suite *ExtensionServicesConfigFilesSuite) TestReconcileExtensionServicesConfigFiles() {
+func (suite *ExtensionServiceConfigFilesSuite) TestReconcileExtensionServiceConfigFiles() {
 	for _, tt := range []struct {
 		extensionName string
 		configFiles   []struct {
@@ -75,23 +75,23 @@ func (suite *ExtensionServicesConfigFilesSuite) TestReconcileExtensionServicesCo
 			},
 		},
 	} {
-		extensionServicesConfigFiles := runtimeres.NewExtensionServicesConfigSpec(runtimeres.NamespaceName, tt.extensionName)
-		extensionServicesConfigFiles.TypedSpec().Files = xslices.Map(tt.configFiles, func(config struct {
+		extensionServiceConfigFiles := runtimeres.NewExtensionServiceConfigSpec(runtimeres.NamespaceName, tt.extensionName)
+		extensionServiceConfigFiles.TypedSpec().Files = xslices.Map(tt.configFiles, func(config struct {
 			content   string
 			mountPath string
 		},
-		) runtimeres.ExtensionServicesConfigFile {
-			return runtimeres.ExtensionServicesConfigFile{
+		) runtimeres.ExtensionServiceConfigFile {
+			return runtimeres.ExtensionServiceConfigFile{
 				Content:   config.content,
 				MountPath: config.mountPath,
 			}
 		})
 
-		suite.Require().NoError(suite.State().Create(suite.Ctx(), extensionServicesConfigFiles))
+		suite.Require().NoError(suite.State().Create(suite.Ctx(), extensionServiceConfigFiles))
 
 		ctest.AssertResource(suite, tt.extensionName,
-			func(status *runtimeres.ExtensionServicesConfigStatus, asrt *assert.Assertions) {
-				asrt.Equal(extensionServicesConfigFiles.Metadata().Version().String(), status.TypedSpec().SpecVersion)
+			func(status *runtimeres.ExtensionServiceConfigStatus, asrt *assert.Assertions) {
+				asrt.Equal(extensionServiceConfigFiles.Metadata().Version().String(), status.TypedSpec().SpecVersion)
 			},
 		)
 
@@ -113,8 +113,8 @@ func (suite *ExtensionServicesConfigFilesSuite) TestReconcileExtensionServicesCo
 	suite.Assert().NoError(err)
 
 	// delete test-extension-b resource
-	suite.Assert().NoError(suite.State().Destroy(suite.Ctx(), runtimeres.NewExtensionServicesConfigSpec(runtimeres.NamespaceName, "test-extension-b").Metadata()))
-	ctest.AssertNoResource[*runtimeres.ExtensionServicesConfigStatus](suite, "test-extension-b")
+	suite.Assert().NoError(suite.State().Destroy(suite.Ctx(), runtimeres.NewExtensionServiceConfigSpec(runtimeres.NamespaceName, "test-extension-b").Metadata()))
+	ctest.AssertNoResource[*runtimeres.ExtensionServiceConfigStatus](suite, "test-extension-b")
 
 	suite.Assert().NoFileExists(filepath.Join(suite.extensionsConfigDir, "test", "testdata"))
 	suite.Assert().NoDirExists(filepath.Join(suite.extensionsConfigDir, "test"))

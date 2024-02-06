@@ -293,14 +293,14 @@ omit: false
 			name: "misspelled apiVersion",
 			source: []byte(`---
 apiversion: v1alpha1
-kind: ExtensionServicesConfig
+kind: ExtensionServiceConfig
 config:
     - name: nut-client
       configFiles:
           - content: MONITOR ${upsmonHost} 1 remote pass foo
             mountPath: /usr/local/etc/nut/upsmon.conf
 `),
-			expectedErr: "\"ExtensionServicesConfig\" \"\": not registered",
+			expectedErr: "\"ExtensionServiceConfig\" \"\": not registered",
 		},
 	}
 

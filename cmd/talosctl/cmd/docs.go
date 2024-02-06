@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
@@ -119,6 +120,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "v1alpha1",
 					fileDoc: v1alpha1.GetFileDoc(),
+				},
+				{
+					name:    "extensions",
+					fileDoc: extensions.GetFileDoc(),
 				},
 			} {
 				path := filepath.Join(dir, pkg.name)

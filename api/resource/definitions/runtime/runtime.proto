@@ -17,19 +17,20 @@ message EventSinkConfigSpec {
   string endpoint = 1;
 }
 
-// ExtensionServicesConfigFile describes extensions service config files.
-message ExtensionServicesConfigFile {
+// ExtensionServiceConfigFile describes extensions service config files.
+message ExtensionServiceConfigFile {
   string content = 1;
   string mount_path = 2;
 }
 
-// ExtensionServicesConfigSpec describes status of rendered extensions service config files.
-message ExtensionServicesConfigSpec {
-  repeated ExtensionServicesConfigFile files = 2;
+// ExtensionServiceConfigSpec describes status of rendered extensions service config files.
+message ExtensionServiceConfigSpec {
+  repeated ExtensionServiceConfigFile files = 1;
+  repeated string environment = 2;
 }
 
-// ExtensionServicesConfigStatusSpec describes status of rendered extensions service config files.
-message ExtensionServicesConfigStatusSpec {
+// ExtensionServiceConfigStatusSpec describes status of rendered extensions service config files.
+message ExtensionServiceConfigStatusSpec {
   string spec_version = 1;
 }
 

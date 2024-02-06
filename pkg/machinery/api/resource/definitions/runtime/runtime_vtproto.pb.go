@@ -106,7 +106,7 @@ func (m *EventSinkConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *ExtensionServicesConfigFile) MarshalVT() (dAtA []byte, err error) {
+func (m *ExtensionServiceConfigFile) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -119,12 +119,12 @@ func (m *ExtensionServicesConfigFile) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ExtensionServicesConfigFile) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ExtensionServiceConfigFile) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ExtensionServicesConfigFile) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ExtensionServiceConfigFile) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -153,7 +153,7 @@ func (m *ExtensionServicesConfigFile) MarshalToSizedBufferVT(dAtA []byte) (int, 
 	return len(dAtA) - i, nil
 }
 
-func (m *ExtensionServicesConfigSpec) MarshalVT() (dAtA []byte, err error) {
+func (m *ExtensionServiceConfigSpec) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -166,12 +166,12 @@ func (m *ExtensionServicesConfigSpec) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ExtensionServicesConfigSpec) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ExtensionServiceConfigSpec) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ExtensionServicesConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ExtensionServiceConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -183,6 +183,15 @@ func (m *ExtensionServicesConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Environment) > 0 {
+		for iNdEx := len(m.Environment) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Environment[iNdEx])
+			copy(dAtA[i:], m.Environment[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Environment[iNdEx])))
+			i--
+			dAtA[i] = 0x12
+		}
+	}
 	if len(m.Files) > 0 {
 		for iNdEx := len(m.Files) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Files[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -192,13 +201,13 @@ func (m *ExtensionServicesConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, 
 			i -= size
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 			i--
-			dAtA[i] = 0x12
+			dAtA[i] = 0xa
 		}
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *ExtensionServicesConfigStatusSpec) MarshalVT() (dAtA []byte, err error) {
+func (m *ExtensionServiceConfigStatusSpec) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -211,12 +220,12 @@ func (m *ExtensionServicesConfigStatusSpec) MarshalVT() (dAtA []byte, err error)
 	return dAtA[:n], nil
 }
 
-func (m *ExtensionServicesConfigStatusSpec) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ExtensionServiceConfigStatusSpec) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *ExtensionServicesConfigStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ExtensionServiceConfigStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1046,7 +1055,7 @@ func (m *EventSinkConfigSpec) SizeVT() (n int) {
 	return n
 }
 
-func (m *ExtensionServicesConfigFile) SizeVT() (n int) {
+func (m *ExtensionServiceConfigFile) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1064,7 +1073,7 @@ func (m *ExtensionServicesConfigFile) SizeVT() (n int) {
 	return n
 }
 
-func (m *ExtensionServicesConfigSpec) SizeVT() (n int) {
+func (m *ExtensionServiceConfigSpec) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1076,11 +1085,17 @@ func (m *ExtensionServicesConfigSpec) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
+	if len(m.Environment) > 0 {
+		for _, s := range m.Environment {
+			l = len(s)
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
 	n += len(m.unknownFields)
 	return n
 }
 
-func (m *ExtensionServicesConfigStatusSpec) SizeVT() (n int) {
+func (m *ExtensionServiceConfigStatusSpec) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1548,7 +1563,7 @@ func (m *EventSinkConfigSpec) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ExtensionServicesConfigFile) UnmarshalVT(dAtA []byte) error {
+func (m *ExtensionServiceConfigFile) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1571,10 +1586,10 @@ func (m *ExtensionServicesConfigFile) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ExtensionServicesConfigFile: wiretype end group for non-group")
+			return fmt.Errorf("proto: ExtensionServiceConfigFile: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExtensionServicesConfigFile: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ExtensionServiceConfigFile: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1663,7 +1678,7 @@ func (m *ExtensionServicesConfigFile) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ExtensionServicesConfigSpec) UnmarshalVT(dAtA []byte) error {
+func (m *ExtensionServiceConfigSpec) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1686,13 +1701,13 @@ func (m *ExtensionServicesConfigSpec) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ExtensionServicesConfigSpec: wiretype end group for non-group")
+			return fmt.Errorf("proto: ExtensionServiceConfigSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExtensionServicesConfigSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ExtensionServiceConfigSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 2:
+		case 1:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Files", wireType)
 			}
@@ -1721,10 +1736,42 @@ func (m *ExtensionServicesConfigSpec) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Files = append(m.Files, &ExtensionServicesConfigFile{})
+			m.Files = append(m.Files, &ExtensionServiceConfigFile{})
 			if err := m.Files[len(m.Files)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Environment", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Environment = append(m.Environment, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1748,7 +1795,7 @@ func (m *ExtensionServicesConfigSpec) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ExtensionServicesConfigStatusSpec) UnmarshalVT(dAtA []byte) error {
+func (m *ExtensionServiceConfigStatusSpec) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1771,10 +1818,10 @@ func (m *ExtensionServicesConfigStatusSpec) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ExtensionServicesConfigStatusSpec: wiretype end group for non-group")
+			return fmt.Errorf("proto: ExtensionServiceConfigStatusSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ExtensionServicesConfigStatusSpec: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ExtensionServiceConfigStatusSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

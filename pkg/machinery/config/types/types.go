@@ -6,9 +6,9 @@
 package types
 
 import (
-	_ "github.com/siderolabs/talos/pkg/machinery/config/types/extensionservicesconfig" // import config types to register them
-	_ "github.com/siderolabs/talos/pkg/machinery/config/types/network"                 // import config types to register them
-	_ "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"                 // import config types to register them
-	_ "github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"              // import config types to register them
-	_ "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"                // import config types to register them
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types/network"            // import config types to register them
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"            // import config types to register them
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions" // import config types to register them
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"         // import config types to register them
+	_ "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"           // import config types to register them
 )

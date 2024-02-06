@@ -20,16 +20,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-// ExtensionServicesConfigController watches v1alpha1.Config, creates/updates/deletes extension services config.
-type ExtensionServicesConfigController struct{}
+// ExtensionServiceConfigController watches v1alpha1.Config, creates/updates/deletes extension services config.
+type ExtensionServiceConfigController struct{}
 
 // Name implements controller.Controller interface.
-func (ctrl *ExtensionServicesConfigController) Name() string {
-	return "runtime.ExtensionServicesConfigController"
+func (ctrl *ExtensionServiceConfigController) Name() string {
+	return "runtime.ExtensionServiceConfigController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *ExtensionServicesConfigController) Inputs() []controller.Input {
+func (ctrl *ExtensionServiceConfigController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: config.NamespaceName,
@@ -41,10 +41,10 @@ func (ctrl *ExtensionServicesConfigController) Inputs() []controller.Input {
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *ExtensionServicesConfigController) Outputs() []controller.Output {
+func (ctrl *ExtensionServiceConfigController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: runtime.ExtensionServicesConfigType,
+			Type: runtime.ExtensionServiceConfigType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -53,7 +53,7 @@ func (ctrl *ExtensionServicesConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *ExtensionServicesConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ExtensionServiceConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -68,15 +68,17 @@ func (ctrl *ExtensionServicesConfigController) Run(ctx context.Context, r contro
 
 		r.StartTrackingOutputs()
 
-		if cfg != nil && cfg.Config() != nil && cfg.Config().ExtensionServicesConfig() != nil {
-			for _, ext := range cfg.Config().ExtensionServicesConfig().ConfigData() {
-				if err = safe.WriterModify(ctx, r, runtime.NewExtensionServicesConfigSpec(runtime.NamespaceName, ext.Name()), func(spec *runtime.ExtensionServicesConfig) error {
-					spec.TypedSpec().Files = xslices.Map(ext.ConfigFiles(), func(c extconfig.ExtensionServicesConfigFile) runtime.ExtensionServicesConfigFile {
-						return runtime.ExtensionServicesConfigFile{
+		if cfg != nil && cfg.Config() != nil {
+			for _, extConfig := range cfg.Config().ExtensionServiceConfigs() {
+				if err = safe.WriterModify(ctx, r, runtime.NewExtensionServiceConfigSpec(runtime.NamespaceName, extConfig.Name()), func(spec *runtime.ExtensionServiceConfig) error {
+					spec.TypedSpec().Files = xslices.Map(extConfig.ConfigFiles(), func(c extconfig.ExtensionServiceConfigFile) runtime.ExtensionServiceConfigFile {
+						return runtime.ExtensionServiceConfigFile{
 							Content:   c.Content(),
-							MountPath: c.Path(),
+							MountPath: c.MountPath(),
 						}
 					})
+
+					spec.TypedSpec().Environment = extConfig.Environment()
 
 					return nil
 				}); err != nil {
@@ -85,7 +87,7 @@ func (ctrl *ExtensionServicesConfigController) Run(ctx context.Context, r contro
 			}
 		}
 
-		if err = safe.CleanupOutputs[*runtime.ExtensionServicesConfig](ctx, r); err != nil {
+		if err = safe.CleanupOutputs[*runtime.ExtensionServiceConfig](ctx, r); err != nil {
 			return err
 		}
 	}

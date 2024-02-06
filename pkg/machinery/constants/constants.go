@@ -850,16 +850,16 @@ const (
 	// FirmwarePath is the path to the standard Linux firmware location.
 	FirmwarePath = "/lib/firmware"
 
-	// ExtensionServicesConfigPath is the directory path which contains  configuration files of extension services.
+	// ExtensionServiceConfigPath is the directory path which contains  configuration files of extension services.
 	//
 	// See pkg/machinery/extensions/services for the file format.
-	ExtensionServicesConfigPath = "/usr/local/etc/containers"
+	ExtensionServiceConfigPath = "/usr/local/etc/containers"
 
-	// ExtensionServicesRootfsPath is the path to the extracted rootfs files of extension services.
-	ExtensionServicesRootfsPath = "/usr/local/lib/containers"
+	// ExtensionServiceRootfsPath is the path to the extracted rootfs files of extension services.
+	ExtensionServiceRootfsPath = "/usr/local/lib/containers"
 
-	// ExtensionServicesUserConfigPath is the path to the user provider extension services config directory.
-	ExtensionServicesUserConfigPath = SystemOverlaysPath + "/extensions"
+	// ExtensionServiceUserConfigPath is the path to the user provided extension services config directory.
+	ExtensionServiceUserConfigPath = SystemOverlaysPath + "/extensions"
 
 	// DBusServiceSocketPath is the path to the D-Bus socket for the logind mock to connect to.
 	DBusServiceSocketPath = SystemRunPath + "/dbus/service.socket"

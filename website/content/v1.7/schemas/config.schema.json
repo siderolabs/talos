@@ -2,6 +2,82 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://talos.dev/v1.7/schemas/config.schema.json",
   "$defs": {
+    "extensions.ConfigFile": {
+      "properties": {
+        "content": {
+          "type": "string",
+          "title": "content",
+          "description": "The content of the extension service config file.\n",
+          "markdownDescription": "The content of the extension service config file.",
+          "x-intellij-html-description": "\u003cp\u003eThe content of the extension service config file.\u003c/p\u003e\n"
+        },
+        "mountPath": {
+          "type": "string",
+          "title": "mountPath",
+          "description": "The mount path of the extension service config file.\n",
+          "markdownDescription": "The mount path of the extension service config file.",
+          "x-intellij-html-description": "\u003cp\u003eThe mount path of the extension service config file.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "extensions.ServiceConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "ExtensionServiceConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the extension service.\n",
+          "markdownDescription": "Name of the extension service.",
+          "x-intellij-html-description": "\u003cp\u003eName of the extension service.\u003c/p\u003e\n"
+        },
+        "configFiles": {
+          "items": {
+            "$ref": "#/$defs/extensions.ConfigFile"
+          },
+          "type": "array",
+          "title": "configFiles",
+          "description": "The config files for the extension service.\n",
+          "markdownDescription": "The config files for the extension service.",
+          "x-intellij-html-description": "\u003cp\u003eThe config files for the extension service.\u003c/p\u003e\n"
+        },
+        "environment": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "environment",
+          "description": "The environment for the extension service.\n",
+          "markdownDescription": "The environment for the extension service.",
+          "x-intellij-html-description": "\u003cp\u003eThe environment for the extension service.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ]
+    },
     "network.DefaultActionConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -3204,6 +3280,9 @@
     }
   },
   "oneOf": [
+    {
+      "$ref": "#/$defs/extensions.ServiceConfigV1Alpha1"
+    },
     {
       "$ref": "#/$defs/network.DefaultActionConfigV1Alpha1"
     },
