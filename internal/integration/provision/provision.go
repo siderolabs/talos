@@ -419,6 +419,12 @@ func (suite *BaseSuite) upgradeKubernetes(fromVersion, toVersion string, skipKub
 		UpgradeKubelet: !skipKubeletUpgrade,
 		PrePullImages:  true,
 
+		KubeletImage:           constants.KubeletImage,
+		APIServerImage:         constants.KubernetesAPIServerImage,
+		ControllerManagerImage: constants.KubernetesControllerManagerImage,
+		SchedulerImage:         constants.KubernetesSchedulerImage,
+		ProxyImage:             constants.KubeProxyImage,
+
 		EncoderOpt: encoder.WithComments(encoder.CommentsAll),
 	}
 

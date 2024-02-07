@@ -49,6 +49,13 @@ func init() {
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false, "skip the actual upgrade and show the upgrade plan instead")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.PrePullImages, "pre-pull-images", true, "pre-pull images before upgrade")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.UpgradeKubelet, "upgrade-kubelet", true, "upgrade kubelet service")
+
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.KubeletImage, "kubelet-image", constants.KubeletImage, "kubelet image to use")
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.APIServerImage, "apiserver-image", constants.KubernetesAPIServerImage, "kube-apiserver image to use")
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControllerManagerImage, "controller-manager-image", constants.KubernetesControllerManagerImage, "kube-controller-manager image to use")
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.SchedulerImage, "scheduler-image", constants.KubernetesSchedulerImage, "kube-scheduler image to use")
+	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ProxyImage, "proxy-image", constants.KubeProxyImage, "kube-proxy image to use")
+
 	addCommand(upgradeK8sCmd)
 }
 

@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	v1alpha1config "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -199,7 +198,7 @@ func upgradeKubeletPatcher(
 			}
 		}
 
-		image := fmt.Sprintf("%s:v%s", constants.KubeletImage, options.Path.ToVersion())
+		image := fmt.Sprintf("%s:v%s", options.KubeletImage, options.Path.ToVersion())
 
 		if oldImage == image {
 			return errUpdateSkipped
