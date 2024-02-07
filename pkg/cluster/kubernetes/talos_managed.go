@@ -352,11 +352,12 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 			imageName := constants.KubernetesAPIServerImage
 
 			privateRepo := strings.Split(config.ClusterConfig.APIServerConfig.ContainerImage, ":")[0]
-			if privateRepo != constants.KubernetesAPIServerImage {
+			if privateRepo != constants.KubernetesAPIServerImage && !options.PrePullImages {
 				imageName = privateRepo
 			}
 
 			image := fmt.Sprintf("%s:v%s", imageName, options.Path.ToVersion())
+			options.Log(" > using apiServerImage %s", image)
 
 			if config.ClusterConfig.APIServerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
@@ -377,11 +378,12 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 			imageName := constants.KubernetesControllerManagerImage
 
 			privateRepo := strings.Split(config.ClusterConfig.ControllerManagerConfig.ContainerImage, ":")[0]
-			if privateRepo != constants.KubernetesControllerManagerImage {
+			if privateRepo != constants.KubernetesControllerManagerImage && !options.PrePullImages {
 				imageName = privateRepo
 			}
 
 			image := fmt.Sprintf("%s:v%s", imageName, options.Path.ToVersion())
+			options.Log(" > using controllerManagerImage %s", image)
 
 			if config.ClusterConfig.ControllerManagerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
@@ -401,12 +403,13 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 
 			imageName := constants.KubernetesSchedulerImage
 
-			if config.ClusterConfig.SchedulerConfig.ContainerImage == "" {
-				privateRepo := strings.Split(config.ClusterConfig.SchedulerConfig.ContainerImage, ":")[0]
+			privateRepo := strings.Split(config.ClusterConfig.SchedulerConfig.ContainerImage, ":")[0]
+			if privateRepo != constants.KubernetesSchedulerImage && !options.PrePullImages {
 				imageName = privateRepo
 			}
 
-			image := fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, options.Path.ToVersion())
+			image := fmt.Sprintf("%s:v%s", imageName, options.Path.ToVersion())
+			options.Log(" > using schedulerImage %s", image)
 
 			if config.ClusterConfig.SchedulerConfig.ContainerImage == image || configImage == image {
 				return errUpdateSkipped
