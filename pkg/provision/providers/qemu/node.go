@@ -100,6 +100,9 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 	}
 
 	nodeUUID := uuid.New()
+	if nodeReq.UUID != nil {
+		nodeUUID = *nodeReq.UUID
+	}
 
 	apiPort, err := p.findBridgeListenPort(clusterReq)
 	if err != nil {

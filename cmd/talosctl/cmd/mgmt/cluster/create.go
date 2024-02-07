@@ -19,9 +19,11 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-kubeconfig"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
@@ -167,6 +169,7 @@ var (
 	bandwidth                  int
 	diskEncryptionKeyTypes     []string
 	withFirewall               string
+	withUUIDHostnames          bool
 )
 
 // createCmd represents the cluster up command.
@@ -742,8 +745,10 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			nodeIPs[j] = ips[j][i]
 		}
 
+		nodeUUID := uuid.New()
+
 		nodeReq := provision.NodeRequest{
-			Name:                fmt.Sprintf("%s-controlplane-%d", clusterName, i+1),
+			Name:                nodeName(clusterName, "controlplane", i+1, nodeUUID),
 			Type:                machine.TypeControlPlane,
 			IPs:                 nodeIPs,
 			Memory:              controlPlaneMemory,
@@ -752,6 +757,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			SkipInjectingConfig: skipInjectingConfig,
 			BadRTC:              badRTC,
 			ExtraKernelArgs:     extraKernelArgs,
+			UUID:                pointer.To(nodeUUID),
 		}
 
 		if i == 0 {
@@ -784,8 +790,6 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	for i := 1; i <= workers; i++ {
-		name := fmt.Sprintf("%s-worker-%d", clusterName, i)
-
 		cfg := configBundle.Worker()
 
 		nodeIPs := make([]netip.Addr, len(cidrs))
@@ -800,9 +804,11 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			}
 		}
 
+		nodeUUID := uuid.New()
+
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
-				Name:                name,
+				Name:                nodeName(clusterName, "worker", i, nodeUUID),
 				Type:                machine.TypeWorker,
 				IPs:                 nodeIPs,
 				Memory:              workerMemory,
@@ -812,6 +818,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 				SkipInjectingConfig: skipInjectingConfig,
 				BadRTC:              badRTC,
 				ExtraKernelArgs:     extraKernelArgs,
+				UUID:                pointer.To(nodeUUID),
 			})
 	}
 
@@ -844,6 +851,14 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	return showCluster(cluster)
+}
+
+func nodeName(clusterName, role string, index int, uuid uuid.UUID) string {
+	if withUUIDHostnames {
+		return fmt.Sprintf("machine-%s", uuid)
+	}
+
+	return fmt.Sprintf("%s-%s-%d", clusterName, role, index)
 }
 
 func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
@@ -1115,6 +1130,7 @@ func init() {
 		"specify percent of corrupt packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)")
 	createCmd.Flags().IntVar(&bandwidth, "with-network-bandwidth", 0, "specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster")
 	createCmd.Flags().StringVar(&withFirewall, firewallFlag, "", "inject firewall rules into the cluster, value is default policy - accept/block (QEMU only)")
+	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
 
 	Cmd.AddCommand(createCmd)
 }

@@ -168,6 +168,7 @@ talosctl cluster create [flags]
       --with-network-packet-reorder float        specify percent of reordered packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)
       --with-tpm2                                enable TPM2 emulation support using swtpm
       --with-uefi                                enable UEFI on x86_64 architecture (default true)
+      --with-uuid-hostnames                      use machine UUIDs as default hostnames (QEMU only)
       --workers int                              the number of workers to create (default 1)
 ```
 

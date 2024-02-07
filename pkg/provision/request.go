@@ -9,6 +9,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -180,6 +181,11 @@ type NodeRequest struct {
 	//
 	// This doesn't apply to boots from ISO or from the disk image.
 	ExtraKernelArgs *procfs.Cmdline
+
+	// UUID allows to specify the UUID of the node (VMs only).
+	//
+	// If not specified, a random UUID will be generated.
+	UUID *uuid.UUID
 
 	// Testing features
 
