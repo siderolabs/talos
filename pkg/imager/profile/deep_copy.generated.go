@@ -37,5 +37,9 @@ func (o Profile) DeepCopy() Profile {
 		cp.Output.ImageOptions = new(ImageOptions)
 		*cp.Output.ImageOptions = *o.Output.ImageOptions
 	}
+	if o.Output.ISOOptions != nil {
+		cp.Output.ISOOptions = new(ISOOptions)
+		*cp.Output.ISOOptions = *o.Output.ISOOptions
+	}
 	return cp
 }

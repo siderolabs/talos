@@ -15,6 +15,8 @@ type Output struct {
 	Kind OutputKind `yaml:"kind"`
 	// Options for the 'image' output.
 	ImageOptions *ImageOptions `yaml:"imageOptions,omitempty"`
+	// Options for the 'iso' output.
+	ISOOptions *ISOOptions `yaml:"isoOptions,omitempty"`
 	// OutFormat is the format for the output:
 	//  * raw - output raw file
 	//  * .tar.gz - output tar.gz archive
@@ -35,6 +37,14 @@ type ImageOptions struct {
 	DiskFormat DiskFormat `yaml:"diskFormat,omitempty"`
 	// DiskFormatOptions are additional options for the disk format
 	DiskFormatOptions string `yaml:"diskFormatOptions,omitempty"`
+}
+
+// ISOOptions describes options for the 'iso' output.
+type ISOOptions struct {
+	// SDBootEnrollKeys is a value in loader.conf secure-boot-enroll: off, manual, if-safe, force.
+	//
+	// If not set, it defaults to if-safe.
+	SDBootEnrollKeys SDBootEnrollKeys `yaml:"sdBootEnrollKeys"`
 }
 
 //go:generate enumer -type=OutputKind -linecomment -text
@@ -80,4 +90,17 @@ const (
 	DiskFormatQCOW2                     // qcow2
 	DiskFormatVPC                       // vhd
 	DiskFormatOVA                       // ova
+)
+
+//go:generate enumer -type SDBootEnrollKeys -linecomment -text
+
+// SDBootEnrollKeys is a value in loader.conf secure-boot-enroll: off, manual, if-safe, force.
+type SDBootEnrollKeys int
+
+// SDBootEnrollKeys values.
+const (
+	SDBootEnrollKeysIfSafe SDBootEnrollKeys = iota // if-safe
+	SDBootEnrollKeysManual                         // manual
+	SDBootEnrollKeysForce                          // force
+	SDBootEnrollKeysOff                            // off
 )
