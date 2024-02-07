@@ -20,6 +20,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/tarball"
 	"github.com/google/go-containerregistry/pkg/v1/types"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
@@ -85,9 +86,13 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 	var err error
 
 	if i.prof.SecureBootEnabled() {
+		isoOptions := pointer.SafeDeref(i.prof.Output.ISOOptions)
+
 		options := iso.UEFIOptions{
 			UKIPath:    i.ukiPath,
 			SDBootPath: i.sdBootPath,
+
+			SDBootSecureBootEnrollKeys: isoOptions.SDBootEnrollKeys.String(),
 
 			PlatformKeyPath:    i.prof.Input.SecureBoot.PlatformKeyPath,
 			KeyExchangeKeyPath: i.prof.Input.SecureBoot.KeyExchangeKeyPath,

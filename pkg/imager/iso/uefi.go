@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 
@@ -23,6 +24,9 @@ import (
 type UEFIOptions struct {
 	UKIPath    string
 	SDBootPath string
+
+	// A value in loader.conf secure-boot-enroll: off, manual, if-safe, force.
+	SDBootSecureBootEnrollKeys string
 
 	// optional, for auto-enrolling secureboot keys
 	PlatformKeyPath    string
@@ -41,8 +45,8 @@ const (
 	mib = 1024 * 1024
 )
 
-//go:embed loader.conf
-var loaderConfig []byte
+//go:embed loader.conf.tmpl
+var loaderConfigTemplate string
 
 // CreateUEFI creates an iso using a UKI, systemd-boot.
 //
@@ -53,6 +57,8 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 	if err := os.MkdirAll(options.ScratchDir, 0o755); err != nil {
 		return err
 	}
+
+	printf("preparing raw image")
 
 	efiBootImg := filepath.Join(options.ScratchDir, "efiboot.img")
 
@@ -73,6 +79,18 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 
 	if err := utils.CreateRawDisk(printf, efiBootImg, isoSize); err != nil {
 		return err
+	}
+
+	printf("preparing loader.conf")
+
+	var loaderConfigOut bytes.Buffer
+
+	if err := template.Must(template.New("loader.conf").Parse(loaderConfigTemplate)).Execute(&loaderConfigOut, struct {
+		SecureBootEnroll string
+	}{
+		SecureBootEnroll: options.SDBootSecureBootEnrollKeys,
+	}); err != nil {
+		return fmt.Errorf("error rendering loader.conf: %w", err)
 	}
 
 	printf("creating vFAT EFI image")
@@ -125,7 +143,7 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 	}
 
 	if _, err := cmd.RunContext(
-		cmd.WithStdin(context.Background(), bytes.NewReader(loaderConfig)),
+		cmd.WithStdin(context.Background(), &loaderConfigOut),
 		"mcopy", "-i", efiBootImg, "-", "::loader/loader.conf",
 	); err != nil {
 		return err

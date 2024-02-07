@@ -37,6 +37,9 @@ var Default = map[string]Profile{
 		Output: Output{
 			Kind:      OutKindISO,
 			OutFormat: OutFormatRaw,
+			ISOOptions: &ISOOptions{
+				SDBootEnrollKeys: SDBootEnrollKeysIfSafe,
+			},
 		},
 	},
 	// Metal images

@@ -51,6 +51,20 @@ machine:
 ```
 """
 
+    [notes.secureboot-image]
+        title = "Secure Boot Image"
+        description = """\
+Talos Linux now provides a way to configure systemd-boot ISO 'secure-boot-enroll' option while generating a SecureBoot ISO image:
+
+```yaml
+output:
+    kind: iso
+    isoOptions:
+        sdBootEnrollKeys: force # default is still if-safe
+    outFormat: raw
+```
+"""
+
     [notes.rsa-service-account]
         title = "Kubernetes API Server Service Account Key"
         description = """\
