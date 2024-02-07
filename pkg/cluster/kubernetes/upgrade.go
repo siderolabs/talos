@@ -32,6 +32,12 @@ type UpgradeOptions struct {
 	DryRun               bool
 	EncoderOpt           encoder.Option
 
+	KubeletImage           string
+	APIServerImage         string
+	ControllerManagerImage string
+	SchedulerImage         string
+	ProxyImage             string
+
 	controlPlaneNodes []string
 	workerNodes       []string
 }

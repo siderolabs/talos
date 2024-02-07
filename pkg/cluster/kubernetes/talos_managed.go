@@ -124,9 +124,9 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 
 func prePullImages(ctx context.Context, talosClient *client.Client, options UpgradeOptions) error {
 	for _, imageRef := range []string{
-		fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, options.Path.ToVersion()),
-		fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, options.Path.ToVersion()),
-		fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, options.Path.ToVersion()),
+		fmt.Sprintf("%s:v%s", options.APIServerImage, options.Path.ToVersion()),
+		fmt.Sprintf("%s:v%s", options.ControllerManagerImage, options.Path.ToVersion()),
+		fmt.Sprintf("%s:v%s", options.SchedulerImage, options.Path.ToVersion()),
 	} {
 		for _, node := range options.controlPlaneNodes {
 			options.Log(" > %q: pre-pulling %s", node, imageRef)
@@ -146,7 +146,7 @@ func prePullImages(ctx context.Context, talosClient *client.Client, options Upgr
 		return nil
 	}
 
-	imageRef := fmt.Sprintf("%s:v%s", constants.KubeletImage, options.Path.ToVersion())
+	imageRef := fmt.Sprintf("%s:v%s", options.KubeletImage, options.Path.ToVersion())
 
 	for _, node := range append(append([]string(nil), options.controlPlaneNodes...), options.workerNodes...) {
 		options.Log(" > %q: pre-pulling %s", node, imageRef)
@@ -206,7 +206,7 @@ func patchKubeProxy(options UpgradeOptions) func(config *v1alpha1config.Config) 
 			config.ClusterConfig.ProxyConfig = &v1alpha1config.ProxyConfig{}
 		}
 
-		config.ClusterConfig.ProxyConfig.ContainerImage = fmt.Sprintf("%s:v%s", constants.KubeProxyImage, options.Path.ToVersion())
+		config.ClusterConfig.ProxyConfig.ContainerImage = fmt.Sprintf("%s:v%s", options.ProxyImage, options.Path.ToVersion())
 
 		return nil
 	}
@@ -304,7 +304,23 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 
 var errUpdateSkipped = errors.New("update skipped")
 
-//nolint:gocyclo,cyclop
+func staticPodImage(logUpdate func(oldImage string), imageName, containerImage, configImage string, options UpgradeOptions) (string, error) {
+	image := fmt.Sprintf("%s:v%s", imageName, options.Path.ToVersion())
+
+	if containerImage == image || configImage == image {
+		return "", errUpdateSkipped
+	}
+
+	logUpdate(containerImage)
+
+	if options.DryRun {
+		return "", errUpdateSkipped
+	}
+
+	return image, nil
+}
+
+//nolint:gocyclo
 func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResource resource.Resource) func(config *v1alpha1config.Config) error {
 	return func(config *v1alpha1config.Config) error {
 		if config.ClusterConfig == nil {
@@ -349,16 +365,13 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 				config.ClusterConfig.APIServerConfig = &v1alpha1config.APIServerConfig{}
 			}
 
-			image := fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, options.Path.ToVersion())
-
-			if config.ClusterConfig.APIServerConfig.ContainerImage == image || configImage == image {
-				return errUpdateSkipped
-			}
-
-			logUpdate(config.ClusterConfig.APIServerConfig.ContainerImage)
-
-			if options.DryRun {
-				return errUpdateSkipped
+			image, err := staticPodImage(logUpdate,
+				options.APIServerImage,
+				config.ClusterConfig.APIServerConfig.ContainerImage,
+				configImage,
+				options)
+			if err != nil {
+				return err
 			}
 
 			config.ClusterConfig.APIServerConfig.ContainerImage = image
@@ -367,16 +380,13 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 				config.ClusterConfig.ControllerManagerConfig = &v1alpha1config.ControllerManagerConfig{}
 			}
 
-			image := fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, options.Path.ToVersion())
-
-			if config.ClusterConfig.ControllerManagerConfig.ContainerImage == image || configImage == image {
-				return errUpdateSkipped
-			}
-
-			logUpdate(config.ClusterConfig.ControllerManagerConfig.ContainerImage)
-
-			if options.DryRun {
-				return errUpdateSkipped
+			image, err := staticPodImage(logUpdate,
+				options.ControllerManagerImage,
+				config.ClusterConfig.ControllerManagerConfig.ContainerImage,
+				configImage,
+				options)
+			if err != nil {
+				return err
 			}
 
 			config.ClusterConfig.ControllerManagerConfig.ContainerImage = image
@@ -385,16 +395,13 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 				config.ClusterConfig.SchedulerConfig = &v1alpha1config.SchedulerConfig{}
 			}
 
-			image := fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, options.Path.ToVersion())
-
-			if config.ClusterConfig.SchedulerConfig.ContainerImage == image || configImage == image {
-				return errUpdateSkipped
-			}
-
-			logUpdate(config.ClusterConfig.SchedulerConfig.ContainerImage)
-
-			if options.DryRun {
-				return errUpdateSkipped
+			image, err := staticPodImage(logUpdate,
+				options.SchedulerImage,
+				config.ClusterConfig.SchedulerConfig.ContainerImage,
+				configImage,
+				options)
+			if err != nil {
+				return err
 			}
 
 			config.ClusterConfig.SchedulerConfig.ContainerImage = image

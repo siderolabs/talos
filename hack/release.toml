@@ -95,6 +95,13 @@ config:
 ```
 """
 
+    [notes.k8supgrade]
+        title = "Kubernetes Upgrade"
+        description = """\
+The command `talosctl upgrade-k8s` now supports specifying custom image references for Kubernetes components via `--*-image` flags.
+The default behavior is unchanged, and the flags are optional.
+"""
+
 [make_deps]
 
     [make_deps.tools]

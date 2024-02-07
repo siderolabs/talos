@@ -106,6 +106,8 @@ This command runs in several phases:
 
 If the command fails for any reason, it can be safely restarted to continue the upgrade process from the moment of the failure.
 
+> Note: When using custom/overridden Kubernetes component images, use flags `--*-image` to override the default image names.
+
 ## Manual Kubernetes Upgrade
 
 Kubernetes can be upgraded manually by following the steps outlined below.

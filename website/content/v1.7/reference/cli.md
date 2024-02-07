@@ -2887,15 +2887,20 @@ talosctl upgrade-k8s [flags]
 ### Options
 
 ```
-      --dry-run           skip the actual upgrade and show the upgrade plan instead
-      --endpoint string   the cluster control plane endpoint
-      --from string       the Kubernetes control plane version to upgrade from
-  -h, --help              help for upgrade-k8s
-      --pre-pull-images   pre-pull images before upgrade (default true)
-      --to string         the Kubernetes control plane version to upgrade to (default "1.29.1")
-      --upgrade-kubelet   upgrade kubelet service (default true)
-      --with-docs         patch all machine configs adding the documentation for each field (default true)
-      --with-examples     patch all machine configs with the commented examples (default true)
+      --apiserver-image string            kube-apiserver image to use (default "registry.k8s.io/kube-apiserver")
+      --controller-manager-image string   kube-controller-manager image to use (default "registry.k8s.io/kube-controller-manager")
+      --dry-run                           skip the actual upgrade and show the upgrade plan instead
+      --endpoint string                   the cluster control plane endpoint
+      --from string                       the Kubernetes control plane version to upgrade from
+  -h, --help                              help for upgrade-k8s
+      --kubelet-image string              kubelet image to use (default "ghcr.io/siderolabs/kubelet")
+      --pre-pull-images                   pre-pull images before upgrade (default true)
+      --proxy-image string                kube-proxy image to use (default "registry.k8s.io/kube-proxy")
+      --scheduler-image string            kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
+      --to string                         the Kubernetes control plane version to upgrade to (default "1.29.1")
+      --upgrade-kubelet                   upgrade kubelet service (default true)
+      --with-docs                         patch all machine configs adding the documentation for each field (default true)
+      --with-examples                     patch all machine configs with the commented examples (default true)
 ```
 
 ### Options inherited from parent commands
