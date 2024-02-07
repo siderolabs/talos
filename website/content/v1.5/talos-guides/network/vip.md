@@ -96,9 +96,9 @@ machine:
     interfaces:
       - deviceSelector:
           busPath: "0*" # should select any hardware network device, if you have just one, it will be selected
-      dhcp: true
-      vip:
-        ip: 192.168.0.15
+        dhcp: true
+        vip:
+          ip: 192.168.0.15
 ```
 
 ## Caveats
