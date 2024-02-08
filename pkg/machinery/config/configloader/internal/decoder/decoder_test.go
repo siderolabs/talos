@@ -289,6 +289,19 @@ apiVersion: v1alpha3
 omit: false
 `),
 		},
+		{
+			name: "misspelled apiVersion",
+			source: []byte(`---
+apiversion: v1alpha1
+kind: ExtensionServicesConfig
+config:
+    - name: nut-client
+      configFiles:
+          - content: MONITOR ${upsmonHost} 1 remote pass foo
+            mountPath: /usr/local/etc/nut/upsmon.conf
+`),
+			expectedErr: "\"ExtensionServicesConfig\" \"\": not registered",
+		},
 	}
 
 	for _, tt := range tests {

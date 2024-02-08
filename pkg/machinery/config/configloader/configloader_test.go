@@ -48,6 +48,8 @@ func callMethods(t testing.TB, obj reflect.Value, chain ...string) {
 			fallthrough
 		case "Doc":
 			fallthrough
+		case "APIUrl":
+			fallthrough
 		case "Endpoint":
 			// t.Logf("Skipping %v", nextChain)
 			continue

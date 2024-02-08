@@ -23,27 +23,35 @@ var (
 // NewDocumentFunc represents a function that creates a new document by version.
 type NewDocumentFunc func(version string) config.Document
 
-var registry = &Registry{
-	registered: map[string]NewDocumentFunc{},
-}
+var registry = NewRegistry()
 
 // Registry represents the document kind/version registry.
+//
+// Global registry is available via top-level functions Register and New.
 type Registry struct {
 	m          sync.Mutex
 	registered map[string]NewDocumentFunc
 }
 
+// NewRegistry creates a new registry.
+func NewRegistry() *Registry {
+	return &Registry{
+		registered: map[string]NewDocumentFunc{},
+	}
+}
+
 // Register registers a manifests with the registry.
 func Register(kind string, f NewDocumentFunc) {
-	registry.register(kind, f)
+	registry.Register(kind, f)
 }
 
 // New creates a new instance of the requested manifest.
 func New(kind, version string) (config.Document, error) {
-	return registry.new(kind, version)
+	return registry.New(kind, version)
 }
 
-func (r *Registry) register(kind string, f NewDocumentFunc) {
+// Register registers a document kind with the registry.
+func (r *Registry) Register(kind string, f NewDocumentFunc) {
 	r.m.Lock()
 	defer r.m.Unlock()
 
@@ -54,13 +62,18 @@ func (r *Registry) register(kind string, f NewDocumentFunc) {
 	r.registered[kind] = f
 }
 
-func (r *Registry) new(kind, version string) (config.Document, error) {
+// New creates a new instance of the requested document.
+func (r *Registry) New(kind, version string) (config.Document, error) {
 	r.m.Lock()
 	defer r.m.Unlock()
 
 	f, ok := r.registered[kind]
 	if ok {
-		return f(version), nil
+		doc := f(version)
+
+		if doc != nil {
+			return doc, nil
+		}
 	}
 
 	return nil, fmt.Errorf("%q %q: %w", kind, version, ErrNotRegistered)

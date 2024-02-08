@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: ExtensionServicesConfig
+config:
+    - name: foo
+      configFiles:
+        - content: hello
+          mountPath: /etc/foo

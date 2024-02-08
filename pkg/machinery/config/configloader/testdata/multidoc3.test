@@ -1,0 +1,26 @@
+apiVersion: v1alpha1
+kind: NetworkDefaultActionConfig
+ingress: block
+---
+apiVersion: v1alpha1
+kind: NetworkRuleConfig
+name: test
+portSelector:
+    ports:
+        - 53
+        - 8000-9000
+    protocol: udp
+ingress:
+    - subnet: 192.168.0.0/16
+      except: 192.168.0.3/32
+    - subnet: 2001::/16
+---
+apiVersion: v1alpha1
+kind: NetworkRuleConfig
+name: www
+portSelector:
+    ports:
+        - 80
+    protocol: tcp
+ingress:
+    - subnet: 192.168.0.0/16
