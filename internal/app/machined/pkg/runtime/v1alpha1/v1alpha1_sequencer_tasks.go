@@ -620,6 +620,15 @@ func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string
 	}, "startMachined"
 }
 
+// StartSyslogd represents the task to start syslogd.
+func StartSyslogd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
+	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
+		system.Services(r).LoadAndStart(&services.Syslogd{})
+
+		return nil
+	}, "startSyslogd"
+}
+
 // StartDashboard represents the task to start dashboard.
 func StartDashboard(_ runtime.Sequence, _ interface{}) (runtime.TaskExecutionFunc, string) {
 	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {

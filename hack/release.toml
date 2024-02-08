@@ -124,6 +124,16 @@ machine:
 ```
 """
 
+    [notes.syslog]
+        title = "Syslog"
+        description = """\
+Talos Linux now starts a basic syslog receiver listening on `/dev/log`.
+The receiver can mostly parse both RFC3164 and RFC5424 messages and writes them as JSON formatted message.
+The logs can be viewed via `talosctl logs syslogd`.
+
+This is mostly implemented for extension services that log to syslog.
+"""
+
 [make_deps]
 
     [make_deps.tools]

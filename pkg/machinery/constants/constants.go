@@ -974,6 +974,9 @@ const (
 
 	// PodResolvConfPath is the path to the pod resolv.conf file.
 	PodResolvConfPath = "/system/resolved/resolv.conf"
+
+	// SyslogListenSocketPath is the path to the syslog socket.
+	SyslogListenSocketPath = "/dev/log"
 )
 
 // See https://linux.die.net/man/3/klogctl
