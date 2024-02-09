@@ -84,7 +84,9 @@ func (suite *DiskUsageSuite) TestSuccess() {
 			}
 
 			parts := splitLine(lines[1])
+
 			var err error
+
 			folderSize, err = strconv.ParseInt(parts[4], 10, 64)
 			if err != nil {
 				return err
@@ -102,6 +104,7 @@ func (suite *DiskUsageSuite) TestSuccess() {
 			}
 
 			var totalExpected int64
+
 			for _, line := range lines[1 : len(lines)-1] {
 				info, err := parseLine(line)
 				if err != nil {
@@ -118,6 +121,7 @@ func (suite *DiskUsageSuite) TestSuccess() {
 			if err != nil {
 				return err
 			}
+
 			if info.size != totalExpected {
 				return fmt.Errorf("folder size was calculated incorrectly. Expected %d, got %d", totalExpected, info.size)
 			}

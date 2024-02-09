@@ -94,6 +94,7 @@ func TestPopulate(t *testing.T) {
 			t.Parallel()
 
 			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 

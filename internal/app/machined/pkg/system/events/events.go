@@ -111,6 +111,7 @@ func (events *ServiceEvents) Get(count int) (result []ServiceEvent) {
 		if events.events[i].Message != "" {
 			result = append(result, events.events[i])
 		}
+
 		count--
 	}
 

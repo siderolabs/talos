@@ -62,6 +62,7 @@ func TestDNS(t *testing.T) {
 
 			r, err := dnssrv.Exchange(createQuery(), "127.0.0.1:10700")
 			test.errCheck(t, err)
+
 			if r != nil {
 				require.Equal(t, test.expectedCode, r.Rcode, r)
 			}

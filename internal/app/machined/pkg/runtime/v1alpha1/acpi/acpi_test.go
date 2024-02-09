@@ -67,6 +67,7 @@ func Test_parse(t *testing.T) {
 
 				return
 			}
+
 			if got != tt.want {
 				t.Errorf("parse() = %v, want %v", got, tt.want)
 			}

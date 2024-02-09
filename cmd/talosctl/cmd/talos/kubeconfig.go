@@ -141,7 +141,6 @@ func extractAndMerge(data []byte, localPath string) error {
 			return askOverwriteOrRename(fmt.Sprintf("%s %q already exists", component, name))
 		},
 	})
-
 	if err != nil {
 		return err
 	}

@@ -655,7 +655,6 @@ func (c *Client) ServiceInfo(ctx context.Context, id string, callOptions ...grpc
 		&emptypb.Empty{},
 		callOptions...,
 	)
-
 	if err != nil {
 		return services, err
 	}

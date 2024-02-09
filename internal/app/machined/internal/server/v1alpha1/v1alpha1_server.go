@@ -966,6 +966,7 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 				)
 			} else {
 				currentDepth := int32(strings.Count(fi.FullPath, archiver.OSPathSeparator)) - rootDepth
+
 				size := fi.FileInfo.Size()
 				if size < 0 {
 					size = 0
@@ -989,7 +990,6 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 						RelativeName: fi.RelPath,
 						Size:         size,
 					}, currentDepth, false)
-
 					if err != nil {
 						return err
 					}
@@ -998,9 +998,8 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 				// depth goes down when walker gets to the next sibling folder
 				if currentDepth < depth {
 					nextPrefix := fi.FullPath
-					err = flushFolders(prefix, nextPrefix)
 
-					if err != nil {
+					if err = flushFolders(prefix, nextPrefix); err != nil {
 						return err
 					}
 
@@ -1010,6 +1009,7 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 				if fi.FileInfo.IsDir() {
 					prefix = fi.FullPath
 				}
+
 				depth = currentDepth
 			}
 		}
@@ -1023,7 +1023,6 @@ func (s *Server) DiskUsage(req *machine.DiskUsageRequest, obj machine.MachineSer
 				}
 
 				err = sendSize(folder, 0, true)
-
 				if err != nil {
 					return err
 				}

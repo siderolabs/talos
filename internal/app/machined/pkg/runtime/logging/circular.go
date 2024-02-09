@@ -165,7 +165,6 @@ func (handler *circularHandler) Reader(opts ...runtime.LogOption) (io.ReadCloser
 		var err error
 
 		handler.buf, err = handler.manager.getBuffer(handler.id, false)
-
 		if err != nil {
 			return nil, err
 		}

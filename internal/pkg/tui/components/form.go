@@ -171,11 +171,14 @@ func (item *Item) createFormItems() ([]tview.Primitive, error) {
 		} else {
 			input := tview.NewInputField()
 			formItem = input
+
 			input.SetLabel(label)
+
 			text, err := yaml.Marshal(item.dest)
 			if err != nil {
 				return nil, err
 			}
+
 			input.SetText(string(text))
 			input.SetChangedFunc(func(text string) {
 				if err := item.assign(text); err != nil {

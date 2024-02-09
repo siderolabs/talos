@@ -210,6 +210,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		events := sr.AsProto().Events.Events
+
 		lastMsg := events[len(events)-1].Msg
 		if lastMsg != "Waiting for cond2" {
 			return retry.ExpectedError(errors.New("service should be waiting on 2nd condition"))

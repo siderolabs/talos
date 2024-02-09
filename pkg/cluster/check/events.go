@@ -52,7 +52,6 @@ func AllNodesBootedAssertion(ctx context.Context, cluster ClusterInfo) error {
 			}
 		}
 	}, client.WithTailEvents(-1))
-
 	if err != nil {
 		unwrappedErr := err
 

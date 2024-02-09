@@ -1726,6 +1726,7 @@ func VerifyDiskAvailability(runtime.Sequence, any) (runtime.TaskExecutionFunc, s
 						// if disk is busy, report mounts for debugging purposes but just once
 						// otherwise console might be flooded with messages
 						dumpMounts(logger)
+
 						mountsReported = true
 					}
 

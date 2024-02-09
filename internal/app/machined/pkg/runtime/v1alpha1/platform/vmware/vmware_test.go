@@ -67,6 +67,7 @@ func TestApplyNetworkConfigV2a(t *testing.T) {
 			require.NoError(t, st.Create(ctx, eth2))
 
 			var metadata vmware.NetworkConfig
+
 			require.NoError(t, yaml.Unmarshal(tt.raw, &metadata))
 
 			v := &vmware.VMware{}

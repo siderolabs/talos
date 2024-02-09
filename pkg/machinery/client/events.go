@@ -212,7 +212,6 @@ func (c *Client) EventsWatchV2(ctx context.Context, ch chan<- EventResult, opts 
 				}
 			}
 		}()
-
 		if err != nil {
 			select {
 			case ch <- EventResult{Error: err}:

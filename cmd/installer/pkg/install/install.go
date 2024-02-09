@@ -211,7 +211,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	}
 
 	for _, label := range bootLabels {
-		err = func() error {
+		if err = func() error {
 			var device string
 			// searching targets for the device to be used
 		OuterLoop:
@@ -248,9 +248,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 			mountpoints.Set(label, mountpoint)
 
 			return nil
-		}()
-
-		if err != nil {
+		}(); err != nil {
 			return err
 		}
 	}

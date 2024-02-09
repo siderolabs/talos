@@ -53,6 +53,7 @@ func TestNewADV(t *testing.T) {
 
 				return
 			}
+
 			if !reflect.DeepEqual(gotAdv, tt.wantAdv) {
 				t.Errorf("NewADV() = %v, want %v", gotAdv, tt.wantAdv)
 			}
@@ -88,10 +89,12 @@ func TestADV_ReadTag(t *testing.T) {
 			if len(tt.a) != 2*AdvSize {
 				t.Errorf("Test data is invalid, ADV size = %v, want %v", len(tt.a), 2*AdvSize)
 			}
+
 			gotVal, gotOk := tt.a.ReadTag(tt.args.t)
 			if gotVal != tt.wantVal {
 				t.Errorf("ADV.ReadTag() gotVal = %v, want %v", gotVal, tt.wantVal)
 			}
+
 			if gotOk != tt.wantOk {
 				t.Errorf("ADV.ReadTag() gotOk = %v, want %v", gotOk, tt.wantOk)
 			}
@@ -144,12 +147,15 @@ func TestADV_SetTag(t *testing.T) {
 			if len(tt.a) != 2*AdvSize {
 				t.Errorf("Test data is invalid, source ADV size = %v, want %v", len(tt.a), 2*AdvSize)
 			}
+
 			if len(tt.wantADV) != 2*AdvSize {
 				t.Errorf("Test data is invalid, target ADV size = %v, want %v", len(tt.wantADV), 2*AdvSize)
 			}
+
 			if gotOk := tt.a.SetTag(tt.args.t, tt.args.val); gotOk != tt.wantOk {
 				t.Errorf("ADV.SetTag() = %v, want %v", gotOk, tt.wantOk)
 			}
+
 			if !bytes.Equal(tt.a, tt.wantADV) {
 				t.Errorf("ADV = %v, want %v", tt.a, tt.wantADV)
 			}
@@ -203,12 +209,15 @@ func TestADV_DeleteTag(t *testing.T) {
 			if len(tt.a) != 2*AdvSize {
 				t.Errorf("Test data is invalid, source ADV size = %v, want %v", len(tt.a), 2*AdvSize)
 			}
+
 			if len(tt.wantADV) != 2*AdvSize {
 				t.Errorf("Test data is invalid, target ADV size = %v, want %v", len(tt.wantADV), 2*AdvSize)
 			}
+
 			if gotOk := tt.a.DeleteTag(tt.args.t); gotOk != tt.wantOk {
 				t.Errorf("ADV.DeleteTag() = %v, want %v", gotOk, tt.wantOk)
 			}
+
 			if !bytes.Equal(tt.a, tt.wantADV) {
 				t.Errorf("ADV = %v, want %v", tt.a, tt.wantADV)
 			}
@@ -231,6 +240,7 @@ func TestADV_cleanup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.a.cleanup()
+
 			if !bytes.Equal(tt.a, tt.want) {
 				t.Errorf("ADV.cleanup() = %v, want %v", tt.a, tt.want)
 			}
@@ -251,16 +261,20 @@ func TestADV_head(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.a.head()
+
 			// Expecting 165, 47, 45, 90.
 			if tt.a[0] != 165 {
 				t.Errorf("head() = %v, want %v", tt.a[0], 165)
 			}
+
 			if tt.a[1] != 47 {
 				t.Errorf("head() = %v, want %v", tt.a[0], 47)
 			}
+
 			if tt.a[2] != 45 {
 				t.Errorf("head() = %v, want %v", tt.a[0], 45)
 			}
+
 			if tt.a[3] != 90 {
 				t.Errorf("head() = %v, want %v", tt.a[0], 90)
 			}
@@ -285,12 +299,15 @@ func TestADV_total(t *testing.T) {
 			if tt.a[4] != 103 {
 				t.Errorf("head() = %v, want %v", tt.a[4], 103)
 			}
+
 			if tt.a[5] != 23 {
 				t.Errorf("head() = %v, want %v", tt.a[5], 23)
 			}
+
 			if tt.a[6] != 4 {
 				t.Errorf("head() = %v, want %v", tt.a[6], 4)
 			}
+
 			if tt.a[7] != 163 {
 				t.Errorf("head() = %v, want %v", tt.a[7], 163)
 			}
@@ -311,16 +328,20 @@ func TestADV_tail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.a.tail()
+
 			// Expecting 100, 191, 40, 221.
 			if tt.a[len(tt.a)-4] != 100 {
 				t.Errorf("head() = %v, want %v", tt.a[len(tt.a)-4], 100)
 			}
+
 			if tt.a[len(tt.a)-3] != 191 {
 				t.Errorf("head() = %v, want %v", tt.a[len(tt.a)-3], 191)
 			}
+
 			if tt.a[len(tt.a)-2] != 40 {
 				t.Errorf("head() = %v, want %v", tt.a[len(tt.a)-2], 40)
 			}
+
 			if tt.a[len(tt.a)-1] != 221 {
 				t.Errorf("head() = %v, want %v", tt.a[len(tt.a)-1], 221)
 			}

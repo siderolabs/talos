@@ -133,6 +133,7 @@ func Walker(ctx context.Context, rootPath string, options ...WalkerOption) (<-ch
 					case SymlinkFileType:
 						matches = fileInfo.Mode()&os.ModeSymlink != 0
 					}
+
 					if matches {
 						break
 					}

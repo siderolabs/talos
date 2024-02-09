@@ -46,7 +46,6 @@ var memoryCmd = &cobra.Command{
 				verboseRender(&remotePeer, resp)
 			} else {
 				err = briefRender(&remotePeer, resp)
-
 				if err != nil {
 					return err
 				}

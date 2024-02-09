@@ -212,7 +212,9 @@ func openArchive() (*os.File, error) {
 		}
 	} else {
 		buf := bufio.NewReader(os.Stdin)
+
 		fmt.Printf("%s already exists, overwrite? [y/N]: ", supportCmdFlags.output)
+
 		choice, err := buf.ReadString('\n')
 		if err != nil {
 			return nil, err

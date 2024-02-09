@@ -19,7 +19,6 @@ func TestParseType(t *testing.T) {
 
 	t.Run("Values", func(t *testing.T) {
 		// We have to use the same values as defined in proto as we use direct type conversions in many places.
-
 		assert.EqualValues(t, machineapi.MachineConfig_TYPE_UNKNOWN, machine.TypeUnknown)
 		assert.EqualValues(t, machineapi.MachineConfig_TYPE_INIT, machine.TypeInit)
 		assert.EqualValues(t, machineapi.MachineConfig_TYPE_CONTROL_PLANE, machine.TypeControlPlane)

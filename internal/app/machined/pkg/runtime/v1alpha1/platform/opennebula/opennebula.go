@@ -96,7 +96,9 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 							ConfigLayer:     network.ConfigPlatform,
 						},
 					)
+
 					var mtu uint32
+
 					if oneContext[ifaceName+"_MTU"] == "" {
 						mtu = 0
 					} else {
@@ -148,6 +150,7 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 
 					// Parse DNS servers
 					dnsServers := strings.Fields(oneContext[ifaceName+"_DNS"])
+
 					var dnsIPs []netip.Addr
 
 					for _, dnsServer := range dnsServers {
@@ -155,6 +158,7 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 						if err != nil {
 							return nil, fmt.Errorf("failed to parse DNS server IP: %w", err)
 						}
+
 						dnsIPs = append(dnsIPs, ip)
 					}
 

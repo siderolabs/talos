@@ -391,7 +391,6 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 
 			return nil
 		})
-
 		if err != nil {
 			return fmt.Errorf("failed to format device: %w", err)
 		}

@@ -312,9 +312,11 @@ config:
 
 			d := decoder.NewDecoder()
 			actual, err := d.Decode(bytes.NewReader(tt.source))
+
 			if tt.expected != nil {
 				assert.Equal(t, tt.expected, actual)
 			}
+
 			if tt.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {

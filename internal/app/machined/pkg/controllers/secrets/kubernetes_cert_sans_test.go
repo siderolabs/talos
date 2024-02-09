@@ -115,6 +115,7 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 
 	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
 		var certSANs resource.Resource
+
 		certSANs, err := ctest.Get[*secrets.CertSAN](
 			suite,
 			resource.NewMetadata(

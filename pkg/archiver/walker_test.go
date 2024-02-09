@@ -105,6 +105,7 @@ func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
 			suite.Require().NoError(err)
 
 			var result []string
+
 			for fi := range ch {
 				suite.Require().NoError(fi.Error)
 				result = append(result, fi.RelPath)

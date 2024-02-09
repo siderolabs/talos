@@ -81,6 +81,7 @@ func (s *Spinner) Draw(screen tcell.Screen) {
 
 	line := fmt.Sprintf(s.label+" %s", spinner)
 	tview.Print(screen, line, x, y, width, tview.AlignLeft, tcell.ColorWhite)
+
 	s.index++
 
 	if s.index == len(s.spinner) {

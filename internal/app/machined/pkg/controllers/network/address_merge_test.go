@@ -230,6 +230,7 @@ func (suite *AddressMergeSuite) TestMergeFlapping() {
 
 					continue
 				}
+
 				suite.T().Log("finalizer added")
 
 				time.Sleep(10 * time.Millisecond)

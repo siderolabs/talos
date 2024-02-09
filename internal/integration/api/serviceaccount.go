@@ -258,7 +258,6 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 			Data: bytes,
 			Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
 		})
-
 		if err != nil {
 			return err
 		}

@@ -22,6 +22,7 @@ func TestPollingCondition(t *testing.T) {
 		t.Parallel()
 
 		var calls int
+
 		cond := conditions.PollingCondition("Test condition", func(ctx context.Context) error {
 			calls++
 
@@ -42,6 +43,7 @@ func TestPollingCondition(t *testing.T) {
 		t.Parallel()
 
 		var calls int
+
 		cond := conditions.PollingCondition("Test condition", func(ctx context.Context) error {
 			calls++
 
@@ -62,6 +64,7 @@ func TestPollingCondition(t *testing.T) {
 		t.Parallel()
 
 		var calls int
+
 		cond := conditions.PollingCondition("Test condition", func(ctx context.Context) error {
 			calls++
 

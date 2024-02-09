@@ -3,12 +3,11 @@
 
 # options for analysis running
 run:
-  go: '1.18'
   # default concurrency is a available CPU number
   # concurrency: 4
 
   # timeout for analysis, e.g. 30s, 5m, default is 1m
-  deadline: 10m
+  timeout: 10m
 
   # exit code when at least one issue was found, default is 1
   issues-exit-code: 1
@@ -35,6 +34,7 @@ run:
 output:
   # colored-line-number|line-number|json|tab|checkstyle, default is "colored-line-number"
   format: line-number
+  sort-results: true
 
 # all available settings of specific linters
 linters-settings:
@@ -55,9 +55,6 @@ linters-settings:
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
     min-complexity: 10
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
   dupl:
     # tokens count to trigger issue, 150 by default
     threshold: 100
@@ -66,14 +63,6 @@ linters-settings:
     min-len: 3
     # minimal occurrences count to trigger, 3 by default
     min-occurrences: 3
-  depguard:
-    list-type: blacklist
-    packages:
-      - github.com/golang/protobuf/proto
-      - google.golang.org/protobuf/proto
-    packages-with-error-message:
-      - google.golang.org/protobuf/proto: Use "github.com/siderolabs/talos/pkg/machinery/proto" instead.
-        github.com/golang/protobuf/proto: Use "github.com/siderolabs/talos/pkg/machinery/proto" instead.
   misspell:
     # Correct spellings using locale preferences for US or UK.
     # Default is to use a neutral variety of English.
@@ -85,28 +74,8 @@ linters-settings:
     line-length: 200
     # tab width in spaces. Default to 1.
     tab-width: 1
-  unused:
-    # treat code as a program (not a library) and report unused exported identifiers; default is false.
-    # XXX: if you enable this setting, unused will report a lot of false-positives in text editors:
-    # if it's called for subdir of a project it can't find funcs usages. All text editor integrations
-    # with golangci-lint call it on a directory with the changed file.
-    check-exported: false
-  unparam:
-    # call graph construction algorithm (cha, rta). In general, use cha for libraries,
-    # and rta for programs with main packages. Default is cha.
-    algo: cha
-
-    # Inspect exported functions, default is false. Set to true if no external program/library imports your code.
-    # XXX: if you enable this setting, unparam will report a lot of false-positives in text editors:
-    # if it's called for subdir of a project it can't find external interfaces. All text editor integrations
-    # with golangci-lint call it on a directory with the changed file.
-    check-exported: false
-  nakedret:
-    # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
-    max-func-lines: 30
   nolintlint:
     allow-unused: false
-    allow-leading-space: false
     allow-no-explanation: []
     require-explanation: false
     require-specific: true
@@ -146,14 +115,13 @@ linters:
     - forbidigo
     - forcetypeassert
     - funlen
-    - gas
     - gochecknoglobals
     - gochecknoinits
     - gocognit
     - godox
     - goerr113
     - gomnd
-    - ifshort
+    - gosec
     - ireturn # we return interfaces
     - maintidx
     - nestif
@@ -184,7 +152,8 @@ linters:
     - varcheck
     - structcheck
     - deadcode
-
+    - ifshort
+    - perfsprint
   disable-all: false
   fast: false
 

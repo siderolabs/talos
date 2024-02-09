@@ -71,6 +71,7 @@ func TestEvents_Publish(t *testing.T) {
 			e := NewEvents(tt.cap, tt.cap/10)
 
 			var wg sync.WaitGroup
+
 			wg.Add(tt.watchers)
 
 			got := uint32(0)

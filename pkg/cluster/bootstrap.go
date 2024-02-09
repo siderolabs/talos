@@ -64,7 +64,6 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}

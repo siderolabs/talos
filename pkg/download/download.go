@@ -150,6 +150,7 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 		)...,
 	).RetryWithContext(ctx, func(ctx context.Context) error {
 		var attemptEndpoint string
+
 		attemptEndpoint, err = options.EndpointFunc(ctx)
 		if err != nil {
 			return err

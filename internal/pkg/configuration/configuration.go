@@ -140,19 +140,16 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 			in.MachineConfig.KubernetesVersion,
 			options...,
 		)
-
 		if err != nil {
 			return nil, err
 		}
 
 		c, err = input.Config(machineType)
-
 		if err != nil {
 			return nil, err
 		}
 
 		cfgBytes, err = c.Bytes()
-
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +169,6 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 		}
 
 		taloscfgBytes, err = talosconfig.Bytes()
-
 		if err != nil {
 			return nil, err
 		}

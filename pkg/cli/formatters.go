@@ -191,8 +191,7 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 					graph.Edge(graph.Node(resourceTypeID(edge)), graph.Node(edge.ControllerName), idLabels...).Solid()
 				case inspect.DependencyEdgeType_INPUT_WEAK:
 					graph.Edge(graph.Node(resourceTypeID(edge)), graph.Node(edge.ControllerName), idLabels...).Dotted()
-				case inspect.DependencyEdgeType_INPUT_DESTROY_READY:
-					// don't show the DestroyReady inputs to reduce the visual clutter
+				case inspect.DependencyEdgeType_INPUT_DESTROY_READY: // don't show the DestroyReady inputs to reduce the visual clutter
 				}
 			}
 		}

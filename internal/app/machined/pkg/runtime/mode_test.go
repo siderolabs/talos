@@ -89,6 +89,7 @@ func TestParseMode(t *testing.T) {
 
 				return
 			}
+
 			if !reflect.DeepEqual(gotM, tt.wantM) {
 				t.Errorf("ParseMode() = %v, want %v", gotM, tt.wantM)
 			}

@@ -52,6 +52,7 @@ func (eg *Group) NextFocus() {
 // PrevFocus switch focus to the prev element.
 func (eg *Group) PrevFocus() {
 	eg.detectFocus()
+
 	eg.current--
 
 	if eg.current < 0 {

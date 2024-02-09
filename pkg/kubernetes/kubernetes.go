@@ -278,6 +278,7 @@ func (h *Client) evict(ctx context.Context, p corev1.Pod, gracePeriod int64) err
 func (h *Client) waitForPodDeleted(ctx context.Context, p *corev1.Pod) error {
 	return retry.Constant(time.Minute, retry.WithUnits(3*time.Second)).RetryWithContext(ctx, func(ctx context.Context) error {
 		pod, err := h.CoreV1().Pods(p.GetNamespace()).Get(ctx, p.GetName(), metav1.GetOptions{})
+
 		switch {
 		case apierrors.IsNotFound(err):
 			return nil

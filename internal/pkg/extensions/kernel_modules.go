@@ -153,6 +153,7 @@ func extractRootfsFromInitramfs(r io.Reader, rootfsFilePath string) error {
 		}
 
 		reader := io.NewSectionReader(r.ReaderAt, 0, int64(r.FileSize))
+
 		f, err := os.Create(rootfsFilePath)
 		if err != nil {
 			return err

@@ -49,8 +49,8 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 		}
 
 		mtuStr := network.Options["com.docker.network.driver.mtu"]
-		res.clusterInfo.Network.MTU, err = strconv.Atoi(mtuStr)
 
+		res.clusterInfo.Network.MTU, err = strconv.Atoi(mtuStr)
 		if err != nil {
 			return nil, err
 		}

@@ -129,6 +129,7 @@ func (a *nodeTracker) trackEventsWithRetry(actorIDCh chan string) error {
 		// retryable function
 		err := func() error {
 			eventCh := make(chan client.EventResult)
+
 			err := a.cli.EventsWatchV2(ctx, eventCh, client.WithTailEvents(tailEvents))
 			if err != nil {
 				return err

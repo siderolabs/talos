@@ -55,17 +55,17 @@ GO_VERSION ?= 1.21
 # renovate: datasource=go depName=golang.org/x/tools
 GOIMPORTS_VERSION ?= v0.17.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
-GOFUMPT_VERSION ?= v0.5.0
+GOFUMPT_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.55.2
+GOLANGCILINT_VERSION ?= v1.56.1
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.17.0
 # renovate: datasource=go depName=github.com/alvaroloes/enumer
 ENUMER_VERSION ?= v1.1.2
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.29.0
+DEEPCOPY_GEN_VERSION ?= v0.29.1
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
-VTPROTOBUF_VERSION ?= v0.5.0
+VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
 DEEPCOPY_VERSION ?= v0.5.5
 # renovate: datasource=go depName=github.com/siderolabs/importvet

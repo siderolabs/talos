@@ -294,7 +294,6 @@ func (apiSuite *APISuite) AssertRebootedNoChecks(ctx context.Context, node strin
 	err = retry.Constant(time.Minute * 5).Retry(func() error {
 		// read boot_id before reboot
 		bootIDBefore, err = apiSuite.ReadBootID(nodeCtx)
-
 		if err != nil {
 			return retry.ExpectedError(err)
 		}

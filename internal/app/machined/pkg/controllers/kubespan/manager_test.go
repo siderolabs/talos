@@ -203,6 +203,7 @@ func (suite *ManagerSuite) TestReconcile() {
 			spec := res.TypedSpec()
 
 			asrt.Len(spec.Wireguard.Peers, 2)
+
 			if len(spec.Wireguard.Peers) != 2 {
 				return
 			}
@@ -246,6 +247,7 @@ func (suite *ManagerSuite) TestReconcile() {
 			asrt.Equal(nethelpers.VerdictAccept, spec.Policy)
 
 			asrt.Len(spec.Rules, 2)
+
 			if len(spec.Rules) != 2 {
 				return
 			}

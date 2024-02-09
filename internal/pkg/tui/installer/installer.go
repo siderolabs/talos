@@ -293,7 +293,6 @@ func (installer *Installer) configure() error {
 
 			return nil
 		}(i)
-
 		if err != nil {
 			return err
 		}
@@ -345,8 +344,8 @@ func (installer *Installer) apply(conn *Connection) error {
 		}
 
 		config = response.Messages[0].Data[0]
-		talosconfig, err = clientconfig.FromBytes(response.Messages[0].Talosconfig)
 
+		talosconfig, err = clientconfig.FromBytes(response.Messages[0].Talosconfig)
 		if err != nil {
 			return err
 		}
@@ -364,6 +363,7 @@ func (installer *Installer) apply(conn *Connection) error {
 
 		// TODO: progress bar, logs?
 		list.AddItem(s, 1, 1, false)
+
 		reply, err = conn.ApplyConfiguration(
 			&machineapi.ApplyConfigurationRequest{
 				Data:   config,
@@ -503,6 +503,7 @@ func (installer *Installer) showModal(title, text string, buttons ...string) int
 		SetDoneFunc(
 			func(buttonIndex int, buttonLabel string) {
 				index = buttonIndex
+
 				close(done)
 			},
 		)

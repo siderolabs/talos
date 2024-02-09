@@ -69,6 +69,7 @@ func (suite *MaintenanceSuite) TestReconcile() {
 
 			serverCert, err := spec.Server.GetCert()
 			asrt.NoError(err)
+
 			if err != nil {
 				return
 			}

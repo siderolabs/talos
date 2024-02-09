@@ -245,6 +245,7 @@ func configureAdapter(installer *Installer, opts *machineapi.GenerateConfigurati
 		return components.NewFormModalButton(item.Name, "configure").
 			SetSelectedFunc(func() {
 				deviceIndex := -1
+
 				var adapterSettings *machineapi.NetworkDeviceConfig
 
 				for i, iface := range opts.MachineConfig.NetworkConfig.Interfaces {

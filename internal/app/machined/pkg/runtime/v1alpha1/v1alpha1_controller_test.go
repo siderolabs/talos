@@ -141,6 +141,7 @@ func TestRun(t *testing.T) {
 			e := NewEvents(1000, 10)
 
 			t.Setenv("PLATFORM", "container")
+
 			s, err := NewState()
 			require.NoError(err)
 

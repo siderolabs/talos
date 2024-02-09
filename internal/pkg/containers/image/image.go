@@ -112,7 +112,6 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

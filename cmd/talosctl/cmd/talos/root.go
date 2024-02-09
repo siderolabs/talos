@@ -151,7 +151,7 @@ func getPathFromNode(path, filter string) map[string]struct{} {
 }
 
 func getServiceFromNode() []string {
-	var svcIds []string
+	var svcIDs []string
 
 	//nolint:errcheck
 	GlobalArgs.WithClient(
@@ -166,7 +166,7 @@ func getServiceFromNode() []string {
 			for _, msg := range resp.Messages {
 				for _, s := range msg.Services {
 					svc := cli.ServiceInfoWrapper{ServiceInfo: s}
-					svcIds = append(svcIds, svc.Id)
+					svcIDs = append(svcIDs, svc.Id)
 				}
 			}
 
@@ -174,11 +174,11 @@ func getServiceFromNode() []string {
 		},
 	)
 
-	return svcIds
+	return svcIDs
 }
 
 func getContainersFromNode(kubernetes bool) []string {
-	var containerIds []string
+	var containerIDs []string
 
 	//nolint:errcheck
 	GlobalArgs.WithClient(
@@ -211,7 +211,7 @@ func getContainersFromNode(kubernetes bool) []string {
 						continue
 					}
 
-					containerIds = append(containerIds, p.Id)
+					containerIDs = append(containerIDs, p.Id)
 				}
 			}
 
@@ -219,7 +219,7 @@ func getContainersFromNode(kubernetes bool) []string {
 		},
 	)
 
-	return containerIds
+	return containerIDs
 }
 
 func mergeSuggestions(a, b []string) []string {

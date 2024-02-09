@@ -105,12 +105,14 @@ func (azu *AzureUploader) AzureGalleryUpload(ctx context.Context) error {
 
 		g.Go(func() error {
 			log.Printf("azure: starting upload blob for %s\n", arch)
+
 			err = azu.uploadAzureBlob(ctx, arch)
 			if err != nil {
 				return fmt.Errorf("azure: error uploading page blob for %s: %w", arch, err)
 			}
 
 			log.Printf("azure: starting image version creation for %s\n", arch)
+
 			err = azu.createAzureImageVersion(ctx, arch)
 			if err != nil {
 				return fmt.Errorf("azure: error creating image version: %w", err)
@@ -268,7 +270,6 @@ func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, arch stri
 				log.Printf("azure: image version exists for %s\n azure: removing old image version\n", *v.Name)
 
 				err = azu.deleteImageVersion(ctx, arch)
-
 				if err != nil {
 					return err
 				}
@@ -310,7 +311,6 @@ func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, arch stri
 	}
 
 	_, err = poller.PollUntilDone(ctx, nil)
-
 	if err != nil {
 		return fmt.Errorf("azure: failed to pull the result for image version creation: %w", err)
 	}
@@ -331,7 +331,6 @@ func (azu *AzureUploader) deleteImageVersion(ctx context.Context, arch string) e
 	}
 
 	_, err = poller.PollUntilDone(ctx, nil)
-
 	if err != nil {
 		return fmt.Errorf("azure: failed to pull the result for image deletion: %w", err)
 	}

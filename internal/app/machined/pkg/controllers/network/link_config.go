@@ -102,7 +102,6 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 					ConfigLayer: network.ConfigDefault,
 				},
 			})
-
 			if err != nil {
 				return fmt.Errorf("error applying cmdline route: %w", err)
 			}
@@ -197,7 +196,6 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 							ConfigLayer: network.ConfigDefault,
 						},
 					})
-
 					if err != nil {
 						return fmt.Errorf("error applying default link up: %w", err)
 					}

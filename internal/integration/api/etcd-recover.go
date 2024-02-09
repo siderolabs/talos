@@ -135,7 +135,6 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 						defer requestCtxCancel()
 
 						bootIDAfter, err = suite.ReadBootID(requestCtx)
-
 						if err != nil {
 							// API might be unresponsive during reboot
 							return retry.ExpectedError(err)

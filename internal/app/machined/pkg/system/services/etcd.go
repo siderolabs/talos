@@ -367,7 +367,6 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, pe
 
 		return nil
 	})
-
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to build cluster arguments: %w", err)
 	}

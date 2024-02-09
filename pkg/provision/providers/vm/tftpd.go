@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/pin/tftp"
+	"github.com/pin/tftp/v3"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/siderolabs/talos/pkg/provision/providers/vm/internal/ipxe"

@@ -149,27 +149,27 @@ func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, conten
 	}
 
 	var (
-		expectedIds   []string
-		unexpectedIds []string
+		expectedIDs   []string
+		unexpectedIDs []string
 	)
 
 	if contents.resolvConf != "" {
-		expectedIds = append(expectedIds, "resolv.conf")
+		expectedIDs = append(expectedIDs, "resolv.conf")
 	} else {
-		unexpectedIds = append(unexpectedIds, "resolv.conf")
+		unexpectedIDs = append(unexpectedIDs, "resolv.conf")
 	}
 
 	if contents.hosts != "" {
-		expectedIds = append(expectedIds, "hosts")
+		expectedIDs = append(expectedIDs, "hosts")
 	} else {
-		unexpectedIds = append(unexpectedIds, "hosts")
+		unexpectedIDs = append(unexpectedIDs, "hosts")
 	}
 
 	assertResources(
 		suite.ctx,
 		suite.T(),
 		suite.state,
-		expectedIds,
+		expectedIDs,
 		func(r *files.EtcFileSpec, asrt *assert.Assertions) {
 			switch r.Metadata().ID() {
 			case "hosts":
@@ -183,6 +183,7 @@ func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, conten
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 			if contents.resolvGlobalConf == "" {
 				_, err := os.Lstat(suite.podResolvConfPath)
+
 				switch {
 				case err == nil:
 					return retry.ExpectedErrorf("unexpected pod %s", suite.podResolvConfPath)
@@ -194,6 +195,7 @@ func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, conten
 			}
 
 			file, err := os.ReadFile(suite.podResolvConfPath)
+
 			switch {
 			case errors.Is(err, os.ErrNotExist):
 				return retry.ExpectedErrorf("missing pod %s", suite.podResolvConfPath)
@@ -207,7 +209,7 @@ func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, conten
 		}),
 	)
 
-	for _, id := range unexpectedIds {
+	for _, id := range unexpectedIDs {
 		id := id
 
 		assertNoResource[*files.EtcFileSpec](suite.ctx, suite.T(), suite.state, id)

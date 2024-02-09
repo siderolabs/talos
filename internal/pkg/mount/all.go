@@ -61,6 +61,7 @@ func UnmountAll() error {
 					log.Printf("unmounted %s (%s)", mountInfo.MountPoint, mountInfo.MountSource)
 				} else {
 					log.Printf("failed unmounting %s: %s", mountInfo.MountPoint, err)
+
 					failedUnmounts++
 				}
 			}
