@@ -4,11 +4,14 @@ package network
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _OperatorName = "dhcp4dhcp6vip"
 
 var _OperatorIndex = [...]uint8{0, 5, 10, 13}
+
+const _OperatorLowerName = "dhcp4dhcp6vip"
 
 func (i Operator) String() string {
 	if i < 0 || i >= Operator(len(_OperatorIndex)-1) {
@@ -17,12 +20,30 @@ func (i Operator) String() string {
 	return _OperatorName[_OperatorIndex[i]:_OperatorIndex[i+1]]
 }
 
-var _OperatorValues = []Operator{0, 1, 2}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _OperatorNoOp() {
+	var x [1]struct{}
+	_ = x[OperatorDHCP4-(0)]
+	_ = x[OperatorDHCP6-(1)]
+	_ = x[OperatorVIP-(2)]
+}
+
+var _OperatorValues = []Operator{OperatorDHCP4, OperatorDHCP6, OperatorVIP}
 
 var _OperatorNameToValueMap = map[string]Operator{
-	_OperatorName[0:5]:   0,
-	_OperatorName[5:10]:  1,
-	_OperatorName[10:13]: 2,
+	_OperatorName[0:5]:        OperatorDHCP4,
+	_OperatorLowerName[0:5]:   OperatorDHCP4,
+	_OperatorName[5:10]:       OperatorDHCP6,
+	_OperatorLowerName[5:10]:  OperatorDHCP6,
+	_OperatorName[10:13]:      OperatorVIP,
+	_OperatorLowerName[10:13]: OperatorVIP,
+}
+
+var _OperatorNames = []string{
+	_OperatorName[0:5],
+	_OperatorName[5:10],
+	_OperatorName[10:13],
 }
 
 // OperatorString retrieves an enum value from the enum constants string name.
@@ -31,12 +52,23 @@ func OperatorString(s string) (Operator, error) {
 	if val, ok := _OperatorNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _OperatorNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to Operator values", s)
 }
 
 // OperatorValues returns all values of the enum
 func OperatorValues() []Operator {
 	return _OperatorValues
+}
+
+// OperatorStrings returns a slice of all String values of the enum
+func OperatorStrings() []string {
+	strs := make([]string, len(_OperatorNames))
+	copy(strs, _OperatorNames)
+	return strs
 }
 
 // IsAOperator returns "true" if the value is listed in the enum definition. "false" otherwise

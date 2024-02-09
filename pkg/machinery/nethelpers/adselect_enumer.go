@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _ADSelectName = "stablebandwidthcount"
 
 var _ADSelectIndex = [...]uint8{0, 6, 15, 20}
+
+const _ADSelectLowerName = "stablebandwidthcount"
 
 func (i ADSelect) String() string {
 	if i >= ADSelect(len(_ADSelectIndex)-1) {
@@ -17,12 +20,30 @@ func (i ADSelect) String() string {
 	return _ADSelectName[_ADSelectIndex[i]:_ADSelectIndex[i+1]]
 }
 
-var _ADSelectValues = []ADSelect{0, 1, 2}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _ADSelectNoOp() {
+	var x [1]struct{}
+	_ = x[ADSelectStable-(0)]
+	_ = x[ADSelectBandwidth-(1)]
+	_ = x[ADSelectCount-(2)]
+}
+
+var _ADSelectValues = []ADSelect{ADSelectStable, ADSelectBandwidth, ADSelectCount}
 
 var _ADSelectNameToValueMap = map[string]ADSelect{
-	_ADSelectName[0:6]:   0,
-	_ADSelectName[6:15]:  1,
-	_ADSelectName[15:20]: 2,
+	_ADSelectName[0:6]:        ADSelectStable,
+	_ADSelectLowerName[0:6]:   ADSelectStable,
+	_ADSelectName[6:15]:       ADSelectBandwidth,
+	_ADSelectLowerName[6:15]:  ADSelectBandwidth,
+	_ADSelectName[15:20]:      ADSelectCount,
+	_ADSelectLowerName[15:20]: ADSelectCount,
+}
+
+var _ADSelectNames = []string{
+	_ADSelectName[0:6],
+	_ADSelectName[6:15],
+	_ADSelectName[15:20],
 }
 
 // ADSelectString retrieves an enum value from the enum constants string name.
@@ -31,12 +52,23 @@ func ADSelectString(s string) (ADSelect, error) {
 	if val, ok := _ADSelectNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _ADSelectNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to ADSelect values", s)
 }
 
 // ADSelectValues returns all values of the enum
 func ADSelectValues() []ADSelect {
 	return _ADSelectValues
+}
+
+// ADSelectStrings returns a slice of all String values of the enum
+func ADSelectStrings() []string {
+	strs := make([]string, len(_ADSelectNames))
+	copy(strs, _ADSelectNames)
+	return strs
 }
 
 // IsAADSelect returns "true" if the value is listed in the enum definition. "false" otherwise

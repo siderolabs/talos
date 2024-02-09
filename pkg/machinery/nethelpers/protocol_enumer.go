@@ -4,13 +4,18 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
-	_ProtocolName_0 = "icmp"
-	_ProtocolName_1 = "tcp"
-	_ProtocolName_2 = "udp"
-	_ProtocolName_3 = "icmpv6"
+	_ProtocolName_0      = "icmp"
+	_ProtocolLowerName_0 = "icmp"
+	_ProtocolName_1      = "tcp"
+	_ProtocolLowerName_1 = "tcp"
+	_ProtocolName_2      = "udp"
+	_ProtocolLowerName_2 = "udp"
+	_ProtocolName_3      = "icmpv6"
+	_ProtocolLowerName_3 = "icmpv6"
 )
 
 var (
@@ -35,13 +40,34 @@ func (i Protocol) String() string {
 	}
 }
 
-var _ProtocolValues = []Protocol{1, 6, 17, 58}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _ProtocolNoOp() {
+	var x [1]struct{}
+	_ = x[ProtocolICMP-(1)]
+	_ = x[ProtocolTCP-(6)]
+	_ = x[ProtocolUDP-(17)]
+	_ = x[ProtocolICMPv6-(58)]
+}
+
+var _ProtocolValues = []Protocol{ProtocolICMP, ProtocolTCP, ProtocolUDP, ProtocolICMPv6}
 
 var _ProtocolNameToValueMap = map[string]Protocol{
-	_ProtocolName_0[0:4]: 1,
-	_ProtocolName_1[0:3]: 6,
-	_ProtocolName_2[0:3]: 17,
-	_ProtocolName_3[0:6]: 58,
+	_ProtocolName_0[0:4]:      ProtocolICMP,
+	_ProtocolLowerName_0[0:4]: ProtocolICMP,
+	_ProtocolName_1[0:3]:      ProtocolTCP,
+	_ProtocolLowerName_1[0:3]: ProtocolTCP,
+	_ProtocolName_2[0:3]:      ProtocolUDP,
+	_ProtocolLowerName_2[0:3]: ProtocolUDP,
+	_ProtocolName_3[0:6]:      ProtocolICMPv6,
+	_ProtocolLowerName_3[0:6]: ProtocolICMPv6,
+}
+
+var _ProtocolNames = []string{
+	_ProtocolName_0[0:4],
+	_ProtocolName_1[0:3],
+	_ProtocolName_2[0:3],
+	_ProtocolName_3[0:6],
 }
 
 // ProtocolString retrieves an enum value from the enum constants string name.
@@ -50,12 +76,23 @@ func ProtocolString(s string) (Protocol, error) {
 	if val, ok := _ProtocolNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _ProtocolNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to Protocol values", s)
 }
 
 // ProtocolValues returns all values of the enum
 func ProtocolValues() []Protocol {
 	return _ProtocolValues
+}
+
+// ProtocolStrings returns a slice of all String values of the enum
+func ProtocolStrings() []string {
+	strs := make([]string, len(_ProtocolNames))
+	copy(strs, _ProtocolNames)
+	return strs
 }
 
 // IsAProtocol returns "true" if the value is listed in the enum definition. "false" otherwise

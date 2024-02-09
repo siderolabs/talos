@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
-	_VLANProtocolName_0 = "802.1q"
-	_VLANProtocolName_1 = "802.1ad"
+	_VLANProtocolName_0      = "802.1q"
+	_VLANProtocolLowerName_0 = "802.1q"
+	_VLANProtocolName_1      = "802.1ad"
+	_VLANProtocolLowerName_1 = "802.1ad"
 )
 
 var (
@@ -27,11 +30,26 @@ func (i VLANProtocol) String() string {
 	}
 }
 
-var _VLANProtocolValues = []VLANProtocol{33024, 34984}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _VLANProtocolNoOp() {
+	var x [1]struct{}
+	_ = x[VLANProtocol8021Q-(33024)]
+	_ = x[VLANProtocol8021AD-(34984)]
+}
+
+var _VLANProtocolValues = []VLANProtocol{VLANProtocol8021Q, VLANProtocol8021AD}
 
 var _VLANProtocolNameToValueMap = map[string]VLANProtocol{
-	_VLANProtocolName_0[0:6]: 33024,
-	_VLANProtocolName_1[0:7]: 34984,
+	_VLANProtocolName_0[0:6]:      VLANProtocol8021Q,
+	_VLANProtocolLowerName_0[0:6]: VLANProtocol8021Q,
+	_VLANProtocolName_1[0:7]:      VLANProtocol8021AD,
+	_VLANProtocolLowerName_1[0:7]: VLANProtocol8021AD,
+}
+
+var _VLANProtocolNames = []string{
+	_VLANProtocolName_0[0:6],
+	_VLANProtocolName_1[0:7],
 }
 
 // VLANProtocolString retrieves an enum value from the enum constants string name.
@@ -40,12 +58,23 @@ func VLANProtocolString(s string) (VLANProtocol, error) {
 	if val, ok := _VLANProtocolNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _VLANProtocolNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to VLANProtocol values", s)
 }
 
 // VLANProtocolValues returns all values of the enum
 func VLANProtocolValues() []VLANProtocol {
 	return _VLANProtocolValues
+}
+
+// VLANProtocolStrings returns a slice of all String values of the enum
+func VLANProtocolStrings() []string {
+	strs := make([]string, len(_VLANProtocolNames))
+	copy(strs, _VLANProtocolNames)
+	return strs
 }
 
 // IsAVLANProtocol returns "true" if the value is listed in the enum definition. "false" otherwise

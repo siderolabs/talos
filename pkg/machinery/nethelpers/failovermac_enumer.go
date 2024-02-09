@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _FailOverMACName = "noneactivefollow"
 
 var _FailOverMACIndex = [...]uint8{0, 4, 10, 16}
+
+const _FailOverMACLowerName = "noneactivefollow"
 
 func (i FailOverMAC) String() string {
 	if i >= FailOverMAC(len(_FailOverMACIndex)-1) {
@@ -17,12 +20,30 @@ func (i FailOverMAC) String() string {
 	return _FailOverMACName[_FailOverMACIndex[i]:_FailOverMACIndex[i+1]]
 }
 
-var _FailOverMACValues = []FailOverMAC{0, 1, 2}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _FailOverMACNoOp() {
+	var x [1]struct{}
+	_ = x[FailOverMACNone-(0)]
+	_ = x[FailOverMACActive-(1)]
+	_ = x[FailOverMACFollow-(2)]
+}
+
+var _FailOverMACValues = []FailOverMAC{FailOverMACNone, FailOverMACActive, FailOverMACFollow}
 
 var _FailOverMACNameToValueMap = map[string]FailOverMAC{
-	_FailOverMACName[0:4]:   0,
-	_FailOverMACName[4:10]:  1,
-	_FailOverMACName[10:16]: 2,
+	_FailOverMACName[0:4]:        FailOverMACNone,
+	_FailOverMACLowerName[0:4]:   FailOverMACNone,
+	_FailOverMACName[4:10]:       FailOverMACActive,
+	_FailOverMACLowerName[4:10]:  FailOverMACActive,
+	_FailOverMACName[10:16]:      FailOverMACFollow,
+	_FailOverMACLowerName[10:16]: FailOverMACFollow,
+}
+
+var _FailOverMACNames = []string{
+	_FailOverMACName[0:4],
+	_FailOverMACName[4:10],
+	_FailOverMACName[10:16],
 }
 
 // FailOverMACString retrieves an enum value from the enum constants string name.
@@ -31,12 +52,23 @@ func FailOverMACString(s string) (FailOverMAC, error) {
 	if val, ok := _FailOverMACNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _FailOverMACNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to FailOverMAC values", s)
 }
 
 // FailOverMACValues returns all values of the enum
 func FailOverMACValues() []FailOverMAC {
 	return _FailOverMACValues
+}
+
+// FailOverMACStrings returns a slice of all String values of the enum
+func FailOverMACStrings() []string {
+	strs := make([]string, len(_FailOverMACNames))
+	copy(strs, _FailOverMACNames)
+	return strs
 }
 
 // IsAFailOverMAC returns "true" if the value is listed in the enum definition. "false" otherwise

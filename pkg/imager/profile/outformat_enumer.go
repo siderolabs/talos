@@ -4,11 +4,14 @@ package profile
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _OutFormatName = "unknownraw.tar.gz.xz.gz"
 
 var _OutFormatIndex = [...]uint8{0, 7, 10, 17, 20, 23}
+
+const _OutFormatLowerName = "unknownraw.tar.gz.xz.gz"
 
 func (i OutFormat) String() string {
 	if i < 0 || i >= OutFormat(len(_OutFormatIndex)-1) {
@@ -17,14 +20,38 @@ func (i OutFormat) String() string {
 	return _OutFormatName[_OutFormatIndex[i]:_OutFormatIndex[i+1]]
 }
 
-var _OutFormatValues = []OutFormat{0, 1, 2, 3, 4}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _OutFormatNoOp() {
+	var x [1]struct{}
+	_ = x[OutFormatUnknown-(0)]
+	_ = x[OutFormatRaw-(1)]
+	_ = x[OutFormatTar-(2)]
+	_ = x[OutFormatXZ-(3)]
+	_ = x[OutFormatGZ-(4)]
+}
+
+var _OutFormatValues = []OutFormat{OutFormatUnknown, OutFormatRaw, OutFormatTar, OutFormatXZ, OutFormatGZ}
 
 var _OutFormatNameToValueMap = map[string]OutFormat{
-	_OutFormatName[0:7]:   0,
-	_OutFormatName[7:10]:  1,
-	_OutFormatName[10:17]: 2,
-	_OutFormatName[17:20]: 3,
-	_OutFormatName[20:23]: 4,
+	_OutFormatName[0:7]:        OutFormatUnknown,
+	_OutFormatLowerName[0:7]:   OutFormatUnknown,
+	_OutFormatName[7:10]:       OutFormatRaw,
+	_OutFormatLowerName[7:10]:  OutFormatRaw,
+	_OutFormatName[10:17]:      OutFormatTar,
+	_OutFormatLowerName[10:17]: OutFormatTar,
+	_OutFormatName[17:20]:      OutFormatXZ,
+	_OutFormatLowerName[17:20]: OutFormatXZ,
+	_OutFormatName[20:23]:      OutFormatGZ,
+	_OutFormatLowerName[20:23]: OutFormatGZ,
+}
+
+var _OutFormatNames = []string{
+	_OutFormatName[0:7],
+	_OutFormatName[7:10],
+	_OutFormatName[10:17],
+	_OutFormatName[17:20],
+	_OutFormatName[20:23],
 }
 
 // OutFormatString retrieves an enum value from the enum constants string name.
@@ -33,12 +60,23 @@ func OutFormatString(s string) (OutFormat, error) {
 	if val, ok := _OutFormatNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _OutFormatNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to OutFormat values", s)
 }
 
 // OutFormatValues returns all values of the enum
 func OutFormatValues() []OutFormat {
 	return _OutFormatValues
+}
+
+// OutFormatStrings returns a slice of all String values of the enum
+func OutFormatStrings() []string {
+	strs := make([]string, len(_OutFormatNames))
+	copy(strs, _OutFormatNames)
+	return strs
 }
 
 // IsAOutFormat returns "true" if the value is listed in the enum definition. "false" otherwise

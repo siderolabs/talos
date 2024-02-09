@@ -4,15 +4,22 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
-	_RouteProtocolName_0 = "unspecredirectkernelbootstatic"
-	_RouteProtocolName_1 = "ramrtzebrabirddnroutedxorpntkdhcpmrtdkeepalived"
-	_RouteProtocolName_2 = "babel"
-	_RouteProtocolName_3 = "openr"
-	_RouteProtocolName_4 = "bgpisisospfrip"
-	_RouteProtocolName_5 = "eigrp"
+	_RouteProtocolName_0      = "unspecredirectkernelbootstatic"
+	_RouteProtocolLowerName_0 = "unspecredirectkernelbootstatic"
+	_RouteProtocolName_1      = "ramrtzebrabirddnroutedxorpntkdhcpmrtdkeepalived"
+	_RouteProtocolLowerName_1 = "ramrtzebrabirddnroutedxorpntkdhcpmrtdkeepalived"
+	_RouteProtocolName_2      = "babel"
+	_RouteProtocolLowerName_2 = "babel"
+	_RouteProtocolName_3      = "openr"
+	_RouteProtocolLowerName_3 = "openr"
+	_RouteProtocolName_4      = "bgpisisospfrip"
+	_RouteProtocolLowerName_4 = "bgpisisospfrip"
+	_RouteProtocolName_5      = "eigrp"
+	_RouteProtocolLowerName_5 = "eigrp"
 )
 
 var (
@@ -45,31 +52,106 @@ func (i RouteProtocol) String() string {
 	}
 }
 
-var _RouteProtocolValues = []RouteProtocol{0, 1, 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 42, 99, 186, 187, 188, 189, 192}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _RouteProtocolNoOp() {
+	var x [1]struct{}
+	_ = x[ProtocolUnspec-(0)]
+	_ = x[ProtocolRedirect-(1)]
+	_ = x[ProtocolKernel-(2)]
+	_ = x[ProtocolBoot-(3)]
+	_ = x[ProtocolStatic-(4)]
+	_ = x[ProtocolRA-(9)]
+	_ = x[ProtocolMRT-(10)]
+	_ = x[ProtocolZebra-(11)]
+	_ = x[ProtocolBird-(12)]
+	_ = x[ProtocolDnrouted-(13)]
+	_ = x[ProtocolXorp-(14)]
+	_ = x[ProtocolNTK-(15)]
+	_ = x[ProtocolDHCP-(16)]
+	_ = x[ProtocolMRTD-(17)]
+	_ = x[ProtocolKeepalived-(18)]
+	_ = x[ProtocolBabel-(42)]
+	_ = x[ProtocolOpenr-(99)]
+	_ = x[ProtocolBGP-(186)]
+	_ = x[ProtocolISIS-(187)]
+	_ = x[ProtocolOSPF-(188)]
+	_ = x[ProtocolRIP-(189)]
+	_ = x[ProtocolEIGRP-(192)]
+}
+
+var _RouteProtocolValues = []RouteProtocol{ProtocolUnspec, ProtocolRedirect, ProtocolKernel, ProtocolBoot, ProtocolStatic, ProtocolRA, ProtocolMRT, ProtocolZebra, ProtocolBird, ProtocolDnrouted, ProtocolXorp, ProtocolNTK, ProtocolDHCP, ProtocolMRTD, ProtocolKeepalived, ProtocolBabel, ProtocolOpenr, ProtocolBGP, ProtocolISIS, ProtocolOSPF, ProtocolRIP, ProtocolEIGRP}
 
 var _RouteProtocolNameToValueMap = map[string]RouteProtocol{
-	_RouteProtocolName_0[0:6]:   0,
-	_RouteProtocolName_0[6:14]:  1,
-	_RouteProtocolName_0[14:20]: 2,
-	_RouteProtocolName_0[20:24]: 3,
-	_RouteProtocolName_0[24:30]: 4,
-	_RouteProtocolName_1[0:2]:   9,
-	_RouteProtocolName_1[2:5]:   10,
-	_RouteProtocolName_1[5:10]:  11,
-	_RouteProtocolName_1[10:14]: 12,
-	_RouteProtocolName_1[14:22]: 13,
-	_RouteProtocolName_1[22:26]: 14,
-	_RouteProtocolName_1[26:29]: 15,
-	_RouteProtocolName_1[29:33]: 16,
-	_RouteProtocolName_1[33:37]: 17,
-	_RouteProtocolName_1[37:47]: 18,
-	_RouteProtocolName_2[0:5]:   42,
-	_RouteProtocolName_3[0:5]:   99,
-	_RouteProtocolName_4[0:3]:   186,
-	_RouteProtocolName_4[3:7]:   187,
-	_RouteProtocolName_4[7:11]:  188,
-	_RouteProtocolName_4[11:14]: 189,
-	_RouteProtocolName_5[0:5]:   192,
+	_RouteProtocolName_0[0:6]:        ProtocolUnspec,
+	_RouteProtocolLowerName_0[0:6]:   ProtocolUnspec,
+	_RouteProtocolName_0[6:14]:       ProtocolRedirect,
+	_RouteProtocolLowerName_0[6:14]:  ProtocolRedirect,
+	_RouteProtocolName_0[14:20]:      ProtocolKernel,
+	_RouteProtocolLowerName_0[14:20]: ProtocolKernel,
+	_RouteProtocolName_0[20:24]:      ProtocolBoot,
+	_RouteProtocolLowerName_0[20:24]: ProtocolBoot,
+	_RouteProtocolName_0[24:30]:      ProtocolStatic,
+	_RouteProtocolLowerName_0[24:30]: ProtocolStatic,
+	_RouteProtocolName_1[0:2]:        ProtocolRA,
+	_RouteProtocolLowerName_1[0:2]:   ProtocolRA,
+	_RouteProtocolName_1[2:5]:        ProtocolMRT,
+	_RouteProtocolLowerName_1[2:5]:   ProtocolMRT,
+	_RouteProtocolName_1[5:10]:       ProtocolZebra,
+	_RouteProtocolLowerName_1[5:10]:  ProtocolZebra,
+	_RouteProtocolName_1[10:14]:      ProtocolBird,
+	_RouteProtocolLowerName_1[10:14]: ProtocolBird,
+	_RouteProtocolName_1[14:22]:      ProtocolDnrouted,
+	_RouteProtocolLowerName_1[14:22]: ProtocolDnrouted,
+	_RouteProtocolName_1[22:26]:      ProtocolXorp,
+	_RouteProtocolLowerName_1[22:26]: ProtocolXorp,
+	_RouteProtocolName_1[26:29]:      ProtocolNTK,
+	_RouteProtocolLowerName_1[26:29]: ProtocolNTK,
+	_RouteProtocolName_1[29:33]:      ProtocolDHCP,
+	_RouteProtocolLowerName_1[29:33]: ProtocolDHCP,
+	_RouteProtocolName_1[33:37]:      ProtocolMRTD,
+	_RouteProtocolLowerName_1[33:37]: ProtocolMRTD,
+	_RouteProtocolName_1[37:47]:      ProtocolKeepalived,
+	_RouteProtocolLowerName_1[37:47]: ProtocolKeepalived,
+	_RouteProtocolName_2[0:5]:        ProtocolBabel,
+	_RouteProtocolLowerName_2[0:5]:   ProtocolBabel,
+	_RouteProtocolName_3[0:5]:        ProtocolOpenr,
+	_RouteProtocolLowerName_3[0:5]:   ProtocolOpenr,
+	_RouteProtocolName_4[0:3]:        ProtocolBGP,
+	_RouteProtocolLowerName_4[0:3]:   ProtocolBGP,
+	_RouteProtocolName_4[3:7]:        ProtocolISIS,
+	_RouteProtocolLowerName_4[3:7]:   ProtocolISIS,
+	_RouteProtocolName_4[7:11]:       ProtocolOSPF,
+	_RouteProtocolLowerName_4[7:11]:  ProtocolOSPF,
+	_RouteProtocolName_4[11:14]:      ProtocolRIP,
+	_RouteProtocolLowerName_4[11:14]: ProtocolRIP,
+	_RouteProtocolName_5[0:5]:        ProtocolEIGRP,
+	_RouteProtocolLowerName_5[0:5]:   ProtocolEIGRP,
+}
+
+var _RouteProtocolNames = []string{
+	_RouteProtocolName_0[0:6],
+	_RouteProtocolName_0[6:14],
+	_RouteProtocolName_0[14:20],
+	_RouteProtocolName_0[20:24],
+	_RouteProtocolName_0[24:30],
+	_RouteProtocolName_1[0:2],
+	_RouteProtocolName_1[2:5],
+	_RouteProtocolName_1[5:10],
+	_RouteProtocolName_1[10:14],
+	_RouteProtocolName_1[14:22],
+	_RouteProtocolName_1[22:26],
+	_RouteProtocolName_1[26:29],
+	_RouteProtocolName_1[29:33],
+	_RouteProtocolName_1[33:37],
+	_RouteProtocolName_1[37:47],
+	_RouteProtocolName_2[0:5],
+	_RouteProtocolName_3[0:5],
+	_RouteProtocolName_4[0:3],
+	_RouteProtocolName_4[3:7],
+	_RouteProtocolName_4[7:11],
+	_RouteProtocolName_4[11:14],
+	_RouteProtocolName_5[0:5],
 }
 
 // RouteProtocolString retrieves an enum value from the enum constants string name.
@@ -78,12 +160,23 @@ func RouteProtocolString(s string) (RouteProtocol, error) {
 	if val, ok := _RouteProtocolNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _RouteProtocolNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to RouteProtocol values", s)
 }
 
 // RouteProtocolValues returns all values of the enum
 func RouteProtocolValues() []RouteProtocol {
 	return _RouteProtocolValues
+}
+
+// RouteProtocolStrings returns a slice of all String values of the enum
+func RouteProtocolStrings() []string {
+	strs := make([]string, len(_RouteProtocolNames))
+	copy(strs, _RouteProtocolNames)
+	return strs
 }
 
 // IsARouteProtocol returns "true" if the value is listed in the enum definition. "false" otherwise

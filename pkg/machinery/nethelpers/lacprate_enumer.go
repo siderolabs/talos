@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _LACPRateName = "slowfast"
 
 var _LACPRateIndex = [...]uint8{0, 4, 8}
+
+const _LACPRateLowerName = "slowfast"
 
 func (i LACPRate) String() string {
 	if i >= LACPRate(len(_LACPRateIndex)-1) {
@@ -17,11 +20,26 @@ func (i LACPRate) String() string {
 	return _LACPRateName[_LACPRateIndex[i]:_LACPRateIndex[i+1]]
 }
 
-var _LACPRateValues = []LACPRate{0, 1}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _LACPRateNoOp() {
+	var x [1]struct{}
+	_ = x[LACPRateSlow-(0)]
+	_ = x[LACPRateFast-(1)]
+}
+
+var _LACPRateValues = []LACPRate{LACPRateSlow, LACPRateFast}
 
 var _LACPRateNameToValueMap = map[string]LACPRate{
-	_LACPRateName[0:4]: 0,
-	_LACPRateName[4:8]: 1,
+	_LACPRateName[0:4]:      LACPRateSlow,
+	_LACPRateLowerName[0:4]: LACPRateSlow,
+	_LACPRateName[4:8]:      LACPRateFast,
+	_LACPRateLowerName[4:8]: LACPRateFast,
+}
+
+var _LACPRateNames = []string{
+	_LACPRateName[0:4],
+	_LACPRateName[4:8],
 }
 
 // LACPRateString retrieves an enum value from the enum constants string name.
@@ -30,12 +48,23 @@ func LACPRateString(s string) (LACPRate, error) {
 	if val, ok := _LACPRateNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _LACPRateNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to LACPRate values", s)
 }
 
 // LACPRateValues returns all values of the enum
 func LACPRateValues() []LACPRate {
 	return _LACPRateValues
+}
+
+// LACPRateStrings returns a slice of all String values of the enum
+func LACPRateStrings() []string {
+	strs := make([]string, len(_LACPRateNames))
+	copy(strs, _LACPRateNames)
+	return strs
 }
 
 // IsALACPRate returns "true" if the value is listed in the enum definition. "false" otherwise

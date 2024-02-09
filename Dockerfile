@@ -127,7 +127,6 @@ FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
 ENV PATH /toolchain/bin:/toolchain/go/bin
 ENV LD_LIBRARY_PATH /toolchain/lib
 ENV GOTOOLCHAIN local
-ENV GOEXPERIMENT loopvar
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
@@ -147,7 +146,7 @@ ARG STRINGER_VERSION
 RUN --mount=type=cache,target=/.cache go install golang.org/x/tools/cmd/stringer@${STRINGER_VERSION} \
     && mv /go/bin/stringer /toolchain/go/bin/stringer
 ARG ENUMER_VERSION
-RUN --mount=type=cache,target=/.cache go install github.com/alvaroloes/enumer@${ENUMER_VERSION} \
+RUN --mount=type=cache,target=/.cache go install github.com/dmarkham/enumer@${ENUMER_VERSION} \
     && mv /go/bin/enumer /toolchain/go/bin/enumer
 ARG DEEPCOPY_GEN_VERSION
 RUN --mount=type=cache,target=/.cache go install k8s.io/code-generator/cmd/deepcopy-gen@${DEEPCOPY_GEN_VERSION} \

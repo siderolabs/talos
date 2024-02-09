@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
-	_RoutingTableName_0 = "unspec"
-	_RoutingTableName_1 = "defaultmainlocal"
+	_RoutingTableName_0      = "unspec"
+	_RoutingTableLowerName_0 = "unspec"
+	_RoutingTableName_1      = "defaultmainlocal"
+	_RoutingTableLowerName_1 = "defaultmainlocal"
 )
 
 var (
@@ -28,13 +31,34 @@ func (i RoutingTable) String() string {
 	}
 }
 
-var _RoutingTableValues = []RoutingTable{0, 253, 254, 255}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _RoutingTableNoOp() {
+	var x [1]struct{}
+	_ = x[TableUnspec-(0)]
+	_ = x[TableDefault-(253)]
+	_ = x[TableMain-(254)]
+	_ = x[TableLocal-(255)]
+}
+
+var _RoutingTableValues = []RoutingTable{TableUnspec, TableDefault, TableMain, TableLocal}
 
 var _RoutingTableNameToValueMap = map[string]RoutingTable{
-	_RoutingTableName_0[0:6]:   0,
-	_RoutingTableName_1[0:7]:   253,
-	_RoutingTableName_1[7:11]:  254,
-	_RoutingTableName_1[11:16]: 255,
+	_RoutingTableName_0[0:6]:        TableUnspec,
+	_RoutingTableLowerName_0[0:6]:   TableUnspec,
+	_RoutingTableName_1[0:7]:        TableDefault,
+	_RoutingTableLowerName_1[0:7]:   TableDefault,
+	_RoutingTableName_1[7:11]:       TableMain,
+	_RoutingTableLowerName_1[7:11]:  TableMain,
+	_RoutingTableName_1[11:16]:      TableLocal,
+	_RoutingTableLowerName_1[11:16]: TableLocal,
+}
+
+var _RoutingTableNames = []string{
+	_RoutingTableName_0[0:6],
+	_RoutingTableName_1[0:7],
+	_RoutingTableName_1[7:11],
+	_RoutingTableName_1[11:16],
 }
 
 // RoutingTableString retrieves an enum value from the enum constants string name.
@@ -43,12 +67,23 @@ func RoutingTableString(s string) (RoutingTable, error) {
 	if val, ok := _RoutingTableNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _RoutingTableNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to RoutingTable values", s)
 }
 
 // RoutingTableValues returns all values of the enum
 func RoutingTableValues() []RoutingTable {
 	return _RoutingTableValues
+}
+
+// RoutingTableStrings returns a slice of all String values of the enum
+func RoutingTableStrings() []string {
+	strs := make([]string, len(_RoutingTableNames))
+	copy(strs, _RoutingTableNames)
+	return strs
 }
 
 // IsARoutingTable returns "true" if the value is listed in the enum definition. "false" otherwise

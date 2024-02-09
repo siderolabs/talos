@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _BondModeName = "balance-rractive-backupbalance-xorbroadcast802.3adbalance-tlbbalance-alb"
 
 var _BondModeIndex = [...]uint8{0, 10, 23, 34, 43, 50, 61, 72}
+
+const _BondModeLowerName = "balance-rractive-backupbalance-xorbroadcast802.3adbalance-tlbbalance-alb"
 
 func (i BondMode) String() string {
 	if i >= BondMode(len(_BondModeIndex)-1) {
@@ -17,16 +20,46 @@ func (i BondMode) String() string {
 	return _BondModeName[_BondModeIndex[i]:_BondModeIndex[i+1]]
 }
 
-var _BondModeValues = []BondMode{0, 1, 2, 3, 4, 5, 6}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _BondModeNoOp() {
+	var x [1]struct{}
+	_ = x[BondModeRoundrobin-(0)]
+	_ = x[BondModeActiveBackup-(1)]
+	_ = x[BondModeXOR-(2)]
+	_ = x[BondModeBroadcast-(3)]
+	_ = x[BondMode8023AD-(4)]
+	_ = x[BondModeTLB-(5)]
+	_ = x[BondModeALB-(6)]
+}
+
+var _BondModeValues = []BondMode{BondModeRoundrobin, BondModeActiveBackup, BondModeXOR, BondModeBroadcast, BondMode8023AD, BondModeTLB, BondModeALB}
 
 var _BondModeNameToValueMap = map[string]BondMode{
-	_BondModeName[0:10]:  0,
-	_BondModeName[10:23]: 1,
-	_BondModeName[23:34]: 2,
-	_BondModeName[34:43]: 3,
-	_BondModeName[43:50]: 4,
-	_BondModeName[50:61]: 5,
-	_BondModeName[61:72]: 6,
+	_BondModeName[0:10]:       BondModeRoundrobin,
+	_BondModeLowerName[0:10]:  BondModeRoundrobin,
+	_BondModeName[10:23]:      BondModeActiveBackup,
+	_BondModeLowerName[10:23]: BondModeActiveBackup,
+	_BondModeName[23:34]:      BondModeXOR,
+	_BondModeLowerName[23:34]: BondModeXOR,
+	_BondModeName[34:43]:      BondModeBroadcast,
+	_BondModeLowerName[34:43]: BondModeBroadcast,
+	_BondModeName[43:50]:      BondMode8023AD,
+	_BondModeLowerName[43:50]: BondMode8023AD,
+	_BondModeName[50:61]:      BondModeTLB,
+	_BondModeLowerName[50:61]: BondModeTLB,
+	_BondModeName[61:72]:      BondModeALB,
+	_BondModeLowerName[61:72]: BondModeALB,
+}
+
+var _BondModeNames = []string{
+	_BondModeName[0:10],
+	_BondModeName[10:23],
+	_BondModeName[23:34],
+	_BondModeName[34:43],
+	_BondModeName[43:50],
+	_BondModeName[50:61],
+	_BondModeName[61:72],
 }
 
 // BondModeString retrieves an enum value from the enum constants string name.
@@ -35,12 +68,23 @@ func BondModeString(s string) (BondMode, error) {
 	if val, ok := _BondModeNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _BondModeNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to BondMode values", s)
 }
 
 // BondModeValues returns all values of the enum
 func BondModeValues() []BondMode {
 	return _BondModeValues
+}
+
+// BondModeStrings returns a slice of all String values of the enum
+func BondModeStrings() []string {
+	strs := make([]string, len(_BondModeNames))
+	copy(strs, _BondModeNames)
+	return strs
 }
 
 // IsABondMode returns "true" if the value is listed in the enum definition. "false" otherwise

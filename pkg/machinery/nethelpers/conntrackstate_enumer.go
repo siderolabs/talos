@@ -4,12 +4,16 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
-	_ConntrackStateName_0 = "invalidestablished"
-	_ConntrackStateName_1 = "related"
-	_ConntrackStateName_2 = "new"
+	_ConntrackStateName_0      = "invalidestablished"
+	_ConntrackStateLowerName_0 = "invalidestablished"
+	_ConntrackStateName_1      = "related"
+	_ConntrackStateLowerName_1 = "related"
+	_ConntrackStateName_2      = "new"
+	_ConntrackStateLowerName_2 = "new"
 )
 
 var (
@@ -32,13 +36,34 @@ func (i ConntrackState) String() string {
 	}
 }
 
-var _ConntrackStateValues = []ConntrackState{1, 2, 4, 8}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _ConntrackStateNoOp() {
+	var x [1]struct{}
+	_ = x[ConntrackStateInvalid-(1)]
+	_ = x[ConntrackStateEstablished-(2)]
+	_ = x[ConntrackStateRelated-(4)]
+	_ = x[ConntrackStateNew-(8)]
+}
+
+var _ConntrackStateValues = []ConntrackState{ConntrackStateInvalid, ConntrackStateEstablished, ConntrackStateRelated, ConntrackStateNew}
 
 var _ConntrackStateNameToValueMap = map[string]ConntrackState{
-	_ConntrackStateName_0[0:7]:  1,
-	_ConntrackStateName_0[7:18]: 2,
-	_ConntrackStateName_1[0:7]:  4,
-	_ConntrackStateName_2[0:3]:  8,
+	_ConntrackStateName_0[0:7]:       ConntrackStateInvalid,
+	_ConntrackStateLowerName_0[0:7]:  ConntrackStateInvalid,
+	_ConntrackStateName_0[7:18]:      ConntrackStateEstablished,
+	_ConntrackStateLowerName_0[7:18]: ConntrackStateEstablished,
+	_ConntrackStateName_1[0:7]:       ConntrackStateRelated,
+	_ConntrackStateLowerName_1[0:7]:  ConntrackStateRelated,
+	_ConntrackStateName_2[0:3]:       ConntrackStateNew,
+	_ConntrackStateLowerName_2[0:3]:  ConntrackStateNew,
+}
+
+var _ConntrackStateNames = []string{
+	_ConntrackStateName_0[0:7],
+	_ConntrackStateName_0[7:18],
+	_ConntrackStateName_1[0:7],
+	_ConntrackStateName_2[0:3],
 }
 
 // ConntrackStateString retrieves an enum value from the enum constants string name.
@@ -47,12 +72,23 @@ func ConntrackStateString(s string) (ConntrackState, error) {
 	if val, ok := _ConntrackStateNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _ConntrackStateNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to ConntrackState values", s)
 }
 
 // ConntrackStateValues returns all values of the enum
 func ConntrackStateValues() []ConntrackState {
 	return _ConntrackStateValues
+}
+
+// ConntrackStateStrings returns a slice of all String values of the enum
+func ConntrackStateStrings() []string {
+	strs := make([]string, len(_ConntrackStateNames))
+	copy(strs, _ConntrackStateNames)
+	return strs
 }
 
 // IsAConntrackState returns "true" if the value is listed in the enum definition. "false" otherwise

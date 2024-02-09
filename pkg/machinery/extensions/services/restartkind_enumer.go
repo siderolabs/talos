@@ -4,11 +4,14 @@ package services
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _RestartKindName = "alwaysneveruntilSuccess"
 
 var _RestartKindIndex = [...]uint8{0, 6, 11, 23}
+
+const _RestartKindLowerName = "alwaysneveruntilsuccess"
 
 func (i RestartKind) String() string {
 	i -= 1
@@ -18,12 +21,30 @@ func (i RestartKind) String() string {
 	return _RestartKindName[_RestartKindIndex[i]:_RestartKindIndex[i+1]]
 }
 
-var _RestartKindValues = []RestartKind{1, 2, 3}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _RestartKindNoOp() {
+	var x [1]struct{}
+	_ = x[RestartAlways-(1)]
+	_ = x[RestartNever-(2)]
+	_ = x[RestartUntilSuccess-(3)]
+}
+
+var _RestartKindValues = []RestartKind{RestartAlways, RestartNever, RestartUntilSuccess}
 
 var _RestartKindNameToValueMap = map[string]RestartKind{
-	_RestartKindName[0:6]:   1,
-	_RestartKindName[6:11]:  2,
-	_RestartKindName[11:23]: 3,
+	_RestartKindName[0:6]:        RestartAlways,
+	_RestartKindLowerName[0:6]:   RestartAlways,
+	_RestartKindName[6:11]:       RestartNever,
+	_RestartKindLowerName[6:11]:  RestartNever,
+	_RestartKindName[11:23]:      RestartUntilSuccess,
+	_RestartKindLowerName[11:23]: RestartUntilSuccess,
+}
+
+var _RestartKindNames = []string{
+	_RestartKindName[0:6],
+	_RestartKindName[6:11],
+	_RestartKindName[11:23],
 }
 
 // RestartKindString retrieves an enum value from the enum constants string name.
@@ -32,12 +53,23 @@ func RestartKindString(s string) (RestartKind, error) {
 	if val, ok := _RestartKindNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _RestartKindNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to RestartKind values", s)
 }
 
 // RestartKindValues returns all values of the enum
 func RestartKindValues() []RestartKind {
 	return _RestartKindValues
+}
+
+// RestartKindStrings returns a slice of all String values of the enum
+func RestartKindStrings() []string {
+	strs := make([]string, len(_RestartKindNames))
+	copy(strs, _RestartKindNames)
+	return strs
 }
 
 // IsARestartKind returns "true" if the value is listed in the enum definition. "false" otherwise

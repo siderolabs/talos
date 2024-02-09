@@ -4,12 +4,16 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
-	_ScopeName_0 = "global"
-	_ScopeName_1 = "site"
-	_ScopeName_2 = "linkhostnowhere"
+	_ScopeName_0      = "global"
+	_ScopeLowerName_0 = "global"
+	_ScopeName_1      = "site"
+	_ScopeLowerName_1 = "site"
+	_ScopeName_2      = "linkhostnowhere"
+	_ScopeLowerName_2 = "linkhostnowhere"
 )
 
 var (
@@ -32,14 +36,38 @@ func (i Scope) String() string {
 	}
 }
 
-var _ScopeValues = []Scope{0, 200, 253, 254, 255}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _ScopeNoOp() {
+	var x [1]struct{}
+	_ = x[ScopeGlobal-(0)]
+	_ = x[ScopeSite-(200)]
+	_ = x[ScopeLink-(253)]
+	_ = x[ScopeHost-(254)]
+	_ = x[ScopeNowhere-(255)]
+}
+
+var _ScopeValues = []Scope{ScopeGlobal, ScopeSite, ScopeLink, ScopeHost, ScopeNowhere}
 
 var _ScopeNameToValueMap = map[string]Scope{
-	_ScopeName_0[0:6]:  0,
-	_ScopeName_1[0:4]:  200,
-	_ScopeName_2[0:4]:  253,
-	_ScopeName_2[4:8]:  254,
-	_ScopeName_2[8:15]: 255,
+	_ScopeName_0[0:6]:       ScopeGlobal,
+	_ScopeLowerName_0[0:6]:  ScopeGlobal,
+	_ScopeName_1[0:4]:       ScopeSite,
+	_ScopeLowerName_1[0:4]:  ScopeSite,
+	_ScopeName_2[0:4]:       ScopeLink,
+	_ScopeLowerName_2[0:4]:  ScopeLink,
+	_ScopeName_2[4:8]:       ScopeHost,
+	_ScopeLowerName_2[4:8]:  ScopeHost,
+	_ScopeName_2[8:15]:      ScopeNowhere,
+	_ScopeLowerName_2[8:15]: ScopeNowhere,
+}
+
+var _ScopeNames = []string{
+	_ScopeName_0[0:6],
+	_ScopeName_1[0:4],
+	_ScopeName_2[0:4],
+	_ScopeName_2[4:8],
+	_ScopeName_2[8:15],
 }
 
 // ScopeString retrieves an enum value from the enum constants string name.
@@ -48,12 +76,23 @@ func ScopeString(s string) (Scope, error) {
 	if val, ok := _ScopeNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _ScopeNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to Scope values", s)
 }
 
 // ScopeValues returns all values of the enum
 func ScopeValues() []Scope {
 	return _ScopeValues
+}
+
+// ScopeStrings returns a slice of all String values of the enum
+func ScopeStrings() []string {
+	strs := make([]string, len(_ScopeNames))
+	copy(strs, _ScopeNames)
+	return strs
 }
 
 // IsAScope returns "true" if the value is listed in the enum definition. "false" otherwise

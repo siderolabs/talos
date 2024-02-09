@@ -4,9 +4,11 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _NfTablesChainPriorityName = "firstconntrack-defragrawselinux-firstconntrackmanglenat-destfiltersecuritynat-sourceselinux-lastconntrack-helperlast"
+const _NfTablesChainPriorityLowerName = "firstconntrack-defragrawselinux-firstconntrackmanglenat-destfiltersecuritynat-sourceselinux-lastconntrack-helperlast"
 
 var _NfTablesChainPriorityMap = map[NfTablesChainPriority]string{
 	-2147483648: _NfTablesChainPriorityName[0:5],
@@ -31,22 +33,70 @@ func (i NfTablesChainPriority) String() string {
 	return fmt.Sprintf("NfTablesChainPriority(%d)", i)
 }
 
-var _NfTablesChainPriorityValues = []NfTablesChainPriority{-2147483648, -400, -300, -225, -200, -150, -100, 0, 50, 100, 225, 300, 2147483647}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _NfTablesChainPriorityNoOp() {
+	var x [1]struct{}
+	_ = x[ChainPriorityFirst-(-2147483648)]
+	_ = x[ChainPriorityConntrackDefrag-(-400)]
+	_ = x[ChainPriorityRaw-(-300)]
+	_ = x[ChainPrioritySELinuxFirst-(-225)]
+	_ = x[ChainPriorityConntrack-(-200)]
+	_ = x[ChainPriorityMangle-(-150)]
+	_ = x[ChainPriorityNATDest-(-100)]
+	_ = x[ChainPriorityFilter-(0)]
+	_ = x[ChainPrioritySecurity-(50)]
+	_ = x[ChainPriorityNATSource-(100)]
+	_ = x[ChainPrioritySELinuxLast-(225)]
+	_ = x[ChainPriorityConntrackHelper-(300)]
+	_ = x[ChainPriorityLast-(2147483647)]
+}
+
+var _NfTablesChainPriorityValues = []NfTablesChainPriority{ChainPriorityFirst, ChainPriorityConntrackDefrag, ChainPriorityRaw, ChainPrioritySELinuxFirst, ChainPriorityConntrack, ChainPriorityMangle, ChainPriorityNATDest, ChainPriorityFilter, ChainPrioritySecurity, ChainPriorityNATSource, ChainPrioritySELinuxLast, ChainPriorityConntrackHelper, ChainPriorityLast}
 
 var _NfTablesChainPriorityNameToValueMap = map[string]NfTablesChainPriority{
-	_NfTablesChainPriorityName[0:5]:     -2147483648,
-	_NfTablesChainPriorityName[5:21]:    -400,
-	_NfTablesChainPriorityName[21:24]:   -300,
-	_NfTablesChainPriorityName[24:37]:   -225,
-	_NfTablesChainPriorityName[37:46]:   -200,
-	_NfTablesChainPriorityName[46:52]:   -150,
-	_NfTablesChainPriorityName[52:60]:   -100,
-	_NfTablesChainPriorityName[60:66]:   0,
-	_NfTablesChainPriorityName[66:74]:   50,
-	_NfTablesChainPriorityName[74:84]:   100,
-	_NfTablesChainPriorityName[84:96]:   225,
-	_NfTablesChainPriorityName[96:112]:  300,
-	_NfTablesChainPriorityName[112:116]: 2147483647,
+	_NfTablesChainPriorityName[0:5]:          ChainPriorityFirst,
+	_NfTablesChainPriorityLowerName[0:5]:     ChainPriorityFirst,
+	_NfTablesChainPriorityName[5:21]:         ChainPriorityConntrackDefrag,
+	_NfTablesChainPriorityLowerName[5:21]:    ChainPriorityConntrackDefrag,
+	_NfTablesChainPriorityName[21:24]:        ChainPriorityRaw,
+	_NfTablesChainPriorityLowerName[21:24]:   ChainPriorityRaw,
+	_NfTablesChainPriorityName[24:37]:        ChainPrioritySELinuxFirst,
+	_NfTablesChainPriorityLowerName[24:37]:   ChainPrioritySELinuxFirst,
+	_NfTablesChainPriorityName[37:46]:        ChainPriorityConntrack,
+	_NfTablesChainPriorityLowerName[37:46]:   ChainPriorityConntrack,
+	_NfTablesChainPriorityName[46:52]:        ChainPriorityMangle,
+	_NfTablesChainPriorityLowerName[46:52]:   ChainPriorityMangle,
+	_NfTablesChainPriorityName[52:60]:        ChainPriorityNATDest,
+	_NfTablesChainPriorityLowerName[52:60]:   ChainPriorityNATDest,
+	_NfTablesChainPriorityName[60:66]:        ChainPriorityFilter,
+	_NfTablesChainPriorityLowerName[60:66]:   ChainPriorityFilter,
+	_NfTablesChainPriorityName[66:74]:        ChainPrioritySecurity,
+	_NfTablesChainPriorityLowerName[66:74]:   ChainPrioritySecurity,
+	_NfTablesChainPriorityName[74:84]:        ChainPriorityNATSource,
+	_NfTablesChainPriorityLowerName[74:84]:   ChainPriorityNATSource,
+	_NfTablesChainPriorityName[84:96]:        ChainPrioritySELinuxLast,
+	_NfTablesChainPriorityLowerName[84:96]:   ChainPrioritySELinuxLast,
+	_NfTablesChainPriorityName[96:112]:       ChainPriorityConntrackHelper,
+	_NfTablesChainPriorityLowerName[96:112]:  ChainPriorityConntrackHelper,
+	_NfTablesChainPriorityName[112:116]:      ChainPriorityLast,
+	_NfTablesChainPriorityLowerName[112:116]: ChainPriorityLast,
+}
+
+var _NfTablesChainPriorityNames = []string{
+	_NfTablesChainPriorityName[0:5],
+	_NfTablesChainPriorityName[5:21],
+	_NfTablesChainPriorityName[21:24],
+	_NfTablesChainPriorityName[24:37],
+	_NfTablesChainPriorityName[37:46],
+	_NfTablesChainPriorityName[46:52],
+	_NfTablesChainPriorityName[52:60],
+	_NfTablesChainPriorityName[60:66],
+	_NfTablesChainPriorityName[66:74],
+	_NfTablesChainPriorityName[74:84],
+	_NfTablesChainPriorityName[84:96],
+	_NfTablesChainPriorityName[96:112],
+	_NfTablesChainPriorityName[112:116],
 }
 
 // NfTablesChainPriorityString retrieves an enum value from the enum constants string name.
@@ -55,12 +105,23 @@ func NfTablesChainPriorityString(s string) (NfTablesChainPriority, error) {
 	if val, ok := _NfTablesChainPriorityNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _NfTablesChainPriorityNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to NfTablesChainPriority values", s)
 }
 
 // NfTablesChainPriorityValues returns all values of the enum
 func NfTablesChainPriorityValues() []NfTablesChainPriority {
 	return _NfTablesChainPriorityValues
+}
+
+// NfTablesChainPriorityStrings returns a slice of all String values of the enum
+func NfTablesChainPriorityStrings() []string {
+	strs := make([]string, len(_NfTablesChainPriorityNames))
+	copy(strs, _NfTablesChainPriorityNames)
+	return strs
 }
 
 // IsANfTablesChainPriority returns "true" if the value is listed in the enum definition. "false" otherwise

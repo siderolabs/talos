@@ -15,11 +15,11 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-alpha.0-5-gf4b41d1
+TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-alpha.0-6-gb6b4d9e
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.7.0-alpha.0-19-g96cc841
-EXTRAS ?= v1.7.0-alpha.0
+PKGS ?= v1.7.0-alpha.0-22-g0ec4cc3
+EXTRAS ?= v1.7.0-alpha.0-1-gc4934e1
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
@@ -51,7 +51,7 @@ PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
 PKG_TALOSCTL_CNI_BUNDLE_INSTALL ?= $(PKGS_PREFIX)/talosctl-cni-bundle-install:$(EXTRAS)
 
 # renovate: datasource=github-tags depName=golang/go
-GO_VERSION ?= 1.21
+GO_VERSION ?= 1.22
 # renovate: datasource=go depName=golang.org/x/tools
 GOIMPORTS_VERSION ?= v0.17.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
@@ -60,16 +60,16 @@ GOFUMPT_VERSION ?= v0.6.0
 GOLANGCILINT_VERSION ?= v1.56.1
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.17.0
-# renovate: datasource=go depName=github.com/alvaroloes/enumer
-ENUMER_VERSION ?= v1.1.2
+# renovate: datasource=go depName=github.com/dmarkham/enumer
+ENUMER_VERSION ?= v1.5.9
 # renovate: datasource=go depName=k8s.io/code-generator
 DEEPCOPY_GEN_VERSION ?= v0.29.1
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy
-DEEPCOPY_VERSION ?= v0.5.5
+DEEPCOPY_VERSION ?= v0.5.6
 # renovate: datasource=go depName=github.com/siderolabs/importvet
-IMPORTVET_VERSION ?= v0.1.0
+IMPORTVET_VERSION ?= v0.2.0
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.39.0
 # renovate: datasource=npm depName=textlint

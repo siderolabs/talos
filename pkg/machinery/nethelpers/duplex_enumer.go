@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const (
-	_DuplexName_0 = "HalfFull"
-	_DuplexName_1 = "Unknown"
+	_DuplexName_0      = "HalfFull"
+	_DuplexLowerName_0 = "halffull"
+	_DuplexName_1      = "Unknown"
+	_DuplexLowerName_1 = "unknown"
 )
 
 var (
@@ -27,12 +30,30 @@ func (i Duplex) String() string {
 	}
 }
 
-var _DuplexValues = []Duplex{0, 1, 255}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _DuplexNoOp() {
+	var x [1]struct{}
+	_ = x[Half-(0)]
+	_ = x[Full-(1)]
+	_ = x[Unknown-(255)]
+}
+
+var _DuplexValues = []Duplex{Half, Full, Unknown}
 
 var _DuplexNameToValueMap = map[string]Duplex{
-	_DuplexName_0[0:4]: 0,
-	_DuplexName_0[4:8]: 1,
-	_DuplexName_1[0:7]: 255,
+	_DuplexName_0[0:4]:      Half,
+	_DuplexLowerName_0[0:4]: Half,
+	_DuplexName_0[4:8]:      Full,
+	_DuplexLowerName_0[4:8]: Full,
+	_DuplexName_1[0:7]:      Unknown,
+	_DuplexLowerName_1[0:7]: Unknown,
+}
+
+var _DuplexNames = []string{
+	_DuplexName_0[0:4],
+	_DuplexName_0[4:8],
+	_DuplexName_1[0:7],
 }
 
 // DuplexString retrieves an enum value from the enum constants string name.
@@ -41,12 +62,23 @@ func DuplexString(s string) (Duplex, error) {
 	if val, ok := _DuplexNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _DuplexNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to Duplex values", s)
 }
 
 // DuplexValues returns all values of the enum
 func DuplexValues() []Duplex {
 	return _DuplexValues
+}
+
+// DuplexStrings returns a slice of all String values of the enum
+func DuplexStrings() []string {
+	strs := make([]string, len(_DuplexNames))
+	copy(strs, _DuplexNames)
+	return strs
 }
 
 // IsADuplex returns "true" if the value is listed in the enum definition. "false" otherwise

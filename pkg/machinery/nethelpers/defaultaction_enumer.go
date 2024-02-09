@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _DefaultActionName = "acceptblock"
 
 var _DefaultActionIndex = [...]uint8{0, 6, 11}
+
+const _DefaultActionLowerName = "acceptblock"
 
 func (i DefaultAction) String() string {
 	if i < 0 || i >= DefaultAction(len(_DefaultActionIndex)-1) {
@@ -17,11 +20,26 @@ func (i DefaultAction) String() string {
 	return _DefaultActionName[_DefaultActionIndex[i]:_DefaultActionIndex[i+1]]
 }
 
-var _DefaultActionValues = []DefaultAction{0, 1}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _DefaultActionNoOp() {
+	var x [1]struct{}
+	_ = x[DefaultActionAccept-(0)]
+	_ = x[DefaultActionBlock-(1)]
+}
+
+var _DefaultActionValues = []DefaultAction{DefaultActionAccept, DefaultActionBlock}
 
 var _DefaultActionNameToValueMap = map[string]DefaultAction{
-	_DefaultActionName[0:6]:  0,
-	_DefaultActionName[6:11]: 1,
+	_DefaultActionName[0:6]:       DefaultActionAccept,
+	_DefaultActionLowerName[0:6]:  DefaultActionAccept,
+	_DefaultActionName[6:11]:      DefaultActionBlock,
+	_DefaultActionLowerName[6:11]: DefaultActionBlock,
+}
+
+var _DefaultActionNames = []string{
+	_DefaultActionName[0:6],
+	_DefaultActionName[6:11],
 }
 
 // DefaultActionString retrieves an enum value from the enum constants string name.
@@ -30,12 +48,23 @@ func DefaultActionString(s string) (DefaultAction, error) {
 	if val, ok := _DefaultActionNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _DefaultActionNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to DefaultAction values", s)
 }
 
 // DefaultActionValues returns all values of the enum
 func DefaultActionValues() []DefaultAction {
 	return _DefaultActionValues
+}
+
+// DefaultActionStrings returns a slice of all String values of the enum
+func DefaultActionStrings() []string {
+	strs := make([]string, len(_DefaultActionNames))
+	copy(strs, _DefaultActionNames)
+	return strs
 }
 
 // IsADefaultAction returns "true" if the value is listed in the enum definition. "false" otherwise

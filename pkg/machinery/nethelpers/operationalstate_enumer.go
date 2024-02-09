@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _OperationalStateName = "unknownnotPresentdownlowerLayerDowntestingdormantup"
 
 var _OperationalStateIndex = [...]uint8{0, 7, 17, 21, 35, 42, 49, 51}
+
+const _OperationalStateLowerName = "unknownnotpresentdownlowerlayerdowntestingdormantup"
 
 func (i OperationalState) String() string {
 	if i >= OperationalState(len(_OperationalStateIndex)-1) {
@@ -17,16 +20,46 @@ func (i OperationalState) String() string {
 	return _OperationalStateName[_OperationalStateIndex[i]:_OperationalStateIndex[i+1]]
 }
 
-var _OperationalStateValues = []OperationalState{0, 1, 2, 3, 4, 5, 6}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _OperationalStateNoOp() {
+	var x [1]struct{}
+	_ = x[OperStateUnknown-(0)]
+	_ = x[OperStateNotPresent-(1)]
+	_ = x[OperStateDown-(2)]
+	_ = x[OperStateLowerLayerDown-(3)]
+	_ = x[OperStateTesting-(4)]
+	_ = x[OperStateDormant-(5)]
+	_ = x[OperStateUp-(6)]
+}
+
+var _OperationalStateValues = []OperationalState{OperStateUnknown, OperStateNotPresent, OperStateDown, OperStateLowerLayerDown, OperStateTesting, OperStateDormant, OperStateUp}
 
 var _OperationalStateNameToValueMap = map[string]OperationalState{
-	_OperationalStateName[0:7]:   0,
-	_OperationalStateName[7:17]:  1,
-	_OperationalStateName[17:21]: 2,
-	_OperationalStateName[21:35]: 3,
-	_OperationalStateName[35:42]: 4,
-	_OperationalStateName[42:49]: 5,
-	_OperationalStateName[49:51]: 6,
+	_OperationalStateName[0:7]:        OperStateUnknown,
+	_OperationalStateLowerName[0:7]:   OperStateUnknown,
+	_OperationalStateName[7:17]:       OperStateNotPresent,
+	_OperationalStateLowerName[7:17]:  OperStateNotPresent,
+	_OperationalStateName[17:21]:      OperStateDown,
+	_OperationalStateLowerName[17:21]: OperStateDown,
+	_OperationalStateName[21:35]:      OperStateLowerLayerDown,
+	_OperationalStateLowerName[21:35]: OperStateLowerLayerDown,
+	_OperationalStateName[35:42]:      OperStateTesting,
+	_OperationalStateLowerName[35:42]: OperStateTesting,
+	_OperationalStateName[42:49]:      OperStateDormant,
+	_OperationalStateLowerName[42:49]: OperStateDormant,
+	_OperationalStateName[49:51]:      OperStateUp,
+	_OperationalStateLowerName[49:51]: OperStateUp,
+}
+
+var _OperationalStateNames = []string{
+	_OperationalStateName[0:7],
+	_OperationalStateName[7:17],
+	_OperationalStateName[17:21],
+	_OperationalStateName[21:35],
+	_OperationalStateName[35:42],
+	_OperationalStateName[42:49],
+	_OperationalStateName[49:51],
 }
 
 // OperationalStateString retrieves an enum value from the enum constants string name.
@@ -35,12 +68,23 @@ func OperationalStateString(s string) (OperationalState, error) {
 	if val, ok := _OperationalStateNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _OperationalStateNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to OperationalState values", s)
 }
 
 // OperationalStateValues returns all values of the enum
 func OperationalStateValues() []OperationalState {
 	return _OperationalStateValues
+}
+
+// OperationalStateStrings returns a slice of all String values of the enum
+func OperationalStateStrings() []string {
+	strs := make([]string, len(_OperationalStateNames))
+	copy(strs, _OperationalStateNames)
+	return strs
 }
 
 // IsAOperationalState returns "true" if the value is listed in the enum definition. "false" otherwise

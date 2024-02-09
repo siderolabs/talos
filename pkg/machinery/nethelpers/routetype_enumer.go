@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _RouteTypeName = "unspecunicastlocalbroadcastanycastmulticastblackholeunreachableprohibitthrownatxresolve"
 
 var _RouteTypeIndex = [...]uint8{0, 6, 13, 18, 27, 34, 43, 52, 63, 71, 76, 79, 87}
+
+const _RouteTypeLowerName = "unspecunicastlocalbroadcastanycastmulticastblackholeunreachableprohibitthrownatxresolve"
 
 func (i RouteType) String() string {
 	if i >= RouteType(len(_RouteTypeIndex)-1) {
@@ -17,21 +20,66 @@ func (i RouteType) String() string {
 	return _RouteTypeName[_RouteTypeIndex[i]:_RouteTypeIndex[i+1]]
 }
 
-var _RouteTypeValues = []RouteType{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _RouteTypeNoOp() {
+	var x [1]struct{}
+	_ = x[TypeUnspec-(0)]
+	_ = x[TypeUnicast-(1)]
+	_ = x[TypeLocal-(2)]
+	_ = x[TypeBroadcast-(3)]
+	_ = x[TypeAnycast-(4)]
+	_ = x[TypeMulticast-(5)]
+	_ = x[TypeBlackhole-(6)]
+	_ = x[TypeUnreachable-(7)]
+	_ = x[TypeProhibit-(8)]
+	_ = x[TypeThrow-(9)]
+	_ = x[TypeNAT-(10)]
+	_ = x[TypeXResolve-(11)]
+}
+
+var _RouteTypeValues = []RouteType{TypeUnspec, TypeUnicast, TypeLocal, TypeBroadcast, TypeAnycast, TypeMulticast, TypeBlackhole, TypeUnreachable, TypeProhibit, TypeThrow, TypeNAT, TypeXResolve}
 
 var _RouteTypeNameToValueMap = map[string]RouteType{
-	_RouteTypeName[0:6]:   0,
-	_RouteTypeName[6:13]:  1,
-	_RouteTypeName[13:18]: 2,
-	_RouteTypeName[18:27]: 3,
-	_RouteTypeName[27:34]: 4,
-	_RouteTypeName[34:43]: 5,
-	_RouteTypeName[43:52]: 6,
-	_RouteTypeName[52:63]: 7,
-	_RouteTypeName[63:71]: 8,
-	_RouteTypeName[71:76]: 9,
-	_RouteTypeName[76:79]: 10,
-	_RouteTypeName[79:87]: 11,
+	_RouteTypeName[0:6]:        TypeUnspec,
+	_RouteTypeLowerName[0:6]:   TypeUnspec,
+	_RouteTypeName[6:13]:       TypeUnicast,
+	_RouteTypeLowerName[6:13]:  TypeUnicast,
+	_RouteTypeName[13:18]:      TypeLocal,
+	_RouteTypeLowerName[13:18]: TypeLocal,
+	_RouteTypeName[18:27]:      TypeBroadcast,
+	_RouteTypeLowerName[18:27]: TypeBroadcast,
+	_RouteTypeName[27:34]:      TypeAnycast,
+	_RouteTypeLowerName[27:34]: TypeAnycast,
+	_RouteTypeName[34:43]:      TypeMulticast,
+	_RouteTypeLowerName[34:43]: TypeMulticast,
+	_RouteTypeName[43:52]:      TypeBlackhole,
+	_RouteTypeLowerName[43:52]: TypeBlackhole,
+	_RouteTypeName[52:63]:      TypeUnreachable,
+	_RouteTypeLowerName[52:63]: TypeUnreachable,
+	_RouteTypeName[63:71]:      TypeProhibit,
+	_RouteTypeLowerName[63:71]: TypeProhibit,
+	_RouteTypeName[71:76]:      TypeThrow,
+	_RouteTypeLowerName[71:76]: TypeThrow,
+	_RouteTypeName[76:79]:      TypeNAT,
+	_RouteTypeLowerName[76:79]: TypeNAT,
+	_RouteTypeName[79:87]:      TypeXResolve,
+	_RouteTypeLowerName[79:87]: TypeXResolve,
+}
+
+var _RouteTypeNames = []string{
+	_RouteTypeName[0:6],
+	_RouteTypeName[6:13],
+	_RouteTypeName[13:18],
+	_RouteTypeName[18:27],
+	_RouteTypeName[27:34],
+	_RouteTypeName[34:43],
+	_RouteTypeName[43:52],
+	_RouteTypeName[52:63],
+	_RouteTypeName[63:71],
+	_RouteTypeName[71:76],
+	_RouteTypeName[76:79],
+	_RouteTypeName[79:87],
 }
 
 // RouteTypeString retrieves an enum value from the enum constants string name.
@@ -40,12 +88,23 @@ func RouteTypeString(s string) (RouteType, error) {
 	if val, ok := _RouteTypeNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _RouteTypeNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to RouteType values", s)
 }
 
 // RouteTypeValues returns all values of the enum
 func RouteTypeValues() []RouteType {
 	return _RouteTypeValues
+}
+
+// RouteTypeStrings returns a slice of all String values of the enum
+func RouteTypeStrings() []string {
+	strs := make([]string, len(_RouteTypeNames))
+	copy(strs, _RouteTypeNames)
+	return strs
 }
 
 // IsARouteType returns "true" if the value is listed in the enum definition. "false" otherwise

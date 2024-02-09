@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _NfTablesChainHookName = "preroutinginputforwardoutputpostrouting"
 
 var _NfTablesChainHookIndex = [...]uint8{0, 10, 15, 22, 28, 39}
+
+const _NfTablesChainHookLowerName = "preroutinginputforwardoutputpostrouting"
 
 func (i NfTablesChainHook) String() string {
 	if i >= NfTablesChainHook(len(_NfTablesChainHookIndex)-1) {
@@ -17,14 +20,38 @@ func (i NfTablesChainHook) String() string {
 	return _NfTablesChainHookName[_NfTablesChainHookIndex[i]:_NfTablesChainHookIndex[i+1]]
 }
 
-var _NfTablesChainHookValues = []NfTablesChainHook{0, 1, 2, 3, 4}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _NfTablesChainHookNoOp() {
+	var x [1]struct{}
+	_ = x[ChainHookPrerouting-(0)]
+	_ = x[ChainHookInput-(1)]
+	_ = x[ChainHookForward-(2)]
+	_ = x[ChainHookOutput-(3)]
+	_ = x[ChainHookPostrouting-(4)]
+}
+
+var _NfTablesChainHookValues = []NfTablesChainHook{ChainHookPrerouting, ChainHookInput, ChainHookForward, ChainHookOutput, ChainHookPostrouting}
 
 var _NfTablesChainHookNameToValueMap = map[string]NfTablesChainHook{
-	_NfTablesChainHookName[0:10]:  0,
-	_NfTablesChainHookName[10:15]: 1,
-	_NfTablesChainHookName[15:22]: 2,
-	_NfTablesChainHookName[22:28]: 3,
-	_NfTablesChainHookName[28:39]: 4,
+	_NfTablesChainHookName[0:10]:       ChainHookPrerouting,
+	_NfTablesChainHookLowerName[0:10]:  ChainHookPrerouting,
+	_NfTablesChainHookName[10:15]:      ChainHookInput,
+	_NfTablesChainHookLowerName[10:15]: ChainHookInput,
+	_NfTablesChainHookName[15:22]:      ChainHookForward,
+	_NfTablesChainHookLowerName[15:22]: ChainHookForward,
+	_NfTablesChainHookName[22:28]:      ChainHookOutput,
+	_NfTablesChainHookLowerName[22:28]: ChainHookOutput,
+	_NfTablesChainHookName[28:39]:      ChainHookPostrouting,
+	_NfTablesChainHookLowerName[28:39]: ChainHookPostrouting,
+}
+
+var _NfTablesChainHookNames = []string{
+	_NfTablesChainHookName[0:10],
+	_NfTablesChainHookName[10:15],
+	_NfTablesChainHookName[15:22],
+	_NfTablesChainHookName[22:28],
+	_NfTablesChainHookName[28:39],
 }
 
 // NfTablesChainHookString retrieves an enum value from the enum constants string name.
@@ -33,12 +60,23 @@ func NfTablesChainHookString(s string) (NfTablesChainHook, error) {
 	if val, ok := _NfTablesChainHookNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _NfTablesChainHookNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to NfTablesChainHook values", s)
 }
 
 // NfTablesChainHookValues returns all values of the enum
 func NfTablesChainHookValues() []NfTablesChainHook {
 	return _NfTablesChainHookValues
+}
+
+// NfTablesChainHookStrings returns a slice of all String values of the enum
+func NfTablesChainHookStrings() []string {
+	strs := make([]string, len(_NfTablesChainHookNames))
+	copy(strs, _NfTablesChainHookNames)
+	return strs
 }
 
 // IsANfTablesChainHook returns "true" if the value is listed in the enum definition. "false" otherwise

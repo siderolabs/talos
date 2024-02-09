@@ -4,11 +4,14 @@ package profile
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _OutputKindName = "unknownisoimageinstallerkernelinitramfsukicmdline"
 
 var _OutputKindIndex = [...]uint8{0, 7, 10, 15, 24, 30, 39, 42, 49}
+
+const _OutputKindLowerName = "unknownisoimageinstallerkernelinitramfsukicmdline"
 
 func (i OutputKind) String() string {
 	if i < 0 || i >= OutputKind(len(_OutputKindIndex)-1) {
@@ -17,17 +20,50 @@ func (i OutputKind) String() string {
 	return _OutputKindName[_OutputKindIndex[i]:_OutputKindIndex[i+1]]
 }
 
-var _OutputKindValues = []OutputKind{0, 1, 2, 3, 4, 5, 6, 7}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _OutputKindNoOp() {
+	var x [1]struct{}
+	_ = x[OutKindUnknown-(0)]
+	_ = x[OutKindISO-(1)]
+	_ = x[OutKindImage-(2)]
+	_ = x[OutKindInstaller-(3)]
+	_ = x[OutKindKernel-(4)]
+	_ = x[OutKindInitramfs-(5)]
+	_ = x[OutKindUKI-(6)]
+	_ = x[OutKindCmdline-(7)]
+}
+
+var _OutputKindValues = []OutputKind{OutKindUnknown, OutKindISO, OutKindImage, OutKindInstaller, OutKindKernel, OutKindInitramfs, OutKindUKI, OutKindCmdline}
 
 var _OutputKindNameToValueMap = map[string]OutputKind{
-	_OutputKindName[0:7]:   0,
-	_OutputKindName[7:10]:  1,
-	_OutputKindName[10:15]: 2,
-	_OutputKindName[15:24]: 3,
-	_OutputKindName[24:30]: 4,
-	_OutputKindName[30:39]: 5,
-	_OutputKindName[39:42]: 6,
-	_OutputKindName[42:49]: 7,
+	_OutputKindName[0:7]:        OutKindUnknown,
+	_OutputKindLowerName[0:7]:   OutKindUnknown,
+	_OutputKindName[7:10]:       OutKindISO,
+	_OutputKindLowerName[7:10]:  OutKindISO,
+	_OutputKindName[10:15]:      OutKindImage,
+	_OutputKindLowerName[10:15]: OutKindImage,
+	_OutputKindName[15:24]:      OutKindInstaller,
+	_OutputKindLowerName[15:24]: OutKindInstaller,
+	_OutputKindName[24:30]:      OutKindKernel,
+	_OutputKindLowerName[24:30]: OutKindKernel,
+	_OutputKindName[30:39]:      OutKindInitramfs,
+	_OutputKindLowerName[30:39]: OutKindInitramfs,
+	_OutputKindName[39:42]:      OutKindUKI,
+	_OutputKindLowerName[39:42]: OutKindUKI,
+	_OutputKindName[42:49]:      OutKindCmdline,
+	_OutputKindLowerName[42:49]: OutKindCmdline,
+}
+
+var _OutputKindNames = []string{
+	_OutputKindName[0:7],
+	_OutputKindName[7:10],
+	_OutputKindName[10:15],
+	_OutputKindName[15:24],
+	_OutputKindName[24:30],
+	_OutputKindName[30:39],
+	_OutputKindName[39:42],
+	_OutputKindName[42:49],
 }
 
 // OutputKindString retrieves an enum value from the enum constants string name.
@@ -36,12 +72,23 @@ func OutputKindString(s string) (OutputKind, error) {
 	if val, ok := _OutputKindNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _OutputKindNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to OutputKind values", s)
 }
 
 // OutputKindValues returns all values of the enum
 func OutputKindValues() []OutputKind {
 	return _OutputKindValues
+}
+
+// OutputKindStrings returns a slice of all String values of the enum
+func OutputKindStrings() []string {
+	strs := make([]string, len(_OutputKindNames))
+	copy(strs, _OutputKindNames)
+	return strs
 }
 
 // IsAOutputKind returns "true" if the value is listed in the enum definition. "false" otherwise

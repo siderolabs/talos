@@ -4,11 +4,14 @@ package runtime
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _MachineStageName = "unknownbootinginstallingmaintenancerunningrebootingshutting downresettingupgrading"
 
 var _MachineStageIndex = [...]uint8{0, 7, 14, 24, 35, 42, 51, 64, 73, 82}
+
+const _MachineStageLowerName = "unknownbootinginstallingmaintenancerunningrebootingshutting downresettingupgrading"
 
 func (i MachineStage) String() string {
 	if i < 0 || i >= MachineStage(len(_MachineStageIndex)-1) {
@@ -17,18 +20,54 @@ func (i MachineStage) String() string {
 	return _MachineStageName[_MachineStageIndex[i]:_MachineStageIndex[i+1]]
 }
 
-var _MachineStageValues = []MachineStage{0, 1, 2, 3, 4, 5, 6, 7, 8}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _MachineStageNoOp() {
+	var x [1]struct{}
+	_ = x[MachineStageUnknown-(0)]
+	_ = x[MachineStageBooting-(1)]
+	_ = x[MachineStageInstalling-(2)]
+	_ = x[MachineStageMaintenance-(3)]
+	_ = x[MachineStageRunning-(4)]
+	_ = x[MachineStageRebooting-(5)]
+	_ = x[MachineStageShuttingDown-(6)]
+	_ = x[MachineStageResetting-(7)]
+	_ = x[MachineStageUpgrading-(8)]
+}
+
+var _MachineStageValues = []MachineStage{MachineStageUnknown, MachineStageBooting, MachineStageInstalling, MachineStageMaintenance, MachineStageRunning, MachineStageRebooting, MachineStageShuttingDown, MachineStageResetting, MachineStageUpgrading}
 
 var _MachineStageNameToValueMap = map[string]MachineStage{
-	_MachineStageName[0:7]:   0,
-	_MachineStageName[7:14]:  1,
-	_MachineStageName[14:24]: 2,
-	_MachineStageName[24:35]: 3,
-	_MachineStageName[35:42]: 4,
-	_MachineStageName[42:51]: 5,
-	_MachineStageName[51:64]: 6,
-	_MachineStageName[64:73]: 7,
-	_MachineStageName[73:82]: 8,
+	_MachineStageName[0:7]:        MachineStageUnknown,
+	_MachineStageLowerName[0:7]:   MachineStageUnknown,
+	_MachineStageName[7:14]:       MachineStageBooting,
+	_MachineStageLowerName[7:14]:  MachineStageBooting,
+	_MachineStageName[14:24]:      MachineStageInstalling,
+	_MachineStageLowerName[14:24]: MachineStageInstalling,
+	_MachineStageName[24:35]:      MachineStageMaintenance,
+	_MachineStageLowerName[24:35]: MachineStageMaintenance,
+	_MachineStageName[35:42]:      MachineStageRunning,
+	_MachineStageLowerName[35:42]: MachineStageRunning,
+	_MachineStageName[42:51]:      MachineStageRebooting,
+	_MachineStageLowerName[42:51]: MachineStageRebooting,
+	_MachineStageName[51:64]:      MachineStageShuttingDown,
+	_MachineStageLowerName[51:64]: MachineStageShuttingDown,
+	_MachineStageName[64:73]:      MachineStageResetting,
+	_MachineStageLowerName[64:73]: MachineStageResetting,
+	_MachineStageName[73:82]:      MachineStageUpgrading,
+	_MachineStageLowerName[73:82]: MachineStageUpgrading,
+}
+
+var _MachineStageNames = []string{
+	_MachineStageName[0:7],
+	_MachineStageName[7:14],
+	_MachineStageName[14:24],
+	_MachineStageName[24:35],
+	_MachineStageName[35:42],
+	_MachineStageName[42:51],
+	_MachineStageName[51:64],
+	_MachineStageName[64:73],
+	_MachineStageName[73:82],
 }
 
 // MachineStageString retrieves an enum value from the enum constants string name.
@@ -37,12 +76,23 @@ func MachineStageString(s string) (MachineStage, error) {
 	if val, ok := _MachineStageNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _MachineStageNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to MachineStage values", s)
 }
 
 // MachineStageValues returns all values of the enum
 func MachineStageValues() []MachineStage {
 	return _MachineStageValues
+}
+
+// MachineStageStrings returns a slice of all String values of the enum
+func MachineStageStrings() []string {
+	strs := make([]string, len(_MachineStageNames))
+	copy(strs, _MachineStageNames)
+	return strs
 }
 
 // IsAMachineStage returns "true" if the value is listed in the enum definition. "false" otherwise

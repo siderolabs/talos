@@ -4,9 +4,11 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _LinkFlagName = "UPBROADCASTDEBUGLOOPBACKPOINTTOPOINTNOTRAILERSRUNNINGNOARPPROMISCALLMULTIMASTERSLAVEMULTICASTPORTSELAUTOMEDIADYNAMICLOWER_UPDORMANTECHO"
+const _LinkFlagLowerName = "upbroadcastdebugloopbackpointtopointnotrailersrunningnoarppromiscallmultimasterslavemulticastportselautomediadynamiclower_updormantecho"
 
 var _LinkFlagMap = map[LinkFlag]string{
 	1:      _LinkFlagName[0:2],
@@ -37,28 +39,94 @@ func (i LinkFlag) String() string {
 	return fmt.Sprintf("LinkFlag(%d)", i)
 }
 
-var _LinkFlagValues = []LinkFlag{1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _LinkFlagNoOp() {
+	var x [1]struct{}
+	_ = x[LinkUp-(1)]
+	_ = x[LinkBroadcast-(2)]
+	_ = x[LinkDebug-(4)]
+	_ = x[LinkLoopback-(8)]
+	_ = x[LinkPointToPoint-(16)]
+	_ = x[LinkNoTrailers-(32)]
+	_ = x[LinkRunning-(64)]
+	_ = x[LinkNoArp-(128)]
+	_ = x[LinkPromisc-(256)]
+	_ = x[LinkAllMulti-(512)]
+	_ = x[LinkMaster-(1024)]
+	_ = x[LinkSlave-(2048)]
+	_ = x[LinkMulticase-(4096)]
+	_ = x[LinkPortsel-(8192)]
+	_ = x[LinKAutoMedia-(16384)]
+	_ = x[LinkDynamic-(32768)]
+	_ = x[LinkLowerUp-(65536)]
+	_ = x[LinkDormant-(131072)]
+	_ = x[LinkEcho-(262144)]
+}
+
+var _LinkFlagValues = []LinkFlag{LinkUp, LinkBroadcast, LinkDebug, LinkLoopback, LinkPointToPoint, LinkNoTrailers, LinkRunning, LinkNoArp, LinkPromisc, LinkAllMulti, LinkMaster, LinkSlave, LinkMulticase, LinkPortsel, LinKAutoMedia, LinkDynamic, LinkLowerUp, LinkDormant, LinkEcho}
 
 var _LinkFlagNameToValueMap = map[string]LinkFlag{
-	_LinkFlagName[0:2]:     1,
-	_LinkFlagName[2:11]:    2,
-	_LinkFlagName[11:16]:   4,
-	_LinkFlagName[16:24]:   8,
-	_LinkFlagName[24:36]:   16,
-	_LinkFlagName[36:46]:   32,
-	_LinkFlagName[46:53]:   64,
-	_LinkFlagName[53:58]:   128,
-	_LinkFlagName[58:65]:   256,
-	_LinkFlagName[65:73]:   512,
-	_LinkFlagName[73:79]:   1024,
-	_LinkFlagName[79:84]:   2048,
-	_LinkFlagName[84:93]:   4096,
-	_LinkFlagName[93:100]:  8192,
-	_LinkFlagName[100:109]: 16384,
-	_LinkFlagName[109:116]: 32768,
-	_LinkFlagName[116:124]: 65536,
-	_LinkFlagName[124:131]: 131072,
-	_LinkFlagName[131:135]: 262144,
+	_LinkFlagName[0:2]:          LinkUp,
+	_LinkFlagLowerName[0:2]:     LinkUp,
+	_LinkFlagName[2:11]:         LinkBroadcast,
+	_LinkFlagLowerName[2:11]:    LinkBroadcast,
+	_LinkFlagName[11:16]:        LinkDebug,
+	_LinkFlagLowerName[11:16]:   LinkDebug,
+	_LinkFlagName[16:24]:        LinkLoopback,
+	_LinkFlagLowerName[16:24]:   LinkLoopback,
+	_LinkFlagName[24:36]:        LinkPointToPoint,
+	_LinkFlagLowerName[24:36]:   LinkPointToPoint,
+	_LinkFlagName[36:46]:        LinkNoTrailers,
+	_LinkFlagLowerName[36:46]:   LinkNoTrailers,
+	_LinkFlagName[46:53]:        LinkRunning,
+	_LinkFlagLowerName[46:53]:   LinkRunning,
+	_LinkFlagName[53:58]:        LinkNoArp,
+	_LinkFlagLowerName[53:58]:   LinkNoArp,
+	_LinkFlagName[58:65]:        LinkPromisc,
+	_LinkFlagLowerName[58:65]:   LinkPromisc,
+	_LinkFlagName[65:73]:        LinkAllMulti,
+	_LinkFlagLowerName[65:73]:   LinkAllMulti,
+	_LinkFlagName[73:79]:        LinkMaster,
+	_LinkFlagLowerName[73:79]:   LinkMaster,
+	_LinkFlagName[79:84]:        LinkSlave,
+	_LinkFlagLowerName[79:84]:   LinkSlave,
+	_LinkFlagName[84:93]:        LinkMulticase,
+	_LinkFlagLowerName[84:93]:   LinkMulticase,
+	_LinkFlagName[93:100]:       LinkPortsel,
+	_LinkFlagLowerName[93:100]:  LinkPortsel,
+	_LinkFlagName[100:109]:      LinKAutoMedia,
+	_LinkFlagLowerName[100:109]: LinKAutoMedia,
+	_LinkFlagName[109:116]:      LinkDynamic,
+	_LinkFlagLowerName[109:116]: LinkDynamic,
+	_LinkFlagName[116:124]:      LinkLowerUp,
+	_LinkFlagLowerName[116:124]: LinkLowerUp,
+	_LinkFlagName[124:131]:      LinkDormant,
+	_LinkFlagLowerName[124:131]: LinkDormant,
+	_LinkFlagName[131:135]:      LinkEcho,
+	_LinkFlagLowerName[131:135]: LinkEcho,
+}
+
+var _LinkFlagNames = []string{
+	_LinkFlagName[0:2],
+	_LinkFlagName[2:11],
+	_LinkFlagName[11:16],
+	_LinkFlagName[16:24],
+	_LinkFlagName[24:36],
+	_LinkFlagName[36:46],
+	_LinkFlagName[46:53],
+	_LinkFlagName[53:58],
+	_LinkFlagName[58:65],
+	_LinkFlagName[65:73],
+	_LinkFlagName[73:79],
+	_LinkFlagName[79:84],
+	_LinkFlagName[84:93],
+	_LinkFlagName[93:100],
+	_LinkFlagName[100:109],
+	_LinkFlagName[109:116],
+	_LinkFlagName[116:124],
+	_LinkFlagName[124:131],
+	_LinkFlagName[131:135],
 }
 
 // LinkFlagString retrieves an enum value from the enum constants string name.
@@ -67,12 +135,23 @@ func LinkFlagString(s string) (LinkFlag, error) {
 	if val, ok := _LinkFlagNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _LinkFlagNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to LinkFlag values", s)
 }
 
 // LinkFlagValues returns all values of the enum
 func LinkFlagValues() []LinkFlag {
 	return _LinkFlagValues
+}
+
+// LinkFlagStrings returns a slice of all String values of the enum
+func LinkFlagStrings() []string {
+	strs := make([]string, len(_LinkFlagNames))
+	copy(strs, _LinkFlagNames)
+	return strs
 }
 
 // IsALinkFlag returns "true" if the value is listed in the enum definition. "false" otherwise

@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _MatchOperatorName = "==!="
 
 var _MatchOperatorIndex = [...]uint8{0, 2, 4}
+
+const _MatchOperatorLowerName = "==!="
 
 func (i MatchOperator) String() string {
 	if i < 0 || i >= MatchOperator(len(_MatchOperatorIndex)-1) {
@@ -17,11 +20,26 @@ func (i MatchOperator) String() string {
 	return _MatchOperatorName[_MatchOperatorIndex[i]:_MatchOperatorIndex[i+1]]
 }
 
-var _MatchOperatorValues = []MatchOperator{0, 1}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _MatchOperatorNoOp() {
+	var x [1]struct{}
+	_ = x[OperatorEqual-(0)]
+	_ = x[OperatorNotEqual-(1)]
+}
+
+var _MatchOperatorValues = []MatchOperator{OperatorEqual, OperatorNotEqual}
 
 var _MatchOperatorNameToValueMap = map[string]MatchOperator{
-	_MatchOperatorName[0:2]: 0,
-	_MatchOperatorName[2:4]: 1,
+	_MatchOperatorName[0:2]:      OperatorEqual,
+	_MatchOperatorLowerName[0:2]: OperatorEqual,
+	_MatchOperatorName[2:4]:      OperatorNotEqual,
+	_MatchOperatorLowerName[2:4]: OperatorNotEqual,
+}
+
+var _MatchOperatorNames = []string{
+	_MatchOperatorName[0:2],
+	_MatchOperatorName[2:4],
 }
 
 // MatchOperatorString retrieves an enum value from the enum constants string name.
@@ -30,12 +48,23 @@ func MatchOperatorString(s string) (MatchOperator, error) {
 	if val, ok := _MatchOperatorNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _MatchOperatorNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to MatchOperator values", s)
 }
 
 // MatchOperatorValues returns all values of the enum
 func MatchOperatorValues() []MatchOperator {
 	return _MatchOperatorValues
+}
+
+// MatchOperatorStrings returns a slice of all String values of the enum
+func MatchOperatorStrings() []string {
+	strs := make([]string, len(_MatchOperatorNames))
+	copy(strs, _MatchOperatorNames)
+	return strs
 }
 
 // IsAMatchOperator returns "true" if the value is listed in the enum definition. "false" otherwise

@@ -4,9 +4,11 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _LinkTypeName = "netromethereetherax25pronetchaosieee802arcnetatalkdlciatmmetricomieee1394eui64infinibandslipcslipslip6cslip6rsrvdadaptrosex25hwx25canpppciscolapbddcmprawhdlcipiptunnel6fradskiploopbacklocaltlkfddibifsitip/ddpgrepimreghippiasheconetirdafcppfcalfcplfcfb_0fcfb_1fcfb_2fcfb_3fcfb_4fcfb_5fcfb_6fcfb_7fcfb_8fcfb_9fcfb_10fcfb_11fcfb_12trieee802.11ieee802.11_prismieee802.11_radiotapieee802.15.4ieee802.15.4_monitorphonetphonet_pipecaifip6grenetlink6lowpannohdrvoid"
+const _LinkTypeLowerName = "netromethereetherax25pronetchaosieee802arcnetatalkdlciatmmetricomieee1394eui64infinibandslipcslipslip6cslip6rsrvdadaptrosex25hwx25canpppciscolapbddcmprawhdlcipiptunnel6fradskiploopbacklocaltlkfddibifsitip/ddpgrepimreghippiasheconetirdafcppfcalfcplfcfb_0fcfb_1fcfb_2fcfb_3fcfb_4fcfb_5fcfb_6fcfb_7fcfb_8fcfb_9fcfb_10fcfb_11fcfb_12trieee802.11ieee802.11_prismieee802.11_radiotapieee802.15.4ieee802.15.4_monitorphonetphonet_pipecaifip6grenetlink6lowpannohdrvoid"
 
 var _LinkTypeMap = map[LinkType]string{
 	0:     _LinkTypeName[0:6],
@@ -94,85 +96,322 @@ func (i LinkType) String() string {
 	return fmt.Sprintf("LinkType(%d)", i)
 }
 
-var _LinkTypeValues = []LinkType{0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 19, 23, 24, 27, 32, 256, 257, 258, 259, 260, 264, 270, 271, 272, 280, 512, 513, 516, 517, 518, 768, 769, 770, 771, 772, 773, 774, 775, 776, 777, 778, 779, 780, 781, 782, 783, 784, 785, 786, 787, 788, 789, 790, 791, 792, 793, 794, 795, 796, 797, 798, 799, 800, 801, 802, 803, 804, 805, 820, 821, 822, 823, 824, 825, 65534, 65535}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _LinkTypeNoOp() {
+	var x [1]struct{}
+	_ = x[LinkNetrom-(0)]
+	_ = x[LinkEther-(1)]
+	_ = x[LinkEether-(2)]
+	_ = x[LinkAx25-(3)]
+	_ = x[LinkPronet-(4)]
+	_ = x[LinkChaos-(5)]
+	_ = x[LinkIee802-(6)]
+	_ = x[LinkArcnet-(7)]
+	_ = x[LinkAtalk-(8)]
+	_ = x[LinkDlci-(15)]
+	_ = x[LinkAtm-(19)]
+	_ = x[LinkMetricom-(23)]
+	_ = x[LinkIeee1394-(24)]
+	_ = x[LinkEui64-(27)]
+	_ = x[LinkInfiniband-(32)]
+	_ = x[LinkSlip-(256)]
+	_ = x[LinkCslip-(257)]
+	_ = x[LinkSlip6-(258)]
+	_ = x[LinkCslip6-(259)]
+	_ = x[LinkRsrvd-(260)]
+	_ = x[LinkAdapt-(264)]
+	_ = x[LinkRose-(270)]
+	_ = x[LinkX25-(271)]
+	_ = x[LinkHwx25-(272)]
+	_ = x[LinkCan-(280)]
+	_ = x[LinkPpp-(512)]
+	_ = x[LinkCisco-(513)]
+	_ = x[LinkLapb-(516)]
+	_ = x[LinkDdcmp-(517)]
+	_ = x[LinkRawhdlc-(518)]
+	_ = x[LinkTunnel-(768)]
+	_ = x[LinkTunnel6-(769)]
+	_ = x[LinkFrad-(770)]
+	_ = x[LinkSkip-(771)]
+	_ = x[LinkLoopbck-(772)]
+	_ = x[LinkLocaltlk-(773)]
+	_ = x[LinkFddi-(774)]
+	_ = x[LinkBif-(775)]
+	_ = x[LinkSit-(776)]
+	_ = x[LinkIpddp-(777)]
+	_ = x[LinkIpgre-(778)]
+	_ = x[LinkPimreg-(779)]
+	_ = x[LinkHippi-(780)]
+	_ = x[LinkAsh-(781)]
+	_ = x[LinkEconet-(782)]
+	_ = x[LinkIrda-(783)]
+	_ = x[LinkFcpp-(784)]
+	_ = x[LinkFcal-(785)]
+	_ = x[LinkFcpl-(786)]
+	_ = x[LinkFcfabric-(787)]
+	_ = x[LinkFcfabric1-(788)]
+	_ = x[LinkFcfabric2-(789)]
+	_ = x[LinkFcfabric3-(790)]
+	_ = x[LinkFcfabric4-(791)]
+	_ = x[LinkFcfabric5-(792)]
+	_ = x[LinkFcfabric6-(793)]
+	_ = x[LinkFcfabric7-(794)]
+	_ = x[LinkFcfabric8-(795)]
+	_ = x[LinkFcfabric9-(796)]
+	_ = x[LinkFcfabric10-(797)]
+	_ = x[LinkFcfabric11-(798)]
+	_ = x[LinkFcfabric12-(799)]
+	_ = x[LinkIee802tr-(800)]
+	_ = x[LinkIee80211-(801)]
+	_ = x[LinkIee80211prism-(802)]
+	_ = x[LinkIee80211Radiotap-(803)]
+	_ = x[LinkIee8021154-(804)]
+	_ = x[LinkIee8021154monitor-(805)]
+	_ = x[LinkPhonet-(820)]
+	_ = x[LinkPhonetpipe-(821)]
+	_ = x[LinkCaif-(822)]
+	_ = x[LinkIP6gre-(823)]
+	_ = x[LinkNetlink-(824)]
+	_ = x[Link6Lowpan-(825)]
+	_ = x[LinkNone-(65534)]
+	_ = x[LinkVoid-(65535)]
+}
+
+var _LinkTypeValues = []LinkType{LinkNetrom, LinkEther, LinkEether, LinkAx25, LinkPronet, LinkChaos, LinkIee802, LinkArcnet, LinkAtalk, LinkDlci, LinkAtm, LinkMetricom, LinkIeee1394, LinkEui64, LinkInfiniband, LinkSlip, LinkCslip, LinkSlip6, LinkCslip6, LinkRsrvd, LinkAdapt, LinkRose, LinkX25, LinkHwx25, LinkCan, LinkPpp, LinkCisco, LinkLapb, LinkDdcmp, LinkRawhdlc, LinkTunnel, LinkTunnel6, LinkFrad, LinkSkip, LinkLoopbck, LinkLocaltlk, LinkFddi, LinkBif, LinkSit, LinkIpddp, LinkIpgre, LinkPimreg, LinkHippi, LinkAsh, LinkEconet, LinkIrda, LinkFcpp, LinkFcal, LinkFcpl, LinkFcfabric, LinkFcfabric1, LinkFcfabric2, LinkFcfabric3, LinkFcfabric4, LinkFcfabric5, LinkFcfabric6, LinkFcfabric7, LinkFcfabric8, LinkFcfabric9, LinkFcfabric10, LinkFcfabric11, LinkFcfabric12, LinkIee802tr, LinkIee80211, LinkIee80211prism, LinkIee80211Radiotap, LinkIee8021154, LinkIee8021154monitor, LinkPhonet, LinkPhonetpipe, LinkCaif, LinkIP6gre, LinkNetlink, Link6Lowpan, LinkNone, LinkVoid}
 
 var _LinkTypeNameToValueMap = map[string]LinkType{
-	_LinkTypeName[0:6]:     0,
-	_LinkTypeName[6:11]:    1,
-	_LinkTypeName[11:17]:   2,
-	_LinkTypeName[17:21]:   3,
-	_LinkTypeName[21:27]:   4,
-	_LinkTypeName[27:32]:   5,
-	_LinkTypeName[32:39]:   6,
-	_LinkTypeName[39:45]:   7,
-	_LinkTypeName[45:50]:   8,
-	_LinkTypeName[50:54]:   15,
-	_LinkTypeName[54:57]:   19,
-	_LinkTypeName[57:65]:   23,
-	_LinkTypeName[65:73]:   24,
-	_LinkTypeName[73:78]:   27,
-	_LinkTypeName[78:88]:   32,
-	_LinkTypeName[88:92]:   256,
-	_LinkTypeName[92:97]:   257,
-	_LinkTypeName[97:102]:  258,
-	_LinkTypeName[102:108]: 259,
-	_LinkTypeName[108:113]: 260,
-	_LinkTypeName[113:118]: 264,
-	_LinkTypeName[118:122]: 270,
-	_LinkTypeName[122:125]: 271,
-	_LinkTypeName[125:130]: 272,
-	_LinkTypeName[130:133]: 280,
-	_LinkTypeName[133:136]: 512,
-	_LinkTypeName[136:141]: 513,
-	_LinkTypeName[141:145]: 516,
-	_LinkTypeName[145:150]: 517,
-	_LinkTypeName[150:157]: 518,
-	_LinkTypeName[157:161]: 768,
-	_LinkTypeName[161:168]: 769,
-	_LinkTypeName[168:172]: 770,
-	_LinkTypeName[172:176]: 771,
-	_LinkTypeName[176:184]: 772,
-	_LinkTypeName[184:192]: 773,
-	_LinkTypeName[192:196]: 774,
-	_LinkTypeName[196:199]: 775,
-	_LinkTypeName[199:202]: 776,
-	_LinkTypeName[202:208]: 777,
-	_LinkTypeName[208:211]: 778,
-	_LinkTypeName[211:217]: 779,
-	_LinkTypeName[217:222]: 780,
-	_LinkTypeName[222:225]: 781,
-	_LinkTypeName[225:231]: 782,
-	_LinkTypeName[231:235]: 783,
-	_LinkTypeName[235:239]: 784,
-	_LinkTypeName[239:243]: 785,
-	_LinkTypeName[243:247]: 786,
-	_LinkTypeName[247:253]: 787,
-	_LinkTypeName[253:259]: 788,
-	_LinkTypeName[259:265]: 789,
-	_LinkTypeName[265:271]: 790,
-	_LinkTypeName[271:277]: 791,
-	_LinkTypeName[277:283]: 792,
-	_LinkTypeName[283:289]: 793,
-	_LinkTypeName[289:295]: 794,
-	_LinkTypeName[295:301]: 795,
-	_LinkTypeName[301:307]: 796,
-	_LinkTypeName[307:314]: 797,
-	_LinkTypeName[314:321]: 798,
-	_LinkTypeName[321:328]: 799,
-	_LinkTypeName[328:330]: 800,
-	_LinkTypeName[330:340]: 801,
-	_LinkTypeName[340:356]: 802,
-	_LinkTypeName[356:375]: 803,
-	_LinkTypeName[375:387]: 804,
-	_LinkTypeName[387:407]: 805,
-	_LinkTypeName[407:413]: 820,
-	_LinkTypeName[413:424]: 821,
-	_LinkTypeName[424:428]: 822,
-	_LinkTypeName[428:434]: 823,
-	_LinkTypeName[434:441]: 824,
-	_LinkTypeName[441:448]: 825,
-	_LinkTypeName[448:453]: 65534,
-	_LinkTypeName[453:457]: 65535,
+	_LinkTypeName[0:6]:          LinkNetrom,
+	_LinkTypeLowerName[0:6]:     LinkNetrom,
+	_LinkTypeName[6:11]:         LinkEther,
+	_LinkTypeLowerName[6:11]:    LinkEther,
+	_LinkTypeName[11:17]:        LinkEether,
+	_LinkTypeLowerName[11:17]:   LinkEether,
+	_LinkTypeName[17:21]:        LinkAx25,
+	_LinkTypeLowerName[17:21]:   LinkAx25,
+	_LinkTypeName[21:27]:        LinkPronet,
+	_LinkTypeLowerName[21:27]:   LinkPronet,
+	_LinkTypeName[27:32]:        LinkChaos,
+	_LinkTypeLowerName[27:32]:   LinkChaos,
+	_LinkTypeName[32:39]:        LinkIee802,
+	_LinkTypeLowerName[32:39]:   LinkIee802,
+	_LinkTypeName[39:45]:        LinkArcnet,
+	_LinkTypeLowerName[39:45]:   LinkArcnet,
+	_LinkTypeName[45:50]:        LinkAtalk,
+	_LinkTypeLowerName[45:50]:   LinkAtalk,
+	_LinkTypeName[50:54]:        LinkDlci,
+	_LinkTypeLowerName[50:54]:   LinkDlci,
+	_LinkTypeName[54:57]:        LinkAtm,
+	_LinkTypeLowerName[54:57]:   LinkAtm,
+	_LinkTypeName[57:65]:        LinkMetricom,
+	_LinkTypeLowerName[57:65]:   LinkMetricom,
+	_LinkTypeName[65:73]:        LinkIeee1394,
+	_LinkTypeLowerName[65:73]:   LinkIeee1394,
+	_LinkTypeName[73:78]:        LinkEui64,
+	_LinkTypeLowerName[73:78]:   LinkEui64,
+	_LinkTypeName[78:88]:        LinkInfiniband,
+	_LinkTypeLowerName[78:88]:   LinkInfiniband,
+	_LinkTypeName[88:92]:        LinkSlip,
+	_LinkTypeLowerName[88:92]:   LinkSlip,
+	_LinkTypeName[92:97]:        LinkCslip,
+	_LinkTypeLowerName[92:97]:   LinkCslip,
+	_LinkTypeName[97:102]:       LinkSlip6,
+	_LinkTypeLowerName[97:102]:  LinkSlip6,
+	_LinkTypeName[102:108]:      LinkCslip6,
+	_LinkTypeLowerName[102:108]: LinkCslip6,
+	_LinkTypeName[108:113]:      LinkRsrvd,
+	_LinkTypeLowerName[108:113]: LinkRsrvd,
+	_LinkTypeName[113:118]:      LinkAdapt,
+	_LinkTypeLowerName[113:118]: LinkAdapt,
+	_LinkTypeName[118:122]:      LinkRose,
+	_LinkTypeLowerName[118:122]: LinkRose,
+	_LinkTypeName[122:125]:      LinkX25,
+	_LinkTypeLowerName[122:125]: LinkX25,
+	_LinkTypeName[125:130]:      LinkHwx25,
+	_LinkTypeLowerName[125:130]: LinkHwx25,
+	_LinkTypeName[130:133]:      LinkCan,
+	_LinkTypeLowerName[130:133]: LinkCan,
+	_LinkTypeName[133:136]:      LinkPpp,
+	_LinkTypeLowerName[133:136]: LinkPpp,
+	_LinkTypeName[136:141]:      LinkCisco,
+	_LinkTypeLowerName[136:141]: LinkCisco,
+	_LinkTypeName[141:145]:      LinkLapb,
+	_LinkTypeLowerName[141:145]: LinkLapb,
+	_LinkTypeName[145:150]:      LinkDdcmp,
+	_LinkTypeLowerName[145:150]: LinkDdcmp,
+	_LinkTypeName[150:157]:      LinkRawhdlc,
+	_LinkTypeLowerName[150:157]: LinkRawhdlc,
+	_LinkTypeName[157:161]:      LinkTunnel,
+	_LinkTypeLowerName[157:161]: LinkTunnel,
+	_LinkTypeName[161:168]:      LinkTunnel6,
+	_LinkTypeLowerName[161:168]: LinkTunnel6,
+	_LinkTypeName[168:172]:      LinkFrad,
+	_LinkTypeLowerName[168:172]: LinkFrad,
+	_LinkTypeName[172:176]:      LinkSkip,
+	_LinkTypeLowerName[172:176]: LinkSkip,
+	_LinkTypeName[176:184]:      LinkLoopbck,
+	_LinkTypeLowerName[176:184]: LinkLoopbck,
+	_LinkTypeName[184:192]:      LinkLocaltlk,
+	_LinkTypeLowerName[184:192]: LinkLocaltlk,
+	_LinkTypeName[192:196]:      LinkFddi,
+	_LinkTypeLowerName[192:196]: LinkFddi,
+	_LinkTypeName[196:199]:      LinkBif,
+	_LinkTypeLowerName[196:199]: LinkBif,
+	_LinkTypeName[199:202]:      LinkSit,
+	_LinkTypeLowerName[199:202]: LinkSit,
+	_LinkTypeName[202:208]:      LinkIpddp,
+	_LinkTypeLowerName[202:208]: LinkIpddp,
+	_LinkTypeName[208:211]:      LinkIpgre,
+	_LinkTypeLowerName[208:211]: LinkIpgre,
+	_LinkTypeName[211:217]:      LinkPimreg,
+	_LinkTypeLowerName[211:217]: LinkPimreg,
+	_LinkTypeName[217:222]:      LinkHippi,
+	_LinkTypeLowerName[217:222]: LinkHippi,
+	_LinkTypeName[222:225]:      LinkAsh,
+	_LinkTypeLowerName[222:225]: LinkAsh,
+	_LinkTypeName[225:231]:      LinkEconet,
+	_LinkTypeLowerName[225:231]: LinkEconet,
+	_LinkTypeName[231:235]:      LinkIrda,
+	_LinkTypeLowerName[231:235]: LinkIrda,
+	_LinkTypeName[235:239]:      LinkFcpp,
+	_LinkTypeLowerName[235:239]: LinkFcpp,
+	_LinkTypeName[239:243]:      LinkFcal,
+	_LinkTypeLowerName[239:243]: LinkFcal,
+	_LinkTypeName[243:247]:      LinkFcpl,
+	_LinkTypeLowerName[243:247]: LinkFcpl,
+	_LinkTypeName[247:253]:      LinkFcfabric,
+	_LinkTypeLowerName[247:253]: LinkFcfabric,
+	_LinkTypeName[253:259]:      LinkFcfabric1,
+	_LinkTypeLowerName[253:259]: LinkFcfabric1,
+	_LinkTypeName[259:265]:      LinkFcfabric2,
+	_LinkTypeLowerName[259:265]: LinkFcfabric2,
+	_LinkTypeName[265:271]:      LinkFcfabric3,
+	_LinkTypeLowerName[265:271]: LinkFcfabric3,
+	_LinkTypeName[271:277]:      LinkFcfabric4,
+	_LinkTypeLowerName[271:277]: LinkFcfabric4,
+	_LinkTypeName[277:283]:      LinkFcfabric5,
+	_LinkTypeLowerName[277:283]: LinkFcfabric5,
+	_LinkTypeName[283:289]:      LinkFcfabric6,
+	_LinkTypeLowerName[283:289]: LinkFcfabric6,
+	_LinkTypeName[289:295]:      LinkFcfabric7,
+	_LinkTypeLowerName[289:295]: LinkFcfabric7,
+	_LinkTypeName[295:301]:      LinkFcfabric8,
+	_LinkTypeLowerName[295:301]: LinkFcfabric8,
+	_LinkTypeName[301:307]:      LinkFcfabric9,
+	_LinkTypeLowerName[301:307]: LinkFcfabric9,
+	_LinkTypeName[307:314]:      LinkFcfabric10,
+	_LinkTypeLowerName[307:314]: LinkFcfabric10,
+	_LinkTypeName[314:321]:      LinkFcfabric11,
+	_LinkTypeLowerName[314:321]: LinkFcfabric11,
+	_LinkTypeName[321:328]:      LinkFcfabric12,
+	_LinkTypeLowerName[321:328]: LinkFcfabric12,
+	_LinkTypeName[328:330]:      LinkIee802tr,
+	_LinkTypeLowerName[328:330]: LinkIee802tr,
+	_LinkTypeName[330:340]:      LinkIee80211,
+	_LinkTypeLowerName[330:340]: LinkIee80211,
+	_LinkTypeName[340:356]:      LinkIee80211prism,
+	_LinkTypeLowerName[340:356]: LinkIee80211prism,
+	_LinkTypeName[356:375]:      LinkIee80211Radiotap,
+	_LinkTypeLowerName[356:375]: LinkIee80211Radiotap,
+	_LinkTypeName[375:387]:      LinkIee8021154,
+	_LinkTypeLowerName[375:387]: LinkIee8021154,
+	_LinkTypeName[387:407]:      LinkIee8021154monitor,
+	_LinkTypeLowerName[387:407]: LinkIee8021154monitor,
+	_LinkTypeName[407:413]:      LinkPhonet,
+	_LinkTypeLowerName[407:413]: LinkPhonet,
+	_LinkTypeName[413:424]:      LinkPhonetpipe,
+	_LinkTypeLowerName[413:424]: LinkPhonetpipe,
+	_LinkTypeName[424:428]:      LinkCaif,
+	_LinkTypeLowerName[424:428]: LinkCaif,
+	_LinkTypeName[428:434]:      LinkIP6gre,
+	_LinkTypeLowerName[428:434]: LinkIP6gre,
+	_LinkTypeName[434:441]:      LinkNetlink,
+	_LinkTypeLowerName[434:441]: LinkNetlink,
+	_LinkTypeName[441:448]:      Link6Lowpan,
+	_LinkTypeLowerName[441:448]: Link6Lowpan,
+	_LinkTypeName[448:453]:      LinkNone,
+	_LinkTypeLowerName[448:453]: LinkNone,
+	_LinkTypeName[453:457]:      LinkVoid,
+	_LinkTypeLowerName[453:457]: LinkVoid,
+}
+
+var _LinkTypeNames = []string{
+	_LinkTypeName[0:6],
+	_LinkTypeName[6:11],
+	_LinkTypeName[11:17],
+	_LinkTypeName[17:21],
+	_LinkTypeName[21:27],
+	_LinkTypeName[27:32],
+	_LinkTypeName[32:39],
+	_LinkTypeName[39:45],
+	_LinkTypeName[45:50],
+	_LinkTypeName[50:54],
+	_LinkTypeName[54:57],
+	_LinkTypeName[57:65],
+	_LinkTypeName[65:73],
+	_LinkTypeName[73:78],
+	_LinkTypeName[78:88],
+	_LinkTypeName[88:92],
+	_LinkTypeName[92:97],
+	_LinkTypeName[97:102],
+	_LinkTypeName[102:108],
+	_LinkTypeName[108:113],
+	_LinkTypeName[113:118],
+	_LinkTypeName[118:122],
+	_LinkTypeName[122:125],
+	_LinkTypeName[125:130],
+	_LinkTypeName[130:133],
+	_LinkTypeName[133:136],
+	_LinkTypeName[136:141],
+	_LinkTypeName[141:145],
+	_LinkTypeName[145:150],
+	_LinkTypeName[150:157],
+	_LinkTypeName[157:161],
+	_LinkTypeName[161:168],
+	_LinkTypeName[168:172],
+	_LinkTypeName[172:176],
+	_LinkTypeName[176:184],
+	_LinkTypeName[184:192],
+	_LinkTypeName[192:196],
+	_LinkTypeName[196:199],
+	_LinkTypeName[199:202],
+	_LinkTypeName[202:208],
+	_LinkTypeName[208:211],
+	_LinkTypeName[211:217],
+	_LinkTypeName[217:222],
+	_LinkTypeName[222:225],
+	_LinkTypeName[225:231],
+	_LinkTypeName[231:235],
+	_LinkTypeName[235:239],
+	_LinkTypeName[239:243],
+	_LinkTypeName[243:247],
+	_LinkTypeName[247:253],
+	_LinkTypeName[253:259],
+	_LinkTypeName[259:265],
+	_LinkTypeName[265:271],
+	_LinkTypeName[271:277],
+	_LinkTypeName[277:283],
+	_LinkTypeName[283:289],
+	_LinkTypeName[289:295],
+	_LinkTypeName[295:301],
+	_LinkTypeName[301:307],
+	_LinkTypeName[307:314],
+	_LinkTypeName[314:321],
+	_LinkTypeName[321:328],
+	_LinkTypeName[328:330],
+	_LinkTypeName[330:340],
+	_LinkTypeName[340:356],
+	_LinkTypeName[356:375],
+	_LinkTypeName[375:387],
+	_LinkTypeName[387:407],
+	_LinkTypeName[407:413],
+	_LinkTypeName[413:424],
+	_LinkTypeName[424:428],
+	_LinkTypeName[428:434],
+	_LinkTypeName[434:441],
+	_LinkTypeName[441:448],
+	_LinkTypeName[448:453],
+	_LinkTypeName[453:457],
 }
 
 // LinkTypeString retrieves an enum value from the enum constants string name.
@@ -181,12 +420,23 @@ func LinkTypeString(s string) (LinkType, error) {
 	if val, ok := _LinkTypeNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _LinkTypeNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to LinkType values", s)
 }
 
 // LinkTypeValues returns all values of the enum
 func LinkTypeValues() []LinkType {
 	return _LinkTypeValues
+}
+
+// LinkTypeStrings returns a slice of all String values of the enum
+func LinkTypeStrings() []string {
+	strs := make([]string, len(_LinkTypeNames))
+	copy(strs, _LinkTypeNames)
+	return strs
 }
 
 // IsALinkType returns "true" if the value is listed in the enum definition. "false" otherwise

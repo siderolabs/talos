@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _StatusName = "addressesconnectivityhostnameetcfiles"
 
 var _StatusIndex = [...]uint8{0, 9, 21, 29, 37}
+
+const _StatusLowerName = "addressesconnectivityhostnameetcfiles"
 
 func (i Status) String() string {
 	i -= 1
@@ -18,13 +21,34 @@ func (i Status) String() string {
 	return _StatusName[_StatusIndex[i]:_StatusIndex[i+1]]
 }
 
-var _StatusValues = []Status{1, 2, 3, 4}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _StatusNoOp() {
+	var x [1]struct{}
+	_ = x[StatusAddresses-(1)]
+	_ = x[StatusConnectivity-(2)]
+	_ = x[StatusHostname-(3)]
+	_ = x[StatusEtcFiles-(4)]
+}
+
+var _StatusValues = []Status{StatusAddresses, StatusConnectivity, StatusHostname, StatusEtcFiles}
 
 var _StatusNameToValueMap = map[string]Status{
-	_StatusName[0:9]:   1,
-	_StatusName[9:21]:  2,
-	_StatusName[21:29]: 3,
-	_StatusName[29:37]: 4,
+	_StatusName[0:9]:        StatusAddresses,
+	_StatusLowerName[0:9]:   StatusAddresses,
+	_StatusName[9:21]:       StatusConnectivity,
+	_StatusLowerName[9:21]:  StatusConnectivity,
+	_StatusName[21:29]:      StatusHostname,
+	_StatusLowerName[21:29]: StatusHostname,
+	_StatusName[29:37]:      StatusEtcFiles,
+	_StatusLowerName[29:37]: StatusEtcFiles,
+}
+
+var _StatusNames = []string{
+	_StatusName[0:9],
+	_StatusName[9:21],
+	_StatusName[21:29],
+	_StatusName[29:37],
 }
 
 // StatusString retrieves an enum value from the enum constants string name.
@@ -33,12 +57,23 @@ func StatusString(s string) (Status, error) {
 	if val, ok := _StatusNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _StatusNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to Status values", s)
 }
 
 // StatusValues returns all values of the enum
 func StatusValues() []Status {
 	return _StatusValues
+}
+
+// StatusStrings returns a slice of all String values of the enum
+func StatusStrings() []string {
+	strs := make([]string, len(_StatusNames))
+	copy(strs, _StatusNames)
+	return strs
 }
 
 // IsAStatus returns "true" if the value is listed in the enum definition. "false" otherwise

@@ -4,11 +4,14 @@ package nethelpers
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _BondXmitHashPolicyName = "layer2layer3+4layer2+3encap2+3encap3+4"
 
 var _BondXmitHashPolicyIndex = [...]uint8{0, 6, 14, 22, 30, 38}
+
+const _BondXmitHashPolicyLowerName = "layer2layer3+4layer2+3encap2+3encap3+4"
 
 func (i BondXmitHashPolicy) String() string {
 	if i >= BondXmitHashPolicy(len(_BondXmitHashPolicyIndex)-1) {
@@ -17,14 +20,38 @@ func (i BondXmitHashPolicy) String() string {
 	return _BondXmitHashPolicyName[_BondXmitHashPolicyIndex[i]:_BondXmitHashPolicyIndex[i+1]]
 }
 
-var _BondXmitHashPolicyValues = []BondXmitHashPolicy{0, 1, 2, 3, 4}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _BondXmitHashPolicyNoOp() {
+	var x [1]struct{}
+	_ = x[BondXmitPolicyLayer2-(0)]
+	_ = x[BondXmitPolicyLayer34-(1)]
+	_ = x[BondXmitPolicyLayer23-(2)]
+	_ = x[BondXmitPolicyEncap23-(3)]
+	_ = x[BondXmitPolicyEncap34-(4)]
+}
+
+var _BondXmitHashPolicyValues = []BondXmitHashPolicy{BondXmitPolicyLayer2, BondXmitPolicyLayer34, BondXmitPolicyLayer23, BondXmitPolicyEncap23, BondXmitPolicyEncap34}
 
 var _BondXmitHashPolicyNameToValueMap = map[string]BondXmitHashPolicy{
-	_BondXmitHashPolicyName[0:6]:   0,
-	_BondXmitHashPolicyName[6:14]:  1,
-	_BondXmitHashPolicyName[14:22]: 2,
-	_BondXmitHashPolicyName[22:30]: 3,
-	_BondXmitHashPolicyName[30:38]: 4,
+	_BondXmitHashPolicyName[0:6]:        BondXmitPolicyLayer2,
+	_BondXmitHashPolicyLowerName[0:6]:   BondXmitPolicyLayer2,
+	_BondXmitHashPolicyName[6:14]:       BondXmitPolicyLayer34,
+	_BondXmitHashPolicyLowerName[6:14]:  BondXmitPolicyLayer34,
+	_BondXmitHashPolicyName[14:22]:      BondXmitPolicyLayer23,
+	_BondXmitHashPolicyLowerName[14:22]: BondXmitPolicyLayer23,
+	_BondXmitHashPolicyName[22:30]:      BondXmitPolicyEncap23,
+	_BondXmitHashPolicyLowerName[22:30]: BondXmitPolicyEncap23,
+	_BondXmitHashPolicyName[30:38]:      BondXmitPolicyEncap34,
+	_BondXmitHashPolicyLowerName[30:38]: BondXmitPolicyEncap34,
+}
+
+var _BondXmitHashPolicyNames = []string{
+	_BondXmitHashPolicyName[0:6],
+	_BondXmitHashPolicyName[6:14],
+	_BondXmitHashPolicyName[14:22],
+	_BondXmitHashPolicyName[22:30],
+	_BondXmitHashPolicyName[30:38],
 }
 
 // BondXmitHashPolicyString retrieves an enum value from the enum constants string name.
@@ -33,12 +60,23 @@ func BondXmitHashPolicyString(s string) (BondXmitHashPolicy, error) {
 	if val, ok := _BondXmitHashPolicyNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _BondXmitHashPolicyNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to BondXmitHashPolicy values", s)
 }
 
 // BondXmitHashPolicyValues returns all values of the enum
 func BondXmitHashPolicyValues() []BondXmitHashPolicy {
 	return _BondXmitHashPolicyValues
+}
+
+// BondXmitHashPolicyStrings returns a slice of all String values of the enum
+func BondXmitHashPolicyStrings() []string {
+	strs := make([]string, len(_BondXmitHashPolicyNames))
+	copy(strs, _BondXmitHashPolicyNames)
+	return strs
 }
 
 // IsABondXmitHashPolicy returns "true" if the value is listed in the enum definition. "false" otherwise

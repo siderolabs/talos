@@ -4,11 +4,14 @@ package profile
 
 import (
 	"fmt"
+	"strings"
 )
 
 const _DiskFormatName = "unknownrawqcow2vhdova"
 
 var _DiskFormatIndex = [...]uint8{0, 7, 10, 15, 18, 21}
+
+const _DiskFormatLowerName = "unknownrawqcow2vhdova"
 
 func (i DiskFormat) String() string {
 	if i < 0 || i >= DiskFormat(len(_DiskFormatIndex)-1) {
@@ -17,14 +20,38 @@ func (i DiskFormat) String() string {
 	return _DiskFormatName[_DiskFormatIndex[i]:_DiskFormatIndex[i+1]]
 }
 
-var _DiskFormatValues = []DiskFormat{0, 1, 2, 3, 4}
+// An "invalid array index" compiler error signifies that the constant values have changed.
+// Re-run the stringer command to generate them again.
+func _DiskFormatNoOp() {
+	var x [1]struct{}
+	_ = x[DiskFormatUnknown-(0)]
+	_ = x[DiskFormatRaw-(1)]
+	_ = x[DiskFormatQCOW2-(2)]
+	_ = x[DiskFormatVPC-(3)]
+	_ = x[DiskFormatOVA-(4)]
+}
+
+var _DiskFormatValues = []DiskFormat{DiskFormatUnknown, DiskFormatRaw, DiskFormatQCOW2, DiskFormatVPC, DiskFormatOVA}
 
 var _DiskFormatNameToValueMap = map[string]DiskFormat{
-	_DiskFormatName[0:7]:   0,
-	_DiskFormatName[7:10]:  1,
-	_DiskFormatName[10:15]: 2,
-	_DiskFormatName[15:18]: 3,
-	_DiskFormatName[18:21]: 4,
+	_DiskFormatName[0:7]:        DiskFormatUnknown,
+	_DiskFormatLowerName[0:7]:   DiskFormatUnknown,
+	_DiskFormatName[7:10]:       DiskFormatRaw,
+	_DiskFormatLowerName[7:10]:  DiskFormatRaw,
+	_DiskFormatName[10:15]:      DiskFormatQCOW2,
+	_DiskFormatLowerName[10:15]: DiskFormatQCOW2,
+	_DiskFormatName[15:18]:      DiskFormatVPC,
+	_DiskFormatLowerName[15:18]: DiskFormatVPC,
+	_DiskFormatName[18:21]:      DiskFormatOVA,
+	_DiskFormatLowerName[18:21]: DiskFormatOVA,
+}
+
+var _DiskFormatNames = []string{
+	_DiskFormatName[0:7],
+	_DiskFormatName[7:10],
+	_DiskFormatName[10:15],
+	_DiskFormatName[15:18],
+	_DiskFormatName[18:21],
 }
 
 // DiskFormatString retrieves an enum value from the enum constants string name.
@@ -33,12 +60,23 @@ func DiskFormatString(s string) (DiskFormat, error) {
 	if val, ok := _DiskFormatNameToValueMap[s]; ok {
 		return val, nil
 	}
+
+	if val, ok := _DiskFormatNameToValueMap[strings.ToLower(s)]; ok {
+		return val, nil
+	}
 	return 0, fmt.Errorf("%s does not belong to DiskFormat values", s)
 }
 
 // DiskFormatValues returns all values of the enum
 func DiskFormatValues() []DiskFormat {
 	return _DiskFormatValues
+}
+
+// DiskFormatStrings returns a slice of all String values of the enum
+func DiskFormatStrings() []string {
+	strs := make([]string, len(_DiskFormatNames))
+	copy(strs, _DiskFormatNames)
+	return strs
 }
 
 // IsADiskFormat returns "true" if the value is listed in the enum definition. "false" otherwise
