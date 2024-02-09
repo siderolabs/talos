@@ -152,7 +152,7 @@ local TriggerDownstream(name, target, repositories, image='', params=[], depends
 // This provides the docker service.
 local docker = {
   name: 'docker',
-  image: 'docker:25.0.2-dind',
+  image: 'docker:24.0.7-dind',
   entrypoint: ['dockerd'],
   privileged: true,
   command: [
