@@ -12,6 +12,7 @@ If you have tested this on other Raspberry Pi boards, please let us know.
 ## Video Walkthrough
 
 To see a live demo of this writeup, see the video below:
+
 <iframe width="560" height="315" src="https://www.youtube.com/embed/aHu1lFir7UU" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Prerequisites
@@ -24,8 +25,7 @@ You will need
 Download the latest `talosctl`.
 
 ```bash
-curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/download/{{< release >}}/talosctl-$(uname -s | tr "[:upper:]" "[:lower:]")-amd64
-chmod +x /usr/local/bin/talosctl
+curl -sL 'https://www.talos.dev/install' | bash
 ```
 
 ## Updating the EEPROM
