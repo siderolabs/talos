@@ -3,6 +3,9 @@
 A list of adopters of Talos Linux, and the use
 
 ## Adopters (listed alphabetically)
+* **[Ænix](https://aenix.io/)**  
+  Ænix provides consulting services for cloud providers and uses Talos Linux as base disto for free PaaS platform [Cozystack](https://cozystack.io) for running managed services, virtual machines and Kubernetes clusters.
+
 * **[Equinix Managed Services NL](https://www.equinix.nl/services/managed-services/netherlands)**  
   Equinix Managed Services NL offers various infrastructure services, amongst which [EQAP](https://www.equinix.nl/services/managed-services/netherlands/application-platform), which is a managed Kubernetes, based on Talos Linux.
 
