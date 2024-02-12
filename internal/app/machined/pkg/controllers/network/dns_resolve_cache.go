@@ -6,7 +6,10 @@ package network
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"net"
 	"time"
 
 	"github.com/coredns/coredns/plugin/pkg/proxy"
@@ -24,6 +27,7 @@ import (
 // DNSResolveCacheController starts dns server on both udp and tcp ports based on finalized network configuration.
 type DNSResolveCacheController struct {
 	Addr   string
+	AddrV6 string
 	Logger *zap.Logger
 }
 
@@ -100,54 +104,70 @@ func (ctrl *DNSResolveCacheController) runServer(originCtx context.Context, r co
 	defer handler.Stop()
 
 	cache := dns.NewCache(handler, ctrl.Logger)
-	addr := ctrl.Addr
 	ctx := originCtx
 
+	serverOpts := map[string]dns.ServerOptins{}
+
 	for _, opt := range []struct {
-		net     string
-		addr    string
-		srvOpts dns.ServerOptins
+		net  string
+		addr string
 	}{
-		{
-			net:  "udp",
-			addr: addr,
-			srvOpts: dns.ServerOptins{
-				Handler: cache,
-			},
-		},
-		{
-			net:  "tcp",
-			addr: addr,
-			srvOpts: dns.ServerOptins{
+		{net: "udp", addr: ctrl.Addr},
+		{net: "udp6", addr: ctrl.AddrV6},
+		{net: "tcp", addr: ctrl.Addr},
+		{net: "tcp6", addr: ctrl.AddrV6},
+	} {
+		l := ctrl.Logger.With(zap.String("net", opt.net), zap.String("addr", opt.addr))
+
+		switch opt.net {
+		case "udp", "udp6":
+			packetConn, err := dns.NewUDPPacketConn(opt.net, opt.addr)
+			if err != nil {
+				if opt.net == "udp6" {
+					// If we can't bind to ipv6, we can continue with ipv4
+					continue
+				}
+
+				return fmt.Errorf("error creating udp packet conn: %w", err)
+			}
+
+			defer closeListener(packetConn, l)
+
+			serverOpts[opt.net] = dns.ServerOptins{
+				PacketConn: packetConn,
+				Handler:    cache,
+			}
+
+		case "tcp", "tcp6":
+			listener, err := dns.NewTCPListener(opt.net, opt.addr)
+			if err != nil {
+				if opt.net == "tcp6" {
+					// If we can't bind to ipv6, we can continue with ipv4
+					continue
+				}
+
+				return fmt.Errorf("error creating tcp listener: %w", err)
+			}
+
+			defer closeListener(listener, l)
+
+			serverOpts[opt.net] = dns.ServerOptins{
+				Listener:      listener,
 				Handler:       cache,
 				ReadTimeout:   3 * time.Second,
 				WriteTimeout:  5 * time.Second,
 				IdleTimeout:   func() time.Duration { return 10 * time.Second },
 				MaxTCPQueries: -1,
-			},
-		},
-	} {
-		l := ctrl.Logger.With(zap.String("net", opt.net))
-
-		if opt.net == "tcp" {
-			listener, err := dns.NewTCPListener(opt.addr)
-			if err != nil {
-				return fmt.Errorf("error creating tcp listener: %w", err)
 			}
-
-			opt.srvOpts.Listener = listener
-		} else if opt.net == "udp" {
-			packetConn, err := dns.NewUDPPacketConn(opt.addr)
-			if err != nil {
-				return fmt.Errorf("error creating udp packet conn: %w", err)
-			}
-
-			opt.srvOpts.PacketConn = packetConn
 		}
+	}
 
-		runner := dns.NewRunner(dns.NewServer(opt.srvOpts), l)
+	for netwk, opt := range serverOpts {
+		l := ctrl.Logger.With(zap.String("net", netwk))
 
-		err := ctrl.writeDNSStatus(ctx, r, opt.net)
+		runner := dns.NewRunner(dns.NewServer(opt), l)
+
+		err := ctrl.writeDNSStatus(ctx, r, netwk)
 		if err != nil {
 			return err
 		}
@@ -200,6 +220,12 @@ func (ctrl *DNSResolveCacheController) runServer(originCtx context.Context, r co
 				return err
 			}
 		}
+	}
+}
+
+func closeListener(lis io.Closer, l *zap.Logger) {
+	if err := lis.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
+		l.Error("error closing listener", zap.Error(err))
 	}
 }
 

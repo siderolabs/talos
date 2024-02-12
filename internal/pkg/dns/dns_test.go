@@ -111,16 +111,14 @@ func newServer(t *testing.T, nameservers ...string) (context.Context, func()) {
 		p := proxy.NewProxy(ns, net.JoinHostPort(ns, "53"), "dns")
 		p.Start(500 * time.Millisecond)
 
-		t.Cleanup(func() {
-			p.Stop()
-		})
+		t.Cleanup(p.Stop)
 
 		return p
 	})
 
 	handler.SetProxy(pxs)
 
-	pc, err := dns.NewUDPPacketConn(":10700")
+	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.1:10700")
 	require.NoError(t, err)
 
 	runner := dns.NewRunner(dns.NewServer(dns.ServerOptins{

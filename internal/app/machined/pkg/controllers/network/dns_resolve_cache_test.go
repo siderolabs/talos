@@ -148,7 +148,8 @@ func TestDNSServer(t *testing.T) {
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{
-					Addr:   ":10700",
+					Addr:   "127.0.0.1:10700",
+					AddrV6: "[::1]:10700",
 					Logger: zaptest.NewLogger(t),
 				}))
 			},

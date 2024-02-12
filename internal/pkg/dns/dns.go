@@ -229,38 +229,76 @@ func NewServer(opts ServerOptins) Server {
 type server struct{ *dns.Server }
 
 // NewTCPListener creates a new TCP listener.
-func NewTCPListener(addr string) (net.Listener, error) {
-	lc := net.ListenConfig{
-		Control: makeControl(tcpOptions),
+func NewTCPListener(network, addr string) (net.Listener, error) {
+	var opts []controlOptions
+
+	switch network {
+	case "tcp", "tcp4":
+		network = "tcp4"
+		opts = tcpOptions
+
+	case "tcp6":
+		opts = tcpOptionsV6
+
+	default:
+		return nil, fmt.Errorf("unsupported network: %s", network)
 	}
 
-	return lc.Listen(context.Background(), "tcp", addr)
+	lc := net.ListenConfig{Control: makeControl(opts)}
+
+	return lc.Listen(context.Background(), network, addr)
 }
 
 // NewUDPPacketConn creates a new UDP packet connection.
-func NewUDPPacketConn(addr string) (net.PacketConn, error) {
-	lc := net.ListenConfig{
-		Control: makeControl(udpOptions),
+func NewUDPPacketConn(network, addr string) (net.PacketConn, error) {
+	var opts []controlOptions
+
+	switch network {
+	case "udp", "udp4":
+		network = "udp4"
+		opts = udpOptions
+
+	case "udp6":
+		opts = udpOptionsV6
+
+	default:
+		return nil, fmt.Errorf("unsupported network: %s", network)
 	}
 
-	return lc.ListenPacket(context.Background(), "udp", addr)
+	lc := net.ListenConfig{
+		Control: makeControl(opts),
+	}
+
+	return lc.ListenPacket(context.Background(), network, addr)
 }
 
 var (
 	tcpOptions = []controlOptions{
-		// this isn't really necessary, because currently if the process dies, OS dies with it
-		{unix.SOL_SOCKET, unix.SO_REUSEADDR, 1, "failed to set SO_REUSEADDR"},
+		{unix.SOL_SOCKET, unix.SO_REUSEPORT, 1, "failed to set SO_REUSEADDR"},
 		{unix.IPPROTO_IP, unix.IP_RECVTTL, 1, "failed to set IP_RECVTTL"},
 		{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
 		{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
 		{unix.IPPROTO_IP, unix.IP_TTL, 1, "failed to set IP_TTL"},
 	}
 
+	tcpOptionsV6 = []controlOptions{
+		{unix.SOL_SOCKET, unix.SO_REUSEPORT, 1, "failed to set SO_REUSEADDR"},
+		{unix.IPPROTO_IPV6, unix.IPV6_RECVHOPLIMIT, 1, "failed to set IPV6_RECVHOPLIMIT"},
+		{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
+		{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
+		{unix.IPPROTO_IPV6, unix.IPV6_UNICAST_HOPS, 1, "failed to set IPV6_UNICAST_HOPS"},
+	}
+
 	udpOptions = []controlOptions{
-		// this isn't really necessary, because currently if the process dies, OS dies with it
-		{unix.SOL_SOCKET, unix.SO_REUSEADDR, 1, "failed to set SO_REUSEADDR"},
+		{unix.SOL_SOCKET, unix.SO_REUSEPORT, 1, "failed to set SO_REUSEADDR"},
 		{unix.IPPROTO_IP, unix.IP_RECVTTL, 1, "failed to set IP_RECVTTL"},
 		{unix.IPPROTO_IP, unix.IP_TTL, 1, "failed to set IP_TTL"},
+	}
+
+	udpOptionsV6 = []controlOptions{
+		{unix.SOL_SOCKET, unix.SO_REUSEPORT, 1, "failed to set SO_REUSEADDR"},
+		{unix.IPPROTO_IPV6, unix.IPV6_RECVHOPLIMIT, 1, "failed to set IPV6_RECVHOPLIMIT"},
+		{unix.IPPROTO_IPV6, unix.IPV6_UNICAST_HOPS, 1, "failed to set IPV6_UNICAST_HOPS"},
 	}
 )
 
