@@ -9,4 +9,4 @@
 - op: replace
   path: /cluster/extraManifests
   value:
-    - "https://raw.githubusercontent.com/mologie/talos-vmtoolsd/master/deploy/unstable.yaml"
+    - "https://raw.githubusercontent.com/siderolabs/talos-vmtoolsd/master/deploy/latest.yaml"
