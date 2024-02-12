@@ -39,7 +39,7 @@ It's contents should look like the following:
 - op: replace
   path: /cluster/extraManifests
   value:
-    - "https://raw.githubusercontent.com/mologie/talos-vmtoolsd/master/deploy/unstable.yaml"
+    - "https://raw.githubusercontent.com/siderolabs/talos-vmtoolsd/master/deploy/latest.yaml"
 ```
 
 With the patch in hand, generate machine configs with:
