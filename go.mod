@@ -111,7 +111,7 @@ require (
 	github.com/siderolabs/go-blockdevice v0.4.7
 	github.com/siderolabs/go-circular v0.1.0
 	github.com/siderolabs/go-cmd v0.1.1
-	github.com/siderolabs/go-debug v0.2.3
+	github.com/siderolabs/go-debug v0.3.0
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
 	github.com/siderolabs/go-kubernetes v0.2.8

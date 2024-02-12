@@ -120,10 +120,12 @@ func newServer(t *testing.T, nameservers ...string) (context.Context, func()) {
 
 	handler.SetProxy(pxs)
 
+	pc, err := dns.NewUDPPacketConn(":10700")
+	require.NoError(t, err)
+
 	runner := dns.NewRunner(dns.NewServer(dns.ServerOptins{
-		Addr:    ":10700",
-		Net:     "udp",
-		Handler: dns.NewCache(handler, l),
+		PacketConn: pc,
+		Handler:    dns.NewCache(handler, l),
 	}), l)
 
 	return ctxutil.MonitorFn(context.Background(), runner.Run), runner.Stop
@@ -145,7 +147,7 @@ func createQuery() *dnssrv.Msg {
 	}
 }
 
-func TestListenFailure(t *testing.T) {
+func TestActivateFailure(t *testing.T) {
 	// Ensure that we correctly handle an error inside [dns.Runner.Run].
 	l := zaptest.NewLogger(t)
 
@@ -188,7 +190,7 @@ type testServer struct {
 
 var errFailed = errors.New("listen failure")
 
-func (ts *testServer) ListenAndServe() error { return errFailed }
+func (ts *testServer) ActivateAndServe() error { return errFailed }
 
 func (ts *testServer) Shutdown() error {
 	ts.t.Fatal("should not be called")
@@ -204,7 +206,7 @@ type runnerStopper struct {
 	val atomic.Pointer[chan struct{}]
 }
 
-func (rs *runnerStopper) ListenAndServe() error {
+func (rs *runnerStopper) ActivateAndServe() error {
 	ch := make(chan struct{})
 
 	if rs.val.Swap(&ch) != nil {

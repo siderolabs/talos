@@ -103,27 +103,51 @@ func (ctrl *DNSResolveCacheController) runServer(originCtx context.Context, r co
 	addr := ctrl.Addr
 	ctx := originCtx
 
-	for _, opt := range []dns.ServerOptins{
+	for _, opt := range []struct {
+		net     string
+		addr    string
+		srvOpts dns.ServerOptins
+	}{
 		{
-			Addr:    addr,
-			Net:     "udp",
-			Handler: cache,
+			net:  "udp",
+			addr: addr,
+			srvOpts: dns.ServerOptins{
+				Handler: cache,
+			},
 		},
 		{
-			Addr:          addr,
-			Net:           "tcp",
-			Handler:       cache,
-			ReadTimeout:   3 * time.Second,
-			WriteTimeout:  5 * time.Second,
-			IdleTimeout:   func() time.Duration { return 10 * time.Second },
-			MaxTCPQueries: -1,
+			net:  "tcp",
+			addr: addr,
+			srvOpts: dns.ServerOptins{
+				Handler:       cache,
+				ReadTimeout:   3 * time.Second,
+				WriteTimeout:  5 * time.Second,
+				IdleTimeout:   func() time.Duration { return 10 * time.Second },
+				MaxTCPQueries: -1,
+			},
 		},
 	} {
-		l := ctrl.Logger.With(zap.String("net", opt.Net))
+		l := ctrl.Logger.With(zap.String("net", opt.net))
 
-		runner := dns.NewRunner(dns.NewServer(opt), l)
+		if opt.net == "tcp" {
+			listener, err := dns.NewTCPListener(opt.addr)
+			if err != nil {
+				return fmt.Errorf("error creating tcp listener: %w", err)
+			}
 
-		err := ctrl.writeDNSStatus(ctx, r, opt.Net)
+			opt.srvOpts.Listener = listener
+		} else if opt.net == "udp" {
+			packetConn, err := dns.NewUDPPacketConn(opt.addr)
+			if err != nil {
+				return fmt.Errorf("error creating udp packet conn: %w", err)
+			}
+
+			opt.srvOpts.PacketConn = packetConn
+		}
+
+		runner := dns.NewRunner(dns.NewServer(opt.srvOpts), l)
+
+		err := ctrl.writeDNSStatus(ctx, r, opt.net)
 		if err != nil {
 			return err
 		}

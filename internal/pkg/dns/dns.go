@@ -8,10 +8,13 @@ package dns
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
+	"net"
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
@@ -20,13 +23,14 @@ import (
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/utils"
 )
 
 // NewRunner creates a new Runner.
 func NewRunner(srv Server, logger *zap.Logger) *Runner {
-	r := utils.NewRunner(srv.ListenAndServe, srv.Shutdown, func(err error) bool {
+	r := utils.NewRunner(srv.ActivateAndServe, srv.Shutdown, func(err error) bool {
 		// There a possible scenario where `Run` reached `ListenAndServe` and then yielded CPU time to another
 		// goroutine and then `Stop` reached `Shutdown`. In that case `ListenAndServe` will actually start after
 		// `Shutdown` and `Stop` method will forever block if we do not try again.
@@ -44,7 +48,7 @@ type Runner struct {
 
 // Server is a dns server.
 type Server interface {
-	ListenAndServe() error
+	ActivateAndServe() error
 	Shutdown() error
 }
 
@@ -200,8 +204,8 @@ func (h *Handler) Stop() { h.SetProxy(nil) }
 
 // ServerOptins is a Server options.
 type ServerOptins struct {
-	Addr          string
-	Net           string
+	Listener      net.Listener
+	PacketConn    net.PacketConn
 	Handler       dns.Handler
 	ReadTimeout   time.Duration
 	WriteTimeout  time.Duration
@@ -212,8 +216,8 @@ type ServerOptins struct {
 // NewServer creates a new Server.
 func NewServer(opts ServerOptins) Server {
 	return &server{&dns.Server{
-		Addr:          opts.Addr,
-		Net:           opts.Net,
+		Listener:      opts.Listener,
+		PacketConn:    opts.PacketConn,
 		Handler:       opts.Handler,
 		ReadTimeout:   opts.ReadTimeout,
 		WriteTimeout:  opts.WriteTimeout,
@@ -223,3 +227,72 @@ func NewServer(opts ServerOptins) Server {
 }
 
 type server struct{ *dns.Server }
+
+// NewTCPListener creates a new TCP listener.
+func NewTCPListener(addr string) (net.Listener, error) {
+	lc := net.ListenConfig{
+		Control: makeControl(tcpOptions),
+	}
+
+	return lc.Listen(context.Background(), "tcp", addr)
+}
+
+// NewUDPPacketConn creates a new UDP packet connection.
+func NewUDPPacketConn(addr string) (net.PacketConn, error) {
+	lc := net.ListenConfig{
+		Control: makeControl(udpOptions),
+	}
+
+	return lc.ListenPacket(context.Background(), "udp", addr)
+}
+
+var (
+	tcpOptions = []controlOptions{
+		// this isn't really necessary, because currently if the process dies, OS dies with it
+		{unix.SOL_SOCKET, unix.SO_REUSEADDR, 1, "failed to set SO_REUSEADDR"},
+		{unix.IPPROTO_IP, unix.IP_RECVTTL, 1, "failed to set IP_RECVTTL"},
+		{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
+		{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
+		{unix.IPPROTO_IP, unix.IP_TTL, 1, "failed to set IP_TTL"},
+	}
+
+	udpOptions = []controlOptions{
+		// this isn't really necessary, because currently if the process dies, OS dies with it
+		{unix.SOL_SOCKET, unix.SO_REUSEADDR, 1, "failed to set SO_REUSEADDR"},
+		{unix.IPPROTO_IP, unix.IP_RECVTTL, 1, "failed to set IP_RECVTTL"},
+		{unix.IPPROTO_IP, unix.IP_TTL, 1, "failed to set IP_TTL"},
+	}
+)
+
+type controlOptions struct {
+	level        int
+	opt          int
+	val          int
+	errorMessage string
+}
+
+func makeControl(opts []controlOptions) func(string, string, syscall.RawConn) error {
+	return func(_ string, _ string, c syscall.RawConn) error {
+		var resErr error
+
+		err := c.Control(func(fd uintptr) {
+			for _, opt := range opts {
+				opErr := unix.SetsockoptInt(int(fd), opt.level, opt.opt, opt.val)
+				if opErr != nil {
+					resErr = fmt.Errorf(opt.errorMessage+": %w", opErr)
+
+					return
+				}
+			}
+		})
+		if err != nil {
+			return fmt.Errorf("failed in control call: %w", err)
+		}
+
+		if resErr != nil {
+			return fmt.Errorf("failed to set socket options: %w", resErr)
+		}
+
+		return nil
+	}
+}
