@@ -190,6 +190,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.DeviceConfigController{},
 		&network.DNSResolveCacheController{
 			Addr:   "127.0.0.1:53",
+			AddrV6: "[::1]:53",
 			Logger: dnsCacheLogger,
 		},
 		&network.DNSUpstreamController{},
