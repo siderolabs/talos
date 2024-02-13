@@ -141,6 +141,7 @@ func PrefixMountTargets(mountpoints *Points, targetPrefix string) error {
 	return iter.Err()
 }
 
+//nolint:gocyclo
 func mountRetry(f RetryFunc, p *Point, isUnmount bool) (err error) {
 	err = retry.Constant(5*time.Second, retry.WithUnits(50*time.Millisecond)).Retry(func() error {
 		if err = f(p); err != nil {
@@ -160,6 +161,14 @@ func mountRetry(f RetryFunc, p *Point, isUnmount bool) (err error) {
 				isMounted, checkErr := p.IsMounted()
 				if checkErr != nil {
 					return retry.ExpectedError(checkErr)
+				}
+
+				if !isMounted && !isUnmount {
+					if errRepair := p.Repair(); errRepair != nil {
+						return fmt.Errorf("error repairing: %w", errRepair)
+					}
+
+					return retry.ExpectedError(err)
 				}
 
 				if !isMounted && isUnmount { // if partition is already unmounted, ignore EINVAL
