@@ -25,7 +25,7 @@ const EventSinkKind = "EventSinkConfig"
 func init() {
 	registry.Register(EventSinkKind, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case "v1alpha1": //nolint:goconst
 			return &EventSinkV1Alpha1{}
 		default:
 			return nil
@@ -90,6 +90,11 @@ func (s *EventSinkV1Alpha1) EventsEndpoint() *string {
 
 // KmsgLogURLs implements config.RuntimeConfig interface.
 func (s *EventSinkV1Alpha1) KmsgLogURLs() []*url.URL {
+	return nil
+}
+
+// WatchdogTimer implements config.RuntimeConfig interface.
+func (s *EventSinkV1Alpha1) WatchdogTimer() config.WatchdogTimerConfig {
 	return nil
 }
 

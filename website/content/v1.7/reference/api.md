@@ -231,6 +231,8 @@ description: Talos gRPC API reference.
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
+    - [WatchdogTimerConfigSpec](#talos.resource.definitions.runtime.WatchdogTimerConfigSpec)
+    - [WatchdogTimerStatusSpec](#talos.resource.definitions.runtime.WatchdogTimerStatusSpec)
   
 - [resource/definitions/secrets/secrets.proto](#resource/definitions/secrets/secrets.proto)
     - [APICertsSpec](#talos.resource.definitions.secrets.APICertsSpec)
@@ -4197,6 +4199,39 @@ UnmetCondition is a failure which prevents machine from being ready at the stage
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | reason | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.WatchdogTimerConfigSpec"></a>
+
+### WatchdogTimerConfigSpec
+WatchdogTimerConfigSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  |  |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.WatchdogTimerStatusSpec"></a>
+
+### WatchdogTimerStatusSpec
+WatchdogTimerStatusSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  |  |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| feed_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 

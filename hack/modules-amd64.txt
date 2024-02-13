@@ -11,6 +11,7 @@ kernel/drivers/ata/pata_marvell.ko
 kernel/drivers/ata/pata_oldpiix.ko
 kernel/drivers/ata/pata_sch.ko
 kernel/drivers/block/nbd.ko
+kernel/drivers/char/ipmi/ipmi_watchdog.ko
 kernel/drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 kernel/drivers/gpu/drm/amd/amdxcp/amdxcp.ko
 kernel/drivers/gpu/drm/display/drm_display_helper.ko
@@ -62,6 +63,8 @@ kernel/drivers/message/fusion/mptbase.ko
 kernel/drivers/message/fusion/mptsas.ko
 kernel/drivers/message/fusion/mptscsih.ko
 kernel/drivers/message/fusion/mptspi.ko
+kernel/drivers/mfd/lpc_ich.ko
+kernel/drivers/mfd/mfd-core.ko
 kernel/drivers/misc/hpilo.ko
 kernel/drivers/mmc/host/sdhci_f_sdh30.ko
 kernel/drivers/mmc/host/sdhci-acpi.ko
@@ -134,6 +137,13 @@ kernel/drivers/virtio/virtio_mmio.ko
 kernel/drivers/virtio/virtio_pci_legacy_dev.ko
 kernel/drivers/virtio/virtio_pci_modern_dev.ko
 kernel/drivers/virtio/virtio_pci.ko
+kernel/drivers/watchdog/i6300esb.ko
+kernel/drivers/watchdog/iTCO_vendor_support.ko
+kernel/drivers/watchdog/iTCO_wdt.ko
+kernel/drivers/watchdog/sp5100_tco.ko
+kernel/drivers/watchdog/watchdog.ko
+kernel/drivers/watchdog/wdat_wdt.ko
+kernel/drivers/watchdog/xen_wdt.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko

@@ -326,6 +326,10 @@ func launchVM(config *LaunchConfig) error {
 		"virtio-serial",
 		"-device",
 		"virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
+		"-device",
+		"i6300esb,id=watchdog0",
+		"-watchdog-action",
+		"pause",
 	}
 
 	for i, disk := range config.DiskPaths {

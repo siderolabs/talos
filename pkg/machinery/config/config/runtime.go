@@ -4,12 +4,22 @@
 
 package config
 
-import "net/url"
+import (
+	"net/url"
+	"time"
+)
 
 // RuntimeConfig defines the interface to access Talos runtime configuration.
 type RuntimeConfig interface {
 	EventsEndpoint() *string
 	KmsgLogURLs() []*url.URL
+	WatchdogTimer() WatchdogTimerConfig
+}
+
+// WatchdogTimerConfig defines the interface to access Talos watchdog timer configuration.
+type WatchdogTimerConfig interface {
+	Device() string
+	Timeout() time.Duration
 }
 
 // WrapRuntimeConfigList wraps a list of RuntimeConfig into a single RuntimeConfig aggregating the results.
@@ -28,5 +38,11 @@ func (w runtimeConfigWrapper) EventsEndpoint() *string {
 func (w runtimeConfigWrapper) KmsgLogURLs() []*url.URL {
 	return aggregateValues(w, func(c RuntimeConfig) []*url.URL {
 		return c.KmsgLogURLs()
+	})
+}
+
+func (w runtimeConfigWrapper) WatchdogTimer() WatchdogTimerConfig {
+	return findFirstValue(w, func(c RuntimeConfig) WatchdogTimerConfig {
+		return c.WatchdogTimer()
 	})
 }

@@ -163,6 +163,22 @@ machine:
 Talos Linux now supports rotating the root CA certificate and key for Talos API and Kubernetes API.
 """
 
+    [notes.watchdog]
+        title = "Hardware Watchdog Timers"
+        description = """\
+Talos Linux now supports hardware watchdog timers configuration.
+If enabled, and the machine becomes unresponsive, the hardware watchdog will reset the machine.
+
+The watchdog can be enabled with the following configuration document:
+
+```yaml
+apiVersion: v1alpha1
+kind: WatchdogTimerConfig
+device: /dev/watchdog0
+timeout: 3m0s
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

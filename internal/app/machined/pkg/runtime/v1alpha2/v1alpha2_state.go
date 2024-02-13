@@ -194,6 +194,8 @@ func NewState() (*State, error) {
 		&runtime.PlatformMetadata{},
 		&runtime.SecurityState{},
 		&runtime.UniqueMachineToken{},
+		&runtime.WatchdogTimerConfig{},
+		&runtime.WatchdogTimerStatus{},
 		&secrets.API{},
 		&secrets.CertSAN{},
 		&secrets.Etcd{},

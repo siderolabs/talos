@@ -5,6 +5,7 @@ package talos.resource.definitions.runtime;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/runtime";
 
 import "common/common.proto";
+import "google/protobuf/duration.proto";
 import "resource/definitions/enums/enums.proto";
 
 // DevicesStatusSpec is the spec for devices status.
@@ -124,5 +125,18 @@ message UniqueMachineTokenSpec {
 message UnmetCondition {
   string name = 1;
   string reason = 2;
+}
+
+// WatchdogTimerConfigSpec describes configuration of watchdog timer.
+message WatchdogTimerConfigSpec {
+  string device = 1;
+  google.protobuf.Duration timeout = 2;
+}
+
+// WatchdogTimerStatusSpec describes configuration of watchdog timer.
+message WatchdogTimerStatusSpec {
+  string device = 1;
+  google.protobuf.Duration timeout = 2;
+  google.protobuf.Duration feed_interval = 3;
 }
 

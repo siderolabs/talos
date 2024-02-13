@@ -108,6 +108,11 @@ func (s *KmsgLogV1Alpha1) KmsgLogURLs() []*url.URL {
 	return []*url.URL{s.KmsgLogURL.URL}
 }
 
+// WatchdogTimer implements config.RuntimeConfig interface.
+func (s *KmsgLogV1Alpha1) WatchdogTimer() config.WatchdogTimerConfig {
+	return nil
+}
+
 // Validate implements config.Validator interface.
 func (s *KmsgLogV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	if s.MetaName == "" {

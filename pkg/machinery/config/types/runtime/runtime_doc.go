@@ -64,6 +64,37 @@ func (EventSinkV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "WatchdogTimerConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "WatchdogTimerConfig is a watchdog timer config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "WatchdogTimerConfig is a watchdog timer config document.",
+		Fields: []encoder.Doc{
+			{},
+			{
+				Name:        "device",
+				Type:        "string",
+				Note:        "",
+				Description: "Path to the watchdog device.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Path to the watchdog device." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "timeout",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Timeout for the watchdog.\n\nIf Talos is unresponsive for this duration, the watchdog will reset the system.\n\nDefault value is 1 minute, minimum value is 10 seconds.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Timeout for the watchdog." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleWatchdogTimerV1Alpha1())
+
+	doc.Fields[1].AddExample("", "/dev/watchdog0")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file runtime_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -72,6 +103,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			KmsgLogV1Alpha1{}.Doc(),
 			EventSinkV1Alpha1{}.Doc(),
+			WatchdogTimerV1Alpha1{}.Doc(),
 		},
 	}
 }
