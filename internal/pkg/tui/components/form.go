@@ -5,6 +5,7 @@
 package components
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -114,7 +115,7 @@ func (item *Item) createFormItems() ([]tview.Primitive, error) {
 				numColumns := len(tableHeaders)
 
 				if len(data)%numColumns != 0 {
-					return nil, fmt.Errorf("incorrect amount of data provided for the table")
+					return nil, errors.New("incorrect amount of data provided for the table")
 				}
 
 				selected := -1
@@ -139,7 +140,7 @@ func (item *Item) createFormItems() ([]tview.Primitive, error) {
 				dropdown := tview.NewDropDown()
 
 				if len(item.options)%2 != 0 {
-					return nil, fmt.Errorf("wrong amount of arguments for options: should be even amount of key, value pairs")
+					return nil, errors.New("wrong amount of arguments for options: should be even amount of key, value pairs")
 				}
 
 				for i := 0; i < len(item.options); i += 2 {

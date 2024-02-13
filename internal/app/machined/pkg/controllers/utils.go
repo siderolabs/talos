@@ -6,6 +6,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -53,7 +54,7 @@ func LoadOrNewFromFile(path string, empty interface{}, generate func(interface{}
 	}
 
 	if reflect.ValueOf(empty).Elem().IsZero() {
-		return fmt.Errorf("value is still zero after unmarshaling")
+		return errors.New("value is still zero after unmarshaling")
 	}
 
 	return f.Close()

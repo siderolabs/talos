@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -58,7 +59,7 @@ func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runt
 
 		rawAffiliates, err := safe.ReaderList[*cluster.Affiliate](ctx, r, resource.NewMetadata(cluster.RawNamespaceName, cluster.AffiliateType, "", resource.VersionUndefined))
 		if err != nil {
-			return fmt.Errorf("error listing affiliates")
+			return errors.New("error listing affiliates")
 		}
 
 		mergedAffiliates := make(map[resource.ID]*cluster.AffiliateSpec, rawAffiliates.Len())

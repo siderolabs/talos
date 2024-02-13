@@ -5,6 +5,7 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -68,7 +69,7 @@ func (s *State) Info() provision.ClusterInfo {
 // StatePath get state config file path.
 func (s *State) StatePath() (string, error) {
 	if s.statePath == "" {
-		return "", fmt.Errorf("state path is not set")
+		return "", errors.New("state path is not set")
 	}
 
 	return s.statePath, nil

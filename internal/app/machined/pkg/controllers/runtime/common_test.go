@@ -6,7 +6,7 @@ package runtime_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log"
 	"sync"
 	"time"
@@ -75,7 +75,7 @@ func (suite *RuntimeSuite) assertResource(md resource.Metadata, compare func(res
 		}
 
 		if !compare(r) {
-			return fmt.Errorf("resource is not equal to the expected one")
+			return errors.New("resource is not equal to the expected one")
 		}
 
 		return nil

@@ -5,6 +5,7 @@
 package extensions
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -43,11 +44,11 @@ func Load(path string) (*Extension, error) {
 	var zeroManifest extensions.Manifest
 
 	if extension.Manifest == zeroManifest {
-		return nil, fmt.Errorf("extension manifest is missing")
+		return nil, errors.New("extension manifest is missing")
 	}
 
 	if extension.rootfsPath == "" {
-		return nil, fmt.Errorf("extension rootfs is missing")
+		return nil, errors.New("extension rootfs is missing")
 	}
 
 	return extension, nil

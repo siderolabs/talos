@@ -7,6 +7,7 @@ package installer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -372,7 +373,7 @@ func (installer *Installer) apply(conn *Connection) error {
 		)
 
 		if conn.dryRun {
-			err = fmt.Errorf("skipped in dry run")
+			err = errors.New("skipped in dry run")
 		}
 
 		s.Stop(err == nil)

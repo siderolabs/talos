@@ -6,7 +6,7 @@ package network_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log"
 	"net/netip"
 	"sync"
@@ -103,7 +103,7 @@ func (suite *AddressEventsSuite) TestReconcile() {
 				defer suite.events.messagesMu.Unlock()
 
 				if len(suite.events.messages) == 0 {
-					return retry.ExpectedError(fmt.Errorf("no events created"))
+					return retry.ExpectedErrorf("no events created")
 				}
 
 				m := suite.events.messages[len(suite.events.messages)-1]
@@ -112,11 +112,11 @@ func (suite *AddressEventsSuite) TestReconcile() {
 
 				event, ok = m.(*machine.AddressEvent)
 				if !ok {
-					return fmt.Errorf("not an endpoint event")
+					return errors.New("not an endpoint event")
 				}
 
 				if event.Hostname == "" {
-					return retry.ExpectedError(fmt.Errorf("expected hostname to be set"))
+					return retry.ExpectedErrorf("expected hostname to be set")
 				}
 
 				return nil
@@ -154,7 +154,7 @@ func (suite *AddressEventsSuite) TestReconcile() {
 				defer suite.events.messagesMu.Unlock()
 
 				if len(suite.events.messages) == 0 {
-					return retry.ExpectedError(fmt.Errorf("no events created"))
+					return retry.ExpectedErrorf("no events created")
 				}
 
 				m := suite.events.messages[len(suite.events.messages)-1]
@@ -163,11 +163,11 @@ func (suite *AddressEventsSuite) TestReconcile() {
 
 				event, ok = m.(*machine.AddressEvent)
 				if !ok {
-					return fmt.Errorf("not an address event")
+					return errors.New("not an address event")
 				}
 
 				if len(event.Addresses) == 0 {
-					return retry.ExpectedError(fmt.Errorf("expected addresses to be set"))
+					return retry.ExpectedErrorf("expected addresses to be set")
 				}
 
 				return nil

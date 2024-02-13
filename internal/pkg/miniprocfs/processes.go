@@ -6,7 +6,7 @@ package miniprocfs
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"os"
 	"strconv"
@@ -124,7 +124,7 @@ func (procs *Processes) readProc(pidString string) (*machine.ProcessInfo, error)
 
 	rbracket := bytes.LastIndexByte(procs.buf, ')')
 	if rbracket == -1 {
-		return nil, fmt.Errorf("unexpected format")
+		return nil, errors.New("unexpected format")
 	}
 
 	fields := bytes.Fields(procs.buf[rbracket+2:])

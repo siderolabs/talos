@@ -6,6 +6,7 @@
 package profile
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -62,18 +63,18 @@ func (p *Profile) Validate() error {
 	}
 
 	if p.Platform == "" {
-		return fmt.Errorf("platform is required")
+		return errors.New("platform is required")
 	}
 
 	if p.Board != "" {
 		if !(p.Arch == arm64 && p.Platform == "metal") {
-			return fmt.Errorf("board is only supported for metal arm64")
+			return errors.New("board is only supported for metal arm64")
 		}
 	}
 
 	switch p.Output.Kind {
 	case OutKindUnknown:
-		return fmt.Errorf("unknown output kind")
+		return errors.New("unknown output kind")
 	case OutKindISO:
 		// ISO supports all kinds of customization
 	case OutKindCmdline:
@@ -81,7 +82,7 @@ func (p *Profile) Validate() error {
 	case OutKindImage:
 		// Image supports all kinds of customization
 		if p.Output.ImageOptions.DiskSize == 0 {
-			return fmt.Errorf("disk size is required for image output")
+			return errors.New("disk size is required for image output")
 		}
 	case OutKindInstaller:
 		if !p.SecureBootEnabled() && len(p.Customization.ExtraKernelArgs) > 0 {

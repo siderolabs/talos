@@ -6,6 +6,7 @@ package vm
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,7 +27,7 @@ func ReadConfig(config interface{}) error {
 	}
 
 	if d.More() {
-		return fmt.Errorf("extra unexpected input on stdin")
+		return errors.New("extra unexpected input on stdin")
 	}
 
 	return os.Stdin.Close()

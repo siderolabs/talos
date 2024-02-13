@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/netip"
 	"sync"
@@ -95,7 +94,7 @@ func (suite *RouteMergeSuite) assertRoutes(requiredIDs []string, check func(*net
 	}
 
 	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
+		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
 	}
 
 	return nil
@@ -112,7 +111,7 @@ func (suite *RouteMergeSuite) assertNoRoute(id string) error {
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("address %q is still there", id))
+			return retry.ExpectedErrorf("address %q is still there", id)
 		}
 	}
 
@@ -201,7 +200,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 						case "inet4/10.5.0.3//50":
 							if *cmdline.TypedSpec() != *r.TypedSpec() {
 								// using retry here, as it might not be reconciled immediately
-								return retry.ExpectedError(fmt.Errorf("not equal yet"))
+								return retry.ExpectedErrorf("not equal yet")
 							}
 						case "inet4/10.0.0.34/10.0.0.35/32/1024":
 							suite.Assert().Equal(*static.TypedSpec(), *r.TypedSpec())
@@ -336,7 +335,7 @@ func (suite *RouteMergeSuite) TestMergeFlapping() {
 
 						if *dhcp.TypedSpec() != *r.TypedSpec() {
 							// using retry here, as it might not be reconciled immediately
-							return retry.ExpectedError(fmt.Errorf("not equal yet"))
+							return retry.ExpectedErrorf("not equal yet")
 						}
 
 						return nil

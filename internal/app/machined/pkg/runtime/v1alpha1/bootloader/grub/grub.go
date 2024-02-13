@@ -6,6 +6,7 @@
 package grub
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -67,7 +68,7 @@ func (c *Config) validate() error {
 	}
 
 	if c.Default == c.Fallback {
-		return fmt.Errorf("default and fallback entries must not be the same")
+		return errors.New("default and fallback entries must not be the same")
 	}
 
 	return nil

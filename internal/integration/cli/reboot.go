@@ -8,6 +8,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -102,7 +103,7 @@ func (suite *RebootSuite) TestRebootEarlyFailPrintsOutput() {
 			}
 
 			if !strings.Contains(stdout, "failed to determine endpoints") {
-				return fmt.Errorf("expected to find 'failed to determine endpoints' in stderr")
+				return errors.New("expected to find 'failed to determine endpoints' in stderr")
 			}
 
 			return nil

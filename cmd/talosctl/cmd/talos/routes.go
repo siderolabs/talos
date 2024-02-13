@@ -6,7 +6,7 @@ package talos
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 
@@ -23,7 +23,7 @@ var routesCmd = &cobra.Command{
 	Hidden:  true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			return fmt.Errorf("`talosctl routes` is deprecated, please use `talosctl get routes` instead")
+			return errors.New("`talosctl routes` is deprecated, please use `talosctl get routes` instead")
 		})
 	},
 }

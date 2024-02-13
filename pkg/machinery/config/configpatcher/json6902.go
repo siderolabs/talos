@@ -6,6 +6,7 @@ package configpatcher
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 
@@ -23,7 +24,7 @@ func JSON6902(talosMachineConfig []byte, patch jsonpatch.Patch) ([]byte, error) 
 	}
 
 	if numDocuments != 1 {
-		return nil, fmt.Errorf("JSON6902 patches are not supported for multi-document machine configuration")
+		return nil, errors.New("JSON6902 patches are not supported for multi-document machine configuration")
 	}
 
 	// apply JSON patch
@@ -63,7 +64,7 @@ func countYAMLDocuments(talosMachineConfig []byte) (int, error) {
 		}
 
 		if docs.Kind != yaml.DocumentNode {
-			return 0, fmt.Errorf("talos machine config is not a yaml document")
+			return 0, errors.New("talos machine config is not a yaml document")
 		}
 
 		numDocuments++

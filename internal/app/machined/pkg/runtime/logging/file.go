@@ -6,6 +6,7 @@ package logging
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -52,7 +53,7 @@ type fileLogHandler struct {
 
 func (handler *fileLogHandler) buildPath() error {
 	if strings.ContainsAny(handler.id, string(os.PathSeparator)+".") {
-		return fmt.Errorf("service ID is invalid")
+		return errors.New("service ID is invalid")
 	}
 
 	handler.path = filepath.Join(handler.logDirectory, handler.id+".log")

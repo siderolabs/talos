@@ -6,7 +6,7 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sync"
 	"time"
 
@@ -85,7 +85,7 @@ func (lock *PriorityLock[T]) Lock(ctx context.Context, takeOverTimeout time.Dura
 	select {
 	case lock.takeoverCh <- struct{}{}:
 	case <-takeOverTimer.C:
-		return nil, fmt.Errorf("failed to acquire lock: timeout")
+		return nil, errors.New("failed to acquire lock: timeout")
 	}
 
 	defer func() {
@@ -109,7 +109,7 @@ func (lock *PriorityLock[T]) Lock(ctx context.Context, takeOverTimeout time.Dura
 
 		return seqCtx, nil
 	case <-takeOverTimer.C:
-		return nil, fmt.Errorf("failed to acquire lock: timeout")
+		return nil, errors.New("failed to acquire lock: timeout")
 	}
 }
 

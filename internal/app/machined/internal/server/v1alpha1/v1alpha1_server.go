@@ -305,7 +305,7 @@ Config diff:
 // GenerateConfiguration implements the machine.MachineServer interface.
 func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (reply *machine.GenerateConfigurationResponse, err error) {
 	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
-		return nil, fmt.Errorf("config can't be generated on worker nodes")
+		return nil, errors.New("config can't be generated on worker nodes")
 	}
 
 	return configuration.Generate(ctx, in)
@@ -572,7 +572,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 
 	if len(in.GetUserDisksToWipe()) > 0 {
 		if in.Mode == machine.ResetRequest_SYSTEM_DISK {
-			return nil, fmt.Errorf("reset failed: invalid input, wipe mode SYSTEM_DISK doesn't support UserDisksToWipe parameter")
+			return nil, errors.New("reset failed: invalid input, wipe mode SYSTEM_DISK doesn't support UserDisksToWipe parameter")
 		}
 
 		var diskList []*bddisk.Disk
@@ -607,7 +607,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 
 	if len(in.GetSystemPartitionsToWipe()) > 0 {
 		if in.Mode == machine.ResetRequest_USER_DISKS {
-			return nil, fmt.Errorf("reset failed: invalid input, wipe mode USER_DISKS doesn't support SystemPartitionsToWipe parameter")
+			return nil, errors.New("reset failed: invalid input, wipe mode USER_DISKS doesn't support SystemPartitionsToWipe parameter")
 		}
 
 		bd := s.Controller.Runtime().State().Machine().Disk().BlockDevice
@@ -1294,7 +1294,7 @@ func (s *Server) Read(in *machine.ReadRequest, srv machine.MachineService_ReadSe
 
 		return nil
 	default:
-		return fmt.Errorf("path must be a regular file")
+		return errors.New("path must be a regular file")
 	}
 }
 

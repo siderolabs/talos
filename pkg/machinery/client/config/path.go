@@ -5,7 +5,7 @@
 package config
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -84,7 +84,7 @@ func firstValidPath() (Path, error) {
 	}
 
 	if firstWriteAllowed.Path == "" {
-		return Path{}, fmt.Errorf("no valid config paths found")
+		return Path{}, errors.New("no valid config paths found")
 	}
 
 	err = ensure(firstWriteAllowed.Path)

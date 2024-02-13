@@ -7,7 +7,7 @@ package uki
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
+	"errors"
 	"os"
 	"strings"
 )
@@ -34,18 +34,18 @@ func DiscoverKernelVersion(kernelPath string) (string, error) {
 
 	// check header magic
 	if string(header[0x202:0x206]) != "HdrS" {
-		return "", fmt.Errorf("invalid kernel image")
+		return "", errors.New("invalid kernel image")
 	}
 
 	setupSects := header[0x1f1]
 	versionOffset := binary.LittleEndian.Uint16(header[0x20e:0x210])
 
 	if versionOffset == 0 {
-		return "", fmt.Errorf("no kernel version")
+		return "", errors.New("no kernel version")
 	}
 
 	if versionOffset > uint16(setupSects)*0x200 {
-		return "", fmt.Errorf("invalid kernel version offset")
+		return "", errors.New("invalid kernel version offset")
 	}
 
 	versionOffset += 0x200
@@ -59,7 +59,7 @@ func DiscoverKernelVersion(kernelPath string) (string, error) {
 
 	idx := bytes.IndexByte(version, 0)
 	if idx == -1 {
-		return "", fmt.Errorf("invalid kernel version")
+		return "", errors.New("invalid kernel version")
 	}
 
 	versionString := string(version[:idx])

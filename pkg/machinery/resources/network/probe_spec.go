@@ -5,6 +5,7 @@
 package network
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -41,7 +42,7 @@ func (spec *ProbeSpecSpec) ID() (resource.ID, error) {
 	var zeroTCP TCPProbeSpec
 
 	if spec.TCP == zeroTCP {
-		return "", fmt.Errorf("no probe type specified")
+		return "", errors.New("no probe type specified")
 	}
 
 	return fmt.Sprintf("tcp:%s", spec.TCP.Endpoint), nil

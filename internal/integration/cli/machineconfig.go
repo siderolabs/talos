@@ -8,6 +8,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -107,11 +108,11 @@ func (suite *MachineConfigSuite) TestPatchPrintStdout() {
 		var matchErr *multierror.Error
 
 		if !strings.Contains(output, "clusterName: replaced") {
-			matchErr = multierror.Append(matchErr, fmt.Errorf("clusterName not replaced"))
+			matchErr = multierror.Append(matchErr, errors.New("clusterName not replaced"))
 		}
 
 		if !strings.Contains(output, "endpoint: replaced") {
-			matchErr = multierror.Append(matchErr, fmt.Errorf("endpoint not replaced"))
+			matchErr = multierror.Append(matchErr, errors.New("endpoint not replaced"))
 		}
 
 		return matchErr.ErrorOrNil()

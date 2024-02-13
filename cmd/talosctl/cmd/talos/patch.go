@@ -7,6 +7,7 @@ package talos
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -99,7 +100,7 @@ var patchCmd = &cobra.Command{
 			}
 
 			if len(patchCmdFlags.patch) == 0 {
-				return fmt.Errorf("either --patch or --patch-file should be defined")
+				return errors.New("either --patch or --patch-file should be defined")
 			}
 
 			patches, err := configpatcher.LoadPatches(patchCmdFlags.patch)

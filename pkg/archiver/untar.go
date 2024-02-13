@@ -7,6 +7,7 @@ package archiver
 import (
 	"archive/tar"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -39,7 +40,7 @@ func Untar(ctx context.Context, r io.Reader, rootPath string) error {
 
 		hdrPath := safepath.CleanPath(hdr.Name)
 		if hdrPath == "" {
-			return fmt.Errorf("empty tar header path")
+			return errors.New("empty tar header path")
 		}
 
 		path := filepath.Join(rootPath, hdrPath)

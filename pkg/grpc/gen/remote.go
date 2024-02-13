@@ -6,6 +6,7 @@ package gen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -29,7 +30,7 @@ type RemoteGenerator struct {
 // NewRemoteGenerator initializes a RemoteGenerator with a preconfigured grpc.ClientConn.
 func NewRemoteGenerator(token string, endpoints []string, ca *x509.PEMEncodedCertificateAndKey) (g *RemoteGenerator, err error) {
 	if len(endpoints) == 0 {
-		return nil, fmt.Errorf("at least one root of trust endpoint is required")
+		return nil, errors.New("at least one root of trust endpoint is required")
 	}
 
 	endpoints = resolver.EnsureEndpointsHavePorts(endpoints, constants.TrustdPort)

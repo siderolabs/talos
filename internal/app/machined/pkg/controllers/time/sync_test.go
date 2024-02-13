@@ -6,7 +6,6 @@ package time_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"reflect"
 	"slices"
@@ -100,7 +99,7 @@ func (suite *SyncSuite) assertTimeStatus(spec timeresource.StatusSpec) error {
 	status := r.(*timeresource.Status) //nolint:errcheck,forcetypeassert
 
 	if *status.TypedSpec() != spec {
-		return retry.ExpectedError(fmt.Errorf("time status doesn't match: %v != %v", *status.TypedSpec(), spec))
+		return retry.ExpectedErrorf("time status doesn't match: %v != %v", *status.TypedSpec(), spec)
 	}
 
 	return nil
@@ -291,7 +290,7 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 				mockSyncer = suite.getMockSyncer()
 
 				if mockSyncer == nil {
-					return retry.ExpectedError(fmt.Errorf("syncer not created yet"))
+					return retry.ExpectedErrorf("syncer not created yet")
 				}
 
 				return nil
@@ -341,7 +340,7 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
 				if !reflect.DeepEqual(mockSyncer.getTimeServers(), []string{"127.0.0.1"}) {
-					return retry.ExpectedError(fmt.Errorf("time servers not updated yet"))
+					return retry.ExpectedErrorf("time servers not updated yet")
 				}
 
 				return nil

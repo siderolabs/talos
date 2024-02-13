@@ -6,6 +6,7 @@ package secrets
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/netip"
 	"net/url"
@@ -55,7 +56,7 @@ func NewRootEtcdController() *RootEtcdController {
 				etcdSecrets.EtcdCA = cfgProvider.Cluster().Etcd().CA()
 
 				if etcdSecrets.EtcdCA == nil {
-					return fmt.Errorf("missing cluster.etcdCA secret")
+					return errors.New("missing cluster.etcdCA secret")
 				}
 
 				return nil
@@ -108,13 +109,13 @@ func NewRootKubernetesController() *RootKubernetesController {
 				k8sSecrets.AggregatorCA = cfgProvider.Cluster().AggregatorCA()
 
 				if k8sSecrets.AggregatorCA == nil {
-					return fmt.Errorf("missing cluster.aggregatorCA secret")
+					return errors.New("missing cluster.aggregatorCA secret")
 				}
 
 				k8sSecrets.CA = cfgProvider.Cluster().CA()
 
 				if k8sSecrets.CA == nil {
-					return fmt.Errorf("missing cluster.CA secret")
+					return errors.New("missing cluster.CA secret")
 				}
 
 				k8sSecrets.ServiceAccount = cfgProvider.Cluster().ServiceAccount()

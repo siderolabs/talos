@@ -208,7 +208,7 @@ func (vip *VIP) campaign(ctx context.Context, notifyCh chan<- struct{}) error {
 
 	hostname, err := os.Hostname() // TODO: this should be etcd nodename
 	if err != nil {
-		return fmt.Errorf("refusing to join election without a hostname")
+		return errors.New("refusing to join election without a hostname")
 	}
 
 	ec, err := etcd.NewLocalClient(ctx)

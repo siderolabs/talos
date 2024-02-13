@@ -8,6 +8,7 @@ package apid
 import (
 	"context"
 	"crypto/x509"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -241,7 +242,7 @@ func apidMain() error {
 
 func verifyExtKeyUsage(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
 	if len(verifiedChains) == 0 {
-		return fmt.Errorf("no verified chains")
+		return errors.New("no verified chains")
 	}
 
 	certs := verifiedChains[0]

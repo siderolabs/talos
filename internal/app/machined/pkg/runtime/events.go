@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -61,7 +62,7 @@ type WatchOptionFunc func(opts *WatchOptions) error
 func WithTailEvents(number int) WatchOptionFunc {
 	return func(opts *WatchOptions) error {
 		if !opts.TailID.IsNil() || opts.TailDuration != 0 {
-			return fmt.Errorf("WithTailEvents can't be specified at the same time with WithTailID or WithTailDuration")
+			return errors.New("WithTailEvents can't be specified at the same time with WithTailID or WithTailDuration")
 		}
 
 		opts.TailEvents = number
@@ -74,7 +75,7 @@ func WithTailEvents(number int) WatchOptionFunc {
 func WithTailID(id xid.ID) WatchOptionFunc {
 	return func(opts *WatchOptions) error {
 		if opts.TailEvents != 0 || opts.TailDuration != 0 {
-			return fmt.Errorf("WithTailID can't be specified at the same time with WithTailEvents or WithTailDuration")
+			return errors.New("WithTailID can't be specified at the same time with WithTailEvents or WithTailDuration")
 		}
 
 		opts.TailID = id
@@ -87,7 +88,7 @@ func WithTailID(id xid.ID) WatchOptionFunc {
 func WithTailDuration(dur time.Duration) WatchOptionFunc {
 	return func(opts *WatchOptions) error {
 		if opts.TailEvents != 0 || !opts.TailID.IsNil() {
-			return fmt.Errorf("WithTailDuration can't be specified at the same time with WithTailEvents or WithTailID")
+			return errors.New("WithTailDuration can't be specified at the same time with WithTailEvents or WithTailID")
 		}
 
 		opts.TailDuration = dur

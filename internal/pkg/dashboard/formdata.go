@@ -5,6 +5,7 @@
 package dashboard
 
 import (
+	"errors"
 	"fmt"
 	"net/netip"
 	"strings"
@@ -122,7 +123,7 @@ func (formData *NetworkConfigFormData) ToPlatformNetworkConfig() (*runtime.Platf
 			}
 
 			if len(config.Addresses) == 0 {
-				errs = multierror.Append(errs, fmt.Errorf("no addresses specified"))
+				errs = multierror.Append(errs, errors.New("no addresses specified"))
 			}
 
 			config.Routes, err = formData.buildRoutes(formData.Iface)

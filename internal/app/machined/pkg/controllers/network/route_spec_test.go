@@ -119,9 +119,9 @@ func (suite *RouteSpecSuite) assertRoute(
 	case matching == 1:
 		return nil
 	case matching == 0:
-		return retry.ExpectedError(fmt.Errorf("route to %s via %s not found", destination, gateway))
+		return retry.ExpectedErrorf("route to %s via %s not found", destination, gateway)
 	default:
-		return retry.ExpectedError(fmt.Errorf("route to %s via %s found %d matches", destination, gateway, matching))
+		return retry.ExpectedErrorf("route to %s via %s found %d matches", destination, gateway, matching)
 	}
 }
 
@@ -138,7 +138,7 @@ func (suite *RouteSpecSuite) assertNoRoute(destination netip.Prefix, gateway net
 		if route.Attributes.Gateway.Equal(gateway.AsSlice()) &&
 			(destination.Bits() == int(route.DstLength) || (destination.Bits() == -1 && route.DstLength == 0)) &&
 			route.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
-			return retry.ExpectedError(fmt.Errorf("route to %s via %s is present", destination, gateway))
+			return retry.ExpectedErrorf("route to %s via %s is present", destination, gateway)
 		}
 	}
 

@@ -7,6 +7,7 @@ package v1alpha1
 import (
 	"crypto/tls"
 	stdx509 "crypto/x509"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -1186,7 +1187,7 @@ func (i *InstallConfig) Disk() (string, error) {
 			return d.DeviceName, nil
 		}
 
-		return "", fmt.Errorf("no disk found matching provided parameters")
+		return "", errors.New("no disk found matching provided parameters")
 	}
 
 	return i.InstallDisk, nil

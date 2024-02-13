@@ -5,6 +5,7 @@
 package watch
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -44,7 +45,7 @@ func NewEthtool(trigger Trigger) (Watcher, error) {
 	}
 
 	if monitorID == 0 {
-		return nil, fmt.Errorf("could not find monitor multicast group ID for ethtool")
+		return nil, errors.New("could not find monitor multicast group ID for ethtool")
 	}
 
 	if err = watcher.conn.JoinGroup(monitorID); err != nil {

@@ -5,7 +5,7 @@
 package provision
 
 import (
-	"fmt"
+	"errors"
 	"net/netip"
 	"time"
 
@@ -96,7 +96,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 
 		if reqs[i].Config.Machine().Type() == machine.TypeInit {
 			if found {
-				err = fmt.Errorf("duplicate init node in requests")
+				err = errors.New("duplicate init node in requests")
 
 				return
 			}
@@ -107,7 +107,7 @@ func (reqs NodeRequests) FindInitNode() (req NodeRequest, err error) {
 	}
 
 	if !found {
-		err = fmt.Errorf("no init node found in requests")
+		err = errors.New("no init node found in requests")
 	}
 
 	return

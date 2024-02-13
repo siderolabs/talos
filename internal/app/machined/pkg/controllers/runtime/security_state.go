@@ -11,6 +11,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -93,7 +94,7 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 			if pcrPublicKeyData, err := os.ReadFile(constants.PCRPublicKey); err == nil {
 				block, _ := pem.Decode(pcrPublicKeyData)
 				if block == nil {
-					return fmt.Errorf("failed to decode PEM block for PCR public key")
+					return errors.New("failed to decode PEM block for PCR public key")
 				}
 
 				cert := x509.Certificate{

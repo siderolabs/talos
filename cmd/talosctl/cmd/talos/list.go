@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -47,7 +48,7 @@ var lsCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if recurse && recursionDepth != 1 {
-			return fmt.Errorf("only one of flags --recurse and --depth can be specified at the same time")
+			return errors.New("only one of flags --recurse and --depth can be specified at the same time")
 		}
 
 		return WithClient(func(ctx context.Context, c *client.Client) error {

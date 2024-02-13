@@ -6,7 +6,7 @@ package uki
 
 import (
 	"debug/pe"
-	"fmt"
+	"errors"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 )
@@ -31,5 +31,5 @@ func GetSBAT(path string) ([]byte, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("could not find SBAT section")
+	return nil, errors.New("could not find SBAT section")
 }

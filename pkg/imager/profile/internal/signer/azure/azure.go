@@ -7,6 +7,7 @@ package azure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -115,7 +116,7 @@ func getAzureCredential(method authenticationMethod) (azureCredential, error) {
 	case unknownAuthenticationMethod:
 		break
 	default:
-		return nil, fmt.Errorf("you should never reach this")
+		return nil, errors.New("you should never reach this")
 	}
 
 	envCreds, err := azidentity.NewEnvironmentCredential(&azidentity.EnvironmentCredentialOptions{ClientOptions: clientOpts})

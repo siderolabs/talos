@@ -45,7 +45,7 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		state := sr.AsProto().State
 		if state != events.StateRunning.String() {
-			return retry.ExpectedError(errors.New("service should be running"))
+			return retry.ExpectedErrorf("service should be running")
 		}
 
 		return nil
@@ -87,7 +87,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		health := sr.AsProto().Health
 		if health.Unknown || !health.Healthy {
-			return retry.ExpectedError(errors.New("service should be healthy"))
+			return retry.ExpectedErrorf("service should be healthy")
 		}
 
 		return nil
@@ -128,7 +128,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		health := sr.AsProto().Health
 		if health.Unknown || !health.Healthy {
-			return retry.ExpectedError(errors.New("service should be healthy"))
+			return retry.ExpectedErrorf("service should be healthy")
 		}
 
 		return nil
@@ -139,7 +139,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		health := sr.AsProto().Health
 		if health.Unknown || health.Healthy {
-			return retry.ExpectedError(errors.New("service should be not healthy"))
+			return retry.ExpectedErrorf("service should be not healthy")
 		}
 
 		return nil
@@ -150,7 +150,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		health := sr.AsProto().Health
 		if health.Unknown || !health.Healthy {
-			return retry.ExpectedError(errors.New("service should be healthy"))
+			return retry.ExpectedErrorf("service should be healthy")
 		}
 
 		return nil
@@ -194,7 +194,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		state := sr.AsProto().State
 		if state != events.StateWaiting.String() {
-			return retry.ExpectedError(errors.New("service should be waiting"))
+			return retry.ExpectedErrorf("service should be waiting")
 		}
 
 		return nil
@@ -213,7 +213,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 
 		lastMsg := events[len(events)-1].Msg
 		if lastMsg != "Waiting for cond2" {
-			return retry.ExpectedError(errors.New("service should be waiting on 2nd condition"))
+			return retry.ExpectedErrorf("service should be waiting on 2nd condition")
 		}
 
 		return nil
@@ -230,7 +230,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		state := sr.AsProto().State
 		if state != events.StateRunning.String() {
-			return retry.ExpectedError(errors.New("service should be running"))
+			return retry.ExpectedErrorf("service should be running")
 		}
 
 		return nil
@@ -309,7 +309,7 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		state := sr.AsProto().State
 		if state != events.StateWaiting.String() {
-			return retry.ExpectedError(errors.New("service should be waiting"))
+			return retry.ExpectedErrorf("service should be waiting")
 		}
 
 		return nil
@@ -392,7 +392,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		state := sr.AsProto().State
 		if state != events.StateRunning.String() {
-			return retry.ExpectedError(errors.New("service should be running"))
+			return retry.ExpectedErrorf("service should be running")
 		}
 
 		return nil
@@ -415,7 +415,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		state := sr.AsProto().State
 		if state != events.StateRunning.String() {
-			return retry.ExpectedError(errors.New("service should be running"))
+			return retry.ExpectedErrorf("service should be running")
 		}
 
 		return nil

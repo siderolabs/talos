@@ -6,6 +6,7 @@ package v1alpha1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -95,17 +96,17 @@ func (r *Runtime) SetConfig(cfg config.Provider) error {
 func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	cfgProv := r.c.Load()
 	if cfgProv == nil {
-		return fmt.Errorf("no current config")
+		return errors.New("no current config")
 	}
 
 	currentConfig := cfgProv.RawV1Alpha1()
 	if currentConfig == nil {
-		return fmt.Errorf("current config is not v1alpha1")
+		return errors.New("current config is not v1alpha1")
 	}
 
 	newConfig := cfg.RawV1Alpha1()
 	if newConfig == nil {
-		return fmt.Errorf("new config is not v1alpha1")
+		return errors.New("new config is not v1alpha1")
 	}
 
 	// copy the config as we're going to modify it

@@ -268,7 +268,7 @@ func (a *nodeTracker) handleEvent(event client.Event) error {
 		})
 
 		if msg.GetTask() == "stopAllServices" {
-			return retry.ExpectedError(fmt.Errorf("stopAllServices task completed"))
+			return retry.ExpectedErrorf("stopAllServices task completed")
 		}
 
 	case *machineapi.SequenceEvent:

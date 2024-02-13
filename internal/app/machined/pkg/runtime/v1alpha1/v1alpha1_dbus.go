@@ -6,7 +6,7 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -75,7 +75,7 @@ func (dbus *DBusState) Stop() error {
 
 	select {
 	case <-time.After(time.Second):
-		return fmt.Errorf("timed out stopping D-Bus broker")
+		return errors.New("timed out stopping D-Bus broker")
 	case err := <-dbus.errCh:
 		return err
 	}

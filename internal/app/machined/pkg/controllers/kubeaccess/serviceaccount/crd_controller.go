@@ -223,7 +223,7 @@ func (t *CRDController) Run(ctx context.Context, workers int) error {
 	t.logger.Debug("waiting for informer caches to sync")
 
 	if ok := cache.WaitForCacheSync(ctx.Done(), t.secretsSynced, t.talosSAsSynced); !ok {
-		return fmt.Errorf("failed to wait for caches to sync")
+		return errors.New("failed to wait for caches to sync")
 	}
 
 	t.logger.Debug("starting workers")
@@ -448,14 +448,14 @@ func (t *CRDController) handleSecret(obj interface{}) {
 	if object, ok = obj.(metav1.Object); !ok {
 		tombstone, tombstoneOK := obj.(cache.DeletedFinalStateUnknown)
 		if !tombstoneOK {
-			utilruntime.HandleError(fmt.Errorf("error decoding object, invalid type"))
+			utilruntime.HandleError(errors.New("error decoding object, invalid type"))
 
 			return
 		}
 
 		object, tombstoneOK = tombstone.Obj.(metav1.Object)
 		if !tombstoneOK {
-			utilruntime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
+			utilruntime.HandleError(errors.New("error decoding object tombstone, invalid type"))
 
 			return
 		}

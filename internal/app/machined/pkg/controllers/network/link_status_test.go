@@ -111,7 +111,7 @@ func (suite *LinkStatusSuite) assertInterfaces(requiredIDs []string, check func(
 	}
 
 	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
+		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
 	}
 
 	return nil
@@ -128,7 +128,7 @@ func (suite *LinkStatusSuite) assertNoInterface(id string) error {
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("interface %q is still there", id))
+			return retry.ExpectedErrorf("interface %q is still there", id)
 		}
 	}
 
@@ -136,7 +136,7 @@ func (suite *LinkStatusSuite) assertNoInterface(id string) error {
 }
 
 func (suite *LinkStatusSuite) TestInterfaceHwInfo() {
-	errNoInterfaces := fmt.Errorf("no suitable interfaces found")
+	errNoInterfaces := errors.New("no suitable interfaces found")
 
 	err := retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 		func() error {
@@ -271,11 +271,9 @@ func (suite *LinkStatusSuite) TestDummyInterface() {
 				return suite.assertInterfaces(
 					[]string{dummyInterface}, func(r *network.LinkStatus) error {
 						if r.TypedSpec().OperationalState != nethelpers.OperStateUp && r.TypedSpec().OperationalState != nethelpers.OperStateUnknown {
-							return retry.ExpectedError(
-								fmt.Errorf(
-									"operational state is not up: %s",
-									r.TypedSpec().OperationalState,
-								),
+							return retry.ExpectedErrorf(
+								"operational state is not up: %s",
+								r.TypedSpec().OperationalState,
 							)
 						}
 

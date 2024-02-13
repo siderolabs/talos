@@ -117,13 +117,13 @@ Node is running in maintenance mode and does not have a config yet.`
 // GenerateConfiguration implements the [machine.MachineServiceServer] interface.
 func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.GenerateConfigurationRequest) (*machine.GenerateConfigurationResponse, error) {
 	if in.MachineConfig == nil {
-		return nil, fmt.Errorf("invalid generate request")
+		return nil, errors.New("invalid generate request")
 	}
 
 	machineType := v1alpha1machine.Type(in.MachineConfig.Type)
 
 	if machineType == v1alpha1machine.TypeWorker {
-		return nil, fmt.Errorf("join config can't be generated in the maintenance mode")
+		return nil, errors.New("join config can't be generated in the maintenance mode")
 	}
 
 	return configuration.Generate(ctx, in)
@@ -215,7 +215,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 	}
 
 	if in.UserDisksToWipe != nil && in.Mode == machine.ResetRequest_SYSTEM_DISK {
-		return nil, fmt.Errorf("reset failed: invalid input, wipe mode SYSTEM_DISK doesn't support UserDisksToWipe parameter")
+		return nil, errors.New("reset failed: invalid input, wipe mode SYSTEM_DISK doesn't support UserDisksToWipe parameter")
 	}
 
 	actorID := uuid.New().String()
@@ -223,7 +223,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 	log.Printf("reset request received. actorID: %s", actorID)
 
 	if len(in.GetSystemPartitionsToWipe()) > 0 {
-		return nil, fmt.Errorf("system partitions to wipe params is not supported in the maintenance mode")
+		return nil, errors.New("system partitions to wipe params is not supported in the maintenance mode")
 	}
 
 	var dev *blockdevice.BlockDevice
@@ -231,7 +231,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 	disk := s.controller.Runtime().State().Machine().Disk(disk.WithPartitionLabel(constants.BootPartitionLabel))
 
 	if disk == nil {
-		return nil, fmt.Errorf("reset failed: Talos is not installed")
+		return nil, errors.New("reset failed: Talos is not installed")
 	}
 
 	dev, err = blockdevice.Open(disk.Device().Name())

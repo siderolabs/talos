@@ -108,7 +108,7 @@ func (k8sSuite *K8sSuite) WaitForK8sNodeReadinessStatus(ctx context.Context, nod
 		}
 
 		if !checkFn(readinessStatus) {
-			return retry.ExpectedError(fmt.Errorf("node readiness status is %s", readinessStatus))
+			return retry.ExpectedErrorf("node readiness status is %s", readinessStatus)
 		}
 
 		return nil

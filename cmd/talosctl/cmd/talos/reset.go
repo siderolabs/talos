@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -91,7 +92,7 @@ var resetCmd = &cobra.Command{
 		resetRequest := buildResetRequest()
 
 		if resetCmdFlags.wait && resetCmdFlags.insecure {
-			return fmt.Errorf("cannot use --wait and --insecure together")
+			return errors.New("cannot use --wait and --insecure together")
 		}
 
 		if !resetCmdFlags.wait {
@@ -176,7 +177,7 @@ func resetGetActorID(ctx context.Context, c *client.Client, req *machineapi.Rese
 	}
 
 	if len(resp.GetMessages()) == 0 {
-		return "", fmt.Errorf("no messages returned from action run")
+		return "", errors.New("no messages returned from action run")
 	}
 
 	return resp.GetMessages()[0].GetActorId(), nil

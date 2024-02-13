@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	stdlibx509 "crypto/x509"
+	"errors"
 	"fmt"
 	"time"
 
@@ -179,7 +180,7 @@ func (ctrl *TrustdController) reconcile(ctx context.Context, r controller.Runtim
 		machineType := machineTypeRes.MachineType()
 
 		if !machineType.IsControlPlane() {
-			return fmt.Errorf("machine type changed")
+			return errors.New("machine type changed")
 		}
 
 		rootResource, err := safe.ReaderGet[*secrets.OSRoot](ctx, r, resource.NewMetadata(secrets.NamespaceName, secrets.OSRootType, secrets.OSRootID, resource.VersionUndefined))

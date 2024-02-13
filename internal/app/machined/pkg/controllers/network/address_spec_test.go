@@ -104,7 +104,7 @@ func (suite *AddressSpecSuite) assertLinkAddress(linkName, address string) error
 		return nil
 	}
 
-	return retry.ExpectedError(fmt.Errorf("address %s not found on %q", addr, linkName))
+	return retry.ExpectedErrorf("address %s not found on %q", addr, linkName)
 }
 
 func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) error {
@@ -123,7 +123,7 @@ func (suite *AddressSpecSuite) assertNoLinkAddress(linkName, address string) err
 
 	for _, linkAddress := range linkAddresses {
 		if linkAddress.Index == uint32(iface.Index) && int(linkAddress.PrefixLength) == addr.Bits() && linkAddress.Attributes.Address.Equal(addr.Addr().AsSlice()) {
-			return retry.ExpectedError(fmt.Errorf("address %s is assigned to %q", addr, linkName))
+			return retry.ExpectedErrorf("address %s is assigned to %q", addr, linkName)
 		}
 	}
 

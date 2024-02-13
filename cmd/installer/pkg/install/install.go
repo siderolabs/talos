@@ -6,6 +6,7 @@ package install
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -321,7 +322,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		}
 
 		if metaPartitionName == "" {
-			return fmt.Errorf("failed to detect META partition")
+			return errors.New("failed to detect META partition")
 		}
 
 		if metaState, err = meta.New(context.Background(), nil, meta.WithPrinter(i.options.Printf), meta.WithFixedPath(metaPartitionName)); err != nil {

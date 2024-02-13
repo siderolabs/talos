@@ -6,6 +6,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -108,7 +109,7 @@ func (ctr *Container) Validate() error {
 	var multiErr *multierror.Error
 
 	if ctr.Entrypoint == "" {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("container endpoint can't be empty"))
+		multiErr = multierror.Append(multiErr, errors.New("container endpoint can't be empty"))
 	}
 
 	return multiErr.ErrorOrNil()
@@ -153,11 +154,11 @@ func (dep *Dependency) Validate() error {
 	}
 
 	if nonZeroDeps == 0 {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("no dependency specified"))
+		multiErr = multierror.Append(multiErr, errors.New("no dependency specified"))
 	}
 
 	if nonZeroDeps > 1 {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("more than a single dependency is set"))
+		multiErr = multierror.Append(multiErr, errors.New("more than a single dependency is set"))
 	}
 
 	return multiErr.ErrorOrNil()

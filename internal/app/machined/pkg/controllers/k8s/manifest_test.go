@@ -82,7 +82,7 @@ func (suite *ManifestSuite) assertManifests(manifests []string) error {
 	ids := xslices.Map(resources.Items, func(r resource.Resource) string { return r.Metadata().ID() })
 
 	if !reflect.DeepEqual(manifests, ids) {
-		return retry.ExpectedError(fmt.Errorf("expected %q, got %q", manifests, ids))
+		return retry.ExpectedErrorf("expected %q, got %q", manifests, ids)
 	}
 
 	return nil

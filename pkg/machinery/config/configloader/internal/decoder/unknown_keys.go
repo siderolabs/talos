@@ -5,6 +5,7 @@
 package decoder
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -111,7 +112,7 @@ func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interf
 			keyNode := spec.Content[i]
 
 			if keyNode.Kind != yaml.ScalarNode {
-				return unknown, fmt.Errorf("unexpected mapping key type")
+				return unknown, errors.New("unexpected mapping key type")
 			}
 
 			key := keyNode.Value

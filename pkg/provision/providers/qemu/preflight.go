@@ -6,6 +6,7 @@ package qemu
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -53,7 +54,7 @@ type preflightCheckContext struct {
 
 func (check *preflightCheckContext) verifyRoot(ctx context.Context) error {
 	if os.Geteuid() != 0 {
-		return fmt.Errorf("error: please run as root user (CNI requirement), we recommend running with `sudo -E`")
+		return errors.New("error: please run as root user (CNI requirement), we recommend running with `sudo -E`")
 	}
 
 	return nil

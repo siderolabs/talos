@@ -85,7 +85,7 @@ func upgradeKubeletOnNode(ctx context.Context, cluster UpgradeProvider, options 
 	}
 
 	if !initialService.TypedSpec().Running || !initialService.TypedSpec().Healthy {
-		return fmt.Errorf("kubelet is not healthy")
+		return errors.New("kubelet is not healthy")
 	}
 
 	// find out current kubelet version, as the machine config might have a missing image field,
@@ -253,12 +253,10 @@ func checkNodeKubeletVersion(ctx context.Context, cluster UpgradeProvider, nodeT
 		nodeFound = true
 
 		if node.Status.NodeInfo.KubeletVersion != version {
-			return retry.ExpectedError(
-				fmt.Errorf(
-					"node version mismatch: got %q, expected %q",
-					node.Status.NodeInfo.KubeletVersion,
-					version,
-				),
+			return retry.ExpectedErrorf(
+				"node version mismatch: got %q, expected %q",
+				node.Status.NodeInfo.KubeletVersion,
+				version,
 			)
 		}
 
@@ -277,14 +275,14 @@ func checkNodeKubeletVersion(ctx context.Context, cluster UpgradeProvider, nodeT
 		}
 
 		if !ready {
-			return retry.ExpectedError(fmt.Errorf("node is not ready"))
+			return retry.ExpectedErrorf("node is not ready")
 		}
 
 		break
 	}
 
 	if !nodeFound {
-		return retry.ExpectedError(fmt.Errorf("node %q not found", nodeToCheck))
+		return retry.ExpectedErrorf("node %q not found", nodeToCheck)
 	}
 
 	return nil

@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -50,7 +51,7 @@ var upgradeCmd = &cobra.Command{
 		}
 
 		if upgradeCmdFlags.wait && upgradeCmdFlags.insecure {
-			return fmt.Errorf("cannot use --wait and --insecure together")
+			return errors.New("cannot use --wait and --insecure together")
 		}
 
 		rebootModeStr := strings.ToUpper(upgradeCmdFlags.rebootMode)
@@ -137,7 +138,7 @@ func upgradeGetActorID(ctx context.Context, c *client.Client, opts []client.Upgr
 	}
 
 	if len(resp.GetMessages()) == 0 {
-		return "", fmt.Errorf("no messages returned from action run")
+		return "", errors.New("no messages returned from action run")
 	}
 
 	return resp.GetMessages()[0].GetActorId(), nil

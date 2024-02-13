@@ -7,6 +7,7 @@ package network
 //docgen:jsonschema
 
 import (
+	"errors"
 	"fmt"
 	"net/netip"
 
@@ -171,11 +172,11 @@ func (s *RuleConfigV1Alpha1) Clone() config.Document {
 // Validate implements config.Validator interface.
 func (s *RuleConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	if s.MetaName == "" {
-		return nil, fmt.Errorf("name is required")
+		return nil, errors.New("name is required")
 	}
 
 	if len(s.PortSelector.Ports) == 0 {
-		return nil, fmt.Errorf("portSelector.ports is required")
+		return nil, errors.New("portSelector.ports is required")
 	}
 
 	if err := s.PortSelector.Ports.Validate(); err != nil {

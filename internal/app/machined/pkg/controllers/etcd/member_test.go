@@ -6,7 +6,6 @@ package etcd_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -72,7 +71,7 @@ func (suite *MemberSuite) assertInexistentEtcdMember(member *etcd.Member) func()
 			return retry.ExpectedError(err)
 		}
 
-		return retry.ExpectedError(fmt.Errorf("should not exist"))
+		return retry.ExpectedErrorf("should not exist")
 	}
 }
 

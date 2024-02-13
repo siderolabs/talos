@@ -42,7 +42,7 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	controlPlaneNodes := s.NodesByType(machine.TypeControlPlane)
 
 	if len(controlPlaneNodes) == 0 {
-		return fmt.Errorf("no control plane nodes to bootstrap")
+		return errors.New("no control plane nodes to bootstrap")
 	}
 
 	sort.Slice(controlPlaneNodes, func(i, j int) bool {

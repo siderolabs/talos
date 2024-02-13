@@ -159,14 +159,14 @@ func (suite *ManagerSuite) TestReconcile() {
 	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
 		_, err := ctest.Get[*network.LinkSpec](suite, linkSpec.Metadata())
 		if err == nil {
-			return retry.ExpectedError(fmt.Errorf("link resource still exists"))
+			return retry.ExpectedErrorf("link resource still exists")
 		}
 
 		suite.Assert().Truef(state.IsNotFoundError(err), "unexpected error: %v", err)
 
 		_, err = ctest.Get[*network.AddressSpec](suite, addressSpec.Metadata())
 		if err == nil {
-			return retry.ExpectedError(fmt.Errorf("address resource still exists"))
+			return retry.ExpectedErrorf("address resource still exists")
 		}
 
 		suite.Assert().Truef(state.IsNotFoundError(err), "unexpected error: %v", err)

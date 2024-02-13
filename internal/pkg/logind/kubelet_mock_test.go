@@ -5,6 +5,7 @@
 package logind_test
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"syscall"
@@ -61,7 +62,7 @@ func (bus *DBusCon) CurrentInhibitDelay() (time.Duration, error) {
 
 	delay, ok := res.Value().(uint64)
 	if !ok {
-		return 0, fmt.Errorf("InhibitDelayMaxUSec from logind is not a uint64 as expected")
+		return 0, errors.New("InhibitDelayMaxUSec from logind is not a uint64 as expected")
 	}
 
 	// InhibitDelayMaxUSec is in microseconds

@@ -9,6 +9,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 
@@ -24,7 +25,7 @@ func ParsePCRSigningPubKey(file string) (*rsa.PublicKey, error) {
 
 	block, _ := pem.Decode(pcrSigningPubKey)
 	if block == nil {
-		return nil, fmt.Errorf("failed to decode pcr signing public key")
+		return nil, errors.New("failed to decode pcr signing public key")
 	}
 
 	// parse rsa public key
@@ -35,7 +36,7 @@ func ParsePCRSigningPubKey(file string) (*rsa.PublicKey, error) {
 
 	tpm2PubKey, ok := tpm2PubKeyAny.(*rsa.PublicKey)
 	if !ok {
-		return nil, fmt.Errorf("failed to cast pcr signing public key to rsa")
+		return nil, errors.New("failed to cast pcr signing public key to rsa")
 	}
 
 	return tpm2PubKey, nil

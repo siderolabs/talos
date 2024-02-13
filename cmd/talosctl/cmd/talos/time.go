@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -66,11 +67,11 @@ var timeCmd = &cobra.Command{
 				}
 
 				if !msg.Localtime.IsValid() {
-					return fmt.Errorf("error parsing local time")
+					return errors.New("error parsing local time")
 				}
 
 				if !msg.Remotetime.IsValid() {
-					return fmt.Errorf("error parsing remote time")
+					return errors.New("error parsing remote time")
 				}
 
 				localtime = msg.Localtime.AsTime()

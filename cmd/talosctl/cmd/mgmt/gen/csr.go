@@ -7,6 +7,7 @@ package gen
 import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -40,7 +41,7 @@ var genCSRCmd = &cobra.Command{
 
 		pemBlock, _ := pem.Decode(keyBytes)
 		if pemBlock == nil {
-			return fmt.Errorf("error decoding PEM")
+			return errors.New("error decoding PEM")
 		}
 
 		keyEC, err := stdlibx509.ParsePKCS8PrivateKey(pemBlock.Bytes)

@@ -7,6 +7,7 @@ package containers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -102,7 +103,7 @@ func (c *Container) GetLogChunker(ctx context.Context, follow bool, tailLines in
 	}
 
 	if filename == "" {
-		return nil, nil, fmt.Errorf("no log available")
+		return nil, nil, errors.New("no log available")
 	}
 
 	f, err := os.OpenFile(filename, os.O_RDONLY, 0)

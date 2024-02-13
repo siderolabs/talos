@@ -221,7 +221,7 @@ func download(req *http.Request, options *downloadOptions) (data []byte, err err
 
 		localTCPAddr, tcperr := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
 		if tcperr != nil {
-			return nil, retry.ExpectedError(fmt.Errorf("resolving source tcp address: %s", tcperr.Error()))
+			return nil, retry.ExpectedErrorf("resolving source tcp address: %s", tcperr.Error())
 		}
 
 		d := (&net.Dialer{
@@ -255,12 +255,12 @@ func download(req *http.Request, options *downloadOptions) (data []byte, err err
 		data, _ = io.ReadAll(io.LimitReader(resp.Body, 32)) //nolint:errcheck // as error already happened, we don't care much about this one
 		data = bytes.ToValidUTF8(data, nil)
 
-		return data, retry.ExpectedError(fmt.Errorf("failed to download config, status code %d, body %q", resp.StatusCode, string(data)))
+		return data, retry.ExpectedErrorf("failed to download config, status code %d, body %q", resp.StatusCode, string(data))
 	}
 
 	data, err = io.ReadAll(resp.Body)
 	if err != nil {
-		return data, retry.ExpectedError(fmt.Errorf("read config: %s", err.Error()))
+		return data, retry.ExpectedErrorf("read config: %s", err.Error())
 	}
 
 	if len(data) == 0 && options.ErrorOnEmptyResponse != nil {

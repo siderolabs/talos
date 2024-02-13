@@ -6,6 +6,7 @@
 package address
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -50,7 +51,7 @@ func IPPrefixFrom(address, netmask string) (netip.Prefix, error) {
 	}
 
 	if ip.Is4() && bits > 32 {
-		return netip.Prefix{}, fmt.Errorf("failed netmask should be the same address family")
+		return netip.Prefix{}, errors.New("failed netmask should be the same address family")
 	}
 
 	return netip.PrefixFrom(ip, bits), nil

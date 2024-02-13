@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	stdlibx509 "crypto/x509"
+	"errors"
 	"fmt"
 	"time"
 
@@ -202,14 +203,14 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		switch machineType {
 		case machine.TypeInit, machine.TypeControlPlane:
 			if !isControlplane {
-				return fmt.Errorf("machine type changed")
+				return errors.New("machine type changed")
 			}
 		case machine.TypeWorker:
 			if isControlplane {
-				return fmt.Errorf("machine type changed")
+				return errors.New("machine type changed")
 			}
 		case machine.TypeUnknown:
-			return fmt.Errorf("machine type changed")
+			return errors.New("machine type changed")
 		default:
 			panic(fmt.Sprintf("unexpected machine type %v", machineType))
 		}

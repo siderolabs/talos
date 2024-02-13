@@ -7,6 +7,7 @@ package keys
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
@@ -15,7 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
-var errNoSystemInfoGetter = fmt.Errorf("the UUID getter is not set")
+var errNoSystemInfoGetter = errors.New("the UUID getter is not set")
 
 // NewHandler key using provided config.
 func NewHandler(cfg config.EncryptionKey, options ...KeyOption) (Handler, error) {
@@ -30,7 +31,7 @@ func NewHandler(cfg config.EncryptionKey, options ...KeyOption) (Handler, error)
 	case cfg.Static() != nil:
 		k := cfg.Static().Key()
 		if k == nil {
-			return nil, fmt.Errorf("static key must have key data defined")
+			return nil, errors.New("static key must have key data defined")
 		}
 
 		return NewStaticKeyHandler(key, k), nil
@@ -50,7 +51,7 @@ func NewHandler(cfg config.EncryptionKey, options ...KeyOption) (Handler, error)
 		return NewTPMKeyHandler(key)
 	}
 
-	return nil, fmt.Errorf("malformed config: no key handler can be created")
+	return nil, errors.New("malformed config: no key handler can be created")
 }
 
 // Handler manages key lifecycle.
@@ -71,4 +72,4 @@ func (k *KeyHandler) Slot() int {
 }
 
 // ErrTokenInvalid is returned by the keys handler if the supplied token is not valid.
-var ErrTokenInvalid = fmt.Errorf("invalid token")
+var ErrTokenInvalid = errors.New("invalid token")

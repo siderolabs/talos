@@ -8,7 +8,7 @@ package siderolink
 //docgen:jsonschema
 
 import (
-	"fmt"
+	"errors"
 	"net/url"
 
 	"github.com/siderolabs/gen/ensure"
@@ -115,21 +115,21 @@ func (s *ConfigV1Alpha1) APIUrl() *url.URL {
 // Validate implements config.Validator interface.
 func (s *ConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	if s.APIUrlConfig.URL == nil {
-		return nil, fmt.Errorf("apiUrl is required")
+		return nil, errors.New("apiUrl is required")
 	}
 
 	switch s.APIUrlConfig.URL.Scheme {
 	case "https":
 	case "grpc":
 	default:
-		return nil, fmt.Errorf("apiUrl scheme must be https:// or grpc://")
+		return nil, errors.New("apiUrl scheme must be https:// or grpc://")
 	}
 
 	switch s.APIUrlConfig.URL.Path {
 	case "/":
 	case "":
 	default:
-		return nil, fmt.Errorf("apiUrl path must be empty")
+		return nil, errors.New("apiUrl path must be empty")
 	}
 
 	return nil, nil

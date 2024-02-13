@@ -7,6 +7,7 @@ package configuration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -32,7 +33,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 	var c config.Provider
 
 	if in.MachineConfig == nil || in.ClusterConfig == nil || in.ClusterConfig.ControlPlane == nil {
-		return nil, fmt.Errorf("invalid generate request")
+		return nil, errors.New("invalid generate request")
 	}
 
 	switch in.ConfigVersion {

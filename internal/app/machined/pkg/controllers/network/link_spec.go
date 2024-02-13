@@ -6,6 +6,7 @@ package network
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -516,7 +517,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 					return nil
 				}); err != nil {
-					return fmt.Errorf("error bumping link refresh")
+					return errors.New("error bumping link refresh")
 				}
 			}
 		}

@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 	"testing"
@@ -81,7 +80,7 @@ func (suite *LinkMergeSuite) assertNoLinks(id string) error {
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("link %q is still there", id))
+			return retry.ExpectedErrorf("link %q is still there", id)
 		}
 	}
 

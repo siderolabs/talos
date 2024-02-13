@@ -6,7 +6,7 @@ package image_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -44,7 +44,7 @@ func (c *mockConfig) Config() map[string]config.RegistryConfig {
 }
 
 func (c *mockConfig) ExtraFiles() ([]config.File, error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, errors.New("not implemented")
 }
 
 type ResolverSuite struct {

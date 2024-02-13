@@ -7,6 +7,7 @@ package container
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -42,7 +43,7 @@ func New(documents ...config.Document) (*Container, error) {
 		switch d := doc.(type) {
 		case *v1alpha1.Config:
 			if container.v1alpha1Config != nil {
-				return nil, fmt.Errorf("duplicate v1alpha1.Config")
+				return nil, errors.New("duplicate v1alpha1.Config")
 			}
 
 			container.v1alpha1Config = d

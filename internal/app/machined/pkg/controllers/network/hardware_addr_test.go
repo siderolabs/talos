@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -81,7 +80,7 @@ func (suite *HardwareAddrSuite) assertNoHWAddr(id string) error {
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("interface %q is still there", id))
+			return retry.ExpectedErrorf("interface %q is still there", id)
 		}
 	}
 

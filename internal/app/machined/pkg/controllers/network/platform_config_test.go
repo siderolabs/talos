@@ -103,7 +103,7 @@ func (suite *PlatformConfigSuite) assertResources(
 	}
 
 	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
+		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
 	}
 
 	return nil
@@ -120,7 +120,7 @@ func (suite *PlatformConfigSuite) assertNoResource(resourceType resource.Type, i
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("spec %q is still there", id))
+			return retry.ExpectedErrorf("spec %q is still there", id)
 		}
 	}
 

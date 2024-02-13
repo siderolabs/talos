@@ -6,7 +6,7 @@ package helpers
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -27,7 +27,7 @@ func ForEachResource(ctx context.Context,
 	args ...string,
 ) error {
 	if len(args) == 0 {
-		return fmt.Errorf("not enough arguments: at least 1 is expected")
+		return errors.New("not enough arguments: at least 1 is expected")
 	}
 
 	resourceType := args[0]

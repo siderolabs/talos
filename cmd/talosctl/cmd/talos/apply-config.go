@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -53,7 +54,7 @@ var applyConfigCmd = &cobra.Command{
 			} else if cmd.CalledAs() == "apply-config" {
 				cmd.Help() //nolint:errcheck
 
-				return fmt.Errorf("expected no positional arguments")
+				return errors.New("expected no positional arguments")
 			}
 		}
 
@@ -64,7 +65,7 @@ var applyConfigCmd = &cobra.Command{
 			}
 
 			if len(cfgBytes) < 1 {
-				return fmt.Errorf("no configuration data read")
+				return errors.New("no configuration data read")
 			}
 
 			if len(applyConfigCmdFlags.patches) != 0 {
@@ -89,7 +90,7 @@ var applyConfigCmd = &cobra.Command{
 				}
 			}
 		} else if applyConfigCmdFlags.Mode.Mode != helpers.InteractiveMode {
-			return fmt.Errorf("no filename supplied for configuration")
+			return errors.New("no filename supplied for configuration")
 		}
 
 		withClient := func(f func(context.Context, *client.Client) error) error {

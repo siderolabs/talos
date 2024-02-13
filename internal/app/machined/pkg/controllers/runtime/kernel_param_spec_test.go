@@ -5,7 +5,6 @@
 package runtime_test
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -74,7 +73,7 @@ func (suite *KernelParamSpecSuite) TestParamsSynced() {
 				}
 			}
 
-			return retry.ExpectedError(fmt.Errorf("resource still exists"))
+			return retry.ExpectedErrorf("resource still exists")
 		},
 	))
 

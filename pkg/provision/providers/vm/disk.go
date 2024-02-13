@@ -5,6 +5,7 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"syscall"
@@ -49,7 +50,7 @@ func (p *Provisioner) CreateDisks(state *State, nodeReq provision.NodeRequest) (
 	}
 
 	if len(diskPaths) == 0 {
-		return nil, fmt.Errorf("node request must have at least one disk defined to be used as primary disk")
+		return nil, errors.New("node request must have at least one disk defined to be used as primary disk")
 	}
 
 	return diskPaths, nil

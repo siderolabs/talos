@@ -7,6 +7,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -80,7 +81,7 @@ func (suite *DiskUsageSuite) TestSuccess() {
 		base.StdoutMatchFunc(func(stdout string) error {
 			lines := strings.Split(strings.TrimSpace(stdout), "\n")
 			if len(lines) == 1 {
-				return fmt.Errorf("expected lines > 0")
+				return errors.New("expected lines > 0")
 			}
 
 			parts := splitLine(lines[1])
@@ -100,7 +101,7 @@ func (suite *DiskUsageSuite) TestSuccess() {
 		base.StdoutMatchFunc(func(stdout string) error {
 			lines := strings.Split(strings.TrimSpace(stdout), "\n")
 			if len(lines) == 1 {
-				return fmt.Errorf("expected lines > 0")
+				return errors.New("expected lines > 0")
 			}
 
 			var totalExpected int64

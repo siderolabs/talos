@@ -6,6 +6,7 @@ package kubernetes
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -66,7 +67,7 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 	}
 
 	if version == nil {
-		return "", fmt.Errorf("failed to detect lowest Kubernetes version")
+		return "", errors.New("failed to detect lowest Kubernetes version")
 	}
 
 	return version.String(), nil

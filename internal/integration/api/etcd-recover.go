@@ -142,13 +142,11 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 
 						if bootIDAfter == bootIDBefore {
 							// bootID should be different after reboot
-							return retry.ExpectedError(
-								fmt.Errorf(
-									"bootID didn't change for node %q: before %s, after %s",
-									node,
-									bootIDBefore,
-									bootIDAfter,
-								),
+							return retry.ExpectedErrorf(
+								"bootID didn't change for node %q: before %s, after %s",
+								node,
+								bootIDBefore,
+								bootIDAfter,
 							)
 						}
 

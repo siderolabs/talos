@@ -178,18 +178,16 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 						bootIDAfter, err := suite.ReadBootID(requestCtx)
 						if err != nil {
 							// API might be unresponsive during reboot
-							return retry.ExpectedError(fmt.Errorf("error reading bootID for node %q: %w", node, err))
+							return retry.ExpectedErrorf("error reading bootID for node %q: %w", node, err)
 						}
 
 						if bootIDAfter == bootIDBefore {
 							// bootID should be different after reboot
-							return retry.ExpectedError(
-								fmt.Errorf(
-									"bootID didn't change for node %q: before %s, after %s",
-									node,
-									bootIDBefore,
-									bootIDAfter,
-								),
+							return retry.ExpectedErrorf(
+								"bootID didn't change for node %q: before %s, after %s",
+								node,
+								bootIDBefore,
+								bootIDAfter,
 							)
 						}
 

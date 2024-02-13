@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	stderrors "errors"
 	"fmt"
 	"math/rand"
 	"net/url"
@@ -325,7 +326,7 @@ func (suite *AcquireSuite) TestFromPlatform() {
 }
 
 func (suite *AcquireSuite) TestFromPlatformFailure() {
-	suite.platformConfig.err = fmt.Errorf("mock error")
+	suite.platformConfig.err = stderrors.New("mock error")
 
 	suite.triggerAcquire()
 

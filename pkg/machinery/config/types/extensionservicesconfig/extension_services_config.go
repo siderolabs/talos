@@ -6,6 +6,7 @@
 package extensionservicesconfig
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/siderolabs/gen/xslices"
@@ -75,12 +76,12 @@ func (e *V1Alpha1) Clone() config.Document {
 // Validate implements config.Validatator interface.
 func (e *V1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	if len(e.Config) == 0 {
-		return nil, fmt.Errorf("no extensions config found")
+		return nil, errors.New("no extensions config found")
 	}
 
 	for _, ext := range e.Config {
 		if ext.ExtensionName == "" {
-			return nil, fmt.Errorf("extension name is required")
+			return nil, errors.New("extension name is required")
 		}
 
 		if len(ext.ExtensionServiceConfigFiles) == 0 {

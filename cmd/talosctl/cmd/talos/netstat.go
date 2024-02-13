@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -90,7 +91,7 @@ If you don't pass an argument, the command will show host connections.`,
 
 		return WithClient(func(ctx context.Context, c *client.Client) (err error) {
 			if netstatCmdFlags.pods && len(args) > 0 {
-				return fmt.Errorf("cannot use --pods and specify a pod")
+				return errors.New("cannot use --pods and specify a pod")
 			}
 
 			findThePod := len(args) > 0

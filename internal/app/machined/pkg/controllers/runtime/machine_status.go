@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -229,7 +230,7 @@ func (ctrl *MachineStatusController) timeSyncCheck(ctx context.Context, r contro
 	}
 
 	if !timeSyncStatus.TypedSpec().Synced {
-		return fmt.Errorf("time is not synced")
+		return errors.New("time is not synced")
 	}
 
 	return nil

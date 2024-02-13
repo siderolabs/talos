@@ -6,6 +6,7 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -35,7 +36,7 @@ func GetEndpoints(ctx context.Context, resources state.State) ([]string, error) 
 	}
 
 	if len(endpointAddrs) == 0 {
-		return nil, fmt.Errorf("no controlplane endpoints discovered yet")
+		return nil, errors.New("no controlplane endpoints discovered yet")
 	}
 
 	endpoints := endpointAddrs.Strings()

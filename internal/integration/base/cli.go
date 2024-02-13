@@ -126,7 +126,7 @@ func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp
 		}
 
 		if !regex.MatchString(stdout.String()) {
-			return retry.ExpectedError(fmt.Errorf("stdout doesn't match: %q", stdout))
+			return retry.ExpectedErrorf("stdout doesn't match: %q", stdout)
 		}
 
 		return nil

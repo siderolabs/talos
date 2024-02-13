@@ -6,7 +6,7 @@ package runtime
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sync"
 )
 
@@ -32,7 +32,7 @@ func (d *Drainer) Drain(ctx context.Context) error {
 	if d.draining {
 		d.subscriptionsMu.Unlock()
 
-		return fmt.Errorf("already draining")
+		return errors.New("already draining")
 	}
 
 	d.draining = true

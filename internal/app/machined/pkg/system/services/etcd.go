@@ -667,7 +667,7 @@ func BootstrapEtcd(ctx context.Context, r runtime.Runtime, req *machineapi.Boots
 	}
 
 	if entries, _ := os.ReadDir(constants.EtcdDataPath); len(entries) > 0 { //nolint:errcheck
-		return fmt.Errorf("etcd data directory is not empty")
+		return errors.New("etcd data directory is not empty")
 	}
 
 	svc := &Etcd{

@@ -53,7 +53,7 @@ func openConfigAndContext(context string) (*clientconfig.Config, error) {
 	}
 
 	if context == "" {
-		return nil, fmt.Errorf("no context is set")
+		return nil, errors.New("no context is set")
 	}
 
 	if _, ok := c.Contexts[context]; !ok {
@@ -215,7 +215,7 @@ var configRemoveCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pattern := args[0]
 		if pattern == "" {
-			return fmt.Errorf("no context specified")
+			return errors.New("no context specified")
 		}
 
 		c, err := clientconfig.Open(GlobalArgs.Talosconfig)
@@ -293,7 +293,7 @@ func checkAndSetCrtAndKey(configContext *clientconfig.Context) error {
 	}
 
 	if crt == "" || key == "" {
-		return fmt.Errorf("if either the 'crt' or 'key' flag is specified, both are required")
+		return errors.New("if either the 'crt' or 'key' flag is specified, both are required")
 	}
 
 	crtBytes, err := os.ReadFile(crt)
@@ -491,7 +491,7 @@ func configInfo(config *clientconfig.Config, now time.Time) (talosconfigInfo, er
 
 		block, _ := pem.Decode(b)
 		if block == nil {
-			return talosconfigInfo{}, fmt.Errorf("error decoding PEM")
+			return talosconfigInfo{}, errors.New("error decoding PEM")
 		}
 
 		var crt *x509.Certificate

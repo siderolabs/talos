@@ -6,6 +6,7 @@ package install
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/containerd/containerd"
@@ -103,7 +104,7 @@ func PullAndValidateInstallerImage(ctx context.Context, reg config.Registries, r
 	}
 
 	if code != 0 {
-		return fmt.Errorf("installer help returned non-zero exit. assuming invalid installer")
+		return errors.New("installer help returned non-zero exit. assuming invalid installer")
 	}
 
 	return nil

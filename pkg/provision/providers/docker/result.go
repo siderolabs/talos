@@ -5,7 +5,7 @@
 package docker
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -23,5 +23,5 @@ func (res *result) Info() provision.ClusterInfo {
 }
 
 func (res *result) StatePath() (string, error) {
-	return "", fmt.Errorf("state path is not used for docker provisioner")
+	return "", errors.New("state path is not used for docker provisioner")
 }

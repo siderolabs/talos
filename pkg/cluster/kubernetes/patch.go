@@ -6,6 +6,7 @@ package kubernetes
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -34,7 +35,7 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 
 	cfg := mc.Container().RawV1Alpha1()
 	if cfg == nil {
-		return fmt.Errorf("config is not v1alpha1 config")
+		return errors.New("config is not v1alpha1 config")
 	}
 
 	if err = patchFunc(cfg); err != nil {

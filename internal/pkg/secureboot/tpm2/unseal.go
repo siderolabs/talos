@@ -11,6 +11,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/google/go-tpm/tpm2"
@@ -80,7 +81,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	if !bytes.Equal(createPrimaryResponse.Name.Buffer, srk.Buffer) {
 		// this means the srk name does not match, possibly due to a different TPM or tpm was reset
 		// could also mean the disk was used on a different machine
-		return nil, fmt.Errorf("srk name does not match")
+		return nil, errors.New("srk name does not match")
 	}
 
 	load := tpm2.Load{
@@ -172,7 +173,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 			signature = bank.Sig
 
 			if hex.EncodeToString(pubKeyFingerprint[:]) != bank.PKFP {
-				return nil, fmt.Errorf("certificate fingerprint does not match")
+				return nil, errors.New("certificate fingerprint does not match")
 			}
 
 			break
@@ -180,7 +181,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	}
 
 	if signature == "" {
-		return nil, fmt.Errorf("signature not found")
+		return nil, errors.New("signature not found")
 	}
 
 	signatureDecoded, err := base64.StdEncoding.DecodeString(signature)
@@ -242,7 +243,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	}
 
 	if !bytes.Equal(secureBootStatePolicyDigest.Buffer, sealed.PolicyDigest) {
-		return nil, fmt.Errorf("sealing policy digest does not match")
+		return nil, errors.New("sealing policy digest does not match")
 	}
 
 	unsealOp := tpm2.Unseal{

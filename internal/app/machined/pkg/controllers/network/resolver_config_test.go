@@ -6,7 +6,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/netip"
 	"net/url"
@@ -87,7 +86,7 @@ func (suite *ResolverConfigSuite) assertNoResolver(id string) error {
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("spec %q is still there", id))
+			return retry.ExpectedErrorf("spec %q is still there", id)
 		}
 	}
 

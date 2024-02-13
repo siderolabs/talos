@@ -7,6 +7,7 @@ package types
 
 //nolint:gci
 import (
+	"errors"
 	"fmt"
 	"go/types"
 	"path"
@@ -43,7 +44,7 @@ func FindPkgDecls(taggedStructs ast.TaggedStructs, loadedPkgs []*packages.Packag
 	}
 
 	if result.Len() == 0 {
-		return slices.Sorted[*PkgDecl]{}, fmt.Errorf("no definitions found")
+		return slices.Sorted[*PkgDecl]{}, errors.New("no definitions found")
 	}
 
 	return result, nil

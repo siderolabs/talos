@@ -26,7 +26,7 @@ func LoadPackages(pkgPath string) ([]*packages.Package, error) {
 	}
 
 	if len(pkgs) == 0 {
-		return nil, fmt.Errorf("no packages found")
+		return nil, errors.New("no packages found")
 	}
 
 	err = collectErrors(pkgs)

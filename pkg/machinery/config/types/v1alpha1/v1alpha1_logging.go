@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -26,10 +27,10 @@ func (lc *LoggingConfig) Validate() error {
 		}
 
 		if endpoint == nil {
-			errs = multierror.Append(errs, fmt.Errorf("empty logging endpoint"))
+			errs = multierror.Append(errs, errors.New("empty logging endpoint"))
 		} else {
 			if endpoint.Host == "" {
-				errs = multierror.Append(errs, fmt.Errorf("empty logging endpoint's host"))
+				errs = multierror.Append(errs, errors.New("empty logging endpoint's host"))
 			}
 
 			if endpoint.Scheme != "tcp" && endpoint.Scheme != "udp" {

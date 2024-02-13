@@ -8,6 +8,7 @@ package ipxe
 import (
 	"bytes"
 	"embed"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -126,16 +127,16 @@ var (
 func patchScript(contents, script []byte) ([]byte, error) {
 	start := bytes.Index(contents, placeholderStart)
 	if start == -1 {
-		return nil, fmt.Errorf("placeholder start not found")
+		return nil, errors.New("placeholder start not found")
 	}
 
 	end := bytes.Index(contents, placeholderEnd)
 	if end == -1 {
-		return nil, fmt.Errorf("placeholder end not found")
+		return nil, errors.New("placeholder end not found")
 	}
 
 	if end < start {
-		return nil, fmt.Errorf("placeholder end before start")
+		return nil, errors.New("placeholder end before start")
 	}
 
 	end += len(placeholderEnd)

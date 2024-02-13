@@ -237,11 +237,11 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 					log.Printf("aws: import into %s/%s, import snapshot %s%%", region, arch, progress)
 				}
 
-				return retry.ExpectedError(fmt.Errorf("task status is %s", *task.SnapshotTaskDetail.Status))
+				return retry.ExpectedErrorf("task status is %s", *task.SnapshotTaskDetail.Status)
 			}
 		}
 
-		return retry.ExpectedError(fmt.Errorf("task status not found"))
+		return retry.ExpectedErrorf("task status not found")
 	})
 	if err != nil {
 		log.Printf("WARNING: aws: ignoring failure to import snapshot into %s/%s: %s", region, arch, err)

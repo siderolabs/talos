@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -66,7 +67,7 @@ func shutdownGetActorID(ctx context.Context, c *client.Client) (string, error) {
 	}
 
 	if len(resp.GetMessages()) == 0 {
-		return "", fmt.Errorf("no messages returned from action run")
+		return "", errors.New("no messages returned from action run")
 	}
 
 	return resp.GetMessages()[0].GetActorId(), nil

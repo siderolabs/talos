@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"io"
 	"log"
@@ -137,7 +138,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 		}
 
 		if bondName != "" && iface.Bond != bondName {
-			return nil, fmt.Errorf("encountered multiple bonds. this is unexpected in the equinix metal platform")
+			return nil, stderrors.New("encountered multiple bonds. this is unexpected in the equinix metal platform")
 		}
 
 		bondName = iface.Bond

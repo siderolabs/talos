@@ -7,6 +7,7 @@ package helpers
 import (
 	"archive/tar"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -38,7 +39,7 @@ func ExtractFileFromTarGz(filename string, r io.ReadCloser) ([]byte, error) {
 
 		hdrPath := safepath.CleanPath(hdr.Name)
 		if hdrPath == "" {
-			return nil, fmt.Errorf("empty tar header path")
+			return nil, errors.New("empty tar header path")
 		}
 
 		if hdrPath == filename {
@@ -78,7 +79,7 @@ func ExtractTarGz(localPath string, r io.ReadCloser) error {
 
 		hdrPath := safepath.CleanPath(hdr.Name)
 		if hdrPath == "" {
-			return fmt.Errorf("empty tar header path")
+			return errors.New("empty tar header path")
 		}
 
 		path := filepath.Join(localPath, hdrPath)

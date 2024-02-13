@@ -7,6 +7,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -58,14 +59,14 @@ func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		r.State().V1Alpha2().Resources(),
 		func(ctx context.Context, access state.Access) error {
 			if !access.Verb.Readonly() {
-				return fmt.Errorf("write access denied")
+				return errors.New("write access denied")
 			}
 
 			switch {
 			case access.ResourceNamespace == secrets.NamespaceName && access.ResourceType == secrets.TrustdType && access.ResourceID == secrets.TrustdID:
 			case access.ResourceNamespace == secrets.NamespaceName && access.ResourceType == secrets.OSRootType && access.ResourceID == secrets.OSRootID:
 			default:
-				return fmt.Errorf("access denied")
+				return errors.New("access denied")
 			}
 
 			return nil

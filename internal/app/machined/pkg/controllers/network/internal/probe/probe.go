@@ -7,7 +7,7 @@ package probe
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net"
 	"sync"
 	"syscall"
@@ -132,7 +132,7 @@ func (runner *Runner) probe(ctx context.Context) error {
 	case runner.Spec.TCP != zeroTCP:
 		return runner.probeTCP(ctx)
 	default:
-		return fmt.Errorf("no probe type specified")
+		return errors.New("no probe type specified")
 	}
 }
 

@@ -6,6 +6,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -81,7 +82,7 @@ var duCmd = &cobra.Command{
 
 			return helpers.ReadGRPCStream(stream, func(info *machineapi.DiskUsageInfo, node string, multipleNodes bool) error {
 				if info.Error != "" {
-					return helpers.NonFatalError(fmt.Errorf(info.Error))
+					return helpers.NonFatalError(errors.New(info.Error))
 				}
 
 				pattern := "%s\t%s\n"

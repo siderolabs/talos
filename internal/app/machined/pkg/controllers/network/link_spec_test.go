@@ -114,7 +114,7 @@ func (suite *LinkSpecSuite) assertInterfaces(requiredIDs []string, check func(*n
 	}
 
 	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
+		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func (suite *LinkSpecSuite) assertNoInterface(id string) error {
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("interface %q is still there", id))
+			return retry.ExpectedErrorf("interface %q is still there", id)
 		}
 	}
 

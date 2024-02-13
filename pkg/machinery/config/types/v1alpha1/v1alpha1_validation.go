@@ -96,7 +96,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		} else {
 			if opts.Local {
 				if c.MachineConfig.MachineInstall.InstallDisk == "" && len(c.MachineConfig.MachineInstall.DiskMatchers()) == 0 {
-					result = multierror.Append(result, fmt.Errorf("either install disk or diskSelector should be defined"))
+					result = multierror.Append(result, errors.New("either install disk or diskSelector should be defined"))
 				}
 			} else {
 				disk, err := c.MachineConfig.MachineInstall.Disk()
@@ -241,15 +241,15 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 
 	if c.Machine().Network().KubeSpan().Enabled() {
 		if !c.Cluster().Discovery().Enabled() {
-			result = multierror.Append(result, fmt.Errorf(".cluster.discovery should be enabled when .machine.network.kubespan is enabled"))
+			result = multierror.Append(result, errors.New(".cluster.discovery should be enabled when .machine.network.kubespan is enabled"))
 		}
 
 		if c.Cluster().ID() == "" {
-			result = multierror.Append(result, fmt.Errorf(".cluster.id should be set when .machine.network.kubespan is enabled"))
+			result = multierror.Append(result, errors.New(".cluster.id should be set when .machine.network.kubespan is enabled"))
 		}
 
 		if c.Cluster().Secret() == "" {
-			result = multierror.Append(result, fmt.Errorf(".cluster.secret should be set when .machine.network.kubespan is enabled"))
+			result = multierror.Append(result, errors.New(".cluster.secret should be set when .machine.network.kubespan is enabled"))
 		}
 
 		for _, cidr := range c.Machine().Network().KubeSpan().Filters().Endpoints() {
@@ -292,11 +292,11 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 
 	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() {
 		if !c.Machine().Features().RBACEnabled() {
-			result = multierror.Append(result, fmt.Errorf("feature API RBAC should be enabled when Kubernetes Talos API Access feature is enabled"))
+			result = multierror.Append(result, errors.New("feature API RBAC should be enabled when Kubernetes Talos API Access feature is enabled"))
 		}
 
 		if !c.Machine().Type().IsControlPlane() {
-			result = multierror.Append(result, fmt.Errorf("feature Kubernetes Talos API Access can only be enabled on control plane machines"))
+			result = multierror.Append(result, errors.New("feature Kubernetes Talos API Access can only be enabled on control plane machines"))
 		}
 
 		for _, r := range c.Machine().Features().KubernetesTalosAPIAccess().AllowedRoles() {
@@ -307,7 +307,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 	}
 
 	if c.ConfigPersist != nil && !*c.ConfigPersist {
-		result = multierror.Append(result, fmt.Errorf(".persist should be enabled"))
+		result = multierror.Append(result, errors.New(".persist should be enabled"))
 	}
 
 	if opts.Strict {
@@ -338,11 +338,11 @@ func (c *ClusterConfig) Validate() error {
 	var result *multierror.Error
 
 	if c == nil {
-		return fmt.Errorf("cluster instructions are required")
+		return errors.New("cluster instructions are required")
 	}
 
 	if c.ControlPlane == nil || c.ControlPlane.Endpoint == nil {
-		return fmt.Errorf("cluster controlplane endpoint is required")
+		return errors.New("cluster controlplane endpoint is required")
 	}
 
 	if err := sideronet.ValidateEndpointURI(c.ControlPlane.Endpoint.URL.String()); err != nil {
@@ -428,7 +428,7 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 // Validate validates external cloud provider configuration.
 func (ecp *ExternalCloudProviderConfig) Validate() error {
 	if !ecp.Enabled() && (len(ecp.ExternalManifests) != 0) {
-		return fmt.Errorf("external cloud provider is disabled, but manifests are provided")
+		return errors.New("external cloud provider is disabled, but manifests are provided")
 	}
 
 	var result *multierror.Error
@@ -451,7 +451,7 @@ func (manifests ClusterInlineManifests) Validate() error {
 
 	for _, manifest := range manifests {
 		if strings.TrimSpace(manifest.InlineManifestName) == "" {
-			result = multierror.Append(result, fmt.Errorf("inline manifest name can't be empty"))
+			result = multierror.Append(result, errors.New("inline manifest name can't be empty"))
 		}
 
 		if _, ok := manifestNames[manifest.InlineManifestName]; ok {
@@ -477,15 +477,15 @@ func (c *ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 		if err != nil {
 			result = multierror.Append(result, fmt.Errorf("cluster discovery service registry endpoint is invalid: %w", err))
 		} else if url.Path != "" && url.Path != "/" {
-			result = multierror.Append(result, fmt.Errorf("cluster discovery service path should be empty"))
+			result = multierror.Append(result, errors.New("cluster discovery service path should be empty"))
 		}
 
 		if clusterCfg.ID() == "" {
-			result = multierror.Append(result, fmt.Errorf("cluster discovery service requires .cluster.id"))
+			result = multierror.Append(result, errors.New("cluster discovery service requires .cluster.id"))
 		}
 
 		if clusterCfg.Secret() == "" {
-			result = multierror.Append(result, fmt.Errorf("cluster discovery service requires .cluster.secret"))
+			result = multierror.Append(result, errors.New("cluster discovery service requires .cluster.secret"))
 		}
 	}
 
@@ -498,7 +498,7 @@ func ValidateNetworkDevices(d *Device, pairedInterfaces map[string]string, check
 	var result *multierror.Error
 
 	if d == nil {
-		return nil, fmt.Errorf("empty device")
+		return nil, errors.New("empty device")
 	}
 
 	if d.Ignore() {
@@ -523,7 +523,7 @@ func CheckDeviceInterface(d *Device, _ map[string]string) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
-		return nil, fmt.Errorf("empty device")
+		return nil, errors.New("empty device")
 	}
 
 	if d.DeviceInterface == "" && d.DeviceSelector == nil {
@@ -597,32 +597,32 @@ func checkBond(b *Bond) error {
 
 	if b.BondMIIMon == 0 {
 		if b.BondUpDelay != 0 {
-			result = multierror.Append(result, fmt.Errorf("bond.upDelay can't be set if miiMon is zero"))
+			result = multierror.Append(result, errors.New("bond.upDelay can't be set if miiMon is zero"))
 		}
 
 		if b.BondDownDelay != 0 {
-			result = multierror.Append(result, fmt.Errorf("bond.downDelay can't be set if miiMon is zero"))
+			result = multierror.Append(result, errors.New("bond.downDelay can't be set if miiMon is zero"))
 		}
 	} else {
 		if b.BondUpDelay%b.BondMIIMon != 0 {
-			result = multierror.Append(result, fmt.Errorf("bond.upDelay should be a multiple of miiMon"))
+			result = multierror.Append(result, errors.New("bond.upDelay should be a multiple of miiMon"))
 		}
 
 		if b.BondDownDelay%b.BondMIIMon != 0 {
-			result = multierror.Append(result, fmt.Errorf("bond.downDelay should be a multiple of miiMon"))
+			result = multierror.Append(result, errors.New("bond.downDelay should be a multiple of miiMon"))
 		}
 	}
 
 	if len(b.BondARPIPTarget) > 0 {
-		result = multierror.Append(result, fmt.Errorf("bond.arpIPTarget is not supported"))
+		result = multierror.Append(result, errors.New("bond.arpIPTarget is not supported"))
 	}
 
 	if b.BondLACPRate != "" && bondMode != nethelpers.BondMode8023AD {
-		result = multierror.Append(result, fmt.Errorf("bond.lacpRate is only available in 802.3ad mode"))
+		result = multierror.Append(result, errors.New("bond.lacpRate is only available in 802.3ad mode"))
 	}
 
 	if b.BondADActorSystem != "" {
-		result = multierror.Append(result, fmt.Errorf("bond.adActorSystem is not supported"))
+		result = multierror.Append(result, errors.New("bond.adActorSystem is not supported"))
 	}
 
 	if (bondMode == nethelpers.BondMode8023AD || bondMode == nethelpers.BondModeALB || bondMode == nethelpers.BondModeTLB) && b.BondARPValidate != "" {
@@ -646,11 +646,11 @@ func checkBond(b *Bond) error {
 	}
 
 	if bondMode != nethelpers.BondMode8023AD && b.BondADActorSysPrio > 0 {
-		result = multierror.Append(result, fmt.Errorf("bond.adActorSysPrio is only available in 802.3ad mode"))
+		result = multierror.Append(result, errors.New("bond.adActorSysPrio is only available in 802.3ad mode"))
 	}
 
 	if bondMode != nethelpers.BondMode8023AD && b.BondADUserPortKey > 0 {
-		result = multierror.Append(result, fmt.Errorf("bond.adUserPortKey is only available in 802.3ad mode"))
+		result = multierror.Append(result, errors.New("bond.adUserPortKey is only available in 802.3ad mode"))
 	}
 
 	return result.ErrorOrNil()
@@ -745,7 +745,7 @@ func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) ([]str
 	var result *multierror.Error
 
 	if d == nil {
-		return nil, fmt.Errorf("empty device")
+		return nil, errors.New("empty device")
 	}
 
 	var warnings []string
@@ -794,7 +794,7 @@ func CheckDeviceRoutes(d *Device, _ map[string]string) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
-		return nil, fmt.Errorf("empty device")
+		return nil, errors.New("empty device")
 	}
 
 	if len(d.DeviceRoutes) == 0 {
@@ -860,7 +860,7 @@ func (e *EtcdConfig) Validate() error {
 	}
 
 	if e.EtcdSubnet != "" && len(e.EtcdAdvertisedSubnets) > 0 {
-		result = multierror.Append(result, fmt.Errorf("etcd subnet can't be set when advertised subnets are set"))
+		result = multierror.Append(result, errors.New("etcd subnet can't be set when advertised subnets are set"))
 	}
 
 	for _, cidr := range e.AdvertisedSubnets() {

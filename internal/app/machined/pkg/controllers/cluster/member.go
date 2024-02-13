@@ -6,6 +6,7 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -59,7 +60,7 @@ func (ctrl *MemberController) Run(ctx context.Context, r controller.Runtime, _ *
 
 		affiliates, err := safe.ReaderListAll[*cluster.Affiliate](ctx, r)
 		if err != nil {
-			return fmt.Errorf("error listing affiliates")
+			return errors.New("error listing affiliates")
 		}
 
 		touchedIDs := make(map[resource.ID]struct{})

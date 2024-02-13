@@ -7,6 +7,7 @@ package follow
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -160,7 +161,7 @@ func (r *Reader) notify() {
 				}
 			case fsnotify.Remove:
 				select {
-				case r.notifyCh <- fmt.Errorf("file was removed while watching"):
+				case r.notifyCh <- errors.New("file was removed while watching"):
 				case <-r.ctx.Done():
 				}
 

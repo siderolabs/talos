@@ -6,6 +6,7 @@ package containerd
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -185,7 +186,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 		if hostname == "*" {
 			// no way to generate TLS config for wildcard host
-			return nil, fmt.Errorf("wildcard host TLS configuration is not supported")
+			return nil, errors.New("wildcard host TLS configuration is not supported")
 		}
 
 		directory := &HostsDirectory{}

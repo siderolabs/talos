@@ -7,7 +7,6 @@ package mgmt
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 
@@ -34,7 +33,7 @@ var kmsLaunchCmd = &cobra.Command{
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if kmsLaunchCmdFlags.key == nil {
-			return fmt.Errorf("no key provided to the KMS server")
+			return errors.New("no key provided to the KMS server")
 		}
 
 		srv := server.NewServer(func(_ context.Context, nodeUUID string) ([]byte, error) {

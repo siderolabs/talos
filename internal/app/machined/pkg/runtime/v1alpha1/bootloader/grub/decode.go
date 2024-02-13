@@ -37,19 +37,19 @@ func Read(path string) (*Config, error) {
 func Decode(c []byte) (*Config, error) {
 	defaultEntryMatches := defaultEntryRegex.FindAllSubmatch(c, -1)
 	if len(defaultEntryMatches) != 1 {
-		return nil, fmt.Errorf("failed to find default")
+		return nil, errors.New("failed to find default")
 	}
 
 	fallbackEntryMatches := fallbackEntryRegex.FindAllSubmatch(c, -1)
 	if len(fallbackEntryMatches) > 1 {
-		return nil, fmt.Errorf("found multiple fallback entries")
+		return nil, errors.New("found multiple fallback entries")
 	}
 
 	var fallbackEntry BootLabel
 
 	if len(fallbackEntryMatches) == 1 {
 		if len(fallbackEntryMatches[0]) != 2 {
-			return nil, fmt.Errorf("failed to parse fallback entry")
+			return nil, errors.New("failed to parse fallback entry")
 		}
 
 		entry, err := ParseBootLabel(string(fallbackEntryMatches[0][1]))

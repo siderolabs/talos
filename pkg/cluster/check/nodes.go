@@ -56,7 +56,7 @@ func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 
 	for _, msg := range resp.Messages {
 		if msg.Metadata == nil {
-			return fmt.Errorf("no metadata in the response")
+			return errors.New("no metadata in the response")
 		}
 
 		hostname := msg.Metadata.Hostname
@@ -205,7 +205,7 @@ type mountData struct {
 }
 
 // ErrOldTalosVersion is returned when the node is running an old version of Talos.
-var ErrOldTalosVersion = fmt.Errorf("old Talos version")
+var ErrOldTalosVersion = errors.New("old Talos version")
 
 func getEphemeralPartitionData(ctx context.Context, state state.State, nodeIP string) (mountData, error) {
 	items, err := safe.StateListAll[*runtime.MountStatus](client.WithNode(ctx, nodeIP), state)
@@ -244,7 +244,7 @@ func getNodesMounts(ctx context.Context, cl *client.Client) (map[string][]mntDat
 	}
 
 	if len(diskResp.Messages) == 0 {
-		return nil, fmt.Errorf("no nodes with mounts found")
+		return nil, errors.New("no nodes with mounts found")
 	}
 
 	nodesMnts := map[string][]mntData{}
@@ -252,7 +252,7 @@ func getNodesMounts(ctx context.Context, cl *client.Client) (map[string][]mntDat
 	for _, msg := range diskResp.Messages {
 		switch {
 		case msg.Metadata == nil:
-			return nil, fmt.Errorf("no metadata in response")
+			return nil, errors.New("no metadata in response")
 		case len(msg.GetStats()) == 0:
 			return nil, fmt.Errorf("no mounts found for node %q", msg.Metadata.Hostname)
 		}

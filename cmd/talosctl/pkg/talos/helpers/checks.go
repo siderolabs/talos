@@ -6,6 +6,7 @@ package helpers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -39,7 +40,7 @@ func CheckErrors[T interface{ GetMetadata() *common.Metadata }](messages ...T) e
 	for _, msg := range messages {
 		md := msg.GetMetadata()
 		if md != nil && md.Error != "" {
-			err = AppendErrors(err, fmt.Errorf(md.Error))
+			err = AppendErrors(err, errors.New(md.Error))
 		}
 	}
 

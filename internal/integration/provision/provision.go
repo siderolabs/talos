@@ -381,13 +381,11 @@ waitLoop:
 
 				if version != options.TargetVersion {
 					// upgrade not finished yet
-					return retry.ExpectedError(
-						fmt.Errorf(
-							"node %q version doesn't match expected: expected %q, got %q",
-							node.IPs[0].String(),
-							options.TargetVersion,
-							version,
-						),
+					return retry.ExpectedErrorf(
+						"node %q version doesn't match expected: expected %q, got %q",
+						node.IPs[0].String(),
+						options.TargetVersion,
+						version,
 					)
 				}
 

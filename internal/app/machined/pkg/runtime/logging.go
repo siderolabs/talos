@@ -6,7 +6,7 @@ package runtime
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"io"
 	"time"
 
@@ -67,7 +67,7 @@ type LogEvent struct {
 }
 
 // ErrDontRetry indicates that log event should not be resent.
-var ErrDontRetry = fmt.Errorf("don't retry")
+var ErrDontRetry = errors.New("don't retry")
 
 // LogSender provides common interface for log senders.
 type LogSender interface {

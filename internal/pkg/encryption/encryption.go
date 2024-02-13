@@ -177,7 +177,7 @@ func (h *Handler) formatAndEncrypt(ctx context.Context, path string, handlers []
 	log.Printf("encrypting the partition %s (%s)", path, h.partition.Name)
 
 	if len(handlers) == 0 {
-		return fmt.Errorf("no encryption keys found")
+		return errors.New("no encryption keys found")
 	}
 
 	var (

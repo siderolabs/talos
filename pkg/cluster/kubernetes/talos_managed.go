@@ -61,7 +61,7 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 	}
 
 	if len(options.controlPlaneNodes) == 0 {
-		return fmt.Errorf("no controlplane nodes discovered")
+		return errors.New("no controlplane nodes discovered")
 	}
 
 	options.Log("discovered controlplane nodes %q", options.controlPlaneNodes)
@@ -302,7 +302,7 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 	return nil
 }
 
-var errUpdateSkipped = fmt.Errorf("update skipped")
+var errUpdateSkipped = errors.New("update skipped")
 
 //nolint:gocyclo,cyclop
 func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResource resource.Resource) func(config *v1alpha1config.Config) error {

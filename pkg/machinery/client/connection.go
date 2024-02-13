@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -117,7 +118,7 @@ func buildTLSConfig(configContext *clientconfig.Context) (*tls.Config, error) {
 		tlsConfig.RootCAs = x509.NewCertPool()
 
 		if ok := tlsConfig.RootCAs.AppendCertsFromPEM(caBytes); !ok {
-			return nil, fmt.Errorf("failed to append CA certificate to RootCAs pool")
+			return nil, errors.New("failed to append CA certificate to RootCAs pool")
 		}
 	}
 

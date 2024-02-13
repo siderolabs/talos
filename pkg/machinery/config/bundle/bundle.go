@@ -6,6 +6,7 @@
 package bundle
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -45,7 +46,7 @@ func NewBundle(opts ...Option) (*Bundle, error) {
 	// Configs already exist, we'll pull them in.
 	if options.ExistingConfigs != "" {
 		if options.InputOptions != nil {
-			return bundle, fmt.Errorf("both existing config path and input options specified")
+			return bundle, errors.New("both existing config path and input options specified")
 		}
 
 		// Pull existing machine configs of each type
@@ -103,7 +104,7 @@ func NewBundle(opts ...Option) (*Bundle, error) {
 	}
 
 	if options.InputOptions == nil {
-		return nil, fmt.Errorf("no WithInputOptions is defined")
+		return nil, errors.New("no WithInputOptions is defined")
 	}
 
 	input, err := generate.NewInput(

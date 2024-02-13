@@ -4,7 +4,6 @@
 package runtime_test
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -95,7 +94,7 @@ func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
 				}
 			}
 
-			return retry.ExpectedError(fmt.Errorf("resource still exists"))
+			return retry.ExpectedErrorf("resource still exists")
 		},
 	))
 }

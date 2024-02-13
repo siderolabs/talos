@@ -7,6 +7,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -52,7 +53,7 @@ func (o *APID) ID(r runtime.Runtime) string {
 // apidResourceFilter filters access to COSI state for apid.
 func apidResourceFilter(ctx context.Context, access state.Access) error {
 	if !access.Verb.Readonly() {
-		return fmt.Errorf("write access denied")
+		return errors.New("write access denied")
 	}
 
 	switch {
@@ -63,7 +64,7 @@ func apidResourceFilter(ctx context.Context, access state.Access) error {
 	case access.ResourceNamespace == network.NamespaceName && access.ResourceType == network.HostnameStatusType:
 		// allowed, contains local node hostname
 	default:
-		return fmt.Errorf("access denied")
+		return errors.New("access denied")
 	}
 
 	return nil

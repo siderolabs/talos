@@ -98,7 +98,7 @@ func (suite *FirewallSuite) TestKubeletAccess() {
 
 			if firewallEnabled {
 				if err == nil {
-					return fmt.Errorf("kubelet API should not be available")
+					return errors.New("kubelet API should not be available")
 				}
 
 				if !errors.Is(err, os.ErrDeadlineExceeded) && !errors.Is(err, context.DeadlineExceeded) {

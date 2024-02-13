@@ -8,7 +8,7 @@ package vmware
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -26,7 +26,7 @@ func (v *VMware) Name() string {
 
 // Configuration implements the platform.Platform interface.
 func (v *VMware) Configuration(context.Context, state.State) ([]byte, error) {
-	return nil, fmt.Errorf("arch not supported")
+	return nil, errors.New("arch not supported")
 }
 
 // Mode implements the platform.Platform interface.

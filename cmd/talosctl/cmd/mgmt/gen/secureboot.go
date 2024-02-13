@@ -7,6 +7,7 @@ package gen
 import (
 	"context"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -191,11 +192,11 @@ func init() {
 func convertPEMToDER(data []byte) ([]byte, error) {
 	block, rest := pem.Decode(data)
 	if block == nil {
-		return nil, fmt.Errorf("failed to decode PEM data")
+		return nil, errors.New("failed to decode PEM data")
 	}
 
 	if len(rest) > 0 {
-		return nil, fmt.Errorf("more than one PEM block found in PEM data")
+		return nil, errors.New("more than one PEM block found in PEM data")
 	}
 
 	return block.Bytes, nil

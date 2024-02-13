@@ -6,6 +6,7 @@ package ntp_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -75,7 +76,7 @@ func (suite *NTPSuite) adjustSystemClock(val *unix.Timex) (status timex.State, e
 func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err error) {
 	switch host {
 	case "127.0.0.1": // error
-		return nil, fmt.Errorf("no response")
+		return nil, errors.New("no response")
 	case "127.0.0.2": // invalid response
 		resp = &beevikntp.Response{}
 
@@ -122,7 +123,7 @@ func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err err
 		suite.failingServer++
 
 		if suite.failingServer%2 == 0 {
-			return nil, fmt.Errorf("failed this time")
+			return nil, errors.New("failed this time")
 		}
 
 		resp = &beevikntp.Response{
@@ -230,7 +231,7 @@ func (suite *NTPSuite) TestSyncContinuous() {
 			defer suite.clockLock.Unlock()
 
 			if len(suite.clockAdjustments) < 3 {
-				return retry.ExpectedError(fmt.Errorf("not enough syncs"))
+				return retry.ExpectedErrorf("not enough syncs")
 			}
 
 			return nil
@@ -277,7 +278,7 @@ func (suite *NTPSuite) TestSyncWithSpikes() {
 			defer suite.clockLock.Unlock()
 
 			if len(suite.clockAdjustments) < 6 {
-				return retry.ExpectedError(fmt.Errorf("not enough syncs"))
+				return retry.ExpectedErrorf("not enough syncs")
 			}
 
 			for _, adj := range suite.clockAdjustments {
@@ -367,7 +368,7 @@ func (suite *NTPSuite) TestSyncIterateTimeservers() {
 			defer suite.clockLock.Unlock()
 
 			if len(suite.clockAdjustments) < 3 {
-				return retry.ExpectedError(fmt.Errorf("not enough syncs"))
+				return retry.ExpectedErrorf("not enough syncs")
 			}
 
 			return nil
@@ -458,7 +459,7 @@ func (suite *NTPSuite) TestSyncSwitchTimeservers() {
 			defer suite.clockLock.Unlock()
 
 			if len(suite.clockAdjustments) < 3 {
-				return retry.ExpectedError(fmt.Errorf("not enough syncs"))
+				return retry.ExpectedErrorf("not enough syncs")
 			}
 
 			return nil

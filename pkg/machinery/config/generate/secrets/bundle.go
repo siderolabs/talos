@@ -6,6 +6,7 @@ package secrets
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -103,7 +104,7 @@ func NewBundleFromKubernetesPKI(pkiDir, bootstrapToken string, versionContract *
 
 	aggregatorCAFound := err == nil
 	if aggregatorCAFound && !versionContract.SupportsAggregatorCA() {
-		return nil, fmt.Errorf("aggregator CA found in pki dir but is not supported by the requested version")
+		return nil, errors.New("aggregator CA found in pki dir but is not supported by the requested version")
 	}
 
 	if versionContract.SupportsAggregatorCA() {
@@ -123,7 +124,7 @@ func NewBundleFromKubernetesPKI(pkiDir, bootstrapToken string, versionContract *
 
 	saKeyFound := err == nil
 	if saKeyFound && !versionContract.SupportsServiceAccount() {
-		return nil, fmt.Errorf("service account key found in pki dir but is not supported by the requested version")
+		return nil, errors.New("service account key found in pki dir but is not supported by the requested version")
 	}
 
 	if versionContract.SupportsServiceAccount() {

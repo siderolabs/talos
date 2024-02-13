@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -199,7 +200,7 @@ func (p *Provisioner) dropBridgeTrafficRule(bridgeName string) error {
 //nolint:gocyclo
 func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, state *State, options provision.Options) error {
 	if (network.Bandwidth != 0) && (network.Latency != 0 || network.Jitter != 0 || network.PacketLoss != 0 || network.PacketReorder != 0 || network.PacketCorrupt != 0) {
-		return fmt.Errorf("bandwidth and other chaos options cannot be used together")
+		return errors.New("bandwidth and other chaos options cannot be used together")
 	}
 
 	link, err := netlink.LinkByName(state.BridgeName)

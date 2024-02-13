@@ -60,7 +60,7 @@ func NewManifest(mode Mode, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Opt
 
 	if opts.Board != constants.BoardNone {
 		if uefiOnlyBoot {
-			return nil, fmt.Errorf("board option can't be used with uefi-only-boot")
+			return nil, errors.New("board option can't be used with uefi-only-boot")
 		}
 
 		var b runtime.Board
@@ -79,11 +79,11 @@ func NewManifest(mode Mode, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Opt
 	}
 
 	if !opts.Force && opts.Zero {
-		return nil, fmt.Errorf("zero option can't be used without force")
+		return nil, errors.New("zero option can't be used without force")
 	}
 
 	if !opts.Force && !bootLoaderPresent {
-		return nil, fmt.Errorf("install with preserve is not supported if existing boot partition was not found")
+		return nil, errors.New("install with preserve is not supported if existing boot partition was not found")
 	}
 
 	// Verify that the target device(s) can satisfy the requested options.

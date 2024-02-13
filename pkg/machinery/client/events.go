@@ -6,6 +6,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,7 +21,7 @@ import (
 )
 
 // ErrEventNotSupported is returned from the event decoder when we encounter an unknown event.
-var ErrEventNotSupported = fmt.Errorf("event is not supported")
+var ErrEventNotSupported = errors.New("event is not supported")
 
 // EventsOptionFunc defines the options for the Events API.
 type EventsOptionFunc func(opts *machineapi.EventsRequest)
@@ -186,7 +187,7 @@ func (c *Client) EventsWatchV2(ctx context.Context, ch chan<- EventResult, opts 
 					if event.GetMetadata().GetStatus() != nil {
 						mdErr = status.FromProto(event.GetMetadata().GetStatus()).Err()
 					} else {
-						mdErr = fmt.Errorf(event.GetMetadata().GetError())
+						mdErr = errors.New(event.GetMetadata().GetError())
 					}
 
 					return fmt.Errorf("%s: %w", event.GetMetadata().GetHostname(), mdErr)

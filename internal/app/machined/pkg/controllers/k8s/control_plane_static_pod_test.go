@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:dupl
 package k8s_test
 
 import (
@@ -83,7 +82,6 @@ func (suite *ControlPlaneStaticPodSuite) startRuntime() {
 	}()
 }
 
-//nolint:dupl
 func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests []string) error {
 	resources, err := suite.state.List(
 		suite.ctx,
@@ -96,7 +94,7 @@ func (suite *ControlPlaneStaticPodSuite) assertControlPlaneStaticPods(manifests 
 	ids := xslices.Map(resources.Items, func(r resource.Resource) string { return r.Metadata().ID() })
 
 	if !reflect.DeepEqual(manifests, ids) {
-		return retry.ExpectedError(fmt.Errorf("expected %q, got %q", manifests, ids))
+		return retry.ExpectedErrorf("expected %q, got %q", manifests, ids)
 	}
 
 	return nil

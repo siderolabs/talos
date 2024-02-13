@@ -7,7 +7,7 @@ package runtime
 //docgen:jsonschema
 
 import (
-	"fmt"
+	"errors"
 	"net/url"
 
 	"github.com/siderolabs/gen/ensure"
@@ -111,29 +111,29 @@ func (s *KmsgLogV1Alpha1) KmsgLogURLs() []*url.URL {
 // Validate implements config.Validator interface.
 func (s *KmsgLogV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	if s.MetaName == "" {
-		return nil, fmt.Errorf("name is required")
+		return nil, errors.New("name is required")
 	}
 
 	if s.KmsgLogURL.URL == nil {
-		return nil, fmt.Errorf("url is required")
+		return nil, errors.New("url is required")
 	}
 
 	switch s.KmsgLogURL.URL.Scheme {
 	case "tcp":
 	case "udp":
 	default:
-		return nil, fmt.Errorf("url scheme must be tcp:// or udp://")
+		return nil, errors.New("url scheme must be tcp:// or udp://")
 	}
 
 	switch s.KmsgLogURL.URL.Path {
 	case "/":
 	case "":
 	default:
-		return nil, fmt.Errorf("url path must be empty")
+		return nil, errors.New("url path must be empty")
 	}
 
 	if s.KmsgLogURL.URL.Port() == "" {
-		return nil, fmt.Errorf("url port is required")
+		return nil, errors.New("url port is required")
 	}
 
 	return nil, nil

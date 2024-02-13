@@ -9,6 +9,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 
@@ -44,7 +45,7 @@ func NewSecureBootSigner(certPath, keyPath string) (*SecureBootSigner, error) {
 	// convert private key to rsa.PrivateKey
 	rsaPrivateKeyBlock, _ := pem.Decode(keyData)
 	if rsaPrivateKeyBlock == nil {
-		return nil, fmt.Errorf("failed to decode private key")
+		return nil, errors.New("failed to decode private key")
 	}
 
 	rsaKey, err := x509.ParsePKCS1PrivateKey(rsaPrivateKeyBlock.Bytes)
@@ -59,7 +60,7 @@ func NewSecureBootSigner(certPath, keyPath string) (*SecureBootSigner, error) {
 
 	certBlock, _ := pem.Decode(certData)
 	if certBlock == nil {
-		return nil, fmt.Errorf("failed to decode certificate")
+		return nil, errors.New("failed to decode certificate")
 	}
 
 	cert, err := x509.ParseCertificate(certBlock.Bytes)

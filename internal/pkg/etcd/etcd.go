@@ -104,7 +104,7 @@ func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Config, p
 
 	if !preserve {
 		if len(resp.Members) == 1 {
-			return fmt.Errorf("only 1 etcd member found; assuming this is not an HA setup and refusing to upgrade; if this is a single-node cluster, use --preserve to upgrade")
+			return errors.New("only 1 etcd member found; assuming this is not an HA setup and refusing to upgrade; if this is a single-node cluster, use --preserve to upgrade")
 		}
 	}
 
@@ -220,7 +220,7 @@ func (c *Client) ForfeitLeadership(ctx context.Context, memberID string) (string
 	}
 
 	if len(resp.Members) == 1 {
-		return "", fmt.Errorf("cannot forfeit leadership, only one member")
+		return "", errors.New("cannot forfeit leadership, only one member")
 	}
 
 	var member *etcdserverpb.Member

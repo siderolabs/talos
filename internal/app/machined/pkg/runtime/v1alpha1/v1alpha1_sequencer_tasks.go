@@ -160,7 +160,7 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 			// assert that cgroupsv2 is being used when running not in container mode,
 			// as Talos sets up cgroupsv2 on its own
 			if cgroups.Mode() != cgroups.Unified && !mount.ForceGGroupsV1() {
-				return fmt.Errorf("cgroupsv2 should be used")
+				return errors.New("cgroupsv2 should be used")
 			}
 		}
 
@@ -504,7 +504,7 @@ func DiskSizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 		disk := r.State().Machine().Disk() // get ephemeral disk state
 		if disk == nil {
-			return fmt.Errorf("failed to get ephemeral disk state")
+			return errors.New("failed to get ephemeral disk state")
 		}
 
 		diskSize, err := disk.Size()
@@ -1569,7 +1569,7 @@ func ResetUserDisks(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, st
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		in, ok := data.(runtime.ResetOptions)
 		if !ok {
-			return fmt.Errorf("unexpected runtime data")
+			return errors.New("unexpected runtime data")
 		}
 
 		wipeDevice := func(deviceName string) error {
@@ -1637,7 +1637,7 @@ func parseTargets(r runtime.Runtime, wipeStr string) (targets, error) {
 	}
 
 	if len(result) == 0 {
-		return targets{}, fmt.Errorf("no wipe labels specified")
+		return targets{}, errors.New("no wipe labels specified")
 	}
 
 	return targets{systemDiskTargets: result}, nil
@@ -1654,7 +1654,7 @@ func ResetSystemDiskSpec(_ runtime.Sequence, data any) (runtime.TaskExecutionFun
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		in, ok := data.(SystemDiskTargets)
 		if !ok {
-			return fmt.Errorf("unexpected runtime data")
+			return errors.New("unexpected runtime data")
 		}
 
 		for _, target := range in.GetSystemDiskTargets() {
@@ -1730,7 +1730,7 @@ func VerifyDiskAvailability(runtime.Sequence, any) (runtime.TaskExecutionFunc, s
 						mountsReported = true
 					}
 
-					return retry.ExpectedError(fmt.Errorf("ephemeral partition in use: %q", partname))
+					return retry.ExpectedErrorf("ephemeral partition in use: %q", partname)
 				}
 
 				return fmt.Errorf("failed to verify ephemeral partition not in use: %w", err)
@@ -1868,7 +1868,7 @@ func SaveStateEncryptionConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc
 		}
 
 		if !ok {
-			return fmt.Errorf("failed to save state encryption config in the META partition")
+			return errors.New("failed to save state encryption config in the META partition")
 		}
 
 		return r.State().Machine().Meta().Flush()
@@ -2051,7 +2051,7 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 			logger.Println("staged upgrade successful")
 
 		default:
-			return fmt.Errorf("unsupported configuration for install task")
+			return errors.New("unsupported configuration for install task")
 		}
 
 		return nil

@@ -6,7 +6,7 @@ package talos
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 
@@ -22,7 +22,7 @@ var interfacesCmd = &cobra.Command{
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			return fmt.Errorf("`talosctl interfaces` is deprecated, please use `talosctl get addresses` and `talosctl get links` instead")
+			return errors.New("`talosctl interfaces` is deprecated, please use `talosctl get addresses` and `talosctl get links` instead")
 		})
 	},
 }

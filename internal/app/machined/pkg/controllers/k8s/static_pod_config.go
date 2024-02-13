@@ -6,6 +6,7 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -85,7 +86,7 @@ func (ctrl *StaticPodConfigController) Run(ctx context.Context, r controller.Run
 				}
 
 				if !ok {
-					return fmt.Errorf("name is missing in static pod metadata")
+					return errors.New("name is missing in static pod metadata")
 				}
 
 				namespace, ok, err = unstructured.NestedString(pod, "metadata", "namespace")

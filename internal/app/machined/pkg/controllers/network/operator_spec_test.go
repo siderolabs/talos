@@ -236,7 +236,7 @@ func (suite *OperatorSpecSuite) assertResources(resourceType resource.Type, requ
 	}
 
 	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
+		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
 	}
 
 	return nil

@@ -233,7 +233,7 @@ func (ctrl *KmsgLogDeliveryController) resend(ctx context.Context, r controller.
 			return nil
 		case <-r.EventCh():
 			// config changed, restart the loop
-			return fmt.Errorf("config changed")
+			return errors.New("config changed")
 		case <-time.After(logRetryTimeout):
 		}
 	}

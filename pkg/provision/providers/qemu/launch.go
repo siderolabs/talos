@@ -157,10 +157,9 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 
 	vmIface, tapIface, err := cniutils.VMTapPair(currentResult, containerID)
 	if err != nil {
-		return fmt.Errorf(
+		return errors.New(
 			"failed to parse VM network configuration from CNI output, ensure CNI is configured with a plugin " +
-				"that supports automatic VM network configuration such as tc-redirect-tap",
-		)
+				"that supports automatic VM network configuration such as tc-redirect-tap")
 	}
 
 	cniChain := utils.FormatChainName(config.NetworkConfig.Name, containerID)
@@ -396,7 +395,7 @@ func launchVM(config *LaunchConfig) error {
 
 			<-done
 
-			return fmt.Errorf("process stopped")
+			return errors.New("process stopped")
 		case err := <-done:
 			if err != nil {
 				return fmt.Errorf("process exited with error %s", err)
@@ -464,7 +463,7 @@ func Launch() error {
 				case sig := <-config.c:
 					fmt.Fprintf(os.Stderr, "exiting stopped launcher as signal %s was received\n", sig)
 
-					return fmt.Errorf("process stopped")
+					return errors.New("process stopped")
 				}
 			}
 

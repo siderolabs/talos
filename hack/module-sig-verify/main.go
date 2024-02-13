@@ -12,6 +12,7 @@ import (
 	"crypto/sha512"
 	"crypto/x509"
 	"encoding/binary"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -177,7 +178,7 @@ func verifyModule(crt *x509.Certificate, moduleData io.ReadSeeker) error {
 
 	pubKey, ok := crt.PublicKey.(*rsa.PublicKey)
 	if !ok {
-		return fmt.Errorf("failed to convert public key to RSA key")
+		return errors.New("failed to convert public key to RSA key")
 	}
 
 	if err := rsa.VerifyPKCS1v15(pubKey, crypto.SHA512, hashed[:], signatureSigned); err != nil {

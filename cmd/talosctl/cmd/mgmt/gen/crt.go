@@ -7,6 +7,7 @@ package gen
 import (
 	stdlibx509 "crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -38,7 +39,7 @@ var genCrtCmd = &cobra.Command{
 
 		caPemBlock, _ := pem.Decode(caBytes)
 		if caPemBlock == nil {
-			return fmt.Errorf("error decoding cert PEM")
+			return errors.New("error decoding cert PEM")
 		}
 
 		caCrt, err := stdlibx509.ParseCertificate(caPemBlock.Bytes)
@@ -53,7 +54,7 @@ var genCrtCmd = &cobra.Command{
 
 		keyPemBlock, _ := pem.Decode(keyBytes)
 		if keyPemBlock == nil {
-			return fmt.Errorf("error decoding key PEM")
+			return errors.New("error decoding key PEM")
 		}
 
 		caKey, err := stdlibx509.ParsePKCS8PrivateKey(keyPemBlock.Bytes)
@@ -68,7 +69,7 @@ var genCrtCmd = &cobra.Command{
 
 		csrPemBlock, _ := pem.Decode(csrBytes)
 		if csrPemBlock == nil {
-			return fmt.Errorf("error parsing CSR PEM")
+			return errors.New("error parsing CSR PEM")
 		}
 
 		ccsr, err := stdlibx509.ParseCertificateRequest(csrPemBlock.Bytes)

@@ -9,6 +9,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -237,7 +238,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	}
 
 	if !e2ePassed {
-		return fmt.Errorf("missing e2e plugin status")
+		return errors.New("missing e2e plugin status")
 	}
 
 	if options.RetrieveResults {
@@ -250,7 +251,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 		}
 
 		if resultR == nil {
-			return fmt.Errorf("no result reader")
+			return errors.New("no result reader")
 		}
 
 		gzipR, err := gzip.NewReader(resultR)

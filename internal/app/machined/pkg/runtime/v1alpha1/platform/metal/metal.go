@@ -7,6 +7,7 @@ package metal
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"log"
 	"os"
@@ -133,7 +134,7 @@ func readConfigFromISO() ([]byte, error) {
 	}
 
 	if sb == nil {
-		return nil, fmt.Errorf("error while substituting filesystem type")
+		return nil, stderrors.New("error while substituting filesystem type")
 	}
 
 	if err = unix.Mount(dev.Device().Name(), mnt, sb.Type(), unix.MS_RDONLY, ""); err != nil {

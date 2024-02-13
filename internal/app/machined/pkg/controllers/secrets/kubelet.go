@@ -6,6 +6,7 @@ package secrets
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -66,7 +67,7 @@ func NewKubeletController() *KubeletController {
 				kubeletSecrets.CA = cfgProvider.Cluster().CA()
 
 				if kubeletSecrets.CA == nil {
-					return fmt.Errorf("missing cluster.CA secret")
+					return errors.New("missing cluster.CA secret")
 				}
 
 				kubeletSecrets.BootstrapTokenID = cfgProvider.Cluster().Token().ID()

@@ -74,7 +74,7 @@ func parse(r io.Reader) (decoded []config.Document, err error) {
 		}
 
 		if manifests.Kind != yaml.DocumentNode {
-			return nil, fmt.Errorf("expected a document")
+			return nil, errors.New("expected a document")
 		}
 
 		for _, manifest := range manifests.Content {
@@ -100,7 +100,7 @@ func decode(manifest *yaml.Node) (target config.Document, err error) {
 		switch node.Value {
 		case ManifestKindKey:
 			if len(manifest.Content) < i+1 {
-				return nil, fmt.Errorf("missing manifest content")
+				return nil, errors.New("missing manifest content")
 			}
 
 			if err = manifest.Content[i+1].Decode(&kind); err != nil {
@@ -108,7 +108,7 @@ func decode(manifest *yaml.Node) (target config.Document, err error) {
 			}
 		case ManifestAPIVersionKey:
 			if len(manifest.Content) < i+1 {
-				return nil, fmt.Errorf("missing manifest content")
+				return nil, errors.New("missing manifest content")
 			}
 
 			if err = manifest.Content[i+1].Decode(&version); err != nil {

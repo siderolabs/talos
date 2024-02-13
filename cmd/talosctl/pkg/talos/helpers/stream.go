@@ -56,7 +56,7 @@ func ReadGRPCStream[S Stream[T], T Message](stream S, handler func(T, string, bo
 			}
 
 			if info.GetMetadata().Error != "" {
-				streamErrs = AppendErrors(streamErrs, fmt.Errorf(info.GetMetadata().Error))
+				streamErrs = AppendErrors(streamErrs, errors.New(info.GetMetadata().Error))
 
 				continue
 			}

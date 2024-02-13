@@ -10,6 +10,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -50,7 +51,7 @@ func NewPCRSigner(keyPath string) (*PCRSigner, error) {
 	// convert private key to rsa.PrivateKey
 	rsaPrivateKeyBlock, _ := pem.Decode(keyData)
 	if rsaPrivateKeyBlock == nil {
-		return nil, fmt.Errorf("failed to decode private key")
+		return nil, errors.New("failed to decode private key")
 	}
 
 	rsaKey, err := x509.ParsePKCS1PrivateKey(rsaPrivateKeyBlock.Bytes)

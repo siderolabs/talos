@@ -6,7 +6,6 @@ package perf_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 	"testing"
@@ -107,7 +106,7 @@ func (suite *PerfSuite) TestReconcile() {
 				memSpec := mem.(*perfresource.Memory).TypedSpec()
 
 				if len(cpuSpec.CPU) == 0 || memSpec.MemTotal == 0 {
-					return retry.ExpectedError(fmt.Errorf("cpu spec does not contain any CPU or Total memory is zero"))
+					return retry.ExpectedErrorf("cpu spec does not contain any CPU or Total memory is zero")
 				}
 
 				return nil

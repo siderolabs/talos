@@ -8,6 +8,7 @@ package global
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 
 	"github.com/siderolabs/crypto/x509"
@@ -69,7 +70,7 @@ func (c *Args) WithClientNoNodes(action func(context.Context, *client.Client) er
 }
 
 // ErrConfigContext is returned when config context cannot be resolved.
-var ErrConfigContext = fmt.Errorf("failed to resolve config context")
+var ErrConfigContext = errors.New("failed to resolve config context")
 
 // WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
 func (c *Args) WithClient(action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
@@ -85,7 +86,7 @@ func (c *Args) WithClient(action func(context.Context, *client.Client) error, di
 			}
 
 			if len(c.Nodes) < 1 {
-				return fmt.Errorf("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
+				return errors.New("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
 			}
 
 			ctx = client.WithNodes(ctx, c.Nodes...)

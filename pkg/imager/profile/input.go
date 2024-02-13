@@ -6,6 +6,7 @@ package profile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -119,7 +120,7 @@ func (key SigningKey) GetSigner(ctx context.Context) (measure.RSAKey, error) {
 	case key.AzureVaultURL != "" && key.AzureKeyID != "":
 		return azure.NewPCRSigner(ctx, key.AzureVaultURL, key.AzureKeyID, key.AzureKeyVersion)
 	default:
-		return nil, fmt.Errorf("unsupported PCR signer")
+		return nil, errors.New("unsupported PCR signer")
 	}
 }
 
@@ -131,7 +132,7 @@ func (keyAndCert SigningKeyAndCertificate) GetSigner(ctx context.Context) (pesig
 	case keyAndCert.AzureVaultURL != "" && keyAndCert.AzureCertificateID != "":
 		return azure.NewSecureBootSigner(ctx, keyAndCert.AzureVaultURL, keyAndCert.AzureCertificateID, keyAndCert.AzureCertificateID)
 	default:
-		return nil, fmt.Errorf("unsupported PCR signer")
+		return nil, errors.New("unsupported PCR signer")
 	}
 }
 
@@ -223,7 +224,7 @@ func fileExists(path string) bool {
 // Pull the container asset to the path.
 func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(string, ...any)) (v1.Image, error) {
 	if c.TarballPath != "" {
-		return nil, fmt.Errorf("pulling tarball container image is not supported")
+		return nil, errors.New("pulling tarball container image is not supported")
 	}
 
 	if c.OCIPath != "" {

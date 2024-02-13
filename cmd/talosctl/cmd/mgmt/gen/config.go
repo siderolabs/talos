@@ -5,6 +5,7 @@
 package gen
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -262,15 +263,15 @@ func writeConfig(args []string) error {
 
 func validateFlags() error {
 	if len(genConfigCmdFlags.outputTypes) == 0 {
-		return fmt.Errorf("at least one output type must be specified")
+		return errors.New("at least one output type must be specified")
 	}
 
 	if len(genConfigCmdFlags.outputTypes) > 1 && genConfigCmdFlags.output == stdoutOutput {
-		return fmt.Errorf("can't use multiple output types with stdout")
+		return errors.New("can't use multiple output types with stdout")
 	}
 
 	if genConfigCmdFlags.outputDir != "" && genConfigCmdFlags.output != "" {
-		return fmt.Errorf("can't use both output-dir and output")
+		return errors.New("can't use both output-dir and output")
 	}
 
 	if genConfigCmdFlags.outputDir != "" {

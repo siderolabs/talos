@@ -6,6 +6,7 @@ package uki
 
 import (
 	"debug/pe"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -30,7 +31,7 @@ func (builder *Builder) assemble() error {
 
 	header, ok := peFile.OptionalHeader.(*pe.OptionalHeader64)
 	if !ok {
-		return fmt.Errorf("failed to get optional header")
+		return errors.New("failed to get optional header")
 	}
 
 	baseVMA := header.ImageBase + uint64(lastSection.VirtualAddress) + uint64(lastSection.VirtualSize)

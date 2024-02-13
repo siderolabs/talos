@@ -7,6 +7,7 @@ package registry
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/netip"
 	"strconv"
@@ -235,7 +236,7 @@ func (r *Kubernetes) Push(ctx context.Context, affiliate *cluster.Affiliate) err
 // Watch should be called first for the List to return data.
 func (r *Kubernetes) List(localNodeName string) ([]*cluster.AffiliateSpec, error) {
 	if r.nodes == nil {
-		return nil, fmt.Errorf("List() called without Watch() first")
+		return nil, errors.New("List() called without Watch() first")
 	}
 
 	nodes, err := r.nodes.Lister().List(labels.Everything())

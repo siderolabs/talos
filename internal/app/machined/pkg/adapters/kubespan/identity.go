@@ -5,6 +5,7 @@
 package kubespan
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -57,7 +58,7 @@ func (a identity) UpdateAddress(clusterID string, mac net.HardwareAddr) error {
 
 func wgEUI64(prefix netip.Prefix, mac net.HardwareAddr) (out netip.Prefix, err error) {
 	if value.IsZero(prefix) {
-		return out, fmt.Errorf("cannot calculate IP from zero prefix")
+		return out, errors.New("cannot calculate IP from zero prefix")
 	}
 
 	stdIP, err := eui64.ParseMAC(netipx.PrefixIPNet(prefix).IP, mac)

@@ -86,21 +86,21 @@ func NewPCRSigner(ctx context.Context, vaultURL, keyID, keyVersion string) (*Key
 	}
 
 	if keyResponse.Key.Kty == nil {
-		return nil, fmt.Errorf("key type is nil")
+		return nil, errors.New("key type is nil")
 	}
 
 	switch *keyResponse.Key.Kty { //nolint:exhaustive
 	case azkeys.KeyTypeRSA, azkeys.KeyTypeRSAHSM:
 		// expected, continue
 	default:
-		return nil, fmt.Errorf("key type is not RSA")
+		return nil, errors.New("key type is not RSA")
 	}
 
 	var publicKey rsa.PublicKey
 
 	// N = modulus
 	if len(keyResponse.Key.N) == 0 {
-		return nil, fmt.Errorf("property N is empty")
+		return nil, errors.New("property N is empty")
 	}
 
 	publicKey.N = &big.Int{}
@@ -108,7 +108,7 @@ func NewPCRSigner(ctx context.Context, vaultURL, keyID, keyVersion string) (*Key
 
 	// e = public exponent
 	if len(keyResponse.Key.E) == 0 {
-		return nil, fmt.Errorf("property e is empty")
+		return nil, errors.New("property e is empty")
 	}
 
 	publicKey.E = int(big.NewInt(0).SetBytes(keyResponse.Key.E).Uint64())

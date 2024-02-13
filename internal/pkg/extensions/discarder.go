@@ -5,7 +5,7 @@
 package extensions
 
 import (
-	"fmt"
+	"errors"
 	"io"
 )
 
@@ -22,7 +22,7 @@ type discarder struct {
 // It is an error for the offset to be negative.
 func (r *discarder) ReadAt(p []byte, off int64) (int, error) {
 	if off-r.pos < 0 {
-		return 0, fmt.Errorf("negative seek on discarder not allowed")
+		return 0, errors.New("negative seek on discarder not allowed")
 	}
 
 	if off != r.pos {

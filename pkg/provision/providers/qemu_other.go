@@ -8,11 +8,11 @@ package providers
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
 func newQemu(ctx context.Context) (provision.Provisioner, error) {
-	return nil, fmt.Errorf("qemu provisioner is not supported on this platform")
+	return nil, errors.New("qemu provisioner is not supported on this platform")
 }

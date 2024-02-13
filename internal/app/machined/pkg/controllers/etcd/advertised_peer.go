@@ -6,6 +6,7 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/netip"
 	"reflect"
@@ -144,7 +145,7 @@ func (ctrl *AdvertisedPeerController) updateAdvertisedPeers(ctx context.Context,
 	}
 
 	if localMember == nil {
-		return fmt.Errorf("local member not found in member list")
+		return errors.New("local member not found in member list")
 	}
 
 	newPeerURLs := xslices.Map(advertisedAddresses, func(addr netip.Addr) string {

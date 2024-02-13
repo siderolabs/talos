@@ -6,6 +6,7 @@ package download_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -97,13 +98,13 @@ func TestDownload(t *testing.T) {
 		{
 			name:          "empty error",
 			path:          "/empty",
-			opts:          []download.Option{download.WithErrorOnEmptyResponse(fmt.Errorf("empty response"))},
+			opts:          []download.Option{download.WithErrorOnEmptyResponse(errors.New("empty response"))},
 			expectedError: "empty response",
 		},
 		{
 			name:          "not found error",
 			path:          "/404",
-			opts:          []download.Option{download.WithErrorOnNotFound(fmt.Errorf("gone forever"))},
+			opts:          []download.Option{download.WithErrorOnNotFound(errors.New("gone forever"))},
 			expectedError: "gone forever",
 		},
 		{

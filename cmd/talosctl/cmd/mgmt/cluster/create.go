@@ -262,7 +262,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	if controlplanes < 1 {
-		return fmt.Errorf("number of controlplanes can't be less than 1")
+		return errors.New("number of controlplanes can't be less than 1")
 	}
 
 	controlPlaneNanoCPUs, err := parseCPUShare(controlPlaneCpus)
@@ -287,7 +287,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	if !cidr4.Addr().Is4() {
-		return fmt.Errorf("--cidr is expected to be IPV4 CIDR")
+		return errors.New("--cidr is expected to be IPV4 CIDR")
 	}
 
 	// use ULA IPv6 network fd00::/8, add 'TAL' in hex to build /32 network, add IPv4 CIDR to build /64 unique network
@@ -312,7 +312,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	if len(cidrs) == 0 {
-		return fmt.Errorf("neither IPv4 nor IPv6 network was enabled")
+		return errors.New("neither IPv4 nor IPv6 network was enabled")
 	}
 
 	// Gateway addr at 1st IP in range, ex. 192.168.0.1
@@ -362,7 +362,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	// Validate network chaos flags
 	if !networkChaos {
 		if jitter != 0 || latency != 0 || packetLoss != 0 || packetReorder != 0 || packetCorrupt != 0 || bandwidth != 0 {
-			return fmt.Errorf("network chaos flags can only be used with --with-network-chaos")
+			return errors.New("network chaos flags can only be used with --with-network-chaos")
 		}
 	}
 
@@ -426,7 +426,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 	if ports != "" {
 		if provisionerName != "docker" {
-			return fmt.Errorf("exposed-ports flag only supported with docker provisioner")
+			return errors.New("exposed-ports flag only supported with docker provisioner")
 		}
 
 		portList := strings.Split(ports, ",")
@@ -553,7 +553,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			}
 
 			if len(keys) == 0 {
-				return fmt.Errorf("no disk encryption key types enabled")
+				return errors.New("no disk encryption key types enabled")
 			}
 
 			if encryptStatePartition {
@@ -993,7 +993,7 @@ func getDisks() ([]*provision.Disk, error) {
 		)
 
 		if len(partitions)%2 != 0 {
-			return nil, fmt.Errorf("failed to parse malformed partition definitions")
+			return nil, errors.New("failed to parse malformed partition definitions")
 		}
 
 		partitionIndex := 0
@@ -1002,7 +1002,7 @@ func getDisks() ([]*provision.Disk, error) {
 			partitionPath := partitions[j]
 
 			if !strings.HasPrefix(partitionPath, "/var") {
-				return nil, fmt.Errorf("user disk partitions can only be mounted into /var folder")
+				return nil, errors.New("user disk partitions can only be mounted into /var folder")
 			}
 
 			value, e := strconv.ParseInt(partitions[j+1], 10, 0)
@@ -1012,7 +1012,7 @@ func getDisks() ([]*provision.Disk, error) {
 				partitionSize, e = humanize.ParseBytes(partitions[j+1])
 
 				if e != nil {
-					return nil, fmt.Errorf("failed to parse partition size")
+					return nil, errors.New("failed to parse partition size")
 				}
 			}
 

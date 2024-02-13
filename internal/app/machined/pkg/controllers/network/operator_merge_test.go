@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 	"testing"
@@ -93,7 +92,7 @@ func (suite *OperatorMergeSuite) assertOperators(requiredIDs []string, check fun
 	}
 
 	if len(missingIDs) > 0 {
-		return retry.ExpectedError(fmt.Errorf("some resources are missing: %q", missingIDs))
+		return retry.ExpectedErrorf("some resources are missing: %q", missingIDs)
 	}
 
 	return nil
@@ -110,7 +109,7 @@ func (suite *OperatorMergeSuite) assertNoOperator(id string) error {
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("operator %q is still there", id))
+			return retry.ExpectedErrorf("operator %q is still there", id)
 		}
 	}
 
@@ -293,7 +292,7 @@ func (suite *OperatorMergeSuite) TestMergeFlapping() {
 
 						if *override.TypedSpec() != *r.TypedSpec() {
 							// using retry here, as it might not be reconciled immediately
-							return retry.ExpectedError(fmt.Errorf("not equal yet"))
+							return retry.ExpectedErrorf("not equal yet")
 						}
 
 						return nil

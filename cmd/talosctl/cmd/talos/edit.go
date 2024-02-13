@@ -55,7 +55,7 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 		}
 
 		if mc.Metadata().Type() != config.MachineConfigType {
-			return fmt.Errorf("only the machineconfig resource can be edited")
+			return errors.New("only the machineconfig resource can be edited")
 		}
 
 		metadata := mc.Metadata()

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -166,7 +167,7 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 
 	// Check if the file size is a multiple of 512 bytes
 	if totalSize%pageblob.PageBytes != 0 {
-		return fmt.Errorf("azure: error: the file size must be a multiple of 512 bytes")
+		return errors.New("azure: error: the file size must be a multiple of 512 bytes")
 	}
 
 	_, err = pageBlobClient.Create(ctx, totalSize, nil)
@@ -350,7 +351,7 @@ type azureHelper struct {
 func (helper *azureHelper) setDefaultAzureCreds() error {
 	helper.subscriptionID = os.Getenv("AZURE_SUBSCRIPTION_ID")
 	if len(helper.subscriptionID) == 0 {
-		return fmt.Errorf("azure: AZURE_SUBSCRIPTION_ID is not set")
+		return errors.New("azure: AZURE_SUBSCRIPTION_ID is not set")
 	}
 
 	authFromEnvironment, err := auth.NewAuthorizerFromEnvironment()

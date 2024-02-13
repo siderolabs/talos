@@ -6,7 +6,7 @@ package cluster
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -26,7 +26,7 @@ type LocalClientProvider struct {
 // Client implements ClientProvider interface.
 func (c *LocalClientProvider) Client(endpoints ...string) (*client.Client, error) {
 	if len(endpoints) > 0 {
-		return nil, fmt.Errorf("custom endpoints not supported with LocalClientProvider")
+		return nil, errors.New("custom endpoints not supported with LocalClientProvider")
 	}
 
 	var err error

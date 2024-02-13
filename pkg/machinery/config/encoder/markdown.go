@@ -7,6 +7,7 @@ package encoder
 import (
 	"bytes"
 	_ "embed"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -68,7 +69,7 @@ func (fd *FileDoc) Encode(root *Doc, frontmatter func(title, description string)
 func (fd *FileDoc) Write(path string, frontmatter func(title, description string) string) error {
 	if stat, err := os.Stat(path); !os.IsNotExist(err) {
 		if !stat.IsDir() {
-			return fmt.Errorf("destination path should be a directory")
+			return errors.New("destination path should be a directory")
 		}
 	} else {
 		if err := os.MkdirAll(path, 0o777); err != nil {

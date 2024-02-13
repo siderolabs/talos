@@ -6,7 +6,6 @@ package kubernetes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -294,6 +293,6 @@ func (h *Client) waitForPodDeleted(ctx context.Context, p *corev1.Pod) error {
 			return nil
 		}
 
-		return retry.ExpectedError(errors.New("pod is still running on the node"))
+		return retry.ExpectedErrorf("pod is still running on the node")
 	})
 }

@@ -7,6 +7,7 @@ package check
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -18,7 +19,7 @@ import (
 )
 
 // ErrServiceNotFound is an error that indicates that a service was not found.
-var ErrServiceNotFound = fmt.Errorf("service not found")
+var ErrServiceNotFound = errors.New("service not found")
 
 // ServiceStateAssertion checks whether service reached some specified state.
 func ServiceStateAssertion(ctx context.Context, cl ClusterInfo, service string, states ...string) error {

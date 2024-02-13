@@ -7,6 +7,7 @@ package sdboot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -223,7 +224,7 @@ func (c *Config) Revert(ctx context.Context) error {
 			return WriteVariable(efivario.NewDefaultContext(), LoaderEntryDefaultName, filepath.Base(file))
 		}
 
-		return fmt.Errorf("previous UKI not found")
+		return errors.New("previous UKI not found")
 	}); err != nil {
 		return err
 	}

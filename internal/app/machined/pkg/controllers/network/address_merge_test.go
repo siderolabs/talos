@@ -7,7 +7,6 @@ package network_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/netip"
 	"sync"
@@ -84,7 +83,7 @@ func (suite *AddressMergeSuite) assertNoAddress(id string) error {
 
 	for _, res := range resources.Items {
 		if res.Metadata().ID() == id {
-			return retry.ExpectedError(fmt.Errorf("address %q is still there", id))
+			return retry.ExpectedErrorf("address %q is still there", id)
 		}
 	}
 

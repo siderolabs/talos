@@ -5,6 +5,7 @@
 package makefs
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -37,7 +38,7 @@ func XFSRepair(partname, fsType string) error {
 // XFS creates a XFS filesystem on the specified partition.
 func XFS(partname string, setters ...Option) error {
 	if partname == "" {
-		return fmt.Errorf("missing path to disk")
+		return errors.New("missing path to disk")
 	}
 
 	opts := NewDefaultOptions(setters...)
