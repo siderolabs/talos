@@ -39,6 +39,8 @@ type TalosSuite struct {
 	ExtensionsNvidia bool
 	// TrustedBoot tells if the cluster is secure booted and disks are encrypted
 	TrustedBoot bool
+	// TalosImage is the image name for 'talos' container.
+	TalosImage string
 
 	discoveredNodes cluster.Info
 }

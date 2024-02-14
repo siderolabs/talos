@@ -22,6 +22,7 @@ require (
 	k8s.io/kube-scheduler v0.29.2
 	k8s.io/kubectl v0.29.2
 	k8s.io/kubelet v0.29.2
+	k8s.io/pod-security-admission v0.29.2
 )
 
 require (

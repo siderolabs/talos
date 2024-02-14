@@ -17,6 +17,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -87,7 +88,7 @@ func (p *processRunner) build() (commandWrapper, error) {
 	args := []string{
 		fmt.Sprintf("-name=%s", p.args.ID),
 		fmt.Sprintf("-dropped-caps=%s", strings.Join(p.opts.DroppedCapabilities, ",")),
-		fmt.Sprintf("-cgroup-path=%s", p.opts.CgroupPath),
+		fmt.Sprintf("-cgroup-path=%s", cgroup.Path(p.opts.CgroupPath)),
 		fmt.Sprintf("-oom-score=%d", p.opts.OOMScoreAdj),
 		fmt.Sprintf("-uid=%d", p.opts.UID),
 	}

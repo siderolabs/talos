@@ -7,9 +7,13 @@
 package base
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"slices"
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
@@ -18,14 +22,23 @@ import (
 	eventsv1 "k8s.io/api/events/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/client-go/tools/remotecommand"
+	watchtools "k8s.io/client-go/tools/watch"
 	"k8s.io/kubectl/pkg/scheme"
 
 	taloskubernetes "github.com/siderolabs/talos/pkg/kubernetes"
@@ -39,6 +52,7 @@ type K8sSuite struct {
 	DynamicClient   dynamic.Interface
 	DiscoveryClient *discovery.DiscoveryClient
 	RestConfig      *rest.Config
+	Mapper          *restmapper.DeferredDiscoveryRESTMapper
 }
 
 // SetupSuite initializes Kubernetes client.
@@ -68,6 +82,8 @@ func (k8sSuite *K8sSuite) SetupSuite() {
 
 	k8sSuite.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(config)
 	k8sSuite.Require().NoError(err)
+
+	k8sSuite.Mapper = restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sSuite.DiscoveryClient))
 }
 
 // GetK8sNodeByInternalIP returns the kubernetes node by its internal ip or error if it is not found.
@@ -245,4 +261,140 @@ func (k8sSuite *K8sSuite) GetPodsWithLabel(ctx context.Context, namespace, label
 	}
 
 	return podList, nil
+}
+
+// ParseManifests parses YAML manifest bytes into unstructured objects.
+func (k8sSuite *K8sSuite) ParseManifests(manifests []byte) []unstructured.Unstructured {
+	reader := yaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(manifests)))
+
+	var parsedManifests []unstructured.Unstructured
+
+	for {
+		yamlManifest, err := reader.Read()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			k8sSuite.Require().NoError(err)
+		}
+
+		yamlManifest = bytes.TrimSpace(yamlManifest)
+
+		if len(yamlManifest) == 0 {
+			continue
+		}
+
+		jsonManifest, err := yaml.ToJSON(yamlManifest)
+		if err != nil {
+			k8sSuite.Require().NoError(err, "error converting manifest to JSON")
+		}
+
+		if bytes.Equal(jsonManifest, []byte("null")) || bytes.Equal(jsonManifest, []byte("{}")) {
+			// skip YAML docs which contain only comments
+			continue
+		}
+
+		var obj unstructured.Unstructured
+
+		if err = json.Unmarshal(jsonManifest, &obj); err != nil {
+			k8sSuite.Require().NoError(err, "error loading JSON manifest into unstructured")
+		}
+
+		parsedManifests = append(parsedManifests, obj)
+	}
+
+	return parsedManifests
+}
+
+// ApplyManifests applies the given manifests to the Kubernetes cluster.
+func (k8sSuite *K8sSuite) ApplyManifests(ctx context.Context, manifests []unstructured.Unstructured) {
+	for _, obj := range manifests {
+		mapping, err := k8sSuite.Mapper.RESTMapping(obj.GetObjectKind().GroupVersionKind().GroupKind(), obj.GetObjectKind().GroupVersionKind().Version)
+		if err != nil {
+			k8sSuite.Require().NoError(err, "error creating mapping for object %s", obj.GetName())
+		}
+
+		dr := k8sSuite.DynamicClient.Resource(mapping.Resource).Namespace(obj.GetNamespace())
+
+		_, err = dr.Create(ctx, &obj, metav1.CreateOptions{})
+		k8sSuite.Require().NoError(err, "error creating object %s", obj.GetName())
+
+		k8sSuite.T().Logf("created object %s/%s/%s", obj.GetObjectKind().GroupVersionKind(), obj.GetNamespace(), obj.GetName())
+	}
+}
+
+// DeleteManifests deletes the given manifests from the Kubernetes cluster.
+func (k8sSuite *K8sSuite) DeleteManifests(ctx context.Context, manifests []unstructured.Unstructured) {
+	// process in reverse orderd
+	manifests = slices.Clone(manifests)
+	slices.Reverse(manifests)
+
+	for _, obj := range manifests {
+		mapping, err := k8sSuite.Mapper.RESTMapping(obj.GetObjectKind().GroupVersionKind().GroupKind(), obj.GetObjectKind().GroupVersionKind().Version)
+		if err != nil {
+			k8sSuite.Require().NoError(err, "error creating mapping for object %s", obj.GetName())
+		}
+
+		dr := k8sSuite.DynamicClient.Resource(mapping.Resource).Namespace(obj.GetNamespace())
+
+		err = dr.Delete(ctx, obj.GetName(), metav1.DeleteOptions{})
+		if errors.IsNotFound(err) {
+			continue
+		}
+
+		k8sSuite.Require().NoError(err, "error deleting object %s", obj.GetName())
+
+		// wait for the object to be deleted
+		fieldSelector := fields.OneTermEqualSelector("metadata.name", obj.GetName()).String()
+		lw := &cache.ListWatch{
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				options.FieldSelector = fieldSelector
+
+				return dr.List(ctx, options)
+			},
+			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				options.FieldSelector = fieldSelector
+
+				return dr.Watch(ctx, options)
+			},
+		}
+
+		preconditionFunc := func(store cache.Store) (bool, error) {
+			var exists bool
+
+			_, exists, err = store.Get(&metav1.ObjectMeta{Namespace: obj.GetNamespace(), Name: obj.GetName()})
+			if err != nil {
+				return true, err
+			}
+
+			if !exists {
+				// since we're looking for it to disappear we just return here if it no longer exists
+				return true, nil
+			}
+
+			return false, nil
+		}
+
+		_, err = watchtools.UntilWithSync(ctx, lw, &unstructured.Unstructured{}, preconditionFunc, func(event watch.Event) (bool, error) {
+			return event.Type == watch.Deleted, nil
+		})
+
+		k8sSuite.Require().NoError(err, "error waiting for the object to be deleted %s", obj.GetName())
+
+		k8sSuite.T().Logf("deleted object %s/%s/%s", obj.GetObjectKind().GroupVersionKind(), obj.GetNamespace(), obj.GetName())
+	}
+}
+
+// ToUnstructured converts the given runtime.Object to unstructured.Unstructured.
+func (k8sSuite *K8sSuite) ToUnstructured(obj runtime.Object) unstructured.Unstructured {
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		k8sSuite.Require().NoError(err, "error converting object to unstructured")
+	}
+
+	u := unstructured.Unstructured{Object: unstructuredObj}
+	u.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
+
+	return u
 }

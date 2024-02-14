@@ -108,6 +108,10 @@ func (c *Client) GetEndpoints() []string {
 		return c.options.endpointsOverride
 	}
 
+	if c.options.configContext != nil {
+		return c.options.configContext.Endpoints
+	}
+
 	if c.options.config != nil {
 		if err := c.resolveConfigContext(); err != nil {
 			return nil
