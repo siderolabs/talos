@@ -245,9 +245,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"overlay",
 		MountOverlayFilesystems,
-	).Append(
-		"legacyCleanup",
-		CleanupLegacyStaticPodFiles,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"udevSetup",

@@ -73,7 +73,6 @@ docker run --rm -it \
   --mount type=volume,destination=/etc/cni \
   --mount type=volume,destination=/etc/kubernetes \
   --mount type=volume,destination=/usr/libexec/kubernetes \
-  --mount type=volume,destination=/usr/etc/udev \
   --mount type=volume,destination=/opt \
   -e PLATFORM=container \
   ghcr.io/siderolabs/talos:{{< release >}}

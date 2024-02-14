@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/internal/integration/cli"
 	"github.com/siderolabs/talos/internal/integration/k8s"
 	provision_test "github.com/siderolabs/talos/internal/integration/provision"
+	"github.com/siderolabs/talos/pkg/images"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -49,6 +50,7 @@ var (
 	provisionerName   string
 	clusterName       string
 	stateDir          string
+	talosImage        string
 )
 
 // TestIntegration ...
@@ -99,6 +101,7 @@ func TestIntegration(t *testing.T) {
 				ExtensionsQEMU:   extensionsQEMU,
 				ExtensionsNvidia: extensionsNvidia,
 				TrustedBoot:      trustedBoot,
+				TalosImage:       talosImage,
 			})
 		}
 
@@ -158,6 +161,7 @@ func init() {
 	flag.StringVar(&expectedGoVersion, "talos.go.version", constants.GoVersion, "expected Talos version")
 	flag.StringVar(&talosctlPath, "talos.talosctlpath", "talosctl", "The path to 'talosctl' binary")
 	flag.StringVar(&kubectlPath, "talos.kubectlpath", "kubectl", "The path to 'kubectl' binary")
+	flag.StringVar(&talosImage, "talos.image", images.DefaultTalosImageRepository, "The default 'talos' container image")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")

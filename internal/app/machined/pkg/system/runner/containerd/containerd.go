@@ -22,6 +22,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 )
 
 // containerdRunner is a runner.Runner that runs container in containerd.
@@ -319,7 +320,7 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 	if c.opts.CgroupPath != "" {
 		specOpts = append(
 			specOpts,
-			oci.WithCgroup(c.opts.CgroupPath),
+			oci.WithCgroup(cgroup.Path(c.opts.CgroupPath)),
 		)
 	}
 

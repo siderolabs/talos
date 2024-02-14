@@ -53,6 +53,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/cri"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
@@ -164,6 +165,11 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 			}
 		}
 
+		// Initialize cgroups root path.
+		if err = cgroup.InitRoot(); err != nil {
+			return fmt.Errorf("error initializing cgroups root path: %w", err)
+		}
+
 		groups := []struct {
 			name      string
 			resources *cgroup2.Resources
@@ -188,6 +194,10 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 			},
 			{
 				name:      constants.CgroupSystemRuntime,
+				resources: &cgroup2.Resources{},
+			},
+			{
+				name:      constants.CgroupUdevd,
 				resources: &cgroup2.Resources{},
 			},
 			{
@@ -228,7 +238,7 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 					resources = &cgroup2.Resources{}
 				}
 
-				cg, err := cgroup2.NewManager(constants.CgroupMountPath, c.name, resources)
+				cg, err := cgroup2.NewManager(constants.CgroupMountPath, cgroup.Path(c.name), resources)
 				if err != nil {
 					return fmt.Errorf("failed to create cgroup: %w", err)
 				}
@@ -2198,42 +2208,6 @@ func ForceCleanup(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 		return nil
 	}, "forceCleanup"
-}
-
-// CleanupLegacyStaticPodFiles removes legacy static pod files in the manifests directory.
-//
-// This part of transition to Talos 1.3.0, as Talos 1.3.0 serves static pods from internal web server.
-func CleanupLegacyStaticPodFiles(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		manifestDir, err := os.Open(constants.ManifestsDirectory)
-		if err != nil {
-			return fmt.Errorf("error opening manifests directory: %w", err)
-		}
-
-		defer manifestDir.Close() //nolint:errcheck
-
-		manifests, err := manifestDir.Readdirnames(0)
-		if err != nil {
-			return fmt.Errorf("error listing manifests: %w", err)
-		}
-
-		for _, manifest := range manifests {
-			// skip manifests not owned by Talos
-			if !strings.HasPrefix(manifest, constants.TalosManifestPrefix) {
-				continue
-			}
-
-			podPath := filepath.Join(constants.ManifestsDirectory, manifest)
-
-			logger.Printf("cleaning up legacy static pod file %q", podPath)
-
-			if err = os.Remove(podPath); err != nil {
-				return fmt.Errorf("error cleaning up legacy static pod file: %w", err)
-			}
-		}
-
-		return nil
-	}, "cleanupLegacyStaticPodFiles"
 }
 
 // ReloadMeta reloads META partition after disk mount, installer run, etc.

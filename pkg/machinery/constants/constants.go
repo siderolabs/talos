@@ -650,6 +650,9 @@ const (
 	// CgroupSystemRuntime is the cgroup name for containerd runtime processes.
 	CgroupSystemRuntime = CgroupSystem + "/runtime"
 
+	// CgroupUdevd is the cgroup name for udevd runtime processes.
+	CgroupUdevd = CgroupSystem + "/udevd"
+
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
 

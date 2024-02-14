@@ -101,8 +101,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 		})
 	}
 
-	// constants.UdevDir is in the list to support pre-1.4 Talos versions which had it in constants.Overlays
-	for _, path := range append(constants.Overlays, constants.UdevDir, "/var", "/system/state") {
+	for _, path := range append([]string{constants.EphemeralMountPoint, constants.StateMountPoint}, constants.Overlays...) {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeVolume,
 			Target: path,

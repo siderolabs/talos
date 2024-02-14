@@ -25,6 +25,7 @@ import (
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
@@ -275,9 +276,9 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 	config.Authorization = kubeletconfig.KubeletAuthorization{
 		Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
 	}
-	config.CgroupRoot = "/"
-	config.SystemCgroups = constants.CgroupSystem
-	config.KubeletCgroups = constants.CgroupKubelet
+	config.CgroupRoot = cgroup.Root()
+	config.SystemCgroups = cgroup.Path(constants.CgroupSystem)
+	config.KubeletCgroups = cgroup.Path(constants.CgroupKubelet)
 	config.RotateCertificates = true
 	config.ProtectKernelDefaults = true
 
