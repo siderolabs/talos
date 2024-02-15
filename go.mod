@@ -15,15 +15,15 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.29.1
-	k8s.io/apimachinery v0.29.1
-	k8s.io/apiserver v0.29.1
-	k8s.io/client-go v0.29.1
-	k8s.io/component-base v0.29.1
-	k8s.io/cri-api v0.29.1
-	k8s.io/kube-scheduler v0.29.1
-	k8s.io/kubectl v0.29.1
-	k8s.io/kubelet v0.29.1
+	k8s.io/api v0.30.0-alpha.2
+	k8s.io/apimachinery v0.30.0-alpha.2
+	k8s.io/apiserver v0.30.0-alpha.2
+	k8s.io/client-go v0.30.0-alpha.2
+	k8s.io/component-base v0.30.0-alpha.2
+	k8s.io/cri-api v0.30.0-alpha.2
+	k8s.io/kube-scheduler v0.30.0-alpha.2
+	k8s.io/kubectl v0.30.0-alpha.2
+	k8s.io/kubelet v0.30.0-alpha.2
 )
 
 require (
@@ -114,7 +114,7 @@ require (
 	github.com/siderolabs/go-debug v0.3.0
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
-	github.com/siderolabs/go-kubernetes v0.2.8
+	github.com/siderolabs/go-kubernetes v0.2.9
 	github.com/siderolabs/go-loadbalancer v0.3.2
 	github.com/siderolabs/go-pcidb v0.2.0
 	github.com/siderolabs/go-pointer v1.0.0
@@ -332,9 +332,9 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.29.1 // indirect
+	k8s.io/cli-runtime v0.30.0-alpha.2 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00 // indirect
+	k8s.io/kube-openapi v0.0.0-20231113174909-778a5567bc1e // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.69 // indirect
 	rsc.io/qr v0.2.0 // indirect

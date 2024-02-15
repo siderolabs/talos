@@ -15,7 +15,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -110,8 +109,6 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		kubeSchedulerConfig := kubeSchedulerRes.TypedSpec()
 
-		kubeSchedulerVersion := compatibility.VersionFromImageRef(kubeSchedulerConfig.Image)
-
 		type configFile struct {
 			filename string
 			f        func() (runtime.Object, error)
@@ -157,7 +154,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 				configs: []configFile{
 					{
 						filename: "scheduler-config.yaml",
-						f:        schedulerConfig(kubeSchedulerConfig, kubeSchedulerVersion),
+						f:        schedulerConfig(kubeSchedulerConfig),
 					},
 				},
 			},
@@ -243,7 +240,7 @@ func auditPolicyConfig(spec *k8s.AuditPolicyConfigSpec) func() (runtime.Object, 
 	}
 }
 
-func schedulerConfig(spec *k8s.SchedulerConfigSpec, kubeSchedulerVersion compatibility.Version) func() (runtime.Object, error) {
+func schedulerConfig(spec *k8s.SchedulerConfigSpec) func() (runtime.Object, error) {
 	return func() (runtime.Object, error) {
 		var cfg schedulerv1.KubeSchedulerConfiguration
 
@@ -251,7 +248,7 @@ func schedulerConfig(spec *k8s.SchedulerConfigSpec, kubeSchedulerVersion compati
 			return nil, fmt.Errorf("error unmarshaling scheduler configuration: %w", err)
 		}
 
-		cfg.APIVersion = kubeSchedulerVersion.KubeSchedulerConfigurationAPIVersion()
+		cfg.APIVersion = "kubescheduler.config.k8s.io/v1"
 		cfg.Kind = "KubeSchedulerConfiguration"
 		cfg.ClientConnection.Kubeconfig = filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")
 

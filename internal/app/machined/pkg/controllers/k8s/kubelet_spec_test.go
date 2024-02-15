@@ -421,22 +421,6 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 		},
 		{
-			name: "enable seccomp default + feature flag",
-			cfgSpec: &k8s.KubeletConfigSpec{
-				ClusterDNS:                   []string{"10.0.0.5"},
-				ClusterDomain:                "cluster.local",
-				DefaultRuntimeSeccompEnabled: true,
-			},
-			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.24.0"),
-			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
-				kc.ContainerRuntimeEndpoint = ""
-				kc.SeccompDefault = pointer.To(true)
-				kc.FeatureGates = map[string]bool{
-					"SeccompDefault": true,
-				}
-			},
-		},
-		{
 			name: "enable skipNodeRegistration",
 			cfgSpec: &k8s.KubeletConfigSpec{
 				ClusterDNS:           []string{"10.0.0.5"},

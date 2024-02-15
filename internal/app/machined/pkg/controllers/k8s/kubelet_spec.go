@@ -285,17 +285,8 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 		config.ContainerRuntimeEndpoint = "unix://" + constants.CRIContainerdAddress
 	}
 
-	// SeccompDefault feature gate is enabled by default Kubernetes 1.25+, GA in 1.27
 	if cfgSpec.DefaultRuntimeSeccompEnabled {
 		config.SeccompDefault = pointer.To(true)
-
-		if !kubeletVersion.FeatureFlagSeccompDefaultEnabledByDefault() {
-			if config.FeatureGates == nil {
-				config.FeatureGates = map[string]bool{}
-			}
-
-			config.FeatureGates["SeccompDefault"] = true
-		}
 	}
 
 	if cfgSpec.EnableFSQuotaMonitoring {
