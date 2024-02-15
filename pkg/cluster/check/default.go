@@ -15,13 +15,6 @@ import (
 // DefaultClusterChecks returns a set of default Talos cluster readiness checks.
 func DefaultClusterChecks() []ClusterCheck {
 	return append(PreBootSequenceChecks(), []ClusterCheck{
-		// wait for all nodes to finish booting
-		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("all nodes to finish boot sequence", func(ctx context.Context) error {
-				return AllNodesBootedAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
-		},
-
 		// wait for all the nodes to report in at k8s level
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all k8s nodes to report", func(ctx context.Context) error {
@@ -147,6 +140,13 @@ func PreBootSequenceChecks() []ClusterCheck {
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("kubelet to be healthy", func(ctx context.Context) error {
 				return ServiceHealthAssertion(ctx, cluster, "kubelet", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
+			}, 5*time.Minute, 5*time.Second)
+		},
+
+		// wait for all nodes to finish booting
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("all nodes to finish boot sequence", func(ctx context.Context) error {
+				return AllNodesBootedAssertion(ctx, cluster)
 			}, 5*time.Minute, 5*time.Second)
 		},
 	}
