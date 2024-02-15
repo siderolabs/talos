@@ -152,7 +152,7 @@ local TriggerDownstream(name, target, repositories, image='', params=[], depends
 // This provides the docker service.
 local docker = {
   name: 'docker',
-  image: 'ghcr.io/smira/docker:20.10-dind-hacked',
+  image: 'docker:25.0.2-dind',
   entrypoint: ['dockerd'],
   privileged: true,
   command: [
