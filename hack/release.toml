@@ -96,6 +96,9 @@ environment:
 ```
 
 For documentation, see [Extension Services Config Files](https://www.talos.dev/v1.7/reference/configuration/extensions/extensionserviceconfig/).
+
+**Note**: The use of `environmentFile` in extension service spec is now deprecated and will be removed in a future release of Talos.
+Use `ExtensionServiceConfig` instead.
 """
 
     [notes.k8supgrade]

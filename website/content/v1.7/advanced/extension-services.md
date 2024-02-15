@@ -27,8 +27,6 @@ Format of the extension service config:
 name: hello-world
 container:
   entrypoint: ./hello-world
-  # an optional path to a file containing environment variables
-  environmentFile: /var/etc/hello-world/env
   environment:
     - XDG_RUNTIME_DIR=/run
   args:
@@ -57,8 +55,10 @@ The extension service will be registered as a Talos service under an `ext-<name>
 ### `container`
 
 * `entrypoint` defines the container entrypoint relative to the container root filesystem (`/usr/local/lib/containers/<name>`)
-* `environmentFile` defines the path to a file containing environment variables, the service waits for the file to exist before starting
-* `environment` defines the container environment variables, overrides the variables from `environmentFile`
+* `environmentFile` (**deprecated**) defines the path to a file containing environment variables, the service waits for the file to
+  exist before starting.
+  Use `ExtensionServiceConfig` instead.
+* `environment` defines the container environment variables.
 * `args` defines the additional arguments to pass to the entrypoint
 * `mounts` defines the volumes to be mounted into the container root
 

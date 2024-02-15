@@ -36,7 +36,23 @@ For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade
 
 ## Before Upgrade to {{% release %}}
 
-There are no specific actions to be taken before an upgrade.
+If running `tailscale` or `nut-client` extension, follow the below steps for upgrade.
+
+### nut-client
+
+First start by editing the machine config in `staged` mode (`talosctl edit mc --mode=staged`) and remove the `.machine.files` section that adds the `nut-client` config.
+
+Now upgrade talos to `{{% release %}}`, the `nut-client` service would now be waiting for the `ExtensionServiceConfig` document.
+
+Create a config document as described in the `nut-client` [README](https://github.com/siderolabs/extensions/blob/main/power/nut-client/README.md#usage) and apply the patch.
+
+### tailscale
+
+First start by editing the machine config in `staged` mode (`talosctl edit mc --mode=staged`) and remove the `.machine.files` section that adds the `tailscale` auth key file.
+
+Upgrade talos to `{{% release %}}`, the `tailscale` service would now be waiting for the `ExtensionServiceConfig` document.
+
+Create a config document as described in the `tailscale` [README](https://github.com/siderolabs/extensions/blob/main/network/tailscale/README.md#usage) and apply the patch.
 
 Please review the [release notes]({{< relref "../introduction/what-is-new" >}}) for any changes that may affect your cluster.
 
