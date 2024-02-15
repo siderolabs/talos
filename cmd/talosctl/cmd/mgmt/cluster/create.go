@@ -706,6 +706,17 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		return err
 	}
 
+	bundleTalosconfig := configBundle.TalosConfig()
+	if bundleTalosconfig == nil {
+		if clusterWait {
+			return errors.New("no talosconfig in the config bundle: cannot wait for cluster")
+		}
+
+		if applyConfigEnabled {
+			return errors.New("no talosconfig in the config bundle: cannot apply config")
+		}
+	}
+
 	if skipInjectingConfig {
 		types := []machine.Type{machine.TypeControlPlane, machine.TypeWorker}
 
@@ -827,8 +838,13 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		return err
 	}
 
+	// No talosconfig in the bundle - skip the operations below
+	if bundleTalosconfig == nil {
+		return nil
+	}
+
 	// Create and save the talosctl configuration file.
-	if err = saveConfig(configBundle.TalosConfig()); err != nil {
+	if err = saveConfig(bundleTalosconfig); err != nil {
 		return err
 	}
 
