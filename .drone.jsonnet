@@ -375,14 +375,14 @@ local ExtensionsStep(with_e2e=true) =
     extra_commands=[
       // create a patch file to pass to the downstream build
       // ignore nvidia extensions, testing nvidia extensions needs a machine with nvidia graphics card
-      'jq -R < _out/extensions-metadata | jq -s -f hack/test/extensions/extension-patch-filter.jq > _out/extensions-patch.json',
-      'cat _out/extensions-patch.json',
+      'jq -R < _out/extensions-metadata | jq -s -f hack/test/extensions/extension-patch-filter.jq | yq eval ".[] | split_doc" -P > _out/extensions-patch.yaml',
+      'cat _out/extensions-patch.yaml',
     ]
   );
 
   local e2e_extensions = Step('e2e-extensions', target='e2e-qemu', privileged=true, depends_on=[extensions_patch_manifest], environment={
     QEMU_MEMORY_WORKERS: '4096',
-    WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.json',
+    WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.yaml',
     IMAGE_REGISTRY: local_registry,
     QEMU_EXTRA_DISKS: '3',
     SHORT_INTEGRATION_TEST: 'yes',
