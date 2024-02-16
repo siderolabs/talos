@@ -90,7 +90,8 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 		return err
 	}
 
-	if !mc.Config().Machine().Features().LocalDNSEnabled() {
+	machineConfig := mc.Config().Machine()
+	if machineConfig == nil || !machineConfig.Features().LocalDNSEnabled() {
 		return nil
 	}
 
