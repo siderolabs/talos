@@ -7,12 +7,15 @@ package authz
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/netip"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
@@ -23,8 +26,12 @@ const (
 	// Disabled is used when RBAC is disabled in the machine configuration. All roles are assumed.
 	Disabled InjectorMode = iota
 
-	// ReadOnly is used to inject only Reader role.
+	// ReadOnly is used to inject only the Reader role.
 	ReadOnly
+
+	// ReadOnlyWithAdminOnSiderolink is used to inject the Admin role if the peer is a SideroLink peer.
+	// Otherwise, the Reader role is injected.
+	ReadOnlyWithAdminOnSiderolink
 
 	// MetadataOnly is used internally. Checks only metadata.
 	MetadataOnly
@@ -33,10 +40,22 @@ const (
 	Enabled
 )
 
+var (
+	adminRoleSet  = role.MakeSet(role.Admin)
+	readerRoleSet = role.MakeSet(role.Reader)
+)
+
+// SideroLinkPeerCheckFunc checks if the peer is a SideroLink peer.
+type SideroLinkPeerCheckFunc func(ctx context.Context) (netip.Addr, bool)
+
 // Injector sets roles to the context.
 type Injector struct {
 	// Mode.
 	Mode InjectorMode
+
+	// SideroLinkPeerCheckFunc checks if the peer is a SideroLink peer.
+	// When not specified, it defaults to isSideroLinkPeer.
+	SideroLinkPeerCheckFunc SideroLinkPeerCheckFunc
 
 	// Logger.
 	Logger func(format string, v ...interface{})
@@ -65,7 +84,21 @@ func (i *Injector) extractRoles(ctx context.Context) role.Set {
 		return role.All
 
 	case ReadOnly:
-		return role.MakeSet(role.Reader)
+		return readerRoleSet
+
+	case ReadOnlyWithAdminOnSiderolink:
+		check := i.SideroLinkPeerCheckFunc
+		if check == nil {
+			check = isSideroLinkPeer
+		}
+
+		if siderolinkPeerAddr, siderolinkPeer := check(ctx); siderolinkPeer {
+			i.logf("inject admin role for SideroLink peer %q", siderolinkPeerAddr)
+
+			return adminRoleSet
+		}
+
+		return readerRoleSet
 
 	case MetadataOnly:
 		roles, _ := getFromMetadata(ctx, i.logf)
@@ -134,4 +167,32 @@ func (i *Injector) StreamInterceptor() grpc.StreamServerInterceptor {
 
 		return handler(srv, wrapped)
 	}
+}
+
+func isSideroLinkPeer(ctx context.Context) (netip.Addr, bool) {
+	addr, ok := peerAddress(ctx)
+	if !ok {
+		return netip.Addr{}, false
+	}
+
+	return addr, network.IsULA(addr, network.ULASideroLink)
+}
+
+func peerAddress(ctx context.Context) (netip.Addr, bool) {
+	remotePeer, ok := peer.FromContext(ctx)
+	if !ok {
+		return netip.Addr{}, false
+	}
+
+	ip, _, err := net.SplitHostPort(remotePeer.Addr.String())
+	if err != nil {
+		return netip.Addr{}, false
+	}
+
+	addr, err := netip.ParseAddr(ip)
+	if err != nil {
+		return netip.Addr{}, false
+	}
+
+	return addr, true
 }

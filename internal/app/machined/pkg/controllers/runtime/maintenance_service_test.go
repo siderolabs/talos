@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
@@ -32,6 +33,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
+const isSiderolinkPeerHeaderKey = "is-siderolink-peer"
+
 func TestMaintenanceServiceSuite(t *testing.T) {
 	suite.Run(t, &MaintenanceServiceSuite{
 		DefaultSuite: ctest.DefaultSuite{
@@ -42,7 +45,16 @@ func TestMaintenanceServiceSuite(t *testing.T) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&secrets.MaintenanceRootController{}))
 				suite.Require().NoError(suite.Runtime().RegisterController(&secrets.MaintenanceCertSANsController{}))
 				suite.Require().NoError(suite.Runtime().RegisterController(&secrets.MaintenanceController{}))
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.MaintenanceServiceController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.MaintenanceServiceController{
+					SiderolinkPeerCheckFunc: func(ctx context.Context) (netip.Addr, bool) {
+						isSiderolinkPeer := len(metadata.ValueFromIncomingContext(ctx, isSiderolinkPeerHeaderKey)) > 0
+						if isSiderolinkPeer {
+							return netip.MustParseAddr("127.0.0.42"), true
+						}
+
+						return netip.Addr{}, false
+					},
+				}))
 			},
 		},
 	})
@@ -129,6 +141,19 @@ func (suite *MaintenanceServiceSuite) TestRunService() {
 	// verify that old address returns connection refused
 	_, err = net.Dial("tcp", oldListenAddress)
 	suite.Require().ErrorContains(err, "connection refused")
+
+	// test the API again over SideroLink - the Admin role must be injected to the call
+	mc, err = client.New(suite.Ctx(),
+		client.WithTLSConfig(&tls.Config{
+			InsecureSkipVerify: true,
+		}), client.WithEndpoints(maintenanceConfig.TypedSpec().ListenAddress),
+	)
+	suite.Require().NoError(err)
+
+	siderolinkCtx := metadata.AppendToOutgoingContext(suite.Ctx(), isSiderolinkPeerHeaderKey, "yep")
+
+	_, err = mc.Version(siderolinkCtx)
+	suite.Require().NoError(err)
 
 	// teardown the maintenance service
 	_, err = suite.State().Teardown(suite.Ctx(), maintenanceRequest.Metadata())
