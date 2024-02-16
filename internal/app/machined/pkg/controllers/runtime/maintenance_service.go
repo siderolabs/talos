@@ -35,7 +35,9 @@ import (
 )
 
 // MaintenanceServiceController runs the maintenance service based on the configuration.
-type MaintenanceServiceController struct{}
+type MaintenanceServiceController struct {
+	SiderolinkPeerCheckFunc authz.SideroLinkPeerCheckFunc
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *MaintenanceServiceController) Name() string {
@@ -117,7 +119,8 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 	srv := maintenance.New(cfgCh)
 
 	injector := &authz.Injector{
-		Mode: authz.ReadOnly,
+		Mode:                    authz.ReadOnlyWithAdminOnSiderolink,
+		SideroLinkPeerCheckFunc: ctrl.SiderolinkPeerCheckFunc,
 	}
 
 	if debug.Enabled {

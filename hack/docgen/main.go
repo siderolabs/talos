@@ -431,7 +431,6 @@ func render(doc *Doc, dest string) {
 	defer out.Close()
 
 	_, err = out.Write(formatted)
-
 	if err != nil {
 		log.Fatalf("failed to write output file: %v", err)
 	}

@@ -26,6 +26,11 @@ func GetRoles(ctx context.Context) role.Set {
 	return set
 }
 
+// HasRole returns true if the context includes the given role.
+func HasRole(ctx context.Context, r role.Role) bool {
+	return GetRoles(ctx).Includes(r)
+}
+
 // getFromContext returns roles stored in the context.
 func getFromContext(ctx context.Context) (role.Set, bool) {
 	set, ok := ctx.Value(ctxKey{}).(role.Set)

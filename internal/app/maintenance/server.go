@@ -27,12 +27,14 @@ import (
 	"github.com/siderolabs/talos/internal/app/resources"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
 	"github.com/siderolabs/talos/internal/pkg/configuration"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 	"github.com/siderolabs/talos/pkg/version"
 )
 
@@ -71,7 +73,7 @@ func (s *Server) Register(obj *grpc.Server) {
 }
 
 // ApplyConfiguration implements [machine.MachineServiceServer].
-func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
+func (s *Server) ApplyConfiguration(_ context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	//nolint:exhaustive
 	switch in.Mode {
 	case machine.ApplyConfigurationRequest_TRY:
@@ -130,13 +132,13 @@ func (s *Server) GenerateConfiguration(ctx context.Context, in *machine.Generate
 }
 
 // GenerateClientConfiguration implements the [machine.MachineServiceServer] interface.
-func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
+func (s *Server) GenerateClientConfiguration(context.Context, *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "client configuration (talosconfig) can't be generated in the maintenance mode")
 }
 
 // Version implements the machine.MachineServer interface.
-func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (*machine.VersionResponse, error) {
-	if err := assertPeerSideroLink(ctx); err != nil {
+func (s *Server) Version(ctx context.Context, _ *emptypb.Empty) (*machine.VersionResponse, error) {
+	if err := s.assertAdminRole(ctx); err != nil {
 		return nil, err
 	}
 
@@ -161,7 +163,7 @@ func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (*machine.Versi
 
 // Upgrade initiates an upgrade.
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply *machine.UpgradeResponse, err error) {
-	if err = assertPeerSideroLink(ctx); err != nil {
+	if err = s.assertAdminRole(ctx); err != nil {
 		return nil, err
 	}
 
@@ -210,7 +212,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (reply
 //
 //nolint:gocyclo
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
-	if err = assertPeerSideroLink(ctx); err != nil {
+	if err = s.assertAdminRole(ctx); err != nil {
 		return nil, err
 	}
 
@@ -293,7 +295,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 
 // MetaWrite implements the [machine.MachineServiceServer] interface.
 func (s *Server) MetaWrite(ctx context.Context, req *machine.MetaWriteRequest) (*machine.MetaWriteResponse, error) {
-	if err := assertPeerSideroLink(ctx); err != nil {
+	if err := s.assertAdminRole(ctx); err != nil {
 		return nil, err
 	}
 
@@ -324,7 +326,7 @@ func (s *Server) MetaWrite(ctx context.Context, req *machine.MetaWriteRequest) (
 
 // MetaDelete implements the [machine.MachineServiceServer] interface.
 func (s *Server) MetaDelete(ctx context.Context, req *machine.MetaDeleteRequest) (*machine.MetaDeleteResponse, error) {
-	if err := assertPeerSideroLink(ctx); err != nil {
+	if err := s.assertAdminRole(ctx); err != nil {
 		return nil, err
 	}
 
@@ -351,4 +353,12 @@ func (s *Server) MetaDelete(ctx context.Context, req *machine.MetaDeleteRequest)
 	return &machine.MetaDeleteResponse{
 		Messages: []*machine.MetaDelete{{}},
 	}, nil
+}
+
+func (s *Server) assertAdminRole(ctx context.Context) error {
+	if !authz.HasRole(ctx, role.Admin) {
+		return status.Error(codes.Unimplemented, "API is not implemented in maintenance mode")
+	}
+
+	return nil
 }
