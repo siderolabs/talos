@@ -60,6 +60,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				suite.Assert().Equal("I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=", spec.SharedSecret)
 				suite.Assert().True(spec.ForceRouting)
 				suite.Assert().False(spec.AdvertiseKubernetesNetworks)
+				suite.Assert().False(spec.HarvestExtraEndpoints)
 
 				return nil
 			},

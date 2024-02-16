@@ -2725,9 +2725,9 @@
         "harvestExtraEndpoints": {
           "type": "boolean",
           "title": "harvestExtraEndpoints",
-          "description": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u0026gt;50) in the KubeSpan network it can cause performance issues.\n",
-          "markdownDescription": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u003e50) in the KubeSpan network it can cause performance issues.",
-          "x-intellij-html-description": "\u003cp\u003eKubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (\u0026gt;50) in the KubeSpan network it can cause performance issues.\u003c/p\u003e\n"
+          "description": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is disabled by default, don’t enable it\nwith high number of peers (\u0026gt;50) in the KubeSpan network (performance issues).\n",
+          "markdownDescription": "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is disabled by default, don't enable it\nwith high number of peers (\u003e50) in the KubeSpan network (performance issues).",
+          "x-intellij-html-description": "\u003cp\u003eKubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is disabled by default, don\u0026rsquo;t enable it\nwith high number of peers (\u0026gt;50) in the KubeSpan network (performance issues).\u003c/p\u003e\n"
         },
         "mtu": {
           "type": "integer",

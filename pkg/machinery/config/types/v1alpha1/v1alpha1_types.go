@@ -2260,8 +2260,8 @@ type NetworkKubeSpan struct {
 	// description: |
 	//   KubeSpan can collect and publish extra endpoints for each member of the cluster
 	//   based on Wireguard endpoint information for each peer.
-	//   This feature is enabled by default to help discover additional endpoints,
-	//   but with high number of peers (>50) in the KubeSpan network it can cause performance issues.
+	//   This feature is disabled by default, don't enable it
+	//   with high number of peers (>50) in the KubeSpan network (performance issues).
 	KubeSpanHarvestExtraEndpoints *bool `yaml:"harvestExtraEndpoints,omitempty"`
 	// description: |
 	//   KubeSpan link MTU size.

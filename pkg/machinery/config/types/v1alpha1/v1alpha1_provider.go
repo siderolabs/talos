@@ -1118,10 +1118,6 @@ func (k *NetworkKubeSpan) AdvertiseKubernetesNetworks() bool {
 
 // HarvestExtraEndpoints implements KubeSpan interface.
 func (k *NetworkKubeSpan) HarvestExtraEndpoints() bool {
-	if k.KubeSpanHarvestExtraEndpoints == nil {
-		return true
-	}
-
 	return pointer.SafeDeref(k.KubeSpanHarvestExtraEndpoints)
 }
 

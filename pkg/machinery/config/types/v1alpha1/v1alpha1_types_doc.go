@@ -3569,7 +3569,7 @@ func (NetworkKubeSpan) Doc() *encoder.Doc {
 				Name:        "harvestExtraEndpoints",
 				Type:        "bool",
 				Note:        "",
-				Description: "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is enabled by default to help discover additional endpoints,\nbut with high number of peers (>50) in the KubeSpan network it can cause performance issues.",
+				Description: "KubeSpan can collect and publish extra endpoints for each member of the cluster\nbased on Wireguard endpoint information for each peer.\nThis feature is disabled by default, don't enable it\nwith high number of peers (>50) in the KubeSpan network (performance issues).",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpan can collect and publish extra endpoints for each member of the cluster" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

@@ -108,6 +108,22 @@ The command `talosctl upgrade-k8s` now supports specifying custom image referenc
 The default behavior is unchanged, and the flags are optional.
 """
 
+    [notes.kubespan]
+        title = "KubeSpan"
+        description = """\
+Talos Linux disables by default a KubeSpan feature to harvest additional endpoints from KubeSpan members.
+This feature turned out to be less helpful than expected and caused unnecessary performance issues.
+
+Previous behavior can be restored with:
+
+```yaml
+machine:
+  network:
+    kubespan:
+        harvestExtraEndpoints: true
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]
