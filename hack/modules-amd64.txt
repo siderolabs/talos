@@ -111,6 +111,7 @@ kernel/drivers/net/mdio.ko
 kernel/drivers/net/mii.ko
 kernel/drivers/net/usb/r8152.ko
 kernel/drivers/net/vmxnet3/vmxnet3.ko
+kernel/drivers/net/vrf.ko
 kernel/drivers/nvme/host/nvme.ko
 kernel/drivers/scsi/aacraid/aacraid.ko
 kernel/drivers/scsi/hpsa.ko
