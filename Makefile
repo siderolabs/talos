@@ -111,7 +111,7 @@ IMAGER_ARGS ?=
 
 CGO_ENABLED ?= 0
 GO_BUILDFLAGS ?=
-GO_BUILDTAGS ?= tcell_minimal
+GO_BUILDTAGS ?= tcell_minimal,grpcnotrace
 GO_LDFLAGS ?=
 GOAMD64 ?= v2
 
