@@ -15,6 +15,9 @@ A list of adopters of Talos Linux, and the use
 * **[Nedap Security Atlas](https://nedapsecurityatlas.com)**  
   Nedap Security Atlas does all on-premise development, unit and integration testing in Gitlab running on Talos clusters.
 
+* **[Oceanbox.io](https://oceanbox.io)**  
+  Oceanbox leverages talos to deliver oceanography as a service. It is used on-premise in a rook-ceph storage cluster, and to host frontend and supporting services for the HPC cluster.  
+
 * **[SCHULZ Systemtechnik GmbH](https://schulz.st/en/page/schulz-systemtechnik)**  
   SCHULZ is a provider of integrated automation solutions for a wide range of industries. We use Talos as a base for our edge devices that run IoT and ML applications.
 
