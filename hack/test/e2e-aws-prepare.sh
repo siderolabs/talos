@@ -66,8 +66,9 @@ jq --null-input \
   --arg AMI_ID "${AMI_ID}" \
   --arg NVIDIA_AMI_ID "${NVIDIA_AMI_ID}" \
   --arg CLUSTER_NAME "${NAME_PREFIX}" \
+  --arg TALOS_VERSION_CONTRACT "${TALOS_VERSION}" \
   --arg KUBERNETES_VERSION "${KUBERNETES_VERSION}" \
-  '{worker_group: $WORKER_GROUP, ami_id: $AMI_ID, nvidia_ami_id: $NVIDIA_AMI_ID, cluster_name: $CLUSTER_NAME, kubernetes_version: $KUBERNETES_VERSION}' \
+  '{worker_group: $WORKER_GROUP, ami_id: $AMI_ID, nvidia_ami_id: $NVIDIA_AMI_ID, cluster_name: $CLUSTER_NAME, talos_version_contract: $TALOS_VERSION_CONTRACT, kubernetes_version: $KUBERNETES_VERSION}' \
   | jq -f hack/test/tfvars/aws.jq > "${ARTIFACTS}/e2e-aws-generated/vars.json"
 
 cp hack/test/tfvars/*.yaml "${ARTIFACTS}/e2e-aws-generated"
