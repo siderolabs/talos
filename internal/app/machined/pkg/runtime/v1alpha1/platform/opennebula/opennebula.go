@@ -127,26 +127,28 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 						},
 					)
 
-					// Parse gateway address and create RouteSpecSpec entry
-					gateway, err := netip.ParseAddr(oneContext[ifaceName+"_GATEWAY"])
-					if err != nil {
-						return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
+					if oneContext[ifaceName+"_GATEWAY"] != "" {
+						// Parse gateway address and create RouteSpecSpec entry
+						gateway, err := netip.ParseAddr(oneContext[ifaceName+"_GATEWAY"])
+						if err != nil {
+							return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
+						}
+
+						route := network.RouteSpecSpec{
+							ConfigLayer: network.ConfigPlatform,
+							Gateway:     gateway,
+							OutLinkName: ifaceNameLower,
+							Table:       nethelpers.TableMain,
+							Protocol:    nethelpers.ProtocolStatic,
+							Type:        nethelpers.TypeUnicast,
+							Family:      nethelpers.FamilyInet4,
+							Priority:    network.DefaultRouteMetric,
+						}
+
+						route.Normalize()
+
+						networkConfig.Routes = append(networkConfig.Routes, route)
 					}
-
-					route := network.RouteSpecSpec{
-						ConfigLayer: network.ConfigPlatform,
-						Gateway:     gateway,
-						OutLinkName: ifaceNameLower,
-						Table:       nethelpers.TableMain,
-						Protocol:    nethelpers.ProtocolStatic,
-						Type:        nethelpers.TypeUnicast,
-						Family:      nethelpers.FamilyInet4,
-						Priority:    network.DefaultRouteMetric,
-					}
-
-					route.Normalize()
-
-					networkConfig.Routes = append(networkConfig.Routes, route)
 
 					// Parse DNS servers
 					dnsServers := strings.Fields(oneContext[ifaceName+"_DNS"])
