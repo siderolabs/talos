@@ -1,3 +1,87 @@
+## [Talos 1.6.5](https://github.com/siderolabs/talos/releases/tag/v1.6.5) (2024-02-22)
+
+Welcome to the v1.6.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Kubernetes Upgrade
+
+The command `talosctl upgrade-k8s` now supports specifying custom image references for Kubernetes components via `--*-image` flags.
+The default behavior is unchanged, and the flags are optional.
+
+
+### Component Updates
+
+Kubernetes: 1.29.2
+Linux: 6.1.78
+
+Talos is built with Go 1.21.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Anastasios Papagiannis
+* Andrian Zubovic
+* Matthieu S
+* Utku Ozdemir
+* pardomue
+
+### Changes
+<details><summary>13 commits</summary>
+<p>
+
+* [`e5c198a32`](https://github.com/siderolabs/talos/commit/e5c198a322ef2591f0cba06c879dfe5fb2e1fb20) feat: update pkgs
+* [`54c60ddfb`](https://github.com/siderolabs/talos/commit/54c60ddfb651cb4b166043c116974692577d8b59) feat: allow access to all resources over siderolink in maintenance mode
+* [`c7f5ff73e`](https://github.com/siderolabs/talos/commit/c7f5ff73e4ce6e827003f134efd3fa00f5fa5a58) fix: use MachineStatus resource to check for boot done
+* [`7d1378240`](https://github.com/siderolabs/talos/commit/7d1378240e7aa65dde45e67397c62e78259bbe78) feat: support AWS KMS for the SecureBoot signing
+* [`c6e7a95cc`](https://github.com/siderolabs/talos/commit/c6e7a95ccf5a562585233c51e856b60df4c09c17) feat: custom image settings for k8s upgrade
+* [`0f5e946f4`](https://github.com/siderolabs/talos/commit/0f5e946f4c1d970577b16ecb17dc9302920d3c38) fix: ensure that Talos runs in a pod (container)
+* [`fd93ce1b6`](https://github.com/siderolabs/talos/commit/fd93ce1b64dacb1363782a82e0711cd79f1e237b) feat: update kernel with sfc driver and LSM updates
+* [`36836878f`](https://github.com/siderolabs/talos/commit/36836878fbf074322a3f6e2e7e50100201dbe8ad) fix: run xfs_repair on invalid argument error
+* [`6ea29d927`](https://github.com/siderolabs/talos/commit/6ea29d9275c03589a235dc694e1a7bc0bd4148c9) feat: support systemd-boot ISO enroll keys option
+* [`e993215fe`](https://github.com/siderolabs/talos/commit/e993215fe70a44fc2f4049a75c377e5ee66e055a) fix: unlock the upgrade mutex properly
+* [`5515a6bab`](https://github.com/siderolabs/talos/commit/5515a6bab1853d6577a3142208ccfff57a99f007) fix: use a separate cgroup for each extension service
+* [`e7935e6b9`](https://github.com/siderolabs/talos/commit/e7935e6b95112617986ff5bd9c931d08289fa665) feat: update Linux to 6.1.78
+* [`959627850`](https://github.com/siderolabs/talos/commit/9596278503bbc0bde01e68e84566449f5cc69e0b) feat: update Kubernetes default to 1.29.2
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>9 commits</summary>
+<p>
+
+* [`6868f38`](https://github.com/siderolabs/pkgs/commit/6868f380b4322e091bed465b87f6ca94bf012316) feat: enable PSI (pressure stall information)
+* [`777cae9`](https://github.com/siderolabs/pkgs/commit/777cae9cd08d15669e892f0d673596a0d5b4daa6) feat: update Linux to 6.1.78
+* [`f71ff75`](https://github.com/siderolabs/pkgs/commit/f71ff756823304eb39804fa48a2ca3598bbc494d) feat: enable VRF module
+* [`a7e36fb`](https://github.com/siderolabs/pkgs/commit/a7e36fbe3901185028fb9d8084d480eaf97f8e87) feat: add support for Solarflare SFC9100 and SFC9200 family
+* [`7146892`](https://github.com/siderolabs/pkgs/commit/7146892d0767452eb04d5723b4dc535038887cad) feat: enable CONFIG_SECURITY_PATH and CONFIG_BPF_LSM
+* [`73f3c03`](https://github.com/siderolabs/pkgs/commit/73f3c03fb7bf4795901479bceadbf704f1b3f201) feat: backport iPXE update from main
+* [`8ff728c`](https://github.com/siderolabs/pkgs/commit/8ff728c574279d50d4bdf41b9ba9f609b128e873) chore: set `PREEMPT_NONE` as recommended for servers
+* [`b849795`](https://github.com/siderolabs/pkgs/commit/b8497950cd79a5b53b3f13c1100c40fee51b6d14) fix: enable KFD support in kernel
+* [`0b8a78b`](https://github.com/siderolabs/pkgs/commit/0b8a78b1b70afe4421e33a9dabddc37ea38c1071) feat: bring Linux to 6.1.76
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/aws/aws-sdk-go-v2/service/kms**  v1.26.5 **_new_**
+* **github.com/siderolabs/pkgs**                v1.6.0-16-gb77ffb7 -> v1.6.0-25-g6868f38
+* **k8s.io/api**                                v0.29.1 -> v0.29.2
+* **k8s.io/apiserver**                          v0.29.1 -> v0.29.2
+* **k8s.io/client-go**                          v0.29.1 -> v0.29.2
+* **k8s.io/component-base**                     v0.29.1 -> v0.29.2
+* **k8s.io/kube-scheduler**                     v0.29.1 -> v0.29.2
+* **k8s.io/kubectl**                            v0.29.1 -> v0.29.2
+* **k8s.io/kubelet**                            v0.29.1 -> v0.29.2
+* **k8s.io/pod-security-admission**             v0.29.2 **_new_**
+
+Previous release can be found at [v1.6.4](https://github.com/siderolabs/talos/releases/tag/v1.6.4)
+
 ## [Talos 1.6.4](https://github.com/siderolabs/talos/releases/tag/v1.6.4) (2024-02-01)
 
 Welcome to the v1.6.4 release of Talos!
