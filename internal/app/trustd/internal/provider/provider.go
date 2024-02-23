@@ -22,15 +22,15 @@ import (
 // TLSConfig provides client & server TLS configs for trustd.
 type TLSConfig struct {
 	certificateProvider *certificateProvider
+
+	watchCh <-chan state.Event
 }
 
 // NewTLSConfig builds provider from configuration and endpoints.
-//
-//nolint:gocyclo
-func NewTLSConfig(resources state.State) (*TLSConfig, error) {
+func NewTLSConfig(ctx context.Context, resources state.State) (*TLSConfig, error) {
 	watchCh := make(chan state.Event)
 
-	if err := resources.Watch(context.TODO(), resource.NewMetadata(secrets.NamespaceName, secrets.TrustdType, secrets.TrustdID, resource.VersionUndefined), watchCh); err != nil {
+	if err := resources.Watch(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.TrustdType, secrets.TrustdID, resource.VersionUndefined), watchCh); err != nil {
 		return nil, fmt.Errorf("error setting up watch: %w", err)
 	}
 
@@ -38,7 +38,13 @@ func NewTLSConfig(resources state.State) (*TLSConfig, error) {
 	provider := &certificateProvider{}
 
 	for {
-		event := <-watchCh
+		var event state.Event
+
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case event = <-watchCh:
+		}
 
 		switch event.Type {
 		case state.Created, state.Updated:
@@ -56,34 +62,40 @@ func NewTLSConfig(resources state.State) (*TLSConfig, error) {
 			return nil, err
 		}
 
-		break
+		return &TLSConfig{
+			certificateProvider: provider,
+			watchCh:             watchCh,
+		}, nil
 	}
+}
 
-	go func() {
-		for {
-			event := <-watchCh
+// Watch for updates to trustd certificates.
+func (tlsConfig *TLSConfig) Watch(ctx context.Context) error {
+	for {
+		var event state.Event
 
-			switch event.Type {
-			case state.Created, state.Updated:
-				// expected
-			case state.Destroyed, state.Bootstrapped:
-				// ignore, we'll get another event
-				continue
-			case state.Errored:
-				log.Printf("error watching for trustd certificates: %s", event.Error)
-			}
-
-			trustdCerts := event.Resource.(*secrets.Trustd) //nolint:errcheck,forcetypeassert
-
-			if err := provider.Update(trustdCerts); err != nil {
-				log.Printf("failed updating cert: %v", err)
-			}
+		select {
+		case <-ctx.Done():
+			return nil
+		case event = <-tlsConfig.watchCh:
 		}
-	}()
 
-	return &TLSConfig{
-		certificateProvider: provider,
-	}, nil
+		switch event.Type {
+		case state.Created, state.Updated:
+			// expected
+		case state.Destroyed, state.Bootstrapped:
+			// ignore, we'll get another event
+			continue
+		case state.Errored:
+			log.Printf("error watching for trustd certificates: %s", event.Error)
+		}
+
+		trustdCerts := event.Resource.(*secrets.Trustd) //nolint:errcheck,forcetypeassert
+
+		if err := tlsConfig.certificateProvider.Update(trustdCerts); err != nil {
+			return fmt.Errorf("failed updating cert: %w", err)
+		}
+	}
 }
 
 // ServerConfig generates server-side tls.Config.
