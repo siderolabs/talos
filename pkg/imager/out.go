@@ -7,6 +7,7 @@ package imager
 import (
 	"context"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -88,11 +89,33 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 	if i.prof.SecureBootEnabled() {
 		isoOptions := pointer.SafeDeref(i.prof.Output.ISOOptions)
 
+		crtData, readErr := os.ReadFile(i.prof.Input.SecureBoot.SecureBootSigner.CertPath)
+		if readErr != nil {
+			return fmt.Errorf("failed to read secureboot uki certificate: %w", readErr)
+		}
+
+		block, rest := pem.Decode(crtData)
+		if block == nil {
+			return errors.New("failed to decode PEM data")
+		}
+
+		if len(rest) > 0 {
+			return errors.New("more than one PEM block found in PEM data")
+		}
+
+		derCrtPath := filepath.Join(i.tempDir, "uki.der")
+
+		if err = os.WriteFile(derCrtPath, block.Bytes, 0o600); err != nil {
+			return fmt.Errorf("failed to write uki.der: %w", err)
+		}
+
 		options := iso.UEFIOptions{
 			UKIPath:    i.ukiPath,
 			SDBootPath: i.sdBootPath,
 
 			SDBootSecureBootEnrollKeys: isoOptions.SDBootEnrollKeys.String(),
+
+			UKISigningCertDerPath: derCrtPath,
 
 			PlatformKeyPath:    i.prof.Input.SecureBoot.PlatformKeyPath,
 			KeyExchangeKeyPath: i.prof.Input.SecureBoot.KeyExchangeKeyPath,

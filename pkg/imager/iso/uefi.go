@@ -28,6 +28,9 @@ type UEFIOptions struct {
 	// A value in loader.conf secure-boot-enroll: off, manual, if-safe, force.
 	SDBootSecureBootEnrollKeys string
 
+	// UKISigningCertDer is the DER encoded UKI signing certificate.
+	UKISigningCertDerPath string
+
 	// optional, for auto-enrolling secureboot keys
 	PlatformKeyPath    string
 	KeyExchangeKeyPath string
@@ -116,6 +119,10 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		return err
 	}
 
+	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::EFI/keys"); err != nil {
+		return err
+	}
+
 	if _, err := cmd.Run("mmd", "-i", efiBootImg, "::loader"); err != nil {
 		return err
 	}
@@ -146,6 +153,10 @@ func CreateUEFI(printf func(string, ...any), options UEFIOptions) error {
 		cmd.WithStdin(context.Background(), &loaderConfigOut),
 		"mcopy", "-i", efiBootImg, "-", "::loader/loader.conf",
 	); err != nil {
+		return err
+	}
+
+	if _, err := cmd.Run("mcopy", "-i", efiBootImg, options.UKISigningCertDerPath, "::EFI/keys/uki-signing-cert.der"); err != nil {
 		return err
 	}
 
