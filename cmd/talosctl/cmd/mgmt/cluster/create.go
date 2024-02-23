@@ -76,6 +76,7 @@ const (
 	networkCIDRFlag               = "cidr"
 	nameserversFlag               = "nameservers"
 	clusterDiskSizeFlag           = "disk"
+	clusterDiskPreallocateFlag    = "disk-preallocate"
 	clusterDisksFlag              = "user-disk"
 	customCNIUrlFlag              = "custom-cni-url"
 	talosVersionFlag              = "talos-version"
@@ -124,6 +125,7 @@ var (
 	controlPlaneMemory         int
 	workersMemory              int
 	clusterDiskSize            int
+	clusterDiskPreallocate     bool
 	clusterDisks               []string
 	extraDisks                 int
 	extraDiskSize              int
@@ -796,7 +798,8 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	// append extra disks
 	for i := 0; i < extraDisks; i++ {
 		disks = append(disks, &provision.Disk{
-			Size: uint64(extraDiskSize) * 1024 * 1024,
+			Size:            uint64(extraDiskSize) * 1024 * 1024,
+			SkipPreallocate: !clusterDiskPreallocate,
 		})
 	}
 
@@ -997,7 +1000,8 @@ func getDisks() ([]*provision.Disk, error) {
 	// should have at least a single primary disk
 	disks := []*provision.Disk{
 		{
-			Size: uint64(clusterDiskSize) * 1024 * 1024,
+			Size:            uint64(clusterDiskSize) * 1024 * 1024,
+			SkipPreallocate: !clusterDiskPreallocate,
 		},
 	}
 
@@ -1042,8 +1046,9 @@ func getDisks() ([]*provision.Disk, error) {
 
 		disks = append(disks, &provision.Disk{
 			// add 1 MB to make extra room for GPT and alignment
-			Size:       diskSize + 2*1024*1024,
-			Partitions: diskPartitions,
+			Size:            diskSize + 2*1024*1024,
+			Partitions:      diskPartitions,
+			SkipPreallocate: !clusterDiskPreallocate,
 		})
 	}
 
@@ -1091,6 +1096,7 @@ func init() {
 	createCmd.Flags().IntVar(&controlPlaneMemory, "memory", 2048, "the limit on memory usage in MB (each control plane/VM)")
 	createCmd.Flags().IntVar(&workersMemory, "memory-workers", 2048, "the limit on memory usage in MB (each worker/VM)")
 	createCmd.Flags().IntVar(&clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
+	createCmd.Flags().BoolVar(&clusterDiskPreallocate, clusterDiskPreallocateFlag, true, "whether disk space should be preallocated")
 	createCmd.Flags().StringSliceVar(&clusterDisks, clusterDisksFlag, []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
 	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each worker VM")
 	createCmd.Flags().IntVar(&extraDiskSize, "extra-disks-size", 5*1024, "default limit on disk size in MB (each VM)")

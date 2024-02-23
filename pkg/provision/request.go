@@ -150,6 +150,8 @@ func (reqs NodeRequests) PXENodes() (nodes []NodeRequest) {
 type Disk struct {
 	// Size in bytes.
 	Size uint64
+	// Whether to skip preallocating the disk space.
+	SkipPreallocate bool
 	// Partitions represents the list of partitions.
 	Partitions []*v1alpha1.DiskPartition
 }

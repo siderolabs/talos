@@ -42,8 +42,10 @@ func (p *Provisioner) CreateDisks(state *State, nodeReq provision.NodeRequest) (
 			return nil, err
 		}
 
-		if err = syscall.Fallocate(int(diskF.Fd()), 0, 0, int64(disk.Size)); err != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: failed to preallocate disk space for %q (size %d): %s", diskPath, disk.Size, err)
+		if !disk.SkipPreallocate {
+			if err = syscall.Fallocate(int(diskF.Fd()), 0, 0, int64(disk.Size)); err != nil {
+				fmt.Fprintf(os.Stderr, "WARNING: failed to preallocate disk space for %q (size %d): %s", diskPath, disk.Size, err)
+			}
 		}
 
 		diskPaths[i] = diskPath
