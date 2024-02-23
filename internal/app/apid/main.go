@@ -81,7 +81,7 @@ func apidMain() error {
 	stateClient := v1alpha1.NewStateClient(runtimeConn)
 	resources := state.WrapCore(client.NewAdapter(stateClient))
 
-	tlsConfig, err := provider.NewTLSConfig(resources)
+	tlsConfig, err := provider.NewTLSConfig(ctx, resources)
 	if err != nil {
 		return fmt.Errorf("failed to create remote certificate provider: %w", err)
 	}
@@ -223,6 +223,10 @@ func apidMain() error {
 
 	errGroup.Go(func() error {
 		return socketServer.Serve(socketListener)
+	})
+
+	errGroup.Go(func() error {
+		return tlsConfig.Watch(ctx)
 	})
 
 	errGroup.Go(func() error {

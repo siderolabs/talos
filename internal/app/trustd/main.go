@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Package trustd implements trustd functionality.
 package trustd
 
 import (
@@ -78,7 +79,7 @@ func trustdMain() error {
 	stateClient := v1alpha1.NewStateClient(runtimeConn)
 	resources := state.WrapCore(client.NewAdapter(stateClient))
 
-	tlsConfig, err := provider.NewTLSConfig(resources)
+	tlsConfig, err := provider.NewTLSConfig(ctx, resources)
 	if err != nil {
 		return fmt.Errorf("failed to create remote certificate provider: %w", err)
 	}
@@ -112,6 +113,10 @@ func trustdMain() error {
 
 	errGroup.Go(func() error {
 		return networkServer.Serve(networkListener)
+	})
+
+	errGroup.Go(func() error {
+		return tlsConfig.Watch(ctx)
 	})
 
 	errGroup.Go(func() error {
