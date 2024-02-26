@@ -150,7 +150,8 @@ talosctl gen config \
 To do so patch this into your machine configuration:
 
 ``` yaml
-inlineManifests:
+cluster:
+  inlineManifests:
     - name: cilium
       contents: |
         --
