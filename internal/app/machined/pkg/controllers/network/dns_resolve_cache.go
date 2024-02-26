@@ -160,6 +160,8 @@ func (ctrl *DNSResolveCacheController) runServer(originCtx context.Context, r co
 				MaxTCPQueries: -1,
 			}
 		}
+
+		l.Info("dns listener created")
 	}
 
 	for netwk, opt := range serverOpts {
@@ -227,6 +229,8 @@ func closeListener(lis io.Closer, l *zap.Logger) {
 	if err := lis.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
 		l.Error("error closing listener", zap.Error(err))
 	}
+
+	l.Info("dns listener closed")
 }
 
 func dropResolveResources(ctx context.Context, r controller.Runtime, nets ...resource.ID) error {

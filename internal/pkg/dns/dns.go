@@ -274,7 +274,6 @@ func NewUDPPacketConn(network, addr string) (net.PacketConn, error) {
 
 var (
 	tcpOptions = []controlOptions{
-		{unix.SOL_SOCKET, unix.SO_REUSEPORT, 1, "failed to set SO_REUSEADDR"},
 		{unix.IPPROTO_IP, unix.IP_RECVTTL, 1, "failed to set IP_RECVTTL"},
 		{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
 		{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
@@ -282,7 +281,6 @@ var (
 	}
 
 	tcpOptionsV6 = []controlOptions{
-		{unix.SOL_SOCKET, unix.SO_REUSEPORT, 1, "failed to set SO_REUSEADDR"},
 		{unix.IPPROTO_IPV6, unix.IPV6_RECVHOPLIMIT, 1, "failed to set IPV6_RECVHOPLIMIT"},
 		{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
 		{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
@@ -290,13 +288,11 @@ var (
 	}
 
 	udpOptions = []controlOptions{
-		{unix.SOL_SOCKET, unix.SO_REUSEPORT, 1, "failed to set SO_REUSEADDR"},
 		{unix.IPPROTO_IP, unix.IP_RECVTTL, 1, "failed to set IP_RECVTTL"},
 		{unix.IPPROTO_IP, unix.IP_TTL, 1, "failed to set IP_TTL"},
 	}
 
 	udpOptionsV6 = []controlOptions{
-		{unix.SOL_SOCKET, unix.SO_REUSEPORT, 1, "failed to set SO_REUSEADDR"},
 		{unix.IPPROTO_IPV6, unix.IPV6_RECVHOPLIMIT, 1, "failed to set IPV6_RECVHOPLIMIT"},
 		{unix.IPPROTO_IPV6, unix.IPV6_UNICAST_HOPS, 1, "failed to set IPV6_UNICAST_HOPS"},
 	}

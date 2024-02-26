@@ -77,7 +77,7 @@ func (suite *DNSServer) TestResolving() {
 	var res *dns.Msg
 
 	err := retry.Constant(2*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
-		r, err := dns.Exchange(msg, "127.0.0.1:10700")
+		r, err := dns.Exchange(msg, "127.0.0.53:10700")
 
 		res = r
 
@@ -148,7 +148,7 @@ func TestDNSServer(t *testing.T) {
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{
-					Addr:   "127.0.0.1:10700",
+					Addr:   "127.0.0.53:10700",
 					AddrV6: "[::1]:10700",
 					Logger: zaptest.NewLogger(t),
 				}))

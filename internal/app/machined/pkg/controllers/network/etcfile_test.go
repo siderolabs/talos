@@ -221,7 +221,7 @@ func (suite *EtcFileConfigSuite) TestComplete() {
 		[]resource.Resource{suite.cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.dnsServer},
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n10.0.0.1    a b\n10.0.0.2    c d\n", //nolint:lll
-			resolvConf:       "nameserver 127.0.0.1\n\nsearch example.com\n",
+			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n\nsearch example.com\n",
 			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
 		},
 	)
@@ -232,7 +232,7 @@ func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.dnsServer},
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
-			resolvConf:       "nameserver 127.0.0.1\n\nsearch example.com\n",
+			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n\nsearch example.com\n",
 			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n\nsearch example.com\n",
 		},
 	)
@@ -255,7 +255,7 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
 		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.dnsServer},
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
-			resolvConf:       "nameserver 127.0.0.1\n",
+			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n",
 			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
 		},
 	)
@@ -268,7 +268,7 @@ func (suite *EtcFileConfigSuite) TestNoDomainname() {
 		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.dnsServer},
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
-			resolvConf:       "nameserver 127.0.0.1\n",
+			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n",
 			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
 		},
 	)
@@ -279,7 +279,7 @@ func (suite *EtcFileConfigSuite) TestOnlyResolvers() {
 		[]resource.Resource{suite.resolverStatus, suite.dnsServer},
 		etcFileContents{
 			hosts:            "",
-			resolvConf:       "nameserver 127.0.0.1\n",
+			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n",
 			resolvGlobalConf: "nameserver 1.1.1.1\nnameserver 2.2.2.2\nnameserver 3.3.3.3\n",
 		},
 	)

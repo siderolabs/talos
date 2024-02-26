@@ -176,12 +176,12 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-var localDNS = netip.MustParseAddr("127.0.0.1")
+var localDNS = []netip.Addr{netip.MustParseAddr("127.0.0.53"), netip.MustParseAddr("::1")}
 
 func pickNameservers(list safe.List[*network.DNSResolveCache], resolverStatus *network.ResolverStatus) []netip.Addr {
 	if list.Len() > 0 {
 		// local dns resolve cache enabled, route host dns requests to 127.0.0.1
-		return []netip.Addr{localDNS}
+		return localDNS
 	}
 
 	return resolverStatus.TypedSpec().DNSServers

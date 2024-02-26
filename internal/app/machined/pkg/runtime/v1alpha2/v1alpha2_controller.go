@@ -189,7 +189,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.AddressStatusController{},
 		&network.DeviceConfigController{},
 		&network.DNSResolveCacheController{
-			Addr:   "127.0.0.1:53",
+			Addr:   "127.0.0.53:53",
 			AddrV6: "[::1]:53",
 			Logger: dnsCacheLogger,
 		},

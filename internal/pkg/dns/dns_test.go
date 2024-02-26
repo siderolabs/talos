@@ -60,7 +60,7 @@ func TestDNS(t *testing.T) {
 
 			time.Sleep(10 * time.Millisecond)
 
-			r, err := dnssrv.Exchange(createQuery(), "127.0.0.1:10700")
+			r, err := dnssrv.Exchange(createQuery(), "127.0.0.53:10700")
 			test.errCheck(t, err)
 
 			if r != nil {
@@ -86,11 +86,11 @@ func TestDNSEmptyDestinations(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	r, err := dnssrv.Exchange(createQuery(), "127.0.0.1:10700")
+	r, err := dnssrv.Exchange(createQuery(), "127.0.0.53:10700")
 	require.NoError(t, err)
 	require.Equal(t, dnssrv.RcodeServerFailure, r.Rcode, r)
 
-	r, err = dnssrv.Exchange(createQuery(), "127.0.0.1:10700")
+	r, err = dnssrv.Exchange(createQuery(), "127.0.0.53:10700")
 	require.NoError(t, err)
 	require.Equal(t, dnssrv.RcodeServerFailure, r.Rcode, r)
 
@@ -118,7 +118,7 @@ func newServer(t *testing.T, nameservers ...string) (context.Context, func()) {
 
 	handler.SetProxy(pxs)
 
-	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.1:10700")
+	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.53:10700")
 	require.NoError(t, err)
 
 	runner := dns.NewRunner(dns.NewServer(dns.ServerOptins{
