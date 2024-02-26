@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/crane"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
@@ -77,6 +78,9 @@ type ContainerAsset struct {
 	//
 	// If OCIPath is set, ImageRef is ignored.
 	OCIPath string `yaml:"ociPath,omitempty"`
+
+	// AuthConfig is a authentication config to access private registry.
+	*authn.AuthConfig
 }
 
 // SecureBootAssets describes secureboot assets.
@@ -264,6 +268,7 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(stri
 			Architecture: arch,
 			OS:           "linux",
 		}),
+		crane.WithAuth(c),
 		crane.WithContext(ctx),
 	}
 
@@ -277,6 +282,11 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(stri
 	}
 
 	return img, nil
+}
+
+// Authorization fullfils container registry Authorization interface.
+func (c *ContainerAsset) Authorization() (*authn.AuthConfig, error) {
+	return c.AuthConfig, nil
 }
 
 func (c *ContainerAsset) pullFromOCI(arch string) (v1.Image, error) {

@@ -10,8 +10,10 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/dustin/go-humanize"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -37,6 +39,7 @@ var cmdFlags struct {
 	OutputPath            string
 	OutputKind            string
 	TarToStdout           bool
+	RegistryCredentials   string
 }
 
 // rootCmd represents the base command when called without any subcommands.
@@ -74,11 +77,24 @@ var rootCmd = &cobra.Command{
 					},
 				}
 
+				auth := &authn.AuthConfig{}
+
+				if cmdFlags.RegistryCredentials != "" {
+					userpass := strings.Split(cmdFlags.RegistryCredentials, ":")
+					if len(userpass) != 2 {
+						return fmt.Errorf("please use format username:password for registry credential")
+					}
+
+					auth.Username = userpass[0]
+					auth.Password = userpass[1]
+				}
+
 				prof.Input.SystemExtensions = xslices.Map(
 					cmdFlags.SystemExtensionImages,
 					func(imageRef string) profile.ContainerAsset {
 						return profile.ContainerAsset{
-							ImageRef: imageRef,
+							ImageRef:   imageRef,
+							AuthConfig: auth,
 						}
 					},
 				)
@@ -163,4 +179,5 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OutputPath, "output", "/out", "The output directory path")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OutputKind, "output-kind", "", "Override output kind")
 	rootCmd.PersistentFlags().BoolVar(&cmdFlags.TarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
+	rootCmd.PersistentFlags().StringVar(&cmdFlags.RegistryCredentials, "registry-credentials", "", "username:password for pulling extensions from private registry")
 }
