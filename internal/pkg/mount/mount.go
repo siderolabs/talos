@@ -148,7 +148,7 @@ func mountRetry(f RetryFunc, p *Point, isUnmount bool) (err error) {
 			switch err {
 			case unix.EBUSY:
 				return retry.ExpectedError(err)
-			case unix.ENOENT:
+			case unix.ENOENT, unix.ENODEV:
 				// if udevd triggers BLKRRPART ioctl, partition device entry might disappear temporarily
 				return retry.ExpectedError(err)
 			case unix.EUCLEAN:
