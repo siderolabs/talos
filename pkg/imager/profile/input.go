@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/go-containerregistry/pkg/authn"
+	"github.com/google/go-containerregistry/pkg/authn/github"
 	"github.com/google/go-containerregistry/pkg/crane"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
@@ -265,6 +267,12 @@ func (c *ContainerAsset) Pull(ctx context.Context, arch string, printf func(stri
 			OS:           "linux",
 		}),
 		crane.WithContext(ctx),
+		crane.WithAuthFromKeychain(
+			authn.NewMultiKeychain(
+				authn.DefaultKeychain,
+				github.Keychain,
+			),
+		),
 	}
 
 	if c.ForceInsecure {

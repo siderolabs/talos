@@ -186,6 +186,17 @@ crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-dige
 
 For each Talos release, the `ghcr.io/siderolabs/extensions:VERSION` image contains a pinned reference to each system extension container image.
 
+### Pulling from Private Registries
+
+Talos Linux official images are all public, but when pulling a custom image from a private registry, the `imager` might need authentication to access the images.
+
+The `imager` container when pulling images supports following methods to authenticate to an external registry:
+
+* for `ghcr.io` registry, `GITHUB_TOKEN` can be provided as an environment variable;
+* for other registries, `~/.docker/config.json` can be mounted into the container from the host:
+  * another option is to use a `DOCKER_CONFIG` environment variable, and the path will be `$DOCKER_CONFIG/config.json` in the container;
+  * the third option is to mount Podman's auth file at `$XDG_RUNTIME_DIR/containers/auth.json`.
+
 ### Example: Bare-metal with Imager
 
 Let's assume we want to boot Talos on a bare-metal machine with Intel CPU and add a `gvisor` container runtime to the image.
