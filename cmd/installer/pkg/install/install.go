@@ -10,12 +10,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"syscall"
 	"time"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
@@ -385,7 +385,7 @@ func retryBlockdeviceOpen(device string) (*blockdevice.BlockDevice, error) {
 		switch {
 		case os.IsNotExist(openErr):
 			return retry.ExpectedError(openErr)
-		case errors.Is(openErr, unix.ENODEV):
+		case errors.Is(openErr, syscall.ENODEV):
 			return retry.ExpectedError(openErr)
 		default:
 			return nil

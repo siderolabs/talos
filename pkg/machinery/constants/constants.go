@@ -371,7 +371,7 @@ const (
 	CoreDNSImage = "registry.k8s.io/coredns/coredns"
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
-	// renovate: datasource=github-releases depName=coredns/coredns
+	// renovate: datasource=docker depName=registry.k8s.io/coredns/coredns
 	DefaultCoreDNSVersion = "v1.11.1"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
