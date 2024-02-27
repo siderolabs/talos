@@ -16,7 +16,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alexflint/go-filemutex"
 	"github.com/containernetworking/cni/libcni"
+	"github.com/containernetworking/cni/pkg/types"
 	types100 "github.com/containernetworking/cni/pkg/types/100"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/containernetworking/plugins/pkg/testutils"
@@ -94,6 +96,39 @@ type tpm2Config struct {
 	StateDir string
 }
 
+// withCNIOperationLocked ensures that CNI operations don't run concurrently.
+//
+// There are race conditions in the CNI plugins that can cause a failure if called concurrently.
+func withCNIOperationLocked[T any](config *LaunchConfig, f func() (T, error)) (T, error) {
+	var zeroT T
+
+	lock, err := filemutex.New(filepath.Join(config.StatePath, "cni.lock"))
+	if err != nil {
+		return zeroT, fmt.Errorf("failed to create CNI lock: %w", err)
+	}
+
+	if err = lock.Lock(); err != nil {
+		return zeroT, fmt.Errorf("failed to acquire CNI lock: %w", err)
+	}
+
+	defer func() {
+		if err := lock.Close(); err != nil {
+			log.Printf("failed to release CNI lock: %s", err)
+		}
+	}()
+
+	return f()
+}
+
+// withCNIOperationLockedNoResult ensures that CNI operations don't run concurrently.
+func withCNIOperationLockedNoResult(config *LaunchConfig, f func() error) error {
+	_, err := withCNIOperationLocked(config, func() (struct{}, error) {
+		return struct{}{}, f()
+	})
+
+	return err
+}
+
 // withCNI creates network namespace, launches CNI and passes control to the next function
 // filling config with netNS and interface details.
 //
@@ -134,18 +169,33 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 	}
 
 	// attempt to clean up network in case it was deployed previously
-	err = cniConfig.DelNetworkList(ctx, config.NetworkConfig, &runtimeConf)
+	err = withCNIOperationLockedNoResult(
+		config,
+		func() error {
+			return cniConfig.DelNetworkList(ctx, config.NetworkConfig, &runtimeConf)
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("error deleting CNI network: %w", err)
 	}
 
-	res, err := cniConfig.AddNetworkList(ctx, config.NetworkConfig, &runtimeConf)
+	res, err := withCNIOperationLocked(
+		config,
+		func() (types.Result, error) {
+			return cniConfig.AddNetworkList(ctx, config.NetworkConfig, &runtimeConf)
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("error provisioning CNI network: %w", err)
 	}
 
 	defer func() {
-		if e := cniConfig.DelNetworkList(ctx, config.NetworkConfig, &runtimeConf); e != nil {
+		if e := withCNIOperationLockedNoResult(
+			config,
+			func() error {
+				return cniConfig.DelNetworkList(ctx, config.NetworkConfig, &runtimeConf)
+			},
+		); e != nil {
 			log.Printf("error cleaning up CNI: %s", e)
 		}
 	}()
