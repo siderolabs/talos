@@ -68,9 +68,9 @@ promtail:
                 __path__: /var/log/audit/kube/*.log
 ```
 
-## Setting CPU scaling governer
+## Setting CPU scaling governor
 
-While its possible to set [CPU scaling governer](https://kernelnewbies.org/Linux_5.9#CPU_Frequency_scaling) via `.machine.sysfs` it's sometimes cumbersome to set it for all CPU's individually.
+While its possible to set [CPU scaling governor](https://kernelnewbies.org/Linux_5.9#CPU_Frequency_scaling) via `.machine.sysfs` it's sometimes cumbersome to set it for all CPU's individually.
 A more elegant approach would be set it via a kernel commandline parameter.
 This also means that the options are applied way early in the boot process.
 
