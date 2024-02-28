@@ -37,6 +37,8 @@ var cmdFlags struct {
 	OutputPath            string
 	OutputKind            string
 	TarToStdout           bool
+	OverlayName           string
+	OverlayImage          string
 }
 
 // rootCmd represents the base command when called without any subcommands.
@@ -72,6 +74,15 @@ var rootCmd = &cobra.Command{
 						ExtraKernelArgs: cmdFlags.ExtraKernelArgs,
 						MetaContents:    cmdFlags.MetaValues.GetMetaValues(),
 					},
+				}
+
+				if cmdFlags.OverlayName != "" || cmdFlags.OverlayImage != "" {
+					prof.Overlay = &profile.OverlayOptions{
+						Name: cmdFlags.OverlayName,
+						Image: profile.ContainerAsset{
+							ImageRef: cmdFlags.OverlayImage,
+						},
+					}
 				}
 
 				prof.Input.SystemExtensions = xslices.Map(
@@ -163,4 +174,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OutputPath, "output", "/out", "The output directory path")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OutputKind, "output-kind", "", "Override output kind")
 	rootCmd.PersistentFlags().BoolVar(&cmdFlags.TarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
+	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayName, "overlay-name", "", "The name of the overlay to use")
+	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayImage, "overlay-image", "", "The image reference to the overlay")
+	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-name")
+	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-image")
 }

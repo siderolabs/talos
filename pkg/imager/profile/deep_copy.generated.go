@@ -33,6 +33,16 @@ func (o Profile) DeepCopy() Profile {
 		cp.Input.SystemExtensions = make([]ContainerAsset, len(o.Input.SystemExtensions))
 		copy(cp.Input.SystemExtensions, o.Input.SystemExtensions)
 	}
+	if o.Overlay != nil {
+		cp.Overlay = new(OverlayOptions)
+		*cp.Overlay = *o.Overlay
+		if o.Overlay.Options != nil {
+			cp.Overlay.Options = make(map[string]any, len(o.Overlay.Options))
+			for k4, v4 := range o.Overlay.Options {
+				cp.Overlay.Options[k4] = v4
+			}
+		}
+	}
 	if o.Output.ImageOptions != nil {
 		cp.Output.ImageOptions = new(ImageOptions)
 		*cp.Output.ImageOptions = *o.Output.ImageOptions

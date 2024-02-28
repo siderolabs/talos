@@ -45,3 +45,15 @@ func (q Quirks) SupportsCompressedEncodedMETA() bool {
 
 	return q.v.GTE(minVersionCompressedMETA)
 }
+
+var minVersionOverlay = semver.MustParse("1.7.0")
+
+// SupportsOverlay returns true if the Talos imager version supports overlay.
+func (q Quirks) SupportsOverlay() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionOverlay)
+}

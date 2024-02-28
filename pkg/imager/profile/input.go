@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/aws"
 	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/azure"
 	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/file"
+	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -166,7 +167,7 @@ const defaultSecureBootPrefix = "/secureboot"
 
 // FillDefaults fills default values for the input.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 	var (
 		zeroFileAsset      FileAsset
@@ -181,7 +182,7 @@ func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 		i.Initramfs.Path = fmt.Sprintf(constants.InitramfsAssetPath, arch)
 	}
 
-	if arch == arm64 {
+	if arch == arm64 && !quirks.New(version).SupportsOverlay() {
 		if i.DTB == zeroFileAsset {
 			i.DTB.Path = fmt.Sprintf(constants.DTBAssetPath, arch)
 		}

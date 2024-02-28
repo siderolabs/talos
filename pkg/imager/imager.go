@@ -10,21 +10,26 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/siderolabs/go-procfs/procfs"
+	"gopkg.in/yaml.v3"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/uki"
 	"github.com/siderolabs/talos/pkg/imager/extensions"
+	"github.com/siderolabs/talos/pkg/imager/internal/overlay/executor"
 	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	"github.com/siderolabs/talos/pkg/machinery/overlay"
 	"github.com/siderolabs/talos/pkg/reporter"
 	"github.com/siderolabs/talos/pkg/version"
 )
@@ -32,6 +37,8 @@ import (
 // Imager is an interface for image generation.
 type Imager struct {
 	prof profile.Profile
+
+	overlayInstaller overlay.Installer
 
 	tempDir string
 
@@ -45,34 +52,6 @@ type Imager struct {
 
 // New creates a new Imager.
 func New(prof profile.Profile) (*Imager, error) {
-	// resolve the profile if it contains a base name
-	if prof.BaseProfileName != "" {
-		baseProfile, ok := profile.Default[prof.BaseProfileName]
-		if !ok {
-			return nil, fmt.Errorf("unknown base profile: %s", prof.BaseProfileName)
-		}
-
-		baseProfile = baseProfile.DeepCopy()
-
-		// merge the profiles
-		if err := merge.Merge(&baseProfile, &prof); err != nil {
-			return nil, err
-		}
-
-		prof = baseProfile
-		prof.BaseProfileName = ""
-	}
-
-	if prof.Version == "" {
-		prof.Version = version.Tag
-	}
-
-	if err := prof.Validate(); err != nil {
-		return nil, fmt.Errorf("profile is invalid: %w", err)
-	}
-
-	prof.Input.FillDefaults(prof.Arch, prof.Version, prof.SecureBootEnabled())
-
 	return &Imager{
 		prof: prof,
 	}, nil
@@ -89,22 +68,31 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 
 	defer os.RemoveAll(i.tempDir) //nolint:errcheck
 
+	// 0. Handle overlays first
+	if err = i.handleOverlay(ctx, report); err != nil {
+		return "", err
+	}
+
+	if err = i.handleProf(); err != nil {
+		return "", err
+	}
+
 	report.Report(reporter.Update{
 		Message: "profile ready:",
 		Status:  reporter.StatusSucceeded,
 	})
 
-	// 0. Dump the profile.
+	// 1. Dump the profile.
 	if err = i.prof.Dump(os.Stderr); err != nil {
 		return "", err
 	}
 
-	// 1. Transform `initramfs.xz` with system extensions
+	// 2. Transform `initramfs.xz` with system extensions
 	if err = i.buildInitramfs(ctx, report); err != nil {
 		return "", err
 	}
 
-	// 2. Prepare kernel arguments.
+	// 3. Prepare kernel arguments.
 	if err = i.buildCmdline(); err != nil {
 		return "", err
 	}
@@ -114,14 +102,14 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		Status:  reporter.StatusSucceeded,
 	})
 
-	// 3. Build UKI if Secure Boot is enabled.
+	// 4. Build UKI if Secure Boot is enabled.
 	if i.prof.SecureBootEnabled() {
 		if err = i.buildUKI(ctx, report); err != nil {
 			return "", err
 		}
 	}
 
-	// 4. Build the output.
+	// 5. Build the output.
 	outputAssetPath = filepath.Join(outputPath, i.prof.OutputPath())
 
 	switch i.prof.Output.Kind {
@@ -154,7 +142,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		Status:  reporter.StatusSucceeded,
 	})
 
-	// 5. Post-process the output.
+	// 6. Post-process the output.
 	switch i.prof.Output.OutFormat {
 	case profile.OutFormatRaw:
 		// do nothing
@@ -170,6 +158,92 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	default:
 		return "", fmt.Errorf("unknown output format: %s", i.prof.Output.OutFormat)
 	}
+}
+
+func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) error {
+	if i.prof.Overlay == nil {
+		report.Report(reporter.Update{
+			Message: "skipped pulling overlay (no overlay)",
+			Status:  reporter.StatusSkip,
+		})
+
+		return nil
+	}
+
+	tempOverlayPath := filepath.Join(i.tempDir, "overlay")
+
+	if err := os.MkdirAll(tempOverlayPath, 0o755); err != nil {
+		return fmt.Errorf("failed to create overlay directory: %w", err)
+	}
+
+	if err := i.prof.Overlay.Image.Extract(ctx, tempOverlayPath, runtime.GOARCH, progressPrintf(report, reporter.Update{Message: "pulling overlay...", Status: reporter.StatusRunning})); err != nil {
+		return err
+	}
+
+	// find all *.yaml files in the tempOverlayPath/profiles/ directory
+	profileYAMLs, err := filepath.Glob(filepath.Join(tempOverlayPath, "profiles", "*.yaml"))
+	if err != nil {
+		return fmt.Errorf("failed to find profiles: %w", err)
+	}
+
+	installerName := i.prof.Overlay.Name
+
+	if installerName == "" {
+		installerName = "default"
+	}
+
+	i.overlayInstaller = executor.New(filepath.Join(tempOverlayPath, "installers", installerName))
+
+	for _, profilePath := range profileYAMLs {
+		profileName := strings.TrimSuffix(filepath.Base(profilePath), ".yaml")
+
+		var overlayProfile profile.Profile
+
+		profileDataBytes, err := os.ReadFile(profilePath)
+		if err != nil {
+			return fmt.Errorf("failed to read profile: %w", err)
+		}
+
+		if err := yaml.Unmarshal(profileDataBytes, &overlayProfile); err != nil {
+			return fmt.Errorf("failed to unmarshal profile: %w", err)
+		}
+
+		profile.Default[profileName] = overlayProfile
+	}
+
+	return nil
+}
+
+func (i *Imager) handleProf() error {
+	// resolve the profile if it contains a base name
+	if i.prof.BaseProfileName != "" {
+		baseProfile, ok := profile.Default[i.prof.BaseProfileName]
+		if !ok {
+			return fmt.Errorf("unknown base profile: %s", i.prof.BaseProfileName)
+		}
+
+		baseProfile = baseProfile.DeepCopy()
+
+		// merge the profiles
+		if err := merge.Merge(&baseProfile, &i.prof); err != nil {
+			return err
+		}
+
+		i.prof = baseProfile
+		i.prof.BaseProfileName = ""
+	}
+
+	if i.prof.Version == "" {
+		i.prof.Version = version.Tag
+	}
+
+	if err := i.prof.Validate(); err != nil {
+		return fmt.Errorf("profile is invalid: %w", err)
+	}
+
+	i.prof.Input.FillDefaults(i.prof.Arch, i.prof.Version, i.prof.SecureBootEnabled())
+
+	return nil
 }
 
 // buildInitramfs transforms `initramfs.xz` with system extensions.
@@ -238,6 +312,8 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 }
 
 // buildCmdline builds the kernel command line.
+//
+//nolint:gocyclo
 func (i *Imager) buildCmdline() error {
 	p, err := platform.NewPlatform(i.prof.Platform)
 	if err != nil {
@@ -251,8 +327,9 @@ func (i *Imager) buildCmdline() error {
 	cmdline.SetAll(p.KernelArgs().Strings())
 
 	// board kernel args
+	// TODO: check if supports overlay quirk
 	if i.prof.Board != "" {
-		var b runtime.Board
+		var b talosruntime.Board
 
 		b, err = board.NewBoard(i.prof.Board)
 		if err != nil {
@@ -261,6 +338,16 @@ func (i *Imager) buildCmdline() error {
 
 		cmdline.Append(constants.KernelParamBoard, b.Name())
 		cmdline.SetAll(b.KernelArgs().Strings())
+	}
+
+	// overlay kernel args
+	if i.overlayInstaller != nil {
+		options, optsErr := i.overlayInstaller.GetOptions(i.prof.Overlay.Options)
+		if optsErr != nil {
+			return optsErr
+		}
+
+		cmdline.SetAll(options.KernelArgs)
 	}
 
 	// first defaults, then extra kernel args to allow extra kernel args to override defaults

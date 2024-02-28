@@ -37,8 +37,20 @@ type Profile struct {
 
 	// Input describes inputs for image generation.
 	Input Input `yaml:"input"`
+	// Overlay describes overlay options for image generation.
+	Overlay *OverlayOptions `yaml:"overlay,omitempty"`
 	// Output describes image generation result.
 	Output Output `yaml:"output"`
+}
+
+// OverlayOptions describes overlay options for image generation.
+type OverlayOptions struct {
+	// Name of the overlay installer, defaults to `default` if not set.
+	Name string `yaml:"name"`
+	// Image to use for the overlay.
+	Image ContainerAsset `yaml:"image"`
+	// Options for the overlay.
+	Options map[string]any `yaml:"options,omitempty"`
 }
 
 // CustomizationProfile describes customizations that can be applied to the image.
@@ -67,7 +79,11 @@ func (p *Profile) Validate() error {
 	}
 
 	if p.Board != "" {
-		if !(p.Arch == arm64 && p.Platform == "metal") {
+		if p.Overlay != nil {
+			return errors.New("overlay is not supported with board options")
+		}
+
+		if p.Arch != arm64 || p.Platform != "metal" {
 			return errors.New("board is only supported for metal arm64")
 		}
 	}
