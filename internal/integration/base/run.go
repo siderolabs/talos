@@ -155,7 +155,7 @@ func retryRunAndWait(suite *suite.Suite, cmdFunc func() *exec.Cmd, retryer retry
 		stdoutBuf, stderrBuf, err = runAndWait(suite, cmdFunc())
 
 		if _, ok := err.(*exec.ExitError); ok {
-			return retry.ExpectedError(err)
+			return retry.ExpectedErrorf("command failed, stderr %v: %w", stderrBuf.String(), err)
 		}
 
 		return err
