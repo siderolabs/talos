@@ -23,6 +23,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -33,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/pkg/imager/ova"
 	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/imager/qemuimg"
+	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/reporter"
@@ -282,6 +284,12 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		Printf:      printf,
 	}
 
+	if i.overlayInstaller != nil {
+		opts.OverlayInstaller = i.overlayInstaller
+		opts.ExtraOptions = i.prof.Overlay.ExtraOptions
+		opts.OverlayExtractedDir = i.tempDir
+	}
+
 	if opts.Board == "" {
 		opts.Board = constants.BoardNone
 	}
@@ -298,7 +306,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 	return nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter.Reporter) error {
 	printf := progressPrintf(report, reporter.Update{Message: "building installer...", Status: reporter.StatusRunning})
 
@@ -374,35 +382,37 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 		)
 	}
 
-	for _, extraArtifact := range []struct {
-		sourcePath string
-		imagePath  string
-	}{
-		{
-			sourcePath: i.prof.Input.DTB.Path,
-			imagePath:  strings.TrimLeft(fmt.Sprintf(constants.DTBAssetPath, i.prof.Arch), "/"),
-		},
-		{
-			sourcePath: i.prof.Input.UBoot.Path,
-			imagePath:  strings.TrimLeft(fmt.Sprintf(constants.UBootAssetPath, i.prof.Arch), "/"),
-		},
-		{
-			sourcePath: i.prof.Input.RPiFirmware.Path,
-			imagePath:  strings.TrimLeft(fmt.Sprintf(constants.RPiFirmwareAssetPath, i.prof.Arch), "/"),
-		},
-	} {
-		if extraArtifact.sourcePath == "" {
-			continue
+	if !quirks.New(i.prof.Version).SupportsOverlay() {
+		for _, extraArtifact := range []struct {
+			sourcePath string
+			imagePath  string
+		}{
+			{
+				sourcePath: i.prof.Input.DTB.Path,
+				imagePath:  strings.TrimLeft(fmt.Sprintf(constants.DTBAssetPath, i.prof.Arch), "/"),
+			},
+			{
+				sourcePath: i.prof.Input.UBoot.Path,
+				imagePath:  strings.TrimLeft(fmt.Sprintf(constants.UBootAssetPath, i.prof.Arch), "/"),
+			},
+			{
+				sourcePath: i.prof.Input.RPiFirmware.Path,
+				imagePath:  strings.TrimLeft(fmt.Sprintf(constants.RPiFirmwareAssetPath, i.prof.Arch), "/"),
+			},
+		} {
+			if extraArtifact.sourcePath == "" {
+				continue
+			}
+
+			var extraFiles []filemap.File
+
+			extraFiles, err = filemap.Walk(extraArtifact.sourcePath, extraArtifact.imagePath)
+			if err != nil {
+				return fmt.Errorf("failed to walk extra artifact %s: %w", extraArtifact.sourcePath, err)
+			}
+
+			artifacts = append(artifacts, extraFiles...)
 		}
-
-		var extraFiles []filemap.File
-
-		extraFiles, err = filemap.Walk(extraArtifact.sourcePath, extraArtifact.imagePath)
-		if err != nil {
-			return fmt.Errorf("failed to walk extra artifact %s: %w", extraArtifact.sourcePath, err)
-		}
-
-		artifacts = append(artifacts, extraFiles...)
 	}
 
 	artifactsLayer, err := filemap.Layer(artifacts)
@@ -413,6 +423,62 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 	newInstallerImg, err = mutate.AppendLayers(newInstallerImg, artifactsLayer)
 	if err != nil {
 		return fmt.Errorf("failed to append artifacts layer: %w", err)
+	}
+
+	if i.overlayInstaller != nil {
+		extraOpts, internalErr := yaml.Marshal(i.prof.Overlay.ExtraOptions)
+		if internalErr != nil {
+			return fmt.Errorf("failed to marshal extra options: %w", internalErr)
+		}
+
+		if internalErr = os.WriteFile(filepath.Join(i.tempDir, constants.ImagerOverlayExtraOptionsPath), extraOpts, 0o644); internalErr != nil {
+			return fmt.Errorf("failed to write extra options yaml: %w", internalErr)
+		}
+
+		printf("generating overlay installer layer")
+
+		var overlayArtifacts []filemap.File
+
+		for _, extraArtifact := range []struct {
+			sourcePath string
+			imagePath  string
+		}{
+			{
+				sourcePath: filepath.Join(i.tempDir, constants.ImagerOverlayArtifactsPath),
+				imagePath:  constants.ImagerOverlayArtifactsPath,
+			},
+			{
+				sourcePath: filepath.Join(i.tempDir, constants.ImagerOverlayInstallersPath, i.prof.Overlay.Name),
+				imagePath:  constants.ImagerOverlayInstallerDefaultPath,
+			},
+			{
+				sourcePath: filepath.Join(i.tempDir, constants.ImagerOverlayExtraOptionsPath),
+				imagePath:  constants.ImagerOverlayExtraOptionsPath,
+			},
+		} {
+			if extraArtifact.sourcePath == "" {
+				continue
+			}
+
+			var extraFiles []filemap.File
+
+			extraFiles, err = filemap.Walk(extraArtifact.sourcePath, extraArtifact.imagePath)
+			if err != nil {
+				return fmt.Errorf("failed to walk extra artifact %s: %w", extraArtifact.sourcePath, err)
+			}
+
+			overlayArtifacts = append(overlayArtifacts, extraFiles...)
+		}
+
+		overlayArtifactsLayer, internalErr := filemap.Layer(overlayArtifacts)
+		if internalErr != nil {
+			return fmt.Errorf("failed to create overlay artifacts layer: %w", internalErr)
+		}
+
+		newInstallerImg, internalErr = mutate.AppendLayers(newInstallerImg, overlayArtifactsLayer)
+		if internalErr != nil {
+			return fmt.Errorf("failed to append overlay artifacts layer: %w", internalErr)
+		}
 	}
 
 	ref, err := name.ParseReference(i.prof.Input.BaseInstaller.ImageRef)

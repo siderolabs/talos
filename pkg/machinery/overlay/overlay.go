@@ -6,9 +6,9 @@
 package overlay
 
 // Installer is an interface for overlay installers.
-type Installer interface {
-	GetOptions(extra InstallExtraOptions) (Options, error)
-	Install(options InstallOptions) error
+type Installer[T any] interface {
+	GetOptions(extra T) (Options, error)
+	Install(options InstallOptions[T]) error
 }
 
 // Options for the overlay installer.
@@ -21,12 +21,12 @@ type Options struct {
 }
 
 // InstallOptions for the overlay installer.
-type InstallOptions struct {
-	InstallDisk   string              `yaml:"installDisk"`
-	MountPrefix   string              `yaml:"mountPrefix"`
-	ArtifactsPath string              `yaml:"artifactsPath"`
-	ExtraOptions  InstallExtraOptions `yaml:"extraOptions,omitempty"`
+type InstallOptions[T any] struct {
+	InstallDisk   string `yaml:"installDisk"`
+	MountPrefix   string `yaml:"mountPrefix"`
+	ArtifactsPath string `yaml:"artifactsPath"`
+	ExtraOptions  T      `yaml:"extraOptions,omitempty"`
 }
 
-// InstallExtraOptions for the overlay installer.
-type InstallExtraOptions map[string]any
+// ExtraOptions for the overlay installer.
+type ExtraOptions map[string]any

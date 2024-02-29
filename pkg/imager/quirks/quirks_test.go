@@ -63,3 +63,39 @@ func TestSupportsCompressedEncodedMETA(t *testing.T) {
 		})
 	}
 }
+
+func TestSupportsOverlay(t *testing.T) {
+	for _, test := range []struct {
+		version string
+
+		expected bool
+	}{
+		{
+			version:  "1.6.3",
+			expected: false,
+		},
+		{
+			version:  "1.7.0",
+			expected: true,
+		},
+		{
+			expected: true,
+		},
+		{
+			version:  "1.6.2",
+			expected: false,
+		},
+		{
+			version:  "1.7.0-alpha.0",
+			expected: true,
+		},
+		{
+			version:  "v1.7.0-alpha.0-75-gff08e2821",
+			expected: true,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			assert.Equal(t, test.expected, quirks.New(test.version).SupportsOverlay())
+		})
+	}
+}

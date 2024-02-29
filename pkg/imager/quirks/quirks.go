@@ -19,7 +19,12 @@ func New(talosVersion string) Quirks {
 		return Quirks{}
 	}
 
-	return Quirks{v: &v}
+	// we only care about major, minor, and patch, so that alpha, beta, etc. are ignored
+	return Quirks{v: &semver.Version{
+		Major: v.Major,
+		Minor: v.Minor,
+		Patch: v.Patch,
+	}}
 }
 
 var minVersionResetOption = semver.MustParse("1.4.0")

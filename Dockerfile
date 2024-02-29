@@ -32,8 +32,6 @@ ARG PKG_RUNC
 ARG PKG_XFSPROGS
 ARG PKG_UTIL_LINUX
 ARG PKG_KMOD
-ARG PKG_U_BOOT
-ARG PKG_RASPBERYPI_FIRMWARE
 ARG PKG_KERNEL
 ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL
 
@@ -113,9 +111,6 @@ FROM --platform=arm64 ${PKG_KMOD} AS pkg-kmod-arm64
 FROM ${PKG_KERNEL} AS pkg-kernel
 FROM --platform=amd64 ${PKG_KERNEL} AS pkg-kernel-amd64
 FROM --platform=arm64 ${PKG_KERNEL} AS pkg-kernel-arm64
-
-FROM --platform=arm64 ${PKG_U_BOOT} AS pkg-u-boot-arm64
-FROM --platform=arm64 ${PKG_RASPBERYPI_FIRMWARE} AS pkg-raspberrypi-firmware-arm64
 
 # Resolve package images using ${EXTRAS} to be used later in COPY --from=.
 
@@ -780,8 +775,6 @@ COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
 COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
 COPY --from=pkg-sd-boot-arm64 /linuxaa64.efi.stub /usr/install/arm64/systemd-stub.efi
 COPY --from=pkg-sd-boot-arm64 /systemd-bootaa64.efi /usr/install/arm64/systemd-boot.efi
-COPY --from=pkg-u-boot-arm64 / /usr/install/arm64/u-boot
-COPY --from=pkg-raspberrypi-firmware-arm64 / /usr/install/arm64/raspberrypi-firmware
 
 FROM scratch AS install-artifacts-all
 COPY --from=install-artifacts-amd64 / /

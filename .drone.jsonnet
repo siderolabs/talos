@@ -640,7 +640,6 @@ local integration_qemu_csi = Step('e2e-csi', target='e2e-qemu', privileged=true,
 });
 
 local integration_images = Step('images', target='images', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
-local integration_sbcs = Step('sbcs', target='sbcs', depends_on=[integration_images], environment={ IMAGE_REGISTRY: local_registry });
 local integration_cloud_images = Step('cloud-images', depends_on=[integration_images], environment=creds_env_vars);
 
 local integration_reproducibility_test = Step('reproducibility-test', target='reproducibility-test', depends_on=[load_artifacts], environment={ IMAGE_REGISTRY: local_registry });
@@ -704,7 +703,7 @@ local integration_pipelines = [
   Pipeline('integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip]) + integration_trigger(['integration-qemu-encrypted-vip']),
   Pipeline('integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race]) + integration_trigger(['integration-qemu-race']),
   Pipeline('integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi]) + integration_trigger(['integration-qemu-csi']),
-  Pipeline('integration-images', default_pipeline_steps + [integration_images, integration_sbcs]) + integration_trigger(['integration-images']),
+  Pipeline('integration-images', default_pipeline_steps + [integration_images]) + integration_trigger(['integration-images']),
   Pipeline('integration-reproducibility-test', default_pipeline_steps + [integration_reproducibility_test]) + integration_trigger(['integration-reproducibility']),
   Pipeline('integration-cloud-images', default_pipeline_steps + [integration_images, integration_cloud_images]) + literal_trigger(['integration-cloud-images']),
   Pipeline('image-factory', default_pipeline_steps + [
@@ -738,7 +737,7 @@ local integration_pipelines = [
   Pipeline('cron-integration-qemu-encrypted-vip', default_pipeline_steps + [integration_qemu_encrypted_vip], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-integration-qemu-race', default_pipeline_steps + [build_race, integration_qemu_race], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-qemu-csi', default_pipeline_steps + [integration_qemu_csi], [default_cron_pipeline]) + cron_trigger(['nightly']),
-  Pipeline('cron-integration-images', default_pipeline_steps + [integration_images, integration_sbcs], [default_cron_pipeline]) + cron_trigger(['nightly']),
+  Pipeline('cron-integration-images', default_pipeline_steps + [integration_images], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-integration-reproducibility-test', default_pipeline_steps + [integration_reproducibility_test], [default_cron_pipeline]) + cron_trigger(['nightly']),
   Pipeline('cron-image-factory', default_pipeline_steps + [
     integration_factory_16_iso,
@@ -891,7 +890,6 @@ local conformance_pipelines = [
 
 local cloud_images = Step('cloud-images', depends_on=[e2e_docker, e2e_qemu], environment=creds_env_vars);
 local images = Step('images', target='images', depends_on=[iso, images_essential, save_artifacts], environment={ IMAGE_REGISTRY: local_registry });
-local sbcs = Step('sbcs', target='sbcs', depends_on=[images], environment={ IMAGE_REGISTRY: local_registry });
 
 // TODO(andrewrynhard): We should run E2E tests on a release.
 local release = {
@@ -921,15 +919,6 @@ local release = {
       '_out/metal-arm64.iso',
       '_out/metal-amd64.raw.xz',
       '_out/metal-arm64.raw.xz',
-      '_out/metal-rpi_generic-arm64.raw.xz',
-      '_out/metal-rockpi_4-arm64.raw.xz',
-      '_out/metal-rockpi_4c-arm64.raw.xz',
-      '_out/metal-rock64-arm64.raw.xz',
-      '_out/metal-pine64-arm64.raw.xz',
-      '_out/metal-bananapi_m64-arm64.raw.xz',
-      '_out/metal-libretech_all_h3_cc_h5-arm64.raw.xz',
-      '_out/metal-jetson_nano-arm64.raw.xz',
-      '_out/metal-nanopi_r4s-arm64.raw.xz',
       '_out/nocloud-amd64.raw.xz',
       '_out/nocloud-arm64.raw.xz',
       '_out/opennebula-amd64.raw.xz',
@@ -973,7 +962,6 @@ local release = {
     cloud_images.name,
     talosctl_cni_bundle.name,
     images.name,
-    sbcs.name,
     iso.name,
     push.name,
     release_notes.name,
@@ -982,7 +970,6 @@ local release = {
 
 local release_steps = default_steps + [
   images,
-  sbcs,
   cloud_images,
   release,
 ];

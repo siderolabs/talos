@@ -22,7 +22,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/uki"
 	"github.com/siderolabs/talos/pkg/imager/extensions"
-	"github.com/siderolabs/talos/pkg/imager/internal/overlay/executor"
+	"github.com/siderolabs/talos/pkg/imager/overlay/executor"
 	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/imager/utils"
@@ -38,7 +38,7 @@ import (
 type Imager struct {
 	prof profile.Profile
 
-	overlayInstaller overlay.Installer
+	overlayInstaller overlay.Installer[overlay.ExtraOptions]
 
 	tempDir string
 
@@ -170,7 +170,7 @@ func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) e
 		return nil
 	}
 
-	tempOverlayPath := filepath.Join(i.tempDir, "overlay")
+	tempOverlayPath := filepath.Join(i.tempDir, constants.ImagerOverlayBasePath)
 
 	if err := os.MkdirAll(tempOverlayPath, 0o755); err != nil {
 		return fmt.Errorf("failed to create overlay directory: %w", err)
@@ -180,19 +180,17 @@ func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) e
 		return err
 	}
 
-	// find all *.yaml files in the tempOverlayPath/profiles/ directory
-	profileYAMLs, err := filepath.Glob(filepath.Join(tempOverlayPath, "profiles", "*.yaml"))
+	// find all *.yaml files in the overlay/profiles/ directory
+	profileYAMLs, err := filepath.Glob(filepath.Join(i.tempDir, constants.ImagerOverlayProfilesPath, "*.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to find profiles: %w", err)
 	}
 
-	installerName := i.prof.Overlay.Name
-
-	if installerName == "" {
-		installerName = "default"
+	if i.prof.Overlay.Name == "" {
+		i.prof.Overlay.Name = constants.ImagerOverlayInstallerDefault
 	}
 
-	i.overlayInstaller = executor.New(filepath.Join(tempOverlayPath, "installers", installerName))
+	i.overlayInstaller = executor.New(filepath.Join(i.tempDir, constants.ImagerOverlayInstallersPath, i.prof.Overlay.Name))
 
 	for _, profilePath := range profileYAMLs {
 		profileName := strings.TrimSuffix(filepath.Base(profilePath), ".yaml")
@@ -327,8 +325,7 @@ func (i *Imager) buildCmdline() error {
 	cmdline.SetAll(p.KernelArgs().Strings())
 
 	// board kernel args
-	// TODO: check if supports overlay quirk
-	if i.prof.Board != "" {
+	if i.prof.Board != "" && !quirks.New(i.prof.Version).SupportsOverlay() {
 		var b talosruntime.Board
 
 		b, err = board.NewBoard(i.prof.Board)
@@ -342,7 +339,7 @@ func (i *Imager) buildCmdline() error {
 
 	// overlay kernel args
 	if i.overlayInstaller != nil {
-		options, optsErr := i.overlayInstaller.GetOptions(i.prof.Overlay.Options)
+		options, optsErr := i.overlayInstaller.GetOptions(i.prof.Overlay.ExtraOptions)
 		if optsErr != nil {
 			return optsErr
 		}

@@ -124,6 +124,13 @@ machine:
 ```
 """
 
+    [notes.sbc]
+        title = "SBC"
+        description = """\
+Talos core will drop support for SBC's and will not include the SBC binaries in the release.
+*Overlays* are being developed to support SBC's.
+"""
+
     [notes.syslog]
         title = "Syslog"
         description = """\

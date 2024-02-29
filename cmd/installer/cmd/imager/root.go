@@ -6,10 +6,12 @@
 package imager
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/gen/xslices"
@@ -22,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/imager"
 	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/overlay"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -39,6 +42,7 @@ var cmdFlags struct {
 	TarToStdout           bool
 	OverlayName           string
 	OverlayImage          string
+	OverlayOptions        []string
 }
 
 // rootCmd represents the base command when called without any subcommands.
@@ -76,12 +80,47 @@ var rootCmd = &cobra.Command{
 					},
 				}
 
+				extraOverlayOptions := overlay.ExtraOptions{}
+
+				for _, option := range cmdFlags.OverlayOptions {
+					if strings.HasPrefix(option, "@") {
+						data, err := os.ReadFile(option[1:])
+						if err != nil {
+							return err
+						}
+
+						decoder := yaml.NewDecoder(bytes.NewReader(data))
+						decoder.KnownFields(true)
+
+						if err := decoder.Decode(&extraOverlayOptions); err != nil {
+							return err
+						}
+
+						continue
+
+					}
+
+					k, v, _ := strings.Cut(option, "=")
+
+					if strings.HasPrefix(v, "@") {
+						data, err := os.ReadFile(v[1:])
+						if err != nil {
+							return err
+						}
+
+						v = string(data)
+					}
+
+					extraOverlayOptions[k] = v
+				}
+
 				if cmdFlags.OverlayName != "" || cmdFlags.OverlayImage != "" {
 					prof.Overlay = &profile.OverlayOptions{
 						Name: cmdFlags.OverlayName,
 						Image: profile.ContainerAsset{
 							ImageRef: cmdFlags.OverlayImage,
 						},
+						ExtraOptions: extraOverlayOptions,
 					}
 				}
 
@@ -176,6 +215,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&cmdFlags.TarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayName, "overlay-name", "", "The name of the overlay to use")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayImage, "overlay-image", "", "The image reference to the overlay")
+	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.OverlayOptions, "overlay-option", []string{}, "Extra options to pass to the overlay")
 	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-name")
 	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-image")
+	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-option")
 }

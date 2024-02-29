@@ -6,11 +6,7 @@
 package board
 
 import (
-	"errors"
 	"fmt"
-	"os"
-
-	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	bananapim64 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board/bananapi_m64"
@@ -25,26 +21,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// CurrentBoard is a helper func for discovering the current board.
-func CurrentBoard() (b runtime.Board, err error) {
-	var board string
-
-	if p := procfs.ProcCmdline().Get(constants.KernelParamBoard).First(); p != nil {
-		board = *p
-	}
-
-	if p, ok := os.LookupEnv("BOARD"); ok {
-		board = p
-	}
-
-	if board == "" {
-		return nil, errors.New("failed to determine board")
-	}
-
-	return newBoard(board)
-}
-
 // NewBoard initializes and returns a runtime.Board.
+// Deprecated: Not supported anymore, use overlays instead.
 func NewBoard(board string) (b runtime.Board, err error) {
 	return newBoard(board)
 }

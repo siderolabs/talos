@@ -574,6 +574,21 @@ const (
 	// RPiFirmwareAssetPath is the path to the raspberrypi firmware in the installer.
 	RPiFirmwareAssetPath = "/usr/install/%s/raspberrypi-firmware"
 
+	// ImagerOverlayBasePath is the base path for the imager overlay.
+	ImagerOverlayBasePath = "/overlay"
+	// ImagerOverlayArtifactsPath is the path to the artifacts in the imager overlay.
+	ImagerOverlayArtifactsPath = ImagerOverlayBasePath + "/" + "artifacts"
+	// ImagerOverlayInstallersPath is the path to the installers in the imager overlay.
+	ImagerOverlayInstallersPath = ImagerOverlayBasePath + "/" + "installers"
+	// ImagerOverlayProfilesPath is the path to the profiles in the imager overlay.
+	ImagerOverlayProfilesPath = ImagerOverlayBasePath + "/" + "profiles"
+	// ImagerOverlayInstallerDefault is the default installer name.
+	ImagerOverlayInstallerDefault = "default"
+	// ImagerOverlayInstallerDefaultPath is the path to the default installer in the imager overlay.
+	ImagerOverlayInstallerDefaultPath = ImagerOverlayInstallersPath + "/" + ImagerOverlayInstallerDefault
+	// ImagerOverlayExtraOptionsPath is the path to the generated extra options file in the imager overlay.
+	ImagerOverlayExtraOptionsPath = ImagerOverlayBasePath + "/" + "extra-options"
+
 	// PlatformKeyAsset defines a well known name for the platform key filename used for auto-enrolling.
 	PlatformKeyAsset = "PK.auth"
 

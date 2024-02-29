@@ -5,17 +5,20 @@
 package install
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/siderolabs/go-blockdevice/blockdevice"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
@@ -23,24 +26,29 @@ import (
 	bootloaderoptions "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/pkg/imager/overlay/executor"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	"github.com/siderolabs/talos/pkg/machinery/overlay"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // Options represents the set of options available for an install.
 type Options struct {
-	ConfigSource      string
-	Disk              string
-	Platform          string
-	Arch              string
-	Board             string
-	ExtraKernelArgs   []string
-	Upgrade           bool
-	Force             bool
-	Zero              bool
-	LegacyBIOSSupport bool
-	MetaValues        MetaValues
+	ConfigSource        string
+	Disk                string
+	Platform            string
+	Arch                string
+	Board               string
+	ExtraKernelArgs     []string
+	Upgrade             bool
+	Force               bool
+	Zero                bool
+	LegacyBIOSSupport   bool
+	MetaValues          MetaValues
+	OverlayInstaller    overlay.Installer[overlay.ExtraOptions]
+	OverlayExtractedDir string
+	ExtraOptions        overlay.ExtraOptions
 
 	// Options specific for the image creation mode.
 	ImageSecureboot bool
@@ -68,7 +76,15 @@ func (m Mode) IsImage() bool {
 }
 
 // Install installs Talos.
-func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) (err error) {
+//
+//nolint:gocyclo
+func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) error {
+	overlayPresent := overlayPresent()
+
+	if b := getBoard(); b != constants.BoardNone && !overlayPresent {
+		return fmt.Errorf("using standard installer image is not supported for board: %s, use an installer with overlay", b)
+	}
+
 	cmdline := procfs.NewCmdline("")
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
 
@@ -79,7 +95,7 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 	cmdline.SetAll(p.KernelArgs().Strings())
 
 	// first defaults, then extra kernel args to allow extra kernel args to override defaults
-	if err = cmdline.AppendAll(kernel.DefaultArgs); err != nil {
+	if err := cmdline.AppendAll(kernel.DefaultArgs); err != nil {
 		return err
 	}
 
@@ -91,7 +107,7 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 
 		var b runtime.Board
 
-		b, err = board.NewBoard(opts.Board)
+		b, err := board.NewBoard(opts.Board)
 		if err != nil {
 			return err
 		}
@@ -101,13 +117,32 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		cmdline.SetAll(b.KernelArgs().Strings())
 	}
 
-	if err = cmdline.AppendAll(
+	if err := cmdline.AppendAll(
 		opts.ExtraKernelArgs,
 		procfs.WithOverwriteArgs("console"),
 		procfs.WithOverwriteArgs(constants.KernelParamPlatform),
 		procfs.WithDeleteNegatedArgs(),
 	); err != nil {
 		return err
+	}
+
+	if overlayPresent {
+		extraOptionsBytes, err := os.ReadFile(constants.ImagerOverlayExtraOptionsPath)
+		if err != nil {
+			return err
+		}
+
+		var extraOptions overlay.ExtraOptions
+
+		decoder := yaml.NewDecoder(bytes.NewReader(extraOptionsBytes))
+		decoder.KnownFields(true)
+
+		if err := decoder.Decode(&extraOptions); err != nil {
+			return fmt.Errorf("failed to decode extra options: %w", err)
+		}
+
+		opts.OverlayInstaller = executor.New(constants.ImagerOverlayInstallerDefaultPath)
+		opts.ExtraOptions = extraOptions
 	}
 
 	i, err := NewInstaller(ctx, cmdline, mode, opts)
@@ -302,6 +337,17 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		}
 	}
 
+	if i.options.OverlayInstaller != nil {
+		if err = i.options.OverlayInstaller.Install(overlay.InstallOptions[overlay.ExtraOptions]{
+			InstallDisk:   i.options.Disk,
+			MountPrefix:   i.options.MountPrefix,
+			ArtifactsPath: filepath.Join(i.options.OverlayExtractedDir, constants.ImagerOverlayArtifactsPath),
+			ExtraOptions:  i.options.ExtraOptions,
+		}); err != nil {
+			return err
+		}
+	}
+
 	if mode == ModeUpgrade || len(i.options.MetaValues.values) > 0 {
 		var (
 			metaState         *meta.Meta
@@ -393,4 +439,24 @@ func retryBlockdeviceOpen(device string) (*blockdevice.BlockDevice, error) {
 	})
 
 	return bd, err
+}
+
+func overlayPresent() bool {
+	_, err := os.Stat(constants.ImagerOverlayInstallerDefaultPath)
+
+	return err == nil
+}
+
+func getBoard() string {
+	cmdline := procfs.ProcCmdline()
+	if cmdline == nil {
+		return constants.BoardNone
+	}
+
+	board := cmdline.Get(constants.KernelParamBoard)
+	if board == nil {
+		return constants.BoardNone
+	}
+
+	return *board.First()
 }

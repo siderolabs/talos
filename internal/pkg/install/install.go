@@ -173,10 +173,6 @@ func RunInstallerContainer(disk, platform, ref string, cfg configcore.Config, cf
 		"--zero=" + zero,
 	}
 
-	if c := procfs.ProcCmdline().Get(constants.KernelParamBoard).First(); c != nil {
-		args = append(args, "--board="+*c)
-	}
-
 	for _, arg := range options.ExtraKernelArgs {
 		args = append(args, "--extra-kernel-arg", arg)
 	}

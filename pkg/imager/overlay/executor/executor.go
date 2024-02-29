@@ -40,7 +40,7 @@ func (o *Options) GetOptions(extra overlay.ExtraOptions) (overlay.Options, error
 
 	out, err := o.execute(bytes.NewReader(extraYAML), "get-options")
 	if err != nil {
-		return overlay.Options{}, fmt.Errorf("failed to run overlay installer: %w", err)
+		return overlay.Options{}, err
 	}
 
 	var options overlay.Options
@@ -60,7 +60,7 @@ func (o *Options) Install(options overlay.InstallOptions[overlay.ExtraOptions]) 
 	}
 
 	if _, err := o.execute(bytes.NewReader(optionsBytes), "install"); err != nil {
-		return fmt.Errorf("failed to run overlay installer: %w", err)
+		return err
 	}
 
 	return nil

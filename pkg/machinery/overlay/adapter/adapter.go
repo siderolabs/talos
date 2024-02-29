@@ -15,7 +15,7 @@ import (
 )
 
 // Execute executes the overlay installer.
-func Execute(installer overlay.Installer) {
+func Execute[T any](installer overlay.Installer[T]) {
 	if len(os.Args) < 2 {
 		fmt.Fprint(os.Stderr, "missing command")
 
@@ -34,8 +34,8 @@ func Execute(installer overlay.Installer) {
 	}
 }
 
-func getOptions(installer overlay.Installer) {
-	var opts overlay.InstallExtraOptions
+func getOptions[T any](installer overlay.Installer[T]) {
+	var opts T
 
 	withErrorHandler(yaml.NewDecoder(os.Stdin).Decode(&opts))
 
@@ -49,8 +49,8 @@ func getOptions(installer overlay.Installer) {
 	withErrorHandler(yaml.NewEncoder(os.Stdout).Encode(opt))
 }
 
-func install(installer overlay.Installer) {
-	var opts overlay.InstallOptions
+func install[T any](installer overlay.Installer[T]) {
+	var opts overlay.InstallOptions[T]
 
 	withErrorHandler(yaml.NewDecoder(os.Stdin).Decode(&opts))
 

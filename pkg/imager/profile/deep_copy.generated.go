@@ -36,10 +36,10 @@ func (o Profile) DeepCopy() Profile {
 	if o.Overlay != nil {
 		cp.Overlay = new(OverlayOptions)
 		*cp.Overlay = *o.Overlay
-		if o.Overlay.Options != nil {
-			cp.Overlay.Options = make(map[string]any, len(o.Overlay.Options))
-			for k4, v4 := range o.Overlay.Options {
-				cp.Overlay.Options[k4] = v4
+		if o.Overlay.ExtraOptions != nil {
+			cp.Overlay.ExtraOptions = make(map[string]any, len(o.Overlay.ExtraOptions))
+			for k4, v4 := range o.Overlay.ExtraOptions {
+				cp.Overlay.ExtraOptions[k4] = v4
 			}
 		}
 	}

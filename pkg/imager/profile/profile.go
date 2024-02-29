@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/meta"
+	"github.com/siderolabs/talos/pkg/machinery/overlay"
 )
 
 //go:generate deep-copy -type Profile -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
@@ -50,7 +51,7 @@ type OverlayOptions struct {
 	// Image to use for the overlay.
 	Image ContainerAsset `yaml:"image"`
 	// Options for the overlay.
-	Options map[string]any `yaml:"options,omitempty"`
+	overlay.ExtraOptions `yaml:"options,omitempty"`
 }
 
 // CustomizationProfile describes customizations that can be applied to the image.
