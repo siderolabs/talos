@@ -126,7 +126,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsExpectedModules() {
 		"usb_wwan":        "usb_wwan.ko",
 		"usbnet":          "usbnet.ko",
 		"zaurus":          "zaurus.ko",
-		// "zfs":             "zfs.ko", // disabled, see https://github.com/siderolabs/pkgs/pull/873
+		"zfs":             "zfs.ko",
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
@@ -554,8 +554,6 @@ func (suite *ExtensionsSuiteQEMU) mdADMScan() string {
 
 // TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
-	suite.T().Skip("skipping due to https://github.com/siderolabs/pkgs/pull/873")
-
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-zpool-importer": "Finished"})
 

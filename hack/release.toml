@@ -17,7 +17,7 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.6.16
+Linux: 6.6.18
 etcd: 3.5.11
 Kubernetes: 1.30.0-alpha.3
 containerd: 1.7.13
@@ -36,7 +36,7 @@ Talos Linux now supports `physical: true` qualifier for device selectors, it sel
     [notes.problems]
         title = "Known Problems"
         description = """\
-ZFS and DRBD extensions are disabled in this release due to incompatibility with the latest Linux kernel.
+DRBD extension is disabled in this release due to incompatibility with the latest Linux kernel.
 """
 
     [notes.dns-resolve-cache]
