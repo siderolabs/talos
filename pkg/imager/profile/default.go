@@ -340,6 +340,20 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	constants.BoardRock4cPlus: {
+		Arch:       "arm64",
+		Platform:   constants.PlatformMetal,
+		Board:      constants.BoardRock4cPlus,
+		SecureBoot: pointer.To(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatXZ,
+			ImageOptions: &ImageOptions{
+				DiskSize:   MinRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
 	constants.BoardPine64: {
 		Arch:       "arm64",
 		Platform:   constants.PlatformMetal,
