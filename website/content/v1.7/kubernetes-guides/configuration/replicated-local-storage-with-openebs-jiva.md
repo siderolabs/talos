@@ -26,9 +26,9 @@ Create a machine config patch with the contents below and save as `patch.yaml`
 machine:
   kubelet:
     extraMounts:
-      - destination: /var/openebs/local
+      - destination: /var/local/openebs
         type: bind
-        source: /var/openebs/local
+        source: /var/local/openebs
         options:
           - bind
           - rshared
