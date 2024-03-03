@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/jeromer/syslogparser"
 	"github.com/jeromer/syslogparser/rfc3164"
@@ -29,9 +30,17 @@ func Parse(b []byte) (string, error) {
 
 	switch rfc {
 	case syslogparser.RFC_3164:
-		parser = rfc3164.NewParser(b)
+		input := slices.Clone(b)
 
-		if rfc3164ContainsHostname(b) {
+		tagPresent, hostnamePresent := rfc3164ContainsTagHostname(b)
+
+		if !tagPresent {
+			input = enhanceRFC3164WithTag(b)
+		}
+
+		parser = rfc3164.NewParser(input)
+
+		if !hostnamePresent {
 			parser.WithHostname("localhost")
 		}
 	case syslogparser.RFC_5424:
@@ -52,11 +61,51 @@ func Parse(b []byte) (string, error) {
 	return string(msg), nil
 }
 
-func rfc3164ContainsHostname(buf []byte) bool {
+func rfc3164ContainsTagHostname(buf []byte) (bool, bool) {
 	indx := bytes.Index(buf, []byte(`]:`))
 	if indx == -1 {
-		return false
+		return false, false
 	}
 
-	return bytes.Count(buf[:indx], []byte(` `)) == 3
+	// handle case when timestamp is of the format `<6>Mar  3 12:55:18`
+	if len(bytes.Split(buf[:indx], []byte(`  `))) > 1 {
+		return true, false
+	}
+
+	return true, bytes.Count(buf[:indx], []byte(` `)) > 3
+}
+
+func enhanceRFC3164WithTag(buf []byte) []byte {
+	var count int
+
+	spaces := 3
+
+	singleDigitDayIndex := bytes.Index(buf, []byte(`  `))
+	if singleDigitDayIndex != -1 && singleDigitDayIndex < 8 {
+		spaces = 4
+	}
+
+	i := bytes.IndexFunc(buf, func(r rune) bool {
+		if r == rune(' ') {
+			count++
+		}
+
+		if count == spaces {
+			return true
+		}
+
+		return false
+	},
+	)
+
+	initial := buf[:i]
+	remaining := buf[i:]
+
+	var syslogBytes bytes.Buffer
+
+	syslogBytes.Write(initial)
+	syslogBytes.WriteString(" unknown:")
+	syslogBytes.Write(remaining)
+
+	return syslogBytes.Bytes()
 }

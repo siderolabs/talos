@@ -22,7 +22,17 @@ func TestParser(t *testing.T) {
 		{
 			name:     "RFC3164 without tag and hostname",
 			input:    []byte(`<4>Feb 16 17:54:19 time="2024-02-16T17:54:19.857755073Z" level=warning msg="Could not add /dev/mshv to the devices cgroup`),
-			expected: `{"content":"msg=\"Could not add /dev/mshv to the devices cgroup","facility":0,"hostname":"time=\"2024-02-16T17:54:19.857755073Z\"","priority":4,"severity":4,"tag":"level=warning","timestamp":"2024-02-16T17:54:19Z"}`, //nolint:lll
+			expected: `{"content":"time=\"2024-02-16T17:54:19.857755073Z\" level=warning msg=\"Could not add /dev/mshv to the devices cgroup","facility":0,"hostname":"localhost","priority":4,"severity":4,"tag":"unknown","timestamp":"2024-02-16T17:54:19Z"}`, //nolint:lll
+		},
+		{
+			name:     "RFC3164 timestamp contains single digit day",
+			input:    []byte(`<6>Mar  3 12:55:18 syslogd_test[834097]: Hello, syslogd!`),
+			expected: `{"content":"Hello, syslogd!","facility":0,"hostname":"localhost","priority":6,"severity":6,"tag":"syslogd_test","timestamp":"2024-03-03T12:55:18Z"}`,
+		},
+		{
+			name:     "RFC3164 timestamp contains single digit day & without tag and hostname",
+			input:    []byte(`<6>Mar  3 12:55:18 Hello, syslogd!`),
+			expected: `{"content":"Hello, syslogd!","facility":0,"hostname":"localhost","priority":6,"severity":6,"tag":"unknown","timestamp":"2024-03-03T12:55:18Z"}`,
 		},
 		{
 			name:     "RFC3164 without hostname",
