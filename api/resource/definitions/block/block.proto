@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package talos.resource.definitions.block;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block";
+
+// DeviceSpec is the spec for devices status.
+message DeviceSpec {
+  string type = 1;
+  int64 major = 2;
+  int64 minor = 3;
+  string partition_name = 4;
+  int64 partition_number = 5;
+  int64 generation = 6;
+  string device_path = 7;
+  string parent = 8;
+}
+
+// DiscoveredVolumeSpec is the spec for DiscoveredVolumes status.
+message DiscoveredVolumeSpec {
+  uint64 size = 1;
+  uint64 sector_size = 2;
+  uint64 io_size = 3;
+  string name = 4;
+  string uuid = 5;
+  string label = 6;
+  uint32 block_size = 7;
+  uint32 filesystem_block_size = 8;
+  uint64 probed_size = 9;
+  string partition_uuid = 10;
+  string partition_type = 11;
+  string partition_label = 12;
+  uint64 partition_index = 13;
+  string type = 14;
+  string device_path = 15;
+  string parent = 16;
+}
+

@@ -100,9 +100,8 @@ linters-settings:
     replace-local: true
     replace-allow-list:
       - gopkg.in/yaml.v3
-      - github.com/vmware-tanzu/sonobuoy
-      - golang.org/x/sys
       - github.com/coredns/coredns
+      - github.com/mdlayher/kobject
     retract-allow-no-explanation: false
     exclude-forbidden: true
 

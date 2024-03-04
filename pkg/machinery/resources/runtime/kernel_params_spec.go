@@ -11,11 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
-
-// NamespaceName contains configuration resources.
-const NamespaceName resource.Namespace = v1alpha1.NamespaceName
 
 // KernelParamSpecType is type of KernelParam resource.
 const KernelParamSpecType = resource.Type("KernelParamSpecs.runtime.talos.dev")

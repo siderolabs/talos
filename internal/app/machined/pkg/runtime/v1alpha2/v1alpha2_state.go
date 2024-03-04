@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/registry"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
@@ -94,6 +95,8 @@ func NewState() (*State, error) {
 
 	// register Talos resources
 	for _, r := range []meta.ResourceWithRD{
+		&block.Device{},
+		&block.DiscoveredVolume{},
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},

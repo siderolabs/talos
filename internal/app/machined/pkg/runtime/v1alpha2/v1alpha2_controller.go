@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/config"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
@@ -87,6 +88,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	}
 
 	for _, c := range []controller.Controller{
+		&block.DevicesController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
+		&block.DiscoveryController{},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),
 		&cluster.DiscoveryServiceController{},

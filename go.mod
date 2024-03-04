@@ -5,6 +5,10 @@ go 1.22.1
 replace (
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.11.52
+
+	// see https://github.com/mdlayher/kobject/pull/5
+	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+
 	// Use nested module.
 	github.com/siderolabs/talos/pkg/machinery => ./pkg/machinery
 
@@ -87,6 +91,7 @@ require (
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
 	github.com/mdlayher/ethtool v0.1.0
 	github.com/mdlayher/genetlink v1.3.2
+	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
 	github.com/mdlayher/netlink v1.7.2
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdp/qrterminal/v3 v3.2.0
@@ -112,6 +117,7 @@ require (
 	github.com/siderolabs/gen v0.4.8
 	github.com/siderolabs/go-api-signature v0.3.2
 	github.com/siderolabs/go-blockdevice v0.4.7
+	github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240301135834-a5481f5272f2
 	github.com/siderolabs/go-circular v0.1.0
 	github.com/siderolabs/go-cmd v0.1.1
 	github.com/siderolabs/go-copy v0.1.0

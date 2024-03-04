@@ -25,6 +25,10 @@ description: Talos gRPC API reference.
   
     - [File-level Extensions](#common/common.proto-extensions)
   
+- [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
+    - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
+    - [DiscoveredVolumeSpec](#talos.resource.definitions.block.DiscoveredVolumeSpec)
+  
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
     - [AffiliateSpec](#talos.resource.definitions.cluster.AffiliateSpec)
     - [ConfigSpec](#talos.resource.definitions.cluster.ConfigSpec)
@@ -723,6 +727,74 @@ Common metadata message nested in all reply message types
 | remove_deprecated_message | string | .google.protobuf.MessageOptions | 93117 | Indicates the Talos version when this deprecated message will be removed from API. |
 | remove_deprecated_method | string | .google.protobuf.MethodOptions | 93117 | Indicates the Talos version when this deprecated method will be removed from API. |
 | remove_deprecated_service | string | .google.protobuf.ServiceOptions | 93117 | Indicates the Talos version when this deprecated service will be removed from API. |
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="resource/definitions/block/block.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## resource/definitions/block/block.proto
+
+
+
+<a name="talos.resource.definitions.block.DeviceSpec"></a>
+
+### DeviceSpec
+DeviceSpec is the spec for devices status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
+| major | [int64](#int64) |  |  |
+| minor | [int64](#int64) |  |  |
+| partition_name | [string](#string) |  |  |
+| partition_number | [int64](#int64) |  |  |
+| generation | [int64](#int64) |  |  |
+| device_path | [string](#string) |  |  |
+| parent | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiscoveredVolumeSpec"></a>
+
+### DiscoveredVolumeSpec
+DiscoveredVolumeSpec is the spec for DiscoveredVolumes status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| size | [uint64](#uint64) |  |  |
+| sector_size | [uint64](#uint64) |  |  |
+| io_size | [uint64](#uint64) |  |  |
+| name | [string](#string) |  |  |
+| uuid | [string](#string) |  |  |
+| label | [string](#string) |  |  |
+| block_size | [uint32](#uint32) |  |  |
+| filesystem_block_size | [uint32](#uint32) |  |  |
+| probed_size | [uint64](#uint64) |  |  |
+| partition_uuid | [string](#string) |  |  |
+| partition_type | [string](#string) |  |  |
+| partition_label | [string](#string) |  |  |
+| partition_index | [uint64](#uint64) |  |  |
+| type | [string](#string) |  |  |
+| device_path | [string](#string) |  |  |
+| parent | [string](#string) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
 
  <!-- end HasExtensions -->
 
