@@ -16,6 +16,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
 // serviceCmd represents the service command.
@@ -89,7 +90,7 @@ func serviceList(ctx context.Context, c *client.Client) error {
 
 	for _, msg := range resp.Messages {
 		for _, s := range msg.Services {
-			svc := cli.ServiceInfoWrapper{ServiceInfo: s}
+			svc := formatters.ServiceInfoWrapper{ServiceInfo: s}
 
 			node := defaultNode
 
@@ -122,7 +123,7 @@ func serviceInfo(ctx context.Context, c *client.Client, id string) error {
 		return fmt.Errorf("service %q is not registered on any nodes", id)
 	}
 
-	return cli.RenderServicesInfo(services, os.Stdout, defaultNode, true)
+	return formatters.RenderServicesInfo(services, os.Stdout, defaultNode, true)
 }
 
 func serviceStart(ctx context.Context, c *client.Client, id string) error {

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // DefaultImage appends default image version.

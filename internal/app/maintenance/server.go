@@ -35,7 +35,7 @@ import (
 	v1alpha1machine "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // Server implements [machine.MachineServiceServer], network.NetworkService, and [storage.StorageServiceServer].

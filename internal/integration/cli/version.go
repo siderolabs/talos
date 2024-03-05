@@ -10,7 +10,7 @@ import (
 	"regexp"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // VersionSuite verifies version command.

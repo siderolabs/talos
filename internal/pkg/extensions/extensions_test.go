@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/extensions"
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 func TestLoadValidate(t *testing.T) {

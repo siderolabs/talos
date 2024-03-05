@@ -25,7 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // Options represents the set of options available for an install.

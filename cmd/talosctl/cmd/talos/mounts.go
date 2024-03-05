@@ -15,6 +15,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
 // mountsCmd represents the mounts command.
@@ -37,7 +38,7 @@ var mountsCmd = &cobra.Command{
 				cli.Warning("%s", err)
 			}
 
-			return cli.RenderMounts(resp, os.Stdout, &remotePeer)
+			return formatters.RenderMounts(resp, os.Stdout, &remotePeer)
 		})
 	},
 }

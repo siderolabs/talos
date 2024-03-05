@@ -30,8 +30,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/reporter"
-	"github.com/siderolabs/talos/pkg/version"
 )
 
 // Imager is an interface for image generation.

@@ -25,9 +25,9 @@ import (
 	"github.com/siderolabs/talos/pkg/images"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers"
-	"github.com/siderolabs/talos/pkg/version"
 )
 
 // Accumulated list of all the suites to run.

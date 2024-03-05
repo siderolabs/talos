@@ -78,8 +78,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	resourcev1alpha1 "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/minimal"
-	"github.com/siderolabs/talos/pkg/version"
 )
 
 // WaitForUSB represents the WaitForUSB task.

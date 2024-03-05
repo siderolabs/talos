@@ -17,8 +17,8 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/measure"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/splash"
-	"github.com/siderolabs/talos/pkg/version"
 )
 
 func (builder *Builder) generateOSRel() error {

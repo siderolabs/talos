@@ -20,12 +20,12 @@ import (
 	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
-	"github.com/siderolabs/talos/pkg/cli"
 	_ "github.com/siderolabs/talos/pkg/grpc/codec" // register codec
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
 var kubernetes bool
@@ -165,7 +165,7 @@ func getServiceFromNode() []string {
 
 			for _, msg := range resp.Messages {
 				for _, s := range msg.Services {
-					svc := cli.ServiceInfoWrapper{ServiceInfo: s}
+					svc := formatters.ServiceInfoWrapper{ServiceInfo: s}
 					svcIDs = append(svcIDs, svc.Id)
 				}
 			}

@@ -33,12 +33,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/formatters"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // BundleOptions defines GetSupportBundle options.
@@ -430,7 +430,7 @@ func serviceInfo(id string) collect {
 
 		var buf bytes.Buffer
 
-		if err := cli.RenderServicesInfo(services, &buf, "", false); err != nil {
+		if err := formatters.RenderServicesInfo(services, &buf, "", false); err != nil {
 			return nil, err
 		}
 
@@ -528,7 +528,7 @@ func dependencies(ctx context.Context, options *BundleOptions) ([]byte, error) {
 
 	var buf bytes.Buffer
 
-	if err = cli.RenderGraph(ctx, options.Client, resp, &buf, true); err != nil {
+	if err = formatters.RenderGraph(ctx, options.Client, resp, &buf, true); err != nil {
 		return nil, err
 	}
 
@@ -617,7 +617,7 @@ func mounts(ctx context.Context, options *BundleOptions) ([]byte, error) {
 
 	var buf bytes.Buffer
 
-	if err = cli.RenderMounts(resp, &buf, nil); err != nil {
+	if err = formatters.RenderMounts(resp, &buf, nil); err != nil {
 		return nil, err
 	}
 

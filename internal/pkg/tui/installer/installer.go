@@ -18,7 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/tui/components"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // NewPage creates a new installer page.

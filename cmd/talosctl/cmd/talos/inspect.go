@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
 // inspectCmd represents the inspect command.
@@ -54,7 +55,7 @@ to render the graph:
 				cli.Warning("%s", err)
 			}
 
-			return cli.RenderGraph(ctx, c, resp, os.Stdout, inspectDependenciesCmdFlags.withResources)
+			return formatters.RenderGraph(ctx, c, resp, os.Stdout, inspectDependenciesCmdFlags.withResources)
 		})
 	},
 }

@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // Config represents a grub configuration file (grub.cfg).

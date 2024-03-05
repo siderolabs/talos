@@ -14,7 +14,7 @@ import (
 	"github.com/blang/semver/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
-	"github.com/siderolabs/talos/pkg/version"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // Validate the extension: compatibility, contents, etc.
