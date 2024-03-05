@@ -24,8 +24,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/cluster"
 	clusterresource "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 
