@@ -319,6 +319,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&siderolink.ManagerController{},
+		&siderolink.UserspaceWireguardController{
+			RelayRetryTimeout: 10 * time.Second,
+		},
 		&timecontrollers.AdjtimeStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

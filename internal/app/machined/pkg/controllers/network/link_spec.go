@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink"
 	"github.com/siderolabs/gen/pair/ordered"
@@ -512,8 +513,8 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				logger.Info("reconfigured wireguard link", zap.Int("peers", len(link.TypedSpec().Wireguard.Peers)))
 
 				// notify link status controller, as wireguard updates can't be watched via netlink API
-				if err = r.Modify(ctx, network.NewLinkRefresh(network.NamespaceName, network.LinkKindWireguard), func(r resource.Resource) error {
-					r.(*network.LinkRefresh).TypedSpec().Bump()
+				if err = safe.WriterModify[*network.LinkRefresh](ctx, r, network.NewLinkRefresh(network.NamespaceName, network.LinkKindWireguard), func(r *network.LinkRefresh) error {
+					r.TypedSpec().Bump()
 
 					return nil
 				}); err != nil {

@@ -243,6 +243,7 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/siderolink/siderolink.proto](#resource/definitions/siderolink/siderolink.proto)
     - [ConfigSpec](#talos.resource.definitions.siderolink.ConfigSpec)
+    - [TunnelSpec](#talos.resource.definitions.siderolink.TunnelSpec)
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
     - [AdjtimeStatusSpec](#talos.resource.definitions.time.AdjtimeStatusSpec)
@@ -4361,12 +4362,34 @@ TrustdCertsSpec describes etcd certs secrets.
 <a name="talos.resource.definitions.siderolink.ConfigSpec"></a>
 
 ### ConfigSpec
-ConfigSpec describes KubeSpan configuration..
+ConfigSpec describes Siderolink configuration.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | api_endpoint | [string](#string) |  |  |
+| host | [string](#string) |  |  |
+| join_token | [string](#string) |  |  |
+| insecure | [bool](#bool) |  |  |
+| tunnel | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.siderolink.TunnelSpec"></a>
+
+### TunnelSpec
+TunnelSpec describes Siderolink GRPC Tunnel configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| api_endpoint | [string](#string) |  |  |
+| link_name | [string](#string) |  |  |
+| mtu | [int64](#int64) |  |  |
+| node_address | [common.NetIPPort](#common.NetIPPort) |  |  |
 
 
 

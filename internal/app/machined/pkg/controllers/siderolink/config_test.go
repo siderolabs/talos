@@ -7,9 +7,11 @@ package siderolink_test
 import (
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -32,6 +34,7 @@ func TestConfigSuite(t *testing.T) {
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&siderolinkctrl.ConfigController{}))
 			},
+			Timeout: time.Second,
 		},
 	})
 }
@@ -41,7 +44,7 @@ func (suite *ConfigSuite) TestConfig() {
 
 	siderolinkConfig := &siderolinkcfg.ConfigV1Alpha1{
 		APIUrlConfig: meta.URL{
-			URL: must(url.Parse("https://api.sidero.dev")),
+			URL: must.Value(url.Parse("https://api.sidero.dev"))(suite.T()),
 		},
 	}
 
@@ -56,10 +59,23 @@ func (suite *ConfigSuite) TestConfig() {
 		})
 }
 
-func must[T any](t T, err error) T {
-	if err != nil {
-		panic(err)
+func (suite *ConfigSuite) TestConfigTunnel() {
+	rtestutils.AssertNoResource[*siderolink.Config](suite.Ctx(), suite.T(), suite.State(), siderolink.ConfigID)
+
+	siderolinkConfig := &siderolinkcfg.ConfigV1Alpha1{
+		APIUrlConfig: meta.URL{
+			URL: must.Value(url.Parse("https://api.sidero.dev?grpc_tunnel=true"))(suite.T()),
+		},
 	}
 
-	return t
+	cfg, err := container.New(siderolinkConfig)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{siderolink.ConfigID},
+		func(c *siderolink.Config, assert *assert.Assertions) {
+			assert.Equal("https://api.sidero.dev?grpc_tunnel=true", c.TypedSpec().APIEndpoint)
+			assert.True(c.TypedSpec().Tunnel)
+		})
 }

@@ -5,8 +5,9 @@
 package network
 
 import (
+	"cmp"
 	"net/netip"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -180,25 +181,15 @@ func (spec *WireguardSpec) Equal(other *WireguardSpec) bool {
 
 // Sort the spec so that comparison is possible.
 func (spec *WireguardSpec) Sort() {
-	sort.Slice(spec.Peers, func(i, j int) bool {
-		return spec.Peers[i].PublicKey < spec.Peers[j].PublicKey
-	})
+	slices.SortFunc(spec.Peers, func(a, b WireguardPeer) int { return cmp.Compare(a.PublicKey, b.PublicKey) })
 
 	for k := range spec.Peers {
-		k := k
-
-		sort.Slice(spec.Peers[k].AllowedIPs, func(i, j int) bool {
-			left := spec.Peers[k].AllowedIPs[i]
-			right := spec.Peers[k].AllowedIPs[j]
-
-			switch left.Addr().Compare(right.Addr()) {
-			case -1:
-				return true
-			case 0:
-				return left.Bits() < right.Bits()
-			default:
-				return false
+		slices.SortFunc(spec.Peers[k].AllowedIPs, func(left, right netip.Prefix) int {
+			if res := left.Addr().Compare(right.Addr()); res != 0 {
+				return res
 			}
+
+			return cmp.Compare(left.Bits(), right.Bits())
 		})
 	}
 }

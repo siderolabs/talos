@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
-//go:generate deep-copy -type ConfigSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type ConfigSpec -type TunnelSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // ConfigType is type of Config resource.
 const ConfigType = resource.Type("SiderolinkConfigs.siderolink.talos.dev")
@@ -23,14 +23,18 @@ const ConfigType = resource.Type("SiderolinkConfigs.siderolink.talos.dev")
 // ConfigID the singleton config resource ID.
 const ConfigID = resource.ID("siderolink")
 
-// Config resource holds KubeSpan configuration.
+// Config resource holds Siderolink configuration.
 type Config = typed.Resource[ConfigSpec, ConfigExtension]
 
-// ConfigSpec describes KubeSpan configuration..
+// ConfigSpec describes Siderolink configuration.
 //
 //gotagsrewrite:gen
 type ConfigSpec struct {
 	APIEndpoint string `yaml:"apiEndpoint" protobuf:"1"`
+	Host        string `yaml:"host" protobuf:"2"`
+	JoinToken   string `yaml:"joinToken" protobuf:"3"`
+	Insecure    bool   `yaml:"insecure" protobuf:"4"`
+	Tunnel      bool   `yaml:"tunnel" protobuf:"5"`
 }
 
 // NewConfig initializes a Config resource.
@@ -54,6 +58,10 @@ func (ConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "API Endpoint",
 				JSONPath: `{.apiEndpoint}`,
+			},
+			{
+				Name:     "Tunnel",
+				JSONPath: `{.tunnel}`,
 			},
 		},
 		Sensitivity: meta.Sensitive,

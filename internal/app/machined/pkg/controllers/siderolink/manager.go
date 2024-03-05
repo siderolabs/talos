@@ -30,7 +30,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
-	"github.com/siderolabs/talos/internal/pkg/endpoint"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -67,6 +66,10 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 		{
 			Type: network.LinkSpecType,
 			Kind: controller.OutputShared,
+		},
+		{
+			Type: siderolink.TunnelType,
+			Kind: controller.OutputExclusive,
 		},
 	}
 }
@@ -185,7 +188,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			zap.String("next_peer_endpoint", ctrl.pd.PeekNextEndpoint()),
 		)
 
-		if err := safe.WriterModify(ctx, r, linkSpec,
+		if err = safe.WriterModify(ctx, r, linkSpec,
 			func(res *network.LinkSpec) error {
 				spec := res.TypedSpec()
 
@@ -194,7 +197,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				spec.Type = nethelpers.LinkNone
 				spec.Kind = "wireguard"
 				spec.Up = true
-				spec.Logical = true
+				spec.Logical = ctrl.pd.grpcPeerAddrPort == ""
 				spec.MTU = wireguard.LinkMTU
 
 				spec.Wireguard = network.WireguardSpec{
@@ -219,7 +222,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("error creating siderolink spec: %w", err)
 		}
 
-		if err := safe.WriterModify(ctx, r, addressSpec,
+		if err = safe.WriterModify(ctx, r, addressSpec,
 			func(res *network.AddressSpec) error {
 				spec := res.TypedSpec()
 
@@ -233,6 +236,32 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				return nil
 			}); err != nil {
 			return fmt.Errorf("error creating address spec: %w", err)
+		}
+
+		if ctrl.pd.grpcPeerAddrPort != "" {
+			var ourAddr netip.AddrPort
+
+			ourAddr, err = netip.ParseAddrPort(ctrl.pd.grpcPeerAddrPort)
+			if err != nil {
+				return err
+			}
+
+			if err = safe.WriterModify(ctx, r, siderolink.NewTunnel(),
+				func(tunnel *siderolink.Tunnel) error {
+					tunnel.TypedSpec().APIEndpoint = ctrl.pd.apiEndpont
+					tunnel.TypedSpec().LinkName = constants.SideroLinkName
+					tunnel.TypedSpec().MTU = wireguard.LinkMTU
+					tunnel.TypedSpec().NodeAddress = ourAddr
+
+					return nil
+				},
+			); err != nil {
+				return fmt.Errorf("error creating tunnel spec: %w", err)
+			}
+		} else {
+			if err = r.Destroy(ctx, siderolink.NewTunnel().Metadata()); err != nil && !state.IsNotFoundError(err) {
+				return fmt.Errorf("error destroying tunnel spec: %w", err)
+			}
 		}
 
 		keepLinkSpecSet := map[resource.ID]struct{}{
@@ -283,20 +312,6 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 	}
 
 	nodeUUID := sysInfo.TypedSpec().UUID
-	stringEndpoint := cfg.TypedSpec().APIEndpoint
-
-	parsedEndpoint, err := endpoint.Parse(stringEndpoint)
-	if err != nil {
-		return optional.None[provisionData](), fmt.Errorf("failed to parse siderolink endpoint: %w", err)
-	}
-
-	var transportCredentials credentials.TransportCredentials
-
-	if parsedEndpoint.Insecure {
-		transportCredentials = insecure.NewCredentials()
-	} else {
-		transportCredentials = credentials.NewTLS(&tls.Config{})
-	}
 
 	provision := func() (*pb.ProvisionResponse, error) {
 		connCtx, connCtxCancel := context.WithTimeout(ctx, 10*time.Second)
@@ -304,12 +319,12 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 
 		conn, connErr := grpc.DialContext(
 			connCtx,
-			parsedEndpoint.Host,
-			grpc.WithTransportCredentials(transportCredentials),
+			cfg.TypedSpec().Host,
+			withTransportCredentials(cfg.TypedSpec().Insecure),
 			grpc.WithSharedWriteBuffer(true),
 		)
 		if connErr != nil {
-			return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", stringEndpoint, connErr)
+			return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", cfg.TypedSpec().Host, connErr)
 		}
 
 		defer func() {
@@ -323,15 +338,22 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 			return nil, fmt.Errorf("failed to get unique token: %w", rdrErr)
 		}
 
-		sideroLinkClient := pb.NewProvisionServiceClient(conn)
-		request := &pb.ProvisionRequest{
-			NodeUuid:        nodeUUID,
-			NodePublicKey:   ctrl.nodeKey.PublicKey().String(),
-			NodeUniqueToken: pointer.To(uniqTokenRes.TypedSpec().Token),
-			TalosVersion:    pointer.To(version.Tag),
+		var wgOverGRPC *bool
+
+		if cfg.TypedSpec().Tunnel {
+			wgOverGRPC = pointer.To(true)
 		}
 
-		token := parsedEndpoint.GetParam("jointoken")
+		sideroLinkClient := pb.NewProvisionServiceClient(conn)
+		request := &pb.ProvisionRequest{
+			NodeUuid:          nodeUUID,
+			NodePublicKey:     ctrl.nodeKey.PublicKey().String(),
+			NodeUniqueToken:   pointer.To(uniqTokenRes.TypedSpec().Token),
+			TalosVersion:      pointer.To(version.Tag),
+			WireguardOverGrpc: wgOverGRPC,
+		}
+
+		token := cfg.TypedSpec().JoinToken
 
 		if token != "" {
 			request.JoinToken = pointer.To(token)
@@ -347,11 +369,12 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 
 	return optional.Some(provisionData{
 		nodeUUID:          nodeUUID,
-		apiEndpont:        stringEndpoint,
+		apiEndpont:        cfg.TypedSpec().APIEndpoint,
 		ServerAddress:     resp.ServerAddress,
 		ServerPublicKey:   resp.ServerPublicKey,
 		NodeAddressPrefix: resp.NodeAddressPrefix,
 		endpoints:         resp.GetEndpoints(),
+		grpcPeerAddrPort:  resp.GrpcPeerAddrPort,
 	}), nil
 }
 
@@ -362,6 +385,7 @@ type provisionData struct {
 	ServerPublicKey   string
 	NodeAddressPrefix string
 	endpoints         []string
+	grpcPeerAddrPort  string
 }
 
 func (d *provisionData) IsEmpty() bool {
@@ -475,4 +499,16 @@ func (ctrl *ManagerController) shouldReconnect(wgClient *wgctrl.Client) (bool, e
 	since := time.Since(peer.LastHandshakeTime)
 
 	return since >= wireguard.PeerDownInterval, nil
+}
+
+func withTransportCredentials(insec bool) grpc.DialOption {
+	var transportCredentials credentials.TransportCredentials
+
+	if insec {
+		transportCredentials = insecure.NewCredentials()
+	} else {
+		transportCredentials = credentials.NewTLS(&tls.Config{})
+	}
+
+	return grpc.WithTransportCredentials(transportCredentials)
 }

@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/endpoint"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
@@ -55,6 +56,8 @@ func (ctrl *ConfigController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
+//
+//nolint:gocyclo
 func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
@@ -70,9 +73,20 @@ func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, _ *
 
 		r.StartTrackingOutputs()
 
-		if endpoint := ctrl.apiEndpoint(cfg); endpoint != "" {
+		if ep := ctrl.apiEndpoint(cfg); ep != "" {
+			var parsed endpoint.Endpoint
+
+			parsed, err = endpoint.Parse(ep)
+			if err != nil {
+				return fmt.Errorf("failed to parse siderolink API endpoint: %w", err)
+			}
+
 			if err = safe.WriterModify(ctx, r, siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID), func(c *siderolink.Config) error {
-				c.TypedSpec().APIEndpoint = endpoint
+				c.TypedSpec().APIEndpoint = ep
+				c.TypedSpec().Host = parsed.Host
+				c.TypedSpec().JoinToken = parsed.GetParam("jointoken")
+				c.TypedSpec().Insecure = parsed.Insecure
+				c.TypedSpec().Tunnel = parsed.GetParam("grpc_tunnel") == "true" || parsed.GetParam("grpc_tunnel") == "y"
 
 				return nil
 			}); err != nil {
