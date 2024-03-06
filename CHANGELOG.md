@@ -1,3 +1,67 @@
+## [Talos 1.6.6](https://github.com/siderolabs/talos/releases/tag/v1.6.6) (2024-03-06)
+
+Welcome to the v1.6.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.1.80
+
+Talos is built with Go 1.21.8.
+
+
+### Contributors
+
+* Andrey Smirnov
+
+### Changes
+<details><summary>4 commits</summary>
+<p>
+
+* [`e4f712689`](https://github.com/siderolabs/talos/commit/e4f712689c3c2407caa334a4a6081ef140db3f23) fix: workaround a race in CNI setup (talosctl cluster create)
+* [`38b5aed50`](https://github.com/siderolabs/talos/commit/38b5aed50ae6869aee7f1806dbf6da8cebf28639) fix: provide auth when pulling images in the imager
+* [`4af77b5fd`](https://github.com/siderolabs/talos/commit/4af77b5fd7d14455aa1c71cf325173cdad24f5a1) fix: handle errors to watch apid/trustd certs
+* [`2df2586f9`](https://github.com/siderolabs/talos/commit/2df2586f918ce0a8165643f8b467caab7443c2af) feat: update Linux to 6.1.80, Go to 1.21.8
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`9234398`](https://github.com/siderolabs/extras/commit/92343983928b2147ab62bc89e79975e59d197528) chore: update Go to 1.21.8
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`2961472`](https://github.com/siderolabs/pkgs/commit/29614729cc2b675ea46c47f91d1950a5638ac9ba) feat: update Linux to 6.1.80, firmware to 20240220
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`ae30965`](https://github.com/siderolabs/tools/commit/ae30965738f9b93078dfd219c1c9fdd75db644f7) feat: update Go to 1.21.8
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/alexflint/go-filemutex**  v1.2.0 **_new_**
+* **github.com/siderolabs/extras**       v1.6.0-1-g113887a -> v1.6.0-2-g9234398
+* **github.com/siderolabs/pkgs**         v1.6.0-25-g6868f38 -> v1.6.0-26-g2961472
+* **github.com/siderolabs/tools**        v1.6.0-2-g5e034ec -> v1.6.0-3-gae30965
+
+Previous release can be found at [v1.6.5](https://github.com/siderolabs/talos/releases/tag/v1.6.5)
+
 ## [Talos 1.6.5](https://github.com/siderolabs/talos/releases/tag/v1.6.5) (2024-02-22)
 
 Welcome to the v1.6.5 release of Talos!
