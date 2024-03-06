@@ -85,6 +85,10 @@ func NewBundle(opts ...Option) (*Bundle, error) {
 
 		// Pull existing talosconfig
 		talosConfig, err := os.Open(filepath.Join(options.ExistingConfigs, "talosconfig"))
+		if os.IsNotExist(err) { // talosconfig is optional
+			return bundle, nil
+		}
+
 		if err != nil {
 			return bundle, err
 		}

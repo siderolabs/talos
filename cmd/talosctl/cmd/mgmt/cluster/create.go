@@ -443,7 +443,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	if inputDir != "" {
 		definedGenFlag := checkForDefinedGenFlag(flags)
 		if definedGenFlag != "" {
-			return fmt.Errorf("flag --%s is not supported with generated configs(--%s)", definedGenFlag, inputDirFlag)
+			return fmt.Errorf("flag --%s is not supported with generated configs (--%s)", definedGenFlag, inputDirFlag)
 		}
 
 		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(inputDir))
@@ -1169,7 +1169,6 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 		networkIPv4Flag,
 		networkIPv6Flag,
 		networkMTUFlag,
-		networkCIDRFlag,
 		nameserversFlag,
 		clusterDiskSizeFlag,
 		clusterDisksFlag,
