@@ -8,4 +8,13 @@ cluster:
                     enforce: restricted
                 exemptions:
                     namespaces:
+                        - kube-system
                         - rook-system
+                    runtimeClasses:
+                      - rc-2
+                      - rc-3
+                    usernames:
+                      - user-3
+                      - user-1
+                      - user-2
+                      - user-4

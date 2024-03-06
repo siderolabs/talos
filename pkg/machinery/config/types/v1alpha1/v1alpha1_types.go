@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1183,12 +1184,72 @@ func (configs *AdmissionPluginConfigList) mergeConfig(config *AdmissionPluginCon
 	}
 
 	if existing != nil {
+		if existing.PluginName == "PodSecurity" {
+			return configs.mergePodSecurityPlugins(existing, config)
+		}
+
 		return merge.Merge(existing, config)
 	}
 
 	*configs = append(*configs, config)
 
 	return nil
+}
+
+// mergePodSecurityPlugins merges the AdmissionPluginConfigs of type PodSecurity.
+//
+// It merges the exemptions fields of the PodSecurity plugin without introducing duplicates.
+func (configs *AdmissionPluginConfigList) mergePodSecurityPlugins(left, right *AdmissionPluginConfig) error {
+	const exemptionsFieldName = "exemptions"
+
+	getExemptionsField := func(config *AdmissionPluginConfig, fieldName string) ([]string, bool) {
+		exemptions, ok := config.PluginConfiguration.Object[exemptionsFieldName].(map[string]any)
+		if !ok {
+			return nil, false
+		}
+
+		items, ok := exemptions[fieldName].([]any)
+		if !ok {
+			return nil, false
+		}
+
+		itemStrs := make([]string, 0, len(items))
+
+		for _, ns := range items {
+			itemStr, itemStrOk := ns.(string)
+			if !itemStrOk {
+				return nil, false
+			}
+
+			itemStrs = append(itemStrs, itemStr)
+		}
+
+		return itemStrs, ok
+	}
+
+	for _, fieldName := range []string{"namespaces", "runtimeClasses", "usernames"} {
+		existingField, ok := getExemptionsField(left, fieldName)
+		if !ok {
+			continue
+		}
+
+		newField, ok := getExemptionsField(right, fieldName)
+		if !ok {
+			continue
+		}
+
+		newFiltered := make([]any, 0, len(newField))
+
+		for _, ns := range newField {
+			if !slices.Contains(existingField, ns) {
+				newFiltered = append(newFiltered, ns)
+			}
+		}
+
+		right.PluginConfiguration.Object[exemptionsFieldName].(map[string]any)[fieldName] = newFiltered
+	}
+
+	return merge.Merge(left, right)
 }
 
 // AdmissionPluginConfig represents the API server admission plugin configuration.

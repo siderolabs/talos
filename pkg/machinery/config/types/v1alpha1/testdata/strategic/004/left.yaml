@@ -68,8 +68,12 @@ cluster:
                 exemptions:
                     namespaces:
                         - kube-system
-                    runtimeClasses: []
-                    usernames: []
+                    runtimeClasses:
+                        - rc-1
+                        - rc-2
+                    usernames:
+                        - user-1
+                        - user-2
                 kind: PodSecurityConfiguration
     controllerManager:
         image: k8s.gcr.io/kube-controller-manager:v1.24.2

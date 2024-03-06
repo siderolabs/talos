@@ -69,8 +69,15 @@ cluster:
                     namespaces:
                         - kube-system
                         - rook-system
-                    runtimeClasses: []
-                    usernames: []
+                    runtimeClasses:
+                        - rc-1
+                        - rc-2
+                        - rc-3
+                    usernames:
+                        - user-1
+                        - user-2
+                        - user-3
+                        - user-4
                 kind: PodSecurityConfiguration
     controllerManager:
         image: k8s.gcr.io/kube-controller-manager:v1.24.2
