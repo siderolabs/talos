@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos
 
-go 1.21.6
+go 1.21.8
 
 replace (
 	// Use nested module.

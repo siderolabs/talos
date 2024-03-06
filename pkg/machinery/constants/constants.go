@@ -16,7 +16,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.1.78-talos"
+	DefaultKernelVersion = "6.1.80-talos"
 
 	// KernelModulesPath is the default path to the kernel modules without the kernel version.
 	KernelModulesPath = "/lib/modules"
@@ -868,7 +868,7 @@ const (
 	DBusClientSocketPath = "/run/dbus/system_bus_socket"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.21.6 X:loopvar"
+	GoVersion = "go1.21.8 X:loopvar"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"

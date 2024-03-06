@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.6.4"
+previous = "v1.6.5"
 
 pre_release = false
 
@@ -17,18 +17,9 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description = """\
-Kubernetes: 1.29.2
-Linux: 6.1.78
+Linux: 6.1.80
 
-Talos is built with Go 1.21.6.
-"""
-
-
-    [notes.k8supgrade]
-        title = "Kubernetes Upgrade"
-        description = """\
-The command `talosctl upgrade-k8s` now supports specifying custom image references for Kubernetes components via `--*-image` flags.
-The default behavior is unchanged, and the flags are optional.
+Talos is built with Go 1.21.8.
 """
 
 [make_deps]
