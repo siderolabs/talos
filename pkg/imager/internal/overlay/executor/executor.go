@@ -11,7 +11,7 @@ import (
 	"io"
 	"os/exec"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
 )
