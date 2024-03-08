@@ -15,7 +15,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	k8s "github.com/siderolabs/talos/pkg/kubernetes"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	// "github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // KubernetesClient provides Kubernetes client built via Talos API Kubeconfig.
@@ -68,7 +68,7 @@ func (k *KubernetesClient) K8sRestConfig(ctx context.Context) (*rest.Config, err
 	config.Timeout = time.Minute
 
 	if k.ForceEndpoint != "" {
-		config.Host = fmt.Sprintf("%s:%d", k.ForceEndpoint, constants.DefaultControlPlanePort)
+		config.Host = fmt.Sprintf("%s:%d", k.ForceEndpoint, 7444 /*constants.DefaultControlPlanePort*/)
 	}
 
 	return config, nil

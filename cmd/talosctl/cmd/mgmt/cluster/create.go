@@ -646,6 +646,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			}
 		}
 
+		endpointList = []string{forceEndpoint + ":50050"}
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
 		configBundleOpts = append(configBundleOpts,
 			bundle.WithInputOptions(
@@ -774,7 +775,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		}
 
 		if i == 0 {
-			nodeReq.Ports = []string{"50000:50000/tcp", fmt.Sprintf("%d:%d/tcp", controlPlanePort, controlPlanePort)}
+			nodeReq.Ports = []string{"50050:50000/tcp", fmt.Sprintf("%d:%d/tcp", controlPlanePort, controlPlanePort)}
 		}
 
 		if withInitNode && i == 0 {
