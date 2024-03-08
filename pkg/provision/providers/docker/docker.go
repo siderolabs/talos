@@ -85,11 +85,11 @@ func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (int
 	case "darwin", "windows":
 		return "", "127.0.0.1"
 	case "linux":
-		if detectWSL() {
-			return "", "127.0.0.1"
-		}
+		// if detectWSL() {
+		return "", "127.0.0.1"
+		// }
 
-		fallthrough
+		// fallthrough
 	default:
 		return "", ""
 	}
