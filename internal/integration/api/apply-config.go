@@ -8,17 +8,14 @@ package api
 
 import (
 	"context"
-	"errors"
 	"sort"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -94,7 +91,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 
 	node := nodes[0]
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
@@ -157,7 +154,7 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 		node := suite.RandomDiscoveredNodeInternalIP()
 		suite.ClearConnectionRefused(suite.ctx, node)
 
-		nodeCtx := client.WithNodes(suite.ctx, node)
+		nodeCtx := client.WithNode(suite.ctx, node)
 
 		provider, err := suite.ReadConfigFromNode(nodeCtx)
 		suite.Require().NoError(err, "failed to read existing config from node %q", node)
@@ -185,10 +182,14 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 
 		suite.Require().NoError(err, "failed to read updated configuration from node %q: %w", node)
 
-		suite.Assert().Equal(
-			newProvider.Machine().Sysctls()[applyConfigNoRebootTestSysctl],
-			applyConfigNoRebootTestSysctlVal,
-		)
+		if mode == machineapi.ApplyConfigurationRequest_AUTO {
+			suite.Assert().Equal(
+				newProvider.Machine().Sysctls()[applyConfigNoRebootTestSysctl],
+				applyConfigNoRebootTestSysctlVal,
+			)
+		} else {
+			suite.Assert().NotContains(newProvider.Machine().Sysctls(), applyConfigNoRebootTestSysctl)
+		}
 
 		cfgDataOut = suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 			// revert back
@@ -214,7 +215,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	suite.ClearConnectionRefused(suite.ctx, node)
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 
 	suite.Assert().NoError(err)
@@ -357,7 +358,7 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 
 	node := nodes[0]
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
@@ -375,14 +376,7 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 	)
 	suite.Require().Error(err)
 
-	var (
-		errs      *multierror.Error
-		nodeError *client.NodeError
-	)
-
-	suite.Require().True(errors.As(err, &errs))
-	suite.Require().True(errors.As(errs.Errors[0], &nodeError))
-	suite.Require().Equal(codes.InvalidArgument, status.Code(nodeError.Err))
+	suite.Require().Equal(codes.InvalidArgument, client.StatusCode(err))
 }
 
 // TestApplyDryRun verifies the apply config API with dry run enabled.
@@ -396,7 +390,7 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 
 	node := nodes[0]
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)

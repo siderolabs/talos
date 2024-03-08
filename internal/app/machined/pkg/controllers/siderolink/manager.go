@@ -314,7 +314,7 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 	nodeUUID := sysInfo.TypedSpec().UUID
 
 	provision := func() (*pb.ProvisionResponse, error) {
-		conn, connErr := grpc.NewClient(
+		conn, connErr := grpc.Dial(
 			cfg.TypedSpec().Host,
 			withTransportCredentials(cfg.TypedSpec().Insecure),
 			grpc.WithSharedWriteBuffer(true),

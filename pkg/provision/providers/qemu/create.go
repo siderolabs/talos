@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
@@ -112,6 +113,12 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	nodeInfo = append(nodeInfo, workerNodeInfo...)
 
+	lbPort := constants.DefaultControlPlanePort
+
+	if len(request.Network.LoadBalancerPorts) > 0 {
+		lbPort = request.Network.LoadBalancerPorts[0]
+	}
+
 	state.ClusterInfo = provision.ClusterInfo{
 		ClusterName: request.Name,
 		Network: provision.NetworkInfo{
@@ -120,8 +127,9 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 			GatewayAddrs: request.Network.GatewayAddrs,
 			MTU:          request.Network.MTU,
 		},
-		Nodes:      nodeInfo,
-		ExtraNodes: pxeNodeInfo,
+		Nodes:              nodeInfo,
+		ExtraNodes:         pxeNodeInfo,
+		KubernetesEndpoint: p.GetExternalKubernetesControlPlaneEndpoint(request.Network, lbPort),
 	}
 
 	err = state.Save()

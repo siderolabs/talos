@@ -68,7 +68,7 @@ func (suite *TimedSuite) TestTime() {
 	//nolint:errcheck
 	go server.Serve(listener)
 
-	conn, err := grpc.NewClient(
+	conn, err := grpc.Dial(
 		fmt.Sprintf("%s://%s", "unix", listener.Addr().String()),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(dialer.DialUnix()),
@@ -102,7 +102,7 @@ func (suite *TimedSuite) TestTimeCheck() {
 	//nolint:errcheck
 	go server.Serve(listener)
 
-	conn, err := grpc.NewClient(
+	conn, err := grpc.Dial(
 		fmt.Sprintf("%s://%s", "unix", listener.Addr().String()),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(dialer.DialUnix()),

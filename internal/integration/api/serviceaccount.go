@@ -60,6 +60,7 @@ func (suite *ServiceAccountSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
 
+	suite.ClearConnectionRefused(suite.ctx, suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)...)
 	suite.AssertClusterHealthy(suite.ctx)
 }
 
@@ -237,7 +238,7 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 	controlPlaneIPs := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane)
 
 	for _, ip := range controlPlaneIPs {
-		nodeCtx := client.WithNodes(suite.ctx, ip)
+		nodeCtx := client.WithNode(suite.ctx, ip)
 
 		nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
 		if err != nil {

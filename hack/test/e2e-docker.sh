@@ -21,8 +21,6 @@ function create_cluster {
     --memory=2048 \
     --cpus=2.0 \
     --with-init-node=false \
-    --docker-host-ip=127.0.0.1 \
-    --endpoint=127.0.0.1 \
     ${REGISTRY_MIRROR_FLAGS} \
     --crashdump
 

@@ -62,7 +62,7 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 
 	nodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	nodeCtx := client.WithNodes(suite.ctx, nodeInternalIP)
+	nodeCtx := client.WithNode(suite.ctx, nodeInternalIP)
 
 	node, err := suite.GetK8sNodeByInternalIP(suite.ctx, nodeInternalIP)
 	suite.Require().NoError(err)

@@ -10,7 +10,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -81,7 +80,7 @@ func (suite *HealthSuite) testClientSide(extraArgs ...string) {
 	args := append([]string{"--server=false"}, extraArgs...)
 
 	if suite.K8sEndpoint != "" {
-		args = append(args, "--k8s-endpoint", strings.Split(suite.K8sEndpoint, ":")[0])
+		args = append(args, "--k8s-endpoint", suite.K8sEndpoint)
 	}
 
 	suite.RunCLI(append([]string{"health"}, args...),

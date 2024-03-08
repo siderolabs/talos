@@ -6,20 +6,49 @@
 package docker
 
 import (
-	"bytes"
 	"context"
-	"os"
-	"runtime"
+	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/docker/docker/client"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
 type provisioner struct {
 	client *client.Client
+
+	mappedKubernetesPort, mappedTalosAPIPort int
+}
+
+func getAvailableTCPPort() (int, error) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0, err
+	}
+
+	_, portStr, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		l.Close() //nolint:errcheck
+
+		return 0, err
+	}
+
+	err = l.Close()
+	if err != nil {
+		return 0, err
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return port, nil
 }
 
 // NewProvisioner initializes docker provisioner.
@@ -31,6 +60,16 @@ func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 	p.client, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
+	}
+
+	p.mappedKubernetesPort, err = getAvailableTCPPort()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get available port for Kubernetes API: %w", err)
+	}
+
+	p.mappedTalosAPIPort, err = getAvailableTCPPort()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get available port for Talos API: %w", err)
 	}
 
 	return p, nil
@@ -77,22 +116,22 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 	}
 }
 
-// GetLoadBalancers returns internal/external loadbalancer endpoints.
-func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (internalEndpoint, externalEndpoint string) {
-	// docker doesn't provide internal LB, so return empty string
-	// external LB is always localhost for OS X where docker exposes ports
-	switch runtime.GOOS {
-	case "darwin", "windows":
-		return "", "127.0.0.1"
-	case "linux":
-		if detectWSL() {
-			return "", "127.0.0.1"
-		}
+// GetInClusterKubernetesControlPlaneEndpoint returns the Kubernetes control plane endpoint.
+func (p *provisioner) GetInClusterKubernetesControlPlaneEndpoint(networkReq provision.NetworkRequest, controlPlanePort int) string {
+	// Docker doesn't have a loadbalancer, so use the first container IP.
+	return "https://" + nethelpers.JoinHostPort(networkReq.CIDRs[0].Addr().Next().Next().String(), controlPlanePort)
+}
 
-		fallthrough
-	default:
-		return "", ""
-	}
+// GetExternalKubernetesControlPlaneEndpoint returns the Kubernetes control plane endpoint.
+func (p *provisioner) GetExternalKubernetesControlPlaneEndpoint(provision.NetworkRequest, int) string {
+	// return a mapped to the localhost first container Kubernetes API endpoint.
+	return "https://" + nethelpers.JoinHostPort("127.0.0.1", p.mappedKubernetesPort)
+}
+
+// GetTalosAPIEndpoints returns a list of Talos API endpoints.
+func (p *provisioner) GetTalosAPIEndpoints(provision.NetworkRequest) []string {
+	// return a mapped to the localhost first container Talos API endpoint.
+	return []string{nethelpers.JoinHostPort("127.0.0.1", p.mappedTalosAPIPort)}
 }
 
 // UserDiskName not implemented for docker.
@@ -103,14 +142,4 @@ func (p *provisioner) UserDiskName(index int) string {
 // GetFirstInterface returns first network interface name.
 func (p *provisioner) GetFirstInterface() v1alpha1.IfaceSelector {
 	return v1alpha1.IfaceByName("eth0")
-}
-
-func detectWSL() bool {
-	// "Official" way of detecting WSL https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
-	contents, err := os.ReadFile("/proc/sys/kernel/osrelease")
-	if err == nil && (bytes.Contains(bytes.ToLower(contents), []byte("microsoft")) || bytes.Contains(bytes.ToLower(contents), []byte("wsl"))) {
-		return true
-	}
-
-	return false
 }

@@ -63,6 +63,7 @@ func showCluster(cluster provision.Cluster) error {
 
 	fmt.Fprintf(w, "NETWORK GATEWAY\t%s\n", strings.Join(gateways, ","))
 	fmt.Fprintf(w, "NETWORK MTU\t%d\n", cluster.Info().Network.MTU)
+	fmt.Fprintf(w, "KUBERNETES ENDPOINT\t%s\n", cluster.Info().KubernetesEndpoint)
 
 	if err := w.Flush(); err != nil {
 		return err

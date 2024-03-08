@@ -8,7 +8,6 @@ package base
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -34,10 +33,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
@@ -441,25 +440,12 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 
 // ReadConfigFromNode reads machine configuration from the node.
 func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Provider, error) {
-	// Load the current node machine config
-	cfgData := new(bytes.Buffer)
-
-	reader, err := apiSuite.Client.Read(nodeCtx, constants.ConfigPath)
+	cfg, err := safe.StateGetByID[*configres.MachineConfig](nodeCtx, apiSuite.Client.COSI, configres.V1Alpha1ID)
 	if err != nil {
-		return nil, fmt.Errorf("error creating reader: %w", err)
-	}
-	defer reader.Close() //nolint:errcheck
-
-	if _, err = io.Copy(cfgData, reader); err != nil {
-		return nil, fmt.Errorf("error reading: %w", err)
+		return nil, fmt.Errorf("error fetching machine config resource: %w", err)
 	}
 
-	provider, err := configloader.NewFromBytes(cfgData.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse: %w", err)
-	}
-
-	return provider, nil
+	return cfg.Provider(), nil
 }
 
 // UserDisks returns list of user disks on with size greater than sizeGreaterThanGB and not having any partitions present.

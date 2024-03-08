@@ -9,6 +9,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
@@ -69,10 +70,22 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate
 	}
 }
 
-// GetLoadBalancers returns internal/external loadbalancer endpoints.
-func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (internalEndpoint, externalEndpoint string) {
-	// qemu runs loadbalancer on the bridge, which is good for both internal access, external access goes via round-robin
-	return networkReq.GatewayAddrs[0].String(), ""
+// GetInClusterKubernetesControlPlaneEndpoint returns the Kubernetes control plane endpoint.
+func (p *provisioner) GetInClusterKubernetesControlPlaneEndpoint(networkReq provision.NetworkRequest, controlPlanePort int) string {
+	// QEMU provisioner always runs TCP loadbalancer on the bridge IP and port 6443.
+	return "https://" + nethelpers.JoinHostPort(networkReq.GatewayAddrs[0].String(), controlPlanePort)
+}
+
+// GetExternalKubernetesControlPlaneEndpoint returns the Kubernetes control plane endpoint.
+func (p *provisioner) GetExternalKubernetesControlPlaneEndpoint(networkReq provision.NetworkRequest, controlPlanePort int) string {
+	// for QEMU, external and in-cluster endpoints are same.
+	return p.GetInClusterKubernetesControlPlaneEndpoint(networkReq, controlPlanePort)
+}
+
+// GetTalosAPIEndpoints returns a list of Talos API endpoints.
+func (p *provisioner) GetTalosAPIEndpoints(provision.NetworkRequest) []string {
+	// nil means that the API of controlplane endpoints should be used
+	return nil
 }
 
 // GetFirstInterface returns first network interface name.

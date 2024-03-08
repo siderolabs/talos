@@ -57,7 +57,7 @@ func (l *Local) GetConnection(ctx context.Context, fullMethodName string) (conte
 	}
 
 	var err error
-	l.conn, err = grpc.NewClient(
+	l.conn, err = grpc.Dial(
 		"unix:"+l.socketPath,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(

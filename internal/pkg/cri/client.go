@@ -32,7 +32,7 @@ func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error
 	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, endpoint, //nolint:staticcheck // WithBlock is used
+	conn, err := grpc.DialContext(ctx, endpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 		grpc.FailOnNonTempDialError(false),

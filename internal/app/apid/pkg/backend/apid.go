@@ -95,7 +95,7 @@ func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (contex
 	backoffConfig := backoff.DefaultConfig
 	backoffConfig.MaxDelay = 15 * time.Second
 
-	a.conn, err = grpc.NewClient(
+	a.conn, err = grpc.Dial(
 		fmt.Sprintf("%s:%d", net.FormatAddress(a.target), constants.ApidPort),
 		grpc.WithInitialWindowSize(65535*32),
 		grpc.WithInitialConnWindowSize(65535*16),

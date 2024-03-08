@@ -49,7 +49,7 @@ func (suite *DiscoverySuite) SetupTest() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	suite.ClearConnectionRefused(suite.ctx, node)
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
@@ -171,7 +171,7 @@ func (suite *DiscoverySuite) TestRegistries() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	suite.ClearConnectionRefused(suite.ctx, node)
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 

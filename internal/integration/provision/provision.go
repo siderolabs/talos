@@ -43,7 +43,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
@@ -494,8 +493,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 		StateDirectory: suite.stateDir,
 	}
 
-	defaultInternalLB, _ := suite.provisioner.GetLoadBalancers(request.Network)
-	suite.controlPlaneEndpoint = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultInternalLB, constants.DefaultControlPlanePort))
+	suite.controlPlaneEndpoint = suite.provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort)
 
 	genOptions := suite.provisioner.GenOptions(request.Network)
 

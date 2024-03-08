@@ -59,7 +59,7 @@ func WithInstallDisk(disk string) Option {
 // WithAdditionalSubjectAltNames specifies additional SANs.
 func WithAdditionalSubjectAltNames(sans []string) Option {
 	return func(o *Options) error {
-		o.AdditionalSubjectAltNames = sans
+		o.AdditionalSubjectAltNames = append(o.AdditionalSubjectAltNames, sans...)
 
 		return nil
 	}

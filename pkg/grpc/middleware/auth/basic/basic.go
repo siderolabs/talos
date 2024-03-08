@@ -38,7 +38,7 @@ func NewConnection(address string, creds credentials.PerRPCCredentials, ca *x509
 		grpc.WithSharedWriteBuffer(true),
 	}
 
-	conn, err = grpc.NewClient(address, grpcOpts...)
+	conn, err = grpc.Dial(address, grpcOpts...)
 	if err != nil {
 		return
 	}
