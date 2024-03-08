@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -37,7 +38,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintln(options.LogWriter, "creating controlplane nodes")
 
-	if nodeInfo, err = p.createNodes(ctx, request, request.Nodes.ControlPlaneNodes(), &options); err != nil {
+	if nodeInfo, err = p.createNodes(ctx, request, request.Nodes.ControlPlaneNodes(), &options, true); err != nil {
 		return nil, err
 	}
 
@@ -45,7 +46,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	var workerNodeInfo []provision.NodeInfo
 
-	if workerNodeInfo, err = p.createNodes(ctx, request, request.Nodes.WorkerNodes(), &options); err != nil {
+	if workerNodeInfo, err = p.createNodes(ctx, request, request.Nodes.WorkerNodes(), &options, false); err != nil {
 		return nil, err
 	}
 
@@ -60,7 +61,8 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 				GatewayAddrs: request.Network.GatewayAddrs[:1],
 				MTU:          request.Network.MTU,
 			},
-			Nodes: nodeInfo,
+			Nodes:              nodeInfo,
+			KubernetesEndpoint: p.GetExternalKubernetesControlPlaneEndpoint(request.Network, constants.DefaultControlPlanePort),
 		},
 	}
 

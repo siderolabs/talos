@@ -6,7 +6,9 @@ package cluster
 
 import (
 	"context"
-	"fmt"
+	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
@@ -68,7 +70,15 @@ func (k *KubernetesClient) K8sRestConfig(ctx context.Context) (*rest.Config, err
 	config.Timeout = time.Minute
 
 	if k.ForceEndpoint != "" {
-		config.Host = fmt.Sprintf("%s:%d", k.ForceEndpoint, constants.DefaultControlPlanePort)
+		forceEndpoint, _ := strings.CutPrefix(k.ForceEndpoint, "https://")
+
+		host, port, err := net.SplitHostPort(forceEndpoint)
+		if err != nil {
+			host = forceEndpoint
+			port = strconv.Itoa(constants.DefaultControlPlanePort)
+		}
+
+		config.Host = net.JoinHostPort(host, port)
 	}
 
 	return config, nil

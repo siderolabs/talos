@@ -102,7 +102,7 @@ talosctl cluster create [flags]
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
       --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
       --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
-      --control-plane-port int                   control plane port (load balancer and local API port) (default 6443)
+      --control-plane-port int                   control plane port (load balancer and local API port, QEMU only) (default 6443)
       --controlplanes int                        the number of controlplanes to create (default 1)
       --cpus string                              the share of CPUs as fraction (each control plane/VM) (default "2.0")
       --cpus-workers string                      the share of CPUs as fraction (each worker/VM) (default "2.0")

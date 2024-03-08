@@ -82,6 +82,10 @@ func TestIntegration(t *testing.T) {
 		if err != nil {
 			t.Error("error reflecting cluster via provisioner", err)
 		}
+
+		if k8sEndpoint == "" {
+			k8sEndpoint = cluster.Info().KubernetesEndpoint
+		}
 	}
 
 	provision_test.DefaultSettings.CurrentVersion = expectedVersion

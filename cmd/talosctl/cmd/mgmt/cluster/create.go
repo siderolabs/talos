@@ -617,38 +617,43 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			)
 		}
 
-		defaultInternalLB, defaultEndpoint := provisioner.GetLoadBalancers(request.Network)
-
-		if defaultInternalLB == "" {
-			// provisioner doesn't provide internal LB, so use first controlplane node
-			defaultInternalLB = ips[0][0].String()
-		}
+		externalKubernetesEndpoint := provisioner.GetExternalKubernetesControlPlaneEndpoint(request.Network, controlPlanePort)
 
 		if useVIP {
-			defaultInternalLB = vip.String()
+			externalKubernetesEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), controlPlanePort)
 		}
 
-		var endpointList []string
+		provisionOptions = append(provisionOptions, provision.WithKubernetesEndpoint(externalKubernetesEndpoint))
+
+		endpointList := provisioner.GetTalosAPIEndpoints(request.Network)
 
 		switch {
-		case defaultEndpoint != "":
-			if forceEndpoint == "" {
-				forceEndpoint = defaultEndpoint
-			}
-
-			fallthrough
 		case forceEndpoint != "":
-			endpointList = []string{forceEndpoint}
 			// using non-default endpoints, provision additional cert SANs and fix endpoint list
-			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
+			endpointList = []string{forceEndpoint}
 			genOptions = append(genOptions, generate.WithAdditionalSubjectAltNames(endpointList))
 		case forceInitNodeAsEndpoint:
 			endpointList = []string{ips[0][0].String()}
-		default:
+		case len(endpointList) > 0:
+			for _, endpointHostPort := range endpointList {
+				endpointHost, _, err := net.SplitHostPort(endpointHostPort)
+				if err != nil {
+					endpointHost = endpointHostPort
+				}
+
+				genOptions = append(genOptions, generate.WithAdditionalSubjectAltNames([]string{endpointHost}))
+			}
+		case endpointList == nil:
 			// use control plane nodes as endpoints, client-side load-balancing
 			for i := range controlplanes {
 				endpointList = append(endpointList, ips[0][i].String())
 			}
+		}
+
+		inClusterEndpoint := provisioner.GetInClusterKubernetesControlPlaneEndpoint(request.Network, controlPlanePort)
+
+		if useVIP {
+			inClusterEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), controlPlanePort)
 		}
 
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
@@ -656,7 +661,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			bundle.WithInputOptions(
 				&bundle.InputOptions{
 					ClusterName: clusterName,
-					Endpoint:    fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultInternalLB, controlPlanePort)),
+					Endpoint:    inClusterEndpoint,
 					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
 				}),
@@ -795,10 +800,6 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			BadRTC:              badRTC,
 			ExtraKernelArgs:     extraKernelArgs,
 			UUID:                pointer.To(nodeUUID),
-		}
-
-		if i == 0 {
-			nodeReq.Ports = []string{"50000:50000/tcp", fmt.Sprintf("%d:%d/tcp", controlPlanePort, controlPlanePort)}
 		}
 
 		if withInitNode && i == 0 {
@@ -981,7 +982,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 
 	if clusterAccess.ForceEndpoint != "" {
 		for name := range kubeConfig.Clusters {
-			kubeConfig.Clusters[name].Server = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(clusterAccess.ForceEndpoint, controlPlanePort))
+			kubeConfig.Clusters[name].Server = clusterAccess.ForceEndpoint
 		}
 	}
 
@@ -1169,7 +1170,7 @@ func init() {
 	createCmd.Flags().BoolVar(&badRTC, "bad-rtc", false, "launch VM with bad RTC state (QEMU only)")
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
 	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
-	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
+	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port, QEMU only)")
 	createCmd.Flags().IntVar(&kubePrismPort, kubePrismFlag, constants.DefaultKubePrismPort, "KubePrism port (set to 0 to disable)")
 	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
 	createCmd.Flags().BoolVar(&skipBootPhaseFinishedCheck, "skip-boot-phase-finished-check", false, "skip waiting for node to finish boot phase")

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/netip"
+	"runtime"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -30,19 +31,42 @@ type portMap struct {
 	portBindings nat.PortMap
 }
 
-func (p *provisioner) createNodes(ctx context.Context, clusterReq provision.ClusterRequest, nodeReqs []provision.NodeRequest, options *provision.Options) ([]provision.NodeInfo, error) {
+func (p *provisioner) createNodes(
+	ctx context.Context,
+	clusterReq provision.ClusterRequest,
+	nodeReqs []provision.NodeRequest,
+	options *provision.Options,
+	isControlplane bool,
+) ([]provision.NodeInfo, error) {
 	errCh := make(chan error)
 	nodeCh := make(chan provision.NodeInfo, len(nodeReqs))
 
-	for _, nodeReq := range nodeReqs {
-		go func(nodeReq provision.NodeRequest) {
+	for i, nodeReq := range nodeReqs {
+		go func(i int, nodeReq provision.NodeRequest) {
+			if i == 0 && isControlplane {
+				hostPrefix := ""
+
+				// on Linux, limit listening to localhost, on other OSes Docker engine VM is separate from the host
+				if runtime.GOOS == "linux" {
+					hostPrefix = "127.0.0.1:"
+				}
+
+				nodeReq.Ports = append(
+					[]string{
+						fmt.Sprintf("%s%d:%d/tcp", hostPrefix, p.mappedTalosAPIPort, constants.ApidPort),
+						fmt.Sprintf("%s%d:%d/tcp", hostPrefix, p.mappedKubernetesPort, constants.DefaultControlPlanePort),
+					},
+					nodeReq.Ports...,
+				)
+			}
+
 			nodeInfo, err := p.createNode(ctx, clusterReq, nodeReq, options)
 			if err == nil {
 				nodeCh <- nodeInfo
 			}
 
 			errCh <- err
-		}(nodeReq)
+		}(i, nodeReq)
 	}
 
 	var multiErr *multierror.Error
@@ -244,24 +268,33 @@ func (p *provisioner) destroyNodes(ctx context.Context, clusterName string, opti
 	return multiErr.ErrorOrNil()
 }
 
-func genPortMap(portList []string, hostIP string) (portMap, error) {
+func genPortMap(portList []string, defaultHostIP string) (portMap, error) {
 	portSetRet := nat.PortSet{}
 	portMapRet := nat.PortMap{}
 
 	for _, port := range portList {
-		explodedPortAndProtocol := strings.Split(port, "/")
+		portsAndHost, protocol, ok := strings.Cut(port, "/")
 
-		if len(explodedPortAndProtocol) != 2 {
+		if !ok {
 			return portMap{}, errors.New("incorrect format for exposed port/protocols")
 		}
 
-		explodedPort := strings.Split(explodedPortAndProtocol[0], ":")
+		expodedPortsAndHost := strings.Split(portsAndHost, ":")
 
-		if len(explodedPort) != 2 {
+		var containerPort, hostPort string
+
+		hostIP := defaultHostIP
+
+		switch len(expodedPortsAndHost) {
+		case 2:
+			hostPort, containerPort = expodedPortsAndHost[0], expodedPortsAndHost[1]
+		case 3:
+			hostIP, hostPort, containerPort = expodedPortsAndHost[0], expodedPortsAndHost[1], expodedPortsAndHost[2]
+		default:
 			return portMap{}, errors.New("incorrect format for exposed ports")
 		}
 
-		natPort, err := nat.NewPort(explodedPortAndProtocol[1], explodedPort[1])
+		natPort, err := nat.NewPort(protocol, containerPort)
 		if err != nil {
 			return portMap{}, err
 		}
@@ -270,7 +303,7 @@ func genPortMap(portList []string, hostIP string) (portMap, error) {
 		portMapRet[natPort] = []nat.PortBinding{
 			{
 				HostIP:   hostIP,
-				HostPort: explodedPort[0],
+				HostPort: hostPort,
 			},
 		}
 	}

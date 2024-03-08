@@ -6,11 +6,13 @@ package docker
 
 import (
 	"context"
+	"net"
 	"net/netip"
 	"strconv"
 	"strings"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -62,6 +64,8 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 		return nil, err
 	}
 
+	var mappedKubernetesPort string
+
 	for _, node := range nodes {
 		t, err := machine.ParseType(node.Labels["talos.type"])
 		if err != nil {
@@ -89,6 +93,14 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 			ips = append(ips, addr)
 		}
 
+		for port, portBinding := range container.HostConfig.PortBindings {
+			if port.Int() == constants.DefaultControlPlanePort {
+				for _, binding := range portBinding {
+					mappedKubernetesPort = binding.HostPort
+				}
+			}
+		}
+
 		res.clusterInfo.Nodes = append(res.clusterInfo.Nodes,
 			provision.NodeInfo{
 				ID:   node.ID,
@@ -100,6 +112,10 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 				NanoCPUs: container.HostConfig.Resources.NanoCPUs,
 				Memory:   container.HostConfig.Resources.Memory,
 			})
+	}
+
+	if mappedKubernetesPort != "" {
+		res.clusterInfo.KubernetesEndpoint = "https://" + net.JoinHostPort("127.0.0.1", mappedKubernetesPort)
 	}
 
 	return res, nil
