@@ -55,7 +55,7 @@ func RunInstallerContainer(disk, platform, ref string, cfg configcore.Config, cf
 		extensionsConfig []config.Extension
 	)
 
-	if cfg != nil {
+	if cfg != nil && cfg.Machine() != nil {
 		registriesConfig = cfg.Machine().Registries()
 		extensionsConfig = cfg.Machine().Install().Extensions()
 	} else {
@@ -296,7 +296,7 @@ func OptionsFromUpgradeRequest(r runtime.Runtime, in *machineapi.UpgradeRequest)
 		WithForce(!in.GetPreserve()),
 	}
 
-	if r.Config() != nil {
+	if r.Config() != nil && r.Config().Machine() != nil {
 		opts = append(opts, WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()))
 	}
 
