@@ -134,6 +134,13 @@ The logs can be viewed via `talosctl logs syslogd`.
 This is mostly implemented for extension services that log to syslog.
 """
 
+    [notes.ntp]
+        title = "NTP"
+        description = """\
+Default NTP server was updated to be `time.cloudflare.com` instead of `pool.ntp.org`.
+Default server is only used if the user does not specify any NTP servers in the configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]

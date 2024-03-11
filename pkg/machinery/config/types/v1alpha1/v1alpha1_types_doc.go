@@ -1195,7 +1195,7 @@ func (TimeConfig) Doc() *encoder.Doc {
 				Name:        "servers",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `pool.ntp.org`",
+				Description: "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `time.cloudflare.com`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies time (NTP) servers to use for setting the system time." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

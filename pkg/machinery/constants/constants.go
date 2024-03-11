@@ -744,10 +744,7 @@ const (
 	AnnotationOwnedTaints = "talos.dev/owned-taints"
 
 	// DefaultNTPServer is the NTP server to use if not configured explicitly.
-	//
-	// TODO: Once we get naming sorted we need to apply for a project specific address
-	// https://manage.ntppool.org/manage/vendor
-	DefaultNTPServer = "pool.ntp.org"
+	DefaultNTPServer = "time.cloudflare.com"
 
 	// DefaultPrimaryResolver is the default primary DNS server.
 	DefaultPrimaryResolver = "1.1.1.1"

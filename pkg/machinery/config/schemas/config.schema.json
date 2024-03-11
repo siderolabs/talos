@@ -3132,9 +3132,9 @@
           },
           "type": "array",
           "title": "servers",
-          "description": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to pool.ntp.org\n",
-          "markdownDescription": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `pool.ntp.org`",
-          "x-intellij-html-description": "\u003cp\u003eSpecifies time (NTP) servers to use for setting the system time.\nDefaults to \u003ccode\u003epool.ntp.org\u003c/code\u003e\u003c/p\u003e\n"
+          "description": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to time.cloudflare.com.\n",
+          "markdownDescription": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `time.cloudflare.com`.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies time (NTP) servers to use for setting the system time.\nDefaults to \u003ccode\u003etime.cloudflare.com\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "bootTimeout": {
           "type": "string",

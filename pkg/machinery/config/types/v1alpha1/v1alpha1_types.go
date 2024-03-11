@@ -968,7 +968,7 @@ type TimeConfig struct {
 	TimeDisabled *bool `yaml:"disabled,omitempty"`
 	//   description: |
 	//     Specifies time (NTP) servers to use for setting the system time.
-	//     Defaults to `pool.ntp.org`
+	//     Defaults to `time.cloudflare.com`.
 	TimeServers []string `yaml:"servers,omitempty"`
 	//   description: |
 	//     Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.

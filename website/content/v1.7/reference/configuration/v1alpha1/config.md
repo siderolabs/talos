@@ -1994,7 +1994,7 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`disabled` |bool |<details><summary>Indicates if the time service is disabled for the machine.</summary>Defaults to `false`.</details>  | |
-|`servers` |[]string |<details><summary>Specifies time (NTP) servers to use for setting the system time.</summary>Defaults to `pool.ntp.org`</details>  | |
+|`servers` |[]string |<details><summary>Specifies time (NTP) servers to use for setting the system time.</summary>Defaults to `time.cloudflare.com`.</details>  | |
 |`bootTimeout` |Duration |<details><summary>Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.</summary>NTP sync will be still running in the background.<br />Defaults to "infinity" (waiting forever for time sync)</details>  | |
 
 
