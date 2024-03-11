@@ -86,7 +86,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		return nil, result.ErrorOrNil()
 	}
 
-	if err := c.ClusterConfig.Validate(); err != nil {
+	if err := c.ClusterConfig.Validate(c.Machine().Type().IsControlPlane()); err != nil {
 		result = multierror.Append(result, err)
 	}
 
@@ -334,7 +334,9 @@ func isValidDNSName(name string) bool {
 }
 
 // Validate validates the config.
-func (c *ClusterConfig) Validate() error {
+//
+//nolint:gocyclo
+func (c *ClusterConfig) Validate(isControlPlane bool) error {
 	var result *multierror.Error
 
 	if c == nil {
@@ -358,7 +360,11 @@ func (c *ClusterConfig) Validate() error {
 	}
 
 	if c.EtcdConfig != nil {
-		result = multierror.Append(result, c.EtcdConfig.Validate())
+		if isControlPlane {
+			result = multierror.Append(result, c.EtcdConfig.Validate())
+		} else {
+			result = multierror.Append(result, errors.New("etcd config is only allowed on control plane machines"))
+		}
 	}
 
 	result = multierror.Append(

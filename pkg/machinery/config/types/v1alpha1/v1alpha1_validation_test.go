@@ -1005,6 +1005,42 @@ func TestValidate(t *testing.T) {
 			expectedError: "2 errors occurred:\n\t* cluster discovery service requires .cluster.id\n\t* cluster discovery service requires .cluster.secret\n\n",
 		},
 		{
+			name: "EtcdMissingCa",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					EtcdConfig: &v1alpha1.EtcdConfig{},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* key/cert combination should not be empty\n\n",
+		},
+		{
+			name: "EtcdConfigProvidedForWorker",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					EtcdConfig: &v1alpha1.EtcdConfig{},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* etcd config is only allowed on control plane machines\n\n",
+		},
+		{
 			name: "GoodEtcdSubnet",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
