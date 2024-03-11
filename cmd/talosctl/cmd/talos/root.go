@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"slices"
-	"sort"
 	"strings"
 
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
@@ -222,23 +221,12 @@ func getContainersFromNode(kubernetes bool) []string {
 	return containerIDs
 }
 
-func mergeSuggestions(a, b []string) []string {
-	merged := append(slices.Clone(a), b...)
+func mergeSuggestions(s ...[]string) []string {
+	merged := slices.Concat(s...)
 
-	sort.Strings(merged)
+	slices.Sort(merged)
 
-	n := 1
-
-	for i := 1; i < len(merged); i++ {
-		if merged[i] != merged[i-1] {
-			merged[n] = merged[i]
-			n++
-		}
-	}
-
-	merged = merged[:n]
-
-	return merged
+	return slices.Compact(merged)
 }
 
 func relativeTo(fullPath string, filter string) bool {

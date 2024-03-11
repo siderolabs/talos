@@ -118,6 +118,19 @@ func (manager *CircularBufferLoggingManager) getBuffer(id string, create bool) (
 	return buf.(*circular.Buffer), nil
 }
 
+// RegisteredLogs implements runtime.LoggingManager interface.
+func (manager *CircularBufferLoggingManager) RegisteredLogs() []string {
+	var result []string
+
+	manager.buffers.Range(func(key, val any) bool {
+		result = append(result, key.(string))
+
+		return true
+	})
+
+	return result
+}
+
 type circularHandler struct {
 	manager *CircularBufferLoggingManager
 	id      string

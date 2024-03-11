@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -229,7 +229,7 @@ func (a *Tracker) Run() error {
 	})
 
 	if len(failedNodes) > 0 {
-		sort.Strings(failedNodes)
+		slices.Sort(failedNodes)
 
 		fmt.Fprintf(os.Stderr, "console logs for nodes %q:\n", failedNodes)
 
@@ -288,7 +288,7 @@ func (a *Tracker) processNodeUpdate(update nodeUpdate) reporter.Update {
 	}
 
 	nodes := maps.Keys(a.nodeToLatestStatusUpdate)
-	sort.Strings(nodes)
+	slices.Sort(nodes)
 
 	messages := make([]string, 0, len(nodes)+1)
 	messages = append(messages, fmt.Sprintf("watching nodes: %v", nodes))

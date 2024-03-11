@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/siderolabs/gen/containers"
 	"github.com/siderolabs/go-tail"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -22,6 +23,8 @@ import (
 // FileLoggingManager implements simple logging to files.
 type FileLoggingManager struct {
 	logDirectory string
+
+	registeredLogs containers.ConcurrentMap[string, struct{}]
 }
 
 // NewFileLoggingManager initializes new FileLoggingManager.
@@ -36,6 +39,7 @@ func (manager *FileLoggingManager) ServiceLog(id string) runtime.LogHandler {
 	return &fileLogHandler{
 		logDirectory: manager.logDirectory,
 		id:           id,
+		manager:      manager,
 	}
 }
 
@@ -44,11 +48,23 @@ func (manager *FileLoggingManager) SetSenders([]runtime.LogSender) []runtime.Log
 	return nil
 }
 
+// RegisteredLogs implements runtime.LoggingManager interface.
+func (manager *FileLoggingManager) RegisteredLogs() []string {
+	var result []string
+
+	manager.registeredLogs.ForEach(func(key string, _ struct{}) {
+		result = append(result, key)
+	})
+
+	return result
+}
+
 type fileLogHandler struct {
 	path string
 
 	logDirectory string
 	id           string
+	manager      *FileLoggingManager
 }
 
 func (handler *fileLogHandler) buildPath() error {
@@ -67,7 +83,14 @@ func (handler *fileLogHandler) Writer() (io.WriteCloser, error) {
 		return nil, err
 	}
 
-	return os.OpenFile(handler.path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o666)
+	result, err := os.OpenFile(handler.path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o666)
+	if err != nil {
+		return nil, err
+	}
+
+	handler.manager.registeredLogs.GetOrCreate(handler.id, struct{}{})
+
+	return result, nil
 }
 
 // Reader implements runtime.LogHandler interface.

@@ -48,6 +48,7 @@ const (
 	MachineService_DiskUsage_FullMethodName                   = "/machine.MachineService/DiskUsage"
 	MachineService_LoadAvg_FullMethodName                     = "/machine.MachineService/LoadAvg"
 	MachineService_Logs_FullMethodName                        = "/machine.MachineService/Logs"
+	MachineService_LogsContainers_FullMethodName              = "/machine.MachineService/LogsContainers"
 	MachineService_Memory_FullMethodName                      = "/machine.MachineService/Memory"
 	MachineService_Mounts_FullMethodName                      = "/machine.MachineService/Mounts"
 	MachineService_NetworkDeviceStats_FullMethodName          = "/machine.MachineService/NetworkDeviceStats"
@@ -127,6 +128,7 @@ type MachineServiceClient interface {
 	DiskUsage(ctx context.Context, in *DiskUsageRequest, opts ...grpc.CallOption) (MachineService_DiskUsageClient, error)
 	LoadAvg(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LoadAvgResponse, error)
 	Logs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (MachineService_LogsClient, error)
+	LogsContainers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LogsContainersResponse, error)
 	Memory(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MemoryResponse, error)
 	Mounts(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MountsResponse, error)
 	NetworkDeviceStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*NetworkDeviceStatsResponse, error)
@@ -603,6 +605,15 @@ func (x *machineServiceLogsClient) Recv() (*common.Data, error) {
 	return m, nil
 }
 
+func (c *machineServiceClient) LogsContainers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LogsContainersResponse, error) {
+	out := new(LogsContainersResponse)
+	err := c.cc.Invoke(ctx, MachineService_LogsContainers_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *machineServiceClient) Memory(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MemoryResponse, error) {
 	out := new(MemoryResponse)
 	err := c.cc.Invoke(ctx, MachineService_Memory_FullMethodName, in, out, opts...)
@@ -949,6 +960,7 @@ type MachineServiceServer interface {
 	DiskUsage(*DiskUsageRequest, MachineService_DiskUsageServer) error
 	LoadAvg(context.Context, *emptypb.Empty) (*LoadAvgResponse, error)
 	Logs(*LogsRequest, MachineService_LogsServer) error
+	LogsContainers(context.Context, *emptypb.Empty) (*LogsContainersResponse, error)
 	Memory(context.Context, *emptypb.Empty) (*MemoryResponse, error)
 	Mounts(context.Context, *emptypb.Empty) (*MountsResponse, error)
 	NetworkDeviceStats(context.Context, *emptypb.Empty) (*NetworkDeviceStatsResponse, error)
@@ -1062,6 +1074,9 @@ func (UnimplementedMachineServiceServer) LoadAvg(context.Context, *emptypb.Empty
 }
 func (UnimplementedMachineServiceServer) Logs(*LogsRequest, MachineService_LogsServer) error {
 	return status.Errorf(codes.Unimplemented, "method Logs not implemented")
+}
+func (UnimplementedMachineServiceServer) LogsContainers(context.Context, *emptypb.Empty) (*LogsContainersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogsContainers not implemented")
 }
 func (UnimplementedMachineServiceServer) Memory(context.Context, *emptypb.Empty) (*MemoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Memory not implemented")
@@ -1633,6 +1648,24 @@ func (x *machineServiceLogsServer) Send(m *common.Data) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _MachineService_LogsContainers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MachineServiceServer).LogsContainers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MachineService_LogsContainers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MachineServiceServer).LogsContainers(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MachineService_Memory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
@@ -2162,6 +2195,10 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LoadAvg",
 			Handler:    _MachineService_LoadAvg_Handler,
+		},
+		{
+			MethodName: "LogsContainers",
+			Handler:    _MachineService_LogsContainers_Handler,
 		},
 		{
 			MethodName: "Memory",

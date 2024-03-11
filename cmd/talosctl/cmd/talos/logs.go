@@ -15,7 +15,9 @@ import (
 	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -29,7 +31,6 @@ var (
 	tailLines int32
 )
 
-// logsCmd represents the logs command.
 var logsCmd = &cobra.Command{
 	Use:   "logs <service name>",
 	Short: "Retrieve logs for a service",
@@ -44,7 +45,7 @@ var logsCmd = &cobra.Command{
 			return getContainersFromNode(kubernetes), cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return mergeSuggestions(getServiceFromNode(), getContainersFromNode(kubernetes)), cobra.ShellCompDirectiveNoFileComp
+		return mergeSuggestions(getServiceFromNode(), getContainersFromNode(kubernetes), getLogsContainers()), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
@@ -204,6 +205,28 @@ func (slicer *lineSlicer) run(stream machine.MachineService_LogsClient) {
 		_, err = slicer.getPipe(node).Write(data.Bytes)
 		cli.Should(err)
 	}
+}
+
+func getLogsContainers() []string {
+	var result []string
+
+	//nolint:errcheck
+	WithClient(
+		func(ctx context.Context, c *client.Client) error {
+			var remotePeer peer.Peer
+
+			resp, err := c.LogsContainers(ctx, grpc.Peer(&remotePeer))
+			if err != nil {
+				return err
+			}
+
+			result = xslices.FlatMap(resp.Messages, func(lc *machine.LogsContainer) []string { return lc.Ids })
+
+			return nil
+		},
+	)
+
+	return result
 }
 
 func init() {

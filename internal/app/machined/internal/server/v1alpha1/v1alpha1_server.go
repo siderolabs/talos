@@ -1223,6 +1223,17 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 	return nil
 }
 
+// LogsContainers provide a list of registered log containers.
+func (s *Server) LogsContainers(context.Context, *emptypb.Empty) (*machine.LogsContainersResponse, error) {
+	return &machine.LogsContainersResponse{
+		Messages: []*machine.LogsContainer{
+			{
+				Ids: s.Controller.Runtime().Logging().RegisteredLogs(),
+			},
+		},
+	}, nil
+}
+
 func k8slogs(ctx context.Context, req *machine.LogsRequest) (chunker.Chunker, io.Closer, error) {
 	inspector, err := getContainerInspector(ctx, req.Namespace, req.Driver)
 	if err != nil {

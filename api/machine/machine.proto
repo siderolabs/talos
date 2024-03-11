@@ -60,6 +60,7 @@ service MachineService {
   rpc DiskUsage(DiskUsageRequest) returns (stream DiskUsageInfo);
   rpc LoadAvg(google.protobuf.Empty) returns (LoadAvgResponse);
   rpc Logs(LogsRequest) returns (stream common.Data);
+  rpc LogsContainers(google.protobuf.Empty) returns (LogsContainersResponse);
   rpc Memory(google.protobuf.Empty) returns (MemoryResponse);
   rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
   rpc NetworkDeviceStats(google.protobuf.Empty) returns (NetworkDeviceStatsResponse);
@@ -568,6 +569,16 @@ message LogsRequest {
 
 message ReadRequest {
   string path = 1;
+}
+
+// LogsContainer desribes all avalaible registered log containers.
+message LogsContainer {
+  common.Metadata metadata = 1;
+  repeated string ids = 2;
+}
+
+message LogsContainersResponse {
+  repeated LogsContainer messages = 1;
 }
 
 // rpc rollback

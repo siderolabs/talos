@@ -343,6 +343,8 @@ description: Talos gRPC API reference.
     - [ListRequest](#machine.ListRequest)
     - [LoadAvg](#machine.LoadAvg)
     - [LoadAvgResponse](#machine.LoadAvgResponse)
+    - [LogsContainer](#machine.LogsContainer)
+    - [LogsContainersResponse](#machine.LogsContainersResponse)
     - [LogsRequest](#machine.LogsRequest)
     - [MachineConfig](#machine.MachineConfig)
     - [MachineStatusEvent](#machine.MachineStatusEvent)
@@ -5950,6 +5952,37 @@ ListRequest describes a request to list the contents of a directory.
 
 
 
+<a name="machine.LogsContainer"></a>
+
+### LogsContainer
+LogsContainer desribes all avalaible registered log containers.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| ids | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="machine.LogsContainersResponse"></a>
+
+### LogsContainersResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [LogsContainer](#machine.LogsContainer) | repeated |  |
+
+
+
+
+
+
 <a name="machine.LogsRequest"></a>
 
 ### LogsRequest
@@ -7649,6 +7682,7 @@ The machine service definition.
 | DiskUsage | [DiskUsageRequest](#machine.DiskUsageRequest) | [DiskUsageInfo](#machine.DiskUsageInfo) stream |  |
 | LoadAvg | [.google.protobuf.Empty](#google.protobuf.Empty) | [LoadAvgResponse](#machine.LoadAvgResponse) |  |
 | Logs | [LogsRequest](#machine.LogsRequest) | [.common.Data](#common.Data) stream |  |
+| LogsContainers | [.google.protobuf.Empty](#google.protobuf.Empty) | [LogsContainersResponse](#machine.LogsContainersResponse) |  |
 | Memory | [.google.protobuf.Empty](#google.protobuf.Empty) | [MemoryResponse](#machine.MemoryResponse) |  |
 | Mounts | [.google.protobuf.Empty](#google.protobuf.Empty) | [MountsResponse](#machine.MountsResponse) |  |
 | NetworkDeviceStats | [.google.protobuf.Empty](#google.protobuf.Empty) | [NetworkDeviceStatsResponse](#machine.NetworkDeviceStatsResponse) |  |

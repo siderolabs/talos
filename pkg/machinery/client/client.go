@@ -460,6 +460,21 @@ func (c *Client) Logs(ctx context.Context, namespace string, driver common.Conta
 	return
 }
 
+// LogsContainers implements the proto.MachineServiceClient interface.
+func (c *Client) LogsContainers(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.LogsContainersResponse, err error) {
+	resp, err = c.MachineClient.LogsContainers(
+		ctx,
+		&emptypb.Empty{},
+		callOptions...,
+	)
+
+	var filtered interface{}
+	filtered, err = FilterMessages(resp, err)
+	resp, _ = filtered.(*machineapi.LogsContainersResponse) //nolint:errcheck
+
+	return
+}
+
 // Version implements the proto.MachineServiceClient interface.
 func (c *Client) Version(ctx context.Context, callOptions ...grpc.CallOption) (resp *machineapi.VersionResponse, err error) {
 	resp, err = c.MachineClient.Version(

@@ -23,6 +23,9 @@ type LoggingManager interface {
 	//
 	// SetSenders should be thread-safe.
 	SetSenders(senders []LogSender) []LogSender
+
+	// RegisteredLogs returns a list of registered logs containers.
+	RegisteredLogs() []string
 }
 
 // LogOptions for LogHandler.Reader.
