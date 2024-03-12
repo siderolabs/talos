@@ -17,8 +17,7 @@ import (
 	"runtime/debug"
 	"strconv"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -187,8 +186,8 @@ func NewDefaultOptions(setters ...Option) *Options {
 		opts.ServerOptions,
 		grpc.InitialWindowSize(65535*32),
 		grpc.InitialConnWindowSize(65535*16),
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(opts.UnaryInterceptors...)),
-		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(opts.StreamInterceptors...)),
+		grpc.ChainUnaryInterceptor(opts.UnaryInterceptors...),
+		grpc.ChainStreamInterceptor(opts.StreamInterceptors...),
 		grpc.SharedWriteBuffer(true),
 	)
 
