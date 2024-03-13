@@ -107,9 +107,9 @@ require (
 	github.com/safchain/ethtool v0.3.0
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.25
 	github.com/siderolabs/crypto v0.4.2
-	github.com/siderolabs/discovery-api v0.1.3
-	github.com/siderolabs/discovery-client v0.1.6
-	github.com/siderolabs/gen v0.4.7
+	github.com/siderolabs/discovery-api v0.1.4
+	github.com/siderolabs/discovery-client v0.1.8
+	github.com/siderolabs/gen v0.4.8
 	github.com/siderolabs/go-api-signature v0.3.2
 	github.com/siderolabs/go-blockdevice v0.4.7
 	github.com/siderolabs/go-circular v0.1.0
@@ -119,7 +119,7 @@ require (
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
 	github.com/siderolabs/go-kubernetes v0.2.9
-	github.com/siderolabs/go-loadbalancer v0.3.2
+	github.com/siderolabs/go-loadbalancer v0.3.3
 	github.com/siderolabs/go-pcidb v0.2.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/go-procfs v0.1.2
