@@ -625,6 +625,10 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 		var endpointList []string
 
+		if controlPlanePort != 0 {
+			provisionOptions = append(provisionOptions, provision.WithPort(controlPlanePort))
+		}
+
 		switch {
 		case defaultEndpoint != "":
 			if forceEndpoint == "" {

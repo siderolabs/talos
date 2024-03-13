@@ -34,6 +34,15 @@ func WithEndpoint(endpoint string) Option {
 	}
 }
 
+// WithPort specifies k8s port to use when acessing Talos cluster.
+func WithPort(port int) Option {
+	return func(o *Options) error {
+		o.ForcePort = port
+
+		return nil
+	}
+}
+
 // WithTalosConfig specifies talosconfig to use when acessing Talos cluster.
 func WithTalosConfig(talosConfig *clientconfig.Config) Option {
 	return func(o *Options) error {
@@ -139,6 +148,7 @@ type Options struct {
 	TalosConfig   *clientconfig.Config
 	TalosClient   *client.Client
 	ForceEndpoint string
+	ForcePort     int
 	TargetArch    string
 
 	// Enable bootloader by booting from disk image after install.
