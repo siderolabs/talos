@@ -969,6 +969,9 @@ type TimeConfig struct {
 	//   description: |
 	//     Specifies time (NTP) servers to use for setting the system time.
 	//     Defaults to `time.cloudflare.com`.
+	//
+	//	   Talos can also sync to the PTP time source (e.g provided by the hypervisor),
+	//     provide the path to the PTP device as "/dev/ptp0" or "/dev/ptp_kvm".
 	TimeServers []string `yaml:"servers,omitempty"`
 	//   description: |
 	//     Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.

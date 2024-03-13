@@ -141,10 +141,20 @@ This is mostly implemented for extension services that log to syslog.
 """
 
     [notes.ntp]
-        title = "NTP"
+        title = "Time Sync"
         description = """\
 Default NTP server was updated to be `time.cloudflare.com` instead of `pool.ntp.org`.
 Default server is only used if the user does not specify any NTP servers in the configuration.
+
+Talos Linux can now sync to PTP devices (e.g. provided by the hypervisor) skipping the network time servers.
+In order to activate PTP sync, set `machine.time.servers` to the PTP device name (e.g. `/dev/ptp0`):
+
+```yaml
+machine:
+  time:
+    servers:
+      - /dev/ptp0
+```
 """
 
 [make_deps]

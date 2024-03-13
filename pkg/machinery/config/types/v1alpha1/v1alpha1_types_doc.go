@@ -1195,8 +1195,8 @@ func (TimeConfig) Doc() *encoder.Doc {
 				Name:        "servers",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `time.cloudflare.com`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies time (NTP) servers to use for setting the system time." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "description: |\n    Specifies time (NTP) servers to use for setting the system time.\n    Defaults to `time.cloudflare.com`.\n\n   Talos can also sync to the PTP time source (e.g provided by the hypervisor),\n    provide the path to the PTP device as \"/dev/ptp0\" or \"/dev/ptp_kvm\".\n",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "bootTimeout",

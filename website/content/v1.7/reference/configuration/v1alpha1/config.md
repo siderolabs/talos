@@ -314,7 +314,7 @@ env:
 |`time` |<a href="#Config.machine.time">TimeConfig</a> |Used to configure the machine's time settings. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 time:
     disabled: false # Indicates if the time service is disabled for the machine.
-    # Specifies time (NTP) servers to use for setting the system time.
+    # description: |
     servers:
         - time.cloudflare.com
     bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
@@ -1984,7 +1984,7 @@ TimeConfig represents the options for configuring time on a machine.
 machine:
     time:
         disabled: false # Indicates if the time service is disabled for the machine.
-        # Specifies time (NTP) servers to use for setting the system time.
+        # description: |
         servers:
             - time.cloudflare.com
         bootTimeout: 2m0s # Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.
@@ -1994,7 +1994,7 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`disabled` |bool |<details><summary>Indicates if the time service is disabled for the machine.</summary>Defaults to `false`.</details>  | |
-|`servers` |[]string |<details><summary>Specifies time (NTP) servers to use for setting the system time.</summary>Defaults to `time.cloudflare.com`.</details>  | |
+|`servers` |[]string |<details><summary>description: |</summary>    Specifies time (NTP) servers to use for setting the system time.<br />    Defaults to `time.cloudflare.com`.<br /><br />   Talos can also sync to the PTP time source (e.g provided by the hypervisor),<br />    provide the path to the PTP device as "/dev/ptp0" or "/dev/ptp_kvm".<br /></details>  | |
 |`bootTimeout` |Duration |<details><summary>Specifies the timeout when the node time is considered to be in sync unlocking the boot sequence.</summary>NTP sync will be still running in the background.<br />Defaults to "infinity" (waiting forever for time sync)</details>  | |
 
 

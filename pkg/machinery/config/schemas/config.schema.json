@@ -3132,9 +3132,9 @@
           },
           "type": "array",
           "title": "servers",
-          "description": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to time.cloudflare.com.\n",
-          "markdownDescription": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `time.cloudflare.com`.",
-          "x-intellij-html-description": "\u003cp\u003eSpecifies time (NTP) servers to use for setting the system time.\nDefaults to \u003ccode\u003etime.cloudflare.com\u003c/code\u003e.\u003c/p\u003e\n"
+          "description": "description: |\n    Specifies time (NTP) servers to use for setting the system time.\n    Defaults to time.cloudflare.com.\n\nTalos can also sync to the PTP time source (e.g provided by the hypervisor),\n    provide the path to the PTP device as “/dev/ptp0” or “/dev/ptp_kvm”.\n",
+          "markdownDescription": "description: |\n    Specifies time (NTP) servers to use for setting the system time.\n    Defaults to `time.cloudflare.com`.\n\n   Talos can also sync to the PTP time source (e.g provided by the hypervisor),\n    provide the path to the PTP device as \"/dev/ptp0\" or \"/dev/ptp_kvm\".",
+          "x-intellij-html-description": "\u003cp\u003edescription: |\n    Specifies time (NTP) servers to use for setting the system time.\n    Defaults to \u003ccode\u003etime.cloudflare.com\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eTalos can also sync to the PTP time source (e.g provided by the hypervisor),\n    provide the path to the PTP device as \u0026ldquo;/dev/ptp0\u0026rdquo; or \u0026ldquo;/dev/ptp_kvm\u0026rdquo;.\u003c/p\u003e\n"
         },
         "bootTimeout": {
           "type": "string",

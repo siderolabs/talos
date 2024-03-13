@@ -11,8 +11,10 @@ import (
 	"fmt"
 	"math/bits"
 	"net"
+	"os"
 	"reflect"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -50,6 +52,13 @@ type Syncer struct {
 	CurrentTime CurrentTimeFunc
 	NTPQuery    QueryFunc
 	AdjustTime  AdjustTimeFunc
+}
+
+// Measurement is a struct containing correction data based on a time request.
+type Measurement struct {
+	ClockOffset time.Duration
+	Leap        ntp.LeapIndicator
+	Spike       bool
 }
 
 // NewSyncer creates new Syncer with default configuration.
@@ -169,9 +178,8 @@ func (syncer *Syncer) Run(ctx context.Context) {
 		}
 
 		spike := false
-
-		if resp != nil && resp.Validate() == nil {
-			spike = syncer.isSpike(resp)
+		if resp != nil {
+			spike = resp.Spike
 		}
 
 		switch {
@@ -181,17 +189,15 @@ func (syncer *Syncer) Run(ctx context.Context) {
 		case pollInterval == 0:
 			// first sync
 			pollInterval = syncer.MinPoll
-		case err != nil:
-			// error encountered, don't change the poll interval
 		case !spike && absDuration(resp.ClockOffset) > ExpectedAccuracy:
 			// huge offset, retry sync with minimum interval
 			pollInterval = syncer.MinPoll
-		case absDuration(resp.ClockOffset) < ExpectedAccuracy*100/25: // *0.25
+		case absDuration(resp.ClockOffset) < ExpectedAccuracy*25/100: // *0.25
 			// clock offset is within 25% of expected accuracy, increase poll interval
 			if pollInterval < syncer.MaxPoll {
 				pollInterval *= 2
 			}
-		case spike || absDuration(resp.ClockOffset) > ExpectedAccuracy*100/75: // *0.75
+		case spike || absDuration(resp.ClockOffset) > ExpectedAccuracy*75/100: // *0.75
 			// spike was detected or clock offset is too large, decrease poll interval
 			if pollInterval > syncer.MinPoll {
 				pollInterval /= 2
@@ -209,7 +215,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 			zap.Bool("spike", spike),
 		)
 
-		if resp != nil && resp.Validate() == nil && !spike {
+		if resp != nil && !spike {
 			err = syncer.adjustTime(resp.ClockOffset, resp.Leap, lastSyncServer, pollInterval)
 
 			if err == nil {
@@ -234,14 +240,14 @@ func (syncer *Syncer) Run(ctx context.Context) {
 	}
 }
 
-func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, resp *ntp.Response, err error) {
+func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measurement *Measurement, err error) {
 	lastSyncServer = syncer.getLastSyncServer()
 	failedServer := ""
 
 	if lastSyncServer != "" {
-		resp, err = syncer.queryServer(lastSyncServer)
+		measurement, err = syncer.queryServer(lastSyncServer)
 		if err != nil {
-			syncer.logger.Error(fmt.Sprintf("ntp query error with server %q", lastSyncServer), zap.Error(err))
+			syncer.logger.Error(fmt.Sprintf("time query error with server %q", lastSyncServer), zap.Error(err))
 
 			failedServer = lastSyncServer
 			lastSyncServer = ""
@@ -254,7 +260,7 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, resp *n
 
 		serverList, err = syncer.resolveServers(ctx)
 		if err != nil {
-			return lastSyncServer, resp, err
+			return lastSyncServer, measurement, err
 		}
 
 		for _, server := range serverList {
@@ -265,15 +271,15 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, resp *n
 
 			select {
 			case <-ctx.Done():
-				return lastSyncServer, resp, ctx.Err()
+				return lastSyncServer, measurement, ctx.Err()
 			case <-syncer.restartSyncCh:
-				return lastSyncServer, resp, nil
+				return lastSyncServer, measurement, nil
 			default:
 			}
 
-			resp, err = syncer.queryServer(server)
+			measurement, err = syncer.queryServer(server)
 			if err != nil {
-				syncer.logger.Error(fmt.Sprintf("ntp query error with server %q", server), zap.Error(err))
+				syncer.logger.Error(fmt.Sprintf("time query error with server %q", server), zap.Error(err))
 				err = nil
 			} else {
 				syncer.setLastSyncServer(server)
@@ -284,20 +290,28 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, resp *n
 		}
 	}
 
-	return lastSyncServer, resp, err
+	return lastSyncServer, measurement, err
+}
+
+func (syncer *Syncer) isPTPDevice(server string) bool {
+	return strings.HasPrefix(server, "/dev/")
 }
 
 func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 	var serverList []string
 
 	for _, server := range syncer.getTimeServers() {
-		ips, err := net.LookupIP(server)
-		if err != nil {
-			syncer.logger.Warn(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
-		}
+		if syncer.isPTPDevice(server) {
+			serverList = append(serverList, server)
+		} else {
+			ips, err := net.LookupIP(server)
+			if err != nil {
+				syncer.logger.Warn(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
+			}
 
-		for _, ip := range ips {
-			serverList = append(serverList, ip.String())
+			for _, ip := range ips {
+				serverList = append(serverList, ip.String())
+			}
 		}
 
 		select {
@@ -310,7 +324,57 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 	return serverList, nil
 }
 
-func (syncer *Syncer) queryServer(server string) (*ntp.Response, error) {
+func (syncer *Syncer) queryServer(server string) (*Measurement, error) {
+	if syncer.isPTPDevice(server) {
+		return syncer.queryPTP(server)
+	}
+
+	return syncer.queryNTP(server)
+}
+
+func (syncer *Syncer) queryPTP(server string) (*Measurement, error) {
+	phc, err := os.Open(server)
+	if err != nil {
+		return nil, err
+	}
+
+	defer phc.Close() //nolint:errcheck
+
+	// From clock_gettime(2):
+	//
+	// Using  the  appropriate  macros,  open file descriptors may be converted into clock IDs and passed to clock_gettime(), clock_settime(), and clock_adjtime(2).  The
+	// following example shows how to convert a file descriptor into a dynamic clock ID.
+	//
+	// 	#define CLOCKFD 3
+	// 	#define FD_TO_CLOCKID(fd)   ((~(clockid_t) (fd) << 3) | CLOCKFD)
+
+	clockid := int32(3 | (^phc.Fd() << 3))
+
+	var ts unix.Timespec
+
+	err = unix.ClockGettime(clockid, &ts)
+	if err != nil {
+		return nil, err
+	}
+
+	offset := time.Until(time.Unix(ts.Sec, ts.Nsec))
+	syncer.logger.Debug("PTP clock",
+		zap.Duration("clock_offset", offset),
+		zap.Int64("sec", ts.Sec),
+		zap.Int64("nsec", ts.Nsec),
+		zap.String("device", server),
+	)
+
+	meas := &Measurement{
+		ClockOffset: offset,
+		Leap:        0,
+		Spike:       false,
+	}
+
+	return meas, err
+}
+
+func (syncer *Syncer) queryNTP(server string) (*Measurement, error) {
 	resp, err := syncer.NTPQuery(server)
 	if err != nil {
 		return nil, err
@@ -327,11 +391,19 @@ func (syncer *Syncer) queryServer(server string) (*ntp.Response, error) {
 		zap.Duration("root_distance", resp.RootDistance),
 	)
 
-	if err = resp.Validate(); err != nil {
-		return resp, err
+	validationError := resp.Validate()
+
+	measurement := &Measurement{
+		ClockOffset: resp.ClockOffset,
+		Leap:        resp.Leap,
+		Spike:       false,
 	}
 
-	return resp, err
+	if validationError == nil {
+		measurement.Spike = syncer.isSpike(resp)
+	}
+
+	return measurement, validationError
 }
 
 // log2i returns 0 for v == 0 and v == 1.
