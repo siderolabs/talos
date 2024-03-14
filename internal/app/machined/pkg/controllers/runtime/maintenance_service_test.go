@@ -25,9 +25,12 @@ import (
 	runtimectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
 	"github.com/siderolabs/talos/internal/app/maintenance"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -114,6 +117,25 @@ func (suite *MaintenanceServiceSuite) TestRunService() {
 	_, err = mc.Version(suite.Ctx())
 	suite.Require().ErrorContains(err, "API is not implemented in maintenance mode")
 
+	// apply partial machine config
+	_, err = mc.ApplyConfiguration(suite.Ctx(), &machineapi.ApplyConfigurationRequest{
+		Data: []byte(`
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: test
+url: "tcp://127.0.0.42:1234"
+`),
+	})
+	suite.Require().NoError(err)
+
+	// assert that the config with the maintenance ID is created
+	rtestutils.AssertResource[*configres.MachineConfig](suite.Ctx(), suite.T(), suite.State(), configres.MaintenanceID, func(r *configres.MachineConfig, assertion *assert.Assertions) {
+		configBytes, configBytesErr := r.Container().Bytes()
+		assertion.NoError(configBytesErr)
+
+		assertion.Contains(string(configBytes), "tcp://127.0.0.42:1234")
+	})
+
 	suite.Require().NoError(mc.Close())
 
 	// change the listen address
@@ -168,6 +190,9 @@ func (suite *MaintenanceServiceSuite) TestRunService() {
 
 	_, err = net.Dial("tcp", maintenanceConfig.TypedSpec().ListenAddress)
 	suite.Require().ErrorContains(err, "connection refused")
+
+	// assert that the maintenance service is removed from the config after the service was shut down
+	rtestutils.AssertNoResource[*configres.MachineConfig](suite.Ctx(), suite.T(), suite.State(), configres.MaintenanceID)
 }
 
 type mockController struct {
@@ -242,7 +267,7 @@ func (mock mockController) IsBootstrapAllowed() bool {
 }
 
 func (mock mockState) Platform() talosruntime.Platform {
-	return nil
+	return &metal.Metal{} // required for ApplyConfiguration to not fail
 }
 
 func (mock mockState) Machine() talosruntime.MachineState {

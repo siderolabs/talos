@@ -111,6 +111,12 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 			lastReachableAddresses = nil
 			lastListenAddress = ""
 		}
+
+		// clean up maintenance machine config, as we are done with the maintenance service
+		err := r.Destroy(ctx, config.NewMachineConfigWithID(nil, config.MaintenanceID).Metadata())
+		if err != nil && !state.IsNotFoundError(err) {
+			logger.Error("failed to destroy maintenance machine config", zap.String("id", config.MaintenanceID), zap.Error(err))
+		}
 	}
 
 	defer shutdownServer(context.Background())
