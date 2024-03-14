@@ -15,11 +15,11 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-alpha.0-10-g14bf457
+TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-alpha.0-11-gcb5fd56
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.7.0-alpha.0-33-g3aacf03
-EXTRAS ?= v1.7.0-alpha.0-2-g60793cd
+PKGS ?= v1.7.0-alpha.0-35-g8804a60
+EXTRAS ?= v1.7.0-alpha.0-3-g47bb718
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
@@ -90,11 +90,11 @@ KUBECTL_VERSION ?= v1.30.0-beta.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.41
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.14.2
+HELM_VERSION ?= v3.14.3
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.6.2
+CLUSTERCTL_VERSION ?= 1.6.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.16.0
+CILIUM_CLI_VERSION ?= v0.16.1
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
