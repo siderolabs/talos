@@ -764,14 +764,12 @@ RUN apk add --no-cache --update --no-scripts grub
 
 FROM scratch AS install-artifacts-amd64
 COPY --from=pkg-kernel-amd64 /boot/vmlinuz /usr/install/amd64/vmlinuz
-COPY --from=pkg-kernel-amd64 /dtb /usr/install/amd64/dtb
 COPY --from=initramfs-archive-amd64 /initramfs.xz /usr/install/amd64/initramfs.xz
 COPY --from=pkg-sd-boot-amd64 /linuxx64.efi.stub /usr/install/amd64/systemd-stub.efi
 COPY --from=pkg-sd-boot-amd64 /systemd-bootx64.efi /usr/install/amd64/systemd-boot.efi
 
 FROM scratch AS install-artifacts-arm64
 COPY --from=pkg-kernel-arm64 /boot/vmlinuz /usr/install/arm64/vmlinuz
-COPY --from=pkg-kernel-arm64 /dtb /usr/install/arm64/dtb
 COPY --from=initramfs-archive-arm64 /initramfs.xz /usr/install/arm64/initramfs.xz
 COPY --from=pkg-sd-boot-arm64 /linuxaa64.efi.stub /usr/install/arm64/systemd-stub.efi
 COPY --from=pkg-sd-boot-arm64 /systemd-bootaa64.efi /usr/install/arm64/systemd-boot.efi

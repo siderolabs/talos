@@ -13,11 +13,14 @@ type Installer[T any] interface {
 
 // Options for the overlay installer.
 type Options struct {
-	Name             string   `yaml:"name"`
-	KernelArgs       []string `yaml:"kernelArgs,omitempty"`
-	PartitionOptions struct {
-		Offset uint64
-	} `yaml:"partitionOptions,omitempty"`
+	Name             string           `yaml:"name"`
+	KernelArgs       []string         `yaml:"kernelArgs,omitempty"`
+	PartitionOptions PartitionOptions `yaml:"partitionOptions,omitempty"`
+}
+
+// PartitionOptions for the overlay installer.
+type PartitionOptions struct {
+	Offset uint64 `yaml:"offset,omitempty"`
 }
 
 // InstallOptions for the overlay installer.

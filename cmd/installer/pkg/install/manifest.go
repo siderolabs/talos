@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/board"
 	"github.com/siderolabs/talos/internal/pkg/mount"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -48,7 +49,7 @@ type Device struct {
 
 // NewManifest initializes and returns a Manifest.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func NewManifest(mode Mode, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Options) (manifest *Manifest, err error) {
 	manifest = &Manifest{
 		Devices:           map[string]Device{},
@@ -58,7 +59,7 @@ func NewManifest(mode Mode, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Opt
 		Printf: opts.Printf,
 	}
 
-	if opts.Board != constants.BoardNone {
+	if opts.Board != constants.BoardNone && !quirks.New(opts.Version).SupportsOverlay() {
 		if uefiOnlyBoot {
 			return nil, errors.New("board option can't be used with uefi-only-boot")
 		}
@@ -71,6 +72,19 @@ func NewManifest(mode Mode, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Opt
 		}
 
 		manifest.PartitionOptions = b.PartitionOptions()
+	}
+
+	if opts.OverlayInstaller != nil {
+		overlayOpts, getOptsErr := opts.OverlayInstaller.GetOptions(opts.ExtraOptions)
+		if getOptsErr != nil {
+			return nil, fmt.Errorf("failed to get overlay installer options: %w", getOptsErr)
+		}
+
+		if overlayOpts.PartitionOptions.Offset != 0 {
+			manifest.PartitionOptions = &runtime.PartitionOptions{
+				PartitionsOffset: overlayOpts.PartitionOptions.Offset,
+			}
+		}
 	}
 
 	// TODO: legacy, to support old Talos initramfs, assume force if boot partition not found
