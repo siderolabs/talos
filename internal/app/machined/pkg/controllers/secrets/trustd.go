@@ -216,7 +216,7 @@ func (ctrl *TrustdController) reconcile(ctx context.Context, r controller.Runtim
 }
 
 func (ctrl *TrustdController) generateControlPlane(ctx context.Context, r controller.Runtime, logger *zap.Logger, rootSpec *secrets.OSRootSpec, certSANs *secrets.CertSANSpec) error {
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(rootSpec.CA)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(rootSpec.IssuingCA)
 	if err != nil {
 		return fmt.Errorf("failed to parse CA certificate: %w", err)
 	}
@@ -239,9 +239,7 @@ func (ctrl *TrustdController) generateControlPlane(ctx context.Context, r contro
 		func(r *secrets.Trustd) error {
 			trustdSecrets := r.TypedSpec()
 
-			trustdSecrets.CA = &x509.PEMEncodedCertificateAndKey{
-				Crt: rootSpec.CA.Crt,
-			}
+			trustdSecrets.AcceptedCAs = rootSpec.AcceptedCAs
 			trustdSecrets.Server = x509.NewCertificateAndKeyFromKeyPair(serverCert)
 
 			return nil

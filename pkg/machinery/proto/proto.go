@@ -163,6 +163,27 @@ func registerDefaultTypes() {
 	)
 
 	protoenc.RegisterEncoderDecoder(
+		func(v *x509.PEMEncodedCertificate) ([]byte, error) {
+			source := common.PEMEncodedCertificate{
+				Crt: v.Crt,
+			}
+
+			return proto.Marshal(&source)
+		},
+		func(slc []byte) (*x509.PEMEncodedCertificate, error) {
+			var dest common.PEMEncodedCertificate
+
+			if err := proto.Unmarshal(slc, &dest); err != nil {
+				return nil, err
+			}
+
+			return &x509.PEMEncodedCertificate{
+				Crt: dest.Crt,
+			}, nil
+		},
+	)
+
+	protoenc.RegisterEncoderDecoder(
 		func(v netip.Addr) ([]byte, error) {
 			ipEncoded, err := v.MarshalBinary()
 			if err != nil {

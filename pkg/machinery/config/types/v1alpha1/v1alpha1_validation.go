@@ -139,6 +139,13 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			}
 		}
 
+		if c.Machine().Security().IssuingCA() != nil && len(c.Machine().Security().IssuingCA().Key) > 0 {
+			result = multierror.Append(result, errors.New("issuing Talos API CA key is not allowed on non-controlplane nodes (.machine.ca)"))
+		}
+
+		if c.Cluster().CA() != nil && len(c.Cluster().CA().Key) > 0 {
+			result = multierror.Append(result, errors.New("issuing Kubernetes API CA key is not allowed on non-controlplane nodes (.cluster.ca)"))
+		}
 	case machine.TypeUnknown:
 		fallthrough
 

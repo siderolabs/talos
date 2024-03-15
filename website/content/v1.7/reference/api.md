@@ -15,6 +15,7 @@ description: Talos gRPC API reference.
     - [NetIP](#common.NetIP)
     - [NetIPPort](#common.NetIPPort)
     - [NetIPPrefix](#common.NetIPPrefix)
+    - [PEMEncodedCertificate](#common.PEMEncodedCertificate)
     - [PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey)
     - [PEMEncodedKey](#common.PEMEncodedKey)
     - [URL](#common.URL)
@@ -622,6 +623,21 @@ Common metadata message nested in all reply message types
 | ----- | ---- | ----- | ----------- |
 | ip | [bytes](#bytes) |  |  |
 | prefix_length | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="common.PEMEncodedCertificate"></a>
+
+### PEMEncodedCertificate
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| crt | [bytes](#bytes) |  |  |
 
 
 
@@ -4211,9 +4227,9 @@ APICertsSpec describes etcd certs secrets.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | client | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 
 
 
@@ -4389,10 +4405,11 @@ OSRootSpec describes operating system CA.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| issuing_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | cert_sani_ps | [common.NetIP](#common.NetIP) | repeated |  |
 | cert_sandns_names | [string](#string) | repeated |  |
 | token | [string](#string) |  |  |
+| accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 
 
 
@@ -4407,8 +4424,8 @@ TrustdCertsSpec describes etcd certs secrets.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 
 
 

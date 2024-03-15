@@ -48,9 +48,14 @@ func (suite *APISuite) TestReconcileControlPlane() {
 	)
 	suite.Require().NoError(err)
 
-	rootSecrets.TypedSpec().CA = &x509.PEMEncodedCertificateAndKey{
+	rootSecrets.TypedSpec().IssuingCA = &x509.PEMEncodedCertificateAndKey{
 		Crt: talosCA.CrtPEM,
 		Key: talosCA.KeyPEM,
+	}
+	rootSecrets.TypedSpec().AcceptedCAs = []*x509.PEMEncodedCertificate{
+		{
+			Crt: talosCA.CrtPEM,
+		},
 	}
 	rootSecrets.TypedSpec().CertSANDNSNames = []string{"example.com"}
 	rootSecrets.TypedSpec().CertSANIPs = []netip.Addr{netip.MustParseAddr("10.4.3.2"), netip.MustParseAddr("10.2.1.3")}
@@ -99,8 +104,14 @@ func (suite *APISuite) TestReconcileControlPlane() {
 
 		apiCerts := certs.TypedSpec()
 
-		suite.Assert().Equal(talosCA.CrtPEM, apiCerts.CA.Crt)
-		suite.Assert().Nil(apiCerts.CA.Key)
+		suite.Assert().Equal(
+			[]*x509.PEMEncodedCertificate{
+				{
+					Crt: talosCA.CrtPEM,
+				},
+			},
+			apiCerts.AcceptedCAs,
+		)
 
 		serverCert, err := apiCerts.Server.GetCert()
 		suite.Require().NoError(err)

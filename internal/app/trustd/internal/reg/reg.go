@@ -5,6 +5,7 @@
 package reg
 
 import (
+	"bytes"
 	"context"
 	stdx509 "crypto/x509"
 	"crypto/x509/pkix"
@@ -15,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -90,8 +92,8 @@ func (r *Registrator) Certificate(ctx context.Context, in *securityapi.Certifica
 	// TODO: Verify that the request is coming from the IP address declared in
 	// the CSR.
 	signed, err := x509.NewCertificateFromCSRBytes(
-		osRoot.TypedSpec().CA.Crt,
-		osRoot.TypedSpec().CA.Key,
+		osRoot.TypedSpec().IssuingCA.Crt,
+		osRoot.TypedSpec().IssuingCA.Key,
 		in.Csr,
 		x509Opts...,
 	)
@@ -100,7 +102,15 @@ func (r *Registrator) Certificate(ctx context.Context, in *securityapi.Certifica
 	}
 
 	resp = &securityapi.CertificateResponse{
-		Ca:  osRoot.TypedSpec().CA.Crt,
+		Ca: bytes.Join(
+			xslices.Map(
+				osRoot.TypedSpec().AcceptedCAs,
+				func(cert *x509.PEMEncodedCertificate) []byte {
+					return cert.Crt
+				},
+			),
+			nil,
+		),
 		Crt: signed.X509CertificatePEM,
 	}
 

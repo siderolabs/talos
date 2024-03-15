@@ -652,8 +652,8 @@ github.com/sethgrid/pester v1.2.0 h1:adC9RS29rRUef3rIKWPOuP1Jm3/MmB6ke+OhE5giENI
 github.com/sethgrid/pester v1.2.0/go.mod h1:hEUINb4RqvDxtoCaU0BNT/HV4ig5kfgOasrf1xcvr0A=
 github.com/siderolabs/coredns v1.11.52 h1:L0jzzyRvmhiA3mf21yjXh8OjTEz95sVknOHfgq1I9Dk=
 github.com/siderolabs/coredns v1.11.52/go.mod h1:dePXyKhQsTe3Ks228EAaiBWxV37jyquDDVHc8zwiWSY=
-github.com/siderolabs/crypto v0.4.2 h1:ahAwmm1+0xd3QfGiZ0jYpWxtCVngsy+PK0cgR9frOA8=
-github.com/siderolabs/crypto v0.4.2/go.mod h1:rnjC/Z6m/mI2vMv98glgU6oU8lXNi8YceiTxALohfzY=
+github.com/siderolabs/crypto v0.4.4 h1:Q6EDBMR2Ub2oAZW5Xl8lrKB27bM3Sn8Gkfw3rngco5U=
+github.com/siderolabs/crypto v0.4.4/go.mod h1:hsR3tJ3aaeuhCChsLF4dBd9vlJVPvmhg4vvx2ez4aD4=
 github.com/siderolabs/discovery-api v0.1.4 h1:2fMEFSMiWaD1zDiBDY5md8VxItvL1rDQRSOfeXNjYKc=
 github.com/siderolabs/discovery-api v0.1.4/go.mod h1:kaBy+G42v2xd/uAF/NIe383sjNTBE2AhxPTyi9SZI0s=
 github.com/siderolabs/discovery-client v0.1.8 h1:8WhJiNyVmjZ0F+tSfeaDyQ04n02lRK2dh/CvWp+zlnY=

@@ -126,6 +126,16 @@ type MachineConfig struct {
 	//         type: string
 	MachineCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
 	//   description: |
+	//     The certificates issued by certificate authorities are accepted in addition to issuing 'ca'.
+	//     It is composed of a base64 encoded `crt``.
+	//   schema:
+	//     type: object
+	//     additionalProperties: false
+	//     properties:
+	//       crt:
+	//         type: string
+	MachineAcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs,omitempty"`
+	//   description: |
 	//     Extra certificate subject alternative names for the machine's certificate.
 	//     By default, all non-loopback interface IPs are automatically added to the certificate's SANs.
 	//   examples:

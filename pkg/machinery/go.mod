@@ -20,7 +20,7 @@ require (
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/planetscale/vtprotobuf v0.6.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/siderolabs/crypto v0.4.2
+	github.com/siderolabs/crypto v0.4.4
 	github.com/siderolabs/gen v0.4.8
 	github.com/siderolabs/go-api-signature v0.3.2
 	github.com/siderolabs/go-blockdevice v0.4.7

@@ -21,8 +21,14 @@ type APIDFactorySuite struct {
 	f *backend.APIDFactory
 }
 
+type fakeTLSConfigProvider struct{}
+
+func (fakeTLSConfigProvider) ClientConfig() (*tls.Config, error) {
+	return &tls.Config{}, nil
+}
+
 func (suite *APIDFactorySuite) SetupSuite() {
-	suite.f = backend.NewAPIDFactory(&tls.Config{})
+	suite.f = backend.NewAPIDFactory(fakeTLSConfigProvider{})
 }
 
 func (suite *APIDFactorySuite) TestGet() {

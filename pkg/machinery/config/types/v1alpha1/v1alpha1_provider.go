@@ -284,9 +284,14 @@ func (m *MachineConfig) Sysfs() map[string]string {
 	return m.MachineSysfs
 }
 
-// CA implements the config.Provider interface.
-func (m *MachineConfig) CA() *x509.PEMEncodedCertificateAndKey {
+// IssuingCA implements the config.Provider interface.
+func (m *MachineConfig) IssuingCA() *x509.PEMEncodedCertificateAndKey {
 	return m.MachineCA
+}
+
+// AcceptedCAs implements the config.Provider interface.
+func (m *MachineConfig) AcceptedCAs() []*x509.PEMEncodedCertificate {
+	return slices.Clone(m.MachineAcceptedCAs)
 }
 
 // Token implements the config.Provider interface.

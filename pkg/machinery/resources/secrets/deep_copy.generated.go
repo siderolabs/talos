@@ -9,13 +9,21 @@ package secrets
 import (
 	"net/netip"
 	"net/url"
+
+	"github.com/siderolabs/crypto/x509"
 )
 
 // DeepCopy generates a deep copy of APICertsSpec.
 func (o APICertsSpec) DeepCopy() APICertsSpec {
 	var cp APICertsSpec = o
-	if o.CA != nil {
-		cp.CA = o.CA.DeepCopy()
+	if o.AcceptedCAs != nil {
+		cp.AcceptedCAs = make([]*x509.PEMEncodedCertificate, len(o.AcceptedCAs))
+		copy(cp.AcceptedCAs, o.AcceptedCAs)
+		for i2 := range o.AcceptedCAs {
+			if o.AcceptedCAs[i2] != nil {
+				cp.AcceptedCAs[i2] = o.AcceptedCAs[i2].DeepCopy()
+			}
+		}
 	}
 	if o.Client != nil {
 		cp.Client = o.Client.DeepCopy()
@@ -168,8 +176,17 @@ func (o MaintenanceRootSpec) DeepCopy() MaintenanceRootSpec {
 // DeepCopy generates a deep copy of OSRootSpec.
 func (o OSRootSpec) DeepCopy() OSRootSpec {
 	var cp OSRootSpec = o
-	if o.CA != nil {
-		cp.CA = o.CA.DeepCopy()
+	if o.IssuingCA != nil {
+		cp.IssuingCA = o.IssuingCA.DeepCopy()
+	}
+	if o.AcceptedCAs != nil {
+		cp.AcceptedCAs = make([]*x509.PEMEncodedCertificate, len(o.AcceptedCAs))
+		copy(cp.AcceptedCAs, o.AcceptedCAs)
+		for i2 := range o.AcceptedCAs {
+			if o.AcceptedCAs[i2] != nil {
+				cp.AcceptedCAs[i2] = o.AcceptedCAs[i2].DeepCopy()
+			}
+		}
 	}
 	if o.CertSANIPs != nil {
 		cp.CertSANIPs = make([]netip.Addr, len(o.CertSANIPs))
@@ -185,8 +202,14 @@ func (o OSRootSpec) DeepCopy() OSRootSpec {
 // DeepCopy generates a deep copy of TrustdCertsSpec.
 func (o TrustdCertsSpec) DeepCopy() TrustdCertsSpec {
 	var cp TrustdCertsSpec = o
-	if o.CA != nil {
-		cp.CA = o.CA.DeepCopy()
+	if o.AcceptedCAs != nil {
+		cp.AcceptedCAs = make([]*x509.PEMEncodedCertificate, len(o.AcceptedCAs))
+		copy(cp.AcceptedCAs, o.AcceptedCAs)
+		for i2 := range o.AcceptedCAs {
+			if o.AcceptedCAs[i2] != nil {
+				cp.AcceptedCAs[i2] = o.AcceptedCAs[i2].DeepCopy()
+			}
+		}
 	}
 	if o.Server != nil {
 		cp.Server = o.Server.DeepCopy()

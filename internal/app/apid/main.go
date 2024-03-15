@@ -100,11 +100,15 @@ func apidMain() error {
 		return fmt.Errorf("failed to create client TLS config: %w", err)
 	}
 
-	var remoteFactory director.RemoteBackendFactory
+	var (
+		remoteFactory director.RemoteBackendFactory
+		onPKIUpdate   func()
+	)
 
 	if clientTLSConfig != nil {
-		backendFactory := apidbackend.NewAPIDFactory(clientTLSConfig)
+		backendFactory := apidbackend.NewAPIDFactory(tlsConfig)
 		remoteFactory = backendFactory.Get
+		onPKIUpdate = backendFactory.Flush
 	}
 
 	localAddressProvider, err := director.NewLocalAddressProvider(resources)
@@ -226,7 +230,7 @@ func apidMain() error {
 	})
 
 	errGroup.Go(func() error {
-		return tlsConfig.Watch(ctx)
+		return tlsConfig.Watch(ctx, onPKIUpdate)
 	})
 
 	errGroup.Go(func() error {

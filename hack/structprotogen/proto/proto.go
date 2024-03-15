@@ -390,6 +390,8 @@ func formatTypeName(fieldTypePkg string, fieldType string, declPkg string) (stri
 		return commoProto, "common.PEMEncodedCertificateAndKey"
 	case typeData{"github.com/siderolabs/crypto/x509", "PEMEncodedKey"}:
 		return commoProto, "common.PEMEncodedKey"
+	case typeData{"github.com/siderolabs/crypto/x509", "PEMEncodedCertificate"}:
+		return commoProto, "common.PEMEncodedCertificate"
 	default:
 		return "", ""
 	}

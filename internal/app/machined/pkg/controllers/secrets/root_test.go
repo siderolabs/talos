@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -77,7 +78,15 @@ func (suite *RootSuite) TestReconcileControlPlane() {
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{secrets.OSRootID},
 		func(res *secrets.OSRoot, asrt *assert.Assertions) {
-			asrt.Equal(res.TypedSpec().CA, cfg.Machine().Security().CA())
+			asrt.Equal(res.TypedSpec().IssuingCA, cfg.Machine().Security().IssuingCA())
+			asrt.Equal(
+				[]*x509.PEMEncodedCertificate{
+					{
+						Crt: cfg.Machine().Security().IssuingCA().Crt,
+					},
+				},
+				res.TypedSpec().AcceptedCAs,
+			)
 		},
 	)
 }
@@ -87,7 +96,15 @@ func (suite *RootSuite) TestReconcileWorker() {
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{secrets.OSRootID},
 		func(res *secrets.OSRoot, asrt *assert.Assertions) {
-			asrt.Equal(res.TypedSpec().CA, cfg.Machine().Security().CA())
+			asrt.Nil(res.TypedSpec().IssuingCA)
+			asrt.Equal(
+				[]*x509.PEMEncodedCertificate{
+					{
+						Crt: cfg.Machine().Security().IssuingCA().Crt,
+					},
+				},
+				res.TypedSpec().AcceptedCAs,
+			)
 		},
 	)
 

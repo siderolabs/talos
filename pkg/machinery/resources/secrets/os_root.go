@@ -29,7 +29,8 @@ type OSRoot = typed.Resource[OSRootSpec, OSRootExtension]
 //
 //gotagsrewrite:gen
 type OSRootSpec struct {
-	CA              *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"1"`
+	IssuingCA       *x509.PEMEncodedCertificateAndKey `yaml:"issuingCA" protobuf:"1"`
+	AcceptedCAs     []*x509.PEMEncodedCertificate     `yaml:"acceptedCAs" protobuf:"5"`
 	CertSANIPs      []netip.Addr                      `yaml:"certSANIPs" protobuf:"2"`
 	CertSANDNSNames []string                          `yaml:"certSANDNSNames" protobuf:"3"`
 

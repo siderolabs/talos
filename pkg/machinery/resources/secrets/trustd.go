@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package secrets //nolint:dupl
+package secrets
 
 import (
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -27,8 +27,8 @@ type Trustd = typed.Resource[TrustdCertsSpec, TrustdExtension]
 //
 //gotagsrewrite:gen
 type TrustdCertsSpec struct {
-	CA     *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"1"` // only cert is passed, without key
-	Server *x509.PEMEncodedCertificateAndKey `yaml:"server" protobuf:"2"`
+	AcceptedCAs []*x509.PEMEncodedCertificate     `yaml:"acceptedCAs" protobuf:"3"`
+	Server      *x509.PEMEncodedCertificateAndKey `yaml:"server" protobuf:"2"`
 }
 
 // NewTrustd initializes a Trustd resource.

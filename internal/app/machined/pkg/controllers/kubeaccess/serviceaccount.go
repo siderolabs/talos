@@ -171,7 +171,7 @@ func (ctrl *CRDController) Run(ctx context.Context, r controller.Runtime, logger
 		go func() {
 			crdControllerErrCh <- ctrl.runCRDController(
 				crdControllerCtx,
-				osSecretsSpec.CA,
+				osSecretsSpec.IssuingCA,
 				kubeconfig,
 				kubeaccessConfigSpec,
 				logger,

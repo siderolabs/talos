@@ -172,7 +172,7 @@ func NewBundleFromConfig(clock Clock, c config.Config) *Bundle {
 		K8sAggregator:     c.Cluster().AggregatorCA(),
 		K8sServiceAccount: c.Cluster().ServiceAccount(),
 		Etcd:              c.Cluster().Etcd().CA(),
-		OS:                c.Machine().Security().CA(),
+		OS:                c.Machine().Security().IssuingCA(),
 	}
 
 	cluster := &Cluster{

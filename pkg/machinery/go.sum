@@ -119,8 +119,8 @@ github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkB
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 h1:lZUw3E0/J3roVtGQ+SCrUrg3ON6NgVqpn3+iol9aGu4=
 github.com/santhosh-tekuri/jsonschema/v5 v5.3.1/go.mod h1:uToXkOrWAZ6/Oc07xWQrPOhJotwFIyu2bBVN41fcDUY=
-github.com/siderolabs/crypto v0.4.2 h1:ahAwmm1+0xd3QfGiZ0jYpWxtCVngsy+PK0cgR9frOA8=
-github.com/siderolabs/crypto v0.4.2/go.mod h1:rnjC/Z6m/mI2vMv98glgU6oU8lXNi8YceiTxALohfzY=
+github.com/siderolabs/crypto v0.4.4 h1:Q6EDBMR2Ub2oAZW5Xl8lrKB27bM3Sn8Gkfw3rngco5U=
+github.com/siderolabs/crypto v0.4.4/go.mod h1:hsR3tJ3aaeuhCChsLF4dBd9vlJVPvmhg4vvx2ez4aD4=
 github.com/siderolabs/gen v0.4.8 h1:VNpbmDLhkXp7qcSEkKk1Ee7vU2afs3xvHrWLGR2UuiY=
 github.com/siderolabs/gen v0.4.8/go.mod h1:7ROKVHHB68R3Amrd4a1ZXz/oMrXWF3Mg3lSEgnkJY5c=
 github.com/siderolabs/go-api-signature v0.3.2 h1:blqrZF1GM7TWgq7mY7CsR+yQ93u6az0Kf0mfsw+hvf0=

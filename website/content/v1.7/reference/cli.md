@@ -2659,6 +2659,46 @@ talosctl rollback [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl rotate-ca
+
+Rotate cluster CAs (Talos and Kubernetes APIs).
+
+### Synopsis
+
+The command starts by generating new CAs, and gracefully applying it to the cluster.
+
+```
+talosctl rotate-ca [flags]
+```
+
+### Options
+
+```
+      --control-plane-nodes strings   specify IPs of control plane nodes
+      --dry-run                       dry-run mode (no changes to the cluster) (default true)
+  -h, --help                          help for rotate-ca
+      --init-node string              specify IPs of init node
+      --k8s-endpoint string           use endpoint instead of kubeconfig default
+  -o, --output talosconfig            path to the output new talosconfig (default "talosconfig")
+      --with-docs                     patch all machine configs adding the documentation for each field (default true)
+      --with-examples                 patch all machine configs with the commented examples (default true)
+      --worker-nodes strings          specify IPs of worker nodes
+```
+
+### Options inherited from parent commands
+
+```
+      --cluster string       Cluster to connect to if a proxy endpoint is used.
+      --context string       Context to be used in command
+  -e, --endpoints strings    override default endpoints in Talos configuration
+  -n, --nodes strings        target the specified nodes
+      --talosconfig string   The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl service
 
 Retrieve the state of a service (or all services), control service state
@@ -3065,6 +3105,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl reset](#talosctl-reset)	 - Reset a node
 * [talosctl restart](#talosctl-restart)	 - Restart a process
 * [talosctl rollback](#talosctl-rollback)	 - Rollback a node to the previous installation
+* [talosctl rotate-ca](#talosctl-rotate-ca)	 - Rotate cluster CAs (Talos and Kubernetes APIs).
 * [talosctl service](#talosctl-service)	 - Retrieve the state of a service (or all services), control service state
 * [talosctl shutdown](#talosctl-shutdown)	 - Shutdown a node
 * [talosctl stats](#talosctl-stats)	 - Get container stats

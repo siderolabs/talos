@@ -173,7 +173,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 		joinedConfig.Machine().Network().Hostname(),
 	)
 
-	suite.Require().EqualValues(config.Machine().Security().CA(), joinedConfig.Machine().Security().CA())
+	suite.Require().EqualValues(config.Machine().Security().IssuingCA(), joinedConfig.Machine().Security().IssuingCA())
 	suite.Require().EqualValues(config.Machine().Security().Token(), joinedConfig.Machine().Security().Token())
 	suite.Require().EqualValues(
 		config.Cluster().AESCBCEncryptionSecret(),

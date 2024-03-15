@@ -37,9 +37,14 @@ func TestCertificate(t *testing.T) {
 	require.NoError(t, err)
 
 	osRoot := secrets.NewOSRoot(secrets.OSRootID)
-	osRoot.TypedSpec().CA = &x509.PEMEncodedCertificateAndKey{
+	osRoot.TypedSpec().IssuingCA = &x509.PEMEncodedCertificateAndKey{
 		Crt: ca.CrtPEM,
 		Key: ca.KeyPEM,
+	}
+	osRoot.TypedSpec().AcceptedCAs = []*x509.PEMEncodedCertificate{
+		{
+			Crt: ca.CrtPEM,
+		},
 	}
 	require.NoError(t, resources.Create(ctx, osRoot))
 

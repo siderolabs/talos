@@ -157,6 +157,12 @@ machine:
 ```
 """
 
+    [notes.ca-rotation]
+        title = "CA Rotation"
+        description = """\
+Talos Linux now supports rotating the root CA certificate and key for Talos API and Kubernetes API.
+"""
+
 [make_deps]
 
     [make_deps.tools]

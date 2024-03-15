@@ -17,8 +17,10 @@ import (
 
 func TestAPIProtobufMarshal(t *testing.T) {
 	r := secrets.NewAPI()
-	r.TypedSpec().CA = &x509.PEMEncodedCertificateAndKey{
-		Crt: []byte("foo"),
+	r.TypedSpec().AcceptedCAs = []*x509.PEMEncodedCertificate{
+		{
+			Crt: []byte("foo"),
+		},
 	}
 	r.TypedSpec().Client = &x509.PEMEncodedCertificateAndKey{
 		Crt: []byte("bar"),

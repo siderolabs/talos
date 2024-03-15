@@ -107,6 +107,10 @@ message PEMEncodedKey {
   bytes key = 1;
 }
 
+message PEMEncodedCertificate {
+  bytes crt = 1;
+}
+
 message NetIP {
   bytes ip = 1;
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	protobuf "google.golang.org/protobuf/proto" //nolint:depguard
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -42,8 +41,12 @@ type APIDSuite struct {
 }
 
 func (suite *APIDSuite) SetupSuite() {
+	tlsConfigProvider := func() (*tls.Config, error) {
+		return &tls.Config{}, nil
+	}
+
 	var err error
-	suite.b, err = backend.NewAPID("127.0.0.1", credentials.NewTLS(&tls.Config{}))
+	suite.b, err = backend.NewAPID("127.0.0.1", tlsConfigProvider)
 	suite.Require().NoError(err)
 }
 

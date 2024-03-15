@@ -17,8 +17,10 @@ import (
 
 func TestTrustdProtobufMarshal(t *testing.T) {
 	r := secrets.NewTrustd()
-	r.TypedSpec().CA = &x509.PEMEncodedCertificateAndKey{
-		Crt: []byte("foo"),
+	r.TypedSpec().AcceptedCAs = []*x509.PEMEncodedCertificate{
+		{
+			Crt: []byte("foo"),
+		},
 	}
 	r.TypedSpec().Server = &x509.PEMEncodedCertificateAndKey{
 		Crt: []byte("car"),

@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
@@ -145,7 +146,19 @@ func NewRootOSController() *RootOSController {
 				cfgProvider := cfg.Config()
 				osSecrets := res.TypedSpec()
 
-				osSecrets.CA = cfgProvider.Machine().Security().CA()
+				osSecrets.IssuingCA = cfgProvider.Machine().Security().IssuingCA()
+				osSecrets.AcceptedCAs = cfgProvider.Machine().Security().AcceptedCAs()
+
+				if osSecrets.IssuingCA != nil {
+					osSecrets.AcceptedCAs = append(osSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{
+						Crt: osSecrets.IssuingCA.Crt,
+					})
+				}
+
+				if len(osSecrets.IssuingCA.Key) == 0 {
+					// drop incomplete issuing CA, as the machine config for workers contains just the cert
+					osSecrets.IssuingCA = nil
+				}
 
 				osSecrets.CertSANIPs = nil
 				osSecrets.CertSANDNSNames = nil

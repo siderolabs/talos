@@ -125,7 +125,7 @@ func healthOnClient(ctx context.Context, c *client.Client) error {
 	}
 	defer clientProvider.Close() //nolint:errcheck
 
-	clusterInfo, err := buildClusterInfo()
+	clusterInfo, err := buildClusterInfo(healthCmdFlags.clusterState)
 	if err != nil {
 		return err
 	}
@@ -225,9 +225,7 @@ func init() {
 	healthCmd.Flags().BoolVar(&healthCmdFlags.runE2E, "run-e2e", false, "run Kubernetes e2e test")
 }
 
-func buildClusterInfo() (cluster.Info, error) {
-	clusterState := healthCmdFlags.clusterState
-
+func buildClusterInfo(clusterState clusterNodes) (cluster.Info, error) {
 	// if nodes are set explicitly via command line args, use them
 	if len(clusterState.ControlPlaneNodes) > 0 || len(clusterState.WorkerNodes) > 0 {
 		return &clusterState, nil

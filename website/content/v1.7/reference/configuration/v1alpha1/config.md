@@ -72,6 +72,7 @@ ca:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
+|`acceptedCAs` |[]PEMEncodedCertificate |<details><summary>The certificates issued by certificate authorities are accepted in addition to issuing 'ca'.</summary>It is composed of a base64 encoded `crt``.</details>  | |
 |`certSANs` |[]string |<details><summary>Extra certificate subject alternative names for the machine's certificate.</summary>By default, all non-loopback interface IPs are automatically added to the certificate's SANs.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 certSANs:
     - 10.0.0.10

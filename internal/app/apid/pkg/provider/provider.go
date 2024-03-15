@@ -6,14 +6,18 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	stdlibtls "crypto/tls"
+	stdx509 "crypto/x509"
 	"fmt"
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/tls"
+	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
@@ -68,7 +72,7 @@ func NewTLSConfig(ctx context.Context, resources state.State) (*TLSConfig, error
 }
 
 // Watch for changes in API certificates and updates the TLSConfig.
-func (tlsConfig *TLSConfig) Watch(ctx context.Context) error {
+func (tlsConfig *TLSConfig) Watch(ctx context.Context, onUpdate func()) error {
 	for {
 		var event state.Event
 
@@ -93,19 +97,18 @@ func (tlsConfig *TLSConfig) Watch(ctx context.Context) error {
 		if err := tlsConfig.certificateProvider.Update(apiCerts); err != nil {
 			return fmt.Errorf("failed updating cert: %v", err)
 		}
+
+		if onUpdate != nil {
+			onUpdate()
+		}
 	}
 }
 
 // ServerConfig generates server-side tls.Config.
 func (tlsConfig *TLSConfig) ServerConfig() (*stdlibtls.Config, error) {
-	ca, err := tlsConfig.certificateProvider.GetCA()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get root CA: %w", err)
-	}
-
 	return tls.New(
 		tls.WithClientAuthType(tls.Mutual),
-		tls.WithCACertPEM(ca),
+		tls.WithDynamicClientCA(tlsConfig.certificateProvider),
 		tls.WithServerCertificateProvider(tlsConfig.certificateProvider),
 	)
 }
@@ -131,7 +134,8 @@ func (tlsConfig *TLSConfig) ClientConfig() (*stdlibtls.Config, error) {
 type certificateProvider struct {
 	mu sync.Mutex
 
-	apiCerts               *secrets.API
+	ca                     []byte
+	caCertPool             *stdx509.CertPool
 	clientCert, serverCert *stdlibtls.Certificate
 }
 
@@ -139,17 +143,30 @@ func (p *certificateProvider) Update(apiCerts *secrets.API) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.apiCerts = apiCerts
-
-	serverCert, err := stdlibtls.X509KeyPair(p.apiCerts.TypedSpec().Server.Crt, p.apiCerts.TypedSpec().Server.Key)
+	serverCert, err := stdlibtls.X509KeyPair(apiCerts.TypedSpec().Server.Crt, apiCerts.TypedSpec().Server.Key)
 	if err != nil {
 		return fmt.Errorf("failed to parse server cert and key into a TLS Certificate: %w", err)
 	}
 
 	p.serverCert = &serverCert
 
-	if p.apiCerts.TypedSpec().Client != nil {
-		clientCert, err := stdlibtls.X509KeyPair(p.apiCerts.TypedSpec().Client.Crt, p.apiCerts.TypedSpec().Client.Key)
+	p.ca = bytes.Join(
+		xslices.Map(
+			apiCerts.TypedSpec().AcceptedCAs,
+			func(cert *x509.PEMEncodedCertificate) []byte {
+				return cert.Crt
+			},
+		),
+		nil,
+	)
+
+	p.caCertPool = stdx509.NewCertPool()
+	if !p.caCertPool.AppendCertsFromPEM(p.ca) {
+		return fmt.Errorf("failed to parse CA certs into a CertPool")
+	}
+
+	if apiCerts.TypedSpec().Client != nil {
+		clientCert, err := stdlibtls.X509KeyPair(apiCerts.TypedSpec().Client.Crt, apiCerts.TypedSpec().Client.Key)
 		if err != nil {
 			return fmt.Errorf("failed to parse client cert and key into a TLS Certificate: %w", err)
 		}
@@ -166,7 +183,14 @@ func (p *certificateProvider) GetCA() ([]byte, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	return p.apiCerts.TypedSpec().CA.Crt, nil
+	return p.ca, nil
+}
+
+func (p *certificateProvider) GetCACertPool() (*stdx509.CertPool, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	return p.caCertPool, nil
 }
 
 func (p *certificateProvider) GetCertificate(h *stdlibtls.ClientHelloInfo) (*stdlibtls.Certificate, error) {

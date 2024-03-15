@@ -102,7 +102,8 @@ type Extension interface {
 // Security defines the requirements for a config that pertains to security
 // related options.
 type Security interface {
-	CA() *x509.PEMEncodedCertificateAndKey
+	IssuingCA() *x509.PEMEncodedCertificateAndKey
+	AcceptedCAs() []*x509.PEMEncodedCertificate
 	Token() string
 	CertSANs() []string
 }

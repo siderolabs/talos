@@ -2283,6 +2283,19 @@
           "markdownDescription": "The root certificate authority of the PKI.\nIt is composed of a base64 encoded `crt` and `key`.",
           "x-intellij-html-description": "\u003cp\u003eThe root certificate authority of the PKI.\nIt is composed of a base64 encoded \u003ccode\u003ecrt\u003c/code\u003e and \u003ccode\u003ekey\u003c/code\u003e.\u003c/p\u003e\n"
         },
+        "acceptedCAs": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "acceptedCAs",
+          "description": "The certificates issued by certificate authorities are accepted in addition to issuing ‘ca’.\nIt is composed of a base64 encoded crt`.\n",
+          "markdownDescription": "The certificates issued by certificate authorities are accepted in addition to issuing 'ca'.\nIt is composed of a base64 encoded `crt``.",
+          "x-intellij-html-description": "\u003cp\u003eThe certificates issued by certificate authorities are accepted in addition to issuing \u0026lsquo;ca\u0026rsquo;.\nIt is composed of a base64 encoded \u003ccode\u003ecrt\u003c/code\u003e`.\u003c/p\u003e\n"
+        },
         "certSANs": {
           "items": {
             "type": "string"

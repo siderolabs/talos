@@ -103,6 +103,13 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The root certificate authority of the PKI." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "acceptedCAs",
+				Type:        "[]PEMEncodedCertificate",
+				Note:        "",
+				Description: "The certificates issued by certificate authorities are accepted in addition to issuing 'ca'.\nIt is composed of a base64 encoded `crt``.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The certificates issued by certificate authorities are accepted in addition to issuing 'ca'." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "certSANs",
 				Type:        "[]string",
 				Note:        "",
@@ -263,29 +270,29 @@ func (MachineConfig) Doc() *encoder.Doc {
 
 	doc.Fields[1].AddExample("example token", "328hom.uqjzh6jnn2eie9oi")
 	doc.Fields[2].AddExample("machine CA example", pemEncodedCertificateExample())
-	doc.Fields[3].AddExample("Uncomment this to enable SANs.", []string{"10.0.0.10", "172.16.0.10", "192.168.0.10"})
-	doc.Fields[4].AddExample("ControlPlane definition example.", machineControlplaneExample())
-	doc.Fields[5].AddExample("Kubelet definition example.", machineKubeletExample())
-	doc.Fields[6].AddExample("nginx static pod.", machinePodsExample())
-	doc.Fields[7].AddExample("Network definition example.", machineNetworkConfigExample())
-	doc.Fields[8].AddExample("MachineDisks list example.", machineDisksExample())
-	doc.Fields[9].AddExample("MachineInstall config usage example.", machineInstallExample())
-	doc.Fields[10].AddExample("MachineFiles usage example.", machineFilesExample())
-	doc.Fields[11].AddExample("Environment variables definition examples.", machineEnvExamples0())
-	doc.Fields[11].AddExample("", machineEnvExamples1())
-	doc.Fields[11].AddExample("", machineEnvExamples2())
-	doc.Fields[12].AddExample("Example configuration for cloudflare ntp server.", machineTimeExample())
-	doc.Fields[13].AddExample("MachineSysctls usage example.", machineSysctlsExample())
-	doc.Fields[14].AddExample("MachineSysfs usage example.", machineSysfsExample())
-	doc.Fields[15].AddExample("", machineConfigRegistriesExample())
-	doc.Fields[16].AddExample("", machineSystemDiskEncryptionExample())
-	doc.Fields[17].AddExample("", machineFeaturesExample())
-	doc.Fields[18].AddExample("", machineUdevExample())
-	doc.Fields[19].AddExample("", machineLoggingExample())
-	doc.Fields[20].AddExample("", machineKernelExample())
-	doc.Fields[21].AddExample("", machineSeccompExample())
-	doc.Fields[22].AddExample("node labels example.", map[string]string{"exampleLabel": "exampleLabelValue"})
-	doc.Fields[23].AddExample("node taints example.", map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"})
+	doc.Fields[4].AddExample("Uncomment this to enable SANs.", []string{"10.0.0.10", "172.16.0.10", "192.168.0.10"})
+	doc.Fields[5].AddExample("ControlPlane definition example.", machineControlplaneExample())
+	doc.Fields[6].AddExample("Kubelet definition example.", machineKubeletExample())
+	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
+	doc.Fields[8].AddExample("Network definition example.", machineNetworkConfigExample())
+	doc.Fields[9].AddExample("MachineDisks list example.", machineDisksExample())
+	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
+	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
+	doc.Fields[12].AddExample("Environment variables definition examples.", machineEnvExamples0())
+	doc.Fields[12].AddExample("", machineEnvExamples1())
+	doc.Fields[12].AddExample("", machineEnvExamples2())
+	doc.Fields[13].AddExample("Example configuration for cloudflare ntp server.", machineTimeExample())
+	doc.Fields[14].AddExample("MachineSysctls usage example.", machineSysctlsExample())
+	doc.Fields[15].AddExample("MachineSysfs usage example.", machineSysfsExample())
+	doc.Fields[16].AddExample("", machineConfigRegistriesExample())
+	doc.Fields[17].AddExample("", machineSystemDiskEncryptionExample())
+	doc.Fields[18].AddExample("", machineFeaturesExample())
+	doc.Fields[19].AddExample("", machineUdevExample())
+	doc.Fields[20].AddExample("", machineLoggingExample())
+	doc.Fields[21].AddExample("", machineKernelExample())
+	doc.Fields[22].AddExample("", machineSeccompExample())
+	doc.Fields[23].AddExample("node labels example.", map[string]string{"exampleLabel": "exampleLabelValue"})
+	doc.Fields[24].AddExample("node taints example.", map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"})
 
 	return doc
 }

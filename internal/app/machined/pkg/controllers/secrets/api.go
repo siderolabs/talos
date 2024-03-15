@@ -278,7 +278,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 }
 
 func (ctrl *APIController) generateControlPlane(ctx context.Context, r controller.Runtime, logger *zap.Logger, rootSpec *secrets.OSRootSpec, certSANs *secrets.CertSANSpec) error {
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(rootSpec.CA)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(rootSpec.IssuingCA)
 	if err != nil {
 		return fmt.Errorf("failed to parse CA certificate: %w", err)
 	}
@@ -314,9 +314,7 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 		func(r resource.Resource) error {
 			apiSecrets := r.(*secrets.API).TypedSpec()
 
-			apiSecrets.CA = &x509.PEMEncodedCertificateAndKey{
-				Crt: rootSpec.CA.Crt,
-			}
+			apiSecrets.AcceptedCAs = rootSpec.AcceptedCAs
 			apiSecrets.Server = x509.NewCertificateAndKeyFromKeyPair(serverCert)
 			apiSecrets.Client = x509.NewCertificateAndKeyFromKeyPair(clientCert)
 
@@ -339,7 +337,7 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runtime, logger *zap.Logger,
 	rootSpec *secrets.OSRootSpec, endpointsStr []string, certSANs *secrets.CertSANSpec,
 ) error {
-	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr, rootSpec.CA)
+	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr, rootSpec.IssuingCA)
 	if err != nil {
 		return fmt.Errorf("failed creating trustd client: %w", err)
 	}
@@ -393,8 +391,10 @@ func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runt
 		func(r resource.Resource) error {
 			apiSecrets := r.(*secrets.API).TypedSpec()
 
-			apiSecrets.CA = &x509.PEMEncodedCertificateAndKey{
-				Crt: ca,
+			apiSecrets.AcceptedCAs = []*x509.PEMEncodedCertificate{
+				{
+					Crt: ca,
+				},
 			}
 			apiSecrets.Server = serverCert
 

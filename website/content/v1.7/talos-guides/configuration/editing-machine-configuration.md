@@ -34,6 +34,8 @@ The list of config changes allowed to be applied immediately in Talos {{< releas
 * `.debug`
 * `.cluster`
 * `.machine.time`
+* `.machine.ca`
+* `.machine.acceptedCAs`
 * `.machine.certCANs`
 * `.machine.install` (configuration is only applied during install/upgrade)
 * `.machine.network`

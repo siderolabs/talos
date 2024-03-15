@@ -6,8 +6,10 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	stdlibtls "crypto/tls"
+	stdx509 "crypto/x509"
 	"fmt"
 	"log"
 	"sync"
@@ -15,6 +17,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/tls"
+	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
@@ -115,17 +119,32 @@ func (tlsConfig *TLSConfig) ServerConfig() (*stdlibtls.Config, error) {
 type certificateProvider struct {
 	mu sync.Mutex
 
-	trustdCerts *secrets.Trustd
-	serverCert  *stdlibtls.Certificate
+	ca         []byte
+	caCertPool *stdx509.CertPool
+
+	serverCert *stdlibtls.Certificate
 }
 
 func (p *certificateProvider) Update(trustdCerts *secrets.Trustd) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.trustdCerts = trustdCerts
+	p.ca = bytes.Join(
+		xslices.Map(
+			trustdCerts.TypedSpec().AcceptedCAs,
+			func(cert *x509.PEMEncodedCertificate) []byte {
+				return cert.Crt
+			},
+		),
+		nil,
+	)
 
-	serverCert, err := stdlibtls.X509KeyPair(p.trustdCerts.TypedSpec().Server.Crt, p.trustdCerts.TypedSpec().Server.Key)
+	p.caCertPool = stdx509.NewCertPool()
+	if !p.caCertPool.AppendCertsFromPEM(p.ca) {
+		return fmt.Errorf("failed to parse root CA")
+	}
+
+	serverCert, err := stdlibtls.X509KeyPair(trustdCerts.TypedSpec().Server.Crt, trustdCerts.TypedSpec().Server.Key)
 	if err != nil {
 		return fmt.Errorf("failed to parse server cert and key into a TLS Certificate: %w", err)
 	}
@@ -139,7 +158,14 @@ func (p *certificateProvider) GetCA() ([]byte, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	return p.trustdCerts.TypedSpec().CA.Crt, nil
+	return p.ca, nil
+}
+
+func (p *certificateProvider) GetCACertPool() (*stdx509.CertPool, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	return p.caCertPool, nil
 }
 
 func (p *certificateProvider) GetCertificate(h *stdlibtls.ClientHelloInfo) (*stdlibtls.Certificate, error) {

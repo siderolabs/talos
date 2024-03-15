@@ -6,6 +6,7 @@ package maintenance
 
 import (
 	stdlibtls "crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"sync/atomic"
 
@@ -48,6 +49,11 @@ func (provider *TLSProvider) Update(maintenanceCerts *secrets.MaintenanceService
 
 // GetCA implements tls.CertificateProvider interface.
 func (provider *TLSProvider) GetCA() ([]byte, error) {
+	return nil, nil
+}
+
+// GetCACertPool implements tls.CertificateProvider interface.
+func (provider *TLSProvider) GetCACertPool() (*x509.CertPool, error) {
 	return nil, nil
 }
 

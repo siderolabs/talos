@@ -115,6 +115,8 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	// the config changes allowed to be applied immediately are:
 	// * .debug
 	// * .cluster
+	// * .machine.ca
+	// * .machine.acceptedCAs
 	// * .machine.time
 	// * .machine.certCANs
 	// * .machine.install
@@ -137,6 +139,8 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	newConfig.ClusterConfig = currentConfig.ClusterConfig
 
 	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
+		newConfig.MachineConfig.MachineCA = currentConfig.MachineConfig.MachineCA
+		newConfig.MachineConfig.MachineAcceptedCAs = currentConfig.MachineConfig.MachineAcceptedCAs
 		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
 		newConfig.MachineConfig.MachineInstall = currentConfig.MachineConfig.MachineInstall

@@ -6,6 +6,7 @@ package backend
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"sync"
 	"time"
@@ -32,22 +33,23 @@ var _ proxy.Backend = (*APID)(nil)
 // Backend authenticates itself using given grpc credentials.
 type APID struct {
 	target string
-	creds  credentials.TransportCredentials
+
+	tlsConfigProvider func() (*tls.Config, error)
 
 	mu   sync.Mutex
 	conn *grpc.ClientConn
 }
 
 // NewAPID creates new instance of APID backend.
-func NewAPID(target string, creds credentials.TransportCredentials) (*APID, error) {
+func NewAPID(target string, tlsConfigProvider func() (*tls.Config, error)) (*APID, error) {
 	// perform very basic validation on target, trying to weed out empty addresses or addresses with the port appended
 	if target == "" || net.AddressContainsPort(target) {
 		return nil, fmt.Errorf("invalid target %q", target)
 	}
 
 	return &APID{
-		target: target,
-		creds:  creds,
+		target:            target,
+		tlsConfigProvider: tlsConfigProvider,
 	}, nil
 }
 
@@ -81,6 +83,11 @@ func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (contex
 		return outCtx, a.conn, nil
 	}
 
+	tlsConfig, err := a.tlsConfigProvider()
+	if err != nil {
+		return outCtx, nil, err
+	}
+
 	// override  max delay to avoid excessive backoff when the another node is unavailable (e.g. rebooted),
 	// and apid used as an endpoint considers another node to be down for longer than expected.
 	//
@@ -88,13 +95,12 @@ func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (contex
 	backoffConfig := backoff.DefaultConfig
 	backoffConfig.MaxDelay = 15 * time.Second
 
-	var err error
 	a.conn, err = grpc.DialContext(
 		ctx,
 		fmt.Sprintf("%s:%d", net.FormatAddress(a.target), constants.ApidPort),
 		grpc.WithInitialWindowSize(65535*32),
 		grpc.WithInitialConnWindowSize(65535*16),
-		grpc.WithTransportCredentials(a.creds),
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithConnectParams(grpc.ConnectParams{
 			Backoff: backoffConfig,
 			// not published as a constant in gRPC library

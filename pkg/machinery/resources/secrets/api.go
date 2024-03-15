@@ -27,9 +27,9 @@ type API = typed.Resource[APICertsSpec, APIExtension]
 //
 //gotagsrewrite:gen
 type APICertsSpec struct {
-	CA     *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"1"` // only cert is passed, without key
-	Client *x509.PEMEncodedCertificateAndKey `yaml:"client" protobuf:"2"`
-	Server *x509.PEMEncodedCertificateAndKey `yaml:"server" protobuf:"3"`
+	AcceptedCAs []*x509.PEMEncodedCertificate     `yaml:"acceptedCAs" protobuf:"4"`
+	Client      *x509.PEMEncodedCertificateAndKey `yaml:"client" protobuf:"2"`
+	Server      *x509.PEMEncodedCertificateAndKey `yaml:"server" protobuf:"3"`
 }
 
 // NewAPI initializes an API resource.
