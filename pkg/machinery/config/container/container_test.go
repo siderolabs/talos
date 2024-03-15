@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
@@ -76,6 +77,35 @@ func TestNewDuplicate(t *testing.T) {
 
 	_, err = container.New(siderolink1, siderolink2)
 	assert.EqualError(t, err, "duplicate document: SideroLinkConfig/")
+}
+
+func TestPatchV1Alpha1(t *testing.T) {
+	t.Parallel()
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "worker",
+		},
+	}
+
+	sideroLinkCfg := siderolink.NewConfigV1Alpha1()
+	sideroLinkCfg.APIUrlConfig.URL = must.Value(url.Parse("https://siderolink.api/?jointoken=secret&user=alice"))(t)
+
+	cfg, err := container.New(v1alpha1Cfg, sideroLinkCfg)
+	require.NoError(t, err)
+
+	patchedCfg, err := cfg.PatchV1Alpha1(func(cfg *v1alpha1.Config) error {
+		cfg.MachineConfig.MachineType = "controlplane"
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, machine.TypeWorker, cfg.Machine().Type())
+	assert.Equal(t, machine.TypeControlPlane, patchedCfg.Machine().Type())
+
+	assert.Equal(t, "https://siderolink.api/?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
+	assert.Equal(t, "https://siderolink.api/?jointoken=secret&user=alice", patchedCfg.SideroLink().APIUrl().String())
 }
 
 func TestValidate(t *testing.T) {

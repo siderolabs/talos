@@ -42,6 +42,9 @@ type Provider interface {
 	// Clone returns a copy of the Provider.
 	Clone() Provider
 
+	// PatchV1Alpha1 patches the container's v1alpha1.Config while preserving other config documents.
+	PatchV1Alpha1(patcher func(*v1alpha1.Config) error) (Provider, error)
+
 	// RedactSecrets returns a copy of the Provider with all secrets replaced with the given string.
 	RedactSecrets(string) Provider
 
