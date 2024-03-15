@@ -21,7 +21,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/backoff"
@@ -35,9 +34,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	configtypes "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -584,18 +581,11 @@ func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string
 
 // PatchV1Alpha1Config patches v1alpha1 config in the config provider.
 func (apiSuite *APISuite) PatchV1Alpha1Config(provider config.Provider, patch func(*v1alpha1.Config)) []byte {
-	cfg := provider.RawV1Alpha1()
-	apiSuite.Require().NotNil(cfg)
+	ctr, err := provider.PatchV1Alpha1(func(c *v1alpha1.Config) error {
+		patch(c)
 
-	patch(cfg)
-
-	otherDocs := xslices.Filter(provider.Documents(), func(doc configtypes.Document) bool {
-		_, ok := doc.(*v1alpha1.Config)
-
-		return !ok
+		return nil
 	})
-
-	ctr, err := container.New(append([]configtypes.Document{cfg}, otherDocs...)...)
 	apiSuite.Require().NoError(err)
 
 	bytes, err := ctr.Bytes()

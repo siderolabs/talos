@@ -25,7 +25,6 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -285,10 +284,9 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 	}
 
 	for _, keys := range keySets {
-		cfg.EncryptionKeys = keys
-
-		data, err := container.NewV1Alpha1(machineConfig).Bytes()
-		suite.Require().NoError(err)
+		data := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
+			cfg.MachineConfig.MachineSystemDiskEncryption.EphemeralPartition.EncryptionKeys = keys
+		})
 
 		suite.AssertRebooted(
 			suite.ctx, node, func(nodeCtx context.Context) error {

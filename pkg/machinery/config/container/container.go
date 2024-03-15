@@ -97,6 +97,28 @@ func (container *Container) Clone() coreconfig.Provider {
 	}
 }
 
+// PatchV1Alpha1 patches the container's v1alpha1.Config while preserving other config documents.
+func (container *Container) PatchV1Alpha1(patcher func(*v1alpha1.Config) error) (coreconfig.Provider, error) {
+	cfg := container.RawV1Alpha1()
+	if cfg == nil {
+		return nil, fmt.Errorf("v1alpha1.Config is not present in the container")
+	}
+
+	cfg = cfg.DeepCopy()
+
+	if err := patcher(cfg); err != nil {
+		return nil, err
+	}
+
+	otherDocs := xslices.Filter(container.Documents(), func(doc config.Document) bool {
+		_, ok := doc.(*v1alpha1.Config)
+
+		return !ok
+	})
+
+	return New(append([]config.Document{cfg}, otherDocs...)...)
+}
+
 // Readonly implements config.Container interface.
 func (container *Container) Readonly() bool {
 	return container.readonly

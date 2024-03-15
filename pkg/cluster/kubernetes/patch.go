@@ -6,14 +6,12 @@ package kubernetes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	v1alpha1config "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -33,16 +31,14 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}
 
-	cfg := mc.Container().RawV1Alpha1()
-	if cfg == nil {
-		return errors.New("config is not v1alpha1 config")
-	}
+	provider := mc.Provider()
 
-	if err = patchFunc(cfg); err != nil {
+	newProvider, err := provider.PatchV1Alpha1(patchFunc)
+	if err != nil {
 		return fmt.Errorf("error patching config: %w", err)
 	}
 
-	cfgBytes, err := container.NewV1Alpha1(cfg).EncodeBytes(encoderOpt)
+	cfgBytes, err := newProvider.EncodeBytes(encoderOpt)
 	if err != nil {
 		return fmt.Errorf("error serializing config: %w", err)
 	}
