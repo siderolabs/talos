@@ -33,12 +33,6 @@ Talos is built with Go 1.22.1.
 Talos Linux now supports `physical: true` qualifier for device selectors, it selects non-virtual network interfaces (i.e. `en0` is selected, while `bond0` is not).
 """
 
-    [notes.problems]
-        title = "Known Problems"
-        description = """\
-DRBD extension is disabled in this release due to incompatibility with the latest Linux kernel.
-"""
-
     [notes.dns-resolve-cache]
         title = "DNS Caching"
         description = """\
