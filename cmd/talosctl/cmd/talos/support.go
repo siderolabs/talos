@@ -5,7 +5,6 @@
 package talos
 
 import (
-	"archive/zip"
 	"bufio"
 	"context"
 	"errors"
@@ -13,18 +12,21 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"text/tabwriter"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/fatih/color"
 	"github.com/gosuri/uiprogress"
-	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/go-talos-support/support"
+	"github.com/siderolabs/go-talos-support/support/bundle"
+	"github.com/siderolabs/go-talos-support/support/collectors"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8s "k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clusterresource "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
@@ -71,26 +73,26 @@ var supportCmd = &cobra.Command{
 
 		defer f.Close() //nolint:errcheck
 
-		archive := &cluster.BundleArchive{
-			Archive: zip.NewWriter(f),
-		}
+		progress := make(chan bundle.Progress)
 
-		progress := make(chan cluster.BundleProgress)
-
-		var eg errgroup.Group
+		var (
+			eg     errgroup.Group
+			errors supportBundleErrors
+		)
 
 		eg.Go(func() error {
 			if supportCmdFlags.verbose {
-				for range progress { //nolint:revive
+				for p := range progress {
+					errors.handleProgress(p)
 				}
 			} else {
-				showProgress(progress)
+				showProgress(progress, &errors)
 			}
 
 			return nil
 		})
 
-		collectErr := collectData(archive, progress)
+		collectErr := collectData(f, progress)
 
 		close(progress)
 
@@ -98,81 +100,79 @@ var supportCmd = &cobra.Command{
 			return e
 		}
 
-		if collectErr != nil {
-			if err = printErrors(collectErr); err != nil {
-				return err
-			}
+		if err = errors.print(); err != nil {
+			return err
 		}
 
 		fmt.Fprintf(os.Stderr, "Support bundle is written to %s\n", supportCmdFlags.output)
 
-		if err = archive.Archive.Close(); err != nil {
-			return err
-		}
-
-		if collectErr != nil {
-			os.Exit(1)
-		}
-
-		return nil
+		return collectErr
 	},
 }
 
-func collectData(archive *cluster.BundleArchive, progress chan cluster.BundleProgress) error {
+func collectData(dest *os.File, progress chan bundle.Progress) error {
 	return WithClient(func(ctx context.Context, c *client.Client) error {
-		sources := append([]string{}, GlobalArgs.Nodes...)
-		sources = append(sources, "cluster")
-
-		var (
-			errsMu sync.Mutex
-			errs   error
-		)
-
-		var eg errgroup.Group
-
-		for _, source := range sources {
-			opts := &cluster.BundleOptions{
-				Archive:    archive,
-				NumWorkers: supportCmdFlags.numWorkers,
-				Progress:   progress,
-				Source:     source,
-				Client:     c,
-			}
-
-			if !supportCmdFlags.verbose {
-				opts.LogOutput = io.Discard
-			}
-
-			source := source
-
-			eg.Go(func() error {
-				var err error
-
-				if source == "cluster" {
-					err = cluster.GetKubernetesSupportBundle(ctx, opts)
-				} else {
-					err = cluster.GetNodeSupportBundle(client.WithNodes(ctx, source), opts)
-				}
-
-				if err == nil {
-					return nil
-				}
-
-				errsMu.Lock()
-				defer errsMu.Unlock()
-
-				errs = multierror.Append(errs, err)
-
-				return err
-			})
+		clientset, err := getKubernetesClient(ctx, c)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create kubernetes client %s\n", err)
 		}
 
-		// errors are gathered separately as eg.Wait returns only a single error
-		// while we want to gather all of them
-		eg.Wait() //nolint:errcheck
+		opts := []bundle.Option{
+			bundle.WithArchiveOutput(dest),
+			bundle.WithKubernetesClient(clientset),
+			bundle.WithTalosClient(c),
+			bundle.WithNodes(GlobalArgs.Nodes...),
+			bundle.WithNumWorkers(supportCmdFlags.numWorkers),
+			bundle.WithProgressChan(progress),
+		}
 
-		return errs
+		if !supportCmdFlags.verbose {
+			opts = append(opts, bundle.WithLogOutput(io.Discard))
+		}
+
+		options := bundle.NewOptions(opts...)
+
+		collectors, err := collectors.GetForOptions(ctx, options)
+		if err != nil {
+			return err
+		}
+
+		return support.CreateSupportBundle(ctx, options, collectors...)
 	})
+}
+
+func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset, error) {
+	if len(GlobalArgs.Endpoints) == 0 {
+		fmt.Fprintln(os.Stderr, "No endpoints set for the cluster, the command might not be able to get kubeconfig")
+	}
+
+	kubeconfig, err := c.Kubeconfig(client.WithNodes(ctx, GlobalArgs.Endpoints...))
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := clientcmd.NewClientConfigFromBytes(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	restconfig, err := config.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := k8s.NewForConfig(restconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// just checking that k8s responds
+	_, err = clientset.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
 }
 
 func getDiscoveryConfig() (*clusterresource.Config, error) {
@@ -221,27 +221,41 @@ func openArchive() (*os.File, error) {
 		}
 
 		if strings.TrimSpace(strings.ToLower(choice)) != "y" {
-			return nil, nil
+			return nil, fmt.Errorf("operation aborted")
 		}
 	}
 
 	return os.OpenFile(supportCmdFlags.output, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
 }
 
-func printErrors(err error) error {
-	w := tabwriter.NewWriter(os.Stderr, 0, 0, 3, ' ', 0)
+type supportBundleError struct {
+	source string
+	value  string
+}
 
-	wroteHeader := false
+type supportBundleErrors struct {
+	errors []supportBundleError
+}
 
-	var errs *multierror.Error
+func (sbe *supportBundleErrors) handleProgress(p bundle.Progress) {
+	if p.Error != nil {
+		sbe.errors = append(sbe.errors, supportBundleError{
+			source: p.Source,
+			value:  p.Error.Error(),
+		})
+	}
+}
 
-	if !errors.As(err, &errs) {
-		fmt.Fprintf(os.Stderr, "Processed with errors:\n%s\n", color.RedString(err.Error()))
-
+func (sbe *supportBundleErrors) print() error {
+	if sbe.errors == nil {
 		return nil
 	}
 
-	for _, err := range errs.Errors {
+	var wroteHeader bool
+
+	w := tabwriter.NewWriter(os.Stderr, 0, 0, 3, ' ', 0)
+
+	for _, err := range sbe.errors {
 		if !wroteHeader {
 			wroteHeader = true
 
@@ -249,21 +263,12 @@ func printErrors(err error) error {
 			fmt.Fprintln(w, "\tSOURCE\tERROR")
 		}
 
-		var (
-			bundleErr *cluster.BundleError
-			source    string
-		)
-
-		if errors.As(err, &bundleErr) {
-			source = bundleErr.Source
-		}
-
-		details := strings.Split(err.Error(), "\n")
+		details := strings.Split(err.value, "\n")
 		for i, d := range details {
 			details[i] = strings.TrimSpace(d)
 		}
 
-		fmt.Fprintf(w, "\t%s\t%s\n", source, color.RedString(details[0]))
+		fmt.Fprintf(w, "\t%s\t%s\n", err.source, color.RedString(details[0]))
 
 		if len(details) > 1 {
 			for _, line := range details[1:] {
@@ -275,7 +280,7 @@ func printErrors(err error) error {
 	return w.Flush()
 }
 
-func showProgress(progress <-chan cluster.BundleProgress) {
+func showProgress(progress <-chan bundle.Progress, errors *supportBundleErrors) {
 	uiprogress.Start()
 
 	type nodeProgress struct {
@@ -286,6 +291,8 @@ func showProgress(progress <-chan cluster.BundleProgress) {
 	nodes := map[string]*nodeProgress{}
 
 	for p := range progress {
+		errors.handleProgress(p)
+
 		var (
 			np *nodeProgress
 			ok bool

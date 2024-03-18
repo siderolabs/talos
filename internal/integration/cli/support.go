@@ -55,15 +55,15 @@ func (suite *SupportSuite) TestSupport() {
 
 	for _, name := range []string{
 		"dmesg.log",
+		"service-logs/apid.log",
+		"service-logs/apid.state",
+		"service-logs/machined.log",
+		"service-logs/machined.state",
+		"service-logs/kubelet.log",
+		"service-logs/kubelet.state",
+		"resources/kernelparamstatuses.runtime.talos.dev.yaml",
+		"kubernetes-logs/kube-system/kube-apiserver.log",
 		"controller-runtime.log",
-		"apid.log",
-		"apid.state",
-		"machined.log",
-		"machined.state",
-		"kubelet.log",
-		"kubelet.state",
-		"talosResources/kernelparamstatuses.runtime.talos.dev.yaml",
-		"kube-system/kube-apiserver.log",
 		"mounts",
 		"processes",
 		"io",
@@ -74,8 +74,8 @@ func (suite *SupportSuite) TestSupport() {
 	}
 
 	for _, name := range []string{
-		"cluster/kubernetesResources/nodes.yaml",
-		"cluster/kubernetesResources/systemPods.yaml",
+		"kubernetesResources/nodes.yaml",
+		"kubernetesResources/systemPods.yaml",
 	} {
 		suite.Require().Contains(files, name, "File %s doesn't exist in the support bundle", name)
 	}
