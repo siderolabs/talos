@@ -47,16 +47,20 @@ var (
 	once     sync.Once
 )
 
+func newServices(runtime runtime.Runtime) *singleton {
+	return &singleton{
+		runtime: runtime,
+		state:   map[string]*ServiceRunner{},
+		running: map[string]struct{}{},
+	}
+}
+
 // Services returns the instance of the system services API.
 //
 //nolint:revive,golint
 func Services(runtime runtime.Runtime) *singleton {
 	once.Do(func() {
-		instance = &singleton{
-			runtime: runtime,
-			state:   map[string]*ServiceRunner{},
-			running: map[string]struct{}{},
-		}
+		instance = newServices(runtime)
 	})
 
 	return instance
@@ -84,7 +88,7 @@ func (s *singleton) Load(services ...Service) []string {
 			continue
 		}
 
-		svcrunner := NewServiceRunner(service, s.runtime)
+		svcrunner := NewServiceRunner(s, service, s.runtime)
 		s.state[id] = svcrunner
 	}
 
@@ -162,6 +166,8 @@ func (s *singleton) Start(serviceIDs ...string) error {
 			continue
 		}
 
+		runNotify := make(chan struct{})
+
 		s.wg.Add(1)
 
 		go func(id string, svcrunner *ServiceRunner) {
@@ -173,7 +179,7 @@ func (s *singleton) Start(serviceIDs ...string) error {
 				}()
 				defer s.wg.Done()
 
-				return svcrunner.Run()
+				return svcrunner.Run(runNotify)
 			}()
 
 			switch {
@@ -190,6 +196,9 @@ func (s *singleton) Start(serviceIDs ...string) error {
 				svcrunner.UpdateState(context.Background(), events.StateFailed, msg)
 			}
 		}(id, svcrunner)
+
+		// wait for svcrunner.Run to enter the running phase, and then return
+		<-runNotify
 	}
 
 	return multiErr.ErrorOrNil()
@@ -347,12 +356,12 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 	for name, svcrunner := range servicesToStop {
 		shutdownWg.Add(1)
 
-		stoppedConds = append(stoppedConds, WaitForService(StateEventDown, name))
+		stoppedConds = append(stoppedConds, waitForService(s, StateEventDown, name))
 
 		go func(svcrunner *ServiceRunner, reverseDeps []string) {
 			defer shutdownWg.Done()
 
-			conds := xslices.Map(reverseDeps, func(dep string) conditions.Condition { return WaitForService(StateEventDown, dep) })
+			conds := xslices.Map(reverseDeps, func(dep string) conditions.Condition { return waitForService(s, StateEventDown, dep) })
 			allDeps := conditions.WaitForAll(conds...)
 
 			if err := allDeps.Wait(shutdownCtx); err != nil {

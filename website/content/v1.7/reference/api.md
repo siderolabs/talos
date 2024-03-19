@@ -7714,6 +7714,7 @@ File type.
 | FINISHED | 5 |  |
 | FAILED | 6 |  |
 | SKIPPED | 7 |  |
+| STARTING | 8 |  |
 
 
 
