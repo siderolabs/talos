@@ -33,9 +33,10 @@ var WaitConditionCheckInterval = time.Second
 type ServiceRunner struct {
 	mu sync.Mutex
 
-	runtime runtime.Runtime
-	service Service
-	id      string
+	runtime  runtime.Runtime
+	service  Service
+	id       string
+	instance *singleton
 
 	state  events.ServiceState
 	events events.ServiceEvents
@@ -44,23 +45,19 @@ type ServiceRunner struct {
 
 	stateSubscribers map[StateEvent][]chan<- struct{}
 
-	ctxMu     sync.Mutex
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
+	stopCh chan struct{}
 }
 
 // NewServiceRunner creates new ServiceRunner around Service instance.
-func NewServiceRunner(service Service, runtime runtime.Runtime) *ServiceRunner {
-	ctx, ctxCancel := context.WithCancel(context.Background())
-
+func NewServiceRunner(instance *singleton, service Service, runtime runtime.Runtime) *ServiceRunner {
 	return &ServiceRunner{
 		service:          service,
+		instance:         instance,
 		runtime:          runtime,
 		id:               service.ID(runtime),
 		state:            events.StateInitialized,
 		stateSubscribers: make(map[StateEvent][]chan<- struct{}),
-		ctx:              ctx,
-		ctxCancel:        ctxCancel,
+		stopCh:           make(chan struct{}, 1),
 	}
 }
 
@@ -192,23 +189,32 @@ var ErrSkip = errors.New("service skipped")
 // Run returns an error when a service stops.
 //
 // Run should be run in a goroutine.
-func (svcrunner *ServiceRunner) Run() error {
-	defer func() {
-		// reset context for the next run
-		svcrunner.ctxMu.Lock()
-		svcrunner.ctx, svcrunner.ctxCancel = context.WithCancel(context.Background())
-		svcrunner.ctxMu.Unlock()
+//
+//nolint:gocyclo
+func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			return
+		case <-svcrunner.stopCh:
+			cancel()
+		}
 	}()
 
-	svcrunner.ctxMu.Lock()
-	ctx := svcrunner.ctx
-	svcrunner.ctxMu.Unlock()
+	svcrunner.UpdateState(ctx, events.StateStarting, "Starting service")
+
+	for _, notifyCh := range notifyChannels {
+		close(notifyCh)
+	}
 
 	condition := svcrunner.service.Condition(svcrunner.runtime)
 
 	dependencies := svcrunner.service.DependsOn(svcrunner.runtime)
 	if len(dependencies) > 0 {
-		serviceConditions := xslices.Map(dependencies, func(dep string) conditions.Condition { return WaitForService(StateEventUp, dep) })
+		serviceConditions := xslices.Map(dependencies, func(dep string) conditions.Condition { return waitForService(instance, StateEventUp, dep) })
 		serviceDependencies := conditions.WaitForAll(serviceConditions...)
 
 		if condition != nil {
@@ -318,10 +324,6 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		}()
 	}
 
-	// when service run finishes, cancel context, this is important if service
-	// terminates on its own before being terminated by Stop()
-	defer svcrunner.ctxCancel()
-
 	select {
 	case <-ctx.Done():
 		err := runnr.Stop()
@@ -344,9 +346,10 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 //
 // Shutdown completes when Start() returns.
 func (svcrunner *ServiceRunner) Shutdown() {
-	svcrunner.ctxMu.Lock()
-	defer svcrunner.ctxMu.Unlock()
-	svcrunner.ctxCancel()
+	select {
+	case svcrunner.stopCh <- struct{}{}:
+	default:
+	}
 }
 
 // AsProto returns protobuf struct with the state of the service runner.

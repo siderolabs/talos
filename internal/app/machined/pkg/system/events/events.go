@@ -30,12 +30,15 @@ const (
 	StateFinished
 	StateFailed
 	StateSkipped
+	StateStarting
 )
 
 func (state ServiceState) String() string {
 	switch state {
 	case StateInitialized:
 		return "Initialized"
+	case StateStarting:
+		return "Starting"
 	case StatePreparing:
 		return "Preparing"
 	case StateWaiting:

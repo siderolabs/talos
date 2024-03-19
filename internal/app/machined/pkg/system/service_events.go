@@ -26,15 +26,16 @@ const (
 type serviceCondition struct {
 	mu              sync.Mutex
 	waitingRegister bool
+	instance        *singleton
 
 	event   StateEvent
 	service string
 }
 
 func (sc *serviceCondition) Wait(ctx context.Context) error {
-	instance.mu.Lock()
-	svcrunner := instance.state[sc.service]
-	instance.mu.Unlock()
+	sc.instance.mu.Lock()
+	svcrunner := sc.instance.state[sc.service]
+	sc.instance.mu.Unlock()
 
 	if svcrunner == nil {
 		return sc.waitRegister(ctx)
@@ -68,9 +69,9 @@ func (sc *serviceCondition) waitRegister(ctx context.Context) error {
 	var svcrunner *ServiceRunner
 
 	for {
-		instance.mu.Lock()
-		svcrunner = instance.state[sc.service]
-		instance.mu.Unlock()
+		sc.instance.mu.Lock()
+		svcrunner = sc.instance.state[sc.service]
+		sc.instance.mu.Unlock()
 
 		if svcrunner != nil {
 			break
@@ -103,8 +104,13 @@ func (sc *serviceCondition) String() string {
 
 // WaitForService waits for service to reach some state event.
 func WaitForService(event StateEvent, service string) conditions.Condition {
+	return waitForService(instance, event, service)
+}
+
+func waitForService(instance *singleton, event StateEvent, service string) conditions.Condition {
 	return &serviceCondition{
-		event:   event,
-		service: service,
+		instance: instance,
+		event:    event,
+		service:  service,
 	}
 }

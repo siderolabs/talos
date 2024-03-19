@@ -32,7 +32,7 @@ func (suite *ServiceRunnerSuite) assertStateSequence(expectedStates []events.Ser
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlow() {
-	sr := system.NewServiceRunner(&MockService{
+	sr := system.NewServiceRunner(system.Services(nil), &MockService{
 		condition: conditions.None(),
 	}, nil)
 
@@ -62,6 +62,7 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
@@ -72,11 +73,11 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 	suite.Assert().Equal("MockRunner", protoService.Id)
 	suite.Assert().Equal("Running", protoService.State)
 	suite.Assert().True(protoService.Health.Unknown)
-	suite.Assert().Len(protoService.Events.Events, 4)
+	suite.Assert().Len(protoService.Events.Events, 5)
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
-	sr := system.NewServiceRunner(&MockHealthcheckedService{}, nil)
+	sr := system.NewServiceRunner(system.Services(nil), &MockHealthcheckedService{}, nil)
 
 	errCh := make(chan error)
 
@@ -104,6 +105,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
@@ -117,7 +119,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 			condition: conditions.None(),
 		},
 	}
-	sr := system.NewServiceRunner(&m, nil)
+	sr := system.NewServiceRunner(system.Services(nil), &m, nil)
 
 	errCh := make(chan error)
 
@@ -161,6 +163,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
@@ -181,7 +184,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 
 	cond1 := NewMockCondition("cond1")
 	cond2 := NewMockCondition("cond2")
-	sr := system.NewServiceRunner(&MockService{
+	sr := system.NewServiceRunner(system.Services(nil), &MockService{
 		condition: conditions.WaitForAll(cond1, cond2),
 	}, nil)
 
@@ -240,6 +243,7 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StateWaiting,
 		events.StateWaiting,
 		events.StatePreparing,
@@ -248,18 +252,19 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 	}, sr)
 
 	events := sr.GetEventHistory(10000)
-	suite.Assert().Equal("Waiting for cond1, cond2", events[0].Message)
-	suite.Assert().Equal("Waiting for cond2", events[1].Message)
+	suite.Assert().Equal("Waiting for cond1, cond2", events[1].Message)
+	suite.Assert().Equal("Waiting for cond2", events[2].Message)
 }
 
 func (suite *ServiceRunnerSuite) TestPreStageFail() {
 	svc := &MockService{
 		preError: errors.New("pre failed"),
 	}
-	sr := system.NewServiceRunner(svc, nil)
+	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
 	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StatePreparing,
 	}, sr)
 	suite.Assert().EqualError(err, "failed to run pre stage: pre failed")
@@ -269,10 +274,11 @@ func (suite *ServiceRunnerSuite) TestRunnerStageFail() {
 	svc := &MockService{
 		runnerError: errors.New("runner failed"),
 	}
-	sr := system.NewServiceRunner(svc, nil)
+	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
 	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StatePreparing,
 		events.StatePreparing,
 	}, sr)
@@ -283,10 +289,11 @@ func (suite *ServiceRunnerSuite) TestRunnerStageSkipped() {
 	svc := &MockService{
 		nilRunner: true,
 	}
-	sr := system.NewServiceRunner(svc, nil)
+	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
 	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StatePreparing,
 		events.StatePreparing,
 	}, sr)
@@ -297,7 +304,7 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 	svc := &MockService{
 		condition: conditions.WaitForFileToExist("/doesntexistever"),
 	}
-	sr := system.NewServiceRunner(svc, nil)
+	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
 
 	errCh := make(chan error)
 
@@ -325,6 +332,7 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 	suite.Assert().EqualError(<-errCh, "condition failed: context canceled")
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StateWaiting,
 	}, sr)
 }
@@ -334,19 +342,23 @@ func (suite *ServiceRunnerSuite) TestPostStateFail() {
 		condition: conditions.None(),
 		postError: errors.New("post failed"),
 	}
-	sr := system.NewServiceRunner(svc, nil)
+	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
 
 	errCh := make(chan error)
+	runNotify := make(chan struct{})
 
 	go func() {
-		errCh <- sr.Run()
+		errCh <- sr.Run(runNotify)
 	}()
+
+	<-runNotify
 
 	sr.Shutdown()
 
 	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
@@ -358,7 +370,7 @@ func (suite *ServiceRunnerSuite) TestPostStateFail() {
 func (suite *ServiceRunnerSuite) TestRunFail() {
 	runner := &MockRunner{exitCh: make(chan error)}
 	svc := &MockService{runner: runner}
-	sr := system.NewServiceRunner(svc, nil)
+	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
 
 	errCh := make(chan error)
 
@@ -371,6 +383,7 @@ func (suite *ServiceRunnerSuite) TestRunFail() {
 	suite.Assert().EqualError(<-errCh, "failed running service: error running service: run failed")
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
@@ -378,7 +391,7 @@ func (suite *ServiceRunnerSuite) TestRunFail() {
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
-	sr := system.NewServiceRunner(&MockService{
+	sr := system.NewServiceRunner(system.Services(nil), &MockService{
 		condition: conditions.None(),
 	}, nil)
 
@@ -407,9 +420,13 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 
 	suite.Assert().NoError(<-errCh)
 
+	notifyCh := make(chan struct{})
+
 	go func() {
-		errCh <- sr.Run()
+		errCh <- sr.Run(notifyCh)
 	}()
+
+	<-notifyCh
 
 	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		state := sr.AsProto().State
@@ -431,10 +448,12 @@ func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
 	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
+		events.StateStarting,
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
 		events.StateRunning,
+		events.StateStarting,
 		events.StateWaiting,
 		events.StatePreparing,
 		events.StatePreparing,
