@@ -9,7 +9,7 @@ aliases:
 
 In order to create a key pair, you will need the root CA.
 
-Save the the CA public key, and CA private key as `ca.crt`, and `ca.key` respectively.
+Save the CA public key, and CA private key as `ca.crt`, and `ca.key` respectively.
 Now, run the following commands to generate a certificate:
 
 ```bash
@@ -33,7 +33,7 @@ In order to renew the certificate, you will need the root CA, and the admin priv
 The base64 encoded key can be found in any one of the control plane node's configuration file.
 Where it is exactly will depend on the specific version of the configuration file you are using.
 
-Save the the CA public key, CA private key, and admin private key as `ca.crt`, `ca.key`, and `admin.key` respectively.
+Save the CA public key, CA private key, and admin private key as `ca.crt`, `ca.key`, and `admin.key` respectively.
 Now, run the following commands to generate a certificate:
 
 ```bash

@@ -34,7 +34,7 @@ talosctl gen config --with-secrets secrets.yaml --output-types talosconfig -o ta
 
 In order to create a new key pair for client configuration, you will need the root Talos API CA.
 The base64 encoded CA can be found in the control plane node's configuration file.
-Save the the CA public key, and CA private key as `ca.crt`, and `ca.key` respectively:
+Save the CA public key, and CA private key as `ca.crt`, and `ca.key` respectively:
 
 ```shell
 yq eval .machine.ca.crt controlplane.yaml | base64 -d > ca.crt
