@@ -1,8 +1,6 @@
 ---
-title: "Pine64 Rock64"
-description: "Installing Talos on Pine64 Rock64 SBC using raw disk image."
-aliases:
-  - ../../../single-board-computers/rock64
+title: "Radxa ROCK 4C Plus"
+description: "Installing Talos on Radxa ROCK 4c Plus SBC using raw disk image."
 ---
 
 ## Prerequisites
@@ -10,7 +8,7 @@ aliases:
 You will need
 
 - `talosctl`
-- an SD card
+- an SD card or an eMMC or USB drive or an nVME drive
 
 Download the latest `talosctl`.
 
@@ -21,19 +19,19 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image
 
-The default schematic id for "vanilla" Pine64 Rock64 is `a9dd1a551aa4098ff3e67916055cd5aec1f918d02faf2502d069bab84b2319de`.
+The default schematic id for "vanilla" Rock 4c Plus is `2c086d74bbf7cc99cdac752a40990d4854f1202ac642d3c8e5171ddd22184b68`.
 Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://factory.talos.dev/image/a9dd1a551aa4098ff3e67916055cd5aec1f918d02faf2502d069bab84b2319de/{{< release >}}/metal-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/2c086d74bbf7cc99cdac752a40990d4854f1202ac642d3c8e5171ddd22184b68/{{< release >}}/metal-arm64.raw.xz
 xz -d metal-arm64.raw.xz
 ```
 
 ## Writing the Image
 
-The path to your SD card can be found using `fdisk` on Linux or `diskutil` on macOS.
+The path to your SD card/eMMC/USB/nVME can be found using `fdisk` on Linux or `diskutil` on macOS.
 In this example, we will assume `/dev/mmcblk0`.
 
 Now `dd` the image to your SD card:
@@ -42,9 +40,17 @@ Now `dd` the image to your SD card:
 sudo dd if=metal-arm64.raw of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
+The user has two options to proceed:
+
+- booting from a SD card or eMMC
+
+### Booting from SD card or eMMC
+
+Insert the SD card into the board, turn it on and proceed to [bootstrapping the node](#bootstrapping-the-node).
+
 ## Bootstrapping the Node
 
-Insert the SD card to your board, turn it on and wait for the console to show you the instructions for bootstrapping the node.
+Wait for the console to show you the instructions for bootstrapping the node.
 Following the instructions in the console output to connect to the interactive installer:
 
 ```bash
@@ -66,5 +72,5 @@ talosctl kubeconfig
 For example, to upgrade to the latest version of Talos, you can run:
 
 ```bash
-talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/a9dd1a551aa4098ff3e67916055cd5aec1f918d02faf2502d069bab84b2319de:{{< release >}}
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/2c086d74bbf7cc99cdac752a40990d4854f1202ac642d3c8e5171ddd22184b68:{{< release >}}
 ```

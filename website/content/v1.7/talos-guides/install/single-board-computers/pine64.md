@@ -1,7 +1,7 @@
 ---
 title: "Pine64"
 description: "Installing Talos on a Pine64 SBC using raw disk image."
-aliases: 
+aliases:
   - ../../../single-board-computers/pine64
 ---
 
@@ -21,11 +21,14 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image
 
+The default schematic id for "vanilla" Pine64 is `94cd4c4e285dc07059868f089f87c2437e1ed2746cc8d0fcbc0abbaf2b9a6729`.
+Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-pine64-arm64.raw.xz
-xz -d metal-pine64-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/94cd4c4e285dc07059868f089f87c2437e1ed2746cc8d0fcbc0abbaf2b9a6729/{{< release >}}/metal-arm64.raw.xz
+xz -d metal-arm64.raw.xz
 ```
 
 ## Writing the Image
@@ -36,7 +39,7 @@ In this example, we will assume `/dev/mmcblk0`.
 Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-pine64-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
+sudo dd if=metal-arm64.raw of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
 ## Bootstrapping the Node
@@ -56,4 +59,12 @@ Retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl kubeconfig
+```
+
+## Upgrading
+
+For example, to upgrade to the latest version of Talos, you can run:
+
+```bash
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/94cd4c4e285dc07059868f089f87c2437e1ed2746cc8d0fcbc0abbaf2b9a6729:{{< release >}}
 ```

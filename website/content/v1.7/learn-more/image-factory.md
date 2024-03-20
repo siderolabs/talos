@@ -48,6 +48,11 @@ customization:
     officialExtensions: # optional
       - siderolabs/gvisor
       - siderolabs/amd-ucode
+overlay: # optional
+  name: rpi_generic
+  image: siderolabs/sbc-raspberry-pi
+  options: # optional, any valid yaml, depends on the overlay implementation
+    data: "mydata"
 ```
 
 The "vanilla" schematic is:

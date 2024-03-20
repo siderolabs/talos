@@ -48,7 +48,7 @@ Next we will extract the L4T release and replace the `u-boot` binary with the pa
 ```bash
 tar xf jetson-210_linux_r32.6.1_aarch64.tbz2
 cd Linux_for_Tegra
-crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.3.0-alpha.0-25-g0ac7773 - | tar xf - --strip-components=1 -C bootloader/t210ref/p3450-0000/ jetson_nano/u-boot.bin
+crane --platform=linux/arm64 export ghcr.io/siderolabs/sbc-jetson:v0.1.0 - | tar xf - --strip-components=4 -C bootloader/t210ref/p3450-0000/ artifacts/arm64/u-boot/jetson_nano/u-boot.bin
 ```
 
 Next we will flash the firmware to the Jetson Nano SPI flash.
@@ -82,11 +82,14 @@ Once the flashing is done you can disconnect the USB cable and power off the Jet
 
 ## Download the Image
 
+The default schematic id for "vanilla" Jetson Nano is `ef65b643766cc94c7eda6c42cb8fe009086d2b7b8066fd971950f4ef21708b5d`.
+Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-jetson_nano-arm64.raw.xz
-xz -d metal-jetson_nano-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/ef65b643766cc94c7eda6c42cb8fe009086d2b7b8066fd971950f4ef21708b5d/{{< release >}}/metal-arm64.raw.xz
+xz -d metal-arm64.raw.xz
 ```
 
 ## Writing the Image
@@ -94,7 +97,7 @@ xz -d metal-jetson_nano-arm64.raw.xz
 Now `dd` the image to your SD card/USB storage:
 
 ```bash
-sudo dd if=metal-jetson_nano-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M status=progress
+sudo dd if=metal-arm64.raw of=/dev/mmcblk0 conv=fsync bs=4M status=progress
 ```
 
 | Replace `/dev/mmcblk0` with the name of your SD card/USB storage.
@@ -116,4 +119,12 @@ Retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl kubeconfig
+```
+
+## Upgrading
+
+For example, to upgrade to the latest version of Talos, you can run:
+
+```bash
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/ef65b643766cc94c7eda6c42cb8fe009086d2b7b8066fd971950f4ef21708b5d:{{< release >}}
 ```

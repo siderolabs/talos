@@ -10,19 +10,23 @@ can be customized further for a specific use case:
 * updating [kernel command line arguments]({{< relref "../../reference/kernel" >}})
 * using custom `META` contents, e.g. for [metal network configuration]({{< relref "../../advanced/metal-network-configuration" >}})
 * generating [SecureBoot]({{< relref "../install/bare-metal-platforms/secureboot" >}}) images signed with a custom key
+* generating disk images for SBC's (Single Board Computers)
 
 There are two ways to generate Talos boot assets:
 
 * using [Image Factory]({{< relref "#image-factory" >}}) service (recommended)
 * manually using [imager]({{< relref "#imager" >}}) container image (advanced)
 
-Image Factory is easier to use, but it only produces images for official Talos Linux releases and official Talos Linux system extensions.
+Image Factory is easier to use, but it only produces images for official Talos Linux releases, official Talos Linux system extensions
+and official Talos Overlays.
+
 The `imager` container can be used to generate images from `main` branch, with local changes, or with custom system extensions.
 
 ## Image Factory
 
 [Image Factory]({{< relref "../../learn-more/image-factory" >}}) is a service that generates Talos boot assets on-demand.
-Image Factory allows to generate boot assets for the official Talos Linux releases and official Talos Linux system extensions.
+Image Factory allows to generate boot assets for the official Talos Linux releases, official Talos Linux system extensions
+and official Talos Overlays.
 
 The main concept of the Image Factory is a *schematic* which defines the customization of the boot asset.
 Once the schematic is configured, Image Factory can be used to pull various Talos Linux images, ISOs, installer images, PXE booting bare-metal machines across different architectures,
@@ -83,6 +87,54 @@ Once installed, the machine can be upgraded to a new version of Talos by referen
 
 ```shell
 talosctl upgrade --image factory.talos.dev/installer/b8e8fbbe1b520989e6c52c8dc8303070cb42095997e76e812fa8892393e1d176:<new_version>
+```
+
+Same way upgrade process can be used to transition to a new set of system extensions: generate new schematic with the new set of system extensions, and upgrade the machine to the new schematic ID:
+
+```shell
+talosctl upgrade --image factory.talos.dev/installer/<new_schematic_id>:{{< release >}}
+```
+
+### Example: Raspberry Pi generic with Image Factory
+
+Let's assume we want to boot Talos on a Raspberry Pi with `iscsi-tools` system extension.
+
+First, let's create the schematic file `rpi_generic.yaml`:
+
+```yaml
+# rpi_generic.yaml
+overlay:
+  name: rpi_generic
+  image: siderolabs/sbc-raspberrypi
+customization:
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/iscsi-tools
+```
+
+> The schematic doesn't contain any system extension or overlay versions, Image Factory will pick the correct version matching Talos Linux release.
+
+And now we can upload the schematic to the Image Factory to retrieve its ID:
+
+```shell
+$ curl -X POST --data-binary @rpi_generic.yaml https://factory.talos.dev/schematics
+{"id":"0db665edfda21c70194e7ca660955425d16cec2aa58ff031e2abf72b7c328585"}
+```
+
+The returned schematic ID `0db665edfda21c70194e7ca660955425d16cec2aa58ff031e2abf72b7c328585` we will use to generate the boot assets.
+
+> The schematic ID is based on the schematic contents, so uploading the same schematic will return the same ID.
+
+Now we can download the metal arm64 image:
+
+* https://factory.talos.dev/image/0db665edfda21c70194e7ca660955425d16cec2aa58ff031e2abf72b7c328585/{{< release >}}/metal-arm64.raw.xz (download it and burn to a boot media)
+
+> The Image Factory URL contains both schematic ID and Talos version, and both can be changed to generate different boot assets.
+
+Once installed, the machine can be upgraded to a new version of Talos by referencing new installer image:
+
+```shell
+talosctl upgrade --image factory.talos.dev/installer/0db665edfda21c70194e7ca660955425d16cec2aa58ff031e2abf72b7c328585:<new_version>
 ```
 
 Same way upgrade process can be used to transition to a new set of system extensions: generate new schematic with the new set of system extensions, and upgrade the machine to the new schematic ID:
@@ -186,6 +238,22 @@ crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-dige
 
 For each Talos release, the `ghcr.io/siderolabs/extensions:VERSION` image contains a pinned reference to each system extension container image.
 
+### Overlay Image Reference
+
+While Image Factory automatically resolves the overlay name into a matching container image for a specific version of Talos, `imager` requires the full explicit container image reference.
+The `imager` also allows to install custom overlays which are not part of the official Talos overlays.
+
+To get the official Talos overlays container image reference matching a Talos release, use the following command:
+
+```shell
+crane export ghcr.io/siderolabs/overlays:{{< release >}} | tar x -O overlays.yaml
+```
+
+> Note: this command is using [crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) tool, but any other tool which allows
+> to export the image contents can be used.
+
+For each Talos release, the `ghcr.io/siderolabs/overlays:VERSION` image contains a pinned reference to each overlay container image.
+
 ### Pulling from Private Registries
 
 Talos Linux official images are all public, but when pulling a custom image from a private registry, the `imager` might need authentication to access the images.
@@ -271,6 +339,82 @@ crane push _out/metal-amd64-installer.tar ghcr.io/<username></username>/installe
 Now we can use the customized `installer` image to install Talos on the bare-metal machine.
 
 When it's time to upgrade a machine, a new `installer` image can be generated using the new version of `imager`, and updating the system extension images to the matching versions.
+The custom `installer` image can now be used to upgrade Talos machine.
+
+### Example: Raspberry Pi overlay with Imager
+
+Let's assume we want to boot Talos on Raspberry Pi with `rpi_generic` overlay and `iscsi-tools` system extension.
+
+First, let's lookup extension images for `iscsi-tools` in the [extensions repository](https://github.com/siderolabs/extensions):
+
+```shell
+$ crane export ghcr.io/siderolabs/extensions:{{< release >}} | tar x -O image-digests | grep -E 'iscsi-tools'
+ghcr.io/siderolabs/iscsi-tools:v0.1.4@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e
+```
+
+Next we'll lookup the overlay image for `rpi_generic` in the [overlays repository](https://github.com/siderolabs/overlays):
+
+```shell
+$ crane export ghcr.io/siderolabs/overlays:{{< release >}} | tar x -O overlays.yaml | yq '.overlays[] | select(.name=="rpi_generic")'
+name: rpi_generic
+image: ghcr.io/siderolabs/sbc-raspberrypi:v0.1.0
+digest: sha256:849ace01b9af514d817b05a9c5963a35202e09a4807d12f8a3ea83657c76c863
+```
+
+Now we can generate the metal image with the following command:
+
+```shell
+$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} rpi_generic --arch arm64 --system-extension-image ghcr.io/siderolabs/iscsi-tools:v0.1.4@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --overlay-image ghcr.io/siderolabs/sbc-raspberrypi:v0.1.0@sha256:849ace01b9af514d817b05a9c5963a35202e09a4807d12f8a3ea83657c76c863 --overlay-name=rpi_generic
+profile ready:
+arch: arm64
+platform: metal
+secureboot: false
+version: {{< release >}}
+input:
+  kernel:
+    path: /usr/install/arm64/vmlinuz
+  initramfs:
+    path: /usr/install/arm64/initramfs.xz
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer:{{< release >}}
+  systemExtensions:
+    - imageRef: ghcr.io/siderolabs/iscsi-tools:v0.1.4@sha256:a68c268d40694b7b93c8ac65d6b99892a6152a2ee23fdbffceb59094cc3047fc
+overlay:
+  name: rpi_generic
+  image:
+    imageRef: ghcr.io/siderolabs/sbc-raspberrypi:v0.1.0-alpha.1@sha256:849ace01b9af514d817b05a9c5963a35202e09a4807d12f8a3ea83657c76c863
+output:
+  kind: image
+  imageOptions:
+    diskSize: 1306525696
+    diskFormat: raw
+  outFormat: .xz
+initramfs ready
+kernel command line: talos.platform=metal console=tty0 console=ttyAMA0,115200 sysctl.kernel.kexec_load_disabled=1 talos.dashboard.disabled=1 init_on_alloc=1 slab_nomerge pti=on consoleblank=0 nvme_core.io_timeout=4294967295 printk.devkmsg=on ima_template=ima-ng ima_appraise=fix ima_hash=sha512
+disk image ready
+output asset path: /out/metal-arm64.raw
+compression done: /out/metal-arm64.raw.xz
+```
+
+Now the `_out/metal-arm64.raw.xz` is the compressed disk image which can be written to a boot media.
+
+As the next step, we should generate a custom `installer` image which contains all required system extensions (kernel args can't be specified with the installer image, but they are set in the machine configuration):
+
+```shell
+$ docker run --rm -t -v $PWD/_out:/out ghcr.io/siderolabs/imager:{{< release >}} installer --arch arm64 --system-extension-image ghcr.io/siderolabs/iscsi-tools:v0.1.4@sha256:548b2b121611424f6b1b6cfb72a1669421ffaf2f1560911c324a546c7cee655e --overlay-image ghcr.io/siderolabs/sbc-raspberrypi:v0.1.0@sha256:849ace01b9af514d817b05a9c5963a35202e09a4807d12f8a3ea83657c76c863 --overlay-name=rpi_generic
+...
+output asset path: /out/metal-arm64-installer.tar
+```
+
+The `installer` container image should be pushed to the container registry:
+
+```shell
+crane push _out/metal-arm64-installer.tar ghcr.io/<username></username>/installer:{{< release >}}
+```
+
+Now we can use the customized `installer` image to install Talos on Raspvberry Pi.
+
+When it's time to upgrade a machine, a new `installer` image can be generated using the new version of `imager`, and updating the system extension and overlay images to the matching versions.
 The custom `installer` image can now be used to upgrade Talos machine.
 
 ### Example: AWS with Imager

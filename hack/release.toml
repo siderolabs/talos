@@ -121,8 +121,13 @@ machine:
     [notes.sbc]
         title = "SBC"
         description = """\
-Talos core will drop support for SBC's and will not include the SBC binaries in the release.
-*Overlays* are being developed to support SBC's.
+Talos has split the SBC's (Single Board Computers) into separate repositories.
+There will not be any more SBC specific release assets as part of Talos release.
+
+The default Talos Installer image will stop working for SBC's and will fail the upgrade, if used, starting from Talos v1.7.0.
+
+The SBC's images and installers can be generated on the fly using [Image Factory](https://factory.talos.dev) or using [Imager](https://www.talos.dev/latest/talos-guides/install/boot-assets/) for custom images.
+The list of official SBC's images supported by Image Factory can be found in the [Overlays](https://github.com/siderolabs/overlays/) repository.
 """
 
     [notes.syslog]

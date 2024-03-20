@@ -19,11 +19,14 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image
 
+The default schematic id for "vanilla" RockPi 4c is `a291c960717f5abad9b280c4c75bf067a4e63e339124ea814cb221f6000057d6`.
+Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4c-arm64.raw.xz
-xz -d metal-rockpi_4c-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/a291c960717f5abad9b280c4c75bf067a4e63e339124ea814cb221f6000057d6/{{< release >}}/metal-arm64.raw.xz
+xz -d metal-arm64.raw.xz
 ```
 
 ## Writing the Image
@@ -34,7 +37,7 @@ In this example, we will assume `/dev/mmcblk0`.
 Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-rockpi_4c-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
+sudo dd if=metal-arm64.raw of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
 The user has two options to proceed:
@@ -50,30 +53,9 @@ Insert the SD card into the board, turn it on and proceed to [bootstrapping the 
 
 This requires the user to flash the RockPi SPI flash with u-boot.
 
-This requires the user has access to [crane CLI](https://github.com/google/go-containerregistry/releases), a spare SD card and optionally access to the [RockPi serial console](https://wiki.radxa.com/Rockpi4/dev/serial-console).
+Follow the Radxa docs on [Install on M.2 NVME SSD](https://wiki.radxa.com/Rockpi4/install/NVME)
 
-- Flash the Rock PI 4c variant of [Debian](https://wiki.radxa.com/Rockpi4/downloads) to the SD card.
-- Boot into the debian image
-- Check that /dev/mtdblock0 exists otherwise the command will silently fail; e.g. `lsblk`.
-- Download u-boot image from talos u-boot:
-
-```bash
-mkdir _out
-crane --platform=linux/arm64 export ghcr.io/siderolabs/u-boot:v1.3.0-alpha.0-25-g0ac7773 - | tar xf - --strip-components=1 -C _out rockpi_4c/rkspi_loader.img
-sudo dd if=rkspi_loader.img of=/dev/mtdblock0 bs=4K
-```
-
-- Optionally, you can also write Talos image to the SSD drive right from your Rock PI board:
-
-```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4c-arm64.raw.xz
-xz -d metal-rockpi_4c-arm64.raw.xz
-sudo dd if=metal-rockpi_4c-arm64.raw.xz of=/dev/nvme0n1
-```
-
-- remove SD card and reboot.
-
-After these steps, Talos will boot from the nVME/USB and enter maintenance mode.
+After these above steps, Talos will boot from the nVME/USB and enter maintenance mode.
 Proceed to [bootstrapping the node](#bootstrapping-the-node).
 
 ## Bootstrapping the Node
@@ -93,4 +75,12 @@ Retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl kubeconfig
+```
+
+## Upgrading
+
+For example, to upgrade to the latest version of Talos, you can run:
+
+```bash
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/a291c960717f5abad9b280c4c75bf067a4e63e339124ea814cb221f6000057d6:{{< release >}}
 ```

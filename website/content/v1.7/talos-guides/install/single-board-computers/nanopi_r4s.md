@@ -21,11 +21,14 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image
 
+The default schematic id for "vanilla" NanoPi R4S is `0609eb7bed621f87075729ed7c7410c3b5ee83fb42d10e2cdb1fd5c7b3a3325b`.
+Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-rockpi_4-arm64.raw.xz
-xz -d metal-nanopi_r4s-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/0609eb7bed621f87075729ed7c7410c3b5ee83fb42d10e2cdb1fd5c7b3a3325b/{{< release >}}/metal-arm64.raw.xz
+xz -d metal-arm64.raw.xz
 ```
 
 ## Writing the Image
@@ -36,7 +39,7 @@ In this example, we will assume `/dev/mmcblk0`.
 Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-nanopi_r4s-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
+sudo dd if=metal-arm64.raw of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
 ## Bootstrapping the Node
@@ -56,4 +59,12 @@ Retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl kubeconfig
+```
+
+## Upgrading
+
+For example, to upgrade to the latest version of Talos, you can run:
+
+```bash
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/0609eb7bed621f87075729ed7c7410c3b5ee83fb42d10e2cdb1fd5c7b3a3325b:{{< release >}}
 ```

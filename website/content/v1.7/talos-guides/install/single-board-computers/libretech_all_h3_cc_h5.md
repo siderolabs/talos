@@ -1,7 +1,7 @@
 ---
 title: "Libre Computer Board ALL-H3-CC"
 description: "Installing Talos on Libre Computer Board ALL-H3-CC SBC using raw disk image."
-aliases: 
+aliases:
   - ../../../single-board-computers/libretech_all_h3_cc_h5
 ---
 
@@ -21,11 +21,14 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image
 
+The default schematic id for "vanilla" Libretech H3 CC H5 is `9e6498be873621e4a40d5bcfe67ce873d58a2e7aea1079ae27754bdedf245c8c`.
+Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-libretech_all_h3_cc_h5-arm64.raw.xz
-xz -d metal-libretech_all_h3_cc_h5-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/9e6498be873621e4a40d5bcfe67ce873d58a2e7aea1079ae27754bdedf245c8c/{{< release >}}/metal-arm64.raw.xz
+xz -d metal-arm64.raw.xz
 ```
 
 ## Writing the Image
@@ -36,12 +39,14 @@ In this example, we will assume `/dev/mmcblk0`.
 Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-libretech_all_h3_cc_h5-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
+sudo dd if=metal-arm64.raw of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
 ## Bootstrapping the Node
 
 Insert the SD card to your board, turn it on and wait for the console to show you the instructions for bootstrapping the node.
+
+Create a `installer-patch.yaml` containing reference to the `installer` image generated from an overlay:
 Following the instructions in the console output to connect to the interactive installer:
 
 ```bash
@@ -56,4 +61,12 @@ Retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl kubeconfig
+```
+
+## Upgrading
+
+For example, to upgrade to the latest version of Talos, you can run:
+
+```bash
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/9e6498be873621e4a40d5bcfe67ce873d58a2e7aea1079ae27754bdedf245c8c:{{< release >}}
 ```

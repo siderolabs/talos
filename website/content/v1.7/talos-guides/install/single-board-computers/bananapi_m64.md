@@ -1,7 +1,7 @@
 ---
 title: "Banana Pi M64"
 description: "Installing Talos on Banana Pi M64 SBC using raw disk image."
-aliases: 
+aliases:
   - ../../../single-board-computers/bananapi_m64
 ---
 
@@ -19,13 +19,16 @@ curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/do
 chmod +x /usr/local/bin/talosctl
 ```
 
-## Download the Image
+## Download the Image using Image Factory
+
+The default schematic id for "vanilla" Banana Pi M64 is `f48c47c8a27248bc19a878c086f2cb2ed0d5aff777688af95fc88f100d1048e1`.
+Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-bananapi_m64-arm64.raw.xz
-xz -d metal-bananapi_m64-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/f48c47c8a27248bc19a878c086f2cb2ed0d5aff777688af95fc88f100d1048e1/{{< release >}}/metal-arm64.raw.xz
+xz -d metal-arm64.raw.xz
 ```
 
 ## Writing the Image
@@ -36,7 +39,7 @@ In this example, we will assume `/dev/mmcblk0`.
 Now `dd` the image to your SD card:
 
 ```bash
-sudo dd if=metal-bananapi_m64-arm64.img of=/dev/mmcblk0 conv=fsync bs=4M
+sudo dd if=metal-arm64.raw of=/dev/mmcblk0 conv=fsync bs=4M
 ```
 
 ## Bootstrapping the Node
@@ -56,4 +59,12 @@ Retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl kubeconfig
+```
+
+## Upgrading
+
+For example, to upgrade to the latest version of Talos, you can run:
+
+```bash
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/f48c47c8a27248bc19a878c086f2cb2ed0d5aff777688af95fc88f100d1048e1:{{< release >}}
 ```
