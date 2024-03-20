@@ -172,6 +172,11 @@ func (c *Client) LeaveCluster(ctx context.Context, st state.State) error {
 			return retry.ExpectedError(err)
 		}
 
+		if errors.Is(err, rpctypes.ErrStopped) {
+			// retry the stopped errors as the member might be in the process of shutting down
+			return retry.ExpectedError(err)
+		}
+
 		return err
 	}); err != nil {
 		return err

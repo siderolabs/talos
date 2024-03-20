@@ -6,11 +6,13 @@
 package kobject
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/mdlayher/kobject"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 )
 
 const readBufferSize = 64 * 1024 * 1024
@@ -77,7 +79,9 @@ func (w *Watcher) Run(logger *zap.Logger) <-chan *Event {
 		for {
 			ev, err := w.cli.Receive()
 			if err != nil {
-				logger.Error("failed to receive kobject event", zap.Error(err))
+				if !errors.Is(err, unix.EBADF) {
+					logger.Error("failed to receive kobject event", zap.Error(err))
+				}
 
 				return
 			}

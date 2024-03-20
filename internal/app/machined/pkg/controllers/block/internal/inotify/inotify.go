@@ -39,7 +39,10 @@ func (w *watches) remove(wd uint32) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	delete(w.path, w.wd[wd].path)
+	if _, ok := w.wd[wd]; ok {
+		delete(w.path, w.wd[wd].path)
+	}
+
 	delete(w.wd, wd)
 }
 
@@ -207,7 +210,7 @@ func (w *Watcher) Run() (<-chan string, <-chan error) {
 				}
 
 				// Send the events that are not ignored on the events channel
-				if mask&unix.IN_IGNORED == 0 {
+				if mask&unix.IN_IGNORED == 0 && mask&unix.IN_CLOSE_WRITE != 0 {
 					eventCh <- name
 				}
 

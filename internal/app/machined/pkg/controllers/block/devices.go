@@ -230,7 +230,7 @@ func (ctrl *DevicesController) processEvent(ctx context.Context, r controller.Ru
 		}
 
 		if err := inotifyWatcher.Remove(devPath); err != nil {
-			return fmt.Errorf("failed to remove inotify watch for %q: %w", devPath, err)
+			logger.Debug("failed to remove inotify watch", zap.String("device", devPath), zap.Error(err))
 		}
 	default:
 		logger.Debug("skipped, as action is not supported")

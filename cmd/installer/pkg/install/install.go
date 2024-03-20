@@ -270,7 +270,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 			bd, err = retryBlockdeviceOpen(device)
 			if err != nil {
-				return err
+				return fmt.Errorf("error opening blockdevice %s: %w", device, err)
 			}
 
 			defer bd.Close() //nolint:errcheck
@@ -279,19 +279,19 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 
 			mountpoint, err = mount.SystemMountPointForLabel(ctx, bd, label, mount.WithPrefix(i.options.MountPrefix))
 			if err != nil {
-				return err
+				return fmt.Errorf("error finding system mount points for %s: %w", device, err)
 			}
 
 			mountpoints.Set(label, mountpoint)
 
 			return nil
 		}(); err != nil {
-			return err
+			return fmt.Errorf("error mounting for label %q: %w", label, err)
 		}
 	}
 
 	if err = mount.Mount(mountpoints); err != nil {
-		return err
+		return fmt.Errorf("failed to mount standard mountpoints: %w", err)
 	}
 
 	defer func() {
@@ -312,7 +312,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		BootAssets:  i.options.BootAssets,
 		Printf:      i.options.Printf,
 	}); err != nil {
-		return err
+		return fmt.Errorf("failed to install bootloader: %w", err)
 	}
 
 	if i.options.Board != constants.BoardNone {
@@ -333,7 +333,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 			RPiFirmwarePath: i.options.BootAssets.RPiFirmwarePath,
 			Printf:          i.options.Printf,
 		}); err != nil {
-			return err
+			return fmt.Errorf("failed to install for board %s: %w", b.Name(), err)
 		}
 	}
 
@@ -344,7 +344,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 			ArtifactsPath: filepath.Join(i.options.OverlayExtractedDir, constants.ImagerOverlayArtifactsPath),
 			ExtraOptions:  i.options.ExtraOptions,
 		}); err != nil {
-			return err
+			return fmt.Errorf("failed to run overlay installer: %w", err)
 		}
 	}
 
@@ -373,7 +373,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		}
 
 		if metaState, err = meta.New(context.Background(), nil, meta.WithPrinter(i.options.Printf), meta.WithFixedPath(metaPartitionName)); err != nil {
-			return err
+			return fmt.Errorf("failed to open META: %w", err)
 		}
 
 		var ok bool
@@ -391,7 +391,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		}
 
 		if err = metaState.Flush(); err != nil {
-			return err
+			return fmt.Errorf("failed to flush META: %w", err)
 		}
 	}
 
@@ -423,7 +423,7 @@ func retryBlockdeviceOpen(device string) (*blockdevice.BlockDevice, error) {
 	err := retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		var openErr error
 
-		bd, openErr = blockdevice.Open(device)
+		bd, openErr = blockdevice.Open(device, blockdevice.WithExclusiveLock(true))
 		if openErr == nil {
 			return nil
 		}

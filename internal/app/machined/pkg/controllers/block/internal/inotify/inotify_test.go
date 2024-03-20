@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/inotify"
 )
 
+//nolint:gocyclo
 func TestWatcher(t *testing.T) {
 	watcher, err := inotify.NewWatcher()
 	require.NoError(t, err)
@@ -58,6 +59,17 @@ func TestWatcher(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, f2.Close())
+
+	select {
+	case path := <-watchCh:
+		require.FailNow(t, "unexpected path", "%s", path)
+	case err = <-errCh:
+		require.FailNow(t, "unexpected error", "%s", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	// remove file2
+	require.NoError(t, os.Remove(filepath.Join(d, "file2")))
 
 	select {
 	case path := <-watchCh:
