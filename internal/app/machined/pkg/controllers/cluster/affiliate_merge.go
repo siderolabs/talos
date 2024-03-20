@@ -78,8 +78,6 @@ func (ctrl *AffiliateMergeController) Run(ctx context.Context, r controller.Runt
 		touchedIDs := make(map[resource.ID]struct{}, len(mergedAffiliates))
 
 		for id, affiliateSpec := range mergedAffiliates {
-			affiliateSpec := affiliateSpec
-
 			if err = safe.WriterModify(ctx, r, cluster.NewAffiliate(cluster.NamespaceName, id), func(res *cluster.Affiliate) error {
 				*res.TypedSpec() = *affiliateSpec
 

@@ -31,9 +31,10 @@ func (b *FormLabel) SetFormAttributes(labelWidth int, labelColor, bgColor, field
 	b.SetBackgroundColor(bgColor)
 	s := strings.TrimSpace(b.GetText(false))
 
-	for i := 0; i < labelWidth; i++ {
+	for range labelWidth {
 		s = " " + s
 	}
+
 	b.SetText(s)
 
 	return b

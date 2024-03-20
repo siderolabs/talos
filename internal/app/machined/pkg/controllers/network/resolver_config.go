@@ -138,7 +138,6 @@ func (ctrl *ResolverConfigController) apply(ctx context.Context, r controller.Ru
 	ids := make([]string, 0, len(specs))
 
 	for _, spec := range specs {
-		spec := spec
 		id := network.LayeredID(spec.ConfigLayer, network.ResolverID)
 
 		if err := r.Modify(

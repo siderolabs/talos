@@ -400,7 +400,7 @@ func (ctrl *MachineStatusController) watchEvents() {
 		)
 
 		for ev := range eventCh {
-			newStage := oldStage
+			newStage := oldStage //nolint:copyloopvar
 
 			switch event := ev.Event.Payload.(type) {
 			case *machineapi.SequenceEvent:

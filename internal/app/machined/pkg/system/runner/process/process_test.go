@@ -129,7 +129,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 		return logContents
 	}
 
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		time.Sleep(100 * time.Millisecond)
 
 		if len(fetchLog()) > 20 {

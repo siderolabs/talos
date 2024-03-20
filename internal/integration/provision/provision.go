@@ -179,7 +179,7 @@ func (suite *BaseSuite) waitForClusterHealth() {
 		runs = 3
 	}
 
-	for run := 0; run < runs; run++ {
+	for run := range runs {
 		if run > 0 {
 			time.Sleep(15 * time.Second)
 		}
@@ -570,7 +570,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	)
 	suite.Require().NoError(err)
 
-	for i := 0; i < options.ControlplaneNodes; i++ {
+	for i := range options.ControlplaneNodes {
 		request.Nodes = append(
 			request.Nodes,
 			provision.NodeRequest{

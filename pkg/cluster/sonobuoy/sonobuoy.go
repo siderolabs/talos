@@ -85,8 +85,6 @@ func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 	}
 
 	for _, options := range optionsList {
-		options := options
-
 		if err := Run(ctx, cluster, &options); err != nil {
 			return err
 		}

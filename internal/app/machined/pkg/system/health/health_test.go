@@ -45,7 +45,7 @@ func (suite *CheckSuite) TestHealthy() {
 		errCh <- health.Run(ctx, &settings, &state, check)
 	}()
 
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		time.Sleep(10 * time.Millisecond)
 
 		if atomic.LoadUint32(&called) > 2 {
@@ -94,7 +94,7 @@ func (suite *CheckSuite) TestHealthChange() {
 	}()
 
 	// wait for the first health change
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if state.Get().Healthy != nil {
 			break
 		}
@@ -107,7 +107,7 @@ func (suite *CheckSuite) TestHealthChange() {
 
 	atomic.StoreUint32(&healthy, 1)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		time.Sleep(20 * time.Millisecond)
 
 		if *state.Get().Healthy {
@@ -162,7 +162,7 @@ func (suite *CheckSuite) TestCheckAbort() {
 	}()
 
 	// wait for the first health change
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if state.Get().Healthy != nil {
 			break
 		}

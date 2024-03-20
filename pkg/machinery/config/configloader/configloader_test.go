@@ -27,7 +27,7 @@ func callMethods(t testing.TB, obj reflect.Value, chain ...string) {
 
 	typ := obj.Type()
 
-	for i := 0; i < obj.NumMethod(); i++ {
+	for i := range obj.NumMethod() {
 		method := obj.Method(i)
 
 		if method.Type().NumIn() != 0 {
@@ -98,7 +98,6 @@ func TestConfigLoader(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, file := range files {
-		file := file
 		t.Run(file, func(t *testing.T) {
 			t.Parallel()
 

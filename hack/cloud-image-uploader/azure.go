@@ -102,8 +102,6 @@ func (azu *AzureUploader) AzureGalleryUpload(ctx context.Context) error {
 	log.Printf("azure: uploading blobs for architectures: %+v\n", azu.Options.Architectures)
 
 	for _, arch := range azu.Options.Architectures {
-		arch := arch
-
 		g.Go(func() error {
 			log.Printf("azure: starting upload blob for %s\n", arch)
 
@@ -190,7 +188,7 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 	var g *errgroup.Group
 	g, ctx = errgroup.WithContext(ctx)
 
-	for i := 0; i < concurrency; i++ {
+	for range concurrency {
 		g.Go(func() error {
 			for w := range workCh {
 				_, err = pageBlobClient.UploadPages(

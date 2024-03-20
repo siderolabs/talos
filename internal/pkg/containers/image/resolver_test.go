@@ -157,12 +157,8 @@ func (suite *ResolverSuite) TestRegistryEndpoints() {
 			},
 		},
 	} {
-		tt := tt
-
 		suite.Run(tt.name, func() {
 			for _, req := range tt.requests {
-				req := req
-
 				suite.Run(req.host, func() {
 					endpoints, overridePath, err := image.RegistryEndpoints(tt.config, req.host)
 

@@ -154,7 +154,6 @@ func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runti
 	ids := make([]string, 0, len(routes))
 
 	for _, route := range routes {
-		route := route
 		id := network.LayeredID(route.ConfigLayer, network.RouteID(route.Table, route.Family, route.Destination, route.Gateway, route.Priority, route.OutLinkName))
 
 		if err := r.Modify(

@@ -32,7 +32,7 @@ func (suite *EventsSuite) TestEmpty() {
 func (suite *EventsSuite) TestSome() {
 	var e events.ServiceEvents
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		e.Push(events.ServiceEvent{
 			Message: strconv.Itoa(i),
 		})
@@ -56,7 +56,7 @@ func (suite *EventsSuite) TestOverflow() {
 
 	numEvents := events.MaxEventsToKeep*2 + 3
 
-	for i := 0; i < numEvents; i++ {
+	for i := range numEvents {
 		e.Push(events.ServiceEvent{
 			Message: strconv.Itoa(i),
 		})

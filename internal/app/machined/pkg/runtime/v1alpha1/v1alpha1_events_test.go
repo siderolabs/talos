@@ -76,13 +76,13 @@ func TestEvents_Publish(t *testing.T) {
 
 			got := uint32(0)
 
-			for i := 0; i < tt.watchers; i++ {
+			for range tt.watchers {
 				if err := e.Watch(func(events <-chan runtime.EventInfo) {
 					defer wg.Done()
 
 					l := rate.NewLimiter(500, tt.cap*8/10)
 
-					for j := 0; j < tt.messages; j++ {
+					for j := range tt.messages {
 						event, ok := <-events
 
 						if !ok {
@@ -110,7 +110,7 @@ func TestEvents_Publish(t *testing.T) {
 
 			l := rate.NewLimiter(500, tt.cap/2)
 
-			for i := 0; i < tt.messages; i++ {
+			for i := range tt.messages {
 				_ = l.Wait(context.Background()) //nolint:errcheck
 
 				e.Publish(context.Background(), &machine.SequenceEvent{
@@ -135,7 +135,7 @@ func receive(t *testing.T, e runtime.Watcher, n int, opts ...runtime.WatchOption
 	if err := e.Watch(func(events <-chan runtime.EventInfo) {
 		defer wg.Done()
 
-		for j := 0; j < n; j++ {
+		for range n {
 			event, ok := <-events
 			if !ok {
 				t.Fatalf("Watch: chanel closed")
@@ -186,7 +186,7 @@ func gen(k, l int) (result []int) {
 func TestEvents_WatchOptionsTailEvents(t *testing.T) {
 	e := NewEvents(100, 10)
 
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
@@ -203,7 +203,7 @@ func TestEvents_WatchOptionsTailEvents(t *testing.T) {
 
 	e = NewEvents(100, 10)
 
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
@@ -219,7 +219,7 @@ func TestEvents_WatchOptionsTailEvents(t *testing.T) {
 func TestEvents_WatchOptionsTailSeconds(t *testing.T) {
 	e := NewEvents(100, 10)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
@@ -242,7 +242,7 @@ func TestEvents_WatchOptionsTailSeconds(t *testing.T) {
 func TestEvents_WatchOptionsTailID(t *testing.T) {
 	e := NewEvents(100, 10)
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		e.Publish(context.Background(), &machine.SequenceEvent{
 			Sequence: strconv.Itoa(i),
 		})
@@ -262,7 +262,7 @@ func BenchmarkWatch(b *testing.B) {
 
 	wg.Add(b.N)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = e.Watch(func(events <-chan runtime.EventInfo) { wg.Done() }) //nolint:errcheck
 	}
 
@@ -280,11 +280,11 @@ func BenchmarkPublish(bb *testing.B) {
 
 			wg.Add(watchers)
 
-			for j := 0; j < watchers; j++ {
+			for range watchers {
 				_ = e.Watch(func(events <-chan runtime.EventInfo) { //nolint:errcheck
 					defer wg.Done()
 
-					for i := 0; i < b.N; i++ {
+					for range b.N {
 						if _, ok := <-events; !ok {
 							return
 						}
@@ -296,7 +296,7 @@ func BenchmarkPublish(bb *testing.B) {
 
 			b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
+			for range b.N {
 				e.Publish(context.Background(), &ev)
 			}
 

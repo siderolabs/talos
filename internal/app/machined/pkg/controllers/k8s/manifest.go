@@ -107,8 +107,6 @@ func (ctrl *ManifestController) Run(ctx context.Context, r controller.Runtime, l
 		}
 
 		for _, renderedManifest := range renderedManifests {
-			renderedManifest := renderedManifest
-
 			if err = safe.WriterModify(ctx, r, k8s.NewManifest(k8s.ControlPlaneNamespaceName, renderedManifest.name),
 				func(r *k8s.Manifest) error {
 					return k8sadapter.Manifest(r).SetYAML(renderedManifest.data)

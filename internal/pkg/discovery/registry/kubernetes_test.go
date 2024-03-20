@@ -84,8 +84,6 @@ func TestAnnotationsFromAffiliate(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			affiliate := cluster.NewAffiliate(cluster.NamespaceName, tt.affiliate.NodeID)
 			*affiliate.TypedSpec() = tt.affiliate
@@ -197,8 +195,6 @@ func TestAffiliateFromNode(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.expected, registry.AffiliateFromNode(&tt.node))
 		})

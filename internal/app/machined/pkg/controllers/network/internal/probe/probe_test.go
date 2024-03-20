@@ -52,7 +52,7 @@ func TestProbeHTTP(t *testing.T) {
 	t.Cleanup(p.Stop)
 
 	// probe should always succeed
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		assert.Equal(t, probe.Notification{
 			ID: "test",
 			Status: network.ProbeStatusSpec{
@@ -124,7 +124,7 @@ func TestProbeConsecutiveFailures(t *testing.T) {
 	// stop the test server, probe should fail
 	server.Close()
 
-	for i := 0; i < p.Spec.FailureThreshold-1; i++ {
+	for range p.Spec.FailureThreshold - 1 {
 		// probe should fail, but no notification should be sent yet (failure threshold not reached)
 		mockClock.Add(p.Spec.Interval)
 

@@ -34,7 +34,7 @@ func (suite *LogsSuite) TestTailLogs() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 
 	// run some machined API calls to produce enough log lines
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		suite.RunCLI([]string{"-n", node, "version"})
 	}
 

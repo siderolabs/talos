@@ -81,8 +81,6 @@ func TestValidateFailures(t *testing.T) {
 			validateError: "path \"/boot/vmlinuz\" is not allowed in extensions",
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			ext, err := extensions.Load(filepath.Join("testdata/bad", tt.name))
 

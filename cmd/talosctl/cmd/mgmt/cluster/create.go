@@ -641,7 +641,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			endpointList = []string{ips[0][0].String()}
 		default:
 			// use control plane nodes as endpoints, client-side load-balancing
-			for i := 0; i < controlplanes; i++ {
+			for i := range controlplanes {
 				endpointList = append(endpointList, ips[0][i].String())
 			}
 		}
@@ -750,7 +750,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
 	// Create the controlplane nodes.
-	for i := 0; i < controlplanes; i++ {
+	for i := range controlplanes {
 		var cfg config.Provider
 
 		nodeIPs := make([]netip.Addr, len(cidrs))
@@ -796,7 +796,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	// append extra disks
-	for i := 0; i < extraDisks; i++ {
+	for range extraDisks {
 		disks = append(disks, &provision.Disk{
 			Size:            uint64(extraDiskSize) * 1024 * 1024,
 			SkipPreallocate: !clusterDiskPreallocate,

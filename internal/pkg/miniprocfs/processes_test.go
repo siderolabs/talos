@@ -87,8 +87,8 @@ func TestMock(t *testing.T) {
 func BenchmarkPrometheusProcfs(b *testing.B) {
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
-		resp := []*machine.ProcessInfo{}
+	for range b.N {
+		var resp []*machine.ProcessInfo
 
 		procs, err := procfs.AllProcs()
 		require.NoError(b, err)
@@ -135,8 +135,8 @@ func BenchmarkPrometheusProcfs(b *testing.B) {
 func BenchmarkProcesses(b *testing.B) {
 	b.ReportAllocs()
 
-	for i := 0; i < b.N; i++ {
-		resp := []*machine.ProcessInfo{}
+	for range b.N {
+		var resp []*machine.ProcessInfo
 
 		processes, err := miniprocfs.NewProcesses()
 		require.NoError(b, err)

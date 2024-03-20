@@ -288,8 +288,6 @@ func TestDisablePredictableNetworkInterfaces(t *testing.T) {
 			expected: false,
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.host, func(t *testing.T) {
 			host, err := compatibility.ParseTalosVersion(&machine.VersionInfo{
 				Tag: tt.host,

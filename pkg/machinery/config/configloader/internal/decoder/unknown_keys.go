@@ -156,7 +156,7 @@ func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interf
 			return unknown, fmt.Errorf("unexpected type for yaml sequence: %s", typ)
 		}
 
-		for i := 0; i < len(spec.Content); i++ {
+		for i := range len(spec.Content) {
 			innerUnknown, err := internalCheckUnknownKeys(typ.Elem(), spec.Content[i])
 			if err != nil {
 				return unknown, err

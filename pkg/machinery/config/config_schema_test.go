@@ -96,8 +96,6 @@ func TestSchemaValidation(t *testing.T) {
 			expectedErrorContains: "'/ingress/1/except' does not validate with",
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

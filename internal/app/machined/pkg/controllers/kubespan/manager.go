@@ -339,8 +339,6 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 
 		// update peer statuses
 		for pubKey, peerStatus := range peerStatuses {
-			peerStatus := peerStatus
-
 			if err = safe.WriterModify(ctx, r,
 				kubespan.NewPeerStatus(
 					kubespan.NamespaceName,
@@ -418,8 +416,6 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 				ConfigLayer: network.ConfigOperator,
 			},
 		} {
-			spec := spec
-
 			if err = safe.WriterModify(ctx, r,
 				network.NewRouteSpec(
 					network.ConfigNamespaceName,

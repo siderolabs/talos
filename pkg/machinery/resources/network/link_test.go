@@ -206,8 +206,6 @@ func TestWireguardSpecMerge(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			spec := tt.spec
 			spec.Merge(tt.other)

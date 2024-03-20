@@ -197,7 +197,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 
 	// running same container twice should be fine
 	// (checks that containerd state is cleaned up properly)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		suite.Assert().NoError(r.Run(MockEventSink))
 		// calling stop when Run has finished is no-op
 		suite.Assert().NoError(r.Stop())
@@ -310,7 +310,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 		done <- r.Run(MockEventSink)
 	}()
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		time.Sleep(500 * time.Millisecond)
 
 		if bytes.Contains(suite.getLogContents(suite.containerID+".log"), []byte("fail\n")) {
@@ -330,7 +330,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	suite.Assert().NoError(err)
 	suite.Assert().NoError(f.Close())
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		time.Sleep(500 * time.Millisecond)
 
 		if bytes.Contains(suite.getLogContents(suite.containerID+".log"), []byte("ok\n")) {

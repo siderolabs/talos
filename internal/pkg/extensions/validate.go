@@ -50,7 +50,7 @@ func (ext *Extension) validateConstraints() error {
 
 // trim removes 'v' symbol anywhere in string if it's located before the number.
 func trim(constraint string) string {
-	for i := 0; i < len(constraint); i++ {
+	for i := 0; i < len(constraint); i++ { //nolint:intrange
 		if constraint[i] == 'v' && i+1 < len(constraint) && constraint[i+1] >= '0' && constraint[i+1] <= '9' {
 			constraint = constraint[:i] + constraint[i+1:]
 		}

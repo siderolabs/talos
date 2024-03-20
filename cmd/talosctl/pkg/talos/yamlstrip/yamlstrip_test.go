@@ -20,8 +20,6 @@ func TestComments(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, path := range testCases {
-		path := path
-
 		t.Run(filepath.Base(path), func(t *testing.T) {
 			in, err := os.ReadFile(path)
 			require.NoError(t, err)

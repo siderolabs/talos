@@ -98,8 +98,6 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		for _, route := range routes {
-			route := route
-
 			dstAddr, _ := netip.AddrFromSlice(route.Attributes.Dst)
 			dstPrefix := netip.PrefixFrom(dstAddr, int(route.DstLength))
 			srcAddr, _ := netip.AddrFromSlice(route.Attributes.Src)

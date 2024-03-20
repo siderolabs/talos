@@ -449,8 +449,6 @@ func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosco
 	var wg sync.WaitGroup
 
 	for _, sender := range prevSenders {
-		sender := sender
-
 		wg.Add(1)
 
 		go func() {

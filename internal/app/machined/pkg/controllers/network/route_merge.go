@@ -87,8 +87,6 @@ func (ctrl *RouteMergeController) Run(ctx context.Context, r controller.Runtime,
 		conflictsDetected := 0
 
 		for id, route := range routes {
-			route := route
-
 			if err = r.Modify(ctx, network.NewRouteSpec(network.NamespaceName, id), func(res resource.Resource) error {
 				rt := res.(*network.RouteSpec) //nolint:errcheck,forcetypeassert
 

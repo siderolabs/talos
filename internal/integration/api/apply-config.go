@@ -483,7 +483,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 
 	suite.Assert().Truef(lookupDummyInterface(), "dummy interface wasn't found")
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		provider, err = getMachineConfig(nodeCtx)
 		suite.Assert().Nilf(err, "failed to read existing config from node %q: %s", node, err)
 

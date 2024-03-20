@@ -229,8 +229,6 @@ func DHCPd(ifName string, ips []net.IP, statePath string) error {
 	var eg errgroup.Group
 
 	for _, ip := range ips {
-		ip := ip
-
 		eg.Go(func() error {
 			if ip.To4() == nil {
 				server, err := server6.NewServer(

@@ -151,7 +151,7 @@ func merge(vl, vr reflect.Value, replace bool) error {
 			return nil
 		}
 
-		for i := 0; i < tl.NumField(); i++ {
+		for i := range tl.NumField() {
 			var replace bool
 
 			structTag := tl.Field(i).Tag.Get("merge")

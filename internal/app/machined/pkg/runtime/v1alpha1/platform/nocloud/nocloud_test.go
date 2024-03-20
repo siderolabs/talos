@@ -51,8 +51,6 @@ func TestParseMetadata(t *testing.T) {
 			expected: expectedNetworkConfigV2,
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			n := &nocloud.Nocloud{}
 

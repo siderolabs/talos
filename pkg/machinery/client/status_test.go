@@ -62,8 +62,6 @@ func TestStatus(t *testing.T) {
 			code:    codes.AlreadyExists,
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			st := client.Status(tt.err)
 			if tt.nilStatus {

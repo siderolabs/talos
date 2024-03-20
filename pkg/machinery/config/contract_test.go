@@ -33,7 +33,6 @@ func TestContractParseVersion(t *testing.T) {
 		"v0.88":          {0, 88},
 		"v0.8.3-alpha.4": config.TalosVersion0_8,
 	} {
-		v, expected := v, expected
 		t.Run(v, func(t *testing.T) {
 			t.Parallel()
 

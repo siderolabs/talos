@@ -97,7 +97,6 @@ func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
 			result:   []string{".", "dev", "dev/random", "etc", "etc/certs", "etc/certs/ca.crt", "etc/hostname", "lib", "lib/dynalib.so", "usr", "usr/bin", "usr/bin/cp", "usr/bin/mv"},
 		},
 	} {
-		test := test
 		suite.Run(strconv.Itoa(test.maxDepth), func() {
 			suite.T().Parallel()
 

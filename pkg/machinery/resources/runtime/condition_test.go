@@ -108,8 +108,6 @@ func TestCondition(t *testing.T) {
 			Succeeds: true,
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 

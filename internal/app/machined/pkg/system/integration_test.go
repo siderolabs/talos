@@ -83,7 +83,7 @@ func TestRestartService(t *testing.T) {
 
 	services.Load(TestService{})
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		require.NoError(t, services.Start("test-service"))
 
 		require.NoError(t, system.WaitForServiceWithInstance(services, system.StateEventUp, "test-service").Wait(ctx))

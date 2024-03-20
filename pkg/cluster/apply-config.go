@@ -26,17 +26,15 @@ type ApplyConfigClient struct {
 // ApplyConfig on the node via the API using insecure mode.
 func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.NodeRequest, out io.Writer) error {
 	for _, node := range nodes {
-		n := node
-
 		configureNode := func() error {
 			c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{
 				InsecureSkipVerify: true,
-			}), client.WithEndpoints(n.IPs[0].String()))
+			}), client.WithEndpoints(node.IPs[0].String()))
 			if err != nil {
 				return err
 			}
 
-			cfgBytes, err := n.Config.Bytes()
+			cfgBytes, err := node.Config.Bytes()
 			if err != nil {
 				return err
 			}

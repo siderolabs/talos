@@ -303,11 +303,7 @@ func (c *Controller) runPhase(ctx context.Context, phase runtime.Phase, seq runt
 
 	for number, task := range phase.Tasks {
 		// Make the task number human friendly.
-		number := number
-
 		number++
-
-		task := task
 
 		eg.Go(func() error {
 			progress := fmt.Sprintf("%d/%d", number, len(phase.Tasks))

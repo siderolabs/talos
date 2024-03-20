@@ -97,7 +97,7 @@ func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedList
 		errCh <- cmd2.Wait()
 	}()
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err = <-errCh; err != nil {
 			return err
 		}

@@ -318,8 +318,6 @@ func updateAccumulativeAddresses(ctx context.Context, r controller.Runtime, id r
 		spec := r.(*network.NodeAddress).TypedSpec()
 
 		for _, ip := range accumulative {
-			ip := ip
-
 			// find insert position using binary search
 			i := sort.Search(len(spec.Addresses), func(j int) bool {
 				return !spec.Addresses[j].Addr().Less(ip.Addr())

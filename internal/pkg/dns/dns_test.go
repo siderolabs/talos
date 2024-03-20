@@ -163,7 +163,7 @@ func TestRunnerStopsBeforeRun(t *testing.T) {
 	// Ensure that we correctly handle an error inside [dns.Runner.Run].
 	l := zap.NewNop()
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		runner := dns.NewRunner(&runnerStopper{}, l)
 
 		ctx := ctxutil.MonitorFn(context.Background(), runner.Run)
@@ -172,7 +172,7 @@ func TestRunnerStopsBeforeRun(t *testing.T) {
 		<-ctx.Done()
 	}
 
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		runner := dns.NewRunner(&runnerStopper{}, l)
 
 		runner.Stop()

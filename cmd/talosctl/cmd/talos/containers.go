@@ -69,13 +69,12 @@ func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse)
 	defaultNode := client.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
-		resp := msg
-		sort.Slice(resp.Containers,
+		sort.Slice(msg.Containers,
 			func(i, j int) bool {
-				return strings.Compare(resp.Containers[i].Id, resp.Containers[j].Id) < 0
+				return strings.Compare(msg.Containers[i].Id, msg.Containers[j].Id) < 0
 			})
 
-		for _, p := range resp.Containers {
+		for _, p := range msg.Containers {
 			display := p.Id
 			if p.Id != p.PodId {
 				// container in a sandbox
@@ -84,8 +83,8 @@ func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse)
 
 			node := defaultNode
 
-			if resp.Metadata != nil {
-				node = resp.Metadata.Hostname
+			if msg.Metadata != nil {
+				node = msg.Metadata.Hostname
 			}
 
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", node, p.Namespace, display, p.Image, p.Pid, p.Status)

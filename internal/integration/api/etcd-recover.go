@@ -99,8 +99,6 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 	errCh := make(chan error)
 
 	for _, node := range controlPlaneNodes {
-		node := node
-
 		go func() {
 			errCh <- func() error {
 				nodeCtx := client.WithNodes(suite.ctx, node)

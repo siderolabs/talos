@@ -469,9 +469,8 @@ func (d *Dashboard) processLog(node, line string) {
 
 func (d *Dashboard) selectScreen(screen Screen) {
 	for _, info := range d.screenConfigs {
-		info := info
 		if info.screen == screen {
-			d.selectedScreenConfig = &info
+			d.selectedScreenConfig = &info //nolint:exportloopref
 
 			d.mainGrid.AddItem(info.primitive, 1, 0, 1, 1, 0, 0, false)
 

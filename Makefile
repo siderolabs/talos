@@ -55,7 +55,7 @@ GOIMPORTS_VERSION ?= v0.19.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.56.2
+GOLANGCILINT_VERSION ?= v1.57.0
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.19.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer

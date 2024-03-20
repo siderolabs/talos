@@ -200,8 +200,6 @@ func (m *Manifest) checkMounts(device Device) error {
 	}
 
 	for _, path := range matches {
-		path := path
-
 		if err = func() error {
 			var f *os.File
 
@@ -390,8 +388,6 @@ func (m *Manifest) executeOnDevice(device Device, targets []*Target) (err error)
 	}
 
 	for _, target := range targets {
-		target := target
-
 		err = retry.Constant(time.Minute, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 			e := target.Format(m.Printf)
 			if e != nil {

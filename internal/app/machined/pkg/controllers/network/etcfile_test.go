@@ -210,8 +210,6 @@ func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, conten
 	)
 
 	for _, id := range unexpectedIDs {
-		id := id
-
 		assertNoResource[*files.EtcFileSpec](suite.ctx, suite.T(), suite.state, id)
 	}
 }

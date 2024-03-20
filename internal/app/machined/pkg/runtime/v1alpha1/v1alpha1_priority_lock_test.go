@@ -102,8 +102,6 @@ func TestPriorityLockConcurrent(t *testing.T) {
 	sequenceCh := make(chan testSequenceNumber)
 
 	for seq := testSequenceNumber(1); seq <= 20; seq++ {
-		seq := seq
-
 		eg.Go(func() error {
 			ctx, err := lock.Lock(globalCtx, time.Second, seq)
 			if errors.Is(err, runtime.ErrLocked) {

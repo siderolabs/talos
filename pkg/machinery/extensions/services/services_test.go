@@ -107,8 +107,6 @@ func TestValidate(t *testing.T) {
 			expectedError: "4 errors occurred:\n\t* no dependency specified\n\t* path is not absolute: \"./somefile\"\n\t* invalid network dependency: Status(0)\n\t* more than a single dependency is set\n\n",
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.spec.Validate()
 			assert.EqualError(t, err, tt.expectedError)

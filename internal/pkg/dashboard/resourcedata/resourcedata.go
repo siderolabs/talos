@@ -72,8 +72,6 @@ func (source *Source) run(ctx context.Context) {
 
 	nodes := source.nodes(ctx)
 	for _, node := range nodes {
-		node := node
-
 		source.eg.Go(func() error {
 			source.runResourceWatchWithRetries(ctx, node)
 

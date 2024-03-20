@@ -108,8 +108,6 @@ func (c *Client) StopAndRemovePodSandboxes(ctx context.Context, stopAction StopA
 	var g errgroup.Group
 
 	for _, pod := range pods {
-		pod := pod // https://golang.org/doc/faq#closures_and_goroutines
-
 		g.Go(func() error {
 			status, _, e := c.PodSandboxStatus(ctx, pod.GetId())
 			if e != nil {
@@ -177,8 +175,6 @@ func stopAndRemove(ctx context.Context, stopAction StopAction, client *Client, p
 	var g errgroup.Group
 
 	for _, container := range containers {
-		container := container // https://golang.org/doc/faq#closures_and_goroutines
-
 		g.Go(func() error {
 			// TODO(andrewrynhard): Can we set the timeout dynamically?
 			if container.State == runtimeapi.ContainerState_CONTAINER_RUNNING || container.State == runtimeapi.ContainerState_CONTAINER_UNKNOWN {

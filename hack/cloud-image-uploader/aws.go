@@ -89,9 +89,6 @@ func (au *AWSUploader) RegisterAMIs(ctx context.Context) error {
 	g, ctx = errgroup.WithContext(ctx)
 
 	for region, svc := range au.ec2svcs {
-		region := region
-		svc := svc
-
 		g.Go(func() error {
 			err := au.registerAMI(ctx, region, svc)
 			if err != nil {
@@ -147,8 +144,6 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 	var g errgroup.Group
 
 	for _, arch := range au.Options.Architectures {
-		arch := arch
-
 		g.Go(func() error {
 			err = au.registerAMIArch(ctx, region, svc, arch, bucketName, uploader)
 			if err != nil {

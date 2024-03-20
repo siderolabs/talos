@@ -357,7 +357,7 @@ func TestADV_overwrite(t *testing.T) {
 		t.Errorf("NewADV() failed: %s", err)
 	}
 
-	for i := 0; i < 1024; i++ {
+	for range 1024 {
 		if !a.SetTag(1, "yes") {
 			t.Errorf("SetTag() failed")
 		}

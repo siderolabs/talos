@@ -90,7 +90,6 @@ Certificate expires: 10 years from now (2031-07-03)
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

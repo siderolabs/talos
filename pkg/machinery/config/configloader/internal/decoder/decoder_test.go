@@ -305,8 +305,6 @@ config:
 	}
 
 	for _, tt := range tests {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -333,8 +331,6 @@ func TestDecoderV1Alpha1Config(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, file := range files {
-		file := file
-
 		t.Run(file, func(t *testing.T) {
 			t.Parallel()
 
@@ -355,7 +351,7 @@ func BenchmarkDecoderV1Alpha1Config(b *testing.B) {
 	contents, err := os.ReadFile("testdata/controlplane.yaml")
 	require.NoError(b, err)
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		d := decoder.NewDecoder()
 		_, err = d.Decode(bytes.NewReader(contents))
 

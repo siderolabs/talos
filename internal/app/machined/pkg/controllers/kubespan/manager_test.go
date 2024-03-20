@@ -219,8 +219,6 @@ func (suite *ManagerSuite) TestReconcile() {
 	)
 
 	for _, peer := range []*kubespan.PeerSpec{peer1, peer2} {
-		peer := peer
-
 		ctest.AssertResource(suite,
 			peer.Metadata().ID(),
 			func(res *kubespan.PeerStatus, asrt *assert.Assertions) {
@@ -326,8 +324,6 @@ func (suite *ManagerSuite) TestReconcile() {
 	)
 
 	for _, peer := range []*kubespan.PeerSpec{peer1, peer2} {
-		peer := peer
-
 		ctest.AssertResource(suite,
 			peer.Metadata().ID(),
 			func(res *kubespan.PeerStatus, asrt *assert.Assertions) {

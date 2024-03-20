@@ -74,8 +74,6 @@ func (suite *ResourcesSuite) TestListResources() {
 	eg, egCtx := errgroup.WithContext(ctx)
 
 	for _, resourceType := range resourceTypes {
-		resourceType := resourceType
-
 		eg.Go(func() error {
 			for _, namespace := range namespaces {
 				_, err := suite.Client.COSI.List(egCtx, resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined))

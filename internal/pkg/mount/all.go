@@ -41,7 +41,7 @@ func UnmountAll() error {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
-	for i := 0; i < timeout; i++ {
+	for range timeout {
 		mounts, err := readMountInfo()
 		if err != nil {
 			return err

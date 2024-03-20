@@ -485,7 +485,7 @@ func (ctrl *PlatformConfigController) apply(ctx context.Context, r controller.Ru
 		resourceNamespace := resourceEmpty.Metadata().Namespace()
 		resourceType := resourceEmpty.Metadata().Type()
 
-		for i := 0; i < specType.length; i++ {
+		for i := range specType.length {
 			spec := specType.getter(i)
 
 			id, err := specType.idBuilder(spec)

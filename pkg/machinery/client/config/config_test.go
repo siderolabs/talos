@@ -82,8 +82,6 @@ func TestConfigMerge(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			c := tt.config
 			c.Merge(tt.configToMerge)

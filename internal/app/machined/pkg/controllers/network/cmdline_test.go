@@ -472,8 +472,6 @@ func (suite *CmdlineSuite) TestParse() {
 			},
 		},
 	} {
-		test := test
-
 		suite.Run(test.name, func() {
 			cmdline := procfs.NewCmdline(test.cmdline)
 

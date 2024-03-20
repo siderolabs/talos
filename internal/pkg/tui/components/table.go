@@ -163,7 +163,7 @@ func (t *Table) SelectRow(row int) bool {
 // HoverRow highlights the row in the table.
 func (t *Table) HoverRow(row int) bool {
 	updateRowStyle := func(r int, foregroundColor, backgroundColor tcell.Color) {
-		for i := 0; i < t.GetColumnCount(); i++ {
+		for i := range t.GetColumnCount() {
 			t.GetCell(r, i).SetBackgroundColor(backgroundColor).SetTextColor(foregroundColor)
 		}
 	}

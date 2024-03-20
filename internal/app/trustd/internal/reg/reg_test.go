@@ -74,8 +74,6 @@ func TestCertificate(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			serverCSR, serverCert, err := x509.NewEd25519CSRAndIdentity(tt.csrSetters...)
 			require.NoError(t, err)

@@ -52,8 +52,6 @@ func TestApplyNetworkConfigV2a(t *testing.T) {
 			expected: expectedNetworkConfigMatchByName,
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			st := state.WrapCore(namespaced.NewState(inmem.Build))

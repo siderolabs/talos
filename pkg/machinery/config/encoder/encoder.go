@@ -153,9 +153,9 @@ func toYamlNode(in interface{}, options *Options) (*yaml.Node, error) {
 
 		t := v.Type()
 
-		examples := []string{}
+		var examples []string
 
-		for i := 0; i < v.NumField(); i++ {
+		for i := range v.NumField() {
 			// skip unexported fields
 			if !v.Field(i).CanInterface() {
 				continue
@@ -303,7 +303,7 @@ func toYamlNode(in interface{}, options *Options) (*yaml.Node, error) {
 		node.Kind = yaml.SequenceNode
 		nodes := make([]*yaml.Node, v.Len())
 
-		for i := 0; i < v.Len(); i++ {
+		for i := range v.Len() {
 			element := v.Index(i)
 
 			var err error
@@ -313,7 +313,9 @@ func toYamlNode(in interface{}, options *Options) (*yaml.Node, error) {
 				return nil, err
 			}
 		}
+
 		appendNodes(node, nodes...)
+
 	default:
 		if err := node.Encode(in); err != nil {
 			return nil, err

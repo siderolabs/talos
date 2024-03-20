@@ -25,8 +25,6 @@ type GenerateSuite struct {
 
 func (suite *GenerateSuite) TestGenerateAdmin() {
 	for _, rsa := range []bool{true, false} {
-		rsa := rsa
-
 		suite.Run(fmt.Sprintf("RSA=%v", rsa), func() {
 			ca, err := x509.NewSelfSignedCertificateAuthority(x509.RSA(rsa))
 			suite.Require().NoError(err)

@@ -123,8 +123,6 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 	opts.MachineConfig.NetworkConfig.Interfaces = []*machineapi.NetworkDeviceConfig{}
 
 	for _, link := range links {
-		link := link
-
 		status := ""
 
 		if !link.Physical {

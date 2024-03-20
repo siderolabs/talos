@@ -305,8 +305,6 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 		for _, discoveredAffiliate := range client.GetAffiliates() {
 			id := fmt.Sprintf("service/%s", discoveredAffiliate.Affiliate.NodeId)
 
-			discoveredAffiliate := discoveredAffiliate
-
 			if err = safe.WriterModify(ctx, r, cluster.NewAffiliate(cluster.RawNamespaceName, id), func(res *cluster.Affiliate) error {
 				*res.TypedSpec() = specAffiliate(discoveredAffiliate.Affiliate, discoveredAffiliate.Endpoints)
 

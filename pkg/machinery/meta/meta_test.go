@@ -38,8 +38,6 @@ func TestEncodeDecodeValues(t *testing.T) {
 	t.Parallel()
 
 	for _, allowGzip := range []bool{false, true} {
-		allowGzip := allowGzip
-
 		t.Run(fmt.Sprintf("allowGzip=%v", allowGzip), func(t *testing.T) {
 			t.Parallel()
 
@@ -75,8 +73,6 @@ func TestEncodeDecodeValues(t *testing.T) {
 					expectedGzippedSize: 80,
 				},
 			} {
-				test := test
-
 				t.Run(test.name, func(t *testing.T) {
 					t.Parallel()
 

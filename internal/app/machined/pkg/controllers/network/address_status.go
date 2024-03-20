@@ -88,15 +88,12 @@ func (ctrl *AddressStatusController) Run(ctx context.Context, r controller.Runti
 		}
 
 		for _, addr := range addrs {
-			addr := addr
-
 			// TODO: should we use local address actually?
 			// from if_addr.h:
 			// IFA_ADDRESS is prefix address, rather than local interface address.
 			// * It makes no difference for normally configured broadcast interfaces,
 			// * but for point-to-point IFA_ADDRESS is DESTINATION address,
 			// * local address is supplied in IFA_LOCAL attribute.
-
 			ipAddr, _ := netip.AddrFromSlice(addr.Attributes.Address)
 			ipPrefix := netip.PrefixFrom(ipAddr, int(addr.PrefixLength))
 			id := network.AddressID(linkLookup[addr.Index], ipPrefix)

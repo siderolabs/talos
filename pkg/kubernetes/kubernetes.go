@@ -211,34 +211,32 @@ func (h *Client) Drain(ctx context.Context, node string) error {
 	// Evict each pod.
 
 	for _, pod := range pods.Items {
-		p := pod
-
 		eg.Go(func() error {
-			if _, ok := p.ObjectMeta.Annotations[corev1.MirrorPodAnnotationKey]; ok {
-				log.Printf("skipping mirror pod %s/%s\n", p.GetNamespace(), p.GetName())
+			if _, ok := pod.ObjectMeta.Annotations[corev1.MirrorPodAnnotationKey]; ok {
+				log.Printf("skipping mirror pod %s/%s\n", pod.GetNamespace(), pod.GetName())
 
 				return nil
 			}
 
-			controllerRef := metav1.GetControllerOf(&p)
+			controllerRef := metav1.GetControllerOf(&pod)
 
 			if controllerRef == nil {
-				log.Printf("skipping unmanaged pod %s/%s\n", p.GetNamespace(), p.GetName())
+				log.Printf("skipping unmanaged pod %s/%s\n", pod.GetNamespace(), pod.GetName())
 
 				return nil
 			}
 
 			if controllerRef.Kind == appsv1.SchemeGroupVersion.WithKind("DaemonSet").Kind {
-				log.Printf("skipping DaemonSet pod %s/%s\n", p.GetNamespace(), p.GetName())
+				log.Printf("skipping DaemonSet pod %s/%s\n", pod.GetNamespace(), pod.GetName())
 
 				return nil
 			}
 
-			if !p.DeletionTimestamp.IsZero() {
-				log.Printf("skipping deleted pod %s/%s\n", p.GetNamespace(), p.GetName())
+			if !pod.DeletionTimestamp.IsZero() {
+				log.Printf("skipping deleted pod %s/%s\n", pod.GetNamespace(), pod.GetName())
 			}
 
-			if err := h.evict(ctx, p, int64(60)); err != nil {
+			if err := h.evict(ctx, pod, int64(60)); err != nil {
 				log.Printf("WARNING: failed to evict pod: %v", err)
 			}
 

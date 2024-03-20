@@ -198,7 +198,7 @@ func (suite *DiscoverySuite) TestRegistries() {
 
 		var rawAffiliates []*cluster.Affiliate
 
-		for i := 0; i < 30; i++ {
+		for range 30 {
 			rawAffiliates = suite.getAffiliates(nodeCtx, cluster.RawNamespaceName)
 
 			if len(rawAffiliates) == expectedRawAffiliates {

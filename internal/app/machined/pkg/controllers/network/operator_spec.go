@@ -281,8 +281,6 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 
 	for _, op := range ctrl.operators {
 		for _, addressSpec := range op.Operator.AddressSpecs() {
-			addressSpec := addressSpec
-
 			if err := apply(
 				network.NewAddressSpec(
 					network.ConfigNamespaceName,
@@ -297,8 +295,6 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, routeSpec := range op.Operator.RouteSpecs() {
-			routeSpec := routeSpec
-
 			if err := apply(
 				network.NewRouteSpec(
 					network.ConfigNamespaceName,
@@ -316,8 +312,6 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, linkSpec := range op.Operator.LinkSpecs() {
-			linkSpec := linkSpec
-
 			if err := apply(
 				network.NewLinkSpec(
 					network.ConfigNamespaceName,
@@ -332,8 +326,6 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, hostnameSpec := range op.Operator.HostnameSpecs() {
-			hostnameSpec := hostnameSpec
-
 			if err := apply(
 				network.NewHostnameSpec(
 					network.ConfigNamespaceName,
@@ -348,8 +340,6 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, resolverSpec := range op.Operator.ResolverSpecs() {
-			resolverSpec := resolverSpec
-
 			if err := apply(
 				network.NewResolverSpec(
 					network.ConfigNamespaceName,
@@ -364,8 +354,6 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, timeserverSpec := range op.Operator.TimeServerSpecs() {
-			timeserverSpec := timeserverSpec
-
 			if err := apply(
 				network.NewTimeServerSpec(
 					network.ConfigNamespaceName,

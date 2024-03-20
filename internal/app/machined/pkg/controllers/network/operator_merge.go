@@ -89,8 +89,6 @@ func (ctrl *OperatorMergeController) Run(ctx context.Context, r controller.Runti
 		conflictsDetected := 0
 
 		for id, operator := range operators {
-			operator := operator
-
 			if err = r.Modify(ctx, network.NewOperatorSpec(network.NamespaceName, id), func(res resource.Resource) error {
 				op := res.(*network.OperatorSpec) //nolint:errcheck,forcetypeassert
 

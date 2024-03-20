@@ -234,7 +234,6 @@ func (ctrl *LinkConfigController) apply(ctx context.Context, r controller.Runtim
 	ids := make([]string, 0, len(links))
 
 	for _, link := range links {
-		link := link
 		id := network.LayeredID(link.ConfigLayer, network.LinkID(link.Name))
 
 		if err := r.Modify(

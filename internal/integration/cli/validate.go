@@ -52,11 +52,7 @@ func (suite *ValidateSuite) TestValidate() {
 	)
 
 	for _, configFile := range []string{"controlplane.yaml", "worker.yaml"} {
-		configFile := configFile
-
 		for _, mode := range []string{"cloud", "container"} {
-			mode := mode
-
 			suite.Run(fmt.Sprintf("%s-%s", configFile, mode), func() {
 				suite.RunCLI([]string{"validate", "-m", mode, "-c", configFile, "--strict"})
 			})

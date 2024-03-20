@@ -91,8 +91,6 @@ func TestGenerateSuite(t *testing.T) {
 			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion0_8)},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.label, func(t *testing.T) {
 			t.Parallel()
 

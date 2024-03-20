@@ -103,8 +103,6 @@ func (ctrl *LinkMergeController) Run(ctx context.Context, r controller.Runtime, 
 		conflictsDetected := 0
 
 		for id, link := range links {
-			link := link
-
 			if err = r.Modify(ctx, network.NewLinkSpec(network.NamespaceName, id), func(res resource.Resource) error {
 				l := res.(*network.LinkSpec) //nolint:errcheck,forcetypeassert
 

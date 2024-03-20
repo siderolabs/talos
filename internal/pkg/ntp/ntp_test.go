@@ -380,7 +380,7 @@ func (suite *NTPSuite) TestSyncIterateTimeservers() {
 	wg.Wait()
 
 	// should always sync with 127.0.0.3, and never switch to 127.0.0.4
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		suite.Assert().Equal(time.Millisecond, suite.clockAdjustments[i])
 	}
 }

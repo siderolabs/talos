@@ -537,10 +537,13 @@ func (suite *LinkSpecSuite) TestBond8023ad() {
 	}
 	networkadapter.BondMasterSpec(&bond.TypedSpec().BondMaster).FillDefaults()
 
-	dummies := []resource.Resource{}
-	dummyNames := []string{}
+	//nolint:prealloc
+	var (
+		dummies    []resource.Resource
+		dummyNames []string
+	)
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		dummyName := suite.uniqueDummyInterface()
 		dummy := network.NewLinkSpec(network.NamespaceName, dummyName)
 		*dummy.TypedSpec() = network.LinkSpecSpec{
@@ -944,7 +947,7 @@ func TestSortBonds(t *testing.T) {
 	seed := time.Now().Unix()
 	rnd := rand.New(rand.NewSource(seed))
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		res := toResources(expectedSlice)
 		rnd.Shuffle(len(res), func(i, j int) { res[i], res[j] = res[j], res[i] })
 		netctrl.SortBonds(res)

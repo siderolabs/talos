@@ -180,8 +180,6 @@ func TestValidate(t *testing.T) {
 			expectedError: "2 errors occurred:\n\t* machine instructions are required\n\t* apiUrl is required\n\n",
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

@@ -71,7 +71,7 @@ func (r *roundRobinResolver) start() error {
 	endpoints := strings.Split(r.target.Endpoint(), ",")
 
 	for _, addr := range endpoints {
-		serverName := addr
+		serverName := addr //nolint:copyloopvar
 
 		host, _, err := net.SplitHostPort(serverName)
 		if err == nil {

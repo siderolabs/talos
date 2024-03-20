@@ -213,7 +213,7 @@ func (suite *LinkMergeSuite) TestMergeFlapping() {
 
 	flipflop := func(idx int) func() error {
 		return func() error {
-			for i := 0; i < 500; i++ {
+			for range 500 {
 				if err := suite.state.Create(suite.ctx, resources[idx]); err != nil {
 					return err
 				}
@@ -236,7 +236,7 @@ func (suite *LinkMergeSuite) TestMergeFlapping() {
 	eg.Go(
 		func() error {
 			// add/remove finalizer to the merged resource
-			for i := 0; i < 1000; i++ {
+			for range 1000 {
 				if err := suite.state.AddFinalizer(
 					suite.ctx,
 					resource.NewMetadata(

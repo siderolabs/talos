@@ -160,7 +160,6 @@ func (ctrl *AddressConfigController) apply(ctx context.Context, r controller.Run
 	ids := make([]string, 0, len(addresses))
 
 	for _, address := range addresses {
-		address := address
 		id := network.LayeredID(address.ConfigLayer, network.AddressID(address.LinkName, address.Address))
 
 		if err := r.Modify(

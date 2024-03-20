@@ -294,7 +294,7 @@ func populateNestedExamples(v reflect.Value, index int) {
 	case reflect.Struct:
 		doc := getDoc(v.Interface())
 
-		for i := 0; i < v.NumField(); i++ {
+		for i := range v.NumField() {
 			field := v.Field(i)
 			if !field.CanInterface() {
 				continue
@@ -315,7 +315,7 @@ func populateNestedExamples(v reflect.Value, index int) {
 			populateNestedExamples(v.MapIndex(key), index)
 		}
 	case reflect.Slice:
-		for i := 0; i < v.Len(); i++ {
+		for i := range v.Len() {
 			populateNestedExamples(v.Index(i), index)
 		}
 	}

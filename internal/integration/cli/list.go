@@ -95,7 +95,6 @@ func (suite *ListSuite) TestDepth() {
 
 		{separators: 5, flags: []string{"--recurse=true"}},
 	} {
-		test := test
 		suite.Run(strings.Join(test.flags, ","), func() {
 			suite.T().Parallel()
 			runAndCheck(suite.T(), test.separators, test.flags...)

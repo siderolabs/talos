@@ -99,8 +99,6 @@ func TestAffiliateSpec_Merge(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			spec := tt.a
 			spec.Merge(&tt.b)

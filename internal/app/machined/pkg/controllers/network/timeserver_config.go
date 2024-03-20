@@ -138,7 +138,6 @@ func (ctrl *TimeServerConfigController) apply(ctx context.Context, r controller.
 	ids := make([]string, 0, len(specs))
 
 	for _, spec := range specs {
-		spec := spec
 		id := network.LayeredID(spec.ConfigLayer, network.TimeServerID)
 
 		if err := r.Modify(

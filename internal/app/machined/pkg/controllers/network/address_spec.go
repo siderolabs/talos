@@ -302,7 +302,7 @@ func broadcastAddr(addr netip.Prefix) net.IP {
 
 	out := make(net.IP, n)
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		out[i] = ip[i] | ^mask[i]
 	}
 

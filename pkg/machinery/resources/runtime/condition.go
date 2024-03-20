@@ -34,7 +34,6 @@ func (condition *KernelParamsSetCondition) String() string {
 // Wait implements condition interface.
 func (condition *KernelParamsSetCondition) Wait(ctx context.Context) error {
 	for _, prop := range condition.props {
-		prop := prop
 		if _, err := condition.state.WatchFor(
 			ctx,
 			resource.NewMetadata(NamespaceName, KernelParamStatusType, prop.Key, resource.VersionUndefined),

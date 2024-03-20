@@ -59,8 +59,6 @@ func TestVariableMatches(t *testing.T) {
 			},
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -138,8 +136,6 @@ func TestVariableReplace(t *testing.T) {
 			expected: "https://example.com?a=value1",
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

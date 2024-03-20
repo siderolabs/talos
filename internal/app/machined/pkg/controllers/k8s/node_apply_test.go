@@ -112,8 +112,6 @@ func TestApplyLabels(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -297,8 +295,6 @@ func TestApplyTaints(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -395,8 +391,6 @@ func TestApplyCordoned(t *testing.T) {
 			expectedAnnotations:   map[string]string{"foo": "bar"},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

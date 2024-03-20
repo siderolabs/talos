@@ -303,8 +303,6 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 			expectedErr: "2 errors occurred:\n\t* field \"authentication\" can't be overridden\n\t* field \"port\" can't be overridden\n\n",
 		},
 	} {
-		tt := tt
-
 		t.Run(
 			tt.name, func(t *testing.T) {
 				t.Parallel()
@@ -460,8 +458,6 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

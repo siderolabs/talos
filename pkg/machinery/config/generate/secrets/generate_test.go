@@ -46,8 +46,6 @@ func TestNewBundle(t *testing.T) {
 			versionContract: config.TalosVersionCurrent,
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

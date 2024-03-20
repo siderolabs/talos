@@ -256,7 +256,7 @@ func (suite *ResetSuite) TestResetDuringBoot() {
 
 	suite.T().Log("Resetting node", node)
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		bootID := suite.ReadBootIDWithRetry(nodeCtx, time.Minute*5)
 
 		err := retry.Constant(5*time.Minute, retry.WithUnits(time.Millisecond*1000)).Retry(

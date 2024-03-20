@@ -194,8 +194,6 @@ func (ctrl *KubeletStaticPodController) refreshPodStatus(ctx context.Context, r 
 	podsSeen := map[string]struct{}{}
 
 	for _, pod := range podList.Items {
-		pod := pod
-
 		switch pod.Metadata.Annotations.ConfigSource {
 		case "file":
 			// static pod from a file source

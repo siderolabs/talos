@@ -39,8 +39,8 @@ func (w *TermUIWrapper) Draw(screen tcell.Screen) {
 	buf := termui.NewBuffer(w.termUIDrawable.GetRect())
 	w.termUIDrawable.Draw(buf)
 
-	for i := 0; i < width; i++ {
-		for j := 0; j < height; j++ {
+	for i := range width {
+		for j := range height {
 			cell := buf.GetCell(image.Point{X: i, Y: j})
 
 			style := w.convertStyle(cell.Style)

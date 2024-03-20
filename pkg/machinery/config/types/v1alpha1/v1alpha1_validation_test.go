@@ -1493,8 +1493,6 @@ func TestValidate(t *testing.T) {
 			expectedError: "3 errors occurred:\n\t* apiserver resource validation failed: unsupported pod resource \"invalid1\"\n\t* controller-manager resource validation failed: unsupported pod resource \"invalid2\"\n\t* scheduler resource validation failed: unsupported pod resource \"invalid3\"\n\n", //nolint:lll
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -1607,8 +1605,6 @@ func TestValidateCNI(t *testing.T) {
 			expectedError: "1 error occurred:\n\t* \"urls\" field should be empty for \"none\" CNI\n\n",
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

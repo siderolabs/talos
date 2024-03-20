@@ -230,7 +230,7 @@ func (t *CRDController) Run(ctx context.Context, workers int) error {
 
 	wg.Add(workers)
 
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go func() {
 			wait.Until(func() { t.runWorker(ctx) }, time.Second, ctx.Done())
 			wg.Done()

@@ -131,8 +131,6 @@ func TestDownload(t *testing.T) {
 			expected: "data",
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

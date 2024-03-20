@@ -169,7 +169,7 @@ func handleConn(ctx context.Context, conn *net.UnixConn, mu *sync.Mutex, ours, t
 		// find the other side of the connection
 		var w net.Conn
 
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			mu.Lock()
 			w = *theirs
 			mu.Unlock()

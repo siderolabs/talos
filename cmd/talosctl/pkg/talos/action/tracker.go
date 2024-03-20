@@ -163,8 +163,6 @@ func (a *Tracker) Run() error {
 		var trackEg errgroup.Group
 
 		for _, node := range a.cliContext.Nodes {
-			node := node
-
 			var (
 				dmesg *circular.Buffer
 				err   error

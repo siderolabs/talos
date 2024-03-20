@@ -171,7 +171,6 @@ func (suite *TalosconfigSuite) TestNew() {
 			opts: []base.RunOption{base.StdoutShouldMatch(regexp.MustCompile(`hosts`))},
 		},
 	} {
-		tt := tt
 		name := strings.Join(tt.args, "_")
 		suite.Run(name, func() {
 			suite.T().Parallel()
@@ -229,7 +228,6 @@ func (suite *TalosconfigSuite) TestNew() {
 			},
 		},
 	} {
-		tt := tt
 		name := strings.Join(tt.args, "_")
 		suite.Run(name, func() {
 			suite.T().Parallel()
@@ -266,7 +264,6 @@ func (suite *TalosconfigSuite) TestNew() {
 			},
 		},
 	} {
-		tt := tt
 		name := strings.Join(tt.args, "_")
 		suite.Run(name, func() {
 			suite.T().Parallel()
@@ -313,7 +310,6 @@ func (suite *TalosconfigSuite) TestNew() {
 			},
 		},
 	} {
-		tt := tt
 		name := strings.Join(tt.args, "_")
 		suite.Run(name, func() {
 			suite.T().Parallel()

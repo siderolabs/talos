@@ -849,8 +849,6 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 	}
 
 	for _, disk := range r.Config().Machine().Disks() {
-		disk := disk
-
 		if err := func() error {
 			bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode))
 			if err != nil {

@@ -74,8 +74,6 @@ func (suite *FirewallSuite) TestKubeletAccess() {
 	}
 
 	for _, node := range allNodes {
-		node := node
-
 		eg.Go(func() error {
 			attemptCtx, cancel := context.WithTimeout(ctx, time.Second)
 			defer cancel()

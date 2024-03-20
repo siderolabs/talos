@@ -206,7 +206,7 @@ func (suite *EventsSinkSuite) TestDrain() {
 	ctx, cancel := context.WithCancel(suite.ctx)
 	defer cancel()
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		suite.events.Publish(
 			ctx,
 			&machine.PhaseEvent{

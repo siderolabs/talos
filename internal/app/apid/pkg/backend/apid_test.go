@@ -214,11 +214,11 @@ func TestAPIIdiosyncrasies(t *testing.T) {
 		storage.File_storage_storage_proto.Services(),
 		time.File_time_time_proto.Services(),
 	} {
-		for i := 0; i < services.Len(); i++ {
+		for i := range services.Len() {
 			service := services.Get(i)
 			methods := service.Methods()
 
-			for j := 0; j < methods.Len(); j++ {
+			for j := range methods.Len() {
 				method := methods.Get(j)
 
 				t.Run(
@@ -320,7 +320,7 @@ func testEnum(t *testing.T, enum protoreflect.EnumDescriptor, currentVersion *co
 	testDeprecated(t, enum, currentVersion)
 
 	values := enum.Values()
-	for i := 0; i < values.Len(); i++ {
+	for i := range values.Len() {
 		testDeprecated(t, values.Get(i), currentVersion)
 	}
 }
@@ -329,23 +329,23 @@ func testMessage(t *testing.T, message protoreflect.MessageDescriptor, currentVe
 	testDeprecated(t, message, currentVersion)
 
 	fields := message.Fields()
-	for i := 0; i < fields.Len(); i++ {
+	for i := range fields.Len() {
 		testDeprecated(t, fields.Get(i), currentVersion)
 	}
 
 	oneofs := message.Oneofs()
-	for i := 0; i < oneofs.Len(); i++ {
+	for i := range oneofs.Len() {
 		testDeprecated(t, oneofs.Get(i), currentVersion)
 	}
 
 	enums := message.Enums()
-	for i := 0; i < enums.Len(); i++ {
+	for i := range enums.Len() {
 		testEnum(t, enums.Get(i), currentVersion)
 	}
 
 	// test nested messages
 	messages := message.Messages()
-	for i := 0; i < messages.Len(); i++ {
+	for i := range messages.Len() {
 		testMessage(t, messages.Get(i), currentVersion)
 	}
 }
@@ -364,22 +364,22 @@ func TestDeprecatedAPIs(t *testing.T) {
 		time.File_time_time_proto,
 	} {
 		enums := file.Enums()
-		for i := 0; i < enums.Len(); i++ {
+		for i := range enums.Len() {
 			testEnum(t, enums.Get(i), currentVersion)
 		}
 
 		messages := file.Messages()
-		for i := 0; i < messages.Len(); i++ {
+		for i := range messages.Len() {
 			testMessage(t, messages.Get(i), currentVersion)
 		}
 
 		services := file.Services()
-		for i := 0; i < services.Len(); i++ {
+		for i := range services.Len() {
 			service := services.Get(i)
 			testDeprecated(t, service, currentVersion)
 
 			methods := service.Methods()
-			for j := 0; j < methods.Len(); j++ {
+			for j := range methods.Len() {
 				method := methods.Get(j)
 				testDeprecated(t, method, currentVersion)
 

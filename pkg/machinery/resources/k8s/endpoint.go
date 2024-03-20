@@ -71,8 +71,6 @@ type EndpointList []netip.Addr
 // Merge endpoints from multiple Endpoint resources into a single list.
 func (l EndpointList) Merge(endpoint *Endpoint) EndpointList {
 	for _, ip := range endpoint.TypedSpec().Addresses {
-		ip := ip
-
 		idx := sort.Search(len(l), func(i int) bool { return !l[i].Less(ip) })
 
 		if idx < len(l) && l[idx].Compare(ip) == 0 {

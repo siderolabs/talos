@@ -38,7 +38,6 @@ func TestParseType(t *testing.T) {
 	}
 
 	for _, tt := range validTests {
-		tt := tt
 		t.Run(tt.s, func(t *testing.T) {
 			t.Parallel()
 
@@ -56,7 +55,6 @@ func TestParseType(t *testing.T) {
 	for _, s := range []string{
 		"foo",
 	} {
-		s := s
 		t.Run(s, func(t *testing.T) {
 			t.Parallel()
 

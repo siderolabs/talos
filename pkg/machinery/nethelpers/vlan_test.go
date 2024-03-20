@@ -59,8 +59,6 @@ func TestVLANLinkName(t *testing.T) {
 			expected: "enx1ef972f.4095",
 		},
 	} {
-		test := test
-
 		t.Run(fmt.Sprintf("%s.%d", test.base, test.vlanID), func(t *testing.T) {
 			t.Parallel()
 

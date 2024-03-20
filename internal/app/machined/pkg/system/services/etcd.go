@@ -598,7 +598,7 @@ func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) erro
 		}
 
 		// try to iterate all available endpoints in the time available for an attempt
-		for i := 0; i < len(endpoints); i++ {
+		for range len(endpoints) {
 			select {
 			case <-ctx.Done():
 				return retry.ExpectedError(ctx.Err())

@@ -938,6 +938,7 @@ FROM base AS lint-go
 COPY .golangci.yml .
 ENV GOGC 50
 ENV GOLANGCI_LINT_CACHE /.cache/lint
+RUN golangci-lint config verify --config .golangci.yml
 RUN --mount=type=cache,target=/.cache golangci-lint run --config .golangci.yml
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache golangci-lint run --config ../../.golangci.yml

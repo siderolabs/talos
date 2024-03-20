@@ -36,8 +36,6 @@ func TestGetSelection(t *testing.T) {
 			expected: []byte{0, 0, 0xe0},
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

@@ -183,8 +183,6 @@ func (suite *GenSuite) testGenConfigPatch(patch []byte) {
 			},
 		},
 	} {
-		tt := tt
-
 		suite.Run(tt.flag, func() {
 			suite.RunCLI([]string{"gen", "config", "--force", "foo", "https://192.168.0.1:6443", "--" + tt.flag, string(patch)},
 				base.StdoutEmpty(),

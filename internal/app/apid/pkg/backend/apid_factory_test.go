@@ -48,7 +48,7 @@ func (suite *APIDFactorySuite) TestGetConcurrent() {
 
 	backendCh := make(chan proxy.Backend, 10)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		wg.Add(1)
 
 		go func() {

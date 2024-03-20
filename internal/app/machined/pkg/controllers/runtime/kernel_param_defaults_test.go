@@ -77,8 +77,6 @@ func (suite *KernelParamDefaultsSuite) TestContainerMode() {
 	suite.startRuntime()
 
 	for _, prop := range getParams(runtime.ModeContainer) {
-		prop := prop
-
 		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			suite.assertResource(
 				resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamDefaultSpecType, prop.Key, resource.VersionUndefined),
@@ -101,8 +99,6 @@ func (suite *KernelParamDefaultsSuite) TestMetalMode() {
 	suite.startRuntime()
 
 	for _, prop := range getParams(runtime.ModeMetal) {
-		prop := prop
-
 		suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			suite.assertResource(
 				resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamDefaultSpecType, prop.Key, resource.VersionUndefined),

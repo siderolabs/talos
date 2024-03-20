@@ -181,7 +181,6 @@ func (ctrl *HostnameConfigController) apply(ctx context.Context, r controller.Ru
 	ids := make([]string, 0, len(specs))
 
 	for _, spec := range specs {
-		spec := spec
 		id := network.LayeredID(spec.ConfigLayer, network.HostnameID)
 
 		if err := r.Modify(

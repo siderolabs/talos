@@ -69,13 +69,12 @@ func statsRender(remotePeer *peer.Peer, resp *machineapi.StatsResponse) error {
 	defaultNode := client.AddrFromPeer(remotePeer)
 
 	for _, msg := range resp.Messages {
-		resp := msg
-		sort.Slice(resp.Stats,
+		sort.Slice(msg.Stats,
 			func(i, j int) bool {
-				return strings.Compare(resp.Stats[i].Id, resp.Stats[j].Id) < 0
+				return strings.Compare(msg.Stats[i].Id, msg.Stats[j].Id) < 0
 			})
 
-		for _, s := range resp.Stats {
+		for _, s := range msg.Stats {
 			display := s.Id
 			if s.Id != s.PodId {
 				// container in a sandbox
@@ -84,8 +83,8 @@ func statsRender(remotePeer *peer.Peer, resp *machineapi.StatsResponse) error {
 
 			node := defaultNode
 
-			if resp.Metadata != nil {
-				node = resp.Metadata.Hostname
+			if msg.Metadata != nil {
+				node = msg.Metadata.Hostname
 			}
 
 			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)

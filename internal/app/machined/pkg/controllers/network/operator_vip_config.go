@@ -174,7 +174,6 @@ func (ctrl *OperatorVIPConfigController) apply(ctx context.Context, r controller
 	ids := make([]string, 0, len(specs))
 
 	for _, spec := range specs {
-		spec := spec
 		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec.Operator, spec.LinkName))
 
 		if err := r.Modify(

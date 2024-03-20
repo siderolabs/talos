@@ -257,8 +257,6 @@ func (handler *circularHandler) resend(e *runtime.LogEvent) {
 		sendErrors := make(chan error, len(senders))
 
 		for _, sender := range senders {
-			sender := sender
-
 			go func() {
 				sendErrors <- sender.Send(sendCtx, e)
 			}()

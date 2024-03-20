@@ -196,8 +196,6 @@ func (ctrl *KmsgLogDeliveryController) resend(ctx context.Context, r controller.
 		sendErrors := make(chan error, len(senders))
 
 		for _, sender := range senders {
-			sender := sender
-
 			go func() {
 				sendErrors <- sender.Send(sendCtx, e)
 			}()

@@ -23,8 +23,6 @@ func TFTPd(ips []net.IP, nextHandler string) error {
 	var eg errgroup.Group
 
 	for _, ip := range ips {
-		ip := ip
-
 		eg.Go(func() error {
 			return server.ListenAndServe(net.JoinHostPort(ip.String(), "69"))
 		})

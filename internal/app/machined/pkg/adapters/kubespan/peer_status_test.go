@@ -116,8 +116,6 @@ func TestPeerStatus_CalculateState(t *testing.T) {
 			expectedState:       kubespan.PeerStateUp,
 		},
 	} {
-		tt := tt
-
 		t.Run(tt.name, func(t *testing.T) {
 			peerStatus := kubespan.PeerStatusSpec{
 				LastHandshakeTime:  time.Now().Add(-tt.sinceLastHandshake),

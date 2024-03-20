@@ -59,8 +59,6 @@ func (suite *ApidSuite) TestControlPlaneRouting() {
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 
 	for _, endpoint := range endpoints {
-		endpoint := endpoint
-
 		suite.Run(endpoint, func() {
 			cli, err := client.New(suite.ctx,
 				client.WithConfig(suite.Talosconfig),
@@ -112,8 +110,6 @@ func (suite *ApidSuite) TestWorkerNoRouting() {
 	}
 
 	for _, endpoint := range endpoints {
-		endpoint := endpoint
-
 		suite.Run(endpoint, func() {
 			cli, err := client.New(suite.ctx,
 				client.WithConfig(suite.Talosconfig),

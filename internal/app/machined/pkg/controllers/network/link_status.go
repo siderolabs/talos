@@ -160,8 +160,6 @@ func (ctrl *LinkStatusController) reconcile(
 
 	// for every rtnetlink discovered link
 	for _, link := range links {
-		link := link
-
 		var (
 			ethState      *ethtool.LinkState
 			ethInfo       *ethtool.LinkInfo

@@ -48,8 +48,6 @@ func TestConfigEncodingStability(t *testing.T) {
 	require.True(t, currentVersion.LTE(maxContractVersion), "latest version contract is not tested")
 
 	for _, versionContract := range versionContracts {
-		versionContract := versionContract
-
 		t.Run(versionContract.String(), func(t *testing.T) {
 			t.Parallel()
 

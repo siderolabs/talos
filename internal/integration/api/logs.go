@@ -86,7 +86,7 @@ func (suite *LogsSuite) TestServicesHaveLogs() {
 func (suite *LogsSuite) TestTail() {
 	// invoke machined enough times to generate
 	// some logs
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		_, err := suite.Client.Version(suite.nodeCtx)
 		suite.Require().NoError(err)
 	}
@@ -160,7 +160,7 @@ func (suite *LogsSuite) testStreaming(tailLines int32) {
 	if tailLines >= 0 {
 		// invoke machined enough times to generate
 		// some logs
-		for i := int32(0); i < tailLines; i++ {
+		for range tailLines {
 			_, err := suite.Client.Stats(
 				suite.nodeCtx,
 				constants.SystemContainerdNamespace,

@@ -45,8 +45,6 @@ func TestQuote(t *testing.T) {
 			expected: "http://my-host/config.yaml?uuid=\\$\\{uuid\\}\\&serial=\\$\\{serial\\}\\&mac=\\$\\{mac\\}\\&hostname=\\$\\{hostname\\}",
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -94,8 +92,6 @@ func TestUnquote(t *testing.T) {
 			expected: "http://my-host/config.yaml?uuid=${uuid}&serial=${serial}&mac=${mac}&hostname=${hostname}",
 		},
 	} {
-		test := test
-
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

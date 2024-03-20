@@ -156,8 +156,6 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 		for _, affilateSpec := range affiliateSpecs {
 			id := fmt.Sprintf("k8s/%s", affilateSpec.NodeID)
 
-			affilateSpec := affilateSpec
-
 			if err = safe.WriterModify(ctx, r, cluster.NewAffiliate(cluster.RawNamespaceName, id), func(res *cluster.Affiliate) error {
 				*res.TypedSpec() = *affilateSpec
 

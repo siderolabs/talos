@@ -89,8 +89,6 @@ func (ctrl *AddressMergeController) Run(ctx context.Context, r controller.Runtim
 		conflictsDetected := 0
 
 		for id, address := range addresses {
-			address := address
-
 			if err = r.Modify(ctx, network.NewAddressSpec(network.NamespaceName, id), func(res resource.Resource) error {
 				addr := res.(*network.AddressSpec) //nolint:errcheck,forcetypeassert
 

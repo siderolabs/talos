@@ -114,7 +114,7 @@ func (r *Reporter) Report(update Update) {
 
 	if prevLineTemporary {
 		for _, outputLine := range strings.Split(r.lastLine, "\n") {
-			for i := 0; i < (utf8.RuneCountInString(outputLine)+w-1)/w; i++ {
+			for range (utf8.RuneCountInString(outputLine) + w - 1) / w {
 				fmt.Fprint(r.w, "\033[A\033[K") // cursor up, clear line
 			}
 		}
