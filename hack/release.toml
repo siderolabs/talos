@@ -17,7 +17,8 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description = """\
-* Linux: 6.1.80
+* Linux: 6.1.82
+* Kubernetes: 1.29.3
 
 Talos is built with Go 1.21.8.
 """
