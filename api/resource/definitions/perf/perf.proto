@@ -81,4 +81,3 @@ message MemorySpec {
   uint64 direct_map2m = 47;
   uint64 direct_map1g = 48;
 }
-

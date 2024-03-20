@@ -11,4 +11,3 @@ message SeccompProfileSpec {
   string name = 1;
   google.protobuf.Struct value = 2;
 }
-

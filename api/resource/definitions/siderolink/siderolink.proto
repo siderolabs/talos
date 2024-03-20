@@ -22,4 +22,3 @@ message TunnelSpec {
   int64 mtu = 3;
   common.NetIPPort node_address = 4;
 }
-

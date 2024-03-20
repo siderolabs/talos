@@ -24,4 +24,3 @@ message StatusSpec {
   int64 epoch = 2;
   bool sync_disabled = 3;
 }
-

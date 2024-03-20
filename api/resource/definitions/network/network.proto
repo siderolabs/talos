@@ -417,4 +417,3 @@ message WireguardSpec {
   int64 firewall_mark = 4;
   repeated WireguardPeer peers = 5;
 }
-

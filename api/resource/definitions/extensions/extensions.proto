@@ -28,4 +28,3 @@ message Metadata {
   string description = 4;
   Compatibility compatibility = 5;
 }
-

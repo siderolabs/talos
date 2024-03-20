@@ -36,4 +36,3 @@ message SpecSpec {
   repeated common.NetIP listen_peer_addresses = 5;
   repeated common.NetIP listen_client_addresses = 6;
 }
-
