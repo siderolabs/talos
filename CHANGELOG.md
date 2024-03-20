@@ -1,3 +1,64 @@
+## [Talos 1.6.7](https://github.com/siderolabs/talos/releases/tag/v1.6.7) (2024-03-20)
+
+Welcome to the v1.6.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+* Linux: 6.1.82
+* Kubernetes: 1.29.3
+
+Talos is built with Go 1.21.8.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Utku Ozdemir
+* Noel Georgi
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`9ef06f60f`](https://github.com/siderolabs/talos/commit/9ef06f60f9e5b20da5dc051310709498ceaeaa3a) fix: service lifecycle issues
+* [`2c9159977`](https://github.com/siderolabs/talos/commit/2c9159977a02ea6d6ab3ba379163f573ef77e414) fix: patch correctly config in `talosctl upgrade-k8s`
+* [`16691dfd5`](https://github.com/siderolabs/talos/commit/16691dfd5290feaf259bcea4be5f1b7e85f2017b) fix: remove maintenance config when maintenance service is shut down
+* [`5cbbbfa68`](https://github.com/siderolabs/talos/commit/5cbbbfa687862344d30c6c59c2c65f474b41fd23) fix: fix nil panic on maintenance upgrade with partial config
+* [`3c942fe9d`](https://github.com/siderolabs/talos/commit/3c942fe9d833176574c376c47526e769c04b4ba4) fix: etcd config validation for worker
+* [`a5920a157`](https://github.com/siderolabs/talos/commit/a5920a157ec1e819a5062789575be3d467463b5d) feat: update Kubernetes to 1.29.3, Linux to 6.1.82
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>1 commit</summary>
+<p>
+
+* [`df44f94`](https://github.com/siderolabs/pkgs/commit/df44f9483cd44bda8ec27ef2060e196103ef1341) feat: update dependencies for Talos 1.6.7
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**     v1.6.0-26-g2961472 -> v1.6.0-27-gdf44f94
+* **google.golang.org/protobuf**     v1.31.0 -> v1.33.0
+* **k8s.io/api**                     v0.29.2 -> v0.29.3
+* **k8s.io/apimachinery**            v0.29.2 -> v0.29.3
+* **k8s.io/apiserver**               v0.29.2 -> v0.29.3
+* **k8s.io/client-go**               v0.29.2 -> v0.29.3
+* **k8s.io/component-base**          v0.29.2 -> v0.29.3
+* **k8s.io/cri-api**                 v0.29.2 -> v0.29.3
+* **k8s.io/kube-scheduler**          v0.29.2 -> v0.29.3
+* **k8s.io/kubectl**                 v0.29.2 -> v0.29.3
+* **k8s.io/kubelet**                 v0.29.2 -> v0.29.3
+* **k8s.io/pod-security-admission**  v0.29.2 -> v0.29.3
+
+Previous release can be found at [v1.6.6](https://github.com/siderolabs/talos/releases/tag/v1.6.6)
+
 ## [Talos 1.6.6](https://github.com/siderolabs/talos/releases/tag/v1.6.6) (2024-03-06)
 
 Welcome to the v1.6.6 release of Talos!
