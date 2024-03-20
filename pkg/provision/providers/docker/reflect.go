@@ -68,6 +68,11 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 			return nil, err
 		}
 
+		container, err := p.client.ContainerInspect(ctx, node.ID)
+		if err != nil {
+			return nil, err
+		}
+
 		var ips []netip.Addr
 
 		if network, ok := node.NetworkSettings.Networks[res.clusterInfo.Network.Name]; ok {
@@ -91,6 +96,9 @@ func (p *provisioner) Reflect(ctx context.Context, clusterName, stateDirectory s
 				Type: t,
 
 				IPs: ips,
+
+				NanoCPUs: container.HostConfig.Resources.NanoCPUs,
+				Memory:   container.HostConfig.Resources.Memory,
 			})
 	}
 
