@@ -87,6 +87,7 @@ const (
 	bootloaderEnabledFlag         = "with-bootloader"
 	forceEndpointFlag             = "endpoint"
 	controlPlanePortFlag          = "control-plane-port"
+	apiPortFlag                   = "api-port"
 	kubePrismFlag                 = "kubeprism-port"
 	tpm2EnabledFlag               = "with-tpm2"
 	diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
@@ -159,6 +160,7 @@ var (
 	extraBootKernelArgs        string
 	dockerDisableIPv6          bool
 	controlPlanePort           int
+	apiPort                    int
 	kubePrismPort              int
 	dhcpSkipHostname           bool
 	skipBootPhaseFinishedCheck bool
@@ -650,7 +652,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			}
 		}
 
-		endpointList = []string{forceEndpoint + ":50050"}
+		endpointList = []string{fmt.Sprintf("%s:%d", forceEndpoint, apiPort)}
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
 		configBundleOpts = append(configBundleOpts,
 			bundle.WithInputOptions(
@@ -779,7 +781,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		}
 
 		if i == 0 {
-			nodeReq.Ports = []string{"50050:50000/tcp", fmt.Sprintf("%d:%d/tcp", controlPlanePort, controlPlanePort)}
+			nodeReq.Ports = []string{fmt.Sprintf("%d:50000/tcp", apiPort), fmt.Sprintf("%d:%d/tcp", controlPlanePort, controlPlanePort)}
 		}
 
 		if withInitNode && i == 0 {
@@ -1144,6 +1146,7 @@ func init() {
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
 	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
 	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
+	createCmd.Flags().IntVar(&apiPort, apiPortFlag, constants.ApidPort, "API port (local Talos management API port)")
 	createCmd.Flags().IntVar(&kubePrismPort, kubePrismFlag, constants.DefaultKubePrismPort, "KubePrism port (set to 0 to disable)")
 	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
 	createCmd.Flags().BoolVar(&skipBootPhaseFinishedCheck, "skip-boot-phase-finished-check", false, "skip waiting for node to finish boot phase")
@@ -1186,6 +1189,7 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 		bootloaderEnabledFlag,
 		forceEndpointFlag,
 		controlPlanePortFlag,
+		apiPortFlag,
 		kubePrismFlag,
 		firewallFlag,
 	}
