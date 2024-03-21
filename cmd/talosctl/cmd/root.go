@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -67,7 +68,7 @@ func Execute() error {
 }
 
 func init() {
-	for _, cmd := range append(talos.Commands, mgmt.Commands...) {
+	for _, cmd := range slices.Concat(talos.Commands, mgmt.Commands) {
 		rootCmd.AddCommand(cmd)
 	}
 }

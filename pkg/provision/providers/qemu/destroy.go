@@ -82,6 +82,12 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
+	fmt.Fprintln(options.LogWriter, "removing siderolink agent")
+
+	if err := p.DestroySiderolinkAgent(state); err != nil {
+		return err
+	}
+
 	fmt.Fprintln(options.LogWriter, "removing state directory")
 
 	return deleteStateDirectory(true)

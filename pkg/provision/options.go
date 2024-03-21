@@ -133,6 +133,15 @@ func WithKMS(endpoint string) Option {
 	}
 }
 
+// WithSiderolinkAgent enables or disables siderolink agent.
+func WithSiderolinkAgent(v bool) Option {
+	return func(o *Options) error {
+		o.SiderolinkEnabled = v
+
+		return nil
+	}
+}
+
 // Options describes Provisioner parameters.
 type Options struct {
 	LogWriter     io.Writer
@@ -157,6 +166,8 @@ type Options struct {
 	DeleteStateOnErr  bool
 
 	KMSEndpoint string
+
+	SiderolinkEnabled bool
 }
 
 // DefaultOptions returns default options.

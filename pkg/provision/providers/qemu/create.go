@@ -47,6 +47,16 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, err
 	}
 
+	if options.SiderolinkEnabled {
+		fmt.Fprintln(options.LogWriter, "creating siderolink agent")
+
+		if err = p.CreateSiderolinkAgent(state, request); err != nil {
+			return nil, err
+		}
+
+		fmt.Fprintln(options.LogWriter, "created siderolink agent")
+	}
+
 	fmt.Fprintln(options.LogWriter, "creating network", request.Network.Name)
 
 	if err = p.CreateNetwork(ctx, state, request.Network, options); err != nil {

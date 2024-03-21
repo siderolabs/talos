@@ -153,6 +153,14 @@ case "${WITH_TRUSTED_BOOT_ISO:-false}" in
     ;;
 esac
 
+case "${WITH_SIDEROLINK_AGENT:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--with-siderolink")
+    ;;
+esac
+
 function create_cluster {
   build_registry_mirrors
 

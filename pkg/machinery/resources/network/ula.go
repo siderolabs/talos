@@ -24,6 +24,9 @@ const (
 
 	// ULASideroLink is the Unique Local Addressing space key for the SideroLink feature.
 	ULASideroLink = 0x03
+
+	// ULAVirtualSideroLink is the Unique Local Addressing space key for the Virtual SideroLink over GRPC feature.
+	ULAVirtualSideroLink = 0x04
 )
 
 // ULAPrefix calculates and returns a Talos-specific Unique Local Address prefix for the given purpose.

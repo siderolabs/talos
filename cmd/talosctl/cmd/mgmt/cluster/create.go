@@ -9,11 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
 	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
 	stdruntime "runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -172,6 +174,7 @@ var (
 	diskEncryptionKeyTypes     []string
 	withFirewall               string
 	withUUIDHostnames          bool
+	withSiderolinkAgent        bool
 )
 
 // createCmd represents the cluster up command.
@@ -422,6 +425,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		provision.WithTPM2(tpm2Enabled),
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
+		provision.WithSiderolinkAgent(withSiderolinkAgent),
 	}
 
 	var configBundleOpts []bundle.Option
@@ -746,6 +750,40 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		extraKernelArgs = procfs.NewCmdline(extraBootKernelArgs)
 	}
 
+	wgNodeGen := makeNodeAddrGenerator()
+
+	if withSiderolinkAgent {
+		if extraKernelArgs == nil {
+			extraKernelArgs = procfs.NewCmdline("")
+		}
+
+		if extraKernelArgs.Get("siderolink.api") != nil || extraKernelArgs.Get("talos.events.sink") != nil || extraKernelArgs.Get("talos.logging.kernel") != nil {
+			return errors.New("siderolink kernel arguments are already set, cannot run with --with-siderolink")
+		}
+
+		wgHost := gatewayIPs[0].String()
+
+		ports, err := getDynamicPorts()
+		if err != nil {
+			return err
+		}
+
+		request.SiderolinkRequest.WireguardEndpoint = net.JoinHostPort(wgHost, ports.wgPort)
+		request.SiderolinkRequest.APIEndpoint = ":" + ports.apiPort
+		request.SiderolinkRequest.SinkEndpoint = ":" + ports.sinkPort
+		request.SiderolinkRequest.LogEndpoint = ":" + ports.logPort
+
+		agentNodeAddr := wgNodeGen.GetAgentNodeAddr()
+
+		apiLink := "grpc://" + net.JoinHostPort(wgHost, ports.apiPort) + "?jointoken=foo"
+		sinkURL := net.JoinHostPort(agentNodeAddr, ports.sinkPort)
+		kernelURL := "tcp://" + net.JoinHostPort(agentNodeAddr, ports.logPort)
+
+		extraKernelArgs.Append("siderolink.api", apiLink)
+		extraKernelArgs.Append("talos.events.sink", sinkURL)
+		extraKernelArgs.Append("talos.logging.kernel", kernelURL)
+	}
+
 	// Add talosconfig to provision options, so we'll have it to parse there
 	provisionOptions = append(provisionOptions, provision.WithTalosConfig(configBundle.TalosConfig()))
 
@@ -759,6 +797,17 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		}
 
 		nodeUUID := uuid.New()
+
+		if withSiderolinkAgent {
+			var generated netip.Addr
+
+			generated, err = wgNodeGen.GenerateRandomNodeAddr()
+			if err != nil {
+				return err
+			}
+
+			request.SiderolinkRequest.AddBind(nodeUUID, generated)
+		}
 
 		nodeReq := provision.NodeRequest{
 			Name:                nodeName(clusterName, "controlplane", i+1, nodeUUID),
@@ -820,6 +869,17 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 		nodeUUID := uuid.New()
 
+		if withSiderolinkAgent {
+			var generated netip.Addr
+
+			generated, err = wgNodeGen.GenerateRandomNodeAddr()
+			if err != nil {
+				return err
+			}
+
+			request.SiderolinkRequest.AddBind(nodeUUID, generated)
+		}
+
 		request.Nodes = append(request.Nodes,
 			provision.NodeRequest{
 				Name:                nodeName(clusterName, "worker", i, nodeUUID),
@@ -855,7 +915,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	defer clusterAccess.Close() //nolint:errcheck
 
 	if applyConfigEnabled {
-		err = clusterAccess.ApplyConfig(ctx, request.Nodes, os.Stdout)
+		err = clusterAccess.ApplyConfig(ctx, request.Nodes, request.SiderolinkRequest, os.Stdout)
 		if err != nil {
 			return err
 		}
@@ -1153,6 +1213,7 @@ func init() {
 	createCmd.Flags().IntVar(&bandwidth, "with-network-bandwidth", 0, "specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster")
 	createCmd.Flags().StringVar(&withFirewall, firewallFlag, "", "inject firewall rules into the cluster, value is default policy - accept/block (QEMU only)")
 	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
+	createCmd.Flags().BoolVar(&withSiderolinkAgent, "with-siderolink", false, "enables the use of siderolink agent as configuration apply mechanism")
 
 	Cmd.AddCommand(createCmd)
 }
@@ -1191,4 +1252,112 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 	}
 
 	return ""
+}
+
+type generatedPorts struct {
+	wgPort   string
+	apiPort  string
+	sinkPort string
+	logPort  string
+}
+
+func getDynamicPorts() (generatedPorts, error) {
+	var resultErr error
+
+	for range 10 {
+		wgPort, err := getDynamicPort("udp")
+		if err != nil {
+			return generatedPorts{}, fmt.Errorf("failed to get dynamic port for WireGuard: %w", err)
+		}
+
+		apiPort, err := getDynamicPort("tcp")
+		if err != nil {
+			return generatedPorts{}, fmt.Errorf("failed to get dynamic port for GRPC API: %w", err)
+		}
+
+		sinkPort, err := getDynamicPort("tcp")
+		if err != nil {
+			return generatedPorts{}, fmt.Errorf("failed to get dynamic port for Sink: %w", err)
+		}
+
+		logPort, err := getDynamicPort("tcp")
+		if err != nil {
+			return generatedPorts{}, fmt.Errorf("failed to get dynamic port for Log: %w", err)
+		}
+
+		resultErr = checkPortsDontOverlap(wgPort, apiPort, sinkPort, logPort)
+		if resultErr != nil {
+			continue
+		}
+
+		return generatedPorts{
+			wgPort:   strconv.Itoa(wgPort),
+			apiPort:  strconv.Itoa(apiPort),
+			sinkPort: strconv.Itoa(sinkPort),
+			logPort:  strconv.Itoa(logPort),
+		}, nil
+	}
+
+	return generatedPorts{}, fmt.Errorf("failed to get non-overlapping dynamic ports in 10 attempts: %w", resultErr)
+}
+
+func getDynamicPort(network string) (int, error) {
+	var (
+		closeFn func() error
+		addrFn  func() net.Addr
+	)
+
+	switch network {
+	case "tcp", "tcp4", "tcp6":
+		l, err := net.Listen(network, "127.0.0.1:0")
+		if err != nil {
+			return 0, err
+		}
+
+		addrFn, closeFn = l.Addr, l.Close
+	case "udp", "udp4", "udp6":
+		l, err := net.ListenPacket(network, "127.0.0.1:0")
+		if err != nil {
+			return 0, err
+		}
+
+		addrFn, closeFn = l.LocalAddr, l.Close
+	default:
+		return 0, fmt.Errorf("unsupported network: %s", network)
+	}
+
+	_, portStr, err := net.SplitHostPort(addrFn().String())
+	if err != nil {
+		return 0, handleCloseErr(err, closeFn())
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return port, handleCloseErr(nil, closeFn())
+}
+
+func handleCloseErr(err error, closeErr error) error {
+	switch {
+	case err != nil && closeErr != nil:
+		return fmt.Errorf("error: %w, close error: %w", err, closeErr)
+	case err == nil && closeErr != nil:
+		return closeErr
+	case err != nil && closeErr == nil:
+		return err
+	default:
+		return nil
+	}
+}
+
+func checkPortsDontOverlap(ports ...int) error {
+	slices.Sort(ports)
+
+	if len(ports) != len(slices.Compact(ports)) {
+		return errors.New("generated ports overlap")
+	}
+
+	return nil
 }

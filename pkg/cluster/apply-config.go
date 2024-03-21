@@ -7,6 +7,7 @@ package cluster
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"time"
 
@@ -24,12 +25,20 @@ type ApplyConfigClient struct {
 }
 
 // ApplyConfig on the node via the API using insecure mode.
-func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.NodeRequest, out io.Writer) error {
+func (s *APIBootstrapper) ApplyConfig(ctx context.Context, nodes []provision.NodeRequest, sl provision.SiderolinkRequest, out io.Writer) error {
 	for _, node := range nodes {
 		configureNode := func() error {
+			ep := node.IPs[0].String()
+
+			if addr, ok := sl.GetAddr(node.UUID); ok {
+				fmt.Fprintln(out, "using SideroLink node address for 'with-apply-config'", node.UUID, "=", addr.String())
+
+				ep = addr.String()
+			}
+
 			c, err := client.New(ctx, client.WithTLSConfig(&tls.Config{
 				InsecureSkipVerify: true,
-			}), client.WithEndpoints(node.IPs[0].String()))
+			}), client.WithEndpoints(ep))
 			if err != nil {
 				return err
 			}

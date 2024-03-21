@@ -6,7 +6,9 @@ package provision
 
 import (
 	"errors"
+	"fmt"
 	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -42,6 +44,8 @@ type ClusterRequest struct {
 
 	// Path to root of state directory (~/.talos/clusters by default).
 	StateDirectory string
+
+	SiderolinkRequest SiderolinkRequest
 }
 
 // CNIConfig describes CNI part of NetworkRequest.
@@ -198,4 +202,52 @@ type NodeRequest struct {
 	PXEBooted        bool
 	TFTPServer       string
 	IPXEBootFilename string
+}
+
+// SiderolinkRequest describes a request for SideroLink agent.
+type SiderolinkRequest struct {
+	WireguardEndpoint string
+	APIEndpoint       string
+	SinkEndpoint      string
+	LogEndpoint       string
+	SiderolinkBind    []SiderolinkBind
+}
+
+// AddBind adds a pair of prebinded UUID->Addr for SideroLink agent.
+func (sr *SiderolinkRequest) AddBind(id uuid.UUID, addr netip.Addr) {
+	idx := slices.IndexFunc(sr.SiderolinkBind, func(b SiderolinkBind) bool { return b.UUID == id })
+	if idx != -1 {
+		panic(fmt.Errorf("duplicate UUID %s in SideroLink bind", id))
+	}
+
+	idx = slices.IndexFunc(sr.SiderolinkBind, func(b SiderolinkBind) bool { return b.Addr == addr })
+	if idx != -1 {
+		panic(fmt.Errorf("duplicate address %s in SideroLink bind", addr))
+	}
+
+	sr.SiderolinkBind = append(sr.SiderolinkBind, SiderolinkBind{
+		UUID: id,
+		Addr: addr,
+	})
+}
+
+// GetAddr returns the address for the given UUID.
+func (sr *SiderolinkRequest) GetAddr(u *uuid.UUID) (netip.Addr, bool) {
+	if u == nil {
+		return netip.Addr{}, false
+	}
+
+	for _, b := range sr.SiderolinkBind {
+		if b.UUID == *u {
+			return b.Addr, true
+		}
+	}
+
+	return netip.Addr{}, false
+}
+
+// SiderolinkBind describes a pair of prebinded UUID->Addr for SideroLink agent.
+type SiderolinkBind struct {
+	UUID uuid.UUID
+	Addr netip.Addr
 }
