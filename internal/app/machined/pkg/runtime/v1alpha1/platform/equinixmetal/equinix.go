@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	stderrors "errors"
 	"fmt"
 	"io"
 	"log"
@@ -71,6 +70,12 @@ type Address struct {
 	Gateway    string `json:"gateway"`
 }
 
+// BGPNeighbor holds BGP neighbor info from the equinixmetal metadata.
+type BGPNeighbor struct {
+	AddressFamily int      `json:"address_family"`
+	PeerIPs       []string `json:"peer_ips"`
+}
+
 const (
 	// EquinixMetalUserDataEndpoint is the local metadata endpoint for Equinix.
 	EquinixMetalUserDataEndpoint = "https://metadata.platformequinix.com/userdata"
@@ -122,26 +127,22 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 	// translate the int returned from bond mode metadata to the type needed by network resources
 	bondMode := nethelpers.BondMode(uint8(equinixMetadata.Network.Bonding.Mode))
 
-	// determine bond name and build list of interfaces enslaved by the bond
-	bondName := ""
-
 	hostInterfaces, err := safe.StateListAll[*network.LinkStatus](ctx, st)
 	if err != nil {
 		return nil, fmt.Errorf("error listing host interfaces: %w", err)
 	}
 
-	slaveIndex := 0
+	bondSlaveIndexes := map[string]int{}
+	firstBond := ""
 
 	for _, iface := range equinixMetadata.Network.Interfaces {
 		if iface.Bond == "" {
 			continue
 		}
 
-		if bondName != "" && iface.Bond != bondName {
-			return nil, stderrors.New("encountered multiple bonds. this is unexpected in the equinix metal platform")
+		if firstBond == "" {
+			firstBond = iface.Bond
 		}
-
-		bondName = iface.Bond
 
 		found := false
 
@@ -154,17 +155,20 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 			if hostInterfaceIter.Value().TypedSpec().PermanentAddr.String() == iface.MAC {
 				found = true
 
+				slaveIndex := bondSlaveIndexes[iface.Bond]
+
 				networkConfig.Links = append(networkConfig.Links,
 					network.LinkSpecSpec{
 						Name: hostInterfaceIter.Value().Metadata().ID(),
 						Up:   true,
 						BondSlave: network.BondSlave{
-							MasterName: bondName,
+							MasterName: iface.Bond,
 							SlaveIndex: slaveIndex,
 						},
 						ConfigLayer: network.ConfigPlatform,
 					})
-				slaveIndex++
+
+				bondSlaveIndexes[iface.Bond]++
 
 				break
 			}
@@ -173,39 +177,44 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 		if !found {
 			log.Printf("interface with MAC %q wasn't found on the host, adding with the name from metadata", iface.MAC)
 
+			slaveIndex := bondSlaveIndexes[iface.Bond]
+
 			networkConfig.Links = append(networkConfig.Links,
 				network.LinkSpecSpec{
 					ConfigLayer: network.ConfigPlatform,
 					Name:        iface.Name,
 					Up:          true,
 					BondSlave: network.BondSlave{
-						MasterName: bondName,
+						MasterName: iface.Bond,
 						SlaveIndex: slaveIndex,
 					},
 				})
-			slaveIndex++
+
+			bondSlaveIndexes[iface.Bond]++
 		}
 	}
 
-	bondLink := network.LinkSpecSpec{
-		ConfigLayer: network.ConfigPlatform,
-		Name:        bondName,
-		Logical:     true,
-		Up:          true,
-		Kind:        network.LinkKindBond,
-		Type:        nethelpers.LinkEther,
-		BondMaster: network.BondMasterSpec{
-			Mode:       bondMode,
-			DownDelay:  200,
-			MIIMon:     100,
-			UpDelay:    200,
-			HashPolicy: nethelpers.BondXmitPolicyLayer34,
-		},
+	for bondName := range bondSlaveIndexes {
+		bondLink := network.LinkSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Name:        bondName,
+			Logical:     true,
+			Up:          true,
+			Kind:        network.LinkKindBond,
+			Type:        nethelpers.LinkEther,
+			BondMaster: network.BondMasterSpec{
+				Mode:       bondMode,
+				DownDelay:  200,
+				MIIMon:     100,
+				UpDelay:    200,
+				HashPolicy: nethelpers.BondXmitPolicyLayer34,
+			},
+		}
+
+		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
+
+		networkConfig.Links = append(networkConfig.Links, bondLink)
 	}
-
-	networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
-
-	networkConfig.Links = append(networkConfig.Links, bondLink)
 
 	// 2. addresses
 
@@ -233,7 +242,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 		networkConfig.Addresses = append(networkConfig.Addresses,
 			network.AddressSpecSpec{
 				ConfigLayer: network.ConfigPlatform,
-				LinkName:    bondName,
+				LinkName:    firstBond,
 				Address:     ipAddr,
 				Scope:       nethelpers.ScopeGlobal,
 				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
@@ -249,6 +258,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 	}
 
 	// 3. routes
+	var privateGateway netip.Addr
 
 	for _, addr := range equinixMetadata.Network.Addresses {
 		if !(addr.Enabled && addr.Management) {
@@ -275,7 +285,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 			route := network.RouteSpecSpec{
 				ConfigLayer: network.ConfigPlatform,
 				Gateway:     gw,
-				OutLinkName: bondName,
+				OutLinkName: firstBond,
 				Table:       nethelpers.TableMain,
 				Protocol:    nethelpers.ProtocolStatic,
 				Type:        nethelpers.TypeUnicast,
@@ -298,6 +308,8 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 					return nil, err
 				}
 
+				privateGateway = gw
+
 				dest, err := netip.ParsePrefix(privSubnet)
 				if err != nil {
 					return nil, err
@@ -307,7 +319,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 					ConfigLayer: network.ConfigPlatform,
 					Gateway:     gw,
 					Destination: dest,
-					OutLinkName: bondName,
+					OutLinkName: firstBond,
 					Table:       nethelpers.TableMain,
 					Protocol:    nethelpers.ProtocolStatic,
 					Type:        nethelpers.TypeUnicast,
@@ -345,6 +357,36 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 		InstanceType: equinixMetadata.Plan,
 		InstanceID:   equinixMetadata.ID,
 		ProviderID:   fmt.Sprintf("equinixmetal://%s", equinixMetadata.ID),
+	}
+
+	// 6. BGP neighbors
+
+	for _, bgpNeighbor := range equinixMetadata.BGPNeighbors {
+		if bgpNeighbor.AddressFamily != 4 {
+			continue
+		}
+
+		for _, peerIP := range bgpNeighbor.PeerIPs {
+			peer, err := netip.ParseAddr(peerIP)
+			if err != nil {
+				return nil, err
+			}
+
+			route := network.RouteSpecSpec{
+				ConfigLayer: network.ConfigPlatform,
+				Gateway:     privateGateway,
+				Destination: netip.PrefixFrom(peer, 32),
+				OutLinkName: firstBond,
+				Table:       nethelpers.TableMain,
+				Protocol:    nethelpers.ProtocolStatic,
+				Type:        nethelpers.TypeUnicast,
+				Family:      nethelpers.FamilyInet4,
+			}
+
+			route.Normalize()
+
+			networkConfig.Routes = append(networkConfig.Routes, route)
+		}
 	}
 
 	return networkConfig, nil

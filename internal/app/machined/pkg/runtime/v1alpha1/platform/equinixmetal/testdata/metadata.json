@@ -111,6 +111,38 @@
         ],
         "metal_gateways": []
     },
+    "bgp_neighbors": [
+        {
+          "address_family": 4,
+          "customer_as": 65000,
+          "customer_ip": "10.67.50.1",
+          "md5_enabled": false,
+          "md5_password": null,
+          "multihop": true,
+          "peer_as": 65530,
+          "peer_ips": [
+            "169.254.255.1",
+            "169.254.255.2"
+          ],
+          "routes_in": [],
+          "routes_out": []
+        },
+        {
+          "address_family": 6,
+          "customer_as": 65000,
+          "customer_ip": "2604:1380:45e1:5000::1",
+          "md5_enabled": false,
+          "md5_password": null,
+          "multihop": true,
+          "peer_as": 65530,
+          "peer_ips": [
+            "fc00:0000:0000:0000:0000:0000:0000:000e",
+            "fc00:0000:0000:0000:0000:0000:0000:000f"
+          ],
+          "routes_in": [],
+          "routes_out": []
+        }
+    ],
     "api_url": "https://metadata.packet.net",
     "phone_home_url": "http://tinkerbell.ny5.packet.net/phone-home",
     "user_state_url": "http://tinkerbell.ny5.packet.net/events"

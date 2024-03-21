@@ -6,11 +6,12 @@ package equinixmetal
 
 // MetadataConfig holds equinixmetal metadata info.
 type MetadataConfig struct {
-	ID             string   `json:"id"`
-	Hostname       string   `json:"hostname"`
-	Plan           string   `json:"plan"`
-	Metro          string   `json:"metro"`
-	Facility       string   `json:"facility"`
-	Network        Network  `json:"network"`
-	PrivateSubnets []string `json:"private_subnets"`
+	ID             string        `json:"id"`
+	Hostname       string        `json:"hostname"`
+	Plan           string        `json:"plan"`
+	Metro          string        `json:"metro"`
+	Facility       string        `json:"facility"`
+	Network        Network       `json:"network"`
+	BGPNeighbors   []BGPNeighbor `json:"bgp_neighbors"`
+	PrivateSubnets []string      `json:"private_subnets"`
 }

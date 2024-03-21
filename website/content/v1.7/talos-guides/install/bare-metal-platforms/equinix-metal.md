@@ -5,8 +5,7 @@ aliases:
   - ../../../bare-metal-platforms/equinix-metal
 ---
 
-You can create a Talos Linux cluster on Equinix Metal in a variety of ways, such as through the EM web UI, the `metal` command line too, or through PXE booting.
-Talos Linux is a supported OS install option on Equinix Metal, so it's an easy process.
+You can create a Talos Linux cluster on Equinix Metal in a variety of ways, such as through the EM web UI, or the `metal` command line tool.
 
 Regardless of the method, the process is:
 
@@ -14,8 +13,8 @@ Regardless of the method, the process is:
 * Generate the configurations using `talosctl`.
 * Provision your machines on Equinix Metal.
 * Push the configurations to your servers (if not done as part of the machine provisioning).
-* configure your Kubernetes endpoint to point to the newly created control plane nodes
-* bootstrap the cluster
+* Configure your Kubernetes endpoint to point to the newly created control plane nodes.
+* Bootstrap the cluster.
 
 ## Define the Kubernetes Endpoint
 
@@ -65,10 +64,16 @@ The convention we use is `#!talos`.
 
 ## Provision the machines in Equinix Metal
 
+Talos Linux can be PXE-booted on Equinix Metal using [Image Factory]({{< relref "../../../learn-more/image-factory" >}}), using the `equinixMetal` platform: e.g.
+`https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64` (this URL references the default schematic and `amd64` architecture).
+
+Follow the Image Factory guide to create a custom schematic, e.g. with CPU microcode updates.
+The PXE boot URL can be used as the iPXE script URL.
+
 ### Using the Equinix Metal UI
 
 Simply select the location and type of machines in the Equinix Metal web interface.
-Select Talos as the Operating System, then select the number of servers to create, and name them (in lowercase only.)
+Select 'Custom iPXE' as the Operating System and enter the Image Factory PXE URL as the iPXE script URL, then select the number of servers to create, and name them (in lowercase only.)
 Under *optional settings*, you can optionally paste in the contents of `controlplane.yaml` that was generated, above (ensuring you add a first line of `#!talos`).
 
 You can repeat this process to create machines of different types for control plane and worker nodes (although you would pass in `worker.yaml` for the worker nodes, as user data).
@@ -81,8 +86,6 @@ If you did not pass in the machine configuration as User Data, you need to provi
 
 This guide assumes the user has a working API token,and the [Equinix Metal CLI](https://github.com/equinix/metal-cli/) installed.
 
-Because Talos Linux is a supported operating system, Talos Linux machines can be provisioned directly via the CLI, using the `-O talos_v1` parameter (for Operating System).
-
 <!-- textlint-disable one-sentence-per-line -->
 > Note: Ensure you have prepended `#!talos` to the `controlplane.yaml` file.
 <!-- textlint-enable one-sentence-per-line -->
@@ -91,48 +94,16 @@ Because Talos Linux is a supported operating system, Talos Linux machines can be
 metal device create \
   --project-id $PROJECT_ID \
   --facility $FACILITY \
-  --operating-system "talos_v1" \
+  --operating-system "custom_ipxe" \
+  --ipxe-script-url "https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64" \
   --plan $PLAN\
   --hostname $HOSTNAME\
   --userdata-file controlplane.yaml
 ```
 
-e.g. `metal device create -p <projectID> -f da11 -O talos_v1 -P c3.small.x86 -H steve.test.11 --userdata-file ./controlplane.yaml`
+e.g. `metal device create -p <projectID> -f da11 -O custom_ipxe -P c3.small.x86 -H steve.test.11 --userdata-file ./controlplane.yaml --ipxe-script-url "https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64"`
 
 Repeat this to create each control plane node desired: there should usually be 3 for a HA cluster.
-
-### Network Booting via iPXE
-
-Talos Linux can be PXE-booted on Equinix Metal using [Image Factory]({{< relref "../../../learn-more/image-factory" >}}), using the `equinixMetal` platform: e.g.
-`https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64` (this URL references the default schematic and `amd64` architecture).
-
-#### Create the Control Plane Nodes
-
-```bash
-metal device create \
-  --project-id $PROJECT_ID \
-  --facility $FACILITY \
-  --ipxe-script-url $PXE_SERVER \
-  --operating-system "custom_ipxe" \
-  --plan $PLAN\
-  --hostname $HOSTNAME\
-  --userdata-file controlplane.yaml
-```
-
-> Note: Repeat this to create each control plane node desired: there should usually be 3 for a HA cluster.
-
-#### Create the Worker Nodes
-
-```bash
-metal device create \
-  --project-id $PROJECT_ID \
-  --facility $FACILITY \
-  --ipxe-script-url $PXE_SERVER \
-  --operating-system "custom_ipxe" \
-  --plan $PLAN\
-  --hostname $HOSTNAME\
-  --userdata-file worker.yaml
-```
 
 ## Update the Kubernetes endpoint
 

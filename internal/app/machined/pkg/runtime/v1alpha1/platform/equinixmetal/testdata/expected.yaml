@@ -95,6 +95,28 @@ routes:
       flags: ""
       protocol: static
       layer: platform
+    - family: inet4
+      dst: 169.254.255.1/32
+      src: ""
+      gateway: 10.66.142.16
+      outLinkName: bond0
+      table: main
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 169.254.255.2/32
+      src: ""
+      gateway: 10.66.142.16
+      outLinkName: bond0
+      table: main
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
 hostnames:
     - hostname: infra-green-ci
       domainname: ""
