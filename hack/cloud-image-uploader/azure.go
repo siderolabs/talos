@@ -27,6 +27,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/blang/semver/v4"
 	"github.com/siderolabs/gen/channel"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/ulikunitz/xz"
 	"golang.org/x/sync/errgroup"
 )
@@ -47,29 +48,31 @@ var azureArchitectures = map[string]string{
 type AzureUploader struct {
 	Options Options
 
+	preRelease bool
+
 	helper azureHelper
 }
 
 // extractVersion extracts the version number in the format of int.int.int for Azure and assigns to the Options.AzureTag value.
 func (azu *AzureUploader) setVersion() error {
-	v, err := semver.ParseTolerant(azu.Options.AzureAbbrevTag)
+	v, err := semver.ParseTolerant(azu.Options.Tag)
 	if err != nil {
 		return err
 	}
 
 	versionCore := fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
 
-	if fmt.Sprintf("v%s", versionCore) != azu.Options.AzureAbbrevTag {
+	azu.helper.version = versionCore
+	azu.Options.AzureGalleryName = "SideroLabs"
+
+	if fmt.Sprintf("v%s", versionCore) != azu.Options.Tag {
+		azu.preRelease = true
 		azu.Options.AzureGalleryName = "SideroGalleryTest"
-		azu.Options.AzureCoreTag = versionCore
-		fmt.Println(azu.Options.AzureGalleryName)
-	} else {
-		azu.Options.AzureGalleryName = "SideroLabs"
-		azu.Options.AzureCoreTag = versionCore
-		fmt.Println(azu.Options.AzureGalleryName)
 	}
 
-	return err
+	log.Println("azure: using Azure Gallery:", azu.Options.AzureGalleryName)
+
+	return nil
 }
 
 // AzureGalleryUpload uploads the image to Azure.
@@ -91,11 +94,13 @@ func (azu *AzureUploader) AzureGalleryUpload(ctx context.Context) error {
 		return fmt.Errorf("error setting default Azure credentials: %w", err)
 	}
 
-	log.Printf("azure: getting locations")
+	if len(azu.Options.AzureRegions) == 0 {
+		regions, err := azu.helper.getAzureLocations(ctx)
+		if err != nil {
+			return fmt.Errorf("azure: error setting default Azure credentials: %w", err)
+		}
 
-	err = azu.helper.getAzureLocations(ctx)
-	if err != nil {
-		return fmt.Errorf("azure: error setting default Azure credentials: %w", err)
+		azu.Options.AzureRegions = regions
 	}
 
 	// Upload blob
@@ -245,14 +250,16 @@ uploadLoop:
 }
 
 func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, arch string) error {
-	targetRegions := make([]*armcompute.TargetRegion, 0, len(azu.helper.locations))
+	var targetRegions []*armcompute.TargetRegion
 
-	for _, region := range azu.helper.locations {
-		targetRegions = append(targetRegions, &armcompute.TargetRegion{
-			Name:                 to.Ptr(region.Name),
-			ExcludeFromLatest:    to.Ptr(false),
-			RegionalReplicaCount: to.Ptr[int32](1),
-			StorageAccountType:   to.Ptr(armcompute.StorageAccountTypeStandardLRS),
+	if !azu.preRelease {
+		targetRegions = xslices.Map(azu.Options.AzureRegions, func(region string) *armcompute.TargetRegion {
+			return &armcompute.TargetRegion{
+				Name:                 to.Ptr(region),
+				ExcludeFromLatest:    to.Ptr(false),
+				RegionalReplicaCount: to.Ptr[int32](1),
+				StorageAccountType:   to.Ptr(armcompute.StorageAccountTypeStandardLRS),
+			}
 		})
 	}
 
@@ -265,8 +272,8 @@ func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, arch stri
 		}
 
 		for _, v := range page.Value {
-			if *v.Name == azu.Options.AzureCoreTag {
-				log.Printf("azure: image version exists for %s\n azure: removing old image version\n", *v.Name)
+			if *v.Name == azu.helper.version {
+				log.Printf("azure: image version exists for %s\n", *v.Name)
 
 				err = azu.deleteImageVersion(ctx, arch)
 				if err != nil {
@@ -283,7 +290,7 @@ func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, arch stri
 		resourceGroupName,
 		azu.Options.AzureGalleryName,
 		fmt.Sprintf("talos-%s", azureArchitectures[arch]),
-		azu.Options.AzureCoreTag,
+		azu.helper.version,
 		armcompute.GalleryImageVersion{
 			Location: to.Ptr(defaultRegion),
 			Properties: &armcompute.GalleryImageVersionProperties{
@@ -309,21 +316,34 @@ func (azu *AzureUploader) createAzureImageVersion(ctx context.Context, arch stri
 		return fmt.Errorf("azure: failed to create image version: %w", err)
 	}
 
-	_, err = poller.PollUntilDone(ctx, nil)
+	res, err := poller.PollUntilDone(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("azure: failed to pull the result for image version creation: %w", err)
 	}
 
-	return err
+	for _, region := range azu.Options.AzureRegions {
+		pushResult(CloudImage{
+			Cloud:  "azure",
+			Tag:    azu.Options.Tag,
+			Region: region,
+			Arch:   arch,
+			Type:   "vhd",
+			ID:     *res.ID,
+		})
+	}
+
+	return nil
 }
 
 func (azu *AzureUploader) deleteImageVersion(ctx context.Context, arch string) error {
+	log.Println("azure: removing old image version")
+
 	poller, err := azu.helper.clientFactory.NewGalleryImageVersionsClient().BeginDelete(
 		ctx,
 		resourceGroupName,
 		azu.Options.AzureGalleryName,
 		fmt.Sprintf("talos-%s", azureArchitectures[arch]),
-		azu.Options.AzureCoreTag,
+		azu.helper.version,
 		nil)
 	if err != nil {
 		return fmt.Errorf("azure: failed to delete image: %w", err)
@@ -334,16 +354,16 @@ func (azu *AzureUploader) deleteImageVersion(ctx context.Context, arch string) e
 		return fmt.Errorf("azure: failed to pull the result for image deletion: %w", err)
 	}
 
-	return err
+	return nil
 }
 
 type azureHelper struct {
+	version         string
 	subscriptionID  string
 	clientFactory   *armcompute.ClientFactory
 	cred            *azidentity.DefaultAzureCredential
 	authorizer      autorest.Authorizer
 	providersClient resources.ProvidersClient
-	locations       map[string]Location
 }
 
 func (helper *azureHelper) setDefaultAzureCreds() error {
@@ -385,34 +405,21 @@ func (helper *azureHelper) setDefaultAzureCreds() error {
 	return nil
 }
 
-//nolint:gocyclo
-func (helper *azureHelper) getAzureLocations(ctx context.Context) error {
-	providers, err := helper.listProviders(ctx)
+func (helper *azureHelper) getAzureLocations(ctx context.Context) ([]string, error) {
+	var regions []string
+
+	result, err := helper.providersClient.Get(ctx, "Microsoft.Compute", "")
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("azure: error getting Microsoft.Compute: %w", err)
 	}
 
-	var computeProvider resources.Provider
-
-	for _, provider := range providers {
-		if provider.Namespace != nil && *provider.Namespace == "Microsoft.Compute" {
-			computeProvider = provider
-
-			break
-		}
-	}
-
-	helper.locations = make(map[string]Location)
-
-	if computeProvider.ResourceTypes != nil {
-		for _, rt := range *computeProvider.ResourceTypes {
+	if result.ResourceTypes != nil {
+		for _, rt := range *result.ResourceTypes {
 			if rt.ResourceType != nil && *rt.ResourceType == "virtualMachines" {
 				if rt.Locations != nil {
-					for _, region := range *rt.Locations {
-						abbr := strings.ReplaceAll(region, " ", "")
-						abbr = strings.ToLower(abbr)
-						helper.locations[abbr] = Location{Abbreviation: abbr, Name: region}
-					}
+					regions = xslices.Map(*rt.Locations, func(s string) string {
+						return strings.ToLower(strings.ReplaceAll(s, " ", ""))
+					})
 				}
 
 				break
@@ -420,17 +427,5 @@ func (helper *azureHelper) getAzureLocations(ctx context.Context) error {
 		}
 	}
 
-	return err
-}
-
-func (helper *azureHelper) listProviders(ctx context.Context) (result []resources.Provider, err error) {
-	for list, err := helper.providersClient.List(ctx, ""); list.NotDone(); err = list.NextWithContext(ctx) {
-		if err != nil {
-			return nil, fmt.Errorf("azure: error getting providers list: %v", err)
-		}
-
-		result = append(result, list.Values()...)
-	}
-
-	return
+	return regions, nil
 }

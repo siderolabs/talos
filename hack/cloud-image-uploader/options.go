@@ -21,17 +21,9 @@ type Options struct {
 	AWSRegions []string
 
 	// Azure options.
-	AzureRegions     []Location
-	AzureCoreTag     string
-	AzureAbbrevTag   string
+	AzureRegions     []string
 	AzureGalleryName string
 	AzurePreRelease  string
-}
-
-// Location is the struct for the Azure Regions Options.
-type Location struct {
-	Abbreviation string
-	Name         string
 }
 
 // DefaultOptions used throughout the cli.

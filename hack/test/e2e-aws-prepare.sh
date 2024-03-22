@@ -13,7 +13,7 @@ function cloud_image_upload() {
 }
 
 function get_ami_id() {
-  jq -r ".[] | select(.region == \"${REGION}\") | select (.arch == \"amd64\") | .id" "${ARTIFACTS}/cloud-images.json"
+  jq -r ".[] | select(.cloud == \"aws\") | select(.region == \"${REGION}\") | select (.arch == \"amd64\") | .id" "${ARTIFACTS}/cloud-images.json"
 }
 
 function cloud_image_upload_with_extensions() {
