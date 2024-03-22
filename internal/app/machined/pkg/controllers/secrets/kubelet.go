@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
@@ -64,10 +65,16 @@ func NewKubeletController() *KubeletController {
 					kubeletSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
 				}
 
-				kubeletSecrets.CA = cfgProvider.Cluster().CA()
+				kubeletSecrets.AcceptedCAs = nil
 
-				if kubeletSecrets.CA == nil {
-					return errors.New("missing cluster.CA secret")
+				if cfgProvider.Cluster().IssuingCA() != nil {
+					kubeletSecrets.AcceptedCAs = append(kubeletSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{Crt: cfgProvider.Cluster().IssuingCA().Crt})
+				}
+
+				kubeletSecrets.AcceptedCAs = append(kubeletSecrets.AcceptedCAs, cfgProvider.Cluster().AcceptedCAs()...)
+
+				if len(kubeletSecrets.AcceptedCAs) == 0 {
+					return errors.New("missing accepted Kubernetes CAs")
 				}
 
 				kubeletSecrets.BootstrapTokenID = cfgProvider.Cluster().Token().ID()

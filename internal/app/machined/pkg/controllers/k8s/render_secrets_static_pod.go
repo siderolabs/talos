@@ -184,7 +184,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						keyFilename:  "etcd-client.key",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.CA },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.IssuingCA },
 						certFilename: "ca.crt",
 					},
 					{
@@ -231,7 +231,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				gid:       constants.KubernetesControllerManagerRunGroup,
 				secrets: []secret{
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.CA },
+						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.IssuingCA },
 						certFilename: "ca.crt",
 						keyFilename:  "ca.key",
 					},

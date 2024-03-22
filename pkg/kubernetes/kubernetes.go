@@ -105,7 +105,7 @@ func NewTemporaryClientControlPlane(ctx context.Context, r controller.Reader) (c
 
 	k8sRootSpec := k8sRoot.TypedSpec()
 
-	return NewTemporaryClientFromPKI(k8sRootSpec.CA, k8sRootSpec.LocalEndpoint)
+	return NewTemporaryClientFromPKI(k8sRootSpec.IssuingCA, k8sRootSpec.LocalEndpoint)
 }
 
 // NewTemporaryClientFromPKI initializes a Kubernetes client using a certificate

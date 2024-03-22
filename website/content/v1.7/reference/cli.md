@@ -2666,7 +2666,12 @@ Rotate cluster CAs (Talos and Kubernetes APIs).
 
 ### Synopsis
 
+The command can rotate both Talos and Kubernetes root CAs (for the API).
+By default both CAs are rotated, but you can choose to rotate just one or another.
 The command starts by generating new CAs, and gracefully applying it to the cluster.
+
+For Kubernetes, the command only rotates the API server issuing CA, and other Kubernetes
+PKI can be rotated by applying machine config changes to the controlplane nodes.
 
 ```
 talosctl rotate-ca [flags]
@@ -2680,7 +2685,9 @@ talosctl rotate-ca [flags]
   -h, --help                          help for rotate-ca
       --init-node string              specify IPs of init node
       --k8s-endpoint string           use endpoint instead of kubeconfig default
+      --kubernetes                    rotate Kubernetes API CA (default true)
   -o, --output talosconfig            path to the output new talosconfig (default "talosconfig")
+      --talos                         rotate Talos API CA (default true)
       --with-docs                     patch all machine configs adding the documentation for each field (default true)
       --with-examples                 patch all machine configs with the commented examples (default true)
       --worker-nodes strings          specify IPs of worker nodes

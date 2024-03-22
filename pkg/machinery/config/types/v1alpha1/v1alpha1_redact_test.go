@@ -45,7 +45,7 @@ func TestRedactSecrets(t *testing.T) {
 	require.Equal(t, "***", config.Cluster().Token().Secret())
 	require.Equal(t, "", config.Cluster().AESCBCEncryptionSecret())
 	require.Equal(t, replacement, config.Cluster().SecretboxEncryptionSecret())
-	require.Equal(t, replacement, string(config.Cluster().CA().Key))
+	require.Equal(t, replacement, string(config.Cluster().IssuingCA().Key))
 	require.Equal(t, replacement, string(config.Cluster().Etcd().CA().Key))
 	require.Equal(t, replacement, string(config.Cluster().ServiceAccount().Key))
 }

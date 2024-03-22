@@ -27,7 +27,7 @@ var restartCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return getContainersFromNode(kubernetes), cobra.ShellCompDirectiveNoFileComp
+		return getContainersFromNode(kubernetesFlag), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
@@ -36,7 +36,7 @@ var restartCmd = &cobra.Command{
 				driver    common.ContainerDriver
 			)
 
-			if kubernetes {
+			if kubernetesFlag {
 				namespace = criconstants.K8sContainerdNamespace
 				driver = common.ContainerDriver_CRI
 			} else {
@@ -54,7 +54,7 @@ var restartCmd = &cobra.Command{
 }
 
 func init() {
-	restartCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	restartCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
 	restartCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
 	restartCmd.Flags().MarkHidden("use-cri") //nolint:errcheck

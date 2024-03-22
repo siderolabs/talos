@@ -261,6 +261,16 @@ func (in *ClusterConfig) DeepCopyInto(out *ClusterConfig) {
 		in, out := &in.ClusterCA, &out.ClusterCA
 		*out = (*in).DeepCopy()
 	}
+	if in.ClusterAcceptedCAs != nil {
+		in, out := &in.ClusterAcceptedCAs, &out.ClusterAcceptedCAs
+		*out = make([]*x509.PEMEncodedCertificate, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = (*in).DeepCopy()
+			}
+		}
+	}
 	if in.ClusterAggregatorCA != nil {
 		in, out := &in.ClusterAggregatorCA, &out.ClusterAggregatorCA
 		*out = (*in).DeepCopy()

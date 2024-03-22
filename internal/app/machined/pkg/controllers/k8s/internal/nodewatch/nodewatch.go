@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 
-	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -47,7 +46,7 @@ func (r *NodeWatcher) Get() (*corev1.Node, error) {
 }
 
 // Watch starts watching Node state and notifies on updates via notify channel.
-func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan struct{}, func(), error) {
+func (r *NodeWatcher) Watch(ctx context.Context) (<-chan struct{}, <-chan error, func(), error) {
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		r.client.Clientset,
 		0,
@@ -59,6 +58,7 @@ func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan str
 	)
 
 	notifyCh := make(chan struct{}, 1)
+	watchErrCh := make(chan error, 1)
 
 	notify := func(_ any) {
 		select {
@@ -70,9 +70,12 @@ func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan str
 	r.nodes = informerFactory.Core().V1().Nodes()
 
 	if err := r.nodes.Informer().SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-		logger.Error("node watch error", zap.Error(err))
+		select {
+		case watchErrCh <- err:
+		default:
+		}
 	}); err != nil {
-		return nil, nil, fmt.Errorf("failed to set watch error handler: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to set watch error handler: %w", err)
 	}
 
 	if _, err := r.nodes.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -80,12 +83,12 @@ func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan str
 		DeleteFunc: notify,
 		UpdateFunc: func(_, _ any) { notify(nil) },
 	}); err != nil {
-		return nil, nil, fmt.Errorf("failed to add event handler: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to add event handler: %w", err)
 	}
 
 	informerFactory.Start(ctx.Done())
 
 	informerFactory.WaitForCacheSync(ctx.Done())
 
-	return notifyCh, informerFactory.Shutdown, nil
+	return notifyCh, watchErrCh, informerFactory.Shutdown, nil
 }

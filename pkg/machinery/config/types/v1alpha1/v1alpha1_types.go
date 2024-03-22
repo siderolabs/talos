@@ -391,6 +391,15 @@ type ClusterConfig struct {
 	//         type: string
 	ClusterCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
 	//   description: |
+	//     The list of base64 encoded accepted certificate authorities used by Kubernetes.
+	//   schema:
+	//     type: object
+	//     additionalProperties: false
+	//     properties:
+	//       crt:
+	//         type: string
+	ClusterAcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs,omitempty"`
+	//   description: |
 	//     The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.
 	//
 	//     This CA can be self-signed.

@@ -113,9 +113,21 @@ func NewRootKubernetesController() *RootKubernetesController {
 					return errors.New("missing cluster.aggregatorCA secret")
 				}
 
-				k8sSecrets.CA = cfgProvider.Cluster().CA()
+				k8sSecrets.IssuingCA = cfgProvider.Cluster().IssuingCA()
+				k8sSecrets.AcceptedCAs = cfgProvider.Cluster().AcceptedCAs()
 
-				if k8sSecrets.CA == nil {
+				if k8sSecrets.IssuingCA != nil {
+					k8sSecrets.AcceptedCAs = append(k8sSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{
+						Crt: k8sSecrets.IssuingCA.Crt,
+					})
+				}
+
+				if len(k8sSecrets.IssuingCA.Key) == 0 {
+					// drop incomplete issuing CA, as the machine config for workers contains just the cert
+					k8sSecrets.IssuingCA = nil
+				}
+
+				if len(k8sSecrets.AcceptedCAs) == 0 {
 					return errors.New("missing cluster.CA secret")
 				}
 

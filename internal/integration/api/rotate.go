@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	secretsres "github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/provision/access"
+	"github.com/siderolabs/talos/pkg/rotate/pki/kubernetes"
 	"github.com/siderolabs/talos/pkg/rotate/pki/talos"
 )
 
@@ -113,6 +114,60 @@ func (suite *RotateCASuite) TestTalos() {
 
 	_, err = talos.Rotate(suite.ctx, options)
 	suite.Require().NoError(err)
+
+	suite.AssertClusterHealthy(suite.ctx)
+}
+
+// TestKubernetes updates Kubernetes CA in the cluster.
+func (suite *RotateCASuite) TestKubernetes() {
+	if suite.Cluster == nil {
+		suite.T().Skip("cluster information is not available")
+	}
+
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	suite.T().Logf("capturing current Kubernetes CA")
+
+	nodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	// save k8sRoot
+	k8sRoot, err := safe.StateGetByID[*secretsres.KubernetesRoot](client.WithNode(suite.ctx, nodeInternalIP), suite.Client.COSI, secretsres.KubernetesRootID)
+	suite.Require().NoError(err)
+
+	suite.T().Logf("rotating current CA -> new CA")
+
+	newBundle, err := secrets.NewBundle(secrets.NewFixedClock(time.Now()), config.TalosVersionCurrent)
+	suite.Require().NoError(err)
+
+	options := kubernetes.Options{
+		TalosClient: suite.Client,
+		ClusterInfo: access.NewAdapter(suite.Cluster),
+
+		NewKubernetesCA: newBundle.Certs.K8s,
+
+		EncoderOption: encoder.WithComments(encoder.CommentsAll),
+
+		Printf: suite.T().Logf,
+	}
+
+	suite.Require().NoError(kubernetes.Rotate(suite.ctx, options))
+
+	suite.T().Logf("rotating back new CA -> old CA")
+
+	options = kubernetes.Options{
+		TalosClient: suite.Client,
+		ClusterInfo: access.NewAdapter(suite.Cluster),
+
+		NewKubernetesCA: k8sRoot.TypedSpec().IssuingCA,
+
+		EncoderOption: encoder.WithComments(encoder.CommentsAll),
+
+		Printf: suite.T().Logf,
+	}
+
+	suite.Require().NoError(kubernetes.Rotate(suite.ctx, options))
 
 	suite.AssertClusterHealthy(suite.ctx)
 }

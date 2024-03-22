@@ -168,7 +168,7 @@ func NewBundleFromKubernetesPKI(pkiDir, bootstrapToken string, versionContract *
 // NewBundleFromConfig creates secrets bundle using existing config.
 func NewBundleFromConfig(clock Clock, c config.Config) *Bundle {
 	certs := &Certs{
-		K8s:               c.Cluster().CA(),
+		K8s:               c.Cluster().IssuingCA(),
 		K8sAggregator:     c.Cluster().AggregatorCA(),
 		K8sServiceAccount: c.Cluster().ServiceAccount(),
 		Etcd:              c.Cluster().Etcd().CA(),

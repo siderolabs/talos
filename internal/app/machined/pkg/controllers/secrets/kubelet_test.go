@@ -89,7 +89,7 @@ func (suite *KubeletSuite) TestReconcile() {
 				spec := kubeletSecrets.TypedSpec()
 
 				suite.Assert().Equal("https://foo:6443", spec.Endpoint.String())
-				suite.Assert().Equal(k8sCA, spec.CA)
+				suite.Assert().Equal([]*x509.PEMEncodedCertificate{{Crt: k8sCA.Crt}}, spec.AcceptedCAs)
 				suite.Assert().Equal("abc", spec.BootstrapTokenID)
 				suite.Assert().Equal("def", spec.BootstrapTokenSecret)
 

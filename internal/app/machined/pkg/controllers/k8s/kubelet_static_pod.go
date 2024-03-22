@@ -159,7 +159,7 @@ func (ctrl *KubeletStaticPodController) Run(ctx context.Context, r controller.Ru
 			nodename.TypedSpec().Nodename,
 			certs.APIServerKubeletClient.Crt,
 			certs.APIServerKubeletClient.Key,
-			rootSecrets.TypedSpec().CA.Crt,
+			rootSecrets.TypedSpec().IssuingCA.Crt,
 		)
 		if err != nil {
 			return fmt.Errorf("error building kubelet client: %w", err)

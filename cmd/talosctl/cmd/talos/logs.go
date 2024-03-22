@@ -41,11 +41,11 @@ var logsCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 		}
 
-		if kubernetes {
-			return getContainersFromNode(kubernetes), cobra.ShellCompDirectiveNoFileComp
+		if kubernetesFlag {
+			return getContainersFromNode(kubernetesFlag), cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return mergeSuggestions(getServiceFromNode(), getContainersFromNode(kubernetes), getLogsContainers()), cobra.ShellCompDirectiveNoFileComp
+		return mergeSuggestions(getServiceFromNode(), getContainersFromNode(kubernetesFlag), getLogsContainers()), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
@@ -54,7 +54,7 @@ var logsCmd = &cobra.Command{
 				driver    common.ContainerDriver
 			)
 
-			if kubernetes {
+			if kubernetesFlag {
 				namespace = criconstants.K8sContainerdNamespace
 				driver = common.ContainerDriver_CRI
 			} else {
@@ -230,7 +230,7 @@ func getLogsContainers() []string {
 }
 
 func init() {
-	logsCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	logsCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 	logsCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the logs should be streamed")
 	logsCmd.Flags().Int32VarP(&tailLines, "tail", "", -1, "lines of log file to display (default is to show from the beginning)")
 

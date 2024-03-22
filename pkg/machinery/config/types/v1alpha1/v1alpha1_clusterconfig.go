@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/netip"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/siderolabs/crypto/x509"
@@ -81,9 +82,14 @@ func (c *ClusterConfig) CertSANs() []string {
 	return c.APIServerConfig.CertSANs
 }
 
-// CA implements the config.ClusterConfig interface.
-func (c *ClusterConfig) CA() *x509.PEMEncodedCertificateAndKey {
+// IssuingCA implements the config.ClusterConfig interface.
+func (c *ClusterConfig) IssuingCA() *x509.PEMEncodedCertificateAndKey {
 	return c.ClusterCA
+}
+
+// AcceptedCAs implements the config.ClusterConfig interface.
+func (c *ClusterConfig) AcceptedCAs() []*x509.PEMEncodedCertificate {
+	return slices.Clone(c.ClusterAcceptedCAs)
 }
 
 // AggregatorCA implements the config.ClusterConfig interface.

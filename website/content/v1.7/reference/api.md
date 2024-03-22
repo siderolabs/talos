@@ -4331,9 +4331,9 @@ KubeletSpec describes root Kubernetes secrets.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | endpoint | [common.URL](#common.URL) |  |  |
-| ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | bootstrap_token_id | [string](#string) |  |  |
 | bootstrap_token_secret | [string](#string) |  |  |
+| accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 
 
 
@@ -4388,7 +4388,7 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | local_endpoint | [common.URL](#common.URL) |  |  |
 | cert_sa_ns | [string](#string) | repeated |  |
 | dns_domain | [string](#string) |  |  |
-| ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| issuing_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | service_account | [common.PEMEncodedKey](#common.PEMEncodedKey) |  |  |
 | aggregator_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | aescbc_encryption_secret | [string](#string) |  |  |
@@ -4396,6 +4396,7 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | bootstrap_token_secret | [string](#string) |  |  |
 | secretbox_encryption_secret | [string](#string) |  |  |
 | api_server_ips | [common.NetIP](#common.NetIP) | repeated |  |
+| accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 
 
 

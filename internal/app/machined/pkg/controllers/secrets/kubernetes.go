@@ -126,7 +126,8 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.KubernetesRootS
 	if err := kubeconfig.Generate(&kubeconfig.GenerateInput{
 		ClusterName: k8sRoot.Name,
 
-		CA:                  k8sRoot.CA,
+		IssuingCA:           k8sRoot.IssuingCA,
+		AcceptedCAs:         k8sRoot.AcceptedCAs,
 		CertificateLifetime: KubernetesCertificateValidityDuration,
 
 		CommonName:   constants.KubernetesControllerManagerOrganization,
@@ -146,7 +147,8 @@ func (ctrl *KubernetesController) updateSecrets(k8sRoot *secrets.KubernetesRootS
 	if err := kubeconfig.Generate(&kubeconfig.GenerateInput{
 		ClusterName: k8sRoot.Name,
 
-		CA:                  k8sRoot.CA,
+		IssuingCA:           k8sRoot.IssuingCA,
+		AcceptedCAs:         k8sRoot.AcceptedCAs,
 		CertificateLifetime: KubernetesCertificateValidityDuration,
 
 		CommonName:   constants.KubernetesSchedulerOrganization,
@@ -217,8 +219,12 @@ func (adapter *generateAdminAdapter) Endpoint() *url.URL {
 	return adapter.endpoint
 }
 
-func (adapter *generateAdminAdapter) CA() *x509.PEMEncodedCertificateAndKey {
-	return adapter.k8sRoot.CA
+func (adapter *generateAdminAdapter) IssuingCA() *x509.PEMEncodedCertificateAndKey {
+	return adapter.k8sRoot.IssuingCA
+}
+
+func (adapter *generateAdminAdapter) AcceptedCAs() []*x509.PEMEncodedCertificate {
+	return adapter.k8sRoot.AcceptedCAs
 }
 
 func (adapter *generateAdminAdapter) AdminKubeconfig() config.AdminKubeconfig {

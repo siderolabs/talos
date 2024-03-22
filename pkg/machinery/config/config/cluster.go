@@ -27,7 +27,8 @@ type ClusterConfig interface {
 	Endpoint() *url.URL
 	Token() Token
 	CertSANs() []string
-	CA() *x509.PEMEncodedCertificateAndKey
+	IssuingCA() *x509.PEMEncodedCertificateAndKey
+	AcceptedCAs() []*x509.PEMEncodedCertificate
 	AggregatorCA() *x509.PEMEncodedCertificateAndKey
 	ServiceAccount() *x509.PEMEncodedKey
 	AESCBCEncryptionSecret() string

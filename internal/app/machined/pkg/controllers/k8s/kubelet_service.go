@@ -22,7 +22,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	talosx509 "github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -194,12 +196,8 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			}
 		}
 
-		// refresh certs only if we are managing the node name (not overridden by the user)
-		if cfgSpec.ExpectedNodename != "" {
-			err = ctrl.refreshKubeletCerts(cfgSpec.ExpectedNodename, logger)
-			if err != nil {
-				return err
-			}
+		if err = ctrl.refreshKubeletCerts(cfgSpec.ExpectedNodename, secretSpec.AcceptedCAs, logger); err != nil {
+			return err
 		}
 
 		if err = ctrl.handlePolicyChange(cfgSpec, logger); err != nil {
@@ -210,7 +208,7 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return err
 		}
 
-		if err = ctrl.updateKubeconfig(secretSpec.Endpoint, logger); err != nil {
+		if err = ctrl.updateKubeconfig(secretSpec.Endpoint, secretSpec.AcceptedCAs, logger); err != nil {
 			return err
 		}
 
@@ -300,6 +298,8 @@ func getFromMap[T any](m map[string]any, key string) (optional.Optional[T], erro
 }
 
 func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) error {
+	acceptedCAs := bytes.Join(xslices.Map(secretSpec.AcceptedCAs, func(ca *talosx509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
+
 	cfg := struct {
 		Server               string
 		CACert               string
@@ -307,7 +307,7 @@ func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) 
 		BootstrapTokenSecret string
 	}{
 		Server:               secretSpec.Endpoint.String(),
-		CACert:               base64.StdEncoding.EncodeToString(secretSpec.CA.Crt),
+		CACert:               base64.StdEncoding.EncodeToString(acceptedCAs),
 		BootstrapTokenID:     secretSpec.BootstrapTokenID,
 		BootstrapTokenSecret: secretSpec.BootstrapTokenSecret,
 	}
@@ -328,7 +328,7 @@ func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) 
 		return err
 	}
 
-	return os.WriteFile(constants.KubernetesCACert, secretSpec.CA.Crt, 0o400)
+	return os.WriteFile(constants.KubernetesCACert, acceptedCAs, 0o400)
 }
 
 var kubeletKubeConfigTemplate = []byte(`apiVersion: v1
@@ -403,7 +403,7 @@ func (ctrl *KubeletServiceController) writeKubeletCredentialProviderConfig(cfgSp
 }
 
 // updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.
-func (ctrl *KubeletServiceController) updateKubeconfig(newEndpoint *url.URL, logger *zap.Logger) error {
+func (ctrl *KubeletServiceController) updateKubeconfig(newEndpoint *url.URL, acceptedCAs []*talosx509.PEMEncodedCertificate, logger *zap.Logger) error {
 	config, err := clientcmd.LoadFromFile(constants.KubeletKubeconfig)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -430,19 +430,18 @@ func (ctrl *KubeletServiceController) updateKubeconfig(newEndpoint *url.URL, log
 		return nil
 	}
 
-	if cluster.Server == newEndpoint.String() {
-		return nil
-	}
-
 	cluster.Server = newEndpoint.String()
+	cluster.CertificateAuthorityData = bytes.Join(xslices.Map(acceptedCAs, func(ca *talosx509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
 
 	return clientcmd.WriteToFile(*config, constants.KubeletKubeconfig)
 }
 
-// refreshKubeletCerts checks if the existing kubelet certificates match the node hostname.
+// refreshKubeletCerts checks if the existing kubelet certificates match the node hostname and expected CA.
 // If they don't match, it clears the certificate directory and the removes kubelet's kubeconfig so that
 // they can be regenerated next time kubelet is started.
-func (ctrl *KubeletServiceController) refreshKubeletCerts(nodename string, logger *zap.Logger) error {
+//
+//nolint:gocyclo
+func (ctrl *KubeletServiceController) refreshKubeletCerts(expectedNodename string, acceptedCAs []*talosx509.PEMEncodedCertificate, logger *zap.Logger) error {
 	cert, err := ctrl.readKubeletClientCertificate()
 	if err != nil {
 		return err
@@ -452,19 +451,48 @@ func (ctrl *KubeletServiceController) refreshKubeletCerts(nodename string, logge
 		return nil
 	}
 
-	expectedCommonName := fmt.Sprintf("system:node:%s", nodename)
+	valid := true
 
-	valid := expectedCommonName == cert.Subject.CommonName
+	// refresh certs only if we are managing the node name (not overridden by the user)
+	if expectedNodename != "" {
+		expectedCommonName := fmt.Sprintf("system:node:%s", expectedNodename)
+
+		valid = valid && expectedCommonName == cert.Subject.CommonName
+
+		if !valid {
+			logger.Info("kubelet client certificate does not match expected nodename, removing",
+				zap.String("expected", expectedCommonName),
+				zap.String("actual", cert.Subject.CommonName),
+			)
+		}
+	}
+
+	// check against CAs
+	if valid {
+		rootCAs := x509.NewCertPool()
+
+		for _, ca := range acceptedCAs {
+			if !rootCAs.AppendCertsFromPEM(ca.Crt) {
+				return fmt.Errorf("error adding CA to root pool: %w", err)
+			}
+		}
+
+		_, verifyErr := cert.Verify(x509.VerifyOptions{
+			Roots:     rootCAs,
+			KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+		})
+
+		valid = valid && verifyErr == nil
+
+		if !valid {
+			logger.Info("kubelet client certificate does not match any accepted CAs, removing", zap.NamedError("verify_error", verifyErr))
+		}
+	}
 
 	if valid {
 		// certificate looks good, no need to refresh
 		return nil
 	}
-
-	logger.Info("kubelet client certificate does not match expected nodename, removing",
-		zap.String("expected", expectedCommonName),
-		zap.String("actual", cert.Subject.CommonName),
-	)
 
 	// remove the pki directory
 	err = os.RemoveAll(constants.KubeletPKIDir)

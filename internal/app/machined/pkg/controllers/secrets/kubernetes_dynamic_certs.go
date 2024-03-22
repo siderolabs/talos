@@ -171,7 +171,7 @@ func (ctrl *KubernetesDynamicCertsController) Run(ctx context.Context, r control
 func (ctrl *KubernetesDynamicCertsController) updateSecrets(k8sRoot *secrets.KubernetesRootSpec, k8sCerts *secrets.KubernetesDynamicCertsSpec,
 	certSANs *secrets.CertSANSpec,
 ) error {
-	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sRoot.CA)
+	ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(k8sRoot.IssuingCA)
 	if err != nil {
 		return fmt.Errorf("failed to parse CA certificate: %w", err)
 	}
