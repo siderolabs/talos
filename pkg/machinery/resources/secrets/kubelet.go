@@ -31,7 +31,7 @@ type Kubelet = typed.Resource[KubeletSpec, KubeletExtension]
 type KubeletSpec struct {
 	Endpoint *url.URL `yaml:"endpoint" protobuf:"1"`
 
-	CA *x509.PEMEncodedCertificateAndKey `yaml:"ca" protobuf:"2"`
+	AcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs" protobuf:"5"`
 
 	BootstrapTokenID     string `yaml:"bootstrapTokenID" protobuf:"3"`
 	BootstrapTokenSecret string `yaml:"bootstrapTokenSecret" protobuf:"4"`

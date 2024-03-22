@@ -2852,6 +2852,7 @@ ca:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
+|`acceptedCAs` |[]PEMEncodedCertificate |The list of base64 encoded accepted certificate authorities used by Kubernetes.  | |
 |`aggregatorCA` |PEMEncodedCertificateAndKey |<details><summary>The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.</summary><br />This CA can be self-signed.</details> <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 aggregatorCA:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t

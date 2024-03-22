@@ -5,6 +5,7 @@
 package kubeconfig
 
 import (
+	"bytes"
 	stdlibx509 "crypto/x509"
 	"encoding/base64"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
@@ -45,16 +47,24 @@ current-context: {{ .ContextName }}@{{ .ClusterName }}
 type GenerateAdminInput interface {
 	Name() string
 	Endpoint() *url.URL
-	CA() *x509.PEMEncodedCertificateAndKey
+	IssuingCA() *x509.PEMEncodedCertificateAndKey
+	AcceptedCAs() []*x509.PEMEncodedCertificate
 	AdminKubeconfig() config.AdminKubeconfig
 }
 
 // GenerateAdmin generates admin kubeconfig for the cluster.
 func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
+	acceptedCAs := config.AcceptedCAs()
+
+	if config.IssuingCA() != nil {
+		acceptedCAs = append(acceptedCAs, &x509.PEMEncodedCertificate{Crt: config.IssuingCA().Crt})
+	}
+
 	return Generate(
 		&GenerateInput{
 			ClusterName:         config.Name(),
-			CA:                  config.CA(),
+			IssuingCA:           config.IssuingCA(),
+			AcceptedCAs:         acceptedCAs,
 			CertificateLifetime: config.AdminKubeconfig().CertLifetime(),
 
 			CommonName:   config.AdminKubeconfig().CommonName(),
@@ -72,7 +82,8 @@ func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
 type GenerateInput struct {
 	ClusterName string
 
-	CA                  *x509.PEMEncodedCertificateAndKey
+	IssuingCA           *x509.PEMEncodedCertificateAndKey
+	AcceptedCAs         []*x509.PEMEncodedCertificate
 	CertificateLifetime time.Duration
 
 	CommonName   string
@@ -94,7 +105,7 @@ func Generate(in *GenerateInput, out io.Writer) error {
 		return fmt.Errorf("error parsing kubeconfig template: %w", err)
 	}
 
-	k8sCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(in.CA)
+	k8sCA, err := x509.NewCertificateAuthorityFromCertificateAndKey(in.IssuingCA)
 	if err != nil {
 		return fmt.Errorf("error getting Kubernetes CA: %w", err)
 	}
@@ -115,6 +126,8 @@ func Generate(in *GenerateInput, out io.Writer) error {
 
 	clientCertPEM := x509.NewCertificateAndKeyFromKeyPair(clientCert)
 
+	serverCAs := bytes.Join(xslices.Map(in.AcceptedCAs, func(ca *x509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
+
 	return tpl.Execute(out, struct {
 		GenerateInput
 
@@ -123,7 +136,7 @@ func Generate(in *GenerateInput, out io.Writer) error {
 		ClientKey  string
 	}{
 		GenerateInput: *in,
-		CACert:        string(in.CA.Crt),
+		CACert:        string(serverCAs),
 		ClientCert:    string(clientCertPEM.Crt),
 		ClientKey:     string(clientCertPEM.Key),
 	})

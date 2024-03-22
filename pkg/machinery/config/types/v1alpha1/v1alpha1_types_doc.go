@@ -407,6 +407,13 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The base64 encoded root certificate authority used by Kubernetes." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "acceptedCAs",
+				Type:        "[]PEMEncodedCertificate",
+				Note:        "",
+				Description: "The list of base64 encoded accepted certificate authorities used by Kubernetes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of base64 encoded accepted certificate authorities used by Kubernetes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "aggregatorCA",
 				Type:        "PEMEncodedCertificateAndKey",
 				Note:        "",
@@ -529,27 +536,27 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.Fields[6].AddExample("Decryption secret example (do not use in production!).", "z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=")
 	doc.Fields[7].AddExample("Decryption secret example (do not use in production!).", "z01mye6j16bspJYtTB/5SFX8j7Ph4JXxM2Xuu4vsBPM=")
 	doc.Fields[8].AddExample("ClusterCA example.", pemEncodedCertificateExample())
-	doc.Fields[9].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
-	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedKeyExample())
-	doc.Fields[11].AddExample("", clusterAPIServerExample())
-	doc.Fields[12].AddExample("", clusterControllerManagerExample())
-	doc.Fields[13].AddExample("", clusterProxyExample())
-	doc.Fields[14].AddExample("", clusterSchedulerExample())
-	doc.Fields[15].AddExample("", clusterDiscoveryExample())
-	doc.Fields[16].AddExample("", clusterEtcdExample())
-	doc.Fields[17].AddExample("", clusterCoreDNSExample())
-	doc.Fields[18].AddExample("", clusterExternalCloudProviderConfigExample())
-	doc.Fields[19].AddExample("", []string{
+	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
+	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
+	doc.Fields[12].AddExample("", clusterAPIServerExample())
+	doc.Fields[13].AddExample("", clusterControllerManagerExample())
+	doc.Fields[14].AddExample("", clusterProxyExample())
+	doc.Fields[15].AddExample("", clusterSchedulerExample())
+	doc.Fields[16].AddExample("", clusterDiscoveryExample())
+	doc.Fields[17].AddExample("", clusterEtcdExample())
+	doc.Fields[18].AddExample("", clusterCoreDNSExample())
+	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())
+	doc.Fields[20].AddExample("", []string{
 		"https://www.example.com/manifest1.yaml",
 		"https://www.example.com/manifest2.yaml",
 	})
-	doc.Fields[20].AddExample("", map[string]string{
+	doc.Fields[21].AddExample("", map[string]string{
 		"Token":       "1234567",
 		"X-ExtraInfo": "info",
 	})
-	doc.Fields[21].AddExample("", clusterInlineManifestsExample())
-	doc.Fields[22].AddExample("", clusterAdminKubeconfigExample())
-	doc.Fields[24].AddExample("", true)
+	doc.Fields[22].AddExample("", clusterInlineManifestsExample())
+	doc.Fields[23].AddExample("", clusterAdminKubeconfigExample())
+	doc.Fields[25].AddExample("", true)
 
 	return doc
 }

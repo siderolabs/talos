@@ -38,7 +38,7 @@ var containersCmd = &cobra.Command{
 				driver    common.ContainerDriver
 			)
 
-			if kubernetes {
+			if kubernetesFlag {
 				namespace = criconstants.K8sContainerdNamespace
 				driver = common.ContainerDriver_CRI
 			} else {
@@ -95,7 +95,7 @@ func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse)
 }
 
 func init() {
-	containersCmd.Flags().BoolVarP(&kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	containersCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
 	containersCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
 	containersCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
