@@ -4,7 +4,7 @@ go 1.22.1
 
 replace (
 	// forked coredns so we don't carry caddy and other stuff into the Talos
-	github.com/coredns/coredns => github.com/siderolabs/coredns v1.11.52
+	github.com/coredns/coredns => github.com/siderolabs/coredns v1.11.2-0.20240313201213-4df2d63f3a59
 
 	// see https://github.com/mdlayher/kobject/pull/5
 	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
@@ -52,7 +52,7 @@ require (
 	github.com/containerd/typeurl/v2 v2.1.1
 	github.com/containernetworking/cni v1.1.2
 	github.com/containernetworking/plugins v1.4.1
-	github.com/coredns/coredns v1.11.1
+	github.com/coredns/coredns v1.11.2
 	github.com/coreos/go-iptables v0.7.0
 	github.com/cosi-project/runtime v0.4.0-alpha.9
 	github.com/distribution/reference v0.5.0
@@ -268,7 +268,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/packet v1.1.2 // indirect
 	github.com/mdlayher/socket v0.5.0 // indirect
@@ -298,9 +297,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.18.0 // indirect
-	github.com/prometheus/client_model v0.5.0 // indirect
-	github.com/prometheus/common v0.45.0 // indirect
+	github.com/prometheus/client_golang v1.19.0 // indirect
+	github.com/prometheus/client_model v0.6.0 // indirect
+	github.com/prometheus/common v0.50.0 // indirect
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
