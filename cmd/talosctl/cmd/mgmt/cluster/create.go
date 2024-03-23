@@ -466,14 +466,18 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		return err
 	}
 
-	apiPort, err := getDynamicTCPPort()
-	if err != nil {
-		return err
-	}
+	var apiPort int
+	externalControlPlanePort := controlPlanePort
 
-	externalControlPlanePort, err := getDynamicTCPPort()
-	if err != nil {
-		return err
+	if provisionerName == "docker" {
+		apiPort, err = getDynamicTCPPort()
+		if err != nil {
+			return err
+		}
+		externalControlPlanePort, err = getDynamicTCPPort()
+		if err != nil {
+			return err
+		}
 	}
 
 	if inputDir != "" {
@@ -661,7 +665,9 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 		var endpointList []string
 
-		provisionOptions = append(provisionOptions, provision.WithPort(externalControlPlanePort))
+		if provisionerName == "docker" {
+			provisionOptions = append(provisionOptions, provision.WithPort(externalControlPlanePort))
+		}
 
 		switch {
 		case defaultEndpoint != "":
@@ -675,6 +681,10 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			// using non-default endpoints, provision additional cert SANs and fix endpoint list
 			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
 			genOptions = append(genOptions, generate.WithAdditionalSubjectAltNames(endpointList))
+			// Add dynamic port to endpoint when using Docker forwarding
+			if provisionerName == "docker" {
+				endpointList = []string{fmt.Sprintf("%s:%d", forceEndpoint, apiPort)}
+			}
 		case forceInitNodeAsEndpoint:
 			endpointList = []string{ips[0][0].String()}
 		default:
@@ -684,13 +694,12 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			}
 		}
 
-		endpointList = []string{fmt.Sprintf("%s:%d", forceEndpoint, apiPort)}
 		genOptions = append(genOptions, generate.WithEndpointList(endpointList))
 		configBundleOpts = append(configBundleOpts,
 			bundle.WithInputOptions(
 				&bundle.InputOptions{
 					ClusterName: clusterName,
-					Endpoint:    fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultEndpoint, externalControlPlanePort)),
+					Endpoint:    fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultInternalLB, controlPlanePort)),
 					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
 				}),
@@ -812,7 +821,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			UUID:                pointer.To(nodeUUID),
 		}
 
-		if i == 0 {
+		if provisionerName == "docker" && i == 0 {
 			nodeReq.Ports = []string{fmt.Sprintf("%d:50000/tcp", apiPort), fmt.Sprintf("%d:%d/tcp", externalControlPlanePort, controlPlanePort)}
 		}
 
