@@ -74,6 +74,7 @@ func (k *KubernetesClient) K8sRestConfig(ctx context.Context) (*rest.Config, err
 		if port == 0 {
 			port = constants.DefaultControlPlanePort
 		}
+
 		config.Host = fmt.Sprintf("%s:%d", k.ForceEndpoint, port)
 	}
 

@@ -266,7 +266,8 @@ func getDynamicTCPPort() (int, error) {
 
 	_, portStr, err := net.SplitHostPort(l.Addr().String())
 	if err != nil {
-		l.Close()
+		l.Close() //nolint:errcheck
+
 		return 0, err
 	}
 
@@ -453,7 +454,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	var configBundleOpts []bundle.Option
 
 	if ports != "" {
-		if provisionerName != "docker" {
+		if provisionerName != "docker" { //nolint:goconst
 			return errors.New("exposed-ports flag only supported with docker provisioner")
 		}
 
@@ -467,6 +468,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	var apiPort int
+
 	externalControlPlanePort := controlPlanePort
 
 	if provisionerName == "docker" {
@@ -474,6 +476,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		if err != nil {
 			return err
 		}
+
 		externalControlPlanePort, err = getDynamicTCPPort()
 		if err != nil {
 			return err
