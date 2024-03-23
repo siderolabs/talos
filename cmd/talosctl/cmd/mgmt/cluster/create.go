@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
 	"net/netip"
 	"net/url"
 	"os"
@@ -87,7 +88,6 @@ const (
 	bootloaderEnabledFlag         = "with-bootloader"
 	forceEndpointFlag             = "endpoint"
 	controlPlanePortFlag          = "control-plane-port"
-	apiPortFlag                   = "api-port"
 	kubePrismFlag                 = "kubeprism-port"
 	tpm2EnabledFlag               = "with-tpm2"
 	diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
@@ -160,7 +160,6 @@ var (
 	extraBootKernelArgs        string
 	dockerDisableIPv6          bool
 	controlPlanePort           int
-	apiPort                    int
 	kubePrismPort              int
 	dhcpSkipHostname           bool
 	skipBootPhaseFinishedCheck bool
@@ -257,6 +256,31 @@ func downloadBootAssets(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func getDynamicTCPPort() (int, error) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0, err
+	}
+
+	_, portStr, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		l.Close()
+		return 0, err
+	}
+
+	err = l.Close()
+	if err != nil {
+		return 0, err
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return port, nil
 }
 
 //nolint:gocyclo,cyclop
@@ -438,6 +462,16 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	disks, err := getDisks()
+	if err != nil {
+		return err
+	}
+
+	apiPort, err := getDynamicTCPPort()
+	if err != nil {
+		return err
+	}
+
+	externalControlPlanePort, err := getDynamicTCPPort()
 	if err != nil {
 		return err
 	}
@@ -627,9 +661,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 		var endpointList []string
 
-		if controlPlanePort != 0 {
-			provisionOptions = append(provisionOptions, provision.WithPort(controlPlanePort))
-		}
+		provisionOptions = append(provisionOptions, provision.WithPort(externalControlPlanePort))
 
 		switch {
 		case defaultEndpoint != "":
@@ -781,7 +813,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		}
 
 		if i == 0 {
-			nodeReq.Ports = []string{fmt.Sprintf("%d:50000/tcp", apiPort), fmt.Sprintf("%d:%d/tcp", controlPlanePort, controlPlanePort)}
+			nodeReq.Ports = []string{fmt.Sprintf("%d:50000/tcp", apiPort), fmt.Sprintf("%d:%d/tcp", externalControlPlanePort, controlPlanePort)}
 		}
 
 		if withInitNode && i == 0 {
@@ -1146,7 +1178,6 @@ func init() {
 	createCmd.Flags().StringVar(&extraBootKernelArgs, "extra-boot-kernel-args", "", "add extra kernel args to the initial boot from vmlinuz and initramfs (QEMU only)")
 	createCmd.Flags().BoolVar(&dockerDisableIPv6, "docker-disable-ipv6", false, "skip enabling IPv6 in containers (Docker only)")
 	createCmd.Flags().IntVar(&controlPlanePort, controlPlanePortFlag, constants.DefaultControlPlanePort, "control plane port (load balancer and local API port)")
-	createCmd.Flags().IntVar(&apiPort, apiPortFlag, constants.ApidPort, "API port (local Talos management API port)")
 	createCmd.Flags().IntVar(&kubePrismPort, kubePrismFlag, constants.DefaultKubePrismPort, "KubePrism port (set to 0 to disable)")
 	createCmd.Flags().BoolVar(&dhcpSkipHostname, "disable-dhcp-hostname", false, "skip announcing hostname via DHCP (QEMU only)")
 	createCmd.Flags().BoolVar(&skipBootPhaseFinishedCheck, "skip-boot-phase-finished-check", false, "skip waiting for node to finish boot phase")
@@ -1189,7 +1220,6 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 		bootloaderEnabledFlag,
 		forceEndpointFlag,
 		controlPlanePortFlag,
-		apiPortFlag,
 		kubePrismFlag,
 		firewallFlag,
 	}
