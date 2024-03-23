@@ -690,7 +690,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			bundle.WithInputOptions(
 				&bundle.InputOptions{
 					ClusterName: clusterName,
-					Endpoint:    fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultInternalLB, controlPlanePort)),
+					Endpoint:    fmt.Sprintf("https://%s", nethelpers.JoinHostPort(defaultEndpoint, externalControlPlanePort)),
 					KubeVersion: strings.TrimPrefix(kubernetesVersion, "v"),
 					GenOptions:  genOptions,
 				}),
