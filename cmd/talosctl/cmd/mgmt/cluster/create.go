@@ -989,7 +989,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 
 	if clusterAccess.ForceEndpoint != "" {
 		for name := range kubeConfig.Clusters {
-			kubeConfig.Clusters[name].Server = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(clusterAccess.ForceEndpoint, controlPlanePort))
+			kubeConfig.Clusters[name].Server = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(clusterAccess.ForceEndpoint, clusterAccess.ForcePort))
 		}
 	}
 
