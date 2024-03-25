@@ -12,7 +12,6 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/pkg/kmutex"
 	"github.com/containerd/containerd/reference/docker"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -94,7 +93,7 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 			ref,
 			containerd.WithPullUnpack,
 			containerd.WithResolver(resolver),
-			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
+			//containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
 			containerd.WithUnpackOpts(
 				[]containerd.UnpackOpt{
 					containerd.WithUnpackDuplicationSuppressor(unpackDuplicationSuppressor),
