@@ -7,6 +7,7 @@ package conditions
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 
@@ -53,7 +54,7 @@ func (a *all) Wait(ctx context.Context) error {
 	// collapse errors if any of them is context canceled
 	if err != nil {
 		for _, e := range err.Errors {
-			if e == context.Canceled {
+			if errors.Is(e, context.Canceled) || errors.Is(e, context.DeadlineExceeded) {
 				return e
 			}
 		}
