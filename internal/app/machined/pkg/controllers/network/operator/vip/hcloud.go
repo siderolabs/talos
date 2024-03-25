@@ -62,14 +62,20 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 
 		oldDeviceID := findServerByAlias(serverList, handler.networkID, handler.vip)
 		if oldDeviceID != 0 {
+			handler.logger.Info("trying to remove previous Hetzner Cloud IP alias",
+				zap.String("vip", handler.vip), zap.Int64("device_id", oldDeviceID),
+				zap.Int64("network_id", handler.networkID),
+			)
+
 			action, _, err = handler.client.Server.ChangeAliasIPs(ctx,
 				&hcloud.Server{ID: oldDeviceID},
 				hcloud.ServerChangeAliasIPsOpts{
 					Network:  &hcloud.Network{ID: handler.networkID},
 					AliasIPs: []net.IP{},
-				})
+				},
+			)
 			if err != nil {
-				return fmt.Errorf("error remove alias IPs %q on server %d: %w", handler.vip, oldDeviceID, err)
+				return fmt.Errorf("error remove Hetzner Cloud IP alias %q from server %d: %w", handler.vip, oldDeviceID, err)
 			}
 
 			handler.logger.Info("cleared previous Hetzner Cloud IP alias", zap.String("vip", handler.vip),
@@ -86,7 +92,7 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 			return fmt.Errorf("error change alias IPs %q to server %d: %w", handler.vip, handler.deviceID, err)
 		}
 
-		handler.logger.Info("assigned Hetzner Cloud alias IP", zap.String("vip", handler.vip), zap.Int64("device_id", handler.deviceID),
+		handler.logger.Info("assigned Hetzner Cloud IP alias", zap.String("vip", handler.vip), zap.Int64("device_id", handler.deviceID),
 			zap.Int64("network_id", handler.networkID), zap.String("status", string(action.Status)))
 
 		return nil
@@ -111,7 +117,7 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 		}
 	}
 
-	return fmt.Errorf("error assigning %q to server %d: floating IP is not found", handler.vip, handler.deviceID)
+	return fmt.Errorf("error assigning %q to server %d in network %d: floating IP / alias IP is not found", handler.vip, handler.deviceID, handler.networkID)
 }
 
 // Release implements Handler interface.
@@ -155,7 +161,7 @@ func (handler *HCloudHandler) Release(ctx context.Context) error {
 const HCloudMetaDataEndpoint = "http://169.254.169.254/hetzner/v1/metadata/instance-id"
 
 // GetNetworkAndDeviceIDs fills in parts of the spec based on the API token and instance metadata.
-func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vip netip.Addr) error {
+func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vip netip.Addr, logger *zap.Logger) error {
 	metadataInstanceID, err := download.Download(ctx, HCloudMetaDataEndpoint)
 	if err != nil {
 		return fmt.Errorf("error downloading instance-id: %w", err)
@@ -173,19 +179,29 @@ func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vi
 		return fmt.Errorf("error getting server info: %w", err)
 	}
 
-	spec.NetworkID = 0
-
-	for _, privnet := range server.PrivateNet {
-		network, _, err := client.Network.GetByID(ctx, privnet.Network.ID)
-		if err != nil {
-			return fmt.Errorf("error getting network info: %w", err)
+	if vip.IsPrivate() {
+		// find private network for private vip (alias IP)
+		assignedPrivateNetworks := server.PrivateNet
+		if len(assignedPrivateNetworks) == 0 {
+			return fmt.Errorf("trying to assign private vip (alias IP) %q, but no private network is assigned to the server", vip.String())
 		}
 
-		if network.IPRange.Contains(vip.AsSlice()) {
-			spec.NetworkID = privnet.Network.ID
+		for _, assignedPrivateNetwork := range assignedPrivateNetworks {
+			privateNetwork, _, err := client.Network.GetByID(ctx, assignedPrivateNetwork.Network.ID)
+			if err != nil {
+				return fmt.Errorf("error getting network info: %w", err)
+			}
 
-			break
+			if privateNetwork.IPRange.Contains(vip.AsSlice()) {
+				spec.NetworkID = assignedPrivateNetwork.Network.ID
+				logger.Info("found private network for private vip (alias IP)", zap.String("vip", vip.String()), zap.Int64("network_id", spec.NetworkID))
+
+				break
+			}
 		}
+	} else {
+		// the public vip (floating IP) doesn't require a private network
+		spec.NetworkID = 0
 	}
 
 	return nil

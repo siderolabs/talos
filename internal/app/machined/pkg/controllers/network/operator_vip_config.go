@@ -229,7 +229,7 @@ func handleVIP(ctx context.Context, vlanConfig talosconfig.VIPConfig, deviceName
 		spec.VIP.GratuitousARP = false
 		spec.VIP.HCloud.APIToken = vlanConfig.HCloud().APIToken()
 
-		if err = vip.GetNetworkAndDeviceIDs(ctx, &spec.VIP.HCloud, sharedIP); err != nil {
+		if err = vip.GetNetworkAndDeviceIDs(ctx, &spec.VIP.HCloud, sharedIP, logger); err != nil {
 			return network.OperatorSpecSpec{}, err
 		}
 	// Regular layer 2 VIP
