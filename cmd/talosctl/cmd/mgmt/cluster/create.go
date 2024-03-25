@@ -260,6 +260,32 @@ func downloadBootAssets(ctx context.Context) error {
 	return nil
 }
 
+func getDynamicTCPPort() (int, error) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0, err
+	}
+
+	_, portStr, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		l.Close() //nolint:errcheck
+
+		return 0, err
+	}
+
+	err = l.Close()
+	if err != nil {
+		return 0, err
+	}
+
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return 0, err
+	}
+
+	return port, nil
+}
+
 //nolint:gocyclo,cyclop
 func create(ctx context.Context, flags *pflag.FlagSet) error {
 	if err := downloadBootAssets(ctx); err != nil {
@@ -431,7 +457,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	var configBundleOpts []bundle.Option
 
 	if ports != "" {
-		if provisionerName != "docker" {
+		if provisionerName != "docker" { //nolint:goconst
 			return errors.New("exposed-ports flag only supported with docker provisioner")
 		}
 
@@ -442,6 +468,22 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	disks, err := getDisks()
 	if err != nil {
 		return err
+	}
+
+	var apiPort int
+
+	externalControlPlanePort := controlPlanePort
+
+	if provisionerName == "docker" {
+		apiPort, err = getDynamicTCPPort()
+		if err != nil {
+			return err
+		}
+
+		externalControlPlanePort, err = getDynamicTCPPort()
+		if err != nil {
+			return err
+		}
 	}
 
 	if inputDir != "" {
@@ -629,6 +671,10 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 		var endpointList []string
 
+		if provisionerName == "docker" {
+			provisionOptions = append(provisionOptions, provision.WithPort(externalControlPlanePort))
+		}
+
 		switch {
 		case defaultEndpoint != "":
 			if forceEndpoint == "" {
@@ -641,6 +687,10 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			// using non-default endpoints, provision additional cert SANs and fix endpoint list
 			provisionOptions = append(provisionOptions, provision.WithEndpoint(forceEndpoint))
 			genOptions = append(genOptions, generate.WithAdditionalSubjectAltNames(endpointList))
+			// Add dynamic port to endpoint when using Docker forwarding
+			if provisionerName == "docker" {
+				endpointList = []string{fmt.Sprintf("%s:%d", forceEndpoint, apiPort)}
+			}
 		case forceInitNodeAsEndpoint:
 			endpointList = []string{ips[0][0].String()}
 		default:
@@ -822,8 +872,8 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 			UUID:                pointer.To(nodeUUID),
 		}
 
-		if i == 0 {
-			nodeReq.Ports = []string{"50000:50000/tcp", fmt.Sprintf("%d:%d/tcp", controlPlanePort, controlPlanePort)}
+		if provisionerName == "docker" && i == 0 {
+			nodeReq.Ports = []string{fmt.Sprintf("%d:50000/tcp", apiPort), fmt.Sprintf("%d:%d/tcp", externalControlPlanePort, controlPlanePort)}
 		}
 
 		if withInitNode && i == 0 {
@@ -1010,7 +1060,7 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 
 	if clusterAccess.ForceEndpoint != "" {
 		for name := range kubeConfig.Clusters {
-			kubeConfig.Clusters[name].Server = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(clusterAccess.ForceEndpoint, controlPlanePort))
+			kubeConfig.Clusters[name].Server = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(clusterAccess.ForceEndpoint, clusterAccess.ForcePort))
 		}
 	}
 

@@ -72,6 +72,7 @@ func NewAdapter(clusterInfo provision.Cluster, opts ...provision.Option) *Adapte
 		KubernetesClient: cluster.KubernetesClient{
 			ClientProvider: &configProvider,
 			ForceEndpoint:  options.ForceEndpoint,
+			ForcePort:      options.ForcePort,
 		},
 		APICrashDumper: cluster.APICrashDumper{
 			ClientProvider: &configProvider,

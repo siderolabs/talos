@@ -6,9 +6,7 @@
 package docker
 
 import (
-	"bytes"
 	"context"
-	"os"
 	"runtime"
 
 	"github.com/docker/docker/client"
@@ -82,14 +80,8 @@ func (p *provisioner) GetLoadBalancers(networkReq provision.NetworkRequest) (int
 	// docker doesn't provide internal LB, so return empty string
 	// external LB is always localhost for OS X where docker exposes ports
 	switch runtime.GOOS {
-	case "darwin", "windows":
+	case "darwin", "windows", "linux":
 		return "", "127.0.0.1"
-	case "linux":
-		if detectWSL() {
-			return "", "127.0.0.1"
-		}
-
-		fallthrough
 	default:
 		return "", ""
 	}
@@ -103,14 +95,4 @@ func (p *provisioner) UserDiskName(index int) string {
 // GetFirstInterface returns first network interface name.
 func (p *provisioner) GetFirstInterface() v1alpha1.IfaceSelector {
 	return v1alpha1.IfaceByName("eth0")
-}
-
-func detectWSL() bool {
-	// "Official" way of detecting WSL https://github.com/Microsoft/WSL/issues/423#issuecomment-221627364
-	contents, err := os.ReadFile("/proc/sys/kernel/osrelease")
-	if err == nil && (bytes.Contains(bytes.ToLower(contents), []byte("microsoft")) || bytes.Contains(bytes.ToLower(contents), []byte("wsl"))) {
-		return true
-	}
-
-	return false
 }
