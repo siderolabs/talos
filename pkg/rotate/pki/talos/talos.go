@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	secretsres "github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/role"
+	"github.com/siderolabs/talos/pkg/rotate/pki/internal/helpers"
 )
 
 // Options is the input to the Talos API rotation process.
@@ -157,12 +158,12 @@ func (r *rotator) printIntro() {
 
 	r.opts.Printf("  - control plane nodes: %q\n",
 		append(
-			mapToInternalIP(r.opts.ClusterInfo.NodesByType(machine.TypeInit)),
-			mapToInternalIP(r.opts.ClusterInfo.NodesByType(machine.TypeControlPlane))...,
+			helpers.MapToInternalIP(r.opts.ClusterInfo.NodesByType(machine.TypeInit)),
+			helpers.MapToInternalIP(r.opts.ClusterInfo.NodesByType(machine.TypeControlPlane))...,
 		),
 	)
 	r.opts.Printf("  - worker nodes: %q\n",
-		mapToInternalIP(r.opts.ClusterInfo.NodesByType(machine.TypeWorker)),
+		helpers.MapToInternalIP(r.opts.ClusterInfo.NodesByType(machine.TypeWorker)),
 	)
 }
 
@@ -369,7 +370,7 @@ func (r *rotator) patchAllNodes(ctx context.Context, c *client.Client, patchFunc
 				continue
 			}
 
-			if err := patchNodeConfig(ctx, c, node.InternalIP.String(), r.opts.EncoderOption, func(config *v1alpha1.Config) error {
+			if err := helpers.PatchNodeConfig(ctx, c, node.InternalIP.String(), r.opts.EncoderOption, func(config *v1alpha1.Config) error {
 				return patchFunc(machineType, config)
 			}); err != nil {
 				return fmt.Errorf("error patching node %s: %w", node.InternalIP, err)

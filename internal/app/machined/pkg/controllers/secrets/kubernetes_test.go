@@ -64,7 +64,7 @@ func (suite *KubernetesSuite) TestReconcile() {
 	rootSecrets.TypedSpec().LocalEndpoint, err = url.Parse("https://localhost:6443/")
 	suite.Require().NoError(err)
 
-	rootSecrets.TypedSpec().CA = &x509.PEMEncodedCertificateAndKey{
+	rootSecrets.TypedSpec().IssuingCA = &x509.PEMEncodedCertificateAndKey{
 		Crt: k8sCA.CrtPEM,
 		Key: k8sCA.KeyPEM,
 	}

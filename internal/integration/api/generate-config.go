@@ -179,7 +179,7 @@ func (suite *GenerateConfigSuite) TestGenerate() {
 		config.Cluster().AESCBCEncryptionSecret(),
 		joinedConfig.Cluster().AESCBCEncryptionSecret(),
 	)
-	suite.Require().EqualValues(config.Cluster().CA(), joinedConfig.Cluster().CA())
+	suite.Require().EqualValues(config.Cluster().IssuingCA(), joinedConfig.Cluster().IssuingCA())
 	suite.Require().EqualValues(config.Cluster().Token(), joinedConfig.Cluster().Token())
 	suite.Require().EqualValues(config.Cluster().Etcd().CA(), config.Cluster().Etcd().CA())
 }

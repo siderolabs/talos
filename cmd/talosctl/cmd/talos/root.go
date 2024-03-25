@@ -27,7 +27,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
-var kubernetes bool
+var kubernetesFlag bool
 
 // GlobalArgs is the common arguments for the root command.
 var GlobalArgs global.Args

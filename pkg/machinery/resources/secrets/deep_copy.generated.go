@@ -86,8 +86,14 @@ func (o KubeletSpec) DeepCopy() KubeletSpec {
 			*cp.Endpoint.User = *o.Endpoint.User
 		}
 	}
-	if o.CA != nil {
-		cp.CA = o.CA.DeepCopy()
+	if o.AcceptedCAs != nil {
+		cp.AcceptedCAs = make([]*x509.PEMEncodedCertificate, len(o.AcceptedCAs))
+		copy(cp.AcceptedCAs, o.AcceptedCAs)
+		for i2 := range o.AcceptedCAs {
+			if o.AcceptedCAs[i2] != nil {
+				cp.AcceptedCAs[i2] = o.AcceptedCAs[i2].DeepCopy()
+			}
+		}
 	}
 	return cp
 }
@@ -140,8 +146,17 @@ func (o KubernetesRootSpec) DeepCopy() KubernetesRootSpec {
 		cp.APIServerIPs = make([]netip.Addr, len(o.APIServerIPs))
 		copy(cp.APIServerIPs, o.APIServerIPs)
 	}
-	if o.CA != nil {
-		cp.CA = o.CA.DeepCopy()
+	if o.IssuingCA != nil {
+		cp.IssuingCA = o.IssuingCA.DeepCopy()
+	}
+	if o.AcceptedCAs != nil {
+		cp.AcceptedCAs = make([]*x509.PEMEncodedCertificate, len(o.AcceptedCAs))
+		copy(cp.AcceptedCAs, o.AcceptedCAs)
+		for i2 := range o.AcceptedCAs {
+			if o.AcceptedCAs[i2] != nil {
+				cp.AcceptedCAs[i2] = o.AcceptedCAs[i2].DeepCopy()
+			}
+		}
 	}
 	if o.ServiceAccount != nil {
 		cp.ServiceAccount = o.ServiceAccount.DeepCopy()

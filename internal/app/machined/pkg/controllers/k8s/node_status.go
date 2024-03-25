@@ -24,6 +24,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
+// watchErrorsThreshold is the number of consecutive watch errors before the controller stops watching.
+const watchErrorsThreshold = 5
+
 // NodeStatusController pulls list of Affiliate resource from the Kubernetes registry.
 type NodeStatusController struct{}
 
@@ -63,7 +66,9 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 		nodewatcher      *nodewatch.NodeWatcher
 		watchCtxCancel   context.CancelFunc
 		notifyCh         <-chan struct{}
+		watchErrCh       <-chan error
 		notifyCloser     func()
+		watchErrors      int
 	)
 
 	closeWatcher := func() {
@@ -76,6 +81,8 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			notifyCloser()
 			notifyCloser = nil
 			notifyCh = nil
+			watchErrCh = nil
+			watchErrors = 0
 		}
 
 		if kubernetesClient != nil {
@@ -95,6 +102,20 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			return nil
 		case <-r.EventCh():
 		case <-notifyCh:
+			watchErrors = 0
+		case watchErr := <-watchErrCh:
+			logger.Error("node watch error", zap.Error(watchErr), zap.Int("error_count", watchErrors))
+
+			watchErrors++
+
+			if watchErrors >= watchErrorsThreshold {
+				closeWatcher()
+
+				watchErrors = 0
+			} else {
+				// keep waiting
+				continue
+			}
 		}
 
 		nodename, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
@@ -137,7 +158,7 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			var watchCtx context.Context
 			watchCtx, watchCtxCancel = context.WithCancel(ctx) //nolint:govet
 
-			notifyCh, notifyCloser, err = nodewatcher.Watch(watchCtx, logger)
+			notifyCh, watchErrCh, notifyCloser, err = nodewatcher.Watch(watchCtx)
 			if err != nil {
 				return fmt.Errorf("error setting up registry watcher: %w", err) //nolint:govet
 			}

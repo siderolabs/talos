@@ -70,7 +70,8 @@ func (suite *GenerateSuite) TestGenerate() {
 	input := kubeconfig.GenerateInput{
 		ClusterName: "foo",
 
-		CA:                  k8sCA,
+		IssuingCA:           k8sCA,
+		AcceptedCAs:         []*x509.PEMEncodedCertificate{{Crt: k8sCA.Crt}},
 		CertificateLifetime: time.Hour,
 
 		CommonName:   "system:kube-controller-manager",

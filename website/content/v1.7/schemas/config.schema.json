@@ -847,6 +847,19 @@
           "markdownDescription": "The base64 encoded root certificate authority used by Kubernetes.",
           "x-intellij-html-description": "\u003cp\u003eThe base64 encoded root certificate authority used by Kubernetes.\u003c/p\u003e\n"
         },
+        "acceptedCAs": {
+          "properties": {
+            "crt": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "acceptedCAs",
+          "description": "The list of base64 encoded accepted certificate authorities used by Kubernetes.\n",
+          "markdownDescription": "The list of base64 encoded accepted certificate authorities used by Kubernetes.",
+          "x-intellij-html-description": "\u003cp\u003eThe list of base64 encoded accepted certificate authorities used by Kubernetes.\u003c/p\u003e\n"
+        },
         "aggregatorCA": {
           "properties": {
             "crt": {
