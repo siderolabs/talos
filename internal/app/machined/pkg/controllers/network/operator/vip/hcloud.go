@@ -62,6 +62,7 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 
 		oldDeviceID := findServerByAlias(serverList, handler.networkID, handler.vip)
 		if oldDeviceID != 0 {
+			handler.logger.Info("found previous set alias IP. Trying to remove it.", zap.String("vip", handler.vip), zap.Int64("device_id", oldDeviceID))
 			action, _, err = handler.client.Server.ChangeAliasIPs(ctx,
 				&hcloud.Server{ID: oldDeviceID},
 				hcloud.ServerChangeAliasIPsOpts{
@@ -69,7 +70,7 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 					AliasIPs: []net.IP{},
 				})
 			if err != nil {
-				return fmt.Errorf("error remove alias IPs %q on server %d: %w", handler.vip, oldDeviceID, err)
+				return fmt.Errorf("error remove alias IP %q on server %d: %w", handler.vip, oldDeviceID, err)
 			}
 
 			handler.logger.Info("cleared previous Hetzner Cloud IP alias", zap.String("vip", handler.vip),
@@ -111,7 +112,10 @@ func (handler *HCloudHandler) Acquire(ctx context.Context) error {
 		}
 	}
 
-	return fmt.Errorf("error assigning %q to server %d: floating IP is not found", handler.vip, handler.deviceID)
+	handler.logger.Error("error assigning Hetzner Cloud floating IP to server: floating IP is not found", zap.String("vip", handler.vip),
+		zap.Int64("device_id", handler.deviceID), zap.Int64("network_id", handler.networkID))
+
+	return nil
 }
 
 // Release implements Handler interface.
