@@ -29,10 +29,12 @@ import (
 )
 
 var cmdFlags struct {
-	Platform              string
-	Arch                  string
-	Board                 string
-	ImageDiskSize         string
+	Platform      string
+	Arch          string
+	Board         string
+	ImageDiskSize string
+	// Insecure can be set to true to force pull from insecure registry.
+	Insecure              bool
 	ExtraKernelArgs       []string
 	MetaValues            install.MetaValues
 	SystemExtensionImages []string
@@ -128,7 +130,8 @@ var rootCmd = &cobra.Command{
 					cmdFlags.SystemExtensionImages,
 					func(imageRef string) profile.ContainerAsset {
 						return profile.ContainerAsset{
-							ImageRef: imageRef,
+							ImageRef:      imageRef,
+							ForceInsecure: cmdFlags.Insecure,
 						}
 					},
 				)
@@ -146,6 +149,10 @@ var rootCmd = &cobra.Command{
 					prof.Input.BaseInstaller = profile.ContainerAsset{
 						ImageRef: cmdFlags.BaseInstallerImage,
 					}
+				}
+
+				if cmdFlags.Insecure {
+					prof.Input.BaseInstaller.ForceInsecure = cmdFlags.Insecure
 				}
 
 				if cmdFlags.ImageDiskSize != "" {
@@ -206,6 +213,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Arch, "arch", runtime.GOARCH, "The target architecture")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.BaseInstallerImage, "base-installer-image", "", "Base installer image to use")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Board, "board", "", "The value of "+constants.KernelParamBoard)
+	rootCmd.PersistentFlags().BoolVar(&cmdFlags.Insecure, "insecure", false, "Pull assets from insecure registry")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.ImageDiskSize, "image-disk-size", "", "Set custom disk image size (accepts human readable values, e.g. 6GiB)")
 	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.ExtraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.PersistentFlags().Var(&cmdFlags.MetaValues, "meta", "A key/value pair for META")
