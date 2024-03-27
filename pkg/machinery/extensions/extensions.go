@@ -17,4 +17,6 @@ var AllowedPaths = []string{
 	"/usr/share/glvnd",
 	"/usr/share/egl",
 	"/etc/vulkan",
+	"/dtb",
+	"/boot/dtb",
 }
