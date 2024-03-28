@@ -92,7 +92,7 @@ func (suite *RebootSuite) TestRebootMultiple() {
 		suite.Client.Reboot(nodeCtx),
 	))
 
-	suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*5)
+	suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*7)
 
 	bootID = suite.ReadBootIDWithRetry(nodeCtx, time.Minute*5)
 
@@ -111,7 +111,7 @@ func (suite *RebootSuite) TestRebootMultiple() {
 		return nil
 	}))
 
-	suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*5)
+	suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*7)
 	suite.WaitForBootDone(suite.ctx)
 }
 

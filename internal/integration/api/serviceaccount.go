@@ -115,8 +115,6 @@ func (suite *ServiceAccountSuite) TestValid() {
 }
 
 // TestNotAllowedNamespace tests Kubernetes service accounts in not allowed namespaces.
-//
-//nolint:dupl
 func (suite *ServiceAccountSuite) TestNotAllowedNamespace() {
 	name := "test-allowed-ns"
 
@@ -137,8 +135,6 @@ func (suite *ServiceAccountSuite) TestNotAllowedNamespace() {
 }
 
 // TestNotAllowedRoles tests Kubernetes service accounts with not allowed roles.
-//
-//nolint:dupl
 func (suite *ServiceAccountSuite) TestNotAllowedRoles() {
 	name := "test-not-allowed-roles"
 
@@ -147,6 +143,7 @@ func (suite *ServiceAccountSuite) TestNotAllowedRoles() {
 
 	sa, err := suite.createServiceAccount("kube-system", name, []string{"os:admin"})
 	suite.Assert().NoError(err)
+	suite.Assert().NotNil(sa)
 
 	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name) //nolint:errcheck
 
@@ -172,6 +169,7 @@ func (suite *ServiceAccountSuite) TestFeatureNotEnabled() {
 	}
 
 	suite.Assert().NoError(err)
+	suite.Assert().NotNil(sa)
 
 	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name) //nolint:errcheck
 

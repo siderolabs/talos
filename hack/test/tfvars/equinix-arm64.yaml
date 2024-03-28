@@ -1,0 +1,3 @@
+machine:
+  install:
+    disk: /dev/nvme0n1

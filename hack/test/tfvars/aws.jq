@@ -31,6 +31,5 @@
         "Cluster Name": .cluster_name,
         "Project": "talos-e2e-ci",
         "Environment": "ci"
-    },
-
+    }
 }

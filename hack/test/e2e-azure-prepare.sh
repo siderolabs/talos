@@ -29,7 +29,12 @@ jq --null-input \
   --arg CLUSTER_NAME "${NAME_PREFIX}" \
   --arg TALOS_VERSION_CONTRACT "${TALOS_VERSION}" \
   --arg KUBERNETES_VERSION "${KUBERNETES_VERSION}" \
-  '{vm_os_id: $VM_OS_ID, cluster_name: $CLUSTER_NAME, talos_version_contract: $TALOS_VERSION_CONTRACT, kubernetes_version: $KUBERNETES_VERSION}' \
+    '{
+        vm_os_id: $VM_OS_ID,
+        cluster_name: $CLUSTER_NAME,
+        talos_version_contract: $TALOS_VERSION_CONTRACT,
+        kubernetes_version: $KUBERNETES_VERSION
+    }' \
   | jq -f hack/test/tfvars/azure.jq > "${ARTIFACTS}/e2e-azure-generated/vars.json"
 
 cp hack/test/tfvars/*.yaml "${ARTIFACTS}/e2e-azure-generated"

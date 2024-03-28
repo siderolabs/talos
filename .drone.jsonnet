@@ -211,6 +211,8 @@ local creds_env_vars = {
   // TODO(andrewrynhard): Rename this to the GCP convention.
   GCE_SVC_ACCT: { from_secret: 'gce_svc_acct' },
   PACKET_AUTH_TOKEN: { from_secret: 'packet_auth_token' },
+  EM_API_TOKEN: { from_secret: 'em_api_token' },
+  EM_PROJECT_ID: { from_secret: 'em_project_id' },
   GITHUB_TOKEN: { from_secret: 'ghcr_token' },  // Use GitHub API token to avoid rate limiting on CAPI -> GitHub calls.
 };
 
@@ -917,10 +919,77 @@ local E2EAzure() =
 
   targets;
 
+local E2EEquinixMetal() =
+  local depends_on = [load_artifacts];
+
+  local e2e_equinixmetal_prepare = Step(
+    'e2e-equinix-metal-prepare',
+    depends_on=depends_on,
+    environment=creds_env_vars {
+      IMAGE_REGISTRY: local_registry,
+    },
+    extra_commands=[
+      'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
+      'az storage blob upload-batch --overwrite -s _out --pattern "e2e-equinix-metal-generated/*" -d "${CI_COMMIT_SHA}${DRONE_TAG//./-}"',
+    ]
+  );
+
+  local tf_apply = TriggerDownstream(
+    'tf-apply',
+    'e2e-talos-tf-apply',
+    ['siderolabs/contrib@main'],
+    params=[
+      'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+      'TYPE=equinix-metal',
+    ],
+    depends_on=[e2e_equinixmetal_prepare],
+  );
+
+  local e2e_equinixmetal_tf_apply_post = Step(
+    'e2e-equinix-metal-download-artifacts',
+    with_make=false,
+    environment=creds_env_vars,
+    extra_commands=[
+      'az login --service-principal -u "$${AZURE_CLIENT_ID}" -p "$${AZURE_CLIENT_SECRET}" --tenant "$${AZURE_TENANT_ID}"',
+      'az storage blob download -f _out/e2e-equinix-metal-talosconfig -n e2e-equinix-metal-talosconfig -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+      'az storage blob download -f _out/e2e-equinix-metal-kubeconfig -n e2e-equinix-metal-kubeconfig -c ${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+    ],
+    depends_on=[tf_apply],
+  );
+
+  local e2e_equinixmetal = Step(
+    'e2e-equinix-metal',
+    depends_on=[e2e_equinixmetal_tf_apply_post],
+    environment=creds_env_vars {}
+  );
+
+  local tf_destroy = TriggerDownstream(
+    'tf-destroy',
+    'e2e-talos-tf-destroy',
+    ['siderolabs/contrib@main'],
+    params=[
+      'BUCKET_PATH=${CI_COMMIT_SHA}${DRONE_TAG//./-}',
+      'TYPE=equinix-metal',
+      'REFRESH_ON_DESTROY=false', // it's safe to skip refresh on destroy for EM, since we don't read any data from Equinix.
+    ],
+    depends_on=[e2e_equinixmetal],
+    when={
+      status: [
+        'failure',
+        'success',
+      ],
+    },
+  );
+
+  local targets = [e2e_equinixmetal_prepare, tf_apply, e2e_equinixmetal_tf_apply_post, e2e_equinixmetal, tf_destroy];
+
+  targets;
+
 
 local e2e_aws = [step for step in E2EAWS('default')];
 local e2e_aws_nvidia_oss = [step for step in E2EAWS('nvidia-oss')];
 local e2e_azure = [step for step in E2EAzure()];
+local e2e_equinixmetal = [step for step in E2EEquinixMetal()];
 local e2e_gcp = Step('e2e-gcp', depends_on=[e2e_capi], environment=creds_env_vars);
 
 local e2e_trigger(names) = {
@@ -936,11 +1005,13 @@ local e2e_pipelines = [
   Pipeline('e2e-aws', default_pipeline_steps + e2e_aws) + e2e_trigger(['e2e-aws']),
   Pipeline('e2e-aws-nvidia-oss', default_pipeline_steps + e2e_aws_nvidia_oss) + e2e_trigger(['e2e-aws-nvidia-oss']),
   Pipeline('e2e-azure', default_pipeline_steps + e2e_azure) + e2e_trigger(['e2e-azure']),
+  Pipeline('e2e-equinix-metal', default_pipeline_steps + e2e_equinixmetal) + e2e_trigger(['e2e-equinix-metal']),
   Pipeline('e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp]) + e2e_trigger(['e2e-gcp']),
 
   // cron pipelines, triggered on schedule events
   Pipeline('cron-e2e-aws', default_pipeline_steps + e2e_aws, [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-e2e-azure', default_pipeline_steps + e2e_azure, [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
+  Pipeline('cron-e2e-equinix-metal', default_pipeline_steps + e2e_equinixmetal, [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
   Pipeline('cron-e2e-gcp', default_pipeline_steps + [capi_docker, e2e_capi, e2e_gcp], [default_cron_pipeline]) + cron_trigger(['thrice-daily', 'nightly']),
 ];
 
