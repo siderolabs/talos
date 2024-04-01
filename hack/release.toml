@@ -19,7 +19,7 @@ preface = """\
         description = """\
 Linux: 6.6.21
 etcd: 3.5.11
-Kubernetes: 1.30.0-beta.0
+Kubernetes: 1.30.0-rc.0
 containerd: 1.7.14
 runc: 1.1.12
 Flannel: 0.24.4

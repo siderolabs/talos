@@ -19,16 +19,16 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.30.0-beta.0
-	k8s.io/apimachinery v0.30.0-beta.0
-	k8s.io/apiserver v0.30.0-beta.0
-	k8s.io/client-go v0.30.0-beta.0
-	k8s.io/component-base v0.30.0-beta.0
-	k8s.io/cri-api v0.30.0-beta.0
-	k8s.io/kube-scheduler v0.30.0-beta.0
-	k8s.io/kubectl v0.30.0-beta.0
-	k8s.io/kubelet v0.30.0-beta.0
-	k8s.io/pod-security-admission v0.30.0-beta.0
+	k8s.io/api v0.30.0-rc.0
+	k8s.io/apimachinery v0.30.0-rc.0
+	k8s.io/apiserver v0.30.0-rc.0
+	k8s.io/client-go v0.30.0-rc.0
+	k8s.io/component-base v0.30.0-rc.0
+	k8s.io/cri-api v0.30.0-rc.0
+	k8s.io/kube-scheduler v0.30.0-rc.0
+	k8s.io/kubectl v0.30.0-rc.0
+	k8s.io/kubelet v0.30.0-rc.0
+	k8s.io/pod-security-admission v0.30.0-rc.0
 )
 
 require (
@@ -147,10 +147,10 @@ require (
 	github.com/vmware-tanzu/sonobuoy v0.57.1
 	github.com/vmware/vmw-guestinfo v0.0.0-20220317130741-510905f0efa3
 	github.com/vultr/metadata v1.1.0
-	go.etcd.io/etcd/api/v3 v3.5.12
-	go.etcd.io/etcd/client/pkg/v3 v3.5.12
-	go.etcd.io/etcd/client/v3 v3.5.12
-	go.etcd.io/etcd/etcdutl/v3 v3.5.12
+	go.etcd.io/etcd/api/v3 v3.5.13
+	go.etcd.io/etcd/client/pkg/v3 v3.5.13
+	go.etcd.io/etcd/client/v3 v3.5.13
+	go.etcd.io/etcd/etcdutl/v3 v3.5.13
 	go.uber.org/zap v1.27.0
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/net v0.22.0
@@ -319,10 +319,10 @@ require (
 	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
 	go.etcd.io/bbolt v1.3.9 // indirect
-	go.etcd.io/etcd/client/v2 v2.305.12 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.5.12 // indirect
-	go.etcd.io/etcd/raft/v3 v3.5.12 // indirect
-	go.etcd.io/etcd/server/v3 v3.5.12 // indirect
+	go.etcd.io/etcd/client/v2 v2.305.13 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.5.13 // indirect
+	go.etcd.io/etcd/raft/v3 v3.5.13 // indirect
+	go.etcd.io/etcd/server/v3 v3.5.13 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
@@ -343,7 +343,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.30.0-beta.0 // indirect
+	k8s.io/cli-runtime v0.30.0-rc.0 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
