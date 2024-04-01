@@ -2667,6 +2667,7 @@ endpoint: udp://127.0.0.1:12345
 endpoint: tcp://1.2.3.4:12345
 {{< /highlight >}}</details> | |
 |`format` |string |Logs format.  |`json_lines`<br /> |
+|`extraTags` |map[string]string |Extra tags (key-value) pairs to attach to every log message sent.  | |
 
 
 

@@ -13,10 +13,12 @@ import (
 	"time"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 type jsonLinesSender struct {
-	endpoint *url.URL
+	endpoint  *url.URL
+	extraTags map[string]string
 
 	sema chan struct{}
 	conn net.Conn
@@ -24,13 +26,15 @@ type jsonLinesSender struct {
 
 // NewJSONLines returns log sender that sends logs in JSON over TCP (newline-delimited)
 // or UDP (one message per packet).
-func NewJSONLines(endpoint *url.URL) runtime.LogSender {
+func NewJSONLines(cfg config.LoggingDestination) runtime.LogSender {
 	sema := make(chan struct{}, 1)
 	sema <- struct{}{}
 
 	return &jsonLinesSender{
-		endpoint: endpoint,
-		sema:     sema,
+		endpoint:  cfg.Endpoint(),
+		extraTags: cfg.ExtraTags(),
+
+		sema: sema,
 	}
 }
 
@@ -54,6 +58,10 @@ func (j *jsonLinesSender) marshalJSON(e *runtime.LogEvent) ([]byte, error) {
 	m["msg"] = e.Msg
 	m["talos-time"] = e.Time.Format(time.RFC3339Nano)
 	m["talos-level"] = e.Level.String()
+
+	for k, v := range j.extraTags {
+		m[k] = v
+	}
 
 	return json.Marshal(m)
 }

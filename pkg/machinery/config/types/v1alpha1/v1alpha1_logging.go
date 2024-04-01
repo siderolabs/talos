@@ -59,6 +59,11 @@ func (ld LoggingDestination) Endpoint() *url.URL {
 	return ld.LoggingEndpoint.URL
 }
 
+// ExtraTags implements config.LoggingDestination interface.
+func (ld LoggingDestination) ExtraTags() map[string]string {
+	return ld.LoggingExtraTags
+}
+
 // Format implements config.LoggingDestination interface.
 func (ld LoggingDestination) Format() string {
 	return ld.LoggingFormat

@@ -179,6 +179,22 @@ timeout: 3m0s
 ```
 """
 
+    [notes.logging]
+        title = "Logging"
+        description = """\
+Talos Linux now supports setting extra tags when sending logs in JSON format:
+
+```yaml
+machine:
+  logging:
+    destinations:
+      - endpoint: "udp://127.0.0.1:12345/"
+        format: "json_lines"
+        extraTags:
+          server: s03-rack07
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

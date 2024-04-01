@@ -1503,6 +1503,13 @@ func (in *LoggingDestination) DeepCopyInto(out *LoggingDestination) {
 		in, out := &in.LoggingEndpoint, &out.LoggingEndpoint
 		*out = (*in).DeepCopy()
 	}
+	if in.LoggingExtraTags != nil {
+		in, out := &in.LoggingExtraTags, &out.LoggingExtraTags
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 

@@ -89,6 +89,20 @@ Messages are newline-separated when sent over TCP.
 Over UDP messages are sent with one message per packet.
 `msg`, `talos-level`, `talos-service`, and `talos-time` fields are always present; there may be additional fields.
 
+Every message sent can be enhanced with additional fields by using the `extraTags` field in the machine configuration:
+
+```yaml
+machine:
+  logging:
+    destinations:
+      - endpoint: "udp://127.0.0.1:12345/"
+        format: "json_lines"
+        extraTags:
+          server: s03-rack07
+```
+
+The specified `extraTags` are added to every message sent to the destination verbatim.
+
 ### Kernel logs
 
 Kernel log delivery can be enabled with the `talos.logging.kernel` kernel command line argument, which can be specified

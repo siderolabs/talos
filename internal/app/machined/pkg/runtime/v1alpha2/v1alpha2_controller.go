@@ -352,6 +352,34 @@ func (ctrl *Controller) DependencyGraph() (*controller.DependencyGraph, error) {
 	return ctrl.controllerRuntime.GetDependencyGraph()
 }
 
+type loggingDestination struct {
+	Format    string
+	Endpoint  *url.URL
+	ExtraTags map[string]string
+}
+
+func (a *loggingDestination) Equal(b *loggingDestination) bool {
+	if a.Format != b.Format {
+		return false
+	}
+
+	if a.Endpoint.String() != b.Endpoint.String() {
+		return false
+	}
+
+	if len(a.ExtraTags) != len(b.ExtraTags) {
+		return false
+	}
+
+	for k, v := range a.ExtraTags {
+		if vv, ok := b.ExtraTags[k]; !ok || vv != v {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 	watchCh := make(chan state.Event)
 
@@ -365,7 +393,7 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 		return
 	}
 
-	var loggingEndpoints []*url.URL
+	var loggingDestinations []loggingDestination
 
 	for {
 		var cfg talosconfig.Config
@@ -384,9 +412,9 @@ func (ctrl *Controller) watchMachineConfig(ctx context.Context) {
 		ctrl.updateConsoleLoggingConfig(cfg.Debug())
 
 		if cfg.Machine() == nil {
-			ctrl.updateLoggingConfig(ctx, nil, &loggingEndpoints)
+			ctrl.updateLoggingConfig(ctx, nil, &loggingDestinations)
 		} else {
-			ctrl.updateLoggingConfig(ctx, cfg.Machine().Logging().Destinations(), &loggingEndpoints)
+			ctrl.updateLoggingConfig(ctx, cfg.Machine().Logging().Destinations(), &loggingDestinations)
 		}
 	}
 }
@@ -403,23 +431,27 @@ func (ctrl *Controller) updateConsoleLoggingConfig(debug bool) {
 	}
 }
 
-func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosconfig.LoggingDestination, prevLoggingEndpoints *[]*url.URL) {
-	loggingEndpoints := make([]*url.URL, len(dests))
+func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosconfig.LoggingDestination, prevLoggingDestinations *[]loggingDestination) {
+	loggingDestinations := make([]loggingDestination, len(dests))
 
 	for i, dest := range dests {
 		switch f := dest.Format(); f {
 		case constants.LoggingFormatJSONLines:
-			loggingEndpoints[i] = dest.Endpoint()
+			loggingDestinations[i] = loggingDestination{
+				Format:    f,
+				Endpoint:  dest.Endpoint(),
+				ExtraTags: dest.ExtraTags(),
+			}
 		default:
 			// should not be possible due to validation
 			panic(fmt.Sprintf("unhandled log destination format %q", f))
 		}
 	}
 
-	loggingChanged := len(*prevLoggingEndpoints) != len(loggingEndpoints)
+	loggingChanged := len(*prevLoggingDestinations) != len(loggingDestinations)
 	if !loggingChanged {
-		for i, u := range *prevLoggingEndpoints {
-			if u.String() != loggingEndpoints[i].String() {
+		for i, u := range *prevLoggingDestinations {
+			if !u.Equal(&loggingDestinations[i]) {
 				loggingChanged = true
 
 				break
@@ -431,12 +463,12 @@ func (ctrl *Controller) updateLoggingConfig(ctx context.Context, dests []talosco
 		return
 	}
 
-	*prevLoggingEndpoints = loggingEndpoints
+	*prevLoggingDestinations = loggingDestinations
 
 	var prevSenders []runtime.LogSender
 
-	if len(loggingEndpoints) > 0 {
-		senders := xslices.Map(loggingEndpoints, runtimelogging.NewJSONLines)
+	if len(loggingDestinations) > 0 {
+		senders := xslices.Map(dests, runtimelogging.NewJSONLines)
 
 		ctrl.logger.Info("enabling JSON logging")
 		prevSenders = ctrl.loggingManager.SetSenders(senders)

@@ -2299,6 +2299,18 @@
           "description": "Logs format.\n",
           "markdownDescription": "Logs format.",
           "x-intellij-html-description": "\u003cp\u003eLogs format.\u003c/p\u003e\n"
+        },
+        "extraTags": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraTags",
+          "description": "Extra tags (key-value) pairs to attach to every log message sent.\n",
+          "markdownDescription": "Extra tags (key-value) pairs to attach to every log message sent.",
+          "x-intellij-html-description": "\u003cp\u003eExtra tags (key-value) pairs to attach to every log message sent.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -23,6 +23,8 @@ import (
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
 	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -110,6 +112,22 @@ func (ctrl *KmsgLogDeliveryController) Run(ctx context.Context, r controller.Run
 	}
 }
 
+type logConfig struct {
+	endpoint *url.URL
+}
+
+func (c logConfig) Format() string {
+	return constants.LoggingFormatJSONLines
+}
+
+func (c logConfig) Endpoint() *url.URL {
+	return c.endpoint
+}
+
+func (c logConfig) ExtraTags() map[string]string {
+	return nil
+}
+
 //nolint:gocyclo
 func (ctrl *KmsgLogDeliveryController) deliverLogs(ctx context.Context, r controller.Runtime, logger *zap.Logger, kmsgCh <-chan kmsg.Packet, destURLs []*url.URL) error {
 	if ctrl.drainSub == nil {
@@ -117,7 +135,10 @@ func (ctrl *KmsgLogDeliveryController) deliverLogs(ctx context.Context, r contro
 	}
 
 	// initialize all log senders
-	senders := xslices.Map(destURLs, logging.NewJSONLines)
+	destLogConfigs := xslices.Map(destURLs, func(u *url.URL) config.LoggingDestination {
+		return logConfig{endpoint: u}
+	})
+	senders := xslices.Map(destLogConfigs, logging.NewJSONLines)
 
 	defer func() {
 		closeCtx, closeCtxCancel := context.WithTimeout(context.Background(), logCloseTimeout)

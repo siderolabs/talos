@@ -2392,6 +2392,9 @@ type LoggingDestination struct {
 	// values:
 	//   - json_lines
 	LoggingFormat string `yaml:"format"`
+	// description: |
+	//   Extra tags (key-value) pairs to attach to every log message sent.
+	LoggingExtraTags map[string]string `yaml:"extraTags,omitempty"`
 }
 
 // KernelConfig struct configures Talos Linux kernel.

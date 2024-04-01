@@ -445,6 +445,7 @@ type Logging interface {
 // LoggingDestination describes logging destination.
 type LoggingDestination interface {
 	Endpoint() *url.URL
+	ExtraTags() map[string]string
 	Format() string
 }
 

@@ -3906,6 +3906,13 @@ func (LoggingDestination) Doc() *encoder.Doc {
 					"json_lines",
 				},
 			},
+			{
+				Name:        "extraTags",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Extra tags (key-value) pairs to attach to every log message sent.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra tags (key-value) pairs to attach to every log message sent." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
