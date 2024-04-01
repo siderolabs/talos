@@ -112,7 +112,7 @@ func (ctrl *UserspaceWireguardController) Run(ctx context.Context, r controller.
 			logger.Info("wg over grpc tunnel device created", zap.String("link_name", res.TypedSpec().LinkName))
 
 			eg.Go(func() error {
-				logger.Debug("running tunnel device")
+				logger.Debug("tunnel device running")
 				defer logger.Debug("tunnel device exited")
 
 				return td.Run()

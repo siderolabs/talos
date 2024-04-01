@@ -167,7 +167,7 @@ talosctl cluster create [flags]
       --with-network-packet-corrupt float        specify percent of corrupt packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)
       --with-network-packet-loss float           specify percent of packet loss on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)
       --with-network-packet-reorder float        specify percent of reordered packets on the bridge interface when creating a qemu cluster. e.g. 50% = 0.50 (default: 0.0)
-      --with-siderolink                          enables the use of siderolink agent as configuration apply mechanism
+      --with-siderolink true                     enables the use of siderolink agent as configuration apply mechanism. true or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling (default none)
       --with-tpm2                                enable TPM2 emulation support using swtpm
       --with-uefi                                enable UEFI on x86_64 architecture (default true)
       --with-uuid-hostnames                      use machine UUIDs as default hostnames (QEMU only)

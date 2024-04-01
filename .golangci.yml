@@ -97,6 +97,8 @@ linters-settings:
       - gopkg.in/yaml.v3
       - github.com/coredns/coredns
       - github.com/mdlayher/kobject
+      - golang.zx2c4.com/wireguard
+      - golang.zx2c4.com/wireguard/wgctrl
     retract-allow-no-explanation: false
     exclude-forbidden: true
 

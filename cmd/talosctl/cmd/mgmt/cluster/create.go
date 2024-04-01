@@ -23,6 +23,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-kubeconfig"
 	"github.com/siderolabs/go-pointer"
@@ -174,7 +175,7 @@ var (
 	diskEncryptionKeyTypes     []string
 	withFirewall               string
 	withUUIDHostnames          bool
-	withSiderolinkAgent        bool
+	withSiderolinkAgent        agentFlag
 )
 
 // createCmd represents the cluster up command.
@@ -425,7 +426,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		provision.WithTPM2(tpm2Enabled),
 		provision.WithExtraUEFISearchPaths(extraUEFISearchPaths),
 		provision.WithTargetArch(targetArch),
-		provision.WithSiderolinkAgent(withSiderolinkAgent),
+		provision.WithSiderolinkAgent(withSiderolinkAgent.IsEnabled()),
 	}
 
 	var configBundleOpts []bundle.Option
@@ -746,42 +747,22 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 	var extraKernelArgs *procfs.Cmdline
 
-	if extraBootKernelArgs != "" {
+	if extraBootKernelArgs != "" || withSiderolinkAgent.IsEnabled() {
 		extraKernelArgs = procfs.NewCmdline(extraBootKernelArgs)
 	}
 
-	wgNodeGen := makeNodeAddrGenerator()
+	var slb *siderolinkBuilder
 
-	if withSiderolinkAgent {
-		if extraKernelArgs == nil {
-			extraKernelArgs = procfs.NewCmdline("")
-		}
-
-		if extraKernelArgs.Get("siderolink.api") != nil || extraKernelArgs.Get("talos.events.sink") != nil || extraKernelArgs.Get("talos.logging.kernel") != nil {
-			return errors.New("siderolink kernel arguments are already set, cannot run with --with-siderolink")
-		}
-
-		wgHost := gatewayIPs[0].String()
-
-		ports, err := getDynamicPorts()
+	if withSiderolinkAgent.IsEnabled() {
+		slb, err = newSiderolinkBuilder(gatewayIPs[0].String())
 		if err != nil {
 			return err
 		}
+	}
 
-		request.SiderolinkRequest.WireguardEndpoint = net.JoinHostPort(wgHost, ports.wgPort)
-		request.SiderolinkRequest.APIEndpoint = ":" + ports.apiPort
-		request.SiderolinkRequest.SinkEndpoint = ":" + ports.sinkPort
-		request.SiderolinkRequest.LogEndpoint = ":" + ports.logPort
-
-		agentNodeAddr := wgNodeGen.GetAgentNodeAddr()
-
-		apiLink := "grpc://" + net.JoinHostPort(wgHost, ports.apiPort) + "?jointoken=foo"
-		sinkURL := net.JoinHostPort(agentNodeAddr, ports.sinkPort)
-		kernelURL := "tcp://" + net.JoinHostPort(agentNodeAddr, ports.logPort)
-
-		extraKernelArgs.Append("siderolink.api", apiLink)
-		extraKernelArgs.Append("talos.events.sink", sinkURL)
-		extraKernelArgs.Append("talos.logging.kernel", kernelURL)
+	err = slb.SetKernelArgs(extraKernelArgs, withSiderolinkAgent.IsTunnel())
+	if err != nil {
+		return err
 	}
 
 	// Add talosconfig to provision options, so we'll have it to parse there
@@ -798,15 +779,9 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 		nodeUUID := uuid.New()
 
-		if withSiderolinkAgent {
-			var generated netip.Addr
-
-			generated, err = wgNodeGen.GenerateRandomNodeAddr()
-			if err != nil {
-				return err
-			}
-
-			request.SiderolinkRequest.AddBind(nodeUUID, generated)
+		err = slb.DefineIPv6ForUUID(nodeUUID)
+		if err != nil {
+			return err
 		}
 
 		nodeReq := provision.NodeRequest{
@@ -869,15 +844,9 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 
 		nodeUUID := uuid.New()
 
-		if withSiderolinkAgent {
-			var generated netip.Addr
-
-			generated, err = wgNodeGen.GenerateRandomNodeAddr()
-			if err != nil {
-				return err
-			}
-
-			request.SiderolinkRequest.AddBind(nodeUUID, generated)
+		err = slb.DefineIPv6ForUUID(nodeUUID)
+		if err != nil {
+			return err
 		}
 
 		request.Nodes = append(request.Nodes,
@@ -895,6 +864,8 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 				UUID:                pointer.To(nodeUUID),
 			})
 	}
+
+	request.SiderolinkRequest = slb.SiderolinkRequest()
 
 	cluster, err := provisioner.Create(ctx, request, provisionOptions...)
 	if err != nil {
@@ -1213,7 +1184,7 @@ func init() {
 	createCmd.Flags().IntVar(&bandwidth, "with-network-bandwidth", 0, "specify bandwidth restriction (in kbps) on the bridge interface when creating a qemu cluster")
 	createCmd.Flags().StringVar(&withFirewall, firewallFlag, "", "inject firewall rules into the cluster, value is default policy - accept/block (QEMU only)")
 	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
-	createCmd.Flags().BoolVar(&withSiderolinkAgent, "with-siderolink", false, "enables the use of siderolink agent as configuration apply mechanism")
+	createCmd.Flags().Var(&withSiderolinkAgent, "with-siderolink", "enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling") //nolint:lll
 
 	Cmd.AddCommand(createCmd)
 }
@@ -1254,51 +1225,124 @@ func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
 	return ""
 }
 
-type generatedPorts struct {
-	wgPort   string
-	apiPort  string
-	sinkPort string
-	logPort  string
-}
+func newSiderolinkBuilder(wgHost string) (*siderolinkBuilder, error) {
+	prefix, err := networkPrefix("")
+	if err != nil {
+		return nil, err
+	}
 
-func getDynamicPorts() (generatedPorts, error) {
+	result := &siderolinkBuilder{
+		wgHost:       wgHost,
+		binds:        map[uuid.UUID]netip.Addr{},
+		prefix:       prefix,
+		nodeIPv6Addr: prefix.Addr().Next().String(),
+	}
+
 	var resultErr error
 
 	for range 10 {
-		wgPort, err := getDynamicPort("udp")
-		if err != nil {
-			return generatedPorts{}, fmt.Errorf("failed to get dynamic port for WireGuard: %w", err)
+		for _, d := range []struct {
+			field *int
+			net   string
+			what  string
+		}{
+			{&result.wgPort, "udp", "WireGuard"},
+			{&result.apiPort, "tcp", "gRPC API"},
+			{&result.sinkPort, "tcp", "Event Sink"},
+			{&result.logPort, "tcp", "Log Receiver"},
+		} {
+			var err error
+
+			*d.field, err = getDynamicPort(d.net)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get dynamic port for %s: %w", d.what, err)
+			}
 		}
 
-		apiPort, err := getDynamicPort("tcp")
-		if err != nil {
-			return generatedPorts{}, fmt.Errorf("failed to get dynamic port for GRPC API: %w", err)
+		resultErr = checkPortsDontOverlap(result.wgPort, result.apiPort, result.sinkPort, result.logPort)
+		if resultErr == nil {
+			break
 		}
-
-		sinkPort, err := getDynamicPort("tcp")
-		if err != nil {
-			return generatedPorts{}, fmt.Errorf("failed to get dynamic port for Sink: %w", err)
-		}
-
-		logPort, err := getDynamicPort("tcp")
-		if err != nil {
-			return generatedPorts{}, fmt.Errorf("failed to get dynamic port for Log: %w", err)
-		}
-
-		resultErr = checkPortsDontOverlap(wgPort, apiPort, sinkPort, logPort)
-		if resultErr != nil {
-			continue
-		}
-
-		return generatedPorts{
-			wgPort:   strconv.Itoa(wgPort),
-			apiPort:  strconv.Itoa(apiPort),
-			sinkPort: strconv.Itoa(sinkPort),
-			logPort:  strconv.Itoa(logPort),
-		}, nil
 	}
 
-	return generatedPorts{}, fmt.Errorf("failed to get non-overlapping dynamic ports in 10 attempts: %w", resultErr)
+	if resultErr != nil {
+		return nil, fmt.Errorf("failed to get non-overlapping dynamic ports in 10 attempts: %w", resultErr)
+	}
+
+	return result, nil
+}
+
+type siderolinkBuilder struct {
+	wgHost string
+
+	binds        map[uuid.UUID]netip.Addr
+	prefix       netip.Prefix
+	nodeIPv6Addr string
+	wgPort       int
+	apiPort      int
+	sinkPort     int
+	logPort      int
+}
+
+// DefineIPv6ForUUID defines an IPv6 address for a given UUID. It is safe to call this method on a nil pointer.
+func (slb *siderolinkBuilder) DefineIPv6ForUUID(id uuid.UUID) error {
+	if slb == nil {
+		return nil
+	}
+
+	result, err := generateRandomNodeAddr(slb.prefix)
+	if err != nil {
+		return err
+	}
+
+	slb.binds[id] = result.Addr()
+
+	return nil
+}
+
+// SiderolinkRequest returns a SiderolinkRequest based on the current state of the builder.
+// It is safe to call this method on a nil pointer.
+func (slb *siderolinkBuilder) SiderolinkRequest() provision.SiderolinkRequest {
+	if slb == nil {
+		return provision.SiderolinkRequest{}
+	}
+
+	return provision.SiderolinkRequest{
+		WireguardEndpoint: net.JoinHostPort(slb.wgHost, strconv.Itoa(slb.wgPort)),
+		APIEndpoint:       ":" + strconv.Itoa(slb.apiPort),
+		SinkEndpoint:      ":" + strconv.Itoa(slb.sinkPort),
+		LogEndpoint:       ":" + strconv.Itoa(slb.logPort),
+		SiderolinkBind: maps.ToSlice(slb.binds, func(k uuid.UUID, v netip.Addr) provision.SiderolinkBind {
+			return provision.SiderolinkBind{
+				UUID: k,
+				Addr: v,
+			}
+		}),
+	}
+}
+
+// SetKernelArgs sets the kernel arguments for the current builder. It is safe to call this method on a nil pointer.
+func (slb *siderolinkBuilder) SetKernelArgs(extraKernelArgs *procfs.Cmdline, tunnel bool) error {
+	switch {
+	case slb == nil:
+		return nil
+	case extraKernelArgs.Get("siderolink.api") != nil,
+		extraKernelArgs.Get("talos.events.sink") != nil,
+		extraKernelArgs.Get("talos.logging.kernel") != nil:
+		return errors.New("siderolink kernel arguments are already set, cannot run with --with-siderolink")
+	default:
+		apiLink := "grpc://" + net.JoinHostPort(slb.wgHost, strconv.Itoa(slb.apiPort)) + "?jointoken=foo"
+
+		if tunnel {
+			apiLink += "&grpc_tunnel=true"
+		}
+
+		extraKernelArgs.Append("siderolink.api", apiLink)
+		extraKernelArgs.Append("talos.events.sink", net.JoinHostPort(slb.nodeIPv6Addr, strconv.Itoa(slb.sinkPort)))
+		extraKernelArgs.Append("talos.logging.kernel", "tcp://"+net.JoinHostPort(slb.nodeIPv6Addr, strconv.Itoa(slb.logPort)))
+
+		return nil
+	}
 }
 
 func getDynamicPort(network string) (int, error) {
@@ -1361,3 +1405,33 @@ func checkPortsDontOverlap(ports ...int) error {
 
 	return nil
 }
+
+type agentFlag uint8
+
+func (a *agentFlag) String() string {
+	switch *a {
+	case 1:
+		return "wireguard"
+	case 2:
+		return "grpc-tunnel"
+	default:
+		return "none"
+	}
+}
+
+func (a *agentFlag) Set(s string) error {
+	switch s {
+	case "true", "wireguard":
+		*a = 1
+	case "tunnel":
+		*a = 2
+	default:
+		return fmt.Errorf("unknown type: %s, possible values: 'true', 'wireguard' for the usual WG; 'tunnel' for WG over GRPC", s)
+	}
+
+	return nil
+}
+
+func (a *agentFlag) Type() string    { return "agent" }
+func (a *agentFlag) IsEnabled() bool { return *a != 0 }
+func (a *agentFlag) IsTunnel() bool  { return *a == 2 }

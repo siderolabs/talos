@@ -651,6 +651,13 @@ local integration_siderolink = Step('e2e-siderolink', target='e2e-qemu', privile
   REGISTRY: local_registry,
 });
 
+local integration_siderolink_tunnel = Step('e2e-siderolink-tunnel', target='e2e-qemu', privileged=true, depends_on=[integration_siderolink], environment={
+  SHORT_INTEGRATION_TEST: 'yes',
+  WITH_SIDEROLINK_AGENT: 'tunnel',
+  VIA_MAINTENANCE_MODE: 'true',
+  REGISTRY: local_registry,
+});
+
 local push_edge = {
   name: 'push-edge',
   image: 'autonomy/build-container:latest',
@@ -705,6 +712,7 @@ local integration_pipelines = [
     integration_kubespan,
     integration_default_hostname,
     integration_siderolink,
+    integration_siderolink_tunnel,
   ]) + integration_trigger(['integration-misc']),
   Pipeline('integration-extensions', default_pipeline_steps + integration_extensions) + integration_trigger(['integration-extensions']),
   Pipeline('integration-cilium', default_pipeline_steps + [integration_cilium, integration_cilium_strict, integration_cilium_strict_kubespan]) + integration_trigger(['integration-cilium']),

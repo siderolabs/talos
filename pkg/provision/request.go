@@ -6,7 +6,6 @@ package provision
 
 import (
 	"errors"
-	"fmt"
 	"net/netip"
 	"slices"
 	"time"
@@ -213,34 +212,10 @@ type SiderolinkRequest struct {
 	SiderolinkBind    []SiderolinkBind
 }
 
-// AddBind adds a pair of prebinded UUID->Addr for SideroLink agent.
-func (sr *SiderolinkRequest) AddBind(id uuid.UUID, addr netip.Addr) {
-	idx := slices.IndexFunc(sr.SiderolinkBind, func(b SiderolinkBind) bool { return b.UUID == id })
-	if idx != -1 {
-		panic(fmt.Errorf("duplicate UUID %s in SideroLink bind", id))
-	}
-
-	idx = slices.IndexFunc(sr.SiderolinkBind, func(b SiderolinkBind) bool { return b.Addr == addr })
-	if idx != -1 {
-		panic(fmt.Errorf("duplicate address %s in SideroLink bind", addr))
-	}
-
-	sr.SiderolinkBind = append(sr.SiderolinkBind, SiderolinkBind{
-		UUID: id,
-		Addr: addr,
-	})
-}
-
 // GetAddr returns the address for the given UUID.
 func (sr *SiderolinkRequest) GetAddr(u *uuid.UUID) (netip.Addr, bool) {
-	if u == nil {
-		return netip.Addr{}, false
-	}
-
-	for _, b := range sr.SiderolinkBind {
-		if b.UUID == *u {
-			return b.Addr, true
-		}
+	if idx := slices.IndexFunc(sr.SiderolinkBind, func(sb SiderolinkBind) bool { return sb.UUID == *u }); idx != -1 {
+		return sr.SiderolinkBind[idx].Addr, true
 	}
 
 	return netip.Addr{}, false

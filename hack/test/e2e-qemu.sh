@@ -157,7 +157,7 @@ case "${WITH_SIDEROLINK_AGENT:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--with-siderolink")
+    QEMU_FLAGS+=("--with-siderolink=${WITH_SIDEROLINK_AGENT}")
     ;;
 esac
 

@@ -59,6 +59,8 @@ func (suite *ServiceAccountSuite) SuiteName() string {
 func (suite *ServiceAccountSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
+
+	suite.AssertClusterHealthy(suite.ctx)
 }
 
 // TearDownTest ...
@@ -119,10 +121,10 @@ func (suite *ServiceAccountSuite) TestNotAllowedNamespace() {
 	name := "test-allowed-ns"
 
 	err := suite.configureAPIAccess(true, []string{"os:reader"}, []string{"kube-system"})
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	sa, err := suite.createServiceAccount("default", name, []string{"os:reader"})
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "default", name) //nolint:errcheck
 
@@ -131,7 +133,7 @@ func (suite *ServiceAccountSuite) TestNotAllowedNamespace() {
 			event.Type == corev1.EventTypeWarning &&
 			event.Reason == "ErrNamespaceNotAllowed"
 	})
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 }
 
 // TestNotAllowedRoles tests Kubernetes service accounts with not allowed roles.
