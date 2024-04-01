@@ -6,7 +6,7 @@
     "em_region": .em_region,
     "em_project_id": .em_project_id,
     "control_plane": {
-        "num_instances": 1,
+        "num_instances": 3,
         "plan": "c3.small.x86",
         "ipxe_script_url": .ipxe_script_url_amd64,
         "install_image": .install_image
