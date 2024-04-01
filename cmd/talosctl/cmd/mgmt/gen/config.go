@@ -170,9 +170,6 @@ func GenerateConfigBundle(genOptions []generate.Option,
 		return nil, fmt.Errorf("failed to generate config bundle: %w", err)
 	}
 
-	// We set the default endpoint to localhost for configs generated, with expectation user will tweak later
-	configBundle.TalosConfig().Contexts[clusterName].Endpoints = []string{"127.0.0.1"}
-
 	return configBundle, nil
 }
 
