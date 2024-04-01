@@ -1761,6 +1761,7 @@ Metadata describes base extension metadata.
 | author | [string](#string) |  |  |
 | description | [string](#string) |  |  |
 | compatibility | [Compatibility](#talos.resource.definitions.extensions.Compatibility) |  |  |
+| extra_info | [string](#string) |  |  |
 
 
 

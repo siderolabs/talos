@@ -27,5 +27,6 @@ message Metadata {
   string author = 3;
   string description = 4;
   Compatibility compatibility = 5;
+  string extra_info = 6;
 }
 

@@ -19,6 +19,7 @@ type Metadata struct {
 	Author        string        `yaml:"author" protobuf:"3"`
 	Description   string        `yaml:"description" protobuf:"4"`
 	Compatibility Compatibility `yaml:"compatibility" protobuf:"5"`
+	ExtraInfo     string        `yaml:"extraInfo,omitempty" protobuf:"6"`
 }
 
 // Compatibility describes extension compatibility.
