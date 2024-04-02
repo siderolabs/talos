@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -241,9 +242,15 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					return err
 				}
 
-				var server string
+				var (
+					server                                         string
+					flannelKubeServiceHost, flannelKubeServicePort string
+				)
+
 				if cfgProvider.Machine().Features().KubePrism().Enabled() {
 					server = fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port())
+					flannelKubeServiceHost = "127.0.0.1"
+					flannelKubeServicePort = strconv.Itoa(cfgProvider.Machine().Features().KubePrism().Port())
 				} else {
 					server = cfgProvider.Cluster().Endpoint().String()
 				}
@@ -264,10 +271,12 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					DNSServiceIP:   dnsServiceIP,
 					DNSServiceIPv6: dnsServiceIPv6,
 
-					FlannelEnabled:   cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
-					FlannelImage:     images.Flannel,
-					FlannelCNIImage:  images.FlannelCNI,
-					FlannelExtraArgs: cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
+					FlannelEnabled:         cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
+					FlannelImage:           images.Flannel,
+					FlannelCNIImage:        images.FlannelCNI,
+					FlannelExtraArgs:       cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
+					FlannelKubeServiceHost: flannelKubeServiceHost,
+					FlannelKubeServicePort: flannelKubeServicePort,
 
 					PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 

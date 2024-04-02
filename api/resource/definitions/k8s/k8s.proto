@@ -58,6 +58,8 @@ message BootstrapManifestsConfigSpec {
   bool pod_security_policy_enabled = 14;
   bool talos_api_service_enabled = 15;
   repeated string flannel_extra_args = 16;
+  string flannel_kube_service_host = 17;
+  string flannel_kube_service_port = 18;
 }
 
 // ConfigStatusSpec describes status of rendered secrets.

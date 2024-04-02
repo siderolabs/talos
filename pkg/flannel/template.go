@@ -163,6 +163,14 @@ spec:
               fieldPath: metadata.namespace
         - name: EVENT_QUEUE_DEPTH
           value: "5000"
+        {{- if .FlannelKubeServiceHost }}
+        - name: KUBERNETES_SERVICE_HOST
+          value: {{ .FlannelKubeServiceHost | json }}
+        {{- end }}
+        {{- if .FlannelKubeServicePort }}
+        - name: KUBERNETES_SERVICE_PORT
+          value: {{ .FlannelKubeServicePort | json }}
+        {{- end }}
         image: '{{ .FlannelImage }}'
         name: kube-flannel
         resources:

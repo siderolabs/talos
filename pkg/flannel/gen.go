@@ -91,6 +91,7 @@ func marshal(out io.Writer, obj runtime.Object) {
 	m = regexp.MustCompile(`status:\n(  .+\n)+`).ReplaceAll(m, nil)
 
 	m = regexp.MustCompile(`( +)- EXTRA_ARGS_PLACEHOLDER`).ReplaceAll(m, []byte("$1{{- range $$arg := .FlannelExtraArgs }}\n$1- {{ $$arg | json }}\n$1{{- end }}"))
+	m = regexp.MustCompile(`( +)- name: EXTRA_ENV_PLACEHOLDER`).ReplaceAll(m, []byte("$1{{- if .FlannelKubeServiceHost }}\n$1- name: KUBERNETES_SERVICE_HOST\n$1  value: {{ .FlannelKubeServiceHost | json }}\n$1{{- end }}\n$1{{- if .FlannelKubeServicePort }}\n$1- name: KUBERNETES_SERVICE_PORT\n$1  value: {{ .FlannelKubeServicePort | json }}\n$1{{- end }}"))
 
 	fmt.Fprintf(out, "%s---\n", string(m))
 }
@@ -187,6 +188,9 @@ var Template = []byte(`+"`", url)
 			ds.Spec.Template.Spec.Containers[0].Image = "{{ .FlannelImage }}"
 			ds.Spec.Template.Spec.Containers[0].Args = append(ds.Spec.Template.Spec.Containers[0].Args,
 				"EXTRA_ARGS_PLACEHOLDER")
+
+			ds.Spec.Template.Spec.Containers[0].Env = append(ds.Spec.Template.Spec.Containers[0].Env,
+				corev1.EnvVar{Name: "EXTRA_ENV_PLACEHOLDER"})
 
 			ds.Spec.Template.Spec.Volumes = xslices.FilterInPlace(ds.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
 				return v.Name != "xtables-lock"

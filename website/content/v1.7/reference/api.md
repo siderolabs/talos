@@ -2044,6 +2044,8 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | pod_security_policy_enabled | [bool](#bool) |  |  |
 | talos_api_service_enabled | [bool](#bool) |  |  |
 | flannel_extra_args | [string](#string) | repeated |  |
+| flannel_kube_service_host | [string](#string) |  |  |
+| flannel_kube_service_port | [string](#string) |  |  |
 
 
 
