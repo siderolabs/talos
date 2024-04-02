@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/freddierice/go-losetup/v2"
+	"github.com/klauspost/cpuid/v2"
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/sys/unix"
@@ -66,6 +67,8 @@ func run() (err error) {
 	}
 
 	log.Printf("booting Talos %s", version.Tag)
+
+	cpuInfo()
 
 	// Mount the rootfs.
 	if err = mountRootFS(); err != nil {
@@ -219,6 +222,24 @@ func bindMountExtra() error {
 	log.Printf("bind mounting %s", constants.SDStubDynamicInitrdPath)
 
 	return unix.Mount(constants.SDStubDynamicInitrdPath, filepath.Join(constants.NewRoot, constants.SDStubDynamicInitrdPath), "", unix.MS_BIND|unix.MS_RDONLY, "")
+}
+
+func cpuInfo() {
+	log.Printf("CPU: %s, %d core(s), %d thread(s) per core", cpuid.CPU.BrandName, cpuid.CPU.PhysicalCores, cpuid.CPU.ThreadsPerCore)
+
+	if runtime.GOARCH == "amd64" {
+		log.Printf("x86_64 microarchitecture level: %d", cpuid.CPU.X64Level())
+
+		if cpuid.CPU.X64Level() < constants.MinimumGOAMD64Level {
+			if cpuid.CPU.VM() {
+				log.Printf("it might be that the VM is configured with an older CPU model, please check the VM configuration")
+			}
+
+			log.Printf("x86_64 microarchitecture level %d or higher is required, halting", constants.MinimumGOAMD64Level)
+
+			time.Sleep(365 * 24 * time.Hour)
+		}
+	}
 }
 
 func main() {

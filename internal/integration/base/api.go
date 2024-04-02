@@ -398,7 +398,7 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 				continue
 			}
 
-			if client.StatusCode(err) == codes.Unavailable {
+			if client.StatusCode(err) == codes.Unavailable || client.StatusCode(err) == codes.Canceled {
 				return retry.ExpectedError(err)
 			}
 

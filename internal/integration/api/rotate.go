@@ -116,6 +116,8 @@ func (suite *RotateCASuite) TestTalos() {
 	suite.Require().NoError(err)
 
 	suite.AssertClusterHealthy(suite.ctx)
+
+	suite.ClearConnectionRefused(suite.ctx, suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)...)
 }
 
 // TestKubernetes updates Kubernetes CA in the cluster.

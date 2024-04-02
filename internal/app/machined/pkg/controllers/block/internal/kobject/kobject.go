@@ -77,7 +77,7 @@ func (w *Watcher) Run(logger *zap.Logger) <-chan *Event {
 		for {
 			ev, err := w.cli.Receive()
 			if err != nil {
-				if err.Error() == "use of closed file" { // unfortunately not an exported error, just errors.New()
+				if err.Error() != "use of closed file" { // unfortunately not an exported error, just errors.New()
 					logger.Error("failed to receive kobject event", zap.Error(err))
 				}
 

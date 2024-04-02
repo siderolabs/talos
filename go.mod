@@ -92,6 +92,7 @@ require (
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink v1.4.1
 	github.com/jxskiss/base62 v1.1.0
+	github.com/klauspost/cpuid/v2 v2.2.7
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875

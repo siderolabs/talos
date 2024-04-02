@@ -356,8 +356,7 @@ FROM base AS init-build-amd64
 WORKDIR /src/internal/app/init
 ARG GO_BUILDFLAGS
 ARG GO_LDFLAGS
-ARG GOAMD64
-RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=${GOAMD64} go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
+RUN --mount=type=cache,target=/.cache GOOS=linux GOARCH=amd64 GOAMD64=v1 go build ${GO_BUILDFLAGS} -ldflags "${GO_LDFLAGS}" -o /init
 RUN chmod +x /init
 
 FROM base AS init-build-arm64
