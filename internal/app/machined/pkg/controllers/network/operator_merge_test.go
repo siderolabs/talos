@@ -266,10 +266,8 @@ func (suite *OperatorMergeSuite) TestMergeFlapping() {
 						resource.VersionUndefined,
 					),
 					"foo",
-				); err != nil {
-					if err != nil && !state.IsNotFoundError(err) {
-						return err
-					}
+				); err != nil && !state.IsNotFoundError(err) {
+					return err
 				}
 			}
 
