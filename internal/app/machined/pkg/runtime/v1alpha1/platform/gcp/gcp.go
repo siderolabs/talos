@@ -199,7 +199,7 @@ func (g *GCP) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (g *GCP) KernelArgs() procfs.Parameters {
+func (g *GCP) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("ttyS0"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),

@@ -35,7 +35,7 @@ func (v *VMware) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (v *VMware) KernelArgs() procfs.Parameters {
+func (v *VMware) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{}
 }
 

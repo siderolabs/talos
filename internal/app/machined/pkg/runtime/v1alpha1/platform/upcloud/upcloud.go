@@ -195,7 +195,7 @@ func (u *UpCloud) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (u *UpCloud) KernelArgs() procfs.Parameters {
+func (u *UpCloud) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
 	}

@@ -5,6 +5,7 @@
 package block_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
@@ -25,6 +26,10 @@ func TestDevicesSuite(t *testing.T) {
 }
 
 func (suite *DevicesSuite) TestDiscover() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping test; must be root to use inotify")
+	}
+
 	suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DevicesController{}))
 
 	// these devices should always exist on Linux

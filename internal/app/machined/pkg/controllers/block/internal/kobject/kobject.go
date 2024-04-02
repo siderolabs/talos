@@ -6,13 +6,11 @@
 package kobject
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/mdlayher/kobject"
 	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 )
 
 const readBufferSize = 64 * 1024 * 1024
@@ -79,7 +77,7 @@ func (w *Watcher) Run(logger *zap.Logger) <-chan *Event {
 		for {
 			ev, err := w.cli.Receive()
 			if err != nil {
-				if !errors.Is(err, unix.EBADF) {
+				if err.Error() == "use of closed file" { // unfortunately not an exported error, just errors.New()
 					logger.Error("failed to receive kobject event", zap.Error(err))
 				}
 

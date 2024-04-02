@@ -225,7 +225,7 @@ func (o *OpenNebula) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (o *OpenNebula) KernelArgs() procfs.Parameters {
+func (o *OpenNebula) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),

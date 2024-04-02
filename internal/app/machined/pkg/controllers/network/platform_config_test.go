@@ -715,7 +715,7 @@ func (mock *platformMock) Mode() v1alpha1runtime.Mode {
 	return v1alpha1runtime.ModeCloud
 }
 
-func (mock *platformMock) KernelArgs() procfs.Parameters {
+func (mock *platformMock) KernelArgs(string) procfs.Parameters {
 	return nil
 }
 

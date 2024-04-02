@@ -167,7 +167,7 @@ func (h *Hcloud) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (h *Hcloud) KernelArgs() procfs.Parameters {
+func (h *Hcloud) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),

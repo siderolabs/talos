@@ -30,7 +30,7 @@ type Platform interface {
 	Configuration(context.Context, state.State) ([]byte, error)
 
 	// KernelArgs returns additional kernel arguments which should be injected for the kernel boot.
-	KernelArgs() procfs.Parameters
+	KernelArgs(arch string) procfs.Parameters
 
 	// NetworkConfiguration fetches network configuration from the platform metadata.
 	//

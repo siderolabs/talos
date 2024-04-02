@@ -176,7 +176,7 @@ func (v *Vultr) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (v *Vultr) KernelArgs() procfs.Parameters {
+func (v *Vultr) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
 	}

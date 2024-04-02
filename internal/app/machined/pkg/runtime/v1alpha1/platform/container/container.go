@@ -52,7 +52,7 @@ func (c *Container) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (c *Container) KernelArgs() procfs.Parameters {
+func (c *Container) KernelArgs(string) procfs.Parameters {
 	return nil
 }
 

@@ -110,9 +110,18 @@ func (p *EquinixMetal) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (p *EquinixMetal) KernelArgs() procfs.Parameters {
-	return []*procfs.Parameter{
-		procfs.NewParameter("console").Append("ttyS1,115200n8"),
+func (p *EquinixMetal) KernelArgs(arch string) procfs.Parameters {
+	switch arch {
+	case "amd64":
+		return []*procfs.Parameter{
+			procfs.NewParameter("console").Append("ttyS1,115200n8"),
+		}
+	case "arm64":
+		return []*procfs.Parameter{
+			procfs.NewParameter("console").Append("ttyAMA0,115200"),
+		}
+	default:
+		return nil
 	}
 }
 

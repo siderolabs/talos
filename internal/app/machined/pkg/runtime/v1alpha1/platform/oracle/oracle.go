@@ -159,7 +159,7 @@ func (o *Oracle) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (o *Oracle) KernelArgs() procfs.Parameters {
+func (o *Oracle) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),

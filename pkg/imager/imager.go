@@ -322,7 +322,7 @@ func (i *Imager) buildCmdline() error {
 
 	// platform kernel args
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
-	cmdline.SetAll(p.KernelArgs().Strings())
+	cmdline.SetAll(p.KernelArgs(i.prof.Arch).Strings())
 
 	// board kernel args
 	if i.prof.Board != "" && !quirks.New(i.prof.Version).SupportsOverlay() {

@@ -211,7 +211,7 @@ func (a *Azure) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (a *Azure) KernelArgs() procfs.Parameters {
+func (a *Azure) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("ttyS0,115200n8"),
 		procfs.NewParameter("earlyprintk").Append("ttyS0,115200"),
