@@ -65,7 +65,9 @@ The convention we use is `#!talos`.
 ## Provision the machines in Equinix Metal
 
 Talos Linux can be PXE-booted on Equinix Metal using [Image Factory]({{< relref "../../../learn-more/image-factory" >}}), using the `equinixMetal` platform: e.g.
-`https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64` (this URL references the default schematic and `amd64` architecture).
+`https://pxe.factory.talos.dev/pxe/a6ef1cf923b0b123f88968fb611f4b4d5e53dd8f77be11ba010a38c4bab7f505/{{< release >}}/metal-amd64` (this URL references the schematic with extra kernel command line set as `talos.platform=equinixMetal console=ttyS1,115200n8` and `amd64` architecture).
+
+> NOTE: If using arm64 use the schematic id `1193f285087c2414e8cd1cb44ff4f3a9da2876eb4f21cfe24cff9437956fe7da` and architecture as `arm64`.
 
 Follow the Image Factory guide to create a custom schematic, e.g. with CPU microcode updates.
 The PXE boot URL can be used as the iPXE script URL.
@@ -95,13 +97,13 @@ metal device create \
   --project-id $PROJECT_ID \
   --facility $FACILITY \
   --operating-system "custom_ipxe" \
-  --ipxe-script-url "https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64" \
+  --ipxe-script-url "https://pxe.factory.talos.dev/pxe/a6ef1cf923b0b123f88968fb611f4b4d5e53dd8f77be11ba010a38c4bab7f505/{{< release >}}/metal-amd64" \
   --plan $PLAN\
   --hostname $HOSTNAME\
   --userdata-file controlplane.yaml
 ```
 
-e.g. `metal device create -p <projectID> -f da11 -O custom_ipxe -P c3.small.x86 -H steve.test.11 --userdata-file ./controlplane.yaml --ipxe-script-url "https://pxe.factory.talos.dev/pxe/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba/{{< release >}}/equinixMetal-amd64"`
+e.g. `metal device create -p <projectID> -f da11 -O custom_ipxe -P c3.small.x86 -H steve.test.11 --userdata-file ./controlplane.yaml --ipxe-script-url "https://pxe.factory.talos.dev/pxe/a6ef1cf923b0b123f88968fb611f4b4d5e53dd8f77be11ba010a38c4bab7f505/{{< release >}}/metal-amd64"`
 
 Repeat this to create each control plane node desired: there should usually be 3 for a HA cluster.
 
