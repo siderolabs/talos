@@ -121,7 +121,7 @@ func newServer(t *testing.T, nameservers ...string) (context.Context, func()) {
 	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.53:10700")
 	require.NoError(t, err)
 
-	runner := dns.NewRunner(dns.NewServer(dns.ServerOptins{
+	runner := dns.NewRunner(dns.NewServer(dns.ServerOptions{
 		PacketConn: pc,
 		Handler:    dns.NewCache(handler, l),
 	}), l)

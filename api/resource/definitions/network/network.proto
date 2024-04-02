@@ -101,6 +101,13 @@ message HardwareAddrSpec {
   bytes hardware_addr = 2;
 }
 
+// HostDNSConfigSpec describes host DNS config.
+message HostDNSConfigSpec {
+  bool enabled = 1;
+  repeated common.NetIPPort listen_addresses = 2;
+  common.NetIP service_host_dns_address = 3;
+}
+
 // HostnameSpecSpec describes node hostname.
 message HostnameSpecSpec {
   string hostname = 1;

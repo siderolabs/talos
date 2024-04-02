@@ -96,7 +96,9 @@ func (in *Input) init() ([]config.Document, error) {
 	}
 
 	if in.Options.VersionContract.LocalDNSEnabled() {
-		machine.MachineFeatures.LocalDNS = pointer.To(true)
+		machine.MachineFeatures.HostDNSSupport = &v1alpha1.HostDNSConfig{
+			HostDNSEnabled: pointer.To(true),
+		}
 	}
 
 	certSANs := in.GetAPIServerSANs()

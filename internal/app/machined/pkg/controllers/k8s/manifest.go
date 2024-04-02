@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -168,6 +169,8 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		ApidPort int
 
 		TalosServiceAccount TalosServiceAccount
+
+		HostDNSAddr string
 	}{
 		BootstrapManifestsConfigSpec: cfg,
 		Secrets:                      scrt,
@@ -201,44 +204,42 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 	}
 
 	if cfg.CoreDNSEnabled {
-		defaultManifests = append(defaultManifests,
+		defaultManifests = slices.Concat(defaultManifests,
 			[]manifestDesc{
 				{"11-core-dns", coreDNSTemplate},
 				{"11-core-dns-svc", coreDNSSvcTemplate},
-			}...,
+			},
 		)
 	}
 
 	if cfg.FlannelEnabled {
 		defaultManifests = append(defaultManifests,
-			[]manifestDesc{
-				{"05-flannel", flannelTemplate},
-			}...,
-		)
+			manifestDesc{"05-flannel", flannelTemplate})
 	}
 
 	if cfg.ProxyEnabled {
 		defaultManifests = append(defaultManifests,
-			[]manifestDesc{
-				{"10-kube-proxy", kubeProxyTemplate},
-			}...,
-		)
+			manifestDesc{"10-kube-proxy", kubeProxyTemplate})
 	}
 
 	if cfg.PodSecurityPolicyEnabled {
 		defaultManifests = append(defaultManifests,
-			[]manifestDesc{
-				{"03-default-pod-security-policy", podSecurityPolicy},
-			}...,
+			manifestDesc{"03-default-pod-security-policy", podSecurityPolicy},
 		)
 	}
 
 	if cfg.TalosAPIServiceEnabled {
-		defaultManifests = append(defaultManifests,
+		defaultManifests = slices.Concat(defaultManifests,
 			[]manifestDesc{
 				{"12-talos-api-service", talosAPIService},
 				{"13-talos-service-account-crd", talosServiceAccountCRDTemplate},
-			}...,
+			},
+		)
+	}
+
+	if cfg.ServiceHostDNSAddress != "" {
+		defaultManifests = append(defaultManifests,
+			manifestDesc{"15-host-dns-service", talosHostDNSSvcTemplate},
 		)
 	}
 

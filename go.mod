@@ -92,8 +92,8 @@ require (
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink v1.4.1
 	github.com/jxskiss/base62 v1.1.0
-	github.com/linode/go-metadata v0.2.0
 	github.com/klauspost/cpuid/v2 v2.2.7
+	github.com/linode/go-metadata v0.2.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mdlayher/arp v0.0.0-20220512170110-6706a2966875
@@ -176,8 +176,6 @@ require (
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.69
 	sigs.k8s.io/yaml v1.4.0
 )
-
-require gopkg.in/yaml.v2 v2.4.0
 
 require (
 	cloud.google.com/go/compute v1.23.4 // indirect
@@ -354,6 +352,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/cli-runtime v0.30.0-rc.1 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect

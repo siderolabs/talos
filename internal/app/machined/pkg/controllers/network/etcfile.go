@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
 	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
@@ -60,13 +61,14 @@ func (ctrl *EtcFileController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: network.NamespaceName,
-			Type:      network.DNSResolveCacheType,
+			Type:      network.NodeAddressType,
+			ID:        optional.Some(network.NodeAddressDefaultID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: network.NamespaceName,
-			Type:      network.NodeAddressType,
-			ID:        optional.Some(network.NodeAddressDefaultID),
+			Type:      network.HostDNSConfigType,
+			ID:        optional.Some(network.HostDNSConfigID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -125,9 +127,11 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		}
 
-		dList, err := safe.ReaderListAll[*network.DNSResolveCache](ctx, r)
+		hostDNSCfg, err := safe.ReaderGetByID[*network.HostDNSConfig](ctx, r, network.HostDNSConfigID)
 		if err != nil {
-			return fmt.Errorf("error getting dns server list: %w", err)
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting host dns config: %w", err)
+			}
 		}
 
 		var hostnameStatusSpec *network.HostnameStatusSpec
@@ -135,10 +139,10 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			hostnameStatusSpec = hostnameStatus.TypedSpec()
 		}
 
-		if dList.Len() > 0 || resolverStatus != nil {
+		if resolverStatus != nil && hostDNSCfg != nil {
 			if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "resolv.conf"),
 				func(r *files.EtcFileSpec) error {
-					r.TypedSpec().Contents = renderResolvConf(pickNameservers(dList, resolverStatus), hostnameStatusSpec, cfgProvider)
+					r.TypedSpec().Contents = renderResolvConf(pickNameservers(hostDNSCfg, resolverStatus), hostnameStatusSpec, cfgProvider)
 					r.TypedSpec().Mode = 0o644
 
 					return nil
@@ -147,8 +151,14 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		}
 
-		if resolverStatus != nil {
-			conf := renderResolvConf(resolverStatus.TypedSpec().DNSServers, hostnameStatusSpec, cfgProvider)
+		if resolverStatus != nil && hostDNSCfg != nil {
+			dnsServers := resolverStatus.TypedSpec().DNSServers
+
+			if !value.IsZero(hostDNSCfg.TypedSpec().ServiceHostDNSAddress) {
+				dnsServers = []netip.Addr{hostDNSCfg.TypedSpec().ServiceHostDNSAddress}
+			}
+
+			conf := renderResolvConf(dnsServers, hostnameStatusSpec, cfgProvider)
 
 			if err = os.MkdirAll(filepath.Dir(ctrl.PodResolvConfPath), 0o755); err != nil {
 				return fmt.Errorf("error creating pod resolv.conf dir: %w", err)
@@ -178,8 +188,8 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 
 var localDNS = []netip.Addr{netip.MustParseAddr("127.0.0.53"), netip.MustParseAddr("::1")}
 
-func pickNameservers(list safe.List[*network.DNSResolveCache], resolverStatus *network.ResolverStatus) []netip.Addr {
-	if list.Len() > 0 {
+func pickNameservers(hostDNSCfg *network.HostDNSConfig, resolverStatus *network.ResolverStatus) []netip.Addr {
+	if hostDNSCfg.TypedSpec().Enabled {
 		// local dns resolve cache enabled, route host dns requests to 127.0.0.1
 		return localDNS
 	}

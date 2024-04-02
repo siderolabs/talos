@@ -17,7 +17,6 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -33,9 +32,9 @@ func (ctrl *DNSUpstreamController) Name() string {
 func (ctrl *DNSUpstreamController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        optional.Some(config.V1Alpha1ID),
+			Namespace: network.NamespaceName,
+			Type:      network.HostDNSConfigType,
+			ID:        optional.Some(network.HostDNSConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -81,7 +80,7 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 
 	defer ctrl.cleanupUpstream(ctx, r, touchedIDs, l)
 
-	mc, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.V1Alpha1ID)
+	cfg, err := safe.ReaderGetByID[*network.HostDNSConfig](ctx, r, network.HostDNSConfigID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil
@@ -90,8 +89,8 @@ func (ctrl *DNSUpstreamController) run(ctx context.Context, r controller.Runtime
 		return err
 	}
 
-	machineConfig := mc.Config().Machine()
-	if machineConfig == nil || !machineConfig.Features().LocalDNSEnabled() {
+	if !cfg.TypedSpec().Enabled {
+		// host DNS is disabled, cleanup all upstreams
 		return nil
 	}
 

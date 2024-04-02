@@ -39,9 +39,13 @@ func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {
 	return pointer.SafeDeref(f.DiskQuotaSupport)
 }
 
-// LocalDNSEnabled implements config.Features interface.
-func (f *FeaturesConfig) LocalDNSEnabled() bool {
-	return pointer.SafeDeref(f.LocalDNS)
+// HostDNS implements config.Features interface.
+func (f *FeaturesConfig) HostDNS() config.HostDNS {
+	if f.HostDNSSupport == nil {
+		return &HostDNSConfig{}
+	}
+
+	return f.HostDNSSupport
 }
 
 // KubePrism implements config.Features interface.
@@ -67,4 +71,19 @@ func (a *KubePrism) Port() int {
 	}
 
 	return a.ServerPort
+}
+
+// Enabled implements config.HostDNS.
+func (h *HostDNSConfig) Enabled() bool {
+	return pointer.SafeDeref(h.HostDNSEnabled)
+}
+
+// ForwardKubeDNSToHost implements config.HostDNS.
+func (h *HostDNSConfig) ForwardKubeDNSToHost() bool {
+	return pointer.SafeDeref(h.HostDNSForwardKubeDNSToHost)
+}
+
+// ResolveMemberNames implements config.HostDNS.
+func (h *HostDNSConfig) ResolveMemberNames() bool {
+	return pointer.SafeDeref(h.HostDNSResolveMemberNames)
 }

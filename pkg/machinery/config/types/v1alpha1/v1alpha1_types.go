@@ -2174,8 +2174,8 @@ type FeaturesConfig struct {
 	//     requests to all API servers in the cluster.
 	KubePrismSupport *KubePrism `yaml:"kubePrism,omitempty"`
 	//   description: |
-	//     Enables local dns which routes all dns requests to the local caching router.
-	LocalDNS *bool `yaml:"localDNS,omitempty"`
+	//     Configures host DNS caching resolver.
+	HostDNSSupport *HostDNSConfig `yaml:"hostDNS,omitempty"`
 }
 
 // KubePrism describes the configuration for the KubePrism load balancer.
@@ -2201,6 +2201,25 @@ type KubernetesTalosAPIAccessConfig struct {
 	//   description: |
 	//     The list of Kubernetes namespaces Talos API access is available from.
 	AccessAllowedKubernetesNamespaces []string `yaml:"allowedKubernetesNamespaces,omitempty"`
+}
+
+// HostDNSConfig describes the configuration for the host DNS resolver.
+type HostDNSConfig struct {
+	//   description: |
+	//     Enable host DNS caching resolver.
+	HostDNSEnabled *bool `yaml:"enabled,omitempty"`
+	//   description: |
+	//     Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.
+	//
+	//     When enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of
+	//     using configured upstream DNS resolvers directly).
+	HostDNSForwardKubeDNSToHost *bool `yaml:"forwardKubeDNSToHost,omitempty"`
+	//   description: |
+	//     Resolve member hostnames using the host DNS resolver.
+	//
+	//     When enabled, cluster member hostnames and node names are resolved using the host DNS resolver.
+	//     This requires service discovery to be enabled.
+	HostDNSResolveMemberNames *bool `yaml:"resolveMemberNames,omitempty"`
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.

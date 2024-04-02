@@ -10,13 +10,15 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
+	"sync"
 	"time"
 
 	"github.com/coredns/coredns/plugin/pkg/proxy"
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/ctxutil"
@@ -26,9 +28,15 @@ import (
 
 // DNSResolveCacheController starts dns server on both udp and tcp ports based on finalized network configuration.
 type DNSResolveCacheController struct {
-	Addr   string
-	AddrV6 string
 	Logger *zap.Logger
+
+	mx          sync.Mutex
+	handler     *dns.Handler
+	cache       *dns.Cache
+	runners     map[runnerConfig]*dnsRunner
+	reconcile   chan struct{}
+	originalCtx context.Context //nolint:containedctx
+	wg          sync.WaitGroup
 }
 
 // Name implements controller.Controller interface.
@@ -40,6 +48,12 @@ func (ctrl *DNSResolveCacheController) Name() string {
 func (ctrl *DNSResolveCacheController) Inputs() []controller.Input {
 	return []controller.Input{
 		safe.Input[*network.DNSUpstream](controller.InputWeak),
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.HostDNSConfigType,
+			ID:        optional.Some(network.HostDNSConfigID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -54,12 +68,86 @@ func (ctrl *DNSResolveCacheController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+//
+//nolint:gocyclo,cyclop
+func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	ctrl.init(ctx, logger)
+
+	ctrl.mx.Lock()
+	defer ctrl.mx.Unlock()
+
+	defer ctrl.stopRunners(ctx, false)
+
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return ctxutil.Cause(ctx)
 		case <-r.EventCh():
+		case <-ctrl.reconcile:
+		}
+
+		cfg, err := safe.ReaderGetByID[*network.HostDNSConfig](ctx, r, network.HostDNSConfigID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting host dns config: %w", err)
+		}
+
+		r.StartTrackingOutputs()
+
+		if !cfg.TypedSpec().Enabled {
+			ctrl.stopRunners(ctx, true)
+
+			if err = safe.CleanupOutputs[*network.DNSResolveCache](ctx, r); err != nil {
+				return fmt.Errorf("error cleaning up dns status: %w", err)
+			}
+
+			continue
+		}
+
+		touchedRunners := make(map[runnerConfig]struct{}, len(ctrl.runners))
+
+		for _, addr := range cfg.TypedSpec().ListenAddresses {
+			for _, netwk := range []string{"udp", "tcp"} {
+				config := runnerConfig{net: netwk, addr: addr}
+
+				if _, ok := ctrl.runners[config]; !ok {
+					runner, rErr := newDNSRunner(config, ctrl.cache, ctrl.Logger)
+					if rErr != nil {
+						return fmt.Errorf("error creating dns runner: %w", rErr)
+					}
+
+					if runner == nil {
+						continue
+					}
+
+					ctrl.wg.Add(1)
+
+					go func() {
+						defer ctrl.wg.Done()
+
+						runner.Run(ctx, logger, ctrl.reconcile)
+					}()
+
+					ctrl.runners[config] = runner
+				}
+
+				if err = ctrl.writeDNSStatus(ctx, r, config); err != nil {
+					return fmt.Errorf("error writing dns status: %w", err)
+				}
+
+				touchedRunners[config] = struct{}{}
+			}
+		}
+
+		for config := range ctrl.runners {
+			if _, ok := touchedRunners[config]; !ok {
+				ctrl.runners[config].Stop()
+
+				delete(ctrl.runners, config)
+			}
 		}
 
 		upstreams, err := safe.ReaderListAll[*network.DNSUpstream](ctx, r)
@@ -67,189 +155,191 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 			return fmt.Errorf("error getting resolver status: %w", err)
 		}
 
-		if upstreams.Len() == 0 {
-			continue
+		addrs, prxs := make([]string, 0, upstreams.Len()), make([]*proxy.Proxy, 0, upstreams.Len())
+
+		for it := upstreams.Iterator(); it.Next(); {
+			prx := it.Value().TypedSpec().Value.Prx
+
+			addrs = append(addrs, prx.Addr())
+			prxs = append(prxs, prx.(*proxy.Proxy)) //nolint:forcetypeassert
 		}
 
-		err = func() error {
-			ctrl.Logger.Info("starting dns caching resolver")
-			defer ctrl.Logger.Info("stopping dns caching resolver")
+		if ctrl.handler.SetProxy(prxs) {
+			ctrl.Logger.Info("updated dns server nameservers", zap.Strings("addrs", addrs))
+		}
 
-			return ctrl.runServer(ctx, r)
-		}()
-		if err != nil {
-			return err
+		if err = safe.CleanupOutputs[*network.DNSResolveCache](ctx, r); err != nil {
+			return fmt.Errorf("error cleaning up dns status: %w", err)
 		}
 	}
 }
 
-func (ctrl *DNSResolveCacheController) writeDNSStatus(ctx context.Context, r controller.Runtime, net resource.ID) error {
-	return safe.WriterModify(ctx, r, network.NewDNSResolveCache(net), func(drc *network.DNSResolveCache) error {
+func (ctrl *DNSResolveCacheController) writeDNSStatus(ctx context.Context, r controller.Runtime, config runnerConfig) error {
+	return safe.WriterModify(ctx, r, network.NewDNSResolveCache(fmt.Sprintf("%s-%s", config.net, config.addr)), func(drc *network.DNSResolveCache) error {
 		drc.TypedSpec().Status = "running"
 
 		return nil
 	})
 }
 
-//nolint:gocyclo
-func (ctrl *DNSResolveCacheController) runServer(originCtx context.Context, r controller.Runtime) error {
-	defer func() {
-		err := dropResolveResources(context.Background(), r, "tcp", "udp")
-		if err != nil {
-			ctrl.Logger.Error("error setting back the initial status", zap.Error(err))
-		}
-	}()
-
-	handler := dns.NewHandler(ctrl.Logger)
-	defer handler.Stop()
-
-	cache := dns.NewCache(handler, ctrl.Logger)
-	ctx := originCtx
-
-	serverOpts := map[string]dns.ServerOptins{}
-
-	for _, opt := range []struct {
-		net  string
-		addr string
-	}{
-		{net: "udp", addr: ctrl.Addr},
-		{net: "udp6", addr: ctrl.AddrV6},
-		{net: "tcp", addr: ctrl.Addr},
-		{net: "tcp6", addr: ctrl.AddrV6},
-	} {
-		l := ctrl.Logger.With(zap.String("net", opt.net), zap.String("addr", opt.addr))
-
-		switch opt.net {
-		case "udp", "udp6":
-			packetConn, err := dns.NewUDPPacketConn(opt.net, opt.addr)
-			if err != nil {
-				if opt.net == "udp6" {
-					// If we can't bind to ipv6, we can continue with ipv4
-					continue
-				}
-
-				return fmt.Errorf("error creating udp packet conn: %w", err)
-			}
-
-			defer closeListener(packetConn, l)
-
-			serverOpts[opt.net] = dns.ServerOptins{
-				PacketConn: packetConn,
-				Handler:    cache,
-			}
-
-		case "tcp", "tcp6":
-			listener, err := dns.NewTCPListener(opt.net, opt.addr)
-			if err != nil {
-				if opt.net == "tcp6" {
-					// If we can't bind to ipv6, we can continue with ipv4
-					continue
-				}
-
-				return fmt.Errorf("error creating tcp listener: %w", err)
-			}
-
-			defer closeListener(listener, l)
-
-			serverOpts[opt.net] = dns.ServerOptins{
-				Listener:      listener,
-				Handler:       cache,
-				ReadTimeout:   3 * time.Second,
-				WriteTimeout:  5 * time.Second,
-				IdleTimeout:   func() time.Duration { return 10 * time.Second },
-				MaxTCPQueries: -1,
-			}
+func (ctrl *DNSResolveCacheController) init(ctx context.Context, logger *zap.Logger) {
+	if ctrl.runners != nil {
+		if ctrl.originalCtx != ctx {
+			// This should not happen, but if it does, it's a bug.
+			panic("DNSResolveCacheController is called with a different context")
 		}
 
-		l.Info("dns listener created")
+		return
 	}
 
-	for netwk, opt := range serverOpts {
-		l := ctrl.Logger.With(zap.String("net", netwk))
+	ctrl.originalCtx = ctx
+	ctrl.handler = dns.NewHandler(ctrl.Logger)
+	ctrl.cache = dns.NewCache(ctrl.handler, ctrl.Logger)
+	ctrl.runners = map[runnerConfig]*dnsRunner{}
+	ctrl.reconcile = make(chan struct{}, 1)
 
-		runner := dns.NewRunner(dns.NewServer(opt), l)
+	// Ensure we stop all runners when the context is canceled, no matter where we are currently.
+	// For example if we are in Controller runtime sleeping after error and ctx is canceled, we should stop all runners
+	// but, we will never call Run method again, so we need to ensure this happens regardless of the current state.
+	context.AfterFunc(ctx, func() {
+		ctrl.mx.Lock()
+		defer ctrl.mx.Unlock()
 
-		err := ctrl.writeDNSStatus(ctx, r, netwk)
-		if err != nil {
-			return err
-		}
+		ctrl.stopRunners(ctx, true)
+	})
+}
 
-		// We attach here our goroutine to the context, so if goroutine exits for some reason,
-		// context will be canceled too.
-		ctx = ctxutil.MonitorFn(ctx, runner.Run)
-
-		defer runner.Stop()
+func (ctrl *DNSResolveCacheController) stopRunners(ctx context.Context, ignoreCtx bool) {
+	if !ignoreCtx && ctx.Err() == nil {
+		// context not yet canceled, preserve runners, cache and handler
+		return
 	}
 
-	// Skip first iteration
-	eventCh := closedCh
+	for _, r := range ctrl.runners {
+		r.Stop()
+	}
 
-	for {
+	clear(ctrl.runners)
+
+	ctrl.handler.Stop()
+
+	ctrl.wg.Wait()
+}
+
+type dnsRunner struct {
+	runner *dns.Runner
+	lis    io.Closer
+	logger *zap.Logger
+}
+
+type runnerConfig struct {
+	net  string
+	addr netip.AddrPort
+}
+
+func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger) (*dnsRunner, error) {
+	if cfg.addr.Addr().Is6() {
+		cfg.net += "6"
+	}
+
+	logger = logger.With(zap.String("net", cfg.net), zap.Stringer("addr", cfg.addr))
+
+	var serverOpts dns.ServerOptions
+
+	var lis io.Closer
+
+	switch cfg.net {
+	case "udp", "udp6":
+		packetConn, err := dns.NewUDPPacketConn(cfg.net, cfg.addr.String())
+		if err != nil {
+			if cfg.net == "udp6" {
+				logger.Warn("error creating UDPv6 listener", zap.Error(err))
+
+				// If we can't bind to ipv6, we can continue with ipv4
+				return nil, nil
+			}
+
+			return nil, fmt.Errorf("error creating udp packet conn: %w", err)
+		}
+
+		lis = packetConn
+
+		serverOpts = dns.ServerOptions{
+			PacketConn: packetConn,
+			Handler:    cache,
+		}
+
+	case "tcp", "tcp6":
+		listener, err := dns.NewTCPListener(cfg.net, cfg.addr.String())
+		if err != nil {
+			if cfg.net == "tcp6" {
+				logger.Warn("error creating TCPv6 listener", zap.Error(err))
+
+				// If we can't bind to ipv6, we can continue with ipv4
+				return nil, nil
+			}
+
+			return nil, fmt.Errorf("error creating tcp listener: %w", err)
+		}
+
+		lis = listener
+
+		serverOpts = dns.ServerOptions{
+			Listener:      listener,
+			Handler:       cache,
+			ReadTimeout:   3 * time.Second,
+			WriteTimeout:  5 * time.Second,
+			IdleTimeout:   func() time.Duration { return 10 * time.Second },
+			MaxTCPQueries: -1,
+		}
+	}
+
+	runner := dns.NewRunner(dns.NewServer(serverOpts), logger)
+
+	return &dnsRunner{
+		runner: runner,
+		lis:    lis,
+		logger: logger,
+	}, nil
+}
+
+func (dnsRunner *dnsRunner) Run(ctx context.Context, logger *zap.Logger, reconcile chan<- struct{}) {
+	err := dnsRunner.runner.Run()
+	if err == nil {
+		if ctx.Err() == nil {
+			select {
+			case reconcile <- struct{}{}:
+			default:
+			}
+		}
+
+		return
+	}
+
+	if ctx.Err() == nil {
+		logger.Error("error running dns server, triggering reconcile", zap.Error(err))
+
 		select {
-		case <-ctx.Done():
-			return ctxutil.Cause(ctx)
-		case <-eventCh:
+		case reconcile <- struct{}{}:
+		default:
 		}
 
-		eventCh = r.EventCh()
+		return
+	}
 
-		upstreams, err := safe.ReaderListAll[*network.DNSUpstream](ctx, r)
-		if err != nil {
-			return fmt.Errorf("error getting resolver status: %w", err)
-		}
+	if !errors.Is(err, net.ErrClosed) {
+		logger.Error("controller is closing, but error running dns server", zap.Error(err))
 
-		if upstreams.Len() == 0 {
-			return nil
-		}
-
-		addrs := make([]string, 0, upstreams.Len())
-		prxs := make([]*proxy.Proxy, 0, len(addrs))
-
-		for it := upstreams.Iterator(); it.Next(); {
-			upstream := it.Value()
-
-			addrs = append(addrs, upstream.TypedSpec().Value.Prx.Addr())
-			prxs = append(prxs, upstream.TypedSpec().Value.Prx.(*proxy.Proxy)) //nolint:forcetypeassert
-		}
-
-		if handler.SetProxy(prxs) {
-			ctrl.Logger.Info("updated dns server nameservers", zap.Strings("addrs", addrs))
-		}
-
-		for _, n := range []string{"udp", "tcp"} {
-			err = ctrl.writeDNSStatus(ctx, r, n)
-			if err != nil {
-				return err
-			}
-		}
+		return
 	}
 }
 
-func closeListener(lis io.Closer, l *zap.Logger) {
-	if err := lis.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
-		l.Error("error closing listener", zap.Error(err))
+func (dnsRunner *dnsRunner) Stop() {
+	dnsRunner.runner.Stop()
+
+	if err := dnsRunner.lis.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
+		dnsRunner.logger.Error("error closing listener", zap.Error(err))
+	} else {
+		dnsRunner.logger.Debug("dns listener closed")
 	}
-
-	l.Info("dns listener closed")
 }
-
-func dropResolveResources(ctx context.Context, r controller.Runtime, nets ...resource.ID) error {
-	for _, net := range nets {
-		if err := r.Destroy(ctx, network.NewDNSResolveCache(net).Metadata()); err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return fmt.Errorf("error destroying dns resolve cache resource: %w", err)
-		}
-	}
-
-	return nil
-}
-
-var closedCh = func() <-chan controller.ReconcileEvent {
-	res := make(chan controller.ReconcileEvent)
-	close(res)
-
-	return res
-}()

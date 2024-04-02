@@ -5,7 +5,9 @@
 package network_test
 
 import (
+	"net"
 	"net/netip"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/miekg/dns"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
+	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -21,9 +23,6 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -31,21 +30,21 @@ type DNSServer struct {
 	ctest.DefaultSuite
 }
 
+func expectedDNSRunners(port string) []resource.ID {
+	return []resource.ID{
+		"tcp-127.0.0.53:" + port,
+		"udp-127.0.0.53:" + port,
+		// our dns server makes no promises about actually starting on IPv6, so we don't check it here either
+	}
+}
+
 func (suite *DNSServer) TestResolving() {
 	dnsSlice := []string{"8.8.8.8", "1.1.1.1"}
+	port := must.Value(getDynamicPort())(suite.T())
 
-	cfg := config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineFeatures: &v1alpha1.FeaturesConfig{
-						LocalDNS: pointer.To(true),
-					},
-				},
-			},
-		),
-	)
+	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
+	cfg.TypedSpec().Enabled = true
+	cfg.TypedSpec().ListenAddresses = makeAddrs(port)
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
@@ -54,9 +53,12 @@ func (suite *DNSServer) TestResolving() {
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), resolverSpec))
 
-	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{"tcp", "udp"}, func(r *network.DNSResolveCache, assert *assert.Assertions) {
-		assert.Equal("running", r.TypedSpec().Status)
-	})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(),
+		expectedDNSRunners(port),
+		func(r *network.DNSResolveCache, assert *assert.Assertions) {
+			assert.Equal("running", r.TypedSpec().Status)
+		},
+	)
 
 	rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(dnsSlice))
 
@@ -77,7 +79,7 @@ func (suite *DNSServer) TestResolving() {
 	var res *dns.Msg
 
 	err := retry.Constant(2*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
-		r, err := dns.Exchange(msg, "127.0.0.53:10700")
+		r, err := dns.Exchange(msg, "127.0.0.53:"+port)
 
 		res = r
 
@@ -89,52 +91,43 @@ func (suite *DNSServer) TestResolving() {
 
 func (suite *DNSServer) TestSetupStartStop() {
 	dnsSlice := []string{"8.8.8.8", "1.1.1.1"}
+	port := must.Value(getDynamicPort())(suite.T())
 
 	resolverSpec := network.NewResolverStatus(network.NamespaceName, network.ResolverID)
 	resolverSpec.TypedSpec().DNSServers = xslices.Map(dnsSlice, netip.MustParseAddr)
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), resolverSpec))
 
-	cfg := config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineFeatures: &v1alpha1.FeaturesConfig{
-						LocalDNS: pointer.To(true),
-					},
-				},
-			},
-		),
-	)
-
+	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
+	cfg.TypedSpec().Enabled = true
+	cfg.TypedSpec().ListenAddresses = makeAddrs(port)
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
-	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{"tcp", "udp"}, func(r *network.DNSResolveCache, assert *assert.Assertions) {
-		assert.Equal("running", r.TypedSpec().Status)
-	})
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(),
+		expectedDNSRunners(port),
+		func(r *network.DNSResolveCache, assert *assert.Assertions) {
+			assert.Equal("running", r.TypedSpec().Status)
+		})
 
 	rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(dnsSlice))
 	// stop dns resolver
 
-	cfg.Container().RawV1Alpha1().MachineConfig.MachineFeatures.LocalDNS = pointer.To(false)
-
+	cfg.TypedSpec().Enabled = false
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 
-	ctest.AssertNoResource[*network.DNSResolveCache](suite, "tcp")
-	ctest.AssertNoResource[*network.DNSResolveCache](suite, "udp")
+	for _, runner := range expectedDNSRunners(port) {
+		ctest.AssertNoResource[*network.DNSResolveCache](suite, runner)
+	}
 
 	for _, d := range dnsSlice {
 		ctest.AssertNoResource[*network.DNSUpstream](suite, d)
 	}
 
 	// start dns resolver again
-
-	cfg.Container().RawV1Alpha1().MachineConfig.MachineFeatures.LocalDNS = pointer.To(true)
-
+	cfg.TypedSpec().Enabled = true
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 
-	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{"tcp", "udp"}, func(r *network.DNSResolveCache, assert *assert.Assertions) {
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), expectedDNSRunners(port), func(r *network.DNSResolveCache, assert *assert.Assertions) {
 		assert.Equal("running", r.TypedSpec().Status)
 	})
 
@@ -144,15 +137,38 @@ func (suite *DNSServer) TestSetupStartStop() {
 func TestDNSServer(t *testing.T) {
 	suite.Run(t, &DNSServer{
 		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
+			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{
-					Addr:   "127.0.0.53:10700",
-					AddrV6: "[::1]:10700",
 					Logger: zaptest.NewLogger(t),
 				}))
 			},
 		},
 	})
+}
+
+func getDynamicPort() (string, error) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return "", err
+	}
+
+	closeOnce := sync.OnceValue(l.Close)
+
+	defer closeOnce() //nolint:errcheck
+
+	_, port, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		return "", err
+	}
+
+	return port, closeOnce()
+}
+
+func makeAddrs(port string) []netip.AddrPort {
+	return []netip.AddrPort{
+		netip.MustParseAddrPort("127.0.0.53:" + port),
+		netip.MustParseAddrPort("[::1]:" + port),
+	}
 }

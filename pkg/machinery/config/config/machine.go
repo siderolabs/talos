@@ -415,7 +415,7 @@ type Features interface {
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	ApidCheckExtKeyUsageEnabled() bool
 	DiskQuotaSupportEnabled() bool
-	LocalDNSEnabled() bool
+	HostDNS() HostDNS
 	KubePrism() KubePrism
 }
 
@@ -430,6 +430,13 @@ type KubernetesTalosAPIAccess interface {
 type KubePrism interface {
 	Enabled() bool
 	Port() int
+}
+
+// HostDNS describes the host DNS configuration.
+type HostDNS interface {
+	Enabled() bool
+	ForwardKubeDNSToHost() bool
+	ResolveMemberNames() bool
 }
 
 // UdevConfig describes configuration for udev.

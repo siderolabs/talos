@@ -42,7 +42,8 @@ machine:
         kubePrism:
             enabled: true
             port: 7445
-        localDNS: true
+        hostDNS:
+            enabled: true
 cluster:
     id: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
     secret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=

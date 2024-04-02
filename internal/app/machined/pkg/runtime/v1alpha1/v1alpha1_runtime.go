@@ -160,7 +160,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		if newConfig.MachineConfig.MachineFeatures != nil && currentConfig.MachineConfig.MachineFeatures != nil {
 			newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
 			newConfig.MachineConfig.MachineFeatures.KubePrismSupport = currentConfig.MachineConfig.MachineFeatures.KubePrismSupport
-			newConfig.MachineConfig.MachineFeatures.LocalDNS = currentConfig.MachineConfig.MachineFeatures.LocalDNS
+			newConfig.MachineConfig.MachineFeatures.HostDNSSupport = currentConfig.MachineConfig.MachineFeatures.HostDNSSupport
 		}
 	}
 

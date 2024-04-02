@@ -13,7 +13,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
@@ -25,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // controlplaneMapFunc is a shared "map" func for transform controller which guards on:
@@ -209,6 +213,8 @@ func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 type ControlPlaneBootstrapManifestsController = transform.Controller[*config.MachineConfig, *k8s.BootstrapManifestsConfig]
 
 // NewControlPlaneBootstrapManifestsController instanciates the controller.
+//
+//nolint:gocyclo
 func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifestsController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.BootstrapManifestsConfig]{
@@ -255,6 +261,17 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					server = cfgProvider.Cluster().Endpoint().String()
 				}
 
+				hostDNSCfg, err := safe.ReaderGetByID[*network.HostDNSConfig](ctx, r, network.HostDNSConfigID)
+				if err != nil && !state.IsNotFoundError(err) {
+					return fmt.Errorf("error getting host DNS config: %w", err)
+				}
+
+				var serviceHostDNSAddress string
+
+				if hostDNSCfg != nil && !value.IsZero(hostDNSCfg.TypedSpec().ServiceHostDNSAddress) {
+					serviceHostDNSAddress = hostDNSCfg.TypedSpec().ServiceHostDNSAddress.String()
+				}
+
 				*res.TypedSpec() = k8s.BootstrapManifestsConfigSpec{
 					Server:        server,
 					ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
@@ -281,11 +298,21 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					PodSecurityPolicyEnabled: !cfgProvider.Cluster().APIServer().DisablePodSecurityPolicy(),
 
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
+
+					ServiceHostDNSAddress: serviceHostDNSAddress,
 				}
 
 				return nil
 			},
 		},
+		transform.WithExtraInputs(
+			controller.Input{
+				Namespace: network.NamespaceName,
+				Type:      network.HostDNSConfigType,
+				ID:        optional.Some(network.HostDNSConfigID),
+				Kind:      controller.InputWeak,
+			},
+		),
 	)
 }
 

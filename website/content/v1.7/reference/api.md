@@ -165,6 +165,7 @@ description: Talos gRPC API reference.
     - [DHCP6OperatorSpec](#talos.resource.definitions.network.DHCP6OperatorSpec)
     - [DNSResolveCacheSpec](#talos.resource.definitions.network.DNSResolveCacheSpec)
     - [HardwareAddrSpec](#talos.resource.definitions.network.HardwareAddrSpec)
+    - [HostDNSConfigSpec](#talos.resource.definitions.network.HostDNSConfigSpec)
     - [HostnameSpecSpec](#talos.resource.definitions.network.HostnameSpecSpec)
     - [HostnameStatusSpec](#talos.resource.definitions.network.HostnameStatusSpec)
     - [LinkRefreshSpec](#talos.resource.definitions.network.LinkRefreshSpec)
@@ -2046,6 +2047,7 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | flannel_extra_args | [string](#string) | repeated |  |
 | flannel_kube_service_host | [string](#string) |  |  |
 | flannel_kube_service_port | [string](#string) |  |  |
+| service_host_dns_address | [string](#string) |  |  |
 
 
 
@@ -3023,6 +3025,23 @@ HardwareAddrSpec describes spec for the link.
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | hardware_addr | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.HostDNSConfigSpec"></a>
+
+### HostDNSConfigSpec
+HostDNSConfigSpec describes host DNS config.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
+| listen_addresses | [common.NetIPPort](#common.NetIPPort) | repeated |  |
+| service_host_dns_address | [common.NetIP](#common.NetIP) |  |  |
 
 
 

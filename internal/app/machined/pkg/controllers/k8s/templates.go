@@ -571,3 +571,22 @@ spec:
       served: true
       storage: true
 `)
+
+var talosHostDNSSvcTemplate = []byte(`apiVersion: v1
+kind: Service
+metadata:
+  name: host-dns
+  namespace: kube-system
+spec:
+  clusterIP: {{ .ServiceHostDNSAddress }}
+  ports:
+  - name: dns
+    port: 53
+    protocol: UDP
+    targetPort: 53
+  - name: dns-tcp
+    port: 53
+    protocol: TCP
+    targetPort: 53
+  type: ClusterIP
+`)

@@ -1846,12 +1846,12 @@
           "markdownDescription": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
           "x-intellij-html-description": "\u003cp\u003eKubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
         },
-        "localDNS": {
-          "type": "boolean",
-          "title": "localDNS",
-          "description": "Enables local dns which routes all dns requests to the local caching router.\n",
-          "markdownDescription": "Enables local dns which routes all dns requests to the local caching router.",
-          "x-intellij-html-description": "\u003cp\u003eEnables local dns which routes all dns requests to the local caching router.\u003c/p\u003e\n"
+        "hostDNS": {
+          "$ref": "#/$defs/v1alpha1.HostDNSConfig",
+          "title": "hostDNS",
+          "description": "Configures host DNS caching resolver.\n",
+          "markdownDescription": "Configures host DNS caching resolver.",
+          "x-intellij-html-description": "\u003cp\u003eConfigures host DNS caching resolver.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1868,6 +1868,33 @@
           "description": "Extra arguments for ‘flanneld’.\n",
           "markdownDescription": "Extra arguments for 'flanneld'.",
           "x-intellij-html-description": "\u003cp\u003eExtra arguments for \u0026lsquo;flanneld\u0026rsquo;.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "v1alpha1.HostDNSConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable host DNS caching resolver.\n",
+          "markdownDescription": "Enable host DNS caching resolver.",
+          "x-intellij-html-description": "\u003cp\u003eEnable host DNS caching resolver.\u003c/p\u003e\n"
+        },
+        "forwardKubeDNSToHost": {
+          "type": "boolean",
+          "title": "forwardKubeDNSToHost",
+          "description": "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.\n\nWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).\n",
+          "markdownDescription": "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.\n\nWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).",
+          "x-intellij-html-description": "\u003cp\u003eUse the host DNS resolver as upstream for Kubernetes CoreDNS pods.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).\u003c/p\u003e\n"
+        },
+        "resolveMemberNames": {
+          "type": "boolean",
+          "title": "resolveMemberNames",
+          "description": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\n",
+          "markdownDescription": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.",
+          "x-intellij-html-description": "\u003cp\u003eResolve member hostnames using the host DNS resolver.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

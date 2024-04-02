@@ -54,11 +54,11 @@ type Server interface {
 
 // Run runs dns server.
 func (r *Runner) Run() error {
-	r.logger.Info("starting dns server")
+	r.logger.Debug("starting dns server")
 
 	err := r.r.Run()
 
-	r.logger.Info("dns server stopped", zap.Error(err))
+	r.logger.Debug("dns server stopped", zap.Error(err))
 
 	return err
 }
@@ -202,8 +202,8 @@ func (h *Handler) SetProxy(prxs []*proxy.Proxy) bool {
 // Stop stops and clears dns proxy selector.
 func (h *Handler) Stop() { h.SetProxy(nil) }
 
-// ServerOptins is a Server options.
-type ServerOptins struct {
+// ServerOptions is a Server options.
+type ServerOptions struct {
 	Listener      net.Listener
 	PacketConn    net.PacketConn
 	Handler       dns.Handler
@@ -214,7 +214,7 @@ type ServerOptins struct {
 }
 
 // NewServer creates a new Server.
-func NewServer(opts ServerOptins) Server {
+func NewServer(opts ServerOptions) Server {
 	return &server{&dns.Server{
 		Listener:      opts.Listener,
 		PacketConn:    opts.PacketConn,
