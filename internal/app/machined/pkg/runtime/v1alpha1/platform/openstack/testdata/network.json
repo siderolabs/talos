@@ -36,7 +36,7 @@
         },
         {
             "id": "411f3980-d8f9-4bf0-a09a-9c01c81e1022",
-            "type": "phy",
+            "type": "bridge",
             "ethernet_mac_address": "4c:d9:8f:b3:34:f8"
         },
         {

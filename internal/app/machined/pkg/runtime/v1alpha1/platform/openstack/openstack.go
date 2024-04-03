@@ -146,8 +146,31 @@ func (o *Openstack) ParseMetadata(
 	// Interfaces
 
 	for idx, netLink := range unmarshalledNetworkConfig.Links {
+		// OpenStack network metadata schema:
+		// "type": {
+		// 	"$id": "#/definitions/l2_link/properties/type",
+		// 	"type": "string",
+		// 	"enum": [
+		// 	  "bridge",
+		// 	  "dvs",
+		// 	  "hw_veb",
+		// 	  "hyperv",
+		// 	  "ovs",
+		// 	  "tap",
+		// 	  "vhostuser",
+		// 	  "vif",
+		// 	  "phy"
+		// 	],
+		// 	"title": "Interface type",
+		// 	"examples": [
+		// 	  "bridge"
+		// 	]
+		//   },
+		//   "vif_id": {
+		// 	"$ref": "#/definitions/l2_vif_id"
+		//   }
 		switch netLink.Type {
-		case "phy", "vif", "ovs":
+		case "phy", "vif", "ovs", "bridge", "tap", "vhostuser", "hw_veb":
 			linkName := ""
 
 			for hostInterfaceIter := hostInterfaces.Iterator(); hostInterfaceIter.Next(); {
