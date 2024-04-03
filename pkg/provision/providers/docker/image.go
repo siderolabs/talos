@@ -10,21 +10,21 @@ import (
 	"io"
 
 	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/image"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
-func (p *provisioner) ensureImageExists(ctx context.Context, image string, options *provision.Options) error {
+func (p *provisioner) ensureImageExists(ctx context.Context, containerImage string, options *provision.Options) error {
 	// In order to pull an image, the reference must be in canonical
 	// format (e.g. domain/repo/image:tag).
-	ref, err := reference.ParseNormalizedNamed(image)
+	ref, err := reference.ParseNormalizedNamed(containerImage)
 	if err != nil {
 		return err
 	}
 
-	image = ref.String()
+	containerImage = ref.String()
 
 	// To filter the images, we need a familiar name and a tag
 	// (e.g. domain/repo/image:tag => repo/image:tag).
@@ -38,17 +38,17 @@ func (p *provisioner) ensureImageExists(ctx context.Context, image string, optio
 	filters := filters.NewArgs()
 	filters.Add("reference", familiarName+":"+tag)
 
-	images, err := p.client.ImageList(ctx, types.ImageListOptions{Filters: filters})
+	images, err := p.client.ImageList(ctx, image.ListOptions{Filters: filters})
 	if err != nil {
 		return err
 	}
 
 	if len(images) == 0 {
-		fmt.Fprintln(options.LogWriter, "downloading", image)
+		fmt.Fprintln(options.LogWriter, "downloading", containerImage)
 
 		var reader io.ReadCloser
 
-		if reader, err = p.client.ImagePull(ctx, image, types.ImagePullOptions{}); err != nil {
+		if reader, err = p.client.ImagePull(ctx, containerImage, image.PullOptions{}); err != nil {
 			return err
 		}
 
