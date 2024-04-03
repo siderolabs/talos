@@ -356,115 +356,9 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		}
 
-		if !updateSpecs {
-			// micro-optimization: skip updating specs if there are no changes to the incoming resources and no endpoint changes
-			r.ResetRestartBackoff()
-
-			continue
-		}
-
-		if err = safe.WriterModify(ctx, r,
-			network.NewAddressSpec(
-				network.ConfigNamespaceName,
-				network.LayeredID(network.ConfigOperator, network.AddressID(constants.KubeSpanLinkName, localSpec.Address)),
-			),
-			func(r *network.AddressSpec) error {
-				spec := r.TypedSpec()
-
-				spec.Address = netip.PrefixFrom(localSpec.Address.Addr(), localSpec.Subnet.Bits())
-				spec.ConfigLayer = network.ConfigOperator
-				spec.Family = nethelpers.FamilyInet6
-				spec.Flags = nethelpers.AddressFlags(nethelpers.AddressPermanent)
-				spec.LinkName = constants.KubeSpanLinkName
-				spec.Scope = nethelpers.ScopeGlobal
-
-				return nil
-			},
-		); err != nil {
-			return fmt.Errorf("error modifying address: %w", err)
-		}
-
 		mtu := cfgSpec.MTU
 
-		for _, spec := range []network.RouteSpecSpec{
-			{
-				Family:      nethelpers.FamilyInet4,
-				Destination: netip.Prefix{},
-				Source:      netip.Addr{},
-				Gateway:     netip.Addr{},
-				MTU:         mtu,
-				OutLinkName: constants.KubeSpanLinkName,
-				Table:       nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable),
-				Priority:    1,
-				Scope:       nethelpers.ScopeGlobal,
-				Type:        nethelpers.TypeUnicast,
-				Flags:       0,
-				Protocol:    nethelpers.ProtocolStatic,
-				ConfigLayer: network.ConfigOperator,
-			},
-			{
-				Family:      nethelpers.FamilyInet6,
-				Destination: netip.Prefix{},
-				Source:      netip.Addr{},
-				Gateway:     netip.Addr{},
-				MTU:         mtu,
-				OutLinkName: constants.KubeSpanLinkName,
-				Table:       nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable),
-				Priority:    1,
-				Scope:       nethelpers.ScopeGlobal,
-				Type:        nethelpers.TypeUnicast,
-				Flags:       0,
-				Protocol:    nethelpers.ProtocolStatic,
-				ConfigLayer: network.ConfigOperator,
-			},
-		} {
-			spec := spec
-
-			if err = safe.WriterModify(ctx, r,
-				network.NewRouteSpec(
-					network.ConfigNamespaceName,
-					network.LayeredID(network.ConfigOperator, network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority, spec.OutLinkName)),
-				),
-				func(r *network.RouteSpec) error {
-					*r.TypedSpec() = spec
-
-					return nil
-				},
-			); err != nil {
-				return fmt.Errorf("error modifying route spec: %w", err)
-			}
-		}
-
-		if err = safe.WriterModify(ctx, r,
-			network.NewLinkSpec(
-				network.ConfigNamespaceName,
-				network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
-			),
-			func(r *network.LinkSpec) error {
-				spec := r.TypedSpec()
-
-				spec.ConfigLayer = network.ConfigOperator
-				spec.Name = constants.KubeSpanLinkName
-				spec.Type = nethelpers.LinkNone
-				spec.Kind = "wireguard"
-				spec.Up = true
-				spec.Logical = true
-				spec.MTU = mtu
-
-				spec.Wireguard = network.WireguardSpec{
-					PrivateKey:   localSpec.PrivateKey,
-					ListenPort:   constants.KubeSpanDefaultPort,
-					FirewallMark: constants.KubeSpanDefaultFirewallMark,
-					Peers:        wgPeers,
-				}
-				spec.Wireguard.Sort()
-
-				return nil
-			},
-		); err != nil {
-			return fmt.Errorf("error modifying link spec: %w", err)
-		}
-
+		// always update the firewall rules, as allowedIPsSet might change at any moment due to peer up/down events
 		if err = safe.WriterModify(ctx, r,
 			network.NewNfTablesChain(
 				network.NamespaceName,
@@ -555,6 +449,113 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			},
 		); err != nil {
 			return fmt.Errorf("error modifying nftables chain: %w", err)
+		}
+
+		if !updateSpecs {
+			// micro-optimization: skip updating specs if there are no changes to the incoming resources and no endpoint changes
+			r.ResetRestartBackoff()
+
+			continue
+		}
+
+		if err = safe.WriterModify(ctx, r,
+			network.NewAddressSpec(
+				network.ConfigNamespaceName,
+				network.LayeredID(network.ConfigOperator, network.AddressID(constants.KubeSpanLinkName, localSpec.Address)),
+			),
+			func(r *network.AddressSpec) error {
+				spec := r.TypedSpec()
+
+				spec.Address = netip.PrefixFrom(localSpec.Address.Addr(), localSpec.Subnet.Bits())
+				spec.ConfigLayer = network.ConfigOperator
+				spec.Family = nethelpers.FamilyInet6
+				spec.Flags = nethelpers.AddressFlags(nethelpers.AddressPermanent)
+				spec.LinkName = constants.KubeSpanLinkName
+				spec.Scope = nethelpers.ScopeGlobal
+
+				return nil
+			},
+		); err != nil {
+			return fmt.Errorf("error modifying address: %w", err)
+		}
+
+		for _, spec := range []network.RouteSpecSpec{
+			{
+				Family:      nethelpers.FamilyInet4,
+				Destination: netip.Prefix{},
+				Source:      netip.Addr{},
+				Gateway:     netip.Addr{},
+				MTU:         mtu,
+				OutLinkName: constants.KubeSpanLinkName,
+				Table:       nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable),
+				Priority:    1,
+				Scope:       nethelpers.ScopeGlobal,
+				Type:        nethelpers.TypeUnicast,
+				Flags:       0,
+				Protocol:    nethelpers.ProtocolStatic,
+				ConfigLayer: network.ConfigOperator,
+			},
+			{
+				Family:      nethelpers.FamilyInet6,
+				Destination: netip.Prefix{},
+				Source:      netip.Addr{},
+				Gateway:     netip.Addr{},
+				MTU:         mtu,
+				OutLinkName: constants.KubeSpanLinkName,
+				Table:       nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable),
+				Priority:    1,
+				Scope:       nethelpers.ScopeGlobal,
+				Type:        nethelpers.TypeUnicast,
+				Flags:       0,
+				Protocol:    nethelpers.ProtocolStatic,
+				ConfigLayer: network.ConfigOperator,
+			},
+		} {
+			spec := spec
+
+			if err = safe.WriterModify(ctx, r,
+				network.NewRouteSpec(
+					network.ConfigNamespaceName,
+					network.LayeredID(network.ConfigOperator, network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority, spec.OutLinkName)),
+				),
+				func(r *network.RouteSpec) error {
+					*r.TypedSpec() = spec
+
+					return nil
+				},
+			); err != nil {
+				return fmt.Errorf("error modifying route spec: %w", err)
+			}
+		}
+
+		if err = safe.WriterModify(ctx, r,
+			network.NewLinkSpec(
+				network.ConfigNamespaceName,
+				network.LayeredID(network.ConfigOperator, network.LinkID(constants.KubeSpanLinkName)),
+			),
+			func(r *network.LinkSpec) error {
+				spec := r.TypedSpec()
+
+				spec.ConfigLayer = network.ConfigOperator
+				spec.Name = constants.KubeSpanLinkName
+				spec.Type = nethelpers.LinkNone
+				spec.Kind = "wireguard"
+				spec.Up = true
+				spec.Logical = true
+				spec.MTU = mtu
+
+				spec.Wireguard = network.WireguardSpec{
+					PrivateKey:   localSpec.PrivateKey,
+					ListenPort:   constants.KubeSpanDefaultPort,
+					FirewallMark: constants.KubeSpanDefaultFirewallMark,
+					Peers:        wgPeers,
+				}
+				spec.Wireguard.Sort()
+
+				return nil
+			},
+		); err != nil {
+			return fmt.Errorf("error modifying link spec: %w", err)
 		}
 
 		if rulesMgr == nil {
