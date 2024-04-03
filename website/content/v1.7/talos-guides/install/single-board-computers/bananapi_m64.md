@@ -21,13 +21,13 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image using Image Factory
 
-The default schematic id for "vanilla" Banana Pi M64 is `f48c47c8a27248bc19a878c086f2cb2ed0d5aff777688af95fc88f100d1048e1`.
+The default schematic id for "vanilla" Banana Pi M64 is `8e11dcb3c2803fbe893ab201fcadf1ef295568410e7ced95c6c8b122a5070ce4`.
 Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://factory.talos.dev/image/f48c47c8a27248bc19a878c086f2cb2ed0d5aff777688af95fc88f100d1048e1/{{< release >}}/metal-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/8e11dcb3c2803fbe893ab201fcadf1ef295568410e7ced95c6c8b122a5070ce4/{{< release >}}/metal-arm64.raw.xz
 xz -d metal-arm64.raw.xz
 ```
 
@@ -66,5 +66,5 @@ talosctl kubeconfig
 For example, to upgrade to the latest version of Talos, you can run:
 
 ```bash
-talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/f48c47c8a27248bc19a878c086f2cb2ed0d5aff777688af95fc88f100d1048e1:{{< release >}}
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/8e11dcb3c2803fbe893ab201fcadf1ef295568410e7ced95c6c8b122a5070ce4:{{< release >}}
 ```

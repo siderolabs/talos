@@ -21,13 +21,13 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image
 
-The default schematic id for "vanilla" Libretech H3 CC H5 is `9e6498be873621e4a40d5bcfe67ce873d58a2e7aea1079ae27754bdedf245c8c`.
+The default schematic id for "vanilla" Libretech H3 CC H5 is `5689d7795f91ac5bf6ccc85093fad8f8b27f6ea9d96a9ac5a059997bffd8ad5c`.
 Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://factory.talos.dev/image/9e6498be873621e4a40d5bcfe67ce873d58a2e7aea1079ae27754bdedf245c8c/{{< release >}}/metal-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/5689d7795f91ac5bf6ccc85093fad8f8b27f6ea9d96a9ac5a059997bffd8ad5c/{{< release >}}/metal-arm64.raw.xz
 xz -d metal-arm64.raw.xz
 ```
 
@@ -68,5 +68,5 @@ talosctl kubeconfig
 For example, to upgrade to the latest version of Talos, you can run:
 
 ```bash
-talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/9e6498be873621e4a40d5bcfe67ce873d58a2e7aea1079ae27754bdedf245c8c:{{< release >}}
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/5689d7795f91ac5bf6ccc85093fad8f8b27f6ea9d96a9ac5a059997bffd8ad5c:{{< release >}}
 ```

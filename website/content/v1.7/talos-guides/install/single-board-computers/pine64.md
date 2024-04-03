@@ -21,13 +21,13 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image
 
-The default schematic id for "vanilla" Pine64 is `94cd4c4e285dc07059868f089f87c2437e1ed2746cc8d0fcbc0abbaf2b9a6729`.
+The default schematic id for "vanilla" Pine64 is `185431e0f0bf34c983c6f47f4c6d3703aa2f02cd202ca013216fd71ffc34e175`.
 Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://factory.talos.dev/image/94cd4c4e285dc07059868f089f87c2437e1ed2746cc8d0fcbc0abbaf2b9a6729/{{< release >}}/metal-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/185431e0f0bf34c983c6f47f4c6d3703aa2f02cd202ca013216fd71ffc34e175/{{< release >}}/metal-arm64.raw.xz
 xz -d metal-arm64.raw.xz
 ```
 
@@ -66,5 +66,5 @@ talosctl kubeconfig
 For example, to upgrade to the latest version of Talos, you can run:
 
 ```bash
-talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/94cd4c4e285dc07059868f089f87c2437e1ed2746cc8d0fcbc0abbaf2b9a6729:{{< release >}}
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/185431e0f0bf34c983c6f47f4c6d3703aa2f02cd202ca013216fd71ffc34e175:{{< release >}}
 ```

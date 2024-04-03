@@ -19,13 +19,13 @@ chmod +x /usr/local/bin/talosctl
 
 ## Download the Image
 
-The default schematic id for "vanilla" RockPi 4c is `a291c960717f5abad9b280c4c75bf067a4e63e339124ea814cb221f6000057d6`.
+The default schematic id for "vanilla" RockPi 4c is `08e72e242b71f42c9db5bed80e8255b2e0d442a372bc09055b79537d9e3ce191`.
 Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://factory.talos.dev/image/a291c960717f5abad9b280c4c75bf067a4e63e339124ea814cb221f6000057d6/{{< release >}}/metal-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/08e72e242b71f42c9db5bed80e8255b2e0d442a372bc09055b79537d9e3ce191/{{< release >}}/metal-arm64.raw.xz
 xz -d metal-arm64.raw.xz
 ```
 
@@ -82,5 +82,5 @@ talosctl kubeconfig
 For example, to upgrade to the latest version of Talos, you can run:
 
 ```bash
-talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/a291c960717f5abad9b280c4c75bf067a4e63e339124ea814cb221f6000057d6:{{< release >}}
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/08e72e242b71f42c9db5bed80e8255b2e0d442a372bc09055b79537d9e3ce191:{{< release >}}
 ```

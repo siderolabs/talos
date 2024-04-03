@@ -82,13 +82,13 @@ Once the flashing is done you can disconnect the USB cable and power off the Jet
 
 ## Download the Image
 
-The default schematic id for "vanilla" Jetson Nano is `ef65b643766cc94c7eda6c42cb8fe009086d2b7b8066fd971950f4ef21708b5d`.
+The default schematic id for "vanilla" Jetson Nano is `c7d6f36c6bdfb45fd63178b202a67cff0dd270262269c64886b43f76880ecf1e`.
 Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://factory.talos.dev/image/ef65b643766cc94c7eda6c42cb8fe009086d2b7b8066fd971950f4ef21708b5d/{{< release >}}/metal-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/c7d6f36c6bdfb45fd63178b202a67cff0dd270262269c64886b43f76880ecf1e/{{< release >}}/metal-arm64.raw.xz
 xz -d metal-arm64.raw.xz
 ```
 
@@ -126,5 +126,5 @@ talosctl kubeconfig
 For example, to upgrade to the latest version of Talos, you can run:
 
 ```bash
-talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/ef65b643766cc94c7eda6c42cb8fe009086d2b7b8066fd971950f4ef21708b5d:{{< release >}}
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/c7d6f36c6bdfb45fd63178b202a67cff0dd270262269c64886b43f76880ecf1e:{{< release >}}
 ```

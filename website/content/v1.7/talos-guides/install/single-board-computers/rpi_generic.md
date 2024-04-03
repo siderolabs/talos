@@ -44,12 +44,12 @@ Power off the Raspberry Pi and remove the SD card from it.
 
 ## Download the Image
 
-The default schematic id for "vanilla" Raspberry Pi generic image is `fc1cceeb5711cd263877b6b808fbf4942a8deda65e8804c114a0b5bae252dc50`.Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
+The default schematic id for "vanilla" Raspberry Pi generic image is `ee21ef4a5ef808a9b7484cc0dda0f25075021691c8c09a276591eedb638ea1f9`.Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://factory.talos.dev/image/fc1cceeb5711cd263877b6b808fbf4942a8deda65e8804c114a0b5bae252dc50/{{< release >}}/metal-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/ee21ef4a5ef808a9b7484cc0dda0f25075021691c8c09a276591eedb638ea1f9/{{< release >}}/metal-arm64.raw.xz
 xz -d metal-arm64.raw.xz
 ```
 
@@ -88,7 +88,7 @@ talosctl kubeconfig
 For example, to upgrade to the latest version of Talos, you can run:
 
 ```bash
-talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/fc1cceeb5711cd263877b6b808fbf4942a8deda65e8804c114a0b5bae252dc50:{{< release >}}
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/ee21ef4a5ef808a9b7484cc0dda0f25075021691c8c09a276591eedb638ea1f9:{{< release >}}
 ```
 
 ## Troubleshooting

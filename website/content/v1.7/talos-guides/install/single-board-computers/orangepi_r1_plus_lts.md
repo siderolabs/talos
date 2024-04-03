@@ -1,8 +1,6 @@
 ---
-title: "Friendlyelec Nano PI R4S"
-description: "Installing Talos on a Nano PI R4S SBC using raw disk image."
-aliases:
-  - ../../../single-board-computers/nanopi_r4s
+title: "Orange Pi R1 Plus LTS"
+description: "Installing Talos on Orange Pi R1 Plus LTS SBC using raw disk image."
 ---
 
 ## Prerequisites
@@ -19,15 +17,15 @@ curl -Lo /usr/local/bin/talosctl https://github.com/siderolabs/talos/releases/do
 chmod +x /usr/local/bin/talosctl
 ```
 
-## Download the Image
+## Download the Image using Image Factory
 
-The default schematic id for "vanilla" NanoPi R4S is `5f74a09891d5830f0b36158d3d9ea3b1c9cc019848ace08ff63ba255e38c8da4`.
+The default schematic id for "vanilla" Orange Pi R1 Plus LTS is `da388062cd9318efdc7391982a77ebb2a97ed4fbda68f221354c17839a750509`.
 Refer to the [Image Factory](/../../../learn-more/image-factory) documentation for more information.
 
 Download the image and decompress it:
 
 ```bash
-curl -LO https://factory.talos.dev/image/5f74a09891d5830f0b36158d3d9ea3b1c9cc019848ace08ff63ba255e38c8da4/{{< release >}}/metal-arm64.raw.xz
+curl -LO https://factory.talos.dev/image/da388062cd9318efdc7391982a77ebb2a97ed4fbda68f221354c17839a750509/{{< release >}}/metal-arm64.raw.xz
 xz -d metal-arm64.raw.xz
 ```
 
@@ -66,5 +64,5 @@ talosctl kubeconfig
 For example, to upgrade to the latest version of Talos, you can run:
 
 ```bash
-talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/5f74a09891d5830f0b36158d3d9ea3b1c9cc019848ace08ff63ba255e38c8da4:{{< release >}}
+talosctl -n <node IP or DNS name> upgrade --image=factory.talos.dev/installer/da388062cd9318efdc7391982a77ebb2a97ed4fbda68f221354c17839a750509:{{< release >}}
 ```
