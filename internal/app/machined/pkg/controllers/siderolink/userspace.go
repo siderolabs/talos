@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"sync"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -60,13 +61,10 @@ func (ctrl *UserspaceWireguardController) Outputs() []controller.Output {
 func (ctrl *UserspaceWireguardController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
-	relayRetryTimer := time.NewTimer(0)
-
-	safeReset(relayRetryTimer, 0)
-
 	var (
-		tunnelDevice tunnelDeviceProps
-		tunnelRelay  tunnelProps
+		relayRetryTimer resettableTimer
+		tunnelDevice    tunnelDeviceProps
+		tunnelRelay     tunnelProps
 	)
 
 	defer func() {
@@ -88,7 +86,8 @@ func (ctrl *UserspaceWireguardController) Run(ctx context.Context, r controller.
 		case <-ctx.Done():
 			return ctxutil.Cause(ctx)
 		case <-r.EventCh():
-		case <-relayRetryTimer.C:
+		case <-relayRetryTimer.C():
+			relayRetryTimer.Clear()
 		}
 
 		res, err := safe.ReaderGetByID[*siderolink.Tunnel](ctx, r, siderolink.TunnelID)
@@ -132,11 +131,9 @@ func (ctrl *UserspaceWireguardController) Run(ctx context.Context, r controller.
 		dstHost := ep.Host
 		ourAddrPort := res.TypedSpec().NodeAddress
 
-		if tunnelRelay.relay.IsClosed() ||
-			tunnelRelay.dstHost != ep.Host ||
-			tunnelRelay.ourAddrPort != res.TypedSpec().NodeAddress {
+		if tunnelRelay.relay.IsClosed() || tunnelRelay.dstHost != dstHost || tunnelRelay.ourAddrPort != ourAddrPort {
 			// Reset timer because we are going to start tunnel anyway
-			safeReset(relayRetryTimer, 0)
+			relayRetryTimer.Reset(0)
 
 			tunnelRelay.relay.Close()
 
@@ -181,24 +178,12 @@ func (ctrl *UserspaceWireguardController) Run(ctx context.Context, r controller.
 					zap.Error(err),
 				)
 
-				safeReset(relayRetryTimer, retryIn)
+				relayRetryTimer.Reset(retryIn)
 
 				return nil
 			})
 		}
 	}
-}
-
-func safeReset(timer *time.Timer, in time.Duration) {
-	if !timer.Stop() {
-		<-timer.C
-	}
-
-	if in == 0 {
-		return
-	}
-
-	timer.Reset(in)
 }
 
 // makeLogger ensures that we do not spam like crazy into our ring buffer loggers unless we explicitly want to.
@@ -220,4 +205,61 @@ type tunnelDeviceProps struct {
 	device   *wgtunnel.TunnelDevice
 	linkName string
 	mtu      int
+}
+
+// resettableTimer wraps time.Timer to allow resetting the timer to any duration.
+type resettableTimer struct {
+	mx    sync.Mutex
+	timer *time.Timer
+}
+
+// Reset resets the timer to the given duration.
+//
+// If the duration is zero, the timer is removed (and stopped as needed).
+// If the duration is non-zero, the timer is created if it doesn't exist, or reset if it does.
+func (rt *resettableTimer) Reset(delay time.Duration) {
+	rt.mx.Lock()
+	defer rt.mx.Unlock()
+
+	if delay == 0 {
+		if rt.timer != nil {
+			if !rt.timer.Stop() {
+				<-rt.timer.C
+			}
+
+			rt.timer = nil
+		}
+	} else {
+		if rt.timer == nil {
+			rt.timer = time.NewTimer(delay)
+		} else {
+			if !rt.timer.Stop() {
+				<-rt.timer.C
+			}
+
+			rt.timer.Reset(delay)
+		}
+	}
+}
+
+// Clear should be called after receiving from the timer channel.
+func (rt *resettableTimer) Clear() {
+	rt.mx.Lock()
+	defer rt.mx.Unlock()
+
+	rt.timer = nil
+}
+
+// C returns the timer channel.
+//
+// If the timer was not reset to a non-zero duration, nil is returned.
+func (rt *resettableTimer) C() <-chan time.Time {
+	rt.mx.Lock()
+	defer rt.mx.Unlock()
+
+	if rt.timer == nil {
+		return nil
+	}
+
+	return rt.timer.C
 }
