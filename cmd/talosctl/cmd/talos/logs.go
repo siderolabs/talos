@@ -85,7 +85,7 @@ var logsCmd = &cobra.Command{
 					continue
 				}
 
-				node := defaultNode //nolint:copyloopvar
+				node := defaultNode
 				if data.Metadata != nil && data.Metadata.Hostname != "" {
 					node = data.Metadata.Hostname
 				}

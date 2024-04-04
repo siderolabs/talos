@@ -159,7 +159,7 @@ func New(ctx context.Context, opts ...OptionFunc) (c *Client, err error) {
 		return nil, errors.New("failed to determine endpoints")
 	}
 
-	c.conn, err = c.getConn(ctx)
+	c.conn, err = c.getConn()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client connection: %w", err)
 	}

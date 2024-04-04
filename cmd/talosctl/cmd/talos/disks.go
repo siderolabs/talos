@@ -86,7 +86,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 		for j, disk := range message.Disks {
 			if i == 0 && j == 0 {
 				if node != "" {
-					fmt.Fprintln(w, "NODE\t"+labels) //nolint:goconst
+					fmt.Fprintln(w, "NODE\t"+labels)
 				} else {
 					fmt.Fprintln(w, labels)
 				}

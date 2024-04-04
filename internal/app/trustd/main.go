@@ -67,7 +67,7 @@ func trustdMain() error {
 
 	var err error
 
-	runtimeConn, err := grpc.Dial(
+	runtimeConn, err := grpc.NewClient(
 		"unix://"+constants.TrustdRuntimeSocketPath,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithSharedWriteBuffer(true),

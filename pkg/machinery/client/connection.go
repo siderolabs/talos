@@ -5,7 +5,6 @@
 package client
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -32,7 +31,7 @@ func (c *Client) Conn() *grpc.ClientConn {
 }
 
 // getConn creates new gRPC connection.
-func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcConnectionWrapper, error) {
+func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error) {
 	endpoints := c.GetEndpoints()
 
 	target := c.getTarget(
@@ -53,7 +52,7 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcCon
 	dialOpts = append(dialOpts, opts...)
 
 	if c.options.unixSocketPath != "" {
-		conn, err := grpc.DialContext(ctx, target, dialOpts...)
+		conn, err := grpc.NewClient(target, dialOpts...)
 
 		return newGRPCConnectionWrapper(c.GetClusterName(), conn), err
 	}
@@ -61,7 +60,7 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcCon
 	tlsConfig := c.options.tlsConfig
 
 	if tlsConfig != nil {
-		return c.makeConnection(ctx, target, credentials.NewTLS(tlsConfig), dialOpts)
+		return c.makeConnection(target, credentials.NewTLS(tlsConfig), dialOpts)
 	}
 
 	if err := c.resolveConfigContext(); err != nil {
@@ -103,7 +102,7 @@ func (c *Client) getConn(ctx context.Context, opts ...grpc.DialOption) (*grpcCon
 		return nil, err
 	}
 
-	return c.makeConnection(ctx, target, creds, dialOpts)
+	return c.makeConnection(target, creds, dialOpts)
 }
 
 func buildTLSConfig(configContext *clientconfig.Context) (*tls.Config, error) {
@@ -135,13 +134,13 @@ func buildTLSConfig(configContext *clientconfig.Context) (*tls.Config, error) {
 	return tlsConfig, nil
 }
 
-func (c *Client) makeConnection(ctx context.Context, target string, creds credentials.TransportCredentials, dialOpts []grpc.DialOption) (*grpcConnectionWrapper, error) {
+func (c *Client) makeConnection(target string, creds credentials.TransportCredentials, dialOpts []grpc.DialOption) (*grpcConnectionWrapper, error) {
 	dialOpts = append(dialOpts,
 		grpc.WithTransportCredentials(creds),
 		grpc.WithInitialWindowSize(65535*32),
 		grpc.WithInitialConnWindowSize(65535*16))
 
-	conn, err := grpc.DialContext(ctx, target, dialOpts...)
+	conn, err := grpc.NewClient(target, dialOpts...)
 
 	return newGRPCConnectionWrapper(c.GetClusterName(), conn), err
 }

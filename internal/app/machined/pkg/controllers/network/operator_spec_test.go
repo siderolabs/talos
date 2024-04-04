@@ -198,7 +198,7 @@ func (suite *OperatorSpecSuite) assertRunning(runningIDs []string, assertFunc fu
 	}
 
 	for id := range runningOperators {
-		found := false //nolint:copyloopvar
+		found := false
 
 		for _, expectedID := range runningIDs {
 			if expectedID == id {

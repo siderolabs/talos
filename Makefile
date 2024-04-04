@@ -15,11 +15,11 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0
+TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-1-g10b2a69
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.7.0-1-gd57b0ad
-EXTRAS ?= v1.7.0
+PKGS ?= v1.7.0-2-g6101299
+EXTRAS ?= v1.7.0-1-gbb76755
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
@@ -55,13 +55,13 @@ GOIMPORTS_VERSION ?= v0.19.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.57.0
+GOLANGCILINT_VERSION ?= v1.57.2
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.19.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.9
 # renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.29.2
+DEEPCOPY_GEN_VERSION ?= v0.29.3
 # renovate: datasource=go depName=github.com/planetscale/vtprotobuf
 VTPROTOBUF_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/siderolabs/deep-copy

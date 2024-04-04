@@ -51,7 +51,7 @@ func (h *KMSKeyHandler) NewKey(ctx context.Context) (*encryption.Key, token.Toke
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	conn, err := h.getConn(ctx)
+	conn, err := h.getConn()
 	if err != nil {
 		return nil, nil, fmt.Errorf("error dialing KMS endpoint %q: %w", h.kmsEndpoint, err)
 	}
@@ -96,7 +96,7 @@ func (h *KMSKeyHandler) GetKey(ctx context.Context, t token.Token) (*encryption.
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	conn, err := h.getConn(ctx)
+	conn, err := h.getConn()
 	if err != nil {
 		return nil, fmt.Errorf("error dialing KMS endpoint %q: %w", h.kmsEndpoint, err)
 	}
@@ -119,7 +119,7 @@ func (h *KMSKeyHandler) GetKey(ctx context.Context, t token.Token) (*encryption.
 	return encryption.NewKey(h.slot, []byte(base64.StdEncoding.EncodeToString(resp.Data))), nil
 }
 
-func (h *KMSKeyHandler) getConn(ctx context.Context) (*grpc.ClientConn, error) {
+func (h *KMSKeyHandler) getConn() (*grpc.ClientConn, error) {
 	var transportCredentials credentials.TransportCredentials
 
 	endpoint, err := endpoint.Parse(h.kmsEndpoint)
@@ -133,8 +133,7 @@ func (h *KMSKeyHandler) getConn(ctx context.Context) (*grpc.ClientConn, error) {
 		transportCredentials = credentials.NewTLS(&tls.Config{})
 	}
 
-	return grpc.DialContext(
-		ctx,
+	return grpc.NewClient(
 		endpoint.Host,
 		grpc.WithTransportCredentials(transportCredentials),
 		grpc.WithSharedWriteBuffer(true),

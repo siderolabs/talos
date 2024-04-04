@@ -161,8 +161,7 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 			// establish connection
 			logger.Debug("establishing connection to event sink", zap.String("endpoint", cfg.TypedSpec().Endpoint))
 
-			conn, err = grpc.DialContext(
-				ctx,
+			conn, err = grpc.NewClient(
 				cfg.TypedSpec().Endpoint,
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
 				grpc.WithSharedWriteBuffer(true),
