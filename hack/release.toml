@@ -40,9 +40,22 @@ Talos Linux now  provides a caching DNS resolver for host workloads (including h
 
 ```yaml
 machine:
-   features:
-       localDNS: false
+  features:
+    hostDNS:
+      enabled: false
 ```
+
+You can also enable dns caching for k8s pods with:
+
+```yaml
+machine:
+  features:
+    hostDNS:
+      enabled: true
+      forwardKubeDNSToHost: true
+```
+
+Please note that on running cluster you will have to kill CoreDNS pods for this change to apply.
 """
 
     [notes.secureboot-image]
