@@ -117,6 +117,7 @@ require (
 	github.com/packethost/packngo v0.31.0
 	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/pin/tftp/v3 v3.1.0
+	github.com/pkg/xattr v0.4.9
 	github.com/pmorjan/kmod v1.1.1
 	github.com/prometheus/procfs v0.15.1
 	github.com/rivo/tview v0.0.0-20240807095714-a8dd8799d63b

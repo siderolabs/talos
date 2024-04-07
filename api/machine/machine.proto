@@ -452,6 +452,8 @@ message ListRequest {
   // Types indicates what file type should be returned. If not indicated,
   // all files will be returned.
   repeated Type types = 4;
+  // Report xattrs
+  bool report_xattrs = 5;
 }
 
 // DiskUsageRequest describes a request to list disk usage of directories and regular files
@@ -492,6 +494,13 @@ message FileInfo {
   uint32 uid = 10;
   // Owner gid
   uint32 gid = 11;
+  // Extended attributes (if present and requested)
+  repeated Xattr xattrs = 12;
+}
+
+message Xattr {
+  string name = 1;
+  bytes data = 2;
 }
 
 // DiskUsageInfo describes a file or directory's information for du command

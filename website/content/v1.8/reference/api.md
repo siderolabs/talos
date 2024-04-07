@@ -445,6 +445,7 @@ description: Talos gRPC API reference.
     - [Version](#machine.Version)
     - [VersionInfo](#machine.VersionInfo)
     - [VersionResponse](#machine.VersionResponse)
+    - [Xattr](#machine.Xattr)
   
     - [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode)
     - [ConnectRecord.State](#machine.ConnectRecord.State)
@@ -5973,6 +5974,7 @@ FileInfo describes a file or directory's information
 | relative_name | [string](#string) |  | RelativeName is the name of the file or directory relative to the RootPath |
 | uid | [uint32](#uint32) |  | Owner uid |
 | gid | [uint32](#uint32) |  | Owner gid |
+| xattrs | [Xattr](#machine.Xattr) | repeated | Extended attributes (if present and requested) |
 
 
 
@@ -6219,6 +6221,7 @@ ListRequest describes a request to list the contents of a directory.
 | recurse | [bool](#bool) |  | Recurse indicates that subdirectories should be recursed. |
 | recursion_depth | [int32](#int32) |  | RecursionDepth indicates how many levels of subdirectories should be recursed. The default (0) indicates that no limit should be enforced. |
 | types | [ListRequest.Type](#machine.ListRequest.Type) | repeated | Types indicates what file type should be returned. If not indicated, all files will be returned. |
+| report_xattrs | [bool](#bool) |  | Report xattrs |
 
 
 
@@ -7729,6 +7732,22 @@ rpc upgrade
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | messages | [Version](#machine.Version) | repeated |  |
+
+
+
+
+
+
+<a name="machine.Xattr"></a>
+
+### Xattr
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| data | [bytes](#bytes) |  |  |
 
 
 
