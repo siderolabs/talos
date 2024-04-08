@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -420,7 +421,10 @@ func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
 		}
 
 		if len(expectedStaticPods) > 0 {
-			return fmt.Errorf("missing static pods on node %s: %v", node.InternalIP, maps.Keys(expectedStaticPods))
+			missingStaticPods := maps.Keys(expectedStaticPods)
+			slices.Sort(missingStaticPods)
+
+			return fmt.Errorf("missing static pods on node %s: %v", node.InternalIP, missingStaticPods)
 		}
 	}
 
