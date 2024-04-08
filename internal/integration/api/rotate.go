@@ -156,6 +156,8 @@ func (suite *RotateCASuite) TestKubernetes() {
 
 	suite.Require().NoError(kubernetes.Rotate(suite.ctx, options))
 
+	suite.AssertClusterHealthy(suite.ctx)
+
 	suite.T().Logf("rotating back new CA -> old CA")
 
 	options = kubernetes.Options{
