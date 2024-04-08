@@ -374,6 +374,10 @@ func (c *ClusterConfig) Validate(isControlPlane bool) error {
 		}
 	}
 
+	if c.ClusterCA != nil && !isControlPlane && len(c.ClusterCA.Key) > 0 {
+		result = multierror.Append(result, errors.New("cluster CA key is not allowed on non-controlplane nodes (.cluster.ca)"))
+	}
+
 	result = multierror.Append(
 		result,
 		c.ClusterInlineManifests.Validate(),
