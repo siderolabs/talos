@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -184,7 +185,11 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						keyFilename:  "etcd-client.key",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.IssuingCA },
+						getter: func() *x509.PEMEncodedCertificateAndKey {
+							return &x509.PEMEncodedCertificateAndKey{
+								Crt: bytes.Join(xslices.Map(rootK8sSecrets.AcceptedCAs, func(ca *x509.PEMEncodedCertificate) []byte { return ca.Crt }), nil),
+							}
+						},
 						certFilename: "ca.crt",
 					},
 					{
