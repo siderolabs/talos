@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -25,6 +26,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
+
+// GracefulShutdownTimeout is the timeout for graceful shutdown of the backend connection.
+//
+// Talos has a few long-running API calls, so we need to give the backend some time to finish them.
+const GracefulShutdownTimeout = 30 * time.Minute
 
 var _ proxy.Backend = (*APID)(nil)
 
@@ -253,7 +259,36 @@ func (a *APID) Close() {
 	defer a.mu.Unlock()
 
 	if a.conn != nil {
-		a.conn.Close() //nolint:errcheck
+		gracefulGRPCClose(a.conn, GracefulShutdownTimeout)
 		a.conn = nil
 	}
+}
+
+func gracefulGRPCClose(conn *grpc.ClientConn, timeout time.Duration) {
+	// close the client connection in the background, tries to avoid closing the connection
+	// if the connection is in the middle of a call (e.g. streaming API)
+	//
+	// see https://github.com/grpc/grpc/blob/master/doc/connectivity-semantics-and-api.md for details on connection states
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		for ctx.Err() != nil {
+			switch state := conn.GetState(); state { //nolint:exhaustive
+			case connectivity.Idle,
+				connectivity.Shutdown,
+				connectivity.TransientFailure:
+				// close immediately, connection is not used
+				conn.Close() //nolint:errcheck
+
+				return
+			default:
+				// wait for state change of the connection
+				conn.WaitForStateChange(ctx, state)
+			}
+		}
+
+		// close anyways on timeout
+		conn.Close() //nolint:errcheck
+	}()
 }
