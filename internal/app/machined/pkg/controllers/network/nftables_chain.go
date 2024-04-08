@@ -65,6 +65,10 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 
 		var conn nftables.Conn
 
+		if err := ctrl.preCreateIptablesNFTable(logger, &conn); err != nil {
+			return fmt.Errorf("error pre-creating iptables-nft table: %w", err)
+		}
+
 		list, err := safe.ReaderListAll[*network.NfTablesChain](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error listing nftables chains: %w", err)
@@ -175,4 +179,35 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 
 		r.ResetRestartBackoff()
 	}
+}
+
+func (ctrl *NfTablesChainController) preCreateIptablesNFTable(logger *zap.Logger, conn *nftables.Conn) error {
+	// Pre-create the iptables-nft table, if it doesn't exist.
+	// This is required to ensure that the iptables universal binary prefers iptables-nft over
+	// iptables-legacy can be used to manage the nftables rules.
+	tables, err := conn.ListTablesOfFamily(nftables.TableFamilyIPv4)
+	if err != nil {
+		return fmt.Errorf("error listing existing nftables tables: %w", err)
+	}
+
+	if slices.IndexFunc(tables, func(t *nftables.Table) bool { return t.Name == "mangle" }) != -1 {
+		return nil
+	}
+
+	table := &nftables.Table{
+		Family: nftables.TableFamilyIPv4,
+		Name:   "mangle",
+	}
+	conn.AddTable(table)
+
+	chain := &nftables.Chain{
+		Name:  "KUBE-IPTABLES-HINT",
+		Table: table,
+		Type:  nftables.ChainTypeNAT,
+	}
+	conn.AddChain(chain)
+
+	logger.Info("pre-created iptables-nft table 'mangle'/'KUBE-IPTABLES-HINT'")
+
+	return nil
 }

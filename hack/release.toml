@@ -214,6 +214,16 @@ machine:
 Talos Linux now supports [Akamai Connected Cloud](https://www.linode.com/) provider (platform `akamai`).
 """
 
+    [notes.iptables]
+        title = "IPTables"
+        description = """\
+Talos Linux now forces `kubelet` and `kube-proxy` to use `iptables-nft` instead of `iptables-legacy` (`xtables`) which was the default
+before Talos 1.7.0.
+
+Container images based on `iptables-wrapper` should work without changes, but if there was a direct call to `legacy` mode of `iptables`, make sure
+to update to use `iptables-nft`.
+"""
+
 [make_deps]
 
     [make_deps.tools]
