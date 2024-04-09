@@ -158,7 +158,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 
 		type template struct {
 			filename string
-			template []byte
+			template string
 		}
 
 		for _, pod := range []struct {
@@ -253,7 +253,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				templates: []template{
 					{
 						filename: "kubeconfig",
-						template: []byte("{{ .Secrets.ControllerManagerKubeconfig }}"),
+						template: "{{ .Secrets.ControllerManagerKubeconfig }}",
 					},
 				},
 			},
@@ -265,7 +265,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 				templates: []template{
 					{
 						filename: "kubeconfig",
-						template: []byte("{{ .Secrets.SchedulerKubeconfig }}"),
+						template: "{{ .Secrets.SchedulerKubeconfig }}",
 					},
 				},
 			},
@@ -311,7 +311,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			for _, templ := range pod.templates {
 				var t *stdlibtemplate.Template
 
-				t, err = stdlibtemplate.New(templ.filename).Parse(string(templ.template))
+				t, err = stdlibtemplate.New(templ.filename).Parse(templ.template)
 				if err != nil {
 					return fmt.Errorf("error parsing template %q: %w", templ.filename, err)
 				}
