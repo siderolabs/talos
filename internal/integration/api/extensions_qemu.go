@@ -788,6 +788,41 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsWasmEdge() {
 	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "wasmedge-test"))
 }
 
+// TestExtensionsSpin verifies spin runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsSpin() {
+	_, err := suite.Clientset.NodeV1().RuntimeClasses().Create(suite.ctx, &nodev1.RuntimeClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "wasmtime-spin-v2",
+		},
+		Handler: "spin",
+	}, metav1.CreateOptions{})
+	defer suite.Clientset.NodeV1().RuntimeClasses().Delete(suite.ctx, "wasmtime-spin-v2", metav1.DeleteOptions{}) //nolint:errcheck
+
+	suite.Require().NoError(err)
+
+	_, err = suite.Clientset.CoreV1().Pods("default").Create(suite.ctx, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "spin-test",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:    "spin-test",
+					Image:   "ghcr.io/spinkube/containerd-shim-spin/examples/spin-rust-hello",
+					Command: []string{"/"},
+				},
+			},
+			RuntimeClassName: pointer.To("wasmtime-spin-v2"),
+		},
+	}, metav1.CreateOptions{})
+	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, "spin-test", metav1.DeleteOptions{}) //nolint:errcheck
+
+	suite.Require().NoError(err)
+
+	// wait for the pod to be ready
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "spin-test"))
+}
+
 func init() {
 	allSuites = append(allSuites, &ExtensionsSuiteQEMU{})
 }
