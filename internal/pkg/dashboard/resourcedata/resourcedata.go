@@ -16,9 +16,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/channel"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc/metadata"
 
-	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/util"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -70,10 +69,9 @@ func (source *Source) run(ctx context.Context) {
 
 	source.NodeResourceCh = source.ch
 
-	nodes := source.nodes(ctx)
-	for _, node := range nodes {
+	for _, nodeContext := range util.NodeContexts(ctx) {
 		source.eg.Go(func() error {
-			source.runResourceWatchWithRetries(ctx, node)
+			source.runResourceWatchWithRetries(nodeContext.Ctx, nodeContext.Node)
 
 			return nil
 		})
@@ -101,10 +99,6 @@ func (source *Source) runResourceWatchWithRetries(ctx context.Context, node stri
 
 //nolint:gocyclo,cyclop
 func (source *Source) runResourceWatch(ctx context.Context, node string) error {
-	if node != "" {
-		ctx = client.WithNode(ctx, node)
-	}
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -210,23 +204,4 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 			}
 		}
 	}
-}
-
-func (source *Source) nodes(ctx context.Context) []string {
-	md, mdOk := metadata.FromOutgoingContext(ctx)
-	if !mdOk {
-		return []string{""} // local node
-	}
-
-	nodeVal := md.Get("node")
-	if len(nodeVal) > 0 {
-		return []string{nodeVal[0]}
-	}
-
-	nodesVal := md.Get("nodes")
-	if len(nodesVal) == 0 {
-		return []string{""} // local node
-	}
-
-	return nodesVal
 }

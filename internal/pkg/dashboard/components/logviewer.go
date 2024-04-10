@@ -23,6 +23,7 @@ func NewLogViewer() *LogViewer {
 	}
 
 	widget.logs.ScrollToEnd().
+		SetDynamicColors(true).
 		SetMaxLines(maxLogLines).
 		SetText(noData).
 		SetBorderPadding(0, 0, 1, 1).
@@ -54,7 +55,12 @@ func NewLogViewer() *LogViewer {
 }
 
 // WriteLog writes the log line to the widget.
-func (widget *LogViewer) WriteLog(logLine string) {
+func (widget *LogViewer) WriteLog(logLine, logError string) {
+	if logError != "" {
+		logLine = "[red]" + tview.Escape(logError) + "[-]\n"
+	} else {
+		logLine = tview.Escape(logLine) + "\n"
+	}
+
 	widget.logs.Write([]byte(logLine)) //nolint:errcheck
-	widget.logs.Write([]byte("\n"))    //nolint:errcheck
 }
