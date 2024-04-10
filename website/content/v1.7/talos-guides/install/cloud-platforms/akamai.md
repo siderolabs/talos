@@ -9,8 +9,10 @@ aliases:
 
 This guide will demonstrate how to create a highly-available Kubernetes cluster with one worker using the [Akamai Connected Cloud](https://www.linode.com/) provider.
 
-[Akamai Connected Cloud](https://www.linode.com/) has a very well documented REST API, and an open-source [CLI](https://www.linode.com/docs/products/tools/cli/get-started/) tool to interact with the API which will be used in this guide.
-Make sure to follow installation and authentication instructions for the `linode-cli` tool.
+[Akamai Connected Cloud](https://www.linode.com/) has a very well documented [REST API](https://www.linode.com/docs/api/), and an open-source [CLI](https://www.linode.com/docs/products/tools/cli/get-started/) tool to interact with the API which will be used in this guide.
+Make sure to follow [installation](https://www.linode.com/docs/products/tools/cli/get-started/#installing-the-linode-cli) and authentication instructions for the `linode-cli` tool.
+
+[jq](https://stedolan.github.io/jq/) and [talosctl]({{< relref "../../../introduction/quickstart#talosctl" >}}) also needs to be installed
 
 ### Upload image
 
@@ -21,7 +23,7 @@ Upload the image
 ```bash
 export REGION=us-ord
 
-linode-cli image-upload --region ${REGION} --label talos _out/akamai-amd64.raw.gz
+linode-cli image-upload --region ${REGION} --label talos akamai-amd64.raw.gz
 ```
 
 ### Create a Load Balancer
@@ -36,7 +38,7 @@ linode-cli nodebalancers config-create --port 443 --protocol tcp --check connect
 
 ### Create the Machine Configuration Files
 
-Using the IP address (or DNS name, if you have created one) of the loadbalancer, generate the base configuration files for the Talos machines.
+Using the IP address (or DNS name, if you have created one) of the load balancer, generate the base configuration files for the Talos machines.
 Also note that the load balancer forwards port 443 to port 6443 on the associated nodes, so we should use 443 as the port in the config definition:
 
 ```bash
@@ -49,27 +51,34 @@ talosctl gen config talos-kubernetes-akamai https://${NODEBALANCER_IP} --with-ex
 
 #### Create the Control Plane Nodes
 
+> Although root passwords are not used by Talos, Linode requires that a root password be associated with a linode during creation.
+
 Run the following commands to create three control plane nodes:
 
 ```bash
+export IMAGE_ID=$(linode-cli images list --label talos --format id --text --no-headers)
 export NODEBALANCER_ID=$(linode-cli nodebalancers list --label talos --format id --text --no-headers)
 export NODEBALANCER_CONFIG_ID=$(linode-cli nodebalancers configs-list ${NODEBALANCER_ID} --format id --text --no-headers)
 export REGION=us-ord
+export LINODE_TYPE=g6-standard-4
+export ROOT_PW=$(pwgen 16)
 
 for id in $(seq 3); do
   linode_label="talos-control-plane-${id}"
+
   # create linode
+
   linode-cli linodes create  \
     --no-defaults \
-    --root_pass securepass123! \
-    --type g6-standard-4 \
+    --root_pass ${ROOT_PW} \
+    --type ${LINODE_TYPE} \
     --region ${REGION} \
-    --image ${image_id} \
+    --image ${IMAGE_ID} \
     --label ${linode_label} \
     --private_ip true \
     --tags talos-control-plane \
     --group "talos-control-plane" \
-    --metadata.user_data "$(cat ./controlplane.yaml | base64)"
+    --metadata.user_data "$(base64 -i ./controlplane.yaml)"
 
   # change kernel to "direct disk"
   linode_id=$(linode-cli linodes list --label ${linode_label} --format id --text --no-headers)
@@ -84,23 +93,29 @@ done
 
 #### Create the Worker Nodes
 
+> Although root passwords are not used by Talos, Linode requires that a root password be associated with a linode during creation.
+
 Run the following to create a worker node:
 
 ```bash
 export IMAGE_ID=$(linode-cli images list --label talos --format id --text --no-headers)
 export REGION=us-ord
+export LINODE_TYPE=g6-standard-4
 export LINODE_LABEL="talos-worker-1"
+export ROOT_PW=$(pwgen 16)
+
 linode-cli linodes create  \
     --no-defaults \
-    --root_pass akamaipass123! \
-    --type g6-standard-4 \
-    --region us-ord \
+    --root_pass ${ROOT_PW} \
+    --type ${LINODE_TYPE} \
+    --region ${REGION} \
     --image ${IMAGE_ID} \
     --label ${LINODE_LABEL} \
     --private_ip true \
     --tags talos-worker \
     --group "talos-worker" \
-    --metadata.user_data "$(cat ./worker.yaml | base64)"
+    --metadata.user_data "$(base64 -i ./worker.yaml)"
+
 linode_id=$(linode-cli linodes list --label ${LINODE_LABEL} --format id --text --no-headers)
 confiig_id=$(linode-cli linodes configs-list ${linode_id} --format id --text --no-headers)
 linode-cli linodes config-update ${linode_id} ${confiig_id} --kernel "linode/direct-disk"
