@@ -39,6 +39,7 @@ type Imager struct {
 	prof profile.Profile
 
 	overlayInstaller overlay.Installer[overlay.ExtraOptions]
+	extraProfiles    map[string]profile.Profile
 
 	tempDir string
 
@@ -192,6 +193,10 @@ func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) e
 
 	i.overlayInstaller = executor.New(filepath.Join(i.tempDir, constants.ImagerOverlayInstallersPath, i.prof.Overlay.Name))
 
+	if i.extraProfiles == nil {
+		i.extraProfiles = make(map[string]profile.Profile)
+	}
+
 	for _, profilePath := range profileYAMLs {
 		profileName := strings.TrimSuffix(filepath.Base(profilePath), ".yaml")
 
@@ -206,7 +211,7 @@ func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) e
 			return fmt.Errorf("failed to unmarshal profile: %w", err)
 		}
 
-		profile.Default[profileName] = overlayProfile
+		i.extraProfiles[profileName] = overlayProfile
 	}
 
 	return nil
@@ -215,7 +220,12 @@ func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) e
 func (i *Imager) handleProf() error {
 	// resolve the profile if it contains a base name
 	if i.prof.BaseProfileName != "" {
-		baseProfile, ok := profile.Default[i.prof.BaseProfileName]
+		baseProfile, ok := i.extraProfiles[i.prof.BaseProfileName]
+
+		if !ok {
+			baseProfile, ok = profile.Default[i.prof.BaseProfileName]
+		}
+
 		if !ok {
 			return fmt.Errorf("unknown base profile: %s", i.prof.BaseProfileName)
 		}
