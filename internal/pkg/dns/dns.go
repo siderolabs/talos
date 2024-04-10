@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"net"
 	"slices"
@@ -24,52 +25,7 @@ import (
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
-
-	"github.com/siderolabs/talos/internal/pkg/utils"
 )
-
-// NewRunner creates a new Runner.
-func NewRunner(srv Server, logger *zap.Logger) *Runner {
-	r := utils.NewRunner(srv.ActivateAndServe, srv.Shutdown, func(err error) bool {
-		// There a possible scenario where `Run` reached `ListenAndServe` and then yielded CPU time to another
-		// goroutine and then `Stop` reached `Shutdown`. In that case `ListenAndServe` will actually start after
-		// `Shutdown` and `Stop` method will forever block if we do not try again.
-		return strings.Contains(err.Error(), "server not started")
-	})
-
-	return &Runner{r: r, logger: logger}
-}
-
-// Runner is a dns server handler.
-type Runner struct {
-	r      *utils.Runner
-	logger *zap.Logger
-}
-
-// Server is a dns server.
-type Server interface {
-	ActivateAndServe() error
-	Shutdown() error
-}
-
-// Run runs dns server.
-func (r *Runner) Run() error {
-	r.logger.Debug("starting dns server")
-
-	err := r.r.Run()
-
-	r.logger.Debug("dns server stopped", zap.Error(err))
-
-	return err
-}
-
-// Stop stops dns server. It's safe to call even if server is already stopped.
-func (r *Runner) Stop() {
-	err := r.r.Stop()
-	if err != nil {
-		r.logger.Warn("error shutting down dns server", zap.Error(err))
-	}
-}
 
 // Cache is a [dns.Handler] to [plugin.Handler] adapter.
 type Cache struct {
@@ -211,22 +167,78 @@ type ServerOptions struct {
 	WriteTimeout  time.Duration
 	IdleTimeout   func() time.Duration
 	MaxTCPQueries int
+	Logger        *zap.Logger
 }
 
 // NewServer creates a new Server.
-func NewServer(opts ServerOptions) Server {
-	return &server{&dns.Server{
-		Listener:      opts.Listener,
-		PacketConn:    opts.PacketConn,
-		Handler:       opts.Handler,
-		ReadTimeout:   opts.ReadTimeout,
-		WriteTimeout:  opts.WriteTimeout,
-		IdleTimeout:   opts.IdleTimeout,
-		MaxTCPQueries: opts.MaxTCPQueries,
-	}}
+func NewServer(opts ServerOptions) *Server {
+	return &Server{
+		srv: &dns.Server{
+			Listener:      opts.Listener,
+			PacketConn:    opts.PacketConn,
+			Handler:       opts.Handler,
+			ReadTimeout:   opts.ReadTimeout,
+			WriteTimeout:  opts.WriteTimeout,
+			IdleTimeout:   opts.IdleTimeout,
+			MaxTCPQueries: opts.MaxTCPQueries,
+		},
+		logger: opts.Logger,
+	}
 }
 
-type server struct{ *dns.Server }
+// Server is a dns server.
+type Server struct {
+	srv    *dns.Server
+	logger *zap.Logger
+}
+
+// Start starts the dns server. Returns a function to stop the server.
+func (s *Server) Start(onDone func(err error)) (stop func(), stopped <-chan struct{}) {
+	done := make(chan struct{})
+
+	fn := sync.OnceFunc(func() {
+		for {
+			err := s.srv.Shutdown()
+			if err != nil {
+				if strings.Contains(err.Error(), "server not started") {
+					// There a possible scenario where `go func()` not yet reached `ActivateAndServe` and yielded CPU
+					// time to another goroutine and then this closure reached `Shutdown`. In that case
+					// `ActivateAndServe` will actually start after `Shutdown` and this closure will block forever
+					// because `go func()` will never exit and close `done` channel.
+					continue
+				}
+
+				s.logger.Error("error shutting down dns server", zap.Error(err))
+			}
+
+			break
+		}
+
+		closer := io.Closer(s.srv.Listener)
+		if closer == nil {
+			closer = s.srv.PacketConn
+		}
+
+		if closer != nil {
+			err := closer.Close()
+			if err != nil && !errors.Is(err, net.ErrClosed) {
+				s.logger.Error("error closing dns server listener", zap.Error(err))
+			} else {
+				s.logger.Debug("dns server listener closed")
+			}
+		}
+
+		<-done
+	})
+
+	go func() {
+		defer close(done)
+
+		onDone(s.srv.ActivateAndServe())
+	}()
+
+	return fn, done
+}
 
 // NewTCPListener creates a new TCP listener.
 func NewTCPListener(network, addr string) (net.Listener, error) {

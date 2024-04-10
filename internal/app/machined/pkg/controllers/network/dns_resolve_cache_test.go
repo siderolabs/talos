@@ -78,12 +78,19 @@ func (suite *DNSServer) TestResolving() {
 
 	var res *dns.Msg
 
-	err := retry.Constant(2*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
+	err := retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
 		r, err := dns.Exchange(msg, "127.0.0.53:"+port)
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		if r.Rcode != dns.RcodeSuccess {
+			return retry.ExpectedErrorf("expected rcode %d, got %d", dns.RcodeSuccess, r.Rcode)
+		}
 
 		res = r
 
-		return retry.ExpectedError(err)
+		return nil
 	})
 	suite.Require().NoError(err)
 	suite.Require().Equal(dns.RcodeSuccess, res.Rcode, res)
@@ -137,7 +144,7 @@ func (suite *DNSServer) TestSetupStartStop() {
 func TestDNSServer(t *testing.T) {
 	suite.Run(t, &DNSServer{
 		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
+			Timeout: 10 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{

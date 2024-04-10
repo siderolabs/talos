@@ -5,11 +5,7 @@
 package dns_test
 
 import (
-	"context"
-	"errors"
 	"net"
-	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -18,10 +14,8 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/check"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 
-	"github.com/siderolabs/talos/internal/pkg/ctxutil"
 	"github.com/siderolabs/talos/internal/pkg/dns"
 )
 
@@ -53,10 +47,8 @@ func TestDNS(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx, stop := newServer(t, test.nameservers...)
-
-			stopOnce := sync.OnceFunc(stop)
-			defer stopOnce()
+			stop := newServer(t, test.nameservers...)
+			defer stop()
 
 			time.Sleep(10 * time.Millisecond)
 
@@ -69,20 +61,14 @@ func TestDNS(t *testing.T) {
 
 			t.Logf("r: %s", r)
 
-			stopOnce()
-
-			<-ctx.Done()
-
-			require.NoError(t, ctxutil.Cause(ctx))
+			stop()
 		})
 	}
 }
 
 func TestDNSEmptyDestinations(t *testing.T) {
-	ctx, stop := newServer(t)
-
-	stopOnce := sync.OnceFunc(stop)
-	defer stopOnce()
+	stop := newServer(t)
+	defer stop()
 
 	time.Sleep(10 * time.Millisecond)
 
@@ -94,14 +80,10 @@ func TestDNSEmptyDestinations(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, dnssrv.RcodeServerFailure, r.Rcode, r)
 
-	stopOnce()
-
-	<-ctx.Done()
-
-	require.NoError(t, ctxutil.Cause(ctx))
+	stop()
 }
 
-func newServer(t *testing.T, nameservers ...string) (context.Context, func()) {
+func newServer(t *testing.T, nameservers ...string) func() {
 	l := zaptest.NewLogger(t)
 
 	handler := dns.NewHandler(l)
@@ -121,12 +103,21 @@ func newServer(t *testing.T, nameservers ...string) (context.Context, func()) {
 	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.53:10700")
 	require.NoError(t, err)
 
-	runner := dns.NewRunner(dns.NewServer(dns.ServerOptions{
+	srv := dns.NewServer(dns.ServerOptions{
 		PacketConn: pc,
 		Handler:    dns.NewCache(handler, l),
-	}), l)
+		Logger:     l,
+	})
 
-	return ctxutil.MonitorFn(context.Background(), runner.Run), runner.Stop
+	stop, _ := srv.Start(func(err error) {
+		if err != nil {
+			t.Errorf("error running dns server: %v", err)
+		}
+
+		t.Logf("dns server stopped")
+	})
+
+	return stop
 }
 
 func createQuery() *dnssrv.Msg {
@@ -143,87 +134,4 @@ func createQuery() *dnssrv.Msg {
 			},
 		},
 	}
-}
-
-func TestActivateFailure(t *testing.T) {
-	// Ensure that we correctly handle an error inside [dns.Runner.Run].
-	l := zaptest.NewLogger(t)
-
-	runner := dns.NewRunner(&testServer{t: t}, l)
-
-	ctx := ctxutil.MonitorFn(context.Background(), runner.Run)
-	defer runner.Stop()
-
-	<-ctx.Done()
-
-	require.Equal(t, errFailed, ctxutil.Cause(ctx))
-}
-
-func TestRunnerStopsBeforeRun(t *testing.T) {
-	// Ensure that we correctly handle an error inside [dns.Runner.Run].
-	l := zap.NewNop()
-
-	for range 1000 {
-		runner := dns.NewRunner(&runnerStopper{}, l)
-
-		ctx := ctxutil.MonitorFn(context.Background(), runner.Run)
-		runner.Stop()
-
-		<-ctx.Done()
-	}
-
-	for range 1000 {
-		runner := dns.NewRunner(&runnerStopper{}, l)
-
-		runner.Stop()
-		ctx := ctxutil.MonitorFn(context.Background(), runner.Run)
-
-		<-ctx.Done()
-	}
-}
-
-type testServer struct {
-	t *testing.T
-}
-
-var errFailed = errors.New("listen failure")
-
-func (ts *testServer) ActivateAndServe() error { return errFailed }
-
-func (ts *testServer) Shutdown() error {
-	ts.t.Fatal("should not be called")
-
-	return nil
-}
-
-func (ts *testServer) Name() string {
-	return "test-server"
-}
-
-type runnerStopper struct {
-	val atomic.Pointer[chan struct{}]
-}
-
-func (rs *runnerStopper) ActivateAndServe() error {
-	ch := make(chan struct{})
-
-	if rs.val.Swap(&ch) != nil {
-		panic("chan should be empty")
-	}
-
-	<-ch
-
-	return nil
-}
-
-func (rs *runnerStopper) Shutdown() error {
-	chPtr := rs.val.Load()
-
-	if chPtr == nil {
-		return errors.New("server not started")
-	}
-
-	close(*chPtr)
-
-	return nil
 }
