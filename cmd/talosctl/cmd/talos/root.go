@@ -58,7 +58,7 @@ func addCommand(cmd *cobra.Command) {
 	Commands = append(Commands, cmd)
 }
 
-// completeResource represents tab complete options for `ls` and `ls *` commands.
+// completePathFromNode represents tab complete options for `ls` and `ls *` commands.
 func completePathFromNode(inputPath string) []string {
 	pathToSearch := inputPath
 

@@ -31,7 +31,7 @@ const (
 
 const azureClientID = "AZURE_CLIENT_ID"
 
-// getAuthMethod returns the an authenticationMethod to use to get an Azure Authorizer.
+// getAuthenticationMethod returns an authenticationMethod to use to get an Azure Authorizer.
 // If no environment variables are set, unknownAuthMethod will be used.
 // If the environment variable 'AZURE_AUTH_METHOD' is set to either environment or cli, use it.
 // If the environment variables 'AZURE_TENANT_ID', 'AZURE_CLIENT_ID' and 'AZURE_CLIENT_SECRET' are set, use environment.
