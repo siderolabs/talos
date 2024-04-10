@@ -7,7 +7,6 @@ package imager
 import (
 	"context"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -91,23 +90,16 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 	if i.prof.SecureBootEnabled() {
 		isoOptions := pointer.SafeDeref(i.prof.Output.ISOOptions)
 
-		crtData, readErr := os.ReadFile(i.prof.Input.SecureBoot.SecureBootSigner.CertPath)
-		if readErr != nil {
-			return fmt.Errorf("failed to read secureboot uki certificate: %w", readErr)
-		}
+		var signer pesign.CertificateSigner
 
-		block, rest := pem.Decode(crtData)
-		if block == nil {
-			return errors.New("failed to decode PEM data")
-		}
-
-		if len(rest) > 0 {
-			return errors.New("more than one PEM block found in PEM data")
+		signer, err = i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
 		}
 
 		derCrtPath := filepath.Join(i.tempDir, "uki.der")
 
-		if err = os.WriteFile(derCrtPath, block.Bytes, 0o600); err != nil {
+		if err = os.WriteFile(derCrtPath, signer.Certificate().Raw, 0o600); err != nil {
 			return fmt.Errorf("failed to write uki.der: %w", err)
 		}
 
@@ -134,13 +126,6 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			report.Report(reporter.Update{Message: "generating SecureBoot database...", Status: reporter.StatusRunning})
 
 			// generate the database automatically from provided values
-			var signer pesign.CertificateSigner
-
-			signer, err = i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
-			if err != nil {
-				return fmt.Errorf("failed to get SecureBoot signer: %w", err)
-			}
-
 			enrolledPEM := pem.EncodeToMemory(&pem.Block{
 				Type:  "CERTIFICATE",
 				Bytes: signer.Certificate().Raw,
