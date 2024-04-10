@@ -285,16 +285,16 @@ func (a *Azure) configFromCD() ([]byte, error) {
 //
 //nolint:gocyclo
 func (a *Azure) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	log.Printf("fetching azure instance config from: %q", AzureMetadataEndpoint)
-
-	metadata, err := a.getMetadata(ctx)
+	metadata, apiVersion, err := a.getMetadata(ctx)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("fetching network config from %q", AzureInterfacesEndpoint)
+	interfacesEndpoint := fmt.Sprintf(AzureInterfacesEndpoint, apiVersion)
 
-	metadataNetworkConfig, err := download.Download(ctx, AzureInterfacesEndpoint,
+	log.Printf("fetching network config from %q", interfacesEndpoint)
+
+	metadataNetworkConfig, err := download.Download(ctx, interfacesEndpoint,
 		download.WithHeaders(map[string]string{"Metadata": "true"}))
 	if err != nil {
 		return fmt.Errorf("failed to fetch network config from metadata service: %w", err)
@@ -311,11 +311,13 @@ func (a *Azure) NetworkConfiguration(ctx context.Context, _ state.State, ch chan
 		return fmt.Errorf("failed to parse network metadata: %w", err)
 	}
 
-	log.Printf("fetching load balancer metadata from: %q", AzureLoadbalancerEndpoint)
+	loadbalancerEndpoint := fmt.Sprintf(AzureLoadbalancerEndpoint, apiVersion)
+
+	log.Printf("fetching load balancer metadata from: %q", loadbalancerEndpoint)
 
 	var loadBalancerAddresses LoadBalancerMetadata
 
-	lbConfig, err := download.Download(ctx, AzureLoadbalancerEndpoint,
+	lbConfig, err := download.Download(ctx, loadbalancerEndpoint,
 		download.WithHeaders(map[string]string{"Metadata": "true"}),
 		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))

@@ -53,6 +53,9 @@ func TestDownload(t *testing.T) {
 		case "/base64":
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("ZGF0YQ==")) //nolint:errcheck
+		case "/400":
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintln(w, "bad request")
 		case "/404":
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintln(w, "not found")
@@ -108,10 +111,22 @@ func TestDownload(t *testing.T) {
 			expectedError: "gone forever",
 		},
 		{
+			name:          "bad request error",
+			path:          "/400",
+			opts:          []download.Option{download.WithErrorOnBadRequest(errors.New("bad req"))},
+			expectedError: "bad req",
+		},
+		{
 			name:          "failure 404",
 			path:          "/404",
 			opts:          []download.Option{download.WithTimeout(2 * time.Second)},
 			expectedError: "failed to download config, status code 404, body \"not found\\n\"",
+		},
+		{
+			name:          "failure 400",
+			path:          "/400",
+			opts:          []download.Option{download.WithTimeout(2 * time.Second)},
+			expectedError: "failed to download config, status code 400, body \"bad request\\n\"",
 		},
 		{
 			name: "retry endpoint change",

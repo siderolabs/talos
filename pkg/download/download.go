@@ -35,6 +35,7 @@ type downloadOptions struct {
 	EndpointFunc func(context.Context) (string, error)
 
 	ErrorOnNotFound      error
+	ErrorOnBadRequest    error
 	ErrorOnEmptyResponse error
 
 	Timeout      time.Duration
@@ -105,6 +106,13 @@ func WithErrorOnNotFound(e error) Option {
 func WithErrorOnEmptyResponse(e error) Option {
 	return func(d *downloadOptions) {
 		d.ErrorOnEmptyResponse = e
+	}
+}
+
+// WithErrorOnBadRequest provides specific error to return when response has HTTP 400 error.
+func WithErrorOnBadRequest(e error) Option {
+	return func(d *downloadOptions) {
+		d.ErrorOnBadRequest = e
 	}
 }
 
@@ -212,6 +220,7 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 	return b, nil
 }
 
+//nolint:gocyclo
 func download(req *http.Request, options *downloadOptions) (data []byte, err error) {
 	transport := httpdefaults.PatchTransport(cleanhttp.DefaultTransport())
 	transport.RegisterProtocol("tftp", NewTFTPTransport())
@@ -247,6 +256,10 @@ func download(req *http.Request, options *downloadOptions) (data []byte, err err
 
 	if resp.StatusCode == http.StatusNotFound && options.ErrorOnNotFound != nil {
 		return data, options.ErrorOnNotFound
+	}
+
+	if resp.StatusCode == http.StatusBadRequest && options.ErrorOnBadRequest != nil {
+		return data, options.ErrorOnBadRequest
 	}
 
 	if resp.StatusCode != http.StatusOK {
