@@ -341,7 +341,7 @@ local ExtensionsStep(with_e2e=true) =
   local extensions_build = TriggerDownstream(
     'extensions-build',
     'e2e-talos',
-    ['siderolabs/extensions@main'],
+    ['siderolabs/extensions@release-1.7'],
     params=[
       std.format('REGISTRY=%s', local_registry),
       'PLATFORM=linux/amd64',
