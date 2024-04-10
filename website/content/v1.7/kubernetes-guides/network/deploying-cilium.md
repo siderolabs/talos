@@ -288,6 +288,12 @@ For more details: [GCP ILB support / support scope local routes to be configured
 
 ## Other things to know
 
+- After installing Cilium, `cilium connectivity test` might hang and/or fail with errors similar to
+
+    ```Error creating: pods "client-69748f45d8-9b9jg" is forbidden: violates PodSecurity "baseline:latest": non-default capabilities (container "client" must not include "NET_RAW" in securityContext.capabilities.add)```
+
+  This is expected, you can workaround it by adding the `pod-security.kubernetes.io/enforce=priviledged` [label on the namespace level]({{< relref "../configuration/pod-security">}}).
+
 - Talos has full kernel module support for eBPF, See:
   - [Cilium System Requirements](https://docs.cilium.io/en/v1.14/operations/system_requirements/)
   - [Talos Kernel Config AMD64](https://github.com/siderolabs/pkgs/blob/main/kernel/build/config-amd64)
