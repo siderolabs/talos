@@ -70,7 +70,7 @@ type ResourceDataListener interface {
 
 // LogDataListener is a listener which is notified when a log line is received.
 type LogDataListener interface {
-	OnLogDataChange(node string, logLine string)
+	OnLogDataChange(node, logLine, logError string)
 }
 
 // NodeSelectListener is a listener which is notified when a node is selected.
@@ -376,10 +376,7 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 		defer d.resourceDataSource.Stop() //nolint:errcheck
 
 		// start logs data source
-		if err := d.logDataSource.Start(ctx); err != nil {
-			return err
-		}
-
+		d.logDataSource.Start(ctx)
 		defer d.logDataSource.Stop() //nolint:errcheck
 
 		lastLogTime := time.Now()
@@ -393,11 +390,11 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 
 				if time.Since(lastLogTime) < 50*time.Millisecond {
 					d.app.QueueUpdate(func() {
-						d.processLog(nodeAlias, nodeLog.Log)
+						d.processLog(nodeAlias, nodeLog.Log, nodeLog.Error)
 					})
 				} else {
 					d.app.QueueUpdateDraw(func() {
-						d.processLog(nodeAlias, nodeLog.Log)
+						d.processLog(nodeAlias, nodeLog.Log, nodeLog.Error)
 					})
 				}
 
@@ -461,9 +458,9 @@ func (d *Dashboard) processNodeResource(nodeResource resourcedata.Data) {
 }
 
 // processLog re-renders the log components with new log data.
-func (d *Dashboard) processLog(node, line string) {
+func (d *Dashboard) processLog(node, logLine, logError string) {
 	for _, component := range d.logDataListeners {
-		component.OnLogDataChange(node, line)
+		component.OnLogDataChange(node, logLine, logError)
 	}
 }
 

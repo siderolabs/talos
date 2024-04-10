@@ -91,8 +91,8 @@ func (widget *SummaryGrid) OnResourceDataChange(nodeResource resourcedata.Data) 
 }
 
 // OnLogDataChange implements the LogDataListener interface.
-func (widget *SummaryGrid) OnLogDataChange(node string, logLine string) {
-	widget.logViewer(node).WriteLog(logLine)
+func (widget *SummaryGrid) OnLogDataChange(node, logLine, logError string) {
+	widget.logViewer(node).WriteLog(logLine, logError)
 }
 
 func (widget *SummaryGrid) updateLogViewer() {
