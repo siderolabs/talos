@@ -252,6 +252,12 @@ func (o *Openstack) ParseMetadata(
 					return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
 				}
 
+				priority := uint32(network.DefaultRouteMetric)
+
+				if family == nethelpers.FamilyInet6 {
+					priority *= 2
+				}
+
 				route := network.RouteSpecSpec{
 					ConfigLayer: network.ConfigPlatform,
 					Gateway:     gw,
@@ -260,7 +266,7 @@ func (o *Openstack) ParseMetadata(
 					Protocol:    nethelpers.ProtocolStatic,
 					Type:        nethelpers.TypeUnicast,
 					Family:      family,
-					Priority:    network.DefaultRouteMetric,
+					Priority:    priority,
 				}
 
 				route.Normalize()

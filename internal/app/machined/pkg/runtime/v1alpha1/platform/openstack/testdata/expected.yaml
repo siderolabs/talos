@@ -99,7 +99,7 @@ routes:
       gateway: 2000:0:100:2fff:ff:ff:ff:ff
       outLinkName: eth0
       table: main
-      priority: 1024
+      priority: 2048
       scope: global
       type: unicast
       flags: ""
