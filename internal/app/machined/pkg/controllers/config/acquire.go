@@ -214,6 +214,12 @@ func (validationModeDiskConfig) RequiresInstall() bool {
 	return false
 }
 
+// InContainer implements validation.RuntimeMode interface.
+func (validationModeDiskConfig) InContainer() bool {
+	// containers don't persist config to disk
+	return false
+}
+
 // String implements validation.RuntimeMode interface.
 func (validationModeDiskConfig) String() string {
 	return "diskConfig"

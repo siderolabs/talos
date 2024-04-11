@@ -16,12 +16,15 @@ import (
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-// StatusController manages secrets.Etcd based on configuration.
-type StatusController struct{}
+// StatusController manages network.Status based on state of other resources.
+type StatusController struct {
+	V1Alpha1Mode runtime.Mode
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *StatusController) Name() string {
@@ -143,6 +146,11 @@ func (ctrl *StatusController) Run(ctx context.Context, r controller.Runtime, log
 		result.EtcFilesReady = true
 
 		for _, requiredFile := range []string{"hosts", "resolv.conf"} {
+			// in container mode, ignore resolv.conf, it's managed by the container runtime
+			if ctrl.V1Alpha1Mode.InContainer() && requiredFile == "resolv.conf" {
+				continue
+			}
+
 			_, err = r.Get(ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, requiredFile, resource.VersionUndefined))
 			if err != nil {
 				if !state.IsNotFoundError(err) {

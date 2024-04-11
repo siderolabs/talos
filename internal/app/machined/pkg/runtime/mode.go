@@ -52,6 +52,11 @@ func (m Mode) RequiresInstall() bool {
 	return m == ModeMetal
 }
 
+// InContainer implements config.RuntimeMode.
+func (m Mode) InContainer() bool {
+	return m == ModeContainer
+}
+
 // Supports returns mode capability.
 func (m Mode) Supports(feature ModeCapability) bool {
 	return (m.capabilities() & uint64(feature)) != 0

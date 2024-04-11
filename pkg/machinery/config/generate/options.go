@@ -261,6 +261,15 @@ func WithSecretsBundle(bundle *secrets.Bundle) Option {
 	}
 }
 
+// WithHostDNSForwardKubeDNSToHost specifies whether to forward kube-dns to host.
+func WithHostDNSForwardKubeDNSToHost(forward bool) Option {
+	return func(o *Options) error {
+		o.HostDNSForwardKubeDNSToHost = optional.Some(forward)
+
+		return nil
+	}
+}
+
 // Options describes generate parameters.
 type Options struct {
 	VersionContract *config.VersionContract
@@ -300,6 +309,8 @@ type Options struct {
 	DiscoveryEnabled               *bool
 
 	KubePrismPort optional.Optional[int]
+
+	HostDNSForwardKubeDNSToHost optional.Optional[bool]
 
 	// Client options.
 	Roles        role.Set

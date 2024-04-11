@@ -208,3 +208,7 @@ func (validationMode) String() string {
 func (validationMode) RequiresInstall() bool {
 	return false
 }
+
+func (validationMode) InContainer() bool {
+	return false
+}

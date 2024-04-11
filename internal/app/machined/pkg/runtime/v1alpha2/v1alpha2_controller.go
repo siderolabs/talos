@@ -199,6 +199,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.DNSUpstreamController{},
 		&network.EtcFileController{
 			PodResolvConfPath: constants.PodResolvConfPath,
+			V1Alpha1Mode:      ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&network.HardwareAddrController{},
 		&network.HostDNSConfigController{},
@@ -245,7 +246,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.RouteMergeController{},
 		&network.RouteSpecController{},
 		&network.RouteStatusController{},
-		&network.StatusController{},
+		&network.StatusController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&network.TimeServerConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},

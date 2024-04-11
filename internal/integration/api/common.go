@@ -8,7 +8,6 @@ package api
 
 import (
 	"context"
-	"os"
 	"strings"
 	"time"
 
@@ -46,15 +45,15 @@ func (suite *CommonSuite) TearDownTest() {
 
 // TestVirtioModulesLoaded verifies that the virtio modules are loaded.
 func (suite *CommonSuite) TestVirtioModulesLoaded() {
-	if provisioner := os.Getenv("PROVISIONER"); provisioner != "qemu" {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != "qemu" {
 		suite.T().Skip("skipping virtio test since provisioner is not qemu")
 	}
 
 	expectedVirtIOModules := map[string]string{
-		"virtio_balloon":        "",
-		"virtio_pci":            "",
-		"virtio_pci_legacy_dev": "",
-		"virtio_pci_modern_dev": "",
+		"virtio_balloon":        "virtio_balloon.ko",
+		"virtio_pci":            "virtio_pci.ko",
+		"virtio_pci_legacy_dev": "virtio_pci_legacy_dev.ko",
+		"virtio_pci_modern_dev": "virtio_pci_modern_dev.ko",
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -63,7 +62,7 @@ func (suite *CommonSuite) TestVirtioModulesLoaded() {
 
 // TestCommonDefaults verifies that the default ulimits are set.
 func (suite *CommonSuite) TestCommonDefaults() {
-	if provisioner := os.Getenv("PROVISIONER"); provisioner == "docker" {
+	if suite.Cluster != nil && suite.Cluster.Provisioner() == "docker" {
 		suite.T().Skip("skipping ulimits test since provisioner is docker")
 	}
 
@@ -83,14 +82,19 @@ virtual memory (kb)             (-v) unlimited
 file locks                      (-x) unlimited
 `
 
-	_, err := suite.Clientset.CoreV1().Pods("default").Create(suite.ctx, &corev1.Pod{
+	const (
+		namespace = "default"
+		pod       = "defaults-test"
+	)
+
+	_, err := suite.Clientset.CoreV1().Pods(namespace).Create(suite.ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "defaults-test",
+			Name: pod,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:  "defaults-test",
+					Name:  pod,
 					Image: "alpine",
 					Command: []string{
 						"tail",
@@ -101,18 +105,59 @@ file locks                      (-x) unlimited
 			},
 		},
 	}, metav1.CreateOptions{})
-	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, "defaults-test", metav1.DeleteOptions{}) //nolint:errcheck
 
 	suite.Require().NoError(err)
 
-	// wait for the pod to be ready
-	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 10*time.Minute, "default", "defaults-test"))
+	defer suite.Clientset.CoreV1().Pods(namespace).Delete(suite.ctx, pod, metav1.DeleteOptions{}) //nolint:errcheck
 
-	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, "default", "defaults-test", "ulimit -c -d -e -f -l -m -n -q -r -s -t -v -x")
+	// wait for the pod to be ready
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 10*time.Minute, namespace, pod))
+
+	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "ulimit -c -d -e -f -l -m -n -q -r -s -t -v -x")
 	suite.Require().NoError(err)
 
 	suite.Require().Equal("", stderr)
 	suite.Require().Equal(strings.TrimPrefix(expectedUlimit, "\n"), stdout)
+}
+
+// TestDNSResolver verifies that external DNS resolving works from a pod.
+func (suite *CommonSuite) TestDNSResolver() {
+	const (
+		namespace = "default"
+		pod       = "dns-test"
+	)
+
+	_, err := suite.Clientset.CoreV1().Pods(namespace).Create(suite.ctx, &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: pod,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  pod,
+					Image: "alpine",
+					Command: []string{
+						"tail",
+						"-f",
+						"/dev/null",
+					},
+				},
+			},
+		},
+	}, metav1.CreateOptions{})
+
+	suite.Require().NoError(err)
+
+	defer suite.Clientset.CoreV1().Pods(namespace).Delete(suite.ctx, pod, metav1.DeleteOptions{}) //nolint:errcheck
+
+	// wait for the pod to be ready
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 10*time.Minute, namespace, pod))
+
+	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "wget https://www.google.com/")
+	suite.Require().NoError(err)
+
+	suite.Require().Equal("", stdout)
+	suite.Require().Contains(stderr, "'index.html' saved")
 }
 
 func init() {

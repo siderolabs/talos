@@ -87,7 +87,6 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 		if err := safe.WriterModify(ctx, r, network.NewHostDNSConfig(network.HostDNSConfigID), func(res *network.HostDNSConfig) error {
 			res.TypedSpec().ListenAddresses = []netip.AddrPort{
 				netip.MustParseAddrPort("127.0.0.53:53"),
-				netip.MustParseAddrPort("[::1]:53"),
 			}
 
 			res.TypedSpec().ServiceHostDNSAddress = netip.Addr{}

@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -73,6 +74,7 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.EtcFileController{
 		PodResolvConfPath: suite.podResolvConfPath,
+		V1Alpha1Mode:      v1alpha1runtime.ModeMetal,
 	}))
 
 	u, err := url.Parse("https://foo:6443")
@@ -126,7 +128,6 @@ func (suite *EtcFileConfigSuite) SetupTest() {
 	suite.hostDNSConfig.TypedSpec().Enabled = true
 	suite.hostDNSConfig.TypedSpec().ListenAddresses = []netip.AddrPort{
 		netip.MustParseAddrPort("127.0.0.53:53"),
-		netip.MustParseAddrPort("[::1]:53"),
 		netip.MustParseAddrPort("10.96.0.9:53"),
 	}
 	suite.hostDNSConfig.TypedSpec().ServiceHostDNSAddress = netip.MustParseAddr("10.96.0.9")
@@ -207,6 +208,8 @@ func (suite *EtcFileConfigSuite) testFiles(resources []resource.Resource, conten
 				return retry.ExpectedErrorf("missing pod %s", suite.podResolvConfPath)
 			case err != nil:
 				return err
+			case len(file) == 0:
+				return retry.ExpectedErrorf("empty pod %s", suite.podResolvConfPath)
 			default:
 				suite.Assert().Equal(contents.resolvGlobalConf, string(file))
 
@@ -225,7 +228,7 @@ func (suite *EtcFileConfigSuite) TestComplete() {
 		[]resource.Resource{suite.cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.hostDNSConfig},
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n10.0.0.1    a b\n10.0.0.2    c d\n", //nolint:lll
-			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n\nsearch example.com\n",
+			resolvConf:       "nameserver 127.0.0.53\n\nsearch example.com\n",
 			resolvGlobalConf: "nameserver 10.96.0.9\n\nsearch example.com\n",
 		},
 	)
@@ -236,7 +239,7 @@ func (suite *EtcFileConfigSuite) TestNoExtraHosts() {
 		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.hostDNSConfig},
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
-			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n\nsearch example.com\n",
+			resolvConf:       "nameserver 127.0.0.53\n\nsearch example.com\n",
 			resolvGlobalConf: "nameserver 10.96.0.9\n\nsearch example.com\n",
 		},
 	)
@@ -259,7 +262,7 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomain() {
 		[]resource.Resource{cfg, suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.hostDNSConfig},
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo.example.com foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
-			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n",
+			resolvConf:       "nameserver 127.0.0.53\n",
 			resolvGlobalConf: "nameserver 10.96.0.9\n",
 		},
 	)
@@ -272,7 +275,7 @@ func (suite *EtcFileConfigSuite) TestNoDomainname() {
 		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.hostDNSConfig},
 		etcFileContents{
 			hosts:            "127.0.0.1   localhost\n33.11.22.44 foo\n::1         localhost ip6-localhost ip6-loopback\nff02::1     ip6-allnodes\nff02::2     ip6-allrouters\n",
-			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n",
+			resolvConf:       "nameserver 127.0.0.53\n",
 			resolvGlobalConf: "nameserver 10.96.0.9\n",
 		},
 	)
@@ -283,7 +286,7 @@ func (suite *EtcFileConfigSuite) TestOnlyResolvers() {
 		[]resource.Resource{suite.resolverStatus, suite.hostDNSConfig},
 		etcFileContents{
 			hosts:            "",
-			resolvConf:       "nameserver 127.0.0.53\nnameserver ::1\n",
+			resolvConf:       "nameserver 127.0.0.53\n",
 			resolvGlobalConf: "nameserver 10.96.0.9\n",
 		},
 	)

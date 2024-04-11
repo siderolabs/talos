@@ -16,6 +16,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -101,7 +102,11 @@ func TestStatusSuite(t *testing.T) {
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 3 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.StatusController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(
+					&netctrl.StatusController{
+						V1Alpha1Mode: runtime.ModeMetal,
+					},
+				))
 			},
 		},
 	})

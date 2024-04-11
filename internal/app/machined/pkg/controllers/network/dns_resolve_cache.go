@@ -127,10 +127,6 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 						return fmt.Errorf("error creating dns runner: %w", rErr)
 					}
 
-					if runner == nil {
-						continue
-					}
-
 					ctrl.runners[runnerCfg] = pair.MakePair(runner.Start(ctrl.handleDone(ctx, logger)))
 				}
 
@@ -264,14 +260,7 @@ func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger) (*dns.
 	case "udp", "udp6":
 		packetConn, err := dns.NewUDPPacketConn(cfg.net, cfg.addr.String())
 		if err != nil {
-			if cfg.net == "udp6" {
-				logger.Warn("error creating UDPv6 listener", zap.Error(err))
-
-				// If we can't bind to ipv6, we can continue with ipv4
-				return nil, nil
-			}
-
-			return nil, fmt.Errorf("error creating udp packet conn: %w", err)
+			return nil, fmt.Errorf("error creating %q packet conn: %w", cfg.net, err)
 		}
 
 		serverOpts = dns.ServerOptions{
@@ -283,14 +272,7 @@ func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger) (*dns.
 	case "tcp", "tcp6":
 		listener, err := dns.NewTCPListener(cfg.net, cfg.addr.String())
 		if err != nil {
-			if cfg.net == "tcp6" {
-				logger.Warn("error creating TCPv6 listener", zap.Error(err))
-
-				// If we can't bind to ipv6, we can continue with ipv4
-				return nil, nil
-			}
-
-			return nil, fmt.Errorf("error creating tcp listener: %w", err)
+			return nil, fmt.Errorf("error creating %q listener: %w", cfg.net, err)
 		}
 
 		serverOpts = dns.ServerOptions{

@@ -181,8 +181,8 @@ func (contract *VersionContract) KubePrismEnabled() bool {
 	return contract.Greater(TalosVersion1_5)
 }
 
-// LocalDNSEnabled returns true if local dns router should be enabled by default.
-func (contract *VersionContract) LocalDNSEnabled() bool {
+// HostDNSEnabled returns true if host dns router should be enabled by default.
+func (contract *VersionContract) HostDNSEnabled() bool {
 	return contract.Greater(TalosVersion1_6)
 }
 

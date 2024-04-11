@@ -6,7 +6,6 @@
 package container
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"log"
@@ -16,8 +15,8 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/container/internal/files"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
-	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -60,26 +59,25 @@ func (c *Container) KernelArgs(string) procfs.Parameters {
 func (c *Container) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
-	hostname, err := os.ReadFile("/etc/hostname")
+	hostnameSpec, err := files.ReadHostname("/etc/hostname")
 	if err != nil {
-		return err
-	}
-
-	hostname = bytes.TrimSpace(hostname)
-
-	hostnameSpec := network.HostnameSpecSpec{
-		ConfigLayer: network.ConfigPlatform,
-	}
-
-	if err := hostnameSpec.ParseFQDN(string(hostname)); err != nil {
 		return err
 	}
 
 	networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 
+	resolverSpec, err := files.ReadResolvConf("/etc/resolv.conf")
+	if err != nil {
+		return err
+	}
+
+	if len(resolverSpec.DNSServers) > 0 {
+		networkConfig.Resolvers = append(networkConfig.Resolvers, resolverSpec)
+	}
+
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:     c.Name(),
-		Hostname:     string(hostname),
+		Hostname:     hostnameSpec.FQDN(),
 		InstanceType: os.Getenv("TALOSSKU"),
 	}
 
