@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -31,6 +32,7 @@ import (
 // EtcFileController creates /etc/hostname and /etc/resolv.conf files based on finalized network configuration.
 type EtcFileController struct {
 	PodResolvConfPath string
+	V1Alpha1Mode      runtime.Mode
 }
 
 // Name implements controller.Controller interface.
@@ -139,7 +141,8 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			hostnameStatusSpec = hostnameStatus.TypedSpec()
 		}
 
-		if resolverStatus != nil && hostDNSCfg != nil {
+		if resolverStatus != nil && hostDNSCfg != nil && !ctrl.V1Alpha1Mode.InContainer() {
+			// in container mode, keep the original resolv.conf to use the resolvers supplied by the container runtime
 			if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "resolv.conf"),
 				func(r *files.EtcFileSpec) error {
 					r.TypedSpec().Contents = renderResolvConf(pickNameservers(hostDNSCfg, resolverStatus), hostnameStatusSpec, cfgProvider)
@@ -186,7 +189,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-var localDNS = []netip.Addr{netip.MustParseAddr("127.0.0.53"), netip.MustParseAddr("::1")}
+var localDNS = []netip.Addr{netip.MustParseAddr("127.0.0.53")}
 
 func pickNameservers(hostDNSCfg *network.HostDNSConfig, resolverStatus *network.ResolverStatus) []netip.Addr {
 	if hostDNSCfg.TypedSpec().Enabled {

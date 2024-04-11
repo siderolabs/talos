@@ -128,6 +128,10 @@ func (v validationModeMock) RequiresInstall() bool {
 	return false
 }
 
+func (v validationModeMock) InContainer() bool {
+	return false
+}
+
 func TestAcquireSuite(t *testing.T) {
 	t.Parallel()
 

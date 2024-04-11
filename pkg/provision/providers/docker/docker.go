@@ -86,33 +86,11 @@ func (p *provisioner) Close() error {
 
 // GenOptions provides a list of additional config generate options.
 func (p *provisioner) GenOptions(networkReq provision.NetworkRequest) []generate.Option {
-	nameservers := make([]string, 0, len(networkReq.Nameservers))
-
-	hasV4 := false
-	hasV6 := false
-
-	for _, subnet := range networkReq.CIDRs {
-		if subnet.Addr().Is6() {
-			hasV6 = true
-		} else {
-			hasV4 = true
-		}
-	}
-
-	// filter nameservers by IPv4/IPv6
-	for i := range networkReq.Nameservers {
-		if networkReq.Nameservers[i].Is6() && hasV6 {
-			nameservers = append(nameservers, networkReq.Nameservers[i].String())
-		} else if networkReq.Nameservers[i].Is4() && hasV4 {
-			nameservers = append(nameservers, networkReq.Nameservers[i].String())
-		}
-	}
-
 	return []generate.Option{
 		generate.WithNetworkOptions(
 			v1alpha1.WithNetworkInterfaceIgnore(v1alpha1.IfaceByName("eth0")),
-			v1alpha1.WithNetworkNameservers(nameservers...),
 		),
+		generate.WithHostDNSForwardKubeDNSToHost(true),
 	}
 }
 

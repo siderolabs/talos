@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -169,7 +170,7 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 		asrt.Equal("Talos ("+version.Tag+")", spec.OperatingSystem)
 		asrt.Equal(cluster.KubeSpanAffiliateSpec{}, spec.KubeSpan)
 		asrt.NotNil(spec.ControlPlane)
-		asrt.Equal(6445, spec.ControlPlane.APIServerPort)
+		asrt.Equal(6445, pointer.SafeDeref(spec.ControlPlane).APIServerPort)
 	})
 
 	discoveryConfig.TypedSpec().DiscoveryEnabled = false

@@ -66,7 +66,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.SecretboxEncryptionSupported())
 	assert.True(t, contract.DiskQuotaSupportEnabled())
 	assert.True(t, contract.KubePrismEnabled())
-	assert.True(t, contract.LocalDNSEnabled())
+	assert.True(t, contract.HostDNSEnabled())
 	assert.True(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -93,7 +93,7 @@ func TestContract1_7(t *testing.T) {
 	assert.True(t, contract.SecretboxEncryptionSupported())
 	assert.True(t, contract.DiskQuotaSupportEnabled())
 	assert.True(t, contract.KubePrismEnabled())
-	assert.True(t, contract.LocalDNSEnabled())
+	assert.True(t, contract.HostDNSEnabled())
 	assert.True(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -120,7 +120,7 @@ func TestContract1_6(t *testing.T) {
 	assert.True(t, contract.SecretboxEncryptionSupported())
 	assert.True(t, contract.DiskQuotaSupportEnabled())
 	assert.True(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -147,7 +147,7 @@ func TestContract1_5(t *testing.T) {
 	assert.True(t, contract.SecretboxEncryptionSupported())
 	assert.True(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -174,7 +174,7 @@ func TestContract1_4(t *testing.T) {
 	assert.True(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -201,7 +201,7 @@ func TestContract1_3(t *testing.T) {
 	assert.True(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -228,7 +228,7 @@ func TestContract1_2(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -255,7 +255,7 @@ func TestContract1_1(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -282,7 +282,7 @@ func TestContract1_0(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -309,7 +309,7 @@ func TestContract0_14(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -336,7 +336,7 @@ func TestContract0_13(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -363,7 +363,7 @@ func TestContract0_12(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -390,7 +390,7 @@ func TestContract0_11(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -417,7 +417,7 @@ func TestContract0_10(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -444,7 +444,7 @@ func TestContract0_9(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }
 
@@ -471,6 +471,6 @@ func TestContract0_8(t *testing.T) {
 	assert.False(t, contract.SecretboxEncryptionSupported())
 	assert.False(t, contract.DiskQuotaSupportEnabled())
 	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.LocalDNSEnabled())
+	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
 }

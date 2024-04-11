@@ -32,6 +32,10 @@ func (m runtimeMode) RequiresInstall() bool {
 	return m.requiresInstall
 }
 
+func (runtimeMode) InContainer() bool {
+	return false
+}
+
 func TestValidate(t *testing.T) {
 	t.Parallel()
 

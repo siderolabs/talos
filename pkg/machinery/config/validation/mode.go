@@ -10,4 +10,5 @@ import "fmt"
 type RuntimeMode interface {
 	fmt.Stringer
 	RequiresInstall() bool
+	InContainer() bool
 }

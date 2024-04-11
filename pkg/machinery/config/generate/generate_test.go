@@ -177,3 +177,7 @@ func (m runtimeMode) String() string {
 func (m runtimeMode) RequiresInstall() bool {
 	return m.requiresInstall
 }
+
+func (runtimeMode) InContainer() bool {
+	return false
+}
