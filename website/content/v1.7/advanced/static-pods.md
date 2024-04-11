@@ -30,9 +30,11 @@ machine:
              image: nginx
 ```
 
-Talos renders static pod definitions to the `kubelet` manifest directory (`/etc/kubernetes/manifests`), `kubelet` picks up the definition and launches the pod.
+Talos renders static pod definitions to the `kubelet` using a local HTTP server, `kubelet` picks up the definition and launches the pod.
 
 Talos accepts changes to the static pod configuration without a reboot.
+
+To see a full list of static pods, use `talosctl get staticpods`, and to see the status of the static pods (as reported by the `kubelet`), use `talosctl get staticpodstatus`.
 
 ## Usage
 
