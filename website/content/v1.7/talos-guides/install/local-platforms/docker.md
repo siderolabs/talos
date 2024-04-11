@@ -28,10 +28,10 @@ Further, when running on a Mac in docker,  due to networking limitations, VIPs a
 Creating a local cluster is as simple as:
 
 ```bash
-talosctl cluster create --wait
+talosctl cluster create
 ```
 
-Once the above finishes successfully, your talosconfig(`~/.talos/config`) will be configured to point to the new cluster.
+Once the above finishes successfully, your `talosconfig` (`~/.talos/config`)  and `kubeconfig` (`~/.kube/config`) will be configured to point to the new cluster.
 
 > Note: Startup times can take up to a minute or more before the cluster is available.
 
@@ -39,6 +39,23 @@ Finally, we just need to specify which nodes you want to communicate with using 
 Talosctl can operate on one or all the nodes in the cluster – this makes cluster wide commands much easier.
 
 `talosctl config nodes 10.5.0.2 10.5.0.3`
+
+Talos and Kubernetes API are mapped to a random port on the host machine, the retrieved `talosconfig` and `kubeconfig` are configured automatically to point to the new cluster.
+Talos API endpoint can be found using `talosctl config info`:
+
+```bash
+$ talosctcl config info
+...
+Endpoints:           127.0.0.1:38423
+```
+
+Kubernetes API endpoint is available with `talosctl cluster show`:
+
+```bash
+$ talosctl cluster show
+...
+KUBERNETES ENDPOINT   https://127.0.0.1:43083
+```
 
 ## Using the Cluster
 
@@ -52,6 +69,32 @@ To cleanup, run:
 
 ```bash
 talosctl cluster destroy
+```
+
+## Multiple Clusters
+
+Multiple Talos Linux cluster can be created on the same host, each cluster will need to have:
+
+- a unique name (default is `talos-default`)
+- a unique network CIDR (default is `10.5.0.0/24`)
+
+To create a new cluster, run:
+
+```bash
+talosctl cluster create --name cluster2 --cidr 10.6.0.0/24
+```
+
+To destroy a specific cluster, run:
+
+```bash
+talosctl cluster destroy --name cluster2
+```
+
+To switch between clusters, use `--context` flag:
+
+```bash
+talosctl --context cluster2 version
+kubectl --context admin@cluster2 get nodes
 ```
 
 ## Running Talos in Docker Manually
@@ -77,3 +120,6 @@ docker run --rm -it \
   -e PLATFORM=container \
   ghcr.io/siderolabs/talos:{{< release >}}
 ```
+
+The machine configuration submitted to the container should have a [host DNS feature]({{< relref "../../../reference/configuration/v1alpha1/config#Config.machine.features.hostDNS"  >}}) enabled with `forwardKubeDNSToHost` enabled.
+It is used to forward DNS requests to the resolver provided by Docker (or other container runtime).

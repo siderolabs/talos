@@ -56,6 +56,8 @@ $ talosctl -n 172.20.1.2 logs -k kube-system/kube-proxy-gfkqj:kube-proxy:ad5e8dd
 [...]
 ```
 
+If some host workloads (e.g. system extensions) send syslog messages, they can be retrieved with `talosctl logs syslogd` command.
+
 ## Sending logs
 
 ### Service logs

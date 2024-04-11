@@ -36,9 +36,11 @@ For example, if upgrading from Talos 1.0 to Talos 1.2.4, the recommended upgrade
 
 ## Before Upgrade to {{% release %}}
 
+### Extension Configuration
+
 If running `tailscale` or `nut-client` extension, follow the below steps for upgrade.
 
-### nut-client
+#### nut-client
 
 First start by editing the machine config in `staged` mode (`talosctl edit mc --mode=staged`) and remove the `.machine.files` section that adds the `nut-client` config.
 
@@ -46,7 +48,7 @@ Now upgrade talos to `{{% release %}}`, the `nut-client` service would now be wa
 
 Create a config document as described in the `nut-client` [README](https://github.com/siderolabs/extensions/blob/main/power/nut-client/README.md#usage) and apply the patch.
 
-### tailscale
+#### tailscale
 
 First start by editing the machine config in `staged` mode (`talosctl edit mc --mode=staged`) and remove the `.machine.files` section that adds the `tailscale` auth key file.
 
@@ -55,6 +57,13 @@ Upgrade talos to `{{% release %}}`, the `tailscale` service would now be waiting
 Create a config document as described in the `tailscale` [README](https://github.com/siderolabs/extensions/blob/main/network/tailscale/README.md#usage) and apply the patch.
 
 Please review the [release notes]({{< relref "../introduction/what-is-new" >}}) for any changes that may affect your cluster.
+
+### SBC
+
+The SBC's images and installers can be generated on the fly using [Image Factory](https://factory.talos.dev) or using [imager]({{< relref "./install/boot-assets">}}) for custom images.
+The list of official SBC's images supported by Image Factory can be found in the [overlays](https://github.com/siderolabs/overlays/) repository.
+
+In order to upgrade an SBC running Talos 1.6 to Talos 1.7, generate an `installer` image with an SBC overlay and use it to upgrade the cluster.
 
 ## Video Walkthrough
 
@@ -111,7 +120,15 @@ future.
 
 ## Machine Configuration Changes
 
-TBD
+* new configuration documents:
+  * [ExtensionServiceConfig]({{< relref "../reference/configuration/extensions/extensionserviceconfig" >}})
+  * [WatchdogTimerConfig]({{< relref "../reference/configuration/runtime/watchdogtimerconfig" >}})
+* new fields in [v1alpha1.Config]({{< relref "../reference/configuration/v1alpha1/config" >}}) document:
+  * [`.machine.acceptedCAs`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine" >}})
+  * [`.cluster.acceptedCAs`]({{< relref "../reference/configuration/v1alpha1/config#Config.cluster" >}})
+  * [`.machine.features.hostDNS`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.features.hostDNS" >}})
+  * [`.machine.network.interfaces[].deviceSelector.physical`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.network.interfaces..deviceSelector" >}})
+  * [`.machine.logging.extraTags`]({{< relref "../reference/configuration/v1alpha1/config#Config.machine.logging" >}})
 
 ## Upgrade Sequence
 
