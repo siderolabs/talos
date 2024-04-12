@@ -327,7 +327,7 @@ talosctl --talosconfig talosconfig  health
 You can also watch the performance of a node, via:
 
 ```bash
-talosctl  --talosconfig talosconfig dashboard
+talosctl --talosconfig talosconfig dashboard
 ```
 
 And use standard `kubectl` commands.

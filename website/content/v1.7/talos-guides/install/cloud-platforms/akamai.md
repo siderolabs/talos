@@ -1,15 +1,15 @@
 ---
 title: "Akamai"
-description: "Creating a cluster via the CLI on Akamai Cloud(Linode)."
+description: "Creating a cluster via the CLI on Akamai Cloud (Linode)."
 aliases:
   - ../../../cloud-platforms/akamai
 ---
 
 ## Creating a Talos Linux Cluster on Akamai Connected Cloud via the CLI
 
-This guide will demonstrate how to create a highly-available Kubernetes cluster with one worker using the [Akamai Connected Cloud](https://www.linode.com/) provider.
+This guide will demonstrate how to create a highly available Kubernetes cluster with one worker using the [Akamai Connected Cloud](https://www.linode.com/) provider.
 
-[Akamai Connected Cloud](https://www.linode.com/) has a very well documented [REST API](https://www.linode.com/docs/api/), and an open-source [CLI](https://www.linode.com/docs/products/tools/cli/get-started/) tool to interact with the API which will be used in this guide.
+[Akamai Connected Cloud](https://www.linode.com/) has a very well-documented [REST API](https://www.linode.com/docs/api/), and an open-source [CLI](https://www.linode.com/docs/products/tools/cli/get-started/) tool to interact with the API which will be used in this guide.
 Make sure to follow [installation](https://www.linode.com/docs/products/tools/cli/get-started/#installing-the-linode-cli) and authentication instructions for the `linode-cli` tool.
 
 [jq](https://stedolan.github.io/jq/) and [talosctl]({{< relref "../../../introduction/quickstart#talosctl" >}}) also needs to be installed
@@ -117,8 +117,8 @@ linode-cli linodes create  \
     --metadata.user_data "$(base64 -i ./worker.yaml)"
 
 linode_id=$(linode-cli linodes list --label ${LINODE_LABEL} --format id --text --no-headers)
-confiig_id=$(linode-cli linodes configs-list ${linode_id} --format id --text --no-headers)
-linode-cli linodes config-update ${linode_id} ${confiig_id} --kernel "linode/direct-disk"
+config_id=$(linode-cli linodes configs-list ${linode_id} --format id --text --no-headers)
+linode-cli linodes config-update ${linode_id} ${config_id} --kernel "linode/direct-disk"
 ```
 
 ### Bootstrap Etcd
@@ -140,7 +140,7 @@ talosctl --talosconfig talosconfig bootstrap
 
 ### Retrieve the `kubeconfig`
 
-At this point we can retrieve the admin `kubeconfig` by running:
+At this point, we can retrieve the admin `kubeconfig` by running:
 
 ```bash
 talosctl --talosconfig talosconfig kubeconfig .
@@ -150,4 +150,10 @@ We can also watch the cluster bootstrap via:
 
 ```bash
 talosctl --talosconfig talosconfig health
+```
+
+Alternatively, we can also watch the node overview, logs and real-time metrics dashboard via:
+
+```bash
+talosctl --talosconfig talosconfig dashboard
 ```
