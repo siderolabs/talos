@@ -22,7 +22,7 @@ etcd: 3.5.11
 Kubernetes: 1.30.0-rc.2
 containerd: 1.7.15
 runc: 1.1.12
-Flannel: 0.24.4
+Flannel: 0.25.1
 
 Talos is built with Go 1.22.2.
 """
