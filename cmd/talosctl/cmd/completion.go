@@ -37,7 +37,7 @@ Note for zsh users: [1] zsh completions are only supported in versions of zsh >=
 ## via your distribution's package manager.
 ## Load the talosctl completion code for bash into the current shell
 	source <(talosctl completion bash)
-## Write bash completion code to a file and source if from .bash_profile
+## Write bash completion code to a file and source it from .bash_profile
 	talosctl completion bash > ~/.talos/completion.bash.inc
 	printf "
 		# talosctl shell completion
