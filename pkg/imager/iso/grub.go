@@ -16,8 +16,8 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
-	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/imager/utils"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // GRUBOptions described the input for the CreateGRUB function.
