@@ -12,7 +12,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
-	"github.com/siderolabs/talos/pkg/imager/quirks"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // Bootloader describes a bootloader.

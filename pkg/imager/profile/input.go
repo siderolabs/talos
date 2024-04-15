@@ -26,9 +26,9 @@ import (
 	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/aws"
 	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/azure"
 	"github.com/siderolabs/talos/pkg/imager/profile/internal/signer/file"
-	"github.com/siderolabs/talos/pkg/imager/quirks"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 const (
