@@ -30,6 +30,8 @@ import (
 // GracefulShutdownTimeout is the timeout for graceful shutdown of the backend connection.
 //
 // Talos has a few long-running API calls, so we need to give the backend some time to finish them.
+//
+// The connection will enter IDLE time after GracefulShutdownTimeout/2, if no RPC is running.
 const GracefulShutdownTimeout = 30 * time.Minute
 
 var _ proxy.Backend = (*APID)(nil)
@@ -106,6 +108,7 @@ func (a *APID) GetConnection(ctx context.Context, fullMethodName string) (contex
 		grpc.WithInitialWindowSize(65535*32),
 		grpc.WithInitialConnWindowSize(65535*16),
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+		grpc.WithIdleTimeout(GracefulShutdownTimeout/2), // use half of the shutdown timeout as idle timeout
 		grpc.WithConnectParams(grpc.ConnectParams{
 			Backoff: backoffConfig,
 			// not published as a constant in gRPC library
@@ -273,7 +276,7 @@ func gracefulGRPCClose(conn *grpc.ClientConn, timeout time.Duration) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 
-		for ctx.Err() != nil {
+		for ctx.Err() == nil {
 			switch state := conn.GetState(); state { //nolint:exhaustive
 			case connectivity.Idle,
 				connectivity.Shutdown,
