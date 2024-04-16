@@ -124,6 +124,8 @@ var rootCmd = &cobra.Command{
 						},
 						ExtraOptions: extraOverlayOptions,
 					}
+
+					prof.Input.OverlayInstaller.ImageRef = cmdFlags.OverlayImage
 				}
 
 				prof.Input.SystemExtensions = xslices.Map(

@@ -411,6 +411,21 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 	}
 
 	if i.overlayInstaller != nil {
+		tempOverlayPath := filepath.Join(i.tempDir, "overlay-installer", constants.ImagerOverlayBasePath)
+
+		if err := os.MkdirAll(tempOverlayPath, 0o755); err != nil {
+			return fmt.Errorf("failed to create overlay directory: %w", err)
+		}
+
+		if err := i.prof.Input.OverlayInstaller.Extract(
+			ctx,
+			tempOverlayPath,
+			i.prof.Arch,
+			progressPrintf(report, reporter.Update{Message: "pulling overlay for installer...", Status: reporter.StatusRunning}),
+		); err != nil {
+			return err
+		}
+
 		extraOpts, internalErr := yaml.Marshal(i.prof.Overlay.ExtraOptions)
 		if internalErr != nil {
 			return fmt.Errorf("failed to marshal extra options: %w", internalErr)
@@ -430,11 +445,11 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 			mode       os.FileMode
 		}{
 			{
-				sourcePath: filepath.Join(i.tempDir, constants.ImagerOverlayArtifactsPath),
+				sourcePath: filepath.Join(i.tempDir, "overlay-installer", constants.ImagerOverlayArtifactsPath),
 				imagePath:  strings.TrimLeft(constants.ImagerOverlayArtifactsPath, "/"),
 			},
 			{
-				sourcePath: filepath.Join(i.tempDir, constants.ImagerOverlayInstallersPath, i.prof.Overlay.Name),
+				sourcePath: filepath.Join(i.tempDir, "overlay-installer", constants.ImagerOverlayInstallersPath, i.prof.Overlay.Name),
 				imagePath:  strings.TrimLeft(constants.ImagerOverlayInstallerDefaultPath, "/"),
 				mode:       0o755,
 			},

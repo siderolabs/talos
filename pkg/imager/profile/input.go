@@ -54,6 +54,10 @@ type Input struct {
 	RPiFirmware FileAsset `yaml:"rpiFirmware,omitempty"`
 	// Base installer image to mutate.
 	BaseInstaller ContainerAsset `yaml:"baseInstaller,omitempty"`
+	// OverlayInstaller is an overlay image to inject into the installer.
+	//
+	// OverlayInstaller architecture should match the output installer architecture.
+	OverlayInstaller ContainerAsset `yaml:"overlayInstaller,omitempty"`
 	// SecureBoot is a section with secureboot keys, only for SecureBoot enabled builds.
 	SecureBoot *SecureBootAssets `yaml:"secureboot,omitempty"`
 	// SystemExtensions is a list of system extensions to install.
