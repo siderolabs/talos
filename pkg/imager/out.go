@@ -427,29 +427,31 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 		for _, extraArtifact := range []struct {
 			sourcePath string
 			imagePath  string
+			mode       os.FileMode
 		}{
 			{
 				sourcePath: filepath.Join(i.tempDir, constants.ImagerOverlayArtifactsPath),
-				imagePath:  constants.ImagerOverlayArtifactsPath,
+				imagePath:  strings.TrimLeft(constants.ImagerOverlayArtifactsPath, "/"),
 			},
 			{
 				sourcePath: filepath.Join(i.tempDir, constants.ImagerOverlayInstallersPath, i.prof.Overlay.Name),
-				imagePath:  constants.ImagerOverlayInstallerDefaultPath,
+				imagePath:  strings.TrimLeft(constants.ImagerOverlayInstallerDefaultPath, "/"),
+				mode:       0o755,
 			},
 			{
 				sourcePath: filepath.Join(i.tempDir, constants.ImagerOverlayExtraOptionsPath),
-				imagePath:  constants.ImagerOverlayExtraOptionsPath,
+				imagePath:  strings.TrimLeft(constants.ImagerOverlayExtraOptionsPath, "/"),
 			},
 		} {
-			if extraArtifact.sourcePath == "" {
-				continue
-			}
-
 			var extraFiles []filemap.File
 
 			extraFiles, err = filemap.Walk(extraArtifact.sourcePath, extraArtifact.imagePath)
 			if err != nil {
 				return fmt.Errorf("failed to walk extra artifact %s: %w", extraArtifact.sourcePath, err)
+			}
+
+			for i := range extraFiles {
+				extraFiles[i].ImageMode = int64(extraArtifact.mode)
 			}
 
 			overlayArtifacts = append(overlayArtifacts, extraFiles...)
