@@ -47,6 +47,7 @@ type Options struct {
 	LegacyBIOSSupport   bool
 	MetaValues          MetaValues
 	OverlayInstaller    overlay.Installer[overlay.ExtraOptions]
+	OverlayName         string
 	OverlayExtractedDir string
 	ExtraOptions        overlay.ExtraOptions
 
@@ -85,6 +86,25 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		return fmt.Errorf("using standard installer image is not supported for board: %s, use an installer with overlay", b)
 	}
 
+	if overlayPresent {
+		extraOptionsBytes, err := os.ReadFile(constants.ImagerOverlayExtraOptionsPath)
+		if err != nil {
+			return err
+		}
+
+		var extraOptions overlay.ExtraOptions
+
+		decoder := yaml.NewDecoder(bytes.NewReader(extraOptionsBytes))
+		decoder.KnownFields(true)
+
+		if err := decoder.Decode(&extraOptions); err != nil {
+			return fmt.Errorf("failed to decode extra options: %w", err)
+		}
+
+		opts.OverlayInstaller = executor.New(constants.ImagerOverlayInstallerDefaultPath)
+		opts.ExtraOptions = extraOptions
+	}
+
 	cmdline := procfs.NewCmdline("")
 	cmdline.Append(constants.KernelParamPlatform, p.Name())
 
@@ -117,6 +137,17 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		cmdline.SetAll(b.KernelArgs().Strings())
 	}
 
+	if opts.OverlayInstaller != nil {
+		overlayOpts, getOptsErr := opts.OverlayInstaller.GetOptions(opts.ExtraOptions)
+		if getOptsErr != nil {
+			return fmt.Errorf("failed to get overlay installer options: %w", getOptsErr)
+		}
+
+		opts.OverlayName = overlayOpts.Name
+
+		cmdline.SetAll(overlayOpts.KernelArgs)
+	}
+
 	if err := cmdline.AppendAll(
 		opts.ExtraKernelArgs,
 		procfs.WithOverwriteArgs("console"),
@@ -124,25 +155,6 @@ func Install(ctx context.Context, p runtime.Platform, mode Mode, opts *Options) 
 		procfs.WithDeleteNegatedArgs(),
 	); err != nil {
 		return err
-	}
-
-	if overlayPresent {
-		extraOptionsBytes, err := os.ReadFile(constants.ImagerOverlayExtraOptionsPath)
-		if err != nil {
-			return err
-		}
-
-		var extraOptions overlay.ExtraOptions
-
-		decoder := yaml.NewDecoder(bytes.NewReader(extraOptionsBytes))
-		decoder.KnownFields(true)
-
-		if err := decoder.Decode(&extraOptions); err != nil {
-			return fmt.Errorf("failed to decode extra options: %w", err)
-		}
-
-		opts.OverlayInstaller = executor.New(constants.ImagerOverlayInstallerDefaultPath)
-		opts.ExtraOptions = extraOptions
 	}
 
 	i, err := NewInstaller(ctx, cmdline, mode, opts)
@@ -338,6 +350,8 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	}
 
 	if i.options.OverlayInstaller != nil {
+		i.options.Printf("running overlay installer %q", i.options.OverlayName)
+
 		if err = i.options.OverlayInstaller.Install(overlay.InstallOptions[overlay.ExtraOptions]{
 			InstallDisk:   i.options.Disk,
 			MountPrefix:   i.options.MountPrefix,

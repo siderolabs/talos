@@ -48,16 +48,21 @@ func Execute() {
 	}
 }
 
-var options = &install.Options{}
+var options = &install.Options{
+	Board: constants.BoardNone,
+}
 
-var bootloader bool
+var (
+	bootloader bool
+	dummy      string
+)
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&options.ConfigSource, "config", "", "The value of "+constants.KernelParamConfig)
 	rootCmd.PersistentFlags().StringVar(&options.Disk, "disk", "", "The path to the disk to install to")
 	rootCmd.PersistentFlags().StringVar(&options.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)
 	rootCmd.PersistentFlags().StringVar(&options.Arch, "arch", runtime.GOARCH, "The target architecture")
-	rootCmd.PersistentFlags().StringVar(&options.Board, "board", constants.BoardNone, "Deprecated: no op")
+	rootCmd.PersistentFlags().StringVar(&dummy, "board", constants.BoardNone, "Deprecated: no op")
 	rootCmd.PersistentFlags().StringArrayVar(&options.ExtraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
 	rootCmd.PersistentFlags().BoolVar(&bootloader, "bootloader", true, "Deprecated: no op")
 	rootCmd.PersistentFlags().BoolVar(&options.Upgrade, "upgrade", false, "Indicates that the install is being performed by an upgrade")
