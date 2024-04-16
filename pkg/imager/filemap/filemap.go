@@ -20,6 +20,7 @@ import (
 type File struct {
 	ImagePath  string
 	SourcePath string
+	ImageMode  int64
 }
 
 // Walk the filesystem generating a filemap.
@@ -75,6 +76,7 @@ func build(filemap []File) io.ReadCloser {
 					if err = w.WriteHeader(&tar.Header{
 						Name: entry.ImagePath,
 						Size: st.Size(),
+						Mode: entry.ImageMode,
 					}); err != nil {
 						return err
 					}
