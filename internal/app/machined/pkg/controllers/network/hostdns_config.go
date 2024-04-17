@@ -98,6 +98,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			}
 
 			res.TypedSpec().Enabled = cfgProvider.Machine().Features().HostDNS().Enabled()
+			res.TypedSpec().ResolveMemberNames = cfgProvider.Machine().Features().HostDNS().ResolveMemberNames()
 
 			if cfgProvider.Machine().Features().HostDNS().ForwardKubeDNSToHost() {
 				serviceCIDRStr := cfgProvider.Cluster().Network().ServiceCIDRs()[0]

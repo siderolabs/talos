@@ -194,6 +194,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.AddressStatusController{},
 		&network.DeviceConfigController{},
 		&network.DNSResolveCacheController{
+			State:  ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
 			Logger: dnsCacheLogger,
 		},
 		&network.DNSUpstreamController{},

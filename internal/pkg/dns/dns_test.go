@@ -5,7 +5,9 @@
 package dns_test
 
 import (
+	"context"
 	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -22,25 +24,43 @@ import (
 func TestDNS(t *testing.T) {
 	tests := []struct {
 		name         string
+		hostname     string
 		nameservers  []string
 		expectedCode int
 		errCheck     check.Check
 	}{
 		{
 			name:         "success",
+			hostname:     "google.com",
 			nameservers:  []string{"8.8.8.8"},
 			expectedCode: dnssrv.RcodeSuccess,
 			errCheck:     check.NoError(),
 		},
 		{
 			name:        "failure",
+			hostname:    "google.com",
 			nameservers: []string{"242.242.242.242"},
 			errCheck:    check.ErrorContains("i/o timeout"),
 		},
 		{
 			name:         "empty destinations",
+			hostname:     "google.com",
 			nameservers:  nil,
 			expectedCode: dnssrv.RcodeServerFailure,
+			errCheck:     check.NoError(),
+		},
+		{
+			name:         "empty destinations but node exists",
+			hostname:     "talos-default-worker-1",
+			nameservers:  nil,
+			expectedCode: dnssrv.RcodeSuccess,
+			errCheck:     check.NoError(),
+		},
+		{
+			name:         "empty destinations but node doesn't exists",
+			hostname:     "talos-default-worker-2",
+			nameservers:  []string{"8.8.8.8"},
+			expectedCode: dnssrv.RcodeNameError,
 			errCheck:     check.NoError(),
 		},
 	}
@@ -52,7 +72,7 @@ func TestDNS(t *testing.T) {
 
 			time.Sleep(10 * time.Millisecond)
 
-			r, err := dnssrv.Exchange(createQuery(), "127.0.0.53:10700")
+			r, err := dnssrv.Exchange(createQuery(test.hostname), "127.0.0.53:10700")
 			test.errCheck(t, err)
 
 			if r != nil {
@@ -72,11 +92,11 @@ func TestDNSEmptyDestinations(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	r, err := dnssrv.Exchange(createQuery(), "127.0.0.53:10700")
+	r, err := dnssrv.Exchange(createQuery("google.com"), "127.0.0.53:10700")
 	require.NoError(t, err)
 	require.Equal(t, dnssrv.RcodeServerFailure, r.Rcode, r)
 
-	r, err = dnssrv.Exchange(createQuery(), "127.0.0.53:10700")
+	r, err = dnssrv.Exchange(createQuery("google.com"), "127.0.0.53:10700")
 	require.NoError(t, err)
 	require.Equal(t, dnssrv.RcodeServerFailure, r.Rcode, r)
 
@@ -103,9 +123,13 @@ func newServer(t *testing.T, nameservers ...string) func() {
 	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.53:10700")
 	require.NoError(t, err)
 
+	nodeHandler := dns.NewNodeHandler(handler, &testResolver{}, l)
+
+	nodeHandler.SetEnabled(true)
+
 	srv := dns.NewServer(dns.ServerOptions{
 		PacketConn: pc,
-		Handler:    dns.NewCache(handler, l),
+		Handler:    dns.NewCache(nodeHandler, l),
 		Logger:     l,
 	})
 
@@ -120,7 +144,7 @@ func newServer(t *testing.T, nameservers ...string) func() {
 	return stop
 }
 
-func createQuery() *dnssrv.Msg {
+func createQuery(name string) *dnssrv.Msg {
 	return &dnssrv.Msg{
 		MsgHdr: dnssrv.MsgHdr{
 			Id:               dnssrv.Id(),
@@ -128,10 +152,27 @@ func createQuery() *dnssrv.Msg {
 		},
 		Question: []dnssrv.Question{
 			{
-				Name:   dnssrv.Fqdn("google.com"),
+				Name:   dnssrv.Fqdn(name),
 				Qtype:  dnssrv.TypeA,
 				Qclass: dnssrv.ClassINET,
 			},
 		},
+	}
+}
+
+type testResolver struct{}
+
+func (*testResolver) ResolveAddr(_ context.Context, qType uint16, name string) []netip.Addr {
+	if qType != dnssrv.TypeA {
+		return nil
+	}
+
+	switch name {
+	case "talos-default-controlplane-1.":
+		return []netip.Addr{netip.MustParseAddr("172.20.0.2")}
+	case "talos-default-worker-1.":
+		return []netip.Addr{netip.MustParseAddr("172.20.0.3")}
+	default:
+		return nil
 	}
 }

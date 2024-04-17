@@ -31,6 +31,7 @@ type HostDNSConfigSpec struct {
 	Enabled               bool             `yaml:"enabled" protobuf:"1"`
 	ListenAddresses       []netip.AddrPort `yaml:"listenAddresses,omitempty" protobuf:"2"`
 	ServiceHostDNSAddress netip.Addr       `yaml:"serviceHostDNSAddress,omitempty" protobuf:"3"`
+	ResolveMemberNames    bool             `yaml:"resolveMemberNames,omitempty" protobuf:"4"`
 }
 
 // NewHostDNSConfig initializes a HostDNSConfig resource.

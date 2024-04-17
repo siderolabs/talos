@@ -106,6 +106,7 @@ message HostDNSConfigSpec {
   bool enabled = 1;
   repeated common.NetIPPort listen_addresses = 2;
   common.NetIP service_host_dns_address = 3;
+  bool resolve_member_names = 4;
 }
 
 // HostnameSpecSpec describes node hostname.

@@ -3042,6 +3042,7 @@ HostDNSConfigSpec describes host DNS config.
 | enabled | [bool](#bool) |  |  |
 | listen_addresses | [common.NetIPPort](#common.NetIPPort) | repeated |  |
 | service_host_dns_address | [common.NetIP](#common.NetIP) |  |  |
+| resolve_member_names | [bool](#bool) |  |  |
 
 
 
