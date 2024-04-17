@@ -670,8 +670,8 @@ github.com/siderolabs/go-api-signature v0.3.2 h1:blqrZF1GM7TWgq7mY7CsR+yQ93u6az0
 github.com/siderolabs/go-api-signature v0.3.2/go.mod h1:punhUOaXa7LELYBRCUhfgUGH6ieVz68GrP98apCKXj8=
 github.com/siderolabs/go-blockdevice v0.4.7 h1:2bk4WpEEflGxjrNwp57ye24Pr+cYgAiAeNMWiQOuWbQ=
 github.com/siderolabs/go-blockdevice v0.4.7/go.mod h1:4PeOuk71pReJj1JQEXDE7kIIQJPVe8a+HZQa+qjxSEA=
-github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240301135834-a5481f5272f2 h1:+/vwLuWQuBL85p0XO9Ak22rqvBPreC2R+pta4Bw1HFI=
-github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240301135834-a5481f5272f2/go.mod h1:UBbbc+L7hU0UggOQeKCA+Qp3ImGkSeaLfVOiCbxRxEI=
+github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240405165836-3265299b0192 h1:16/cHDGhTUDBtfIftOkuHWhJcQdpa/FwwWPcTq4aOxc=
+github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240405165836-3265299b0192/go.mod h1:UBbbc+L7hU0UggOQeKCA+Qp3ImGkSeaLfVOiCbxRxEI=
 github.com/siderolabs/go-circular v0.1.0 h1:zpBJNUbCZSh0odZxA4Dcj0d3ShLLR2WxKW6hTdAtoiE=
 github.com/siderolabs/go-circular v0.1.0/go.mod h1:14XnLf/I3J0VjzTgmwWNGjp58/bdIi4zXppAEx8plfw=
 github.com/siderolabs/go-cmd v0.1.1 h1:nTouZUSxLeiiEe7hFexSVvaTsY/3O8k1s08BxPRrsps=
