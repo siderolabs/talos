@@ -5,6 +5,7 @@
 package network_test
 
 import (
+	"errors"
 	"net"
 	"net/netip"
 	"sync"
@@ -23,6 +24,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -141,6 +144,108 @@ func (suite *DNSServer) TestSetupStartStop() {
 	rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(dnsSlice))
 }
 
+func (suite *DNSServer) TestResolveMembers() {
+	port := must.Value(getDynamicPort())(suite.T())
+
+	const (
+		id  = "talos-default-controlplane-1"
+		id2 = "foo.example.com."
+	)
+
+	member := cluster.NewMember(cluster.NamespaceName, id)
+	*member.TypedSpec() = cluster.MemberSpec{
+		NodeID: id,
+		Addresses: []netip.Addr{
+			netip.MustParseAddr("172.20.0.2"),
+		},
+		Hostname:        id,
+		MachineType:     machine.TypeControlPlane,
+		OperatingSystem: "Talos dev",
+		ControlPlane:    nil,
+	}
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), member))
+
+	member = cluster.NewMember(cluster.NamespaceName, id2)
+	*member.TypedSpec() = cluster.MemberSpec{
+		NodeID: id2,
+		Addresses: []netip.Addr{
+			netip.MustParseAddr("172.20.0.3"),
+		},
+		Hostname:        id2,
+		MachineType:     machine.TypeWorker,
+		OperatingSystem: "Talos dev",
+		ControlPlane:    nil,
+	}
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), member))
+
+	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
+	cfg.TypedSpec().Enabled = true
+	cfg.TypedSpec().ListenAddresses = makeAddrs(port)
+	cfg.TypedSpec().ResolveMemberNames = true
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(),
+		expectedDNSRunners(port),
+		func(r *network.DNSResolveCache, assert *assert.Assertions) {
+			assert.Equal("running", r.TypedSpec().Status)
+		},
+	)
+
+	suite.Require().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
+		exchange, err := dns.Exchange(
+			&dns.Msg{
+				MsgHdr: dns.MsgHdr{Id: dns.Id(), RecursionDesired: true},
+				Question: []dns.Question{
+					{Name: dns.Fqdn(id), Qtype: dns.TypeA, Qclass: dns.ClassINET},
+				},
+			},
+			"127.0.0.53:"+port,
+		)
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		if exchange.Rcode != dns.RcodeSuccess {
+			return retry.ExpectedErrorf("expected rcode %d, got %d for %q", dns.RcodeSuccess, exchange.Rcode, id)
+		}
+
+		proper := dns.Fqdn(id)
+
+		if exchange.Answer[0].Header().Name != proper {
+			return retry.ExpectedErrorf("expected answer name %q, got %q", proper, exchange.Answer[0].Header().Name)
+		}
+
+		return nil
+	}))
+
+	suite.Require().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
+		exchange, err := dns.Exchange(
+			&dns.Msg{
+				MsgHdr: dns.MsgHdr{Id: dns.Id(), RecursionDesired: true},
+				Question: []dns.Question{
+					{Name: dns.Fqdn("foo"), Qtype: dns.TypeA, Qclass: dns.ClassINET},
+				},
+			},
+			"127.0.0.53:"+port,
+		)
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		if exchange.Rcode != dns.RcodeSuccess {
+			return retry.ExpectedErrorf("expected rcode %d, got %d for %q", dns.RcodeSuccess, exchange.Rcode, id2)
+		}
+
+		if !exchange.Answer[0].(*dns.A).A.Equal(net.ParseIP("172.20.0.3")) {
+			return retry.ExpectedError(errors.New("unexpected ip"))
+		}
+
+		return nil
+	}))
+}
+
 func TestDNSServer(t *testing.T) {
 	suite.Run(t, &DNSServer{
 		DefaultSuite: ctest.DefaultSuite{
@@ -149,6 +254,7 @@ func TestDNSServer(t *testing.T) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
 				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{
 					Logger: zaptest.NewLogger(t),
+					State:  suite.State(),
 				}))
 			},
 		},

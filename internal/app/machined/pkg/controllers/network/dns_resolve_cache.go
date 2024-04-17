@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,20 +19,24 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	dnssrv "github.com/miekg/dns"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/pair"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/dns"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // DNSResolveCacheController starts dns server on both udp and tcp ports based on finalized network configuration.
 type DNSResolveCacheController struct {
+	State  state.State
 	Logger *zap.Logger
 
 	mx          sync.Mutex
 	handler     *dns.Handler
+	nodeHandler *dns.NodeHandler
 	cache       *dns.Cache
 	runners     map[runnerConfig]pair.Pair[func(), <-chan struct{}]
 	reconcile   chan struct{}
@@ -115,6 +121,8 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 			continue
 		}
 
+		ctrl.nodeHandler.SetEnabled(cfg.TypedSpec().ResolveMemberNames)
+
 		touchedRunners := make(map[runnerConfig]struct{}, len(ctrl.runners))
 
 		for _, addr := range cfg.TypedSpec().ListenAddresses {
@@ -191,7 +199,8 @@ func (ctrl *DNSResolveCacheController) init(ctx context.Context) {
 
 	ctrl.originalCtx = ctx
 	ctrl.handler = dns.NewHandler(ctrl.Logger)
-	ctrl.cache = dns.NewCache(ctrl.handler, ctrl.Logger)
+	ctrl.nodeHandler = dns.NewNodeHandler(ctrl.handler, &stateMapper{state: ctrl.State}, ctrl.Logger)
+	ctrl.cache = dns.NewCache(ctrl.nodeHandler, ctrl.Logger)
 	ctrl.runners = map[runnerConfig]pair.Pair[func(), <-chan struct{}]{}
 	ctrl.reconcile = make(chan struct{}, 1)
 
@@ -287,4 +296,50 @@ func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger) (*dns.
 	}
 
 	return dns.NewServer(serverOpts), nil
+}
+
+type stateMapper struct {
+	state state.State
+}
+
+func (s *stateMapper) ResolveAddr(ctx context.Context, qType uint16, name string) []netip.Addr {
+	name = strings.TrimRight(name, ".")
+
+	list, err := safe.ReaderListAll[*cluster.Member](ctx, s.state)
+	if err != nil {
+		return nil
+	}
+
+	elem, ok := list.Find(func(res *cluster.Member) bool {
+		return fqdnMatch(name, res.TypedSpec().Hostname) || fqdnMatch(name, res.Metadata().ID())
+	})
+	if !ok {
+		return nil
+	}
+
+	result := slices.DeleteFunc(slices.Clone(elem.TypedSpec().Addresses), func(addr netip.Addr) bool {
+		return !((qType == dnssrv.TypeA && addr.Is4()) || (qType == dnssrv.TypeAAAA && addr.Is6()))
+	})
+
+	if len(result) == 0 {
+		return nil
+	}
+
+	return result
+}
+
+func fqdnMatch(what, where string) bool {
+	what = strings.TrimRight(what, ".")
+	where = strings.TrimRight(where, ".")
+
+	if what == where {
+		return true
+	}
+
+	first, _, found := strings.Cut(where, ".")
+	if !found {
+		return false
+	}
+
+	return what == first
 }

@@ -817,6 +817,16 @@ func (m *HostDNSConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.ResolveMemberNames {
+		i--
+		if m.ResolveMemberNames {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
+	}
 	if m.ServiceHostDnsAddress != nil {
 		if vtmsg, ok := interface{}(m.ServiceHostDnsAddress).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
@@ -3858,6 +3868,9 @@ func (m *HostDNSConfigSpec) SizeVT() (n int) {
 		}
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	if m.ResolveMemberNames {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -6800,6 +6813,26 @@ func (m *HostDNSConfigSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ResolveMemberNames", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.ResolveMemberNames = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
