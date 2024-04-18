@@ -108,6 +108,11 @@ e.g. by excluding packets with the port 50000.
 				if err != nil {
 					return err
 				}
+				defer func() {
+					if cerr := out.Close(); cerr != nil && err == nil {
+						err = cerr
+					}
+				}()
 			}
 
 			_, err = io.Copy(out, r)
