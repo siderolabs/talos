@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"os"
 	"strings"
@@ -79,7 +79,7 @@ func (suite *LinkStatusSuite) startRuntime() {
 }
 
 func (suite *LinkStatusSuite) uniqueDummyInterface() string {
-	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int31()&0xff, rand.Int31()&0xff, rand.Int31()&0xff)
+	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
 }
 
 func (suite *LinkStatusSuite) assertInterfaces(requiredIDs []string, check func(*network.LinkStatus) error) error {

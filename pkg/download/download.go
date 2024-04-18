@@ -11,7 +11,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"net/http"
 	"net/url"
@@ -217,7 +217,7 @@ func download(req *http.Request, options *downloadOptions) (data []byte, err err
 	transport.RegisterProtocol("tftp", NewTFTPTransport())
 
 	if options.LowSrcPort {
-		port := 100 + rand.Intn(512)
+		port := 100 + rand.IntN(512)
 
 		localTCPAddr, tcperr := net.ResolveTCPAddr("tcp", ":"+strconv.Itoa(port))
 		if tcperr != nil {

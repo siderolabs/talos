@@ -5,7 +5,7 @@
 package resolver
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"strconv"
 	"strings"

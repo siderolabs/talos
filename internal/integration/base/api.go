@@ -13,7 +13,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 	"path/filepath"
 	"strings"
 	"time"
@@ -143,7 +143,7 @@ func (apiSuite *APISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) 
 
 	apiSuite.Require().NotEmpty(nodes)
 
-	return nodes[rand.Intn(len(nodes))].InternalIP.String()
+	return nodes[rand.IntN(len(nodes))].InternalIP.String()
 }
 
 // Capabilities describes current cluster allowed actions.

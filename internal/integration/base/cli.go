@@ -9,7 +9,7 @@ package base
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -73,7 +73,7 @@ func (cliSuite *CLISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) 
 
 	cliSuite.Require().NotEmpty(nodes)
 
-	return nodes[rand.Intn(len(nodes))].InternalIP.String()
+	return nodes[rand.IntN(len(nodes))].InternalIP.String()
 }
 
 func (cliSuite *CLISuite) discoverKubectl() cluster.Info {

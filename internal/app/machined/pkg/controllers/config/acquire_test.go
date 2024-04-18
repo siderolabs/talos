@@ -10,7 +10,7 @@ import (
 	"context"
 	stderrors "errors"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -153,7 +153,7 @@ func TestAcquireSuite(t *testing.T) {
 		}
 		s.eventPublisher = &eventPublisherMock{}
 
-		s.clusterName = fmt.Sprintf("cluster-%d", rand.Int31())
+		s.clusterName = fmt.Sprintf("cluster-%d", rand.Int32())
 		input, err := generate.NewInput(s.clusterName, "https://localhost:6443", "")
 		s.Require().NoError(err)
 

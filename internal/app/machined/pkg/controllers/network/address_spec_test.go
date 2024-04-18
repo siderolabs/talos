@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"net/netip"
 	"os"
@@ -61,7 +61,7 @@ func (suite *AddressSpecSuite) SetupTest() {
 }
 
 func (suite *AddressSpecSuite) uniqueDummyInterface() string {
-	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int31()&0xff, rand.Int31()&0xff, rand.Int31()&0xff)
+	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
 }
 
 func (suite *AddressSpecSuite) startRuntime() {

@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"net/netip"
 	"os"
 	"sync"
@@ -139,7 +139,7 @@ func (suite *LinkSpecSuite) assertNoInterface(id string) error {
 }
 
 func (suite *LinkSpecSuite) uniqueDummyInterface() string {
-	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int31()&0xff, rand.Int31()&0xff, rand.Int31()&0xff)
+	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
 }
 
 func (suite *LinkSpecSuite) TestLoopback() {
@@ -945,7 +945,8 @@ func TestSortBonds(t *testing.T) {
 	}
 
 	seed := time.Now().Unix()
-	rnd := rand.New(rand.NewSource(seed))
+
+	rnd := rand.New(rand.NewPCG(uint64(time.Now().Unix()), uint64(time.Now().Unix())))
 
 	for i := range 100 {
 		res := toResources(expectedSlice)
