@@ -122,7 +122,7 @@ For documentation, see [Extension Services Config Files]({{< relref "../../refer
 
 ### New Extensions
 
-Talos Linux in version v1.7 introduces new [extensions](https://github.com/siderolabs/exensions):
+Talos Linux in version v1.7 introduces new [extensions](https://github.com/siderolabs/extensions):
 
 * `kata-containers`
 * `spin`
@@ -204,7 +204,7 @@ timeout: 3m0s
 
 ## Component Updates
 
-* Linux: 6.6.26
+* Linux: 6.6.28
 * etcd: 3.5.11
 * Kubernetes: 1.30.0
 * containerd: 1.7.15

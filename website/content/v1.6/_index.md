@@ -9,7 +9,6 @@ kubernetesRelease: "1.29.3"
 prevKubernetesRelease: "1.28.3"
 nvidiaContainerToolkitRelease: "v1.13.5"
 nvidiaDriverRelease: "535.129.03"
-menu: main
 ---
 
 ## Welcome
