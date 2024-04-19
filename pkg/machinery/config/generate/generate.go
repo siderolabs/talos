@@ -91,12 +91,8 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...Option) (
 
 	additionalSubjectAltNames := slices.Clone(input.Options.AdditionalSubjectAltNames)
 
-	if !input.Options.VersionContract.SupportsDynamicCertSANs() {
-		additionalSubjectAltNames = append(additionalSubjectAltNames, input.Options.EndpointList...)
-	}
-
 	if input.Options.DiscoveryEnabled == nil {
-		input.Options.DiscoveryEnabled = pointer.To(input.Options.VersionContract.ClusterDiscoveryEnabled())
+		input.Options.DiscoveryEnabled = pointer.To(true)
 	}
 
 	input.ClusterName = clustername

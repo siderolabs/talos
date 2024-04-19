@@ -15,46 +15,24 @@ import (
 )
 
 // NewEtcdCA generates a CA for the Etcd PKI.
-//
-//nolint:dupl
 func NewEtcdCA(currentTime time.Time, contract *config.VersionContract) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
 		x509.Organization("etcd"),
 		x509.NotAfter(currentTime.Add(CAValidityTime)),
 		x509.NotBefore(currentTime),
-	}
-
-	if !contract.SupportsECDSAKeys() {
-		opts = append(opts, x509.RSA(true))
-	} else {
-		if contract.SupportsECDSASHA256() {
-			opts = append(opts, x509.ECDSA(true))
-		} else {
-			opts = append(opts, x509.ECDSASHA512(true))
-		}
+		x509.ECDSA(true),
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)
 }
 
 // NewKubernetesCA generates a CA for the Kubernetes PKI.
-//
-//nolint:dupl
 func NewKubernetesCA(currentTime time.Time, contract *config.VersionContract) (ca *x509.CertificateAuthority, err error) {
 	opts := []x509.Option{
 		x509.Organization("kubernetes"),
 		x509.NotAfter(currentTime.Add(CAValidityTime)),
 		x509.NotBefore(currentTime),
-	}
-
-	if !contract.SupportsECDSAKeys() {
-		opts = append(opts, x509.RSA(true))
-	} else {
-		if contract.SupportsECDSASHA256() {
-			opts = append(opts, x509.ECDSA(true))
-		} else {
-			opts = append(opts, x509.ECDSASHA512(true))
-		}
+		x509.ECDSA(true),
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)
@@ -67,12 +45,7 @@ func NewAggregatorCA(currentTime time.Time, contract *config.VersionContract) (c
 		x509.CommonName("front-proxy"),
 		x509.NotAfter(currentTime.Add(CAValidityTime)),
 		x509.NotBefore(currentTime),
-	}
-
-	if contract.SupportsECDSASHA256() {
-		opts = append(opts, x509.ECDSA(true))
-	} else {
-		opts = append(opts, x509.ECDSASHA512(true))
+		x509.ECDSA(true),
 	}
 
 	return x509.NewSelfSignedCertificateAuthority(opts...)

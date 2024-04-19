@@ -24,6 +24,7 @@ type VersionContract struct {
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
+	TalosVersion1_8     = &VersionContract{1, 8}
 	TalosVersion1_7     = &VersionContract{1, 7}
 	TalosVersion1_6     = &VersionContract{1, 6}
 	TalosVersion1_5     = &VersionContract{1, 5}
@@ -32,13 +33,6 @@ var (
 	TalosVersion1_2     = &VersionContract{1, 2}
 	TalosVersion1_1     = &VersionContract{1, 1}
 	TalosVersion1_0     = &VersionContract{1, 0}
-	TalosVersion0_14    = &VersionContract{0, 14}
-	TalosVersion0_13    = &VersionContract{0, 13}
-	TalosVersion0_12    = &VersionContract{0, 12}
-	TalosVersion0_11    = &VersionContract{0, 11}
-	TalosVersion0_10    = &VersionContract{0, 10}
-	TalosVersion0_9     = &VersionContract{0, 9}
-	TalosVersion0_8     = &VersionContract{0, 8}
 )
 
 var versionRegexp = regexp.MustCompile(`^v(\d+)\.(\d+)($|\.)`)
@@ -78,46 +72,6 @@ func (contract *VersionContract) Greater(other *VersionContract) bool {
 	}
 
 	return contract.Major > other.Major || (contract.Major == other.Major && contract.Minor > other.Minor)
-}
-
-// SupportsECDSAKeys returns true if version of Talos supports ECDSA keys (vs. RSA keys).
-func (contract *VersionContract) SupportsECDSAKeys() bool {
-	return contract.Greater(TalosVersion0_8)
-}
-
-// SupportsAggregatorCA returns true if version of Talos supports AggregatorCA in the config.
-func (contract *VersionContract) SupportsAggregatorCA() bool {
-	return contract.Greater(TalosVersion0_8)
-}
-
-// SupportsServiceAccount returns true if version of Talos supports ServiceAccount in the config.
-func (contract *VersionContract) SupportsServiceAccount() bool {
-	return contract.Greater(TalosVersion0_8)
-}
-
-// SupportsRBACFeature returns true if version of Talos supports RBAC feature gate.
-func (contract *VersionContract) SupportsRBACFeature() bool {
-	return contract.Greater(TalosVersion0_10)
-}
-
-// SupportsDynamicCertSANs returns true if version of Talos supports dynamic certificate generation with SANs provided from resources.
-func (contract *VersionContract) SupportsDynamicCertSANs() bool {
-	return contract.Greater(TalosVersion0_12)
-}
-
-// SupportsECDSASHA256 returns true if version of Talos supports ECDSA-SHA256 for Kubernetes certificates.
-func (contract *VersionContract) SupportsECDSASHA256() bool {
-	return contract.Greater(TalosVersion0_12)
-}
-
-// ClusterDiscoveryEnabled returns true if cluster discovery should be enabled by default.
-func (contract *VersionContract) ClusterDiscoveryEnabled() bool {
-	return contract.Greater(TalosVersion0_13)
-}
-
-// PodSecurityPolicyEnabled returns true if pod security policy should be enabled by default.
-func (contract *VersionContract) PodSecurityPolicyEnabled() bool {
-	return !contract.Greater(TalosVersion0_14)
 }
 
 // PodSecurityAdmissionEnabled returns true if pod security admission should be enabled by default.

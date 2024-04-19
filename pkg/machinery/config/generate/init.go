@@ -57,9 +57,7 @@ func (in *Input) init() ([]config.Document, error) {
 		MachineFeatures:             &v1alpha1.FeaturesConfig{},
 	}
 
-	if in.Options.VersionContract.SupportsRBACFeature() {
-		machine.MachineFeatures.RBAC = pointer.To(true)
-	}
+	machine.MachineFeatures.RBAC = pointer.To(true)
 
 	if in.Options.VersionContract.StableHostnameEnabled() {
 		machine.MachineFeatures.StableHostname = pointer.To(true)
@@ -203,9 +201,7 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 	}
 
-	if !in.Options.VersionContract.PodSecurityPolicyEnabled() {
-		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = pointer.To(true)
-	}
+	cluster.APIServerConfig.DisablePodSecurityPolicyConfig = pointer.To(true)
 
 	if in.Options.VersionContract.SecretboxEncryptionSupported() {
 		cluster.ClusterSecretboxEncryptionSecret = in.Options.SecretsBundle.Secrets.SecretboxEncryptionSecret

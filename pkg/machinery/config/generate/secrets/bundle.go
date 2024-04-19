@@ -6,7 +6,6 @@ package secrets
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -100,49 +99,33 @@ func NewBundleFromKubernetesPKI(pkiDir, bootstrapToken string, versionContract *
 	}
 
 	aggregatorCACrtPath := filepath.Join(pkiDir, "front-proxy-ca.crt")
-	_, err = os.Stat(aggregatorCACrtPath)
 
-	aggregatorCAFound := err == nil
-	if aggregatorCAFound && !versionContract.SupportsAggregatorCA() {
-		return nil, errors.New("aggregator CA found in pki dir but is not supported by the requested version")
+	aggregatorCA, err = x509.NewCertificateAndKeyFromFiles(aggregatorCACrtPath, filepath.Join(pkiDir, "front-proxy-ca.key"))
+	if err != nil {
+		return nil, err
 	}
 
-	if versionContract.SupportsAggregatorCA() {
-		aggregatorCA, err = x509.NewCertificateAndKeyFromFiles(aggregatorCACrtPath, filepath.Join(pkiDir, "front-proxy-ca.key"))
-		if err != nil {
-			return nil, err
-		}
-
-		err = validatePEMEncodedCertificateAndKey(aggregatorCA)
-		if err != nil {
-			return nil, err
-		}
+	err = validatePEMEncodedCertificateAndKey(aggregatorCA)
+	if err != nil {
+		return nil, err
 	}
 
 	saKeyPath := filepath.Join(pkiDir, "sa.key")
-	_, err = os.Stat(saKeyPath)
 
-	saKeyFound := err == nil
-	if saKeyFound && !versionContract.SupportsServiceAccount() {
-		return nil, errors.New("service account key found in pki dir but is not supported by the requested version")
+	var saBytes []byte
+
+	saBytes, err = os.ReadFile(saKeyPath)
+	if err != nil {
+		return nil, err
 	}
 
-	if versionContract.SupportsServiceAccount() {
-		var saBytes []byte
+	sa = &x509.PEMEncodedKey{
+		Key: saBytes,
+	}
 
-		saBytes, err = os.ReadFile(filepath.Join(pkiDir, "sa.key"))
-		if err != nil {
-			return nil, err
-		}
-
-		sa = &x509.PEMEncodedKey{
-			Key: saBytes,
-		}
-
-		_, err = sa.GetKey()
-		if err != nil {
-			return nil, err
-		}
+	_, err = sa.GetKey()
+	if err != nil {
+		return nil, err
 	}
 
 	bundle := &Bundle{
@@ -241,7 +224,7 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 		}
 	}
 
-	if versionContract.SupportsAggregatorCA() && bundle.Certs.K8sAggregator == nil {
+	if bundle.Certs.K8sAggregator == nil {
 		aggregatorCA, err := NewAggregatorCA(bundle.Clock.Now(), versionContract)
 		if err != nil {
 			return err
@@ -253,7 +236,7 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 		}
 	}
 
-	if versionContract.SupportsServiceAccount() && bundle.Certs.K8sServiceAccount == nil {
+	if bundle.Certs.K8sServiceAccount == nil {
 		if versionContract.UseRSAServiceAccountKey() {
 			serviceAccount, err := x509.NewRSAKey()
 			if err != nil {

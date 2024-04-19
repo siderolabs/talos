@@ -14,12 +14,12 @@ import (
 )
 
 func TestContractGreater(t *testing.T) {
-	assert.True(t, config.TalosVersion0_9.Greater(config.TalosVersion0_8))
-	assert.True(t, config.TalosVersionCurrent.Greater(config.TalosVersion0_8))
-	assert.True(t, config.TalosVersionCurrent.Greater(config.TalosVersion0_9))
+	assert.True(t, config.TalosVersion1_1.Greater(config.TalosVersion1_0))
+	assert.True(t, config.TalosVersionCurrent.Greater(config.TalosVersion1_2))
+	assert.True(t, config.TalosVersionCurrent.Greater(config.TalosVersion1_3))
 
-	assert.False(t, config.TalosVersion0_8.Greater(config.TalosVersion0_9))
-	assert.False(t, config.TalosVersion0_8.Greater(config.TalosVersion0_8))
+	assert.False(t, config.TalosVersion1_2.Greater(config.TalosVersion1_3))
+	assert.False(t, config.TalosVersion1_2.Greater(config.TalosVersion1_2))
 	assert.False(t, config.TalosVersionCurrent.Greater(config.TalosVersionCurrent))
 }
 
@@ -27,11 +27,11 @@ func TestContractParseVersion(t *testing.T) {
 	t.Parallel()
 
 	for v, expected := range map[string]*config.VersionContract{
-		"v0.8":           config.TalosVersion0_8,
-		"v0.8.":          config.TalosVersion0_8,
-		"v0.8.1":         config.TalosVersion0_8,
-		"v0.88":          {0, 88},
-		"v0.8.3-alpha.4": config.TalosVersion0_8,
+		"v1.5":           config.TalosVersion1_5,
+		"v1.5.":          config.TalosVersion1_5,
+		"v1.5.1":         config.TalosVersion1_5,
+		"v1.88":          {1, 88},
+		"v1.5.3-alpha.4": config.TalosVersion1_5,
 	} {
 		t.Run(v, func(t *testing.T) {
 			t.Parallel()
@@ -46,14 +46,25 @@ func TestContractParseVersion(t *testing.T) {
 func TestContractCurrent(t *testing.T) {
 	contract := config.TalosVersionCurrent
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
+	assert.True(t, contract.PodSecurityAdmissionEnabled())
+	assert.True(t, contract.StableHostnameEnabled())
+	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
+	assert.False(t, contract.KubernetesAlternateImageRegistries())
+	assert.True(t, contract.KubernetesAllowSchedulingOnControlPlanes())
+	assert.True(t, contract.KubernetesDiscoveryBackendDisabled())
+	assert.True(t, contract.ApidExtKeyUsageCheckEnabled())
+	assert.True(t, contract.APIServerAuditPolicySupported())
+	assert.True(t, contract.KubeletManifestsDirectoryDisabled())
+	assert.True(t, contract.SecretboxEncryptionSupported())
+	assert.True(t, contract.DiskQuotaSupportEnabled())
+	assert.True(t, contract.KubePrismEnabled())
+	assert.True(t, contract.HostDNSEnabled())
+	assert.True(t, contract.UseRSAServiceAccountKey())
+}
+
+func TestContract1_8(t *testing.T) {
+	contract := config.TalosVersion1_8
+
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
 	assert.True(t, contract.StableHostnameEnabled())
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
@@ -73,14 +84,6 @@ func TestContractCurrent(t *testing.T) {
 func TestContract1_7(t *testing.T) {
 	contract := config.TalosVersion1_7
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
 	assert.True(t, contract.StableHostnameEnabled())
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
@@ -100,14 +103,6 @@ func TestContract1_7(t *testing.T) {
 func TestContract1_6(t *testing.T) {
 	contract := config.TalosVersion1_6
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
 	assert.True(t, contract.StableHostnameEnabled())
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
@@ -127,14 +122,6 @@ func TestContract1_6(t *testing.T) {
 func TestContract1_5(t *testing.T) {
 	contract := config.TalosVersion1_5
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
 	assert.True(t, contract.StableHostnameEnabled())
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
@@ -154,14 +141,6 @@ func TestContract1_5(t *testing.T) {
 func TestContract1_4(t *testing.T) {
 	contract := config.TalosVersion1_4
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
 	assert.True(t, contract.StableHostnameEnabled())
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
@@ -181,14 +160,6 @@ func TestContract1_4(t *testing.T) {
 func TestContract1_3(t *testing.T) {
 	contract := config.TalosVersion1_3
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
 	assert.True(t, contract.StableHostnameEnabled())
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
@@ -208,14 +179,6 @@ func TestContract1_3(t *testing.T) {
 func TestContract1_2(t *testing.T) {
 	contract := config.TalosVersion1_2
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
 	assert.True(t, contract.StableHostnameEnabled())
 	assert.True(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
@@ -235,14 +198,6 @@ func TestContract1_2(t *testing.T) {
 func TestContract1_1(t *testing.T) {
 	contract := config.TalosVersion1_1
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
 	assert.True(t, contract.PodSecurityAdmissionEnabled())
 	assert.False(t, contract.StableHostnameEnabled())
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
@@ -262,203 +217,6 @@ func TestContract1_1(t *testing.T) {
 func TestContract1_0(t *testing.T) {
 	contract := config.TalosVersion1_0
 
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.False(t, contract.PodSecurityPolicyEnabled())
-	assert.False(t, contract.PodSecurityAdmissionEnabled())
-	assert.False(t, contract.StableHostnameEnabled())
-	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
-	assert.False(t, contract.KubernetesAlternateImageRegistries())
-	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
-	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
-	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
-	assert.False(t, contract.APIServerAuditPolicySupported())
-	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
-	assert.False(t, contract.SecretboxEncryptionSupported())
-	assert.False(t, contract.DiskQuotaSupportEnabled())
-	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.HostDNSEnabled())
-	assert.False(t, contract.UseRSAServiceAccountKey())
-}
-
-func TestContract0_14(t *testing.T) {
-	contract := config.TalosVersion0_14
-
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.True(t, contract.ClusterDiscoveryEnabled())
-	assert.True(t, contract.PodSecurityPolicyEnabled())
-	assert.False(t, contract.PodSecurityAdmissionEnabled())
-	assert.False(t, contract.StableHostnameEnabled())
-	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
-	assert.False(t, contract.KubernetesAlternateImageRegistries())
-	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
-	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
-	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
-	assert.False(t, contract.APIServerAuditPolicySupported())
-	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
-	assert.False(t, contract.SecretboxEncryptionSupported())
-	assert.False(t, contract.DiskQuotaSupportEnabled())
-	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.HostDNSEnabled())
-	assert.False(t, contract.UseRSAServiceAccountKey())
-}
-
-func TestContract0_13(t *testing.T) {
-	contract := config.TalosVersion0_13
-
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.True(t, contract.SupportsDynamicCertSANs())
-	assert.True(t, contract.SupportsECDSASHA256())
-	assert.False(t, contract.ClusterDiscoveryEnabled())
-	assert.True(t, contract.PodSecurityPolicyEnabled())
-	assert.False(t, contract.PodSecurityAdmissionEnabled())
-	assert.False(t, contract.StableHostnameEnabled())
-	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
-	assert.False(t, contract.KubernetesAlternateImageRegistries())
-	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
-	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
-	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
-	assert.False(t, contract.APIServerAuditPolicySupported())
-	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
-	assert.False(t, contract.SecretboxEncryptionSupported())
-	assert.False(t, contract.DiskQuotaSupportEnabled())
-	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.HostDNSEnabled())
-	assert.False(t, contract.UseRSAServiceAccountKey())
-}
-
-func TestContract0_12(t *testing.T) {
-	contract := config.TalosVersion0_12
-
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.False(t, contract.SupportsDynamicCertSANs())
-	assert.False(t, contract.SupportsECDSASHA256())
-	assert.False(t, contract.ClusterDiscoveryEnabled())
-	assert.True(t, contract.PodSecurityPolicyEnabled())
-	assert.False(t, contract.PodSecurityAdmissionEnabled())
-	assert.False(t, contract.StableHostnameEnabled())
-	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
-	assert.False(t, contract.KubernetesAlternateImageRegistries())
-	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
-	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
-	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
-	assert.False(t, contract.APIServerAuditPolicySupported())
-	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
-	assert.False(t, contract.SecretboxEncryptionSupported())
-	assert.False(t, contract.DiskQuotaSupportEnabled())
-	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.HostDNSEnabled())
-	assert.False(t, contract.UseRSAServiceAccountKey())
-}
-
-func TestContract0_11(t *testing.T) {
-	contract := config.TalosVersion0_11
-
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.True(t, contract.SupportsRBACFeature())
-	assert.False(t, contract.SupportsDynamicCertSANs())
-	assert.False(t, contract.SupportsECDSASHA256())
-	assert.False(t, contract.ClusterDiscoveryEnabled())
-	assert.True(t, contract.PodSecurityPolicyEnabled())
-	assert.False(t, contract.PodSecurityAdmissionEnabled())
-	assert.False(t, contract.StableHostnameEnabled())
-	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
-	assert.False(t, contract.KubernetesAlternateImageRegistries())
-	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
-	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
-	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
-	assert.False(t, contract.APIServerAuditPolicySupported())
-	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
-	assert.False(t, contract.SecretboxEncryptionSupported())
-	assert.False(t, contract.DiskQuotaSupportEnabled())
-	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.HostDNSEnabled())
-	assert.False(t, contract.UseRSAServiceAccountKey())
-}
-
-func TestContract0_10(t *testing.T) {
-	contract := config.TalosVersion0_10
-
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.False(t, contract.SupportsRBACFeature())
-	assert.False(t, contract.SupportsDynamicCertSANs())
-	assert.False(t, contract.SupportsECDSASHA256())
-	assert.False(t, contract.ClusterDiscoveryEnabled())
-	assert.True(t, contract.PodSecurityPolicyEnabled())
-	assert.False(t, contract.PodSecurityAdmissionEnabled())
-	assert.False(t, contract.StableHostnameEnabled())
-	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
-	assert.False(t, contract.KubernetesAlternateImageRegistries())
-	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
-	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
-	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
-	assert.False(t, contract.APIServerAuditPolicySupported())
-	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
-	assert.False(t, contract.SecretboxEncryptionSupported())
-	assert.False(t, contract.DiskQuotaSupportEnabled())
-	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.HostDNSEnabled())
-	assert.False(t, contract.UseRSAServiceAccountKey())
-}
-
-func TestContract0_9(t *testing.T) {
-	contract := config.TalosVersion0_9
-
-	assert.True(t, contract.SupportsAggregatorCA())
-	assert.True(t, contract.SupportsECDSAKeys())
-	assert.True(t, contract.SupportsServiceAccount())
-	assert.False(t, contract.SupportsRBACFeature())
-	assert.False(t, contract.SupportsDynamicCertSANs())
-	assert.False(t, contract.SupportsECDSASHA256())
-	assert.False(t, contract.ClusterDiscoveryEnabled())
-	assert.True(t, contract.PodSecurityPolicyEnabled())
-	assert.False(t, contract.PodSecurityAdmissionEnabled())
-	assert.False(t, contract.StableHostnameEnabled())
-	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())
-	assert.False(t, contract.KubernetesAlternateImageRegistries())
-	assert.False(t, contract.KubernetesAllowSchedulingOnControlPlanes())
-	assert.False(t, contract.KubernetesDiscoveryBackendDisabled())
-	assert.False(t, contract.ApidExtKeyUsageCheckEnabled())
-	assert.False(t, contract.APIServerAuditPolicySupported())
-	assert.False(t, contract.KubeletManifestsDirectoryDisabled())
-	assert.False(t, contract.SecretboxEncryptionSupported())
-	assert.False(t, contract.DiskQuotaSupportEnabled())
-	assert.False(t, contract.KubePrismEnabled())
-	assert.False(t, contract.HostDNSEnabled())
-	assert.False(t, contract.UseRSAServiceAccountKey())
-}
-
-func TestContract0_8(t *testing.T) {
-	contract := config.TalosVersion0_8
-
-	assert.False(t, contract.SupportsAggregatorCA())
-	assert.False(t, contract.SupportsECDSAKeys())
-	assert.False(t, contract.SupportsServiceAccount())
-	assert.False(t, contract.SupportsRBACFeature())
-	assert.False(t, contract.SupportsDynamicCertSANs())
-	assert.False(t, contract.SupportsECDSASHA256())
-	assert.False(t, contract.ClusterDiscoveryEnabled())
-	assert.True(t, contract.PodSecurityPolicyEnabled())
 	assert.False(t, contract.PodSecurityAdmissionEnabled())
 	assert.False(t, contract.StableHostnameEnabled())
 	assert.False(t, contract.KubeletDefaultRuntimeSeccompProfileEnabled())

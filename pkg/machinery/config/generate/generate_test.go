@@ -39,6 +39,14 @@ func TestGenerateSuite(t *testing.T) {
 			label: "current",
 		},
 		{
+			label:      "1.7",
+			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion1_7)},
+		},
+		{
+			label:      "1.6",
+			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion1_6)},
+		},
+		{
 			label:      "1.5",
 			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion1_5)},
 		},
@@ -61,34 +69,6 @@ func TestGenerateSuite(t *testing.T) {
 		{
 			label:      "1.0",
 			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion1_0)},
-		},
-		{
-			label:      "0.14",
-			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion0_14)},
-		},
-		{
-			label:      "0.13",
-			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion0_13)},
-		},
-		{
-			label:      "0.12",
-			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion0_12)},
-		},
-		{
-			label:      "0.11",
-			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion0_11)},
-		},
-		{
-			label:      "0.10",
-			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion0_10)},
-		},
-		{
-			label:      "0.9",
-			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion0_9)},
-		},
-		{
-			label:      "0.8",
-			genOptions: []generate.Option{generate.WithVersionContract(config.TalosVersion0_8)},
 		},
 	} {
 		t.Run(tt.label, func(t *testing.T) {
@@ -119,11 +99,7 @@ func (suite *GenerateSuite) TestGenerateInitSuccess() {
 	cfg, err := suite.input.Config(machine.TypeInit)
 	suite.Require().NoError(err)
 
-	if suite.versionContract.SupportsRBACFeature() {
-		suite.True(cfg.Machine().Features().RBACEnabled())
-	} else {
-		suite.False(cfg.Machine().Features().RBACEnabled())
-	}
+	suite.True(cfg.Machine().Features().RBACEnabled())
 }
 
 func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
@@ -133,22 +109,14 @@ func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 	_, err = cfg.Validate(runtimeMode{false})
 	suite.Require().NoError(err)
 
-	if suite.versionContract.SupportsRBACFeature() {
-		suite.True(cfg.Machine().Features().RBACEnabled())
-	} else {
-		suite.False(cfg.Machine().Features().RBACEnabled())
-	}
+	suite.True(cfg.Machine().Features().RBACEnabled())
 }
 
 func (suite *GenerateSuite) TestGenerateWorkerSuccess() {
 	cfg, err := suite.input.Config(machine.TypeWorker)
 	suite.Require().NoError(err)
 
-	if suite.versionContract.SupportsRBACFeature() {
-		suite.True(cfg.Machine().Features().RBACEnabled())
-	} else {
-		suite.False(cfg.Machine().Features().RBACEnabled())
-	}
+	suite.True(cfg.Machine().Features().RBACEnabled())
 }
 
 func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {

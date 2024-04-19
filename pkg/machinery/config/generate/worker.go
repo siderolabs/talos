@@ -58,9 +58,7 @@ func (in *Input) worker() ([]config.Document, error) {
 		MachineFeatures:             &v1alpha1.FeaturesConfig{},
 	}
 
-	if in.Options.VersionContract.SupportsRBACFeature() {
-		machine.MachineFeatures.RBAC = pointer.To(true)
-	}
+	machine.MachineFeatures.RBAC = pointer.To(true)
 
 	if in.Options.VersionContract.StableHostnameEnabled() {
 		machine.MachineFeatures.StableHostname = pointer.To(true)

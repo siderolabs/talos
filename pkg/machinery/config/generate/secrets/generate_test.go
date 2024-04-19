@@ -26,20 +26,16 @@ func TestNewBundle(t *testing.T) {
 		versionContract *config.VersionContract
 	}{
 		{
-			name:            "v0.8",
-			versionContract: config.TalosVersion0_8,
-		},
-		{
-			name:            "v0.9",
-			versionContract: config.TalosVersion0_9,
-		},
-		{
 			name:            "v1.0",
 			versionContract: config.TalosVersion1_0,
 		},
 		{
 			name:            "v1.3",
 			versionContract: config.TalosVersion1_3,
+		},
+		{
+			name:            "v1.7",
+			versionContract: config.TalosVersion1_7,
 		},
 		{
 			name:            "current",
