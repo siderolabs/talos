@@ -110,7 +110,7 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 	case "opennebula":
 		p = &opennebula.OpenNebula{}
 	case "openstack":
-		p = &openstack.Openstack{}
+		p = &openstack.OpenStack{}
 	case "oracle":
 		p = &oracle.Oracle{}
 	case "nocloud":

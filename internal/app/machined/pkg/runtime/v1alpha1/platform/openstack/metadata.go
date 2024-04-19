@@ -34,16 +34,16 @@ const (
 
 	endpoint = "http://169.254.169.254/"
 
-	// OpenstackExternalIPEndpoint is the local Openstack endpoint for the external IP.
-	OpenstackExternalIPEndpoint = endpoint + "latest/meta-data/public-ipv4"
-	// OpenstackInstanceTypeEndpoint is the local Openstack endpoint for the instance-type.
-	OpenstackInstanceTypeEndpoint = endpoint + "latest/meta-data/instance-type"
-	// OpenstackMetaDataEndpoint is the local Openstack endpoint for the meta config.
-	OpenstackMetaDataEndpoint = endpoint + configMetadataPath
-	// OpenstackNetworkDataEndpoint is the local Openstack endpoint for the network config.
-	OpenstackNetworkDataEndpoint = endpoint + configNetworkDataPath
-	// OpenstackUserDataEndpoint is the local Openstack endpoint for the config.
-	OpenstackUserDataEndpoint = endpoint + configUserDataPath
+	// OpenStackExternalIPEndpoint is the local OpenStack endpoint for the external IP.
+	OpenStackExternalIPEndpoint = endpoint + "latest/meta-data/public-ipv4"
+	// OpenStackInstanceTypeEndpoint is the local OpenStack endpoint for the instance-type.
+	OpenStackInstanceTypeEndpoint = endpoint + "latest/meta-data/instance-type"
+	// OpenStackMetaDataEndpoint is the local OpenStack endpoint for the meta config.
+	OpenStackMetaDataEndpoint = endpoint + configMetadataPath
+	// OpenStackNetworkDataEndpoint is the local OpenStack endpoint for the network config.
+	OpenStackNetworkDataEndpoint = endpoint + configNetworkDataPath
+	// OpenStackUserDataEndpoint is the local OpenStack endpoint for the config.
+	OpenStackUserDataEndpoint = endpoint + configUserDataPath
 )
 
 // NetworkConfig holds NetworkData config.
@@ -86,24 +86,24 @@ type MetadataConfig struct {
 	InstanceType     string `json:"instance_type"`
 }
 
-func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
-	log.Printf("fetching meta config from: %q", OpenstackMetaDataEndpoint)
+func (o *OpenStack) configFromNetwork(ctx context.Context) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+	log.Printf("fetching meta config from: %q", OpenStackMetaDataEndpoint)
 
-	metaConfig, err = download.Download(ctx, OpenstackMetaDataEndpoint)
+	metaConfig, err = download.Download(ctx, OpenStackMetaDataEndpoint)
 	if err != nil {
 		metaConfig = nil
 	}
 
-	log.Printf("fetching network config from: %q", OpenstackNetworkDataEndpoint)
+	log.Printf("fetching network config from: %q", OpenStackNetworkDataEndpoint)
 
-	networkConfig, err = download.Download(ctx, OpenstackNetworkDataEndpoint)
+	networkConfig, err = download.Download(ctx, OpenStackNetworkDataEndpoint)
 	if err != nil {
 		networkConfig = nil
 	}
 
-	log.Printf("fetching machine config from: %q", OpenstackUserDataEndpoint)
+	log.Printf("fetching machine config from: %q", OpenStackUserDataEndpoint)
 
-	machineConfig, err = download.Download(ctx, OpenstackUserDataEndpoint,
+	machineConfig, err = download.Download(ctx, OpenStackUserDataEndpoint,
 		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
 
@@ -111,7 +111,7 @@ func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, n
 }
 
 //nolint:gocyclo
-func (o *Openstack) configFromCD(ctx context.Context, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+func (o *OpenStack) configFromCD(ctx context.Context, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
 	if err := netutils.WaitForDevicesReady(ctx, r); err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to wait for devices: %w", err)
 	}
@@ -175,10 +175,10 @@ func (o *Openstack) configFromCD(ctx context.Context, r state.State) (metaConfig
 	return metaConfig, networkConfig, machineConfig, nil
 }
 
-func (o *Openstack) instanceType(ctx context.Context) string {
-	log.Printf("fetching instance-type from: %q", OpenstackInstanceTypeEndpoint)
+func (o *OpenStack) instanceType(ctx context.Context) string {
+	log.Printf("fetching instance-type from: %q", OpenStackInstanceTypeEndpoint)
 
-	sku, err := download.Download(ctx, OpenstackInstanceTypeEndpoint)
+	sku, err := download.Download(ctx, OpenStackInstanceTypeEndpoint)
 	if err != nil {
 		return ""
 	}
@@ -186,10 +186,10 @@ func (o *Openstack) instanceType(ctx context.Context) string {
 	return string(sku)
 }
 
-func (o *Openstack) externalIPs(ctx context.Context) (addrs []netip.Addr) {
-	log.Printf("fetching externalIP from: %q", OpenstackExternalIPEndpoint)
+func (o *OpenStack) externalIPs(ctx context.Context) (addrs []netip.Addr) {
+	log.Printf("fetching externalIP from: %q", OpenStackExternalIPEndpoint)
 
-	exIP, err := download.Download(ctx, OpenstackExternalIPEndpoint,
+	exIP, err := download.Download(ctx, OpenStackExternalIPEndpoint,
 		download.WithErrorOnNotFound(errors.ErrNoExternalIPs),
 		download.WithErrorOnEmptyResponse(errors.ErrNoExternalIPs))
 	if err != nil {

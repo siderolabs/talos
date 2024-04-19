@@ -33,7 +33,7 @@ var rawNetwork []byte
 var expectedNetworkConfig string
 
 func TestParseMetadata(t *testing.T) {
-	o := &openstack.Openstack{}
+	o := &openstack.OpenStack{}
 
 	var metadata openstack.MetadataConfig
 

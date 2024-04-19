@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package openstack provides the Openstack platform implementation.
+// Package openstack provides the OpenStack platform implementation.
 package openstack
 
 import (
@@ -30,18 +30,18 @@ import (
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-// Openstack is the concrete type that implements the runtime.Platform interface.
-type Openstack struct{}
+// OpenStack is the concrete type that implements the runtime.Platform interface.
+type OpenStack struct{}
 
 // Name implements the runtime.Platform interface.
-func (o *Openstack) Name() string {
+func (o *OpenStack) Name() string {
 	return "openstack"
 }
 
 // ParseMetadata converts OpenStack metadata to platform network configuration.
 //
 //nolint:gocyclo,cyclop
-func (o *Openstack) ParseMetadata(
+func (o *OpenStack) ParseMetadata(
 	ctx context.Context,
 	unmarshalledNetworkConfig *NetworkConfig,
 	extIPs []netip.Addr,
@@ -350,7 +350,7 @@ func (o *Openstack) ParseMetadata(
 }
 
 // Configuration implements the runtime.Platform interface.
-func (o *Openstack) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
+func (o *OpenStack) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
 	_, _, machineConfig, err = o.configFromCD(ctx, r)
 	if err != nil {
 		if err = netutils.Wait(ctx, r); err != nil {
@@ -373,12 +373,12 @@ func (o *Openstack) Configuration(ctx context.Context, r state.State) (machineCo
 }
 
 // Mode implements the runtime.Platform interface.
-func (o *Openstack) Mode() runtime.Mode {
+func (o *OpenStack) Mode() runtime.Mode {
 	return runtime.ModeCloud
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (o *Openstack) KernelArgs(string) procfs.Parameters {
+func (o *OpenStack) KernelArgs(string) procfs.Parameters {
 	return []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
@@ -386,7 +386,7 @@ func (o *Openstack) KernelArgs(string) procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (o *Openstack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (o *OpenStack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	networkSource := false
 
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD(ctx, st)

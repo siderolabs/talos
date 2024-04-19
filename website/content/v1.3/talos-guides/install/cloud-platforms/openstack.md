@@ -1,32 +1,32 @@
 ---
-title: "Openstack"
-description: "Creating a cluster via the CLI on Openstack."
-aliases: 
+title: "OpenStack"
+description: "Creating a cluster via the CLI on OpenStack."
+aliases:
   - ../../../cloud-platforms/openstack
 ---
 
 ## Creating a Cluster via the CLI
 
-In this guide, we will create an HA Kubernetes cluster in Openstack with 1 worker node.
-We will assume an existing some familiarity with Openstack.
-If you need more information on Openstack specifics, please see the [official Openstack documentation](https://docs.openstack.org).
+In this guide, we will create an HA Kubernetes cluster in OpenStack with 1 worker node.
+We will assume an existing some familiarity with OpenStack.
+If you need more information on OpenStack specifics, please see the [official OpenStack documentation](https://docs.openstack.org).
 
 ### Environment Setup
 
 You should have an existing openrc file.
-This file will provide environment variables necessary to talk to your Openstack cloud.
+This file will provide environment variables necessary to talk to your OpenStack cloud.
 See [here](https://docs.openstack.org/newton/user-guide/common/cli-set-environment-variables-using-openstack-rc.html) for instructions on fetching this file.
 
 ### Create the Image
 
-First, download the Openstack image from a Talos [release](https://github.com/siderolabs/talos/releases).
+First, download the OpenStack image from a Talos [release](https://github.com/siderolabs/talos/releases).
 These images are called `openstack-$ARCH.tar.gz`.
 Untar this file with `tar -xvf openstack-$ARCH.tar.gz`.
 The resulting file will be called `disk.raw`.
 
 #### Upload the Image
 
-Once you have the image, you can upload to Openstack with:
+Once you have the image, you can upload to OpenStack with:
 
 ```bash
 openstack image create --public --disk-format raw --file disk.raw talos
@@ -81,7 +81,7 @@ openstack loadbalancer member create --subnet-id shared-subnet --address <PRIVAT
 
 #### Security Groups
 
-This example uses the default security group in Openstack.
+This example uses the default security group in OpenStack.
 Ports have been opened to ensure that connectivity from both inside and outside the group is possible.
 You will want to allow, at a minimum, ports 6443 (Kubernetes API server) and 50000 (Talos API) from external sources.
 It is also recommended to allow communication over all ports from within the subnet.
@@ -100,7 +100,7 @@ Additionally, you can specify `--config-patch` with RFC6902 jsonpatch which will
 
 ### Compute Creation
 
-We are now ready to create our Openstack nodes.
+We are now ready to create our OpenStack nodes.
 
 Create control plane:
 
