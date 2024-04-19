@@ -161,6 +161,12 @@ func (procs *Processes) readProc(pidString string) (*machine.ProcessInfo, error)
 		return nil, err
 	}
 
+	var label string
+
+	if err = procs.readFileIntoBuf(path + "attr/current"); err == nil {
+		label = string(bytes.TrimSpace(procs.buf))
+	}
+
 	return &machine.ProcessInfo{
 		Pid:            int32(pid),
 		Ppid:           int32(ppid),
@@ -172,6 +178,7 @@ func (procs *Processes) readProc(pidString string) (*machine.ProcessInfo, error)
 		Command:        command,
 		Executable:     executable,
 		Args:           args,
+		Label:          label,
 	}, nil
 }
 

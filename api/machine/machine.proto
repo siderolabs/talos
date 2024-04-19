@@ -650,6 +650,7 @@ message ProcessInfo {
   string command = 8;
   string executable = 9;
   string args = 10;
+  string label = 11;
 }
 
 // rpc restart

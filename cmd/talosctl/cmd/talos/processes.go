@@ -190,7 +190,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 
 	s := []string{}
 
-	s = append(s, "NODE | PID | STATE | THREADS | CPU-TIME | VIRTMEM | RESMEM | COMMAND")
+	s = append(s, "NODE | PID | STATE | THREADS | CPU-TIME | VIRTMEM | RESMEM | LABEL | COMMAND")
 
 	for _, msg := range resp.Messages {
 		procs := msg.Processes
@@ -221,8 +221,8 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 			}
 
 			s = append(s,
-				fmt.Sprintf("%12s | %6d | %1s | %4d | %8.2f | %7s | %7s | %s",
-					node, p.Pid, p.State, p.Threads, p.CpuTime, humanize.Bytes(p.VirtualMemory), humanize.Bytes(p.ResidentMemory), args))
+				fmt.Sprintf("%12s | %6d | %1s | %4d | %8.2f | %7s | %7s | %64s | %s",
+					node, p.Pid, p.State, p.Threads, p.CpuTime, humanize.Bytes(p.VirtualMemory), humanize.Bytes(p.ResidentMemory), p.Label, args))
 		}
 	}
 
