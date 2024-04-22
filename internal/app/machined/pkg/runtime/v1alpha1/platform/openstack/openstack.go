@@ -305,6 +305,11 @@ func (o *Openstack) ParseMetadata(
 
 			route.Normalize()
 
+			// double the priority of the route if it is actually the default gateway and IPv6
+			if route.Destination == (netip.Prefix{}) && family == nethelpers.FamilyInet6 {
+				route.Priority *= 2
+			}
+
 			networkConfig.Routes = append(networkConfig.Routes, route)
 		}
 	}
