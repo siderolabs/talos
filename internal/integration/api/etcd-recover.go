@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -55,8 +56,6 @@ func (suite *EtcdRecoverSuite) TearDownTest() {
 }
 
 // TestSnapshotRecover snapshot etcd, wipes control plane nodes and recovers etcd from a snapshot.
-//
-//nolint:gocyclo
 func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboot")
@@ -83,96 +82,49 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 
 	suite.Require().NoError(suite.snapshotEtcd(snapshotNode, &snapshot))
 
-	// wipe ephemeral partition on all control plane nodes
-	preReset := map[string]string{}
+	// leave etcd on all nodes but one
+	for _, node := range controlPlaneNodes[1:] {
+		suite.T().Logf("leaving etcd on node %q", node)
 
-	for _, node := range controlPlaneNodes {
-		var err error
+		nodeCtx := client.WithNode(suite.ctx, node)
 
-		preReset[node], err = suite.HashKubeletCert(suite.ctx, node)
+		_, err := suite.Client.EtcdForfeitLeadership(nodeCtx, &machineapi.EtcdForfeitLeadershipRequest{})
+		suite.Require().NoError(err)
 
+		err = suite.Client.EtcdLeaveCluster(nodeCtx, &machineapi.EtcdLeaveClusterRequest{})
 		suite.Require().NoError(err)
 	}
 
-	suite.T().Logf("wiping control plane nodes %q", controlPlaneNodes)
-
-	errCh := make(chan error)
-
+	// wipe ephemeral partition on all control plane nodes, starting with the one that still has etcd running
 	for _, node := range controlPlaneNodes {
-		go func() {
-			errCh <- func() error {
-				nodeCtx := client.WithNodes(suite.ctx, node)
-
-				bootIDBefore, err := suite.ReadBootID(nodeCtx)
-				if err != nil {
-					return fmt.Errorf("error reading pre-reset boot ID: %w", err)
-				}
-
-				if err = base.IgnoreGRPCUnavailable(
-					suite.Client.ResetGeneric(
-						nodeCtx, &machineapi.ResetRequest{
-							Reboot:   true,
-							Graceful: false,
-							SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
-								{
-									Label: constants.EphemeralPartitionLabel,
-									Wipe:  true,
-								},
-							},
-						},
-					),
-				); err != nil {
-					return fmt.Errorf("error resetting the node %q: %w", node, err)
-				}
-
-				var bootIDAfter string
-
-				return retry.Constant(5 * time.Minute).Retry(
-					func() error {
-						requestCtx, requestCtxCancel := context.WithTimeout(nodeCtx, 5*time.Second)
-						defer requestCtxCancel()
-
-						bootIDAfter, err = suite.ReadBootID(requestCtx)
-						if err != nil {
-							// API might be unresponsive during reboot
-							return retry.ExpectedError(err)
-						}
-
-						if bootIDAfter == bootIDBefore {
-							// bootID should be different after reboot
-							return retry.ExpectedErrorf(
-								"bootID didn't change for node %q: before %s, after %s",
-								node,
-								bootIDBefore,
-								bootIDAfter,
-							)
-						}
-
-						return nil
-					},
-				)
-			}()
-		}()
+		suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
+			Reboot:   true,
+			Graceful: false,
+			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
+				{
+					Label: constants.EphemeralPartitionLabel,
+					Wipe:  true,
+				},
+			},
+		}, false)
 	}
 
-	for range controlPlaneNodes {
-		suite.Require().NoError(<-errCh)
-	}
+	// verify that etcd data directory doesn't exist on the nodes
+	for _, node := range controlPlaneNodes {
+		stream, err := suite.Client.MachineClient.List(client.WithNode(suite.ctx, node), &machineapi.ListRequest{Root: filepath.Join(constants.EtcdDataPath, "member")})
+		suite.Require().NoError(err)
 
-	suite.ClearConnectionRefused(suite.ctx, controlPlaneNodes...)
+		_, err = stream.Recv()
+		suite.Require().Error(err)
+		suite.Require().Equal(client.StatusCode(err), codes.Unknown)
+		suite.Require().Contains(client.Status(err).Message(), "no such file or directory")
+	}
 
 	suite.T().Logf("recovering etcd snapshot at node %q", recoverNode)
 
 	suite.Require().NoError(suite.recoverEtcd(recoverNode, bytes.NewReader(snapshot.Bytes())))
 
 	suite.AssertClusterHealthy(suite.ctx)
-
-	for _, node := range controlPlaneNodes {
-		postReset, err := suite.HashKubeletCert(suite.ctx, node)
-		suite.Require().NoError(err)
-
-		suite.Assert().NotEqual(postReset, preReset[node], "kubelet cert hasn't changed for node %q", node)
-	}
 }
 
 func (suite *EtcdRecoverSuite) snapshotEtcd(snapshotNode string, dest io.Writer) error {

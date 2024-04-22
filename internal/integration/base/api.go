@@ -582,6 +582,102 @@ func (apiSuite *APISuite) PatchV1Alpha1Config(provider config.Provider, patch fu
 	return bytes
 }
 
+// ResetNode wraps the reset node sequence with checks, waiting for the reset to finish and verifying the result.
+//
+//nolint:gocyclo
+func (apiSuite *APISuite) ResetNode(ctx context.Context, node string, resetSpec *machineapi.ResetRequest, runHealthChecks bool) {
+	apiSuite.T().Logf("resetting node %q with graceful %v mode %s, system %v, user %v", node, resetSpec.Graceful, resetSpec.Mode, resetSpec.SystemPartitionsToWipe, resetSpec.UserDisksToWipe)
+
+	nodeCtx := client.WithNode(ctx, node)
+
+	// any reset should lead to a reboot, so read boot_id before reboot
+	bootIDBefore, err := apiSuite.ReadBootID(nodeCtx)
+	apiSuite.Require().NoError(err)
+
+	// figure out if EPHEMERAL is going to be reset
+	ephemeralIsGoingToBeReset := false
+
+	if len(resetSpec.SystemPartitionsToWipe) == 0 && len(resetSpec.UserDisksToWipe) == 0 {
+		ephemeralIsGoingToBeReset = true
+	} else {
+		for _, part := range resetSpec.SystemPartitionsToWipe {
+			if part.Label == constants.EphemeralPartitionLabel {
+				ephemeralIsGoingToBeReset = true
+
+				break
+			}
+		}
+	}
+
+	preReset, err := apiSuite.HashKubeletCert(ctx, node)
+	apiSuite.Require().NoError(err)
+
+	resp, err := apiSuite.Client.ResetGenericWithResponse(nodeCtx, resetSpec)
+	apiSuite.Require().NoError(err)
+
+	actorID := resp.Messages[0].ActorId
+
+	eventCh := make(chan client.EventResult)
+
+	// watch for events
+	apiSuite.Require().NoError(apiSuite.Client.EventsWatchV2(nodeCtx, eventCh, client.WithActorID(actorID), client.WithTailEvents(-1)))
+
+	waitTimer := time.NewTimer(5 * time.Minute)
+	defer waitTimer.Stop()
+
+waitLoop:
+	for {
+		select {
+		case ev := <-eventCh:
+			apiSuite.Require().NoError(ev.Error)
+
+			switch msg := ev.Event.Payload.(type) {
+			case *machineapi.SequenceEvent:
+				if msg.Error != nil {
+					apiSuite.FailNow("reset failed", "%s: %s", msg.Error.Message, msg.Error.Code)
+				}
+			case *machineapi.PhaseEvent:
+				if msg.Action == machineapi.PhaseEvent_START && msg.Phase == "unmountSystem" {
+					// about to be reset, break waitLoop
+					break waitLoop
+				}
+
+				if msg.Action == machineapi.PhaseEvent_STOP {
+					apiSuite.T().Logf("reset phase %q finished", msg.Phase)
+				}
+			}
+		case <-waitTimer.C:
+			apiSuite.FailNow("timeout waiting for reset to finish")
+		case <-ctx.Done():
+			apiSuite.FailNow("context canceled")
+		}
+	}
+
+	// wait for the apid to be shut down
+	time.Sleep(10 * time.Second)
+
+	apiSuite.AssertBootIDChanged(nodeCtx, bootIDBefore, node, 3*time.Minute)
+
+	apiSuite.ClearConnectionRefused(ctx, node)
+
+	if runHealthChecks {
+		if apiSuite.Cluster != nil {
+			// without cluster state we can't do deep checks, but basic reboot test still works
+			// NB: using `ctx` here to have client talking to init node by default
+			apiSuite.AssertClusterHealthy(ctx)
+		}
+
+		postReset, err := apiSuite.HashKubeletCert(ctx, node)
+		apiSuite.Require().NoError(err)
+
+		if ephemeralIsGoingToBeReset {
+			apiSuite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
+		} else {
+			apiSuite.Assert().Equal(preReset, postReset, "ephemeral partition was not reset")
+		}
+	}
+}
+
 // TearDownSuite closes Talos API client.
 func (apiSuite *APISuite) TearDownSuite() {
 	if apiSuite.Client != nil {
