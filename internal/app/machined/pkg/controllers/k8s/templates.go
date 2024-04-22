@@ -589,4 +589,20 @@ spec:
     protocol: TCP
     targetPort: 53
   type: ClusterIP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: host-dns
+  namespace: kube-system
+subsets:
+  - addresses:
+    - ip: {{ .ServiceHostDNSAddress }}
+    ports:
+    - name: dns
+      port: 53
+      protocol: UDP
+    - name: dns-tcp
+      port: 53
+      protocol: TCP
 `)
