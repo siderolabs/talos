@@ -1036,7 +1036,7 @@ func (b *Bridge) Interfaces() []string {
 // STP implements the config.Bridge interface.
 func (b *Bridge) STP() config.STP {
 	if b.BridgeSTP == nil {
-		return nil
+		return (*STP)(nil)
 	}
 
 	return b.BridgeSTP
