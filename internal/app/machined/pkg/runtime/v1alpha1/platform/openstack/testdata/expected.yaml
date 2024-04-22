@@ -147,7 +147,7 @@ routes:
       gateway: fd00::1
       outLinkName: eth1
       table: main
-      priority: 1024
+      priority: 2048
       scope: global
       type: unicast
       flags: ""
