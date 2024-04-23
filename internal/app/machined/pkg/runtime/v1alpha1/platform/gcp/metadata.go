@@ -41,7 +41,7 @@ type NetworkInterfaceConfig struct {
 	MTU         int      `json:"mtu,omitempty"`
 }
 
-func (g *GCP) getMetadata(context.Context) (*MetadataConfig, error) {
+func (g *GCP) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 	var (
 		meta MetadataConfig
 		err  error
@@ -55,7 +55,7 @@ func (g *GCP) getMetadata(context.Context) (*MetadataConfig, error) {
 		return nil, err
 	}
 
-	instanceType, err := metadata.Get("instance/machine-type")
+	instanceType, err := metadata.GetWithContext(ctx, "instance/machine-type")
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (g *GCP) getMetadata(context.Context) (*MetadataConfig, error) {
 		return nil, err
 	}
 
-	meta.Preempted, err = metadata.Get("instance/scheduling/preemptible")
+	meta.Preempted, err = metadata.GetWithContext(ctx, "instance/scheduling/preemptible")
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +82,8 @@ func (g *GCP) getMetadata(context.Context) (*MetadataConfig, error) {
 	return &meta, nil
 }
 
-func (g *GCP) getNetworkMetadata(context.Context) ([]NetworkInterfaceConfig, error) {
-	metadataNetworkConfigDl, err := metadata.Get("instance/network-interfaces/?recursive=true&alt=json")
+func (g *GCP) getNetworkMetadata(ctx context.Context) ([]NetworkInterfaceConfig, error) {
+	metadataNetworkConfigDl, err := metadata.GetWithContext(ctx, "instance/network-interfaces/?recursive=true&alt=json")
 	if err != nil {
 		return nil, err
 	}

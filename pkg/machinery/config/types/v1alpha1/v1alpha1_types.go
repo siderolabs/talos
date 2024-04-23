@@ -15,7 +15,7 @@ package v1alpha1
 
 //go:generate docgen -output ./v1alpha1_types_doc.go ./v1alpha1_types.go
 
-//go:generate deepcopy-gen --input-dirs ../v1alpha1/ --go-header-file ../../../../../hack/boilerplate.txt --bounding-dirs ../v1alpha1 -O zz_generated.deepcopy
+//go:generate deepcopy-gen --go-header-file ../../../../../hack/boilerplate.txt --bounding-dirs ../v1alpha1 --output-file zz_generated.deepcopy
 
 //docgen:jsonschema
 
