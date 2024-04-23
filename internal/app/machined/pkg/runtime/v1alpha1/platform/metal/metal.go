@@ -76,7 +76,7 @@ func (m *Metal) Configuration(ctx context.Context, r state.State) ([]byte, error
 
 	switch *option {
 	case constants.MetalConfigISOLabel:
-		return readConfigFromISO()
+		return readConfigFromISO(ctx, r)
 	default:
 		if err := netutils.Wait(ctx, r); err != nil {
 			return nil, err
@@ -119,7 +119,11 @@ func (m *Metal) Mode() runtime.Mode {
 	return runtime.ModeMetal
 }
 
-func readConfigFromISO() ([]byte, error) {
+func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
+	if err := netutils.WaitForDevicesReady(ctx, r); err != nil {
+		return nil, fmt.Errorf("failed to wait for devices: %w", err)
+	}
+
 	dev, err := probe.GetDevWithFileSystemLabel(constants.MetalConfigISOLabel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find %s iso: %w", constants.MetalConfigISOLabel, err)

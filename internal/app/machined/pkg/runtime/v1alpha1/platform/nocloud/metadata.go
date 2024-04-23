@@ -144,7 +144,12 @@ func (n *Nocloud) configFromNetwork(ctx context.Context, metaBaseURL string, r s
 	return metaConfig, networkConfig, machineConfig, err
 }
 
-func (n *Nocloud) configFromCD() (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+//nolint:gocyclo
+func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+	if err := netutils.WaitForDevicesReady(ctx, r); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to wait for devices: %w", err)
+	}
+
 	var dev *probe.ProbedBlockDevice
 
 	dev, err = probe.GetDevWithFileSystemLabel(strings.ToLower(configISOLabel))
@@ -244,7 +249,7 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataCon
 	if networkSource && metaBaseURL != "" {
 		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromNetwork(ctx, metaBaseURL, r)
 	} else {
-		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromCD()
+		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromCD(ctx, r)
 	}
 
 	metadata = &MetadataConfig{}

@@ -63,7 +63,7 @@ type ExtensionServiceConfigStatusCondition struct {
 	serviceName string
 }
 
-// NewExtensionServiceConfigStatusCondition builds a coondition which waits for extension service config to be available.
+// NewExtensionServiceConfigStatusCondition builds a condition which waits for extension service config to be available.
 func NewExtensionServiceConfigStatusCondition(state state.State, serviceName string) *ExtensionServiceConfigStatusCondition {
 	return &ExtensionServiceConfigStatusCondition{
 		state:       state,
@@ -81,6 +81,40 @@ func (condition *ExtensionServiceConfigStatusCondition) Wait(ctx context.Context
 		ctx,
 		resource.NewMetadata(NamespaceName, ExtensionServiceConfigStatusType, condition.serviceName, resource.VersionUndefined),
 		state.WithEventTypes(state.Created, state.Updated),
+	)
+
+	return err
+}
+
+// DevicesStatusCondition implements condition which waits for devices to be ready.
+type DevicesStatusCondition struct {
+	state state.State
+}
+
+// NewDevicesStatusCondition builds a condition which waits for devices to be ready.
+func NewDevicesStatusCondition(state state.State) *DevicesStatusCondition {
+	return &DevicesStatusCondition{
+		state: state,
+	}
+}
+
+func (condition *DevicesStatusCondition) String() string {
+	return "devices to be ready"
+}
+
+// Wait implements condition interface.
+func (condition *DevicesStatusCondition) Wait(ctx context.Context) error {
+	_, err := condition.state.WatchFor(
+		ctx,
+		resource.NewMetadata(NamespaceName, DevicesStatusType, DevicesID, resource.VersionUndefined),
+		state.WithEventTypes(state.Created, state.Updated),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			if resource.IsTombstone(r) {
+				return false, nil
+			}
+
+			return r.(*DevicesStatus).TypedSpec().Ready, nil
+		}),
 	)
 
 	return err

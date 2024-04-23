@@ -196,7 +196,7 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 
 // Configuration implements the runtime.Platform interface.
 func (o *OpenNebula) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
-	oneContextPlain, err := o.contextFromCD()
+	oneContextPlain, err := o.contextFromCD(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (o *OpenNebula) KernelArgs(string) procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *OpenNebula) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	oneContext, err := o.contextFromCD()
+	oneContext, err := o.contextFromCD(ctx, st)
 	if stderrors.Is(err, errors.ErrNoConfigSource) {
 		err = nil
 	}
