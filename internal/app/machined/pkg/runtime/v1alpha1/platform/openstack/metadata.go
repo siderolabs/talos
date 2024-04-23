@@ -12,11 +12,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 )
 
@@ -108,7 +110,12 @@ func (o *Openstack) configFromNetwork(ctx context.Context) (metaConfig []byte, n
 	return metaConfig, networkConfig, machineConfig, err
 }
 
-func (o *Openstack) configFromCD() (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+//nolint:gocyclo
+func (o *Openstack) configFromCD(ctx context.Context, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+	if err := netutils.WaitForDevicesReady(ctx, r); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to wait for devices: %w", err)
+	}
+
 	var dev *probe.ProbedBlockDevice
 
 	dev, err = probe.GetDevWithFileSystemLabel(configISOLabel)

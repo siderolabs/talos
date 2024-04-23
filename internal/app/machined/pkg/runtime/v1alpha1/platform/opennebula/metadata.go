@@ -6,17 +6,20 @@
 package opennebula
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-blockdevice/blockdevice/filesystem"
 	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 )
 
 const (
@@ -25,7 +28,11 @@ const (
 	mnt            = "/mnt"
 )
 
-func (o *OpenNebula) contextFromCD() (oneContext []byte, err error) {
+func (o *OpenNebula) contextFromCD(ctx context.Context, r state.State) (oneContext []byte, err error) {
+	if err := netutils.WaitForDevicesReady(ctx, r); err != nil {
+		return nil, fmt.Errorf("failed to wait for devices: %w", err)
+	}
+
 	var dev *probe.ProbedBlockDevice
 
 	dev, err = probe.GetDevWithFileSystemLabel(strings.ToLower(configISOLabel))

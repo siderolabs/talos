@@ -58,14 +58,20 @@ func TestParseMetadata(t *testing.T) {
 
 			eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
 			eth0.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf7}
+			eth0.TypedSpec().Type = nethelpers.LinkEther
+			eth0.TypedSpec().Kind = ""
 			require.NoError(t, st.Create(context.TODO(), eth0))
 
 			eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
 			eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf8}
+			eth1.TypedSpec().Type = nethelpers.LinkEther
+			eth1.TypedSpec().Kind = ""
 			require.NoError(t, st.Create(context.TODO(), eth1))
 
 			eth2 := network.NewLinkStatus(network.NamespaceName, "eth2")
 			eth2.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf9}
+			eth2.TypedSpec().Type = nethelpers.LinkEther
+			eth2.TypedSpec().Kind = ""
 			require.NoError(t, st.Create(context.TODO(), eth2))
 
 			var m nocloud.NetworkConfig

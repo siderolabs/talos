@@ -18,6 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // Wait for the network to be ready to interact with platform metadata services.
@@ -39,11 +40,21 @@ func WaitInterfaces(ctx context.Context, r state.State) error {
 			return fmt.Errorf("error listing host interfaces: %w", err)
 		}
 
-		if hostInterfaces.Len() != 0 {
+		numPhysical := 0
+
+		for iter := hostInterfaces.Iterator(); iter.Next(); {
+			iface := iter.Value()
+
+			if iface.TypedSpec().Physical() {
+				numPhysical++
+			}
+		}
+
+		if numPhysical > 0 {
 			return nil
 		}
 
-		log.Printf("waiting for network interface appearse...")
+		log.Printf("waiting for physical network interfaces to appear...")
 
 		interval := backoff.NextBackOff()
 
@@ -55,6 +66,13 @@ func WaitInterfaces(ctx context.Context, r state.State) error {
 	}
 
 	return nil
+}
+
+// WaitForDevicesReady waits for devices to be ready.
+func WaitForDevicesReady(ctx context.Context, r state.State) error {
+	log.Printf("waiting for devices to be ready...")
+
+	return runtime.NewDevicesStatusCondition(r).Wait(ctx)
 }
 
 // RetryFetch retries fetching from metadata service.

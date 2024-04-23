@@ -351,7 +351,7 @@ func (o *Openstack) ParseMetadata(
 
 // Configuration implements the runtime.Platform interface.
 func (o *Openstack) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
-	_, _, machineConfig, err = o.configFromCD()
+	_, _, machineConfig, err = o.configFromCD(ctx, r)
 	if err != nil {
 		if err = netutils.Wait(ctx, r); err != nil {
 			return nil, err
@@ -389,7 +389,7 @@ func (o *Openstack) KernelArgs(string) procfs.Parameters {
 func (o *Openstack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
 	networkSource := false
 
-	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD()
+	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD(ctx, st)
 	if err != nil {
 		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx)
 		if stderrors.Is(err, errors.ErrNoConfigSource) {
