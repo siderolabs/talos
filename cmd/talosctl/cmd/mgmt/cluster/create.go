@@ -77,6 +77,7 @@ const (
 	networkIPv6Flag               = "ipv6"
 	networkMTUFlag                = "mtu"
 	networkCIDRFlag               = "cidr"
+	networkNoMasqueradeCIDRsFlag  = "no-masquerade-cidrs"
 	nameserversFlag               = "nameservers"
 	clusterDiskSizeFlag           = "disk"
 	clusterDiskPreallocateFlag    = "disk-preallocate"
@@ -115,6 +116,7 @@ var (
 	extraUEFISearchPaths       []string
 	configDebug                bool
 	networkCIDR                string
+	networkNoMasqueradeCIDRs   []string
 	networkMTU                 int
 	networkIPv4                bool
 	networkIPv6                bool
@@ -345,6 +347,19 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		}
 	}
 
+	noMasqueradeCIDRs := make([]netip.Prefix, 0, len(networkNoMasqueradeCIDRs))
+
+	for _, cidr := range networkNoMasqueradeCIDRs {
+		var parsedCIDR netip.Prefix
+
+		parsedCIDR, err = netip.ParsePrefix(cidr)
+		if err != nil {
+			return fmt.Errorf("error parsing non-masquerade CIDR %q: %w", cidr, err)
+		}
+
+		noMasqueradeCIDRs = append(noMasqueradeCIDRs, parsedCIDR)
+	}
+
 	// Parse nameservers
 	nameserverIPs := make([]netip.Addr, len(nameservers))
 
@@ -386,6 +401,7 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 		Network: provision.NetworkRequest{
 			Name:              clusterName,
 			CIDRs:             cidrs,
+			NoMasqueradeCIDRs: noMasqueradeCIDRs,
 			GatewayAddrs:      gatewayIPs,
 			MTU:               networkMTU,
 			Nameservers:       nameserverIPs,
@@ -1115,6 +1131,7 @@ func init() {
 	createCmd.Flags().BoolVar(&configDebug, configDebugFlag, false, "enable debug in Talos config to send service logs to the console")
 	createCmd.Flags().IntVar(&networkMTU, networkMTUFlag, 1500, "MTU of the cluster network")
 	createCmd.Flags().StringVar(&networkCIDR, networkCIDRFlag, "10.5.0.0/24", "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
+	createCmd.Flags().StringSliceVar(&networkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, []string{}, "list of CIDRs to exclude from NAT (QEMU provisioner only)")
 	createCmd.Flags().BoolVar(&networkIPv4, networkIPv4Flag, true, "enable IPv4 network in the cluster")
 	createCmd.Flags().BoolVar(&networkIPv6, networkIPv6Flag, false, "enable IPv6 network in the cluster (QEMU provisioner only)")
 	createCmd.Flags().StringVar(&wireguardCIDR, "wireguard-cidr", "", "CIDR of the wireguard network")

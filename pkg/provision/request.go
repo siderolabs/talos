@@ -58,11 +58,12 @@ type CNIConfig struct {
 
 // NetworkRequest describes cluster network.
 type NetworkRequest struct {
-	Name         string
-	CIDRs        []netip.Prefix
-	GatewayAddrs []netip.Addr
-	MTU          int
-	Nameservers  []netip.Addr
+	Name              string
+	CIDRs             []netip.Prefix
+	NoMasqueradeCIDRs []netip.Prefix
+	GatewayAddrs      []netip.Addr
+	MTU               int
+	Nameservers       []netip.Addr
 
 	LoadBalancerPorts []int
 

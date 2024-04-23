@@ -61,15 +61,16 @@ type LaunchConfig struct {
 	Config string
 
 	// Network
-	BridgeName    string
-	NetworkConfig *libcni.NetworkConfigList
-	CNI           provision.CNIConfig
-	IPs           []netip.Addr
-	CIDRs         []netip.Prefix
-	Hostname      string
-	GatewayAddrs  []netip.Addr
-	MTU           int
-	Nameservers   []netip.Addr
+	BridgeName        string
+	NetworkConfig     *libcni.NetworkConfigList
+	CNI               provision.CNIConfig
+	IPs               []netip.Addr
+	CIDRs             []netip.Prefix
+	NoMasqueradeCIDRs []netip.Prefix
+	Hostname          string
+	GatewayAddrs      []netip.Addr
+	MTU               int
+	Nameservers       []netip.Addr
 
 	// PXE
 	TFTPServer       string
@@ -224,6 +225,12 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 	// no need to clean up the rule, as CNI drops the whole chain
 	if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", "255.255.255.255/32", "-j", "ACCEPT"); err != nil {
 		return fmt.Errorf("failed to insert iptables rule to allow broadcast traffic: %w", err)
+	}
+
+	for _, cidr := range config.NoMasqueradeCIDRs {
+		if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", cidr.String(), "-j", "ACCEPT"); err != nil {
+			return fmt.Errorf("failed to insert iptables rule to allow non-masquerade traffic to cidr %q: %w", cidr.String(), err)
+		}
 	}
 
 	config.tapName = tapIface.Name

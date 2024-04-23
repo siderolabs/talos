@@ -140,6 +140,7 @@ talosctl cluster create [flags]
       --memory-workers int                       the limit on memory usage in MB (each worker/VM) (default 2048)
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use (default [8.8.8.8,1.1.1.1,2001:4860:4860::8888,2606:4700:4700::1111])
+      --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT (QEMU provisioner only)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-boot-phase-finished-check           skip waiting for node to finish boot phase

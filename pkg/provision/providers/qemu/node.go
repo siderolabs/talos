@@ -133,6 +133,7 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		NetworkConfig:     state.VMCNIConfig,
 		CNI:               clusterReq.Network.CNI,
 		CIDRs:             clusterReq.Network.CIDRs,
+		NoMasqueradeCIDRs: clusterReq.Network.NoMasqueradeCIDRs,
 		IPs:               nodeReq.IPs,
 		GatewayAddrs:      clusterReq.Network.GatewayAddrs,
 		MTU:               clusterReq.Network.MTU,

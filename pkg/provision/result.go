@@ -38,10 +38,11 @@ type ClusterInfo struct {
 
 // NetworkInfo describes cluster network.
 type NetworkInfo struct {
-	Name         string
-	CIDRs        []netip.Prefix
-	GatewayAddrs []netip.Addr
-	MTU          int
+	Name              string
+	CIDRs             []netip.Prefix
+	GatewayAddrs      []netip.Addr
+	MTU               int
+	NoMasqueradeCIDRs []netip.Prefix
 }
 
 // NodeInfo describes a node.
