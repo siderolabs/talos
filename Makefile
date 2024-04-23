@@ -9,7 +9,6 @@ IMAGE_REGISTRY ?= $(REGISTRY)
 IMAGE_TAG ?= $(TAG)$(TAG_SUFFIX)
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
 REGISTRY_AND_USERNAME := $(IMAGE_REGISTRY)/$(USERNAME)
-DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
@@ -21,6 +20,9 @@ TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-3-g7e5a248
 PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.8.0-alpha.0-16-g9ebfd1b
 EXTRAS ?= v1.8.0-alpha.0-1-g01ad9f5
+
+KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
+CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
@@ -84,7 +86,6 @@ ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
 TALOSCTL_EXECUTABLE := $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-$(ARCH)
 INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
-MODULE_SIG_VERIFY_DEFAULT_TARGET := module-sig-verify-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.30.1
@@ -403,7 +404,7 @@ talosctl-cni-bundle: ## Creates a compressed tarball that includes CNI bundle fo
 cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
 	@docker run --rm -v $(PWD):/src -w /src \
 		-e TAG=$(TAG) -e ARTIFACTS=$(ARTIFACTS) -e ABBREV_TAG=$(ABBREV_TAG) \
-		-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SVC_ACCT \
+		-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
 		-e AZURE_SUBSCRIPTION_ID -e AZURE_CLIENT_ID -e AZURE_CLIENT_SECRET -e AZURE_TENANT_ID \
 		golang:$(GO_VERSION) \
 		./hack/cloud-image-uploader.sh $(CLOUD_IMAGES_EXTRA_ARGS)
@@ -456,9 +457,6 @@ $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
 
-$(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(MODULE_SIG_VERIFY_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64
-
 $(ARTIFACTS)/kubectl:
 	@mkdir -p $(ARTIFACTS)
 	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
@@ -484,7 +482,7 @@ $(ARTIFACTS)/cilium:
 	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
 	@chmod +x $(ARTIFACTS)/cilium
 
-external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium $(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64
+external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium
 
 e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 external-artifacts ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
@@ -497,8 +495,6 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 external-artifacts 
 		ARTIFACTS=$(ARTIFACTS) \
 		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
-		MODULE_SIG_VERIFY=$(PWD)/$(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64 \
-		KERNEL_MODULE_SIGNING_PUBLIC_KEY=$(PWD)/$(ARTIFACTS)/signing_key.x509 \
 		SHORT_INTEGRATION_TEST=$(SHORT_INTEGRATION_TEST) \
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
@@ -526,9 +522,9 @@ provision-tests-track-%:
 		REGISTRY=$(IMAGE_REGISTRY) \
 		ARTIFACTS=$(ARTIFACTS)
 
-installer-with-extensions: $(ARTIFACTS)/extensions-metadata
+installer-with-extensions: $(ARTIFACTS)/extensions/_out/extensions-metadata
 	$(MAKE) image-installer \
-		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) $(shell cat $(ARTIFACTS)/extensions-metadata | grep -vE 'tailscale|xen-guest-agent|nvidia' | xargs -n 1 echo --system-extension-image)"
+		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) $(shell cat $(ARTIFACTS)/extensions/_out/extensions-metadata | grep -vE 'tailscale|xen-guest-agent|nvidia' | xargs -n 1 echo --system-extension-image)"
 	crane push $(ARTIFACTS)/installer-amd64.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-amd64-extensions
 	echo -n "$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-amd64-extensions" | jq -Rs -f hack/test/extensions/extension-patch-filter.jq | yq eval ".[] | split_doc" -P > $(ARTIFACTS)/extensions-patch.yaml
 
@@ -557,27 +553,27 @@ release-artifacts:
 
 # Utilities
 
+.PHONY: rekres
+rekres:
+	@docker pull $(KRES_IMAGE)
+	@docker run --rm --net=host --user $(shell id -u):$(shell id -g) -v $(PWD):/src -w /src -e GITHUB_TOKEN $(KRES_IMAGE)
+
 .PHONY: conformance
-conformance: ## Performs policy checks against the commit and source code.
-	docker run --rm -it -v $(PWD):/src -w /src ghcr.io/siderolabs/conform:latest enforce
+conformance:
+	@docker pull $(CONFORMANCE_IMAGE)
+	@docker run --rm -it -v $(PWD):/src -w /src $(CONFORMANCE_IMAGE) enforce
 
 .PHONY: release-notes
 release-notes:
 	ARTIFACTS=$(ARTIFACTS) ./hack/release.sh $@ $(ARTIFACTS)/RELEASE_NOTES.md $(TAG)
 
-.PHONY: login
-login: ## Logs in to the configured container registry.
-ifeq ($(DOCKER_LOGIN_ENABLED), true)
-	@docker login --username "$(GHCR_USERNAME)" --password "$(GHCR_PASSWORD)" $(IMAGE_REGISTRY)
-endif
-
-push: login ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the generated tag.
+push: ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the generated tag.
 	@$(MAKE) installer PUSH=true
 	@$(MAKE) imager PUSH=true
 	@$(MAKE) talos PUSH=true
 	@$(MAKE) talosctl-image PUSH=true
 
-push-%: login ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the specified tag (e.g. push-latest).
+push-%: ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the specified tag (e.g. push-latest).
 	@$(MAKE) push IMAGE_TAG=$*
 
 .PHONY: clean

@@ -1,0 +1,68 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-05-21T13:52:48Z by kres 0290180.
+
+name: integration-extensions-cron
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  schedule:
+    - cron: 30 6 * * *
+jobs:
+  default:
+    runs-on:
+      - self-hosted
+      - talos
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: checkout extensions
+        uses: actions/checkout@v4
+        with:
+          path: _out/extensions
+          ref: main
+          repository: siderolabs/extensions
+      - name: set variables
+        run: |
+          cat _out/talos-metadata >> "$GITHUB_ENV"
+      - name: build extensions
+        env:
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make all extensions-metadata -C _out/extensions
+      - name: installer extensions
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make installer-with-extensions
+      - name: e2e-extensions
+        env:
+          EXTRA_TEST_ARGS: -talos.extensions.qemu
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_EXTRA_DISKS: "3"
+          QEMU_MEMORY_WORKERS: "4096"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.yaml'
+        run: |
+          sudo -E make e2e-qemu

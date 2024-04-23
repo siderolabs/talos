@@ -173,7 +173,7 @@ function create_cluster {
     --disk=15360 \
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \
     --extra-disks-size="${QEMU_EXTRA_DISKS_SIZE:-5120}" \
-    --mtu=1450 \
+    --mtu=1430 \
     --memory=2048 \
     --memory-workers="${QEMU_MEMORY_WORKERS:-2048}" \
     --cpus="${QEMU_CPUS:-2}" \

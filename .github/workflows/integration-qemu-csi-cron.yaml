@@ -1,0 +1,42 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-05-16T11:03:04Z by kres 48517a9.
+
+name: integration-qemu-csi-cron
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  schedule:
+    - cron: 30 3 * * *
+jobs:
+  default:
+    runs-on:
+      - self-hosted
+      - talos
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-qemu-csi
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_CPUS_WORKERS: "4"
+          QEMU_EXTRA_DISKS: "1"
+          QEMU_EXTRA_DISKS_SIZE: "12288"
+          QEMU_MEMORY_WORKERS: "5120"
+          QEMU_WORKERS: "3"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_TEST: run_csi_tests
+        run: |
+          sudo -E make e2e-qemu

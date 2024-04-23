@@ -12,8 +12,6 @@
 #  - ARTIFACTS
 #  - TALOSCTL
 #  - INTEGRATION_TEST
-#  - MODULE_SIG_VERIFY
-#  - KERNEL_MODULE_SIGNING_PUBLIC_KEY
 #  - SHORT_INTEGRATION_TEST
 #  - CUSTOM_CNI_URL
 #  - KUBECTL
@@ -108,7 +106,7 @@ function create_cluster_capi {
 
   # Wait for nodes to check in
   timeout=$(($(date +%s) + TIMEOUT))
-  until ${KUBECTL} get nodes -o go-template='{{ len .items }}' | grep ${NUM_NODES} >/dev/null; do
+  until ${KUBECTL} get nodes -o go-template='{{ len .items }}' | grep "${NUM_NODES}" >/dev/null; do
     [[ $(date +%s) -gt $timeout ]] && exit 1
     ${KUBECTL} get nodes -o wide && :
     sleep 10
@@ -210,7 +208,7 @@ function build_registry_mirrors {
   if [[ "${CI:-false}" == "true" ]]; then
     REGISTRY_MIRROR_FLAGS=()
 
-    for registry in docker.io registry.k8s.io quay.io gcr.io ghcr.io registry.dev.talos-systems.io; do
+    for registry in docker.io registry.k8s.io quay.io gcr.io ghcr.io; do
       local service="registry-${registry//./-}.ci.svc"
       addr=$(python3 -c "import socket; print(socket.gethostbyname('${service}'))")
 
@@ -218,7 +216,7 @@ function build_registry_mirrors {
     done
   else
     # use the value from the environment, if present
-    REGISTRY_MIRROR_FLAGS=(${REGISTRY_MIRROR_FLAGS:-})
+    REGISTRY_MIRROR_FLAGS=("${REGISTRY_MIRROR_FLAGS:-}")
   fi
 }
 

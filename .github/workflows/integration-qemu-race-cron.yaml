@@ -1,0 +1,52 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-05-21T13:52:48Z by kres 0290180.
+
+name: integration-qemu-race-cron
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  schedule:
+    - cron: 30 3 * * *
+jobs:
+  default:
+    runs-on:
+      - self-hosted
+      - talos
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: build-race
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          TAG_SUFFIX: -race
+          WITH_RACE: "1"
+        run: |
+          make initramfs installer
+      - name: e2e-qemu-race
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TAG_SUFFIX: -race
+        run: |
+          sudo -E make e2e-qemu

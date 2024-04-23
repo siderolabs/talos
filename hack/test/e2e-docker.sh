@@ -17,11 +17,11 @@ function create_cluster {
     --image="${IMAGE}" \
     --controlplanes=1 \
     --workers=1 \
-    --mtu=1450 \
+    --mtu=1430 \
     --memory=2048 \
     --cpus=2.0 \
     --with-init-node=false \
-    ${REGISTRY_MIRROR_FLAGS} \
+    "${REGISTRY_MIRROR_FLAGS[@]}" \
     --crashdump
 
   "${TALOSCTL}" config node 10.5.0.2

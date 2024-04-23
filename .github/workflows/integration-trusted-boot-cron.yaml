@@ -1,0 +1,38 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-05-16T11:03:04Z by kres 48517a9.
+
+name: integration-trusted-boot-cron
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  schedule:
+    - cron: 30 3 * * *
+jobs:
+  default:
+    runs-on:
+      - self-hosted
+      - talos
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: integration-trusted-boot
+        env:
+          EXTRA_TEST_ARGS: -talos.trustedboot
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_TRUSTED_BOOT_ISO: "true"
+        run: |
+          sudo -E make e2e-qemu

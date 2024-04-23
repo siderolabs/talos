@@ -1,0 +1,1540 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-05-21T18:46:51Z by kres 04ecdaf.
+
+name: default
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  push:
+    branches:
+      - main
+      - release-*
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - main
+      - release-*
+jobs:
+  default:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && github.event_name == 'pull_request'
+    outputs:
+      labels: ${{ steps.retrieve-pr-labels.outputs.result }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: external-artifacts
+        run: |
+          make external-artifacts
+      - name: generate
+        run: |
+          make generate docs
+      - name: uki-certs
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
+      - name: check-dirty
+        run: |
+          make check-dirty
+      - name: build
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+      - name: lint
+        run: |
+          make lint
+      - name: talosctl-cni-bundle
+        run: |
+          make talosctl-cni-bundle
+      - name: iso
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make iso secureboot-iso
+      - name: images-essential
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make images-essential
+      - name: unit-tests
+        run: |
+          make unit-tests
+      - name: unit-tests-race
+        run: |
+          make unit-tests-race
+      - name: coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: _out/coverage.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
+        timeout-minutes: 3
+      - name: Generate executable list
+        run: |
+          find _out -type f -executable > _out/executable-artifacts
+      - name: save artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: |-
+            _out
+            !_out/coverage.txt
+          retention-days: "5"
+      - name: Retrieve PR labels
+        id: retrieve-pr-labels
+        uses: actions/github-script@v7
+        with:
+          retries: "3"
+          script: |
+            if (context.eventName != "pull_request") { return "[]" }
+
+            const resp = await github.rest.issues.get({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+            })
+
+            return resp.data.labels.map(label => label.name)
+  e2e-docker-short:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-docker
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+        run: |
+          make e2e-docker
+  e2e-iso:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-iso
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          sudo -E make e2e-iso
+  e2e-qemu-short:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-qemu
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+        run: |
+          sudo -E make e2e-qemu
+  integration-aws:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Mask secrets
+        run: |
+          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-aws-prepare
+        env:
+          E2E_AWS_TARGET: default
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make e2e-aws-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-aws
+        run: |
+          make e2e-aws
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+  integration-aws-nvidia-nonfree:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Mask secrets
+        run: |
+          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: checkout extensions
+        uses: actions/checkout@v4
+        with:
+          path: _out/extensions
+          ref: main
+          repository: siderolabs/extensions
+      - name: set variables
+        run: |
+          cat _out/talos-metadata >> "$GITHUB_ENV"
+      - name: build extensions
+        env:
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make nvidia-container-toolkit nonfree-kmod-nvidia extensions-metadata -C _out/extensions
+      - name: e2e-aws-prepare
+        env:
+          E2E_AWS_TARGET: nvidia-nonfree
+          EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make e2e-aws-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-aws-nvidia-nonfree
+        env:
+          EXTRA_TEST_ARGS: -talos.extensions.nvidia
+          TEST_NUM_NODES: "4"
+        run: |
+          make e2e-aws
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+  integration-aws-nvidia-oss:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Mask secrets
+        run: |
+          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: checkout extensions
+        uses: actions/checkout@v4
+        with:
+          path: _out/extensions
+          ref: main
+          repository: siderolabs/extensions
+      - name: set variables
+        run: |
+          cat _out/talos-metadata >> "$GITHUB_ENV"
+      - name: build extensions
+        env:
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make nvidia-container-toolkit nvidia-open-gpu-kernel-modules extensions-metadata -C _out/extensions
+      - name: e2e-aws-prepare
+        env:
+          E2E_AWS_TARGET: nvidia-oss
+          EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make e2e-aws-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-aws-nvidia-oss
+        env:
+          EXTRA_TEST_ARGS: -talos.extensions.nvidia
+          TEST_NUM_NODES: "4"
+        run: |
+          make e2e-aws
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+  integration-azure:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/azure')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Mask secrets
+        run: |
+          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-azure-prepare
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make e2e-azure-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: azure
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-azure
+        run: |
+          make e2e-azure
+      - name: tf destroy
+        if: always()
+        env:
+          ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
+          TF_E2E_ACTION: destroy
+          TF_E2E_TEST_TYPE: azure
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+  integration-cilium:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/cilium')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-cilium
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_WORKERS: "2"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}]'
+          WITH_CUSTOM_CNI: cilium
+          WITH_FIREWALL: accept
+          WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-cilium-strict
+        env:
+          CILIUM_INSTALL_TYPE: strict
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_WORKERS: "2"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]'
+          WITH_CUSTOM_CNI: cilium
+          WITH_FIREWALL: accept
+          WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-cilium-strict-kubespan
+        env:
+          CILIUM_INSTALL_TYPE: strict
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_WORKERS: "2"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]'
+          WITH_CUSTOM_CNI: cilium
+          WITH_FIREWALL: accept
+          WITH_KUBESPAN: "true"
+          WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: "yes"
+        run: |
+          sudo -E make e2e-qemu
+  integration-cloud-images:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/cloud-images')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Mask secrets
+        run: |
+          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: images
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make images
+      - name: cloud-images
+        run: |
+          make cloud-images
+  integration-equinix-metal:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/equinix-metal')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Mask secrets
+        run: |
+          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-equinix-metal-prepare
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make e2e-equinix-metal-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: equinix-metal
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-equinix-metal
+        run: |
+          make e2e-equinix-metal
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_TEST_TYPE: equinix-metal
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+  integration-extensions:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/extensions')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: checkout extensions
+        uses: actions/checkout@v4
+        with:
+          path: _out/extensions
+          ref: main
+          repository: siderolabs/extensions
+      - name: set variables
+        run: |
+          cat _out/talos-metadata >> "$GITHUB_ENV"
+      - name: build extensions
+        env:
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make all extensions-metadata -C _out/extensions
+      - name: installer extensions
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make installer-with-extensions
+      - name: e2e-extensions
+        env:
+          EXTRA_TEST_ARGS: -talos.extensions.qemu
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_EXTRA_DISKS: "3"
+          QEMU_MEMORY_WORKERS: "4096"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.yaml'
+        run: |
+          sudo -E make e2e-qemu
+  integration-image-factory:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-factory')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: factory-1.6-iso
+        env:
+          FACTORY_BOOT_METHOD: iso
+          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE: "true"
+          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_UPGRADE_VERSION: v1.6.1
+          FACTORY_VERSION: v1.6.0
+          KUBERNETES_VERSION: 1.29.0
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.6-image
+        env:
+          FACTORY_BOOT_METHOD: disk-image
+          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE: "true"
+          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_UPGRADE_VERSION: v1.6.1
+          FACTORY_VERSION: v1.6.0
+          KUBERNETES_VERSION: 1.29.0
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.6-pxe
+        env:
+          FACTORY_BOOT_METHOD: pxe
+          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_VERSION: v1.6.1
+          KUBERNETES_VERSION: 1.29.0
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.6-secureboot
+        env:
+          FACTORY_BOOT_METHOD: secureboot-iso
+          FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_UPGRADE: "true"
+          FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE_VERSION: v1.6.1
+          FACTORY_VERSION: v1.6.0
+          KUBERNETES_VERSION: 1.29.0
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.5-iso
+        env:
+          FACTORY_BOOT_METHOD: iso
+          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE: "true"
+          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_UPGRADE_VERSION: v1.5.5
+          FACTORY_VERSION: v1.5.5
+          KUBERNETES_VERSION: 1.28.5
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.3-iso
+        env:
+          FACTORY_BOOT_METHOD: iso
+          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_UPGRADE: "true"
+          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+          FACTORY_UPGRADE_VERSION: v1.3.7
+          FACTORY_VERSION: v1.3.7
+          KUBERNETES_VERSION: 1.26.5
+        run: |
+          sudo -E make e2e-image-factory
+      - name: factory-1.3-image
+        env:
+          FACTORY_BOOT_METHOD: disk-image
+          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+          FACTORY_VERSION: v1.3.7
+          KUBERNETES_VERSION: 1.26.5
+        run: |
+          sudo -E make e2e-image-factory
+  integration-images:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/images')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: images
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make images
+  integration-misc:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-firewall
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_FIREWALL: block
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-network-chaos
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_NETWORK_CHAOS: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-canal-reset
+        env:
+          CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-bios-cgroupsv1
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/machine/install/extraKernelArgs/-", "value": "talos.unified_cgroup_hierarchy=0"}]'
+          WITH_UEFI: "false"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-disk-image
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          USE_DISK_IMAGE: "true"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_DISK_ENCRYPTION: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-controlplane-port
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONTROL_PLANE_PORT: "443"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-no-cluster-discovery
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CLUSTER_DISCOVERY: "false"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-kubespan
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io\
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CLUSTER_DISCOVERY: "true"
+          WITH_KUBESPAN: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-default-hostname
+        env:
+          DISABLE_DHCP_HOSTNAME: "true"
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-siderolink
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_SIDEROLINK_AGENT: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-siderolink-tunnel
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_SIDEROLINK_AGENT: tunnel
+        run: |
+          sudo -E make e2e-qemu
+  integration-provision-0:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: provision-tests-prepare
+        run: |
+          make provision-tests-prepare
+      - name: provision-tests-track-0
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          sudo -E make provision-tests-track-0
+  integration-provision-1:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: provision-tests-prepare
+        run: |
+          make provision-tests-prepare
+      - name: provision-tests-track-1
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          sudo -E make provision-tests-track-1
+  integration-provision-2:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: provision-tests-prepare
+        run: |
+          make provision-tests-prepare
+      - name: provision-tests-track-2
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          sudo -E make provision-tests-track-2
+  integration-qemu:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-qemu
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          sudo -E make e2e-qemu
+  integration-qemu-csi:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-qemu-csi
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_CPUS_WORKERS: "4"
+          QEMU_EXTRA_DISKS: "1"
+          QEMU_EXTRA_DISKS_SIZE: "12288"
+          QEMU_MEMORY_WORKERS: "5120"
+          QEMU_WORKERS: "3"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_TEST: run_csi_tests
+        run: |
+          sudo -E make e2e-qemu
+  integration-qemu-encrypted-vip:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-qemu
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          WITH_DISK_ENCRYPTION: "true"
+          WITH_KUBESPAN: "true"
+          WITH_VIRTUAL_IP: "true"
+        run: |
+          sudo -E make e2e-qemu
+  integration-qemu-race:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: build-race
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          TAG_SUFFIX: -race
+          WITH_RACE: "1"
+        run: |
+          make initramfs installer
+      - name: e2e-qemu-race
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TAG_SUFFIX: -race
+        run: |
+          sudo -E make e2e-qemu
+  integration-reproducibility-test:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/reproducibility-test')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: reproducibility-test
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make reproducibility-test
+  integration-trusted-boot:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - talos
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot')
+    needs:
+      - default
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: integration-trusted-boot
+        env:
+          EXTRA_TEST_ARGS: -talos.trustedboot
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_TRUSTED_BOOT_ISO: "true"
+        run: |
+          sudo -E make e2e-qemu
+  push:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && github.event_name != 'pull_request'
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: build
+        run: |
+          make talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
+      - name: release-notes
+        run: |
+          make release-notes
+      - name: login-to-registry
+        uses: docker/login-action@v3
+        with:
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+      - name: push
+        run: |
+          make push
+      - name: push-latest
+        if: '!startsWith(github.ref, ''refs/tags/'')'
+        run: |
+          make push-latest
+  tag:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      - self-hosted
+      - generic
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Mask secrets
+        run: |
+          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: build
+        run: |
+          make talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
+      - name: release-notes
+        run: |
+          make release-notes
+      - name: login-to-registry
+        uses: docker/login-action@v3
+        with:
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+      - name: push
+        run: |
+          make push
+      - name: images
+        run: |
+          make images
+      - name: cloud-images
+        run: |
+          make cloud-images
+      - name: Generate Checksums
+        run: |
+          sha256sum _out/akamai-amd64.raw.gz _out/akamai-arm64.raw.gz _out/aws-amd64.raw.zst _out/aws-arm64.raw.zst _out/azure-amd64.vhd.zst _out/azure-arm64.vhd.zst _out/cloud-images.json _out/digital-ocean-amd64.raw.gz _out/digital-ocean-arm64.raw.gz _out/exoscale-amd64.qcow2.zst _out/exoscale-arm64.qcow2.zst _out/gcp-amd64.raw.tar.gz _out/gcp-arm64.raw.tar.gz _out/hcloud-amd64.raw.zst _out/hcloud-arm64.raw.zst _out/initramfs-amd64.xz _out/initramfs-arm64.xz _out/metal-amd64.iso _out/metal-arm64.iso _out/metal-amd64.raw.zst _out/metal-arm64.raw.zst _out/nocloud-amd64.raw.zst _out/nocloud-arm64.raw.zst _out/opennebula-amd64.raw.zst _out/opennebula-arm64.raw.zst _out/openstack-amd64.raw.zst _out/openstack-arm64.raw.zst _out/oracle-amd64.qcow2.zst _out/oracle-arm64.qcow2.zst _out/scaleway-amd64.raw.zst _out/scaleway-arm64.raw.zst _out/sd-boot-amd64.efi _out/sd-boot-arm64.efi _out/sd-stub-amd64.efi _out/sd-stub-arm64.efi _out/talosctl-cni-bundle-amd64.tar.gz _out/talosctl-cni-bundle-arm64.tar.gz _out/talosctl-darwin-amd64 _out/talosctl-darwin-arm64 _out/talosctl-freebsd-amd64 _out/talosctl-freebsd-arm64 _out/talosctl-linux-amd64 _out/talosctl-linux-arm64 _out/talosctl-linux-armv7 _out/talosctl-windows-amd64.exe _out/upcloud-amd64.raw.zst _out/upcloud-arm64.raw.zst _out/vmware-amd64.ova _out/vmware-arm64.ova _out/vmlinuz-amd64 _out/vmlinuz-arm64 _out/vultr-amd64.raw.zst _out/vultr-arm64.raw.zst > _out/sha256sum.txt
+          sha512sum _out/akamai-amd64.raw.gz _out/akamai-arm64.raw.gz _out/aws-amd64.raw.zst _out/aws-arm64.raw.zst _out/azure-amd64.vhd.zst _out/azure-arm64.vhd.zst _out/cloud-images.json _out/digital-ocean-amd64.raw.gz _out/digital-ocean-arm64.raw.gz _out/exoscale-amd64.qcow2.zst _out/exoscale-arm64.qcow2.zst _out/gcp-amd64.raw.tar.gz _out/gcp-arm64.raw.tar.gz _out/hcloud-amd64.raw.zst _out/hcloud-arm64.raw.zst _out/initramfs-amd64.xz _out/initramfs-arm64.xz _out/metal-amd64.iso _out/metal-arm64.iso _out/metal-amd64.raw.zst _out/metal-arm64.raw.zst _out/nocloud-amd64.raw.zst _out/nocloud-arm64.raw.zst _out/opennebula-amd64.raw.zst _out/opennebula-arm64.raw.zst _out/openstack-amd64.raw.zst _out/openstack-arm64.raw.zst _out/oracle-amd64.qcow2.zst _out/oracle-arm64.qcow2.zst _out/scaleway-amd64.raw.zst _out/scaleway-arm64.raw.zst _out/sd-boot-amd64.efi _out/sd-boot-arm64.efi _out/sd-stub-amd64.efi _out/sd-stub-arm64.efi _out/talosctl-cni-bundle-amd64.tar.gz _out/talosctl-cni-bundle-arm64.tar.gz _out/talosctl-darwin-amd64 _out/talosctl-darwin-arm64 _out/talosctl-freebsd-amd64 _out/talosctl-freebsd-arm64 _out/talosctl-linux-amd64 _out/talosctl-linux-arm64 _out/talosctl-linux-armv7 _out/talosctl-windows-amd64.exe _out/upcloud-amd64.raw.zst _out/upcloud-arm64.raw.zst _out/vmware-amd64.ova _out/vmware-arm64.ova _out/vmlinuz-amd64 _out/vmlinuz-arm64 _out/vultr-amd64.raw.zst _out/vultr-arm64.raw.zst > _out/sha512sum.txt
+      - name: release
+        uses: crazy-max/ghaction-github-release@v2
+        with:
+          body_path: _out/RELEASE_NOTES.md
+          draft: "true"
+          files: |-
+            _out/akamai-amd64.raw.gz
+            _out/akamai-arm64.raw.gz
+            _out/aws-amd64.raw.zst
+            _out/aws-arm64.raw.zst
+            _out/azure-amd64.vhd.zst
+            _out/azure-arm64.vhd.zst
+            _out/cloud-images.json
+            _out/digital-ocean-amd64.raw.gz
+            _out/digital-ocean-arm64.raw.gz
+            _out/exoscale-amd64.qcow2.zst
+            _out/exoscale-arm64.qcow2.zst
+            _out/gcp-amd64.raw.tar.gz
+            _out/gcp-arm64.raw.tar.gz
+            _out/hcloud-amd64.raw.zst
+            _out/hcloud-arm64.raw.zst
+            _out/initramfs-amd64.xz
+            _out/initramfs-arm64.xz
+            _out/metal-amd64.iso
+            _out/metal-arm64.iso
+            _out/metal-amd64.raw.zst
+            _out/metal-arm64.raw.zst
+            _out/nocloud-amd64.raw.zst
+            _out/nocloud-arm64.raw.zst
+            _out/opennebula-amd64.raw.zst
+            _out/opennebula-arm64.raw.zst
+            _out/openstack-amd64.raw.zst
+            _out/openstack-arm64.raw.zst
+            _out/oracle-amd64.qcow2.zst
+            _out/oracle-arm64.qcow2.zst
+            _out/scaleway-amd64.raw.zst
+            _out/scaleway-arm64.raw.zst
+            _out/sd-boot-amd64.efi
+            _out/sd-boot-arm64.efi
+            _out/sd-stub-amd64.efi
+            _out/sd-stub-arm64.efi
+            _out/talosctl-cni-bundle-amd64.tar.gz
+            _out/talosctl-cni-bundle-arm64.tar.gz
+            _out/talosctl-darwin-amd64
+            _out/talosctl-darwin-arm64
+            _out/talosctl-freebsd-amd64
+            _out/talosctl-freebsd-arm64
+            _out/talosctl-linux-amd64
+            _out/talosctl-linux-arm64
+            _out/talosctl-linux-armv7
+            _out/talosctl-windows-amd64.exe
+            _out/upcloud-amd64.raw.zst
+            _out/upcloud-arm64.raw.zst
+            _out/vmware-amd64.ova
+            _out/vmware-arm64.ova
+            _out/vmlinuz-amd64
+            _out/vmlinuz-arm64
+            _out/vultr-amd64.raw.zst
+            _out/vultr-arm64.raw.zst
+            _out/sha*.txt

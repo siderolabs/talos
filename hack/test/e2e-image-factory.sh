@@ -48,7 +48,7 @@ function create_cluster {
     --controlplanes=3 \
     --workers="${QEMU_WORKERS:-1}" \
     --disk=15360 \
-    --mtu=1450 \
+    --mtu=1430 \
     --memory=2048 \
     --memory-workers="${QEMU_MEMORY_WORKERS:-2048}" \
     --cpus="${QEMU_CPUS:-2}" \

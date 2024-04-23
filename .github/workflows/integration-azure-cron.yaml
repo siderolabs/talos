@@ -1,0 +1,77 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-05-16T11:03:04Z by kres 48517a9.
+
+name: integration-azure-cron
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  schedule:
+    - cron: 30 7 * * *
+jobs:
+  default:
+    runs-on:
+      - self-hosted
+      - generic
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Mask secrets
+        run: |
+          echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-azure-prepare
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make e2e-azure-prepare
+      - name: checkout contrib
+        uses: actions/checkout@v4
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: azure
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-azure
+        run: |
+          make e2e-azure
+      - name: tf destroy
+        if: always()
+        env:
+          ARM_CLIENT_ID: ${{ env.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ env.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
+          TF_E2E_ACTION: destroy
+          TF_E2E_TEST_TYPE: azure
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf

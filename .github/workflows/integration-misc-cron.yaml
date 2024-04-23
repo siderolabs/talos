@@ -1,0 +1,114 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-05-16T11:03:04Z by kres 48517a9.
+
+name: integration-misc-cron
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+"on":
+  schedule:
+    - cron: 30 5 * * *
+jobs:
+  default:
+    runs-on:
+      - self-hosted
+      - talos
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: e2e-firewall
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_FIREWALL: block
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-network-chaos
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_NETWORK_CHAOS: "yes"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-canal-reset
+        env:
+          CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-bios-cgroupsv1
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '[{"op": "add", "path": "/machine/install/extraKernelArgs/-", "value": "talos.unified_cgroup_hierarchy=0"}]'
+          WITH_UEFI: "false"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-disk-image
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          USE_DISK_IMAGE: "true"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_DISK_ENCRYPTION: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-controlplane-port
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONTROL_PLANE_PORT: "443"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-no-cluster-discovery
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CLUSTER_DISCOVERY: "false"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-kubespan
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io\
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CLUSTER_DISCOVERY: "true"
+          WITH_KUBESPAN: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-default-hostname
+        env:
+          DISABLE_DHCP_HOSTNAME: "true"
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-siderolink
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_SIDEROLINK_AGENT: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-siderolink-tunnel
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_SIDEROLINK_AGENT: tunnel
+        run: |
+          sudo -E make e2e-qemu

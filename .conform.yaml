@@ -1,3 +1,7 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-05-02T14:45:40Z by kres fcfe226-dirty.
+
 policies:
   - type: commit
     spec:
@@ -34,15 +38,18 @@ policies:
           - talosctl
           - kernel
           - security
+          - ci
           - ^v1.8
   - type: license
     spec:
       skipPaths:
         - .git/
+        - testdata/
       includeSuffixes:
         - .go
       excludeSuffixes:
         - .pb.go
+        - .pb.gw.go
         - _string.go
         - _enumer.go
         - _string_linux.go
