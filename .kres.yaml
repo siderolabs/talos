@@ -1,0 +1,634 @@
+---
+kind: golang.Toolchain
+spec:
+  # image: ghcr.io/siderolabs/tools:v1.8.0-alpha.0
+  buildTags:
+    - tcell_minimal
+    - grpcnotrace
+  makefile:
+    extraVariables:
+      - name: NAME
+        defaultValue: Talos
+      - name: GOAMD64
+        defaultValue: v2
+      - name: CLOUD_IMAGES_EXTRA_ARGS
+        defaultValue: ""
+      - name: TOOLS
+        defaultValue: ghcr.io/siderolabs/tools:v1.8.0-alpha.0
+      - name: PKGS_PREFIX
+        defaultValue: ghcr.io/siderolabs
+      - name: PKGS
+        defaultValue: v1.8.0-alpha.0-3-g010913b
+      - name: EXTRAS
+        defaultValue: v1.8.0-alpha.0
+      - name: TALOSCTL_DEFAULT_TARGET
+        defaultValue: talosctl-$(OPERATING_SYSTEM)-$(GOARCH)
+      - name: TALOSCTL_EXECUTABLE
+        defaultValue: $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)
+      - name: INTEGRATION_TEST_DEFAULT_TARGET
+        defaultValue: integration-test-$(OPERATING_SYSTEM)-$(GOARCH)
+      - name: INTEGRATION_TEST_PROVISION_DEFAULT_TARGET
+        defaultValue: integration-test-provision-$(OPERATING_SYSTEM)-$(GOARCH)
+      - name: PKG_FHS
+        defaultValue: $(PKGS_PREFIX)/fhs:$(PKGS)
+      - name: PKG_CA_CERTIFICATES
+        defaultValue: $(PKGS_PREFIX)/ca-certificates:$(PKGS)
+      - name: PKG_CRYPTSETUP
+        defaultValue: $(PKGS_PREFIX)/cryptsetup:$(PKGS)
+      - name: PKG_CONTAINERD
+        defaultValue: $(PKGS_PREFIX)/containerd:$(PKGS)
+      - name: PKG_DOSFSTOOLS
+        defaultValue: $(PKGS_PREFIX)/dosfstools:$(PKGS)
+      - name: PKG_EUDEV
+        defaultValue: $(PKGS_PREFIX)/eudev:$(PKGS)
+      - name: PKG_GRUB
+        defaultValue: $(PKGS_PREFIX)/grub:$(PKGS)
+      - name: PKG_SD_BOOT
+        defaultValue: $(PKGS_PREFIX)/sd-boot:$(PKGS)
+      - name: PKG_IPTABLES
+        defaultValue: $(PKGS_PREFIX)/iptables:$(PKGS)
+      - name: PKG_IPXE
+        defaultValue: $(PKGS_PREFIX)/ipxe:$(PKGS)
+      - name: PKG_LIBINIH
+        defaultValue: $(PKGS_PREFIX)/libinih:$(PKGS)
+      - name: PKG_LIBJSON_C
+        defaultValue: $(PKGS_PREFIX)/libjson-c:$(PKGS)
+      - name: PKG_LIBPOPT
+        defaultValue: $(PKGS_PREFIX)/libpopt:$(PKGS)
+      - name: PKG_LIBURCU
+        defaultValue: $(PKGS_PREFIX)/liburcu:$(PKGS)
+      - name: PKG_OPENSSL
+        defaultValue: $(PKGS_PREFIX)/openssl:$(PKGS)
+      - name: PKG_LIBSECCOMP
+        defaultValue: $(PKGS_PREFIX)/libseccomp:$(PKGS)
+      - name: PKG_LINUX_FIRMWARE
+        defaultValue: $(PKGS_PREFIX)/linux-firmware:$(PKGS)
+      - name: PKG_LVM2
+        defaultValue: $(PKGS_PREFIX)/lvm2:$(PKGS)
+      - name: PKG_LIBAIO
+        defaultValue: $(PKGS_PREFIX)/libaio:$(PKGS)
+      - name: PKG_MUSL
+        defaultValue: $(PKGS_PREFIX)/musl:$(PKGS)
+      - name: PKG_RUNC
+        defaultValue: $(PKGS_PREFIX)/runc:$(PKGS)
+      - name: PKG_XFSPROGS
+        defaultValue: $(PKGS_PREFIX)/xfsprogs:$(PKGS)
+      - name: PKG_UTIL_LINUX
+        defaultValue: $(PKGS_PREFIX)/util-linux:$(PKGS)
+      - name: PKG_KMOD
+        defaultValue: $(PKGS_PREFIX)/kmod:$(PKGS)
+      - name: PKG_KERNEL
+        defaultValue: $(PKGS_PREFIX)/kernel:$(PKGS)
+      - name: PKG_TALOSCTL_CNI_BUNDLE_INSTALL
+        defaultValue: $(PKGS_PREFIX)/talosctl-cni-bundle-install:$(EXTRAS)
+      - name: GO_VERSION
+        defaultValue: 1.22
+      - name: GOIMPORTS_VERSION
+        defaultValue: v0.19.0
+      - name: GOFUMPT_VERSION
+        defaultValue: v0.6.0
+      - name: GOLANGCILINT_VERSION
+        defaultValue: v1.57.2
+      - name: STRINGER_VERSION
+        defaultValue: v0.19.0
+      - name: ENUMER_VERSION
+        defaultValue: v1.5.9
+      - name: DEEPCOPY_GEN_VERSION
+        defaultValue: v0.29.3
+      - name: VTPROTOBUF_VERSION
+        defaultValue: v0.6.0
+      - name: DEEPCOPY_VERSION
+        defaultValue: v0.5.6
+      - name: IMPORTVET_VERSION
+        defaultValue: v0.2.0
+      - name: MARKDOWNLINTCLI_VERSION
+        defaultValue: 0.39.0
+      - name: TEXTLINT_VERSION
+        defaultValue: 14.0.4
+      - name: TEXTLINT_FILTER_RULE_COMMENTS_VERSION
+        defaultValue: 1.2.2
+      - name: TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION
+        defaultValue: 2.0.0
+      - name: HUGO_VERSION
+        defaultValue: 0.111.3-ext-alpine
+      - name: KUBECTL_VERSION
+        defaultValue: v1.30.0
+      - name: KUBESTR_VERSION
+        defaultValue: v0.4.44
+      - name: HELM_VERSION
+        defaultValue: v3.14.3
+      - name: CLUSTERCTL_VERSION
+        defaultValue: 1.6.3
+      - name: CILIUM_CLI_VERSION
+        defaultValue: v0.16.4
+      - name: KUBECTL_URL
+        defaultValue: https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
+      - name: KUBESTR_URL
+        defaultValue: https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
+      - name: HELM_URL
+        defaultValue: https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
+      - name: CLUSTERCTL_URL
+        defaultValue: https://github.com/kubernetes-sigs/cluster-api/releases/download/v$(CLUSTERCTL_VERSION)/clusterctl-$(OPERATING_SYSTEM)-amd64
+      - name: CILIUM_CLI_URL
+        defaultValue: https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
+      - name: TESTPKGS
+        defaultValue: github.com/siderolabs/talos/...
+      - name: RELEASES
+        defaultValue: v1.6.7 v1.7.0
+      - name: SHORT_INTEGRATION_TEST
+      - name: CUSTOM_CNI_URL
+      - name: INSTALLER_ARCH
+        defaultValue: all
+      - name: IMAGER_ARGS
+---
+kind: common.Docker
+spec:
+  extraBuildArgs:
+        - TOOLS
+        - PKGS
+        - EXTRAS
+        - GOFUMPT_VERSION
+        - GOIMPORTS_VERSION
+        - STRINGER_VERSION
+        - ENUMER_VERSION
+        - DEEPCOPY_GEN_VERSION
+        - VTPROTOBUF_VERSION
+        - IMPORTVET_VERSION
+        - GOLANGCILINT_VERSION
+        - DEEPCOPY_VERSION
+        - MARKDOWNLINTCLI_VERSION
+        - TEXTLINT_VERSION
+        - TEXTLINT_FILTER_RULE_COMMENTS_VERSION
+        - TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION
+        - TAG
+        - SOURCE_DATE_EPOCH
+        - ARTIFACTS
+        - TESTPKGS
+        - INSTALLER_ARCH
+        - GOAMD64
+        - http_proxy
+        - https_proxy
+        - NAME
+        - SHA
+        - USERNAME
+        - REGISTRY
+        - PKGS_PREFIX
+        - PKG_FHS
+        - PKG_CA_CERTIFICATES
+        - PKG_CRYPTSETUP
+        - PKG_CONTAINERD
+        - PKG_DOSFSTOOLS
+        - PKG_EUDEV
+        - PKG_GRUB
+        - PKG_SD_BOOT
+        - PKG_IPTABLES
+        - PKG_IPXE
+        - PKG_LIBINIH
+        - PKG_LIBJSON_C
+        - PKG_LIBPOPT
+        - PKG_LIBURCU
+        - PKG_OPENSSL
+        - PKG_LIBSECCOMP
+        - PKG_LINUX_FIRMWARE
+        - PKG_LVM2
+        - PKG_LIBAIO
+        - PKG_MUSL
+        - PKG_RUNC
+        - PKG_XFSPROGS
+        - PKG_UTIL_LINUX
+        - PKG_KMOD
+        - PKG_U_BOOT
+        - PKG_RASPBERYPI_FIRMWARE
+        - PKG_KERNEL
+        - PKG_TALOSCTL_CNI_BUNDLE_INSTALL
+        - ABBREV_TAG
+---
+kind: auto.CustomSteps
+spec:
+  steps:
+    - name: external-artifacts
+      toplevel: true
+    - name: $(ARTIFACTS)/cilium
+      toplevel: true
+    - name: $(ARTIFACTS)/clusterctl
+      toplevel: true
+    - name: $(ARTIFACTS)/helm
+      toplevel: true
+    - name: $(ARTIFACTS)/kubectl
+      toplevel: true
+    - name: $(ARTIFACTS)/kubestr
+      toplevel: true
+    - name: generate
+      toplevel: true
+    - name: docs
+      toplevel: true
+    - name: uki-certs
+      toplevel: true
+    - name: talosctl-all # keep compat with existing build
+      toplevel: true
+    - name: hack-test
+      toplevel: true
+    - name: docs-preview
+      toplevel: true
+    - name: kernel
+      topvel: true
+    - name: initramfs
+      toplevel: true
+    - name: sd-boot
+      toplevel: true
+    - name: sd-stub
+      toplevel: true
+    - name: installer # keep compat with existing build
+      toplevel: true
+    - name: imager # keep compat with existing build
+      toplevel: true
+    - name: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64
+      toplevel: true
+    - name: $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
+      toplevel: true
+    - name: lint-protobuf
+      toplevel: true
+    - name: talosctl-cni-bundle
+      toplevel: true
+    - name: image-%
+      toplevel: true
+    - name: iso
+      toplevel: true
+    - name: secureboot-iso
+      toplevel: true
+    - name: images-essential
+      toplevel: true
+    - name: images
+      toplevel: true
+    - name: e2e-%
+      toplevel: true
+---
+kind: custom.Step
+name: external-artifacts
+spec:
+  makefile:
+    enabled: true
+    depends:
+      - $(ARTIFACTS)/cilium
+      - $(ARTIFACTS)/clusterctl
+      - $(ARTIFACTS)/helm
+      - $(ARTIFACTS)/kubectl
+      - $(ARTIFACTS)/kubestr
+---
+kind: custom.Step
+name: $(ARTIFACTS)/cilium
+spec:
+  makefile:
+    enabled: true
+    phony: false
+    depends:
+      - $(ARTIFACTS)
+    script:
+      - "@curl -L \"$(CILIUM_CLI_URL)\" | tar xzf - -C $(ARTIFACTS) cilium"
+      - "@chmod +x $(ARTIFACTS)/cilium"
+---
+kind: custom.Step
+name: $(ARTIFACTS)/clusterctl
+spec:
+  makefile:
+    enabled: true
+    phony: false
+    depends:
+      - $(ARTIFACTS)
+    script:
+      - "@curl -L -o $(ARTIFACTS)/clusterctl \"$(CLUSTERCTL_URL)\""
+      - "@chmod +x $(ARTIFACTS)/clusterctl"
+---
+kind: custom.Step
+name: $(ARTIFACTS)/helm
+spec:
+  makefile:
+    enabled: true
+    phony: false
+    depends:
+      - $(ARTIFACTS)
+    script:
+      - "@curl -L \"$(HELM_URL)\" | tar xzf - -C $(ARTIFACTS) --strip-components=1 linux-amd64/helm"
+      - "@chmod +x $(ARTIFACTS)/helm"
+---
+kind: custom.Step
+name: $(ARTIFACTS)/kubectl
+spec:
+  makefile:
+    enabled: true
+    phony: false
+    depends:
+      - $(ARTIFACTS)
+    script:
+      - "@curl -L -o $(ARTIFACTS)/kubectl \"$(KUBECTL_URL)\""
+      - "@chmod +x $(ARTIFACTS)/kubectl"
+---
+kind: custom.Step
+name: $(ARTIFACTS)/kubestr
+spec:
+  makefile:
+    enabled: true
+    phony: false
+    depends:
+      - $(ARTIFACTS)
+    script:
+      - "@curl -L \"$(KUBESTR_URL)\" | tar xzf - -C $(ARTIFACTS) kubestr"
+      - "@chmod +x $(ARTIFACTS)/kubestr"
+---
+kind: custom.Step
+name: generate
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64"
+---
+kind: custom.Step
+name: docs
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@rm -rf docs/configuration/*"
+      - "@rm -rf docs/talosctl/*"
+      - "@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64"
+---
+kind: custom.Step
+name: uki-certs
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    depends:
+      - $(TALOSCTL_DEFAULT_TARGET)
+    script:
+      - "@$(TALOSCTL_EXECUTABLE) gen secureboot uki"
+      - "@$(TALOSCTL_EXECUTABLE) gen secureboot pcr"
+      - "@$(TALOSCTL_EXECUTABLE) gen secureboot database"
+---
+kind: custom.Step
+name: talosctl-all # keep compat with existing build
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false NAME=Client"
+---
+kind: custom.Step
+name: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 # keep compat with existing build
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client PUSH=false"
+---
+kind: custom.Step
+name: $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64 # keep compat with existing build
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client"
+---
+kind: custom.Step
+name: lint-protobuf
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) target-lint-protobuf PLATFORM=linux/amd64"
+---
+kind: custom.Step
+name: hack-test
+spec:
+  makefile:
+    enabled: true
+    phony: false
+    script:
+      - "@./hack/test/$*.sh"
+---
+kind: custom.Step
+name: docs-preview
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@docker run --rm --interactive --tty --user $(shell id -u):$(shell id -g) --volume $(PWD):/src --workdir /src/website --publish 1313:1313 klakegg/hugo:$(HUGO_VERSION) server"
+---
+kind: custom.Step
+name: kernel
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false"
+      - "@-rm -rf $(ARTIFACTS)/modules"
+---
+kind: custom.Step
+name: initramfs
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false"
+---
+kind: custom.Step
+name: sd-boot
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false"
+---
+kind: custom.Step
+name: sd-stub
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false"
+---
+kind: custom.Step
+name: installer # keep compat with existing build
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@INSTALLER_ARCH=targetarch $(MAKE) image-installer"
+---
+kind: custom.Step
+name: imager # keep compat with existing build
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - "@INSTALLER_ARCH=targetarch $(MAKE) image-imager"
+---
+kind: custom.Step
+name: talosctl-cni-bundle
+spec:
+  makefile:
+    enabled: true
+    phony: false
+    script:
+      - |
+        @$(MAKE) local-$@ DEST=$(ARTIFACTS)
+
+        @for platform in $(shell echo $(PLATFORM) | tr "," " "); do \
+          arch=`basename $$platform` ; \
+
+          tar  -C $(ARTIFACTS)/talosctl-cni-bundle-$${arch} -czf $(ARTIFACTS)/talosctl-cni-bundle-$${arch}.tar.gz . ; \
+        done
+---
+kind: custom.Step
+name: image-%
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    script:
+      - |
+        @docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
+
+        @for platform in $(shell echo $(PLATFORM) | tr "," " "); do \
+          arch=`basename $$platform` ; \
+
+          docker run --rm -t -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch $(IMAGER_ARGS) ; \
+        done
+---
+kind: custom.Step
+name: iso
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    depends:
+      - image-iso
+---
+kind: custom.Step
+name: secureboot-iso
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    depends:
+      - image-secureboot-iso
+---
+kind: custom.Step
+name: images-essential
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    depends:
+      - image-aws
+      - image-azure
+      - image-gcp
+      - image-metal
+      - secureboot-installer
+---
+kind: custom.Step
+name: images
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    depends:
+      - image-akamai
+      - image-aws
+      - image-azure
+      - image-digital-ocean
+      - image-exoscale
+      - image-gcp
+      - image-hcloud
+      - image-iso
+      - image-metal
+      - image-nocloud
+      - image-opennebula
+      - image-openstack
+      - image-oracle
+      - image-scaleway
+      - image-upcloud
+      - image-vmware
+      - image-vultr
+---
+kind: custom.Step
+name: e2e-%
+spec:
+  makefile:
+    enabled: true
+    phony: true
+    depends:
+      - $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64
+      - external-artifacts
+    script:
+      - |
+        @$(MAKE) hack-test-$@ \
+          PLATFORM=$* \
+          TAG=$(TAG) \
+          SHA=$(SHA) \
+          REGISTRY=$(IMAGE_REGISTRY) \
+          IMAGE=$(REGISTRY_AND_USERNAME)/talos:$(IMAGE_TAG) \
+          INSTALLER_IMAGE=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) \
+          ARTIFACTS=$(ARTIFACTS) \
+          TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
+          INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
+          MODULE_SIG_VERIFY=$(PWD)/$(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64 \
+          KERNEL_MODULE_SIGNING_PUBLIC_KEY=$(PWD)/$(ARTIFACTS)/signing_key.x509 \
+          SHORT_INTEGRATION_TEST=$(SHORT_INTEGRATION_TEST) \
+          CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
+          KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
+          KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \
+          HELM=$(PWD)/$(ARTIFACTS)/helm \
+          CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl \
+          CILIUM_CLI=$(PWD)/$(ARTIFACTS)/cilium
+---
+kind: golang.Build
+name: talosctl
+spec:
+  extraVariables:
+    - NAME=Client
+  outputs:
+    linux-amd64:
+      GOOS: linux
+      GOARCH: amd64
+    linux-arm64:
+      GOOS: linux
+      GOARCH: arm64
+    darwin-amd64:
+      GOOS: darwin
+      GOARCH: amd64
+    darwin-arm64:
+      GOOS: darwin
+      GOARCH: arm64
+    windows-amd64.exe:
+      GOOS: windows
+      GOARCH: amd64
+    freebsd-amd64:
+      GOOS: freebsd
+      GOARCH: amd64
+    freebsd-arm64:
+      GOOS: freebsd
+      GOARCH: arm64
+---
+kind: common.Lint
+spec:
+  extraLintTargets:
+    - lint-protobuf
+---
+kind: golang.UnitTests
+spec:
+  requiresInsecure: true

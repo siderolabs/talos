@@ -1,26 +1,146 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2024-04-23T18:08:19Z by kres ebc009d-dirty.
+
+# common variables
+
+SHA := $(shell git describe --match=none --always --abbrev=8 --dirty)
+TAG := $(shell git describe --tag --always --dirty --match v[0-9]\*)
+ABBREV_TAG := $(shell git describe --tags >/dev/null 2>/dev/null && git describe --tag --always --match v[0-9]\* --abbrev=0 || echo 'undefined')
+BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+ARTIFACTS := _out
+IMAGE_TAG ?= $(TAG)
+OPERATING_SYSTEM := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+GOARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
+SOURCE_DATE_EPOCH := $(shell git log -1 --pretty=%ct)
+WITH_DEBUG ?= false
+WITH_RACE ?= false
 REGISTRY ?= ghcr.io
 USERNAME ?= siderolabs
-SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
-TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]\*)
-ABBREV_TAG ?= $(shell git describe --tag --always --match v[0-9]\* --abbrev=0 )
-TAG_SUFFIX ?=
-SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct)
-IMAGE_REGISTRY ?= $(REGISTRY)
-IMAGE_TAG ?= $(TAG)$(TAG_SUFFIX)
-BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
-REGISTRY_AND_USERNAME := $(IMAGE_REGISTRY)/$(USERNAME)
-DOCKER_LOGIN_ENABLED ?= true
-NAME = Talos
+REGISTRY_AND_USERNAME ?= $(REGISTRY)/$(USERNAME)
+PROTOBUF_GO_VERSION ?= 1.33.0
+GRPC_GO_VERSION ?= 1.3.0
+GRPC_GATEWAY_VERSION ?= 2.19.1
+VTPROTOBUF_VERSION ?= 0.6.0
+DEEPCOPY_VERSION ?= v0.5.6
+GOLANGCILINT_VERSION ?= v1.57.2
+GOFUMPT_VERSION ?= v0.6.0
+GO_VERSION ?= 1.22.2
+GOIMPORTS_VERSION ?= v0.20.0
+GO_BUILDFLAGS ?=
+GO_LDFLAGS ?=
+CGO_ENABLED ?= 0
+GOTOOLCHAIN ?= local
+TESTPKGS ?= ./...
+KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
+CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
 
-CLOUD_IMAGES_EXTRA_ARGS ?= ""
+# docker build settings
 
-ARTIFACTS := _out
+BUILD := docker buildx build
+PLATFORM ?= linux/amd64
+PROGRESS ?= auto
+PUSH ?= false
+CI_ARGS ?=
+COMMON_ARGS = --file=Dockerfile
+COMMON_ARGS += --provenance=false
+COMMON_ARGS += --progress=$(PROGRESS)
+COMMON_ARGS += --platform=$(PLATFORM)
+COMMON_ARGS += --push=$(PUSH)
+COMMON_ARGS += --build-arg=ARTIFACTS="$(ARTIFACTS)"
+COMMON_ARGS += --build-arg=SHA="$(SHA)"
+COMMON_ARGS += --build-arg=TAG="$(TAG)"
+COMMON_ARGS += --build-arg=ABBREV_TAG="$(ABBREV_TAG)"
+COMMON_ARGS += --build-arg=USERNAME="$(USERNAME)"
+COMMON_ARGS += --build-arg=REGISTRY="$(REGISTRY)"
+COMMON_ARGS += --build-arg=TOOLCHAIN="$(TOOLCHAIN)"
+COMMON_ARGS += --build-arg=CGO_ENABLED="$(CGO_ENABLED)"
+COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
+COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
+COMMON_ARGS += --build-arg=GOTOOLCHAIN="$(GOTOOLCHAIN)"
+COMMON_ARGS += --build-arg=GOEXPERIMENT="$(GOEXPERIMENT)"
+COMMON_ARGS += --build-arg=PROTOBUF_GO_VERSION="$(PROTOBUF_GO_VERSION)"
+COMMON_ARGS += --build-arg=GRPC_GO_VERSION="$(GRPC_GO_VERSION)"
+COMMON_ARGS += --build-arg=GRPC_GATEWAY_VERSION="$(GRPC_GATEWAY_VERSION)"
+COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION="$(VTPROTOBUF_VERSION)"
+COMMON_ARGS += --build-arg=DEEPCOPY_VERSION="$(DEEPCOPY_VERSION)"
+COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION="$(GOLANGCILINT_VERSION)"
+COMMON_ARGS += --build-arg=GOIMPORTS_VERSION="$(GOIMPORTS_VERSION)"
+COMMON_ARGS += --build-arg=GOFUMPT_VERSION="$(GOFUMPT_VERSION)"
+COMMON_ARGS += --build-arg=TESTPKGS="$(TESTPKGS)"
+COMMON_ARGS += --build-arg=TOOLS="$(TOOLS)"
+COMMON_ARGS += --build-arg=PKGS="$(PKGS)"
+COMMON_ARGS += --build-arg=EXTRAS="$(EXTRAS)"
+COMMON_ARGS += --build-arg=GOFUMPT_VERSION="$(GOFUMPT_VERSION)"
+COMMON_ARGS += --build-arg=GOIMPORTS_VERSION="$(GOIMPORTS_VERSION)"
+COMMON_ARGS += --build-arg=STRINGER_VERSION="$(STRINGER_VERSION)"
+COMMON_ARGS += --build-arg=ENUMER_VERSION="$(ENUMER_VERSION)"
+COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION="$(DEEPCOPY_GEN_VERSION)"
+COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION="$(VTPROTOBUF_VERSION)"
+COMMON_ARGS += --build-arg=IMPORTVET_VERSION="$(IMPORTVET_VERSION)"
+COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION="$(GOLANGCILINT_VERSION)"
+COMMON_ARGS += --build-arg=DEEPCOPY_VERSION="$(DEEPCOPY_VERSION)"
+COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION="$(MARKDOWNLINTCLI_VERSION)"
+COMMON_ARGS += --build-arg=TEXTLINT_VERSION="$(TEXTLINT_VERSION)"
+COMMON_ARGS += --build-arg=TEXTLINT_FILTER_RULE_COMMENTS_VERSION="$(TEXTLINT_FILTER_RULE_COMMENTS_VERSION)"
+COMMON_ARGS += --build-arg=TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION="$(TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION)"
+COMMON_ARGS += --build-arg=TAG="$(TAG)"
+COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
+COMMON_ARGS += --build-arg=ARTIFACTS="$(ARTIFACTS)"
+COMMON_ARGS += --build-arg=TESTPKGS="$(TESTPKGS)"
+COMMON_ARGS += --build-arg=INSTALLER_ARCH="$(INSTALLER_ARCH)"
+COMMON_ARGS += --build-arg=GOAMD64="$(GOAMD64)"
+COMMON_ARGS += --build-arg=http_proxy="$(http_proxy)"
+COMMON_ARGS += --build-arg=https_proxy="$(https_proxy)"
+COMMON_ARGS += --build-arg=NAME="$(NAME)"
+COMMON_ARGS += --build-arg=SHA="$(SHA)"
+COMMON_ARGS += --build-arg=USERNAME="$(USERNAME)"
+COMMON_ARGS += --build-arg=REGISTRY="$(REGISTRY)"
+COMMON_ARGS += --build-arg=PKGS_PREFIX="$(PKGS_PREFIX)"
+COMMON_ARGS += --build-arg=PKG_FHS="$(PKG_FHS)"
+COMMON_ARGS += --build-arg=PKG_CA_CERTIFICATES="$(PKG_CA_CERTIFICATES)"
+COMMON_ARGS += --build-arg=PKG_CRYPTSETUP="$(PKG_CRYPTSETUP)"
+COMMON_ARGS += --build-arg=PKG_CONTAINERD="$(PKG_CONTAINERD)"
+COMMON_ARGS += --build-arg=PKG_DOSFSTOOLS="$(PKG_DOSFSTOOLS)"
+COMMON_ARGS += --build-arg=PKG_EUDEV="$(PKG_EUDEV)"
+COMMON_ARGS += --build-arg=PKG_GRUB="$(PKG_GRUB)"
+COMMON_ARGS += --build-arg=PKG_SD_BOOT="$(PKG_SD_BOOT)"
+COMMON_ARGS += --build-arg=PKG_IPTABLES="$(PKG_IPTABLES)"
+COMMON_ARGS += --build-arg=PKG_IPXE="$(PKG_IPXE)"
+COMMON_ARGS += --build-arg=PKG_LIBINIH="$(PKG_LIBINIH)"
+COMMON_ARGS += --build-arg=PKG_LIBJSON_C="$(PKG_LIBJSON_C)"
+COMMON_ARGS += --build-arg=PKG_LIBPOPT="$(PKG_LIBPOPT)"
+COMMON_ARGS += --build-arg=PKG_LIBURCU="$(PKG_LIBURCU)"
+COMMON_ARGS += --build-arg=PKG_OPENSSL="$(PKG_OPENSSL)"
+COMMON_ARGS += --build-arg=PKG_LIBSECCOMP="$(PKG_LIBSECCOMP)"
+COMMON_ARGS += --build-arg=PKG_LINUX_FIRMWARE="$(PKG_LINUX_FIRMWARE)"
+COMMON_ARGS += --build-arg=PKG_LVM2="$(PKG_LVM2)"
+COMMON_ARGS += --build-arg=PKG_LIBAIO="$(PKG_LIBAIO)"
+COMMON_ARGS += --build-arg=PKG_MUSL="$(PKG_MUSL)"
+COMMON_ARGS += --build-arg=PKG_RUNC="$(PKG_RUNC)"
+COMMON_ARGS += --build-arg=PKG_XFSPROGS="$(PKG_XFSPROGS)"
+COMMON_ARGS += --build-arg=PKG_UTIL_LINUX="$(PKG_UTIL_LINUX)"
+COMMON_ARGS += --build-arg=PKG_KMOD="$(PKG_KMOD)"
+COMMON_ARGS += --build-arg=PKG_U_BOOT="$(PKG_U_BOOT)"
+COMMON_ARGS += --build-arg=PKG_RASPBERYPI_FIRMWARE="$(PKG_RASPBERYPI_FIRMWARE)"
+COMMON_ARGS += --build-arg=PKG_KERNEL="$(PKG_KERNEL)"
+COMMON_ARGS += --build-arg=PKG_TALOSCTL_CNI_BUNDLE_INSTALL="$(PKG_TALOSCTL_CNI_BUNDLE_INSTALL)"
+COMMON_ARGS += --build-arg=ABBREV_TAG="$(ABBREV_TAG)"
+TOOLCHAIN ?= docker.io/golang:1.22-alpine
+
+# extra variables
+
+NAME ?= Talos
+GOAMD64 ?= v2
+CLOUD_IMAGES_EXTRA_ARGS ?=
 TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0
-
 PKGS_PREFIX ?= ghcr.io/siderolabs
 PKGS ?= v1.8.0-alpha.0-3-g010913b
 EXTRAS ?= v1.8.0-alpha.0
-
+TALOSCTL_DEFAULT_TARGET ?= talosctl-$(OPERATING_SYSTEM)-$(GOARCH)
+TALOSCTL_EXECUTABLE ?= $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)
+INTEGRATION_TEST_DEFAULT_TARGET ?= integration-test-$(OPERATING_SYSTEM)-$(GOARCH)
+INTEGRATION_TEST_PROVISION_DEFAULT_TARGET ?= integration-test-provision-$(OPERATING_SYSTEM)-$(GOARCH)
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
 PKG_CRYPTSETUP ?= $(PKGS_PREFIX)/cryptsetup:$(PKGS)
@@ -47,53 +167,25 @@ PKG_UTIL_LINUX ?= $(PKGS_PREFIX)/util-linux:$(PKGS)
 PKG_KMOD ?= $(PKGS_PREFIX)/kmod:$(PKGS)
 PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
 PKG_TALOSCTL_CNI_BUNDLE_INSTALL ?= $(PKGS_PREFIX)/talosctl-cni-bundle-install:$(EXTRAS)
-
-# renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.22
-# renovate: datasource=go depName=golang.org/x/tools
-GOIMPORTS_VERSION ?= v0.20.0
-# renovate: datasource=go depName=mvdan.cc/gofumpt
+GOIMPORTS_VERSION ?= v0.19.0
 GOFUMPT_VERSION ?= v0.6.0
-# renovate: datasource=go depName=github.com/golangci/golangci-lint
 GOLANGCILINT_VERSION ?= v1.57.2
-# renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.19.0
-# renovate: datasource=go depName=github.com/dmarkham/enumer
 ENUMER_VERSION ?= v1.5.9
-# renovate: datasource=go depName=k8s.io/code-generator
-DEEPCOPY_GEN_VERSION ?= v0.30.0
-# renovate: datasource=go depName=github.com/planetscale/vtprotobuf
+DEEPCOPY_GEN_VERSION ?= v0.29.3
 VTPROTOBUF_VERSION ?= v0.6.0
-# renovate: datasource=go depName=github.com/siderolabs/deep-copy
 DEEPCOPY_VERSION ?= v0.5.6
-# renovate: datasource=go depName=github.com/siderolabs/importvet
 IMPORTVET_VERSION ?= v0.2.0
-# renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.39.0
-# renovate: datasource=npm depName=textlint
 TEXTLINT_VERSION ?= 14.0.4
-# renovate: datasource=npm depName=textlint-filter-rule-comments
 TEXTLINT_FILTER_RULE_COMMENTS_VERSION ?= 1.2.2
-# renovate: datasource=npm depName=textlint-rule-one-sentence-per-line
 TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION ?= 2.0.0
-# renovate: datasource=docker depName=klakegg/hugo
 HUGO_VERSION ?= 0.111.3-ext-alpine
-OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
-ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
-TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
-TALOSCTL_EXECUTABLE := $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-$(ARCH)
-INTEGRATION_TEST_DEFAULT_TARGET := integration-test-$(OPERATING_SYSTEM)
-MODULE_SIG_VERIFY_DEFAULT_TARGET := module-sig-verify-$(OPERATING_SYSTEM)
-INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
-# renovate: datasource=github-releases depName=kubernetes/kubernetes
 KUBECTL_VERSION ?= v1.30.0
-# renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.44
-# renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v3.14.3
-# renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 CLUSTERCTL_VERSION ?= 1.6.3
-# renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.16.4
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
@@ -107,109 +199,13 @@ CUSTOM_CNI_URL ?=
 INSTALLER_ARCH ?= all
 IMAGER_ARGS ?=
 
-CGO_ENABLED ?= 0
-GO_BUILDFLAGS ?=
-GO_BUILDTAGS ?= tcell_minimal,grpcnotrace
-GO_LDFLAGS ?=
-GOAMD64 ?= v2
+# extra buildtags
 
-WITH_RACE ?= false
-WITH_DEBUG ?= false
+GO_BUILDFLAGS += -tags tcell_minimal,grpcnotrace
 
-ifneq (, $(filter $(WITH_RACE), t true TRUE y yes 1))
-CGO_ENABLED = 1
-GO_BUILDFLAGS += -race
-GO_LDFLAGS += -linkmode=external -extldflags '-static'
-INSTALLER_ARCH = targetarch
-endif
+# help menu
 
-ifneq (, $(filter $(WITH_DEBUG), t true TRUE y yes 1))
-GO_BUILDTAGS := $(GO_BUILDTAGS),sidero.debug
-else
-GO_LDFLAGS += -s -w
-endif
-
-GO_BUILDFLAGS += -tags "$(GO_BUILDTAGS)"
-
-, := ,
-space := $(subst ,, )
-BUILD := docker buildx build
-PLATFORM ?= linux/amd64
-PROGRESS ?= auto
-PUSH ?= false
-COMMON_ARGS := --file=Dockerfile
-COMMON_ARGS += --progress=$(PROGRESS)
-COMMON_ARGS += --platform=$(PLATFORM)
-COMMON_ARGS += --push=$(PUSH)
-COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
-COMMON_ARGS += --build-arg=PKGS=$(PKGS)
-COMMON_ARGS += --build-arg=EXTRAS=$(EXTRAS)
-COMMON_ARGS += --build-arg=GOFUMPT_VERSION=$(GOFUMPT_VERSION)
-COMMON_ARGS += --build-arg=GOIMPORTS_VERSION=$(GOIMPORTS_VERSION)
-COMMON_ARGS += --build-arg=STRINGER_VERSION=$(STRINGER_VERSION)
-COMMON_ARGS += --build-arg=ENUMER_VERSION=$(ENUMER_VERSION)
-COMMON_ARGS += --build-arg=DEEPCOPY_GEN_VERSION=$(DEEPCOPY_GEN_VERSION)
-COMMON_ARGS += --build-arg=VTPROTOBUF_VERSION=$(VTPROTOBUF_VERSION)
-COMMON_ARGS += --build-arg=IMPORTVET_VERSION=$(IMPORTVET_VERSION)
-COMMON_ARGS += --build-arg=GOLANGCILINT_VERSION=$(GOLANGCILINT_VERSION)
-COMMON_ARGS += --build-arg=DEEPCOPY_VERSION=$(DEEPCOPY_VERSION)
-COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
-COMMON_ARGS += --build-arg=TEXTLINT_VERSION=$(TEXTLINT_VERSION)
-COMMON_ARGS += --build-arg=TEXTLINT_FILTER_RULE_COMMENTS_VERSION=$(TEXTLINT_FILTER_RULE_COMMENTS_VERSION)
-COMMON_ARGS += --build-arg=TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION=$(TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION)
-COMMON_ARGS += --build-arg=TAG=$(TAG)
-COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
-COMMON_ARGS += --build-arg=ARTIFACTS=$(ARTIFACTS)
-COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
-COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
-COMMON_ARGS += --build-arg=CGO_ENABLED=$(CGO_ENABLED)
-COMMON_ARGS += --build-arg=GO_BUILDFLAGS="$(GO_BUILDFLAGS)"
-COMMON_ARGS += --build-arg=GO_LDFLAGS="$(GO_LDFLAGS)"
-COMMON_ARGS += --build-arg=GOAMD64="$(GOAMD64)"
-COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
-COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
-COMMON_ARGS += --build-arg=NAME=$(NAME)
-COMMON_ARGS += --build-arg=SHA=$(SHA)
-COMMON_ARGS += --build-arg=USERNAME=$(USERNAME)
-COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
-COMMON_ARGS += --build-arg=PKGS_PREFIX=$(PKGS_PREFIX)
-COMMON_ARGS += --build-arg=PKG_FHS=$(PKG_FHS)
-COMMON_ARGS += --build-arg=PKG_CA_CERTIFICATES=$(PKG_CA_CERTIFICATES)
-COMMON_ARGS += --build-arg=PKG_CRYPTSETUP=$(PKG_CRYPTSETUP)
-COMMON_ARGS += --build-arg=PKG_CONTAINERD=$(PKG_CONTAINERD)
-COMMON_ARGS += --build-arg=PKG_DOSFSTOOLS=$(PKG_DOSFSTOOLS)
-COMMON_ARGS += --build-arg=PKG_EUDEV=$(PKG_EUDEV)
-COMMON_ARGS += --build-arg=PKG_GRUB=$(PKG_GRUB)
-COMMON_ARGS += --build-arg=PKG_SD_BOOT=$(PKG_SD_BOOT)
-COMMON_ARGS += --build-arg=PKG_IPTABLES=$(PKG_IPTABLES)
-COMMON_ARGS += --build-arg=PKG_IPXE=$(PKG_IPXE)
-COMMON_ARGS += --build-arg=PKG_LIBINIH=$(PKG_LIBINIH)
-COMMON_ARGS += --build-arg=PKG_LIBJSON_C=$(PKG_LIBJSON_C)
-COMMON_ARGS += --build-arg=PKG_LIBPOPT=$(PKG_LIBPOPT)
-COMMON_ARGS += --build-arg=PKG_LIBURCU=$(PKG_LIBURCU)
-COMMON_ARGS += --build-arg=PKG_OPENSSL=$(PKG_OPENSSL)
-COMMON_ARGS += --build-arg=PKG_LIBSECCOMP=$(PKG_LIBSECCOMP)
-COMMON_ARGS += --build-arg=PKG_LINUX_FIRMWARE=$(PKG_LINUX_FIRMWARE)
-COMMON_ARGS += --build-arg=PKG_LVM2=$(PKG_LVM2)
-COMMON_ARGS += --build-arg=PKG_LIBAIO=$(PKG_LIBAIO)
-COMMON_ARGS += --build-arg=PKG_MUSL=$(PKG_MUSL)
-COMMON_ARGS += --build-arg=PKG_RUNC=$(PKG_RUNC)
-COMMON_ARGS += --build-arg=PKG_XFSPROGS=$(PKG_XFSPROGS)
-COMMON_ARGS += --build-arg=PKG_UTIL_LINUX=$(PKG_UTIL_LINUX)
-COMMON_ARGS += --build-arg=PKG_KMOD=$(PKG_KMOD)
-COMMON_ARGS += --build-arg=PKG_U_BOOT=$(PKG_U_BOOT)
-COMMON_ARGS += --build-arg=PKG_RASPBERYPI_FIRMWARE=$(PKG_RASPBERYPI_FIRMWARE)
-COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
-COMMON_ARGS += --build-arg=PKG_TALOSCTL_CNI_BUNDLE_INSTALL=$(PKG_TALOSCTL_CNI_BUNDLE_INSTALL)
-COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
-
-CI_ARGS ?=
-
-all: initramfs kernel installer imager talosctl talosctl-image talos
-
-# Help Menu
-
-define HELP_MENU_HEADER
+export define HELP_MENU_HEADER
 # Getting Started
 
 To build this project, you must have the following installed:
@@ -217,395 +213,465 @@ To build this project, you must have the following installed:
 - git
 - make
 - docker (19.03 or higher)
-- buildx (https://github.com/docker/buildx)
-- crane (https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md)
 
 ## Creating a Builder Instance
 
-The build process makes use of features not currently supported by the default
-builder instance (docker driver). To create a compatible builder instance, run:
+The build process makes use of experimental Docker features (buildx).
+To enable experimental features, add 'experimental: "true"' to '/etc/docker/daemon.json' on
+Linux or enable experimental features in Docker GUI for Windows or Mac.
 
-```
-docker buildx create --driver docker-container --name local --buildkitd-flags '--allow-insecure-entitlement security.insecure' --use
-```
+To create a builder instance, run:
+
+	docker buildx create --name local --use
+
+If running builds that needs to be cached aggresively create a builder instance with the following:
+
+	docker buildx create --name local --use --config=config.toml
+
+config.toml contents:
+
+[worker.oci]
+  gc = true
+  gckeepstorage = 50000
+
+  [[worker.oci.gcpolicy]]
+    keepBytes = 10737418240
+    keepDuration = 604800
+    filters = [ "type==source.local", "type==exec.cachemount", "type==source.git.checkout"]
+  [[worker.oci.gcpolicy]]
+    all = true
+    keepBytes = 53687091200
 
 If you already have a compatible builder instance, you may use that instead.
-
-> Note: The security.insecure entitlement is only required, and used by the unit-tests target.
 
 ## Artifacts
 
 All artifacts will be output to ./$(ARTIFACTS). Images will be tagged with the
-registry "$(IMAGE_REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(REGISTRY_AND_USERNAME)/image:$(IMAGE_TAG)).
+registry "$(REGISTRY)", username "$(USERNAME)", and a dynamic tag (e.g. $(IMAGE):$(IMAGE_TAG)).
 The registry and username can be overridden by exporting REGISTRY, and USERNAME
 respectively.
 
-## Race Detector
-
-Building with `WITH_RACE=1` enables race detector in the Talos executables. Integration tests are always built with the race detector
-enabled.
-
 endef
 
-export HELP_MENU_HEADER
+ifneq (, $(filter $(WITH_RACE), t true TRUE y yes 1))
+GO_BUILDFLAGS += -race
+CGO_ENABLED := 1
+GO_LDFLAGS += -linkmode=external -extldflags '-static'
+endif
 
-help: ## This help menu.
-	@echo "$$HELP_MENU_HEADER"
-	@grep -E '^[a-zA-Z0-9%_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+ifneq (, $(filter $(WITH_DEBUG), t true TRUE y yes 1))
+GO_BUILDFLAGS += -tags sidero.debug
+else
+GO_LDFLAGS += -s
+endif
 
-# Build Abstractions
+all: unit-tests unit-tests-hack-cloud-image-uploader unit-tests-hack-docgen unit-tests-hack-gotagsrewrite unit-tests-hack-module-sig-verify unit-tests-hack-structprotogen unit-tests-pkg-machinery installer image-installer talosctl image-talosctl external-artifacts $(ARTIFACTS)/cilium $(ARTIFACTS)/clusterctl $(ARTIFACTS)/helm $(ARTIFACTS)/kubectl $(ARTIFACTS)/kubestr generate docs uki-certs talosctl-all hack-test docs-preview initramfs sd-boot sd-stub installer imager $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64 lint-protobuf talosctl-cni-bundle image-% iso secureboot-iso images-essential images e2e-% lint
+
+$(ARTIFACTS):  ## Creates artifacts directory.
+	@mkdir -p $(ARTIFACTS)
+
+.PHONY: clean
+clean:  ## Cleans up all artifacts.
+	@rm -rf $(ARTIFACTS)
+
+check-dirty:  ## Verifies that source tree is not dirty
+	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; git diff; exit 1 ; fi
+
+target-%:  ## Builds the specified target defined in the Dockerfile. The build result will only remain in the build cache.
+	@$(BUILD) --target=$* $(COMMON_ARGS) $(TARGET_ARGS) $(CI_ARGS) .
+
+local-%:  ## Builds the specified target defined in the Dockerfile using the local output type. The build result will be output to the specified local destination.
+	@$(MAKE) target-$* TARGET_ARGS="--output=type=local,dest=$(DEST) $(TARGET_ARGS)"
+
+lint-golangci-lint:  ## Runs golangci-lint linter.
+	@$(MAKE) target-$@
+
+lint-gofumpt:  ## Runs gofumpt linter.
+	@$(MAKE) target-$@
+
+.PHONY: fmt
+fmt:  ## Formats the source code
+	@docker run --rm -it -v $(PWD):/src -w /src golang:$(GO_VERSION) \
+		bash -c "export GOTOOLCHAIN=local; \
+		export GO111MODULE=on; export GOPROXY=https://proxy.golang.org; \
+		go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && \
+		gofumpt -w ."
+
+lint-govulncheck:  ## Runs govulncheck linter.
+	@$(MAKE) target-$@
+
+lint-goimports:  ## Runs goimports linter.
+	@$(MAKE) target-$@
+
+lint-golangci-lint-hack-cloud-image-uploader:  ## Runs golangci-lint linter.
+	@$(MAKE) target-$@
+
+lint-gofumpt-hack-cloud-image-uploader:  ## Runs gofumpt linter.
+	@$(MAKE) target-$@
+
+lint-govulncheck-hack-cloud-image-uploader:  ## Runs govulncheck linter.
+	@$(MAKE) target-$@
+
+lint-goimports-hack-cloud-image-uploader:  ## Runs goimports linter.
+	@$(MAKE) target-$@
+
+lint-golangci-lint-hack-docgen:  ## Runs golangci-lint linter.
+	@$(MAKE) target-$@
+
+lint-gofumpt-hack-docgen:  ## Runs gofumpt linter.
+	@$(MAKE) target-$@
+
+lint-govulncheck-hack-docgen:  ## Runs govulncheck linter.
+	@$(MAKE) target-$@
+
+lint-goimports-hack-docgen:  ## Runs goimports linter.
+	@$(MAKE) target-$@
+
+lint-golangci-lint-hack-gotagsrewrite:  ## Runs golangci-lint linter.
+	@$(MAKE) target-$@
+
+lint-gofumpt-hack-gotagsrewrite:  ## Runs gofumpt linter.
+	@$(MAKE) target-$@
+
+lint-govulncheck-hack-gotagsrewrite:  ## Runs govulncheck linter.
+	@$(MAKE) target-$@
+
+lint-goimports-hack-gotagsrewrite:  ## Runs goimports linter.
+	@$(MAKE) target-$@
+
+lint-golangci-lint-hack-module-sig-verify:  ## Runs golangci-lint linter.
+	@$(MAKE) target-$@
+
+lint-gofumpt-hack-module-sig-verify:  ## Runs gofumpt linter.
+	@$(MAKE) target-$@
+
+lint-govulncheck-hack-module-sig-verify:  ## Runs govulncheck linter.
+	@$(MAKE) target-$@
+
+lint-goimports-hack-module-sig-verify:  ## Runs goimports linter.
+	@$(MAKE) target-$@
+
+lint-golangci-lint-hack-structprotogen:  ## Runs golangci-lint linter.
+	@$(MAKE) target-$@
+
+lint-gofumpt-hack-structprotogen:  ## Runs gofumpt linter.
+	@$(MAKE) target-$@
+
+lint-govulncheck-hack-structprotogen:  ## Runs govulncheck linter.
+	@$(MAKE) target-$@
+
+lint-goimports-hack-structprotogen:  ## Runs goimports linter.
+	@$(MAKE) target-$@
+
+lint-golangci-lint-pkg-machinery:  ## Runs golangci-lint linter.
+	@$(MAKE) target-$@
+
+lint-gofumpt-pkg-machinery:  ## Runs gofumpt linter.
+	@$(MAKE) target-$@
+
+lint-govulncheck-pkg-machinery:  ## Runs govulncheck linter.
+	@$(MAKE) target-$@
+
+lint-goimports-pkg-machinery:  ## Runs goimports linter.
+	@$(MAKE) target-$@
 
 .PHONY: base
-target-%: ## Builds the specified target defined in the Dockerfile. The build result will only remain in the build cache.
-	@$(BUILD) \
-		--target=$* \
-		$(COMMON_ARGS) \
-		$(TARGET_ARGS) \
-		$(CI_ARGS) .
+base:  ## Prepare base toolchain
+	@$(MAKE) target-$@
 
-local-%: ## Builds the specified target defined in the Dockerfile using the local output type. The build result will be output to the specified local destination.
-	@$(MAKE) target-$* TARGET_ARGS="--output=type=local,dest=$(DEST) $(TARGET_ARGS)"
-	@PLATFORM=$(PLATFORM) \
-		ARTIFACTS=$(ARTIFACTS) \
-		./hack/fix-artifacts.sh
+.PHONY: unit-tests
+unit-tests:  ## Performs unit tests
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)  TARGET_ARGS="--allow security.insecure"
 
-docker-%: ## Builds the specified target defined in the Dockerfile using the docker output type. The build result will be output to the specified local destination.
-	@mkdir -p $(DEST)
-	@$(MAKE) target-$* TARGET_ARGS="--output type=docker,dest=$(DEST)/$*.tar,name=$(REGISTRY_AND_USERNAME)/$*:$(IMAGE_TAG) $(TARGET_ARGS)"
+.PHONY: unit-tests-race
+unit-tests-race:  ## Performs unit tests with race detection enabled.
+	@$(MAKE) target-$@  TARGET_ARGS="--allow security.insecure"
 
-registry-%: ## Builds the specified target defined in the Dockerfile using the image/registry output type. The build result will be pushed to the registry if PUSH=true.
-	@$(MAKE) target-$* TARGET_ARGS="--output type=image,name=$(REGISTRY_AND_USERNAME)/$*:$(IMAGE_TAG) $(TARGET_ARGS)"
+.PHONY: unit-tests-hack-cloud-image-uploader
+unit-tests-hack-cloud-image-uploader:  ## Performs unit tests
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)  TARGET_ARGS="--allow security.insecure"
 
-hack-test-%: ## Runs the specified script in ./hack/test with well known environment variables.
-	@./hack/test/$*.sh
+.PHONY: unit-tests-hack-cloud-image-uploader-race
+unit-tests-hack-cloud-image-uploader-race:  ## Performs unit tests with race detection enabled.
+	@$(MAKE) target-$@  TARGET_ARGS="--allow security.insecure"
 
-# Generators
+.PHONY: unit-tests-hack-docgen
+unit-tests-hack-docgen:  ## Performs unit tests
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-hack-docgen-race
+unit-tests-hack-docgen-race:  ## Performs unit tests with race detection enabled.
+	@$(MAKE) target-$@  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-hack-gotagsrewrite
+unit-tests-hack-gotagsrewrite:  ## Performs unit tests
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-hack-gotagsrewrite-race
+unit-tests-hack-gotagsrewrite-race:  ## Performs unit tests with race detection enabled.
+	@$(MAKE) target-$@  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-hack-module-sig-verify
+unit-tests-hack-module-sig-verify:  ## Performs unit tests
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-hack-module-sig-verify-race
+unit-tests-hack-module-sig-verify-race:  ## Performs unit tests with race detection enabled.
+	@$(MAKE) target-$@  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-hack-structprotogen
+unit-tests-hack-structprotogen:  ## Performs unit tests
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-hack-structprotogen-race
+unit-tests-hack-structprotogen-race:  ## Performs unit tests with race detection enabled.
+	@$(MAKE) target-$@  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-pkg-machinery
+unit-tests-pkg-machinery:  ## Performs unit tests
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: unit-tests-pkg-machinery-race
+unit-tests-pkg-machinery-race:  ## Performs unit tests with race detection enabled.
+	@$(MAKE) target-$@  TARGET_ARGS="--allow security.insecure"
+
+.PHONY: coverage
+coverage:  ## Upload coverage data to codecov.io.
+	bash -c "bash <(curl -s https://codecov.io/bash) -f $(ARTIFACTS)/coverage-unit-tests.txt -X fix"
+	bash -c "bash <(curl -s https://codecov.io/bash) -f $(ARTIFACTS)/coverage-unit-tests-hack-cloud-image-uploader.txt -X fix"
+	bash -c "bash <(curl -s https://codecov.io/bash) -f $(ARTIFACTS)/coverage-unit-tests-hack-docgen.txt -X fix"
+	bash -c "bash <(curl -s https://codecov.io/bash) -f $(ARTIFACTS)/coverage-unit-tests-hack-gotagsrewrite.txt -X fix"
+	bash -c "bash <(curl -s https://codecov.io/bash) -f $(ARTIFACTS)/coverage-unit-tests-hack-module-sig-verify.txt -X fix"
+	bash -c "bash <(curl -s https://codecov.io/bash) -f $(ARTIFACTS)/coverage-unit-tests-hack-structprotogen.txt -X fix"
+	bash -c "bash <(curl -s https://codecov.io/bash) -f $(ARTIFACTS)/coverage-unit-tests-pkg-machinery.txt -X fix"
+
+.PHONY: $(ARTIFACTS)/installer-linux-amd64
+$(ARTIFACTS)/installer-linux-amd64:
+	@$(MAKE) local-installer-linux-amd64 DEST=$(ARTIFACTS)
+
+.PHONY: installer-linux-amd64
+installer-linux-amd64: $(ARTIFACTS)/installer-linux-amd64  ## Builds executable for installer-linux-amd64.
+
+.PHONY: installer
+installer: installer-linux-amd64  ## Builds executables for installer.
+
+.PHONY: lint-markdown
+lint-markdown:  ## Runs markdownlint.
+	@$(MAKE) target-$@
+
+.PHONY: lint
+lint: lint-golangci-lint lint-gofumpt lint-govulncheck lint-goimports lint-golangci-lint-hack-cloud-image-uploader lint-gofumpt-hack-cloud-image-uploader lint-govulncheck-hack-cloud-image-uploader lint-goimports-hack-cloud-image-uploader lint-golangci-lint-hack-docgen lint-gofumpt-hack-docgen lint-govulncheck-hack-docgen lint-goimports-hack-docgen lint-golangci-lint-hack-gotagsrewrite lint-gofumpt-hack-gotagsrewrite lint-govulncheck-hack-gotagsrewrite lint-goimports-hack-gotagsrewrite lint-golangci-lint-hack-module-sig-verify lint-gofumpt-hack-module-sig-verify lint-govulncheck-hack-module-sig-verify lint-goimports-hack-module-sig-verify lint-golangci-lint-hack-structprotogen lint-gofumpt-hack-structprotogen lint-govulncheck-hack-structprotogen lint-goimports-hack-structprotogen lint-golangci-lint-pkg-machinery lint-gofumpt-pkg-machinery lint-govulncheck-pkg-machinery lint-goimports-pkg-machinery lint-markdown lint-protobuf  ## Run all linters for the project.
+
+.PHONY: image-installer
+image-installer:  ## Builds image for installer.
+	@$(MAKE) target-$@ TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/installer:$(IMAGE_TAG)"
+
+.PHONY: $(ARTIFACTS)/talosctl-darwin-amd64
+$(ARTIFACTS)/talosctl-darwin-amd64:
+	@$(MAKE) local-talosctl-darwin-amd64 DEST=$(ARTIFACTS) NAME=Client
+
+.PHONY: talosctl-darwin-amd64
+talosctl-darwin-amd64: $(ARTIFACTS)/talosctl-darwin-amd64  ## Builds executable for talosctl-darwin-amd64.
+
+.PHONY: $(ARTIFACTS)/talosctl-darwin-arm64
+$(ARTIFACTS)/talosctl-darwin-arm64:
+	@$(MAKE) local-talosctl-darwin-arm64 DEST=$(ARTIFACTS) NAME=Client
+
+.PHONY: talosctl-darwin-arm64
+talosctl-darwin-arm64: $(ARTIFACTS)/talosctl-darwin-arm64  ## Builds executable for talosctl-darwin-arm64.
+
+.PHONY: $(ARTIFACTS)/talosctl-freebsd-amd64
+$(ARTIFACTS)/talosctl-freebsd-amd64:
+	@$(MAKE) local-talosctl-freebsd-amd64 DEST=$(ARTIFACTS) NAME=Client
+
+.PHONY: talosctl-freebsd-amd64
+talosctl-freebsd-amd64: $(ARTIFACTS)/talosctl-freebsd-amd64  ## Builds executable for talosctl-freebsd-amd64.
+
+.PHONY: $(ARTIFACTS)/talosctl-freebsd-arm64
+$(ARTIFACTS)/talosctl-freebsd-arm64:
+	@$(MAKE) local-talosctl-freebsd-arm64 DEST=$(ARTIFACTS) NAME=Client
+
+.PHONY: talosctl-freebsd-arm64
+talosctl-freebsd-arm64: $(ARTIFACTS)/talosctl-freebsd-arm64  ## Builds executable for talosctl-freebsd-arm64.
+
+.PHONY: $(ARTIFACTS)/talosctl-linux-amd64
+$(ARTIFACTS)/talosctl-linux-amd64:
+	@$(MAKE) local-talosctl-linux-amd64 DEST=$(ARTIFACTS) NAME=Client
+
+.PHONY: talosctl-linux-amd64
+talosctl-linux-amd64: $(ARTIFACTS)/talosctl-linux-amd64  ## Builds executable for talosctl-linux-amd64.
+
+.PHONY: $(ARTIFACTS)/talosctl-linux-arm64
+$(ARTIFACTS)/talosctl-linux-arm64:
+	@$(MAKE) local-talosctl-linux-arm64 DEST=$(ARTIFACTS) NAME=Client
+
+.PHONY: talosctl-linux-arm64
+talosctl-linux-arm64: $(ARTIFACTS)/talosctl-linux-arm64  ## Builds executable for talosctl-linux-arm64.
+
+.PHONY: $(ARTIFACTS)/talosctl-windows-amd64.exe
+$(ARTIFACTS)/talosctl-windows-amd64.exe:
+	@$(MAKE) local-talosctl-windows-amd64.exe DEST=$(ARTIFACTS) NAME=Client
+
+.PHONY: talosctl-windows-amd64.exe
+talosctl-windows-amd64.exe: $(ARTIFACTS)/talosctl-windows-amd64.exe  ## Builds executable for talosctl-windows-amd64.exe.
+
+.PHONY: talosctl
+talosctl: talosctl-darwin-amd64 talosctl-darwin-arm64 talosctl-freebsd-amd64 talosctl-freebsd-arm64 talosctl-linux-amd64 talosctl-linux-arm64 talosctl-windows-amd64.exe  ## Builds executables for talosctl.
+
+.PHONY: image-talosctl
+image-talosctl:  ## Builds image for talosctl.
+	@$(MAKE) target-$@ TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/talosctl:$(IMAGE_TAG)"
+
+external-artifacts: $(ARTIFACTS)/cilium $(ARTIFACTS)/clusterctl $(ARTIFACTS)/helm $(ARTIFACTS)/kubectl $(ARTIFACTS)/kubestr
+
+$(ARTIFACTS)/cilium: $(ARTIFACTS)
+	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
+	@chmod +x $(ARTIFACTS)/cilium
+
+$(ARTIFACTS)/clusterctl: $(ARTIFACTS)
+	@curl -L -o $(ARTIFACTS)/clusterctl "$(CLUSTERCTL_URL)"
+	@chmod +x $(ARTIFACTS)/clusterctl
+
+$(ARTIFACTS)/helm: $(ARTIFACTS)
+	@curl -L "$(HELM_URL)" | tar xzf - -C $(ARTIFACTS) --strip-components=1 linux-amd64/helm
+	@chmod +x $(ARTIFACTS)/helm
+
+$(ARTIFACTS)/kubectl: $(ARTIFACTS)
+	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
+	@chmod +x $(ARTIFACTS)/kubectl
+
+$(ARTIFACTS)/kubestr: $(ARTIFACTS)
+	@curl -L "$(KUBESTR_URL)" | tar xzf - -C $(ARTIFACTS) kubestr
+	@chmod +x $(ARTIFACTS)/kubestr
 
 .PHONY: generate
-generate: ## Generates code from protobuf service definitions and machinery config.
+generate:
 	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
 
 .PHONY: docs
-docs: ## Generates the documentation for machine config, and talosctl.
+docs:
 	@rm -rf docs/configuration/*
 	@rm -rf docs/talosctl/*
 	@$(MAKE) local-$@ DEST=./ PLATFORM=linux/amd64
 
-.PHONY: docs-preview
-docs-preview: ## Starts a local preview of the documentation using Hugo in docker
-	@docker run --rm --interactive --tty \
-	--user $(shell id -u):$(shell id -g) \
-	--volume $(PWD):/src --workdir /src/website \
-	--publish 1313:1313 \
-	klakegg/hugo:$(HUGO_VERSION) \
-	server
-
-# Local Artifacts
-
-.PHONY: kernel
-kernel: ## Outputs the kernel package contents (vmlinuz) to the artifact directory.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
-	@-rm -rf $(ARTIFACTS)/modules
-
-.PHONY: initramfs
-initramfs: ## Builds the compressed initramfs and outputs it to the artifact directory.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
-
-.PHONY: sd-boot
-sd-boot: ## Outputs the systemd-boot to the artifact directory.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
-
-.PHONY: sd-stub
-sd-stub: ## Outputs the systemd-stub to the artifact directory.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
-
-.PHONY: installer
-installer: ## Builds the container image for the installer and outputs it to the registry.
-	@INSTALLER_ARCH=targetarch  \
-		$(MAKE) registry-$@
-
-.PHONY: imager
-imager: ## Builds the container image for the imager and outputs it to the registry.
-	@$(MAKE) registry-$@
-
-.PHONY: talos
-talos: ## Builds the Talos container image and outputs it to the registry.
-	@$(MAKE) registry-$@
-
-.PHONY: talosctl-image
-talosctl-image: ## Builds the talosctl container image and outputs it to the registry.
-	@$(MAKE) registry-talosctl
-
-talosctl-all:
-	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false NAME=Client
-
-talosctl-linux-amd64:
-	@$(MAKE) local-talosctl-linux-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
-
-talosctl-linux-arm64:
-	@$(MAKE) local-talosctl-linux-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
-
-talosctl-darwin-amd64:
-	@$(MAKE) local-talosctl-darwin-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
-
-talosctl-darwin-arm64:
-	@$(MAKE) local-talosctl-darwin-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
-
-talosctl-freebsd-amd64:
-	@$(MAKE) local-talosctl-freebsd-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
-
-taloscl-freebsd-arm64:
-	@$(MAKE) local-talosctl-freebsd-arm64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
-
-talosctl-windows-amd64:
-	@$(MAKE) local-talosctl-windows-amd64 DEST=$(ARTIFACTS) PUSH=false NAME=Client
-
-talosctl:
-	@$(MAKE) local-talosctl-targetarch DEST=$(ARTIFACTS)
-
-image-%: ## Builds the specified image. Valid options are aws, azure, digital-ocean, gcp, and vmware (e.g. image-aws)
-	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=$$(basename "$${platform}") && \
-		docker run --rm -t -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch $(IMAGER_ARGS) ; \
-	done
-
-images-essential: image-aws image-azure image-gcp image-metal secureboot-installer ## Builds only essential images used in the CI (AWS, GCP, and Metal).
-
-images: image-akamai image-aws image-azure image-digital-ocean image-exoscale image-gcp image-hcloud image-iso image-metal image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr ## Builds all known images (AWS, Azure, DigitalOcean, Exoscale, GCP, HCloud, Metal, NoCloud, OpenNebula, Openstack, Oracle, Scaleway, UpCloud, Vultr and VMware).
-
-.PHONY: iso
-iso: image-iso ## Builds the ISO and outputs it to the artifact directory.
-
-.PHONY: secureboot-iso
-secureboot-iso: image-secureboot-iso ## Builds UEFI only ISO which uses UKI and outputs it to the artifact directory.
-
-.PHONY: secureboot-installer
-secureboot-installer: ## Builds UEFI only installer which uses UKI and push it to the registry.
-	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)"
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=$$(basename "$${platform}") && \
-		crane push $(ARTIFACTS)/installer-$${arch}-secureboot.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-$${arch}-secureboot ; \
-	done
-
-.PHONY: talosctl-cni-bundle
-talosctl-cni-bundle: ## Creates a compressed tarball that includes CNI bundle for talosctl.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=`basename "$${platform}"` ; \
-		tar  -C $(ARTIFACTS)/talosctl-cni-bundle-$${arch} -czf $(ARTIFACTS)/talosctl-cni-bundle-$${arch}.tar.gz . ; \
-	done
-	@rm -rf $(ARTIFACTS)/talosctl-cni-bundle-*/
-
-.PHONY: cloud-images
-cloud-images: ## Uploads cloud images (AMIs, etc.) to the cloud registry.
-	@docker run --rm -v $(PWD):/src -w /src \
-		-e TAG=$(TAG) -e ARTIFACTS=$(ARTIFACTS) -e ABBREV_TAG=$(ABBREV_TAG) \
-		-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SVC_ACCT \
-		-e AZURE_SUBSCRIPTION_ID -e AZURE_CLIENT_ID -e AZURE_CLIENT_SECRET -e AZURE_TENANT_ID \
-		golang:$(GO_VERSION) \
-		./hack/cloud-image-uploader.sh $(CLOUD_IMAGES_EXTRA_ARGS)
-
 .PHONY: uki-certs
-uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
+uki-certs: $(TALOSCTL_DEFAULT_TARGET)
 	@$(TALOSCTL_EXECUTABLE) gen secureboot uki
 	@$(TALOSCTL_EXECUTABLE) gen secureboot pcr
 	@$(TALOSCTL_EXECUTABLE) gen secureboot database
 
-# Code Quality
+.PHONY: talosctl-all
+talosctl-all:
+	@$(MAKE) local-talosctl-all DEST=$(ARTIFACTS) PUSH=false NAME=Client
 
-api-descriptors: ## Generates API descriptors used to detect breaking API changes.
-	@$(MAKE) local-api-descriptors DEST=./ PLATFORM=linux/amd64
+hack-test:
+	@./hack/test/$*.sh
 
-fmt-go: ## Formats the source code.
-	@docker run --rm -it -v $(PWD):/src -w /src -e GOTOOLCHAIN=local golang:$(GO_VERSION) bash -c "go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION) && goimports -w -local github.com/siderolabs/talos . && go install mvdan.cc/gofumpt@$(GOFUMPT_VERSION) && gofumpt -w ."
+.PHONY: docs-preview
+docs-preview:
+	@docker run --rm --interactive --tty --user $(shell id -u):$(shell id -g) --volume $(PWD):/src --workdir /src/website --publish 1313:1313 klakegg/hugo:$(HUGO_VERSION) server
 
-fmt-protobuf: ## Formats protobuf files.
-	@$(MAKE) local-fmt-protobuf DEST=./ PLATFORM=linux/amd64
+.PHONY: initramfs
+initramfs:
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
 
-fmt: ## Formats the source code and protobuf files.
-	@$(MAKE) fmt-go fmt-protobuf
+.PHONY: sd-boot
+sd-boot:
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
 
-lint-%: ## Runs the specified linter. Valid options are go, protobuf, and markdown (e.g. lint-go).
-	@$(MAKE) target-lint-$* PLATFORM=linux/amd64
+.PHONY: sd-stub
+sd-stub:
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PUSH=false
 
-lint: ## Runs linters on go, vulncheck, protobuf, and markdown file types.
-	@$(MAKE) lint-go lint-vulncheck lint-protobuf lint-markdown
+.PHONY: installer
+installer:
+	@INSTALLER_ARCH=targetarch $(MAKE) image-installer
 
-check-dirty: ## Verifies that source tree is not dirty
-	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; git diff; exit 1 ; fi
+.PHONY: imager
+imager:
+	@INSTALLER_ARCH=targetarch $(MAKE) image-imager
 
-go-mod-outdated: ## Runs the go-mod-oudated to show outdated dependencies.
-	@$(MAKE) target-go-mod-outdated PLATFORM=linux/amd64
-
-# Tests
-
-.PHONY: unit-tests
-unit-tests: ## Performs unit tests.
-	@$(MAKE) local-$@ DEST=$(ARTIFACTS) TARGET_ARGS="--allow security.insecure" PLATFORM=linux/amd64
-
-.PHONY: unit-tests-race
-unit-tests-race: ## Performs unit tests with race detection enabled.
-	@$(MAKE) target-$@ TARGET_ARGS="--allow security.insecure" PLATFORM=linux/amd64
-
+.PHONY: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64
 $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client PUSH=false
 
+.PHONY: $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true NAME=Client
 
-$(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64:
-	@$(MAKE) local-$(MODULE_SIG_VERIFY_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64
+.PHONY: lint-protobuf
+lint-protobuf:
+	@$(MAKE) target-lint-protobuf PLATFORM=linux/amd64
 
-$(ARTIFACTS)/kubectl:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
-	@chmod +x $(ARTIFACTS)/kubectl
-
-$(ARTIFACTS)/kubestr:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L "$(KUBESTR_URL)" | tar xzf - -C $(ARTIFACTS) kubestr
-	@chmod +x $(ARTIFACTS)/kubestr
-
-$(ARTIFACTS)/helm:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L "$(HELM_URL)" | tar xzf - -C $(ARTIFACTS) --strip-components=1 linux-amd64/helm
-	@chmod +x $(ARTIFACTS)/helm
-
-$(ARTIFACTS)/clusterctl:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L -o $(ARTIFACTS)/clusterctl "$(CLUSTERCTL_URL)"
-	@chmod +x $(ARTIFACTS)/clusterctl
-
-$(ARTIFACTS)/cilium:
-	@mkdir -p $(ARTIFACTS)
-	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
-	@chmod +x $(ARTIFACTS)/cilium
-
-external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/clusterctl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium $(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64
-
-e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 external-artifacts ## Runs the E2E test for the specified platform (e.g. e2e-docker).
-	@$(MAKE) hack-test-$@ \
-		PLATFORM=$* \
-		TAG=$(TAG) \
-		SHA=$(SHA) \
-		REGISTRY=$(IMAGE_REGISTRY) \
-		IMAGE=$(REGISTRY_AND_USERNAME)/talos:$(IMAGE_TAG) \
-		INSTALLER_IMAGE=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) \
-		ARTIFACTS=$(ARTIFACTS) \
-		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
-		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
-		MODULE_SIG_VERIFY=$(PWD)/$(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64 \
-		KERNEL_MODULE_SIGNING_PUBLIC_KEY=$(PWD)/$(ARTIFACTS)/signing_key.x509 \
-		SHORT_INTEGRATION_TEST=$(SHORT_INTEGRATION_TEST) \
-		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
-		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
-		KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \
-		HELM=$(PWD)/$(ARTIFACTS)/helm \
-		CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl \
-		CILIUM_CLI=$(PWD)/$(ARTIFACTS)/cilium
-
-provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
-
-provision-tests: provision-tests-prepare
-	@$(MAKE) hack-test-$@ \
-		TAG=$(TAG) \
-		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
-		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
-
-provision-tests-track-%:
-	@$(MAKE) hack-test-provision-tests \
-		TAG=$(TAG) \
-		TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
-		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64 \
-		INTEGRATION_TEST_RUN="TestIntegration/.+-TR$*" \
-		INTEGRATION_TEST_TRACK="$*" \
-		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
-		REGISTRY=$(IMAGE_REGISTRY) \
-		ARTIFACTS=$(ARTIFACTS)
-
-# Assets for releases
-
-.PHONY: $(ARTIFACTS)/$(TALOS_RELEASE)
-$(ARTIFACTS)/$(TALOS_RELEASE): $(ARTIFACTS)/$(TALOS_RELEASE)/vmlinuz $(ARTIFACTS)/$(TALOS_RELEASE)/initramfs.xz
-
-# download release artifacts for specific version
-$(ARTIFACTS)/$(TALOS_RELEASE)/%:
-	@mkdir -p $(ARTIFACTS)/$(TALOS_RELEASE)/
-	@case "$*" in \
-		vmlinuz) \
-			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/siderolabs/talos/releases/download/$(TALOS_RELEASE)/vmlinuz-amd64" \
-			;; \
-		initramfs.xz) \
-			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/siderolabs/talos/releases/download/$(TALOS_RELEASE)/initramfs-amd64.xz" \
-			;; \
-	esac
-
-.PHONY: release-artifacts
-release-artifacts:
-	@for release in $(RELEASES); do \
-		$(MAKE) $(ARTIFACTS)/$$release TALOS_RELEASE=$$release; \
+talosctl-cni-bundle:
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
+	
+	@for platform in $(shell echo $(PLATFORM) | tr "," " "); do \
+	  arch=`basename $$platform` ; \
+	
+	  tar  -C $(ARTIFACTS)/talosctl-cni-bundle-$${arch} -czf $(ARTIFACTS)/talosctl-cni-bundle-$${arch}.tar.gz . ; \
 	done
 
-# Utilities
+.PHONY: image-%
+image-%:
+	@docker pull $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG)
+	
+	@for platform in $(shell echo $(PLATFORM) | tr "," " "); do \
+	  arch=`basename $$platform` ; \
+	
+	  docker run --rm -t -v /dev:/dev -v $(PWD)/$(ARTIFACTS):/secureboot:ro -v $(PWD)/$(ARTIFACTS):/out --network=host --privileged $(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG) $* --arch $$arch $(IMAGER_ARGS) ; \
+	done
 
-.PHONY: conformance
-conformance: ## Performs policy checks against the commit and source code.
-	docker run --rm -it -v $(PWD):/src -w /src ghcr.io/siderolabs/conform:latest enforce
+.PHONY: iso
+iso: image-iso
+
+.PHONY: secureboot-iso
+secureboot-iso: image-secureboot-iso
+
+.PHONY: images-essential
+images-essential: image-aws image-azure image-gcp image-metal secureboot-installer
+
+.PHONY: images
+images: image-akamai image-aws image-azure image-digital-ocean image-exoscale image-gcp image-hcloud image-iso image-metal image-nocloud image-opennebula image-openstack image-oracle image-scaleway image-upcloud image-vmware image-vultr
+
+.PHONY: e2e-%
+e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 external-artifacts
+	@$(MAKE) hack-test-$@ \
+	  PLATFORM=$* \
+	  TAG=$(TAG) \
+	  SHA=$(SHA) \
+	  REGISTRY=$(IMAGE_REGISTRY) \
+	  IMAGE=$(REGISTRY_AND_USERNAME)/talos:$(IMAGE_TAG) \
+	  INSTALLER_IMAGE=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) \
+	  ARTIFACTS=$(ARTIFACTS) \
+	  TALOSCTL=$(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-amd64 \
+	  INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST_DEFAULT_TARGET)-amd64 \
+	  MODULE_SIG_VERIFY=$(PWD)/$(ARTIFACTS)/$(MODULE_SIG_VERIFY_DEFAULT_TARGET)-amd64 \
+	  KERNEL_MODULE_SIGNING_PUBLIC_KEY=$(PWD)/$(ARTIFACTS)/signing_key.x509 \
+	  SHORT_INTEGRATION_TEST=$(SHORT_INTEGRATION_TEST) \
+	  CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
+	  KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
+	  KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \
+	  HELM=$(PWD)/$(ARTIFACTS)/helm \
+	  CLUSTERCTL=$(PWD)/$(ARTIFACTS)/clusterctl \
+	  CILIUM_CLI=$(PWD)/$(ARTIFACTS)/cilium
+
+.PHONY: rekres
+rekres:
+	@docker pull $(KRES_IMAGE)
+	@docker run --rm --net=host --user $(shell id -u):$(shell id -g) -v $(PWD):/src -w /src -e GITHUB_TOKEN $(KRES_IMAGE)
+
+.PHONY: help
+help:  ## This help menu.
+	@echo "$$HELP_MENU_HEADER"
+	@grep -E '^[a-zA-Z%_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: release-notes
-release-notes:
-	ARTIFACTS=$(ARTIFACTS) ./hack/release.sh $@ $(ARTIFACTS)/RELEASE_NOTES.md $(TAG)
+release-notes: $(ARTIFACTS)
+	@ARTIFACTS=$(ARTIFACTS) ./hack/release.sh $@ $(ARTIFACTS)/RELEASE_NOTES.md $(TAG)
 
-.PHONY: login
-login: ## Logs in to the configured container registry.
-ifeq ($(DOCKER_LOGIN_ENABLED), true)
-	@docker login --username "$(GHCR_USERNAME)" --password "$(GHCR_PASSWORD)" $(IMAGE_REGISTRY)
-endif
+.PHONY: conformance
+conformance:
+	@docker pull $(CONFORMANCE_IMAGE)
+	@docker run --rm -it -v $(PWD):/src -w /src $(CONFORMANCE_IMAGE) enforce
 
-push: login ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the generated tag.
-	@$(MAKE) installer PUSH=true
-	@$(MAKE) imager PUSH=true
-	@$(MAKE) talos PUSH=true
-	@$(MAKE) talosctl-image PUSH=true
-
-push-%: login ## Pushes the installer, imager, talos and talosctl images to the configured container registry with the specified tag (e.g. push-latest).
-	@$(MAKE) push IMAGE_TAG=$*
-
-.PHONY: clean
-clean: ## Cleans up all artifacts.
-	@-rm -rf $(ARTIFACTS)
-
-.PHONY: image-list
-image-list: ## Prints a list of all images built by this Makefile with digests.
-	@echo -n installer talos imager talosctl | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
-
-.PHONY: sign-images
-sign-images: ## Run cosign to sign all images built by this Makefile.
-	@for image in $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG=$(IMAGE_TAG)); do \
-		echo '==>' $$image; \
-		cosign verify $$image --certificate-identity-regexp '@siderolabs\.com$$' --certificate-oidc-issuer https://accounts.google.com || \
-			cosign sign --yes $$image; \
-	done
-
-.PHONY: reproducibility-test
-reproducibility-test:
-	@$(MAKE) reproducibility-test-local-initramfs
-	@$(MAKE) reproducibility-test-docker-installer INSTALLER_ARCH=targetarch PLATFORM=linux/amd64
-	@$(MAKE) reproducibility-test-docker-talos reproducibility-test-docker-imager reproducibility-test-docker-talosctl PLATFORM=linux/amd64
-
-reproducibility-test-docker-%:
-	@rm -rf _out1/ _out2/
-	@mkdir -p _out1/ _out2/
-	@$(MAKE) docker-$* DEST=_out1/
-	@$(MAKE) docker-$* DEST=_out2/ TARGET_ARGS="--no-cache"
-	@find _out1/ -type f | xargs -IFILE diffoscope FILE `echo FILE | sed 's/_out1/_out2/'`
-	@rm -rf _out1/ _out2/
-
-reproducibility-test-local-%:
-	@rm -rf _out1/ _out2/
-	@mkdir -p _out1/ _out2/
-	@$(MAKE) local-$* DEST=_out1/
-	@$(MAKE) local-$* DEST=_out2/ TARGET_ARGS="--no-cache"
-	@find _out1/ -type f | xargs -IFILE diffoscope FILE `echo FILE | sed 's/_out1/_out2/'`
-	@rm -rf _out1/ _out2/
