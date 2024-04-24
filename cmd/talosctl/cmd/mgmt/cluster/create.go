@@ -30,7 +30,6 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/internal/firewallpatch"
@@ -64,37 +63,39 @@ const (
 	// vipOffset is the offset from the network address of the CIDR to use for allocating the Virtual (shared) IP address, if enabled.
 	vipOffset = 50
 
-	inputDirFlag = "input-dir"
+	inputDirFlag                 = "input-dir"
+	networkIPv4Flag              = "ipv4"
+	networkIPv6Flag              = "ipv6"
+	networkMTUFlag               = "mtu"
+	networkCIDRFlag              = "cidr"
+	networkNoMasqueradeCIDRsFlag = "no-masquerade-cidrs"
+	nameserversFlag              = "nameservers"
+	clusterDiskPreallocateFlag   = "disk-preallocate"
+	clusterDisksFlag             = "user-disk"
+	clusterDiskSizeFlag          = "disk"
+	useVIPFlag                   = "use-vip"
+	bootloaderEnabledFlag        = "with-bootloader"
+	controlPlanePortFlag         = "control-plane-port"
+	firewallFlag                 = "with-firewall"
+	tpm2EnabledFlag              = "with-tpm2"
 
-	// these flags are considered gen options.
+	// The following flags are the gen options - the options that are only used in machine configuration (i.e., not during the qemu/docker provisioning).
+	// They are not applicable when no machine configuration is generated, hence mutually exclusive with the --input-dir flag.
+
 	nodeInstallImageFlag          = "install-image"
 	configDebugFlag               = "with-debug"
 	dnsDomainFlag                 = "dns-domain"
 	withClusterDiscoveryFlag      = "with-cluster-discovery"
 	registryMirrorFlag            = "registry-mirror"
 	registryInsecureFlag          = "registry-insecure-skip-verify"
-	networkIPv4Flag               = "ipv4"
-	networkIPv6Flag               = "ipv6"
-	networkMTUFlag                = "mtu"
-	networkCIDRFlag               = "cidr"
-	networkNoMasqueradeCIDRsFlag  = "no-masquerade-cidrs"
-	nameserversFlag               = "nameservers"
-	clusterDiskSizeFlag           = "disk"
-	clusterDiskPreallocateFlag    = "disk-preallocate"
-	clusterDisksFlag              = "user-disk"
 	customCNIUrlFlag              = "custom-cni-url"
 	talosVersionFlag              = "talos-version"
 	encryptStatePartitionFlag     = "encrypt-state"
 	encryptEphemeralPartitionFlag = "encrypt-ephemeral"
-	useVIPFlag                    = "use-vip"
 	enableKubeSpanFlag            = "with-kubespan"
-	bootloaderEnabledFlag         = "with-bootloader"
 	forceEndpointFlag             = "endpoint"
-	controlPlanePortFlag          = "control-plane-port"
 	kubePrismFlag                 = "kubeprism-port"
-	tpm2EnabledFlag               = "with-tpm2"
 	diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
-	firewallFlag                  = "with-firewall"
 )
 
 var (
@@ -184,12 +185,9 @@ var (
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Creates a local docker-based or QEMU-based kubernetes cluster",
-	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return cli.WithContext(context.Background(), func(ctx context.Context) error {
-			return create(ctx, cmd.Flags())
-		})
+		return cli.WithContext(context.Background(), create)
 	},
 }
 
@@ -264,7 +262,7 @@ func downloadBootAssets(ctx context.Context) error {
 }
 
 //nolint:gocyclo,cyclop
-func create(ctx context.Context, flags *pflag.FlagSet) error {
+func create(ctx context.Context) error {
 	if err := downloadBootAssets(ctx); err != nil {
 		return err
 	}
@@ -462,11 +460,6 @@ func create(ctx context.Context, flags *pflag.FlagSet) error {
 	}
 
 	if inputDir != "" {
-		definedGenFlag := checkForDefinedGenFlag(flags)
-		if definedGenFlag != "" {
-			return fmt.Errorf("flag --%s is not supported with generated configs (--%s)", definedGenFlag, inputDirFlag)
-		}
-
 		configBundleOpts = append(configBundleOpts, bundle.WithExistingConfigs(inputDir))
 	} else {
 		genOptions := []generate.Option{
@@ -1204,43 +1197,22 @@ func init() {
 	createCmd.Flags().BoolVar(&withUUIDHostnames, "with-uuid-hostnames", false, "use machine UUIDs as default hostnames (QEMU only)")
 	createCmd.Flags().Var(&withSiderolinkAgent, "with-siderolink", "enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling") //nolint:lll
 
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, nodeInstallImageFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, configDebugFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, dnsDomainFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, withClusterDiscoveryFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, registryMirrorFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, registryInsecureFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, customCNIUrlFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, talosVersionFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptStatePartitionFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, encryptEphemeralPartitionFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, enableKubeSpanFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, forceEndpointFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, kubePrismFlag)
+	createCmd.MarkFlagsMutuallyExclusive(inputDirFlag, diskEncryptionKeyTypesFlag)
+
 	Cmd.AddCommand(createCmd)
-}
-
-// checkForDefinedGenFlag returns a gen option flag if one has been defined by the user.
-func checkForDefinedGenFlag(flags *pflag.FlagSet) string {
-	genOptionFlags := []string{
-		nodeInstallImageFlag,
-		configDebugFlag,
-		dnsDomainFlag,
-		withClusterDiscoveryFlag,
-		registryMirrorFlag,
-		registryInsecureFlag,
-		networkIPv4Flag,
-		networkIPv6Flag,
-		networkMTUFlag,
-		nameserversFlag,
-		clusterDiskSizeFlag,
-		clusterDisksFlag,
-		customCNIUrlFlag,
-		talosVersionFlag,
-		encryptStatePartitionFlag,
-		encryptEphemeralPartitionFlag,
-		useVIPFlag,
-		enableKubeSpanFlag,
-		bootloaderEnabledFlag,
-		forceEndpointFlag,
-		controlPlanePortFlag,
-		kubePrismFlag,
-		firewallFlag,
-	}
-	for _, genFlag := range genOptionFlags {
-		if flags.Lookup(genFlag).Changed {
-			return genFlag
-		}
-	}
-
-	return ""
 }
 
 func newSiderolinkBuilder(wgHost string) (*siderolinkBuilder, error) {
