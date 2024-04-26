@@ -195,20 +195,67 @@ func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, che
 
 // WaitForPodToBeRunning waits for the pod with the given namespace and name to be running.
 func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout time.Duration, namespace, podName string) error {
-	return retry.Constant(timeout, retry.WithUnits(time.Second*10)).Retry(
-		func() error {
-			pod, err := k8sSuite.Clientset.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
-			if err != nil {
-				return retry.ExpectedErrorf("error getting pod: %s", err)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	watcher, err := k8sSuite.Clientset.CoreV1().Pods(namespace).Watch(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", podName).String(),
+	})
+	if err != nil {
+		return err
+	}
+
+	defer watcher.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event := <-watcher.ResultChan():
+			if event.Type == watch.Error {
+				return fmt.Errorf("error watching pod: %v", event.Object)
 			}
 
-			if pod.Status.Phase != corev1.PodRunning {
-				return retry.ExpectedErrorf("pod is not running yet: %s", pod.Status.Phase)
+			pod, ok := event.Object.(*corev1.Pod)
+			if !ok {
+				continue
 			}
 
-			return nil
-		},
-	)
+			if pod.Name == podName && pod.Status.Phase == corev1.PodRunning {
+				return nil
+			}
+		}
+	}
+}
+
+// WaitForPodToBeDeleted waits for the pod with the given namespace and name to be deleted.
+func (k8sSuite *K8sSuite) WaitForPodToBeDeleted(ctx context.Context, timeout time.Duration, namespace, podName string) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	watcher, err := k8sSuite.Clientset.CoreV1().Pods(namespace).Watch(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", podName).String(),
+	})
+	if err != nil {
+		return err
+	}
+
+	defer watcher.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event := <-watcher.ResultChan():
+			if event.Type == watch.Deleted {
+				return nil
+			}
+
+			if event.Type == watch.Error {
+				return fmt.Errorf("error watching pod: %v", event.Object)
+			}
+		}
+	}
 }
 
 // ExecuteCommandInPod executes the given command in the pod with the given namespace and name.
