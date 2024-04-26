@@ -58,16 +58,11 @@ func (apiSuite *APISuite) SetupSuite() {
 	apiSuite.Talosconfig, err = clientconfig.Open(apiSuite.TalosConfig)
 	apiSuite.Require().NoError(err)
 
-	opts := []client.OptionFunc{
-		client.WithConfig(apiSuite.Talosconfig),
-	}
-
 	if apiSuite.Endpoint != "" {
-		opts = append(opts, client.WithEndpoints(apiSuite.Endpoint))
+		apiSuite.Client = apiSuite.GetClientWithEndpoints(apiSuite.Endpoint)
+	} else {
+		apiSuite.Client = apiSuite.GetClientWithEndpoints()
 	}
-
-	apiSuite.Client, err = client.New(context.TODO(), opts...)
-	apiSuite.Require().NoError(err)
 
 	// clear any connection refused errors left after the previous tests
 	nodes := apiSuite.DiscoverNodeInternalIPs(context.TODO())
@@ -76,6 +71,19 @@ func (apiSuite *APISuite) SetupSuite() {
 		// grpc might trigger backoff on reconnect attempts, so make sure we clear them
 		apiSuite.ClearConnectionRefused(context.Background(), nodes...)
 	}
+}
+
+// GetClientWithEndpoints returns Talos API client with provided endpoints.
+func (apiSuite *APISuite) GetClientWithEndpoints(endpoints ...string) *client.Client {
+	opts := []client.OptionFunc{
+		client.WithConfig(apiSuite.Talosconfig),
+		client.WithEndpoints(endpoints...),
+	}
+
+	cli, err := client.New(context.TODO(), opts...)
+	apiSuite.Require().NoError(err)
+
+	return cli
 }
 
 // DiscoverNodes provides list of Talos nodes in the cluster.
@@ -590,6 +598,9 @@ func (apiSuite *APISuite) ResetNode(ctx context.Context, node string, resetSpec 
 
 	nodeCtx := client.WithNode(ctx, node)
 
+	nodeClient := apiSuite.GetClientWithEndpoints(node)
+	defer nodeClient.Close() //nolint:errcheck
+
 	// any reset should lead to a reboot, so read boot_id before reboot
 	bootIDBefore, err := apiSuite.ReadBootID(nodeCtx)
 	apiSuite.Require().NoError(err)
@@ -612,7 +623,7 @@ func (apiSuite *APISuite) ResetNode(ctx context.Context, node string, resetSpec 
 	preReset, err := apiSuite.HashKubeletCert(ctx, node)
 	apiSuite.Require().NoError(err)
 
-	resp, err := apiSuite.Client.ResetGenericWithResponse(nodeCtx, resetSpec)
+	resp, err := nodeClient.ResetGenericWithResponse(nodeCtx, resetSpec)
 	apiSuite.Require().NoError(err)
 
 	actorID := resp.Messages[0].ActorId
@@ -620,7 +631,7 @@ func (apiSuite *APISuite) ResetNode(ctx context.Context, node string, resetSpec 
 	eventCh := make(chan client.EventResult)
 
 	// watch for events
-	apiSuite.Require().NoError(apiSuite.Client.EventsWatchV2(nodeCtx, eventCh, client.WithActorID(actorID), client.WithTailEvents(-1)))
+	apiSuite.Require().NoError(nodeClient.EventsWatchV2(nodeCtx, eventCh, client.WithActorID(actorID), client.WithTailEvents(-1)))
 
 	waitTimer := time.NewTimer(5 * time.Minute)
 	defer waitTimer.Stop()

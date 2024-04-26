@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/siderolabs/go-pointer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -103,6 +104,7 @@ file locks                      (-x) unlimited
 					},
 				},
 			},
+			TerminationGracePeriodSeconds: pointer.To[int64](0),
 		},
 	}, metav1.CreateOptions{})
 
@@ -122,6 +124,11 @@ file locks                      (-x) unlimited
 
 // TestDNSResolver verifies that external DNS resolving works from a pod.
 func (suite *CommonSuite) TestDNSResolver() {
+	if suite.Cluster != nil {
+		// cluster should be healthy for kube-dns resolving to work
+		suite.AssertClusterHealthy(suite.ctx)
+	}
+
 	const (
 		namespace = "default"
 		pod       = "dns-test"
@@ -143,6 +150,7 @@ func (suite *CommonSuite) TestDNSResolver() {
 					},
 				},
 			},
+			TerminationGracePeriodSeconds: pointer.To[int64](0),
 		},
 	}, metav1.CreateOptions{})
 
@@ -151,7 +159,7 @@ func (suite *CommonSuite) TestDNSResolver() {
 	defer suite.Clientset.CoreV1().Pods(namespace).Delete(suite.ctx, pod, metav1.DeleteOptions{}) //nolint:errcheck
 
 	// wait for the pod to be ready
-	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 10*time.Minute, namespace, pod))
+	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, time.Minute, namespace, pod))
 
 	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "wget https://www.google.com/")
 	suite.Require().NoError(err)
