@@ -118,12 +118,12 @@ func handle(ctx context.Context, err error) {
 				rebootCmd = 0
 			}
 		}
-	}
 
-	if rebootCmd == unix.LINUX_REBOOT_CMD_RESTART {
-		for i := 10; i >= 0; i-- {
-			log.Printf("rebooting in %d seconds\n", i)
-			time.Sleep(1 * time.Second)
+		if rebootCmd == unix.LINUX_REBOOT_CMD_RESTART {
+			for i := 10; i >= 0; i-- {
+				log.Printf("rebooting in %d seconds\n", i)
+				time.Sleep(1 * time.Second)
+			}
 		}
 	}
 
