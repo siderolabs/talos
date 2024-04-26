@@ -10,14 +10,16 @@ import (
 	"io"
 	"os"
 	"os/exec"
+
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // rebuildInitramfs rebuilds finalized initramfs with extensions.
 //
 // If uncompressedListing is not empty, contents will be prepended to the initramfs uncompressed.
-// Contents from compressedListing will be appended to the initramfs compressed (xz) as a second block.
+// Contents from compressedListing will be appended to the initramfs compressed (xz/zstd) as a second block.
 // Original initramfs.xz contents will stay without changes.
-func (builder *Builder) rebuildInitramfs(tempDir string) error {
+func (builder *Builder) rebuildInitramfs(tempDir string, quirks quirks.Quirks) error {
 	compressedListing, uncompressedListing, err := buildInitramfsContents(tempDir)
 	if err != nil {
 		return err
@@ -29,18 +31,18 @@ func (builder *Builder) rebuildInitramfs(tempDir string) error {
 		}
 	}
 
-	if err = builder.appendCompressedInitramfs(tempDir, compressedListing); err != nil {
+	if err = builder.appendCompressedInitramfs(tempDir, compressedListing, quirks); err != nil {
 		return fmt.Errorf("error appending compressed initramfs: %w", err)
 	}
 
 	return nil
 }
 
-func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedListing []byte) error {
+func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedListing []byte, quirks quirks.Quirks) error {
 	builder.Printf("creating system extensions initramfs archive and compressing it")
 
 	// the code below runs the equivalent of:
-	//   find $tempDir -print | cpio -H newc --create --reproducible | xz -v -C crc32 -0 -e -T 0 -z
+	//   find $tempDir -print | cpio -H newc --create --reproducible | { xz -v -C crc32 -0 -e -T 0 -z || zstd -T0 -18 -c --quiet }
 
 	pipeR, pipeW, err := os.Pipe()
 	if err != nil {
@@ -73,7 +75,14 @@ func (builder *Builder) appendCompressedInitramfs(tempDir string, compressedList
 	defer destination.Close() //nolint:errcheck
 
 	// append compressed initramfs.sysext to the original initramfs.xz, kernel can read such format
-	cmd2 := exec.Command("xz", "-v", "-C", "crc32", "-0", "-e", "-T", "0", "-z", "--quiet")
+	var cmd2 *exec.Cmd
+
+	if quirks.UseZSTDCompression() {
+		cmd2 = exec.Command("zstd", "-T0", "-18", "-c", "--quiet")
+	} else {
+		cmd2 = exec.Command("xz", "-v", "-C", "crc32", "-0", "-e", "-T", "0", "-z", "--quiet")
+	}
+
 	cmd2.Dir = tempDir
 	cmd2.Stdin = pipeR
 	cmd2.Stdout = destination

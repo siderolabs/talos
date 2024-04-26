@@ -13,12 +13,13 @@ DOCKER_LOGIN_ENABLED ?= true
 NAME = Talos
 
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
+ZSTD_COMPRESSION_LEVEL ?= 18
 
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-7-g718a7da
+PKGS ?= v1.8.0-alpha.0-8-gca6249b
 EXTRAS ?= v1.8.0-alpha.0
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
@@ -202,6 +203,7 @@ COMMON_ARGS += --build-arg=PKG_RASPBERYPI_FIRMWARE=$(PKG_RASPBERYPI_FIRMWARE)
 COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
 COMMON_ARGS += --build-arg=PKG_TALOSCTL_CNI_BUNDLE_INSTALL=$(PKG_TALOSCTL_CNI_BUNDLE_INSTALL)
 COMMON_ARGS += --build-arg=ABBREV_TAG=$(ABBREV_TAG)
+COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
 
 CI_ARGS ?=
 
@@ -523,6 +525,12 @@ provision-tests-track-%:
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
 		REGISTRY=$(IMAGE_REGISTRY) \
 		ARTIFACTS=$(ARTIFACTS)
+
+installer-with-extensions: $(ARTIFACTS)/extensions-metadata
+	$(MAKE) image-installer \
+		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) $(shell cat $(ARTIFACTS)/extensions-metadata | grep -vE 'tailscale|xen-guest-agent|nvidia' | xargs -n 1 echo --system-extension-image)"
+	crane push $(ARTIFACTS)/installer-amd64.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-amd64-extensions
+	echo -n "$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-amd64-extensions" | jq -Rs -f hack/test/extensions/extension-patch-filter.jq | yq eval ".[] | split_doc" -P > $(ARTIFACTS)/extensions-patch.yaml
 
 # Assets for releases
 

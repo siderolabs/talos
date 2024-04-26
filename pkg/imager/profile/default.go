@@ -48,7 +48,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -60,7 +60,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(true),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -101,7 +101,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   DefaultRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -113,7 +113,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:          DefaultRAWDiskSize,
 				DiskFormat:        DiskFormatVPC,
@@ -138,7 +138,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:          10 * 1024 * mib,
 				DiskFormat:        DiskFormatQCOW2,
@@ -163,7 +163,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -175,7 +175,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -187,7 +187,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -199,7 +199,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -211,7 +211,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:          DefaultRAWDiskSize,
 				DiskFormat:        DiskFormatQCOW2,
@@ -224,7 +224,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -236,7 +236,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   DefaultRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -260,7 +260,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   DefaultRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -275,7 +275,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -289,7 +289,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -303,7 +303,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -317,7 +317,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -331,7 +331,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -345,7 +345,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -359,7 +359,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -373,7 +373,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,
@@ -387,7 +387,7 @@ var Default = map[string]Profile{
 		SecureBoot: pointer.To(false),
 		Output: Output{
 			Kind:      OutKindImage,
-			OutFormat: OutFormatXZ,
+			OutFormat: OutFormatZSTD,
 			ImageOptions: &ImageOptions{
 				DiskSize:   MinRAWDiskSize,
 				DiskFormat: DiskFormatRaw,

@@ -62,3 +62,17 @@ func (i *Imager) postProcessXz(filename string, report *reporter.Reporter) (stri
 
 	return filename + ".xz", nil
 }
+
+func (i *Imager) postProcessZstd(filename string, report *reporter.Reporter) (string, error) {
+	report.Report(reporter.Update{Message: "compressing .zst", Status: reporter.StatusRunning})
+
+	out := filename + ".zst"
+
+	if _, err := cmd.Run("zstd", "-T0", "--rm", "-18", "--quiet", "--force", "-o", out, filename); err != nil {
+		return "", err
+	}
+
+	report.Report(reporter.Update{Message: fmt.Sprintf("compression done: %s", out), Status: reporter.StatusSucceeded})
+
+	return filename + ".zst", nil
+}

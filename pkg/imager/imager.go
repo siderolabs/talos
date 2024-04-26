@@ -152,6 +152,8 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		return i.postProcessXz(outputAssetPath, report)
 	case profile.OutFormatGZ:
 		return i.postProcessGz(outputAssetPath, report)
+	case profile.OutFormatZSTD:
+		return i.postProcessZstd(outputAssetPath, report)
 	case profile.OutFormatTar:
 		return i.postProcessTar(outputAssetPath, report)
 	case profile.OutFormatUnknown:
@@ -305,6 +307,7 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 		Arch:              i.prof.Arch,
 		ExtensionTreePath: extensionsCheckoutDir,
 		Printf:            printf,
+		Quirks:            quirks.New(i.prof.Version),
 	}
 
 	if err := builder.Build(); err != nil {

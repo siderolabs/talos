@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // List of globs and destinations for early CPU ucode.
@@ -38,7 +39,7 @@ var initramfsPaths = []string{
 //
 // Components which should be placed to the initramfs are moved to the initramfsPath.
 // Ucode components are moved into a separate designated location.
-func (ext *Extension) Compress(squashPath, initramfsPath string) (string, error) {
+func (ext *Extension) Compress(squashPath, initramfsPath string, quirks quirks.Quirks) (string, error) {
 	if err := ext.handleUcode(initramfsPath); err != nil {
 		return "", err
 	}
@@ -53,7 +54,15 @@ func (ext *Extension) Compress(squashPath, initramfsPath string) (string, error)
 
 	squashPath = filepath.Join(squashPath, fmt.Sprintf("%s.sqsh", ext.directory))
 
-	cmd := exec.Command("mksquashfs", ext.rootfsPath, squashPath, "-all-root", "-noappend", "-comp", "xz", "-Xdict-size", "100%", "-no-progress")
+	var compressArgs []string
+
+	if quirks.UseZSTDCompression() {
+		compressArgs = []string{"-comp", "zstd", "-Xcompression-level", "18"}
+	} else {
+		compressArgs = []string{"-comp", "xz", "-Xdict-size", "100%"}
+	}
+
+	cmd := exec.Command("mksquashfs", append([]string{ext.rootfsPath, squashPath, "-all-root", "-noappend", "-no-progress"}, compressArgs...)...)
 	cmd.Stderr = os.Stderr
 
 	return squashPath, cmd.Run()

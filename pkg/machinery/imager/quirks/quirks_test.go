@@ -99,3 +99,35 @@ func TestSupportsOverlay(t *testing.T) {
 		})
 	}
 }
+
+func TestSupportsZstd(t *testing.T) {
+	for _, test := range []struct {
+		version string
+
+		expected bool
+	}{
+		{
+			version:  "1.7.3",
+			expected: false,
+		},
+		{
+			expected: true,
+		},
+		{
+			version:  "1.6.2",
+			expected: false,
+		},
+		{
+			version:  "1.8.0-alpha.0",
+			expected: true,
+		},
+		{
+			version:  "v1.8.3",
+			expected: true,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			assert.Equal(t, test.expected, quirks.New(test.version).UseZSTDCompression())
+		})
+	}
+}

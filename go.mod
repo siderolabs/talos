@@ -92,6 +92,7 @@ require (
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink v1.4.1
 	github.com/jxskiss/base62 v1.1.0
+	github.com/klauspost/compress v1.17.7
 	github.com/klauspost/cpuid/v2 v2.2.7
 	github.com/linode/go-metadata v0.2.0
 	github.com/martinlindhe/base36 v1.1.1
@@ -267,7 +268,6 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

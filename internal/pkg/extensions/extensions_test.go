@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
@@ -43,7 +44,7 @@ func TestCompress(t *testing.T) {
 	require.NoError(t, err)
 
 	squashDest, initramfsDest := t.TempDir(), t.TempDir()
-	squashFile, err := ext.Compress(squashDest, initramfsDest)
+	squashFile, err := ext.Compress(squashDest, initramfsDest, quirks.New(""))
 	assert.NoError(t, err)
 
 	assert.FileExists(t, squashFile)

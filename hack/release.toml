@@ -6,7 +6,7 @@ github_repo = "siderolabs/talos"
 match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 
 # previous release
-previous = "v1.6.0"
+previous = "v1.7.0"
 
 pre_release = true
 
@@ -17,221 +17,15 @@ preface = """\
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.6.28
-etcd: 3.5.11
-Kubernetes: 1.30.0
-containerd: 1.7.15
-runc: 1.1.12
-Flannel: 0.25.1
-
 Talos is built with Go 1.22.2.
 """
 
-    [notes.device_selectors]
-        title = "Device Selectors"
+
+    [notes.zstd]
+        title = "ZSTD Compression"
         description = """\
-Talos Linux now supports `physical: true` qualifier for device selectors, it selects non-virtual network interfaces (i.e. `en0` is selected, while `bond0` is not).
-"""
-
-    [notes.dns-resolve-cache]
-        title = "DNS Caching"
-        description = """\
-Talos Linux now  provides a caching DNS resolver for host workloads (including host networking pods). It can be disabled with:
-
-```yaml
-machine:
-  features:
-    hostDNS:
-      enabled: false
-```
-
-You can also enable dns caching for k8s pods with:
-
-```yaml
-machine:
-  features:
-    hostDNS:
-      enabled: true
-      forwardKubeDNSToHost: true
-```
-
-Please note that on running cluster you will have to kill CoreDNS pods for this change to apply.
-
-If you want to can also enable the resolving of member addresses through their host and node names:
-
-```yaml
-machine:
-  features:
-    hostDNS:
-      enabled: true
-      resolveMemberNames: true
-```
-"""
-
-    [notes.secureboot-image]
-        title = "Secure Boot Image"
-        description = """\
-Talos Linux now provides a way to configure systemd-boot ISO 'secure-boot-enroll' option while generating a SecureBoot ISO image:
-
-```yaml
-output:
-    kind: iso
-    isoOptions:
-        sdBootEnrollKeys: force # default is still if-safe
-    outFormat: raw
-```
-"""
-
-    [notes.rsa-service-account]
-        title = "Kubernetes API Server Service Account Key"
-        description = """\
-Talos Linux starting from this release uses RSA key for Kubernetes API Server Service Account instead of ECDSA key to provide better compatibility with external OpenID Connect implementations.
-"""
-
-    [notes.opennebula]
-        title = "OpenNebula"
-        description = """\
-Talos Linux now supports OpenNebula platform.
-"""
-
-    [notes.extensions]
-        title = "Extension Services Config"
-        description = """\
-Talos now supports supplying configuration files and environment variables for extension services.
-The extension service configuration is a separate config document. An example is shown below:
-
-```yaml
----
-apiVersion: v1alpha1
-kind: ExtensionServiceConfig
-name: nut-client
-configFiles:
-  - content: MONITOR ${upsmonHost} 1 remote pass password
-    mountPath: /usr/local/etc/nut/upsmon.conf
-environment:
-  - UPS_NAME=ups
-```
-
-For documentation, see [Extension Services Config Files](https://www.talos.dev/v1.7/reference/configuration/extensions/extensionserviceconfig/).
-
-**Note**: The use of `environmentFile` in extension service spec is now deprecated and will be removed in a future release of Talos.
-Use `ExtensionServiceConfig` instead.
-"""
-
-    [notes.k8supgrade]
-        title = "Kubernetes Upgrade"
-        description = """\
-The command `talosctl upgrade-k8s` now supports specifying custom image references for Kubernetes components via `--*-image` flags.
-The default behavior is unchanged, and the flags are optional.
-"""
-
-    [notes.kubespan]
-        title = "KubeSpan"
-        description = """\
-Talos Linux disables by default a KubeSpan feature to harvest additional endpoints from KubeSpan members.
-This feature turned out to be less helpful than expected and caused unnecessary performance issues.
-
-Previous behavior can be restored with:
-
-```yaml
-machine:
-  network:
-    kubespan:
-        harvestExtraEndpoints: true
-```
-"""
-
-    [notes.sbc]
-        title = "SBC"
-        description = """\
-Talos has split the SBC's (Single Board Computers) into separate repositories.
-There will not be any more SBC specific release assets as part of Talos release.
-
-The default Talos Installer image will stop working for SBC's and will fail the upgrade, if used, starting from Talos v1.7.0.
-
-The SBC's images and installers can be generated on the fly using [Image Factory](https://factory.talos.dev) or using [Imager](https://www.talos.dev/latest/talos-guides/install/boot-assets/) for custom images.
-The list of official SBC's images supported by Image Factory can be found in the [Overlays](https://github.com/siderolabs/overlays/) repository.
-"""
-
-    [notes.syslog]
-        title = "Syslog"
-        description = """\
-Talos Linux now starts a basic syslog receiver listening on `/dev/log`.
-The receiver can mostly parse both RFC3164 and RFC5424 messages and writes them as JSON formatted message.
-The logs can be viewed via `talosctl logs syslogd`.
-
-This is mostly implemented for extension services that log to syslog.
-"""
-
-    [notes.ntp]
-        title = "Time Sync"
-        description = """\
-Default NTP server was updated to be `time.cloudflare.com` instead of `pool.ntp.org`.
-Default server is only used if the user does not specify any NTP servers in the configuration.
-
-Talos Linux can now sync to PTP devices (e.g. provided by the hypervisor) skipping the network time servers.
-In order to activate PTP sync, set `machine.time.servers` to the PTP device name (e.g. `/dev/ptp0`):
-
-```yaml
-machine:
-  time:
-    servers:
-      - /dev/ptp0
-```
-"""
-
-    [notes.ca-rotation]
-        title = "CA Rotation"
-        description = """\
-Talos Linux now supports rotating the root CA certificate and key for Talos API and Kubernetes API.
-"""
-
-    [notes.watchdog]
-        title = "Hardware Watchdog Timers"
-        description = """\
-Talos Linux now supports hardware watchdog timers configuration.
-If enabled, and the machine becomes unresponsive, the hardware watchdog will reset the machine.
-
-The watchdog can be enabled with the following configuration document:
-
-```yaml
-apiVersion: v1alpha1
-kind: WatchdogTimerConfig
-device: /dev/watchdog0
-timeout: 3m0s
-```
-"""
-
-    [notes.logging]
-        title = "Logging"
-        description = """\
-Talos Linux now supports setting extra tags when sending logs in JSON format:
-
-```yaml
-machine:
-  logging:
-    destinations:
-      - endpoint: "udp://127.0.0.1:12345/"
-        format: "json_lines"
-        extraTags:
-          server: s03-rack07
-```
-"""
-
-    [notes.platforms]
-        title = "Platforms"
-        description = """\
-Talos Linux now supports [Akamai Connected Cloud](https://www.linode.com/) provider (platform `akamai`).
-"""
-
-    [notes.iptables]
-        title = "IPTables"
-        description = """\
-Talos Linux now forces `kubelet` and `kube-proxy` to use `iptables-nft` instead of `iptables-legacy` (`xtables`) which was the default
-before Talos 1.7.0.
-
-Container images based on `iptables-wrapper` should work without changes, but if there was a direct call to `legacy` mode of `iptables`, make sure
-to update to use `iptables-nft`.
+Talos Linux now compresses kernel and initramfs using ZSTD.
+Linux arm64 kernel is now compressed (previously it was uncompressed).
 """
 
 [make_deps]

@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-const _OutFormatName = "unknownraw.tar.gz.xz.gz"
+const _OutFormatName = "unknownraw.tar.gz.xz.gz.zst"
 
-var _OutFormatIndex = [...]uint8{0, 7, 10, 17, 20, 23}
+var _OutFormatIndex = [...]uint8{0, 7, 10, 17, 20, 23, 27}
 
-const _OutFormatLowerName = "unknownraw.tar.gz.xz.gz"
+const _OutFormatLowerName = "unknownraw.tar.gz.xz.gz.zst"
 
 func (i OutFormat) String() string {
 	if i < 0 || i >= OutFormat(len(_OutFormatIndex)-1) {
@@ -29,9 +29,10 @@ func _OutFormatNoOp() {
 	_ = x[OutFormatTar-(2)]
 	_ = x[OutFormatXZ-(3)]
 	_ = x[OutFormatGZ-(4)]
+	_ = x[OutFormatZSTD-(5)]
 }
 
-var _OutFormatValues = []OutFormat{OutFormatUnknown, OutFormatRaw, OutFormatTar, OutFormatXZ, OutFormatGZ}
+var _OutFormatValues = []OutFormat{OutFormatUnknown, OutFormatRaw, OutFormatTar, OutFormatXZ, OutFormatGZ, OutFormatZSTD}
 
 var _OutFormatNameToValueMap = map[string]OutFormat{
 	_OutFormatName[0:7]:        OutFormatUnknown,
@@ -44,6 +45,8 @@ var _OutFormatNameToValueMap = map[string]OutFormat{
 	_OutFormatLowerName[17:20]: OutFormatXZ,
 	_OutFormatName[20:23]:      OutFormatGZ,
 	_OutFormatLowerName[20:23]: OutFormatGZ,
+	_OutFormatName[23:27]:      OutFormatZSTD,
+	_OutFormatLowerName[23:27]: OutFormatZSTD,
 }
 
 var _OutFormatNames = []string{
@@ -52,6 +55,7 @@ var _OutFormatNames = []string{
 	_OutFormatName[10:17],
 	_OutFormatName[17:20],
 	_OutFormatName[20:23],
+	_OutFormatName[23:27],
 }
 
 // OutFormatString retrieves an enum value from the enum constants string name.

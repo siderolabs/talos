@@ -76,6 +76,7 @@ const (
 	OutFormatTar                      // .tar.gz
 	OutFormatXZ                       // .xz
 	OutFormatGZ                       // .gz
+	OutFormatZSTD                     // .zst
 )
 
 //go:generate enumer -type DiskFormat -linecomment -text

@@ -688,14 +688,16 @@ RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
 FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
+ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
+RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
 
 FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
+ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp xz -Xdict-size 100% -no-progress
+RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
 
 FROM scratch AS squashfs-arm64
 COPY --from=rootfs-squashfs-arm64 /rootfs.sqsh /
@@ -710,6 +712,7 @@ COPY --from=rootfs-base /rootfs /
 
 FROM build AS initramfs-archive-arm64
 WORKDIR /initramfs
+ARG ZSTD_COMPRESSION_LEVEL
 COPY --from=squashfs-arm64 /rootfs.sqsh .
 COPY --from=init-build-arm64 /init .
 RUN find . -print0 \
@@ -718,11 +721,12 @@ RUN set -o pipefail \
     && find . 2>/dev/null \
     | LC_ALL=c sort \
     | cpio --reproducible -H newc -o \
-    | xz -v -C crc32 -0 -e -T 0 -z \
+    | zstd -c -T0 -${ZSTD_COMPRESSION_LEVEL} \
     > /initramfs.xz
 
 FROM build AS initramfs-archive-amd64
 WORKDIR /initramfs
+ARG ZSTD_COMPRESSION_LEVEL
 COPY --from=squashfs-amd64 /rootfs.sqsh .
 COPY --from=init-build-amd64 /init .
 RUN find . -print0 \
@@ -731,7 +735,7 @@ RUN set -o pipefail \
     && find . 2>/dev/null \
     | LC_ALL=c sort \
     | cpio --reproducible -H newc -o \
-    | xz -v -C crc32 -0 -e -T 0 -z \
+    | zstd -c -T0 -${ZSTD_COMPRESSION_LEVEL} \
     > /initramfs.xz
 
 FROM initramfs-archive-${TARGETARCH} AS initramfs-archive
@@ -800,7 +804,8 @@ RUN apk add --no-cache --update --no-scripts \
     util-linux \
     xfsprogs \
     xorriso \
-    xz
+    xz \
+    zstd
 ARG TARGETARCH
 ENV TARGETARCH ${TARGETARCH}
 COPY --from=installer-build /installer /bin/installer

@@ -62,3 +62,15 @@ func (q Quirks) SupportsOverlay() bool {
 
 	return q.v.GTE(minVersionOverlay)
 }
+
+var minVersionZstd = semver.MustParse("1.8.0")
+
+// UseZSTDCompression returns true if the Talos should use zstd compression in place of xz.
+func (q Quirks) UseZSTDCompression() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionZstd)
+}

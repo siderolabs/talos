@@ -13,6 +13,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	extinterface "github.com/siderolabs/talos/pkg/machinery/extensions"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // Builder rebuilds initramfs.xz with extensions.
@@ -25,6 +26,8 @@ type Builder struct {
 	ExtensionTreePath string
 	// Printf is used for logging.
 	Printf func(format string, v ...any)
+	// Quirks for the Talos version being used.
+	Quirks quirks.Quirks
 }
 
 // Build rebuilds the initramfs.xz with extensions.
@@ -86,7 +89,7 @@ func (builder *Builder) Build() error {
 		return err
 	}
 
-	return builder.rebuildInitramfs(tempDir)
+	return builder.rebuildInitramfs(tempDir, builder.Quirks)
 }
 
 func (builder *Builder) validateExtensions(extensions []*extensions.Extension) error {
@@ -107,7 +110,7 @@ func (builder *Builder) compressExtensions(extensions []*extensions.Extension, t
 	builder.Printf("compressing system extensions")
 
 	for _, ext := range extensions {
-		path, err := ext.Compress(tempDir, tempDir)
+		path, err := ext.Compress(tempDir, tempDir, builder.Quirks)
 		if err != nil {
 			return nil, fmt.Errorf("error compressing extension %q: %w", ext.Manifest.Metadata.Name, err)
 		}

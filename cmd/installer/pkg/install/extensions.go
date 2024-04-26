@@ -11,6 +11,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/imager/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 func (i *Installer) installExtensions() error {
@@ -19,6 +20,7 @@ func (i *Installer) installExtensions() error {
 		Arch:              i.options.Arch,
 		ExtensionTreePath: constants.SystemExtensionsPath,
 		Printf:            log.Printf,
+		Quirks:            quirks.New(i.options.Version),
 	}
 
 	return builder.Build()

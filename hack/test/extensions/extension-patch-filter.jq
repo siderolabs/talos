@@ -2,11 +2,7 @@
     {
         "machine": {
             "install": {
-                "extensions": [
-                    {
-                        "image": map(select(. | contains("nvidia") or contains("tailscale") or contains("xen-guest-agent") | not)) | .[]
-                    }
-                ],
+                "image": .
             },
             "sysctls": {
                 "user.max_user_namespaces": "11255"
