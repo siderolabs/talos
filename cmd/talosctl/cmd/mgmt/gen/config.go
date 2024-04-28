@@ -71,8 +71,6 @@ var genConfigCmdFlags struct {
 	configPatchWorker       []string
 	registryMirrors         []string
 	persistConfig           bool
-	withExamples            bool
-	withDocs                bool
 	withClusterDiscovery    bool
 	withKubeSpan            bool
 	withSecrets             string
@@ -235,13 +233,6 @@ func writeConfig(args []string) error {
 	)
 
 	commentsFlags := encoder.CommentsDisabled
-	if genConfigCmdFlags.withDocs {
-		commentsFlags |= encoder.CommentsDocs
-	}
-
-	if genConfigCmdFlags.withExamples {
-		commentsFlags |= encoder.CommentsExamples
-	}
 
 	configBundle, err := GenerateConfigBundle(
 		genOptions,
@@ -440,8 +431,6 @@ func init() {
 	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
-	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
-	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withClusterDiscovery, "with-cluster-discovery", "", true, "enable cluster discovery feature")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withKubeSpan, "with-kubespan", "", false, "enable KubeSpan feature")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.withSecrets, "with-secrets", "", "use a secrets file generated using 'gen secrets'")
