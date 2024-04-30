@@ -65,7 +65,7 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
         <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
         <vssd:InstanceID>0</vssd:InstanceID>
         <vssd:VirtualSystemIdentifier>talos</vssd:VirtualSystemIdentifier>
-        <vssd:VirtualSystemType>vmx-13</vssd:VirtualSystemType>
+        <vssd:VirtualSystemType>vmx-15</vssd:VirtualSystemType>
       </System>
       <Item>
         <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
