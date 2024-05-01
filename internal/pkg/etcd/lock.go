@@ -7,6 +7,7 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
@@ -38,7 +39,16 @@ func WithLock(ctx context.Context, key string, logger *zap.Logger, f func() erro
 
 	logger.Debug("mutex acquired", zap.String("key", key))
 
-	defer mutex.Unlock(ctx) //nolint:errcheck
+	defer func() {
+		logger.Debug("releasing mutex", zap.String("key", key))
+
+		unlockCtx, unlockCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer unlockCancel()
+
+		if err = mutex.Unlock(unlockCtx); err != nil {
+			logger.Error("error releasing mutex", zap.String("key", key), zap.Error(err))
+		}
+	}()
 
 	return f()
 }
