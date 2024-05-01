@@ -1,3 +1,59 @@
+## [Talos 1.7.1](https://github.com/siderolabs/talos/releases/tag/v1.7.1) (2024-05-01)
+
+Welcome to the v1.7.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.29
+containerd: 1.7.16
+
+Talos is built with Go 1.22.2.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Igor Rzegocki
+* Spencer Smith
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`5614934c4`](https://github.com/siderolabs/talos/commit/5614934c4058bc50fa2b762c6d6f544753c2c0e5) feat: update Linux to 6.6.29
+* [`1d9705af8`](https://github.com/siderolabs/talos/commit/1d9705af865e9ebede41a29b31b2d42703a41a99) chore: update minimum hardware requirement for vmware ova
+* [`22e5753c3`](https://github.com/siderolabs/talos/commit/22e5753c30f6369d5c2dc6887ac890e6fdcf69e2) test: improve DNS resolver test stability
+* [`498b68193`](https://github.com/siderolabs/talos/commit/498b681932fe35de8d77eb223517547a51c7a95a) test: improve the reset integration tests
+* [`50023bc4e`](https://github.com/siderolabs/talos/commit/50023bc4e6d90d0f7a5a451b588a204ffdc15dbb) fix: wait for devices to be discovered before probing filesystems
+* [`41024e17a`](https://github.com/siderolabs/talos/commit/41024e17a2c395d78735d24b5a560bd832d55895) fix: bump priority of OpenStack routes if IPv6 and default gateway
+* [`bd41fee8c`](https://github.com/siderolabs/talos/commit/bd41fee8ca1acfd4c65a33a293d4d2266875870f) fix: add endpoints for "virtual" `host-dns` service
+* [`2db54c779`](https://github.com/siderolabs/talos/commit/2db54c779df2d9023cf85710182166459adcedb5) fix: return proper value from Bridge.STP instead of plain nil
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`76bd73c`](https://github.com/siderolabs/pkgs/commit/76bd73c0cc6d480b3840bd83b349c0fbf2e76bc6) feat: update Linux to 6.6.29
+* [`6d1f537`](https://github.com/siderolabs/pkgs/commit/6d1f5373707bb474ff76f54bfa85263065574cc4) feat: update containerd to 1.7.16
+* [`bedd1de`](https://github.com/siderolabs/pkgs/commit/bedd1dec29f7247e12d1e7785b9a7434581578ee) feat(intel): add support for power management and ACPI options for Intel CPUs
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd**  v1.7.14 -> v1.7.16
+* **github.com/siderolabs/pkgs**        v1.7.0-6-g29106c0 -> v1.7.0-9-g76bd73c
+
+Previous release can be found at [v1.7.0](https://github.com/siderolabs/talos/releases/tag/v1.7.0)
+
 ## [Talos 1.7.0](https://github.com/siderolabs/talos/releases/tag/v1.7.0) (2024-04-19)
 
 Welcome to the v1.7.0 release of Talos!
