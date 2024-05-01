@@ -26,9 +26,9 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/blang/semver/v4"
+	"github.com/klauspost/compress/zstd"
 	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/ulikunitz/xz"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -146,7 +146,7 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 	defer source.Close() //nolint:errcheck
 
 	// calculate totalSize
-	file, err := xz.NewReader(source)
+	file, err := zstd.NewReader(source)
 	if err != nil {
 		return fmt.Errorf("azure: error extracting file from xz: %w", err)
 	}
@@ -163,7 +163,7 @@ func (azu *AzureUploader) uploadAzureBlob(ctx context.Context, arch string) erro
 		return fmt.Errorf("azure: error seeking back: %w", err)
 	}
 
-	file, err = xz.NewReader(source)
+	file, err = zstd.NewReader(source)
 	if err != nil {
 		return fmt.Errorf("azure: error extracting file from xz: %w", err)
 	}

@@ -17,8 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
+	"github.com/klauspost/compress/zstd"
 	"github.com/siderolabs/go-retry/retry"
-	"github.com/ulikunitz/xz"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -167,7 +167,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 
 		defer source.Close() //nolint:errcheck
 
-		image, err := xz.NewReader(source)
+		image, err := zstd.NewReader(source)
 		if err != nil {
 			return err
 		}

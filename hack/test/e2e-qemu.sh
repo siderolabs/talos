@@ -99,7 +99,7 @@ case "${USE_DISK_IMAGE:-false}" in
   false)
     ;;
   *)
-    xz -d < _out/metal-amd64.raw.xz > _out/metal-amd64.raw
+    zstd -d < _out/metal-amd64.raw.zst > _out/metal-amd64.raw
     QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64.raw")
     ;;
 esac
