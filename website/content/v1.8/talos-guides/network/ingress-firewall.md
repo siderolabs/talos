@@ -3,7 +3,7 @@ title: "Ingress Firewall"
 description: "Learn to use Talos Linux Ingress Firewall to limit access to the host services."
 ---
 
-Talos Linux Ingress Firewall is a simple and effective way to limit access to the services running on the host, which includes both Talos standard
+Talos Linux Ingress Firewall is a simple and effective way to limit network access to the services running on the host, which includes both Talos standard
 services (e.g. `apid` and `kubelet`), and any additional workloads that may be running on the host.
 Talos Linux Ingress Firewall doesn't affect the traffic between the Kubernetes pods/services, please use CNI Network Policies for that.
 
@@ -29,17 +29,17 @@ ingress:
     except: 172.20.0.1/32
 ```
 
-The first document configures the default action for the ingress traffic, which can be either `accept` or `block`, with the default being `accept`.
-If the default action is set to `accept`, then all the ingress traffic will be allowed, unless there is a matching rule that blocks it.
-If the default action is set to `block`, then all the ingress traffic will be blocked, unless there is a matching rule that allows it.
+The first document configures the default action for ingress traffic, which can be either `accept` or `block`, with the default being `accept`.
+If the default action is set to `accept`, then all ingress traffic will be allowed, unless there is a matching rule that blocks it.
+If the default action is set to `block`, then all ingress traffic will be blocked, unless there is a matching rule that allows it.
 
-With either `accept` or `block`, the traffic is always allowed on the following network interfaces:
+With either `accept` or `block`, traffic is always allowed on the following network interfaces:
 
 * `lo`
 * `siderolink`
 * `kubespan`
 
-In the `block` mode:
+In `block` mode:
 
 * ICMP and ICMPv6 traffic is also allowed with a rate limit of 5 packets per second
 * traffic between Kubernetes pod/service subnets is allowed (for native routing CNIs)
@@ -62,21 +62,22 @@ The `protocol` might be either `tcp` or `udp`.
 The `ingress` specifies the list of subnets that are allowed to access the host services, with the optional `except` field to exclude a set of addresses from the subnet.
 
 > Note: incorrect configuration of the ingress firewall might result in the host becoming inaccessible over Talos API.
-> The configuration might be [applied]({{< relref "../configuration/editing-machine-configuration" >}}) in `--mode=try` to make sure it gets reverted in case of a mistake.
+> It is recommended that the configuration be [applied]({{< relref "../configuration/editing-machine-configuration" >}}) in `--mode=try` to ensure it is reverted in case of a mistake.
 
 ## Recommended Rules
 
 The following rules improve the security of the cluster and cover only standard Talos services.
 If there are additional services running with host networking in the cluster, they should be covered by additional rules.
 
-In the `block` mode, the ingress firewall will also block encapsulated traffic (e.g. VXLAN) between the nodes, which needs to be explicitly allowed for the Kubernetes
+In `block` mode, the ingress firewall will also block encapsulated traffic (e.g. VXLAN) between the nodes, which needs to be explicitly allowed for the Kubernetes
 networking to function properly.
-Please refer to the CNI documentation for the specifics, some default configurations are listed below:
+Please refer to the documentation of the CNI in use for the specific ports required.
+Some default configurations are listed below:
 
 * Flannel, Calico: `vxlan` UDP port 4789
 * Cilium: `vxlan` UDP port 8472
 
-In the examples we assume following template variables to describe the cluster:
+In the examples we assume the following template variables to describe the cluster:
 
 * `$CLUSTER_SUBNET`, e.g. `172.20.0.0/24` - the subnet which covers all machines in the cluster
 * `$CP1`, `$CP2`, `$CP3` - the IP addresses of the controlplane nodes
@@ -84,8 +85,10 @@ In the examples we assume following template variables to describe the cluster:
 
 ### Controlplane
 
+In this example Ingress policy:
+
 * `apid` and Kubernetes API are wide open
-* `kubelet` and `trustd` API is only accessible within the cluster
+* `kubelet` and `trustd` API are only accessible within the cluster
 * `etcd` API is limited to controlplane nodes
 
 ```yaml
@@ -160,7 +163,7 @@ ingress:
 
 ### Worker
 
-* `kubelet` and `apid` API is only accessible within the cluster
+* `kubelet` and `apid` API are only accessible within the cluster
 
 ```yaml
 apiVersion: v1alpha1
@@ -200,7 +203,7 @@ ingress:
 
 ## Learn More
 
-Talos Linux Ingress Firewall is using the `nftables` to perform the filtering.
+Talos Linux Ingress Firewall uses `nftables` to perform the filtering.
 
 With the default action set to `accept`, the following rules are applied (example):
 
@@ -232,3 +235,9 @@ table inet talos {
   }
 }
 ```
+
+The running `nftable` configuration can be inspected with `talosctl get nftableschain -o yaml`.
+
+The Ingress Firewall documents can be extracted from the machine config with the following command:
+
+ `talosctl read /system/state/config.yaml | yq 'select(.kind == "NetworkDefaultActionConfig"),select(.kind == "NetworkRuleConfig" )'`
