@@ -12,10 +12,10 @@ SideroLink is a foundation building block of [Sidero Omni](https://www.siderolab
 
 SideroLink is configured by providing the SideroLink API server address, either via kernel command line argument `siderolink.api` or as a [config document]({{< relref "../../reference/configuration/siderolink/siderolinkconfig" >}}).
 
-SideroLink API URL: `https://siderolink.api/?jointoken=token&grpc_tunnel=yes`.
+SideroLink API URL: `https://siderolink.api/?jointoken=token&grpc_tunnel=true`.
 If URL scheme is `grpc://`, the connection will be established without TLS, otherwise, the connection will be established with TLS.
 If specified, join token `token` will be sent to the SideroLink server.
-If `grpc_tunnel` is set to `yes`, the Wireguard traffic will be tunneled over the same SideroLink API gRPC connection instead of using plain UDP.
+If `grpc_tunnel` is set to `true`, the Wireguard traffic will be tunneled over the same SideroLink API gRPC connection instead of using plain UDP.
 
 ## Connection Flow
 
