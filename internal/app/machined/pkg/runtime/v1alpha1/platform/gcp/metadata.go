@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	// https://cloud.google.com/compute/docs/metadata/overview
 	gcpResolverServer = "169.254.169.254"
 	gcpTimeServer     = "metadata.google.internal"
 )

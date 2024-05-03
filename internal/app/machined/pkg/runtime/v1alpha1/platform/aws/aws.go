@@ -87,6 +87,8 @@ func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		InstanceID:   metadata.InstanceID,
 		ProviderID:   fmt.Sprintf("aws:///%s/%s", metadata.Zone, metadata.InstanceID),
 		Spot:         metadata.InstanceLifeCycle == "spot",
+		InternalDNS:  metadata.InternalDNS,
+		ExternalDNS:  metadata.ExternalDNS,
 	}
 
 	return networkConfig, nil

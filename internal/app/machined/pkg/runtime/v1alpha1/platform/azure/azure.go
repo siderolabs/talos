@@ -154,6 +154,11 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 		zone = fmt.Sprintf("%s-%s", metadata.Location, metadata.Zone)
 	}
 
+	providerID, err := convertResourceGroupNameToLower(metadata.ResourceID)
+	if err != nil {
+		return nil, err
+	}
+
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:     a.Name(),
 		Hostname:     metadata.OSProfile.ComputerName,
@@ -161,7 +166,7 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 		Zone:         strings.ToLower(zone),
 		InstanceType: metadata.VMSize,
 		InstanceID:   metadata.ResourceID,
-		ProviderID:   fmt.Sprintf("azure://%s", metadata.ResourceID),
+		ProviderID:   fmt.Sprintf("azure://%s", providerID),
 		Spot:         metadata.EvictionPolicy != "",
 	}
 
@@ -343,4 +348,20 @@ func (a *Azure) NetworkConfiguration(ctx context.Context, _ state.State, ch chan
 	}
 
 	return nil
+}
+
+// convertResourceGroupNameToLower converts the resource group name in the resource ID to be lowered.
+// https://github.com/kubernetes-sigs/cloud-provider-azure/blob/4192b264611aebef8070505dd56680a862acfbbf/pkg/provider/azure_wrap.go#L91
+func convertResourceGroupNameToLower(resourceID string) (string, error) {
+	// https://github.com/kubernetes-sigs/cloud-provider-azure/blob/4192b264611aebef8070505dd56680a862acfbbf/pkg/provider/azure_wrap.go#L37
+	azureResourceGroupNameRE := regexp.MustCompile(`.*/subscriptions/(?:.*)/resourceGroups/(.+)/providers/(?:.*)`)
+
+	matches := azureResourceGroupNameRE.FindStringSubmatch(resourceID)
+	if len(matches) != 2 {
+		return "", fmt.Errorf("%q isn't in Azure resource ID format %q", resourceID, azureResourceGroupNameRE.String())
+	}
+
+	resourceGroup := matches[1]
+
+	return strings.Replace(resourceID, resourceGroup, strings.ToLower(resourceGroup), 1), nil
 }

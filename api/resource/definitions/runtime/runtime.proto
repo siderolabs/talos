@@ -107,6 +107,8 @@ message PlatformMetadataSpec {
   string instance_id = 6;
   string provider_id = 7;
   bool spot = 8;
+  string internal_dns = 9;
+  string external_dns = 10;
 }
 
 // SecurityStateSpec describes the security state resource properties.

@@ -32,8 +32,9 @@ externalIPs:
     - 20.10.5.34
 metadata:
     platform: azure
+    hostname: examplevmname
     region: centralus
     zone: "0"
     instanceType: Standard_DS2
-    instanceId: 000-000-000-000-000
-    providerId: azure://000-000-000-000-000
+    instanceId: /subscriptions/xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx/resourceGroups/Test/providers/Microsoft.Compute/virtualMachines/examplevmname
+    providerId: azure:///subscriptions/xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx/resourceGroups/test/providers/Microsoft.Compute/virtualMachines/examplevmname

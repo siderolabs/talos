@@ -15,6 +15,10 @@ import (
 )
 
 const (
+	// AzureMetadata documentation
+	// ref: https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service
+	// ref: https://github.com/Azure/azure-rest-api-specs/blob/main/specification/imds/data-plane/Microsoft.InstanceMetadataService/stable/2023-07-01/examples/GetInstanceMetadata.json
+
 	// AzureInternalEndpoint is the Azure Internal Channel IP
 	// https://blogs.msdn.microsoft.com/mast/2015/05/18/what-is-the-ip-address-168-63-129-16/
 	AzureInternalEndpoint = "http://168.63.129.16"

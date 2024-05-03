@@ -23,12 +23,15 @@ type MetadataConfig struct {
 	InstanceLifeCycle string `json:"instance-life-cycle,omitempty"`
 	PublicIPv4        string `json:"public-ipv4,omitempty"`
 	PublicIPv6        string `json:"ipv6,omitempty"`
+	InternalDNS       string `json:"local-hostname,omitempty"`
+	ExternalDNS       string `json:"public-hostname,omitempty"`
 	Region            string `json:"region,omitempty"`
 	Zone              string `json:"zone,omitempty"`
 }
 
 //nolint:gocyclo
 func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
 	getMetadataKey := func(key string) (string, error) {
 		resp, err := a.metadataClient.GetMetadata(ctx, &imds.GetMetadataInput{
 			Path: key,
@@ -74,6 +77,14 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 	}
 
 	if metadata.PublicIPv6, err = getMetadataKey("ipv6"); err != nil {
+		return nil, err
+	}
+
+	if metadata.InternalDNS, err = getMetadataKey("local-hostname"); err != nil {
+		return nil, err
+	}
+
+	if metadata.ExternalDNS, err = getMetadataKey("public-hostname"); err != nil {
 		return nil, err
 	}
 

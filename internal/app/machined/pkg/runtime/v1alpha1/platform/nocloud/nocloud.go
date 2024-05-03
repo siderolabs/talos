@@ -35,7 +35,7 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, st sta
 
 	hostname := metadata.Hostname
 	if hostname == "" {
-		hostname = metadata.LocalHostname
+		hostname = metadata.InternalDNS
 	}
 
 	if hostname != "" {
@@ -71,6 +71,8 @@ func (n *Nocloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, st sta
 		ProviderID:   metadata.ProviderID,
 		Region:       metadata.Region,
 		Zone:         metadata.Zone,
+		InternalDNS:  metadata.InternalDNS,
+		ExternalDNS:  metadata.ExternalDNS,
 	}
 
 	return networkConfig, nil

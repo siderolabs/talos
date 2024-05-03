@@ -102,3 +102,4 @@ metadata:
     platform: nocloud
     hostname: talos.fqdn
     instanceId: "0"
+    internalDNS: talos.fqdn

@@ -4174,6 +4174,8 @@ PlatformMetadataSpec describes platform metadata properties.
 | instance_id | [string](#string) |  |  |
 | provider_id | [string](#string) |  |  |
 | spot | [bool](#bool) |  |  |
+| internal_dns | [string](#string) |  |  |
+| external_dns | [string](#string) |  |  |
 
 
 

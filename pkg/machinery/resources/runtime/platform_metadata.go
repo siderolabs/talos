@@ -34,6 +34,8 @@ type PlatformMetadataSpec struct {
 	InstanceID   string `yaml:"instanceId,omitempty" protobuf:"6"`
 	ProviderID   string `yaml:"providerId,omitempty" protobuf:"7"`
 	Spot         bool   `yaml:"spot,omitempty" protobuf:"8"`
+	InternalDNS  string `yaml:"internalDNS,omitempty" protobuf:"9"`
+	ExternalDNS  string `yaml:"externalDNS,omitempty" protobuf:"10"`
 }
 
 // NewPlatformMetadataSpec initializes a MetadataSpec resource.

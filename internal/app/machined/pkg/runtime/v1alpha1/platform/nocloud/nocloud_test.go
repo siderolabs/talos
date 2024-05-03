@@ -79,12 +79,13 @@ func TestParseMetadata(t *testing.T) {
 			require.NoError(t, yaml.Unmarshal(tt.raw, &m))
 
 			mc := nocloud.MetadataConfig{
-				Hostname:   "talos.fqdn",
-				InstanceID: "0",
+				Hostname:    "talos.fqdn",
+				InternalDNS: "talos.fqdn",
+				InstanceID:  "0",
 			}
 			mc2 := nocloud.MetadataConfig{
-				LocalHostname: "talos.fqdn",
-				InstanceID:    "0",
+				InternalDNS: "talos.fqdn",
+				InstanceID:  "0",
 			}
 
 			networkConfig, err := n.ParseMetadata(&m, st, &mc)

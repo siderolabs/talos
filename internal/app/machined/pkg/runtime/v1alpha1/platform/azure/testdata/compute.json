@@ -2,11 +2,14 @@
     "location": "CentralUS",
     "name": "IMDSCanary",
     "offer": "RHEL",
+    "osProfile": {
+        "computerName": "examplevmname"
+    },
     "osType": "Linux",
     "platformFaultDomain": "0",
     "platformUpdateDomain": "0",
     "publisher": "RedHat",
-    "resourceId": "000-000-000-000-000",
+    "resourceId": "/subscriptions/xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx/resourceGroups/Test/providers/Microsoft.Compute/virtualMachines/examplevmname",
     "sku": "7.2",
     "version": "7.2.20161026",
     "vmId": "5c08b38e-4d57-4c23-ac45-aca61037f084",
