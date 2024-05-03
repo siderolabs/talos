@@ -235,11 +235,6 @@ cluster:
       name: none
   proxy:
     disabled: true
-machine:
-  features:
-    kubePrism:
-      enabled: true
-      port: 7445
 ```
 
 ```bash
