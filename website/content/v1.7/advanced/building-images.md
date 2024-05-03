@@ -40,7 +40,7 @@ be overridden with:
 
 * if you built and pushed only a custom `kernel` package, the reference can be overridden with `PKG_KERNEL` variable: `make <target> PKG_KERNEL=<registry>/<username>/kernel:<tag>`
 * if any other single package was customized, the reference can be overridden with `PKG_<pkg>` (e.g. `PKG_IPTABLES`) variable: `make <target> PKG_<pkg>=<registry>/<username>/<pkg>:<tag>`
-* if the full `pkgs` repository was built and pushed, the references can be overridden with `PKGS_PREFIX` and `PKGS` variables: `make <target> PKG_PREFIX=<registry>/<username> PKGS=<tag>`
+* if the full `pkgs` repository was built and pushed, the references can be overridden with `PKGS_PREFIX` and `PKGS` variables: `make <target> PKGS_PREFIX=<registry>/<username> PKGS=<tag>`
 
 ## Customizations
 
