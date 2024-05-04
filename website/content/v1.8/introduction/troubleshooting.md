@@ -226,6 +226,12 @@ Remove the node from Kubernetes with `kubectl delete node <node-name>`.
 
 This error might appear during initial cluster bootstrap, and it will go away once the Kubernetes API server is up and the node is registered.
 
+The example of Talos logs:
+
+```bash
+[talos] controller failed {"component": "controller-runtime", "controller": "k8s.KubeletStaticPodController", "error": "error refreshing pod status: error fetching pod status: Get \"https://127.0.0.1:10250/pods/?timeout=30s\": remote error: tls: internal error"}
+```
+
 By default configuration, `kubelet` issues a self-signed server certificate, but when `rotate-server-certificates` feature is enabled,
 `kubelet` issues its certificate using `kube-apiserver`.
 Make sure the `kubelet` CSR is approved by the Kubernetes API server.
