@@ -22,6 +22,8 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
@@ -30,6 +32,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
+
+const unauthorizedBootIDFallback = "(unauthorized)"
 
 var (
 	// MachineReadyEventFn is the predicate function that returns true if the event indicates the machine is ready.
@@ -55,6 +59,10 @@ var (
 
 	// BootIDChangedPostCheckFn is a post check function that returns nil if the boot ID has changed.
 	BootIDChangedPostCheckFn = func(ctx context.Context, c *client.Client, preActionBootID string) error {
+		if preActionBootID == unauthorizedBootIDFallback {
+			return nil
+		}
+
 		currentBootID, err := getBootID(ctx, c)
 		if err != nil {
 			return err
@@ -332,6 +340,10 @@ func getBootID(ctx context.Context, c *client.Client) (string, error) {
 
 	body, err := io.ReadAll(reader)
 	if err != nil {
+		if status.Code(err) == codes.PermissionDenied { // we are not authorized to read the boot ID, skip the check
+			return unauthorizedBootIDFallback, nil
+		}
+
 		return "", err
 	}
 
