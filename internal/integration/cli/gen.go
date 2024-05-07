@@ -196,8 +196,6 @@ func (suite *GenSuite) testGenConfigPatch(patch []byte) {
 				switch {
 				case tt.shouldAffect[configName]:
 					suite.Assert().Equal("bar", cfg.Cluster().Name(), "checking %q", configName)
-				case configName == "worker.yaml":
-					suite.Assert().Equal("", cfg.Cluster().Name(), "checking %q", configName)
 				default:
 					suite.Assert().Equal("foo", cfg.Cluster().Name(), "checking %q", configName)
 				}

@@ -147,6 +147,10 @@ func (in *Input) worker() ([]config.Document, error) {
 		}
 	}
 
+	if in.Options.VersionContract.ClusterNameForWorkers() {
+		cluster.ClusterName = in.ClusterName
+	}
+
 	v1alpha1Config.MachineConfig = machine
 	v1alpha1Config.ClusterConfig = cluster
 

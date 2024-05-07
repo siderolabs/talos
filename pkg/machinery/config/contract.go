@@ -144,3 +144,8 @@ func (contract *VersionContract) HostDNSEnabled() bool {
 func (contract *VersionContract) UseRSAServiceAccountKey() bool {
 	return contract.Greater(TalosVersion1_6)
 }
+
+// ClusterNameForWorkers returns true if version of Talos should put cluster name to the worker machine config.
+func (contract *VersionContract) ClusterNameForWorkers() bool {
+	return contract.Greater(TalosVersion1_7)
+}

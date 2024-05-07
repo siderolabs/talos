@@ -60,6 +60,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.KubePrismEnabled())
 	assert.True(t, contract.HostDNSEnabled())
 	assert.True(t, contract.UseRSAServiceAccountKey())
+	assert.True(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_8(t *testing.T) {
@@ -79,6 +80,7 @@ func TestContract1_8(t *testing.T) {
 	assert.True(t, contract.KubePrismEnabled())
 	assert.True(t, contract.HostDNSEnabled())
 	assert.True(t, contract.UseRSAServiceAccountKey())
+	assert.True(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_7(t *testing.T) {
@@ -98,6 +100,7 @@ func TestContract1_7(t *testing.T) {
 	assert.True(t, contract.KubePrismEnabled())
 	assert.True(t, contract.HostDNSEnabled())
 	assert.True(t, contract.UseRSAServiceAccountKey())
+	assert.False(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_6(t *testing.T) {
@@ -117,6 +120,7 @@ func TestContract1_6(t *testing.T) {
 	assert.True(t, contract.KubePrismEnabled())
 	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
+	assert.False(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_5(t *testing.T) {
@@ -136,6 +140,7 @@ func TestContract1_5(t *testing.T) {
 	assert.False(t, contract.KubePrismEnabled())
 	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
+	assert.False(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_4(t *testing.T) {
@@ -155,6 +160,7 @@ func TestContract1_4(t *testing.T) {
 	assert.False(t, contract.KubePrismEnabled())
 	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
+	assert.False(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_3(t *testing.T) {
@@ -174,6 +180,7 @@ func TestContract1_3(t *testing.T) {
 	assert.False(t, contract.KubePrismEnabled())
 	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
+	assert.False(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_2(t *testing.T) {
@@ -193,6 +200,7 @@ func TestContract1_2(t *testing.T) {
 	assert.False(t, contract.KubePrismEnabled())
 	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
+	assert.False(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_1(t *testing.T) {
@@ -212,6 +220,7 @@ func TestContract1_1(t *testing.T) {
 	assert.False(t, contract.KubePrismEnabled())
 	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
+	assert.False(t, contract.ClusterNameForWorkers())
 }
 
 func TestContract1_0(t *testing.T) {
@@ -231,4 +240,5 @@ func TestContract1_0(t *testing.T) {
 	assert.False(t, contract.KubePrismEnabled())
 	assert.False(t, contract.HostDNSEnabled())
 	assert.False(t, contract.UseRSAServiceAccountKey())
+	assert.False(t, contract.ClusterNameForWorkers())
 }

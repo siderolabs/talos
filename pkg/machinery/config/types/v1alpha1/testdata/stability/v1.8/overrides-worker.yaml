@@ -49,6 +49,7 @@ cluster:
     secret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
     controlPlane:
         endpoint: https://base:6443
+    clusterName: base
     network:
         cni:
             name: custom
