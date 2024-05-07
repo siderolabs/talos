@@ -33,6 +33,23 @@ Talos Linux now compresses kernel and initramfs using ZSTD.
 Linux arm64 kernel is now compressed (previously it was uncompressed).
 """
 
+    [notes.forward-kube-dns-to-host]
+        title = "DNS Forwarding for CoreDNS pods"
+        description = """\
+Usage of the host DNS resolver as upstream for Kubernetes CoreDNS pods is now enabled by default. You can disable it
+with:
+
+```yaml
+machine:
+  features:
+    hostDNS:
+      enabled: true
+      forwardKubeDNSToHost: false
+```
+
+Please note that on running cluster you will have to kill CoreDNS pods for this change to apply.
+"""
+
 [make_deps]
 
     [make_deps.tools]

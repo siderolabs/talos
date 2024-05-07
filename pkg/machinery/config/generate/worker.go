@@ -97,7 +97,7 @@ func (in *Input) worker() ([]config.Document, error) {
 	if in.Options.VersionContract.HostDNSEnabled() {
 		machine.MachineFeatures.HostDNSSupport = &v1alpha1.HostDNSConfig{
 			HostDNSEnabled:              pointer.To(true),
-			HostDNSForwardKubeDNSToHost: in.Options.HostDNSForwardKubeDNSToHost.Ptr(),
+			HostDNSForwardKubeDNSToHost: ptrOrNil(in.Options.HostDNSForwardKubeDNSToHost.ValueOrZero() || in.Options.VersionContract.HostDNSForwardKubeDNSToHost()),
 		}
 	}
 

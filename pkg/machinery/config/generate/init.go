@@ -96,7 +96,7 @@ func (in *Input) init() ([]config.Document, error) {
 	if in.Options.VersionContract.HostDNSEnabled() {
 		machine.MachineFeatures.HostDNSSupport = &v1alpha1.HostDNSConfig{
 			HostDNSEnabled:              pointer.To(true),
-			HostDNSForwardKubeDNSToHost: in.Options.HostDNSForwardKubeDNSToHost.Ptr(),
+			HostDNSForwardKubeDNSToHost: ptrOrNil(in.Options.HostDNSForwardKubeDNSToHost.ValueOrZero() || in.Options.VersionContract.HostDNSForwardKubeDNSToHost()),
 		}
 	}
 
@@ -228,4 +228,12 @@ func (in *Input) init() ([]config.Document, error) {
 	v1alpha1Config.ClusterConfig = cluster
 
 	return []config.Document{v1alpha1Config}, nil
+}
+
+func ptrOrNil(b bool) *bool {
+	if b {
+		return &b
+	}
+
+	return nil
 }

@@ -149,3 +149,8 @@ func (contract *VersionContract) UseRSAServiceAccountKey() bool {
 func (contract *VersionContract) ClusterNameForWorkers() bool {
 	return contract.Greater(TalosVersion1_7)
 }
+
+// HostDNSForwardKubeDNSToHost returns true if version of Talos forces host dns router to be used as upstream for Kubernetes CoreDNS pods.
+func (contract *VersionContract) HostDNSForwardKubeDNSToHost() bool {
+	return contract.Greater(TalosVersion1_7)
+}
