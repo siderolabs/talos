@@ -69,7 +69,7 @@ func runInstallCmd(ctx context.Context) (err error) {
 			}
 		}
 
-		if config.Machine().Install().LegacyBIOSSupport() {
+		if config.Machine() != nil && config.Machine().Install().LegacyBIOSSupport() {
 			options.LegacyBIOSSupport = true
 		}
 	}
