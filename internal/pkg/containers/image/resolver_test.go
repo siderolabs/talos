@@ -291,7 +291,7 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	resp := &http.Response{}
 	resp.Request = req
 	resp.Header = http.Header{}
-	resp.Header.Add("WWW-Authenticate", "Basic realm=\"Access to the staging site\", charset=\"UTF-8\"")
+	resp.Header.Add("Www-Authenticate", "Basic realm=\"Access to the staging site\", charset=\"UTF-8\"")
 
 	suite.Require().NoError(registryHosts[0].Authorizer.AddResponses(context.Background(), []*http.Response{resp}))
 	suite.Require().NoError(registryHosts[0].Authorizer.Authorize(context.Background(), req))

@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:1.7.0-labs
+# syntax = docker/dockerfile-upstream:1.7.1-labs
 
 # Meta args applied to stage base names.
 
@@ -962,7 +962,7 @@ RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-pat
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:21.7.3-alpine AS lint-markdown
+FROM node:22.1.0-alpine AS lint-markdown
 ARG MARKDOWNLINTCLI_VERSION
 ARG TEXTLINT_VERSION
 ARG TEXTLINT_FILTER_RULE_COMMENTS_VERSION

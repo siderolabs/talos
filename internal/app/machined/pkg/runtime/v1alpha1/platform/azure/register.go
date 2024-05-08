@@ -115,8 +115,8 @@ func reportHealth(ctx context.Context, gsIncarnation, gsContainerID, gsInstanceI
 }
 
 func addHeaders(req *http.Request) {
-	req.Header.Add("x-ms-agent-name", "WALinuxAgent")
-	req.Header.Add("x-ms-version", "2015-04-05")
+	req.Header.Add("X-Ms-Agent-Name", "WALinuxAgent")
+	req.Header.Add("X-Ms-Version", "2015-04-05")
 	req.Header.Add("Content-Type", "text/xml;charset=utf-8")
 }
 

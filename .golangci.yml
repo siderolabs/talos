@@ -106,6 +106,7 @@ linters:
   enable-all: true
   disable:
     - errorlint
+    - err113
     - exhaustruct
     - exhaustivestruct
     - forbidigo
@@ -115,11 +116,11 @@ linters:
     - gochecknoinits
     - gocognit
     - godox
-    - goerr113
     - gomnd
     - gosec
     - ireturn # we return interfaces
     - maintidx
+    - mnd
     - nestif
     - nilnil # we return "nil, nil"
     - nonamedreturns

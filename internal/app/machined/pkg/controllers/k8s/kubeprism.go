@@ -38,8 +38,7 @@ func (ctrl *KubePrismController) Name() string {
 	return "k8s.KubePrismController"
 }
 
-// Inputs implements controller.Controll
-// er interface.
+// Inputs implements controller.Controller interface.
 func (ctrl *KubePrismController) Inputs() []controller.Input {
 	return []controller.Input{
 		{

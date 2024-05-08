@@ -16,11 +16,11 @@ CLOUD_IMAGES_EXTRA_ARGS ?= ""
 ZSTD_COMPRESSION_LEVEL ?= 18
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0
+TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-2-gc34ec5b
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-10-g28c5696
-EXTRAS ?= v1.8.0-alpha.0
+PKGS ?= v1.8.0-alpha.0-13-gbd70572
+EXTRAS ?= v1.8.0-alpha.0-1-g01ad9f5
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
@@ -56,7 +56,7 @@ GOIMPORTS_VERSION ?= v0.20.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.57.2
+GOLANGCILINT_VERSION ?= v1.58.0
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.19.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer
@@ -70,7 +70,7 @@ DEEPCOPY_VERSION ?= v0.5.6
 # renovate: datasource=go depName=github.com/siderolabs/importvet
 IMPORTVET_VERSION ?= v0.2.0
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.39.0
+MARKDOWNLINTCLI_VERSION ?= 0.40.0
 # renovate: datasource=npm depName=textlint
 TEXTLINT_VERSION ?= 14.0.4
 # renovate: datasource=npm depName=textlint-filter-rule-comments
@@ -91,11 +91,11 @@ KUBECTL_VERSION ?= v1.30.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.44
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v3.14.3
+HELM_VERSION ?= v3.14.4
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
-CLUSTERCTL_VERSION ?= 1.6.3
+CLUSTERCTL_VERSION ?= 1.7.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.16.4
+CILIUM_CLI_VERSION ?= v0.16.7
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
