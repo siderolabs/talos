@@ -922,14 +922,14 @@ func nodeName(clusterName, role string, index int, uuid uuid.UUID) string {
 }
 
 func postCreate(ctx context.Context, clusterAccess *access.Adapter) error {
+	if !clusterWait {
+		return nil
+	}
+
 	if !withInitNode {
 		if err := clusterAccess.Bootstrap(ctx, os.Stdout); err != nil {
 			return fmt.Errorf("bootstrap error: %w", err)
 		}
-	}
-
-	if !clusterWait {
-		return nil
 	}
 
 	// Run cluster readiness checks
