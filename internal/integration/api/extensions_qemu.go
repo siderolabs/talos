@@ -486,7 +486,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 		)
 		suite.Require().NoError(err)
 
-		suite.Require().Contains(stderr, "mdadm: array /dev/md0 started.")
+		suite.Require().Contains(stderr, "mdadm: size set to")
 	}
 
 	// now we want to reboot the node and make sure the array is still mounted

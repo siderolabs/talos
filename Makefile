@@ -16,10 +16,10 @@ CLOUD_IMAGES_EXTRA_ARGS ?= ""
 ZSTD_COMPRESSION_LEVEL ?= 18
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-2-gc34ec5b
+TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-3-g7e5a248
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-13-gbd70572
+PKGS ?= v1.8.0-alpha.0-15-gf9559de
 EXTRAS ?= v1.8.0-alpha.0-1-g01ad9f5
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
