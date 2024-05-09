@@ -93,7 +93,7 @@ func (in *Input) init() ([]config.Document, error) {
 		machine.MachineKubelet.KubeletDisableManifestsDirectory = pointer.To(true)
 	}
 
-	if in.Options.VersionContract.HostDNSEnabled() || in.Options.HostDNSForwardKubeDNSToHost.ValueOrZero() {
+	if in.Options.VersionContract.HostDNSEnabled() {
 		machine.MachineFeatures.HostDNSSupport = &v1alpha1.HostDNSConfig{
 			HostDNSEnabled:              pointer.To(true),
 			HostDNSForwardKubeDNSToHost: in.Options.HostDNSForwardKubeDNSToHost.Ptr(),
