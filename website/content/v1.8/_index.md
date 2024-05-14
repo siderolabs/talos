@@ -43,10 +43,12 @@ To do so, you can take our [survey](https://docs.google.com/forms/d/1TUna5YTYGCK
 
 ### Office Hours
 
-- When: Mondays at 16:30 UTC.
-- Where: [Google Meet](https://meet.google.com/day-pxhv-zky).
+- When: Second Monday of every month at 16:30 UTC.
+- Where: [Google Meet](https://meet.google.com/ivb-kjfm-jfc).
 
 You can subscribe to this meeting by joining the community forum above.
+
+> Note: You can convert the meeting hours to your [local time](https://everytimezone.com/s/599e61d6).
 
 ## Enterprise
 
