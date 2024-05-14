@@ -10,17 +10,12 @@ function setup {
   gcloud auth activate-service-account --key-file ${TMP}/svc-acct.json
   set -x
 
-  gsutil cp ${ARTIFACTS}/gcp-amd64.raw.tar.gz gs://talos-e2e/gcp-${SHA}.tar.gz
-  gcloud --quiet --project talos-testbed compute images delete talos-e2e-${SHA} || true
-  gcloud --quiet --project talos-testbed compute images create talos-e2e-${SHA} --source-uri gs://talos-e2e/gcp-${SHA}.tar.gz
-
   ## Cluster-wide vars
   export CLUSTER_NAME=${NAME_PREFIX}
-  export GCP_PROJECT=talos-testbed
+  export GCP_PROJECT=siderolabs-dev
   export GCP_REGION=us-central1
   export GCP_NETWORK=default
-  export GCP_VM_SVC_ACCOUNT=e2e-tester@talos-testbed.iam.gserviceaccount.com
-
+  export GCP_VM_SVC_ACCOUNT=e2e-tester@${GCP_PROJECT}.iam.gserviceaccount.com
 
   ## Control plane vars
   export CONTROL_PLANE_MACHINE_COUNT=3
@@ -33,6 +28,12 @@ function setup {
   export GCP_NODE_MACHINE_TYPE=n1-standard-4
   export GCP_NODE_VOL_SIZE=50
   export GCP_NODE_IMAGE_ID=projects/${GCP_PROJECT}/global/images/talos-e2e-${SHA}
+
+  ## Create GCP Image
+  gsutil cp ${ARTIFACTS}/gcp-amd64.raw.tar.gz gs://siderolabs-e2e/gcp-${SHA}.tar.gz
+  gcloud --quiet --project ${GCP_PROJECT} compute images delete talos-e2e-${SHA} || true
+  gcloud --quiet --project ${GCP_PROJECT} compute images create talos-e2e-${SHA} --source-uri gs://siderolabs-e2e/gcp-${SHA}.tar.gz
+
 
   ${CLUSTERCTL} generate cluster ${NAME_PREFIX} \
     --kubeconfig /tmp/e2e/docker/kubeconfig \
