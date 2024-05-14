@@ -13,6 +13,7 @@ import (
 
 	"github.com/coredns/coredns/plugin/pkg/proxy"
 	dnssrv "github.com/miekg/dns"
+	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/check"
 	"github.com/stretchr/testify/require"
@@ -120,7 +121,7 @@ func newServer(t *testing.T, nameservers ...string) func() {
 
 	handler.SetProxy(pxs)
 
-	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.53:10700")
+	pc, err := dns.NewUDPPacketConn("udp", "127.0.0.53:10700", ensure.Value(dns.MakeControl("udp", false)))
 	require.NoError(t, err)
 
 	nodeHandler := dns.NewNodeHandler(handler, &testResolver{}, l)

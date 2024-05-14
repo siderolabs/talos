@@ -130,7 +130,7 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 				runnerCfg := runnerConfig{net: netwk, addr: addr}
 
 				if _, ok := ctrl.runners[runnerCfg]; !ok {
-					runner, rErr := newDNSRunner(runnerCfg, ctrl.cache, ctrl.Logger)
+					runner, rErr := newDNSRunner(runnerCfg, ctrl.cache, ctrl.Logger, cfg.TypedSpec().ServiceHostDNSAddress.IsValid())
 					if rErr != nil {
 						return fmt.Errorf("error creating dns runner: %w", rErr)
 					}
@@ -256,7 +256,7 @@ type runnerConfig struct {
 	addr netip.AddrPort
 }
 
-func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger) (*dns.Server, error) {
+func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger, forwardEnabled bool) (*dns.Server, error) {
 	if cfg.addr.Addr().Is6() {
 		cfg.net += "6"
 	}
@@ -265,9 +265,14 @@ func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger) (*dns.
 
 	var serverOpts dns.ServerOptions
 
+	controlFn, ctrlErr := dns.MakeControl(cfg.net, forwardEnabled)
+	if ctrlErr != nil {
+		return nil, fmt.Errorf("error creating %q control function: %w", cfg.net, ctrlErr)
+	}
+
 	switch cfg.net {
 	case "udp", "udp6":
-		packetConn, err := dns.NewUDPPacketConn(cfg.net, cfg.addr.String())
+		packetConn, err := dns.NewUDPPacketConn(cfg.net, cfg.addr.String(), controlFn)
 		if err != nil {
 			return nil, fmt.Errorf("error creating %q packet conn: %w", cfg.net, err)
 		}
@@ -279,7 +284,7 @@ func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger) (*dns.
 		}
 
 	case "tcp", "tcp6":
-		listener, err := dns.NewTCPListener(cfg.net, cfg.addr.String())
+		listener, err := dns.NewTCPListener(cfg.net, cfg.addr.String(), controlFn)
 		if err != nil {
 			return nil, fmt.Errorf("error creating %q listener: %w", cfg.net, err)
 		}

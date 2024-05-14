@@ -338,88 +338,76 @@ func (s *Server) Start(onDone func(err error)) (stop func(), stopped <-chan stru
 }
 
 // NewTCPListener creates a new TCP listener.
-func NewTCPListener(network, addr string) (net.Listener, error) {
-	var opts []controlOptions
-
-	switch network {
-	case "tcp", "tcp4":
-		network = "tcp4"
-		opts = tcpOptions
-
-	case "tcp6":
-		opts = tcpOptionsV6
-
-	default:
+func NewTCPListener(network, addr string, control ControlFn) (net.Listener, error) {
+	network, ok := networkNames[network]
+	if !ok {
 		return nil, fmt.Errorf("unsupported network: %s", network)
 	}
 
-	lc := net.ListenConfig{Control: makeControl(opts)}
+	lc := net.ListenConfig{Control: control}
 
 	return lc.Listen(context.Background(), network, addr)
 }
 
 // NewUDPPacketConn creates a new UDP packet connection.
-func NewUDPPacketConn(network, addr string) (net.PacketConn, error) {
-	var opts []controlOptions
-
-	switch network {
-	case "udp", "udp4":
-		network = "udp4"
-		opts = udpOptions
-
-	case "udp6":
-		opts = udpOptionsV6
-
-	default:
+func NewUDPPacketConn(network, addr string, control ControlFn) (net.PacketConn, error) {
+	network, ok := networkNames[network]
+	if !ok {
 		return nil, fmt.Errorf("unsupported network: %s", network)
 	}
 
-	lc := net.ListenConfig{
-		Control: makeControl(opts),
-	}
+	lc := net.ListenConfig{Control: control}
 
 	return lc.ListenPacket(context.Background(), network, addr)
 }
 
-var (
-	tcpOptions = []controlOptions{
-		{unix.IPPROTO_IP, unix.IP_RECVTTL, 1, "failed to set IP_RECVTTL"},
-		{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
-		{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
-		{unix.IPPROTO_IP, unix.IP_TTL, 1, "failed to set IP_TTL"},
+// ControlFn is an alias to [net.ListenConfig.Control] function.
+type ControlFn = func(string, string, syscall.RawConn) error
+
+// MakeControl creates a control function for setting socket options.
+func MakeControl(network string, forwardEnabled bool) (ControlFn, error) {
+	maxHops := 1
+
+	if forwardEnabled {
+		maxHops = 2
 	}
 
-	tcpOptionsV6 = []controlOptions{
-		{unix.IPPROTO_IPV6, unix.IPV6_RECVHOPLIMIT, 1, "failed to set IPV6_RECVHOPLIMIT"},
-		{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
-		{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
-		{unix.IPPROTO_IPV6, unix.IPV6_UNICAST_HOPS, 1, "failed to set IPV6_UNICAST_HOPS"},
+	var options []controlOptions
+
+	switch network {
+	case "tcp", "tcp4":
+		options = []controlOptions{
+			{unix.IPPROTO_IP, unix.IP_RECVTTL, maxHops, "failed to set IP_RECVTTL"},
+			{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
+			{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
+			{unix.IPPROTO_IP, unix.IP_TTL, maxHops, "failed to set IP_TTL"},
+		}
+	case "tcp6":
+		options = []controlOptions{
+			{unix.IPPROTO_IPV6, unix.IPV6_RECVHOPLIMIT, maxHops, "failed to set IPV6_RECVHOPLIMIT"},
+			{unix.IPPROTO_TCP, unix.TCP_FASTOPEN, 5, "failed to set TCP_FASTOPEN"}, // tcp specific stuff from systemd
+			{unix.IPPROTO_TCP, unix.TCP_NODELAY, 1, "failed to set TCP_NODELAY"},   // tcp specific stuff from systemd
+			{unix.IPPROTO_IPV6, unix.IPV6_UNICAST_HOPS, maxHops, "failed to set IPV6_UNICAST_HOPS"},
+		}
+	case "udp", "udp4":
+		options = []controlOptions{
+			{unix.IPPROTO_IP, unix.IP_RECVTTL, maxHops, "failed to set IP_RECVTTL"},
+			{unix.IPPROTO_IP, unix.IP_TTL, maxHops, "failed to set IP_TTL"},
+		}
+	case "udp6":
+		options = []controlOptions{
+			{unix.IPPROTO_IPV6, unix.IPV6_RECVHOPLIMIT, maxHops, "failed to set IPV6_RECVHOPLIMIT"},
+			{unix.IPPROTO_IPV6, unix.IPV6_UNICAST_HOPS, maxHops, "failed to set IPV6_UNICAST_HOPS"},
+		}
+	default:
+		return nil, fmt.Errorf("unsupported network: %s", network)
 	}
 
-	udpOptions = []controlOptions{
-		{unix.IPPROTO_IP, unix.IP_RECVTTL, 1, "failed to set IP_RECVTTL"},
-		{unix.IPPROTO_IP, unix.IP_TTL, 1, "failed to set IP_TTL"},
-	}
-
-	udpOptionsV6 = []controlOptions{
-		{unix.IPPROTO_IPV6, unix.IPV6_RECVHOPLIMIT, 1, "failed to set IPV6_RECVHOPLIMIT"},
-		{unix.IPPROTO_IPV6, unix.IPV6_UNICAST_HOPS, 1, "failed to set IPV6_UNICAST_HOPS"},
-	}
-)
-
-type controlOptions struct {
-	level        int
-	opt          int
-	val          int
-	errorMessage string
-}
-
-func makeControl(opts []controlOptions) func(string, string, syscall.RawConn) error {
 	return func(_ string, _ string, c syscall.RawConn) error {
 		var resErr error
 
 		err := c.Control(func(fd uintptr) {
-			for _, opt := range opts {
+			for _, opt := range options {
 				opErr := unix.SetsockoptInt(int(fd), opt.level, opt.opt, opt.val)
 				if opErr != nil {
 					resErr = fmt.Errorf(opt.errorMessage+": %w", opErr)
@@ -437,5 +425,21 @@ func makeControl(opts []controlOptions) func(string, string, syscall.RawConn) er
 		}
 
 		return nil
-	}
+	}, nil
+}
+
+type controlOptions struct {
+	level        int
+	opt          int
+	val          int
+	errorMessage string
+}
+
+var networkNames = map[string]string{
+	"tcp":  "tcp4",
+	"tcp4": "tcp4",
+	"tcp6": "tcp6",
+	"udp":  "udp4",
+	"udp4": "udp4",
+	"udp6": "udp6",
 }
