@@ -176,26 +176,6 @@ version = "v1.1"
 url = "/v1.0/"
 version = "v1.0"
 
-[[params.versions]]
-url = "/v0.14/"
-version = "v0.14"
-
-[[params.versions]]
-url = "/v0.13/"
-version = "v0.13"
-
-[[params.versions]]
-url = "/v0.12/"
-version = "v0.12"
-
-[[params.versions]]
-url = "/v0.11/"
-version = "v0.11"
-
-[[params.versions]]
-url = "/v0.10/"
-version = "v0.10"
-
 # User interface configuration
 [params.ui]
 #  Set to true to disable breadcrumb navigation.
