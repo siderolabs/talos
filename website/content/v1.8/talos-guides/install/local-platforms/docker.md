@@ -6,16 +6,21 @@ aliases:
 ---
 
 In this guide we will create a Kubernetes cluster in Docker, using a containerized version of Talos.
-
 Running Talos in Docker is intended to be used in CI pipelines, and local testing when you need a quick and easy cluster.
-Furthermore, if you are running Talos in production, it provides an excellent way for developers to develop against the same version of Talos.
+It also provides an excellent way for developers to develop against the same version of Talos as is used in production.
 
 ## Requirements
 
-The follow are requirements for running Talos in Docker:
+The follow are the requirements for running Talos in Docker:
 
 - Docker 18.03 or greater
 - a recent version of [`talosctl`](https://github.com/siderolabs/talos/releases)
+
+{{% alert title="Note" color="info" %}}
+If you are using Docker Desktop on a macOS computer, and you encounter the error: *Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?* you may need to manually create the link for the Docker socket:
+```sudo ln -s "$HOME/.docker/run/docker.sock" /var/run/docker.sock```
+
+{{% /alert %}}
 
 ## Caveats
 
@@ -31,11 +36,11 @@ Creating a local cluster is as simple as:
 talosctl cluster create
 ```
 
-Once the above finishes successfully, your `talosconfig` (`~/.talos/config`)  and `kubeconfig` (`~/.kube/config`) will be configured to point to the new cluster.
+Once the above finishes, your `talosconfig` (`~/.talos/config`)  and `kubeconfig` (`~/.kube/config`) will be configured to point to the new cluster.
 
 > Note: Startup times can take up to a minute or more before the cluster is available.
 
-Finally, we just need to specify which nodes you want to communicate with using talosctl.
+Finally, we just need to specify which nodes you want to communicate with using `talosctl`.
 Talosctl can operate on one or all the nodes in the cluster – this makes cluster wide commands much easier.
 
 `talosctl config nodes 10.5.0.2 10.5.0.3`
@@ -44,7 +49,7 @@ Talos and Kubernetes API are mapped to a random port on the host machine, the re
 Talos API endpoint can be found using `talosctl config info`:
 
 ```bash
-$ talosctcl config info
+$ talosctl config info
 ...
 Endpoints:           127.0.0.1:38423
 ```

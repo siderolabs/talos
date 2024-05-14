@@ -33,7 +33,9 @@ talosctl cluster create
 ```
 
 {{% alert title="Note" color="info" %}}
-If you are using Docker Desktop on a macOS computer you will need to enable the default Docker socket in your settings.
+If you are using Docker Desktop on a macOS computer, if you encounter the error: *Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?* you may need to manually create the link for the Docker socket:
+```sudo ln -s "$HOME/.docker/run/docker.sock" /var/run/docker.sock```
+
 {{% /alert %}}
 
 You can explore using Talos API commands:
