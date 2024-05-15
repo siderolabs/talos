@@ -90,7 +90,7 @@ require (
 	github.com/hetznercloud/hcloud-go/v2 v2.8.0
 	github.com/insomniacslk/dhcp v0.0.0-20240419123447-f1cffa2c0c49
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink v1.4.1
+	github.com/jsimonetti/rtnetlink v1.4.2
 	github.com/jxskiss/base62 v1.1.0
 	github.com/klauspost/compress v1.17.7
 	github.com/klauspost/cpuid/v2 v2.2.7
@@ -145,7 +145,7 @@ require (
 	github.com/siderolabs/grpc-proxy v0.4.0
 	github.com/siderolabs/kms-client v0.1.0
 	github.com/siderolabs/net v0.4.0
-	github.com/siderolabs/siderolink v0.3.6
+	github.com/siderolabs/siderolink v0.3.7
 	github.com/siderolabs/talos/pkg/machinery v1.8.0-alpha.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
@@ -349,7 +349,7 @@ require (
 	golang.zx2c4.com/wireguard v0.0.0-20231211153847-12269c276173 // indirect
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240401170217-c3f982113cda // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240506185236-b8a5c65736ae // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240509183442-62759503f434 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
