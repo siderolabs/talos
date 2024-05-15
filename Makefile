@@ -19,7 +19,7 @@ ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-3-g7e5a248
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-15-gf9559de
+PKGS ?= v1.8.0-alpha.0-16-g9ebfd1b
 EXTRAS ?= v1.8.0-alpha.0-1-g01ad9f5
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
