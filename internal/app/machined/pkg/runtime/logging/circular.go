@@ -15,7 +15,9 @@ import (
 	"sync"
 	"time"
 
+	corezstd "github.com/klauspost/compress/zstd"
 	"github.com/siderolabs/go-circular"
+	"github.com/siderolabs/go-circular/zstd"
 	"github.com/siderolabs/go-debug"
 	"github.com/siderolabs/go-tail"
 
@@ -24,19 +26,25 @@ import (
 
 // These constants should some day move to config.
 const (
+	// Overall capacity of the log buffer (in raw bytes, memory size will be smaller due to compression).
+	DesiredCapacity = 1048576
 	// Some logs are tiny, no need to reserve too much memory.
 	InitialCapacity = 16384
-	// Cap each log at 1M.
-	MaxCapacity = 1048576
-	// Safety gap to avoid buffer overruns.
-	SafetyGap = 2048
+	// Chunk capacity is the length of each chunk, it should be
+	// big enough for the compression to be efficient.
+	ChunkCapacity = 65536
+	// Number of zstd-compressed chunks to keep.
+	NumCompressedChunks = (DesiredCapacity / ChunkCapacity) - 1
+	// Safety gap to avoid buffer overruns, can be lowered as with compression we don't need much.
+	SafetyGap = 1
 )
 
 // CircularBufferLoggingManager implements logging to circular fixed size buffer.
 type CircularBufferLoggingManager struct {
 	fallbackLogger *log.Logger
 
-	buffers sync.Map
+	buffers    sync.Map
+	compressor circular.Compressor
 
 	sendersRW      sync.RWMutex
 	senders        []runtime.LogSender
@@ -45,9 +53,19 @@ type CircularBufferLoggingManager struct {
 
 // NewCircularBufferLoggingManager initializes new CircularBufferLoggingManager.
 func NewCircularBufferLoggingManager(fallbackLogger *log.Logger) *CircularBufferLoggingManager {
+	compressor, err := zstd.NewCompressor(
+		corezstd.WithEncoderConcurrency(1),
+		corezstd.WithWindowSize(2*corezstd.MinWindowSize),
+	)
+	if err != nil {
+		// should not happen
+		panic(fmt.Sprintf("failed to create zstd compressor: %s", err))
+	}
+
 	return &CircularBufferLoggingManager{
 		fallbackLogger: fallbackLogger,
 		sendersChanged: make(chan struct{}),
+		compressor:     compressor,
 	}
 }
 
@@ -106,7 +124,8 @@ func (manager *CircularBufferLoggingManager) getBuffer(id string, create bool) (
 
 		b, err := circular.NewBuffer(
 			circular.WithInitialCapacity(InitialCapacity),
-			circular.WithMaxCapacity(MaxCapacity),
+			circular.WithMaxCapacity(ChunkCapacity),
+			circular.WithNumCompressedChunks(NumCompressedChunks, manager.compressor),
 			circular.WithSafetyGap(SafetyGap))
 		if err != nil {
 			return nil, err // only configuration issue might raise error
