@@ -1,6 +1,6 @@
 module github.com/siderolabs/cloud-image-uploader
 
-go 1.22.2
+go 1.22.3
 
 require (
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible

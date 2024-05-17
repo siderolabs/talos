@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/pkg/machinery
 
-go 1.22.2
+go 1.22.3
 
 // forked go-yaml that introduces RawYAML interface, which can be used to populate YAML fields using bytes
 // which are then encoded as a valid YAML blocks with proper indentiation
