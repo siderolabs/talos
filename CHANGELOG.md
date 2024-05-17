@@ -1,3 +1,82 @@
+## [Talos 1.7.2](https://github.com/siderolabs/talos/releases/tag/v1.7.2) (2024-05-17)
+
+Welcome to the v1.7.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Kubernetes: 1.30.1
+Linux: 6.6.30
+
+Talos is built with Go 1.22.3.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Artem Chernyshev
+* Bernard Gütermann
+* Dmitriy Matrenichev
+* Noel Georgi
+* Spencer Smith
+* Utku Ozdemir
+
+### Changes
+<details><summary>10 commits</summary>
+<p>
+
+* [`53eff982f`](https://github.com/siderolabs/talos/commit/53eff982f5076118ba396b874c46d2502dc3b911) feat: update Kubernetes to 1.30.1
+* [`5bc446e85`](https://github.com/siderolabs/talos/commit/5bc446e858ff9a5b2a93e1ff9063337a2c568bf9) chore: update project in GCP testing
+* [`abaff6084`](https://github.com/siderolabs/talos/commit/abaff6084cb5c62b5090a402ca8884d0ae204d9b) fix: increase host dns packet ttl for pods
+* [`9189fdf4a`](https://github.com/siderolabs/talos/commit/9189fdf4a85be6f1d0ad665bf4ca1385a4598aa1) chore: handle I/O error for xfs_repair
+* [`172569f56`](https://github.com/siderolabs/talos/commit/172569f56efcec7e00b0092b8c88788ea8785084) fix: don't enable hostDNS for versions of Talos which do not have it
+* [`a91527ef7`](https://github.com/siderolabs/talos/commit/a91527ef790c1e9888704033663fd66cf0242ed4) chore: extract `pkg/imager/quirks` to `pkg/machinery`
+* [`5e1544432`](https://github.com/siderolabs/talos/commit/5e1544432a2f365bb89d7c184ec58423d6a9fe54) fix: check for `nil` machine config during installation
+* [`44853ba0f`](https://github.com/siderolabs/talos/commit/44853ba0f5c6b1547e2b1553514a12473c24dcae) feat: update Go to 1.22.3, Linux to 6.6.30
+* [`24c353235`](https://github.com/siderolabs/talos/commit/24c353235c55c7da52ea21ccb4365c5a00774c3d) fix: do not fail cli action tracker when boot id cannot be read
+* [`4aeb22f76`](https://github.com/siderolabs/talos/commit/4aeb22f76a2320017e6488fe83fd4d492e8b5d2e) fix: use a fresh context for etcd unlock
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`9caa8be`](https://github.com/siderolabs/pkgs/commit/9caa8be7134968f62f3fb489698e4abf2c458fec) fix: disable CONFIG_EFI_DISABLE_PCI_DMA option
+* [`4af5dcd`](https://github.com/siderolabs/pkgs/commit/4af5dcd4aa0769a3705056740602aa788a35f17f) feat: update Linux to 6.6.30
+* [`996f95d`](https://github.com/siderolabs/pkgs/commit/996f95d749bf3e07abd63b4c87cd249e0b54105f) feat: update zfs package to v2.2.4
+* [`5e3978f`](https://github.com/siderolabs/pkgs/commit/5e3978fb88c7f59e040a64ec89fb244e89ad8def) feat: enable NFT FIB lookups
+* [`a3c7fbf`](https://github.com/siderolabs/pkgs/commit/a3c7fbf373f52b8cc78565e04db9cb232e86c0f4) feat: update Go to 1.22.3
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`345db93`](https://github.com/siderolabs/tools/commit/345db938d119d1c0225581d6c478700cafeef198) feat: update Go to 1.22.3
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**     v1.7.0-9-g76bd73c -> v1.7.0-14-g9caa8be
+* **github.com/siderolabs/tools**    v1.7.0-1-g10b2a69 -> v1.7.0-2-g345db93
+* **k8s.io/api**                     v0.30.0 -> v0.30.1
+* **k8s.io/apiserver**               v0.30.0 -> v0.30.1
+* **k8s.io/client-go**               v0.30.0 -> v0.30.1
+* **k8s.io/component-base**          v0.30.0 -> v0.30.1
+* **k8s.io/kube-scheduler**          v0.30.0 -> v0.30.1
+* **k8s.io/kubectl**                 v0.30.0 -> v0.30.1
+* **k8s.io/kubelet**                 v0.30.0 -> v0.30.1
+* **k8s.io/pod-security-admission**  v0.30.0 -> v0.30.1
+
+Previous release can be found at [v1.7.1](https://github.com/siderolabs/talos/releases/tag/v1.7.1)
+
 ## [Talos 1.7.1](https://github.com/siderolabs/talos/releases/tag/v1.7.1) (2024-05-01)
 
 Welcome to the v1.7.1 release of Talos!

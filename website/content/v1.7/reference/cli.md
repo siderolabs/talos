@@ -96,7 +96,7 @@ talosctl cluster create [flags]
       --bad-rtc                                  launch VM with bad RTC state (QEMU only)
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                     search path for CNI binaries (VM only) (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v1.7.1/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    URL to download CNI bundle from (VM only) (default "https://github.com/siderolabs/talos/releases/download/v1.7.2/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (VM only) (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (VM only) (default "/home/user/.talos/cni/conf.d")
       --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
@@ -2898,7 +2898,7 @@ talosctl upgrade [flags]
       --debug                debug operation from kernel logs. --wait is set to true when this flag is set
   -f, --force                force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help                 help for upgrade
-  -i, --image string         the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.7.1")
+  -i, --image string         the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.7.2")
       --insecure             upgrade using the insecure (encrypted with no auth) maintenance service
   -p, --preserve             preserve data
   -m, --reboot-mode string   select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Valid values are: ["default" "powercycle"]. (default "default")
