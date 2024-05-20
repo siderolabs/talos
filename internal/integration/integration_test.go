@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -180,8 +181,5 @@ func init() {
 	flag.StringVar(&provision_test.DefaultSettings.CustomCNIURL, "talos.provision.custom-cni-url", provision_test.DefaultSettings.CustomCNIURL, "custom CNI URL for the cluster (provision tests only)")
 	flag.StringVar(&provision_test.DefaultSettings.CNIBundleURL, "talos.provision.cni-bundle-url", provision_test.DefaultSettings.CNIBundleURL, "URL to download CNI bundle from")
 
-	allSuites = append(allSuites, api.GetAllSuites()...)
-	allSuites = append(allSuites, cli.GetAllSuites()...)
-	allSuites = append(allSuites, k8s.GetAllSuites()...)
-	allSuites = append(allSuites, provision_test.GetAllSuites()...)
+	allSuites = slices.Concat(api.GetAllSuites(), cli.GetAllSuites(), k8s.GetAllSuites(), provision_test.GetAllSuites())
 }
