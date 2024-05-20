@@ -10,8 +10,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/defaults"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
 	multierror "github.com/hashicorp/go-multierror"
 
 	"github.com/siderolabs/talos/pkg/conditions"
@@ -101,7 +102,7 @@ func (i *Importer) Import(ctx context.Context, reqs ...*ImportRequest) (err erro
 				for _, img := range imgs {
 					image := containerd.NewImage(client, img)
 					log.Printf("unpacking %s (%s)\n", img.Name, img.Target.Digest)
-					err = image.Unpack(ctx, containerd.DefaultSnapshotter)
+					err = image.Unpack(ctx, defaults.DefaultSnapshotter)
 					if err != nil {
 						return fmt.Errorf("error unpacking %s: %w", img.Name, err)
 					}

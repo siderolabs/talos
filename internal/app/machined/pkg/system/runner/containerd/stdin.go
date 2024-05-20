@@ -8,7 +8,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/containerd/containerd"
+	containerd "github.com/containerd/containerd/v2/client"
 )
 
 // StdinCloser wraps io.Reader providing a signal when reader is read till EOF.

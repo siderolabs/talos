@@ -13,12 +13,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/cio"
-	"github.com/containerd/containerd/contrib/seccomp"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/contrib/seccomp"
+	"github.com/containerd/containerd/v2/pkg/cio"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
+	"github.com/containerd/containerd/v2/pkg/oci"
+	"github.com/containerd/errdefs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"

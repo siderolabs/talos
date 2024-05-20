@@ -12,8 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/mount"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/core/mount"
+	"github.com/containerd/containerd/v2/defaults"
 	"github.com/opencontainers/image-spec/identity"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
@@ -48,7 +49,7 @@ func NewPuller(client *containerd.Client) (*Puller, error) {
 
 // PullAndMount pulls the system extension images, unpacks them and mounts under well known path (constants.SystemExtensionsPath).
 func (puller *Puller) PullAndMount(ctx context.Context, registryConfig config.Registries, extensions []config.Extension) error {
-	snapshotService := puller.client.SnapshotService(containerd.DefaultSnapshotter)
+	snapshotService := puller.client.SnapshotService(defaults.DefaultSnapshotter)
 
 	for i, ext := range extensions {
 		extensionImage := ext.Image()
@@ -108,7 +109,7 @@ func (puller *Puller) Cleanup(ctx context.Context) error {
 		}
 	}
 
-	snapshotService := puller.client.SnapshotService(containerd.DefaultSnapshotter)
+	snapshotService := puller.client.SnapshotService(defaults.DefaultSnapshotter)
 
 	for _, key := range puller.snapshots {
 		if err := snapshotService.Remove(ctx, key); err != nil {

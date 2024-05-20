@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-envparse"

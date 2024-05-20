@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containerd/containerd/remotes/docker"
+	"github.com/containerd/containerd/v2/core/remotes/docker"
 	"github.com/pelletier/go-toml"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"

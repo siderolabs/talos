@@ -9,10 +9,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/snapshots"
+	"github.com/containerd/containerd/v2/core/containers"
+	"github.com/containerd/containerd/v2/core/snapshots"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
+	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 

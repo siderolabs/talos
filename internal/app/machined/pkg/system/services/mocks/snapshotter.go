@@ -12,8 +12,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	mount "github.com/containerd/containerd/mount"
-	snapshots "github.com/containerd/containerd/snapshots"
+	mount "github.com/containerd/containerd/v2/core/mount"
+	snapshots "github.com/containerd/containerd/v2/core/snapshots"
 	gomock "github.com/golang/mock/gomock"
 )
 

@@ -10,11 +10,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/pkg/kmutex"
-	"github.com/containerd/containerd/reference/docker"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/core/images"
+	"github.com/containerd/errdefs"
+	"github.com/distribution/reference"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/siderolabs/go-retry/retry"
 
@@ -51,8 +50,6 @@ func WithSkipIfAlreadyPulled() PullOption {
 	}
 }
 
-var unpackDuplicationSuppressor = kmutex.New()
-
 // Pull is a convenience function that wraps the containerd image pull func with
 // retry functionality.
 //
@@ -64,7 +61,7 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 		o(&opts)
 	}
 
-	namedRef, err := docker.ParseDockerRef(ref)
+	namedRef, err := reference.ParseDockerRef(ref)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse image reference %q: %w", ref, err)
 	}
@@ -95,11 +92,6 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 			containerd.WithPullUnpack,
 			containerd.WithResolver(resolver),
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
-			containerd.WithUnpackOpts(
-				[]containerd.UnpackOpt{
-					containerd.WithUnpackDuplicationSuppressor(unpackDuplicationSuppressor),
-				},
-			),
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 
@@ -123,17 +115,17 @@ func Pull(ctx context.Context, reg config.Registries, client *containerd.Client,
 	return img, nil
 }
 
-func manageAliases(ctx context.Context, client *containerd.Client, namedRef docker.Named, img containerd.Image) error {
+func manageAliases(ctx context.Context, client *containerd.Client, namedRef reference.Named, img containerd.Image) error {
 	// re-tag pulled image
 	imageDigest := img.Target().Digest.String()
 
 	refs := []string{imageDigest}
 
-	if _, ok := namedRef.(docker.NamedTagged); ok {
+	if _, ok := namedRef.(reference.NamedTagged); ok {
 		refs = append(refs, namedRef.String())
 	}
 
-	if _, ok := namedRef.(docker.Canonical); ok {
+	if _, ok := namedRef.(reference.Canonical); ok {
 		refs = append(refs, namedRef.String())
 	} else {
 		refs = append(refs, namedRef.Name()+"@"+imageDigest)

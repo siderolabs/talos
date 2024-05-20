@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/containerd/containerd/images"
+	"github.com/containerd/containerd/v2/core/images"
 	"github.com/opencontainers/go-digest"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/siderolabs/gen/maps"

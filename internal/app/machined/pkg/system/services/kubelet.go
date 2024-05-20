@@ -11,9 +11,9 @@ import (
 	"os"
 	"time"
 
-	containerdapi "github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/oci"
+	containerdapi "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
+	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	specs "github.com/opencontainers/runtime-spec/specs-go"

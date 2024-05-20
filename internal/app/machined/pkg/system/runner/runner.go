@@ -10,8 +10,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/oci"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"

@@ -4,7 +4,7 @@
 
 package services
 
-import "github.com/containerd/containerd/oci"
+import "github.com/containerd/containerd/v2/pkg/oci"
 
 // GetOCIOptions gets all OCI options from an Extension.
 func (svc *Extension) GetOCIOptions() ([]oci.SpecOpts, error) {

@@ -7,10 +7,10 @@ package runtime
 import (
 	"context"
 
-	containerdapi "github.com/containerd/containerd"
-	"github.com/containerd/containerd/errdefs"
-	"github.com/containerd/containerd/namespaces"
-	"github.com/containerd/containerd/platforms"
+	containerdapi "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
+	"github.com/containerd/errdefs"
+	"github.com/containerd/platforms"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"

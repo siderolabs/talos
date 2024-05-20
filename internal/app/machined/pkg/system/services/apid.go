@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/pkg/cap"
+	"github.com/containerd/containerd/v2/pkg/cap"
+	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"

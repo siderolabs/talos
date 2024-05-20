@@ -14,7 +14,7 @@ import (
 	"github.com/containerd/cgroups/v3"
 	"github.com/containerd/cgroups/v3/cgroup1"
 	"github.com/containerd/cgroups/v3/cgroup2"
-	"github.com/containerd/containerd/sys"
+	"github.com/containerd/containerd/v2/pkg/sys"
 	"github.com/siderolabs/gen/xslices"
 	"golang.org/x/sys/unix"
 	"kernel.org/pub/linux/libs/security/libcap/cap"

@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/defaults"
+	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/defaults"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"

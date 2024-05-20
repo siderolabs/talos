@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/containerd/containerd"
+	containerd "github.com/containerd/containerd/v2/client"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
