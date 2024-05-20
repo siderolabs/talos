@@ -37,7 +37,7 @@ type DNSResolveCacheController struct {
 	mx          sync.Mutex
 	handler     *dns.Handler
 	nodeHandler *dns.NodeHandler
-	cache       *dns.Cache
+	rootHandler dnssrv.Handler
 	runners     map[runnerConfig]pair.Pair[func(), <-chan struct{}]
 	reconcile   chan struct{}
 	originalCtx context.Context //nolint:containedctx
@@ -130,7 +130,7 @@ func (ctrl *DNSResolveCacheController) Run(ctx context.Context, r controller.Run
 				runnerCfg := runnerConfig{net: netwk, addr: addr}
 
 				if _, ok := ctrl.runners[runnerCfg]; !ok {
-					runner, rErr := newDNSRunner(runnerCfg, ctrl.cache, ctrl.Logger, cfg.TypedSpec().ServiceHostDNSAddress.IsValid())
+					runner, rErr := newDNSRunner(runnerCfg, ctrl.rootHandler, ctrl.Logger, cfg.TypedSpec().ServiceHostDNSAddress.IsValid())
 					if rErr != nil {
 						return fmt.Errorf("error creating dns runner: %w", rErr)
 					}
@@ -200,7 +200,7 @@ func (ctrl *DNSResolveCacheController) init(ctx context.Context) {
 	ctrl.originalCtx = ctx
 	ctrl.handler = dns.NewHandler(ctrl.Logger)
 	ctrl.nodeHandler = dns.NewNodeHandler(ctrl.handler, &stateMapper{state: ctrl.State}, ctrl.Logger)
-	ctrl.cache = dns.NewCache(ctrl.nodeHandler, ctrl.Logger)
+	ctrl.rootHandler = dns.NewCache(ctrl.nodeHandler, ctrl.Logger)
 	ctrl.runners = map[runnerConfig]pair.Pair[func(), <-chan struct{}]{}
 	ctrl.reconcile = make(chan struct{}, 1)
 
@@ -256,7 +256,7 @@ type runnerConfig struct {
 	addr netip.AddrPort
 }
 
-func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger, forwardEnabled bool) (*dns.Server, error) {
+func newDNSRunner(cfg runnerConfig, rootHandler dnssrv.Handler, logger *zap.Logger, forwardEnabled bool) (*dns.Server, error) {
 	if cfg.addr.Addr().Is6() {
 		cfg.net += "6"
 	}
@@ -279,7 +279,7 @@ func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger, forwar
 
 		serverOpts = dns.ServerOptions{
 			PacketConn: packetConn,
-			Handler:    cache,
+			Handler:    rootHandler,
 			Logger:     logger,
 		}
 
@@ -291,7 +291,7 @@ func newDNSRunner(cfg runnerConfig, cache *dns.Cache, logger *zap.Logger, forwar
 
 		serverOpts = dns.ServerOptions{
 			Listener:      listener,
-			Handler:       cache,
+			Handler:       rootHandler,
 			ReadTimeout:   3 * time.Second,
 			WriteTimeout:  5 * time.Second,
 			IdleTimeout:   func() time.Duration { return 10 * time.Second },
