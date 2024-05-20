@@ -45,7 +45,7 @@ func NewCache(next plugin.Handler, l *zap.Logger) *Cache {
 
 // ServeDNS implements [dns.Handler].
 func (c *Cache) ServeDNS(wr dns.ResponseWriter, msg *dns.Msg) {
-	_, err := c.cache.ServeDNS(context.Background(), wr, msg)
+	_, err := c.cache.ServeDNS(context.Background(), request.NewScrubWriter(msg, wr), msg)
 	if err != nil {
 		// we should probably call newProxy.Healthcheck() if there are too many errors
 		c.logger.Warn("error serving dns request", zap.Error(err))
@@ -102,9 +102,21 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 	)
 
 	for _, ups := range upstreams {
-		resp, err = ups.Connect(ctx, req, proxy.Options{})
-		if errors.Is(err, proxy.ErrCachedClosed) { // Remote side closed conn, can only happen with TCP.
-			continue
+		opts := proxy.Options{}
+
+		for {
+			resp, err = ups.Connect(ctx, req, opts)
+
+			switch {
+			case errors.Is(err, proxy.ErrCachedClosed): // Remote side closed conn, can only happen with TCP.
+				continue
+			case resp != nil && resp.Truncated && !opts.ForceTCP: // Retry with TCP if truncated
+				opts.ForceTCP = true
+
+				continue
+			}
+
+			break
 		}
 
 		if err == nil {
@@ -274,6 +286,7 @@ func NewServer(opts ServerOptions) *Server {
 			Listener:      opts.Listener,
 			PacketConn:    opts.PacketConn,
 			Handler:       opts.Handler,
+			UDPSize:       dns.DefaultMsgSize, // 4096 since default is [dns.MinMsgSize] = 512 bytes, which is too small.
 			ReadTimeout:   opts.ReadTimeout,
 			WriteTimeout:  opts.WriteTimeout,
 			IdleTimeout:   opts.IdleTimeout,

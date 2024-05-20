@@ -71,6 +71,7 @@ data:
         loop
         reload
         loadbalance
+        bufsize 4096
     }
 ---
 apiVersion: apps/v1
