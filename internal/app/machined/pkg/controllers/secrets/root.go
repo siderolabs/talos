@@ -165,11 +165,11 @@ func NewRootOSController() *RootOSController {
 					osSecrets.AcceptedCAs = append(osSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{
 						Crt: osSecrets.IssuingCA.Crt,
 					})
-				}
 
-				if len(osSecrets.IssuingCA.Key) == 0 {
-					// drop incomplete issuing CA, as the machine config for workers contains just the cert
-					osSecrets.IssuingCA = nil
+					if len(osSecrets.IssuingCA.Key) == 0 {
+						// drop incomplete issuing CA, as the machine config for workers contains just the cert
+						osSecrets.IssuingCA = nil
+					}
 				}
 
 				osSecrets.CertSANIPs = nil
