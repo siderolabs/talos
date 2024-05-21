@@ -22,6 +22,7 @@ import (
 
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/cache"
+	"github.com/coredns/coredns/plugin/pkg/dnsutil"
 	"github.com/coredns/coredns/plugin/pkg/proxy"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
@@ -37,7 +38,11 @@ type Cache struct {
 
 // NewCache creates a new Cache.
 func NewCache(next plugin.Handler, l *zap.Logger) *Cache {
-	c := cache.NewCache("zones", "view")
+	c := cache.NewCache(
+		"zones",
+		"view",
+		cache.WithNegativeTTL(10*time.Second, dnsutil.MinimalDefaultTTL),
+	)
 	c.Next = next
 
 	return &Cache{cache: c, logger: l}
