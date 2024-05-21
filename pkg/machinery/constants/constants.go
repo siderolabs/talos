@@ -485,6 +485,9 @@ const (
 	// SystemContainerdAddress is the path to the system containerd socket.
 	SystemContainerdAddress = SystemRunPath + "/containerd/containerd.sock"
 
+	// K8sContainerdNamespace is the Containerd namespace for CRI pods.
+	K8sContainerdNamespace = "k8s.io"
+
 	// CRIContainerdAddress is the path to the CRI containerd socket address.
 	CRIContainerdAddress = "/run/containerd/containerd.sock"
 

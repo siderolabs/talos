@@ -23,7 +23,6 @@ import (
 	"syscall"
 	"time"
 
-	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	cosiv1alpha1 "github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -1257,7 +1256,7 @@ func k8slogs(ctx context.Context, req *machine.LogsRequest) (chunker.Chunker, io
 func getContainerInspector(ctx context.Context, namespace string, driver common.ContainerDriver) (containers.Inspector, error) {
 	switch driver {
 	case common.ContainerDriver_CRI:
-		if namespace != criconstants.K8sContainerdNamespace {
+		if namespace != constants.K8sContainerdNamespace {
 			return nil, errors.New("CRI inspector is supported only for K8s namespace")
 		}
 

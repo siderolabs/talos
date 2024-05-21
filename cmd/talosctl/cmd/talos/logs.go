@@ -12,7 +12,6 @@ import (
 	"os"
 	"sync"
 
-	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -55,7 +54,7 @@ var logsCmd = &cobra.Command{
 			)
 
 			if kubernetesFlag {
-				namespace = criconstants.K8sContainerdNamespace
+				namespace = constants.K8sContainerdNamespace
 				driver = common.ContainerDriver_CRI
 			} else {
 				namespace = constants.SystemContainerdNamespace

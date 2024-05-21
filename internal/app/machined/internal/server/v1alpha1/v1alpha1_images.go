@@ -10,7 +10,6 @@ import (
 	containerdapi "github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
-	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/containerd/containerd/platforms"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,7 +26,7 @@ func containerdNamespaceHelper(ctx context.Context, ns common.ContainerdNamespac
 
 	switch ns {
 	case common.ContainerdNamespace_NS_CRI:
-		namespaceName = criconstants.K8sContainerdNamespace
+		namespaceName = constants.K8sContainerdNamespace
 	case common.ContainerdNamespace_NS_SYSTEM:
 		namespaceName = constants.SystemContainerdNamespace
 	case common.ContainerdNamespace_NS_UNKNOWN:

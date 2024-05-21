@@ -12,7 +12,6 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -39,7 +38,7 @@ var containersCmd = &cobra.Command{
 			)
 
 			if kubernetesFlag {
-				namespace = criconstants.K8sContainerdNamespace
+				namespace = constants.K8sContainerdNamespace
 				driver = common.ContainerDriver_CRI
 			} else {
 				namespace = constants.SystemContainerdNamespace

@@ -13,13 +13,13 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var netstatCmdFlags struct {
@@ -207,7 +207,7 @@ func netstatFlagsToRequest() *machine.NetstatRequest {
 }
 
 func (n *netstat) getPodNetNsFromNode(ctx context.Context) (err error) {
-	resp, err := n.client.Containers(ctx, criconstants.K8sContainerdNamespace, common.ContainerDriver_CRI)
+	resp, err := n.client.Containers(ctx, constants.K8sContainerdNamespace, common.ContainerDriver_CRI)
 	if err != nil {
 		cli.Warning("error getting containers: %v", err)
 

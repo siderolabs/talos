@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strings"
 
-	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -188,7 +187,7 @@ func getContainersFromNode(kubernetes bool) []string {
 			)
 
 			if kubernetes {
-				namespace = criconstants.K8sContainerdNamespace
+				namespace = constants.K8sContainerdNamespace
 				driver = common.ContainerDriver_CRI
 			} else {
 				namespace = constants.SystemContainerdNamespace

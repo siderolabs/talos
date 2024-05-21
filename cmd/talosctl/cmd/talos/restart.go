@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	criconstants "github.com/containerd/containerd/pkg/cri/constants"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -37,7 +36,7 @@ var restartCmd = &cobra.Command{
 			)
 
 			if kubernetesFlag {
-				namespace = criconstants.K8sContainerdNamespace
+				namespace = constants.K8sContainerdNamespace
 				driver = common.ContainerDriver_CRI
 			} else {
 				namespace = constants.SystemContainerdNamespace
