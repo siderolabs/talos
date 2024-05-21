@@ -276,6 +276,105 @@ As the inline manifest is processed from top to bottom make sure to manually put
 - As a safety messure Talos only creates missing resources from inline manifests, it never deletes or updates anything.
 - If you need to update a manifest make sure to first edit all control plane machine configurations and then run `talosctl upgrade-k8s` as it will take care of updating inline manifests.
 
+### Method 5: Using a job
+
+We can utilize a job pattern run arbitrary logic during bootstrap time.
+We can leverage this to our advantage to install Cilium by using an inline manifest as shown in the example below:
+
+``` yaml
+ inlineManifests:
+    - name: cilium-install
+      contents: |
+        ---
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: cilium-install
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: cluster-admin
+        subjects:
+        - kind: ServiceAccount
+          name: cilium-install
+          namespace: kube-system
+        ---
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: cilium-install
+          namespace: kube-system
+        ---
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: cilium-install
+          namespace: kube-system
+        spec:
+          backoffLimit: 10
+          template:
+            metadata:
+              labels:
+                app: cilium-install
+            spec:
+              restartPolicy: OnFailure
+              tolerations:
+                - operator: Exists
+                - effect: NoSchedule
+                  operator: Exists
+                - effect: NoExecute
+                  operator: Exists
+                - effect: PreferNoSchedule
+                  operator: Exists
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+                  effect: NoSchedule
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+                  effect: NoExecute
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+                  effect: PreferNoSchedule
+              affinity:
+                nodeAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                      - matchExpressions:
+                          - key: node-role.kubernetes.io/control-plane
+                            operator: Exists
+              serviceAccount: cilium-install
+              serviceAccountName: cilium-install
+              hostNetwork: true
+              containers:
+              - name: cilium-install
+                image: quay.io/cilium/cilium-cli-ci:latest
+                env:
+                - name: KUBERNETES_SERVICE_HOST
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: status.podIP
+                - name: KUBERNETES_SERVICE_PORT
+                  value: "6443"
+                command:
+                  - cilium
+                  - install
+                  - --helm-set=ipam.mode=kubernetes
+                  - --set
+                  - kubeProxyReplacement=true
+                  - --helm-set=securityContext.capabilities.ciliumAgent={CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}
+                  - --helm-set=securityContext.capabilities.cleanCiliumState={NET_ADMIN,SYS_ADMIN,SYS_RESOURCE} - --helm-set=cgroup.autoMount.enabled=false
+                  - --helm-set=cgroup.hostRoot=/sys/fs/cgroup
+                  - --helm-set=k8sServiceHost=localhost
+                  - --helm-set=k8sServicePort=7445
+```
+
+Because there is no CNI present at installation time the kubernetes.default.svc cannot be used to install Cilium, to overcome this limitation we'll utilize the host network connection to connect back to itself with 'hostNetwork: true' in tandem with the environment variables KUBERNETES_SERVICE_PORT and KUBERNETES_SERVICE_HOST.
+
+The job runs a container to install cilium to your liking, after the job is finished Cilium can be managed/operated like usual.
+
+The above can be combined exchanged with for example Method 3 to host arbitrary configurations externally but render/run them at bootstrap time.
+
 ## Known issues
 
 - There are some gotchas when using Talos and Cilium on the Google cloud platform when using internal load balancers.
