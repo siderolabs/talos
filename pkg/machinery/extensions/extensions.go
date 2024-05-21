@@ -5,6 +5,8 @@
 // Package extensions contains Talos extensions specific API.
 package extensions
 
+import "path/filepath"
+
 // AllowedPaths lists paths allowed in the extension images.
 var AllowedPaths = []string{
 	"/etc/cri/conf.d",
@@ -17,4 +19,38 @@ var AllowedPaths = []string{
 	"/usr/share/glvnd",
 	"/usr/share/egl",
 	"/etc/vulkan",
+}
+
+// Extension represents unpacked extension in the filesystem.
+type Extension struct {
+	Manifest Manifest
+
+	directory  string
+	rootfsPath string
+}
+
+// RootfsPath returns the path to the rootfs directory.
+func (ext *Extension) RootfsPath() string {
+	return ext.rootfsPath
+}
+
+// Directory returns the directory name of the extension.
+func (ext *Extension) Directory() string {
+	return ext.directory
+}
+
+// New creates a new extension from the rootfs path, directory name and manifest.
+func New(rootfsPath, directory string, manifest Manifest) *Extension {
+	extension := &Extension{
+		Manifest: manifest,
+
+		rootfsPath: rootfsPath,
+		directory:  directory,
+	}
+
+	if extension.directory == "" {
+		extension.directory = filepath.Base(rootfsPath)
+	}
+
+	return extension
 }

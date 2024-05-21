@@ -45,14 +45,14 @@ func (ext *Extension) Compress(squashPath, initramfsPath string, quirks quirks.Q
 	}
 
 	for _, path := range initramfsPaths {
-		if _, err := os.Stat(filepath.Join(ext.rootfsPath, path)); err == nil {
-			if err = moveFiles(filepath.Join(ext.rootfsPath, path), filepath.Join(initramfsPath, path)); err != nil {
+		if _, err := os.Stat(filepath.Join(ext.RootfsPath(), path)); err == nil {
+			if err = moveFiles(filepath.Join(ext.RootfsPath(), path), filepath.Join(initramfsPath, path)); err != nil {
 				return "", err
 			}
 		}
 	}
 
-	squashPath = filepath.Join(squashPath, fmt.Sprintf("%s.sqsh", ext.directory))
+	squashPath = filepath.Join(squashPath, fmt.Sprintf("%s.sqsh", ext.Directory()))
 
 	var compressArgs []string
 
@@ -62,7 +62,7 @@ func (ext *Extension) Compress(squashPath, initramfsPath string, quirks quirks.Q
 		compressArgs = []string{"-comp", "xz", "-Xdict-size", "100%"}
 	}
 
-	cmd := exec.Command("mksquashfs", append([]string{ext.rootfsPath, squashPath, "-all-root", "-noappend", "-no-progress"}, compressArgs...)...)
+	cmd := exec.Command("mksquashfs", append([]string{ext.RootfsPath(), squashPath, "-all-root", "-noappend", "-no-progress"}, compressArgs...)...)
 	cmd.Stderr = os.Stderr
 
 	return squashPath, cmd.Run()
@@ -89,7 +89,7 @@ func appendBlob(dst io.Writer, srcPath string) error {
 
 func (ext *Extension) handleUcode(initramfsPath string) error {
 	for _, ucode := range earlyCPUUcode {
-		matches, err := filepath.Glob(filepath.Join(ext.rootfsPath, ucode.glob))
+		matches, err := filepath.Glob(filepath.Join(ext.RootfsPath(), ucode.glob))
 		if err != nil {
 			return err
 		}

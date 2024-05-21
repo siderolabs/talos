@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+
+	"github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
 // List prepared unpacked extensions under rootPath.
@@ -35,12 +37,12 @@ func List(rootPath string) ([]*Extension, error) {
 			return nil, fmt.Errorf("unexpected non-directory entry: %q", item.Name())
 		}
 
-		ext, err := Load(filepath.Join(rootPath, item.Name()))
+		ext, err := extensions.Load(filepath.Join(rootPath, item.Name()))
 		if err != nil {
 			return nil, fmt.Errorf("error loading extension %s: %w", item.Name(), err)
 		}
 
-		result = append(result, ext)
+		result = append(result, &Extension{ext})
 	}
 
 	return result, nil

@@ -11,8 +11,6 @@ import (
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
-
-	"github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
 // Load extension from the filesystem.
@@ -41,7 +39,7 @@ func Load(path string) (*Extension, error) {
 		}
 	}
 
-	var zeroManifest extensions.Manifest
+	var zeroManifest Manifest
 
 	if extension.Manifest == zeroManifest {
 		return nil, errors.New("extension manifest is missing")

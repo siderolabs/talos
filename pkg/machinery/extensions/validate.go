@@ -13,7 +13,6 @@ import (
 
 	"github.com/blang/semver/v4"
 
-	"github.com/siderolabs/talos/pkg/machinery/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
@@ -95,7 +94,7 @@ func (ext *Extension) validateContents() error {
 		if !d.IsDir() {
 			allowed := false
 
-			for _, allowedPath := range extensions.AllowedPaths {
+			for _, allowedPath := range AllowedPaths {
 				if strings.HasPrefix(itemPath, allowedPath) {
 					_, err = filepath.Rel(allowedPath, itemPath)
 					if err == nil {

@@ -35,7 +35,7 @@ func (ext *Extension) ProvidesKernelModules() bool {
 
 // KernelModuleDirectory returns the path to the kernel modules directory.
 func (ext *Extension) KernelModuleDirectory() string {
-	return filepath.Join(ext.rootfsPath, constants.KernelModulesPath)
+	return filepath.Join(ext.RootfsPath(), constants.KernelModulesPath)
 }
 
 func autoDecompress(r io.Reader) (io.Reader, error) {
@@ -142,18 +142,20 @@ func GenerateKernelModuleDependencyTreeExtension(extensionPathsWithKernelModules
 		return nil, err
 	}
 
-	kernelModulesDepTreeExtension := newExtension(kernelModulesDependencyTreeStagingDir, "modules.dep")
-	kernelModulesDepTreeExtension.Manifest = extensions.Manifest{
-		Version: kernelVersionPath,
-		Metadata: extensions.Metadata{
-			Name:        "modules.dep",
-			Version:     kernelVersionPath,
-			Author:      "Talos Machinery",
-			Description: "Combined modules.dep for all extensions",
+	kernelModulesDepTreeExtension := extensions.New(
+		kernelModulesDependencyTreeStagingDir, "modules.dep",
+		extensions.Manifest{
+			Version: kernelVersionPath,
+			Metadata: extensions.Metadata{
+				Name:        "modules.dep",
+				Version:     kernelVersionPath,
+				Author:      "Talos Machinery",
+				Description: "Combined modules.dep for all extensions",
+			},
 		},
-	}
+	)
 
-	return kernelModulesDepTreeExtension, nil
+	return &Extension{kernelModulesDepTreeExtension}, nil
 }
 
 func logErr(msg string, f func() error) {

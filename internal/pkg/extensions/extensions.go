@@ -6,28 +6,10 @@
 package extensions
 
 import (
-	"path/filepath"
-
 	"github.com/siderolabs/talos/pkg/machinery/extensions"
 )
 
-// Extension represents unpacked extension in the filesystem.
+// Extension wraps the extensions.Extension type with additional methods.
 type Extension struct {
-	Manifest extensions.Manifest
-
-	directory  string
-	rootfsPath string
-}
-
-func newExtension(rootfsPath, directory string) *Extension {
-	extension := &Extension{
-		rootfsPath: rootfsPath,
-		directory:  directory,
-	}
-
-	if extension.directory == "" {
-		extension.directory = filepath.Base(rootfsPath)
-	}
-
-	return extension
+	*extensions.Extension
 }
