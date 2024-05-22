@@ -26,6 +26,7 @@ func TestRegisterResource(t *testing.T) {
 
 	for _, resource := range []meta.ResourceWithRD{
 		&runtime.DevicesStatus{},
+		&runtime.Diagnostic{},
 		&runtime.EventSinkConfig{},
 		&runtime.ExtensionStatus{},
 		&runtime.KernelModuleSpec{},

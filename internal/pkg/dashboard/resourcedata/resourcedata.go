@@ -16,8 +16,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/channel"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/util"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -174,6 +176,13 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 
 	if err := source.COSI.WatchKind(ctx, network.NewNodeAddress(network.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
 		return err
+	}
+
+	if err := source.COSI.WatchKind(ctx, runtime.NewDiagnstic(runtime.NamespaceName, "").Metadata(), eventCh, state.WithBootstrapContents(true)); err != nil {
+		if client.StatusCode(err) != codes.PermissionDenied {
+			// ignore permission denied, means resource is not supported yet
+			return err
+		}
 	}
 
 	for {

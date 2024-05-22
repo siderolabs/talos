@@ -25,7 +25,12 @@ type SummaryGrid struct {
 	active     bool
 	node       string
 	logViewers map[string]*components.LogViewer
+
+	diagnostics        *components.Diagnostics
+	diagnosticsVisible bool
 }
+
+const summaryTopFixedRows = 8
 
 // NewSummaryGrid initializes SummaryGrid.
 func NewSummaryGrid(app *tview.Application) *SummaryGrid {
@@ -35,7 +40,7 @@ func NewSummaryGrid(app *tview.Application) *SummaryGrid {
 		logViewers: make(map[string]*components.LogViewer),
 	}
 
-	widget.SetRows(8, 0).SetColumns(-3, -2, -3)
+	widget.SetRows(summaryTopFixedRows, 0).SetColumns(-3, -2, -3)
 
 	talosInfo := components.NewTalosInfo()
 	widget.AddItem(talosInfo, 0, 0, 1, 1, 0, 0, false)
@@ -46,6 +51,8 @@ func NewSummaryGrid(app *tview.Application) *SummaryGrid {
 	networkInfo := components.NewNetworkInfo()
 	widget.AddItem(networkInfo, 0, 2, 1, 1, 0, 0, false)
 
+	widget.diagnostics = components.NewDiagnostics()
+
 	widget.apiDataListeners = []APIDataListener{
 		kubernetesInfo,
 	}
@@ -54,12 +61,14 @@ func NewSummaryGrid(app *tview.Application) *SummaryGrid {
 		talosInfo,
 		kubernetesInfo,
 		networkInfo,
+		widget.diagnostics,
 	}
 
 	widget.nodeSelectListeners = []NodeSelectListener{
 		talosInfo,
 		kubernetesInfo,
 		networkInfo,
+		widget.diagnostics,
 	}
 
 	return widget
@@ -74,6 +83,8 @@ func (widget *SummaryGrid) OnNodeSelect(node string) {
 	for _, nodeSelectListener := range widget.nodeSelectListeners {
 		nodeSelectListener.OnNodeSelect(node)
 	}
+
+	widget.updateDiagnostics()
 }
 
 // OnAPIDataChange implements the APIDataListener interface.
@@ -88,11 +99,30 @@ func (widget *SummaryGrid) OnResourceDataChange(nodeResource resourcedata.Data) 
 	for _, resourceListener := range widget.resourceListeners {
 		resourceListener.OnResourceDataChange(nodeResource)
 	}
+
+	widget.updateDiagnostics()
 }
 
 // OnLogDataChange implements the LogDataListener interface.
 func (widget *SummaryGrid) OnLogDataChange(node, logLine, logError string) {
 	widget.logViewer(node).WriteLog(logLine, logError)
+}
+
+func (widget *SummaryGrid) updateDiagnostics() {
+	height := widget.diagnostics.GetCurrentHeight()
+
+	switch {
+	case height == 0 && widget.diagnosticsVisible:
+		widget.RemoveItem(widget.diagnostics)
+		widget.SetRows(summaryTopFixedRows, 0)
+		widget.diagnosticsVisible = false
+	case height > 0 && !widget.diagnosticsVisible:
+		widget.SetRows(summaryTopFixedRows, 0, height)
+		widget.AddItem(widget.diagnostics, 2, 0, 1, 3, 0, 0, false)
+		widget.diagnosticsVisible = true
+	case height > 0:
+		widget.SetRows(summaryTopFixedRows, 0, height)
+	}
 }
 
 func (widget *SummaryGrid) updateLogViewer() {

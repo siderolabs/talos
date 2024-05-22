@@ -58,6 +58,13 @@ Please note that on running cluster you will have to kill CoreDNS pods for this 
 A list of PCI devices can now be obtained via `PCIDevices` resource, e.g. `talosctl get pcidevices`.
 """
 
+    [notes.diagnostics]
+        title = "Diagnostics"
+        description = """\
+Talos Linux now shows diagnostics information for common problems related to misconfiguration via `talosctl health` and Talos dashboard.
+"""
+
+
 [make_deps]
 
     [make_deps.tools]

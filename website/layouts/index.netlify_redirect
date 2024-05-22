@@ -10,3 +10,8 @@
 {{ printf "%s %s %d" (cond (hasPrefix . "/") . (path.Join $p.RelPermalink ".." .)) (path.Clean $p.RelPermalink) ($p.Params.HTTPCode | default 301) }}
 {{- end }}
 {{- end }}
+
+# Diagnostic redirects
+
+/diagnostic/kubelet-csr /docs/{{ .Site.Params.url_latest_version }}/introduction/troubleshooting/#talos-complains-about-certificate-errors-on-kubelet-api 302
+/diagnostic/address-overlap /docs/{{ .Site.Params.url_latest_version }}/introduction/troubleshooting/#conflict-on-kubernetes-and-host-subnets 302

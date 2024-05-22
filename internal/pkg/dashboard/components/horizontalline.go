@@ -12,19 +12,30 @@ import (
 // HorizontalLine is a widget that draws a horizontal line.
 type HorizontalLine struct {
 	tview.TextView
+
+	label []rune
 }
 
 // NewHorizontalLine initializes HorizontalLine.
-func NewHorizontalLine() *HorizontalLine {
+func NewHorizontalLine(label string) *HorizontalLine {
 	widget := &HorizontalLine{
 		TextView: *tview.NewTextView(),
+		label:    []rune(" " + label + " "),
 	}
+
+	const leftGap = 2
 
 	// set the background to be a horizontal line
 	widget.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		labelLength := len(widget.label)
+
 		for i := x; i < x+width; i++ {
 			for j := y; j < y+height; j++ {
-				screen.SetContent(i, j, tview.BoxDrawingsLightHorizontal, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+				if j == y && i >= leftGap && i-leftGap < labelLength {
+					screen.SetContent(i, j, widget.label[i-leftGap], nil, tcell.StyleDefault.Foreground(tcell.ColorYellow))
+				} else {
+					screen.SetContent(i, j, tview.BoxDrawingsLightHorizontal, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+				}
 			}
 		}
 

@@ -13,6 +13,12 @@ message DevicesStatusSpec {
   bool ready = 1;
 }
 
+// DiagnosticSpec is the spec for devices status.
+message DiagnosticSpec {
+  string message = 1;
+  repeated string details = 2;
+}
+
 // EventSinkConfigSpec describes configuration of Talos event log streaming.
 message EventSinkConfigSpec {
   string endpoint = 1;

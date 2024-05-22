@@ -136,6 +136,13 @@ func PreBootSequenceChecks() []ClusterCheck {
 			}, 5*time.Minute, 5*time.Second)
 		},
 
+		// check diagnostics
+		func(cluster ClusterInfo) conditions.Condition {
+			return conditions.PollingCondition("no diagnostics", func(ctx context.Context) error {
+				return NoDiagnostics(ctx, cluster)
+			}, time.Minute, 5*time.Second)
+		},
+
 		// wait for kubelet to be healthy on all
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("kubelet to be healthy", func(ctx context.Context) error {

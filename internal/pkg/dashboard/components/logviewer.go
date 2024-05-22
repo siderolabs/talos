@@ -48,7 +48,7 @@ func NewLogViewer() *LogViewer {
 
 	widget.SetRows(1, 0).SetColumns(0)
 
-	widget.AddItem(NewHorizontalLine(), 0, 0, 1, 1, 0, 0, false)
+	widget.AddItem(NewHorizontalLine("Logs"), 0, 0, 1, 1, 0, 0, false)
 	widget.AddItem(&widget.logs, 1, 0, 1, 1, 0, 0, true)
 
 	return widget

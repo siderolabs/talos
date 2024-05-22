@@ -177,6 +177,7 @@ func NewState() (*State, error) {
 		&perf.CPU{},
 		&perf.Memory{},
 		&runtime.DevicesStatus{},
+		&runtime.Diagnostic{},
 		&runtime.EventSinkConfig{},
 		&runtime.ExtensionServiceConfig{},
 		&runtime.ExtensionServiceConfigStatus{},

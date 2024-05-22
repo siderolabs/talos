@@ -263,6 +263,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.DevicesStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&runtimecontrollers.DiagnosticsController{},
+		&runtimecontrollers.DiagnosticsLoggerController{},
 		&runtimecontrollers.DropUpgradeFallbackController{
 			MetaProvider: ctrl.v1alpha1Runtime.State().Machine(),
 		},
