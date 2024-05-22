@@ -19,8 +19,8 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-// Requires gRPC-Go v1.32.0 or later.
-const _ = grpc.SupportPackageIsVersion7
+// Requires gRPC-Go v1.62.0 or later.
+const _ = grpc.SupportPackageIsVersion8
 
 const (
 	MachineService_ApplyConfiguration_FullMethodName          = "/machine.MachineService/ApplyConfiguration"
@@ -172,8 +172,9 @@ func NewMachineServiceClient(cc grpc.ClientConnInterface) MachineServiceClient {
 }
 
 func (c *machineServiceClient) ApplyConfiguration(ctx context.Context, in *ApplyConfigurationRequest, opts ...grpc.CallOption) (*ApplyConfigurationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ApplyConfigurationResponse)
-	err := c.cc.Invoke(ctx, MachineService_ApplyConfiguration_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_ApplyConfiguration_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -181,8 +182,9 @@ func (c *machineServiceClient) ApplyConfiguration(ctx context.Context, in *Apply
 }
 
 func (c *machineServiceClient) Bootstrap(ctx context.Context, in *BootstrapRequest, opts ...grpc.CallOption) (*BootstrapResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BootstrapResponse)
-	err := c.cc.Invoke(ctx, MachineService_Bootstrap_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Bootstrap_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -190,8 +192,9 @@ func (c *machineServiceClient) Bootstrap(ctx context.Context, in *BootstrapReque
 }
 
 func (c *machineServiceClient) Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ContainersResponse)
-	err := c.cc.Invoke(ctx, MachineService_Containers_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Containers_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -199,11 +202,12 @@ func (c *machineServiceClient) Containers(ctx context.Context, in *ContainersReq
 }
 
 func (c *machineServiceClient) Copy(ctx context.Context, in *CopyRequest, opts ...grpc.CallOption) (MachineService_CopyClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[0], MachineService_Copy_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[0], MachineService_Copy_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceCopyClient{stream}
+	x := &machineServiceCopyClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -231,8 +235,9 @@ func (x *machineServiceCopyClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) CPUInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*CPUInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CPUInfoResponse)
-	err := c.cc.Invoke(ctx, MachineService_CPUInfo_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_CPUInfo_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -240,8 +245,9 @@ func (c *machineServiceClient) CPUInfo(ctx context.Context, in *emptypb.Empty, o
 }
 
 func (c *machineServiceClient) DiskStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*DiskStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DiskStatsResponse)
-	err := c.cc.Invoke(ctx, MachineService_DiskStats_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_DiskStats_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -249,11 +255,12 @@ func (c *machineServiceClient) DiskStats(ctx context.Context, in *emptypb.Empty,
 }
 
 func (c *machineServiceClient) Dmesg(ctx context.Context, in *DmesgRequest, opts ...grpc.CallOption) (MachineService_DmesgClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[1], MachineService_Dmesg_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[1], MachineService_Dmesg_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceDmesgClient{stream}
+	x := &machineServiceDmesgClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -281,11 +288,12 @@ func (x *machineServiceDmesgClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) Events(ctx context.Context, in *EventsRequest, opts ...grpc.CallOption) (MachineService_EventsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[2], MachineService_Events_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[2], MachineService_Events_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceEventsClient{stream}
+	x := &machineServiceEventsClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -313,8 +321,9 @@ func (x *machineServiceEventsClient) Recv() (*Event, error) {
 }
 
 func (c *machineServiceClient) EtcdMemberList(ctx context.Context, in *EtcdMemberListRequest, opts ...grpc.CallOption) (*EtcdMemberListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdMemberListResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdMemberList_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_EtcdMemberList_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -322,8 +331,9 @@ func (c *machineServiceClient) EtcdMemberList(ctx context.Context, in *EtcdMembe
 }
 
 func (c *machineServiceClient) EtcdRemoveMemberByID(ctx context.Context, in *EtcdRemoveMemberByIDRequest, opts ...grpc.CallOption) (*EtcdRemoveMemberByIDResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdRemoveMemberByIDResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdRemoveMemberByID_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_EtcdRemoveMemberByID_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -331,8 +341,9 @@ func (c *machineServiceClient) EtcdRemoveMemberByID(ctx context.Context, in *Etc
 }
 
 func (c *machineServiceClient) EtcdLeaveCluster(ctx context.Context, in *EtcdLeaveClusterRequest, opts ...grpc.CallOption) (*EtcdLeaveClusterResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdLeaveClusterResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdLeaveCluster_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_EtcdLeaveCluster_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -340,8 +351,9 @@ func (c *machineServiceClient) EtcdLeaveCluster(ctx context.Context, in *EtcdLea
 }
 
 func (c *machineServiceClient) EtcdForfeitLeadership(ctx context.Context, in *EtcdForfeitLeadershipRequest, opts ...grpc.CallOption) (*EtcdForfeitLeadershipResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdForfeitLeadershipResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdForfeitLeadership_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_EtcdForfeitLeadership_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -349,11 +361,12 @@ func (c *machineServiceClient) EtcdForfeitLeadership(ctx context.Context, in *Et
 }
 
 func (c *machineServiceClient) EtcdRecover(ctx context.Context, opts ...grpc.CallOption) (MachineService_EtcdRecoverClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[3], MachineService_EtcdRecover_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[3], MachineService_EtcdRecover_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceEtcdRecoverClient{stream}
+	x := &machineServiceEtcdRecoverClient{ClientStream: stream}
 	return x, nil
 }
 
@@ -383,11 +396,12 @@ func (x *machineServiceEtcdRecoverClient) CloseAndRecv() (*EtcdRecoverResponse, 
 }
 
 func (c *machineServiceClient) EtcdSnapshot(ctx context.Context, in *EtcdSnapshotRequest, opts ...grpc.CallOption) (MachineService_EtcdSnapshotClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[4], MachineService_EtcdSnapshot_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[4], MachineService_EtcdSnapshot_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceEtcdSnapshotClient{stream}
+	x := &machineServiceEtcdSnapshotClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -415,8 +429,9 @@ func (x *machineServiceEtcdSnapshotClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) EtcdAlarmList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdAlarmListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdAlarmListResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdAlarmList_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_EtcdAlarmList_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -424,8 +439,9 @@ func (c *machineServiceClient) EtcdAlarmList(ctx context.Context, in *emptypb.Em
 }
 
 func (c *machineServiceClient) EtcdAlarmDisarm(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdAlarmDisarmResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdAlarmDisarmResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdAlarmDisarm_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_EtcdAlarmDisarm_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -433,8 +449,9 @@ func (c *machineServiceClient) EtcdAlarmDisarm(ctx context.Context, in *emptypb.
 }
 
 func (c *machineServiceClient) EtcdDefragment(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdDefragmentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdDefragmentResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdDefragment_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_EtcdDefragment_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -442,8 +459,9 @@ func (c *machineServiceClient) EtcdDefragment(ctx context.Context, in *emptypb.E
 }
 
 func (c *machineServiceClient) EtcdStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*EtcdStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EtcdStatusResponse)
-	err := c.cc.Invoke(ctx, MachineService_EtcdStatus_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_EtcdStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -451,8 +469,9 @@ func (c *machineServiceClient) EtcdStatus(ctx context.Context, in *emptypb.Empty
 }
 
 func (c *machineServiceClient) GenerateConfiguration(ctx context.Context, in *GenerateConfigurationRequest, opts ...grpc.CallOption) (*GenerateConfigurationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenerateConfigurationResponse)
-	err := c.cc.Invoke(ctx, MachineService_GenerateConfiguration_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_GenerateConfiguration_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -460,8 +479,9 @@ func (c *machineServiceClient) GenerateConfiguration(ctx context.Context, in *Ge
 }
 
 func (c *machineServiceClient) Hostname(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*HostnameResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HostnameResponse)
-	err := c.cc.Invoke(ctx, MachineService_Hostname_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Hostname_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -469,11 +489,12 @@ func (c *machineServiceClient) Hostname(ctx context.Context, in *emptypb.Empty, 
 }
 
 func (c *machineServiceClient) Kubeconfig(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (MachineService_KubeconfigClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[5], MachineService_Kubeconfig_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[5], MachineService_Kubeconfig_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceKubeconfigClient{stream}
+	x := &machineServiceKubeconfigClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -501,11 +522,12 @@ func (x *machineServiceKubeconfigClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (MachineService_ListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[6], MachineService_List_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[6], MachineService_List_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceListClient{stream}
+	x := &machineServiceListClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -533,11 +555,12 @@ func (x *machineServiceListClient) Recv() (*FileInfo, error) {
 }
 
 func (c *machineServiceClient) DiskUsage(ctx context.Context, in *DiskUsageRequest, opts ...grpc.CallOption) (MachineService_DiskUsageClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[7], MachineService_DiskUsage_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[7], MachineService_DiskUsage_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceDiskUsageClient{stream}
+	x := &machineServiceDiskUsageClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -565,8 +588,9 @@ func (x *machineServiceDiskUsageClient) Recv() (*DiskUsageInfo, error) {
 }
 
 func (c *machineServiceClient) LoadAvg(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LoadAvgResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoadAvgResponse)
-	err := c.cc.Invoke(ctx, MachineService_LoadAvg_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_LoadAvg_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -574,11 +598,12 @@ func (c *machineServiceClient) LoadAvg(ctx context.Context, in *emptypb.Empty, o
 }
 
 func (c *machineServiceClient) Logs(ctx context.Context, in *LogsRequest, opts ...grpc.CallOption) (MachineService_LogsClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[8], MachineService_Logs_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[8], MachineService_Logs_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceLogsClient{stream}
+	x := &machineServiceLogsClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -606,8 +631,9 @@ func (x *machineServiceLogsClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) LogsContainers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LogsContainersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LogsContainersResponse)
-	err := c.cc.Invoke(ctx, MachineService_LogsContainers_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_LogsContainers_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -615,8 +641,9 @@ func (c *machineServiceClient) LogsContainers(ctx context.Context, in *emptypb.E
 }
 
 func (c *machineServiceClient) Memory(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MemoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MemoryResponse)
-	err := c.cc.Invoke(ctx, MachineService_Memory_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Memory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -624,8 +651,9 @@ func (c *machineServiceClient) Memory(ctx context.Context, in *emptypb.Empty, op
 }
 
 func (c *machineServiceClient) Mounts(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*MountsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MountsResponse)
-	err := c.cc.Invoke(ctx, MachineService_Mounts_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Mounts_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -633,8 +661,9 @@ func (c *machineServiceClient) Mounts(ctx context.Context, in *emptypb.Empty, op
 }
 
 func (c *machineServiceClient) NetworkDeviceStats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*NetworkDeviceStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NetworkDeviceStatsResponse)
-	err := c.cc.Invoke(ctx, MachineService_NetworkDeviceStats_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_NetworkDeviceStats_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -642,8 +671,9 @@ func (c *machineServiceClient) NetworkDeviceStats(ctx context.Context, in *empty
 }
 
 func (c *machineServiceClient) Processes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ProcessesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ProcessesResponse)
-	err := c.cc.Invoke(ctx, MachineService_Processes_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Processes_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -651,11 +681,12 @@ func (c *machineServiceClient) Processes(ctx context.Context, in *emptypb.Empty,
 }
 
 func (c *machineServiceClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (MachineService_ReadClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[9], MachineService_Read_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[9], MachineService_Read_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceReadClient{stream}
+	x := &machineServiceReadClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -683,8 +714,9 @@ func (x *machineServiceReadClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RebootResponse)
-	err := c.cc.Invoke(ctx, MachineService_Reboot_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Reboot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -692,8 +724,9 @@ func (c *machineServiceClient) Reboot(ctx context.Context, in *RebootRequest, op
 }
 
 func (c *machineServiceClient) Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*RestartResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RestartResponse)
-	err := c.cc.Invoke(ctx, MachineService_Restart_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Restart_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -701,8 +734,9 @@ func (c *machineServiceClient) Restart(ctx context.Context, in *RestartRequest, 
 }
 
 func (c *machineServiceClient) Rollback(ctx context.Context, in *RollbackRequest, opts ...grpc.CallOption) (*RollbackResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RollbackResponse)
-	err := c.cc.Invoke(ctx, MachineService_Rollback_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Rollback_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -710,8 +744,9 @@ func (c *machineServiceClient) Rollback(ctx context.Context, in *RollbackRequest
 }
 
 func (c *machineServiceClient) Reset(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ResetResponse)
-	err := c.cc.Invoke(ctx, MachineService_Reset_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Reset_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -719,8 +754,9 @@ func (c *machineServiceClient) Reset(ctx context.Context, in *ResetRequest, opts
 }
 
 func (c *machineServiceClient) ServiceList(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ServiceListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ServiceListResponse)
-	err := c.cc.Invoke(ctx, MachineService_ServiceList_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_ServiceList_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -728,8 +764,9 @@ func (c *machineServiceClient) ServiceList(ctx context.Context, in *emptypb.Empt
 }
 
 func (c *machineServiceClient) ServiceRestart(ctx context.Context, in *ServiceRestartRequest, opts ...grpc.CallOption) (*ServiceRestartResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ServiceRestartResponse)
-	err := c.cc.Invoke(ctx, MachineService_ServiceRestart_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_ServiceRestart_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -737,8 +774,9 @@ func (c *machineServiceClient) ServiceRestart(ctx context.Context, in *ServiceRe
 }
 
 func (c *machineServiceClient) ServiceStart(ctx context.Context, in *ServiceStartRequest, opts ...grpc.CallOption) (*ServiceStartResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ServiceStartResponse)
-	err := c.cc.Invoke(ctx, MachineService_ServiceStart_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_ServiceStart_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -746,8 +784,9 @@ func (c *machineServiceClient) ServiceStart(ctx context.Context, in *ServiceStar
 }
 
 func (c *machineServiceClient) ServiceStop(ctx context.Context, in *ServiceStopRequest, opts ...grpc.CallOption) (*ServiceStopResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ServiceStopResponse)
-	err := c.cc.Invoke(ctx, MachineService_ServiceStop_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_ServiceStop_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -755,8 +794,9 @@ func (c *machineServiceClient) ServiceStop(ctx context.Context, in *ServiceStopR
 }
 
 func (c *machineServiceClient) Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ShutdownResponse)
-	err := c.cc.Invoke(ctx, MachineService_Shutdown_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Shutdown_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -764,8 +804,9 @@ func (c *machineServiceClient) Shutdown(ctx context.Context, in *ShutdownRequest
 }
 
 func (c *machineServiceClient) Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StatsResponse)
-	err := c.cc.Invoke(ctx, MachineService_Stats_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Stats_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -773,8 +814,9 @@ func (c *machineServiceClient) Stats(ctx context.Context, in *StatsRequest, opts
 }
 
 func (c *machineServiceClient) SystemStat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SystemStatResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SystemStatResponse)
-	err := c.cc.Invoke(ctx, MachineService_SystemStat_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_SystemStat_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -782,8 +824,9 @@ func (c *machineServiceClient) SystemStat(ctx context.Context, in *emptypb.Empty
 }
 
 func (c *machineServiceClient) Upgrade(ctx context.Context, in *UpgradeRequest, opts ...grpc.CallOption) (*UpgradeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpgradeResponse)
-	err := c.cc.Invoke(ctx, MachineService_Upgrade_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Upgrade_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -791,8 +834,9 @@ func (c *machineServiceClient) Upgrade(ctx context.Context, in *UpgradeRequest, 
 }
 
 func (c *machineServiceClient) Version(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*VersionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(VersionResponse)
-	err := c.cc.Invoke(ctx, MachineService_Version_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Version_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -800,8 +844,9 @@ func (c *machineServiceClient) Version(ctx context.Context, in *emptypb.Empty, o
 }
 
 func (c *machineServiceClient) GenerateClientConfiguration(ctx context.Context, in *GenerateClientConfigurationRequest, opts ...grpc.CallOption) (*GenerateClientConfigurationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GenerateClientConfigurationResponse)
-	err := c.cc.Invoke(ctx, MachineService_GenerateClientConfiguration_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_GenerateClientConfiguration_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -809,11 +854,12 @@ func (c *machineServiceClient) GenerateClientConfiguration(ctx context.Context, 
 }
 
 func (c *machineServiceClient) PacketCapture(ctx context.Context, in *PacketCaptureRequest, opts ...grpc.CallOption) (MachineService_PacketCaptureClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[10], MachineService_PacketCapture_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[10], MachineService_PacketCapture_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServicePacketCaptureClient{stream}
+	x := &machineServicePacketCaptureClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -841,8 +887,9 @@ func (x *machineServicePacketCaptureClient) Recv() (*common.Data, error) {
 }
 
 func (c *machineServiceClient) Netstat(ctx context.Context, in *NetstatRequest, opts ...grpc.CallOption) (*NetstatResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(NetstatResponse)
-	err := c.cc.Invoke(ctx, MachineService_Netstat_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_Netstat_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -850,8 +897,9 @@ func (c *machineServiceClient) Netstat(ctx context.Context, in *NetstatRequest, 
 }
 
 func (c *machineServiceClient) MetaWrite(ctx context.Context, in *MetaWriteRequest, opts ...grpc.CallOption) (*MetaWriteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MetaWriteResponse)
-	err := c.cc.Invoke(ctx, MachineService_MetaWrite_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_MetaWrite_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -859,8 +907,9 @@ func (c *machineServiceClient) MetaWrite(ctx context.Context, in *MetaWriteReque
 }
 
 func (c *machineServiceClient) MetaDelete(ctx context.Context, in *MetaDeleteRequest, opts ...grpc.CallOption) (*MetaDeleteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MetaDeleteResponse)
-	err := c.cc.Invoke(ctx, MachineService_MetaDelete_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_MetaDelete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -868,11 +917,12 @@ func (c *machineServiceClient) MetaDelete(ctx context.Context, in *MetaDeleteReq
 }
 
 func (c *machineServiceClient) ImageList(ctx context.Context, in *ImageListRequest, opts ...grpc.CallOption) (MachineService_ImageListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[11], MachineService_ImageList_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[11], MachineService_ImageList_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &machineServiceImageListClient{stream}
+	x := &machineServiceImageListClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -900,8 +950,9 @@ func (x *machineServiceImageListClient) Recv() (*ImageListResponse, error) {
 }
 
 func (c *machineServiceClient) ImagePull(ctx context.Context, in *ImagePullRequest, opts ...grpc.CallOption) (*ImagePullResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ImagePullResponse)
-	err := c.cc.Invoke(ctx, MachineService_ImagePull_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, MachineService_ImagePull_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1225,7 +1276,7 @@ func _MachineService_Copy_Handler(srv interface{}, stream grpc.ServerStream) err
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).Copy(m, &machineServiceCopyServer{stream})
+	return srv.(MachineServiceServer).Copy(m, &machineServiceCopyServer{ServerStream: stream})
 }
 
 type MachineService_CopyServer interface {
@@ -1282,7 +1333,7 @@ func _MachineService_Dmesg_Handler(srv interface{}, stream grpc.ServerStream) er
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).Dmesg(m, &machineServiceDmesgServer{stream})
+	return srv.(MachineServiceServer).Dmesg(m, &machineServiceDmesgServer{ServerStream: stream})
 }
 
 type MachineService_DmesgServer interface {
@@ -1303,7 +1354,7 @@ func _MachineService_Events_Handler(srv interface{}, stream grpc.ServerStream) e
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).Events(m, &machineServiceEventsServer{stream})
+	return srv.(MachineServiceServer).Events(m, &machineServiceEventsServer{ServerStream: stream})
 }
 
 type MachineService_EventsServer interface {
@@ -1392,7 +1443,7 @@ func _MachineService_EtcdForfeitLeadership_Handler(srv interface{}, ctx context.
 }
 
 func _MachineService_EtcdRecover_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(MachineServiceServer).EtcdRecover(&machineServiceEtcdRecoverServer{stream})
+	return srv.(MachineServiceServer).EtcdRecover(&machineServiceEtcdRecoverServer{ServerStream: stream})
 }
 
 type MachineService_EtcdRecoverServer interface {
@@ -1422,7 +1473,7 @@ func _MachineService_EtcdSnapshot_Handler(srv interface{}, stream grpc.ServerStr
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).EtcdSnapshot(m, &machineServiceEtcdSnapshotServer{stream})
+	return srv.(MachineServiceServer).EtcdSnapshot(m, &machineServiceEtcdSnapshotServer{ServerStream: stream})
 }
 
 type MachineService_EtcdSnapshotServer interface {
@@ -1551,7 +1602,7 @@ func _MachineService_Kubeconfig_Handler(srv interface{}, stream grpc.ServerStrea
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).Kubeconfig(m, &machineServiceKubeconfigServer{stream})
+	return srv.(MachineServiceServer).Kubeconfig(m, &machineServiceKubeconfigServer{ServerStream: stream})
 }
 
 type MachineService_KubeconfigServer interface {
@@ -1572,7 +1623,7 @@ func _MachineService_List_Handler(srv interface{}, stream grpc.ServerStream) err
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).List(m, &machineServiceListServer{stream})
+	return srv.(MachineServiceServer).List(m, &machineServiceListServer{ServerStream: stream})
 }
 
 type MachineService_ListServer interface {
@@ -1593,7 +1644,7 @@ func _MachineService_DiskUsage_Handler(srv interface{}, stream grpc.ServerStream
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).DiskUsage(m, &machineServiceDiskUsageServer{stream})
+	return srv.(MachineServiceServer).DiskUsage(m, &machineServiceDiskUsageServer{ServerStream: stream})
 }
 
 type MachineService_DiskUsageServer interface {
@@ -1632,7 +1683,7 @@ func _MachineService_Logs_Handler(srv interface{}, stream grpc.ServerStream) err
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).Logs(m, &machineServiceLogsServer{stream})
+	return srv.(MachineServiceServer).Logs(m, &machineServiceLogsServer{ServerStream: stream})
 }
 
 type MachineService_LogsServer interface {
@@ -1743,7 +1794,7 @@ func _MachineService_Read_Handler(srv interface{}, stream grpc.ServerStream) err
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).Read(m, &machineServiceReadServer{stream})
+	return srv.(MachineServiceServer).Read(m, &machineServiceReadServer{ServerStream: stream})
 }
 
 type MachineService_ReadServer interface {
@@ -2016,7 +2067,7 @@ func _MachineService_PacketCapture_Handler(srv interface{}, stream grpc.ServerSt
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).PacketCapture(m, &machineServicePacketCaptureServer{stream})
+	return srv.(MachineServiceServer).PacketCapture(m, &machineServicePacketCaptureServer{ServerStream: stream})
 }
 
 type MachineService_PacketCaptureServer interface {
@@ -2091,7 +2142,7 @@ func _MachineService_ImageList_Handler(srv interface{}, stream grpc.ServerStream
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MachineServiceServer).ImageList(m, &machineServiceImageListServer{stream})
+	return srv.(MachineServiceServer).ImageList(m, &machineServiceImageListServer{ServerStream: stream})
 }
 
 type MachineService_ImageListServer interface {

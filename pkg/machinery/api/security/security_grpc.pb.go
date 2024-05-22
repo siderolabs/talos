@@ -16,8 +16,8 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-// Requires gRPC-Go v1.32.0 or later.
-const _ = grpc.SupportPackageIsVersion7
+// Requires gRPC-Go v1.62.0 or later.
+const _ = grpc.SupportPackageIsVersion8
 
 const (
 	SecurityService_Certificate_FullMethodName = "/securityapi.SecurityService/Certificate"
@@ -39,8 +39,9 @@ func NewSecurityServiceClient(cc grpc.ClientConnInterface) SecurityServiceClient
 }
 
 func (c *securityServiceClient) Certificate(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CertificateResponse)
-	err := c.cc.Invoke(ctx, SecurityService_Certificate_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, SecurityService_Certificate_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}

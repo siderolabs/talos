@@ -16,8 +16,8 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-// Requires gRPC-Go v1.32.0 or later.
-const _ = grpc.SupportPackageIsVersion7
+// Requires gRPC-Go v1.62.0 or later.
+const _ = grpc.SupportPackageIsVersion8
 
 const (
 	ClusterService_HealthCheck_FullMethodName = "/cluster.ClusterService/HealthCheck"
@@ -39,11 +39,12 @@ func NewClusterServiceClient(cc grpc.ClientConnInterface) ClusterServiceClient {
 }
 
 func (c *clusterServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (ClusterService_HealthCheckClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ClusterService_ServiceDesc.Streams[0], ClusterService_HealthCheck_FullMethodName, opts...)
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ClusterService_ServiceDesc.Streams[0], ClusterService_HealthCheck_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &clusterServiceHealthCheckClient{stream}
+	x := &clusterServiceHealthCheckClient{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -103,7 +104,7 @@ func _ClusterService_HealthCheck_Handler(srv interface{}, stream grpc.ServerStre
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ClusterServiceServer).HealthCheck(m, &clusterServiceHealthCheckServer{stream})
+	return srv.(ClusterServiceServer).HealthCheck(m, &clusterServiceHealthCheckServer{ServerStream: stream})
 }
 
 type ClusterService_HealthCheckServer interface {
