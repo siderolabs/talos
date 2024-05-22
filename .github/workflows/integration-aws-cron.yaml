@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-16T11:03:04Z by kres 48517a9.
+# Generated on 2024-05-22T11:44:56Z by kres 04ecdaf-dirty.
 
 name: integration-aws-cron
 concurrency:
@@ -27,6 +27,7 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
+        if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
           name: artifacts
@@ -34,6 +35,31 @@ jobs:
       - name: Fix artifact permissions
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: build
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+        run: |
+          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+      - name: talosctl-cni-bundle
+        if: github.event_name == 'schedule'
+        run: |
+          make talosctl-cni-bundle
+      - name: iso
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make iso secureboot-iso
+      - name: images-essential
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make images-essential
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: default
