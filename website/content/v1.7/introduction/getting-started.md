@@ -8,7 +8,7 @@ This document will walk you through installing a simple Talos Cluster with a sin
 
 > If this is your first use of Talos Linux, we recommend the [Quickstart]({{< relref "quickstart" >}}) first, to quickly create a local virtual cluster in containers on your workstation.
 >
->For a production cluster, extra steps are needed - see [Production Notes]({{< relref "prodnotes" >}}).
+> For a production cluster, extra steps are needed - see [Production Notes]({{< relref "prodnotes" >}}).
 
 Regardless of where you run Talos, the steps to create a Kubernetes cluster are:
 
@@ -25,13 +25,15 @@ Regardless of where you run Talos, the steps to create a Kubernetes cluster are:
 `talosctl` is a CLI tool which interfaces with the Talos API.
 Talos Linux has no SSH access: `talosctl` is the tool you use to interact with the operating system on the machines.
 
-Install `talosctl` before continuing:
+You can download `talosctl` an MacOS and Linux via:
 
 ```bash
-curl -sL https://talos.dev/install | sh
+brew install siderolabs/tap/talosctl
 ```
 
-> Note: If you boot systems off the ISO, Talos on the ISO image  runs in RAM and acts as an installer.
+For manually installation and other platform please see the [talosctl installation guide]({{< relref "../talos-guides/install/talosctl.md" >}}).
+
+> Note: If you boot systems off the ISO, Talos on the ISO image runs in RAM and acts as an installer.
 > The version of `talosctl` that is used to create the machine configurations controls the version of Talos Linux that is installed on the machines - NOT the image that the machines are initially booted off.
 > For example, booting a machine off the Talos 1.3.7 ISO, but creating the initial configuration with `talosctl` binary of version 1.4.1, will result in a machine running Talos Linux version 1.4.1.
 >
@@ -93,9 +95,9 @@ When Talos boots without a configuration, such as when booting off the Talos ISO
 enters maintenance mode and waits for a configuration to be provided.
 
 > A configuration can be passed in on boot via kernel parameters or metadata servers.
-See [Production Notes]({{< relref "prodnotes#configure-talos" >}}).
+> See [Production Notes]({{< relref "prodnotes#configure-talos" >}}).
 
-Unlike traditional Linux, Talos Linux is *not* configured by SSHing to the server and issuing commands.
+Unlike traditional Linux, Talos Linux is _not_ configured by SSHing to the server and issuing commands.
 Instead, the entire state of the machine is defined by a `machine config` file which is passed to the server.
 This allows machines to be managed in a declarative way, and lends itself to GitOps and modern operations paradigms.
 The state of a machine is completely defined by, and can be reproduced from, the machine configuration file.
@@ -178,12 +180,12 @@ install:
 
 to reflect `vda` instead of `sda`.
 
-> For information on customizing your machine configurations (such as to  specify the version of Kubernetes), using [machine configuration patches]({{< relref "../talos-guides/configuration/patching" >}}), or customizing  configurations for individual machines (such as setting static IP addresses), see the [Production Notes]({{< relref "prodnotes#customizing-machine-configuration" >}}).
+> For information on customizing your machine configurations (such as to specify the version of Kubernetes), using [machine configuration patches]({{< relref "../talos-guides/configuration/patching" >}}), or customizing configurations for individual machines (such as setting static IP addresses), see the [Production Notes]({{< relref "prodnotes#customizing-machine-configuration" >}}).
 
 ## Understand talosctl, endpoints and nodes
 
 It is important to understand the concept of `endpoints` and `nodes`.
-In short: `endpoints` are where `talosctl` *sends* commands to, but the  command *operates* on the specified `nodes`.
+In short: `endpoints` are where `talosctl` _sends_ commands to, but the command _operates_ on the specified `nodes`.
 The endpoint will forward the command to the nodes, if needed.
 
 ### Endpoints
@@ -201,7 +203,7 @@ In this tutorial setup, the endpoint will always be the single control plane nod
 
 Nodes are the target(s) you wish to perform the operation on.
 
-> When specifying nodes, the IPs and/or hostnames are *as seen by the endpoint servers*, not as from the client.
+> When specifying nodes, the IPs and/or hostnames are _as seen by the endpoint servers_, not as from the client.
 > This is because all connections are proxied through the endpoints.
 
 You may provide `-n` or `--nodes` to any `talosctl` command to supply the node or (comma-separated) nodes on which you wish to perform the operation.
@@ -212,7 +214,7 @@ For example, to see the containers running on node 192.168.0.200, by routing the
 talosctl -e 192.168.0.2 -n 192.168.0.200 containers
 ```
 
-To see the etcd logs on *both* nodes 192.168.0.10 and 192.168.0.11:
+To see the etcd logs on _both_ nodes 192.168.0.10 and 192.168.0.11:
 
 ```bash
 talosctl -e 192.168.0.2 -n 192.168.0.10,192.168.0.11 logs etcd
@@ -243,7 +245,7 @@ Apply the `controlplane.yaml` file to the control plane node, and the `worker.ya
 ```
 
 The `--insecure` flag is necessary because the PKI infrastructure has not yet been made available to the node.
-Note: the connection *will* be encrypted, but not authenticated.
+Note: the connection _will_ be encrypted, but not authenticated.
 
 When using the `--insecure` flag, it is not necessary to specify an endpoint.
 
@@ -271,8 +273,8 @@ talosctl bootstrap --nodes 192.168.0.2 --endpoints 192.168.0.2 \
   --talosconfig=./talosconfig
 ```
 
->The bootstrap operation should only be called **ONCE** on a **SINGLE** control plane node.
-(If you have multiple control plane nodes, it doesn't matter which one you issue the bootstrap command against.)
+> The bootstrap operation should only be called **ONCE** on a **SINGLE** control plane node.
+> (If you have multiple control plane nodes, it doesn't matter which one you issue the bootstrap command against.)
 
 At this point, Talos will form an `etcd` cluster, and start the Kubernetes control plane components.
 
@@ -284,7 +286,7 @@ After a few moments, you will be able to download your Kubernetes client configu
 
 Running this command will add (merge) you new cluster into your local Kubernetes configuration.
 
-If you would prefer the configuration to *not* be merged into your default Kubernetes configuration file, pass in a filename:
+If you would prefer the configuration to _not_ be merged into your default Kubernetes configuration file, pass in a filename:
 
 ```sh
   talosctl kubeconfig alternative-kubeconfig --nodes 192.168.0.2 --endpoints 192.168.0.2

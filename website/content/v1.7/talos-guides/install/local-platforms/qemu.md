@@ -41,11 +41,13 @@ apt install qemu-system-x86 qemu-kvm
 
 ### Install talosctl
 
-Download `talosctl` via
+You can download `talosctl` an MacOS and Linux via:
 
 ```bash
-curl -sL https://talos.dev/install | sh
+brew install siderolabs/tap/talosctl
 ```
+
+For manually installation and other platform please see the [talosctl installation guide]({{< relref "../talosctl.md" >}}).
 
 ## Install Talos kernel and initramfs
 

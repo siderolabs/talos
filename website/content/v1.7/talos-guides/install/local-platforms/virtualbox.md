@@ -26,11 +26,13 @@ apt install virtualbox
 
 ### Install talosctl
 
-You can download `talosctl` via
+You can download `talosctl` an MacOS and Linux via:
 
 ```bash
-curl -sL https://talos.dev/install | sh
+brew install siderolabs/tap/talosctl
 ```
+
+For manually installation and other platform please see the [talosctl installation guide]({{< relref "../talosctl.md" >}}).
 
 ### Download ISO Image
 
