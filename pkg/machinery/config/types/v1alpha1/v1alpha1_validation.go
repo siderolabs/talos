@@ -131,12 +131,21 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		warnings = append(warnings, fmt.Sprintf("use %q instead of %q for machine type", t.String(), c.MachineConfig.MachineType))
 	}
 
+	if c.Machine().Security().IssuingCA() == nil && len(c.Machine().Security().AcceptedCAs()) == 0 {
+		result = multierror.Append(result, errors.New("issuing CA or some accepted CAs are required (.machine.ca, machine.acceptedCAs)"))
+	}
+
 	switch c.Machine().Type() {
 	case machine.TypeInit, machine.TypeControlPlane:
 		warn, err := ValidateCNI(c.Cluster().Network().CNI())
 		warnings = append(warnings, warn...)
 		result = multierror.Append(result, err)
 
+		if c.Machine().Security().IssuingCA() == nil {
+			result = multierror.Append(result, errors.New("issuing CA is required (.machine.ca)"))
+		} else if len(c.Machine().Security().IssuingCA().Key) == 0 {
+			result = multierror.Append(result, errors.New("issuing CA key is required for controlplane nodes (.machine.ca.key)"))
+		}
 	case machine.TypeWorker:
 		for _, d := range c.Machine().Network().Devices() {
 			if d.VIPConfig() != nil {
@@ -150,8 +159,14 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			}
 		}
 
-		if c.Machine().Security().IssuingCA() != nil && len(c.Machine().Security().IssuingCA().Key) > 0 {
-			result = multierror.Append(result, errors.New("issuing Talos API CA key is not allowed on non-controlplane nodes (.machine.ca)"))
+		if c.Machine().Security().IssuingCA() != nil {
+			if len(c.Machine().Security().IssuingCA().Key) > 0 {
+				result = multierror.Append(result, errors.New("issuing Talos API CA key is not allowed on non-controlplane nodes (.machine.ca)"))
+			}
+
+			if len(c.Machine().Security().IssuingCA().Crt) == 0 && len(c.Machine().Security().AcceptedCAs()) == 0 {
+				result = multierror.Append(result, errors.New("trusted CA certificates are required on non-controlplane nodes (.machine.ca.crt, .machine.acceptedCAs)"))
+			}
 		}
 
 		if c.Cluster().IssuingCA() != nil && len(c.Cluster().IssuingCA().Key) > 0 {

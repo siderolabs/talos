@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"os"
 	"sort"
 	"testing"
 	"time"
@@ -397,7 +398,14 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 
 	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 		// this won't be possible without a reboot
-		cfg.MachineConfig.MachineType = "controlplane"
+		cfg.MachineConfig.MachineFiles = append(cfg.MachineConfig.MachineFiles,
+			&v1alpha1.MachineFile{
+				FileContent:     "test",
+				FilePermissions: v1alpha1.FileMode(os.ModePerm),
+				FilePath:        "/var/lib/test",
+				FileOp:          "create",
+			},
+		)
 	})
 
 	reply, err := suite.Client.ApplyConfiguration(

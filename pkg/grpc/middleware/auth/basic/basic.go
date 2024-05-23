@@ -5,10 +5,12 @@
 package basic
 
 import (
+	"bytes"
 	"crypto/tls"
 	stdx509 "crypto/x509"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -22,15 +24,19 @@ type Credentials interface {
 
 // NewConnection initializes a grpc.ClientConn configured for basic
 // authentication.
-func NewConnection(address string, creds credentials.PerRPCCredentials, ca *x509.PEMEncodedCertificateAndKey) (conn *grpc.ClientConn, err error) {
+func NewConnection(address string, creds credentials.PerRPCCredentials, acceptedCAs []*x509.PEMEncodedCertificate) (conn *grpc.ClientConn, err error) {
 	tlsConfig := &tls.Config{}
 
-	if ca == nil {
-		tlsConfig.InsecureSkipVerify = true
-	} else {
-		tlsConfig.RootCAs = stdx509.NewCertPool()
-		tlsConfig.RootCAs.AppendCertsFromPEM(ca.Crt)
-	}
+	tlsConfig.RootCAs = stdx509.NewCertPool()
+	tlsConfig.RootCAs.AppendCertsFromPEM(bytes.Join(
+		xslices.Map(
+			acceptedCAs,
+			func(cert *x509.PEMEncodedCertificate) []byte {
+				return cert.Crt
+			},
+		),
+		nil,
+	))
 
 	grpcOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),

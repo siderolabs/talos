@@ -61,7 +61,11 @@ func TestValidate(t *testing.T) {
 			name: "NoMachineType",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -80,6 +84,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "join",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -97,7 +104,11 @@ func TestValidate(t *testing.T) {
 			name: "NoMachineTypeStrict",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{},
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
@@ -110,11 +121,76 @@ func TestValidate(t *testing.T) {
 			expectedError: "1 error occurred:\n\t* warning: use \"worker\" instead of \"\" for machine type\n\n",
 		},
 		{
+			name: "WorkerNoAcceptedCAs",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA:   &x509.PEMEncodedCertificateAndKey{},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			strict:        true,
+			expectedError: "1 error occurred:\n\t* trusted CA certificates are required on non-controlplane nodes (.machine.ca.crt, .machine.acceptedCAs)\n\n",
+		},
+		{
+			name: "WorkerOnlyAcceptedCAs",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineAcceptedCAs: []*x509.PEMEncodedCertificate{
+						{
+							Crt: []byte("foo"),
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			strict: true,
+		},
+		{
+			name: "ControlplaneNoCAKey",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			strict:        true,
+			expectedError: "1 error occurred:\n\t* issuing CA key is required for controlplane nodes (.machine.ca.key)\n\n",
+		},
+		{
 			name: "NoMachineInstall",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -131,6 +207,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -149,6 +228,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineInstall: &v1alpha1.InstallConfig{
 						InstallDisk: "/dev/vda",
 					},
@@ -169,6 +251,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineInstall: &v1alpha1.InstallConfig{
 						InstallDisk: "/dev/vda",
 						InstallExtensions: []v1alpha1.InstallExtensionConfig{
@@ -201,6 +286,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -224,6 +312,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -243,6 +334,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -260,6 +354,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -283,6 +380,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -306,6 +406,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -337,6 +441,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -354,6 +462,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -380,6 +492,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -409,6 +525,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -438,6 +558,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -468,6 +592,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -502,6 +630,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -535,6 +667,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -559,6 +695,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -593,6 +733,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -628,6 +772,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -667,6 +815,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -724,6 +876,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -763,6 +919,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -799,6 +959,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -838,6 +1002,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -884,6 +1052,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -943,6 +1115,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
 							KubeSpanEnabled: pointer.To(true),
@@ -967,6 +1143,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ClusterID:     "foo",
@@ -994,6 +1174,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -1014,6 +1198,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -1032,6 +1220,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -1050,6 +1241,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -1078,6 +1273,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -1104,6 +1303,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineKubelet: &v1alpha1.KubeletConfig{
 						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
 							KubeletNodeIPValidSubnets: []string{
@@ -1130,6 +1332,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineKubelet: &v1alpha1.KubeletConfig{
 						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
 							KubeletNodeIPValidSubnets: []string{
@@ -1158,6 +1363,11 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineAcceptedCAs: []*x509.PEMEncodedCertificate{
+						{
+							Crt: []byte("foo"),
+						},
+					},
 					MachineKubelet: &v1alpha1.KubeletConfig{
 						KubeletExtraConfig: v1alpha1.Unstructured{
 							Object: map[string]interface{}{
@@ -1182,6 +1392,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{},
@@ -1204,6 +1418,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -1231,6 +1449,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
@@ -1255,6 +1477,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineFeatures: &v1alpha1.FeaturesConfig{
 						KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
 							AccessEnabled: pointer.To(true),
@@ -1277,6 +1503,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineFeatures: &v1alpha1.FeaturesConfig{
 						RBAC: pointer.To(true),
 						KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
@@ -1300,6 +1529,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 					MachineFeatures: &v1alpha1.FeaturesConfig{
 						RBAC: pointer.To(true),
 						KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
@@ -1331,6 +1564,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineNodeLabels: map[string]string{
 						"/foo":          "bar",
 						"key":           "value",
@@ -1356,6 +1592,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
 							KubeSpanEnabled: pointer.To(true),
@@ -1390,6 +1629,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
 							KubeSpanEnabled: pointer.To(true),
@@ -1423,6 +1665,9 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
 							KubeSpanEnabled: pointer.To(true),
@@ -1451,6 +1696,10 @@ func TestValidate(t *testing.T) {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ControlPlane: &v1alpha1.ControlPlaneConfig{

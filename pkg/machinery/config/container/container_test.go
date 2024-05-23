@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
@@ -137,6 +138,9 @@ func TestValidate(t *testing.T) {
 		},
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineType: "worker",
+			MachineCA: &x509.PEMEncodedCertificateAndKey{
+				Crt: []byte("cert"),
+			},
 		},
 	}
 
