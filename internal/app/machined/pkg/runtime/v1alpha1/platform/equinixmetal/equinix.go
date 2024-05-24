@@ -14,10 +14,12 @@ import (
 	"log"
 	"net/http"
 	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 
@@ -203,7 +205,10 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 		}
 	}
 
-	for bondName := range bondSlaveIndexes {
+	bondNames := maps.Keys(bondSlaveIndexes)
+	slices.Sort(bondNames)
+
+	for _, bondName := range bondNames {
 		bondLink := network.LinkSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 			Name:        bondName,
