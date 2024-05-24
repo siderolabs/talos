@@ -6,6 +6,7 @@
 package cluster
 
 import (
+	"errors"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -18,6 +19,13 @@ var Cmd = &cobra.Command{
 	Use:   "cluster",
 	Short: "A collection of commands for managing local docker-based or QEMU-based clusters",
 	Long:  ``,
+	PersistentPreRunE: func(*cobra.Command, []string) error {
+		if provisionerName == docker && !bootloaderEnabled {
+			return errors.New("docker provisioner requires bootloader to be enabled")
+		}
+
+		return nil
+	},
 }
 
 var (
@@ -36,7 +44,7 @@ func init() {
 		defaultCNIDir = filepath.Join(talosDir, "cni")
 	}
 
-	Cmd.PersistentFlags().StringVar(&provisionerName, "provisioner", "docker", "Talos cluster provisioner to use")
+	Cmd.PersistentFlags().StringVar(&provisionerName, "provisioner", docker, "Talos cluster provisioner to use")
 	Cmd.PersistentFlags().StringVar(&stateDir, "state", defaultStateDir, "directory path to store cluster state")
 	Cmd.PersistentFlags().StringVar(&clusterName, "name", "talos-default", "the name of the cluster")
 }

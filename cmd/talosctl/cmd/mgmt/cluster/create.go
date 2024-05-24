@@ -54,6 +54,8 @@ import (
 )
 
 const (
+	docker = "docker"
+
 	// gatewayOffset is the offset from the network address of the IP address of the network gateway.
 	gatewayOffset = 1
 
@@ -446,7 +448,7 @@ func create(ctx context.Context) error {
 	var configBundleOpts []bundle.Option
 
 	if ports != "" {
-		if provisionerName != "docker" {
+		if provisionerName != docker {
 			return errors.New("exposed-ports flag only supported with docker provisioner")
 		}
 
@@ -505,7 +507,7 @@ func create(ctx context.Context) error {
 		}
 
 		if talosVersion == "" {
-			if provisionerName == "docker" {
+			if provisionerName == docker {
 				parts := strings.Split(nodeImage, ":")
 
 				talosVersion = parts[len(parts)-1]
