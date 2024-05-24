@@ -850,7 +850,7 @@ func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
 
 	for _, disk := range r.Config().Machine().Disks() {
 		if err := func() error {
-			bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode))
+			bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode), blockdevice.WithExclusiveLock(true))
 			if err != nil {
 				return err
 			}
@@ -921,7 +921,7 @@ func mountDisks(logger *log.Logger, r runtime.Runtime) (err error) {
 	mountpoints := mount.NewMountPoints()
 
 	for _, disk := range r.Config().Machine().Disks() {
-		bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode))
+		bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode), blockdevice.WithExclusiveLock(true))
 		if err != nil {
 			return err
 		}

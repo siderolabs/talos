@@ -445,7 +445,7 @@ func retryBlockdeviceOpen(device string) (*blockdevice.BlockDevice, error) {
 		switch {
 		case os.IsNotExist(openErr):
 			return retry.ExpectedError(openErr)
-		case errors.Is(openErr, syscall.ENODEV):
+		case errors.Is(openErr, syscall.ENODEV), errors.Is(openErr, syscall.ENXIO):
 			return retry.ExpectedError(openErr)
 		default:
 			return nil
