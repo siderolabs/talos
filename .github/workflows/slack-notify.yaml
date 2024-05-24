@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-16T11:03:04Z by kres 48517a9.
+# Generated on 2024-05-24T15:02:03Z by kres b5844f8.
 
 name: slack-notify
 "on":
@@ -12,7 +12,11 @@ name: slack-notify
       - integration-provision-0-cron
       - integration-provision-1-cron
       - integration-provision-2-cron
-      - integration-misc-cron
+      - integration-misc-0-cron
+      - integration-misc-1-cron
+      - integration-misc-2-cron
+      - integration-misc-3-cron
+      - integration-misc-4-cron
       - integration-extensions-cron
       - integration-cilium-cron
       - integration-qemu-encrypted-vip-cron

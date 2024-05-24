@@ -57,7 +57,11 @@ spec:
     - integration-provision-0
     - integration-provision-1
     - integration-provision-2
-    - integration-misc
+    - integration-misc-0
+    - integration-misc-1
+    - integration-misc-2
+    - integration-misc-3
+    - integration-misc-4
     - integration-extensions
     - integration-cilium
     - integration-qemu-encrypted-vip
@@ -456,7 +460,7 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-    - name: integration-misc
+    - name: integration-misc-0
       buildxOptions:
         enabled: true
       depends:
@@ -468,6 +472,129 @@ spec:
         - '30 5 * * *'
       triggerLabels:
         - integration/misc
+        - integration/misc-0
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactPath: _out
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-firewall
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_FIREWALL: block
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-canal-reset
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
+            CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-controlplane-port
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CONTROL_PLANE_PORT: 443
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+    - name: integration-misc-1
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 5 * * *'
+      triggerLabels:
+        - integration/misc
+        - integration/misc-1
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactPath: _out
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-no-cluster-discovery
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CLUSTER_DISCOVERY: false
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-kubespan
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_CLUSTER_DISCOVERY: true
+            WITH_KUBESPAN: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io\
+        - name: e2e-default-hostname
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            VIA_MAINTENANCE_MODE: true
+            DISABLE_DHCP_HOSTNAME: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-siderolink
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_SIDEROLINK_AGENT: true
+            VIA_MAINTENANCE_MODE: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-siderolink-tunnel
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            SHORT_INTEGRATION_TEST: yes
+            WITH_SIDEROLINK_AGENT: tunnel
+            VIA_MAINTENANCE_MODE: true
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+    - name: integration-misc-2
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 5 * * *'
+      triggerLabels:
+        - integration/misc
+        - integration/misc-2
       steps:
         - name: download-artifacts
           conditions:
@@ -497,27 +624,6 @@ spec:
           environment:
             PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-firewall
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            SHORT_INTEGRATION_TEST: yes
-            WITH_FIREWALL: block
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-network-chaos
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            SHORT_INTEGRATION_TEST: yes
-            WITH_NETWORK_CHAOS: yes
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-canal-reset
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
-            CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/canal.yaml
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-bios-cgroupsv1
           command: e2e-qemu
           withSudo: true
@@ -535,36 +641,75 @@ spec:
             VIA_MAINTENANCE_MODE: true
             WITH_DISK_ENCRYPTION: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-controlplane-port
-          command: e2e-qemu
-          withSudo: true
+    - name: integration-misc-3
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 5 * * *'
+      triggerLabels:
+        - integration/misc
+        - integration/misc-3
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactPath: _out
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CONTROL_PLANE_PORT: 443
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-no-cluster-discovery
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: e2e-network-chaos
           command: e2e-qemu
           withSudo: true
           environment:
             SHORT_INTEGRATION_TEST: yes
-            WITH_CLUSTER_DISCOVERY: false
+            WITH_NETWORK_CHAOS: yes
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-kubespan
-          command: e2e-qemu
-          withSudo: true
+    - name: integration-misc-4
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 5 * * *'
+      triggerLabels:
+        - integration/misc
+        - integration/misc-4
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactPath: _out
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CLUSTER_DISCOVERY: true
-            WITH_KUBESPAN: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io\
-        - name: e2e-default-hostname
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            SHORT_INTEGRATION_TEST: yes
-            VIA_MAINTENANCE_MODE: true
-            DISABLE_DHCP_HOSTNAME: true
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
         - name: e2e-siderolink
           command: e2e-qemu
           withSudo: true
