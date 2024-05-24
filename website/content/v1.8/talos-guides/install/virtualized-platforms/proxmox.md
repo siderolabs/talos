@@ -22,11 +22,13 @@ Visit the [Proxmox](https://www.proxmox.com/en/downloads) downloads page if nece
 
 ### Install talosctl
 
-You can download `talosctl` via
+You can download `talosctl` an MacOS and Linux via:
 
 ```bash
-curl -sL https://talos.dev/install | sh
+brew install siderolabs/tap/talosctl
 ```
+
+For manually installation and other platform please see the [talosctl installation guide]({{< relref "../talosctl.md" >}}).
 
 ### Download ISO Image
 
@@ -36,7 +38,7 @@ You can download `metal-amd64.iso` via
 
 ```bash
 mkdir -p _out/
-curl https://github.com/siderolabs/talos/releases/download/<version>/metal-<arch>.iso -L -o _out/metal-<arch>.iso
+curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-<arch>.iso -L -o _out/metal-<arch>.iso
 ```
 
 For example version `{{< release >}}` for `linux` platform:
@@ -45,6 +47,32 @@ For example version `{{< release >}}` for `linux` platform:
 mkdir -p _out/
 curl https://github.com/siderolabs/talos/releases/download/{{< release >}}/metal-amd64.iso -L -o _out/metal-amd64.iso
 ```
+
+### QEMU guest agent support (iso)
+
+- If you need the QEMU guest agent so you can do guest VM shutdowns of your Talos VMs, then you will need a custom ISO
+- To get this, navigate to https://factory.talos.dev/
+- Scroll down and select your Talos version (`{{< release >}}` for example)
+- Then tick the box for `siderolabs/qemu-guest-agent` and submit
+- This will provide you with a link to the bare metal ISO
+- The lines we're interested in are as follows
+
+```text
+Metal ISO
+
+amd64 ISO
+    https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/{{< release >}}/metal-amd64.iso
+arm64 ISO
+    https://factory.talos.dev/image/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515/{{< release >}}/metal-arm64.iso
+
+Installer Image
+
+For the initial Talos install or upgrade use the following installer image:
+factory.talos.dev/installer/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:{{< release >}}
+```
+
+- Download the above ISO (this will most likely be `amd64` for you)
+- Take note of the `factory.talos.dev/installer` URL as you'll need it later
 
 ## Upload ISO
 
@@ -171,6 +199,17 @@ This will create several files in the `_out` directory: `controlplane.yaml`, `wo
 > ```
 >
 > Update `controlplane.yaml` and `worker.yaml` config files to point to the correct disk location.
+
+### QEMU guest agent support
+
+For QEMU guest agent support, you can generate the config with the custom install image:
+
+```bash
+talosctl gen config talos-proxmox-cluster https://$CONTROL_PLANE_IP:6443 --output-dir _out --installer-image factory.talos.dev/installer/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:{{< release >}}
+```
+
+- In Proxmox, go to your VM --> Options and ensure that `QEMU Guest Agent` is `Enabled`
+- The QEMU agent is now configured
 
 ## Create Control Plane Node
 
