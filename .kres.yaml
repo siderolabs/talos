@@ -266,6 +266,8 @@ spec:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             SHORT_INTEGRATION_TEST: yes
     - name: integration-qemu
+      buildxOptions:
+        enabled: true
       depends:
         - default
       runners:
@@ -287,29 +289,19 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-qemu
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
     - name: integration-trusted-boot
+      buildxOptions:
+        enabled: true
       depends:
         - default
       runners:
@@ -326,28 +318,27 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
         - name: build
           conditions:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
+        - name: secureboot-iso
           conditions:
             - only-on-schedule
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: integration-trusted-boot
           command: e2e-qemu
@@ -382,24 +373,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: provision-tests-prepare
         - name: provision-tests-track-0
           withSudo: true
@@ -430,24 +409,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: provision-tests-prepare
         - name: provision-tests-track-1
           withSudo: true
@@ -478,30 +445,20 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: provision-tests-prepare
         - name: provision-tests-track-2
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
     - name: integration-misc
+      buildxOptions:
+        enabled: true
       depends:
         - default
       runners:
@@ -518,28 +475,27 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
         - name: build
           conditions:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           conditions:
             - only-on-schedule
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-firewall
           command: e2e-qemu
@@ -649,24 +605,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -699,6 +643,8 @@ spec:
             EXTRA_TEST_ARGS: -talos.extensions.qemu
             IMAGE_REGISTRY: registry.dev.siderolabs.io
     - name: integration-cilium
+      buildxOptions:
+        enabled: true
       depends:
         - default
       runners:
@@ -720,24 +666,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-cilium
           command: e2e-qemu
           withSudo: true
@@ -775,6 +709,8 @@ spec:
             WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]'
             IMAGE_REGISTRY: registry.dev.siderolabs.io
     - name: integration-qemu-encrypted-vip
+      buildxOptions:
+        enabled: true
       depends:
         - default
       runners:
@@ -796,24 +732,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-qemu
           withSudo: true
           environment:
@@ -845,24 +769,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: build-race
           command: initramfs installer
           environment:
@@ -878,6 +790,8 @@ spec:
             TAG_SUFFIX: -race
             IMAGE_REGISTRY: registry.dev.siderolabs.io
     - name: integration-qemu-csi
+      buildxOptions:
+        enabled: true
       depends:
         - default
       runners:
@@ -899,24 +813,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-qemu-csi
           command: e2e-qemu
           withSudo: true
@@ -930,6 +832,8 @@ spec:
             WITH_TEST: run_csi_tests
             IMAGE_REGISTRY: registry.dev.siderolabs.io
     - name: integration-images
+      buildxOptions:
+        enabled: true
       depends:
         - default
       runners:
@@ -951,24 +855,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -992,33 +884,12 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: reproducibility-test
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
     - name: integration-cloud-images
+      buildxOptions:
+        enabled: true
       sops: true
       depends:
         - default
@@ -1041,30 +912,17 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: cloud-images
     - name: integration-image-factory
+      buildxOptions:
+        enabled: true
       depends:
         - default
       runners:
@@ -1081,6 +939,11 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
         - name: build
           conditions:
             - only-on-schedule
@@ -1102,7 +965,7 @@ spec:
           conditions:
             - only-on-schedule
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: factory-1.6-iso
           command: e2e-image-factory
@@ -1176,6 +1039,8 @@ spec:
             FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
             KUBERNETES_VERSION: 1.26.5
     - name: integration-aws
+      buildxOptions:
+        enabled: true
       sops: true
       depends:
         - default
@@ -1193,23 +1058,22 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
         - name: build
           conditions:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           conditions:
             - only-on-schedule
@@ -1262,28 +1126,27 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
         - name: build
           conditions:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           conditions:
             - only-on-schedule
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
@@ -1353,28 +1216,27 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
         - name: build
           conditions:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           conditions:
             - only-on-schedule
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
@@ -1425,6 +1287,8 @@ spec:
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
     - name: integration-azure
+      buildxOptions:
+        enabled: true
       sops: true
       depends:
         - default
@@ -1442,28 +1306,27 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
         - name: build
           conditions:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: images-essential
           conditions:
             - only-on-schedule
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-azure-prepare
           environment:
@@ -1499,6 +1362,8 @@ spec:
             ARM_CLIENT_SECRET: ${{ env.AZURE_CLIENT_SECRET }}
             ARM_TENANT_ID: ${{ env.AZURE_TENANT_ID }}
     - name: integration-equinix-metal
+      buildxOptions:
+        enabled: true
       sops: true
       depends:
         - default
@@ -1521,24 +1386,12 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
-        - name: iso
-          conditions:
-            - only-on-schedule
-          command: iso secureboot-iso
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-equinix-metal-prepare
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io

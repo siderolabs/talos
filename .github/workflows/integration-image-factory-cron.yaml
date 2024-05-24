@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-23T10:20:45Z by kres 2688b70.
+# Generated on 2024-05-24T09:48:06Z by kres b5844f8.
 
 name: integration-image-factory-cron
 concurrency:
@@ -45,6 +45,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -55,6 +62,12 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -77,7 +90,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
         run: |
           make images-essential
       - name: factory-1.6-iso

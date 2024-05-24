@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-23T10:20:45Z by kres 2688b70.
+# Generated on 2024-05-24T09:48:06Z by kres b5844f8.
 
 name: default
 concurrency:
@@ -362,6 +362,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Mask secrets
         run: |
           echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
@@ -378,11 +385,17 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -390,12 +403,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
       - name: images-essential
         if: github.event_name == 'schedule'
         env:
@@ -504,11 +511,17 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -516,17 +529,11 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
       - name: images-essential
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
         run: |
           make images-essential
       - name: checkout extensions
@@ -650,11 +657,17 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -662,17 +675,11 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
       - name: images-essential
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
         run: |
           make images-essential
       - name: checkout extensions
@@ -773,6 +780,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Mask secrets
         run: |
           echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
@@ -789,11 +803,17 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -801,17 +821,11 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
       - name: images-essential
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
         run: |
           make images-essential
       - name: e2e-azure-prepare
@@ -899,6 +913,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -913,7 +934,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -921,19 +942,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: e2e-cilium
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1014,6 +1022,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Mask secrets
         run: |
           echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
@@ -1034,27 +1049,10 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: images
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1108,6 +1106,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Mask secrets
         run: |
           echo -e "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
@@ -1128,7 +1133,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -1136,19 +1141,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: e2e-equinix-metal-prepare
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1247,7 +1239,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -1255,19 +1247,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: checkout extensions
         uses: actions/checkout@v4
         with:
@@ -1343,6 +1322,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -1353,6 +1339,12 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
@@ -1375,7 +1367,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
         run: |
           make images-essential
       - name: factory-1.6-iso
@@ -1493,6 +1485,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -1507,7 +1506,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -1515,19 +1514,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: images
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1578,6 +1564,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -1588,11 +1581,17 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -1600,17 +1599,11 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
       - name: images-essential
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
         run: |
           make images-essential
       - name: e2e-firewall
@@ -1762,7 +1755,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -1770,19 +1763,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: provision-tests-prepare
         run: |
           make provision-tests-prepare
@@ -1856,7 +1836,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -1864,19 +1844,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: provision-tests-prepare
         run: |
           make provision-tests-prepare
@@ -1950,7 +1917,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -1958,19 +1925,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: provision-tests-prepare
         run: |
           make provision-tests-prepare
@@ -2023,6 +1977,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -2037,7 +1998,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -2045,19 +2006,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: e2e-qemu
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2107,6 +2055,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -2121,7 +2076,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -2129,19 +2084,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: e2e-qemu-csi
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2198,6 +2140,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -2212,7 +2161,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -2220,19 +2169,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: e2e-qemu
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2306,7 +2242,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -2314,19 +2250,6 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: build-race
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2403,31 +2326,6 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: reproducibility-test
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2477,6 +2375,13 @@ jobs:
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
@@ -2487,11 +2392,17 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: uki-certs
+        if: github.event_name == 'schedule'
+        env:
+          PLATFORM: linux/amd64
+        run: |
+          make uki-certs
       - name: build
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
           PUSH: "true"
         run: |
           make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
@@ -2499,19 +2410,13 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
-      - name: iso
+      - name: secureboot-iso
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
         run: |
-          make iso secureboot-iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
+          make secureboot-iso
       - name: integration-trusted-boot
         env:
           EXTRA_TEST_ARGS: -talos.trustedboot
