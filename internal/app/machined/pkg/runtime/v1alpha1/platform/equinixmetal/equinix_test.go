@@ -8,6 +8,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/state"
@@ -27,6 +28,12 @@ var rawMetadata []byte
 
 //go:embed testdata/expected.yaml
 var expectedNetworkConfig string
+
+//go:embed testdata/metadata-2bonds.json
+var rawMetadata2Bonds []byte
+
+//go:embed testdata/expected-2bonds.yaml
+var expectedNetworkConfig2Bonds string
 
 func TestParseMetadata(t *testing.T) {
 	p := &equinixmetal.EquinixMetal{}
@@ -54,4 +61,42 @@ func TestParseMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, expectedNetworkConfig, string(marshaled))
+}
+
+func TestParseMetadata2Bonds(t *testing.T) {
+	p := &equinixmetal.EquinixMetal{}
+
+	var m equinixmetal.MetadataConfig
+
+	require.NoError(t, json.Unmarshal(rawMetadata2Bonds, &m))
+
+	ctx := context.Background()
+
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
+	eth0.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xe4, 0x43, 0x4b, 0xd0, 0x7b, 0x50}
+	require.NoError(t, st.Create(ctx, eth0))
+
+	eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
+	eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xe4, 0x43, 0x4b, 0xd0, 0x7b, 0x51}
+	require.NoError(t, st.Create(ctx, eth1))
+
+	eth2 := network.NewLinkStatus(network.NamespaceName, "eth2")
+	eth2.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xe4, 0x43, 0x4b, 0xd0, 0x7b, 0x52}
+	require.NoError(t, st.Create(ctx, eth2))
+
+	eth3 := network.NewLinkStatus(network.NamespaceName, "eth3")
+	eth3.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xe4, 0x43, 0x4b, 0xd0, 0x7b, 0x53}
+	require.NoError(t, st.Create(ctx, eth3))
+
+	networkConfig, err := p.ParseMetadata(ctx, &m, st)
+	require.NoError(t, err)
+
+	marshaled, err := yaml.Marshal(networkConfig)
+	require.NoError(t, err)
+
+	fmt.Println(string(marshaled))
+
+	assert.Equal(t, expectedNetworkConfig2Bonds, string(marshaled))
 }
