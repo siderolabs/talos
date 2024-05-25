@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-24T09:48:06Z by kres b5844f8.
+# Generated on 2024-05-25T11:30:52Z by kres b5844f8.
 
 name: integration-trusted-boot-cron
 concurrency:
@@ -80,6 +80,13 @@ jobs:
         if: github.event_name == 'schedule'
         run: |
           make talosctl-cni-bundle
+      - name: images-essential
+        if: github.event_name == 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64
+        run: |
+          make images-essential
       - name: secureboot-iso
         if: github.event_name == 'schedule'
         env:

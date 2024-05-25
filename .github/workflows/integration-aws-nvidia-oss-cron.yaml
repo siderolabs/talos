@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-24T09:48:06Z by kres b5844f8.
+# Generated on 2024-05-25T11:30:52Z by kres b5844f8.
 
 name: integration-aws-nvidia-oss-cron
 concurrency:
@@ -68,6 +68,10 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: generate
+        if: github.event_name == 'schedule'
+        run: |
+          make generate
       - name: uki-certs
         if: github.event_name == 'schedule'
         env:

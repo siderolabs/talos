@@ -338,6 +338,12 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: images-essential
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: secureboot-iso
           conditions:
             - only-on-schedule
@@ -745,6 +751,9 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: generate
+          conditions:
+            - only-on-schedule
         - name: build
           conditions:
             - only-on-schedule
@@ -985,7 +994,7 @@ spec:
         - self-hosted
         - generic # this is pretty fast, so we can use generic
       crons:
-        - '30 3 * * *'
+        - '30 2 * * *'
       triggerLabels:
         - integration/images
       steps:
@@ -1223,7 +1232,7 @@ spec:
           conditions:
             - only-on-schedule
           environment:
-            PLATFORM: linux/amd64,linux/arm64
+            PLATFORM: linux/amd64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
@@ -1271,6 +1280,9 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: generate
+          conditions:
+            - only-on-schedule
         - name: uki-certs
           conditions:
             - only-on-schedule
@@ -1361,6 +1373,9 @@ spec:
           artifactStep:
             type: download
             artifactPath: _out
+        - name: generate
+          conditions:
+            - only-on-schedule
         - name: uki-certs
           conditions:
             - only-on-schedule
@@ -1531,7 +1546,7 @@ spec:
             - only-on-schedule
           command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
           environment:
-            PLATFORM: linux/amd64
+            PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
         - name: talosctl-cni-bundle

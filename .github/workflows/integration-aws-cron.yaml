@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-24T09:48:06Z by kres b5844f8.
+# Generated on 2024-05-25T14:28:32Z by kres b5844f8.
 
 name: integration-aws-cron
 concurrency:
@@ -90,7 +90,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
+          PLATFORM: linux/amd64
         run: |
           make images-essential
       - name: e2e-aws-prepare

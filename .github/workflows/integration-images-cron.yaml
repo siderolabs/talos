@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-24T09:48:06Z by kres b5844f8.
+# Generated on 2024-05-26T11:34:32Z by kres b5844f8.
 
 name: integration-images-cron
 concurrency:
@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 "on":
   schedule:
-    - cron: 30 3 * * *
+    - cron: 30 2 * * *
 jobs:
   default:
     runs-on:
