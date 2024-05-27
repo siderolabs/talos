@@ -21,8 +21,7 @@ function create_cluster {
     --memory=2048 \
     --cpus=2.0 \
     --with-init-node=false \
-    "${REGISTRY_MIRROR_FLAGS[@]}" \
-    --crashdump
+    "${REGISTRY_MIRROR_FLAGS[@]}"
 
   "${TALOSCTL}" config node 10.5.0.2
 }

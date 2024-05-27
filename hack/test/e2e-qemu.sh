@@ -184,7 +184,6 @@ function create_cluster {
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \
-    --crashdump \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"
 

@@ -122,6 +122,7 @@ spec:
         - name: save-artifacts
           artifactStep:
             type: upload
+            artifactName: talos-artifacts
             artifactPath: _out
             additionalArtifacts:
               - "!_out/coverage.txt"
@@ -232,11 +233,22 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: e2e-iso
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-e2e-iso
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: e2e-qemu-short
       depends:
         - default
@@ -247,12 +259,23 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: e2e-qemu
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             SHORT_INTEGRATION_TEST: yes
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-e2e-qemu-short
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: e2e-docker-short
       depends:
         - default
@@ -263,12 +286,23 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: e2e-docker
           withSudo: false
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             SHORT_INTEGRATION_TEST: yes
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-e2e-docker-short
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu
       buildxOptions:
         enabled: true
@@ -287,6 +321,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -303,6 +338,16 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-trusted-boot
       buildxOptions:
         enabled: true
@@ -321,6 +366,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: uki-certs
           conditions:
@@ -358,6 +404,16 @@ spec:
             WITH_TRUSTED_BOOT_ISO: true
             EXTRA_TEST_ARGS: -talos.trustedboot
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-trusted-boot
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-0
       buildxOptions:
         enabled: true
@@ -377,6 +433,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -394,6 +451,16 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-provision-0
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-1
       buildxOptions:
         enabled: true
@@ -413,6 +480,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -430,6 +498,16 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-provision-1
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-provision-2
       buildxOptions:
         enabled: true
@@ -449,6 +527,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -466,6 +545,16 @@ spec:
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-provision-2
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-0
       buildxOptions:
         enabled: true
@@ -485,6 +574,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -518,6 +608,16 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_CONTROL_PLANE_PORT: 443
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-misc-0
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-1
       buildxOptions:
         enabled: true
@@ -537,6 +637,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -588,6 +689,16 @@ spec:
             WITH_SIDEROLINK_AGENT: tunnel
             VIA_MAINTENANCE_MODE: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-misc-1
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-2
       buildxOptions:
         enabled: true
@@ -607,6 +718,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: uki-certs
           conditions:
@@ -647,6 +759,16 @@ spec:
             VIA_MAINTENANCE_MODE: true
             WITH_DISK_ENCRYPTION: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-misc-2
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-3
       buildxOptions:
         enabled: true
@@ -666,6 +788,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -685,6 +808,16 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_NETWORK_CHAOS: yes
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-misc-3
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-misc-4
       buildxOptions:
         enabled: true
@@ -704,6 +837,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -732,6 +866,16 @@ spec:
             WITH_SIDEROLINK_AGENT: tunnel
             VIA_MAINTENANCE_MODE: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-misc-4
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-extensions
       buildxOptions:
         enabled: true
@@ -750,6 +894,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: generate
           conditions:
@@ -799,6 +944,16 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             EXTRA_TEST_ARGS: -talos.extensions.qemu
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-extensions
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-cilium
       buildxOptions:
         enabled: true
@@ -817,6 +972,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -865,6 +1021,16 @@ spec:
             CILIUM_INSTALL_TYPE: strict
             WITH_CONFIG_PATCH: '[{"op": "add", "path": "/cluster/network", "value": {"cni": {"name": "none"}}}, {"op": "add", "path": "/cluster/proxy", "value": {"disabled": true}}]'
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-cilium
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-encrypted-vip
       buildxOptions:
         enabled: true
@@ -883,6 +1049,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -902,6 +1069,16 @@ spec:
             WITH_VIRTUAL_IP: true
             WITH_KUBESPAN: true
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-encrypted-vip
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-race
       buildxOptions:
         enabled: true
@@ -920,6 +1097,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -946,6 +1124,16 @@ spec:
           environment:
             TAG_SUFFIX: -race
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-race
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-qemu-csi
       buildxOptions:
         enabled: true
@@ -964,6 +1152,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -988,6 +1177,16 @@ spec:
             QEMU_EXTRA_DISKS_SIZE: 12288
             WITH_TEST: run_csi_tests
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-csi
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-images
       buildxOptions:
         enabled: true
@@ -1006,6 +1205,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -1040,6 +1240,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: reproducibility-test
           environment:
@@ -1063,6 +1264,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:
@@ -1095,6 +1297,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: uki-certs
           conditions:
@@ -1195,6 +1398,16 @@ spec:
             FACTORY_VERSION: v1.3.7
             FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
             KUBERNETES_VERSION: 1.26.5
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-image-factory
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
     - name: integration-aws
       buildxOptions:
         enabled: true
@@ -1214,6 +1427,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: uki-certs
           conditions:
@@ -1282,6 +1496,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: generate
           conditions:
@@ -1375,6 +1590,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: generate
           conditions:
@@ -1468,6 +1684,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: uki-certs
           conditions:
@@ -1543,6 +1760,7 @@ spec:
             - not-on-schedule
           artifactStep:
             type: download
+            artifactName: talos-artifacts
             artifactPath: _out
         - name: build
           conditions:

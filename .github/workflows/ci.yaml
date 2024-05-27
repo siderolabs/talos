@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-27T09:21:08Z by kres b5844f8.
+# Generated on 2024-05-27T16:20:10Z by kres bcb280a.
 
 name: default
 concurrency:
@@ -125,7 +125,7 @@ jobs:
       - name: save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: |-
             _out
             !_out/coverage.txt
@@ -192,7 +192,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         run: |
@@ -203,6 +203,15 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
         run: |
           make e2e-docker
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-e2e-docker-short
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   e2e-iso:
     permissions:
       actions: read
@@ -250,7 +259,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         run: |
@@ -260,6 +269,15 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make e2e-iso
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-e2e-iso
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   e2e-qemu-short:
     permissions:
       actions: read
@@ -307,7 +325,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         run: |
@@ -318,6 +336,15 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-e2e-qemu-short
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-aws:
     permissions:
       actions: read
@@ -379,7 +406,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -505,7 +532,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -655,7 +682,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -805,7 +832,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -932,7 +959,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -986,6 +1013,15 @@ jobs:
           WITH_SKIP_BOOT_PHASE_FINISHED_CHECK: "yes"
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-cilium
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-cloud-images:
     permissions:
       actions: read
@@ -1047,7 +1083,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1131,7 +1167,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1237,7 +1273,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1293,6 +1329,15 @@ jobs:
           WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.yaml'
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-extensions
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-image-factory:
     permissions:
       actions: read
@@ -1348,7 +1393,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1456,6 +1501,15 @@ jobs:
           KUBERNETES_VERSION: 1.26.5
         run: |
           sudo -E make e2e-image-factory
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-image-factory
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-images:
     permissions:
       actions: read
@@ -1511,7 +1565,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1590,7 +1644,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1629,6 +1683,15 @@ jobs:
           WITH_CONTROL_PLANE_PORT: "443"
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-misc-0
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-misc-1:
     permissions:
       actions: read
@@ -1684,7 +1747,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1741,6 +1804,15 @@ jobs:
           WITH_SIDEROLINK_AGENT: tunnel
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-misc-1
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-misc-2:
     permissions:
       actions: read
@@ -1796,7 +1868,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1844,6 +1916,15 @@ jobs:
           WITH_DISK_ENCRYPTION: "true"
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-misc-2
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-misc-3:
     permissions:
       actions: read
@@ -1899,7 +1980,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -1924,6 +2005,15 @@ jobs:
           WITH_NETWORK_CHAOS: "yes"
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-misc-3
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-misc-4:
     permissions:
       actions: read
@@ -1979,7 +2069,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2013,6 +2103,15 @@ jobs:
           WITH_SIDEROLINK_AGENT: tunnel
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-misc-4
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-provision-0:
     permissions:
       actions: read
@@ -2068,7 +2167,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2094,6 +2193,15 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-0
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-provision-0
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-provision-1:
     permissions:
       actions: read
@@ -2149,7 +2257,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2175,6 +2283,15 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-1
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-provision-1
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-provision-2:
     permissions:
       actions: read
@@ -2230,7 +2347,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2256,6 +2373,15 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make provision-tests-track-2
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-provision-2
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-qemu:
     permissions:
       actions: read
@@ -2311,7 +2437,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2334,6 +2460,15 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-qemu
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-qemu-csi:
     permissions:
       actions: read
@@ -2389,7 +2524,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2419,6 +2554,15 @@ jobs:
           WITH_TEST: run_csi_tests
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-qemu-csi
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-qemu-encrypted-vip:
     permissions:
       actions: read
@@ -2474,7 +2618,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2500,6 +2644,15 @@ jobs:
           WITH_VIRTUAL_IP: "true"
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-qemu-encrypted-vip
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-qemu-race:
     permissions:
       actions: read
@@ -2555,7 +2708,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2588,6 +2741,15 @@ jobs:
           TAG_SUFFIX: -race
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-qemu-race
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   integration-reproducibility-test:
     permissions:
       actions: read
@@ -2643,7 +2805,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2709,7 +2871,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -2755,6 +2917,15 @@ jobs:
           WITH_TRUSTED_BOOT_ISO: "true"
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-trusted-boot
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"
   push:
     permissions:
       actions: read

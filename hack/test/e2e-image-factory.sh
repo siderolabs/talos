@@ -59,7 +59,6 @@ function create_cluster {
     --with-apply-config \
     --talos-version="${FACTORY_VERSION}" \
     --install-image="${FACTORY_HOSTNAME}/${INSTALLER_IMAGE_NAME}/${FACTORY_SCHEMATIC}:${FACTORY_VERSION}" \
-    --crashdump \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"
 

@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-27T09:21:08Z by kres b5844f8.
+# Generated on 2024-05-27T16:20:10Z by kres bcb280a.
 
 name: integration-extensions-cron
 concurrency:
@@ -56,7 +56,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
@@ -112,3 +112,12 @@ jobs:
           WITH_CONFIG_PATCH_WORKER: '@_out/extensions-patch.yaml'
         run: |
           sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: talos-logs-integration-extensions
+          path: |-
+            ~/.talos/clusters/**/*.log
+            !~/.talos/clusters/**/swtpm.log
+          retention-days: "5"

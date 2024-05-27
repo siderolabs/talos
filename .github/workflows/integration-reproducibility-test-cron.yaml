@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-24T09:48:06Z by kres b5844f8.
+# Generated on 2024-05-27T16:20:10Z by kres bcb280a.
 
 name: integration-reproducibility-test-cron
 concurrency:
@@ -56,7 +56,7 @@ jobs:
         if: github.event_name != 'schedule'
         uses: actions/download-artifact@v4
         with:
-          name: artifacts
+          name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
         if: github.event_name != 'schedule'
