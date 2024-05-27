@@ -524,7 +524,7 @@ provision-tests-track-%:
 
 installer-with-extensions: $(ARTIFACTS)/extensions/_out/extensions-metadata
 	$(MAKE) image-installer \
-		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) $(shell cat $(ARTIFACTS)/extensions/_out/extensions-metadata | grep -vE 'tailscale|xen-guest-agent|nvidia' | xargs -n 1 echo --system-extension-image)"
+		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG) $(shell cat $(ARTIFACTS)/extensions/_out/extensions-metadata | grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent' | xargs -n 1 echo --system-extension-image)"
 	crane push $(ARTIFACTS)/installer-amd64.tar $(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-amd64-extensions
 	echo -n "$(REGISTRY_AND_USERNAME)/installer:$(IMAGE_TAG)-amd64-extensions" | jq -Rs -f hack/test/extensions/extension-patch-filter.jq | yq eval ".[] | split_doc" -P > $(ARTIFACTS)/extensions-patch.yaml
 

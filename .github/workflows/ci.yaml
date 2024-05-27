@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-05-25T14:28:32Z by kres b5844f8.
+# Generated on 2024-05-27T09:21:08Z by kres b5844f8.
 
 name: default
 concurrency:
@@ -1265,6 +1265,9 @@ jobs:
           path: _out/extensions
           ref: main
           repository: siderolabs/extensions
+      - name: unshallow-extensions
+        run: |
+          git -C _out/extensions fetch --prune --unshallow
       - name: set variables
         run: |
           cat _out/talos-metadata >> "$GITHUB_ENV"

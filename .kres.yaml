@@ -770,6 +770,9 @@ spec:
             repository: siderolabs/extensions
             ref: main
             path: _out/extensions
+        - name: unshallow-extensions
+          nonMakeStep: true
+          command: git -C _out/extensions fetch --prune --unshallow
         - name: set variables
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
