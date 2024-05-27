@@ -125,6 +125,7 @@ spec:
             artifactPath: _out
             additionalArtifacts:
               - "!_out/coverage.txt"
+
     - name: push
       buildxOptions:
         enabled: true
