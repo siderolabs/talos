@@ -167,12 +167,16 @@ func (suite *CommonSuite) TestDNSResolver() {
 	suite.Require().Equal("", stdout)
 	suite.Require().Contains(stderr, "'index.html' saved")
 
-	stdout, stderr, err = suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "nslookup really-long-record.dev.siderolabs.io")
+	_, stderr, err = suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "apk add --update bind-tools")
+	suite.Require().NoError(err)
+	suite.Require().Empty(stderr)
+
+	stdout, stderr, err = suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "dig really-long-record.dev.siderolabs.io")
 	suite.Require().NoError(err)
 
-	suite.Require().Contains(stdout, "really-long-record.dev.siderolabs.io")
-	suite.Require().NotContains(stdout, "Can't find")
-	suite.Require().NotContains(stdout, "No answer")
+	suite.Require().Contains(stdout, "status: NOERROR")
+	suite.Require().Contains(stdout, "ANSWER: 34")
+	suite.Require().NotContains(stdout, "status: NXDOMAIN")
 	suite.Require().Equal(stderr, "")
 }
 
