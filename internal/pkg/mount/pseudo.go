@@ -32,6 +32,7 @@ func PseudoSubMountPoints() (mountpoints *Points, err error) {
 	pseudo.Set("devpts", NewMountPoint("devpts", "/dev/pts", "devpts", unix.MS_NOSUID|unix.MS_NOEXEC, "ptmxmode=000,mode=620,gid=5"))
 	pseudo.Set("hugetlb", NewMountPoint("hugetlbfs", "/dev/hugepages", "hugetlbfs", unix.MS_NOSUID|unix.MS_NODEV, ""))
 	pseudo.Set("securityfs", NewMountPoint("securityfs", "/sys/kernel/security", "securityfs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV|unix.MS_RELATIME, ""))
+	pseudo.Set("tracefs", NewMountPoint("securityfs", "/sys/kernel/tracing", "tracefs", unix.MS_NOSUID|unix.MS_NOEXEC|unix.MS_NODEV, ""))
 
 	if _, err := os.Stat(constants.EFIVarsMountPoint); err == nil {
 		// mount EFI vars if they exist
