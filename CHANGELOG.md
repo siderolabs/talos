@@ -1,3 +1,69 @@
+## [Talos 1.7.3](https://github.com/siderolabs/talos/releases/tag/v1.7.3) (2024-05-29)
+
+Welcome to the v1.7.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.32
+
+Talos is built with Go 1.22.3.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Dmitry Sharshakov
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`92ec41c22`](https://github.com/siderolabs/talos/commit/92ec41c221e1624e134f147137d392e95fc26444) fix: mount `tracefs` filesystem
+* [`1b3ac2ca6`](https://github.com/siderolabs/talos/commit/1b3ac2ca6c93baf0971fb26d04043e352987c4bb) fix: workaround problems with udevd races
+* [`1f2a870a7`](https://github.com/siderolabs/talos/commit/1f2a870a75a99a401e08785886aa6d4f8178749d) fix: time sync over NTP from future era
+* [`4e9aa3007`](https://github.com/siderolabs/talos/commit/4e9aa3007035c550e5e9c5683494ba485279d256) fix: correctly handle dns messages in our dns implementation
+* [`8159a0057`](https://github.com/siderolabs/talos/commit/8159a00571e2ca7ed2370f5311e5a8c9e1d32aca) fix: panic in osroot controller
+* [`b78fb4fea`](https://github.com/siderolabs/talos/commit/b78fb4fea9d8dda1198fbd546526c8abe0429783) fix: update go-tail library to fix 'short read' error
+* [`2df5319ce`](https://github.com/siderolabs/talos/commit/2df5319ce8d3d8ba437d2f64a3bc15cfb4157ed6) test: add a test for watchdog timers
+* [`e529fccb2`](https://github.com/siderolabs/talos/commit/e529fccb2b090c0d650b9ffdd3f664f9bd2eb388) feat: update Linux to 6.6.32
+</p>
+</details>
+
+### Changes from siderolabs/go-tail
+<details><summary>1 commit</summary>
+<p>
+
+* [`7cb7294`](https://github.com/siderolabs/go-tail/commit/7cb7294b8af33175bc463c84493776e6e4da9c4f) fix: remove unexpected short read error
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`a201d27`](https://github.com/siderolabs/pkgs/commit/a201d2775506045f5e0307f450eefc210ac0ace3) feat: bump Linux to 6.6.32
+* [`ce9b072`](https://github.com/siderolabs/pkgs/commit/ce9b0729ea769edffe4afd889ddf0e37d7c8af98) feat: update Linux firmware to 20240513
+* [`82b048a`](https://github.com/siderolabs/pkgs/commit/82b048a5d1de28593ba3ecd654114a11016d8ac1) feat: update ipxe to the latest
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/beevik/ntp**          v1.3.1 -> v1.4.2
+* **github.com/siderolabs/go-tail**  v0.1.0 -> v0.1.1
+* **github.com/siderolabs/pkgs**     v1.7.0-14-g9caa8be -> v1.7.0-17-ga201d27
+* **golang.org/x/net**               v0.23.0 -> v0.24.0
+* **golang.org/x/sys**               v0.18.0 -> v0.19.0
+* **golang.org/x/term**              v0.18.0 -> v0.19.0
+
+Previous release can be found at [v1.7.2](https://github.com/siderolabs/talos/releases/tag/v1.7.2)
+
 ## [Talos 1.7.2](https://github.com/siderolabs/talos/releases/tag/v1.7.2) (2024-05-17)
 
 Welcome to the v1.7.2 release of Talos!
