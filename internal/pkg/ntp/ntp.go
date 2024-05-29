@@ -357,11 +357,11 @@ func (syncer *Syncer) queryPTP(server string) (*Measurement, error) {
 		return nil, err
 	}
 
-	offset := time.Until(time.Unix(ts.Sec, ts.Nsec))
+	offset := time.Until(time.Unix(int64(ts.Sec), int64(ts.Nsec)))
 	syncer.logger.Debug("PTP clock",
 		zap.Duration("clock_offset", offset),
-		zap.Int64("sec", ts.Sec),
-		zap.Int64("nsec", ts.Nsec),
+		zap.Int64("sec", int64(ts.Sec)),
+		zap.Int64("nsec", int64(ts.Nsec)),
 		zap.String("device", server),
 	)
 
@@ -431,20 +431,12 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 		fmt.Fprintf(&buf, "adjusting time (jump) by %s via %s", offset, server)
 
 		req = unix.Timex{
-			Modes: unix.ADJ_SETOFFSET | unix.ADJ_NANO | unix.ADJ_STATUS | unix.ADJ_MAXERROR | unix.ADJ_ESTERROR,
-			Time: unix.Timeval{
-				Sec:  int64(offset / time.Second),
-				Usec: int64(offset / time.Nanosecond % time.Second),
-			},
+			Modes:    unix.ADJ_SETOFFSET | unix.ADJ_NANO | unix.ADJ_STATUS | unix.ADJ_MAXERROR | unix.ADJ_ESTERROR,
+			Time:     Timeval(offset),
 			Maxerror: 0,
 			Esterror: 0,
 		}
 
-		// kernel wants tv_usec to be positive
-		if req.Time.Usec < 0 {
-			req.Time.Sec--
-			req.Time.Usec += int64(time.Second / time.Nanosecond)
-		}
 	} else {
 		fmt.Fprintf(&buf, "adjusting time (slew) by %s via %s", offset, server)
 
@@ -453,12 +445,12 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 
 		req = unix.Timex{
 			Modes:    unix.ADJ_OFFSET | unix.ADJ_NANO | unix.ADJ_STATUS | unix.ADJ_TIMECONST | unix.ADJ_MAXERROR | unix.ADJ_ESTERROR,
-			Offset:   int64(offset / time.Nanosecond),
 			Status:   unix.STA_PLL,
 			Maxerror: 0,
 			Esterror: 0,
-			Constant: int64(log2iPollSeconds) - 4,
 		}
+		SetOffset(&req, offset/time.Nanosecond)
+		SetConstant(&req, log2iPollSeconds-4)
 	}
 
 	switch leapSecond { //nolint:exhaustive
@@ -496,10 +488,10 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 	}
 
 	syncer.logger.Debug("adjtime state",
-		zap.Int64("constant", req.Constant),
+		zap.Int64("constant", int64(req.Constant)),
 		zap.Duration("offset", time.Duration(req.Offset)),
-		zap.Int64("freq_offset", req.Freq),
-		zap.Int64("freq_offset_ppm", req.Freq/65536),
+		zap.Int64("freq_offset", int64(req.Freq)),
+		zap.Int64("freq_offset_ppm", int64(req.Freq)/65536),
 	)
 
 	if err == nil {
