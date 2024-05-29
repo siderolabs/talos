@@ -228,6 +228,27 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 	}
 }
 
+// LogPodLogs logs the logs of the pod with the given namespace and name.
+func (k8sSuite *K8sSuite) LogPodLogs(ctx context.Context, namespace, podName string) {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	req := k8sSuite.Clientset.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{})
+
+	readCloser, err := req.Stream(ctx)
+	if err != nil {
+		k8sSuite.T().Logf("failed to get pod logs: %s", err)
+	}
+
+	defer readCloser.Close() //nolint:errcheck
+
+	scanner := bufio.NewScanner(readCloser)
+
+	for scanner.Scan() {
+		k8sSuite.T().Logf("%s/%s: %s", namespace, podName, scanner.Text())
+	}
+}
+
 // WaitForPodToBeDeleted waits for the pod with the given namespace and name to be deleted.
 func (k8sSuite *K8sSuite) WaitForPodToBeDeleted(ctx context.Context, timeout time.Duration, namespace, podName string) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)

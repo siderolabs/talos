@@ -157,7 +157,13 @@ func (suite *TinkSuite) TestDeploy() {
 	cpCfgBytes, err := cpCfg.Bytes()
 	suite.Require().NoError(err)
 
-	suite.waitForEndpointReady(talosEndpoint)
+	readyErr := suite.waitForEndpointReady(talosEndpoint)
+
+	if readyErr != nil {
+		suite.LogPodLogs(ctx, namespace, ss+"-0")
+	}
+
+	suite.Require().NoError(readyErr)
 
 	insecureClient, err := client.New(ctx,
 		client.WithEndpoints(talosEndpoint),
@@ -182,7 +188,13 @@ func (suite *TinkSuite) TestDeploy() {
 
 	suite.T().Logf("talosconfig = %s", string(ensure.Value(talosconfig.Bytes())))
 
-	suite.waitForEndpointReady(talosEndpoint)
+	readyErr = suite.waitForEndpointReady(talosEndpoint)
+
+	if readyErr != nil {
+		suite.LogPodLogs(ctx, namespace, ss+"-0")
+	}
+
+	suite.Require().NoError(readyErr)
 
 	talosClient, err := client.New(ctx,
 		client.WithConfigContext(talosconfig.Contexts[talosconfig.Context]),
@@ -246,8 +258,8 @@ func (access *tinkClusterAccess) NodesByType(typ machine.Type) []cluster.NodeInf
 	}
 }
 
-func (suite *TinkSuite) waitForEndpointReady(endpoint string) {
-	suite.Require().NoError(retry.Constant(30*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+func (suite *TinkSuite) waitForEndpointReady(endpoint string) error {
+	return retry.Constant(30*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
 		c, err := tls.Dial("tcp", endpoint,
 			&tls.Config{
 				InsecureSkipVerify: true,
@@ -259,7 +271,7 @@ func (suite *TinkSuite) waitForEndpointReady(endpoint string) {
 		}
 
 		return retry.ExpectedError(err)
-	}))
+	})
 }
 
 func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosImage string) []unstructured.Unstructured {

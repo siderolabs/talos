@@ -6,6 +6,7 @@ package block
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strconv"
@@ -74,11 +75,17 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 				continue
 			}
 
-			if err := ctrl.rescan(ctx, r, logger, maps.Keys(nextRescan)); err != nil {
-				return fmt.Errorf("failed to rescan devices: %w", err)
-			}
+			logger.Debug("rescanning devices", zap.Strings("devices", maps.Keys(nextRescan)))
 
-			nextRescan = map[string]int{}
+			if nextRescanBatch, err := ctrl.rescan(ctx, r, logger, maps.Keys(nextRescan)); err != nil {
+				return fmt.Errorf("failed to rescan devices: %w", err)
+			} else {
+				nextRescan = map[string]int{}
+
+				for id := range nextRescanBatch {
+					nextRescan[id] = lastObservedGenerations[id]
+				}
+			}
 		case <-r.EventCh():
 			devices, err := safe.ReaderListAll[*block.Device](ctx, r)
 			if err != nil {
@@ -125,10 +132,11 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 	}
 }
 
-//nolint:gocyclo
-func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtime, logger *zap.Logger, ids []string) error {
+//nolint:gocyclo,cyclop
+func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtime, logger *zap.Logger, ids []string) (map[string]struct{}, error) {
 	failedIDs := map[string]struct{}{}
 	touchedIDs := map[string]struct{}{}
+	nextRescan := map[string]struct{}{}
 
 	for _, id := range ids {
 		device, err := safe.ReaderGetByID[*block.Device](ctx, r, id)
@@ -139,17 +147,26 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 				continue
 			}
 
-			return fmt.Errorf("failed to get device: %w", err)
+			return nil, fmt.Errorf("failed to get device: %w", err)
 		}
 
-		info, err := blkid.ProbePath(filepath.Join("/dev", id))
+		info, err := blkid.ProbePath(filepath.Join("/dev", id), blkid.WithProbeLogger(logger.With(zap.String("device", id))))
 		if err != nil {
-			logger.Debug("failed to probe device", zap.String("id", id), zap.Error(err))
+			if errors.Is(err, blkid.ErrFailedLock) {
+				// failed to lock the blockdevice, retry later
+				logger.Debug("failed to lock device, retrying later", zap.String("id", id))
 
-			failedIDs[id] = struct{}{}
+				nextRescan[id] = struct{}{}
+			} else {
+				logger.Debug("failed to probe device", zap.String("id", id), zap.Error(err))
+
+				failedIDs[id] = struct{}{}
+			}
 
 			continue
 		}
+
+		logger.Debug("probed device", zap.String("id", id), zap.Any("info", info))
 
 		if err = safe.WriterModify(ctx, r, block.NewDiscoveredVolume(block.NamespaceName, id), func(dv *block.DiscoveredVolume) error {
 			dv.TypedSpec().Type = device.TypedSpec().Type
@@ -164,7 +181,7 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 
 			return nil
 		}); err != nil {
-			return fmt.Errorf("failed to write discovered volume: %w", err)
+			return nil, fmt.Errorf("failed to write discovered volume: %w", err)
 		}
 
 		touchedIDs[id] = struct{}{}
@@ -178,6 +195,11 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 				dv.TypedSpec().Parent = id
 
 				dv.TypedSpec().Size = nested.ProbedSize
+
+				if dv.TypedSpec().Size == 0 {
+					dv.TypedSpec().Size = nested.PartitionSize
+				}
+
 				dv.TypedSpec().SectorSize = info.SectorSize
 				dv.TypedSpec().IOSize = info.IOSize
 
@@ -205,7 +227,7 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 
 				return nil
 			}); err != nil {
-				return fmt.Errorf("failed to write discovered volume: %w", err)
+				return nil, fmt.Errorf("failed to write discovered volume: %w", err)
 			}
 
 			touchedIDs[partID] = struct{}{}
@@ -215,7 +237,7 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 	// clean up discovered volumes
 	discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
 	if err != nil {
-		return fmt.Errorf("failed to list discovered volumes: %w", err)
+		return nil, fmt.Errorf("failed to list discovered volumes: %w", err)
 	}
 
 	for iterator := discoveredVolumes.Iterator(); iterator.Next(); {
@@ -238,12 +260,12 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 		if isFailed || parentTouched {
 			// if the probe failed, or if the parent was touched, while this device was not, remove it
 			if err = r.Destroy(ctx, dv.Metadata()); err != nil {
-				return fmt.Errorf("failed to destroy discovered volume: %w", err)
+				return nil, fmt.Errorf("failed to destroy discovered volume: %w", err)
 			}
 		}
 	}
 
-	return nil
+	return nextRescan, nil
 }
 
 func (ctrl *DiscoveryController) fillDiscoveredVolumeFromInfo(dv *block.DiscoveredVolume, info blkid.ProbeResult) {

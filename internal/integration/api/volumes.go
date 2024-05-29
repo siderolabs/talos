@@ -44,13 +44,18 @@ func (suite *VolumesSuite) TearDownTest() {
 
 // TestDiscoveredVolumes verifies that standard Talos partitions are discovered.
 func (suite *VolumesSuite) TestDiscoveredVolumes() {
-	suite.T().Skip("skipping test, as it's flaky (going to address it later)")
-
 	if !suite.Capabilities().SupportsVolumes {
 		suite.T().Skip("cluster doesn't support volumes")
 	}
 
-	node := suite.RandomDiscoveredNodeInternalIP()
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			suite.testDiscoveredVolumes(node)
+		})
+	}
+}
+
+func (suite *VolumesSuite) testDiscoveredVolumes(node string) {
 	ctx := client.WithNode(suite.ctx, node)
 
 	volumes, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
@@ -59,7 +64,9 @@ func (suite *VolumesSuite) TestDiscoveredVolumes() {
 	expectedVolumes := map[string]struct {
 		Name string
 	}{
-		"META": {},
+		"META": {
+			Name: "talosmeta",
+		},
 		"STATE": {
 			Name: "xfs",
 		},
@@ -71,12 +78,12 @@ func (suite *VolumesSuite) TestDiscoveredVolumes() {
 	for iterator := volumes.Iterator(); iterator.Next(); {
 		dv := iterator.Value()
 
-		suite.T().Logf("Volume: %s %s %s %s", dv.Metadata().ID(), dv.TypedSpec().Name, dv.TypedSpec().PartitionLabel, dv.TypedSpec().Label)
+		suite.T().Logf("volume: %s %s %s %s", dv.Metadata().ID(), dv.TypedSpec().Name, dv.TypedSpec().PartitionLabel, dv.TypedSpec().Label)
 
 		partitionLabel := dv.TypedSpec().PartitionLabel
 		filesystemLabel := dv.TypedSpec().Label
 
-		// this is encrypted partition, skip it, we should see another device with actual filesystem
+		// this is encrypted partition, skip it, we should see another device with the actual filesystem
 		if dv.TypedSpec().Name == "luks" {
 			continue
 		}
@@ -95,12 +102,16 @@ func (suite *VolumesSuite) TestDiscoveredVolumes() {
 			}
 		}
 
-		suite.Assert().Equal(expected.Name, dv.TypedSpec().Name)
+		suite.Assert().Equal(expected.Name, dv.TypedSpec().Name, "node: ", node)
 
 		delete(expectedVolumes, id)
 	}
 
-	suite.Assert().Empty(expectedVolumes)
+	suite.Assert().Empty(expectedVolumes, "node: ", node)
+
+	if suite.T().Failed() {
+		suite.DumpLogs(suite.ctx, node, "controller-runtime", "block.")
+	}
 }
 
 func init() {

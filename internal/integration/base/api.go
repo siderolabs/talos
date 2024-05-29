@@ -32,6 +32,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
@@ -744,6 +745,34 @@ waitLoop:
 			apiSuite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
 		} else {
 			apiSuite.Assert().Equal(preReset, postReset, "ephemeral partition was not reset")
+		}
+	}
+}
+
+// DumpLogs dumps a set of logs from the node.
+func (apiSuite *APISuite) DumpLogs(ctx context.Context, node string, service, pattern string) {
+	nodeCtx := client.WithNode(ctx, node)
+
+	logsStream, err := apiSuite.Client.Logs(
+		nodeCtx,
+		constants.SystemContainerdNamespace,
+		common.ContainerDriver_CONTAINERD,
+		service,
+		false,
+		-1,
+	)
+	apiSuite.Require().NoError(err)
+
+	logReader, err := client.ReadStream(logsStream)
+	apiSuite.Require().NoError(err)
+
+	defer logReader.Close() //nolint:errcheck
+
+	scanner := bufio.NewScanner(logReader)
+
+	for scanner.Scan() {
+		if pattern == "" || strings.Contains(scanner.Text(), pattern) {
+			apiSuite.T().Logf("%s (%s): %s", node, service, scanner.Text())
 		}
 	}
 }
