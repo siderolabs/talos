@@ -74,3 +74,15 @@ func (q Quirks) UseZSTDCompression() bool {
 
 	return q.v.GTE(minVersionZstd)
 }
+
+var minVersionMultidoc = semver.MustParse("1.5.0")
+
+// SupportsMultidoc returns true if the Talos version supports multidoc machine configs.
+func (q Quirks) SupportsMultidoc() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionMultidoc)
+}
