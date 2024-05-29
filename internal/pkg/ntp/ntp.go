@@ -357,11 +357,11 @@ func (syncer *Syncer) queryPTP(server string) (*Measurement, error) {
 		return nil, err
 	}
 
-	offset := time.Until(time.Unix(int64(ts.Sec), int64(ts.Nsec)))
+	offset := time.Until(time.Unix(ts.Unix()))
 	syncer.logger.Debug("PTP clock",
 		zap.Duration("clock_offset", offset),
-		zap.Int64("sec", int64(ts.Sec)),
-		zap.Int64("nsec", int64(ts.Nsec)),
+		zap.Int("sec", int(ts.Sec)),
+		zap.Int("nsec", int(ts.Nsec)),
 		zap.String("device", server),
 	)
 
@@ -432,11 +432,10 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 
 		req = unix.Timex{
 			Modes:    unix.ADJ_SETOFFSET | unix.ADJ_NANO | unix.ADJ_STATUS | unix.ADJ_MAXERROR | unix.ADJ_ESTERROR,
-			Time:     Timeval(offset),
+			Time:     toTimeval(offset),
 			Maxerror: 0,
 			Esterror: 0,
 		}
-
 	} else {
 		fmt.Fprintf(&buf, "adjusting time (slew) by %s via %s", offset, server)
 
@@ -449,8 +448,8 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 			Maxerror: 0,
 			Esterror: 0,
 		}
-		SetOffset(&req, offset/time.Nanosecond)
-		SetConstant(&req, log2iPollSeconds-4)
+		setOffset(&req, offset/time.Nanosecond)
+		setConstant(&req, log2iPollSeconds-4)
 	}
 
 	switch leapSecond { //nolint:exhaustive
@@ -488,10 +487,10 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 	}
 
 	syncer.logger.Debug("adjtime state",
-		zap.Int64("constant", int64(req.Constant)),
+		zap.Int("constant", int(req.Constant)),
 		zap.Duration("offset", time.Duration(req.Offset)),
-		zap.Int64("freq_offset", int64(req.Freq)),
-		zap.Int64("freq_offset_ppm", int64(req.Freq)/65536),
+		zap.Int("freq_offset", int(req.Freq)),
+		zap.Int("freq_offset_ppm", int(req.Freq)/65536),
 	)
 
 	if err == nil {

@@ -12,7 +12,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func Timeval(offset time.Duration) unix.Timeval {
+func toTimeval(offset time.Duration) unix.Timeval {
 	t := unix.Timeval{
 		Sec:  int32(offset / time.Second),
 		Usec: int32(offset / time.Nanosecond % time.Second),
@@ -27,8 +27,12 @@ func Timeval(offset time.Duration) unix.Timeval {
 	return t
 }
 
-func SetOffset(t *unix.Timex, offset time.Duration) {
+func toUnix(ts unix.Timespec) time.Time {
+	return time.Unix(int64(ts.Sec), int64(ts.Nsec))
+}
+
+func setOffset(t *unix.Timex, offset time.Duration) {
 	t.Offset = int32(offset / time.Nanosecond)
 }
 
-func SetConstant(t *unix.Timex, constant int) { t.Constant = int32(constant) }
+func setConstant(t *unix.Timex, constant int) { t.Constant = int32(constant) }
