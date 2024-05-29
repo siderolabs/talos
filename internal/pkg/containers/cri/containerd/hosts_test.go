@@ -59,7 +59,7 @@ func TestGenerateHostsWithTLS(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://registry-1.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n\n  [host.\"https://registry-2.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n    skip_verify = true\n"), //nolint:lll
+						Contents: []byte("[host]\n  [host.'https://registry-1.docker.io']\n    capabilities = ['pull', 'resolve']\n  [host.'https://registry-2.docker.io']\n    capabilities = ['pull', 'resolve']\n    skip_verify = true\n"), //nolint:lll
 					},
 				},
 			},
@@ -83,7 +83,7 @@ func TestGenerateHostsWithTLS(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://some.host:123\"]\n    ca = \"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-ca.crt\"\n    client = [[\"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-client.crt\", \"/etc/cri/conf.d/hosts/some.host_123_/some.host:123-client.key\"]]\n    skip_verify = true\n"), //nolint:lll
+						Contents: []byte("[host]\n  [host.'https://some.host:123']\n    ca = '/etc/cri/conf.d/hosts/some.host_123_/some.host:123-ca.crt'\n    client = [['/etc/cri/conf.d/hosts/some.host_123_/some.host:123-client.crt', '/etc/cri/conf.d/hosts/some.host_123_/some.host:123-client.key']]\n    skip_verify = true\n"), //nolint:lll
 					},
 				},
 			},
@@ -92,7 +92,7 @@ func TestGenerateHostsWithTLS(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://registry-2.docker.io\"]\n    skip_verify = true\n"),
+						Contents: []byte("[host]\n  [host.'https://registry-2.docker.io']\n    skip_verify = true\n"),
 					},
 				},
 			},
@@ -132,7 +132,7 @@ func TestGenerateHostsWithoutTLS(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://registry-1.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n\n  [host.\"https://registry-2.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n"), //nolint:lll
+						Contents: []byte("[host]\n  [host.'https://registry-1.docker.io']\n    capabilities = ['pull', 'resolve']\n  [host.'https://registry-2.docker.io']\n    capabilities = ['pull', 'resolve']\n"), //nolint:lll
 					},
 				},
 			},
@@ -141,7 +141,7 @@ func TestGenerateHostsWithoutTLS(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://some.host:123\"]\n"),
+						Contents: []byte("[host]\n  [host.'https://some.host:123']\n"),
 					},
 				},
 			},
@@ -150,7 +150,7 @@ func TestGenerateHostsWithoutTLS(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://my-registry\"]\n    capabilities = [\"pull\", \"resolve\"]\n"),
+						Contents: []byte("[host]\n  [host.'https://my-registry']\n    capabilities = ['pull', 'resolve']\n"),
 					},
 				},
 			},
@@ -205,7 +205,7 @@ func TestGenerateHostsTLSWildcard(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://my-registry1\"]\n    ca = \"/etc/cri/conf.d/hosts/_default/my-registry1-ca.crt\"\n    capabilities = [\"pull\", \"resolve\"]\n\n  [host.\"https://my-registry2\"]\n    capabilities = [\"pull\", \"resolve\"]\n"), //nolint:lll
+						Contents: []byte("[host]\n  [host.'https://my-registry1']\n    capabilities = ['pull', 'resolve']\n    ca = '/etc/cri/conf.d/hosts/_default/my-registry1-ca.crt'\n  [host.'https://my-registry2']\n    capabilities = ['pull', 'resolve']\n"), //nolint:lll
 					},
 				},
 			},
@@ -219,7 +219,7 @@ func TestGenerateHostsTLSWildcard(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://my-registry1\"]\n    ca = \"/etc/cri/conf.d/hosts/my-registry1/my-registry1-ca.crt\"\n"),
+						Contents: []byte("[host]\n  [host.'https://my-registry1']\n    ca = '/etc/cri/conf.d/hosts/my-registry1/my-registry1-ca.crt'\n"),
 					},
 				},
 			},
@@ -269,7 +269,7 @@ func TestGenerateHostsWithHarbor(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://harbor/v2/mirrors/proxy.docker.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n    override_path = true\n    skip_verify = true\n"),
+						Contents: []byte("[host]\n  [host.'https://harbor/v2/mirrors/proxy.docker.io']\n    capabilities = ['pull', 'resolve']\n    override_path = true\n    skip_verify = true\n"),
 					},
 				},
 			},
@@ -278,7 +278,7 @@ func TestGenerateHostsWithHarbor(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://harbor/v2/mirrors/proxy.ghcr.io\"]\n    capabilities = [\"pull\", \"resolve\"]\n    override_path = true\n    skip_verify = true\n"),
+						Contents: []byte("[host]\n  [host.'https://harbor/v2/mirrors/proxy.ghcr.io']\n    capabilities = ['pull', 'resolve']\n    override_path = true\n    skip_verify = true\n"),
 					},
 				},
 			},
@@ -287,7 +287,7 @@ func TestGenerateHostsWithHarbor(t *testing.T) {
 					{
 						Name:     "hosts.toml",
 						Mode:     0o600,
-						Contents: []byte("\n[host]\n\n  [host.\"https://harbor\"]\n    skip_verify = true\n"),
+						Contents: []byte("[host]\n  [host.'https://harbor']\n    skip_verify = true\n"),
 					},
 				},
 			},

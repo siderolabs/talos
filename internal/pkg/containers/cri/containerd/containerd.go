@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"path/filepath"
 
-	"github.com/BurntSushi/toml"
+	"github.com/pelletier/go-toml/v2"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -39,7 +39,7 @@ func GenerateCRIConfig(r config.Registries) ([]byte, error) {
 
 	var buf bytes.Buffer
 
-	if err := toml.NewEncoder(&buf).Encode(&ctrdCfg); err != nil {
+	if err := toml.NewEncoder(&buf).SetIndentTables(true).Encode(&ctrdCfg); err != nil {
 		return nil, err
 	}
 

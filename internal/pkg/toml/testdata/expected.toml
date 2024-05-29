@@ -5,16 +5,19 @@
 version = 2
 
 [metrics]
-  address = "0.0.0.0:11234"
+  address = '0.0.0.0:11234'
 
 [plugins]
-  [plugins."io.containerd.grpc.v1.cri"]
-    sandbox_image = "registry.k8s.io/pause:3.8"
-    [plugins."io.containerd.grpc.v1.cri".containerd]
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  [plugins.'io.containerd.grpc.v1.cri']
+    sandbox_image = 'registry.k8s.io/pause:3.8'
+
+    [plugins.'io.containerd.grpc.v1.cri'.containerd]
+      [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes]
+        [plugins.'io.containerd.grpc.v1.cri'.containerd.runtimes.runc]
           discard_unpacked_layers = true
-          runtime_type = "io.containerd.runc.v2"
-    [plugins."io.containerd.grpc.v1.cri".registry]
-      config_path = "/etc/cri/conf.d/hosts"
-      [plugins."io.containerd.grpc.v1.cri".registry.configs]
+          runtime_type = 'io.containerd.runc.v2'
+
+    [plugins.'io.containerd.grpc.v1.cri'.registry]
+      config_path = '/etc/cri/conf.d/hosts'
+
+      [plugins.'io.containerd.grpc.v1.cri'.registry.configs]

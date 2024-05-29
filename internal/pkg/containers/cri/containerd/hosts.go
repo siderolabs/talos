@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/v2/core/remotes/docker"
-	"github.com/pelletier/go-toml"
+	"github.com/pelletier/go-toml/v2"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
@@ -128,10 +128,13 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 			configureEndpoint(u.Host, directoryName, hostsToml.HostConfigs[endpoint], directory)
 
-			tomlBytes, err := toml.Marshal(hostsToml)
-			if err != nil {
+			var tomlBuf bytes.Buffer
+
+			if err := toml.NewEncoder(&tomlBuf).SetIndentTables(true).Encode(hostsToml); err != nil {
 				return nil, err
 			}
+
+			tomlBytes := tomlBuf.Bytes()
 
 			// this is an ugly hack, and neither TOML format nor go-toml library make it easier
 			//
@@ -146,7 +149,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 			//     [host."bar.foo"]
 			//
 			// but this is invalid TOML, as `[host]' is repeated, so we do an ugly hack and remove it below
-			const hostPrefix = "\n[host]\n"
+			const hostPrefix = "[host]\n"
 
 			if i > 0 {
 				if bytes.HasPrefix(tomlBytes, []byte(hostPrefix)) {
@@ -206,8 +209,9 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 
 		configureEndpoint(hostname, directoryName, hostsToml.HostConfigs[defaultHost], directory)
 
-		marshaled, err := toml.Marshal(hostsToml)
-		if err != nil {
+		var tomlBuf bytes.Buffer
+
+		if err = toml.NewEncoder(&tomlBuf).SetIndentTables(true).Encode(hostsToml); err != nil {
 			return nil, err
 		}
 
@@ -215,7 +219,7 @@ func GenerateHosts(cfg config.Registries, basePath string) (*HostsConfig, error)
 			&HostsFile{
 				Name:     "hosts.toml",
 				Mode:     0o600,
-				Contents: marshaled,
+				Contents: tomlBuf.Bytes(),
 			},
 		)
 
