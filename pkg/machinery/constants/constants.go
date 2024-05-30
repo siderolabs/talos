@@ -398,7 +398,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=github-releases depName=etcd-io/etcd
-	DefaultEtcdVersion = "v3.5.13"
+	DefaultEtcdVersion = "v3.5.14"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
