@@ -25,8 +25,10 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []meta.ResourceWithRD{
-		&hardware.Processor{},
 		&hardware.MemoryModule{},
+		&hardware.PCIDevice{},
+		&hardware.Processor{},
+		&hardware.SystemInformation{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

@@ -16,6 +16,18 @@ message MemoryModuleSpec {
   string product_name = 8;
 }
 
+// PCIDeviceSpec represents a single processor.
+message PCIDeviceSpec {
+  string class = 1;
+  string subclass = 2;
+  string vendor = 3;
+  string product = 4;
+  string class_id = 5;
+  string subclass_id = 6;
+  string vendor_id = 7;
+  string product_id = 8;
+}
+
 // ProcessorSpec represents a single processor.
 message ProcessorSpec {
   string socket = 1;

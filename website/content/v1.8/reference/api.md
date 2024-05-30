@@ -95,6 +95,7 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
     - [MemoryModuleSpec](#talos.resource.definitions.hardware.MemoryModuleSpec)
+    - [PCIDeviceSpec](#talos.resource.definitions.hardware.PCIDeviceSpec)
     - [ProcessorSpec](#talos.resource.definitions.hardware.ProcessorSpec)
     - [SystemInformationSpec](#talos.resource.definitions.hardware.SystemInformationSpec)
   
@@ -1848,6 +1849,28 @@ MemoryModuleSpec represents a single Memory.
 | serial_number | [string](#string) |  |  |
 | asset_tag | [string](#string) |  |  |
 | product_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hardware.PCIDeviceSpec"></a>
+
+### PCIDeviceSpec
+PCIDeviceSpec represents a single processor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| class | [string](#string) |  |  |
+| subclass | [string](#string) |  |  |
+| vendor | [string](#string) |  |  |
+| product | [string](#string) |  |  |
+| class_id | [string](#string) |  |  |
+| subclass_id | [string](#string) |  |  |
+| vendor_id | [string](#string) |  |  |
+| product_id | [string](#string) |  |  |
 
 
 

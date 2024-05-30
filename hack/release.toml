@@ -51,6 +51,12 @@ machine:
 Please note that on running cluster you will have to kill CoreDNS pods for this change to apply.
 """
 
+    [notes.lspci]
+        title = "PCI Devices"
+        description = """\
+A list of PCI devices can now be obtained via `PCIDevices` resource, e.g. `talosctl get pcidevices`.
+"""
+
 [make_deps]
 
     [make_deps.tools]
