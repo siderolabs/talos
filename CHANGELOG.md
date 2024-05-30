@@ -1,3 +1,39 @@
+## [Talos 1.7.4](https://github.com/siderolabs/talos/releases/tag/v1.7.4) (2024-05-30)
+
+Welcome to the v1.7.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Talos is built with Go 1.22.3.
+
+
+### Contributors
+
+* Dmitriy Matrenichev
+
+### Changes
+<details><summary>1 commit</summary>
+<p>
+
+* [`b0ad5904c`](https://github.com/siderolabs/talos/commit/b0ad5904ccf29af603a82e1086d0da3baf3e6bfd) fix: correct time adjustment in `time.SyncController`
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/beevik/ntp**  v1.4.2 -> v1.4.3
+* **golang.org/x/net**       v0.24.0 -> v0.25.0
+* **golang.org/x/sys**       v0.19.0 -> v0.20.0
+* **golang.org/x/term**      v0.19.0 -> v0.20.0
+* **golang.org/x/text**      v0.14.0 -> v0.15.0
+
+Previous release can be found at [v1.7.3](https://github.com/siderolabs/talos/releases/tag/v1.7.3)
+
 ## [Talos 1.7.3](https://github.com/siderolabs/talos/releases/tag/v1.7.3) (2024-05-29)
 
 Welcome to the v1.7.3 release of Talos!
