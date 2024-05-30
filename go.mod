@@ -48,7 +48,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.1
 	github.com/aws/aws-sdk-go-v2/service/kms v1.31.0
 	github.com/aws/smithy-go v1.20.2
-	github.com/beevik/ntp v1.4.2
+	github.com/beevik/ntp v1.4.3
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/blang/semver/v4 v4.0.0
 	github.com/cenkalti/backoff/v4 v4.3.0
