@@ -22,6 +22,7 @@ Linux: 6.6.30
 containerd: 2.0.0-rc.2
 runc: 1.2.0-rc.1
 etcd: 3.5.14
+Flannel: 0.25.3
 
 Talos is built with Go 1.22.3.
 """
