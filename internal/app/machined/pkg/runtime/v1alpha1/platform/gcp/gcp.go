@@ -204,6 +204,9 @@ func (g *GCP) KernelArgs(string) procfs.Parameters {
 		procfs.NewParameter("console").Append("ttyS0"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
 		procfs.NewParameter(constants.KernelParamDashboardDisabled).Append("1"),
+		// disable 'kexec' as GCP VMs sometimes are stuck on kexec, and normal soft reboot
+		// doesn't take much longer on VMs
+		procfs.NewParameter("sysctl.kernel.kexec_load_disabled").Append("1"),
 	}
 }
 
