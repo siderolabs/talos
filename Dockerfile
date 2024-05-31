@@ -962,19 +962,16 @@ RUN --mount=type=cache,target=/.cache prototool break check --descriptor-set-pat
 
 # The markdownlint target performs linting on Markdown files.
 
-FROM node:22.1.0-alpine AS lint-markdown
+FROM oven/bun:1-alpine AS lint-markdown
 ARG MARKDOWNLINTCLI_VERSION
 ARG TEXTLINT_VERSION
 ARG TEXTLINT_FILTER_RULE_COMMENTS_VERSION
 ARG TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION
 RUN apk add --no-cache findutils
-RUN npm i -g markdownlint-cli@${MARKDOWNLINTCLI_VERSION}
-RUN npm i -g textlint@${TEXTLINT_VERSION}
-RUN npm i -g textlint-filter-rule-comments@${TEXTLINT_FILTER_RULE_COMMENTS_VERSION}
-RUN npm i -g textlint-rule-one-sentence-per-line@${TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION}
+RUN bun i -g markdownlint-cli@${MARKDOWNLINTCLI_VERSION} textlint@${TEXTLINT_VERSION} textlint-filter-rule-comments@${TEXTLINT_FILTER_RULE_COMMENTS_VERSION} textlint-rule-one-sentence-per-line@${TEXTLINT_RULE_ONE_SENTENCE_PER_LINE_VERSION}
 WORKDIR /src
 COPY . .
-RUN markdownlint \
+RUN bun run --bun markdownlint \
     --ignore '**/LICENCE.md' \
     --ignore '**/CHANGELOG.md' \
     --ignore '**/CODE_OF_CONDUCT.md' \
@@ -994,7 +991,7 @@ RUN find . \
     -not -path './website/content/*/reference/*' \
     -not -path './website/themes/**' \
     -print0 \
-    | xargs -0 textlint
+    | xargs -0 bun run --bun textlint
 
 # The docs target generates documentation.
 
