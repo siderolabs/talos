@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=RouteProtocol -linecomment -text
-
 // RouteProtocol is a routing protocol.
 type RouteProtocol uint8
 

@@ -6,8 +6,6 @@ package nethelpers
 
 import "fmt"
 
-//go:generate enumer -type=PrimaryReselect -linecomment -text
-
 // PrimaryReselect is an ARP targets mode.
 type PrimaryReselect uint8
 

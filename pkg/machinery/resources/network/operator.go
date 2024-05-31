@@ -4,8 +4,6 @@
 
 package network
 
-//go:generate enumer -type=Operator -linecomment -text
-
 // Operator enumerates Talos network operators.
 type Operator int
 

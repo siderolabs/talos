@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=Protocol -linecomment -text
-
 // Protocol is a inet protocol.
 type Protocol uint8
 

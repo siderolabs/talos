@@ -4,8 +4,6 @@
 
 package network
 
-//go:generate enumer -type=ConfigLayer -linecomment -text
-
 // ConfigLayer describes network configuration layers, with lowest priority first.
 type ConfigLayer int
 

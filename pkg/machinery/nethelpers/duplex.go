@@ -6,8 +6,6 @@ package nethelpers
 
 import "github.com/mdlayher/ethtool"
 
-//go:generate enumer -type=Duplex -text
-
 // Duplex wraps ethtool.Duplex for YAML marshaling.
 type Duplex ethtool.Duplex
 
@@ -15,7 +13,7 @@ type Duplex ethtool.Duplex
 //
 //structprotogen:gen_enum
 const (
-	Half    Duplex = Duplex(ethtool.Half)
-	Full    Duplex = Duplex(ethtool.Full)
-	Unknown Duplex = Duplex(ethtool.Unknown)
+	Half    Duplex = Duplex(ethtool.Half)    // Half
+	Full    Duplex = Duplex(ethtool.Full)    // Full
+	Unknown Duplex = Duplex(ethtool.Unknown) // Unknown
 )

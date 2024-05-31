@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=Scope -linecomment -text
-
 // Scope is an address scope.
 type Scope uint8
 

@@ -8,8 +8,6 @@ import (
 	"github.com/jsimonetti/rtnetlink"
 )
 
-//go:generate enumer -type=OperationalState -linecomment -text
-
 // OperationalState wraps rtnetlink.OperationalState for YAML marshaling.
 type OperationalState uint8
 

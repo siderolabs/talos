@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=Status -linecomment -text
-
 // Status is a network status.
 //
 // Please see resources/network/status.go.

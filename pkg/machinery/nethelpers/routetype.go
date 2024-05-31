@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=RouteType -linecomment -text
-
 // RouteType is a route type.
 type RouteType uint8
 

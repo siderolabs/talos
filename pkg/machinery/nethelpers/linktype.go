@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=LinkType -linecomment -text
-
 // LinkType is a link type.
 type LinkType uint16
 

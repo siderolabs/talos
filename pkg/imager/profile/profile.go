@@ -19,6 +19,8 @@ import (
 
 //go:generate deep-copy -type Profile -header-file ../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
+//go:generate enumer -type OutputKind,OutFormat,DiskFormat,SDBootEnrollKeys -linecomment -text
+
 // Profile describes image generation result.
 type Profile struct {
 	// BaseProfileName is the profile name to inherit from.

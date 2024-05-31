@@ -6,8 +6,6 @@ package nethelpers
 
 import "math"
 
-//go:generate enumer -type=NfTablesChainPriority -linecomment -text
-
 // NfTablesChainPriority wraps nftables.ChainPriority for YAML marshaling.
 type NfTablesChainPriority int32
 

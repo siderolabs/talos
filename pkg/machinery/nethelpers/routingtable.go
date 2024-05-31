@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=RoutingTable -linecomment -text
-
 // RoutingTable is a routing table ID.
 type RoutingTable uint32
 

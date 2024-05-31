@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=VLANProtocol -linecomment -text
-
 // VLANProtocol is a VLAN protocol.
 type VLANProtocol uint16
 

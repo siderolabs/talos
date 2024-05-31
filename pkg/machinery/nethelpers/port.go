@@ -6,8 +6,6 @@ package nethelpers
 
 import "github.com/mdlayher/ethtool"
 
-//go:generate enumer -type=Port -text
-
 // Port wraps ethtool.Port for YAML marshaling.
 type Port ethtool.Port
 

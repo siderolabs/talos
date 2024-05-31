@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=Family -linecomment -text
-
 // Family is a network family.
 type Family uint8
 

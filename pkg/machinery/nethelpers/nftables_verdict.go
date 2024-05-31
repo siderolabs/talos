@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=NfTablesVerdict -linecomment -text
-
 // NfTablesVerdict wraps nftables.Verdict for YAML marshaling.
 type NfTablesVerdict int64
 

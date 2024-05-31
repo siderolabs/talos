@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=LinkFlag -linecomment -text
-
 import (
 	"strings"
 )

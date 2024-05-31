@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=ConntrackState -linecomment -text
-
 // ConntrackState is a conntrack state.
 type ConntrackState uint32
 

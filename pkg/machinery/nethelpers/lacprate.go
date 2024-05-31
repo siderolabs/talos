@@ -6,8 +6,6 @@ package nethelpers
 
 import "fmt"
 
-//go:generate enumer -type=LACPRate -linecomment -text
-
 // LACPRate is a LACP rate.
 type LACPRate uint8
 

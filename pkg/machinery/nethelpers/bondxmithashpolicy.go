@@ -6,8 +6,6 @@ package nethelpers
 
 import "fmt"
 
-//go:generate enumer -type=BondXmitHashPolicy -linecomment -text
-
 // BondXmitHashPolicy is a bond hash policy.
 type BondXmitHashPolicy uint8
 

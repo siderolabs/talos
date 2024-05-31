@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=MatchOperator -linecomment -text
-
 // MatchOperator is a netfilter match operator.
 type MatchOperator int
 

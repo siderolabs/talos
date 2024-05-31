@@ -6,8 +6,6 @@ package nethelpers
 
 import "fmt"
 
-//go:generate enumer -type=ADSelect -linecomment -text
-
 // ADSelect is ADSelect.
 type ADSelect uint8
 

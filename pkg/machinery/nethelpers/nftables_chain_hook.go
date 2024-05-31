@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=NfTablesChainHook -linecomment -text
-
 // NfTablesChainHook wraps nftables.ChainHook for YAML marshaling.
 type NfTablesChainHook uint32
 

@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=RouteFlag -linecomment -text
-
 import (
 	"strings"
 )

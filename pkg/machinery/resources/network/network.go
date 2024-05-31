@@ -14,6 +14,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
+//go:generate enumer -type=ConfigLayer,Operator -linecomment -text
+
 // NamespaceName contains resources related to networking.
 const NamespaceName resource.Namespace = "network"
 

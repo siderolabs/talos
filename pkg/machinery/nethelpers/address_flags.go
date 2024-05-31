@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=AddressFlag -linecomment -text
-
 import (
 	"strings"
 )

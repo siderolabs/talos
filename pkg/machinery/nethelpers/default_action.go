@@ -4,8 +4,6 @@
 
 package nethelpers
 
-//go:generate enumer -type=DefaultAction -linecomment -text
-
 // DefaultAction is a default firewall action.
 type DefaultAction int
 

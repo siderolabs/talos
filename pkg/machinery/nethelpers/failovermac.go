@@ -6,8 +6,6 @@ package nethelpers
 
 import "fmt"
 
-//go:generate enumer -type=FailOverMAC -linecomment
-
 // FailOverMAC is a MAC failover mode.
 type FailOverMAC uint8
 

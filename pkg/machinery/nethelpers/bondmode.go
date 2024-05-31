@@ -6,8 +6,6 @@ package nethelpers
 
 import "fmt"
 
-//go:generate enumer -type=BondMode -linecomment -text
-
 // BondMode is a bond mode.
 type BondMode uint8
 

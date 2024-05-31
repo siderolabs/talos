@@ -47,8 +47,6 @@ type ISOOptions struct {
 	SDBootEnrollKeys SDBootEnrollKeys `yaml:"sdBootEnrollKeys"`
 }
 
-//go:generate enumer -type=OutputKind -linecomment -text
-
 // OutputKind is output specification.
 type OutputKind int
 
@@ -64,8 +62,6 @@ const (
 	OutKindCmdline                     // cmdline
 )
 
-//go:generate enumer -type OutFormat -linecomment -text
-
 // OutFormat is output format specification.
 type OutFormat int
 
@@ -79,8 +75,6 @@ const (
 	OutFormatZSTD                     // .zst
 )
 
-//go:generate enumer -type DiskFormat -linecomment -text
-
 // DiskFormat is disk format specification.
 type DiskFormat int
 
@@ -92,8 +86,6 @@ const (
 	DiskFormatVPC                       // vhd
 	DiskFormatOVA                       // ova
 )
-
-//go:generate enumer -type SDBootEnrollKeys -linecomment -text
 
 // SDBootEnrollKeys is a value in loader.conf secure-boot-enroll: off, manual, if-safe, force.
 type SDBootEnrollKeys int
