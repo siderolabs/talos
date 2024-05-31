@@ -100,7 +100,7 @@ linters-settings:
       - golang.zx2c4.com/wireguard
       - golang.zx2c4.com/wireguard/wgctrl
     retract-allow-no-explanation: false
-    exclude-forbidden: true
+    exclude-forbidden: false
 
 linters:
   enable-all: true

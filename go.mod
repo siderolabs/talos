@@ -367,3 +367,5 @@ require (
 	tags.cncf.io/container-device-interface v0.7.2 // indirect
 	tags.cncf.io/container-device-interface/specs-go v0.7.0 // indirect
 )
+
+exclude github.com/containerd/containerd v1.7.0
