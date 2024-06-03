@@ -228,7 +228,7 @@ func NewInstaller(ctx context.Context, cmdline *procfs.Cmdline, mode Mode, opts 
 //
 //nolint:gocyclo,cyclop
 func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
-	errataBTF()
+	errataArm64ZBoot()
 
 	if mode == ModeUpgrade {
 		if err = i.errataNetIfnames(); err != nil {

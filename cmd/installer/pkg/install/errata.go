@@ -5,10 +5,14 @@
 package install
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"runtime"
 	"time"
 
 	"google.golang.org/grpc"
@@ -23,17 +27,41 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
-// errataBTF handles the case when kexec from pre-BTF kernel to BTF enabled kernel always fails.
-//
-// This applies to upgrades of Talos < 1.3.0 to Talos >= 1.3.0.
-func errataBTF() {
-	_, err := os.Stat("/sys/kernel/btf/vmlinux")
-	if err == nil {
-		// BTF is enabled, nothing to do
+// errataArm64ZBoot handles the case when upgrading from Talos < 1.8.0 on arm64 to compressed kernel.
+func errataArm64ZBoot() {
+	if runtime.GOARCH != "arm64" {
 		return
 	}
 
-	log.Printf("disabling kexec due to upgrade to the BTF enabled kernel")
+	oldConfig, err := os.OpenFile("/proc/config.gz", os.O_RDONLY, 0)
+	if err != nil {
+		log.Printf("failed to open /proc/config.gz: %s", err)
+
+		return
+	}
+
+	defer oldConfig.Close() //nolint:errcheck
+
+	r, err := gzip.NewReader(oldConfig)
+	if err != nil {
+		log.Printf("failed to read /proc/config.gz: %s", err)
+
+		return
+	}
+
+	contents, err := io.ReadAll(r)
+	if err != nil {
+		log.Printf("failed to read /proc/config.gz: %s", err)
+
+		return
+	}
+
+	if bytes.Contains(contents, []byte("CONFIG_ARM64_ZBOOT=y")) {
+		// nothing to do
+		return
+	}
+
+	log.Printf("disabling kexec due to upgrade to the compressed kernel")
 
 	if err = pkgkernel.WriteParam(&kernel.Param{
 		Key:   "proc.sys.kernel.kexec_load_disabled",
