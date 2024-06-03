@@ -63,11 +63,17 @@ func (suite *HardwareSuite) TestSystemInformation() {
 func (suite *HardwareSuite) TestHardwareInfo() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 
-	for _, resourceType := range []resource.Type{
+	resourceList := []resource.Type{
 		hardware.MemoryModuleType,
 		hardware.ProcessorType,
-		hardware.PCIDeviceType,
-	} {
+	}
+
+	if suite.Cluster != nil {
+		// cloud VMs might not publish PCI devices
+		resourceList = append(resourceList, hardware.PCIDeviceType)
+	}
+
+	for _, resourceType := range resourceList {
 		items, err := suite.Client.COSI.List(client.WithNode(suite.ctx, node), resource.NewMetadata(hardware.NamespaceName, resourceType, "", resource.VersionUndefined))
 		suite.Require().NoError(err)
 
