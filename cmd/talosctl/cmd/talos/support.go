@@ -37,8 +37,8 @@ var supportCmdFlags struct {
 	verbose    bool
 }
 
-// supportCmd represents the support command.
-var supportCmd = &cobra.Command{
+// SupportCmd represents the support command.
+var SupportCmd = &cobra.Command{
 	Use:   "support",
 	Short: "Dump debug information about the cluster",
 	Long: `Generated bundle contains the following debug information:
@@ -328,8 +328,8 @@ func showProgress(progress <-chan bundle.Progress, errors *supportBundleErrors) 
 }
 
 func init() {
-	addCommand(supportCmd)
-	supportCmd.Flags().StringVarP(&supportCmdFlags.output, "output", "O", "", "output file to write support archive to")
-	supportCmd.Flags().IntVarP(&supportCmdFlags.numWorkers, "num-workers", "w", 1, "number of workers per node")
-	supportCmd.Flags().BoolVarP(&supportCmdFlags.verbose, "verbose", "v", false, "verbose output")
+	addCommand(SupportCmd)
+	SupportCmd.Flags().StringVarP(&supportCmdFlags.output, "output", "O", "", "output file to write support archive to")
+	SupportCmd.Flags().IntVarP(&supportCmdFlags.numWorkers, "num-workers", "w", 1, "number of workers per node")
+	SupportCmd.Flags().BoolVarP(&supportCmdFlags.verbose, "verbose", "v", false, "verbose output")
 }

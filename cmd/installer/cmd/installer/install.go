@@ -18,8 +18,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
-// installCmd represents the installation command.
-var installCmd = &cobra.Command{
+// InstallCmd represents the installation command.
+var InstallCmd = &cobra.Command{
 	Use:   "install",
 	Short: "",
 	Long:  ``,
@@ -29,7 +29,7 @@ var installCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(InstallCmd)
 }
 
 func runInstallCmd(ctx context.Context) (err error) {

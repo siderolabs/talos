@@ -17,14 +17,14 @@ var metaCmdFlags struct {
 	insecure bool
 }
 
-var metaCmd = &cobra.Command{
+var MetaCmd = &cobra.Command{
 	Use:   "meta",
 	Short: "Write and delete keys in the META partition",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 }
 
-var metaWriteCmd = &cobra.Command{
+var MetaWriteCmd = &cobra.Command{
 	Use:   "write key value",
 	Short: "Write a key-value pair to the META partition.",
 	Long:  ``,
@@ -47,7 +47,7 @@ var metaWriteCmd = &cobra.Command{
 	},
 }
 
-var metaDeleteCmd = &cobra.Command{
+var MetaDeleteCmd = &cobra.Command{
 	Use:   "delete key",
 	Short: "Delete a key from the META partition.",
 	Long:  ``,
@@ -71,9 +71,9 @@ var metaDeleteCmd = &cobra.Command{
 }
 
 func init() {
-	metaCmd.PersistentFlags().BoolVarP(&metaCmdFlags.insecure, "insecure", "i", false, "write|delete meta using the insecure (encrypted with no auth) maintenance service")
+	MetaCmd.PersistentFlags().BoolVarP(&metaCmdFlags.insecure, "insecure", "i", false, "write|delete meta using the insecure (encrypted with no auth) maintenance service")
 
-	metaCmd.AddCommand(metaWriteCmd)
-	metaCmd.AddCommand(metaDeleteCmd)
-	addCommand(metaCmd)
+	MetaCmd.AddCommand(MetaWriteCmd)
+	MetaCmd.AddCommand(MetaDeleteCmd)
+	addCommand(MetaCmd)
 }

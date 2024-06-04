@@ -20,8 +20,8 @@ var genKeypairCmdFlags struct {
 	organization string
 }
 
-// genKeypairCmd represents the `gen keypair` command.
-var genKeypairCmd = &cobra.Command{
+// GenKeypairCmd represents the `gen keypair` command.
+var GenKeypairCmd = &cobra.Command{
 	Use:   "keypair",
 	Short: "Generates an X.509 Ed25519 key pair",
 	Long:  ``,
@@ -63,9 +63,9 @@ var genKeypairCmd = &cobra.Command{
 }
 
 func init() {
-	genKeypairCmd.Flags().StringVar(&genKeypairCmdFlags.ip, "ip", "", "generate the certificate for this IP address")
-	genKeypairCmd.Flags().StringVar(&genKeypairCmdFlags.organization, "organization", "", "X.509 distinguished name for the Organization")
-	cli.Should(cobra.MarkFlagRequired(genKeypairCmd.Flags(), "organization"))
+	GenKeypairCmd.Flags().StringVar(&genKeypairCmdFlags.ip, "ip", "", "generate the certificate for this IP address")
+	GenKeypairCmd.Flags().StringVar(&genKeypairCmdFlags.organization, "organization", "", "X.509 distinguished name for the Organization")
+	cli.Should(cobra.MarkFlagRequired(GenKeypairCmd.Flags(), "organization"))
 
-	Cmd.AddCommand(genKeypairCmd)
+	Cmd.AddCommand(GenKeypairCmd)
 }

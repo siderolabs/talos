@@ -14,7 +14,7 @@ import (
 )
 
 // completionCmd represents the completion command.
-var completionCmd = &cobra.Command{
+var CompletionCmd = &cobra.Command{
 	Use:   "completion SHELL",
 	Short: "Output shell completion code for the specified shell (bash, fish or zsh)",
 	Long: `Output shell completion code for the specified shell (bash, fish or zsh).
@@ -62,11 +62,11 @@ Note for zsh users: [1] zsh completions are only supported in versions of zsh >=
 
 		switch args[0] {
 		case "bash":
-			return rootCmd.GenBashCompletion(os.Stdout)
+			return RootCmd.GenBashCompletion(os.Stdout)
 		case "fish":
-			return rootCmd.GenFishCompletion(os.Stdout, true)
+			return RootCmd.GenFishCompletion(os.Stdout, true)
 		case "zsh":
-			err := rootCmd.GenZshCompletion(os.Stdout)
+			err := RootCmd.GenZshCompletion(os.Stdout)
 			// cobra does not hook the completion, so let's do it manually
 			fmt.Printf("compdef _talosctl talosctl")
 
@@ -78,5 +78,5 @@ Note for zsh users: [1] zsh completions are only supported in versions of zsh >=
 }
 
 func init() {
-	rootCmd.AddCommand(completionCmd)
+	RootCmd.AddCommand(CompletionCmd)
 }

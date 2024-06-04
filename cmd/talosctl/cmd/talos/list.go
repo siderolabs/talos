@@ -32,8 +32,8 @@ var (
 	types          []string
 )
 
-// lsCmd represents the ls command.
-var lsCmd = &cobra.Command{
+// LsCmd represents the ls command.
+var LsCmd = &cobra.Command{
 	Use:     "list [path]",
 	Aliases: []string{"ls"},
 	Short:   "Retrieve a directory listing",
@@ -172,10 +172,10 @@ func init() {
 		"l, L" + "\t" + "symbolic link",
 	}, "\n")
 
-	lsCmd.Flags().BoolVarP(&long, "long", "l", false, "display additional file details")
-	lsCmd.Flags().BoolVarP(&recurse, "recurse", "r", false, "recurse into subdirectories")
-	lsCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
-	lsCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 1, "maximum recursion depth")
-	lsCmd.Flags().StringSliceVarP(&types, "type", "t", nil, typesHelp)
-	addCommand(lsCmd)
+	LsCmd.Flags().BoolVarP(&long, "long", "l", false, "display additional file details")
+	LsCmd.Flags().BoolVarP(&recurse, "recurse", "r", false, "recurse into subdirectories")
+	LsCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
+	LsCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 1, "maximum recursion depth")
+	LsCmd.Flags().StringSliceVarP(&types, "type", "t", nil, typesHelp)
+	addCommand(LsCmd)
 }

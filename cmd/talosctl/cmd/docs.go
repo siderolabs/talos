@@ -61,7 +61,7 @@ var (
 )
 
 // docsCmd represents the docs command.
-var docsCmd = &cobra.Command{
+var DocsCmd = &cobra.Command{
 	Use:    "docs <output> [flags]",
 	Short:  "Generate documentation for the CLI or config",
 	Long:   ``,
@@ -79,7 +79,7 @@ var docsCmd = &cobra.Command{
 		if cliDocs || all {
 			w := &bytes.Buffer{}
 
-			if err := GenMarkdownReference(rootCmd, w, linkHandler); err != nil {
+			if err := GenMarkdownReference(RootCmd, w, linkHandler); err != nil {
 				return fmt.Errorf("failed to generate docs: %w", err)
 			}
 
@@ -159,7 +159,7 @@ func GenMarkdownReference(cmd *cobra.Command, w io.Writer, linkHandler func(stri
 }
 
 func init() {
-	docsCmd.Flags().BoolVar(&configDocs, "config", false, "generate documentation for the default configuration schema")
-	docsCmd.Flags().BoolVar(&cliDocs, "cli", false, "generate documentation for the CLI")
-	rootCmd.AddCommand(docsCmd)
+	DocsCmd.Flags().BoolVar(&configDocs, "config", false, "generate documentation for the default configuration schema")
+	DocsCmd.Flags().BoolVar(&cliDocs, "cli", false, "generate documentation for the CLI")
+	RootCmd.AddCommand(DocsCmd)
 }

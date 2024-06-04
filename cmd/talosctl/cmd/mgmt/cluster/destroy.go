@@ -18,8 +18,8 @@ var destroyCmdFlags struct {
 	forceDelete bool
 }
 
-// destroyCmd represents the cluster destroy command.
-var destroyCmd = &cobra.Command{
+// DestroyCmd represents the cluster destroy command.
+var DestroyCmd = &cobra.Command{
 	Use:   "destroy",
 	Short: "Destroys a local docker-based or firecracker-based kubernetes cluster",
 	Long:  ``,
@@ -46,7 +46,7 @@ func destroy(ctx context.Context) error {
 }
 
 func init() {
-	destroyCmd.PersistentFlags().BoolVarP(&destroyCmdFlags.forceDelete, "force", "f", false, "force deletion of cluster directory if there were errors")
+	DestroyCmd.PersistentFlags().BoolVarP(&destroyCmdFlags.forceDelete, "force", "f", false, "force deletion of cluster directory if there were errors")
 
-	Cmd.AddCommand(destroyCmd)
+	Cmd.AddCommand(DestroyCmd)
 }

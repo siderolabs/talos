@@ -27,15 +27,15 @@ import (
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 )
 
-// etcdCmd represents the etcd command.
-var etcdCmd = &cobra.Command{
+// EtcdCmd represents the etcd command.
+var EtcdCmd = &cobra.Command{
 	Use:   "etcd",
 	Short: "Manage etcd",
 	Long:  ``,
 }
 
-// etcdAlarmCmd represents the etcd alarm command.
-var etcdAlarmCmd = &cobra.Command{
+// EtcdAlarmCmd represents the etcd alarm command.
+var EtcdAlarmCmd = &cobra.Command{
 	Use:   "alarm",
 	Short: "Manage etcd alarms",
 	Long:  ``,
@@ -82,8 +82,8 @@ func displayAlarms(messages []alarmMessage) error {
 	return w.Flush()
 }
 
-// etcdAlarmListCmd represents the etcd alarm list command.
-var etcdAlarmListCmd = &cobra.Command{
+// EtcdAlarmListCmd represents the etcd alarm list command.
+var EtcdAlarmListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List the etcd alarms for the node.",
 	Long:  ``,
@@ -104,8 +104,8 @@ var etcdAlarmListCmd = &cobra.Command{
 	},
 }
 
-// etcdAlarmDisarmCmd represents the etcd alarm disarm command.
-var etcdAlarmDisarmCmd = &cobra.Command{
+// EtcdAlarmDisarmCmd represents the etcd alarm disarm command.
+var EtcdAlarmDisarmCmd = &cobra.Command{
 	Use:   "disarm",
 	Short: "Disarm the etcd alarms for the node.",
 	Long:  ``,
@@ -126,8 +126,8 @@ var etcdAlarmDisarmCmd = &cobra.Command{
 	},
 }
 
-// etcdDefragCmd represents the etcd defrag command.
-var etcdDefragCmd = &cobra.Command{
+// EtcdDefragCmd represents the etcd defrag command.
+var EtcdDefragCmd = &cobra.Command{
 	Use:   "defrag",
 	Short: "Defragment etcd database on the node",
 	Long: `Defragmentation is a maintenance operation that releases unused space from the etcd database file.
@@ -145,7 +145,7 @@ Defragmentation is a resource heavy operation and should be performed only when 
 	},
 }
 
-var etcdLeaveCmd = &cobra.Command{
+var EtcdLeaveCmd = &cobra.Command{
 	Use:   "leave",
 	Short: "Tell nodes to leave etcd cluster",
 	Long:  ``,
@@ -160,7 +160,7 @@ var etcdLeaveCmd = &cobra.Command{
 	},
 }
 
-var etcdMemberRemoveCmd = &cobra.Command{
+var EtcdMemberRemoveCmd = &cobra.Command{
 	Use:   "remove-member <member ID>",
 	Short: "Remove the node from etcd cluster",
 	Long: `Use this command only if you want to remove a member which is in broken state.
@@ -181,7 +181,7 @@ Always prefer etcd leave over this command.`,
 	},
 }
 
-var etcdForfeitLeadershipCmd = &cobra.Command{
+var EtcdForfeitLeadershipCmd = &cobra.Command{
 	Use:   "forfeit-leadership",
 	Short: "Tell node to forfeit etcd cluster leadership",
 	Long:  ``,
@@ -194,7 +194,7 @@ var etcdForfeitLeadershipCmd = &cobra.Command{
 	},
 }
 
-var etcdMemberListCmd = &cobra.Command{
+var EtcdMemberListCmd = &cobra.Command{
 	Use:   "members",
 	Short: "Get the list of etcd cluster members",
 	Long:  ``,
@@ -253,7 +253,7 @@ var etcdMemberListCmd = &cobra.Command{
 	},
 }
 
-var etcdStatusCmd = &cobra.Command{
+var EtcdStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Get the status of etcd cluster member",
 	Long:  `Returns the status of etcd member on the node, use multiple nodes to get status of all members.`,
@@ -316,7 +316,7 @@ var etcdStatusCmd = &cobra.Command{
 	},
 }
 
-var etcdSnapshotCmd = &cobra.Command{
+var EtcdSnapshotCmd = &cobra.Command{
 	Use:   "snapshot <path>",
 	Short: "Stream snapshot of the etcd node to the path.",
 	Long:  ``,
@@ -386,21 +386,21 @@ var etcdSnapshotCmd = &cobra.Command{
 }
 
 func init() {
-	etcdAlarmCmd.AddCommand(
-		etcdAlarmListCmd,
-		etcdAlarmDisarmCmd,
+	EtcdAlarmCmd.AddCommand(
+		EtcdAlarmListCmd,
+		EtcdAlarmDisarmCmd,
 	)
 
-	etcdCmd.AddCommand(
-		etcdAlarmCmd,
-		etcdDefragCmd,
-		etcdForfeitLeadershipCmd,
-		etcdLeaveCmd,
-		etcdMemberListCmd,
-		etcdMemberRemoveCmd,
-		etcdSnapshotCmd,
-		etcdStatusCmd,
+	EtcdCmd.AddCommand(
+		EtcdAlarmCmd,
+		EtcdDefragCmd,
+		EtcdForfeitLeadershipCmd,
+		EtcdLeaveCmd,
+		EtcdMemberListCmd,
+		EtcdMemberRemoveCmd,
+		EtcdSnapshotCmd,
+		EtcdStatusCmd,
 	)
 
-	addCommand(etcdCmd)
+	addCommand(EtcdCmd)
 }

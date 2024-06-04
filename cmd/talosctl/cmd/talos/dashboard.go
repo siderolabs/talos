@@ -18,8 +18,8 @@ var dashboardCmdFlags struct {
 	interval time.Duration
 }
 
-// dashboardCmd represents the monitor command.
-var dashboardCmd = &cobra.Command{
+// DashboardCmd represents the monitor command.
+var DashboardCmd = &cobra.Command{
 	Use:   "dashboard",
 	Short: "Cluster dashboard with node overview, logs and real-time metrics",
 	Long: `Provide a text-based UI to navigate node overview, logs and real-time metrics.
@@ -48,6 +48,6 @@ Keyboard shortcuts:
 }
 
 func init() {
-	dashboardCmd.Flags().DurationVarP(&dashboardCmdFlags.interval, "update-interval", "d", 3*time.Second, "interval between updates")
-	addCommand(dashboardCmd)
+	DashboardCmd.Flags().DurationVarP(&dashboardCmdFlags.interval, "update-interval", "d", 3*time.Second, "interval between updates")
+	addCommand(DashboardCmd)
 }

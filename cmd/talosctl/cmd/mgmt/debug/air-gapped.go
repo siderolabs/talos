@@ -43,8 +43,8 @@ var airgappedFlags struct {
 	httpsPort         int
 }
 
-// airgappedCmd represents the `gen ca` command.
-var airgappedCmd = &cobra.Command{
+// AirgappedCmd represents the `gen ca` command.
+var AirgappedCmd = &cobra.Command{
 	Use:   "air-gapped",
 	Short: "Starts a local HTTP proxy and HTTPS server serving a test manifest.",
 	Long:  ``,
@@ -283,9 +283,9 @@ func runHTTPProxy(ctx context.Context) error {
 }
 
 func init() {
-	airgappedCmd.Flags().IPVar(&airgappedFlags.advertisedAddress, "advertised-address", net.IPv4(10, 5, 0, 2), "The address to advertise to the cluster.")
-	airgappedCmd.Flags().IntVar(&airgappedFlags.httpsPort, "https-port", 8001, "The HTTPS server port.")
-	airgappedCmd.Flags().IntVar(&airgappedFlags.proxyPort, "proxy-port", 8002, "The HTTP proxy port.")
+	AirgappedCmd.Flags().IPVar(&airgappedFlags.advertisedAddress, "advertised-address", net.IPv4(10, 5, 0, 2), "The address to advertise to the cluster.")
+	AirgappedCmd.Flags().IntVar(&airgappedFlags.httpsPort, "https-port", 8001, "The HTTPS server port.")
+	AirgappedCmd.Flags().IntVar(&airgappedFlags.proxyPort, "proxy-port", 8002, "The HTTP proxy port.")
 
-	Cmd.AddCommand(airgappedCmd)
+	Cmd.AddCommand(AirgappedCmd)
 }

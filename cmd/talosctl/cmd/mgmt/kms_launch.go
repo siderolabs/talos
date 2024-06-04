@@ -24,8 +24,8 @@ var kmsLaunchCmdFlags struct {
 	key  []byte
 }
 
-// kmsLaunchCmd represents the kms-launch command.
-var kmsLaunchCmd = &cobra.Command{
+// KmsLaunchCmd represents the kms-launch command.
+var KmsLaunchCmd = &cobra.Command{
 	Use:    "kms-launch",
 	Short:  "Internal command used by QEMU provisioner",
 	Long:   ``,
@@ -79,7 +79,7 @@ var kmsLaunchCmd = &cobra.Command{
 }
 
 func init() {
-	kmsLaunchCmd.Flags().StringVar(&kmsLaunchCmdFlags.addr, "kms-addr", "localhost", "KMS listen address (IP or host)")
-	kmsLaunchCmd.Flags().BytesBase64Var(&kmsLaunchCmdFlags.key, "kms-key", nil, "KMS key to use")
-	addCommand(kmsLaunchCmd)
+	KmsLaunchCmd.Flags().StringVar(&kmsLaunchCmdFlags.addr, "kms-addr", "localhost", "KMS listen address (IP or host)")
+	KmsLaunchCmd.Flags().BytesBase64Var(&kmsLaunchCmdFlags.key, "kms-key", nil, "KMS key to use")
+	addCommand(KmsLaunchCmd)
 }

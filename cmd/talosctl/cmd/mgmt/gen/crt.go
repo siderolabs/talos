@@ -25,8 +25,8 @@ var genCrtCmdFlags struct {
 	hours int
 }
 
-// genCrtCmd represents the `gen crt` command.
-var genCrtCmd = &cobra.Command{
+// GenCrtCmd represents the `gen crt` command.
+var GenCrtCmd = &cobra.Command{
 	Use:   "crt",
 	Short: "Generates an X.509 Ed25519 certificate",
 	Long:  ``,
@@ -101,13 +101,13 @@ var genCrtCmd = &cobra.Command{
 }
 
 func init() {
-	genCrtCmd.Flags().StringVar(&genCrtCmdFlags.name, "name", "", "the basename of the generated file")
-	cli.Should(cobra.MarkFlagRequired(genCrtCmd.Flags(), "name"))
-	genCrtCmd.Flags().StringVar(&genCrtCmdFlags.ca, "ca", "", "path to the PEM encoded CERTIFICATE")
-	cli.Should(cobra.MarkFlagRequired(genCrtCmd.Flags(), "ca"))
-	genCrtCmd.Flags().StringVar(&genCrtCmdFlags.csr, "csr", "", "path to the PEM encoded CERTIFICATE REQUEST")
-	cli.Should(cobra.MarkFlagRequired(genCrtCmd.Flags(), "csr"))
-	genCrtCmd.Flags().IntVar(&genCrtCmdFlags.hours, "hours", 24, "the hours from now on which the certificate validity period ends")
+	GenCrtCmd.Flags().StringVar(&genCrtCmdFlags.name, "name", "", "the basename of the generated file")
+	cli.Should(cobra.MarkFlagRequired(GenCrtCmd.Flags(), "name"))
+	GenCrtCmd.Flags().StringVar(&genCrtCmdFlags.ca, "ca", "", "path to the PEM encoded CERTIFICATE")
+	cli.Should(cobra.MarkFlagRequired(GenCrtCmd.Flags(), "ca"))
+	GenCrtCmd.Flags().StringVar(&genCrtCmdFlags.csr, "csr", "", "path to the PEM encoded CERTIFICATE REQUEST")
+	cli.Should(cobra.MarkFlagRequired(GenCrtCmd.Flags(), "csr"))
+	GenCrtCmd.Flags().IntVar(&genCrtCmdFlags.hours, "hours", 24, "the hours from now on which the certificate validity period ends")
 
-	Cmd.AddCommand(genCrtCmd)
+	Cmd.AddCommand(GenCrtCmd)
 }

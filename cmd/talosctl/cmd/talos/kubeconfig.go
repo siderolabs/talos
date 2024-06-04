@@ -27,8 +27,8 @@ var kubeconfigFlags struct {
 	merge            bool
 }
 
-// kubeconfigCmd represents the kubeconfig command.
-var kubeconfigCmd = &cobra.Command{
+// KubeconfigCmd represents the kubeconfig command.
+var KubeconfigCmd = &cobra.Command{
 	Use:   "kubeconfig [local-path]",
 	Short: "Download the admin kubeconfig from the node",
 	Long: `Download the admin kubeconfig from the node.
@@ -169,8 +169,8 @@ func askOverwriteOrRename(prompt string) (kubeconfig.ConflictDecision, error) {
 }
 
 func init() {
-	kubeconfigCmd.Flags().BoolVarP(&kubeconfigFlags.force, "force", "f", false, "Force overwrite of kubeconfig if already present, force overwrite on kubeconfig merge")
-	kubeconfigCmd.Flags().StringVar(&kubeconfigFlags.forceContextName, "force-context-name", "", "Force context name for kubeconfig merge")
-	kubeconfigCmd.Flags().BoolVarP(&kubeconfigFlags.merge, "merge", "m", true, "Merge with existing kubeconfig")
-	addCommand(kubeconfigCmd)
+	KubeconfigCmd.Flags().BoolVarP(&kubeconfigFlags.force, "force", "f", false, "Force overwrite of kubeconfig if already present, force overwrite on kubeconfig merge")
+	KubeconfigCmd.Flags().StringVar(&kubeconfigFlags.forceContextName, "force-context-name", "", "Force context name for kubeconfig merge")
+	KubeconfigCmd.Flags().BoolVarP(&kubeconfigFlags.merge, "merge", "m", true, "Merge with existing kubeconfig")
+	addCommand(KubeconfigCmd)
 }

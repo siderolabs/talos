@@ -21,8 +21,8 @@ var (
 	validateStrictArg bool
 )
 
-// validateCmd reads in a userData file and attempts to parse it.
-var validateCmd = &cobra.Command{
+// ValidateCmd reads in a userData file and attempts to parse it.
+var ValidateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate config",
 	Long:  ``,
@@ -58,15 +58,15 @@ var validateCmd = &cobra.Command{
 }
 
 func init() {
-	validateCmd.Flags().StringVarP(&validateConfigArg, "config", "c", "", "the path of the config file")
-	validateCmd.Flags().StringVarP(
+	ValidateCmd.Flags().StringVarP(&validateConfigArg, "config", "c", "", "the path of the config file")
+	ValidateCmd.Flags().StringVarP(
 		&validateModeArg,
 		"mode",
 		"m",
 		"",
 		fmt.Sprintf("the mode to validate the config for (valid values are %s, %s, and %s)", runtime.ModeMetal.String(), runtime.ModeCloud.String(), runtime.ModeContainer.String()),
 	)
-	cli.Should(validateCmd.MarkFlagRequired("mode"))
-	validateCmd.Flags().BoolVarP(&validateStrictArg, "strict", "", false, "treat validation warnings as errors")
-	addCommand(validateCmd)
+	cli.Should(ValidateCmd.MarkFlagRequired("mode"))
+	ValidateCmd.Flags().BoolVarP(&validateStrictArg, "strict", "", false, "treat validation warnings as errors")
+	addCommand(ValidateCmd)
 }

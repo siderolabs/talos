@@ -22,8 +22,8 @@ import (
 
 var verbose bool
 
-// memoryCmd represents the processes command.
-var memoryCmd = &cobra.Command{
+// MemoryCmd represents the processes command.
+var MemoryCmd = &cobra.Command{
 	Use:     "memory",
 	Aliases: []string{"m", "free"},
 	Short:   "Show memory usage",
@@ -149,6 +149,6 @@ func verboseRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) {
 }
 
 func init() {
-	memoryCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "display extended memory statistics")
-	addCommand(memoryCmd)
+	MemoryCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "display extended memory statistics")
+	addCommand(MemoryCmd)
 }

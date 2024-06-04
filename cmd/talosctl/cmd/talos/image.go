@@ -41,7 +41,7 @@ func (flags imageCmdFlagsType) apiNamespace() (common.ContainerdNamespace, error
 }
 
 // imagesCmd represents the image command.
-var imageCmd = &cobra.Command{
+var ImageCmd = &cobra.Command{
 	Use:     "image",
 	Aliases: []string{"images"},
 	Short:   "Manage CRI containter images",
@@ -49,8 +49,8 @@ var imageCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 }
 
-// imageListCmd represents the image list command.
-var imageListCmd = &cobra.Command{
+// ImageListCmd represents the image list command.
+var ImageListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"l", "ls"},
 	Short:   "List CRI images",
@@ -90,8 +90,8 @@ var imageListCmd = &cobra.Command{
 	},
 }
 
-// imagePullCmd represents the image pull command.
-var imagePullCmd = &cobra.Command{
+// ImagePullCmd represents the image pull command.
+var ImagePullCmd = &cobra.Command{
 	Use:     "pull",
 	Aliases: []string{"p"},
 	Short:   "Pull an image into CRI",
@@ -114,8 +114,8 @@ var imagePullCmd = &cobra.Command{
 	},
 }
 
-// imageDefaultCmd represents the image default command.
-var imageDefaultCmd = &cobra.Command{
+// ImageDefaultCmd represents the image default command.
+var ImageDefaultCmd = &cobra.Command{
 	Use:   "default",
 	Short: "List the default images used by Talos",
 	Long:  ``,
@@ -151,10 +151,10 @@ var imageDefaultCmd = &cobra.Command{
 }
 
 func init() {
-	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
-	addCommand(imageCmd)
+	ImageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
+	addCommand(ImageCmd)
 
-	imageCmd.AddCommand(imageDefaultCmd)
-	imageCmd.AddCommand(imageListCmd)
-	imageCmd.AddCommand(imagePullCmd)
+	ImageCmd.AddCommand(ImageDefaultCmd)
+	ImageCmd.AddCommand(ImageListCmd)
+	ImageCmd.AddCommand(ImagePullCmd)
 }

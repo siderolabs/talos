@@ -13,8 +13,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// interfacesCmd represents the net interfaces command.
-var interfacesCmd = &cobra.Command{
+// InterfacesCmd represents the net interfaces command.
+var InterfacesCmd = &cobra.Command{
 	Use:    "interfaces",
 	Short:  "List network interfaces",
 	Long:   ``,
@@ -28,5 +28,5 @@ var interfacesCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(interfacesCmd)
+	addCommand(InterfacesCmd)
 }

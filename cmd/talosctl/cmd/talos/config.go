@@ -35,8 +35,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
-// configCmd represents the config command.
-var configCmd = &cobra.Command{
+// ConfigCmd represents the config command.
+var ConfigCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage the client configuration file (talosconfig)",
 	Long:  ``,
@@ -63,8 +63,8 @@ func openConfigAndContext(context string) (*clientconfig.Config, error) {
 	return c, nil
 }
 
-// configEndpointCmd represents the `config endpoint` command.
-var configEndpointCmd = &cobra.Command{
+// ConfigEndpointCmd represents the `config endpoint` command.
+var ConfigEndpointCmd = &cobra.Command{
 	Use:     "endpoint <endpoint>...",
 	Aliases: []string{"endpoints"},
 	Short:   "Set the endpoint(s) for the current context",
@@ -94,8 +94,8 @@ var configEndpointCmd = &cobra.Command{
 	},
 }
 
-// configNodeCmd represents the `config node` command.
-var configNodeCmd = &cobra.Command{
+// ConfigNodeCmd represents the `config node` command.
+var ConfigNodeCmd = &cobra.Command{
 	Use:     "node <endpoint>...",
 	Aliases: []string{"nodes"},
 	Short:   "Set the node(s) for the current context",
@@ -125,8 +125,8 @@ var configNodeCmd = &cobra.Command{
 	},
 }
 
-// configContextCmd represents the `config context` command.
-var configContextCmd = &cobra.Command{
+// ConfigContextCmd represents the `config context` command.
+var ConfigContextCmd = &cobra.Command{
 	Use:     "context <context>",
 	Short:   "Set the current context",
 	Aliases: []string{"use-context"},
@@ -158,8 +158,8 @@ var configAddCmdFlags struct {
 	key string
 }
 
-// configAddCmd represents the `config add` command.
-var configAddCmd = &cobra.Command{
+// ConfigAddCmd represents the `config add` command.
+var ConfigAddCmd = &cobra.Command{
 	Use:   "add <context>",
 	Short: "Add a new context",
 	Long:  ``,
@@ -207,8 +207,8 @@ var configRemoveCmdFlags struct {
 	dry       bool
 }
 
-// configRemoveCmd represents the `config remove` command.
-var configRemoveCmd = &cobra.Command{
+// ConfigRemoveCmd represents the `config remove` command.
+var ConfigRemoveCmd = &cobra.Command{
 	Use:   "remove <context>",
 	Short: "Remove contexts",
 	Args:  cobra.ExactArgs(1),
@@ -313,8 +313,8 @@ func checkAndSetCrtAndKey(configContext *clientconfig.Context) error {
 	return nil
 }
 
-// configGetContextsCmd represents the `config contexts` command.
-var configGetContextsCmd = &cobra.Command{
+// ConfigGetContextsCmd represents the `config contexts` command.
+var ConfigGetContextsCmd = &cobra.Command{
 	Use:     "contexts",
 	Short:   "List defined contexts",
 	Aliases: []string{"get-contexts"},
@@ -358,8 +358,8 @@ var configGetContextsCmd = &cobra.Command{
 	},
 }
 
-// configMergeCmd represents the `config merge` command.
-var configMergeCmd = &cobra.Command{
+// ConfigMergeCmd represents the `config merge` command.
+var ConfigMergeCmd = &cobra.Command{
 	Use:   "merge <from>",
 	Short: "Merge additional contexts from another client configuration file",
 	Long:  "Contexts with the same name are renamed while merging configs.",
@@ -395,8 +395,8 @@ var configNewCmdFlags struct {
 	crtTTL time.Duration
 }
 
-// configNewCmd represents the `config new` command.
-var configNewCmd = &cobra.Command{
+// ConfigNewCmd represents the `config new` command.
+var ConfigNewCmd = &cobra.Command{
 	Use:   "new [<path>]",
 	Short: "Generate a new client configuration file",
 	Args:  cobra.RangeArgs(0, 1),
@@ -446,7 +446,7 @@ var configNewCmd = &cobra.Command{
 	},
 }
 
-// configNewCmd represents the `config info` command output template.
+// ConfigNewCmd represents the `config info` command output template.
 var configInfoCmdTemplate = template.Must(template.New("configInfoCmdTemplate").
 	Funcs(template.FuncMap{"join": strings.Join}).
 	Option("missingkey=error").
@@ -534,8 +534,8 @@ var configInfoCmdFlags struct {
 	output string
 }
 
-// configInfoCmd represents the `config info` command.
-var configInfoCmd = &cobra.Command{
+// ConfigInfoCmd represents the `config info` command.
+var ConfigInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Show information about the current context",
 	Args:  cobra.NoArgs,
@@ -593,36 +593,36 @@ func CompleteConfigContext(*cobra.Command, []string, string) ([]string, cobra.Sh
 }
 
 func init() {
-	configCmd.AddCommand(
-		configEndpointCmd,
-		configNodeCmd,
-		configContextCmd,
-		configAddCmd,
-		configRemoveCmd,
-		configGetContextsCmd,
-		configMergeCmd,
-		configNewCmd,
-		configInfoCmd,
+	ConfigCmd.AddCommand(
+		ConfigEndpointCmd,
+		ConfigNodeCmd,
+		ConfigContextCmd,
+		ConfigAddCmd,
+		ConfigRemoveCmd,
+		ConfigGetContextsCmd,
+		ConfigMergeCmd,
+		ConfigNewCmd,
+		ConfigInfoCmd,
 	)
 
-	configAddCmd.Flags().StringVar(&configAddCmdFlags.ca, "ca", "", "the path to the CA certificate")
-	configAddCmd.Flags().StringVar(&configAddCmdFlags.crt, "crt", "", "the path to the certificate")
-	configAddCmd.Flags().StringVar(&configAddCmdFlags.key, "key", "", "the path to the key")
+	ConfigAddCmd.Flags().StringVar(&configAddCmdFlags.ca, "ca", "", "the path to the CA certificate")
+	ConfigAddCmd.Flags().StringVar(&configAddCmdFlags.crt, "crt", "", "the path to the certificate")
+	ConfigAddCmd.Flags().StringVar(&configAddCmdFlags.key, "key", "", "the path to the key")
 
-	configRemoveCmd.Flags().BoolVarP(
+	ConfigRemoveCmd.Flags().BoolVarP(
 		&configRemoveCmdFlags.noconfirm, "noconfirm", "y", false,
 		"do not ask for confirmation",
 	)
-	configRemoveCmd.Flags().BoolVar(
+	ConfigRemoveCmd.Flags().BoolVar(
 		&configRemoveCmdFlags.dry, "dry-run", false, "dry run",
 	)
 
-	configNewCmd.Flags().StringSliceVar(&configNewCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
-	configNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", constants.TalosAPIDefaultCertificateValidityDuration, "certificate TTL")
+	ConfigNewCmd.Flags().StringSliceVar(&configNewCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
+	ConfigNewCmd.Flags().DurationVar(&configNewCmdFlags.crtTTL, "crt-ttl", constants.TalosAPIDefaultCertificateValidityDuration, "certificate TTL")
 
-	configInfoCmd.Flags().StringVarP(&configInfoCmdFlags.output, "output", "o", "text", "output format (json|yaml|text). Default text.")
+	ConfigInfoCmd.Flags().StringVarP(&configInfoCmdFlags.output, "output", "o", "text", "output format (json|yaml|text). Default text.")
 
-	addCommand(configCmd)
+	addCommand(ConfigCmd)
 }
 
 func getContextData(c *clientconfig.Config) (*clientconfig.Context, error) {

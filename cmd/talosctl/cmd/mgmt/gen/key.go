@@ -18,8 +18,8 @@ var genKeyCmdFlags struct {
 	name string
 }
 
-// genKeyCmd represents the `gen key` command.
-var genKeyCmd = &cobra.Command{
+// GenKeyCmd represents the `gen key` command.
+var GenKeyCmd = &cobra.Command{
 	Use:   "key",
 	Short: "Generates an Ed25519 private key",
 	Long:  ``,
@@ -45,8 +45,8 @@ var genKeyCmd = &cobra.Command{
 }
 
 func init() {
-	genKeyCmd.Flags().StringVar(&genKeyCmdFlags.name, "name", "", "the basename of the generated file")
-	cli.Should(cobra.MarkFlagRequired(genKeyCmd.Flags(), "name"))
+	GenKeyCmd.Flags().StringVar(&genKeyCmdFlags.name, "name", "", "the basename of the generated file")
+	cli.Should(cobra.MarkFlagRequired(GenKeyCmd.Flags(), "name"))
 
-	Cmd.AddCommand(genKeyCmd)
+	Cmd.AddCommand(GenKeyCmd)
 }

@@ -28,8 +28,8 @@ var genSecurebootCmdFlags struct {
 	outputDirectory string
 }
 
-// genSecurebootCmd represents the `gen secureboot` command.
-var genSecurebootCmd = &cobra.Command{
+// GenSecurebootCmd represents the `gen secureboot` command.
+var GenSecurebootCmd = &cobra.Command{
 	Use:   "secureboot",
 	Short: "Generates secrets for the SecureBoot process",
 	Long:  ``,
@@ -39,8 +39,8 @@ var genSecurebootUKICmdFlags struct {
 	commonName string
 }
 
-// genSecurebootUKICmd represents the `gen secureboot uki` command.
-var genSecurebootUKICmd = &cobra.Command{
+// GenSecurebootUKICmd represents the `gen secureboot uki` command.
+var GenSecurebootUKICmd = &cobra.Command{
 	Use:   "uki",
 	Short: "Generates a certificate which is used to sign boot assets (UKI)",
 	Long:  ``,
@@ -50,8 +50,8 @@ var genSecurebootUKICmd = &cobra.Command{
 	},
 }
 
-// genSecurebootPCRCmd represents the `gen secureboot pcr` command.
-var genSecurebootPCRCmd = &cobra.Command{
+// GenSecurebootPCRCmd represents the `gen secureboot pcr` command.
+var GenSecurebootPCRCmd = &cobra.Command{
 	Use:   "pcr",
 	Short: "Generates a key which is used to sign TPM PCR values",
 	Long:  ``,
@@ -66,8 +66,8 @@ var genSecurebootDatabaseCmdFlags struct {
 	signingCertificatePath, signingKeyPath string
 }
 
-// genSecurebootDatabaseCmd represents the `gen secureboot database` command.
-var genSecurebootDatabaseCmd = &cobra.Command{
+// GenSecurebootDatabaseCmd represents the `gen secureboot database` command.
+var GenSecurebootDatabaseCmd = &cobra.Command{
 	Use:   "database",
 	Short: "Generates a UEFI database to enroll the signing certificate",
 	Long:  ``,
@@ -172,21 +172,21 @@ func generateSecureBootDatabase(path, enrolledCertificatePath, signingKeyPath, s
 }
 
 func init() {
-	genSecurebootCmd.PersistentFlags().StringVarP(&genSecurebootCmdFlags.outputDirectory, "output", "o", helpers.ArtifactsPath, "path to the directory storing the generated files")
-	Cmd.AddCommand(genSecurebootCmd)
+	GenSecurebootCmd.PersistentFlags().StringVarP(&genSecurebootCmdFlags.outputDirectory, "output", "o", helpers.ArtifactsPath, "path to the directory storing the generated files")
+	Cmd.AddCommand(GenSecurebootCmd)
 
-	genSecurebootUKICmd.Flags().StringVar(&genSecurebootUKICmdFlags.commonName, "common-name", "Test UKI Signing Key", "common name for the certificate")
-	genSecurebootCmd.AddCommand(genSecurebootUKICmd)
+	GenSecurebootUKICmd.Flags().StringVar(&genSecurebootUKICmdFlags.commonName, "common-name", "Test UKI Signing Key", "common name for the certificate")
+	GenSecurebootCmd.AddCommand(GenSecurebootUKICmd)
 
-	genSecurebootCmd.AddCommand(genSecurebootPCRCmd)
+	GenSecurebootCmd.AddCommand(GenSecurebootPCRCmd)
 
-	genSecurebootDatabaseCmd.Flags().StringVar(
+	GenSecurebootDatabaseCmd.Flags().StringVar(
 		&genSecurebootDatabaseCmdFlags.enrolledCertificatePath, "enrolled-certificate", helpers.ArtifactPath(constants.SecureBootSigningCertAsset), "path to the certificate to enroll")
-	genSecurebootDatabaseCmd.Flags().StringVar(
+	GenSecurebootDatabaseCmd.Flags().StringVar(
 		&genSecurebootDatabaseCmdFlags.signingCertificatePath, "signing-certificate", helpers.ArtifactPath(constants.SecureBootSigningCertAsset), "path to the certificate used to sign the database")
-	genSecurebootDatabaseCmd.Flags().StringVar(
+	GenSecurebootDatabaseCmd.Flags().StringVar(
 		&genSecurebootDatabaseCmdFlags.signingKeyPath, "signing-key", helpers.ArtifactPath(constants.SecureBootSigningKeyAsset), "path to the key used to sign the database")
-	genSecurebootCmd.AddCommand(genSecurebootDatabaseCmd)
+	GenSecurebootCmd.AddCommand(GenSecurebootDatabaseCmd)
 }
 
 func convertPEMToDER(data []byte) ([]byte, error) {

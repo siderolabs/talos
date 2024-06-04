@@ -22,8 +22,8 @@ var loadbalancerLaunchCmdFlags struct {
 	apidOnlyInitNode bool
 }
 
-// loadbalancerLaunchCmd represents the loadbalancer-launch command.
-var loadbalancerLaunchCmd = &cobra.Command{
+// LoadbalancerLaunchCmd represents the loadbalancer-launch command.
+var LoadbalancerLaunchCmd = &cobra.Command{
 	Use:    "loadbalancer-launch",
 	Short:  "Internal command used by QEMU provisioner",
 	Long:   ``,
@@ -55,8 +55,8 @@ func makeLogger() *zap.Logger {
 }
 
 func init() {
-	loadbalancerLaunchCmd.Flags().StringVar(&loadbalancerLaunchCmdFlags.addr, "loadbalancer-addr", "localhost", "load balancer listen address (IP or host)")
-	loadbalancerLaunchCmd.Flags().IntSliceVar(&loadbalancerLaunchCmdFlags.ports, "loadbalancer-ports", []int{constants.DefaultControlPlanePort}, "load balancer ports")
-	loadbalancerLaunchCmd.Flags().StringSliceVar(&loadbalancerLaunchCmdFlags.upstreams, "loadbalancer-upstreams", []string{}, "load balancer upstreams (nodes to proxy to)")
-	addCommand(loadbalancerLaunchCmd)
+	LoadbalancerLaunchCmd.Flags().StringVar(&loadbalancerLaunchCmdFlags.addr, "loadbalancer-addr", "localhost", "load balancer listen address (IP or host)")
+	LoadbalancerLaunchCmd.Flags().IntSliceVar(&loadbalancerLaunchCmdFlags.ports, "loadbalancer-ports", []int{constants.DefaultControlPlanePort}, "load balancer ports")
+	LoadbalancerLaunchCmd.Flags().StringSliceVar(&loadbalancerLaunchCmdFlags.upstreams, "loadbalancer-upstreams", []string{}, "load balancer upstreams (nodes to proxy to)")
+	addCommand(LoadbalancerLaunchCmd)
 }

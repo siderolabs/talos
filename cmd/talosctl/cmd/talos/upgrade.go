@@ -39,8 +39,8 @@ var upgradeCmdFlags struct {
 	insecure     bool
 }
 
-// upgradeCmd represents the processes command.
-var upgradeCmd = &cobra.Command{
+// UpgradeCmd represents the processes command.
+var UpgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade Talos on the target node",
 	Long:  ``,
@@ -152,17 +152,17 @@ func init() {
 
 	rebootModes = xslices.Map(rebootModes, strings.ToLower)
 
-	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i",
+	UpgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i",
 		fmt.Sprintf("%s/%s/installer:%s", images.Registry, images.Username, version.Trim(version.Tag)),
 		"the container image to use for performing the install")
-	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.rebootMode, "reboot-mode", "m", strings.ToLower(machine.UpgradeRequest_DEFAULT.String()),
+	UpgradeCmd.Flags().StringVarP(&upgradeCmdFlags.rebootMode, "reboot-mode", "m", strings.ToLower(machine.UpgradeRequest_DEFAULT.String()),
 		fmt.Sprintf("select the reboot mode during upgrade. Mode %q bypasses kexec. Valid values are: %q.",
 			strings.ToLower(machine.UpgradeRequest_POWERCYCLE.String()),
 			rebootModes))
-	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.preserve, "preserve", "p", false, "preserve data")
-	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.stage, "stage", "s", false, "stage the upgrade to perform it after a reboot")
-	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
-	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.insecure, "insecure", false, "upgrade using the insecure (encrypted with no auth) maintenance service")
-	upgradeCmdFlags.addTrackActionFlags(upgradeCmd)
-	addCommand(upgradeCmd)
+	UpgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.preserve, "preserve", "p", false, "preserve data")
+	UpgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.stage, "stage", "s", false, "stage the upgrade to perform it after a reboot")
+	UpgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
+	UpgradeCmd.Flags().BoolVar(&upgradeCmdFlags.insecure, "insecure", false, "upgrade using the insecure (encrypted with no auth) maintenance service")
+	upgradeCmdFlags.addTrackActionFlags(UpgradeCmd)
+	addCommand(UpgradeCmd)
 }

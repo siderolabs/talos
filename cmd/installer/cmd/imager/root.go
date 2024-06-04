@@ -47,8 +47,8 @@ var cmdFlags struct {
 	OverlayOptions        []string
 }
 
-// rootCmd represents the base command when called without any subcommands.
-var rootCmd = &cobra.Command{
+// RootCmd represents the base command when called without any subcommands.
+var RootCmd = &cobra.Command{
 	Use:          "imager <profile>|-",
 	Short:        "Generate various boot assets and images.",
 	Long:         ``,
@@ -203,30 +203,30 @@ var rootCmd = &cobra.Command{
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// This is called by main.main(). It only needs to happen once to the RootCmd.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	if err := RootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.Arch, "arch", runtime.GOARCH, "The target architecture")
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.BaseInstallerImage, "base-installer-image", "", "Base installer image to use")
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.Board, "board", "", "The value of "+constants.KernelParamBoard)
-	rootCmd.PersistentFlags().BoolVar(&cmdFlags.Insecure, "insecure", false, "Pull assets from insecure registry")
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.ImageDiskSize, "image-disk-size", "", "Set custom disk image size (accepts human readable values, e.g. 6GiB)")
-	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.ExtraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
-	rootCmd.PersistentFlags().Var(&cmdFlags.MetaValues, "meta", "A key/value pair for META")
-	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.SystemExtensionImages, "system-extension-image", []string{}, "The image reference to the system extension to install")
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.OutputPath, "output", "/out", "The output directory path")
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.OutputKind, "output-kind", "", "Override output kind")
-	rootCmd.PersistentFlags().BoolVar(&cmdFlags.TarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayName, "overlay-name", "", "The name of the overlay to use")
-	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayImage, "overlay-image", "", "The image reference to the overlay")
-	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.OverlayOptions, "overlay-option", []string{}, "Extra options to pass to the overlay")
-	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-name")
-	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-image")
-	rootCmd.MarkFlagsMutuallyExclusive("board", "overlay-option")
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.Arch, "arch", runtime.GOARCH, "The target architecture")
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.BaseInstallerImage, "base-installer-image", "", "Base installer image to use")
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.Board, "board", "", "The value of "+constants.KernelParamBoard)
+	RootCmd.PersistentFlags().BoolVar(&cmdFlags.Insecure, "insecure", false, "Pull assets from insecure registry")
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.ImageDiskSize, "image-disk-size", "", "Set custom disk image size (accepts human readable values, e.g. 6GiB)")
+	RootCmd.PersistentFlags().StringArrayVar(&cmdFlags.ExtraKernelArgs, "extra-kernel-arg", []string{}, "Extra argument to pass to the kernel")
+	RootCmd.PersistentFlags().Var(&cmdFlags.MetaValues, "meta", "A key/value pair for META")
+	RootCmd.PersistentFlags().StringArrayVar(&cmdFlags.SystemExtensionImages, "system-extension-image", []string{}, "The image reference to the system extension to install")
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.OutputPath, "output", "/out", "The output directory path")
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.OutputKind, "output-kind", "", "Override output kind")
+	RootCmd.PersistentFlags().BoolVar(&cmdFlags.TarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayName, "overlay-name", "", "The name of the overlay to use")
+	RootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayImage, "overlay-image", "", "The image reference to the overlay")
+	RootCmd.PersistentFlags().StringArrayVar(&cmdFlags.OverlayOptions, "overlay-option", []string{}, "Extra options to pass to the overlay")
+	RootCmd.MarkFlagsMutuallyExclusive("board", "overlay-name")
+	RootCmd.MarkFlagsMutuallyExclusive("board", "overlay-image")
+	RootCmd.MarkFlagsMutuallyExclusive("board", "overlay-option")
 }

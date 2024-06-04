@@ -30,7 +30,7 @@ var (
 	tailLines int32
 )
 
-var logsCmd = &cobra.Command{
+var LogsCmd = &cobra.Command{
 	Use:   "logs <service name>",
 	Short: "Retrieve logs for a service",
 	Long:  ``,
@@ -229,12 +229,12 @@ func getLogsContainers() []string {
 }
 
 func init() {
-	logsCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
-	logsCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the logs should be streamed")
-	logsCmd.Flags().Int32VarP(&tailLines, "tail", "", -1, "lines of log file to display (default is to show from the beginning)")
+	LogsCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	LogsCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the logs should be streamed")
+	LogsCmd.Flags().Int32VarP(&tailLines, "tail", "", -1, "lines of log file to display (default is to show from the beginning)")
 
-	logsCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
-	logsCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
+	LogsCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	LogsCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
 
-	addCommand(logsCmd)
+	addCommand(LogsCmd)
 }

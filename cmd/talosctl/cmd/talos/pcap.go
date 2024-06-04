@@ -34,8 +34,8 @@ var pcapCmdFlags struct {
 	duration  time.Duration
 }
 
-// pcapCmd represents the pcap command.
-var pcapCmd = &cobra.Command{
+// PcapCmd represents the pcap command.
+var PcapCmd = &cobra.Command{
 	Use:     "pcap",
 	Aliases: []string{"tcpdump"},
 	Short:   "Capture the network packets from the node.",
@@ -197,15 +197,15 @@ func parseBPFInstructions(in string) ([]*machine.BPFInstruction, error) {
 }
 
 func init() {
-	pcapCmd.Flags().StringVarP(&pcapCmdFlags.iface, "interface", "i", "eth0", "interface name to capture packets on")
-	pcapCmd.Flags().BoolVar(&pcapCmdFlags.promisc, "promiscuous", false, "put interface into promiscuous mode")
-	pcapCmd.Flags().IntVarP(&pcapCmdFlags.snaplen, "snaplen", "s", 4096, "maximum packet size to capture")
-	pcapCmd.Flags().StringVarP(&pcapCmdFlags.output, "output", "o", "", "if not set, decode packets to stdout; if set write raw pcap data to a file, use '-' for stdout")
-	pcapCmd.Flags().StringVar(&pcapCmdFlags.bpfFilter, "bpf-filter", "", "bpf filter to apply, tcpdump -dd format")
-	pcapCmd.Flags().DurationVar(&pcapCmdFlags.duration, "duration", 0, "duration of the capture")
-	pcapCmd.Flags().MarkDeprecated("snaplen", "support of snap length is removed") //nolint:errcheck
+	PcapCmd.Flags().StringVarP(&pcapCmdFlags.iface, "interface", "i", "eth0", "interface name to capture packets on")
+	PcapCmd.Flags().BoolVar(&pcapCmdFlags.promisc, "promiscuous", false, "put interface into promiscuous mode")
+	PcapCmd.Flags().IntVarP(&pcapCmdFlags.snaplen, "snaplen", "s", 4096, "maximum packet size to capture")
+	PcapCmd.Flags().StringVarP(&pcapCmdFlags.output, "output", "o", "", "if not set, decode packets to stdout; if set write raw pcap data to a file, use '-' for stdout")
+	PcapCmd.Flags().StringVar(&pcapCmdFlags.bpfFilter, "bpf-filter", "", "bpf filter to apply, tcpdump -dd format")
+	PcapCmd.Flags().DurationVar(&pcapCmdFlags.duration, "duration", 0, "duration of the capture")
+	PcapCmd.Flags().MarkDeprecated("snaplen", "support of snap length is removed") //nolint:errcheck
 
-	addCommand(pcapCmd)
+	addCommand(PcapCmd)
 }
 
 // forEachPacket reads packets from the packet source and calls the provided function for each packet. fn should not

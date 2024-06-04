@@ -19,8 +19,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// upgradeK8sCmd represents the upgrade-k8s command.
-var upgradeK8sCmd = &cobra.Command{
+// UpgradeK8sCmd represents the upgrade-k8s command.
+var UpgradeK8sCmd = &cobra.Command{
 	Use:   "upgrade-k8s",
 	Short: "Upgrade Kubernetes control plane in the Talos cluster.",
 	Long:  `Command runs upgrade of Kubernetes control plane components between specified versions.`,
@@ -41,22 +41,22 @@ var upgradeK8sCmdFlags struct {
 }
 
 func init() {
-	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
-	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
-	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
-	upgradeK8sCmd.Flags().BoolVarP(&upgradeK8sCmdFlags.withExamples, "with-examples", "", true, "patch all machine configs with the commented examples")
-	upgradeK8sCmd.Flags().BoolVarP(&upgradeK8sCmdFlags.withDocs, "with-docs", "", true, "patch all machine configs adding the documentation for each field")
-	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false, "skip the actual upgrade and show the upgrade plan instead")
-	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.PrePullImages, "pre-pull-images", true, "pre-pull images before upgrade")
-	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.UpgradeKubelet, "upgrade-kubelet", true, "upgrade kubelet service")
+	UpgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
+	UpgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
+	UpgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
+	UpgradeK8sCmd.Flags().BoolVarP(&upgradeK8sCmdFlags.withExamples, "with-examples", "", true, "patch all machine configs with the commented examples")
+	UpgradeK8sCmd.Flags().BoolVarP(&upgradeK8sCmdFlags.withDocs, "with-docs", "", true, "patch all machine configs adding the documentation for each field")
+	UpgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false, "skip the actual upgrade and show the upgrade plan instead")
+	UpgradeK8sCmd.Flags().BoolVar(&upgradeOptions.PrePullImages, "pre-pull-images", true, "pre-pull images before upgrade")
+	UpgradeK8sCmd.Flags().BoolVar(&upgradeOptions.UpgradeKubelet, "upgrade-kubelet", true, "upgrade kubelet service")
 
-	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.KubeletImage, "kubelet-image", constants.KubeletImage, "kubelet image to use")
-	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.APIServerImage, "apiserver-image", constants.KubernetesAPIServerImage, "kube-apiserver image to use")
-	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControllerManagerImage, "controller-manager-image", constants.KubernetesControllerManagerImage, "kube-controller-manager image to use")
-	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.SchedulerImage, "scheduler-image", constants.KubernetesSchedulerImage, "kube-scheduler image to use")
-	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ProxyImage, "proxy-image", constants.KubeProxyImage, "kube-proxy image to use")
+	UpgradeK8sCmd.Flags().StringVar(&upgradeOptions.KubeletImage, "kubelet-image", constants.KubeletImage, "kubelet image to use")
+	UpgradeK8sCmd.Flags().StringVar(&upgradeOptions.APIServerImage, "apiserver-image", constants.KubernetesAPIServerImage, "kube-apiserver image to use")
+	UpgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControllerManagerImage, "controller-manager-image", constants.KubernetesControllerManagerImage, "kube-controller-manager image to use")
+	UpgradeK8sCmd.Flags().StringVar(&upgradeOptions.SchedulerImage, "scheduler-image", constants.KubernetesSchedulerImage, "kube-scheduler image to use")
+	UpgradeK8sCmd.Flags().StringVar(&upgradeOptions.ProxyImage, "proxy-image", constants.KubeProxyImage, "kube-proxy image to use")
 
-	addCommand(upgradeK8sCmd)
+	addCommand(UpgradeK8sCmd)
 }
 
 func upgradeKubernetes(ctx context.Context, c *client.Client) error {

@@ -78,8 +78,8 @@ var resetCmdFlags struct {
 	systemLabelsToWipe []string
 }
 
-// resetCmd represents the reset command.
-var resetCmd = &cobra.Command{
+// ResetCmd represents the reset command.
+var ResetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "Reset a node",
 	Long:  ``,
@@ -184,12 +184,12 @@ func resetGetActorID(ctx context.Context, c *client.Client, req *machineapi.Rese
 }
 
 func init() {
-	resetCmd.Flags().BoolVar(&resetCmdFlags.graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
-	resetCmd.Flags().BoolVar(&resetCmdFlags.reboot, "reboot", false, "if true, reboot the node after resetting instead of shutting down")
-	resetCmd.Flags().BoolVar(&resetCmdFlags.insecure, "insecure", false, "reset using the insecure (encrypted with no auth) maintenance service")
-	resetCmd.Flags().Var(&resetCmdFlags.wipeMode, "wipe-mode", "disk reset mode")
-	resetCmd.Flags().StringSliceVar(&resetCmdFlags.userDisksToWipe, "user-disks-to-wipe", nil, "if set, wipes defined devices in the list")
-	resetCmd.Flags().StringSliceVar(&resetCmdFlags.systemLabelsToWipe, "system-labels-to-wipe", nil, "if set, just wipe selected system disk partitions by label but keep other partitions intact")
-	resetCmdFlags.addTrackActionFlags(resetCmd)
-	addCommand(resetCmd)
+	ResetCmd.Flags().BoolVar(&resetCmdFlags.graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
+	ResetCmd.Flags().BoolVar(&resetCmdFlags.reboot, "reboot", false, "if true, reboot the node after resetting instead of shutting down")
+	ResetCmd.Flags().BoolVar(&resetCmdFlags.insecure, "insecure", false, "reset using the insecure (encrypted with no auth) maintenance service")
+	ResetCmd.Flags().Var(&resetCmdFlags.wipeMode, "wipe-mode", "disk reset mode")
+	ResetCmd.Flags().StringSliceVar(&resetCmdFlags.userDisksToWipe, "user-disks-to-wipe", nil, "if set, wipes defined devices in the list")
+	ResetCmd.Flags().StringSliceVar(&resetCmdFlags.systemLabelsToWipe, "system-labels-to-wipe", nil, "if set, just wipe selected system disk partitions by label but keep other partitions intact")
+	resetCmdFlags.addTrackActionFlags(ResetCmd)
+	addCommand(ResetCmd)
 }

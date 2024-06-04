@@ -32,8 +32,8 @@ var rotateCACmdFlags struct {
 	rotateKubernetes bool
 }
 
-// rotateCACmd represents the rotate-ca command.
-var rotateCACmd = &cobra.Command{
+// RotateCACmd represents the rotate-ca command.
+var RotateCACmd = &cobra.Command{
 	Use:   "rotate-ca",
 	Short: "Rotate cluster CAs (Talos and Kubernetes APIs).",
 	Long: `The command can rotate both Talos and Kubernetes root CAs (for the API).
@@ -173,15 +173,15 @@ func rotateKubernetesCA(ctx context.Context, c *client.Client, encoderOpt encode
 }
 
 func init() {
-	addCommand(rotateCACmd)
-	rotateCACmd.Flags().StringVar(&rotateCACmdFlags.clusterState.InitNode, "init-node", "", "specify IPs of init node")
-	rotateCACmd.Flags().StringSliceVar(&rotateCACmdFlags.clusterState.ControlPlaneNodes, "control-plane-nodes", nil, "specify IPs of control plane nodes")
-	rotateCACmd.Flags().StringSliceVar(&rotateCACmdFlags.clusterState.WorkerNodes, "worker-nodes", nil, "specify IPs of worker nodes")
-	rotateCACmd.Flags().StringVar(&rotateCACmdFlags.forceEndpoint, "k8s-endpoint", "", "use endpoint instead of kubeconfig default")
-	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.withExamples, "with-examples", "", true, "patch all machine configs with the commented examples")
-	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.withDocs, "with-docs", "", true, "patch all machine configs adding the documentation for each field")
-	rotateCACmd.Flags().StringVarP(&rotateCACmdFlags.output, "output", "o", "talosconfig", "path to the output new `talosconfig`")
-	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.dryRun, "dry-run", "", true, "dry-run mode (no changes to the cluster)")
-	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateTalos, "talos", "", true, "rotate Talos API CA")
-	rotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateKubernetes, "kubernetes", "", true, "rotate Kubernetes API CA")
+	addCommand(RotateCACmd)
+	RotateCACmd.Flags().StringVar(&rotateCACmdFlags.clusterState.InitNode, "init-node", "", "specify IPs of init node")
+	RotateCACmd.Flags().StringSliceVar(&rotateCACmdFlags.clusterState.ControlPlaneNodes, "control-plane-nodes", nil, "specify IPs of control plane nodes")
+	RotateCACmd.Flags().StringSliceVar(&rotateCACmdFlags.clusterState.WorkerNodes, "worker-nodes", nil, "specify IPs of worker nodes")
+	RotateCACmd.Flags().StringVar(&rotateCACmdFlags.forceEndpoint, "k8s-endpoint", "", "use endpoint instead of kubeconfig default")
+	RotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.withExamples, "with-examples", "", true, "patch all machine configs with the commented examples")
+	RotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.withDocs, "with-docs", "", true, "patch all machine configs adding the documentation for each field")
+	RotateCACmd.Flags().StringVarP(&rotateCACmdFlags.output, "output", "o", "talosconfig", "path to the output new `talosconfig`")
+	RotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.dryRun, "dry-run", "", true, "dry-run mode (no changes to the cluster)")
+	RotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateTalos, "talos", "", true, "rotate Talos API CA")
+	RotateCACmd.Flags().BoolVarP(&rotateCACmdFlags.rotateKubernetes, "kubernetes", "", true, "rotate Kubernetes API CA")
 }

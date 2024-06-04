@@ -18,8 +18,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
-// mountsCmd represents the mounts command.
-var mountsCmd = &cobra.Command{
+// MountsCmd represents the mounts command.
+var MountsCmd = &cobra.Command{
 	Use:     "mounts",
 	Aliases: []string{"mount"},
 	Short:   "List mounts",
@@ -44,5 +44,5 @@ var mountsCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(mountsCmd)
+	addCommand(MountsCmd)
 }

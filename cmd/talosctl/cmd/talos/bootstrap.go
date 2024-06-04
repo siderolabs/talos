@@ -24,7 +24,7 @@ var bootstrapCmdFlags struct {
 }
 
 // bootstrapCmd represents the bootstrap command.
-var bootstrapCmd = &cobra.Command{
+var BootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
 	Short: "Bootstrap the etcd cluster on the specified node.",
 	Long: `When Talos cluster is created etcd service on control plane nodes enter the join loop waiting
@@ -79,7 +79,7 @@ Talos etcd cluster can be recovered from a known snapshot with '--recover-from='
 }
 
 func init() {
-	bootstrapCmd.Flags().StringVar(&bootstrapCmdFlags.recoverFrom, "recover-from", "", "recover etcd cluster from the snapshot")
-	bootstrapCmd.Flags().BoolVar(&bootstrapCmdFlags.recoverSkipHashCheck, "recover-skip-hash-check", false, "skip integrity check when recovering etcd (use when recovering from data directory copy)")
-	addCommand(bootstrapCmd)
+	BootstrapCmd.Flags().StringVar(&bootstrapCmdFlags.recoverFrom, "recover-from", "", "recover etcd cluster from the snapshot")
+	BootstrapCmd.Flags().BoolVar(&bootstrapCmdFlags.recoverSkipHashCheck, "recover-skip-hash-check", false, "skip integrity check when recovering etcd (use when recovering from data directory copy)")
+	addCommand(BootstrapCmd)
 }

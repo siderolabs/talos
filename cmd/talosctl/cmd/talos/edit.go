@@ -174,8 +174,8 @@ func addEditingComment(in string) string {
 	return fmt.Sprintf("# \n# %s\n", strings.Join(lines, "\n# "))
 }
 
-// editCmd represents the edit command.
-var editCmd = &cobra.Command{
+// EditCmd represents the edit command.
+var EditCmd = &cobra.Command{
 	Use:   "edit <type> [<id>]",
 	Short: "Edit a resource from the default editor.",
 	Args:  cobra.RangeArgs(1, 2),
@@ -204,9 +204,9 @@ or 'notepad' for Windows.`,
 }
 
 func init() {
-	editCmd.Flags().StringVar(&editCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
-	helpers.AddModeFlags(&editCmdFlags.Mode, editCmd)
-	editCmd.Flags().BoolVar(&editCmdFlags.dryRun, "dry-run", false, "do not apply the change after editing and print the change summary instead")
-	editCmd.Flags().DurationVar(&editCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
-	addCommand(editCmd)
+	EditCmd.Flags().StringVar(&editCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
+	helpers.AddModeFlags(&editCmdFlags.Mode, EditCmd)
+	EditCmd.Flags().BoolVar(&editCmdFlags.dryRun, "dry-run", false, "do not apply the change after editing and print the change summary instead")
+	EditCmd.Flags().DurationVar(&editCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
+	addCommand(EditCmd)
 }

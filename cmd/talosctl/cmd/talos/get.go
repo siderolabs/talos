@@ -31,8 +31,8 @@ var getCmdFlags struct {
 	watch     bool
 }
 
-// getCmd represents the get (resources) command.
-var getCmd = &cobra.Command{
+// GetCmd represents the get (resources) command.
+var GetCmd = &cobra.Command{
 	Use:        "get <type> [<id>]",
 	Aliases:    []string{"g"},
 	SuggestFor: []string{},
@@ -315,10 +315,10 @@ func CompleteNodes(*cobra.Command, []string, string) ([]string, cobra.ShellCompD
 }
 
 func init() {
-	getCmd.Flags().StringVar(&getCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
-	getCmd.Flags().StringVarP(&getCmdFlags.output, "output", "o", "table", "output mode (json, table, yaml, jsonpath)")
-	getCmd.Flags().BoolVarP(&getCmdFlags.watch, "watch", "w", false, "watch resource changes")
-	getCmd.Flags().BoolVarP(&getCmdFlags.insecure, "insecure", "i", false, "get resources using the insecure (encrypted with no auth) maintenance service")
-	cli.Should(getCmd.RegisterFlagCompletionFunc("output", output.CompleteOutputArg))
-	addCommand(getCmd)
+	GetCmd.Flags().StringVar(&getCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
+	GetCmd.Flags().StringVarP(&getCmdFlags.output, "output", "o", "table", "output mode (json, table, yaml, jsonpath)")
+	GetCmd.Flags().BoolVarP(&getCmdFlags.watch, "watch", "w", false, "watch resource changes")
+	GetCmd.Flags().BoolVarP(&getCmdFlags.insecure, "insecure", "i", false, "get resources using the insecure (encrypted with no auth) maintenance service")
+	cli.Should(GetCmd.RegisterFlagCompletionFunc("output", output.CompleteOutputArg))
+	addCommand(GetCmd)
 }

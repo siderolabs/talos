@@ -23,8 +23,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// containersCmd represents the processes command.
-var containersCmd = &cobra.Command{
+// ContainersCmd represents the processes command.
+var ContainersCmd = &cobra.Command{
 	Use:     "containers",
 	Aliases: []string{"c"},
 	Short:   "List containers",
@@ -94,10 +94,10 @@ func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse)
 }
 
 func init() {
-	containersCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	ContainersCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
-	containersCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
-	containersCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
+	ContainersCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	ContainersCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
 
-	addCommand(containersCmd)
+	addCommand(ContainersCmd)
 }

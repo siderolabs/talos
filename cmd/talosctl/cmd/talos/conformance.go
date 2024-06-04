@@ -15,8 +15,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// conformanceCmd represents the conformance command.
-var conformanceCmd = &cobra.Command{
+// ConformanceCmd represents the conformance command.
+var ConformanceCmd = &cobra.Command{
 	Use:   "conformance",
 	Short: "Run conformance tests",
 	Long:  ``,
@@ -26,7 +26,7 @@ var conformanceKubernetesCmdFlags struct {
 	mode string
 }
 
-var conformanceKubernetesCmd = &cobra.Command{
+var ConformanceKubernetesCmd = &cobra.Command{
 	Use:     "kubernetes",
 	Aliases: []string{"k8s"},
 	Short:   "Run Kubernetes conformance tests",
@@ -61,7 +61,7 @@ var conformanceKubernetesCmd = &cobra.Command{
 }
 
 func init() {
-	conformanceKubernetesCmd.Flags().StringVar(&conformanceKubernetesCmdFlags.mode, "mode", "fast", "conformance test mode: [fast, certified]")
-	conformanceCmd.AddCommand(conformanceKubernetesCmd)
-	addCommand(conformanceCmd)
+	ConformanceKubernetesCmd.Flags().StringVar(&conformanceKubernetesCmdFlags.mode, "mode", "fast", "conformance test mode: [fast, certified]")
+	ConformanceCmd.AddCommand(ConformanceKubernetesCmd)
+	addCommand(ConformanceCmd)
 }

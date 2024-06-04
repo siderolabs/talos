@@ -27,7 +27,7 @@ var siderolinkFlags struct {
 	predefinedPairs   []string
 }
 
-var siderolinkCmd = &cobra.Command{
+var SiderolinkCmd = &cobra.Command{
 	Use:    "siderolink-launch",
 	Short:  "Internal command used by cluster create to launch siderolink agent",
 	Long:   ``,
@@ -42,21 +42,21 @@ var siderolinkCmd = &cobra.Command{
 }
 
 func init() {
-	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.joinToken, "sidero-link-join-token", "", "join token for the cluster")
-	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.wireguardEndpoint, "sidero-link-wireguard-endpoint", "", "advertised Wireguard endpoint")
-	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.sinkEndpoint, "event-sink-endpoint", "", "gRPC API endpoint for the Event Sink")
-	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.apiEndpoint, "sidero-link-api-endpoint", "", "gRPC API endpoint for the SideroLink")
-	siderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.logEndpoint, "log-receiver-endpoint", "", "TCP log receiver endpoint")
-	siderolinkCmd.PersistentFlags().StringArrayVar(&siderolinkFlags.predefinedPairs, "predefined-pair", nil, "predefined pairs of UUID=IPv6 addrs for the nodes")
+	SiderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.joinToken, "sidero-link-join-token", "", "join token for the cluster")
+	SiderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.wireguardEndpoint, "sidero-link-wireguard-endpoint", "", "advertised Wireguard endpoint")
+	SiderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.sinkEndpoint, "event-sink-endpoint", "", "gRPC API endpoint for the Event Sink")
+	SiderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.apiEndpoint, "sidero-link-api-endpoint", "", "gRPC API endpoint for the SideroLink")
+	SiderolinkCmd.PersistentFlags().StringVar(&siderolinkFlags.logEndpoint, "log-receiver-endpoint", "", "TCP log receiver endpoint")
+	SiderolinkCmd.PersistentFlags().StringArrayVar(&siderolinkFlags.predefinedPairs, "predefined-pair", nil, "predefined pairs of UUID=IPv6 addrs for the nodes")
 
-	siderolinkCmd.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
-		err := siderolinkCmd.PersistentFlags().MarkHidden(flag.Name)
+	SiderolinkCmd.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
+		err := SiderolinkCmd.PersistentFlags().MarkHidden(flag.Name)
 		if err != nil {
 			panic(err)
 		}
 	})
 
-	addCommand(siderolinkCmd)
+	addCommand(SiderolinkCmd)
 }
 
 func run(ctx context.Context) error {

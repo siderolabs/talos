@@ -19,8 +19,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
-// serviceCmd represents the service command.
-var serviceCmd = &cobra.Command{
+// ServiceCmd represents the service command.
+var ServiceCmd = &cobra.Command{
 	Use:     "service [<id> [start|stop|restart|status]]",
 	Aliases: []string{"services"},
 	Short:   "Retrieve the state of a service (or all services), control service state",
@@ -217,5 +217,5 @@ func serviceRestart(ctx context.Context, c *client.Client, id string) error {
 }
 
 func init() {
-	addCommand(serviceCmd)
+	addCommand(ServiceCmd)
 }

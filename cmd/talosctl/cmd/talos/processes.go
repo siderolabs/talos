@@ -32,8 +32,8 @@ var (
 	watchProcesses bool
 )
 
-// processesCmd represents the processes command.
-var processesCmd = &cobra.Command{
+// ProcessesCmd represents the processes command.
+var ProcessesCmd = &cobra.Command{
 	Use:     "processes",
 	Aliases: []string{"p", "ps"},
 	Short:   "List running processes",
@@ -68,9 +68,9 @@ var processesCmd = &cobra.Command{
 }
 
 func init() {
-	processesCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
-	processesCmd.Flags().BoolVarP(&watchProcesses, "watch", "w", false, "Stream running processes")
-	addCommand(processesCmd)
+	ProcessesCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
+	ProcessesCmd.Flags().BoolVarP(&watchProcesses, "watch", "w", false, "Stream running processes")
+	addCommand(ProcessesCmd)
 }
 
 func processesUI(ctx context.Context, c *client.Client) {

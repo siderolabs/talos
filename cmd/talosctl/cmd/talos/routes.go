@@ -13,8 +13,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// routesCmd represents the net routes command.
-var routesCmd = &cobra.Command{
+// RoutesCmd represents the net routes command.
+var RoutesCmd = &cobra.Command{
 	Use:     "routes",
 	Aliases: []string{"route"},
 	Short:   "List network routes",
@@ -29,5 +29,5 @@ var routesCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(routesCmd)
+	addCommand(RoutesCmd)
 }

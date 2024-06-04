@@ -27,8 +27,8 @@ var versionCmdFlags struct {
 	insecure     bool
 }
 
-// versionCmd represents the `talosctl version` command.
-var versionCmd = &cobra.Command{
+// VersionCmd represents the `talosctl version` command.
+var VersionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Prints the version",
 	Long:  ``,
@@ -106,13 +106,13 @@ func cmdVersion(ctx context.Context, c *client.Client) error {
 }
 
 func init() {
-	versionCmd.Flags().BoolVar(&versionCmdFlags.shortVersion, "short", false, "Print the short version")
-	versionCmd.Flags().BoolVar(&versionCmdFlags.clientOnly, "client", false, "Print client version only")
-	versionCmd.Flags().BoolVarP(&versionCmdFlags.insecure, "insecure", "i", false, "use Talos maintenance mode API")
+	VersionCmd.Flags().BoolVar(&versionCmdFlags.shortVersion, "short", false, "Print the short version")
+	VersionCmd.Flags().BoolVar(&versionCmdFlags.clientOnly, "client", false, "Print client version only")
+	VersionCmd.Flags().BoolVarP(&versionCmdFlags.insecure, "insecure", "i", false, "use Talos maintenance mode API")
 
 	// TODO remove when https://github.com/siderolabs/talos/issues/907 is implemented
-	versionCmd.Flags().BoolVar(&versionCmdFlags.json, "json", false, "")
-	cli.Should(versionCmd.Flags().MarkHidden("json"))
+	VersionCmd.Flags().BoolVar(&versionCmdFlags.json, "json", false, "")
+	cli.Should(VersionCmd.Flags().MarkHidden("json"))
 
-	addCommand(versionCmd)
+	addCommand(VersionCmd)
 }

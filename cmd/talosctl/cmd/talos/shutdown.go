@@ -21,8 +21,8 @@ var shutdownCmdFlags struct {
 	force bool
 }
 
-// shutdownCmd represents the shutdown command.
-var shutdownCmd = &cobra.Command{
+// ShutdownCmd represents the shutdown command.
+var ShutdownCmd = &cobra.Command{
 	Use:   "shutdown",
 	Short: "Shutdown a node",
 	Long:  ``,
@@ -74,7 +74,7 @@ func shutdownGetActorID(ctx context.Context, c *client.Client) (string, error) {
 }
 
 func init() {
-	shutdownCmd.Flags().BoolVar(&shutdownCmdFlags.force, "force", false, "if true, force a node to shutdown without a cordon/drain")
-	shutdownCmdFlags.addTrackActionFlags(shutdownCmd)
-	addCommand(shutdownCmd)
+	ShutdownCmd.Flags().BoolVar(&shutdownCmdFlags.force, "force", false, "if true, force a node to shutdown without a cordon/drain")
+	shutdownCmdFlags.addTrackActionFlags(ShutdownCmd)
+	addCommand(ShutdownCmd)
 }

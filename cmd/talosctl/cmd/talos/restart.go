@@ -15,8 +15,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// restartCmd represents the restart command.
-var restartCmd = &cobra.Command{
+// RestartCmd represents the restart command.
+var RestartCmd = &cobra.Command{
 	Use:   "restart <id>",
 	Short: "Restart a process",
 	Long:  ``,
@@ -53,10 +53,10 @@ var restartCmd = &cobra.Command{
 }
 
 func init() {
-	restartCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	RestartCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
-	restartCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
-	restartCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
+	RestartCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	RestartCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
 
-	addCommand(restartCmd)
+	addCommand(RestartCmd)
 }

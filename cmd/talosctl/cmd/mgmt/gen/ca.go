@@ -22,8 +22,8 @@ var genCACmdFlags struct {
 	rsa          bool
 }
 
-// genCACmd represents the `gen ca` command.
-var genCACmd = &cobra.Command{
+// GenCACmd represents the `gen ca` command.
+var GenCACmd = &cobra.Command{
 	Use:   "ca",
 	Short: "Generates a self-signed X.509 certificate authority",
 	Long:  ``,
@@ -66,10 +66,10 @@ var genCACmd = &cobra.Command{
 }
 
 func init() {
-	genCACmd.Flags().StringVar(&genCACmdFlags.organization, "organization", "", "X.509 distinguished name for the Organization")
-	cli.Should(cobra.MarkFlagRequired(genCACmd.Flags(), "organization"))
-	genCACmd.Flags().IntVar(&genCACmdFlags.hours, "hours", 87600, "the hours from now on which the certificate validity period ends")
-	genCACmd.Flags().BoolVar(&genCACmdFlags.rsa, "rsa", false, "generate in RSA format")
+	GenCACmd.Flags().StringVar(&genCACmdFlags.organization, "organization", "", "X.509 distinguished name for the Organization")
+	cli.Should(cobra.MarkFlagRequired(GenCACmd.Flags(), "organization"))
+	GenCACmd.Flags().IntVar(&genCACmdFlags.hours, "hours", 87600, "the hours from now on which the certificate validity period ends")
+	GenCACmd.Flags().BoolVar(&genCACmdFlags.rsa, "rsa", false, "generate in RSA format")
 
-	Cmd.AddCommand(genCACmd)
+	Cmd.AddCommand(GenCACmd)
 }

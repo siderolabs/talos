@@ -16,8 +16,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// readCmd represents the read command.
-var readCmd = &cobra.Command{
+// ReadCmd represents the read command.
+var ReadCmd = &cobra.Command{
 	Use:     "read <path>",
 	Short:   "Read a file on the machine",
 	Long:    ``,
@@ -54,5 +54,5 @@ var readCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(readCmd)
+	addCommand(ReadCmd)
 }

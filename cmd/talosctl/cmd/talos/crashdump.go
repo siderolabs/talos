@@ -17,8 +17,8 @@ var crashdumpCmdFlags struct {
 	clusterState clusterNodes
 }
 
-// crashdumpCmd represents the crashdump command.
-var crashdumpCmd = &cobra.Command{
+// CrashdumpCmd represents the crashdump command.
+var CrashdumpCmd = &cobra.Command{
 	Use:    "crashdump",
 	Short:  "Dump debug information about the cluster",
 	Long:   ``,
@@ -32,8 +32,8 @@ var crashdumpCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(crashdumpCmd)
-	crashdumpCmd.Flags().StringVar(&crashdumpCmdFlags.clusterState.InitNode, "init-node", "", "specify IPs of init node")
-	crashdumpCmd.Flags().StringSliceVar(&crashdumpCmdFlags.clusterState.ControlPlaneNodes, "control-plane-nodes", nil, "specify IPs of control plane nodes")
-	crashdumpCmd.Flags().StringSliceVar(&crashdumpCmdFlags.clusterState.WorkerNodes, "worker-nodes", nil, "specify IPs of worker nodes")
+	addCommand(CrashdumpCmd)
+	CrashdumpCmd.Flags().StringVar(&crashdumpCmdFlags.clusterState.InitNode, "init-node", "", "specify IPs of init node")
+	CrashdumpCmd.Flags().StringSliceVar(&crashdumpCmdFlags.clusterState.ControlPlaneNodes, "control-plane-nodes", nil, "specify IPs of control plane nodes")
+	CrashdumpCmd.Flags().StringSliceVar(&crashdumpCmdFlags.clusterState.WorkerNodes, "worker-nodes", nil, "specify IPs of worker nodes")
 }

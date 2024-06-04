@@ -33,8 +33,8 @@ var applyConfigCmdFlags struct {
 	configTryTimeout time.Duration
 }
 
-// applyConfigCmd represents the applyConfiguration command.
-var applyConfigCmd = &cobra.Command{
+// ApplyConfigCmd represents the applyConfiguration command.
+var ApplyConfigCmd = &cobra.Command{
 	Use:     "apply-config",
 	Aliases: []string{"apply"},
 	Short:   "Apply a new configuration to a node",
@@ -156,12 +156,12 @@ var applyConfigCmd = &cobra.Command{
 }
 
 func init() {
-	applyConfigCmd.Flags().StringVarP(&applyConfigCmdFlags.filename, "file", "f", "", "the filename of the updated configuration")
-	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
-	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.dryRun, "dry-run", false, "check how the config change will be applied in dry-run mode")
-	applyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
-	applyConfigCmd.Flags().StringSliceVarP(&applyConfigCmdFlags.patches, "config-patch", "p", nil, "the list of config patches to apply to the local config file before sending it to the node")
-	applyConfigCmd.Flags().DurationVar(&applyConfigCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
-	helpers.AddModeFlags(&applyConfigCmdFlags.Mode, applyConfigCmd)
-	addCommand(applyConfigCmd)
+	ApplyConfigCmd.Flags().StringVarP(&applyConfigCmdFlags.filename, "file", "f", "", "the filename of the updated configuration")
+	ApplyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
+	ApplyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.dryRun, "dry-run", false, "check how the config change will be applied in dry-run mode")
+	ApplyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
+	ApplyConfigCmd.Flags().StringSliceVarP(&applyConfigCmdFlags.patches, "config-patch", "p", nil, "the list of config patches to apply to the local config file before sending it to the node")
+	ApplyConfigCmd.Flags().DurationVar(&applyConfigCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
+	helpers.AddModeFlags(&applyConfigCmdFlags.Mode, ApplyConfigCmd)
+	addCommand(ApplyConfigCmd)
 }

@@ -28,8 +28,8 @@ var eventsCmdFlags struct {
 	actorID      string
 }
 
-// eventsCmd represents the events command.
-var eventsCmd = &cobra.Command{
+// EventsCmd represents the events command.
+var EventsCmd = &cobra.Command{
 	Use:   "events",
 	Short: "Stream runtime events",
 	Long:  ``,
@@ -119,9 +119,9 @@ var eventsCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(eventsCmd)
-	eventsCmd.Flags().Int32Var(&eventsCmdFlags.tailEvents, "tail", 0, "show specified number of past events (use -1 to show full history, default is to show no history)")
-	eventsCmd.Flags().DurationVar(&eventsCmdFlags.tailDuration, "duration", 0, "show events for the past duration interval (one second resolution, default is to show no history)")
-	eventsCmd.Flags().StringVar(&eventsCmdFlags.tailID, "since", "", "show events after the specified event ID (default is to show no history)")
-	eventsCmd.Flags().StringVar(&eventsCmdFlags.actorID, "actor-id", "", "filter events by the specified actor ID (default is no filter)")
+	addCommand(EventsCmd)
+	EventsCmd.Flags().Int32Var(&eventsCmdFlags.tailEvents, "tail", 0, "show specified number of past events (use -1 to show full history, default is to show no history)")
+	EventsCmd.Flags().DurationVar(&eventsCmdFlags.tailDuration, "duration", 0, "show events for the past duration interval (one second resolution, default is to show no history)")
+	EventsCmd.Flags().StringVar(&eventsCmdFlags.tailID, "since", "", "show events after the specified event ID (default is to show no history)")
+	EventsCmd.Flags().StringVar(&eventsCmdFlags.actorID, "actor-id", "", "filter events by the specified actor ID (default is no filter)")
 }

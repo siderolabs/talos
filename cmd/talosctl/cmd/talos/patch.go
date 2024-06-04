@@ -88,8 +88,8 @@ func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Conte
 	}
 }
 
-// patchCmd represents the edit command.
-var patchCmd = &cobra.Command{
+// PatchCmd represents the edit command.
+var PatchCmd = &cobra.Command{
 	Use:   "patch <type> [<id>]",
 	Short: "Update field(s) of a resource using a JSON patch.",
 	Args:  cobra.RangeArgs(1, 2),
@@ -125,11 +125,11 @@ var patchCmd = &cobra.Command{
 }
 
 func init() {
-	patchCmd.Flags().StringVar(&patchCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
-	patchCmd.Flags().StringVar(&patchCmdFlags.patchFile, "patch-file", "", "a file containing a patch to be applied to the resource.")
-	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patch, "patch", "p", nil, "the patch to be applied to the resource file, use @file to read a patch from file.")
-	patchCmd.Flags().BoolVar(&patchCmdFlags.dryRun, "dry-run", false, "print the change summary and patch preview without applying the changes")
-	patchCmd.Flags().DurationVar(&patchCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
-	helpers.AddModeFlags(&patchCmdFlags.Mode, patchCmd)
-	addCommand(patchCmd)
+	PatchCmd.Flags().StringVar(&patchCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
+	PatchCmd.Flags().StringVar(&patchCmdFlags.patchFile, "patch-file", "", "a file containing a patch to be applied to the resource.")
+	PatchCmd.Flags().StringArrayVarP(&patchCmdFlags.patch, "patch", "p", nil, "the patch to be applied to the resource file, use @file to read a patch from file.")
+	PatchCmd.Flags().BoolVar(&patchCmdFlags.dryRun, "dry-run", false, "print the change summary and patch preview without applying the changes")
+	PatchCmd.Flags().DurationVar(&patchCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
+	helpers.AddModeFlags(&patchCmdFlags.Mode, PatchCmd)
+	addCommand(PatchCmd)
 }

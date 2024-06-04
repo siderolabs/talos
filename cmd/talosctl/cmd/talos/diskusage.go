@@ -25,8 +25,8 @@ var (
 	threshold int64
 )
 
-// duCmd represents the du command.
-var duCmd = &cobra.Command{
+// DuCmd represents the du command.
+var DuCmd = &cobra.Command{
 	Use:     "usage [path1] [path2] ... [pathN]",
 	Aliases: []string{"du"},
 	Short:   "Retrieve a disk usage",
@@ -121,9 +121,9 @@ var duCmd = &cobra.Command{
 }
 
 func init() {
-	duCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
-	duCmd.Flags().BoolVarP(&all, "all", "a", false, "write counts for all files, not just directories")
-	duCmd.Flags().Int64VarP(&threshold, "threshold", "t", 0, "threshold exclude entries smaller than SIZE if positive, or entries greater than SIZE if negative")
-	duCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 0, "maximum recursion depth")
-	addCommand(duCmd)
+	DuCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
+	DuCmd.Flags().BoolVarP(&all, "all", "a", false, "write counts for all files, not just directories")
+	DuCmd.Flags().Int64VarP(&threshold, "threshold", "t", 0, "threshold exclude entries smaller than SIZE if positive, or entries greater than SIZE if negative")
+	DuCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 0, "maximum recursion depth")
+	addCommand(DuCmd)
 }

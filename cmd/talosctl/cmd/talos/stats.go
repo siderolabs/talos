@@ -23,8 +23,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// statsCmd represents the stats command.
-var statsCmd = &cobra.Command{
+// StatsCmd represents the stats command.
+var StatsCmd = &cobra.Command{
 	Use:   "stats",
 	Short: "Get container stats",
 	Long:  ``,
@@ -94,10 +94,10 @@ func statsRender(remotePeer *peer.Peer, resp *machineapi.StatsResponse) error {
 }
 
 func init() {
-	statsCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	StatsCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
-	statsCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
-	statsCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
+	StatsCmd.Flags().BoolP("use-cri", "c", false, "use the CRI driver")
+	StatsCmd.Flags().MarkHidden("use-cri") //nolint:errcheck
 
-	addCommand(statsCmd)
+	addCommand(StatsCmd)
 }

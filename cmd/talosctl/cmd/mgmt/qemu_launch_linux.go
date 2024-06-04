@@ -12,8 +12,8 @@ import (
 	"github.com/siderolabs/talos/pkg/provision/providers/qemu"
 )
 
-// qemuLaunchCmd represents the qemu-launch command.
-var qemuLaunchCmd = &cobra.Command{
+// QemuLaunchCmd represents the qemu-launch command.
+var QemuLaunchCmd = &cobra.Command{
 	Use:    "qemu-launch",
 	Short:  "Internal command used by QEMU provisioner",
 	Long:   ``,
@@ -25,5 +25,5 @@ var qemuLaunchCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(qemuLaunchCmd)
+	addCommand(QemuLaunchCmd)
 }

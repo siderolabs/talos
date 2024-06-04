@@ -13,8 +13,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// rollbackCmd represents the rollback command.
-var rollbackCmd = &cobra.Command{
+// RollbackCmd represents the rollback command.
+var RollbackCmd = &cobra.Command{
 	Use:   "rollback",
 	Short: "Rollback a node to the previous installation",
 	Long:  ``,
@@ -30,5 +30,5 @@ var rollbackCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(rollbackCmd)
+	addCommand(RollbackCmd)
 }

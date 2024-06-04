@@ -19,8 +19,8 @@ var patchCmdFlags struct {
 	output  string
 }
 
-// patchCmd represents the `machineconfig patch` command.
-var patchCmd = &cobra.Command{
+// PatchCmd represents the `machineconfig patch` command.
+var PatchCmd = &cobra.Command{
 	Use:   "patch <machineconfig-file>",
 	Short: "Patch a machine config",
 	Args:  cobra.ExactArgs(1),
@@ -66,8 +66,8 @@ var patchCmd = &cobra.Command{
 
 func init() {
 	// use StringArrayVarP instead of StringSliceVarP to prevent cobra from splitting the patch string on commas
-	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patches, "patch", "p", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
-	patchCmd.Flags().StringVarP(&patchCmdFlags.output, "output", "o", "", "output destination. if not specified, output will be printed to stdout")
+	PatchCmd.Flags().StringArrayVarP(&patchCmdFlags.patches, "patch", "p", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
+	PatchCmd.Flags().StringVarP(&patchCmdFlags.output, "output", "o", "", "output destination. if not specified, output will be printed to stdout")
 
-	Cmd.AddCommand(patchCmd)
+	Cmd.AddCommand(PatchCmd)
 }

@@ -21,8 +21,8 @@ var rebootCmdFlags struct {
 	mode string
 }
 
-// rebootCmd represents the reboot command.
-var rebootCmd = &cobra.Command{
+// RebootCmd represents the reboot command.
+var RebootCmd = &cobra.Command{
 	Use:   "reboot",
 	Short: "Reboot a node",
 	Long:  ``,
@@ -84,7 +84,7 @@ func rebootGetActorID(opts ...client.RebootMode) func(ctx context.Context, c *cl
 }
 
 func init() {
-	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercycle\" (skips kexec)")
-	rebootCmdFlags.addTrackActionFlags(rebootCmd)
-	addCommand(rebootCmd)
+	RebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercycle\" (skips kexec)")
+	rebootCmdFlags.addTrackActionFlags(RebootCmd)
+	addCommand(RebootCmd)
 }

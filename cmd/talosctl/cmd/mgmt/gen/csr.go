@@ -27,8 +27,8 @@ var genCSRCmdFlags struct {
 	roles []string
 }
 
-// genCSRCmd represents the `gen csr` command.
-var genCSRCmd = &cobra.Command{
+// GenCSRCmd represents the `gen csr` command.
+var GenCSRCmd = &cobra.Command{
 	Use:   "csr",
 	Short: "Generates a CSR using an Ed25519 private key",
 	Long:  ``,
@@ -85,11 +85,11 @@ var genCSRCmd = &cobra.Command{
 }
 
 func init() {
-	genCSRCmd.Flags().StringVar(&genCSRCmdFlags.key, "key", "", "path to the PEM encoded EC or RSA PRIVATE KEY")
-	cli.Should(cobra.MarkFlagRequired(genCSRCmd.Flags(), "key"))
-	genCSRCmd.Flags().StringVar(&genCSRCmdFlags.ip, "ip", "", "generate the certificate for this IP address")
-	cli.Should(cobra.MarkFlagRequired(genCSRCmd.Flags(), "ip"))
-	genCSRCmd.Flags().StringSliceVar(&genCSRCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
+	GenCSRCmd.Flags().StringVar(&genCSRCmdFlags.key, "key", "", "path to the PEM encoded EC or RSA PRIVATE KEY")
+	cli.Should(cobra.MarkFlagRequired(GenCSRCmd.Flags(), "key"))
+	GenCSRCmd.Flags().StringVar(&genCSRCmdFlags.ip, "ip", "", "generate the certificate for this IP address")
+	cli.Should(cobra.MarkFlagRequired(GenCSRCmd.Flags(), "ip"))
+	GenCSRCmd.Flags().StringSliceVar(&genCSRCmdFlags.roles, "roles", role.MakeSet(role.Admin).Strings(), "roles")
 
-	Cmd.AddCommand(genCSRCmd)
+	Cmd.AddCommand(GenCSRCmd)
 }

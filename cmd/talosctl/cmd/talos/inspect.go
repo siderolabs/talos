@@ -17,8 +17,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
-// inspectCmd represents the inspect command.
-var inspectCmd = &cobra.Command{
+// InspectCmd represents the inspect command.
+var InspectCmd = &cobra.Command{
 	Use:   "inspect",
 	Short: "Inspect internals of Talos",
 	Long:  ``,
@@ -28,8 +28,8 @@ var inspectDependenciesCmdFlags struct {
 	withResources bool
 }
 
-// inspectDependenciesCmd represents the inspect dependencies command.
-var inspectDependenciesCmd = &cobra.Command{
+// InspectDependenciesCmd represents the inspect dependencies command.
+var InspectDependenciesCmd = &cobra.Command{
 	Use:   "dependencies",
 	Short: "Inspect controller-resource dependencies as graphviz graph.",
 	Long: `Inspect controller-resource dependencies as graphviz graph.
@@ -61,8 +61,8 @@ to render the graph:
 }
 
 func init() {
-	addCommand(inspectCmd)
+	addCommand(InspectCmd)
 
-	inspectCmd.AddCommand(inspectDependenciesCmd)
-	inspectDependenciesCmd.Flags().BoolVar(&inspectDependenciesCmdFlags.withResources, "with-resources", false, "display live resource information with dependencies")
+	InspectCmd.AddCommand(InspectDependenciesCmd)
+	InspectDependenciesCmd.Flags().BoolVar(&inspectDependenciesCmdFlags.withResources, "with-resources", false, "display live resource information with dependencies")
 }

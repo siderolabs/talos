@@ -21,8 +21,8 @@ var dhcpdLaunchCmdFlags struct {
 	ipxeNextHandler string
 }
 
-// dhcpdLaunchCmd represents the dhcpd-launch command.
-var dhcpdLaunchCmd = &cobra.Command{
+// DhcpdLaunchCmd represents the dhcpd-launch command.
+var DhcpdLaunchCmd = &cobra.Command{
 	Use:    "dhcpd-launch",
 	Short:  "Internal command used by VM provisioners",
 	Long:   ``,
@@ -52,9 +52,9 @@ var dhcpdLaunchCmd = &cobra.Command{
 }
 
 func init() {
-	dhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.addr, "addr", "localhost", "IP addresses to listen on")
-	dhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.ifName, "interface", "", "interface to listen on")
-	dhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.statePath, "state-path", "", "path to state directory")
-	dhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.ipxeNextHandler, "ipxe-next-handler", "", "iPXE script to chain load")
-	addCommand(dhcpdLaunchCmd)
+	DhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.addr, "addr", "localhost", "IP addresses to listen on")
+	DhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.ifName, "interface", "", "interface to listen on")
+	DhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.statePath, "state-path", "", "path to state directory")
+	DhcpdLaunchCmd.Flags().StringVar(&dhcpdLaunchCmdFlags.ipxeNextHandler, "ipxe-next-handler", "", "iPXE script to chain load")
+	addCommand(DhcpdLaunchCmd)
 }

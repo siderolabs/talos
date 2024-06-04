@@ -43,8 +43,8 @@ type netstat struct {
 	NodeNetNSPods map[string]map[string]string
 }
 
-// netstatCmd represents the netstat command.
-var netstatCmd = &cobra.Command{
+// NetstatCmd represents the netstat command.
+var NetstatCmd = &cobra.Command{
 	Use:     "netstat",
 	Aliases: []string{"ss"},
 	Short:   "Show network connections and sockets",
@@ -393,20 +393,20 @@ func wildcardIfZero(num uint32) string {
 }
 
 func init() {
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.verbose, "verbose", "v", false, "display sockets of all supported transport protocols")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.verbose, "verbose", "v", false, "display sockets of all supported transport protocols")
 	// extend is normally -e but cannot be used as this is endpoint in talosctl
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.extend, "extend", "x", false, "show detailed socket information")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.pid, "programs", "p", false, "show process using socket")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.timers, "timers", "o", false, "display timers")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.listening, "listening", "l", false, "display listening server sockets")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.all, "all", "a", false, "display all sockets states (default: connected)")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.pods, "pods", "k", false, "show sockets used by Kubernetes pods")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.tcp, "tcp", "t", false, "display only TCP sockets")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.udp, "udp", "u", false, "display only UDP sockets")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.udplite, "udplite", "U", false, "display only UDPLite sockets")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.raw, "raw", "w", false, "display only RAW sockets")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.ipv4, "ipv4", "4", false, "display only ipv4 sockets")
-	netstatCmd.Flags().BoolVarP(&netstatCmdFlags.ipv6, "ipv6", "6", false, "display only ipv6 sockets")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.extend, "extend", "x", false, "show detailed socket information")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.pid, "programs", "p", false, "show process using socket")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.timers, "timers", "o", false, "display timers")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.listening, "listening", "l", false, "display listening server sockets")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.all, "all", "a", false, "display all sockets states (default: connected)")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.pods, "pods", "k", false, "show sockets used by Kubernetes pods")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.tcp, "tcp", "t", false, "display only TCP sockets")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.udp, "udp", "u", false, "display only UDP sockets")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.udplite, "udplite", "U", false, "display only UDPLite sockets")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.raw, "raw", "w", false, "display only RAW sockets")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.ipv4, "ipv4", "4", false, "display only ipv4 sockets")
+	NetstatCmd.Flags().BoolVarP(&netstatCmdFlags.ipv6, "ipv6", "6", false, "display only ipv6 sockets")
 
-	addCommand(netstatCmd)
+	addCommand(NetstatCmd)
 }

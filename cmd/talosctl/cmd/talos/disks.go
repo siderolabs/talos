@@ -22,7 +22,7 @@ var disksCmdFlags struct {
 	insecure bool
 }
 
-var disksCmd = &cobra.Command{
+var DisksCmd = &cobra.Command{
 	Use:   "disks",
 	Short: "Get the list of disks from /sys/block on the machine",
 	Long:  ``,
@@ -137,6 +137,6 @@ func printDisks(ctx context.Context, c *client.Client) error {
 }
 
 func init() {
-	disksCmd.Flags().BoolVarP(&disksCmdFlags.insecure, "insecure", "i", false, "get disks using the insecure (encrypted with no auth) maintenance service")
-	addCommand(disksCmd)
+	DisksCmd.Flags().BoolVarP(&disksCmdFlags.insecure, "insecure", "i", false, "get disks using the insecure (encrypted with no auth) maintenance service")
+	addCommand(DisksCmd)
 }

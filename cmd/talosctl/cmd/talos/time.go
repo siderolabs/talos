@@ -25,8 +25,8 @@ var timeCmdFlags struct {
 	ntpServer string
 }
 
-// timeCmd represents the time command.
-var timeCmd = &cobra.Command{
+// TimeCmd represents the time command.
+var TimeCmd = &cobra.Command{
 	Use:   "time [--check server]",
 	Short: "Gets current server time",
 	Long:  ``,
@@ -86,6 +86,6 @@ var timeCmd = &cobra.Command{
 }
 
 func init() {
-	timeCmd.Flags().StringVarP(&timeCmdFlags.ntpServer, "check", "c", "", "checks server time against specified ntp server")
-	addCommand(timeCmd)
+	TimeCmd.Flags().StringVarP(&timeCmdFlags.ntpServer, "check", "c", "", "checks server time against specified ntp server")
+	addCommand(TimeCmd)
 }

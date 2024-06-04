@@ -17,8 +17,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// cpCmd represents the cp command.
-var cpCmd = &cobra.Command{
+// CpCmd represents the cp command.
+var CpCmd = &cobra.Command{
 	Use:     "copy <src-path> -|<local-path>",
 	Aliases: []string{"cp"},
 	Short:   "Copy data out from the node",
@@ -81,5 +81,5 @@ captures ownership and permission bits.`,
 }
 
 func init() {
-	addCommand(cpCmd)
+	addCommand(CpCmd)
 }

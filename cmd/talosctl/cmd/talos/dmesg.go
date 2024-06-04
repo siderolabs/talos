@@ -17,8 +17,8 @@ import (
 
 var dmesgTail bool
 
-// dmesgCmd represents the dmesg command.
-var dmesgCmd = &cobra.Command{
+// DmesgCmd represents the dmesg command.
+var DmesgCmd = &cobra.Command{
 	Use:   "dmesg",
 	Short: "Retrieve kernel logs",
 	Long:  ``,
@@ -42,7 +42,7 @@ var dmesgCmd = &cobra.Command{
 }
 
 func init() {
-	addCommand(dmesgCmd)
-	dmesgCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the kernel log should be streamed")
-	dmesgCmd.Flags().BoolVarP(&dmesgTail, "tail", "", false, "specify if only new messages should be sent (makes sense only when combined with --follow)")
+	addCommand(DmesgCmd)
+	DmesgCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the kernel log should be streamed")
+	DmesgCmd.Flags().BoolVarP(&dmesgTail, "tail", "", false, "specify if only new messages should be sent (makes sense only when combined with --follow)")
 }

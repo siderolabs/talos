@@ -22,8 +22,8 @@ import (
 	"github.com/siderolabs/talos/pkg/provision/providers"
 )
 
-// showCmd represents the cluster show command.
-var showCmd = &cobra.Command{
+// ShowCmd represents the cluster show command.
+var ShowCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Shows info about a local provisioned kubernetes cluster",
 	Long:  ``,
@@ -110,5 +110,5 @@ func showCluster(cluster provision.Cluster) error {
 }
 
 func init() {
-	Cmd.AddCommand(showCmd)
+	Cmd.AddCommand(ShowCmd)
 }
