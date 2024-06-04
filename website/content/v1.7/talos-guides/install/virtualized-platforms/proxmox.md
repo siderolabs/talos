@@ -205,7 +205,7 @@ This will create several files in the `_out` directory: `controlplane.yaml`, `wo
 For QEMU guest agent support, you can generate the config with the custom install image:
 
 ```bash
-talosctl gen config talos-proxmox-cluster https://$CONTROL_PLANE_IP:6443 --output-dir _out --installer-image factory.talos.dev/installer/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:{{< release >}}
+talosctl gen config talos-proxmox-cluster https://$CONTROL_PLANE_IP:6443 --output-dir _out --install-image factory.talos.dev/installer/ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515:{{< release >}}
 ```
 
 - In Proxmox, go to your VM --> Options and ensure that `QEMU Guest Agent` is `Enabled`
