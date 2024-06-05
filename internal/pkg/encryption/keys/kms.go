@@ -133,7 +133,7 @@ func (h *KMSKeyHandler) getConn() (*grpc.ClientConn, error) {
 		transportCredentials = credentials.NewTLS(&tls.Config{})
 	}
 
-	return grpc.Dial(
+	return grpc.NewClient(
 		endpoint.Host,
 		grpc.WithTransportCredentials(transportCredentials),
 		grpc.WithSharedWriteBuffer(true),

@@ -8,9 +8,10 @@ package pesign
 import (
 	"crypto"
 	"crypto/x509"
+	"fmt"
 	"os"
 
-	"github.com/foxboron/go-uefi/efi"
+	"github.com/foxboron/go-uefi/authenticode"
 )
 
 // Signer sigs PE (portable executable) files.
@@ -33,15 +34,22 @@ func NewSigner(provider CertificateSigner) (*Signer, error) {
 
 // Sign signs the input file and writes the output to the output file.
 func (s *Signer) Sign(input, output string) error {
-	unsigned, err := os.ReadFile(input)
+	in, err := os.Open(input)
 	if err != nil {
 		return err
 	}
 
-	signed, err := efi.SignEFIExecutable(s.provider.Signer(), s.provider.Certificate(), unsigned)
+	defer in.Close() //nolint:errcheck
+
+	pecoff, err := authenticode.Parse(in)
 	if err != nil {
-		return err
+		return fmt.Errorf("error parsing binary: %w", err)
 	}
 
-	return os.WriteFile(output, signed, 0o600)
+	_, err = pecoff.Sign(s.provider.Signer(), s.provider.Certificate())
+	if err != nil {
+		return fmt.Errorf("error signing binary: %w", err)
+	}
+
+	return os.WriteFile(output, pecoff.Bytes(), 0o600)
 }

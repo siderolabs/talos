@@ -17,7 +17,7 @@ func Confirm(prompt string) bool {
 	var inp string
 
 	fmt.Printf("%s (y/N): ", prompt)
-	fmt.Scanf("%s", &inp)
+	fmt.Scanf("%s", &inp) //nolint:errcheck
 	inp = strings.TrimSpace(inp)
 
 	for _, ok := range okays {

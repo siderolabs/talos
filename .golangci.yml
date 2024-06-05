@@ -44,6 +44,11 @@ linters-settings:
     # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
     # default is false: such cases aren't reported by default.
     check-blank: true
+
+    exclude-functions:
+      - fmt.Fprintln
+      - fmt.Fprintf
+      - fmt.Fprint
   govet: { }
   gocyclo:
     # minimal code complexity to report, 30 by default (but we recommend 10-20)
@@ -108,7 +113,6 @@ linters:
     - errorlint
     - err113
     - exhaustruct
-    - exhaustivestruct
     - forbidigo
     - forcetypeassert
     - funlen
@@ -124,7 +128,6 @@ linters:
     - nestif
     - nilnil # we return "nil, nil"
     - nonamedreturns
-    - nosnakecase
     - paralleltest
     - promlinter # https://github.com/golangci/golangci-lint/issues/2222
     - tagliatelle # we have many different conventions
@@ -140,16 +143,6 @@ linters:
     - testifylint # too annoying
     - inamedparam # too annoying
     - protogetter # too annoying
-
-    # abandoned linters for which golangci shows the warning that the repo is archived by the owner
-    - golint
-    - interfacer
-    - maligned
-    - scopelint
-    - varcheck
-    - structcheck
-    - deadcode
-    - ifshort
     - perfsprint
   disable-all: false
   fast: false

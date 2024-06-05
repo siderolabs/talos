@@ -28,7 +28,6 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
-	"google.golang.org/grpc"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
@@ -619,7 +618,7 @@ func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) erro
 }
 
 func attemptPromote(ctx context.Context, endpoint string, memberID uint64) error {
-	client, err := etcd.NewClient(ctx, []string{endpoint}, grpc.WithBlock())
+	client, err := etcd.NewClient(ctx, []string{endpoint})
 	if err != nil {
 		return err
 	}

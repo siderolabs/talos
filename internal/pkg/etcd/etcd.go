@@ -72,7 +72,7 @@ func NewLocalClient(ctx context.Context, dialOpts ...grpc.DialOption) (client *C
 	return NewClient(
 		ctx,
 		[]string{nethelpers.JoinHostPort("localhost", constants.EtcdClientPort)},
-		append([]grpc.DialOption{grpc.WithBlock()}, dialOpts...)...,
+		dialOpts...,
 	)
 }
 

@@ -73,7 +73,7 @@ func apidMain() error {
 
 	startup.LimitMaxProcs(constants.ApidMaxProcs)
 
-	runtimeConn, err := grpc.Dial("unix://"+constants.APIRuntimeSocketPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	runtimeConn, err := grpc.NewClient("unix://"+constants.APIRuntimeSocketPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("failed to dial runtime connection: %w", err)
 	}

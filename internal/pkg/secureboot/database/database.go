@@ -8,9 +8,9 @@ package database
 import (
 	"crypto/sha256"
 
-	"github.com/foxboron/go-uefi/efi"
 	"github.com/foxboron/go-uefi/efi/signature"
 	"github.com/foxboron/go-uefi/efi/util"
+	"github.com/foxboron/go-uefi/efivar"
 	"github.com/google/uuid"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
@@ -39,24 +39,24 @@ func Generate(enrolledCertificate []byte, signer pesign.CertificateSigner) ([]En
 	}
 
 	// Sign the ESL, but for each EFI variable
-	signedDB, err := efi.SignEFIVariable(signer.Signer(), signer.Certificate(), "db", db.Bytes())
+	_, signedDB, err := signature.SignEFIVariable(efivar.Db, db, signer.Signer(), signer.Certificate())
 	if err != nil {
 		return nil, err
 	}
 
-	signedKEK, err := efi.SignEFIVariable(signer.Signer(), signer.Certificate(), "KEK", db.Bytes())
+	_, signedKEK, err := signature.SignEFIVariable(efivar.KEK, db, signer.Signer(), signer.Certificate())
 	if err != nil {
 		return nil, err
 	}
 
-	signedPK, err := efi.SignEFIVariable(signer.Signer(), signer.Certificate(), "PK", db.Bytes())
+	_, signedPK, err := signature.SignEFIVariable(efivar.PK, db, signer.Signer(), signer.Certificate())
 	if err != nil {
 		return nil, err
 	}
 
 	return []Entry{
-		{Name: constants.SignatureKeyAsset, Contents: signedDB},
-		{Name: constants.KeyExchangeKeyAsset, Contents: signedKEK},
-		{Name: constants.PlatformKeyAsset, Contents: signedPK},
+		{Name: constants.SignatureKeyAsset, Contents: signedDB.Bytes()},
+		{Name: constants.KeyExchangeKeyAsset, Contents: signedKEK.Bytes()},
+		{Name: constants.PlatformKeyAsset, Contents: signedPK.Bytes()},
 	}, nil
 }

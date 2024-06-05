@@ -5,7 +5,6 @@
 package cri
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -28,15 +27,9 @@ type Client struct {
 const maxMsgSize = 1024 * 1024 * 16
 
 // NewClient builds CRI client.
-func NewClient(endpoint string, connectionTimeout time.Duration) (*Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), connectionTimeout)
-	defer cancel()
-
-	conn, err := grpc.DialContext(ctx, endpoint,
+func NewClient(endpoint string, _ time.Duration) (*Client, error) {
+	conn, err := grpc.NewClient(endpoint,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-		grpc.FailOnNonTempDialError(false),
-		grpc.WithBackoffMaxDelay(3*time.Second), //nolint:staticcheck
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxMsgSize)),
 		grpc.WithContextDialer(dialer.DialUnix()),
 		grpc.WithSharedWriteBuffer(true),

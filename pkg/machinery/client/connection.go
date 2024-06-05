@@ -52,7 +52,7 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 	dialOpts = append(dialOpts, opts...)
 
 	if c.options.unixSocketPath != "" {
-		conn, err := grpc.Dial(target, dialOpts...)
+		conn, err := grpc.NewClient(target, dialOpts...)
 
 		return newGRPCConnectionWrapper(c.GetClusterName(), conn), err
 	}
@@ -140,7 +140,7 @@ func (c *Client) makeConnection(target string, creds credentials.TransportCreden
 		grpc.WithInitialWindowSize(65535*32),
 		grpc.WithInitialConnWindowSize(65535*16))
 
-	conn, err := grpc.Dial(target, dialOpts...)
+	conn, err := grpc.NewClient(target, dialOpts...)
 
 	return newGRPCConnectionWrapper(c.GetClusterName(), conn), err
 }
