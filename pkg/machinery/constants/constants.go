@@ -666,6 +666,12 @@ const (
 	// CgroupSystemRuntime is the cgroup name for containerd runtime processes.
 	CgroupSystemRuntime = CgroupSystem + "/runtime"
 
+	// CgroupApid is the cgroup name for apid runtime processes.
+	CgroupApid = CgroupSystem + "/apid"
+
+	// CgroupTrustd is the cgroup name for trustd runtime processes.
+	CgroupTrustd = CgroupSystem + "/trustd"
+
 	// CgroupUdevd is the cgroup name for udevd runtime processes.
 	CgroupUdevd = CgroupSystem + "/udevd"
 
@@ -680,6 +686,9 @@ const (
 
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 128 * 1024 * 1024
+
+	// CgroupEtcd is the cgroup name for etcd process.
+	CgroupEtcd = "/podruntime/etcd"
 
 	// CgroupKubelet is the cgroup name for kubelet process.
 	CgroupKubelet = "/podruntime/kubelet"

@@ -170,6 +170,8 @@ func CreateSystemCgroups(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 			return fmt.Errorf("error initializing cgroups root path: %w", err)
 		}
 
+		logger.Printf("using cgroups root: %s", cgroup.Root())
+
 		groups := []struct {
 			name      string
 			resources *cgroup2.Resources

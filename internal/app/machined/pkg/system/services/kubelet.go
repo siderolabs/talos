@@ -157,9 +157,9 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(k.imgRef),
 		runner.WithEnv(environment.Get(r.Config())),
+		runner.WithCgroupPath(constants.CgroupKubelet),
 		runner.WithOCISpecOpts(
 			containerd.WithRootfsPropagation("shared"),
-			oci.WithCgroup(constants.CgroupKubelet),
 			oci.WithMounts(mounts),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithHostNamespace(specs.PIDNamespace),

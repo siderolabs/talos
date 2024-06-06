@@ -113,7 +113,6 @@ func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oc
 	ociOpts := []oci.SpecOpts{
 		oci.WithRootFSPath(filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name)),
 		containerd.WithRootfsPropagation(svc.Spec.Container.Security.RootfsPropagation),
-		oci.WithCgroup(filepath.Join(constants.CgroupExtensions, svc.Spec.Name)),
 		oci.WithMounts(mounts),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithSelinuxLabel(""),
@@ -216,6 +215,7 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(environment.Get(r.Config())),
 		runner.WithOCISpecOpts(ociSpecOpts...),
+		runner.WithCgroupPath(filepath.Join(constants.CgroupExtensions, svc.Spec.Name)),
 		runner.WithOOMScoreAdj(-600),
 	),
 		restart.WithType(restartType),

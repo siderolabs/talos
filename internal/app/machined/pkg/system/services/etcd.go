@@ -218,6 +218,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithNamespace(constants.SystemContainerdNamespace),
 		runner.WithContainerImage(e.imgRef),
 		runner.WithEnv(env),
+		runner.WithCgroupPath(constants.CgroupEtcd),
 		runner.WithOCISpecOpts(
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),

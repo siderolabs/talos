@@ -192,6 +192,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),
 		runner.WithEnv(env),
+		runner.WithCgroupPath(constants.CgroupApid),
 		runner.WithOCISpecOpts(
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),
