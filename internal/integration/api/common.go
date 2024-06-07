@@ -156,28 +156,47 @@ func (suite *CommonSuite) TestDNSResolver() {
 
 	suite.Require().NoError(err)
 
-	defer suite.Clientset.CoreV1().Pods(namespace).Delete(suite.ctx, pod, metav1.DeleteOptions{}) //nolint:errcheck
+	suite.T().Cleanup(func() {
+		cleanUpCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cleanupCancel()
+
+		suite.Require().NoError(
+			suite.Clientset.CoreV1().Pods(namespace).Delete(cleanUpCtx, pod, metav1.DeleteOptions{}),
+		)
+	})
 
 	// wait for the pod to be ready
 	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, time.Minute, namespace, pod))
 
-	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "wget https://www.google.com/")
-	suite.Require().NoError(err)
+	stdout, stderr, err := suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "wget -S https://www.google.com/")
+	suite.Assert().NoError(err)
+	suite.Assert().Equal("", stdout)
+	suite.Assert().Contains(stderr, "'index.html' saved")
 
-	suite.Require().Equal("", stdout)
-	suite.Require().Contains(stderr, "'index.html' saved")
+	if suite.T().Failed() {
+		suite.T().FailNow()
+	}
 
 	_, stderr, err = suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "apk add --update bind-tools")
-	suite.Require().NoError(err)
-	suite.Require().Empty(stderr)
+
+	suite.Assert().NoError(err)
+	suite.Assert().Empty(stderr, "stderr: %s", stderr)
+
+	if suite.T().Failed() {
+		suite.T().FailNow()
+	}
 
 	stdout, stderr, err = suite.ExecuteCommandInPod(suite.ctx, namespace, pod, "dig really-long-record.dev.siderolabs.io")
-	suite.Require().NoError(err)
 
-	suite.Require().Contains(stdout, "status: NOERROR")
-	suite.Require().Contains(stdout, "ANSWER: 34")
-	suite.Require().NotContains(stdout, "status: NXDOMAIN")
-	suite.Require().Equal(stderr, "")
+	suite.Assert().NoError(err)
+	suite.Assert().Contains(stdout, "status: NOERROR")
+	suite.Assert().Contains(stdout, "ANSWER: 34")
+	suite.Assert().NotContains(stdout, "status: NXDOMAIN")
+	suite.Assert().Equal(stderr, "")
+
+	if suite.T().Failed() {
+		suite.T().FailNow()
+	}
 }
 
 func init() {

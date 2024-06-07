@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
@@ -304,17 +305,26 @@ func (k8sSuite *K8sSuite) ExecuteCommandInPod(ctx context.Context, namespace, po
 		return "", "", err
 	}
 
-	var stdout, stderr bytes.Buffer
+	var stdout, stderr strings.Builder
 
 	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdout: &stdout,
 		Stderr: &stderr,
 	})
 	if err != nil {
-		return "", "", err
+		k8sSuite.T().Logf(
+			"error executing command in pod %s/%s: %v\n\ncommand %q stdout:\n%s\n\ncommand %q stderr:\n%s",
+			namespace,
+			podName,
+			err,
+			command,
+			stdout.String(),
+			command,
+			stderr.String(),
+		)
 	}
 
-	return stdout.String(), stderr.String(), nil
+	return stdout.String(), stderr.String(), err
 }
 
 // GetPodsWithLabel returns the pods with the given label in the specified namespace.
