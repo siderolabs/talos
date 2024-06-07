@@ -18,7 +18,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
-	"github.com/siderolabs/talos/pkg/cluster/sonobuoy"
+	"github.com/siderolabs/talos/pkg/cluster/hydrophone"
 	clusterapi "github.com/siderolabs/talos/pkg/machinery/api/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -207,10 +207,10 @@ func runE2E() error {
 		checkCtx, checkCtxCancel := context.WithTimeout(ctx, healthCmdFlags.clusterWaitTimeout)
 		defer checkCtxCancel()
 
-		options := sonobuoy.DefaultOptions()
+		options := hydrophone.DefaultOptions()
 		options.UseSpinner = true
 
-		return sonobuoy.Run(checkCtx, state, options)
+		return hydrophone.Run(checkCtx, state, options)
 	})
 }
 

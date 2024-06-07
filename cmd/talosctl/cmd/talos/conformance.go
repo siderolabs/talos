@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cluster"
-	"github.com/siderolabs/talos/pkg/cluster/sonobuoy"
+	"github.com/siderolabs/talos/pkg/cluster/hydrophone"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
@@ -50,9 +50,9 @@ var conformanceKubernetesCmd = &cobra.Command{
 
 			switch conformanceKubernetesCmdFlags.mode {
 			case "fast":
-				return sonobuoy.FastConformance(ctx, &state)
+				return hydrophone.FastConformance(ctx, &state)
 			case "certified":
-				return sonobuoy.CertifiedConformance(ctx, &state)
+				return hydrophone.CertifiedConformance(ctx, &state)
 			default:
 				return fmt.Errorf("unsupported conformance mode %v", conformanceKubernetesCmdFlags.mode)
 			}

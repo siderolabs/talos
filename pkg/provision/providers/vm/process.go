@@ -47,8 +47,11 @@ func StopProcessByPidfile(pidPath string) error {
 
 	// wait for the process to exit, this is using (unreliable and slow) polling
 	return retry.Constant(30*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(func() error {
-		err = proc.Signal(syscall.Signal(0))
-		if err == nil {
+		// wait for the process if it's our child, we should clean up zombies, but if it's not our child, it would return ECHILD
+		proc.Wait() //nolint:errcheck
+
+		signalErr := proc.Signal(syscall.Signal(0))
+		if signalErr == nil {
 			return retry.ExpectedErrorf("process %d still running", pid)
 		}
 

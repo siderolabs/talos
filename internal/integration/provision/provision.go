@@ -31,8 +31,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/cluster/check"
+	"github.com/siderolabs/talos/pkg/cluster/hydrophone"
 	"github.com/siderolabs/talos/pkg/cluster/kubernetes"
-	"github.com/siderolabs/talos/pkg/cluster/sonobuoy"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
@@ -128,7 +128,7 @@ type BaseSuite struct {
 // SetupSuite ...
 func (suite *BaseSuite) SetupSuite() {
 	// timeout for the whole test
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 50*time.Minute)
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), time.Hour)
 
 	var err error
 
@@ -630,8 +630,8 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 
 // runE2E runs e2e test on the cluster.
 func (suite *BaseSuite) runE2E(k8sVersion string) {
-	options := sonobuoy.DefaultOptions()
+	options := hydrophone.DefaultOptions()
 	options.KubernetesVersion = k8sVersion
 
-	suite.Assert().NoError(sonobuoy.Run(suite.ctx, suite.clusterAccess, options))
+	suite.Assert().NoError(hydrophone.Run(suite.ctx, suite.clusterAccess, options))
 }
