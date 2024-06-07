@@ -158,6 +158,10 @@ type Disk struct {
 	SkipPreallocate bool
 	// Partitions represents the list of partitions.
 	Partitions []*v1alpha1.DiskPartition
+	// Driver for the disk.
+	//
+	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme".
+	Driver string
 }
 
 // NodeRequest describes a request for a node.

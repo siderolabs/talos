@@ -97,6 +97,8 @@ func NewState() (*State, error) {
 	for _, r := range []meta.ResourceWithRD{
 		&block.Device{},
 		&block.DiscoveredVolume{},
+		&block.Disk{},
+		&block.SystemDisk{},
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},

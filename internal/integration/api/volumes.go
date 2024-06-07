@@ -32,6 +32,10 @@ func (suite *VolumesSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *VolumesSuite) SetupTest() {
+	if !suite.Capabilities().SupportsVolumes {
+		suite.T().Skip("cluster doesn't support volumes")
+	}
+
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), time.Minute)
 }
 
@@ -44,10 +48,6 @@ func (suite *VolumesSuite) TearDownTest() {
 
 // TestDiscoveredVolumes verifies that standard Talos partitions are discovered.
 func (suite *VolumesSuite) TestDiscoveredVolumes() {
-	if !suite.Capabilities().SupportsVolumes {
-		suite.T().Skip("cluster doesn't support volumes")
-	}
-
 	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
 		suite.Run(node, func() {
 			suite.testDiscoveredVolumes(node)
@@ -111,6 +111,60 @@ func (suite *VolumesSuite) testDiscoveredVolumes(node string) {
 
 	if suite.T().Failed() {
 		suite.DumpLogs(suite.ctx, node, "controller-runtime", "block.")
+	}
+}
+
+// TestSystemDisk verifies that Talos system disk is discovered.
+func (suite *VolumesSuite) TestSystemDisk() {
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			ctx := client.WithNode(suite.ctx, node)
+
+			systemDisk, err := safe.StateGetByID[*block.SystemDisk](ctx, suite.Client.COSI, block.SystemDiskID)
+			suite.Require().NoError(err)
+
+			suite.Assert().NotEmpty(systemDisk.TypedSpec().DiskID)
+
+			suite.T().Logf("system disk: %s", systemDisk.TypedSpec().DiskID)
+		})
+	}
+}
+
+// TestDisks verifies that Talos discovers disks.
+func (suite *VolumesSuite) TestDisks() {
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			ctx := client.WithNode(suite.ctx, node)
+
+			disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
+			suite.Require().NoError(err)
+
+			// there should be at least two disks - loop0 for Talos squashfs and a system disk
+			suite.Assert().Greater(disks.Len(), 1)
+
+			var diskNames []string
+
+			for iter := disks.Iterator(); iter.Next(); {
+				disk := iter.Value()
+
+				if disk.TypedSpec().Readonly {
+					continue
+				}
+
+				suite.Assert().NotEmpty(disk.TypedSpec().Size, "disk: %s", disk.Metadata().ID())
+				suite.Assert().NotEmpty(disk.TypedSpec().IOSize, "disk: %s", disk.Metadata().ID())
+				suite.Assert().NotEmpty(disk.TypedSpec().SectorSize, "disk: %s", disk.Metadata().ID())
+
+				if suite.Cluster != nil {
+					// running on our own provider, transport should be always detected
+					suite.Assert().NotEmpty(disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
+				}
+
+				diskNames = append(diskNames, disk.Metadata().ID())
+			}
+
+			suite.T().Logf("disks: %v", diskNames)
+		})
 	}
 }
 

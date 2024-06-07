@@ -40,6 +40,7 @@ type LaunchConfig struct {
 
 	// VM options
 	DiskPaths         []string
+	DiskDrivers       []string
 	VCPUCount         int64
 	MemSize           int64
 	QemuExecutable    string
@@ -327,26 +328,65 @@ func launchVM(config *LaunchConfig) error {
 		"-no-reboot",
 		"-boot", fmt.Sprintf("order=%s,reboot-timeout=5000", bootOrder),
 		"-smbios", fmt.Sprintf("type=1,uuid=%s", config.NodeUUID),
-		"-chardev",
-		fmt.Sprintf("socket,path=%s/%s.sock,server=on,wait=off,id=qga0", config.StatePath, config.Hostname),
-		"-device",
-		"virtio-serial",
-		"-device",
-		"virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
-		"-device",
-		"i6300esb,id=watchdog0",
+		"-chardev", fmt.Sprintf("socket,path=%s/%s.sock,server=on,wait=off,id=qga0", config.StatePath, config.Hostname),
+		"-device", "virtio-serial",
+		"-device", "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
+		"-device", "i6300esb,id=watchdog0",
 		"-watchdog-action",
 		"pause",
 	}
 
+	var (
+		scsiAttached, ahciAttached, nvmeAttached bool
+		ahciBus                                  int
+	)
+
 	for i, disk := range config.DiskPaths {
-		driver := "virtio"
+		driver := config.DiskDrivers[i]
 
-		if i > 0 {
-			driver = "ide"
+		switch driver {
+		case "virtio":
+			args = append(args, "-drive", fmt.Sprintf("format=raw,if=virtio,file=%s,cache=none,", disk))
+		case "ide":
+			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=none,", disk))
+		case "ahci":
+			if !ahciAttached {
+				args = append(args, "-device", "ahci,id=ahci0")
+				ahciAttached = true
+			}
+
+			args = append(args,
+				"-drive", fmt.Sprintf("id=ide%d,format=raw,if=none,file=%s", i, disk),
+				"-device", fmt.Sprintf("ide-hd,drive=ide%d,bus=ahci0.%d", i, ahciBus),
+			)
+
+			ahciBus++
+		case "scsi":
+			if !scsiAttached {
+				args = append(args, "-device", "virtio-scsi-pci,id=scsi0")
+				scsiAttached = true
+			}
+
+			args = append(args,
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi0.0", i),
+			)
+		case "nvme":
+			if !nvmeAttached {
+				// [TODO]: once Talos is fixed, use multipath NVME: https://qemu-project.gitlab.io/qemu/system/devices/nvme.html
+				args = append(args,
+					"-device", "nvme,id=nvme-ctrl-0,serial=deadbeef",
+				)
+				nvmeAttached = true
+			}
+
+			args = append(args,
+				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-device", fmt.Sprintf("nvme-ns,drive=nvme%d", i),
+			)
+		default:
+			return fmt.Errorf("unsupported disk driver %q", driver)
 		}
-
-		args = append(args, "-drive", fmt.Sprintf("format=raw,if=%s,file=%s,cache=unsafe", driver, disk))
 	}
 
 	machineArg := config.MachineType

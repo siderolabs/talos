@@ -7,17 +7,20 @@ package internal
 
 import (
 	"context"
+	"path/filepath"
 
-	"github.com/siderolabs/gen/xslices"
-	bddisk "github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // Server implements storage.StorageService.
-// TODO: this is not a full blown service yet, it's used as the common base in the machine and the maintenance services.
+//
+// It is only kept here for compatibility purposes, proper API is to query `block.Disk` resources.
 type Server struct {
 	storage.UnimplementedStorageServiceServer
 	Controller runtime.Controller
@@ -25,32 +28,48 @@ type Server struct {
 
 // Disks implements storage.StorageService.
 func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.DisksResponse, err error) {
-	disks, err := bddisk.List()
+	st := s.Controller.Runtime().State().V1Alpha2().Resources()
+
+	systemDisk, err := safe.StateGetByID[*block.SystemDisk](ctx, st, block.SystemDiskID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	disks, err := safe.StateListAll[*block.Disk](ctx, st)
 	if err != nil {
 		return nil, err
 	}
 
-	systemDisk := s.Controller.Runtime().State().Machine().Disk()
+	diskConv := func(d *block.Disk) (*storage.Disk, error) {
+		var diskType storage.Disk_DiskType
 
-	diskConv := func(d *bddisk.Disk) *storage.Disk {
-		return &storage.Disk{
-			DeviceName: d.DeviceName,
-			Model:      d.Model,
-			Size:       d.Size,
-			Name:       d.Name,
-			Serial:     d.Serial,
-			Modalias:   d.Modalias,
-			Uuid:       d.UUID,
-			Wwid:       d.WWID,
-			Type:       storage.Disk_DiskType(d.Type),
-			BusPath:    d.BusPath,
-			SystemDisk: systemDisk != nil && d.DeviceName == systemDisk.Device().Name(),
-			Subsystem:  d.SubSystem,
-			Readonly:   d.ReadOnly,
+		switch {
+		case d.TypedSpec().Transport == "nvme":
+			diskType = storage.Disk_NVME
+		case d.TypedSpec().Transport == "mmc":
+			diskType = storage.Disk_SD
+		case d.TypedSpec().Rotational:
+			diskType = storage.Disk_HDD
+		case d.TypedSpec().Transport != "":
+			diskType = storage.Disk_SSD
 		}
+
+		return &storage.Disk{
+			DeviceName: filepath.Join("/dev", d.Metadata().ID()),
+			Model:      d.TypedSpec().Model,
+			Size:       d.TypedSpec().Size,
+			Serial:     d.TypedSpec().Serial,
+			Modalias:   d.TypedSpec().Modalias,
+			Wwid:       d.TypedSpec().WWID,
+			Type:       diskType,
+			BusPath:    d.TypedSpec().BusPath,
+			SystemDisk: systemDisk != nil && d.Metadata().ID() == systemDisk.TypedSpec().DiskID,
+			Subsystem:  d.TypedSpec().SubSystem,
+			Readonly:   d.TypedSpec().Readonly,
+		}, nil
 	}
 
-	diskList := xslices.Map(disks, diskConv)
+	diskList, _ := safe.Map(disks, diskConv) //nolint:errcheck
 
 	reply = &storage.DisksResponse{
 		Messages: []*storage.Disks{

@@ -36,3 +36,24 @@ message DiscoveredVolumeSpec {
   string parent = 16;
 }
 
+// DiskSpec is the spec for Disks status.
+message DiskSpec {
+  uint64 size = 1;
+  uint64 io_size = 2;
+  uint64 sector_size = 3;
+  bool readonly = 4;
+  string model = 5;
+  string serial = 6;
+  string modalias = 7;
+  string wwid = 8;
+  string bus_path = 9;
+  string sub_system = 10;
+  string transport = 11;
+  bool rotational = 12;
+}
+
+// SystemDiskSpec is the spec for SystemDisks status.
+message SystemDiskSpec {
+  string disk_id = 1;
+}
+

@@ -22,6 +22,10 @@ func (suite *DisksSuite) SuiteName() string {
 
 // TestSuccess runs comand with success.
 func (suite *DisksSuite) TestSuccess() {
+	if suite.Cluster != nil && suite.Cluster.Provisioner() == "docker" {
+		suite.T().Skip("docker provisioner doesn't support disks command")
+	}
+
 	suite.RunCLI([]string{"disks", "--nodes", suite.RandomDiscoveredNodeInternalIP()})
 }
 

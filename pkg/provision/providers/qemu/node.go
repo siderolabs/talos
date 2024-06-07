@@ -19,6 +19,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -114,9 +115,25 @@ func (p *provisioner) createNode(state *vm.State, clusterReq provision.ClusterRe
 		defaultBootOrder = nodeReq.DefaultBootOrder
 	}
 
+	// backwards compatibility, set Driver if not set
+	for i := range nodeReq.Disks {
+		if nodeReq.Disks[i].Driver != "" {
+			continue
+		}
+
+		if i == 0 {
+			nodeReq.Disks[i].Driver = "virtio"
+		} else {
+			nodeReq.Disks[i].Driver = "ide"
+		}
+	}
+
 	launchConfig := LaunchConfig{
-		QemuExecutable:    arch.QemuExecutable(),
-		DiskPaths:         diskPaths,
+		QemuExecutable: arch.QemuExecutable(),
+		DiskPaths:      diskPaths,
+		DiskDrivers: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
+			return disk.Driver
+		}),
 		VCPUCount:         vcpuCount,
 		MemSize:           memSize,
 		KernelArgs:        cmdline.String(),

@@ -29,6 +29,8 @@ description: Talos gRPC API reference.
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
     - [DiscoveredVolumeSpec](#talos.resource.definitions.block.DiscoveredVolumeSpec)
+    - [DiskSpec](#talos.resource.definitions.block.DiskSpec)
+    - [SystemDiskSpec](#talos.resource.definitions.block.SystemDiskSpec)
   
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
     - [AffiliateSpec](#talos.resource.definitions.cluster.AffiliateSpec)
@@ -808,6 +810,47 @@ DiscoveredVolumeSpec is the spec for DiscoveredVolumes status.
 | type | [string](#string) |  |  |
 | device_path | [string](#string) |  |  |
 | parent | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiskSpec"></a>
+
+### DiskSpec
+DiskSpec is the spec for Disks status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| size | [uint64](#uint64) |  |  |
+| io_size | [uint64](#uint64) |  |  |
+| sector_size | [uint64](#uint64) |  |  |
+| readonly | [bool](#bool) |  |  |
+| model | [string](#string) |  |  |
+| serial | [string](#string) |  |  |
+| modalias | [string](#string) |  |  |
+| wwid | [string](#string) |  |  |
+| bus_path | [string](#string) |  |  |
+| sub_system | [string](#string) |  |  |
+| transport | [string](#string) |  |  |
+| rotational | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.SystemDiskSpec"></a>
+
+### SystemDiskSpec
+SystemDiskSpec is the spec for SystemDisks status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| disk_id | [string](#string) |  |  |
 
 
 

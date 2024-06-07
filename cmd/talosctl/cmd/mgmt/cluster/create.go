@@ -137,6 +137,7 @@ var (
 	clusterDisks               []string
 	extraDisks                 int
 	extraDiskSize              int
+	extraDisksDrivers          []string
 	targetArch                 string
 	clusterWait                bool
 	clusterWaitTimeout         time.Duration
@@ -832,10 +833,17 @@ func create(ctx context.Context) error {
 	}
 
 	// append extra disks
-	for range extraDisks {
+	for i := range extraDisks {
+		driver := "ide"
+
+		if i < len(extraDisksDrivers) {
+			driver = extraDisksDrivers[i]
+		}
+
 		disks = append(disks, &provision.Disk{
 			Size:            uint64(extraDiskSize) * 1024 * 1024,
 			SkipPreallocate: !clusterDiskPreallocate,
+			Driver:          driver,
 		})
 	}
 
@@ -1045,6 +1053,7 @@ func getDisks() ([]*provision.Disk, error) {
 		{
 			Size:            uint64(clusterDiskSize) * 1024 * 1024,
 			SkipPreallocate: !clusterDiskPreallocate,
+			Driver:          "virtio",
 		},
 	}
 
@@ -1092,6 +1101,7 @@ func getDisks() ([]*provision.Disk, error) {
 			Size:            diskSize + 2*1024*1024,
 			Partitions:      diskPartitions,
 			SkipPreallocate: !clusterDiskPreallocate,
+			Driver:          "ide",
 		})
 	}
 
@@ -1143,6 +1153,7 @@ func init() {
 	createCmd.Flags().BoolVar(&clusterDiskPreallocate, clusterDiskPreallocateFlag, true, "whether disk space should be preallocated")
 	createCmd.Flags().StringSliceVar(&clusterDisks, clusterDisksFlag, []string{}, "list of disks to create for each VM in format: <mount_point1>:<size1>:<mount_point2>:<size2>")
 	createCmd.Flags().IntVar(&extraDisks, "extra-disks", 0, "number of extra disks to create for each worker VM")
+	createCmd.Flags().StringSliceVar(&extraDisksDrivers, "extra-disks-drivers", nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme)")
 	createCmd.Flags().IntVar(&extraDiskSize, "extra-disks-size", 5*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().StringVar(&targetArch, "arch", stdruntime.GOARCH, "cluster architecture")
 	createCmd.Flags().BoolVar(&clusterWait, "wait", true, "wait for the cluster to be ready before returning")
