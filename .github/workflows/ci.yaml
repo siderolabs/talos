@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-06-11T15:17:44Z by kres 7360563.
+# Generated on 2024-06-24T09:42:29Z by kres 4c9f215.
 
 name: default
 concurrency:
@@ -732,7 +732,7 @@ jobs:
           PUSH: "true"
           REGISTRY: registry.dev.siderolabs.io
         run: |
-          make nvidia-container-toolkit nvidia-open-gpu-kernel-modules extensions-metadata -C _out/extensions
+          make nvidia-container-toolkit nvidia-open-gpu-kernel-modules zfs extensions-metadata -C _out/extensions
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-oss

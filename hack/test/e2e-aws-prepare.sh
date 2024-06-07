@@ -19,7 +19,7 @@ function get_ami_id() {
 function cloud_image_upload_with_extensions() {
   case "${1}" in
     nvidia-oss)
-      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | contains("nvidia") and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
+      EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | (contains("nvidia") or contains("zfs")) and (contains("nvidia-fabricmanager") or contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
       ;;
     nvidia-oss-fabricmanager)
       EXTENSIONS=$(jq -R < "${EXTENSIONS_METADATA_FILE}" | jq -rs 'map(select(. | contains("nvidia") and (contains("nonfree-kmod-nvidia") | not))) | .[] |= "--system-extension-image=" + . | join(" ")')
