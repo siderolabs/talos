@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net"
 	"net/netip"
 	"slices"
@@ -50,10 +49,41 @@ func NewCache(next plugin.Handler, l *zap.Logger) *Cache {
 
 // ServeDNS implements [dns.Handler].
 func (c *Cache) ServeDNS(wr dns.ResponseWriter, msg *dns.Msg) {
-	_, err := c.cache.ServeDNS(context.Background(), request.NewScrubWriter(msg, wr), msg)
+	wr = request.NewScrubWriter(msg, wr)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 4500*time.Millisecond)
+	defer cancel()
+
+	code, err := c.cache.ServeDNS(ctx, wr, msg)
 	if err != nil {
 		// we should probably call newProxy.Healthcheck() if there are too many errors
 		c.logger.Warn("error serving dns request", zap.Error(err))
+	}
+
+	if clientWrite(code) {
+		return
+	}
+
+	// Something went wrong
+	state := request.Request{W: wr, Req: msg}
+
+	answer := new(dns.Msg)
+	answer.SetRcode(msg, code)
+	state.SizeAndDo(answer)
+
+	err = wr.WriteMsg(answer)
+	if err != nil {
+		c.logger.Warn("error writing dns response", zap.Error(err))
+	}
+}
+
+// clientWrite returns true if the response has been written to the client.
+func clientWrite(rcode int) bool {
+	switch rcode {
+	case dns.RcodeServerFailure, dns.RcodeRefused, dns.RcodeFormatError, dns.RcodeNotImplemented:
+		return false
+	default:
+		return true
 	}
 }
 
@@ -87,28 +117,16 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 
 	h.logger.Debug("dns request", zap.Stringer("data", msg))
 
-	upstreams := slices.Clone(h.dests)
-
-	if len(upstreams) == 0 {
-		emptyProxyErr := new(dns.Msg).SetRcode(req.Req, dns.RcodeServerFailure)
-
-		err := wrt.WriteMsg(emptyProxyErr)
-		if err != nil {
-			// We can't do much here, but at least log the error.
-			h.logger.Warn("failed to write 'no destination available' error dns response", zap.Error(err))
-		}
-
+	if len(h.dests) == 0 {
 		return dns.RcodeServerFailure, errors.New("no destination available")
 	}
-
-	rand.Shuffle(len(upstreams), func(i, j int) { upstreams[i], upstreams[j] = upstreams[j], upstreams[i] })
 
 	var (
 		resp *dns.Msg
 		err  error
 	)
 
-	for _, ups := range upstreams {
+	for _, ups := range h.dests {
 		opts := proxy.Options{}
 
 		for {
@@ -126,26 +144,20 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 			break
 		}
 
-		if err == nil {
+		if ctx.Err() != nil || err == nil {
 			break
 		}
 
 		continue
 	}
 
-	if err != nil {
+	if ctx.Err() != nil {
+		return dns.RcodeServerFailure, ctx.Err()
+	} else if err != nil {
 		return dns.RcodeServerFailure, err
 	}
 
 	if !req.Match(resp) {
-		resp = new(dns.Msg).SetRcode(req.Req, dns.RcodeFormatError)
-
-		err = wrt.WriteMsg(resp)
-		if err != nil {
-			// We can't do much here, but at least log the error.
-			h.logger.Warn("failed to write non-matched response", zap.Error(err))
-		}
-
 		h.logger.Warn("dns response didn't match", zap.Stringer("data", resp))
 
 		return dns.RcodeFormatError, nil
