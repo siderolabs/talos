@@ -62,7 +62,7 @@ require (
 	github.com/containernetworking/plugins v1.5.0
 	github.com/coredns/coredns v1.11.2
 	github.com/coreos/go-iptables v0.7.0
-	github.com/cosi-project/runtime v0.4.3
+	github.com/cosi-project/runtime v0.4.4
 	github.com/distribution/reference v0.6.0
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/docker/go-connections v0.5.0
@@ -257,7 +257,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/gosuri/uilive v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect

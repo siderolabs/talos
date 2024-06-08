@@ -7,7 +7,7 @@ package backend
 import (
 	"crypto/tls"
 
-	"github.com/siderolabs/gen/containers"
+	"github.com/siderolabs/gen/concurrent"
 	"github.com/siderolabs/grpc-proxy/proxy"
 )
 
@@ -15,7 +15,7 @@ import (
 //
 // TODO: need to clean up idle connections from time to time.
 type APIDFactory struct {
-	cache    containers.SyncMap[string, *APID]
+	cache    *concurrent.HashTrieMap[string, *APID]
 	provider TLSConfigProvider
 }
 
@@ -29,6 +29,7 @@ type TLSConfigProvider interface {
 // Client TLS config is used to connect to other apid instances.
 func NewAPIDFactory(provider TLSConfigProvider) *APIDFactory {
 	return &APIDFactory{
+		cache:    concurrent.NewHashTrieMap[string, *APID](),
 		provider: provider,
 	}
 }
@@ -62,7 +63,7 @@ func (factory *APIDFactory) Get(target string) (proxy.Backend, error) {
 //
 // This ensures that all connections are closed.
 func (factory *APIDFactory) Flush() {
-	factory.cache.Range(func(key string, backend *APID) bool {
+	factory.cache.Enumerate(func(key string, backend *APID) bool {
 		backend.Close()
 
 		return true
