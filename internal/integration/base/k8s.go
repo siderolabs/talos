@@ -67,8 +67,6 @@ func (k8sSuite *K8sSuite) SetupSuite() {
 	})
 	k8sSuite.Require().NoError(err)
 
-	// patch timeout
-	config.Timeout = time.Minute
 	if k8sSuite.K8sEndpoint != "" {
 		config.Host = k8sSuite.K8sEndpoint
 	}

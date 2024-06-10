@@ -137,9 +137,6 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 		return fmt.Errorf("error getting kubernetes config: %w", err)
 	}
 
-	// reset timeout to prevent log streaming from timing out
-	cfg.Timeout = 0
-
 	skc, err := sonodynamic.NewAPIHelperFromRESTConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("couldn't get sonobuoy api helper: %w", err)

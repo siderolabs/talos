@@ -9,7 +9,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -65,9 +64,6 @@ func (k *KubernetesClient) K8sRestConfig(ctx context.Context) (*rest.Config, err
 	if err != nil {
 		return nil, err
 	}
-
-	// patch timeout
-	config.Timeout = time.Minute
 
 	if k.ForceEndpoint != "" {
 		forceEndpoint, _ := strings.CutPrefix(k.ForceEndpoint, "https://")

@@ -8,7 +8,6 @@ package base
 
 import (
 	"context"
-	"time"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,7 +35,6 @@ func discoverNodesK8s(ctx context.Context, client *client.Client, suite *TalosSu
 	}
 
 	// patch timeout
-	config.Timeout = time.Minute
 	if suite.K8sEndpoint != "" {
 		config.Host = suite.K8sEndpoint
 	}
