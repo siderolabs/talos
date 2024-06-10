@@ -122,16 +122,16 @@ func (suite *ResetSuite) TestResetWithSpecEphemeral() {
 	}, true)
 }
 
-// TestResetWithSpecState resets only state partition on the node.
+// TestResetWithSpecStateAndUserDisks resets state partition and user disks on the node.
 //
 // As ephemeral partition is not reset, so kubelet cert shouldn't change.
-func (suite *ResetSuite) TestResetWithSpecState() {
+func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 	if suite.Capabilities().SecureBooted {
 		// this is because in secure boot mode, the machine config is only applied and cannot be passed as kernel args
 		suite.T().Skip("skipping as talos is explicitly trusted booted")
 	}
 
-	node := suite.RandomDiscoveredNodeInternalIP()
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	disks, err := suite.Client.Disks(client.WithNode(suite.ctx, node))
 	suite.Require().NoError(err)
@@ -139,7 +139,18 @@ func (suite *ResetSuite) TestResetWithSpecState() {
 
 	userDisksToWipe := xslices.Map(
 		xslices.Filter(disks.Messages[0].Disks, func(disk *storage.Disk) bool {
-			return !disk.SystemDisk
+			switch {
+			case disk.SystemDisk:
+				return false
+			case disk.Type == storage.Disk_UNKNOWN, disk.Type == storage.Disk_CD, disk.Type == storage.Disk_SD:
+				return false
+			case disk.Readonly:
+				return false
+			case disk.BusPath == "/virtual":
+				return false
+			}
+
+			return true
 		}),
 		func(disk *storage.Disk) string {
 			return disk.DeviceName

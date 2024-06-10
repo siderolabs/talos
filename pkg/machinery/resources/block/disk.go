@@ -28,6 +28,7 @@ type DiskSpec struct {
 	SectorSize uint   `yaml:"sectorSize" protobuf:"3"`
 
 	Readonly bool `yaml:"readonly" protobuf:"4"`
+	CDROM    bool `yaml:"cdrom" protobuf:"13"`
 
 	Model      string `yaml:"model,omitempty" protobuf:"5"`
 	Serial     string `yaml:"serial,omitempty" protobuf:"6"`

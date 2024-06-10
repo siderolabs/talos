@@ -34,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -507,7 +508,11 @@ func (apiSuite *APISuite) UserDisks(ctx context.Context, node string, sizeGreate
 
 	for _, msg := range resp.Messages {
 		for _, disk := range msg.Disks {
-			if disk.SystemDisk {
+			if disk.SystemDisk || disk.Readonly || disk.Type == storage.Disk_CD {
+				continue
+			}
+
+			if disk.BusPath == "/virtual" {
 				continue
 			}
 

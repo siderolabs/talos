@@ -44,6 +44,8 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 		var diskType storage.Disk_DiskType
 
 		switch {
+		case d.TypedSpec().CDROM:
+			diskType = storage.Disk_CD
 		case d.TypedSpec().Transport == "nvme":
 			diskType = storage.Disk_NVME
 		case d.TypedSpec().Transport == "mmc":

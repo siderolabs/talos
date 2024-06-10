@@ -36,6 +36,7 @@ message Disk {
     HDD = 2;
     NVME = 3;
     SD = 4;
+    CD = 5;
   }
   // Type is a type of the disk: nvme, ssd, hdd, sd card.
   DiskType type = 9;

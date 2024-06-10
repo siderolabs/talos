@@ -50,6 +50,7 @@ message DiskSpec {
   string sub_system = 10;
   string transport = 11;
   bool rotational = 12;
+  bool cdrom = 13;
 }
 
 // SystemDiskSpec is the spec for SystemDisks status.

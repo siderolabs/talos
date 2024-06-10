@@ -836,6 +836,7 @@ DiskSpec is the spec for Disks status.
 | sub_system | [string](#string) |  |  |
 | transport | [string](#string) |  |  |
 | rotational | [bool](#bool) |  |  |
+| cdrom | [bool](#bool) |  |  |
 
 
 
@@ -8107,6 +8108,7 @@ DisksResponse represents the response of the `Disks` RPC.
 | HDD | 2 |  |
 | NVME | 3 |  |
 | SD | 4 |  |
+| CD | 5 |  |
 
 
  <!-- end enums -->

@@ -119,6 +119,8 @@ func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controlle
 		return nil
 	}
 
+	defer bd.Close() //nolint:errcheck
+
 	size, err := bd.GetSize()
 	if err != nil || size == 0 {
 		return nil //nolint:nilerr
@@ -126,6 +128,12 @@ func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controlle
 
 	if privateDM, _ := bd.IsPrivateDeviceMapper(); privateDM { //nolint:errcheck
 		return nil
+	}
+
+	isCD := bd.IsCD()
+	if isCD && bd.IsCDNoMedia() {
+		// Linux reports non-zero size for CD-ROMs even when there is no media.
+		size = 0
 	}
 
 	ioSize, err := bd.GetIOSize()
@@ -152,6 +160,7 @@ func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controlle
 		d.TypedSpec().IOSize = ioSize
 		d.TypedSpec().SectorSize = sectorSize
 		d.TypedSpec().Readonly = readOnly
+		d.TypedSpec().CDROM = isCD
 
 		d.TypedSpec().Model = props.Model
 		d.TypedSpec().Serial = props.Serial

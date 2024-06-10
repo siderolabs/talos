@@ -151,13 +151,20 @@ func (suite *VolumesSuite) TestDisks() {
 					continue
 				}
 
-				suite.Assert().NotEmpty(disk.TypedSpec().Size, "disk: %s", disk.Metadata().ID())
+				if !disk.TypedSpec().CDROM {
+					suite.Assert().NotEmpty(disk.TypedSpec().Size, "disk: %s", disk.Metadata().ID())
+				}
+
 				suite.Assert().NotEmpty(disk.TypedSpec().IOSize, "disk: %s", disk.Metadata().ID())
 				suite.Assert().NotEmpty(disk.TypedSpec().SectorSize, "disk: %s", disk.Metadata().ID())
 
 				if suite.Cluster != nil {
 					// running on our own provider, transport should be always detected
-					suite.Assert().NotEmpty(disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
+					if disk.TypedSpec().BusPath == "/virtual" {
+						suite.Assert().Empty(disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
+					} else {
+						suite.Assert().NotEmpty(disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
+					}
 				}
 
 				diskNames = append(diskNames, disk.Metadata().ID())
