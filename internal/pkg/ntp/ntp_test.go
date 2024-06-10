@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"testing"
 	"time"
@@ -17,11 +16,11 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/ntp"
 	"github.com/siderolabs/talos/internal/pkg/timex"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -167,7 +166,7 @@ func (suite *NTPSuite) fakeQuery(host string) (resp *beevikntp.Response, err err
 }
 
 func (suite *NTPSuite) TestSync() {
-	syncer := ntp.NewSyncer(logging.Wrap(log.Writer()).With(zap.String("controller", "ntp")), []string{constants.DefaultNTPServer})
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{constants.DefaultNTPServer})
 
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
@@ -197,7 +196,7 @@ func (suite *NTPSuite) TestSync() {
 }
 
 func (suite *NTPSuite) TestSyncContinuous() {
-	syncer := ntp.NewSyncer(logging.Wrap(log.Writer()).With(zap.String("controller", "ntp")), []string{"127.0.0.3"})
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"127.0.0.3"})
 
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
@@ -244,7 +243,7 @@ func (suite *NTPSuite) TestSyncContinuous() {
 }
 
 func (suite *NTPSuite) TestSyncWithSpikes() {
-	syncer := ntp.NewSyncer(logging.Wrap(log.Writer()).With(zap.String("controller", "ntp")), []string{"127.0.0.7"})
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"127.0.0.7"})
 
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
@@ -296,7 +295,7 @@ func (suite *NTPSuite) TestSyncWithSpikes() {
 }
 
 func (suite *NTPSuite) TestSyncChangeTimeservers() {
-	syncer := ntp.NewSyncer(logging.Wrap(log.Writer()).With(zap.String("controller", "ntp")), []string{"127.0.0.1"})
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"127.0.0.1"})
 
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
@@ -334,7 +333,7 @@ func (suite *NTPSuite) TestSyncChangeTimeservers() {
 }
 
 func (suite *NTPSuite) TestSyncIterateTimeservers() {
-	syncer := ntp.NewSyncer(logging.Wrap(log.Writer()).With(zap.String("controller", "ntp")), []string{"127.0.0.1", "127.0.0.2", "127.0.0.3", "127.0.0.4"})
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"127.0.0.1", "127.0.0.2", "127.0.0.3", "127.0.0.4"})
 
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
@@ -386,7 +385,7 @@ func (suite *NTPSuite) TestSyncIterateTimeservers() {
 }
 
 func (suite *NTPSuite) TestSyncEpochChange() {
-	syncer := ntp.NewSyncer(logging.Wrap(log.Writer()).With(zap.String("controller", "ntp")), []string{"127.0.0.5"})
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"127.0.0.5"})
 
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock
@@ -425,7 +424,7 @@ func (suite *NTPSuite) TestSyncEpochChange() {
 }
 
 func (suite *NTPSuite) TestSyncSwitchTimeservers() {
-	syncer := ntp.NewSyncer(logging.Wrap(log.Writer()).With(zap.String("controller", "ntp")), []string{"127.0.0.6", "127.0.0.4"})
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"127.0.0.6", "127.0.0.4"})
 
 	syncer.AdjustTime = suite.adjustSystemClock
 	syncer.CurrentTime = suite.getSystemClock

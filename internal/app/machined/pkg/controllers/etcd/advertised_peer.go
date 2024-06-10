@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/netip"
-	"reflect"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -153,7 +153,7 @@ func (ctrl *AdvertisedPeerController) updateAdvertisedPeers(ctx context.Context,
 	})
 	currentPeerURLs := localMember.PeerURLs
 
-	if reflect.DeepEqual(newPeerURLs, currentPeerURLs) {
+	if slices.Equal(newPeerURLs, currentPeerURLs) {
 		return nil
 	}
 

@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"io"
 	"os"
-	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -54,7 +54,7 @@ func TestNewADV(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(gotAdv, tt.wantAdv) {
+			if !bytes.Equal(gotAdv, tt.wantAdv) {
 				t.Errorf("NewADV() = %v, want %v", gotAdv, tt.wantAdv)
 			}
 		})
@@ -100,7 +100,7 @@ func TestADV_ReadTag(t *testing.T) {
 			}
 
 			tags := tt.a.ListTags()
-			if !reflect.DeepEqual(tags, []uint8{tt.args.t}) {
+			if !slices.Equal(tags, []uint8{tt.args.t}) {
 				t.Errorf("ADV.ListTags() got = %v, want %v", tags, []uint8{tt.args.t})
 			}
 		})

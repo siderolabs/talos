@@ -7,8 +7,7 @@ package k8s_test
 
 import (
 	"context"
-	"log"
-	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -22,10 +21,10 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap/zaptest"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -49,7 +48,7 @@ func (suite *ExtraManifestSuite) SetupTest() {
 
 	var err error
 
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
+	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&k8sctrl.ExtraManifestController{}))
@@ -79,7 +78,7 @@ func (suite *ExtraManifestSuite) assertExtraManifests(manifests []string) error 
 
 	ids := xslices.Map(resources.Items, func(r resource.Resource) string { return r.Metadata().ID() })
 
-	if !reflect.DeepEqual(manifests, ids) {
+	if !slices.Equal(manifests, ids) {
 		return retry.ExpectedErrorf("expected %q, got %q", manifests, ids)
 	}
 

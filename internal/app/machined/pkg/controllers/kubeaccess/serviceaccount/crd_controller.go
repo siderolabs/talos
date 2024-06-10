@@ -12,7 +12,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"sort"
 	"sync"
@@ -542,7 +541,7 @@ func (t *CRDController) needsUpdate(secret *corev1.Secret, desiredRoles []string
 		return true
 	}
 
-	if !reflect.DeepEqual(t.talosCA.Crt, talosconfigCA) {
+	if !bytes.Equal(t.talosCA.Crt, talosconfigCA) {
 		t.logger.Debug("ca mismatch detected")
 
 		return true
@@ -608,7 +607,7 @@ func (t *CRDController) needsUpdate(secret *corev1.Secret, desiredRoles []string
 	sort.Strings(actualRoles)
 	sort.Strings(desiredRoles)
 
-	if !reflect.DeepEqual(actualRoles, desiredRoles) {
+	if !slices.Equal(actualRoles, desiredRoles) {
 		t.logger.Debug("roles in certificate do not match desired roles",
 			zap.Strings("actual", actualRoles), zap.Strings("desired", desiredRoles))
 

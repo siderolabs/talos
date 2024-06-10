@@ -12,7 +12,6 @@ import (
 	"math/bits"
 	"net"
 	"os"
-	"reflect"
 	"slices"
 	"strings"
 	"sync"
@@ -124,7 +123,7 @@ func (syncer *Syncer) SetTimeServers(timeServers []string) {
 	syncer.timeServersMu.Lock()
 	defer syncer.timeServersMu.Unlock()
 
-	if reflect.DeepEqual(timeServers, syncer.timeServers) {
+	if slices.Equal(timeServers, syncer.timeServers) {
 		return
 	}
 
@@ -213,6 +212,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 			zap.Duration("jitter", time.Duration(syncer.spikeDetector.Jitter()*float64(time.Second))),
 			zap.Duration("poll_interval", pollInterval),
 			zap.Bool("spike", spike),
+			zap.Bool("resp_exists", resp != nil),
 		)
 
 		if resp != nil && !spike {

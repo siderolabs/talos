@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
-	"reflect"
+	"slices"
 	"sort"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -82,7 +82,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			r,
 			k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneDiscoveredEndpointsID),
 			func(r *k8s.Endpoint) error {
-				if !reflect.DeepEqual(r.TypedSpec().Addresses, endpoints) {
+				if !slices.Equal(r.TypedSpec().Addresses, endpoints) {
 					logger.Debug("updated controlplane endpoints", zap.Any("endpoints", endpoints))
 				}
 

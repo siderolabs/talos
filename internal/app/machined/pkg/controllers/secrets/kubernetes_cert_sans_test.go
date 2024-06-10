@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/netip"
 	"net/url"
-	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -143,7 +143,7 @@ func (suite *KubernetesCertSANsSuite) TestReconcile() {
 			"some.other.url",
 		}
 
-		if !reflect.DeepEqual(spec.DNSNames, expectedDNSNames) {
+		if !slices.Equal(spec.DNSNames, expectedDNSNames) {
 			return retry.ExpectedErrorf("expected %v, got %v", expectedDNSNames, spec.DNSNames)
 		}
 

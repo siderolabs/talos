@@ -7,7 +7,6 @@ package runtime_test
 import (
 	"context"
 	"errors"
-	"log"
 	"sync"
 	"time"
 
@@ -18,8 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/siderolabs/talos/pkg/logging"
+	"go.uber.org/zap/zaptest"
 )
 
 const (
@@ -47,9 +45,7 @@ func (suite *RuntimeSuite) SetupTest() {
 
 	var err error
 
-	logger := logging.Wrap(log.Writer())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 }
 

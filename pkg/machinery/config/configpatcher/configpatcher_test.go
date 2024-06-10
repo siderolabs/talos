@@ -5,7 +5,7 @@
 package configpatcher_test
 
 import (
-	"reflect"
+	"bytes"
 	"testing"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -61,7 +61,7 @@ func TestJSON6902(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
+			if !bytes.Equal(got, tt.want) {
 				t.Errorf("JSON6902 got: \n%v\n but wanted: \n%v", string(got), string(tt.want))
 			}
 		})

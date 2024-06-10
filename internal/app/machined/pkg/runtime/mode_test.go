@@ -6,7 +6,6 @@
 package runtime_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -90,7 +89,7 @@ func TestParseMode(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(gotM, tt.wantM) {
+			if gotM != tt.wantM {
 				t.Errorf("ParseMode() = %v, want %v", gotM, tt.wantM)
 			}
 		})

@@ -6,7 +6,6 @@ package opennebula_test
 
 import (
 	_ "embed"
-	"fmt"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/state"
@@ -35,6 +34,6 @@ func TestParseMetadata(t *testing.T) {
 	marshaled, err := yaml.Marshal(networkConfig)
 	require.NoError(t, err)
 
-	fmt.Print(marshaled)
+	t.Log(string(marshaled))
 	assert.Equal(t, expectedNetworkConfig, string(marshaled))
 }

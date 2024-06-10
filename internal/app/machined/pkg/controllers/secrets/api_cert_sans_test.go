@@ -7,7 +7,7 @@ package secrets_test
 import (
 	"fmt"
 	"net/netip"
-	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -110,7 +110,7 @@ func (suite *APICertSANsSuite) TestReconcileControlPlane() {
 
 		expectedDNSNames := []string{"bar", "bar.some.org", "other.org"}
 
-		if !reflect.DeepEqual(expectedDNSNames, spec.DNSNames) {
+		if !slices.Equal(expectedDNSNames, spec.DNSNames) {
 			return retry.ExpectedErrorf("expected %v, got %v", expectedDNSNames, spec.DNSNames)
 		}
 

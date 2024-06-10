@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
-	"reflect"
+	"slices"
 	"sync"
 	"time"
 
@@ -264,7 +264,7 @@ func (ctrl *MaintenanceServiceController) Run(ctx context.Context, r controller.
 		// print additional information for the user on important state changes
 		reachableAddresses := xslices.Map(cfg.TypedSpec().ReachableAddresses, netip.Addr.String)
 
-		if !reflect.DeepEqual(lastReachableAddresses, reachableAddresses) {
+		if !slices.Equal(lastReachableAddresses, reachableAddresses) {
 			logger.Info("this machine is reachable at:")
 
 			for _, addr := range reachableAddresses {

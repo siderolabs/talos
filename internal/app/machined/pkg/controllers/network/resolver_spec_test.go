@@ -7,9 +7,8 @@ package network_test
 
 import (
 	"context"
-	"log"
 	"net/netip"
-	"reflect"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -21,9 +20,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap/zaptest"
 
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -47,7 +46,7 @@ func (suite *ResolverSpecSuite) SetupTest() {
 
 	var err error
 
-	suite.runtime, err = runtime.NewRuntime(suite.state, logging.Wrap(log.Writer()))
+	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.ResolverSpecController{}))
@@ -80,7 +79,7 @@ func (suite *ResolverSpecSuite) assertStatus(id string, servers ...netip.Addr) e
 
 	status := r.(*network.ResolverStatus) //nolint:errcheck,forcetypeassert
 
-	if !reflect.DeepEqual(status.TypedSpec().DNSServers, servers) {
+	if !slices.Equal(status.TypedSpec().DNSServers, servers) {
 		return retry.ExpectedErrorf("server list mismatch: %q != %q", status.TypedSpec().DNSServers, servers)
 	}
 

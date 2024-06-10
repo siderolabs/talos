@@ -6,7 +6,6 @@ package runtime_test
 
 import (
 	"context"
-	"reflect"
 	"slices"
 	"sort"
 	"sync"
@@ -179,7 +178,7 @@ func (suite *CRIImageGCSuite) TestReconcile() {
 		imageList, _ := suite.mockImageService.List(suite.Ctx()) //nolint:errcheck
 		actualImages := xslices.Map(imageList, func(i images.Image) string { return i.Name })
 
-		if reflect.DeepEqual(expectedImages, actualImages) {
+		if slices.Equal(expectedImages, actualImages) {
 			return nil
 		}
 

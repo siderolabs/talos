@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
-	"reflect"
 	"slices"
 	"time"
 
@@ -213,7 +212,7 @@ func (ctrl *EndpointController) updateEndpointsResource(ctx context.Context, r c
 		r,
 		k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneAPIServerEndpointsID),
 		func(r *k8s.Endpoint) error {
-			if !reflect.DeepEqual(r.TypedSpec().Addresses, addrs) {
+			if !slices.Equal(r.TypedSpec().Addresses, addrs) {
 				logger.Debug("updated controlplane endpoints", zap.Any("endpoints", addrs))
 			}
 

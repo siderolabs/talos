@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"sync"
 	"testing"
@@ -147,7 +148,7 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 		func() error {
 			ids := svcMock.getIDs()
 
-			if !reflect.DeepEqual(ids, []string{"ext-frr", "ext-hello-world"}) {
+			if !slices.Equal(ids, []string{"ext-frr", "ext-hello-world"}) {
 				return retry.ExpectedErrorf("services registered: %q", ids)
 			}
 

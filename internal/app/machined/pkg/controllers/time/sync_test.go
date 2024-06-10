@@ -6,8 +6,6 @@ package time_test
 
 import (
 	"context"
-	"log"
-	"reflect"
 	"slices"
 	"sync"
 	"testing"
@@ -22,11 +20,11 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	timectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -62,9 +60,7 @@ func (suite *SyncSuite) SetupTest() {
 
 	var err error
 
-	logger := logging.Wrap(log.Writer())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 }
 
@@ -339,7 +335,7 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 	suite.Assert().NoError(
 		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				if !reflect.DeepEqual(mockSyncer.getTimeServers(), []string{"127.0.0.1"}) {
+				if !slices.Equal(mockSyncer.getTimeServers(), []string{"127.0.0.1"}) {
 					return retry.ExpectedErrorf("time servers not updated yet")
 				}
 

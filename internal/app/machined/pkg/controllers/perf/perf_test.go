@@ -6,7 +6,6 @@ package perf_test
 
 import (
 	"context"
-	"log"
 	"sync"
 	"testing"
 	"time"
@@ -18,9 +17,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/perf"
-	"github.com/siderolabs/talos/pkg/logging"
 	perfresource "github.com/siderolabs/talos/pkg/machinery/resources/perf"
 )
 
@@ -44,9 +43,7 @@ func (suite *PerfSuite) SetupTest() {
 
 	var err error
 
-	logger := logging.Wrap(log.Writer())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 }
 

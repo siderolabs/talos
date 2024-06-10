@@ -7,6 +7,7 @@ package v1alpha1
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -57,9 +58,11 @@ func TestPhaseList_Append(t *testing.T) {
 		},
 	}
 
+	cmp := func(a, b runtime.Phase) bool { return a.Name == b.Name }
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.p = tt.p.Append(tt.args.name, tt.args.tasks...); !reflect.DeepEqual(tt.p, tt.want) {
+			if tt.p = tt.p.Append(tt.args.name, tt.args.tasks...); !slices.EqualFunc(tt.p, tt.want, cmp) {
 				t.Errorf("PhaseList.Append() = %v, want %v", tt.p, tt.want)
 			}
 		})
@@ -102,9 +105,11 @@ func TestPhaseList_AppendWhen(t *testing.T) {
 		},
 	}
 
+	cmp := func(a, b runtime.Phase) bool { return a.Name == b.Name }
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.p = tt.p.AppendWhen(tt.args.when, tt.args.name, tt.args.tasks...); !reflect.DeepEqual(tt.p, tt.want) {
+			if tt.p = tt.p.AppendWhen(tt.args.when, tt.args.name, tt.args.tasks...); !slices.EqualFunc(tt.p, tt.want, cmp) {
 				t.Errorf("PhaseList.AppendWhen() = %v, want %v", tt.p, tt.want)
 			}
 		})

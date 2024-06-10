@@ -9,6 +9,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -120,19 +121,15 @@ func ZapLogger(dests ...*LogDestination) *zap.Logger {
 		panic("at least one writer must be defined")
 	}
 
-	cores := []zapcore.Core{}
+	cores := xslices.Map(dests, func(dest *LogDestination) zapcore.Core {
+		return zapcore.NewCore(
+			zapcore.NewConsoleEncoder(dest.config),
+			zapcore.AddSync(dest.writer),
+			dest.level,
+		)
+	})
 
-	for _, dest := range dests {
-		consoleEncoder := zapcore.NewConsoleEncoder(dest.config)
-
-		cores = append(cores, zapcore.NewCore(consoleEncoder, zapcore.AddSync(dest.writer), dest.level))
-	}
-
-	core := zapcore.NewTee(cores...)
-
-	logger := zap.New(core)
-
-	return logger
+	return zap.New(zapcore.NewTee(cores...))
 }
 
 // Component helper for creating zap.Field.

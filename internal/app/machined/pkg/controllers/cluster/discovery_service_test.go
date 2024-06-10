@@ -10,7 +10,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"io"
-	"log"
 	"net/netip"
 	"net/url"
 	"testing"
@@ -22,11 +21,11 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap/zaptest"
 
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -113,7 +112,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	defer cliCtxCancel()
 
 	go func() {
-		errCh <- cli.Run(cliCtx, logging.Wrap(log.Writer()), notifyCh)
+		errCh <- cli.Run(cliCtx, zaptest.NewLogger(suite.T()), notifyCh)
 	}()
 
 	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
@@ -328,7 +327,7 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 	defer cliCtxCancel()
 
 	go func() {
-		errCh <- cli.Run(cliCtx, logging.Wrap(log.Writer()), notifyCh)
+		errCh <- cli.Run(cliCtx, zaptest.NewLogger(suite.T()), notifyCh)
 	}()
 
 	// inject some affiliate via our client, controller should publish it as an affiliate

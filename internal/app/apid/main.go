@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"log"
 	"os/signal"
-	"reflect"
 	"regexp"
+	"slices"
 	"syscall"
 	"time"
 
@@ -260,7 +260,7 @@ func verifyExtKeyUsage(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) 
 			continue
 		}
 
-		if !reflect.DeepEqual(cert.ExtKeyUsage, []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}) {
+		if !slices.Equal(cert.ExtKeyUsage, []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}) {
 			return fmt.Errorf("certificate %q is missing the client auth extended key usage", cert.Subject)
 		}
 	}

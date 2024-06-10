@@ -6,14 +6,13 @@ package vip_test
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/operator/vip"
-	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -43,7 +42,7 @@ func TestEquinixMetalHandler(t *testing.T) {
 		}
 	}
 
-	logger := logging.Wrap(log.Writer())
+	logger := zaptest.NewLogger(t)
 
 	handler1 := vip.NewEquinixMetalHandler(logger, settings["TALOS_EM_VIP"], network.VIPEquinixMetalSpec{
 		ProjectID: settings["TALOS_EM_PROJECT_ID"],

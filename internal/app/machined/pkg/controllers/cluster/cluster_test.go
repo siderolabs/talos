@@ -6,7 +6,6 @@ package cluster_test
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 
@@ -17,8 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/siderolabs/talos/pkg/logging"
+	"go.uber.org/zap/zaptest"
 )
 
 type ClusterSuite struct {
@@ -40,9 +38,7 @@ func (suite *ClusterSuite) SetupTest() {
 
 	var err error
 
-	logger := logging.Wrap(log.Writer())
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
+	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
 	suite.Require().NoError(err)
 }
 
