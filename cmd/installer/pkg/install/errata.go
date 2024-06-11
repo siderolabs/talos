@@ -73,33 +73,28 @@ func errataArm64ZBoot() {
 
 // errataNetIfnames appends the `net.ifnames=0` kernel parameter to the kernel command line if upgrading
 // from an old enough version of Talos.
-func (i *Installer) errataNetIfnames() error {
+func (i *Installer) errataNetIfnames(talosVersion *compatibility.TalosVersion) {
 	if i.cmdline.Get(constants.KernelParamNetIfnames).First() != nil {
 		// net.ifnames is already set, nothing to do
-		return nil
+		return
 	}
 
-	oldTalos, err := upgradeFromPreIfnamesTalos()
-	if err != nil {
-		return err
-	}
+	oldTalos := upgradeFromPreIfnamesTalos(talosVersion)
 
 	if oldTalos {
 		log.Printf("appending net.ifnames=0 to the kernel command line")
 
 		i.cmdline.Append(constants.KernelParamNetIfnames, "0")
 	}
-
-	return nil
 }
 
-func upgradeFromPreIfnamesTalos() (bool, error) {
+func readHostTalosVersion() (*compatibility.TalosVersion, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
 	if _, err := os.Stat(constants.MachineSocketPath); err != nil {
-		// old Talos version, include fallback
-		return true, nil
+		// can't read Talos version
+		return nil, nil
 	}
 
 	c, err := client.New(ctx,
@@ -107,7 +102,7 @@ func upgradeFromPreIfnamesTalos() (bool, error) {
 		client.WithGRPCDialOptions(grpc.WithTransportCredentials(insecure.NewCredentials())),
 	)
 	if err != nil {
-		return false, fmt.Errorf("error connecting to the machine service: %w", err)
+		return nil, fmt.Errorf("error connecting to the machine service: %w", err)
 	}
 
 	defer c.Close() //nolint:errcheck
@@ -117,15 +112,24 @@ func upgradeFromPreIfnamesTalos() (bool, error) {
 
 	resp, err := c.Version(ctx)
 	if err != nil {
-		return false, fmt.Errorf("error getting Talos version: %w", err)
+		return nil, fmt.Errorf("error getting Talos version: %w", err)
 	}
 
 	hostVersion := unpack(resp.Messages)
 
 	talosVersion, err := compatibility.ParseTalosVersion(hostVersion.Version)
 	if err != nil {
-		return false, fmt.Errorf("error parsing Talos version: %w", err)
+		return nil, fmt.Errorf("error parsing Talos version: %w", err)
 	}
 
-	return talosVersion.DisablePredictableNetworkInterfaces(), nil
+	return talosVersion, nil
+}
+
+func upgradeFromPreIfnamesTalos(talosVersion *compatibility.TalosVersion) bool {
+	if talosVersion == nil {
+		// old Talos version, include fallback
+		return true
+	}
+
+	return talosVersion.DisablePredictableNetworkInterfaces()
 }

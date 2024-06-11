@@ -72,6 +72,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 		phases = phases.Append(
 			"systemRequirements",
 			SetupSystemDirectory,
+			InitVolumeLifecycle,
 		).Append(
 			"etc",
 			CreateSystemCgroups,
@@ -94,6 +95,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			MountCgroups,
 			MountPseudoFilesystems,
 			SetRLimit,
+			InitVolumeLifecycle,
 		).Append(
 			"integrity",
 			WriteIMAPolicy,
@@ -145,7 +147,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 				return r.State().Machine().Installed()
 			},
 			"mountSystem",
-			MountStatePartition,
+			MountStatePartition(false),
 		).Append(
 			"config",
 			LoadConfig,
@@ -187,13 +189,16 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				SaveStateEncryptionConfig,
 			).Append(
 				"mountState",
-				MountStatePartition,
+				MountStatePartition(true),
 			).Append(
 				"saveConfig",
 				SaveConfig,
 			).Append(
 				"unmountState",
 				UnmountStatePartition,
+			).Append(
+				"volumeFinalize",
+				TeardownVolumeLifecycle,
 			).Append(
 				"stopEverything",
 				StopAllServices,
@@ -223,7 +228,7 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"mountState",
-		MountStatePartition,
+		MountStatePartition(true),
 	).Append(
 		"saveConfig",
 		SaveConfig,
@@ -422,10 +427,6 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 		).Append(
 			"dbus",
 			StopDBus,
-		).AppendWhen(
-			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeWorker),
-			"leave",
-			LeaveEtcd,
 		).AppendList(
 			stopAllPhaselist(r, in.GetRebootMode() == machineapi.UpgradeRequest_DEFAULT),
 		).Append(
@@ -446,9 +447,6 @@ func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, in *machineapi.UpgradeRe
 		return nil
 	default:
 		phases = phases.Append(
-			"verifyDisk",
-			VerifyDiskAvailability,
-		).Append(
 			"upgrade",
 			Upgrade,
 		).Append(
@@ -482,21 +480,12 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			!r.Config().Machine().Kubelet().SkipNodeRegistration(),
 			"drain",
 			CordonAndDrainNode,
-		).AppendWhen(
-			!in.GetPreserve(),
-			"cleanup",
-			RemoveAllPods,
-		).AppendWhen(
-			in.GetPreserve(),
+		).Append(
 			"cleanup",
 			StopAllPods,
 		).Append(
 			"dbus",
 			StopDBus,
-		).AppendWhen(
-			!in.GetPreserve() && (r.Config().Machine().Type() != machine.TypeWorker),
-			"leave",
-			LeaveEtcd,
 		).Append(
 			"stopServices",
 			StopServicesEphemeral,
@@ -515,8 +504,8 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			UnmountEphemeralPartition,
 			UnmountStatePartition,
 		).Append(
-			"verifyDisk",
-			VerifyDiskAvailability,
+			"volumeFinalize",
+			TeardownVolumeLifecycle,
 		).Append(
 			"upgrade",
 			Upgrade,
@@ -566,6 +555,9 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 			"unmountSystem",
 			UnmountEphemeralPartition,
 			UnmountStatePartition,
+		).Append(
+			"volumeFinalize",
+			TeardownVolumeLifecycle,
 		).AppendWhen(
 			enableKexec,
 			"kexec",

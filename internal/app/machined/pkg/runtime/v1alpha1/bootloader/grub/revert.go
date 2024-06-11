@@ -6,68 +6,56 @@
 package grub
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
-	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
+	"github.com/siderolabs/gen/xerrors"
 
-	"github.com/siderolabs/talos/internal/pkg/mount"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
+	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Revert reverts the bootloader to the previous version.
-//
-//nolint:gocyclo
-func (c *Config) Revert(ctx context.Context) error {
+func (c *Config) Revert(disk string) error {
 	if c == nil {
 		return fmt.Errorf("cannot revert bootloader: %w", bootloaderNotInstalledError{})
 	}
 
+	err := mount.PartitionOp(
+		disk,
+		[]mount.Spec{
+			{
+				PartitionLabel: constants.BootPartitionLabel,
+				FilesystemType: partition.FilesystemTypeXFS,
+				MountTarget:    constants.BootMountPoint,
+			},
+		},
+		c.revert,
+		nil,
+		nil,
+		[]mountv2.OperationOption{
+			mountv2.WithSkipIfMounted(),
+		},
+		nil,
+	)
+	if err != nil && !xerrors.TagIs[mount.NotFoundTag](err) {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Config) revert() error {
 	if err := c.flip(); err != nil {
 		return err
 	}
 
-	// attempt to probe BOOT partition directly
-	dev, err := probe.GetDevWithPartitionName(constants.BootPartitionLabel)
-	if os.IsNotExist(err) {
-		// no BOOT partition, nothing to revert
-		return nil
-	}
-
-	if err != nil {
-		return err
-	}
-
-	defer dev.Close() //nolint:errcheck
-
-	mp, err := mount.SystemMountPointForLabel(ctx, dev.BlockDevice, constants.BootPartitionLabel)
-	if err != nil {
-		return err
-	}
-
-	// if no BOOT partition nothing to revert
-	if mp == nil {
-		return nil
-	}
-
-	alreadyMounted, err := mp.IsMounted()
-	if err != nil {
-		return err
-	}
-
-	if !alreadyMounted {
-		if err = mp.Mount(); err != nil {
-			return err
-		}
-
-		defer mp.Unmount() //nolint:errcheck
-	}
-
-	if _, err = os.Stat(filepath.Join(constants.BootMountPoint, string(c.Default))); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(filepath.Join(constants.BootMountPoint, string(c.Default))); errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("cannot rollback to %q, label does not exist", "")
 	}
 

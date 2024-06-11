@@ -12,7 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -20,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // ResetSuite ...
@@ -185,6 +188,14 @@ func (suite *ResetSuite) TestResetDuringBoot() {
 	suite.AssertBootIDChanged(nodeCtx, bootIDBefore, node, 3*time.Minute)
 
 	suite.ClearConnectionRefused(suite.ctx, node)
+
+	// make sure EPHEMERAL is ready
+	rtestutils.AssertResources(client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
+		[]string{constants.EphemeralPartitionLabel},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+		},
+	)
 
 	suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
 		Reboot:   true,

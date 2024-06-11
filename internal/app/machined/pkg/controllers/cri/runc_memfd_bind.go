@@ -148,10 +148,10 @@ func cleanup(path string, logger *zap.Logger) error {
 	// Keep umounting until we hit a umount error.
 	for unix.Unmount(fdPath, unix.MNT_DETACH) == nil {
 		// loop...
-		logger.Info(fmt.Sprintf("memfd-bind: path %q unmount succeeded...", path))
+		logger.Debug(fmt.Sprintf("memfd-bind: path %q unmount succeeded...", path))
 	}
 
-	logger.Info(fmt.Sprintf("memfd-bind: path %q has been cleared of all old bind-mounts", path))
+	logger.Debug(fmt.Sprintf("memfd-bind: path %q has been cleared of all old bind-mounts", path))
 
 	return nil
 }

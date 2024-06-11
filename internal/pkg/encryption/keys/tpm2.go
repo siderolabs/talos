@@ -12,9 +12,9 @@ import (
 	"io"
 
 	"github.com/foxboron/go-uefi/efi"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/luks"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
+	"github.com/siderolabs/go-blockdevice/v2/encryption/luks"
+	"github.com/siderolabs/go-blockdevice/v2/encryption/token"
 
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"

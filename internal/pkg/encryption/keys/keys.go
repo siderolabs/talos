@@ -10,48 +10,48 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
+	"github.com/siderolabs/go-blockdevice/v2/encryption/token"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 var errNoSystemInfoGetter = errors.New("the UUID getter is not set")
 
 // NewHandler key using provided config.
-func NewHandler(cfg config.EncryptionKey, options ...KeyOption) (Handler, error) {
+func NewHandler(cfg block.EncryptionKey, options ...KeyOption) (Handler, error) {
 	opts, err := NewDefaultOptions(options)
 	if err != nil {
 		return nil, err
 	}
 
-	key := KeyHandler{slot: cfg.Slot()}
+	key := KeyHandler{slot: cfg.Slot}
 
-	switch {
-	case cfg.Static() != nil:
-		k := cfg.Static().Key()
+	switch cfg.Type {
+	case block.EncryptionKeyStatic:
+		k := cfg.StaticPassphrase
 		if k == nil {
 			return nil, errors.New("static key must have key data defined")
 		}
 
 		return NewStaticKeyHandler(key, k), nil
-	case cfg.NodeID() != nil:
+	case block.EncryptionKeyNodeID:
 		if opts.GetSystemInformation == nil {
-			return nil, fmt.Errorf("failed to create nodeUUID key handler at slot %d: %w", cfg.Slot(), errNoSystemInfoGetter)
+			return nil, fmt.Errorf("failed to create nodeUUID key handler at slot %d: %w", cfg.Slot, errNoSystemInfoGetter)
 		}
 
-		return NewNodeIDKeyHandler(key, opts.PartitionLabel, opts.GetSystemInformation), nil
-	case cfg.KMS() != nil:
+		return NewNodeIDKeyHandler(key, opts.VolumeID, opts.GetSystemInformation), nil
+	case block.EncryptionKeyKMS:
 		if opts.GetSystemInformation == nil {
-			return nil, fmt.Errorf("failed to create KMS key handler at slot %d: %w", cfg.Slot(), errNoSystemInfoGetter)
+			return nil, fmt.Errorf("failed to create KMS key handler at slot %d: %w", cfg.Slot, errNoSystemInfoGetter)
 		}
 
-		return NewKMSKeyHandler(key, cfg.KMS().Endpoint(), opts.GetSystemInformation)
-	case cfg.TPM() != nil:
-		return NewTPMKeyHandler(key, cfg.TPM().CheckSecurebootOnEnroll())
+		return NewKMSKeyHandler(key, cfg.KMSEndpoint, opts.GetSystemInformation)
+	case block.EncryptionKeyTPM:
+		return NewTPMKeyHandler(key, cfg.TPMCheckSecurebootStatusOnEnroll)
+	default:
+		return nil, fmt.Errorf("unsupported key type: %s", cfg.Type)
 	}
-
-	return nil, errors.New("malformed config: no key handler can be created")
 }
 
 // Handler manages key lifecycle.

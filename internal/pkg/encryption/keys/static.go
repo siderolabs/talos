@@ -7,8 +7,8 @@ package keys
 import (
 	"context"
 
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
+	"github.com/siderolabs/go-blockdevice/v2/encryption/token"
 )
 
 // StaticKeyHandler just handles the static key value all the time.

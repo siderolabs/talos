@@ -6,30 +6,63 @@
 package grub
 
 import (
-	"context"
+	"github.com/siderolabs/gen/xerrors"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// Probe probes a block device for GRUB bootloader.
-//
-// If the 'disk' is passed, search happens on that disk only, otherwise searches all partitions.
-func Probe(ctx context.Context, disk string) (*Config, error) {
+// ProbeWithCallback probes the GRUB bootloader, and calls the callback function with the Config.
+func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(*Config) error) (*Config, error) {
 	var grubConf *Config
 
-	if err := mount.PartitionOp(ctx, disk, constants.BootPartitionLabel, func() error {
-		var err error
+	if err := mount.PartitionOp(
+		disk,
+		[]mount.Spec{
+			{
+				PartitionLabel: constants.BootPartitionLabel,
+				FilesystemType: partition.FilesystemTypeXFS,
+				MountTarget:    constants.BootMountPoint,
+			},
+		},
+		func() error {
+			var err error
 
-		grubConf, err = Read(ConfigPath)
-		if err != nil {
-			return err
+			grubConf, err = Read(ConfigPath)
+			if err != nil {
+				return err
+			}
+
+			if grubConf != nil && callback != nil {
+				return callback(grubConf)
+			}
+
+			return nil
+		},
+		options.BlockProbeOptions,
+		[]mountv2.NewPointOption{
+			mountv2.WithReadonly(),
+		},
+		[]mountv2.OperationOption{
+			mountv2.WithSkipIfMounted(),
+		},
+		nil,
+	); err != nil {
+		if xerrors.TagIs[mount.NotFoundTag](err) {
+			// if partitions are not found, it means GRUB is not installed
+			return nil, nil
 		}
 
-		return nil
-	}); err != nil {
 		return nil, err
 	}
 
 	return grubConf, nil
+}
+
+// Probe probes a block device for GRUB bootloader.
+func Probe(disk string, options options.ProbeOptions) (*Config, error) {
+	return ProbeWithCallback(disk, options, nil)
 }

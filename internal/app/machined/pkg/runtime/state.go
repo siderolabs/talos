@@ -9,9 +9,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/registry"
-	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
 	configcore "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
@@ -32,8 +30,6 @@ type Machine interface {
 
 // MachineState defines the machined state.
 type MachineState interface {
-	Disk(options ...disk.Option) *probe.ProbedBlockDevice
-	Close() error
 	Installed() bool
 	IsInstallStaged() bool
 	StagedInstallImageRef() string

@@ -6,21 +6,50 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
+	"github.com/cosi-project/runtime/pkg/state"
+
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/pkg/meta"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
+var revertState state.State
+
+func revertSetState(s state.State) {
+	revertState = s
+}
+
 func revertBootloader(ctx context.Context) {
-	if err := revertBootloadInternal(ctx); err != nil {
+	if revertState == nil {
+		log.Printf("no state to revert bootloader")
+
+		return
+	}
+
+	if err := revertBootloadInternal(ctx, revertState); err != nil {
 		log.Printf("failed to revert bootloader: %s", err)
 	}
 }
 
-func revertBootloadInternal(ctx context.Context) error {
-	metaState, err := meta.New(ctx, nil)
+//nolint:gocyclo
+func revertBootloadInternal(ctx context.Context, resourceState state.State) error {
+	systemDisk, err := block.GetSystemDisk(ctx, resourceState)
+	if err != nil {
+		return fmt.Errorf("system disk lookup failed: %w", err)
+	}
+
+	if systemDisk == nil {
+		log.Printf("no system disk found, nothing to revert")
+
+		return nil
+	}
+
+	metaState, err := meta.New(ctx, resourceState)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// no META, no way to revert
@@ -45,18 +74,13 @@ func revertBootloadInternal(ctx context.Context) error {
 
 	log.Printf("reverting failed upgrade, switching to %q", label)
 
-	if err = func() error {
-		config, probeErr := bootloader.Probe(ctx, "")
-		if probeErr != nil {
-			if os.IsNotExist(probeErr) {
-				// no bootloader found, nothing to do
-				return nil
-			}
-
-			return probeErr
+	if err := func() error {
+		config, err := bootloader.Probe(systemDisk.DevPath, options.ProbeOptions{})
+		if err != nil {
+			return err
 		}
 
-		return config.Revert(ctx)
+		return config.Revert(systemDisk.DevPath)
 	}(); err != nil {
 		return err
 	}

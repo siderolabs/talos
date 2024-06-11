@@ -5,6 +5,9 @@ package talos.resource.definitions.block;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block";
 option java_package = "dev.talos.api.resource.definitions.block";
 
+import "google/api/expr/v1alpha1/checked.proto";
+import "resource/definitions/enums/enums.proto";
+
 // DeviceSpec is the spec for devices status.
 message DeviceSpec {
   string type = 1;
@@ -17,7 +20,7 @@ message DeviceSpec {
   string parent = 8;
 }
 
-// DiscoveredVolumeSpec is the spec for DiscoveredVolumes status.
+// DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 message DiscoveredVolumeSpec {
   uint64 size = 1;
   uint64 sector_size = 2;
@@ -35,6 +38,24 @@ message DiscoveredVolumeSpec {
   string type = 14;
   string device_path = 15;
   string parent = 16;
+  string dev_path = 17;
+  string parent_dev_path = 18;
+  string pretty_size = 19;
+}
+
+// DiscoveryRefreshRequestSpec is the spec for DiscoveryRefreshRequest.
+message DiscoveryRefreshRequestSpec {
+  int64 request = 1;
+}
+
+// DiscoveryRefreshStatusSpec is the spec for DiscoveryRefreshStatus status.
+message DiscoveryRefreshStatusSpec {
+  int64 request = 1;
+}
+
+// DiskSelector selects a disk for the volume.
+message DiskSelector {
+  google.api.expr.v1alpha1.CheckedExpr match = 1;
 }
 
 // DiskSpec is the spec for Disks status.
@@ -52,10 +73,96 @@ message DiskSpec {
   string transport = 11;
   bool rotational = 12;
   bool cdrom = 13;
+  string dev_path = 14;
+  string pretty_size = 15;
 }
 
-// SystemDiskSpec is the spec for SystemDisks status.
+// EncryptionKey is the spec for volume encryption key.
+message EncryptionKey {
+  int64 slot = 1;
+  talos.resource.definitions.enums.BlockEncryptionKeyType type = 2;
+  bytes static_passphrase = 3;
+  string kms_endpoint = 4;
+  bool tpm_check_secureboot_status_on_enroll = 5;
+}
+
+// EncryptionSpec is the spec for volume encryption.
+message EncryptionSpec {
+  talos.resource.definitions.enums.BlockEncryptionProviderType provider = 1;
+  repeated EncryptionKey keys = 2;
+  string cipher = 3;
+  uint64 key_size = 4;
+  uint64 block_size = 5;
+  repeated string perf_options = 6;
+}
+
+// FilesystemSpec is the spec for volume filesystem.
+message FilesystemSpec {
+  talos.resource.definitions.enums.BlockFilesystemType type = 1;
+  string label = 2;
+}
+
+// LocatorSpec is the spec for volume locator.
+message LocatorSpec {
+  google.api.expr.v1alpha1.CheckedExpr match = 1;
+}
+
+// MountSpec is the spec for volume mount.
+message MountSpec {
+  string target_path = 1;
+}
+
+// PartitionSpec is the spec for volume partitioning.
+message PartitionSpec {
+  uint64 min_size = 1;
+  uint64 max_size = 2;
+  bool grow = 3;
+  string label = 4;
+  string type_uuid = 5;
+}
+
+// ProvisioningSpec is the spec for volume provisioning.
+message ProvisioningSpec {
+  DiskSelector disk_selector = 1;
+  PartitionSpec partition_spec = 2;
+  int64 wave = 3;
+  FilesystemSpec filesystem_spec = 4;
+}
+
+// SystemDiskSpec is the spec for SystemDisks resource.
 message SystemDiskSpec {
   string disk_id = 1;
+  string dev_path = 2;
+}
+
+// UserDiskConfigStatusSpec is the spec for UserDiskConfigStatus resource.
+message UserDiskConfigStatusSpec {
+  bool ready = 1;
+}
+
+// VolumeConfigSpec is the spec for VolumeConfig resource.
+message VolumeConfigSpec {
+  string parent_id = 1;
+  talos.resource.definitions.enums.BlockVolumeType type = 2;
+  ProvisioningSpec provisioning = 3;
+  LocatorSpec locator = 4;
+  MountSpec mount = 5;
+  EncryptionSpec encryption = 6;
+}
+
+// VolumeStatusSpec is the spec for VolumeStatus resource.
+message VolumeStatusSpec {
+  talos.resource.definitions.enums.BlockVolumePhase phase = 1;
+  string location = 2;
+  string error_message = 3;
+  string uuid = 4;
+  string partition_uuid = 5;
+  talos.resource.definitions.enums.BlockVolumePhase pre_fail_phase = 6;
+  string parent_location = 7;
+  int64 partition_index = 8;
+  uint64 size = 9;
+  talos.resource.definitions.enums.BlockFilesystemType filesystem = 10;
+  string mount_location = 11;
+  talos.resource.definitions.enums.BlockEncryptionProviderType encryption_provider = 12;
 }
 

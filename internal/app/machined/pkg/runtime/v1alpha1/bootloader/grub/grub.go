@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
@@ -43,10 +44,13 @@ func NewConfig() *Config {
 	}
 }
 
-// UEFIBoot returns true if bootloader is UEFI-only.
-func (c *Config) UEFIBoot() bool {
-	// grub supports BIOS boot, so false here.
-	return false
+// RequiredPartitions returns the list of partitions required by the bootloader.
+func (c *Config) RequiredPartitions() []partition.Options {
+	return []partition.Options{
+		partition.NewPartitionOptions(constants.EFIPartitionLabel, false),
+		partition.NewPartitionOptions(constants.BIOSGrubPartitionLabel, false),
+		partition.NewPartitionOptions(constants.BootPartitionLabel, false),
+	}
 }
 
 // Put puts a new menu entry to the grub config (nothing is written to disk).

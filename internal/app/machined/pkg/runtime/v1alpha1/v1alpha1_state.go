@@ -6,21 +6,21 @@ package v1alpha1
 
 import (
 	"context"
-	"errors"
 	"log"
 	"os"
 	"sync"
+	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	multierror "github.com/hashicorp/go-multierror"
-	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha2"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // State implements the state interface.
@@ -35,8 +35,6 @@ type State struct {
 type MachineState struct {
 	platform  runtime.Platform
 	resources state.State
-
-	disks map[string]*probe.ProbedBlockDevice
 
 	meta     *meta.Meta
 	metaOnce sync.Once
@@ -70,13 +68,6 @@ func NewState() (s *State, err error) {
 		resources: v2State.Resources(),
 	}
 
-	err = machine.probeDisks()
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, err
-		}
-	}
-
 	cluster := &ClusterState{}
 
 	s = &State{
@@ -107,37 +98,6 @@ func (s *State) Cluster() runtime.ClusterState {
 // V1Alpha2 implements the state interface.
 func (s *State) V1Alpha2() runtime.V1Alpha2State {
 	return s.v2
-}
-
-func (s *MachineState) probeDisks(labels ...string) error {
-	if s.platform.Mode() == runtime.ModeContainer {
-		return os.ErrNotExist
-	}
-
-	if len(labels) == 0 {
-		labels = []string{constants.EphemeralPartitionLabel, constants.BootPartitionLabel, constants.EFIPartitionLabel, constants.StatePartitionLabel}
-	}
-
-	if s.disks == nil {
-		s.disks = map[string]*probe.ProbedBlockDevice{}
-	}
-
-	for _, label := range labels {
-		if _, ok := s.disks[label]; ok {
-			continue
-		}
-
-		var dev *probe.ProbedBlockDevice
-
-		dev, err := probe.GetDevWithPartitionName(label)
-		if err != nil {
-			return err
-		}
-
-		s.disks[label] = dev
-	}
-
-	return nil
 }
 
 // Meta implements the runtime.MachineState interface.
@@ -261,44 +221,45 @@ func (s *MachineState) probeMeta() {
 	}
 }
 
-// Disk implements the machine state interface.
-func (s *MachineState) Disk(options ...disk.Option) *probe.ProbedBlockDevice {
-	opts := &disk.Options{
-		Label: constants.EphemeralPartitionLabel,
-	}
-
-	for _, opt := range options {
-		opt(opts)
-	}
-
-	s.probeDisks(opts.Label) //nolint:errcheck
-
-	return s.disks[opts.Label]
-}
-
-// Close implements the machine state interface.
-func (s *MachineState) Close() error {
-	var result *multierror.Error
-
-	for label, disk := range s.disks {
-		if err := disk.Close(); err != nil {
-			e := multierror.Append(result, err)
-			if e != nil {
-				return e
-			}
-		}
-
-		delete(s.disks, label)
-	}
-
-	return result.ErrorOrNil()
-}
-
 // Installed implements the machine state interface.
 func (s *MachineState) Installed() bool {
-	return s.Disk(
-		disk.WithPartitionLabel(constants.EphemeralPartitionLabel),
-	) != nil
+	// undefined in container mode
+	if s.platform.Mode() == runtime.ModeContainer {
+		return true
+	}
+
+	// legacy flow, no context available
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
+
+	metaStatus, err := safe.StateWatchFor[*block.VolumeStatus](
+		ctx,
+		s.resources,
+		block.NewVolumeStatus(block.NamespaceName, constants.MetaPartitionLabel).Metadata(),
+		state.WithEventTypes(state.Created, state.Updated),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			vs, ok := r.(*block.VolumeStatus)
+			if !ok {
+				return false, nil
+			}
+
+			switch vs.TypedSpec().Phase { //nolint:exhaustive
+			case block.VolumePhaseMissing:
+				// no META, talos is not installed
+				return true, nil
+			case block.VolumePhaseReady:
+				// META found
+				return true, nil
+			default:
+				return false, nil
+			}
+		}),
+	)
+	if err != nil {
+		return false
+	}
+
+	return metaStatus.TypedSpec().Phase == block.VolumePhaseReady
 }
 
 // IsInstallStaged implements the machine state interface.

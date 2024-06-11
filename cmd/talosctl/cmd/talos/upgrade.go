@@ -164,5 +164,10 @@ func init() {
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.insecure, "insecure", false, "upgrade using the insecure (encrypted with no auth) maintenance service")
 	upgradeCmdFlags.addTrackActionFlags(upgradeCmd)
+
+	if err := upgradeCmd.Flags().MarkHidden("preserve"); err != nil {
+		panic(err)
+	}
+
 	addCommand(upgradeCmd)
 }

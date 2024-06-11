@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -179,6 +180,11 @@ func run() error {
 		return err
 	}
 
+	revertSetState(c.Runtime().State().V1Alpha2().Resources())
+
+	var controllerWaitGroup sync.WaitGroup
+	defer controllerWaitGroup.Wait() // wait for controller-runtime to finish before rebooting
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -204,8 +210,12 @@ func run() error {
 		}
 	}()
 
+	controllerWaitGroup.Add(1)
+
 	// Start v2 controller runtime.
 	go func() {
+		defer controllerWaitGroup.Done()
+
 		if e := c.V1Alpha2().Run(ctx, drainer); e != nil {
 			ctrlErr := fmt.Errorf("fatal controller runtime error: %s", e)
 

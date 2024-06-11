@@ -17,8 +17,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"

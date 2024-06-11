@@ -7,21 +7,25 @@ package meta
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	goruntime "runtime"
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-blockdevice/blockdevice/probe"
+	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv"
 	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv/syslinux"
 	"github.com/siderolabs/talos/internal/pkg/meta/internal/adv/talos"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -90,29 +94,56 @@ func New(ctx context.Context, st state.State, opts ...Option) (*Meta, error) {
 	return meta, err
 }
 
-func (meta *Meta) getPath() (string, error) {
+func (meta *Meta) getPath(ctx context.Context) (string, string, error) {
 	if meta.opts.fixedPath != "" {
-		return meta.opts.fixedPath, nil
+		return meta.opts.fixedPath, "", nil
 	}
 
-	dev, err := probe.GetDevWithPartitionName(constants.MetaPartitionLabel)
+	if meta.state == nil {
+		return "", "", os.ErrNotExist
+	}
+
+	metaStatus, err := block.WaitForVolumePhase(ctx, meta.state, constants.MetaPartitionLabel, block.VolumePhaseReady, block.VolumePhaseMissing, block.VolumePhaseClosed)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	defer dev.Close() //nolint:errcheck
+	if metaStatus.TypedSpec().Phase == block.VolumePhaseMissing {
+		return "", "", os.ErrNotExist
+	}
 
-	return dev.PartPath(constants.MetaPartitionLabel)
+	if metaStatus.TypedSpec().Phase == block.VolumePhaseClosed && metaStatus.TypedSpec().MountLocation == "" {
+		return "", "", os.ErrNotExist
+	}
+
+	return metaStatus.TypedSpec().MountLocation, metaStatus.TypedSpec().ParentLocation, nil
 }
 
 // Reload refreshes the META from the disk.
+//
+//nolint:gocyclo
 func (meta *Meta) Reload(ctx context.Context) error {
 	meta.mu.Lock()
 	defer meta.mu.Unlock()
 
-	path, err := meta.getPath()
+	path, parentPath, err := meta.getPath(ctx)
 	if err != nil {
 		return err
+	}
+
+	if parentPath != "" {
+		parentDev, err := blockdev.NewFromPath(parentPath)
+		if err != nil {
+			return err
+		}
+
+		defer parentDev.Close() //nolint:errcheck
+
+		if err = parentDev.RetryLock(ctx, true); err != nil {
+			return err
+		}
+
+		defer parentDev.Unlock() //nolint:errcheck
 	}
 
 	f, err := os.Open(path)
@@ -121,6 +152,10 @@ func (meta *Meta) Reload(ctx context.Context) error {
 	}
 
 	defer f.Close() //nolint:errcheck
+
+	if err := flock(f, unix.LOCK_SH); err != nil {
+		return err
+	}
 
 	adv, err := talos.NewADV(f)
 	if adv == nil && err != nil {
@@ -183,13 +218,30 @@ func (meta *Meta) syncState(ctx context.Context) error {
 }
 
 // Flush writes the META to the disk.
+//
+//nolint:gocyclo
 func (meta *Meta) Flush() error {
 	meta.mu.Lock()
 	defer meta.mu.Unlock()
 
-	path, err := meta.getPath()
+	path, parentPath, err := meta.getPath(context.TODO())
 	if err != nil {
 		return err
+	}
+
+	if parentPath != "" {
+		parentDev, err := blockdev.NewFromPath(parentPath)
+		if err != nil {
+			return err
+		}
+
+		defer parentDev.Close() //nolint:errcheck
+
+		if err = parentDev.RetryLock(context.Background(), true); err != nil {
+			return err
+		}
+
+		defer parentDev.Unlock() //nolint:errcheck
 	}
 
 	f, err := os.OpenFile(path, os.O_RDWR, 0)
@@ -198,6 +250,10 @@ func (meta *Meta) Flush() error {
 	}
 
 	defer f.Close() //nolint:errcheck
+
+	if err := flock(f, unix.LOCK_EX); err != nil {
+		return err
+	}
 
 	serialized, err := meta.talos.Bytes()
 	if err != nil {
@@ -342,4 +398,14 @@ func updateTagResource(ctx context.Context, st state.State, t uint8, val string)
 	}
 
 	return err
+}
+
+func flock(f *os.File, flag int) error {
+	for {
+		if err := unix.Flock(int(f.Fd()), flag); !errors.Is(err, unix.EINTR) {
+			return err
+		}
+
+		goruntime.KeepAlive(f)
+	}
 }

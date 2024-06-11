@@ -132,7 +132,7 @@ require (
 	github.com/siderolabs/gen v0.5.0
 	github.com/siderolabs/go-api-signature v0.3.5
 	github.com/siderolabs/go-blockdevice v0.4.7
-	github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240805130014-114af2019684
+	github.com/siderolabs/go-blockdevice/v2 v2.0.1
 	github.com/siderolabs/go-circular v0.2.0
 	github.com/siderolabs/go-cmd v0.1.1
 	github.com/siderolabs/go-copy v0.1.0
@@ -151,6 +151,7 @@ require (
 	github.com/siderolabs/grpc-proxy v0.4.1
 	github.com/siderolabs/kms-client v0.1.0
 	github.com/siderolabs/net v0.4.0
+	github.com/siderolabs/protoenc v0.2.1
 	github.com/siderolabs/siderolink v0.3.9
 	github.com/siderolabs/talos/pkg/machinery v1.8.0-alpha.1
 	github.com/spf13/cobra v1.8.1
@@ -199,6 +200,7 @@ require (
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/ProtonMail/gopenpgp/v2 v2.7.5 // indirect
 	github.com/adrg/xdg v0.5.0 // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.30.4 // indirect
@@ -253,6 +255,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
+	github.com/google/cel-go v0.20.1 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -314,10 +317,10 @@ require (
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/siderolabs/protoenc v0.2.1 // indirect
 	github.com/siderolabs/tcpproxy v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
+	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/u-root/uio v0.0.0-20240209044354-b3d14b93376a // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect

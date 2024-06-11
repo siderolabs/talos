@@ -29,8 +29,21 @@ description: Talos gRPC API reference.
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
     - [DiscoveredVolumeSpec](#talos.resource.definitions.block.DiscoveredVolumeSpec)
+    - [DiscoveryRefreshRequestSpec](#talos.resource.definitions.block.DiscoveryRefreshRequestSpec)
+    - [DiscoveryRefreshStatusSpec](#talos.resource.definitions.block.DiscoveryRefreshStatusSpec)
+    - [DiskSelector](#talos.resource.definitions.block.DiskSelector)
     - [DiskSpec](#talos.resource.definitions.block.DiskSpec)
+    - [EncryptionKey](#talos.resource.definitions.block.EncryptionKey)
+    - [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec)
+    - [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec)
+    - [LocatorSpec](#talos.resource.definitions.block.LocatorSpec)
+    - [MountSpec](#talos.resource.definitions.block.MountSpec)
+    - [PartitionSpec](#talos.resource.definitions.block.PartitionSpec)
+    - [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec)
     - [SystemDiskSpec](#talos.resource.definitions.block.SystemDiskSpec)
+    - [UserDiskConfigStatusSpec](#talos.resource.definitions.block.UserDiskConfigStatusSpec)
+    - [VolumeConfigSpec](#talos.resource.definitions.block.VolumeConfigSpec)
+    - [VolumeStatusSpec](#talos.resource.definitions.block.VolumeStatusSpec)
   
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
     - [AffiliateSpec](#talos.resource.definitions.cluster.AffiliateSpec)
@@ -45,6 +58,11 @@ description: Talos gRPC API reference.
     - [SeccompProfileSpec](#talos.resource.definitions.cri.SeccompProfileSpec)
   
 - [resource/definitions/enums/enums.proto](#resource/definitions/enums/enums.proto)
+    - [BlockEncryptionKeyType](#talos.resource.definitions.enums.BlockEncryptionKeyType)
+    - [BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType)
+    - [BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType)
+    - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
+    - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
     - [NethelpersADSelect](#talos.resource.definitions.enums.NethelpersADSelect)
@@ -793,7 +811,7 @@ DeviceSpec is the spec for devices status.
 <a name="talos.resource.definitions.block.DiscoveredVolumeSpec"></a>
 
 ### DiscoveredVolumeSpec
-DiscoveredVolumeSpec is the spec for DiscoveredVolumes status.
+DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 
 
 | Field | Type | Label | Description |
@@ -814,6 +832,54 @@ DiscoveredVolumeSpec is the spec for DiscoveredVolumes status.
 | type | [string](#string) |  |  |
 | device_path | [string](#string) |  |  |
 | parent | [string](#string) |  |  |
+| dev_path | [string](#string) |  |  |
+| parent_dev_path | [string](#string) |  |  |
+| pretty_size | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiscoveryRefreshRequestSpec"></a>
+
+### DiscoveryRefreshRequestSpec
+DiscoveryRefreshRequestSpec is the spec for DiscoveryRefreshRequest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiscoveryRefreshStatusSpec"></a>
+
+### DiscoveryRefreshStatusSpec
+DiscoveryRefreshStatusSpec is the spec for DiscoveryRefreshStatus status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiskSelector"></a>
+
+### DiskSelector
+DiskSelector selects a disk for the volume.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  |  |
 
 
 
@@ -841,6 +907,130 @@ DiskSpec is the spec for Disks status.
 | transport | [string](#string) |  |  |
 | rotational | [bool](#bool) |  |  |
 | cdrom | [bool](#bool) |  |  |
+| dev_path | [string](#string) |  |  |
+| pretty_size | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.EncryptionKey"></a>
+
+### EncryptionKey
+EncryptionKey is the spec for volume encryption key.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| slot | [int64](#int64) |  |  |
+| type | [talos.resource.definitions.enums.BlockEncryptionKeyType](#talos.resource.definitions.enums.BlockEncryptionKeyType) |  |  |
+| static_passphrase | [bytes](#bytes) |  |  |
+| kms_endpoint | [string](#string) |  |  |
+| tpm_check_secureboot_status_on_enroll | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.EncryptionSpec"></a>
+
+### EncryptionSpec
+EncryptionSpec is the spec for volume encryption.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
+| keys | [EncryptionKey](#talos.resource.definitions.block.EncryptionKey) | repeated |  |
+| cipher | [string](#string) |  |  |
+| key_size | [uint64](#uint64) |  |  |
+| block_size | [uint64](#uint64) |  |  |
+| perf_options | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.FilesystemSpec"></a>
+
+### FilesystemSpec
+FilesystemSpec is the spec for volume filesystem.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
+| label | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.LocatorSpec"></a>
+
+### LocatorSpec
+LocatorSpec is the spec for volume locator.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.MountSpec"></a>
+
+### MountSpec
+MountSpec is the spec for volume mount.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| target_path | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.PartitionSpec"></a>
+
+### PartitionSpec
+PartitionSpec is the spec for volume partitioning.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| min_size | [uint64](#uint64) |  |  |
+| max_size | [uint64](#uint64) |  |  |
+| grow | [bool](#bool) |  |  |
+| label | [string](#string) |  |  |
+| type_uuid | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.ProvisioningSpec"></a>
+
+### ProvisioningSpec
+ProvisioningSpec is the spec for volume provisioning.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| disk_selector | [DiskSelector](#talos.resource.definitions.block.DiskSelector) |  |  |
+| partition_spec | [PartitionSpec](#talos.resource.definitions.block.PartitionSpec) |  |  |
+| wave | [int64](#int64) |  |  |
+| filesystem_spec | [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec) |  |  |
 
 
 
@@ -850,12 +1040,74 @@ DiskSpec is the spec for Disks status.
 <a name="talos.resource.definitions.block.SystemDiskSpec"></a>
 
 ### SystemDiskSpec
-SystemDiskSpec is the spec for SystemDisks status.
+SystemDiskSpec is the spec for SystemDisks resource.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | disk_id | [string](#string) |  |  |
+| dev_path | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.UserDiskConfigStatusSpec"></a>
+
+### UserDiskConfigStatusSpec
+UserDiskConfigStatusSpec is the spec for UserDiskConfigStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.VolumeConfigSpec"></a>
+
+### VolumeConfigSpec
+VolumeConfigSpec is the spec for VolumeConfig resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| parent_id | [string](#string) |  |  |
+| type | [talos.resource.definitions.enums.BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType) |  |  |
+| provisioning | [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec) |  |  |
+| locator | [LocatorSpec](#talos.resource.definitions.block.LocatorSpec) |  |  |
+| mount | [MountSpec](#talos.resource.definitions.block.MountSpec) |  |  |
+| encryption | [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.VolumeStatusSpec"></a>
+
+### VolumeStatusSpec
+VolumeStatusSpec is the spec for VolumeStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| phase | [talos.resource.definitions.enums.BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase) |  |  |
+| location | [string](#string) |  |  |
+| error_message | [string](#string) |  |  |
+| uuid | [string](#string) |  |  |
+| partition_uuid | [string](#string) |  |  |
+| pre_fail_phase | [talos.resource.definitions.enums.BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase) |  |  |
+| parent_location | [string](#string) |  |  |
+| partition_index | [int64](#int64) |  |  |
+| size | [uint64](#uint64) |  |  |
+| filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
+| mount_location | [string](#string) |  |  |
+| encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
 
 
 
@@ -1056,6 +1308,75 @@ SeccompProfileSpec represents the SeccompProfile.
 
 
  <!-- end messages -->
+
+
+<a name="talos.resource.definitions.enums.BlockEncryptionKeyType"></a>
+
+### BlockEncryptionKeyType
+BlockEncryptionKeyType describes encryption key type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ENCRYPTION_KEY_STATIC | 0 |  |
+| ENCRYPTION_KEY_NODE_ID | 1 |  |
+| ENCRYPTION_KEY_KMS | 2 |  |
+| ENCRYPTION_KEY_TPM | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockEncryptionProviderType"></a>
+
+### BlockEncryptionProviderType
+BlockEncryptionProviderType describes encryption provider type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ENCRYPTION_PROVIDER_NONE | 0 |  |
+| ENCRYPTION_PROVIDER_LUKS2 | 1 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockFilesystemType"></a>
+
+### BlockFilesystemType
+BlockFilesystemType describes filesystem type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| FILESYSTEM_TYPE_NONE | 0 |  |
+| FILESYSTEM_TYPE_XFS | 1 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockVolumePhase"></a>
+
+### BlockVolumePhase
+BlockVolumePhase describes volume phase.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VOLUME_PHASE_WAITING | 0 |  |
+| VOLUME_PHASE_FAILED | 1 |  |
+| VOLUME_PHASE_MISSING | 2 |  |
+| VOLUME_PHASE_LOCATED | 3 |  |
+| VOLUME_PHASE_PROVISIONED | 4 |  |
+| VOLUME_PHASE_PREPARED | 5 |  |
+| VOLUME_PHASE_READY | 6 |  |
+| VOLUME_PHASE_CLOSED | 7 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockVolumeType"></a>
+
+### BlockVolumeType
+BlockVolumeType describes volume type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VOLUME_TYPE_PARTITION | 0 |  |
+| VOLUME_TYPE_DISK | 1 |  |
+| VOLUME_TYPE_TMPFS | 2 |  |
+
 
 
 <a name="talos.resource.definitions.enums.KubespanPeerState"></a>

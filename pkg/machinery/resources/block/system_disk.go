@@ -22,11 +22,12 @@ type SystemDisk = typed.Resource[SystemDiskSpec, SystemDiskExtension]
 // SystemDiskID is the singleton resource ID.
 const SystemDiskID resource.ID = "system-disk"
 
-// SystemDiskSpec is the spec for SystemDisks status.
+// SystemDiskSpec is the spec for SystemDisks resource.
 //
 //gotagsrewrite:gen
 type SystemDiskSpec struct {
-	DiskID string `yaml:"diskID" protobuf:"1"`
+	DiskID  string `yaml:"diskID" protobuf:"1"`
+	DevPath string `yaml:"devPath" protobuf:"2"`
 }
 
 // NewSystemDisk initializes a BlockSystemDisk resource.

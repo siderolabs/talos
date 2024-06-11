@@ -92,7 +92,7 @@ func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State, di
 
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
-func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Config, preserve bool) error {
+func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Config) error {
 	if config.Machine().Type() == machine.TypeWorker {
 		return nil
 	}
@@ -100,12 +100,6 @@ func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Config, p
 	resp, err := c.MemberList(ctx)
 	if err != nil {
 		return err
-	}
-
-	if !preserve {
-		if len(resp.Members) == 1 {
-			return errors.New("only 1 etcd member found; assuming this is not an HA setup and refusing to upgrade; if this is a single-node cluster, use --preserve to upgrade")
-		}
 	}
 
 	if len(resp.Members) == 2 {

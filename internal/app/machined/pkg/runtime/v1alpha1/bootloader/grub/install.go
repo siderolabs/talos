@@ -10,10 +10,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/siderolabs/go-blockdevice/blockdevice"
+	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -24,62 +26,92 @@ const (
 )
 
 // Install validates the grub configuration and writes it to the disk.
-//
+func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
+	var installResult *options.InstallResult
+
+	err := mount.PartitionOp(
+		opts.BootDisk,
+		[]mount.Spec{
+			{
+				PartitionLabel: constants.BootPartitionLabel,
+				FilesystemType: partition.FilesystemTypeXFS,
+				MountTarget:    filepath.Join(opts.MountPrefix, constants.BootMountPoint),
+			},
+			{
+				PartitionLabel: constants.EFIPartitionLabel,
+				FilesystemType: partition.FilesystemTypeVFAT,
+				MountTarget:    filepath.Join(opts.MountPrefix, constants.EFIMountPoint),
+			},
+		},
+		func() error {
+			var installErr error
+
+			installResult, installErr = c.install(opts)
+
+			return installErr
+		},
+		[]blkid.ProbeOption{
+			// installation happens with locked blockdevice
+			blkid.WithSkipLocking(true),
+		},
+		nil,
+		nil,
+		opts.BlkidInfo,
+	)
+
+	return installResult, err
+}
+
 //nolint:gocyclo
-func (c *Config) Install(options options.InstallOptions) error {
+func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
 	if err := c.flip(); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := utils.CopyFiles(
-		options.Printf,
+		opts.Printf,
 		utils.SourceDestination(
-			options.BootAssets.KernelPath,
-			filepath.Join(options.MountPrefix, constants.BootMountPoint, string(c.Default), constants.KernelAsset),
+			opts.BootAssets.KernelPath,
+			filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.KernelAsset),
 		),
 		utils.SourceDestination(
-			options.BootAssets.InitramfsPath,
-			filepath.Join(options.MountPrefix, constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
+			opts.BootAssets.InitramfsPath,
+			filepath.Join(opts.MountPrefix, constants.BootMountPoint, string(c.Default), constants.InitramfsAsset),
 		),
 	); err != nil {
-		return err
+		return nil, err
 	}
 
-	if err := c.Put(c.Default, options.Cmdline, options.Version); err != nil {
-		return err
+	if err := c.Put(c.Default, opts.Cmdline, opts.Version); err != nil {
+		return nil, err
 	}
 
-	if err := c.Write(filepath.Join(options.MountPrefix, ConfigPath), options.Printf); err != nil {
-		return err
-	}
-
-	blk, err := getBlockDeviceName(options.BootDisk)
-	if err != nil {
-		return err
+	if err := c.Write(filepath.Join(opts.MountPrefix, ConfigPath), opts.Printf); err != nil {
+		return nil, err
 	}
 
 	var platforms []string
 
-	switch options.Arch {
+	switch opts.Arch {
 	case amd64:
 		platforms = []string{"x86_64-efi", "i386-pc"}
 	case arm64:
 		platforms = []string{"arm64-efi"}
 	}
 
-	if runtime.GOARCH == amd64 && options.Arch == amd64 && !options.ImageMode {
+	if runtime.GOARCH == amd64 && opts.Arch == amd64 && !opts.ImageMode {
 		// let grub choose the platform automatically if not building an image
 		platforms = []string{""}
 	}
 
 	for _, platform := range platforms {
 		args := []string{
-			"--boot-directory=" + filepath.Join(options.MountPrefix, constants.BootMountPoint),
-			"--efi-directory=" + filepath.Join(options.MountPrefix, constants.EFIMountPoint),
+			"--boot-directory=" + filepath.Join(opts.MountPrefix, constants.BootMountPoint),
+			"--efi-directory=" + filepath.Join(opts.MountPrefix, constants.EFIMountPoint),
 			"--removable",
 		}
 
-		if options.ImageMode {
+		if opts.ImageMode {
 			args = append(args, "--no-nvram")
 		}
 
@@ -87,34 +119,22 @@ func (c *Config) Install(options options.InstallOptions) error {
 			args = append(args, "--target="+platform)
 		}
 
-		args = append(args, blk)
+		args = append(args, opts.BootDisk)
 
-		options.Printf("executing: grub-install %s", strings.Join(args, " "))
+		opts.Printf("executing: grub-install %s", strings.Join(args, " "))
 
 		if _, err := cmd.Run("grub-install", args...); err != nil {
-			return fmt.Errorf("failed to install grub: %w", err)
+			return nil, fmt.Errorf("failed to install grub: %w", err)
 		}
 	}
 
-	return nil
-}
-
-func getBlockDeviceName(bootDisk string) (string, error) {
-	dev, err := blockdevice.Open(bootDisk, blockdevice.WithMode(blockdevice.ReadonlyMode))
-	if err != nil {
-		return "", err
+	if opts.ExtraInstallStep != nil {
+		if err := opts.ExtraInstallStep(); err != nil {
+			return nil, err
+		}
 	}
 
-	//nolint:errcheck
-	defer dev.Close()
-
-	// verify that BootDisk has boot partition
-	_, err = dev.GetPartition(constants.BootPartitionLabel)
-	if err != nil {
-		return "", err
-	}
-
-	blk := dev.Device().Name()
-
-	return blk, nil
+	return &options.InstallResult{
+		PreviousLabel: string(c.Fallback),
+	}, nil
 }

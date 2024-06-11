@@ -13,41 +13,44 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-// DiscoveredVolumeType is type of BlockDiscoveredVolume resource.
+// DiscoveredVolumeType is type of DiscoveredVolume resource.
 const DiscoveredVolumeType = resource.Type("DiscoveredVolumes.block.talos.dev")
 
 // DiscoveredVolume resource holds status of hardware DiscoveredVolumes (overall).
 type DiscoveredVolume = typed.Resource[DiscoveredVolumeSpec, DiscoveredVolumeExtension]
 
-// DiscoveredVolumeSpec is the spec for DiscoveredVolumes status.
+// DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 //
 //gotagsrewrite:gen
 type DiscoveredVolumeSpec struct {
-	Type       string `yaml:"type" protobuf:"14"`
-	DevicePath string `yaml:"devicePath" protobuf:"15"`
-	Parent     string `yaml:"parent,omitempty" protobuf:"16"`
+	DevPath       string `yaml:"dev_dath" protobuf:"17"`
+	Type          string `yaml:"type" protobuf:"14"`
+	DevicePath    string `yaml:"device_path" protobuf:"15"`
+	Parent        string `yaml:"parent,omitempty" protobuf:"16"`
+	ParentDevPath string `yaml:"parent_dev_path,omitempty" protobuf:"18"`
 
 	// Overall size of the probed device (in bytes).
-	Size uint64 `yaml:"size" protobuf:"1"`
+	Size       uint64 `yaml:"size" protobuf:"1"`
+	PrettySize string `yaml:"pretty_size" protobuf:"19"`
 
 	// Sector size of the device (in bytes).
-	SectorSize uint `yaml:"sectorSize,omitempty" protobuf:"2"`
+	SectorSize uint `yaml:"sector_size,omitempty" protobuf:"2"`
 
 	// Optimal I/O size for the device (in bytes).
-	IOSize uint `yaml:"ioSize,omitempty" protobuf:"3"`
+	IOSize uint `yaml:"io_size,omitempty" protobuf:"3"`
 
 	Name  string `yaml:"name" protobuf:"4"`
 	UUID  string `yaml:"uuid,omitempty" protobuf:"5"`
 	Label string `yaml:"label,omitempty" protobuf:"6"`
 
-	BlockSize           uint32 `yaml:"blockSize,omitempty" protobuf:"7"`
-	FilesystemBlockSize uint32 `yaml:"filesystemBlockSize,omitempty" protobuf:"8"`
-	ProbedSize          uint64 `yaml:"probedSize,omitempty" protobuf:"9"`
+	BlockSize           uint32 `yaml:"block_size,omitempty" protobuf:"7"`
+	FilesystemBlockSize uint32 `yaml:"filesystem_block_size,omitempty" protobuf:"8"`
+	ProbedSize          uint64 `yaml:"probed_size,omitempty" protobuf:"9"`
 
-	PartitionUUID  string `yaml:"partitionUUID,omitempty" protobuf:"10"`
-	PartitionType  string `yaml:"partitionType,omitempty" protobuf:"11"`
-	PartitionLabel string `yaml:"partitionLabel,omitempty" protobuf:"12"`
-	PartitionIndex uint   `yaml:"partitionIndex,omitempty" protobuf:"13"`
+	PartitionUUID  string `yaml:"partition_uuid,omitempty" protobuf:"10"`
+	PartitionType  string `yaml:"partition_type,omitempty" protobuf:"11"`
+	PartitionLabel string `yaml:"partition_label,omitempty" protobuf:"12"`
+	PartitionIndex uint   `yaml:"partition_index,omitempty" protobuf:"13"`
 }
 
 // NewDiscoveredVolume initializes a BlockDiscoveredVolume resource.
@@ -74,7 +77,7 @@ func (DiscoveredVolumeExtension) ResourceDefinition() meta.ResourceDefinitionSpe
 			},
 			{
 				Name:     "Size",
-				JSONPath: `{.size}`,
+				JSONPath: `{.pretty_size}`,
 			},
 			{
 				Name:     "Discovered",
@@ -86,7 +89,7 @@ func (DiscoveredVolumeExtension) ResourceDefinition() meta.ResourceDefinitionSpe
 			},
 			{
 				Name:     "PartitionLabel",
-				JSONPath: `{.partitionLabel}`,
+				JSONPath: `{.partition_label}`,
 			},
 		},
 	}

@@ -62,13 +62,17 @@ func (ctrl *SystemDiskController) Run(ctx context.Context, r controller.Runtime,
 			return fmt.Errorf("failed to list discovered volumes: %w", err)
 		}
 
-		var systemDiskID string
+		var (
+			systemDiskID   string
+			systemDiskPath string
+		)
 
 		for iter := discoveredVolumes.Iterator(); iter.Next(); {
 			volume := iter.Value()
 
 			if volume.TypedSpec().PartitionLabel == constants.MetaPartitionLabel {
 				systemDiskID = volume.TypedSpec().Parent
+				systemDiskPath = volume.TypedSpec().ParentDevPath
 
 				break
 			}
@@ -77,6 +81,7 @@ func (ctrl *SystemDiskController) Run(ctx context.Context, r controller.Runtime,
 		if systemDiskID != "" {
 			if err = safe.WriterModify(ctx, r, block.NewSystemDisk(block.NamespaceName, block.SystemDiskID), func(d *block.SystemDisk) error {
 				d.TypedSpec().DiskID = systemDiskID
+				d.TypedSpec().DevPath = systemDiskPath
 
 				return nil
 			}); err != nil {

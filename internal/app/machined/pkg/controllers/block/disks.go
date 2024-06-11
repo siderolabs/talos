@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/dustin/go-humanize"
 	blkdev "github.com/siderolabs/go-blockdevice/v2/block"
 	"go.uber.org/zap"
 
@@ -156,7 +157,9 @@ func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controlle
 	touchedDisks[device.Metadata().ID()] = struct{}{}
 
 	return safe.WriterModify(ctx, r, block.NewDisk(block.NamespaceName, device.Metadata().ID()), func(d *block.Disk) error {
+		d.TypedSpec().DevPath = filepath.Join("/dev", device.Metadata().ID())
 		d.TypedSpec().Size = size
+		d.TypedSpec().PrettySize = humanize.Bytes(size)
 		d.TypedSpec().IOSize = ioSize
 		d.TypedSpec().SectorSize = sectorSize
 		d.TypedSpec().Readonly = readOnly

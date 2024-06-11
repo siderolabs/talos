@@ -11,14 +11,14 @@ type KeyOption func(o *KeyOptions) error
 
 // KeyOptions set of options to be used in KeyHandler.GetKey func.
 type KeyOptions struct {
-	PartitionLabel       string
+	VolumeID             string
 	GetSystemInformation helpers.SystemInformationGetter
 }
 
-// WithPartitionLabel passes the partition label to the key handler.
-func WithPartitionLabel(label string) KeyOption {
+// WithVolumeID passes the partition label to the key handler.
+func WithVolumeID(label string) KeyOption {
 	return func(o *KeyOptions) error {
-		o.PartitionLabel = label
+		o.VolumeID = label
 
 		return nil
 	}

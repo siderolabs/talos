@@ -13,9 +13,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/luks"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption/token"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
+	"github.com/siderolabs/go-blockdevice/v2/encryption/luks"
+	"github.com/siderolabs/go-blockdevice/v2/encryption/token"
 	"github.com/siderolabs/kms-client/api/kms"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

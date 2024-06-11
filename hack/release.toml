@@ -218,6 +218,13 @@ This can be also explicitly enabled by setting `talos.halt_if_installed=1` in ke
 """
 
 
+    [notes.installer]
+        title = "Installer"
+        description = """\
+Talos Linux installer now never wipes the system disk on upgrades, which means that the flag
+`--preserve` is always set for `talosctl upgrade`.
+"""
+
 [make_deps]
 
     [make_deps.tools]

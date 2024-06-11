@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -135,8 +136,7 @@ type ResetOptions interface {
 
 // PartitionTarget provides interface to the disk partition.
 type PartitionTarget interface {
-	fmt.Stringer
-	Format(func(string, ...any)) error
+	Wipe(context.Context, func(string, ...any)) error
 	GetLabel() string
 }
 

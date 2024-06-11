@@ -42,11 +42,6 @@ func (c *Config) flip() error {
 	return nil
 }
 
-// PreviousLabel returns the previous bootloader label.
-func (c *Config) PreviousLabel() string {
-	return string(c.Fallback)
-}
-
 // ParseBootLabel parses the given human-readable boot label to a BootLabel.
 func ParseBootLabel(name string) (BootLabel, error) {
 	switch {

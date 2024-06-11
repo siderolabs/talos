@@ -48,6 +48,8 @@ github.com/adrg/xdg v0.5.0/go.mod h1:dDdY4M4DF9Rjy4kHPeNL+ilVF+p2lK8IdM9/rTSGcI4
 github.com/alexflint/go-filemutex v1.3.0 h1:LgE+nTUWnQCyRKbpoceKZsPQbs84LivvgwUymZXdOcM=
 github.com/alexflint/go-filemutex v1.3.0/go.mod h1:U0+VA/i30mGBlLCrFPGtTe9y6wGQfNAWPBTekHQ+c8A=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
+github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
+github.com/antlr4-go/antlr/v4 v4.13.0/go.mod h1:pfChB/xh/Unjila75QW7+VU4TSnWnnk9UTnmpPaOR2g=
 github.com/apparentlymart/go-cidr v1.1.0 h1:2mAhrMoF+nhXqxTzSZMUzDHkLjmIHC+Zzn4tdgBZjnU=
 github.com/apparentlymart/go-cidr v1.1.0/go.mod h1:EBcsNrHc3zQeuaeCeCtQruQm+n9/YjEn/vI25Lg7Gwc=
 github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 h1:7Ip0wMmLHLRJdrloDxZfhMm0xrLXZS8+COSu2bXmEQs=
@@ -284,6 +286,8 @@ github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6
 github.com/golang/snappy v0.0.3/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/google/btree v1.1.2 h1:xf4v41cLI2Z6FxbKm+8Bu+m8ifhj15JuZ9sa0jZCMUU=
 github.com/google/btree v1.1.2/go.mod h1:qOPhT0dTNdNzV6Z/lhRX0YXUafgPLFUh+gZMl761Gm4=
+github.com/google/cel-go v0.20.1 h1:nDx9r8S3L4pE61eDdt8igGj8rf5kjYR3ILxWIpWNi84=
+github.com/google/cel-go v0.20.1/go.mod h1:kWcIzTsPX0zmQ+H3TirHstLLf9ep5QTsZBN9u4dOYLg=
 github.com/google/gnostic-models v0.6.8 h1:yo/ABAfM5IMRsS1VnXjTBvUb61tFIHozhlYvRgGre9I=
 github.com/google/gnostic-models v0.6.8/go.mod h1:5n7qKqH0f5wFt+aWF8CW6pZLLNOfYuF5OpfBSENuI8U=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
@@ -585,8 +589,8 @@ github.com/siderolabs/go-api-signature v0.3.5 h1:tacT+VkdJM5bpBFoyJnWgnojaww/Jqc
 github.com/siderolabs/go-api-signature v0.3.5/go.mod h1:hoH13AfunHflxbXfh+NoploqV13ZTDfQ1mQJWNVSW9U=
 github.com/siderolabs/go-blockdevice v0.4.7 h1:2bk4WpEEflGxjrNwp57ye24Pr+cYgAiAeNMWiQOuWbQ=
 github.com/siderolabs/go-blockdevice v0.4.7/go.mod h1:4PeOuk71pReJj1JQEXDE7kIIQJPVe8a+HZQa+qjxSEA=
-github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240805130014-114af2019684 h1:nyBRi5IO2/rjdj83/7AUWPxx1soG8WWCUOEqMMI+ABE=
-github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240805130014-114af2019684/go.mod h1:5GnL7VLNp5/vgiwYP74fi6KuTUfqGcRxQxtto2tzD+I=
+github.com/siderolabs/go-blockdevice/v2 v2.0.1 h1:y97LM3F3Iht9pxk4M0y53ElsNcWg/6i4wjcBck7y1Lg=
+github.com/siderolabs/go-blockdevice/v2 v2.0.1/go.mod h1:74htzCV913UzaLZ4H+NBXkwWlYnBJIq5m/379ZEcu8w=
 github.com/siderolabs/go-circular v0.2.0 h1:Xca8zrjF/YsujLbwDSojkKzJe7ngetnpuIJn8N78DJI=
 github.com/siderolabs/go-circular v0.2.0/go.mod h1:rrYCwHLYWmxqrmZP+LjYtwB2a55lxzQi0Ztu1VpWZSc=
 github.com/siderolabs/go-cmd v0.1.1 h1:nTouZUSxLeiiEe7hFexSVvaTsY/3O8k1s08BxPRrsps=
@@ -646,6 +650,8 @@ github.com/spf13/cobra v1.8.1 h1:e5/vxKd/rZsfSJMUX1agtjeTDf+qv1/JdBF8gg5k9ZM=
 github.com/spf13/cobra v1.8.1/go.mod h1:wHxEcudfqmLYa8iTfL+OuZPbBZkmvliBWKIezN3kD9Y=
 github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+github.com/stoewer/go-strcase v1.3.0 h1:g0eASXYtp+yvN9fK8sH94oCIk0fau9uV1/ZdJ0AVEzs=
+github.com/stoewer/go-strcase v1.3.0/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
 github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=

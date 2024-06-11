@@ -24,7 +24,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-getter/v2"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubeconfig"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"

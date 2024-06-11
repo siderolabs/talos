@@ -6,7 +6,6 @@
 package sdboot
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -15,9 +14,13 @@ import (
 	"strings"
 
 	"github.com/ecks/uefi/efi/efivario"
+	"github.com/siderolabs/gen/xerrors"
+	"github.com/siderolabs/go-blockdevice/v2/blkid"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	mountv2 "github.com/siderolabs/talos/internal/pkg/mount/v2"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -52,7 +55,7 @@ func New() *Config {
 // Probe for existing sd-boot bootloader.
 //
 //nolint:gocyclo
-func Probe(ctx context.Context, disk string) (*Config, error) {
+func Probe(disk string, options options.ProbeOptions) (*Config, error) {
 	// if not UEFI boot, nothing to do
 	if !isUEFIBoot() {
 		return nil, nil
@@ -64,19 +67,41 @@ func Probe(ctx context.Context, disk string) (*Config, error) {
 
 	// read /boot/EFI and find if sd-boot is already being used
 	// this is to make sure sd-boot from Talos is being used and not sd-boot from another distro
-	if err := mount.PartitionOp(ctx, disk, constants.EFIPartitionLabel, func() error {
-		// list existing boot*.efi files in boot folder
-		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "boot", "BOOT*.efi"))
-		if err != nil {
-			return err
+	if err := mount.PartitionOp(
+		disk,
+		[]mount.Spec{
+			{
+				PartitionLabel: constants.EFIPartitionLabel,
+				FilesystemType: partition.FilesystemTypeVFAT,
+				MountTarget:    constants.EFIMountPoint,
+			},
+		},
+		func() error {
+			// list existing boot*.efi files in boot folder
+			files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "boot", "BOOT*.efi"))
+			if err != nil {
+				return err
+			}
+
+			if len(files) == 0 {
+				return fmt.Errorf("no boot*.efi files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "boot"))
+			}
+
+			return nil
+		},
+		options.BlockProbeOptions,
+		[]mountv2.NewPointOption{
+			mountv2.WithReadonly(),
+		},
+		[]mountv2.OperationOption{
+			mountv2.WithSkipIfMounted(),
+		},
+		nil,
+	); err != nil {
+		if xerrors.TagIs[mount.NotFoundTag](err) {
+			return nil, nil
 		}
 
-		if len(files) == 0 {
-			return fmt.Errorf("no boot*.efi files found in %q", filepath.Join(constants.EFIMountPoint, "EFI", "boot"))
-		}
-
-		return nil
-	}); err != nil {
 		return nil, err
 	}
 
@@ -94,21 +119,39 @@ func Probe(ctx context.Context, disk string) (*Config, error) {
 
 	log.Printf("booted entry: %q", bootedEntry)
 
-	if opErr := mount.PartitionOp(ctx, disk, constants.EFIPartitionLabel, func() error {
-		// list existing UKIs, and check if the current one is present
-		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
-		if err != nil {
-			return err
-		}
-
-		for _, file := range files {
-			if strings.EqualFold(filepath.Base(file), bootedEntry) {
-				return nil
+	if opErr := mount.PartitionOp(
+		disk,
+		[]mount.Spec{
+			{
+				PartitionLabel: constants.EFIPartitionLabel,
+				FilesystemType: partition.FilesystemTypeVFAT,
+				MountTarget:    constants.EFIMountPoint,
+			},
+		},
+		func() error {
+			// list existing UKIs, and check if the current one is present
+			files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+			if err != nil {
+				return err
 			}
-		}
 
-		return fmt.Errorf("booted entry %q not found", bootedEntry)
-	}); opErr != nil {
+			for _, file := range files {
+				if strings.EqualFold(filepath.Base(file), bootedEntry) {
+					return nil
+				}
+			}
+
+			return fmt.Errorf("booted entry %q not found", bootedEntry)
+		},
+		options.BlockProbeOptions,
+		[]mountv2.NewPointOption{
+			mountv2.WithReadonly(),
+		},
+		[]mountv2.OperationOption{
+			mountv2.WithSkipIfMounted(),
+		},
+		nil,
+	); opErr != nil {
 		return nil, opErr
 	}
 
@@ -117,9 +160,43 @@ func Probe(ctx context.Context, disk string) (*Config, error) {
 	}, nil
 }
 
-// UEFIBoot returns true if bootloader is UEFI-only.
-func (c *Config) UEFIBoot() bool {
-	return true
+// RequiredPartitions returns the list of partitions required by the bootloader.
+func (c *Config) RequiredPartitions() []partition.Options {
+	return []partition.Options{
+		partition.NewPartitionOptions(constants.EFIPartitionLabel, true),
+	}
+}
+
+// Install the bootloader.
+func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, error) {
+	var installResult *options.InstallResult
+
+	err := mount.PartitionOp(
+		opts.BootDisk,
+		[]mount.Spec{
+			{
+				PartitionLabel: constants.EFIPartitionLabel,
+				FilesystemType: partition.FilesystemTypeVFAT,
+				MountTarget:    filepath.Join(opts.MountPrefix, constants.EFIMountPoint),
+			},
+		},
+		func() error {
+			var installErr error
+
+			installResult, installErr = c.install(opts)
+
+			return installErr
+		},
+		[]blkid.ProbeOption{
+			// installation happens with locked blockdevice
+			blkid.WithSkipLocking(true),
+		},
+		nil,
+		nil,
+		opts.BlkidInfo,
+	)
+
+	return installResult, err
 }
 
 // Install the bootloader.
@@ -128,26 +205,26 @@ func (c *Config) UEFIBoot() bool {
 // Writes down the UKI and updates the EFI variables.
 //
 //nolint:gocyclo
-func (c *Config) Install(options options.InstallOptions) error {
+func (c *Config) install(opts options.InstallOptions) (*options.InstallResult, error) {
 	var sdbootFilename string
 
-	switch options.Arch {
+	switch opts.Arch {
 	case "amd64":
 		sdbootFilename = "BOOTX64.efi"
 	case "arm64":
 		sdbootFilename = "BOOTAA64.efi"
 	default:
-		return fmt.Errorf("unsupported architecture: %s", options.Arch)
+		return nil, fmt.Errorf("unsupported architecture: %s", opts.Arch)
 	}
 
 	// list existing UKIs, and clean up all but the current one (used to boot)
-	files, err := filepath.Glob(filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+	files, err := filepath.Glob(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// writing UKI by version-based filename here
-	ukiPath := fmt.Sprintf("%s-%s.efi", "Talos", options.Version)
+	ukiPath := fmt.Sprintf("%s-%s.efi", "Talos", opts.Version)
 
 	for _, file := range files {
 		if strings.EqualFold(filepath.Base(file), c.Default) {
@@ -159,75 +236,97 @@ func (c *Config) Install(options options.InstallOptions) error {
 			continue
 		}
 
-		options.Printf("removing old UKI: %s", file)
+		opts.Printf("removing old UKI: %s", file)
 
 		if err = os.Remove(file); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if err := utils.CopyFiles(
-		options.Printf,
+		opts.Printf,
 		utils.SourceDestination(
-			options.BootAssets.UKIPath,
-			filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", ukiPath),
+			opts.BootAssets.UKIPath,
+			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "Linux", ukiPath),
 		),
 		utils.SourceDestination(
-			options.BootAssets.SDBootPath,
-			filepath.Join(options.MountPrefix, constants.EFIMountPoint, "EFI", "boot", sdbootFilename),
+			opts.BootAssets.SDBootPath,
+			filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "EFI", "boot", sdbootFilename),
 		),
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	// don't update EFI variables if we're installing to a loop device
-	if !options.ImageMode {
-		options.Printf("updating EFI variables")
+	if !opts.ImageMode {
+		opts.Printf("updating EFI variables")
 
 		efiCtx := efivario.NewDefaultContext()
 
 		// set the new entry as a default one
 		if err := WriteVariable(efiCtx, LoaderEntryDefaultName, ukiPath); err != nil {
-			return err
+			return nil, err
 		}
 
 		// set default 5 second boot timeout
 		if err := WriteVariable(efiCtx, LoaderConfigTimeoutName, "5"); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
-}
+	if opts.ExtraInstallStep != nil {
+		if err := opts.ExtraInstallStep(); err != nil {
+			return nil, err
+		}
+	}
 
-// PreviousLabel returns the label of the previous bootloader version.
-func (c *Config) PreviousLabel() string {
-	return c.Fallback
+	return &options.InstallResult{
+		PreviousLabel: c.Fallback,
+	}, nil
 }
 
 // Revert the bootloader to the previous version.
-func (c *Config) Revert(ctx context.Context) error {
-	if err := mount.PartitionOp(ctx, "", constants.EFIPartitionLabel, func() error {
-		// use c.Default as the current entry, list other UKIs, find the one which is not c.Default, and update EFI var
-		files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
-		if err != nil {
-			return err
-		}
-
-		for _, file := range files {
-			if strings.EqualFold(filepath.Base(file), c.Default) {
-				continue
-			}
-
-			log.Printf("reverting to previous UKI: %s", file)
-
-			return WriteVariable(efivario.NewDefaultContext(), LoaderEntryDefaultName, filepath.Base(file))
-		}
-
-		return errors.New("previous UKI not found")
-	}); err != nil {
+func (c *Config) Revert(disk string) error {
+	err := mount.PartitionOp(
+		disk,
+		[]mount.Spec{
+			{
+				PartitionLabel: constants.EFIPartitionLabel,
+				FilesystemType: partition.FilesystemTypeVFAT,
+				MountTarget:    constants.EFIMountPoint,
+			},
+		},
+		c.revert,
+		nil,
+		nil,
+		[]mountv2.OperationOption{
+			mountv2.WithSkipIfMounted(),
+		},
+		nil,
+	)
+	if err != nil && !xerrors.TagIs[mount.NotFoundTag](err) {
 		return err
 	}
 
 	return nil
+}
+
+func (c *Config) revert() error {
+	// use c.Default as the current entry, list other UKIs, find the one which is not c.Default, and update EFI var
+	files, err := filepath.Glob(filepath.Join(constants.EFIMountPoint, "EFI", "Linux", "Talos-*.efi"))
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if strings.EqualFold(filepath.Base(file), c.Default) {
+			continue
+		}
+
+		log.Printf("reverting to previous UKI: %s", file)
+
+		return WriteVariable(efivario.NewDefaultContext(), LoaderEntryDefaultName, filepath.Base(file))
+	}
+
+	return errors.New("previous UKI not found")
 }

@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/blockdevice/encryption"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/siderolabs/go-retry/retry"
 	sideronet "github.com/siderolabs/net"

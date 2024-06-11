@@ -52,6 +52,17 @@ func (v *TalosVersion) DisablePredictableNetworkInterfaces() bool {
 	return false
 }
 
+// PrecreateStatePartition returns true if running an 1.8+ installer from a version before <=1.7.x.
+//
+// Host Talos needs STATE partition to save the machine configuration.
+func (v *TalosVersion) PrecreateStatePartition() bool {
+	if v.majorMinor[0] <= talos17.MajorMinor[0] && v.majorMinor[1] <= talos17.MajorMinor[1] {
+		return true
+	}
+
+	return false
+}
+
 // UpgradeableFrom checks if the current version of Talos can be used as an upgrade for the given host version.
 //
 //nolint:gocyclo

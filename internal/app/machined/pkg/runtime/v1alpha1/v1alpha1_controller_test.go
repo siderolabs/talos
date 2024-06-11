@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 
@@ -90,8 +91,6 @@ func (m *mockSequencer) trackCall(name string, doneCh chan struct{}) func(runtim
 }
 
 func TestRun(t *testing.T) {
-	require := require.New(t)
-
 	tests := []struct {
 		name        string
 		from        runtime.Sequence
@@ -138,6 +137,9 @@ func TestRun(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			require := require.New(t)
+			assert := assert.New(t)
+
 			e := NewEvents(1000, 10)
 
 			t.Setenv("PLATFORM", "container")
@@ -175,7 +177,13 @@ func TestRun(t *testing.T) {
 			defer cancel()
 
 			eg.Go(func() error {
-				return controller.Run(ctx, tt.from, tt.dataFrom)
+				t.Logf("starting %s sequence", tt.from.String())
+
+				seqErr := controller.Run(ctx, tt.from, tt.dataFrom)
+
+				t.Logf("sequence %s finished with error: %v", tt.from.String(), seqErr)
+
+				return seqErr
 			})
 
 			eg.Go(func() error {
@@ -185,7 +193,13 @@ func TestRun(t *testing.T) {
 					return fmt.Errorf("timed out waiting for %s sequence to start", tt.from.String())
 				}
 
-				return controller.Run(ctx, tt.to, tt.dataTo)
+				t.Logf("starting %s sequence", tt.to.String())
+
+				seqErr := controller.Run(ctx, tt.to, tt.dataTo)
+
+				t.Logf("sequence %s finished with error: %v", tt.to.String(), seqErr)
+
+				return seqErr
 			})
 
 			require.ErrorIs(eg.Wait(), tt.expectError)
@@ -197,7 +211,7 @@ func TestRun(t *testing.T) {
 			sequencer.callsMu.Lock()
 			defer sequencer.callsMu.Unlock()
 
-			require.Equal(1, sequencer.calls[tt.to])
+			assert.Equal(1, sequencer.calls[tt.to])
 		})
 	}
 }

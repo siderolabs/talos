@@ -2903,7 +2903,6 @@ talosctl upgrade [flags]
   -h, --help                 help for upgrade
   -i, --image string         the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.8.0-alpha.1")
       --insecure             upgrade using the insecure (encrypted with no auth) maintenance service
-  -p, --preserve             preserve data
   -m, --reboot-mode string   select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Valid values are: ["default" "powercycle"]. (default "default")
   -s, --stage                stage the upgrade to perform it after a reboot
       --timeout duration     time to wait for the operation is complete if --debug or --wait is set (default 30m0s)

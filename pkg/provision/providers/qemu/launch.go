@@ -26,7 +26,7 @@ import (
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
+	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/provision"
@@ -273,27 +273,12 @@ func withCNI(ctx context.Context, config *LaunchConfig, f func(config *LaunchCon
 }
 
 func checkPartitions(config *LaunchConfig) (bool, error) {
-	disk, err := os.Open(config.DiskPaths[0])
+	info, err := blkid.ProbePath(config.DiskPaths[0])
 	if err != nil {
-		return false, fmt.Errorf("failed to open disk file %w", err)
+		return false, fmt.Errorf("error probing disk: %w", err)
 	}
 
-	defer disk.Close() //nolint:errcheck
-
-	diskTable, err := gpt.Open(disk)
-	if err != nil {
-		if errors.Is(err, gpt.ErrPartitionTableDoesNotExist) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("error creating GPT object: %w", err)
-	}
-
-	if err = diskTable.Read(); err != nil {
-		return false, err
-	}
-
-	return len(diskTable.Partitions().Items()) > 0, nil
+	return info.Name == "gpt" && len(info.Parts) > 0, nil
 }
 
 // launchVM runs qemu with args built based on config.

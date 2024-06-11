@@ -23,9 +23,12 @@ type Disk = typed.Resource[DiskSpec, DiskExtension]
 //
 //gotagsrewrite:gen
 type DiskSpec struct {
+	DevPath string `yaml:"dev_path" protobuf:"14"`
+
 	Size       uint64 `yaml:"size" protobuf:"1"`
-	IOSize     uint   `yaml:"ioSize" protobuf:"2"`
-	SectorSize uint   `yaml:"sectorSize" protobuf:"3"`
+	PrettySize string `yaml:"pretty_size" protobuf:"15"`
+	IOSize     uint   `yaml:"io_size" protobuf:"2"`
+	SectorSize uint   `yaml:"sector_size" protobuf:"3"`
 
 	Readonly bool `yaml:"readonly" protobuf:"4"`
 	CDROM    bool `yaml:"cdrom" protobuf:"13"`
@@ -34,8 +37,8 @@ type DiskSpec struct {
 	Serial     string `yaml:"serial,omitempty" protobuf:"6"`
 	Modalias   string `yaml:"modalias,omitempty" protobuf:"7"`
 	WWID       string `yaml:"wwid,omitempty" protobuf:"8"`
-	BusPath    string `yaml:"busPath,omitempty" protobuf:"9"`
-	SubSystem  string `yaml:"subSystem,omitempty" protobuf:"10"`
+	BusPath    string `yaml:"bus_path,omitempty" protobuf:"9"`
+	SubSystem  string `yaml:"sub_system,omitempty" protobuf:"10"`
 	Transport  string `yaml:"transport,omitempty" protobuf:"11"`
 	Rotational bool   `yaml:"rotational,omitempty" protobuf:"12"`
 }
@@ -60,7 +63,7 @@ func (DiskExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Size",
-				JSONPath: `{.size}`,
+				JSONPath: `{.pretty_size}`,
 			},
 			{
 				Name:     "Read Only",

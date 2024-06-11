@@ -117,10 +117,17 @@ var minVersionSupportsHalfIfInstalled = semver.MustParse("1.8.0")
 
 // SupportsHaltIfInstalled returns true if the Talos version supports half if installed.
 func (q Quirks) SupportsHaltIfInstalled() bool {
+	return q.v.GTE(minVersionSupportsHalfIfInstalled)
+}
+
+var minVersionSkipDataPartitions = semver.MustParse("1.8.0")
+
+// SkipDataPartitions returns true if the Talos version supports creating EPHEMERAL/STATE partitions on its own.
+func (q Quirks) SkipDataPartitions() bool {
 	// if the version doesn't parse, we assume it's latest Talos
 	if q.v == nil {
 		return true
 	}
 
-	return q.v.GTE(minVersionSupportsHalfIfInstalled)
+	return q.v.GTE(minVersionSkipDataPartitions)
 }
