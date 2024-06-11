@@ -62,16 +62,16 @@ func (suite *VolumesSuite) testDiscoveredVolumes(node string) {
 	suite.Require().NoError(err)
 
 	expectedVolumes := map[string]struct {
-		Name string
+		Names []string
 	}{
 		"META": {
-			Name: "talosmeta",
+			Names: []string{"talosmeta", ""}, // if META was never written, it will not be detected
 		},
 		"STATE": {
-			Name: "xfs",
+			Names: []string{"xfs"},
 		},
 		"EPHEMERAL": {
-			Name: "xfs",
+			Names: []string{"xfs"},
 		},
 	}
 
@@ -102,7 +102,7 @@ func (suite *VolumesSuite) testDiscoveredVolumes(node string) {
 			}
 		}
 
-		suite.Assert().Equal(expected.Name, dv.TypedSpec().Name, "node: ", node)
+		suite.Assert().Contains(expected.Names, dv.TypedSpec().Name, "node: %s", node)
 
 		delete(expectedVolumes, id)
 	}
