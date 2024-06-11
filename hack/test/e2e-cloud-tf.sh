@@ -20,7 +20,7 @@ cp "${ARTIFACTS}/e2e-${TF_E2E_TEST_TYPE}-generated"/* "${TF_SCRIPT_DIR}/examples
 terraform -chdir="${TF_SCRIPT_DIR}/examples/terraform/${TF_E2E_TEST_TYPE}" \
     init \
     -backend-config="bucket=${BUCKET_NAME}" \
-    -backend-config="key=cloud-tf/${TF_E2E_TEST_TYPE}-${GITHUB_SHA}-terraform.tfstate"
+    -backend-config="key=cloud-tf/${TF_E2E_TEST_TYPE}-${GITHUB_SHA}-${GITHUB_RUN_NUMBER}-terraform.tfstate"
 
 case "${TF_E2E_ACTION}" in
     "apply")

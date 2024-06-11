@@ -64,6 +64,7 @@ spec:
     - integration-misc-4
     - integration-extensions
     - integration-cilium
+    - integration-conformance
     - integration-qemu-encrypted-vip
     - integration-qemu-race
     - integration-qemu-csi
@@ -337,6 +338,55 @@ spec:
         - name: e2e-qemu
           withSudo: true
           environment:
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu
+            disableExecutableListGeneration: true
+            artifactPath: ~/.talos/clusters/**/*.log
+            additionalArtifacts:
+              - "!~/.talos/clusters/**/swtpm.log"
+    - name: integration-conformance
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runners:
+        - self-hosted
+        - talos
+      crons:
+        - '30 4 * * *'
+      triggerLabels:
+        - integration/conformance
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: conformance-qemu
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            QEMU_WORKERS: 2
+            QEMU_CPUS: 4
+            TEST_MODE: fast-conformance
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
