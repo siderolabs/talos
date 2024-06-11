@@ -29,6 +29,8 @@ func TestRegisterResource(t *testing.T) {
 		&block.DiscoveredVolume{},
 		&block.Disk{},
 		&block.SystemDisk{},
+		&block.VolumeConfig{},
+		&block.VolumeStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

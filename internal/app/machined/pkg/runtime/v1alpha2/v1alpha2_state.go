@@ -99,6 +99,8 @@ func NewState() (*State, error) {
 		&block.DiscoveredVolume{},
 		&block.Disk{},
 		&block.SystemDisk{},
+		&block.VolumeConfig{},
+		&block.VolumeStatus{},
 		&cluster.Affiliate{},
 		&cluster.Config{},
 		&cluster.Identity{},
