@@ -8,6 +8,7 @@ package options
 import (
 	"fmt"
 
+	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -31,8 +32,17 @@ type InstallOptions struct {
 	// Boot assets to install.
 	BootAssets BootAssets
 
+	// ExtraInstallStep is a function to run after the bootloader is installed.
+	ExtraInstallStep func() error
+
 	// Printf-like function to use.
 	Printf func(format string, v ...any)
+}
+
+// InstallResult is the result of the installation.
+type InstallResult struct {
+	// Previous label (if upgrading).
+	PreviousLabel string
 }
 
 // BootAssets describes the assets to be installed by the bootloader.
@@ -79,4 +89,9 @@ func (assets *BootAssets) FillDefaults(arch string) {
 			assets.RPiFirmwarePath = fmt.Sprintf(constants.RPiFirmwareAssetPath, arch)
 		}
 	}
+}
+
+// ProbeOptions configures bootloader probing.
+type ProbeOptions struct {
+	BlockProbeOptions []blkid.ProbeOption
 }

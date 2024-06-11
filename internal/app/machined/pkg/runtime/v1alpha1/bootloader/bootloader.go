@@ -6,33 +6,34 @@
 package bootloader
 
 import (
-	"context"
 	"os"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/grub"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
 // Bootloader describes a bootloader.
 type Bootloader interface {
-	// Install installs the bootloader
-	Install(options options.InstallOptions) error
+	// Install the bootloader.
+	//
+	// Install mounts the partitions as required.
+	Install(options options.InstallOptions) (*options.InstallResult, error)
 	// Revert reverts the bootloader entry to the previous state.
-	Revert(ctx context.Context) error
-	// PreviousLabel returns the previous bootloader label.
-	PreviousLabel() string
-	// UEFIBoot returns true if the bootloader is UEFI-only.
-	UEFIBoot() bool
+	//
+	// Revert mounts the partitions as required.
+	Revert(disk string) error
+	// RequiredPartitions returns the required partitions for the bootloader.
+	RequiredPartitions() []partition.Options
 }
 
 // Probe checks if any supported bootloaders are installed.
 //
-// If 'disk' is empty, it will probe all disks.
 // Returns nil if it cannot detect any supported bootloader.
-func Probe(ctx context.Context, disk string) (Bootloader, error) {
-	grubBootloader, err := grub.Probe(ctx, disk)
+func Probe(disk string, options options.ProbeOptions) (Bootloader, error) {
+	grubBootloader, err := grub.Probe(disk, options)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +42,7 @@ func Probe(ctx context.Context, disk string) (Bootloader, error) {
 		return grubBootloader, nil
 	}
 
-	sdbootBootloader, err := sdboot.Probe(ctx, disk)
+	sdbootBootloader, err := sdboot.Probe(disk, options)
 	if err != nil {
 		return nil, err
 	}

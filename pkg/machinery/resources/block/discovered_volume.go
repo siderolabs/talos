@@ -13,7 +13,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-// DiscoveredVolumeType is type of BlockDiscoveredVolume resource.
+// DiscoveredVolumeType is type of DiscoveredVolume resource.
 const DiscoveredVolumeType = resource.Type("DiscoveredVolumes.block.talos.dev")
 
 // DiscoveredVolume resource holds status of hardware DiscoveredVolumes (overall).
@@ -23,9 +23,11 @@ type DiscoveredVolume = typed.Resource[DiscoveredVolumeSpec, DiscoveredVolumeExt
 //
 //gotagsrewrite:gen
 type DiscoveredVolumeSpec struct {
-	Type       string `yaml:"type" protobuf:"14"`
-	DevicePath string `yaml:"devicePath" protobuf:"15"`
-	Parent     string `yaml:"parent,omitempty" protobuf:"16"`
+	DevPath       string `yaml:"devPath" protobuf:"17"`
+	Type          string `yaml:"type" protobuf:"14"`
+	DevicePath    string `yaml:"devicePath" protobuf:"15"`
+	Parent        string `yaml:"parent,omitempty" protobuf:"16"`
+	ParentDevPath string `yaml:"parentDevPath,omitempty" protobuf:"18"`
 
 	// Overall size of the probed device (in bytes).
 	Size uint64 `yaml:"size" protobuf:"1"`

@@ -31,9 +31,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	pprocfs "github.com/prometheus/procfs"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/blockdevice"
-	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	"github.com/siderolabs/go-blockdevice/blockdevice/util"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc"
@@ -44,7 +42,6 @@ import (
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
-	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/disk"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
@@ -61,7 +58,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/logind"
 	"github.com/siderolabs/talos/internal/pkg/meta"
 	"github.com/siderolabs/talos/internal/pkg/mount"
-	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/secureboot"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/tpm2"
 	"github.com/siderolabs/talos/pkg/conditions"
@@ -74,6 +70,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	resourceruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -466,7 +463,7 @@ func SaveConfig(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 func MemorySizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		if r.State().Platform().Mode() == runtime.ModeContainer {
-			log.Println("skipping memory size check in the container")
+			logger.Println("skipping memory size check in the container")
 
 			return nil
 		}
@@ -488,17 +485,17 @@ func MemorySizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 
 		switch memTotal := pointer.SafeDeref(info.MemTotal) * humanize.KiByte; {
 		case memTotal < minimum:
-			log.Println("WARNING: memory size is less than recommended")
-			log.Println("WARNING: Talos may not work properly")
-			log.Println("WARNING: minimum memory size is", minimum/humanize.MiByte, "MiB")
-			log.Println("WARNING: recommended memory size is", recommended/humanize.MiByte, "MiB")
-			log.Println("WARNING: current total memory size is", memTotal/humanize.MiByte, "MiB")
+			logger.Println("WARNING: memory size is less than recommended")
+			logger.Println("WARNING: Talos may not work properly")
+			logger.Println("WARNING: minimum memory size is", minimum/humanize.MiByte, "MiB")
+			logger.Println("WARNING: recommended memory size is", recommended/humanize.MiByte, "MiB")
+			logger.Println("WARNING: current total memory size is", memTotal/humanize.MiByte, "MiB")
 		case memTotal < recommended:
-			log.Println("NOTE: recommended memory size is", recommended/humanize.MiByte, "MiB")
-			log.Println("NOTE: current total memory size is", memTotal/humanize.MiByte, "MiB")
+			logger.Println("NOTE: recommended memory size is", recommended/humanize.MiByte, "MiB")
+			logger.Println("NOTE: current total memory size is", memTotal/humanize.MiByte, "MiB")
 		default:
-			log.Println("memory size is OK")
-			log.Println("memory size is", memTotal/humanize.MiByte, "MiB")
+			logger.Println("memory size is OK")
+			logger.Println("memory size is", memTotal/humanize.MiByte, "MiB")
 		}
 
 		return nil
@@ -509,29 +506,26 @@ func MemorySizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 func DiskSizeCheck(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		if r.State().Platform().Mode() == runtime.ModeContainer {
-			log.Println("skipping disk size check in the container")
+			logger.Println("skipping disk size check in the container")
 
 			return nil
 		}
 
-		disk := r.State().Machine().Disk() // get ephemeral disk state
-		if disk == nil {
-			return errors.New("failed to get ephemeral disk state")
+		ephemeralStatus, err := waitForVolumeReady(ctx, r, constants.EphemeralPartitionLabel)
+		if err != nil {
+			return err
 		}
 
-		diskSize, err := disk.Size()
-		if err != nil {
-			return fmt.Errorf("failed to get ephemeral disk size: %w", err)
-		}
+		diskSize := ephemeralStatus.TypedSpec().Size
 
 		if minimum := minimal.DiskSize(); diskSize < minimum {
-			log.Println("WARNING: disk size is less than recommended")
-			log.Println("WARNING: Talos may not work properly")
-			log.Println("WARNING: minimum recommended disk size is", minimum/humanize.MiByte, "MiB")
-			log.Println("WARNING: current total disk size is", diskSize/humanize.MiByte, "MiB")
+			logger.Println("WARNING: disk size is less than recommended")
+			logger.Println("WARNING: Talos may not work properly")
+			logger.Println("WARNING: minimum recommended disk size is", minimum/humanize.MiByte, "MiB")
+			logger.Println("WARNING: current total disk size is", diskSize/humanize.MiByte, "MiB")
 		} else {
-			log.Println("disk size is OK")
-			log.Println("disk size is", diskSize/humanize.MiByte, "MiB")
+			logger.Println("disk size is OK")
+			logger.Println("disk size is", diskSize/humanize.MiByte, "MiB")
 		}
 
 		return nil
@@ -833,9 +827,9 @@ func SetupVarDirectory(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 // MountUserDisks represents the MountUserDisks task.
 func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		if err = partitionAndFormatDisks(logger, r); err != nil {
-			return err
-		}
+		// if err = partitionAndFormatDisks(logger, r); err != nil {
+		// 	return err
+		// }
 
 		return mountDisks(logger, r)
 	}, "mountUserDisks"
@@ -843,81 +837,82 @@ func MountUserDisks(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 // TODO(andrewrynhard): We shouldn't pull in the installer command package
 // here.
-func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
-	m := &installer.Manifest{
-		Devices: map[string]installer.Device{},
-		Targets: map[string][]*installer.Target{},
-		Printf:  logger.Printf,
-	}
 
-	for _, disk := range r.Config().Machine().Disks() {
-		if err := func() error {
-			bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode), blockdevice.WithExclusiveLock(true))
-			if err != nil {
-				return err
-			}
+// func partitionAndFormatDisks(logger *log.Logger, r runtime.Runtime) error {
+// 	m := &installer.Manifest{
+// 		Devices: map[string]installer.Device{},
+// 		Targets: map[string][]*installer.Target{},
+// 		Printf:  logger.Printf,
+// 	}
 
-			deviceName := bd.Device().Name()
+// 	for _, disk := range r.Config().Machine().Disks() {
+// 		if err := func() error {
+// 			bd, err := blockdevice.Open(disk.Device(), blockdevice.WithMode(blockdevice.ReadonlyMode), blockdevice.WithExclusiveLock(true))
+// 			if err != nil {
+// 				return err
+// 			}
 
-			if disk.Device() != deviceName {
-				logger.Printf("using device name %q instead of %q", deviceName, disk.Device())
-			}
+// 			deviceName := bd.Device().Name()
 
-			//nolint:errcheck
-			defer bd.Close()
+// 			if disk.Device() != deviceName {
+// 				logger.Printf("using device name %q instead of %q", deviceName, disk.Device())
+// 			}
 
-			var pt *gpt.GPT
+// 			//nolint:errcheck
+// 			defer bd.Close()
 
-			pt, err = bd.PartitionTable()
-			if err != nil {
-				if !errors.Is(err, blockdevice.ErrMissingPartitionTable) {
-					return err
-				}
-			}
+// 			var pt *gpt.GPT
 
-			// Partitions will be created/recreated if either of the following
-			//  conditions are true:
-			// - a partition table exists AND there are no partitions
-			// - a partition table does not exist
+// 			pt, err = bd.PartitionTable()
+// 			if err != nil {
+// 				if !errors.Is(err, blockdevice.ErrMissingPartitionTable) {
+// 					return err
+// 				}
+// 			}
 
-			if pt != nil {
-				if len(pt.Partitions().Items()) > 0 {
-					logger.Printf(("skipping setup of %q, found existing partitions"), deviceName)
+// 			// Partitions will be created/recreated if either of the following
+// 			//  conditions are true:
+// 			// - a partition table exists AND there are no partitions
+// 			// - a partition table does not exist
 
-					return nil
-				}
-			}
+// 			if pt != nil {
+// 				if len(pt.Partitions().Items()) > 0 {
+// 					logger.Printf(("skipping setup of %q, found existing partitions"), deviceName)
 
-			m.Devices[deviceName] = installer.Device{
-				Device:                 deviceName,
-				ResetPartitionTable:    true,
-				SkipOverlayMountsCheck: true,
-			}
+// 					return nil
+// 				}
+// 			}
 
-			for _, part := range disk.Partitions() {
-				extraTarget := &installer.Target{
-					Device: deviceName,
-					FormatOptions: &partition.FormatOptions{
-						Force:          true,
-						FileSystemType: partition.FilesystemTypeXFS,
-					},
-					Options: &partition.Options{
-						Size:          part.Size(),
-						PartitionType: partition.LinuxFilesystemData,
-					},
-				}
+// 			m.Devices[deviceName] = installer.Device{
+// 				Device:                 deviceName,
+// 				ResetPartitionTable:    true,
+// 				SkipOverlayMountsCheck: true,
+// 			}
 
-				m.Targets[deviceName] = append(m.Targets[deviceName], extraTarget)
-			}
+// 			for _, part := range disk.Partitions() {
+// 				extraTarget := &installer.Target{
+// 					Device: deviceName,
+// 					FormatOptions: &partition.FormatOptions{
+// 						Force:          true,
+// 						FileSystemType: partition.FilesystemTypeXFS,
+// 					},
+// 					Options: &partition.Options{
+// 						Size:          part.Size(),
+// 						PartitionType: partition.LinuxFilesystemData,
+// 					},
+// 				}
 
-			return nil
-		}(); err != nil {
-			return err
-		}
-	}
+// 				m.Targets[deviceName] = append(m.Targets[deviceName], extraTarget)
+// 			}
 
-	return m.Execute()
-}
+// 			return nil
+// 		}(); err != nil {
+// 			return err
+// 		}
+// 	}
+
+// 	return m.Execute()
+// }
 
 func mountDisks(logger *log.Logger, r runtime.Runtime) (err error) {
 	mountpoints := mount.NewMountPoints()
@@ -1530,32 +1525,32 @@ func ResetSystemDiskPartitions(seq runtime.Sequence, _ any) (runtime.TaskExecuti
 	}
 
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		targets, err := parseTargets(r, *wipeStr)
-		if err != nil {
-			return err
-		}
+		// targets, err := parseTargets(r, *wipeStr)
+		// if err != nil {
+		// 	return err
+		// }
 
-		fn, _ := ResetSystemDiskSpec(seq, targets)
-		diskTargets := targets.GetSystemDiskTargets()
+		// fn, _ := ResetSystemDiskSpec(seq, targets)
+		// diskTargets := targets.GetSystemDiskTargets()
 
-		logger.Printf("resetting system disks %s", diskTargets)
+		// logger.Printf("resetting system disks %s", diskTargets)
 
-		err = fn(ctx, logger, r)
-		if err != nil {
-			logger.Printf("resetting system disks %s failed", diskTargets)
+		// err = fn(ctx, logger, r)
+		// if err != nil {
+		// 	logger.Printf("resetting system disks %s failed", diskTargets)
 
-			return err
-		}
+		// 	return err
+		// }
 
-		logger.Printf("finished resetting system disks %s", diskTargets)
+		// logger.Printf("finished resetting system disks %s", diskTargets)
 
-		bootWiped := slices.ContainsFunc(diskTargets, func(t runtime.PartitionTarget) bool {
-			return t.GetLabel() == constants.BootPartitionLabel
-		})
+		// bootWiped := slices.ContainsFunc(diskTargets, func(t runtime.PartitionTarget) bool {
+		// 	return t.GetLabel() == constants.BootPartitionLabel
+		// })
 
-		if bootWiped {
-			return reboot(ctx, logger, r) // only reboot when we wiped boot partition
-		}
+		// if bootWiped {
+		// 	return reboot(ctx, logger, r) // only reboot when we wiped boot partition
+		// }
 
 		return nil
 	}, "wipeSystemDiskPartitions"
@@ -1618,49 +1613,49 @@ func ResetUserDisks(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, st
 	}, "resetUserDisks"
 }
 
-type targets struct {
-	systemDiskTargets []*installer.Target
-}
+// type targets struct {
+// 	systemDiskTargets []*installer.Target
+// }
 
-func (opt targets) GetSystemDiskTargets() []runtime.PartitionTarget {
-	return xslices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
-}
+// func (opt targets) GetSystemDiskTargets() []runtime.PartitionTarget {
+// 	return xslices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
+// }
 
-func parseTargets(r runtime.Runtime, wipeStr string) (targets, error) {
-	after, found := strings.CutPrefix(wipeStr, "system:")
-	if !found {
-		return targets{}, fmt.Errorf("invalid wipe labels string: %q", wipeStr)
-	}
+// func parseTargets(r runtime.Runtime, wipeStr string) (targets, error) {
+// 	after, found := strings.CutPrefix(wipeStr, "system:")
+// 	if !found {
+// 		return targets{}, fmt.Errorf("invalid wipe labels string: %q", wipeStr)
+// 	}
 
-	var result []*installer.Target //nolint:prealloc
+// 	var result []*installer.Target //nolint:prealloc
 
-	for _, part := range strings.Split(after, ",") {
-		bd := r.State().Machine().Disk().BlockDevice
+// 	for _, part := range strings.Split(after, ",") {
+// 		bd := r.State().Machine().Disk().BlockDevice
 
-		target, err := installer.ParseTarget(part, bd.Device().Name())
-		if err != nil {
-			return targets{}, fmt.Errorf("error parsing target label %q: %w", part, err)
-		}
+// 		target, err := installer.ParseTarget(part, bd.Device().Name())
+// 		if err != nil {
+// 			return targets{}, fmt.Errorf("error parsing target label %q: %w", part, err)
+// 		}
 
-		pt, err := bd.PartitionTable()
-		if err != nil {
-			return targets{}, fmt.Errorf("error reading partition table: %w", err)
-		}
+// 		pt, err := bd.PartitionTable()
+// 		if err != nil {
+// 			return targets{}, fmt.Errorf("error reading partition table: %w", err)
+// 		}
 
-		_, err = target.Locate(pt)
-		if err != nil {
-			return targets{}, fmt.Errorf("error locating partition %q: %w", part, err)
-		}
+// 		_, err = target.Locate(pt)
+// 		if err != nil {
+// 			return targets{}, fmt.Errorf("error locating partition %q: %w", part, err)
+// 		}
 
-		result = append(result, target)
-	}
+// 		result = append(result, target)
+// 	}
 
-	if len(result) == 0 {
-		return targets{}, errors.New("no wipe labels specified")
-	}
+// 	if len(result) == 0 {
+// 		return targets{}, errors.New("no wipe labels specified")
+// 	}
 
-	return targets{systemDiskTargets: result}, nil
-}
+// 	return targets{systemDiskTargets: result}, nil
+// }
 
 // SystemDiskTargets represents the interface for getting the system disk targets.
 // It's a subset of [runtime.ResetOptions].
@@ -1911,6 +1906,10 @@ func UnmountEFIPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, stri
 // MountStatePartition mounts the system partition.
 func MountStatePartition(seq runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		if _, err = waitForVolumeReady(ctx, r, constants.StatePartitionLabel); err != nil {
+			return err
+		}
+
 		flags := mount.SkipIfMounted
 
 		if seq == runtime.SequenceInitialize {
@@ -1958,6 +1957,10 @@ func UnmountStatePartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, st
 // MountEphemeralPartition mounts the ephemeral partition.
 func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if _, err := waitForVolumeReady(ctx, r, constants.EphemeralPartitionLabel); err != nil {
+			return err
+		}
+
 		return mount.SystemPartitionMount(ctx, r, logger, constants.EphemeralPartitionLabel,
 			mount.WithFlags(mount.Resize),
 			mount.WithProjectQuota(r.Config().Machine().Features().DiskQuotaSupportEnabled()))
@@ -2395,4 +2398,23 @@ func logError(err error, logger *log.Logger) error {
 	logger.Printf("WARNING: task failed: %s", err)
 
 	return nil
+}
+
+func waitForVolumeReady(ctx context.Context, r runtime.Runtime, volumeID string) (*block.VolumeStatus, error) {
+	volumeStatus, err := r.State().V1Alpha2().Resources().WatchFor(ctx,
+		block.NewVolumeStatus(block.NamespaceName, volumeID).Metadata(),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			volumeStatus, ok := r.(*block.VolumeStatus)
+			if !ok {
+				return false, nil
+			}
+
+			return volumeStatus.TypedSpec().Phase == block.VolumePhaseReady, nil
+		}),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error waiting for volume %q to be ready: %w", volumeID, err)
+	}
+
+	return volumeStatus.(*block.VolumeStatus), nil
 }

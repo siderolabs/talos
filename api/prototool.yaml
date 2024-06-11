@@ -8,7 +8,7 @@ lint:
   ignores:
     - id: FILE_OPTIONS_GO_PACKAGE_NOT_LONG_FORM
       files:
-        - vendor/google/rpc/status.proto
+        - vendor/google/
 
   rules:
     # The specific linters to add.

@@ -34,7 +34,6 @@ import (
 	"github.com/prometheus/procfs"
 	"github.com/rs/xid"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/blockdevice/partition/gpt"
 	bddisk "github.com/siderolabs/go-blockdevice/blockdevice/util/disk"
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-pointer"
@@ -49,9 +48,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	installer "github.com/siderolabs/talos/cmd/installer/pkg/install"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/resources"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
@@ -356,6 +353,7 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 		return nil, err
 	}
 
+	/* [TODO] restore me
 	systemDisk := s.Controller.Runtime().State().Machine().Disk()
 	if systemDisk == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "system disk not found")
@@ -371,6 +369,7 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 	}(); err != nil {
 		return nil, err
 	}
+	*/
 
 	go func() {
 		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithTakeover()); err != nil {
@@ -552,17 +551,18 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 type ResetOptions struct {
 	*machine.ResetRequest
 
-	systemDiskTargets []*installer.Target
+	// [TODO]: restore me
+	//systemDiskTargets []*installer.Target
 }
 
 // GetSystemDiskTargets implements runtime.ResetOptions interface.
-func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
-	if opt.systemDiskTargets == nil {
-		return nil
-	}
+// func (opt *ResetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
+// 	if opt.systemDiskTargets == nil {
+// 		return nil
+// 	}
 
-	return xslices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
-}
+// 	return xslices.Map(opt.systemDiskTargets, func(t *installer.Target) runtime.PartitionTarget { return t })
+// }
 
 // Reset resets the node.
 //
@@ -611,36 +611,37 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 		}
 	}
 
-	if len(in.GetSystemPartitionsToWipe()) > 0 {
-		if in.Mode == machine.ResetRequest_USER_DISKS {
-			return nil, errors.New("reset failed: invalid input, wipe mode USER_DISKS doesn't support SystemPartitionsToWipe parameter")
-		}
+	/*
+		if len(in.GetSystemPartitionsToWipe()) > 0 {
+			if in.Mode == machine.ResetRequest_USER_DISKS {
+				return nil, errors.New("reset failed: invalid input, wipe mode USER_DISKS doesn't support SystemPartitionsToWipe parameter")
+			}
 
-		bd := s.Controller.Runtime().State().Machine().Disk().BlockDevice
+			bd := s.Controller.Runtime().State().Machine().Disk().BlockDevice
 
-		var pt *gpt.GPT
+			var pt *gpt.GPT
 
-		pt, err = bd.PartitionTable()
-		if err != nil {
-			return nil, fmt.Errorf("error reading partition table: %w", err)
-		}
-
-		for _, spec := range in.GetSystemPartitionsToWipe() {
-			target, err := installer.ParseTarget(spec.Label, bd.Device().Name())
+			pt, err = bd.PartitionTable()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error reading partition table: %w", err)
 			}
 
-			_, err = target.Locate(pt)
-			if err != nil {
-				return nil, fmt.Errorf("failed location partition with label %q: %w", spec.Label, err)
-			}
+			for _, spec := range in.GetSystemPartitionsToWipe() {
+				target, err := installer.ParseTarget(spec.Label, bd.Device().Name())
+				if err != nil {
+					return nil, err
+				}
 
-			if spec.Wipe {
-				opts.systemDiskTargets = append(opts.systemDiskTargets, target)
+				_, err = target.Locate(pt)
+				if err != nil {
+					return nil, fmt.Errorf("failed location partition with label %q: %w", spec.Label, err)
+				}
+
+				if spec.Wipe {
+					opts.systemDiskTargets = append(opts.systemDiskTargets, target)
+				}
 			}
-		}
-	}
+		}*/
 
 	resetCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
 
