@@ -81,14 +81,6 @@ The endpoint should be formatted like:
 
 > NOTE: For a production cluster, you should have three control plane nodes, and have the endpoint allocate traffic to all three - see [Production Notes]({{< relref "prodnotes#control-plane-nodes" >}}).
 
-## Accessing the Talos API
-
-Administrative tasks are performed by calling the Talos API (usually with `talosctl`) on Talos Linux control plane nodes - thus, ensure your control
-plane node is directly reachable on TCP port 50000 from the workstation where you run the `talosctl` client.
-This may require changing firewall rules or cloud provider access-lists.
-
-For production configurations, see [Production Notes]({{< relref "prodnotes#decide-the-kubernetes-endpoint" >}}).
-
 ## Configure Talos Linux
 
 When Talos boots without a configuration, such as when booting off the Talos ISO, it
@@ -182,9 +174,24 @@ to reflect `vda` instead of `sda`.
 
 > For information on customizing your machine configurations (such as to specify the version of Kubernetes), using [machine configuration patches]({{< relref "../talos-guides/configuration/patching" >}}), or customizing configurations for individual machines (such as setting static IP addresses), see the [Production Notes]({{< relref "prodnotes#customizing-machine-configuration" >}}).
 
-## Understand talosctl, endpoints and nodes
+## Accessing the Talos API
 
-It is important to understand the concept of `endpoints` and `nodes`.
+Administrative tasks are performed by calling the Talos API (usually with `talosctl`) on Talos Linux control plane nodes, who may forward the requests to other nodes.
+Thus:
+
+- ensure your control plane node is directly reachable on TCP port 50000 from the workstation where you run the `talosctl` client.
+- until a node is a member of the cluster, it does not have the PKI infrastructure set up, and so will not accept API requests that are proxied through a control plane node.
+
+Thus you will need direct access to the **worker** nodes on port 50000 from the workstation where you run `talosctl`  in order to apply the initial configuration.
+Once the cluster is established, you will no longer need port 50000 access to the workers.
+(You can avoid requiring such access by passing in the initial configuration in one of other methods, such as by cloud `userdata` or via `talos.config=` kernel argument on a `metal` platform)
+
+This may require changing firewall rules or cloud provider access-lists.
+
+For production configurations, see [Production Notes]({{< relref "prodnotes#decide-the-kubernetes-endpoint" >}}).
+
+## Understand how talosctl treats endpoints and nodes
+
 In short: `endpoints` are where `talosctl` _sends_ commands to, but the command _operates_ on the specified `nodes`.
 The endpoint will forward the command to the nodes, if needed.
 
@@ -247,7 +254,7 @@ Apply the `controlplane.yaml` file to the control plane node, and the `worker.ya
 The `--insecure` flag is necessary because the PKI infrastructure has not yet been made available to the node.
 Note: the connection _will_ be encrypted, but not authenticated.
 
-When using the `--insecure` flag, it is not necessary to specify an endpoint.
+> When using the `--insecure` flag, you cannot specify an endpoint, and must directly access the node on port 50000.
 
 ### Default talosconfig configuration file
 
