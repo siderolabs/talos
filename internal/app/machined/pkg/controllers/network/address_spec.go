@@ -14,7 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/arp"
 	"go.uber.org/zap"
 	"go4.org/netipx"

@@ -92,7 +92,7 @@ require (
 	github.com/hetznercloud/hcloud-go/v2 v2.9.0
 	github.com/insomniacslk/dhcp v0.0.0-20240529192340-51bc6136a0a6
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink v1.4.2
+	github.com/jsimonetti/rtnetlink/v2 v2.0.2
 	github.com/jxskiss/base62 v1.1.0
 	github.com/klauspost/compress v1.17.9
 	github.com/klauspost/cpuid/v2 v2.2.8
@@ -147,7 +147,7 @@ require (
 	github.com/siderolabs/grpc-proxy v0.4.0
 	github.com/siderolabs/kms-client v0.1.0
 	github.com/siderolabs/net v0.4.0
-	github.com/siderolabs/siderolink v0.3.8
+	github.com/siderolabs/siderolink v0.3.9
 	github.com/siderolabs/talos/pkg/machinery v1.8.0-alpha.0.0.20240521134552-e1711cd3c985
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5

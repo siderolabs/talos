@@ -21,7 +21,7 @@ import (
 	"github.com/containernetworking/plugins/pkg/testutils"
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/google/uuid"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/xslices"
 	sideronet "github.com/siderolabs/net"
 	"github.com/vishvananda/netlink"

@@ -155,7 +155,7 @@ func (s *NfTablesChainSuite) TestICMPLimit() {
 	s.checkNftOutput(`table inet talos-test {
 	chain test1 {
 		type filter hook input priority security; policy accept;
-		meta l4proto icmp limit rate 5/second accept
+		meta l4proto icmp limit rate 5/second burst 5 packets accept
 	}
 }`)
 }

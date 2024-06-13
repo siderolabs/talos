@@ -12,7 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/hashicorp/go-multierror"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/value"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"

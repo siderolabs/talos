@@ -21,7 +21,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zaptest"

@@ -17,7 +17,7 @@ import (
 
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/nclient6"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"go.uber.org/zap"

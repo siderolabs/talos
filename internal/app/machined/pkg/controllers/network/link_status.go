@@ -13,7 +13,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/ethtool"
 	ethtoolioctl "github.com/safchain/ethtool"
 	"go.uber.org/zap"
@@ -297,17 +297,31 @@ func (ctrl *LinkStatusController) reconcile(
 			status.FirmwareVersion = driverInfo.FwVersion
 
 			// link.Attributes.Info will be non-nil, because we set status.Kind above using link.Attributes.Info.Kind
+			var rawLinkData []byte
+
+			if link.Attributes.Info != nil && link.Attributes.Info.Data != nil {
+				if linkData, ok := link.Attributes.Info.Data.(*rtnetlink.LinkData); ok {
+					rawLinkData = linkData.Data
+				}
+			}
+
 			switch status.Kind {
 			case network.LinkKindVLAN:
-				if err = networkadapter.VLANSpec(&status.VLAN).Decode(link.Attributes.Info.Data); err != nil {
+				if rawLinkData == nil {
+					logger.Warn("VLAN link data is nil", zap.String("link", link.Attributes.Name))
+				} else if err = networkadapter.VLANSpec(&status.VLAN).Decode(rawLinkData); err != nil {
 					logger.Warn("failure decoding VLAN attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				}
 			case network.LinkKindBond:
-				if err = networkadapter.BondMasterSpec(&status.BondMaster).Decode(link.Attributes.Info.Data); err != nil {
+				if rawLinkData == nil {
+					logger.Warn("bond link data is nil", zap.String("link", link.Attributes.Name))
+				} else if err = networkadapter.BondMasterSpec(&status.BondMaster).Decode(rawLinkData); err != nil {
 					logger.Warn("failure decoding bond attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				}
 			case network.LinkKindBridge:
-				if err = networkadapter.BridgeMasterSpec(&status.BridgeMaster).Decode(link.Attributes.Info.Data); err != nil {
+				if rawLinkData == nil {
+					logger.Warn("bridge link data is nil", zap.String("link", link.Attributes.Name))
+				} else if err = networkadapter.BridgeMasterSpec(&status.BridgeMaster).Decode(rawLinkData); err != nil {
 					logger.Warn("failure decoding bridge attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				}
 			case network.LinkKindWireguard:

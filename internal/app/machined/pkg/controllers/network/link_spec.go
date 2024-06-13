@@ -14,7 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-multierror"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/pair/ordered"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
@@ -231,6 +231,14 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 	case resource.PhaseRunning:
 		existing := findLink(*links, link.TypedSpec().Name)
 
+		var existingRawLinkData []byte
+
+		if existing != nil && existing.Attributes != nil && existing.Attributes.Info != nil && existing.Attributes.Info.Data != nil {
+			if existingLinkData, ok := existing.Attributes.Info.Data.(*rtnetlink.LinkData); ok {
+				existingRawLinkData = existingLinkData.Data
+			}
+		}
+
 		// check if type/kind matches for the existing logical link
 		if existing != nil && link.TypedSpec().Logical {
 			replace := false
@@ -261,7 +269,11 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			if !replace && link.TypedSpec().Kind == network.LinkKindVLAN {
 				var existingVLAN network.VLANSpec
 
-				if err := networkadapter.VLANSpec(&existingVLAN).Decode(existing.Attributes.Info.Data); err != nil {
+				if existingRawLinkData == nil {
+					return fmt.Errorf("existing link %q has no data, can't decode VLAN settings", link.TypedSpec().Name)
+				}
+
+				if err := networkadapter.VLANSpec(&existingVLAN).Decode(existingRawLinkData); err != nil {
 					return fmt.Errorf("error decoding VLAN properties on %q: %w", link.TypedSpec().Name, err)
 				}
 
@@ -326,7 +338,10 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					Type: parentIndex,
 					Info: &rtnetlink.LinkInfo{
 						Kind: link.TypedSpec().Kind,
-						Data: data,
+						Data: &rtnetlink.LinkData{
+							Name: link.TypedSpec().Kind,
+							Data: data,
+						},
 					},
 				},
 			}); err != nil {
@@ -351,7 +366,11 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		if link.TypedSpec().Kind == network.LinkKindBond {
 			var existingBond network.BondMasterSpec
 
-			if err := networkadapter.BondMasterSpec(&existingBond).Decode(existing.Attributes.Info.Data); err != nil {
+			if existingRawLinkData == nil {
+				return fmt.Errorf("existing link %q has no data, can't decode bond settings", link.TypedSpec().Name)
+			}
+
+			if err := networkadapter.BondMasterSpec(&existingBond).Decode(existingRawLinkData); err != nil {
 				return fmt.Errorf("error parsing bond attributes for %q: %w", link.TypedSpec().Name, err)
 			}
 
@@ -403,7 +422,10 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					Attributes: &rtnetlink.LinkAttributes{
 						Info: &rtnetlink.LinkInfo{
 							Kind: existing.Attributes.Info.Kind,
-							Data: data,
+							Data: &rtnetlink.LinkData{
+								Name: existing.Attributes.Info.Kind,
+								Data: data,
+							},
 						},
 					},
 				}); err != nil {
@@ -418,7 +440,11 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		if link.TypedSpec().Kind == network.LinkKindBridge {
 			var existingBridge network.BridgeMasterSpec
 
-			if err := networkadapter.BridgeMasterSpec(&existingBridge).Decode(existing.Attributes.Info.Data); err != nil {
+			if existingRawLinkData == nil {
+				return fmt.Errorf("existing link %q has no data, can't decode bridge settings", link.TypedSpec().Name)
+			}
+
+			if err := networkadapter.BridgeMasterSpec(&existingBridge).Decode(existingRawLinkData); err != nil {
 				return fmt.Errorf("error parsing bridge attributes for %q: %w", link.TypedSpec().Name, err)
 			}
 
@@ -470,7 +496,10 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					Attributes: &rtnetlink.LinkAttributes{
 						Info: &rtnetlink.LinkInfo{
 							Kind: existing.Attributes.Info.Kind,
-							Data: data,
+							Data: &rtnetlink.LinkData{
+								Name: existing.Attributes.Info.Kind,
+								Data: data,
+							},
 						},
 					},
 				}); err != nil {

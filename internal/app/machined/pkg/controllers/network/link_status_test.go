@@ -22,7 +22,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/jsimonetti/rtnetlink"
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/netlink"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
@@ -317,7 +317,10 @@ func (suite *LinkStatusSuite) TestBridgeInterface() {
 					Name: bridgeInterface,
 					Info: &rtnetlink.LinkInfo{
 						Kind: "bridge",
-						Data: bridgeData,
+						Data: &rtnetlink.LinkData{
+							Name: "bridge",
+							Data: bridgeData,
+						},
 					},
 				},
 			},

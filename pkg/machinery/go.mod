@@ -15,7 +15,7 @@ require (
 	github.com/evanphx/json-patch v5.9.0+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink v1.4.2
+	github.com/jsimonetti/rtnetlink/v2 v2.0.2
 	github.com/mdlayher/ethtool v0.1.0
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/planetscale/vtprotobuf v0.6.0
