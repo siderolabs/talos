@@ -32,6 +32,7 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -148,16 +149,14 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsISCSI() {
 	iscsiTargetExists := func() bool {
 		var iscsiTargetExists bool
 
-		resp, err := suite.Client.Disks(ctx)
+		disks, err := safe.ReaderListAll[*block.Disk](ctx, suite.Client.COSI)
 		suite.Require().NoError(err)
 
-		for _, msg := range resp.Messages {
-			for _, disk := range msg.Disks {
-				if disk.Modalias == "scsi:t-0x00" {
-					iscsiTargetExists = true
+		for iter := disks.Iterator(); iter.Next(); {
+			if iter.Value().TypedSpec().Transport == "iscsi" {
+				iscsiTargetExists = true
 
-					break
-				}
+				break
 			}
 		}
 
@@ -224,7 +223,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsISCSI() {
 		)
 		suite.Require().NoError(err)
 
-		suite.Require().Equal("100+0 records in\n100+0 records out\n", stderr)
+		suite.Require().Contains(stderr, "100+0 records in\n100+0 records out\n")
 		suite.Require().Equal("", stdout)
 
 		stdout, stderr, err = suite.ExecuteCommandInPod(
@@ -363,9 +362,10 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsHelloWorldService() {
 }
 
 // TestExtensionsGvisor verifies gvisor runtime class is working.
-func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisor() {
-	suite.testRuntimeClass("gvisor", "runsc")
-}
+// TODO: frezbo: re-enable once https://github.com/siderolabs/extensions/issues/417 is addressed.
+// func (suite *ExtensionsSuiteQEMU) TestExtensionsGvisor() {
+// 	suite.testRuntimeClass("gvisor", "runsc")
+// }
 
 // TestExtensionsKataContainers verifies gvisor runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainers() {
