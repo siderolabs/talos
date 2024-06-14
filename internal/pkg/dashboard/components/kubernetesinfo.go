@@ -26,6 +26,7 @@ type staticPodStatuses struct {
 
 type kubernetesInfoData struct {
 	isControlPlane    bool
+	typ               string
 	kubernetesVersion string
 	kubeletStatus     string
 
@@ -106,7 +107,13 @@ func (widget *KubernetesInfo) updateNodeData(data resourcedata.Data) {
 
 		nodeData.podStatuses = widget.staticPodStatuses(maps.Values(nodeData.staticPodStatusMap))
 	case *config.MachineType:
-		nodeData.isControlPlane = !data.Deleted && res.MachineType() == machine.TypeControlPlane
+		if data.Deleted {
+			nodeData.isControlPlane = false
+			nodeData.typ = notAvailable
+		} else {
+			nodeData.isControlPlane = res.MachineType() == machine.TypeControlPlane
+			nodeData.typ = res.MachineType().String()
+		}
 	}
 }
 
@@ -128,6 +135,7 @@ func (widget *KubernetesInfo) getOrCreateNodeData(node string) *kubernetesInfoDa
 	nodeData, ok := widget.nodeMap[node]
 	if !ok {
 		nodeData = &kubernetesInfoData{
+			typ:               notAvailable,
 			kubernetesVersion: notAvailable,
 			kubeletStatus:     notAvailable,
 			podStatuses: staticPodStatuses{
@@ -150,6 +158,10 @@ func (widget *KubernetesInfo) redraw() {
 	fieldList := make([]field, 0, 5)
 
 	fieldList = append(fieldList,
+		field{
+			Name:  "TYPE",
+			Value: data.typ,
+		},
 		field{
 			Name:  "KUBERNETES",
 			Value: data.kubernetesVersion,

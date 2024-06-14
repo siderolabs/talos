@@ -75,12 +75,24 @@ func formatStatus(status any) string {
 
 	switch strings.ToLower(statusStr) {
 	case "running", "healthy", "true":
-		return fmt.Sprintf("[green]%s[-]", statusStr)
+		return formatText(statusStr, true)
 	case "stopped", "unhealthy", "false":
-		return fmt.Sprintf("[red]%s[-]", statusStr)
+		return formatText(statusStr, false)
 	default:
 		return statusStr
 	}
+}
+
+func formatText(text string, ok bool) string {
+	if text == "" {
+		return ""
+	}
+
+	if ok {
+		return fmt.Sprintf("[green]√ %s[-]", text)
+	}
+
+	return fmt.Sprintf("[red]× %s[-]", text)
 }
 
 // capitalizeFirst capitalizes the first character of string.

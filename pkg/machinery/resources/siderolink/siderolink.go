@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
-//go:generate deep-copy -type ConfigSpec -type TunnelSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate deep-copy -type ConfigSpec -type StatusSpec -type TunnelSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // ConfigType is type of Config resource.
 const ConfigType = resource.Type("SiderolinkConfigs.siderolink.talos.dev")

@@ -138,8 +138,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			reconnect, err := ctrl.shouldReconnect(wgClient)
+			reconnect, err := peerDown(wgClient)
 			if err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					// no Wireguard device, so no need to reconnect
+					continue
+				}
+
 				return err
 			}
 
@@ -474,27 +479,6 @@ func (ctrl *ManagerController) cleanupAddressSpecs(ctx context.Context, r contro
 	}
 
 	return nil
-}
-
-func (ctrl *ManagerController) shouldReconnect(wgClient *wgctrl.Client) (bool, error) {
-	wgDevice, err := wgClient.Device(constants.SideroLinkName)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			// no Wireguard device, so no need to reconnect
-			return false, nil
-		}
-
-		return false, fmt.Errorf("error reading Wireguard device: %w", err)
-	}
-
-	if len(wgDevice.Peers) != 1 {
-		return false, fmt.Errorf("unexpected number of Wireguard peers: %d", len(wgDevice.Peers))
-	}
-
-	peer := wgDevice.Peers[0]
-	since := time.Since(peer.LastHandshakeTime)
-
-	return since >= wireguard.PeerDownInterval, nil
 }
 
 func withTransportCredentials(insec bool) grpc.DialOption {

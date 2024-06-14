@@ -118,7 +118,7 @@ func (ctrl *DiagnosticsController) Run(ctx context.Context, r controller.Runtime
 					return nil
 				}
 
-				return safe.WriterModify(ctx, r, runtime.NewDiagnstic(runtime.NamespaceName, checkDescription.ID), func(res *runtime.Diagnostic) error {
+				return safe.WriterModify(ctx, r, runtime.NewDiagnostic(runtime.NamespaceName, checkDescription.ID), func(res *runtime.Diagnostic) error {
 					*res.TypedSpec() = *warning
 
 					return nil

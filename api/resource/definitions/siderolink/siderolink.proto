@@ -15,6 +15,12 @@ message ConfigSpec {
   bool tunnel = 5;
 }
 
+// StatusSpec describes Siderolink status.
+message StatusSpec {
+  string host = 1;
+  bool connected = 2;
+}
+
 // TunnelSpec describes Siderolink GRPC Tunnel configuration.
 message TunnelSpec {
   string api_endpoint = 1;

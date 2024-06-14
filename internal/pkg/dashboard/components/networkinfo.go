@@ -266,8 +266,8 @@ func (widget *NetworkInfo) timeservers(status *network.TimeServerStatus) string 
 
 func (widget *NetworkInfo) connectivity(status *network.Status) string {
 	if status.TypedSpec().ConnectivityReady {
-		return "[green]OK[-]"
+		return "[green]√ OK[-]"
 	}
 
-	return "[red]FAILED[-]"
+	return "[red]× FAILED[-]"
 }

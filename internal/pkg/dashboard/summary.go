@@ -30,7 +30,7 @@ type SummaryGrid struct {
 	diagnosticsVisible bool
 }
 
-const summaryTopFixedRows = 8
+const summaryTopFixedRows = 7
 
 // NewSummaryGrid initializes SummaryGrid.
 func NewSummaryGrid(app *tview.Application) *SummaryGrid {

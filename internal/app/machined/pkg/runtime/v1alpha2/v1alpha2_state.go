@@ -214,6 +214,7 @@ func NewState() (*State, error) {
 		&secrets.OSRoot{},
 		&secrets.Trustd{},
 		&siderolink.Config{},
+		&siderolink.Status{},
 		&siderolink.Tunnel{},
 		&time.AdjtimeStatus{},
 		&time.Status{},

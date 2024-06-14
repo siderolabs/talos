@@ -6,29 +6,24 @@ package components
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/rivo/tview"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
 )
 
 type talosInfoData struct {
-	uuid                          string
-	clusterName                   string
-	stage                         string
-	ready                         string
-	typ                           string
-	numMachinesText               string
-	secureBootState               string
-	statePartitionMountStatus     string
-	ephemeralPartitionMountStatus string
+	uuid            string
+	clusterName     string
+	siderolink      string
+	stage           string
+	ready           string
+	numMachinesText string
+	secureBootState string
 
 	machineIDSet map[string]struct{}
 }
@@ -91,6 +86,12 @@ func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
 		} else {
 			nodeData.clusterName = clusterName
 		}
+	case *siderolink.Status:
+		if data.Deleted {
+			nodeData.siderolink = notAvailable
+		} else {
+			nodeData.siderolink = formatText(res.TypedSpec().Host, res.TypedSpec().Connected)
+		}
 	case *runtime.MachineStatus:
 		if data.Deleted {
 			nodeData.stage = notAvailable
@@ -105,28 +106,6 @@ func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
 		} else {
 			nodeData.secureBootState = formatStatus(res.TypedSpec().SecureBoot)
 		}
-	case *runtime.MountStatus:
-		switch res.Metadata().ID() {
-		case constants.StatePartitionLabel:
-			if data.Deleted {
-				nodeData.statePartitionMountStatus = notAvailable
-			} else {
-				nodeData.statePartitionMountStatus = mountStatus(res.TypedSpec().Encrypted, res.TypedSpec().EncryptionProviders)
-			}
-		case constants.EphemeralPartitionLabel:
-			if data.Deleted {
-				nodeData.ephemeralPartitionMountStatus = notAvailable
-			} else {
-				nodeData.ephemeralPartitionMountStatus = mountStatus(res.TypedSpec().Encrypted, res.TypedSpec().EncryptionProviders)
-			}
-		}
-
-	case *config.MachineType:
-		if data.Deleted {
-			nodeData.typ = notAvailable
-		} else {
-			nodeData.typ = res.MachineType().String()
-		}
 	case *cluster.Member:
 		if data.Deleted {
 			delete(nodeData.machineIDSet, res.Metadata().ID())
@@ -134,7 +113,12 @@ func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
 			nodeData.machineIDSet[res.Metadata().ID()] = struct{}{}
 		}
 
-		nodeData.numMachinesText = strconv.Itoa(len(nodeData.machineIDSet))
+		suffix := ""
+		if len(nodeData.machineIDSet) != 1 {
+			suffix = "s"
+		}
+
+		nodeData.numMachinesText = fmt.Sprintf("(%d machine%s)", len(nodeData.machineIDSet), suffix)
 	}
 }
 
@@ -142,16 +126,14 @@ func (widget *TalosInfo) getOrCreateNodeData(node string) *talosInfoData {
 	nodeData, ok := widget.nodeMap[node]
 	if !ok {
 		nodeData = &talosInfoData{
-			uuid:                          notAvailable,
-			clusterName:                   notAvailable,
-			stage:                         notAvailable,
-			ready:                         notAvailable,
-			typ:                           notAvailable,
-			numMachinesText:               notAvailable,
-			secureBootState:               notAvailable,
-			statePartitionMountStatus:     notAvailable,
-			ephemeralPartitionMountStatus: notAvailable,
-			machineIDSet:                  make(map[string]struct{}),
+			uuid:            notAvailable,
+			clusterName:     notAvailable,
+			siderolink:      notAvailable,
+			stage:           notAvailable,
+			ready:           notAvailable,
+			numMachinesText: notAvailable,
+			secureBootState: notAvailable,
+			machineIDSet:    make(map[string]struct{}),
 		}
 
 		widget.nodeMap[node] = nodeData
@@ -171,7 +153,11 @@ func (widget *TalosInfo) redraw() {
 			},
 			{
 				Name:  "CLUSTER",
-				Value: data.clusterName,
+				Value: data.clusterName + " " + data.numMachinesText,
+			},
+			{
+				Name:  "SIDEROLINK",
+				Value: data.siderolink,
 			},
 			{
 				Name:  "STAGE",
@@ -182,35 +168,11 @@ func (widget *TalosInfo) redraw() {
 				Value: data.ready,
 			},
 			{
-				Name:  "TYPE",
-				Value: data.typ,
-			},
-			{
-				Name:  "MACHINES",
-				Value: data.numMachinesText,
-			},
-			{
 				Name:  "SECUREBOOT",
 				Value: data.secureBootState,
-			},
-			{
-				Name:  "STATE",
-				Value: data.statePartitionMountStatus,
-			},
-			{
-				Name:  "EPHEMERAL",
-				Value: data.ephemeralPartitionMountStatus,
 			},
 		},
 	}
 
 	widget.SetText(fields.String())
-}
-
-func mountStatus(encrypted bool, providers []string) string {
-	if !encrypted {
-		return "[green]OK[-]"
-	}
-
-	return fmt.Sprintf("[green]OK - encrypted[-] (%s)", strings.Join(providers, ","))
 }

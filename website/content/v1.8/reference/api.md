@@ -255,6 +255,7 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/siderolink/siderolink.proto](#resource/definitions/siderolink/siderolink.proto)
     - [ConfigSpec](#talos.resource.definitions.siderolink.ConfigSpec)
+    - [StatusSpec](#talos.resource.definitions.siderolink.StatusSpec)
     - [TunnelSpec](#talos.resource.definitions.siderolink.TunnelSpec)
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
@@ -4606,6 +4607,22 @@ ConfigSpec describes Siderolink configuration.
 | join_token | [string](#string) |  |  |
 | insecure | [bool](#bool) |  |  |
 | tunnel | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.siderolink.StatusSpec"></a>
+
+### StatusSpec
+StatusSpec describes Siderolink status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  |  |
+| connected | [bool](#bool) |  |  |
 
 
 

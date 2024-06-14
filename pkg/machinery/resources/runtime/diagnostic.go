@@ -34,8 +34,8 @@ func (spec *DiagnosticSpec) DocumentationURL(id string) string {
 	return "https://talos.dev/diagnostic/" + id
 }
 
-// NewDiagnstic initializes a Diagnostic resource.
-func NewDiagnstic(namespace resource.Namespace, id resource.ID) *Diagnostic {
+// NewDiagnostic initializes a Diagnostic resource.
+func NewDiagnostic(namespace resource.Namespace, id resource.ID) *Diagnostic {
 	return typed.NewResource[DiagnosticSpec, DiagnosticExtension](
 		resource.NewMetadata(namespace, DiagnosticType, id, resource.VersionUndefined),
 		DiagnosticSpec{},

@@ -103,6 +103,62 @@ func (x *ConfigSpec) GetTunnel() bool {
 	return false
 }
 
+// StatusSpec describes Siderolink status.
+type StatusSpec struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Host      string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Connected bool   `protobuf:"varint,2,opt,name=connected,proto3" json:"connected,omitempty"`
+}
+
+func (x *StatusSpec) Reset() {
+	*x = StatusSpec{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_resource_definitions_siderolink_siderolink_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatusSpec) ProtoMessage() {}
+
+func (x *StatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_siderolink_siderolink_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatusSpec.ProtoReflect.Descriptor instead.
+func (*StatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_siderolink_siderolink_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *StatusSpec) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *StatusSpec) GetConnected() bool {
+	if x != nil {
+		return x.Connected
+	}
+	return false
+}
+
 // TunnelSpec describes Siderolink GRPC Tunnel configuration.
 type TunnelSpec struct {
 	state         protoimpl.MessageState
@@ -118,7 +174,7 @@ type TunnelSpec struct {
 func (x *TunnelSpec) Reset() {
 	*x = TunnelSpec{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_resource_definitions_siderolink_siderolink_proto_msgTypes[1]
+		mi := &file_resource_definitions_siderolink_siderolink_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -131,7 +187,7 @@ func (x *TunnelSpec) String() string {
 func (*TunnelSpec) ProtoMessage() {}
 
 func (x *TunnelSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_siderolink_siderolink_proto_msgTypes[1]
+	mi := &file_resource_definitions_siderolink_siderolink_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -144,7 +200,7 @@ func (x *TunnelSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TunnelSpec.ProtoReflect.Descriptor instead.
 func (*TunnelSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_siderolink_siderolink_proto_rawDescGZIP(), []int{1}
+	return file_resource_definitions_siderolink_siderolink_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *TunnelSpec) GetApiEndpoint() string {
@@ -194,7 +250,11 @@ var file_resource_definitions_siderolink_siderolink_proto_rawDesc = []byte{
 	0x6b, 0x65, 0x6e, 0x12, 0x1a, 0x0a, 0x08, 0x69, 0x6e, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x18,
 	0x04, 0x20, 0x01, 0x28, 0x08, 0x52, 0x08, 0x69, 0x6e, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x12,
 	0x16, 0x0a, 0x06, 0x74, 0x75, 0x6e, 0x6e, 0x65, 0x6c, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52,
-	0x06, 0x74, 0x75, 0x6e, 0x6e, 0x65, 0x6c, 0x22, 0x94, 0x01, 0x0a, 0x0a, 0x54, 0x75, 0x6e, 0x6e,
+	0x06, 0x74, 0x75, 0x6e, 0x6e, 0x65, 0x6c, 0x22, 0x3e, 0x0a, 0x0a, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x53, 0x70, 0x65, 0x63, 0x12, 0x12, 0x0a, 0x04, 0x68, 0x6f, 0x73, 0x74, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x68, 0x6f, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x63, 0x6f, 0x6e,
+	0x6e, 0x65, 0x63, 0x74, 0x65, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x09, 0x63, 0x6f,
+	0x6e, 0x6e, 0x65, 0x63, 0x74, 0x65, 0x64, 0x22, 0x94, 0x01, 0x0a, 0x0a, 0x54, 0x75, 0x6e, 0x6e,
 	0x65, 0x6c, 0x53, 0x70, 0x65, 0x63, 0x12, 0x21, 0x0a, 0x0c, 0x61, 0x70, 0x69, 0x5f, 0x65, 0x6e,
 	0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x61, 0x70,
 	0x69, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x6c, 0x69, 0x6e,
@@ -224,14 +284,15 @@ func file_resource_definitions_siderolink_siderolink_proto_rawDescGZIP() []byte 
 	return file_resource_definitions_siderolink_siderolink_proto_rawDescData
 }
 
-var file_resource_definitions_siderolink_siderolink_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_resource_definitions_siderolink_siderolink_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_resource_definitions_siderolink_siderolink_proto_goTypes = []interface{}{
 	(*ConfigSpec)(nil),       // 0: talos.resource.definitions.siderolink.ConfigSpec
-	(*TunnelSpec)(nil),       // 1: talos.resource.definitions.siderolink.TunnelSpec
-	(*common.NetIPPort)(nil), // 2: common.NetIPPort
+	(*StatusSpec)(nil),       // 1: talos.resource.definitions.siderolink.StatusSpec
+	(*TunnelSpec)(nil),       // 2: talos.resource.definitions.siderolink.TunnelSpec
+	(*common.NetIPPort)(nil), // 3: common.NetIPPort
 }
 var file_resource_definitions_siderolink_siderolink_proto_depIdxs = []int32{
-	2, // 0: talos.resource.definitions.siderolink.TunnelSpec.node_address:type_name -> common.NetIPPort
+	3, // 0: talos.resource.definitions.siderolink.TunnelSpec.node_address:type_name -> common.NetIPPort
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -258,6 +319,18 @@ func file_resource_definitions_siderolink_siderolink_proto_init() {
 			}
 		}
 		file_resource_definitions_siderolink_siderolink_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*StatusSpec); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_resource_definitions_siderolink_siderolink_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TunnelSpec); i {
 			case 0:
 				return &v.state
@@ -276,7 +349,7 @@ func file_resource_definitions_siderolink_siderolink_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_resource_definitions_siderolink_siderolink_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
