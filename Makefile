@@ -15,11 +15,11 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-2-g345db93
+TOOLS ?= ghcr.io/siderolabs/tools:v1.7.0-3-g6c94771
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.7.0-17-ga201d27
-EXTRAS ?= v1.7.0-1-gbb76755
+PKGS ?= v1.7.0-21-gc58ed7f
+EXTRAS ?= v1.7.0-2-g7c627a8
 
 PKG_FHS ?= $(PKGS_PREFIX)/fhs:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
