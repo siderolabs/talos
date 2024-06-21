@@ -1,3 +1,79 @@
+## [Talos 1.7.5](https://github.com/siderolabs/talos/releases/tag/v1.7.5) (2024-06-21)
+
+Welcome to the v1.7.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.6.33
+Flannel: 0.25.3
+Containerd: 1.7.18
+
+Talos is built with Go 1.22.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitriy Matrenichev
+* Noel Georgi
+* Marcel Richter
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`6d6751f6a`](https://github.com/siderolabs/talos/commit/6d6751f6aca58256078dc6be975efe78c65fb914) feat: update Linux to 6.6.33, Go to 1.22.4
+* [`2c4aa7342`](https://github.com/siderolabs/talos/commit/2c4aa7342576766aaf9db8522dd0fd836759875a) chore: fix our dns server implementation
+* [`8ad20a6c1`](https://github.com/siderolabs/talos/commit/8ad20a6c1e7b5ab5474ad5b272f023b1f06e3b48) fix: initial assignment of Hetzner Cloud Alias IP
+* [`90c3a0244`](https://github.com/siderolabs/talos/commit/90c3a02442f24591a5152841f18f62bf8deae92a) feat: update Flannel to v0.25.3
+* [`b14fe3973`](https://github.com/siderolabs/talos/commit/b14fe3973a47a0688a01c15d2515e240c6622e28) fix: downgrade Azure IMDS required version
+* [`fa6c85259`](https://github.com/siderolabs/talos/commit/fa6c8525982e754d37dbd3e4f35173ab3909efa5) fix: decrease maximum negative ttl for dns responses
+</p>
+</details>
+
+### Changes from siderolabs/extras
+<details><summary>1 commit</summary>
+<p>
+
+* [`7c627a8`](https://github.com/siderolabs/extras/commit/7c627a833fd90c76b8c08db8e77b26f228c0f7da) feat: update Go to 1.22.4
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>4 commits</summary>
+<p>
+
+* [`c58ed7f`](https://github.com/siderolabs/pkgs/commit/c58ed7f05d7b14dd8c3fb7311678ead9b50139d8) feat: bump Go to 1.22.4
+* [`ab5d66b`](https://github.com/siderolabs/pkgs/commit/ab5d66b8ca3c1932f9df0a6c602f089c8f59bb50) feat: update Linux to 6.6.33
+* [`0e1002e`](https://github.com/siderolabs/pkgs/commit/0e1002e8b455931419264b96c7b5973d0f54512d) feat: enable SCTP support
+* [`e04adee`](https://github.com/siderolabs/pkgs/commit/e04adeeb942037d5aaf303ad765fb8760009f65b) feat: update containerd to 1.7.18
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`6c94771`](https://github.com/siderolabs/tools/commit/6c94771b203aa037454362b8d8e9d0fe663a1540) feat: update Go to 1.22.4
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/docker/docker**      v26.0.0 -> v26.0.2
+* **github.com/miekg/dns**          v1.1.58 -> v1.1.59
+* **github.com/siderolabs/extras**  v1.7.0-1-gbb76755 -> v1.7.0-2-g7c627a8
+* **github.com/siderolabs/pkgs**    v1.7.0-17-ga201d27 -> v1.7.0-21-gc58ed7f
+* **github.com/siderolabs/tools**   v1.7.0-2-g345db93 -> v1.7.0-3-g6c94771
+* **google.golang.org/grpc**        v1.62.1 -> v1.63.2
+
+Previous release can be found at [v1.7.4](https://github.com/siderolabs/talos/releases/tag/v1.7.4)
+
 ## [Talos 1.7.4](https://github.com/siderolabs/talos/releases/tag/v1.7.4) (2024-05-30)
 
 Welcome to the v1.7.4 release of Talos!
