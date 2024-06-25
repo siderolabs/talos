@@ -30,6 +30,7 @@ ARG PKG_LIBAIO
 ARG PKG_MUSL
 ARG PKG_RUNC
 ARG PKG_XFSPROGS
+ARG PKG_APPARMOR
 ARG PKG_UTIL_LINUX
 ARG PKG_KMOD
 ARG PKG_KERNEL
@@ -39,6 +40,9 @@ ARG PKG_TALOSCTL_CNI_BUNDLE_INSTALL
 
 FROM ${PKG_FHS} AS pkg-fhs
 FROM ${PKG_CA_CERTIFICATES} AS pkg-ca-certificates
+
+FROM --platform=amd64 ${PKG_APPARMOR} AS pkg-apparmor-amd64
+FROM --platform=arm64 ${PKG_APPARMOR} AS pkg-apparmor-arm64
 
 FROM --platform=amd64 ${PKG_CRYPTSETUP} AS pkg-cryptsetup-amd64
 FROM --platform=arm64 ${PKG_CRYPTSETUP} AS pkg-cryptsetup-arm64
@@ -558,6 +562,7 @@ COPY --from=depmod-arm64 /build/lib/modules /lib/modules
 FROM build AS rootfs-base-amd64
 COPY --link --from=pkg-fhs / /rootfs
 COPY --link --from=pkg-ca-certificates / /rootfs
+COPY --link --from=pkg-apparmor-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --from=pkg-containerd-amd64 / /rootfs
 COPY --link --from=pkg-dosfstools-amd64 / /rootfs
@@ -622,6 +627,7 @@ END
 FROM build AS rootfs-base-arm64
 COPY --link --from=pkg-fhs / /rootfs
 COPY --link --from=pkg-ca-certificates / /rootfs
+COPY --link --from=pkg-apparmor-arm64 / /rootfs
 COPY --link --from=pkg-cryptsetup-arm64 / /rootfs
 COPY --link --from=pkg-containerd-arm64 / /rootfs
 COPY --link --from=pkg-dosfstools-arm64 / /rootfs

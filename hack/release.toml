@@ -27,6 +27,20 @@ Flannel: 0.25.3
 Talos is built with Go 1.22.4.
 """
 
+    [notes.apparmor]
+        title = "Workload Apparmor Profile"
+        description = """\
+Talos Linux can now apply the default AppArmor profiles to all workloads started via containerd, if the machine is installed with the AppArmor LSM enforced via the extraKernelArgs.
+
+Eg:
+
+```yaml
+machine:
+    install:
+        extraKernelArgs:
+            - security=apparmor
+```
+"""
 
     [notes.zstd]
         title = "ZSTD Compression"
