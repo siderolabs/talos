@@ -273,7 +273,7 @@ As the inline manifest is processed from top to bottom make sure to manually put
 - Only add the Cilium inline manifest to the control plane nodes machine configuration.
 - Make sure all control plane nodes have an identical configuration.
 - If you delete any of the generated resources they will be restored whenever a control plane node reboots.
-- As a safety messure Talos only creates missing resources from inline manifests, it never deletes or updates anything.
+- As a safety measure, Talos only creates missing resources from inline manifests, it never deletes or updates anything.
 - If you need to update a manifest make sure to first edit all control plane machine configurations and then run `talosctl upgrade-k8s` as it will take care of updating inline manifests.
 
 ## Known issues
