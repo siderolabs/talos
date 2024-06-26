@@ -59,7 +59,7 @@ esac
 
 mkdir -p "${ARTIFACTS}/e2e-aws-generated"
 
-NAME_PREFIX="talos-e2e-${SHA}-aws"
+NAME_PREFIX="talos-e2e-${SHA}-aws-${E2E_AWS_TARGET}"
 
 jq --null-input \
   --arg WORKER_GROUP "${WORKER_GROUP}" \
