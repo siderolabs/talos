@@ -13,8 +13,6 @@ import (
 )
 
 // PortRange is a port range.
-//
-//docgen:nodoc
 type PortRange struct {
 	Lo uint16
 	Hi uint16
@@ -72,8 +70,6 @@ func (pr PortRange) String() string {
 }
 
 // PortRanges is a slice of port ranges.
-//
-//docgen:nodoc
 type PortRanges []PortRange
 
 // Validate the port ranges.
