@@ -8,6 +8,7 @@ import (
 	"archive/tar"
 	"bufio"
 	"bytes"
+	stdcmp "cmp"
 	"compress/gzip"
 	"context"
 	"encoding/json"
@@ -76,6 +77,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	docscfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -218,15 +221,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	}
 
 	if in.DryRun {
-		var config interface{}
-		if s.Controller.Runtime().Config() != nil {
-			config = s.Controller.Runtime().ConfigContainer().RawV1Alpha1()
-		}
-
-		diff := cmp.Diff(config, cfgProvider.RawV1Alpha1(), cmp.AllowUnexported(v1alpha1.InstallDiskSizeMatcher{}))
-		if diff == "" {
-			diff = "No changes."
-		}
+		details := generateDiff(s.Controller.Runtime(), cfgProvider)
 
 		return &machine.ApplyConfigurationResponse{
 			Messages: []*machine.ApplyConfiguration{
@@ -234,8 +229,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 					Mode: in.Mode,
 					ModeDetails: fmt.Sprintf(`Dry run summary:
 %s (skipped in dry-run).
-Config diff:
-%s`, modeDetails, diff),
+%s`, modeDetails, details),
 				},
 			},
 		}, nil
@@ -299,6 +293,35 @@ Config diff:
 			},
 		},
 	}, nil
+}
+
+func generateDiff(r runtime.Runtime, provider config.Provider) string {
+	var cfg *v1alpha1.Config
+
+	if r.Config() != nil {
+		cfg = r.ConfigContainer().RawV1Alpha1()
+	}
+
+	v1alpha1Diff := cmp.Diff(cfg, provider.RawV1Alpha1(), cmp.AllowUnexported(v1alpha1.InstallDiskSizeMatcher{}))
+	if v1alpha1Diff == "" {
+		v1alpha1Diff = "No changes."
+	}
+
+	origDocs := slices.DeleteFunc(r.ConfigContainer().Documents(), func(doc docscfg.Document) bool { return doc.Kind() == v1alpha1.Version })
+	newDocs := slices.DeleteFunc(provider.Documents(), func(doc docscfg.Document) bool { return doc.Kind() == v1alpha1.Version })
+
+	slices.SortStableFunc(origDocs, func(a, b docscfg.Document) int { return stdcmp.Compare(a.Kind(), b.Kind()) })
+	slices.SortStableFunc(newDocs, func(a, b docscfg.Document) int { return stdcmp.Compare(a.Kind(), b.Kind()) })
+
+	documentsDiff := cmp.Diff(origDocs, newDocs)
+	if documentsDiff == "" {
+		documentsDiff = "No changes."
+	}
+
+	return fmt.Sprintf(`Config diff:
+%s
+Documents diff:
+%s`, v1alpha1Diff, documentsDiff)
 }
 
 // GenerateConfiguration implements the machine.MachineServer interface.

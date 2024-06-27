@@ -8,12 +8,14 @@ package api
 
 import (
 	"context"
+	"net/url"
 	"os"
-	"sort"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/codes"
@@ -23,7 +25,9 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	mc "github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -88,14 +92,13 @@ func (suite *ApplyConfigSuite) TestApply() {
 
 	suite.WaitForBootDone(suite.ctx)
 
-	sort.Strings(nodes)
+	slices.Sort(nodes)
 
 	node := nodes[0]
-
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Assert().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+	suite.Assert().NoErrorf(err, "failed to read existing config from node %q: %w", node, err)
 
 	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 		if cfg.MachineConfig.MachineSysctls == nil {
@@ -115,7 +118,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 			)
 			if err != nil {
 				// It is expected that the connection will EOF here, so just log the error
-				suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
+				suite.Assert().NoErrorf(err, "failed to apply configuration (node %q): %w", node, err)
 			}
 
 			return nil
@@ -125,7 +128,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 	// Verify configuration change
 	var newProvider config.Provider
 
-	suite.Require().Nilf(
+	suite.Require().NoErrorf(
 		retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(
 			func() error {
 				newProvider, err = suite.ReadConfigFromNode(nodeCtx)
@@ -300,7 +303,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 				)
 				if err != nil {
 					// It is expected that the connection will EOF here, so just log the error
-					suite.Assert().Nilf(err, "failed to apply configuration (node %q): %w", node, err)
+					suite.Assert().Errorf(err, "failed to apply configuration (node %q): %w", node, err)
 				}
 
 				return nil
@@ -312,7 +315,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		// Verify configuration change
 		var newProvider config.Provider
 
-		suite.Require().Nilf(
+		suite.Require().Errorf(
 			retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(
 				func() error {
 					newProvider, err = suite.ReadConfigFromNode(nodeCtx)
@@ -355,14 +358,13 @@ func (suite *ApplyConfigSuite) TestApplyNoReboot() {
 
 	suite.WaitForBootDone(suite.ctx)
 
-	sort.Strings(nodes)
+	slices.Sort(nodes)
 
 	node := nodes[0]
-
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q: %s", node, err)
 
 	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 		// this won't be possible without a reboot
@@ -387,14 +389,13 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 
 	suite.WaitForBootDone(suite.ctx)
 
-	sort.Strings(nodes)
+	slices.Sort(nodes)
 
 	node := nodes[0]
-
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q: %s", node, err)
 
 	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 		// this won't be possible without a reboot
@@ -416,8 +417,47 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 		},
 	)
 
-	suite.Require().Nilf(err, "failed to apply configuration (node %q): %s", node, err)
+	suite.Require().NoErrorf(err, "failed to apply configuration (node %q): %s", node, err)
 	suite.Assert().Contains(reply.Messages[0].ModeDetails, "Dry run summary")
+}
+
+// TestApplyDryRunDocuments verifies the apply config API with multi doc and dry run enabled.
+func (suite *ApplyConfigSuite) TestApplyDryRunDocuments() {
+	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
+	suite.Require().NotEmpty(nodes)
+
+	suite.WaitForBootDone(suite.ctx)
+
+	slices.Sort(nodes)
+
+	node := nodes[0]
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q: %s", node, err)
+
+	kmsg := runtime.NewKmsgLogV1Alpha1()
+	kmsg.MetaName = "omni-kmsg"
+	kmsg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://[fdae:41e4:649b:9303::1]:8092"))
+
+	cont, err := container.New(provider.RawV1Alpha1(), kmsg)
+	suite.Require().NoErrorf(err, "failed to create container: %s", err)
+
+	cfgDataOut, err := cont.Bytes()
+	suite.Require().NoErrorf(err, "failed to marshal container: %s", err)
+
+	reply, err := suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data:   cfgDataOut,
+			Mode:   machineapi.ApplyConfigurationRequest_AUTO,
+			DryRun: true,
+		},
+	)
+
+	suite.Require().NoErrorf(err, "failed to apply configuration (node %q): %s", node, err)
+	suite.Assert().Contains(reply.Messages[0].ModeDetails, "Dry run summary")
+	suite.Assert().Contains(reply.Messages[0].ModeDetails, "omni-kmsg")
+	suite.Assert().Contains(reply.Messages[0].ModeDetails, "tcp://[fdae:41e4:649b:9303::1]:8092")
 }
 
 // TestApplyTry applies the config in try mode with a short timeout.
@@ -427,10 +467,9 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 
 	suite.WaitForBootDone(suite.ctx)
 
-	sort.Strings(nodes)
+	slices.Sort(nodes)
 
 	node := nodes[0]
-
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	getMachineConfig := func(ctx context.Context) (*mc.MachineConfig, error) {
@@ -443,7 +482,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	}
 
 	provider, err := getMachineConfig(nodeCtx)
-	suite.Require().Nilf(err, "failed to read existing config from node %q: %s", node, err)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q: %s", node, err)
 
 	cfgDataOut := suite.PatchV1Alpha1Config(provider.Provider(), func(cfg *v1alpha1.Config) {
 		if cfg.MachineConfig.MachineNetwork == nil {
@@ -465,10 +504,10 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 			TryModeTimeout: durationpb.New(time.Second * 1),
 		},
 	)
-	suite.Assert().Nilf(err, "failed to apply configuration (node %q): %s", node, err)
+	suite.Assert().NoErrorf(err, "failed to apply configuration (node %q): %s", node, err)
 
 	provider, err = getMachineConfig(nodeCtx)
-	suite.Require().Nilf(err, "failed to read existing config from node %q: %w", node, err)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q: %w", node, err)
 
 	suite.Assert().NotNil(provider.Config().Machine().Network())
 	suite.Assert().NotNil(provider.Config().Machine().Network().Devices())
@@ -487,7 +526,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 
 	for range 100 {
 		provider, err = getMachineConfig(nodeCtx)
-		suite.Assert().Nilf(err, "failed to read existing config from node %q: %s", node, err)
+		suite.Assert().NoErrorf(err, "failed to read existing config from node %q: %s", node, err)
 
 		if provider.Config().Machine().Network() == nil {
 			return

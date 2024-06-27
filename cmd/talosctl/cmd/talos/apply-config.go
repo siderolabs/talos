@@ -43,7 +43,7 @@ var applyConfigCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
 			cfgBytes []byte
-			e        error
+			err      error
 		)
 
 		if len(args) > 0 {
@@ -59,9 +59,9 @@ var applyConfigCmd = &cobra.Command{
 		}
 
 		if applyConfigCmdFlags.filename != "" {
-			cfgBytes, e = os.ReadFile(applyConfigCmdFlags.filename)
-			if e != nil {
-				return fmt.Errorf("failed to read configuration from %q: %w", applyConfigCmdFlags.filename, e)
+			cfgBytes, err = os.ReadFile(applyConfigCmdFlags.filename)
+			if err != nil {
+				return fmt.Errorf("failed to read configuration from %q: %w", applyConfigCmdFlags.filename, err)
 			}
 
 			if len(cfgBytes) < 1 {
@@ -74,19 +74,19 @@ var applyConfigCmd = &cobra.Command{
 					patches []configpatcher.Patch
 				)
 
-				patches, e = configpatcher.LoadPatches(applyConfigCmdFlags.patches)
-				if e != nil {
-					return e
+				patches, err = configpatcher.LoadPatches(applyConfigCmdFlags.patches)
+				if err != nil {
+					return err
 				}
 
-				cfg, e = configpatcher.Apply(configpatcher.WithBytes(cfgBytes), patches)
-				if e != nil {
-					return e
+				cfg, err = configpatcher.Apply(configpatcher.WithBytes(cfgBytes), patches)
+				if err != nil {
+					return err
 				}
 
-				cfgBytes, e = cfg.Bytes()
-				if e != nil {
-					return e
+				cfgBytes, err = cfg.Bytes()
+				if err != nil {
+					return err
 				}
 			}
 		} else if applyConfigCmdFlags.Mode.Mode != helpers.InteractiveMode {
@@ -108,8 +108,10 @@ var applyConfigCmd = &cobra.Command{
 
 				if len(GlobalArgs.Endpoints) > 0 {
 					return WithClientNoNodes(func(bootstrapCtx context.Context, bootstrapClient *client.Client) error {
-						opts := []installer.Option{}
-						opts = append(opts, installer.WithBootstrapNode(bootstrapCtx, bootstrapClient, GlobalArgs.Endpoints[0]), installer.WithDryRun(applyConfigCmdFlags.dryRun))
+						opts := []installer.Option{
+							installer.WithBootstrapNode(bootstrapCtx, bootstrapClient, GlobalArgs.Endpoints[0]),
+							installer.WithDryRun(applyConfigCmdFlags.dryRun),
+						}
 
 						conn, err := installer.NewConnection(
 							ctx,
