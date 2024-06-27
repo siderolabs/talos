@@ -40,33 +40,25 @@ var (
 
 // ServiceConfigV1Alpha1 is a extensionserviceconfig document.
 //
-//	examples:
-//	  - value: extensionServiceConfigV1Alpha1()
-//	alias: ExtensionServiceConfig
-//	schemaRoot: true
-//	schemaMeta: v1alpha1/ExtensionServiceConfig
+//docgen:configuration
 type ServiceConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
-	//   description: |
-	//     Name of the extension service.
-	//   schemaRequired: true
-	ServiceName string `yaml:"name"`
-	//   description: |
-	//     The config files for the extension service.
-	ServiceConfigFiles []ConfigFile `yaml:"configFiles,omitempty"`
-	//   description: |
-	//     The environment for the extension service.
-	ServiceEnvironment []string `yaml:"environment,omitempty"`
+	// The name of the extension service.
+	ServiceName string `yaml:"name" docgen:"{'in': '1.7', 'optional': false}"`
+	// The config files for the extension service.
+	ServiceConfigFiles []ConfigFile `yaml:"configFiles,omitempty" docgen:"{'in': '1.7'}"`
+	// The environment for the extension service.
+	ServiceEnvironment []string `yaml:"environment,omitempty" docgen:"{'in': '1.7'}"`
 }
 
 // ConfigFile is a config file for extension services.
+//
+//docgen:configuration
 type ConfigFile struct {
-	//   description: |
-	//     The content of the extension service config file.
-	ConfigFileContent string `yaml:"content"`
-	//   description: |
-	//     The mount path of the extension service config file.
-	ConfigFileMountPath string `yaml:"mountPath"`
+	// The content of the extension service config file.
+	ConfigFileContent string `yaml:"content" docgen:"{'in': '1.7'}"`
+	// The mount path of the extension service config file.
+	ConfigFileMountPath string `yaml:"mountPath" docgen:"{'in': '1.7'}"`
 }
 
 // NewServicesConfigV1Alpha1 creates a new siderolink config document.
