@@ -63,31 +63,31 @@ Install the [Cilium CLI](https://docs.cilium.io/en/v1.13/gettingstarted/k8s-inst
 
 ```bash
 cilium install \
-    --helm-set=ipam.mode=kubernetes \
-    --helm-set=kubeProxyReplacement=disabled \
-    --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-    --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-    --helm-set=cgroup.autoMount.enabled=false \
-    --helm-set=cgroup.hostRoot=/sys/fs/cgroup
+    --set ipam.mode=kubernetes \
+    --set kubeProxyReplacement=disabled \
+    --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+    --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set cgroup.autoMount.enabled=false \
+    --set cgroup.hostRoot=/sys/fs/cgroup
 ```
 
 #### Without kube-proxy
 
 ```bash
 cilium install \
-    --helm-set=ipam.mode=kubernetes \
-    --helm-set=kubeProxyReplacement=true \
-    --helm-set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-    --helm-set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-    --helm-set=cgroup.autoMount.enabled=false \
-    --helm-set=cgroup.hostRoot=/sys/fs/cgroup \
-    --helm-set=k8sServiceHost=localhost \
-    --helm-set=k8sServicePort=7445
+    --set ipam.mode=kubernetes \
+    --set kubeProxyReplacement=true \
+    --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+    --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set cgroup.autoMount.enabled=false \
+    --set cgroup.hostRoot=/sys/fs/cgroup \
+    --set k8sServiceHost=localhost \
+    --set k8sServicePort=7445
 ```
 
 ### Installation using Helm
 
-Refer to [Installing with Helm](https://docs.cilium.io/en/v1.13/installation/k8s-install-helm/) for more information.
+Refer to [Installing with Helm](https://docs.cilium.io/en/v1.15/installation/k8s-install-helm/) for more information.
 
 First we'll need to add the helm repo for Cilium.
 
@@ -108,14 +108,14 @@ During this window you can install Cilium manually by running the following:
 helm install \
     cilium \
     cilium/cilium \
-    --version 1.14.0 \
+    --version 1.15.6 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
-    --set=kubeProxyReplacement=disabled \
-    --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-    --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-    --set=cgroup.autoMount.enabled=false \
-    --set=cgroup.hostRoot=/sys/fs/cgroup
+    --set kubeProxyReplacement=disabled \
+    --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+    --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set cgroup.autoMount.enabled=false \
+    --set cgroup.hostRoot=/sys/fs/cgroup
 ```
 
 Or if you want to deploy Cilium without kube-proxy, also set some extra paramaters:
@@ -124,16 +124,16 @@ Or if you want to deploy Cilium without kube-proxy, also set some extra paramate
 helm install \
     cilium \
     cilium/cilium \
-    --version 1.14.0 \
+    --version 1.15.6 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
-    --set=kubeProxyReplacement=true \
-    --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-    --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-    --set=cgroup.autoMount.enabled=false \
-    --set=cgroup.hostRoot=/sys/fs/cgroup \
-    --set=k8sServiceHost=localhost \
-    --set=k8sServicePort=7445
+    --set kubeProxyReplacement=true \
+    --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+    --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set cgroup.autoMount.enabled=false \
+    --set cgroup.hostRoot=/sys/fs/cgroup \
+    --set k8sServiceHost=localhost \
+    --set k8sServicePort=7445
 ```
 
 After Cilium is installed the boot process should continue and complete successfully.
@@ -146,14 +146,14 @@ Instead of directly installing Cilium you can instead first generate the manifes
 helm template \
     cilium \
     cilium/cilium \
-    --version 1.14.0 \
+    --version 1.15.6 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
-    --set=kubeProxyReplacement=disabled \
-    --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-    --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-    --set=cgroup.autoMount.enabled=false \
-    --set=cgroup.hostRoot=/sys/fs/cgroup > cilium.yaml
+    --set kubeProxyReplacement=disabled \
+    --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+    --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set cgroup.autoMount.enabled=false \
+    --set cgroup.hostRoot=/sys/fs/cgroup > cilium.yaml
 
 kubectl apply -f cilium.yaml
 ```
@@ -164,16 +164,16 @@ Without kube-proxy:
 helm template \
     cilium \
     cilium/cilium \
-    --version 1.14.0 \
+    --version 1.15.6 \
     --namespace kube-system \
     --set ipam.mode=kubernetes \
-    --set=kubeProxyReplacement=true \
-    --set=securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
-    --set=securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
-    --set=cgroup.autoMount.enabled=false \
-    --set=cgroup.hostRoot=/sys/fs/cgroup \
-    --set=k8sServiceHost=localhost \
-    --set=k8sServicePort=7445 > cilium.yaml
+    --set kubeProxyReplacement=true \
+    --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}" \
+    --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}" \
+    --set cgroup.autoMount.enabled=false \
+    --set cgroup.hostRoot=/sys/fs/cgroup \
+    --set k8sServiceHost=localhost \
+    --set k8sServicePort=7445 > cilium.yaml
 
 kubectl apply -f cilium.yaml
 ```
@@ -197,8 +197,8 @@ cluster:
 
 ```bash
 talosctl gen config \
-    my-cluster https://mycluster.local:6443 \
-    --config-patch @patch.yaml
+  my-cluster https://mycluster.local:6443 \
+  --config-patch @patch.yaml
 ```
 
 However, beware of the fact that the helm generated Cilium manifest contains sensitive key material.
@@ -220,8 +220,8 @@ cluster:
 
 ```bash
 talosctl gen config \
-    my-cluster https://mycluster.local:6443 \
-    --config-patch @patch.yaml
+  my-cluster https://mycluster.local:6443 \
+  --config-patch @patch.yaml
 ```
 
 if deploying Cilium with `kube-proxy` disabled, you can also include the following:
@@ -239,8 +239,8 @@ cluster:
 
 ```bash
 talosctl gen config \
-    my-cluster https://mycluster.local:6443 \
-    --config-patch @patch.yaml
+  my-cluster https://mycluster.local:6443 \
+  --config-patch @patch.yaml
 ```
 
 To do so patch this into your machine configuration:
@@ -359,14 +359,14 @@ We can leverage this to our advantage to install Cilium by using an inline manif
                 command:
                   - cilium
                   - install
-                  - --helm-set=ipam.mode=kubernetes
-                  - --set
-                  - kubeProxyReplacement=true
-                  - --helm-set=securityContext.capabilities.ciliumAgent={CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}
-                  - --helm-set=securityContext.capabilities.cleanCiliumState={NET_ADMIN,SYS_ADMIN,SYS_RESOURCE} - --helm-set=cgroup.autoMount.enabled=false
-                  - --helm-set=cgroup.hostRoot=/sys/fs/cgroup
-                  - --helm-set=k8sServiceHost=localhost
-                  - --helm-set=k8sServicePort=7445
+                  - --set ipam.mode=kubernetes
+                  - --set kubeProxyReplacement=true
+                  - --set securityContext.capabilities.ciliumAgent="{CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}"
+                  - --set securityContext.capabilities.cleanCiliumState="{NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}"
+                  - --set cgroup.autoMount.enabled=false
+                  - --set cgroup.hostRoot=/sys/fs/cgroup
+                  - --set k8sServiceHost=localhost
+                  - --set k8sServicePort=7445
 ```
 
 Because there is no CNI present at installation time the kubernetes.default.svc cannot be used to install Cilium, to overcome this limitation we'll utilize the host network connection to connect back to itself with 'hostNetwork: true' in tandem with the environment variables KUBERNETES_SERVICE_PORT and KUBERNETES_SERVICE_HOST.
