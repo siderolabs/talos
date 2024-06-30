@@ -70,11 +70,17 @@ message BondSlave {
 // BridgeMasterSpec describes bridge settings if Kind == "bridge".
 message BridgeMasterSpec {
   STPSpec stp = 1;
+  BridgeVLANSpec vlan = 2;
 }
 
 // BridgeSlave contains a bond's master name and slave index.
 message BridgeSlave {
   string master_name = 1;
+}
+
+// BridgeVLANSpec describes VLAN settings of a bridge.
+message BridgeVLANSpec {
+  bool filtering_enabled = 1;
 }
 
 // DHCP4OperatorSpec describes DHCP4 operator options.

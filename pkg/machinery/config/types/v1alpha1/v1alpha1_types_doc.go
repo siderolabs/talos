@@ -2954,6 +2954,31 @@ func (STP) Doc() *encoder.Doc {
 	return doc
 }
 
+func (BridgeVLAN) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BridgeVLAN",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BridgeVLAN contains the various options for configuring the VLAN properties of a bridge interface." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BridgeVLAN contains the various options for configuring the VLAN properties of a bridge interface.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "Bridge",
+				FieldName: "vlan",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "vlanFiltering",
+				Type:        "bool",
+				Note:        "",
+				Description: "Whether VLAN filtering is enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether VLAN filtering is enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (Bridge) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "Bridge",
@@ -2976,6 +3001,13 @@ func (Bridge) Doc() *encoder.Doc {
 			{
 				Name:        "stp",
 				Type:        "STP",
+				Note:        "",
+				Description: "A bridge option.\nPlease see the official kernel documentation.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "A bridge option." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "vlan",
+				Type:        "BridgeVLAN",
 				Note:        "",
 				Description: "A bridge option.\nPlease see the official kernel documentation.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "A bridge option." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -4077,6 +4109,7 @@ func GetFileDoc() *encoder.FileDoc {
 			VIPHCloudConfig{}.Doc(),
 			Bond{}.Doc(),
 			STP{}.Doc(),
+			BridgeVLAN{}.Doc(),
 			Bridge{}.Doc(),
 			Vlan{}.Doc(),
 			Route{}.Doc(),

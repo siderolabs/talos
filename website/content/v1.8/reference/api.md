@@ -164,6 +164,7 @@ description: Talos gRPC API reference.
     - [BondSlave](#talos.resource.definitions.network.BondSlave)
     - [BridgeMasterSpec](#talos.resource.definitions.network.BridgeMasterSpec)
     - [BridgeSlave](#talos.resource.definitions.network.BridgeSlave)
+    - [BridgeVLANSpec](#talos.resource.definitions.network.BridgeVLANSpec)
     - [DHCP4OperatorSpec](#talos.resource.definitions.network.DHCP4OperatorSpec)
     - [DHCP6OperatorSpec](#talos.resource.definitions.network.DHCP6OperatorSpec)
     - [DNSResolveCacheSpec](#talos.resource.definitions.network.DNSResolveCacheSpec)
@@ -3015,6 +3016,7 @@ BridgeMasterSpec describes bridge settings if Kind == "bridge".
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | stp | [STPSpec](#talos.resource.definitions.network.STPSpec) |  |  |
+| vlan | [BridgeVLANSpec](#talos.resource.definitions.network.BridgeVLANSpec) |  |  |
 
 
 
@@ -3030,6 +3032,21 @@ BridgeSlave contains a bond's master name and slave index.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | master_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.BridgeVLANSpec"></a>
+
+### BridgeVLANSpec
+BridgeVLANSpec describes VLAN settings of a bridge.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filtering_enabled | [bool](#bool) |  |  |
 
 
 

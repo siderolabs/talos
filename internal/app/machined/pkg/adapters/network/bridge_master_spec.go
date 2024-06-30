@@ -36,7 +36,13 @@ func (a bridgeMaster) Encode() ([]byte, error) {
 		stpEnabled = 1
 	}
 
+	vlanFiltering := 0
+	if bridge.VLAN.FilteringEnabled {
+		vlanFiltering = 1
+	}
+
 	encoder.Uint32(unix.IFLA_BR_STP_STATE, uint32(stpEnabled))
+	encoder.Uint8(unix.IFLA_BR_VLAN_FILTERING, uint8(vlanFiltering))
 
 	return encoder.Encode()
 }
@@ -51,8 +57,11 @@ func (a bridgeMaster) Decode(data []byte) error {
 	}
 
 	for decoder.Next() {
-		if decoder.Type() == unix.IFLA_BR_STP_STATE {
+		switch decoder.Type() {
+		case unix.IFLA_BR_STP_STATE:
 			bridge.STP.Enabled = decoder.Uint32() == 1
+		case unix.IFLA_BR_VLAN_FILTERING:
+			bridge.VLAN.FilteringEnabled = decoder.Uint8() == 1
 		}
 	}
 

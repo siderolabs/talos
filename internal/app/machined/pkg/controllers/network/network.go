@@ -132,6 +132,9 @@ func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.Bridge) erro
 		STP: network.STPSpec{
 			Enabled: bridge.STP().Enabled(),
 		},
+		VLAN: network.BridgeVLANSpec{
+			FilteringEnabled: bridge.VLAN().FilteringEnabled(),
+		},
 	}
 
 	return nil

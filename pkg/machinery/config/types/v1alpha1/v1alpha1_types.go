@@ -1971,6 +1971,12 @@ type STP struct {
 	STPEnabled *bool `yaml:"enabled,omitempty"`
 }
 
+// BridgeVLAN contains the various options for configuring the VLAN properties of a bridge interface.
+type BridgeVLAN struct {
+	//   description: Whether VLAN filtering is enabled.
+	BridgeVLANFiltering *bool `yaml:"vlanFiltering,omitempty"`
+}
+
 // Bridge contains the various options for configuring a bridge interface.
 type Bridge struct {
 	//   description: The interfaces that make up the bridge.
@@ -1979,6 +1985,10 @@ type Bridge struct {
 	//     A bridge option.
 	//     Please see the official kernel documentation.
 	BridgeSTP *STP `yaml:"stp,omitempty"`
+	//   description: |
+	//     A bridge option.
+	//     Please see the official kernel documentation.
+	BridgeVLAN *BridgeVLAN `yaml:"vlan,omitempty"`
 }
 
 // VlanList is a list of *Vlan structures with overridden merge process.

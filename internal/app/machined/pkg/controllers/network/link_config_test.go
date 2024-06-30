@@ -229,6 +229,9 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 									BridgeSTP: &v1alpha1.STP{
 										STPEnabled: pointer.To(true),
 									},
+									BridgeVLAN: &v1alpha1.BridgeVLAN{
+										BridgeVLANFiltering: pointer.To(true),
+									},
 								},
 							},
 							{
@@ -348,7 +351,8 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				asrt.True(r.TypedSpec().Logical)
 				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
 				asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
-				asrt.Equal(true, r.TypedSpec().BridgeMaster.STP.Enabled)
+				asrt.True(r.TypedSpec().BridgeMaster.STP.Enabled)
+				asrt.True(r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled)
 			case "wireguard0":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)

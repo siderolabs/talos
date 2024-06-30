@@ -702,9 +702,10 @@ func (suite *LinkSpecSuite) TestBridge() {
 		),
 	)
 
-	// attempt to enable STP
+	// attempt to enable STP & VLAN filtering
 	ctest.UpdateWithConflicts(suite, bridge, func(r *network.LinkSpec) error {
 		r.TypedSpec().BridgeMaster.STP.Enabled = true
+		r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled = true
 
 		return nil
 	})
@@ -717,6 +718,12 @@ func (suite *LinkSpecSuite) TestBridge() {
 						if !r.TypedSpec().BridgeMaster.STP.Enabled {
 							return retry.ExpectedErrorf(
 								"stp is not enabled on bridge %s", r.Metadata().ID(),
+							)
+						}
+
+						if !r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled {
+							return retry.ExpectedErrorf(
+								"vlan filtering is not enabled on bridge %s", r.Metadata().ID(),
 							)
 						}
 

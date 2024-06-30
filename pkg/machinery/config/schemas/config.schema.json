@@ -734,6 +734,26 @@
           "description": "A bridge option.\nPlease see the official kernel documentation.\n",
           "markdownDescription": "A bridge option.\nPlease see the official kernel documentation.",
           "x-intellij-html-description": "\u003cp\u003eA bridge option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        },
+        "vlan": {
+          "$ref": "#/$defs/v1alpha1.BridgeVLAN",
+          "title": "vlan",
+          "description": "A bridge option.\nPlease see the official kernel documentation.\n",
+          "markdownDescription": "A bridge option.\nPlease see the official kernel documentation.",
+          "x-intellij-html-description": "\u003cp\u003eA bridge option.\nPlease see the official kernel documentation.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "v1alpha1.BridgeVLAN": {
+      "properties": {
+        "vlanFiltering": {
+          "type": "boolean",
+          "title": "vlanFiltering",
+          "description": "Whether VLAN filtering is enabled.\n",
+          "markdownDescription": "Whether VLAN filtering is enabled.",
+          "x-intellij-html-description": "\u003cp\u003eWhether VLAN filtering is enabled.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

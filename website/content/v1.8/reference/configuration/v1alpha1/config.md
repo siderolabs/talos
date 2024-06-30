@@ -1358,6 +1358,7 @@ machine:
 |-------|------|-------------|----------|
 |`interfaces` |[]string |The interfaces that make up the bridge.  | |
 |`stp` |<a href="#Config.machine.network.interfaces..bridge.stp">STP</a> |<details><summary>A bridge option.</summary>Please see the official kernel documentation.</details>  | |
+|`vlan` |<a href="#Config.machine.network.interfaces..bridge.vlan">BridgeVLAN</a> |<details><summary>A bridge option.</summary>Please see the official kernel documentation.</details>  | |
 
 
 
@@ -1372,6 +1373,22 @@ STP contains the various options for configuring the STP properties of a bridge 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Whether Spanning Tree Protocol (STP) is enabled.  | |
+
+
+
+
+
+
+###### vlan {#Config.machine.network.interfaces..bridge.vlan}
+
+BridgeVLAN contains the various options for configuring the VLAN properties of a bridge interface.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`vlanFiltering` |bool |Whether VLAN filtering is enabled.  | |
 
 
 

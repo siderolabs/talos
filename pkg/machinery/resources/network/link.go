@@ -58,7 +58,8 @@ type BondMasterSpec struct {
 //
 //gotagsrewrite:gen
 type BridgeMasterSpec struct {
-	STP STPSpec `yaml:"stp,omitempty" protobuf:"1"`
+	STP  STPSpec        `yaml:"stp,omitempty" protobuf:"1"`
+	VLAN BridgeVLANSpec `yaml:"vlan,omitempty" protobuf:"2"`
 }
 
 // STPSpec describes Spanning Tree Protocol (STP) settings of a bridge.
@@ -66,6 +67,13 @@ type BridgeMasterSpec struct {
 //gotagsrewrite:gen
 type STPSpec struct {
 	Enabled bool `yaml:"enabled" protobuf:"1"`
+}
+
+// BridgeVLANSpec describes VLAN settings of a bridge.
+//
+//gotagsrewrite:gen
+type BridgeVLANSpec struct {
+	FilteringEnabled bool `yaml:"filteringEnabled" protobuf:"1"`
 }
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".

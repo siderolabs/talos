@@ -1039,6 +1039,15 @@ func (s *STP) Enabled() bool {
 	return *s.STPEnabled
 }
 
+// FilteringEnabled implements the config.BridgeVLAN interface.
+func (v *BridgeVLAN) FilteringEnabled() bool {
+	if v == nil {
+		return false
+	}
+
+	return pointer.SafeDeref(v.BridgeVLANFiltering)
+}
+
 // Interfaces implements the config.Bridge interface.
 func (b *Bridge) Interfaces() []string {
 	return b.BridgedInterfaces
@@ -1051,6 +1060,15 @@ func (b *Bridge) STP() config.STP {
 	}
 
 	return b.BridgeSTP
+}
+
+// VLAN implements the config.Bridge interface.
+func (b *Bridge) VLAN() config.BridgeVLAN {
+	if b.BridgeVLAN == nil {
+		return (*BridgeVLAN)(nil)
+	}
+
+	return b.BridgeVLAN
 }
 
 // Addresses implements the MachineNetwork interface.

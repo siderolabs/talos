@@ -78,6 +78,12 @@ A list of PCI devices can now be obtained via `PCIDevices` resource, e.g. `talos
 Talos Linux now shows diagnostics information for common problems related to misconfiguration via `talosctl health` and Talos dashboard.
 """
 
+    [notes.bridge]
+        title = "Bridge Interface"
+        description = """\
+Talos Linux now support configuring 'vlan_filtering' for bridge interfaces.
+"""
+
 
 [make_deps]
 

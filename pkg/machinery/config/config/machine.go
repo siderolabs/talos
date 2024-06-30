@@ -245,10 +245,16 @@ type STP interface {
 	Enabled() bool
 }
 
+// BridgeVLAN contains the VLAN settings for a bridge.
+type BridgeVLAN interface {
+	FilteringEnabled() bool
+}
+
 // Bridge contains the options for configuring a bridged interface.
 type Bridge interface {
 	Interfaces() []string
 	STP() STP
+	VLAN() BridgeVLAN
 }
 
 // Vlan represents vlan settings for a device.
