@@ -2,6 +2,7 @@
 title: Welcome
 no_list: true
 linkTitle: "Documentation"
+images: ["images/talos-dev-banner.png"]
 cascade:
   type: docs
 lastRelease: v1.7.0
