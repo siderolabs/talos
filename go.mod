@@ -25,16 +25,16 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.30.1
-	k8s.io/apimachinery v0.30.1
-	k8s.io/apiserver v0.30.1
-	k8s.io/client-go v0.30.1
-	k8s.io/component-base v0.30.1
+	k8s.io/api v0.30.2
+	k8s.io/apimachinery v0.30.2
+	k8s.io/apiserver v0.30.2
+	k8s.io/client-go v0.30.2
+	k8s.io/component-base v0.30.2
 	k8s.io/cri-api v0.31.0-alpha.0.0.20240529224029-3a66d9d86654
-	k8s.io/kube-scheduler v0.30.1
-	k8s.io/kubectl v0.30.1
-	k8s.io/kubelet v0.30.1
-	k8s.io/pod-security-admission v0.30.1
+	k8s.io/kube-scheduler v0.30.2
+	k8s.io/kubectl v0.30.2
+	k8s.io/kubelet v0.30.2
+	k8s.io/pod-security-admission v0.30.2
 )
 
 require (
@@ -340,7 +340,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/cli-runtime v0.30.1 // indirect
+	k8s.io/cli-runtime v0.30.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20240521193020-835d969ad83a // indirect
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.70 // indirect
