@@ -5838,6 +5838,7 @@ FileInfo describes a file or directory's information
 | relative_name | [string](#string) |  | RelativeName is the name of the file or directory relative to the RootPath |
 | uid | [uint32](#uint32) |  | Owner uid |
 | gid | [uint32](#uint32) |  | Owner gid |
+| label | [string](#string) |  | Label is filled with the value of `security.selinux` xattr if present and requested |
 
 
 
@@ -6084,6 +6085,7 @@ ListRequest describes a request to list the contents of a directory.
 | recurse | [bool](#bool) |  | Recurse indicates that subdirectories should be recursed. |
 | recursion_depth | [int32](#int32) |  | RecursionDepth indicates how many levels of subdirectories should be recursed. The default (0) indicates that no limit should be enforced. |
 | types | [ListRequest.Type](#machine.ListRequest.Type) | repeated | Types indicates what file type should be returned. If not indicated, all files will be returned. |
+| labels | [bool](#bool) |  | Report SELinux labels |
 
 
 
