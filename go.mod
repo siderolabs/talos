@@ -7,7 +7,7 @@ replace (
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.11.53
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// Use nested module.
 	github.com/siderolabs/talos/pkg/machinery => ./pkg/machinery
@@ -30,7 +30,7 @@ require (
 	k8s.io/apiserver v0.30.2
 	k8s.io/client-go v0.30.2
 	k8s.io/component-base v0.30.2
-	k8s.io/cri-api v0.31.0-alpha.0.0.20240529224029-3a66d9d86654
+	k8s.io/cri-api v0.31.0-alpha.2
 	k8s.io/kube-scheduler v0.30.2
 	k8s.io/kubectl v0.30.2
 	k8s.io/kubelet v0.30.2
@@ -60,7 +60,7 @@ require (
 	github.com/containerd/typeurl/v2 v2.1.1
 	github.com/containernetworking/cni v1.2.2
 	github.com/containernetworking/plugins v1.5.1
-	github.com/coredns/coredns v1.11.2
+	github.com/coredns/coredns v1.11.3
 	github.com/coreos/go-iptables v0.7.0
 	github.com/cosi-project/runtime v0.5.0
 	github.com/distribution/reference v0.6.0
@@ -128,7 +128,7 @@ require (
 	github.com/siderolabs/gen v0.5.0
 	github.com/siderolabs/go-api-signature v0.3.3
 	github.com/siderolabs/go-blockdevice v0.4.7
-	github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240610010119-f4a4030394f4
+	github.com/siderolabs/go-blockdevice/v2 d9313ea908f3
 	github.com/siderolabs/go-circular v0.2.0
 	github.com/siderolabs/go-cmd v0.1.1
 	github.com/siderolabs/go-copy v0.1.0
@@ -176,7 +176,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/klog/v2 v2.130.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.70
-	sigs.k8s.io/hydrophone v0.6.1-0.20240611183045-ec6fa911eb8b
+	sigs.k8s.io/hydrophone a8659611f919
 	sigs.k8s.io/yaml v1.4.0
 )
 
