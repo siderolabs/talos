@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/hashicorp/go-multierror"
@@ -35,7 +34,7 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 	}
 
 	// Create new net
-	options := types.NetworkCreate{
+	options := network.CreateOptions{
 		Labels: map[string]string{
 			"talos.owned":        "true",
 			"talos.cluster.name": req.Name,
@@ -57,12 +56,12 @@ func (p *provisioner) createNetwork(ctx context.Context, req provision.NetworkRe
 	return err
 }
 
-func (p *provisioner) listNetworks(ctx context.Context, name string) ([]types.NetworkResource, error) {
+func (p *provisioner) listNetworks(ctx context.Context, name string) ([]network.Inspect, error) {
 	filters := filters.NewArgs()
 	filters.Add("label", "talos.owned=true")
 	filters.Add("label", "talos.cluster.name="+name)
 
-	options := types.NetworkListOptions{
+	options := network.ListOptions{
 		Filters: filters,
 	}
 

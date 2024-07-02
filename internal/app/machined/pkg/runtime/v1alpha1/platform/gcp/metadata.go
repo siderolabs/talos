@@ -48,11 +48,11 @@ func (g *GCP) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 		err  error
 	)
 
-	if meta.ProjectID, err = metadata.ProjectID(); err != nil {
+	if meta.ProjectID, err = metadata.ProjectIDWithContext(ctx); err != nil {
 		return nil, err
 	}
 
-	if meta.Name, err = metadata.InstanceName(); err != nil {
+	if meta.Name, err = metadata.InstanceNameWithContext(ctx); err != nil {
 		return nil, err
 	}
 
@@ -63,15 +63,15 @@ func (g *GCP) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 
 	meta.InstanceType = strings.TrimSpace(instanceType[strings.LastIndex(instanceType, "/")+1:])
 
-	if meta.InstanceID, err = metadata.InstanceID(); err != nil {
+	if meta.InstanceID, err = metadata.InstanceIDWithContext(ctx); err != nil {
 		return nil, err
 	}
 
-	if meta.Hostname, err = metadata.Hostname(); err != nil {
+	if meta.Hostname, err = metadata.HostnameWithContext(ctx); err != nil {
 		return nil, err
 	}
 
-	if meta.Zone, err = metadata.Zone(); err != nil {
+	if meta.Zone, err = metadata.ZoneWithContext(ctx); err != nil {
 		return nil, err
 	}
 

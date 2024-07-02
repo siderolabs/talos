@@ -180,8 +180,8 @@ func (g *GCP) Configuration(ctx context.Context, r state.State) ([]byte, error) 
 	return []byte(userdata), nil
 }
 
-func (g *GCP) fetchConfiguration(_ context.Context) (string, error) {
-	userdata, err := metadata.InstanceAttributeValue("user-data")
+func (g *GCP) fetchConfiguration(ctx context.Context) (string, error) {
+	userdata, err := metadata.InstanceAttributeValueWithContext(ctx, "user-data")
 	if err != nil {
 		if _, ok := err.(metadata.NotDefinedError); ok {
 			return "", errors.ErrNoConfigSource

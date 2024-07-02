@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:1.7.1-labs
+# syntax = docker/dockerfile-upstream:1.8.1-labs
 
 # Meta args applied to stage base names.
 
@@ -123,9 +123,9 @@ FROM ${PKG_TALOSCTL_CNI_BUNDLE_INSTALL} AS extras-talosctl-cni-bundle-install
 # The tools target provides base toolchain for the build.
 
 FROM --platform=${BUILDPLATFORM} $TOOLS AS tools
-ENV PATH /toolchain/bin:/toolchain/go/bin
-ENV LD_LIBRARY_PATH /toolchain/lib
-ENV GOTOOLCHAIN local
+ENV PATH=/toolchain/bin:/toolchain/go/bin
+ENV LD_LIBRARY_PATH=/toolchain/lib
+ENV GOTOOLCHAIN=local
 RUN ["/toolchain/bin/mkdir", "/bin", "/tmp"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/bin/bash", "/bin/sh"]
 RUN ["/toolchain/bin/ln", "-svf", "/toolchain/etc/ssl", "/etc/ssl"]
@@ -178,16 +178,16 @@ RUN --mount=type=cache,target=/.cache cd /go/src/github.com/siderolabs/structpro
 
 FROM --platform=${BUILDPLATFORM} tools AS build
 SHELL ["/toolchain/bin/bash", "-c"]
-ENV PATH /toolchain/bin:/toolchain/go/bin
-ENV GO111MODULE on
-ENV GOPROXY https://proxy.golang.org
+ENV PATH=/toolchain/bin:/toolchain/go/bin
+ENV GO111MODULE=on
+ENV GOPROXY=https://proxy.golang.org
 ARG CGO_ENABLED
-ENV CGO_ENABLED ${CGO_ENABLED}
-ENV GOCACHE /.cache/go-build
-ENV GOMODCACHE /.cache/mod
-ENV PROTOTOOL_CACHE_PATH /.cache/prototool
+ENV CGO_ENABLED=${CGO_ENABLED}
+ENV GOCACHE=/.cache/go-build
+ENV GOMODCACHE=/.cache/mod
+ENV PROTOTOOL_CACHE_PATH=/.cache/prototool
 ARG SOURCE_DATE_EPOCH
-ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 WORKDIR /src
 
 # The build-go target creates a container to build Go code with Go modules downloaded and verified.
@@ -500,7 +500,7 @@ COPY --from=talosctl-freebsd-amd64 / /
 COPY --from=talosctl-freebsd-arm64 / /
 COPY --from=talosctl-windows-amd64 / /
 
-FROM scratch as talosctl
+FROM scratch AS talosctl
 ARG TARGETARCH
 COPY --from=talosctl-all /talosctl-linux-${TARGETARCH} /talosctl
 ARG TAG
@@ -839,7 +839,7 @@ FROM installer-image-squashed AS imager
 COPY --from=install-artifacts / /
 ENTRYPOINT ["/bin/imager"]
 
-FROM imager as iso-amd64-build
+FROM imager AS iso-amd64-build
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 RUN /bin/installer \
@@ -847,7 +847,7 @@ RUN /bin/installer \
     --arch amd64 \
     --output /out
 
-FROM imager as iso-arm64-build
+FROM imager AS iso-arm64-build
 ARG SOURCE_DATE_EPOCH
 ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
 RUN /bin/installer \
@@ -855,10 +855,10 @@ RUN /bin/installer \
     --arch arm64 \
     --output /out
 
-FROM scratch as iso-amd64
+FROM scratch AS iso-amd64
 COPY --from=iso-amd64-build /out /
 
-FROM scratch as iso-arm64
+FROM scratch AS iso-arm64
 COPY --from=iso-arm64-build /out /
 
 FROM --platform=${BUILDPLATFORM} iso-${TARGETARCH} AS iso
@@ -946,8 +946,8 @@ COPY --from=module-sig-verify-linux-build /src/module-sig-verify/module-sig-veri
 # The lint target performs linting on the source code.
 FROM base AS lint-go
 COPY .golangci.yml .
-ENV GOGC 50
-ENV GOLANGCI_LINT_CACHE /.cache/lint
+ENV GOGC=50
+ENV GOLANGCI_LINT_CACHE=/.cache/lint
 RUN golangci-lint config verify --config .golangci.yml
 RUN --mount=type=cache,target=/.cache golangci-lint run --config .golangci.yml
 WORKDIR /src/pkg/machinery
@@ -1010,7 +1010,7 @@ RUN env HOME=/home/user TAG=latest /bin/talosctl docs --config /tmp/configuratio
     && env HOME=/home/user TAG=latest /bin/talosctl docs --cli /tmp
 COPY ./pkg/machinery/config/schemas/*.schema.json /tmp/schemas/
 
-FROM pseudomuto/protoc-gen-doc as proto-docs-build
+FROM pseudomuto/protoc-gen-doc AS proto-docs-build
 COPY --from=generate-build /api /protos
 COPY ./hack/protoc-gen-doc/markdown.tmpl /tmp/markdown.tmpl
 RUN protoc \

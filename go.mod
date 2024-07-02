@@ -30,7 +30,7 @@ require (
 	k8s.io/apiserver v0.30.1
 	k8s.io/client-go v0.30.1
 	k8s.io/component-base v0.30.1
-	k8s.io/cri-api v0.30.1
+	k8s.io/cri-api v0.31.0-alpha.0.0.20240529224029-3a66d9d86654
 	k8s.io/kube-scheduler v0.30.1
 	k8s.io/kubectl v0.30.1
 	k8s.io/kubelet v0.30.1
@@ -38,33 +38,33 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute/metadata v0.3.0
+	cloud.google.com/go/compute/metadata v0.4.0
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.12.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.7.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.1.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.1.0
 	github.com/alexflint/go-filemutex v1.3.0
-	github.com/aws/aws-sdk-go-v2/config v1.27.18
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.5
-	github.com/aws/aws-sdk-go-v2/service/kms v1.32.3
-	github.com/aws/smithy-go v1.20.2
+	github.com/aws/aws-sdk-go-v2/config v1.27.23
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.9
+	github.com/aws/aws-sdk-go-v2/service/kms v1.35.1
+	github.com/aws/smithy-go v1.20.3
 	github.com/beevik/ntp v1.4.3
 	github.com/benbjohnson/clock v1.3.5 // project archived on 2023-05-18
 	github.com/blang/semver/v4 v4.0.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/containerd/cgroups/v3 v3.0.3
 	github.com/containerd/containerd/api v1.8.0-rc.2
-	github.com/containerd/containerd/v2 v2.0.0-rc.2
+	github.com/containerd/containerd/v2 v2.0.0-rc.3
 	github.com/containerd/errdefs v0.1.0
 	github.com/containerd/platforms v0.2.1
 	github.com/containerd/typeurl/v2 v2.1.1
-	github.com/containernetworking/cni v1.2.0
-	github.com/containernetworking/plugins v1.5.0
+	github.com/containernetworking/cni v1.2.2
+	github.com/containernetworking/plugins v1.5.1
 	github.com/coredns/coredns v1.11.2
 	github.com/coreos/go-iptables v0.7.0
-	github.com/cosi-project/runtime v0.4.5
+	github.com/cosi-project/runtime v0.5.0
 	github.com/distribution/reference v0.6.0
-	github.com/docker/docker v26.1.4+incompatible
+	github.com/docker/docker v27.0.3+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/ecks/uefi v0.0.0-20221116212947-caef65d070eb
@@ -78,7 +78,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
-	github.com/google/go-containerregistry v0.19.1
+	github.com/google/go-containerregistry v0.19.2
 	github.com/google/go-tpm v0.9.1
 	github.com/google/nftables v0.2.0
 	github.com/google/uuid v1.6.0
@@ -89,8 +89,8 @@ require (
 	github.com/hashicorp/go-envparse v0.1.0
 	github.com/hashicorp/go-getter/v2 v2.2.2
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hetznercloud/hcloud-go/v2 v2.9.0
-	github.com/insomniacslk/dhcp v0.0.0-20240529192340-51bc6136a0a6
+	github.com/hetznercloud/hcloud-go/v2 v2.10.2
+	github.com/insomniacslk/dhcp v0.0.0-20240628075535-bf3278ac95c1
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink/v2 v2.0.2
 	github.com/jxskiss/base62 v1.1.0
@@ -106,7 +106,7 @@ require (
 	github.com/mdlayher/netlink v1.7.2
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdp/qrterminal/v3 v3.2.0
-	github.com/miekg/dns v1.1.59
+	github.com/miekg/dns v1.1.61
 	github.com/nberlee/go-netstat v0.1.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0
@@ -116,17 +116,17 @@ require (
 	github.com/pin/tftp/v3 v3.1.0
 	github.com/pmorjan/kmod v1.1.1
 	github.com/prometheus/procfs v0.15.1
-	github.com/rivo/tview v0.0.0-20240524063012-037df494fb76
+	github.com/rivo/tview v0.0.0-20240625185742-b0a7293b8130
 	github.com/rs/xid v1.5.0
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/safchain/ethtool v0.3.0
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.27
+	github.com/safchain/ethtool v0.4.1
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.28
 	github.com/siderolabs/crypto v0.4.4
 	github.com/siderolabs/discovery-api v0.1.4
 	github.com/siderolabs/discovery-client v0.1.9
 	github.com/siderolabs/gen v0.5.0
-	github.com/siderolabs/go-api-signature v0.3.2
+	github.com/siderolabs/go-api-signature v0.3.3
 	github.com/siderolabs/go-blockdevice v0.4.7
 	github.com/siderolabs/go-blockdevice/v2 v2.0.0-20240610010119-f4a4030394f4
 	github.com/siderolabs/go-circular v0.2.0
@@ -136,7 +136,7 @@ require (
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.0
 	github.com/siderolabs/go-kubernetes v0.2.9
-	github.com/siderolabs/go-loadbalancer v0.3.3
+	github.com/siderolabs/go-loadbalancer v0.3.4
 	github.com/siderolabs/go-pcidb v0.3.0
 	github.com/siderolabs/go-pointer v1.0.0
 	github.com/siderolabs/go-procfs v0.1.2
@@ -149,7 +149,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/siderolink v0.3.9
 	github.com/siderolabs/talos/pkg/machinery v1.8.0-alpha.0.0.20240521134552-e1711cd3c985
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/u-root/u-root v0.14.0
@@ -174,7 +174,7 @@ require (
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/klog/v2 v2.120.1
+	k8s.io/klog/v2 v2.130.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.70
 	sigs.k8s.io/hydrophone v0.6.1-0.20240611183045-ec6fa911eb8b
 	sigs.k8s.io/yaml v1.4.0
@@ -189,34 +189,33 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
-	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/Microsoft/hcsshim v0.12.3 // indirect
+	github.com/Microsoft/hcsshim v0.12.4 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/ProtonMail/go-mime v0.0.0-20230322103455-7d82a3887f2f // indirect
 	github.com/ProtonMail/gopenpgp/v2 v2.7.5 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.27.2 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.18 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.9 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.9 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.30.1 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.23 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.13 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.13 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.20.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.28.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.22.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.26.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.30.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cilium/ebpf v0.12.3 // indirect
-	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/containerd/continuity v0.4.3 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
-	github.com/containerd/go-cni v1.1.9 // indirect
+	github.com/containerd/go-cni v1.1.10 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/plugin v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
@@ -333,12 +332,12 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
-	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	golang.org/x/mod v0.18.0 // indirect
+	golang.org/x/tools v0.22.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	golang.zx2c4.com/wireguard v0.0.0-20231211153847-12269c276173 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240521202816-d264139d666e // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240610135401-a8a62080eff3 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240617180043-68d350f18fd4 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/cli-runtime v0.30.1 // indirect
