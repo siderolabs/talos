@@ -4,6 +4,8 @@ package talos.resource.definitions.block;
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block";
 
+import "resource/definitions/enums/enums.proto";
+
 // DeviceSpec is the spec for devices status.
 message DeviceSpec {
   string type = 1;
@@ -36,6 +38,11 @@ message DiscoveredVolumeSpec {
   string parent = 16;
 }
 
+// DiskSelector selects a disk for the volume.
+message DiskSelector {
+  bool system_disk = 1;
+}
+
 // DiskSpec is the spec for Disks status.
 message DiskSpec {
   uint64 size = 1;
@@ -53,8 +60,44 @@ message DiskSpec {
   bool cdrom = 13;
 }
 
+// LocatorSpec is the spec for volume locator.
+message LocatorSpec {
+  string partition_label = 1;
+}
+
+// PartitionSpec is the spec for volume partitioning.
+message PartitionSpec {
+  uint64 min_size = 1;
+  uint64 max_size = 2;
+  bool grow = 3;
+  string label = 4;
+  string type_uuid = 5;
+}
+
+// ProvisioningSpec is the spec for volume provisioning.
+message ProvisioningSpec {
+  DiskSelector disk_selector = 1;
+  PartitionSpec partition_spec = 2;
+  int64 wave = 3;
+}
+
 // SystemDiskSpec is the spec for SystemDisks status.
 message SystemDiskSpec {
   string disk_id = 1;
+}
+
+// VolumeConfigSpec is the spec for VolumeConfig resource.
+message VolumeConfigSpec {
+  string parent_id = 1;
+  talos.resource.definitions.enums.BlockVolumeType type = 2;
+  ProvisioningSpec provisioning = 3;
+  LocatorSpec locator = 4;
+}
+
+// VolumeStatusSpec is the spec for VolumeStatus resource.
+message VolumeStatusSpec {
+  bool provisioned = 1;
+  bool located = 2;
+  string location = 3;
 }
 

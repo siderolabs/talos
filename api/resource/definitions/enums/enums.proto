@@ -353,6 +353,13 @@ enum NethelpersVLANProtocol {
   VLAN_PROTOCOL8021_AD = 34984;
 }
 
+// BlockVolumeType describes volume type.
+enum BlockVolumeType {
+  VOLUME_TYPE_PARTITION = 0;
+  VOLUME_TYPE_DISK = 1;
+  VOLUME_TYPE_TMPFS = 2;
+}
+
 // KubespanPeerState is KubeSpan peer current state.
 enum KubespanPeerState {
   PEER_STATE_UNKNOWN = 0;

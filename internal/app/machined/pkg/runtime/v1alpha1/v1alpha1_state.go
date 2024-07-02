@@ -297,7 +297,7 @@ func (s *MachineState) Close() error {
 // Installed implements the machine state interface.
 func (s *MachineState) Installed() bool {
 	return s.Disk(
-		disk.WithPartitionLabel(constants.EphemeralPartitionLabel),
+		disk.WithPartitionLabel(constants.MetaPartitionLabel),
 	) != nil
 }
 
