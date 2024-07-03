@@ -123,7 +123,7 @@ func (ctrl *DisksController) analyzeBlockDevice(ctx context.Context, r controlle
 
 	size, err := bd.GetSize()
 	if err != nil || size == 0 {
-		return nil //nolint:nilerr
+		return nil
 	}
 
 	if privateDM, _ := bd.IsPrivateDeviceMapper(); privateDM { //nolint:errcheck

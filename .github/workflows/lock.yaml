@@ -16,3 +16,4 @@ jobs:
         with:
           issue-inactive-days: '60'
           process-only: 'issues'
+          log-output: true

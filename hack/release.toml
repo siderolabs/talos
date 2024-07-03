@@ -23,8 +23,9 @@ containerd: 2.0.0-rc.3
 runc: 1.2.0-rc.2
 etcd: 3.5.14
 Flannel: 0.25.3
+Flannel CNI plugin: 1.5.1
 
-Talos is built with Go 1.22.4.
+Talos is built with Go 1.22.5.
 """
 
     [notes.apparmor]

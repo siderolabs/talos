@@ -206,7 +206,7 @@ func (m *Manifest) checkMounts(device Device) error {
 			f, err = os.Open(path)
 			if err != nil {
 				// ignore error in case process got removed
-				return nil //nolint:nilerr
+				return nil
 			}
 
 			defer f.Close() //nolint:errcheck

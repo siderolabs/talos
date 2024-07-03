@@ -15,11 +15,11 @@ CLOUD_IMAGES_EXTRA_ARGS ?= ""
 ZSTD_COMPRESSION_LEVEL ?= 18
 
 ARTIFACTS := _out
-TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-5-gd2746e5
+TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-6-g31ad71b
 
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.8.0-alpha.0-32-g8d6b19a
-EXTRAS ?= v1.8.0-alpha.0-2-g0efb05f
+PKGS ?= v1.8.0-alpha.0-34-gce49757
+EXTRAS ?= v1.8.0-alpha.0-3-gcab51d8
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -59,7 +59,7 @@ GOIMPORTS_VERSION ?= v0.21.0
 # renovate: datasource=go depName=mvdan.cc/gofumpt
 GOFUMPT_VERSION ?= v0.6.0
 # renovate: datasource=go depName=github.com/golangci/golangci-lint
-GOLANGCILINT_VERSION ?= v1.59.0
+GOLANGCILINT_VERSION ?= v1.59.1
 # renovate: datasource=go depName=golang.org/x/tools
 STRINGER_VERSION ?= v0.21.0
 # renovate: datasource=go depName=github.com/dmarkham/enumer

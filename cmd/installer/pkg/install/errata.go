@@ -99,7 +99,7 @@ func upgradeFromPreIfnamesTalos() (bool, error) {
 
 	if _, err := os.Stat(constants.MachineSocketPath); err != nil {
 		// old Talos version, include fallback
-		return true, nil //nolint:nilerr
+		return true, nil
 	}
 
 	c, err := client.New(ctx,
