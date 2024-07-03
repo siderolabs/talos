@@ -514,7 +514,13 @@ func (ctrl *Controller) makeLogger(s string) (*zap.Logger, error) {
 	}
 
 	return logging.ZapLogger(
-		logging.NewLogDestination(logWriter, zapcore.DebugLevel, logging.WithColoredLevels()),
-		logging.NewLogDestination(logging.StdWriter, ctrl.consoleLogLevel, logging.WithoutTimestamp(), logging.WithoutLogLevels()),
+		logging.NewLogDestination(logWriter, zapcore.DebugLevel,
+			logging.WithColoredLevels(),
+		),
+		logging.NewLogDestination(logging.StdWriter, ctrl.consoleLogLevel,
+			logging.WithoutTimestamp(),
+			logging.WithoutLogLevels(),
+			logging.WithControllerErrorSuppressor(constants.ConsoleLogErrorSuppressThreshold),
+		),
 	).With(logging.Component(s)), nil
 }

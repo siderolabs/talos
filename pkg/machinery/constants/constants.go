@@ -1005,6 +1005,9 @@ const (
 
 	// MinimumGOAMD64Level is the minimum x86_64 microarchitecture level required by Talos.
 	MinimumGOAMD64Level = 2
+
+	// ConsoleLogErrorSuppressThreshold is the threshold for suppressing console log errors.
+	ConsoleLogErrorSuppressThreshold = 4
 )
 
 // See https://linux.die.net/man/3/klogctl

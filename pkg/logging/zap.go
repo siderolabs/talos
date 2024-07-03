@@ -62,50 +62,60 @@ var StdWriter = &logWrapper{nil}
 // LogDestination defines logging destination Config.
 type LogDestination struct {
 	// Level log level.
-	level  zapcore.LevelEnabler
-	writer io.Writer
-	config zapcore.EncoderConfig
+	level             zapcore.LevelEnabler
+	writer            io.Writer
+	config            zapcore.EncoderConfig
+	suppressThreshold int64
 }
 
-// EncoderOption defines a log destination encoder config setter.
-type EncoderOption func(config *zapcore.EncoderConfig)
+// LogDestinationOption defines a log destination encoder config setter.
+type LogDestinationOption func(dest *LogDestination)
 
 // WithoutTimestamp disables timestamp.
-func WithoutTimestamp() EncoderOption {
-	return func(config *zapcore.EncoderConfig) {
-		config.EncodeTime = nil
+func WithoutTimestamp() LogDestinationOption {
+	return func(dest *LogDestination) {
+		dest.config.EncodeTime = nil
 	}
 }
 
 // WithoutLogLevels disable log level.
-func WithoutLogLevels() EncoderOption {
-	return func(config *zapcore.EncoderConfig) {
-		config.EncodeLevel = nil
+func WithoutLogLevels() LogDestinationOption {
+	return func(dest *LogDestination) {
+		dest.config.EncodeLevel = nil
 	}
 }
 
 // WithColoredLevels enables log level colored output.
-func WithColoredLevels() EncoderOption {
-	return func(config *zapcore.EncoderConfig) {
-		config.EncodeLevel = zapcore.CapitalColorLevelEncoder
+func WithColoredLevels() LogDestinationOption {
+	return func(dest *LogDestination) {
+		dest.config.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	}
+}
+
+// WithControllerErrorSuppressor creates a new console log controller error suppressor.
+func WithControllerErrorSuppressor(threshold int64) LogDestinationOption {
+	return func(dest *LogDestination) {
+		dest.suppressThreshold = threshold
 	}
 }
 
 // NewLogDestination creates new log destination.
-func NewLogDestination(writer io.Writer, logLevel zapcore.LevelEnabler, options ...EncoderOption) *LogDestination {
+func NewLogDestination(writer io.Writer, logLevel zapcore.LevelEnabler, options ...LogDestinationOption) *LogDestination {
 	config := zap.NewDevelopmentEncoderConfig()
 	config.ConsoleSeparator = " "
 	config.StacktraceKey = "error"
 
-	for _, option := range options {
-		option(&config)
-	}
-
-	return &LogDestination{
+	dest := &LogDestination{
 		level:  logLevel,
 		config: config,
 		writer: writer,
 	}
+
+	for _, option := range options {
+		option(dest)
+	}
+
+	return dest
 }
 
 // Wrap is a simple helper to wrap io.Writer with default arguments.
@@ -122,11 +132,17 @@ func ZapLogger(dests ...*LogDestination) *zap.Logger {
 	}
 
 	cores := xslices.Map(dests, func(dest *LogDestination) zapcore.Core {
-		return zapcore.NewCore(
+		core := zapcore.NewCore(
 			zapcore.NewConsoleEncoder(dest.config),
 			zapcore.AddSync(dest.writer),
 			dest.level,
 		)
+
+		if dest.suppressThreshold > 0 {
+			core = NewControllerErrorSuppressor(core, dest.suppressThreshold)
+		}
+
+		return core
 	})
 
 	return zap.New(zapcore.NewTee(cores...))

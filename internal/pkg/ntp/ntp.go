@@ -306,7 +306,7 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 		} else {
 			ips, err := net.LookupIP(server)
 			if err != nil {
-				syncer.logger.Warn(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
+				syncer.logger.Error(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
 			}
 
 			for _, ip := range ips {
