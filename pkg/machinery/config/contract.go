@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 // VersionContract describes Talos version to generate config for.
@@ -39,6 +40,8 @@ var versionRegexp = regexp.MustCompile(`^v(\d+)\.(\d+)($|\.)`)
 
 // ParseContractFromVersion parses Talos version into VersionContract.
 func ParseContractFromVersion(version string) (*VersionContract, error) {
+	version = "v" + strings.TrimPrefix(version, "v")
+
 	matches := versionRegexp.FindStringSubmatch(version)
 	if len(matches) < 3 {
 		return nil, fmt.Errorf("error parsing version %q", version)
