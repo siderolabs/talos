@@ -98,13 +98,15 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 		}
 
 		// list source network configuration resources
-		list, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+		list, err := safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.NamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error listing source network addresses: %w", err)
 		}
 
 		// add finalizers for all live resources
-		for _, res := range list.Items {
+		for it := list.Iterator(); it.Next(); {
+			res := it.Value()
+
 			if res.Metadata().Phase() != resource.PhaseRunning {
 				continue
 			}
@@ -123,10 +125,10 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 		// loop over links and make reconcile decision
 		var multiErr *multierror.Error
 
-		SortBonds(list.Items)
+		SortBonds(&list)
 
-		for _, res := range list.Items {
-			link := res.(*network.LinkSpec) //nolint:forcetypeassert,errcheck
+		for it := list.Iterator(); it.Next(); {
+			link := it.Value()
 
 			if err = ctrl.syncLink(ctx, r, logger, conn, wgClient, &links, link); err != nil {
 				multiErr = multierror.Append(multiErr, err)
@@ -143,23 +145,37 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 // SortBonds sort resources in increasing order, except it places slave interfaces right after the bond
 // in proper order.
-func SortBonds(items []resource.Resource) {
-	sort.Slice(items, func(i, j int) bool {
-		left := items[i].(*network.LinkSpec).TypedSpec()
-		right := items[j].(*network.LinkSpec).TypedSpec()
+func SortBonds(items LinkSpecs) {
+	sort.Sort(&struct {
+		LinkSpecs
+		lessLinkSpecs
+	}{items, lessLinkSpecs{items}})
+}
 
-		l := ordered.MakeTriple(left.Name, 0, "")
-		if left.BondSlave.MasterName != "" {
-			l = ordered.MakeTriple(left.BondSlave.MasterName, left.BondSlave.SlaveIndex, left.Name)
-		}
+type lessLinkSpecs struct{ LinkSpecs }
 
-		r := ordered.MakeTriple(right.Name, 0, "")
-		if right.BondSlave.MasterName != "" {
-			r = ordered.MakeTriple(right.BondSlave.MasterName, right.BondSlave.SlaveIndex, right.Name)
-		}
+func (ls lessLinkSpecs) Less(i, j int) bool {
+	left := ls.Get(i).TypedSpec()
+	right := ls.Get(j).TypedSpec()
 
-		return l.LessThan(r)
-	})
+	l := ordered.MakeTriple(left.Name, 0, "")
+	if left.BondSlave.MasterName != "" {
+		l = ordered.MakeTriple(left.BondSlave.MasterName, left.BondSlave.SlaveIndex, left.Name)
+	}
+
+	r := ordered.MakeTriple(right.Name, 0, "")
+	if right.BondSlave.MasterName != "" {
+		r = ordered.MakeTriple(right.BondSlave.MasterName, right.BondSlave.SlaveIndex, right.Name)
+	}
+
+	return l.LessThan(r)
+}
+
+// LinkSpecs is a sortable collection of network.LinkSpec.
+type LinkSpecs interface {
+	Len() int
+	Swap(i, j int)
+	Get(i int) *network.LinkSpec
 }
 
 func findLink(links []rtnetlink.LinkMessage, name string) *rtnetlink.LinkMessage {

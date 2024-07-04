@@ -17,6 +17,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
@@ -918,7 +919,7 @@ func TestLinkSpecSuite(t *testing.T) {
 }
 
 func TestSortBonds(t *testing.T) {
-	expectedSlice := []network.LinkSpecSpec{
+	expected := toResources([]network.LinkSpecSpec{
 		{
 			Name: "A",
 		}, {
@@ -948,34 +949,30 @@ func TestSortBonds(t *testing.T) {
 				SlaveIndex: 2,
 			},
 		},
-	}
+	})
 
 	seed := time.Now().Unix()
 
 	rnd := rand.New(rand.NewPCG(uint64(time.Now().Unix()), uint64(time.Now().Unix())))
 
 	for i := range 100 {
-		res := toResources(expectedSlice)
-		rnd.Shuffle(len(res), func(i, j int) { res[i], res[j] = res[j], res[i] })
-		netctrl.SortBonds(res)
-		sorted := toSpecs(res)
-		require.Equal(t, expectedSlice, sorted, "failed with seed %d iteration %d", seed, i)
+		res := safe.NewList[*network.LinkSpec](resource.List{
+			Items: safe.ToSlice(expected, func(r *network.LinkSpec) resource.Resource { return r }),
+		})
+
+		rnd.Shuffle(res.Len(), res.Swap)
+		netctrl.SortBonds(&res)
+		require.Equal(t, expected, res, "failed with seed %d iteration %d", seed, i)
 	}
 }
 
-func toResources(slice []network.LinkSpecSpec) []resource.Resource {
-	return xslices.Map(slice, func(spec network.LinkSpecSpec) resource.Resource {
-		link := network.NewLinkSpec(network.NamespaceName, "bar")
-		*link.TypedSpec() = spec
+func toResources(slice []network.LinkSpecSpec) safe.List[*network.LinkSpec] {
+	return safe.NewList[*network.LinkSpec](resource.List{
+		Items: xslices.Map(slice, func(spec network.LinkSpecSpec) resource.Resource {
+			link := network.NewLinkSpec(network.NamespaceName, "bar")
+			*link.TypedSpec() = spec
 
-		return link
-	})
-}
-
-func toSpecs(slice []resource.Resource) []network.LinkSpecSpec {
-	return xslices.Map(slice, func(r resource.Resource) network.LinkSpecSpec {
-		v := r.Spec().(*network.LinkSpecSpec) //nolint:errcheck
-
-		return *v
+			return link
+		}),
 	})
 }

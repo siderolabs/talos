@@ -40,7 +40,7 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 		return nil, err
 	}
 
-	diskConv := func(d *block.Disk) (*storage.Disk, error) {
+	diskConv := func(d *block.Disk) *storage.Disk {
 		var diskType storage.Disk_DiskType
 
 		switch {
@@ -68,15 +68,13 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 			SystemDisk: systemDisk != nil && d.Metadata().ID() == systemDisk.TypedSpec().DiskID,
 			Subsystem:  d.TypedSpec().SubSystem,
 			Readonly:   d.TypedSpec().Readonly,
-		}, nil
+		}
 	}
-
-	diskList, _ := safe.Map(disks, diskConv) //nolint:errcheck
 
 	reply = &storage.DisksResponse{
 		Messages: []*storage.Disks{
 			{
-				Disks: diskList,
+				Disks: safe.ToSlice(disks, diskConv),
 			},
 		},
 	}
