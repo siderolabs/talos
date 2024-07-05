@@ -13,6 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
 	yaml "gopkg.in/yaml.v3"
+
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
 // YAML outputs resources in YAML format.
@@ -38,6 +40,10 @@ func (y *YAML) WriteHeader(definition *meta.ResourceDefinition, withEvents bool)
 
 // WriteResource implements output.Writer interface.
 func (y *YAML) WriteResource(node string, r resource.Resource, event state.EventType) error {
+	if r.Metadata().Type() == config.MachineConfigType {
+		r = &mcYamlRepr{r}
+	}
+
 	out, err := resource.MarshalYAML(r)
 	if err != nil {
 		return err
@@ -61,4 +67,19 @@ func (y *YAML) WriteResource(node string, r resource.Resource, event state.Event
 // Flush implements output.Writer interface.
 func (y *YAML) Flush() error {
 	return nil
+}
+
+type mcYamlRepr struct{ resource.Resource }
+
+func (m *mcYamlRepr) Spec() any { return &mcYamlSpec{res: m.Resource} }
+
+type mcYamlSpec struct{ res resource.Resource }
+
+func (m *mcYamlSpec) MarshalYAML() (any, error) {
+	out, err := yaml.Marshal(m.res.Spec())
+	if err != nil {
+		return nil, err
+	}
+
+	return string(out), err
 }

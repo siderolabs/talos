@@ -13,6 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
 	yaml "gopkg.in/yaml.v3"
+
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
 // JSON outputs resources in JSON format.
@@ -37,6 +39,10 @@ func (j *JSON) WriteHeader(definition *meta.ResourceDefinition, withEvents bool)
 
 // prepareEncodableData prepares the data of a resource to be encoded as JSON and populates it with some extra information.
 func (j *JSON) prepareEncodableData(node string, r resource.Resource, event state.EventType) (map[string]interface{}, error) {
+	if r.Metadata().Type() == config.MachineConfigType {
+		r = &mcYamlRepr{r}
+	}
+
 	out, err := resource.MarshalYAML(r)
 	if err != nil {
 		return nil, err

@@ -96,7 +96,7 @@ func (table *Table) WriteResource(node string, r resource.Resource, event state.
 			return nil
 		}
 
-		values = append([]string{label}, values...)
+		values = slices.Insert(values, 0, label)
 	}
 
 	yml, err := yaml.Marshal(r.Spec())
@@ -121,7 +121,7 @@ func (table *Table) WriteResource(node string, r resource.Resource, event state.
 		values = append(values, value)
 	}
 
-	values = append([]string{node}, values...)
+	values = slices.Insert(values, 0, node)
 
 	_, err = fmt.Fprintln(&table.w, strings.Join(values, "\t"))
 

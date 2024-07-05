@@ -58,8 +58,7 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 			return errors.New("only the machineconfig resource can be edited")
 		}
 
-		metadata := mc.Metadata()
-		id := metadata.ID()
+		id := mc.Metadata().ID()
 
 		body, err := yaml.Marshal(mc.Spec())
 		if err != nil {
