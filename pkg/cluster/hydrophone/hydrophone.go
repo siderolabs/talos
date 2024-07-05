@@ -15,11 +15,6 @@ import (
 
 	"github.com/blang/semver/v4"
 	yaml "gopkg.in/yaml.v3"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/hydrophone/pkg/common"
 	"sigs.k8s.io/hydrophone/pkg/conformance"
 	"sigs.k8s.io/hydrophone/pkg/conformance/client"
@@ -127,44 +122,6 @@ func CertifiedConformance(ctx context.Context, cluster cluster.K8sProvider) erro
 	return Run(ctx, cluster, &options)
 }
 
-func ensureNamespaceDeleted(ctx context.Context, clientset *kubernetes.Clientset, namespace string, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	watcher, err := clientset.CoreV1().Namespaces().Watch(ctx, metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("metadata.name", namespace).String(),
-	})
-	if err != nil {
-		return err
-	}
-
-	defer watcher.Stop()
-
-	_, err = clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil // already deleted
-		}
-
-		return err
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case event := <-watcher.ResultChan():
-			if event.Type == watch.Error {
-				return fmt.Errorf("error watching pod: %v", event.Object)
-			}
-
-			if event.Type == watch.Deleted {
-				return nil
-			}
-		}
-	}
-}
-
 // Run the e2e test against cluster with provided options.
 //
 //nolint:gocyclo
@@ -196,10 +153,6 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	cleanup := func() error {
 		if err := testRunner.Cleanup(ctx); err != nil {
 			return fmt.Errorf("failed to cleanup: %w", err)
-		}
-
-		if err := ensureNamespaceDeleted(ctx, clientset, config.Namespace, options.DeleteTimeout); err != nil {
-			return fmt.Errorf("failed to delete namespace: %w", err)
 		}
 
 		return nil
