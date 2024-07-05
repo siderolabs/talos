@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/xslices"
@@ -203,41 +204,58 @@ func (container *Container) Bytes() ([]byte, error) {
 
 // EncodeString configuration to YAML using the provided options.
 func (container *Container) EncodeString(encoderOptions ...encoder.Option) (string, error) {
-	b, err := container.EncodeBytes(encoderOptions...)
+	var buf strings.Builder
+
+	err := container.encodeToBuf(&buf, encoderOptions...)
 	if err != nil {
 		return "", err
 	}
 
-	return string(b), nil
+	return buf.String(), nil
 }
 
 // EncodeBytes configuration to YAML using the provided options.
 func (container *Container) EncodeBytes(encoderOptions ...encoder.Option) ([]byte, error) {
 	var buf bytes.Buffer
 
+	err := container.encodeToBuf(&buf, encoderOptions...)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+type buffer interface {
+	Len() int
+	Write(p []byte) (int, error)
+	WriteString(s string) (int, error)
+}
+
+func (container *Container) encodeToBuf(buf buffer, encoderOptions ...encoder.Option) error {
 	if container.v1alpha1Config != nil {
 		b, err := encoder.NewEncoder(container.v1alpha1Config, encoderOptions...).Encode()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		buf.Write(b)
+		buf.Write(b) //nolint:errcheck
 	}
 
 	for _, doc := range container.documents {
 		if buf.Len() > 0 {
-			buf.WriteString("---\n")
+			buf.WriteString("---\n") //nolint:errcheck
 		}
 
 		b, err := encoder.NewEncoder(doc, encoderOptions...).Encode()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		buf.Write(b)
+		buf.Write(b) //nolint:errcheck
 	}
 
-	return buf.Bytes(), nil
+	return nil
 }
 
 // Validate checks configuration and returns warnings and fatal errors (as multierror).
