@@ -16,13 +16,13 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/google/go-cmp/cmp"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/configdiff"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -165,9 +165,12 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {
-		diff := cmp.Diff(currentConfig, newConfig, cmp.AllowUnexported(v1alpha1.InstallDiskSizeMatcher{}))
+		diff, err := configdiff.DiffToString(container.NewV1Alpha1(currentConfig), container.NewV1Alpha1(newConfig))
+		if err != nil {
+			return fmt.Errorf("error calculating diff: %w", err)
+		}
 
-		return fmt.Errorf("this config change can't be applied in immediate mode\ndiff: %s", diff)
+		return fmt.Errorf("this config change can't be applied in immediate mode\ndiff:\n%s", diff)
 	}
 
 	return nil

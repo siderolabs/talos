@@ -13,8 +13,10 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.6.2
 	github.com/evanphx/json-patch v5.9.0+incompatible
+	github.com/fatih/color v1.17.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hexops/gotextdiff v1.0.3
 	github.com/jsimonetti/rtnetlink/v2 v2.0.2
 	github.com/mdlayher/ethtool v0.1.0
 	github.com/opencontainers/runtime-spec v1.2.0
@@ -47,6 +49,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/josharian/native v1.1.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mdlayher/genetlink v1.3.2 // indirect
 	github.com/mdlayher/netlink v1.7.2 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect

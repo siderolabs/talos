@@ -8,7 +8,6 @@ import (
 	"archive/tar"
 	"bufio"
 	"bytes"
-	stdcmp "cmp"
 	"compress/gzip"
 	"context"
 	"encoding/json"
@@ -28,7 +27,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
-	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/gopacket/gopacket/afpacket"
 	multierror "github.com/hashicorp/go-multierror"
@@ -78,11 +76,10 @@ import (
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	docscfg "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configdiff"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
@@ -221,7 +218,10 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	}
 
 	if in.DryRun {
-		details := generateDiff(s.Controller.Runtime(), cfgProvider)
+		details, err := generateDiff(s.Controller.Runtime(), cfgProvider)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate diff: %w", err)
+		}
 
 		return &machine.ApplyConfigurationResponse{
 			Messages: []*machine.ApplyConfiguration{
@@ -295,33 +295,17 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	}, nil
 }
 
-func generateDiff(r runtime.Runtime, provider config.Provider) string {
-	var cfg *v1alpha1.Config
-
-	if r.Config() != nil {
-		cfg = r.ConfigContainer().RawV1Alpha1()
+func generateDiff(r runtime.Runtime, provider config.Provider) (string, error) {
+	documentsDiff, err := configdiff.DiffToString(r.ConfigContainer(), provider)
+	if err != nil {
+		return "", err
 	}
 
-	v1alpha1Diff := cmp.Diff(cfg, provider.RawV1Alpha1(), cmp.AllowUnexported(v1alpha1.InstallDiskSizeMatcher{}))
-	if v1alpha1Diff == "" {
-		v1alpha1Diff = "No changes."
-	}
-
-	origDocs := slices.DeleteFunc(r.ConfigContainer().Documents(), func(doc docscfg.Document) bool { return doc.Kind() == v1alpha1.Version })
-	newDocs := slices.DeleteFunc(provider.Documents(), func(doc docscfg.Document) bool { return doc.Kind() == v1alpha1.Version })
-
-	slices.SortStableFunc(origDocs, func(a, b docscfg.Document) int { return stdcmp.Compare(a.Kind(), b.Kind()) })
-	slices.SortStableFunc(newDocs, func(a, b docscfg.Document) int { return stdcmp.Compare(a.Kind(), b.Kind()) })
-
-	documentsDiff := cmp.Diff(origDocs, newDocs)
 	if documentsDiff == "" {
 		documentsDiff = "No changes."
 	}
 
-	return fmt.Sprintf(`Config diff:
-%s
-Documents diff:
-%s`, v1alpha1Diff, documentsDiff)
+	return "Config diff:\n\n" + documentsDiff, nil
 }
 
 // GenerateConfiguration implements the machine.MachineServer interface.

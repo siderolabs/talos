@@ -504,9 +504,9 @@ FROM scratch AS talosctl
 ARG TARGETARCH
 COPY --from=talosctl-all /talosctl-linux-${TARGETARCH} /talosctl
 ARG TAG
-ENV VERSION ${TAG}
+ENV VERSION=${TAG}
 LABEL "alpha.talos.dev/version"="${VERSION}"
-LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
+LABEL org.opencontainers.image.source=https://github.com/siderolabs/talos
 ENTRYPOINT ["/talosctl"]
 
 # The kernel target is the linux kernel.
@@ -755,7 +755,7 @@ COPY --from=initramfs-archive /initramfs.xz /initramfs-${TARGETARCH}.xz
 
 FROM scratch AS talos
 COPY --from=rootfs / /
-LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
+LABEL org.opencontainers.image.source=https://github.com/siderolabs/talos
 ENTRYPOINT ["/sbin/init"]
 
 # The installer target generates an image that can be used to install Talos to
@@ -793,7 +793,7 @@ FROM install-artifacts-${INSTALLER_ARCH} AS install-artifacts
 
 FROM alpine:3.18.4 AS installer-image
 ARG SOURCE_DATE_EPOCH
-ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 RUN apk add --no-cache --update --no-scripts \
     bash \
     binutils-aarch64 \
@@ -813,7 +813,7 @@ RUN apk add --no-cache --update --no-scripts \
     xz \
     zstd
 ARG TARGETARCH
-ENV TARGETARCH ${TARGETARCH}
+ENV TARGETARCH=${TARGETARCH}
 COPY --from=installer-build /installer /bin/installer
 COPY --chmod=0644 hack/extra-modules.conf /etc/modules.d/10-extra-modules.conf
 COPY --from=pkg-grub / /
@@ -827,9 +827,9 @@ RUN find /bin /etc /lib /usr /sbin | grep -Ev '/etc/hosts|/etc/resolv.conf' \
 FROM scratch AS installer-image-squashed
 COPY --from=installer-image / /
 ARG TAG
-ENV VERSION ${TAG}
+ENV VERSION=${TAG}
 LABEL "alpha.talos.dev/version"="${VERSION}"
-LABEL org.opencontainers.image.source https://github.com/siderolabs/talos
+LABEL org.opencontainers.image.source=https://github.com/siderolabs/talos
 ENTRYPOINT ["/bin/installer"]
 
 FROM installer-image-squashed AS installer
@@ -841,7 +841,7 @@ ENTRYPOINT ["/bin/imager"]
 
 FROM imager AS iso-amd64-build
 ARG SOURCE_DATE_EPOCH
-ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 RUN /bin/installer \
     iso \
     --arch amd64 \
@@ -849,7 +849,7 @@ RUN /bin/installer \
 
 FROM imager AS iso-arm64-build
 ARG SOURCE_DATE_EPOCH
-ENV SOURCE_DATE_EPOCH ${SOURCE_DATE_EPOCH}
+ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 RUN /bin/installer \
     iso \
     --arch arm64 \
@@ -868,7 +868,7 @@ FROM base AS unit-tests-runner
 RUN unlink /etc/ssl
 COPY --from=rootfs / /
 ARG TESTPKGS
-ENV PLATFORM container
+ENV PLATFORM=container
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -failfast -v \
     -ldflags "${GO_LDFLAGS}" \
@@ -882,8 +882,8 @@ FROM base AS unit-tests-race
 RUN unlink /etc/ssl
 COPY --from=rootfs / /
 ARG TESTPKGS
-ENV PLATFORM container
-ENV CGO_ENABLED 1
+ENV PLATFORM=container
+ENV CGO_ENABLED=1
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache go test -v \
     -ldflags "${GO_LDFLAGS}" \

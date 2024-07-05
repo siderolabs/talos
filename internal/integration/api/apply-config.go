@@ -98,7 +98,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Assert().NoErrorf(err, "failed to read existing config from node %q: %w", node, err)
+	suite.Assert().NoErrorf(err, "failed to read existing config from node %q", node)
 
 	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 		if cfg.MachineConfig.MachineSysctls == nil {
@@ -118,7 +118,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 			)
 			if err != nil {
 				// It is expected that the connection will EOF here, so just log the error
-				suite.Assert().NoErrorf(err, "failed to apply configuration (node %q): %w", node, err)
+				suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
 			}
 
 			return nil
@@ -138,7 +138,7 @@ func (suite *ApplyConfigSuite) TestApply() {
 
 				return nil
 			},
-		), "failed to read updated configuration from node %q: %w", node, err,
+		), "failed to read updated configuration from node %q", node,
 	)
 
 	suite.Assert().Equal(
@@ -177,14 +177,14 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 				Mode: mode,
 			},
 		)
-		suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
+		suite.Require().NoError(err, "failed to apply deferred configuration (node %q)", node)
 
 		// Verify configuration change
 		var newProvider config.Provider
 
 		newProvider, err = suite.ReadConfigFromNode(nodeCtx)
 
-		suite.Require().NoError(err, "failed to read updated configuration from node %q: %w", node)
+		suite.Require().NoError(err, "failed to read updated configuration from node %q", node)
 
 		if mode == machineapi.ApplyConfigurationRequest_AUTO {
 			suite.Assert().Equal(
@@ -206,7 +206,7 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 				Mode: mode,
 			},
 		)
-		suite.Require().NoError(err, "failed to apply deferred configuration (node %q): %w", node)
+		suite.Require().NoError(err, "failed to apply deferred configuration (node %q)", node)
 	}
 }
 
@@ -303,7 +303,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 				)
 				if err != nil {
 					// It is expected that the connection will EOF here, so just log the error
-					suite.Assert().Errorf(err, "failed to apply configuration (node %q): %w", node, err)
+					suite.T().Logf("failed to apply configuration (node %q): %s", node, err)
 				}
 
 				return nil
@@ -315,7 +315,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		// Verify configuration change
 		var newProvider config.Provider
 
-		suite.Require().Errorf(
+		suite.Require().NoError(
 			retry.Constant(time.Minute, retry.WithUnits(time.Second)).Retry(
 				func() error {
 					newProvider, err = suite.ReadConfigFromNode(nodeCtx)
@@ -325,7 +325,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 
 					return nil
 				},
-			), "failed to read updated configuration from node %q: %w", node, err,
+			), "failed to read updated configuration from node %q", node,
 		)
 
 		e := newProvider.Machine().SystemDiskEncryption().Get(constants.EphemeralPartitionLabel)
@@ -504,10 +504,10 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 			TryModeTimeout: durationpb.New(time.Second * 1),
 		},
 	)
-	suite.Assert().NoErrorf(err, "failed to apply configuration (node %q): %s", node, err)
+	suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
 
 	provider, err = getMachineConfig(nodeCtx)
-	suite.Require().NoErrorf(err, "failed to read existing config from node %q: %w", node, err)
+	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
 
 	suite.Assert().NotNil(provider.Config().Machine().Network())
 	suite.Assert().NotNil(provider.Config().Machine().Network().Devices())
