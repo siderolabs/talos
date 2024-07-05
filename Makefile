@@ -14,6 +14,8 @@ NAME = Talos
 CLOUD_IMAGES_EXTRA_ARGS ?= ""
 ZSTD_COMPRESSION_LEVEL ?= 18
 
+CI_RELEASE_TAG := $(shell git log --oneline --format=%B -n 1 HEAD^2 | head -n 1 | sed -r "/^release\(.*\)/ s/^release\((.*)\):.*$$/\\1/; t; Q")
+
 ARTIFACTS := _out
 TOOLS ?= ghcr.io/siderolabs/tools:v1.8.0-alpha.0-6-g31ad71b
 
@@ -615,3 +617,11 @@ reproducibility-test-local-%:
 	@$(MAKE) local-$* DEST=_out2/ TARGET_ARGS="--no-cache"
 	@find _out1/ -type f | xargs -IFILE diffoscope FILE `echo FILE | sed 's/_out1/_out2/'`
 	@rm -rf _out1/ _out2/
+
+.PHONY: ci-temp-release-tag
+ci-temp-release-tag: ## Generates a temporary release tag for CI run.
+	@if [ -n "$(CI_RELEASE_TAG)" -a -n "$${GITHUB_ENV}" ]; then \
+		echo Setting temporary release tag "$(CI_RELEASE_TAG)"; \
+		echo "TAG=$(CI_RELEASE_TAG)" >> "$${GITHUB_ENV}"; \
+		echo "ABBREV_TAG=$(CI_RELEASE_TAG)" >> "$${GITHUB_ENV}"; \
+	fi

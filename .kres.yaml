@@ -90,6 +90,7 @@ spec:
       conditions:
         - on-pull-request
       steps:
+        - name: ci-temp-release-tag
         - name: external-artifacts
         - name: generate
           command: generate docs
@@ -236,6 +237,7 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
         - name: e2e-iso
           withSudo: true
           environment:
@@ -262,6 +264,7 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
         - name: e2e-qemu
           withSudo: true
           environment:
@@ -289,6 +292,7 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: ci-temp-release-tag
         - name: e2e-docker
           withSudo: false
           environment:

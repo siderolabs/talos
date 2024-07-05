@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-06-24T09:42:29Z by kres 4c9f215.
+# Generated on 2024-07-05T14:53:41Z by kres 8c8b007.
 
 name: default
 concurrency:
@@ -69,6 +69,9 @@ jobs:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: external-artifacts
         run: |
           make external-artifacts
@@ -197,6 +200,9 @@ jobs:
       - name: Fix artifact permissions
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: e2e-docker
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -264,6 +270,9 @@ jobs:
       - name: Fix artifact permissions
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: e2e-iso
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -330,6 +339,9 @@ jobs:
       - name: Fix artifact permissions
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: e2e-qemu
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
