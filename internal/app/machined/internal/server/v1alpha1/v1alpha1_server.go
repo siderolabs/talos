@@ -1055,7 +1055,8 @@ func (s *Server) Mounts(ctx context.Context, in *emptypb.Empty) (reply *machine.
 		multiErr *multierror.Error
 	)
 
-	stats := []*machine.MountStat{}
+	var stats []*machine.MountStat
+
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
@@ -1409,7 +1410,7 @@ func (s *Server) Containers(ctx context.Context, in *machine.ContainersRequest) 
 		log.Println(err.Error())
 	}
 
-	containers := []*machine.ContainerInfo{}
+	var containers []*machine.ContainerInfo
 
 	for _, pod := range pods {
 		for _, container := range pod.Containers {
@@ -1457,7 +1458,7 @@ func (s *Server) Stats(ctx context.Context, in *machine.StatsRequest) (reply *ma
 		log.Println(err.Error())
 	}
 
-	stats := []*machine.Stat{}
+	var stats []*machine.Stat
 
 	for _, pod := range pods {
 		for _, container := range pod.Containers {

@@ -27,10 +27,10 @@ type Authorizer struct {
 	FallbackRoles role.Set
 
 	// Logger.
-	Logger func(format string, v ...interface{})
+	Logger func(format string, v ...any)
 }
 
-func (a *Authorizer) logf(format string, v ...interface{}) {
+func (a *Authorizer) logf(format string, v ...any) {
 	if a.Logger != nil {
 		a.Logger(format, v...)
 	}
@@ -59,7 +59,7 @@ func (a *Authorizer) authorize(ctx context.Context, method string) error {
 
 // UnaryInterceptor returns grpc UnaryServerInterceptor.
 func (a *Authorizer) UnaryInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		if err := a.authorize(ctx, info.FullMethod); err != nil {
 			return nil, err
 		}
@@ -70,7 +70,7 @@ func (a *Authorizer) UnaryInterceptor() grpc.UnaryServerInterceptor {
 
 // StreamInterceptor returns grpc StreamServerInterceptor.
 func (a *Authorizer) StreamInterceptor() grpc.StreamServerInterceptor {
-	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		if err := a.authorize(stream.Context(), info.FullMethod); err != nil {
 			return err
 		}

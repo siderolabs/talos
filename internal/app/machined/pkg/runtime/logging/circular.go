@@ -74,7 +74,7 @@ func (manager *CircularBufferLoggingManager) ServiceLog(id string) runtime.LogHa
 	return &circularHandler{
 		manager: manager,
 		id:      id,
-		fields: map[string]interface{}{
+		fields: map[string]any{
 			// use field name that is not used by anything else
 			"talos-service": id,
 		},
@@ -153,7 +153,7 @@ func (manager *CircularBufferLoggingManager) RegisteredLogs() []string {
 type circularHandler struct {
 	manager *CircularBufferLoggingManager
 	id      string
-	fields  map[string]interface{}
+	fields  map[string]any
 
 	buf *circular.Buffer
 }

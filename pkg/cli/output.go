@@ -11,7 +11,7 @@ import (
 )
 
 // Fatalf prints formatted message to stderr and aborts execution.
-func Fatalf(message string, args ...interface{}) {
+func Fatalf(message string, args ...any) {
 	if !strings.HasSuffix(message, "\n") {
 		message += "\n"
 	}
@@ -21,7 +21,7 @@ func Fatalf(message string, args ...interface{}) {
 }
 
 // Warning prints formatted message to stderr.
-func Warning(message string, args ...interface{}) {
+func Warning(message string, args ...any) {
 	if !strings.HasSuffix(message, "\n") {
 		message += "\n"
 	}

@@ -70,7 +70,7 @@ func (ctrl *AddressEventController) Run(ctx context.Context, r controller.Runtim
 		case <-r.EventCh():
 		}
 
-		addresses := []string{}
+		var addresses []string
 
 		nodeAddr, err := r.Get(
 			ctx,

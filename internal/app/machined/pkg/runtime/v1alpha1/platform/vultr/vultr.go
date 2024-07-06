@@ -52,7 +52,7 @@ func (v *Vultr) ParseMetadata(metadata *metadata.MetaData) (*runtime.PlatformNet
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	publicIPs := []string{}
+	var publicIPs []string
 
 	for i, addr := range metadata.Interfaces {
 		iface := fmt.Sprintf("eth%d", i)

@@ -141,8 +141,8 @@ func (events *ServiceEvents) AsProto(count int) *machineapi.ServiceEvents {
 }
 
 // Recorder adds new event to the history of events, formatting message with args using Sprintf.
-type Recorder func(newstate ServiceState, message string, args ...interface{})
+type Recorder func(newstate ServiceState, message string, args ...any)
 
 // NullRecorder discards events.
-func NullRecorder(newstate ServiceState, message string, args ...interface{}) {
+func NullRecorder(newstate ServiceState, message string, args ...any) {
 }

@@ -104,7 +104,7 @@ func SystemMountPointForLabel(ctx context.Context, device *blockdevice.BlockDevi
 
 	o := NewDefaultOptions(opts...)
 
-	preMountHooks := []Hook{}
+	var preMountHooks []Hook
 
 	if o.Encryption != nil {
 		encryptionHandler, err := encryption.NewHandler(

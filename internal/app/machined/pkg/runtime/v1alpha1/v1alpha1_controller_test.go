@@ -67,8 +67,8 @@ func (m *mockSequencer) Upgrade(r runtime.Runtime, req *machine.UpgradeRequest) 
 	return m.phases[runtime.SequenceUpgrade]
 }
 
-func (m *mockSequencer) trackCall(name string, doneCh chan struct{}) func(runtime.Sequence, interface{}) (runtime.TaskExecutionFunc, string) {
-	return func(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func (m *mockSequencer) trackCall(name string, doneCh chan struct{}) func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(seq runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 			if doneCh != nil {
 				defer func() {
@@ -97,8 +97,8 @@ func TestRun(t *testing.T) {
 		from        runtime.Sequence
 		to          runtime.Sequence
 		expectError error
-		dataFrom    interface{}
-		dataTo      interface{}
+		dataFrom    any
+		dataTo      any
 	}{
 		{
 			name:        "reboot should take over boot",
@@ -202,7 +202,7 @@ func TestRun(t *testing.T) {
 	}
 }
 
-func wait(seq runtime.Sequence, data interface{}) (runtime.TaskExecutionFunc, string) {
+func wait(seq runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		select {
 		case <-ctx.Done():

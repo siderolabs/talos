@@ -28,7 +28,7 @@ type EtcFileController struct {
 	ShadowPath string
 
 	// Cache of bind mounts created.
-	bindMounts map[string]interface{}
+	bindMounts map[string]any
 }
 
 // Name implements controller.Controller interface.
@@ -62,7 +62,7 @@ func (ctrl *EtcFileController) Outputs() []controller.Output {
 //nolint:gocyclo,cyclop
 func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.bindMounts == nil {
-		ctrl.bindMounts = make(map[string]interface{})
+		ctrl.bindMounts = make(map[string]any)
 	}
 
 	for {

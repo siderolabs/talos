@@ -178,7 +178,8 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 			if watchCh == nil {
 				watchCh = make(chan machinedruntime.EventInfo)
 
-				opts := []machinedruntime.WatchOptionFunc{}
+				var opts []machinedruntime.WatchOptionFunc
+
 				if ctrl.eventID.IsNil() {
 					opts = append(opts, machinedruntime.WithTailEvents(-1))
 				} else {

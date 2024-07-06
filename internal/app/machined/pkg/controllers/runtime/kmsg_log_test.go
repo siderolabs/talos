@@ -35,7 +35,7 @@ type logHandler struct {
 }
 
 // HandleLog implements logreceiver.Handler.
-func (s *logHandler) HandleLog(srcAddr netip.Addr, msg map[string]interface{}) {
+func (s *logHandler) HandleLog(srcAddr netip.Addr, msg map[string]any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

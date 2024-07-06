@@ -32,7 +32,7 @@ func (a staticPodStatus) SetStatus(status *v1.PodStatus) error {
 		return err
 	}
 
-	a.StaticPodStatus.TypedSpec().PodStatus = map[string]interface{}{}
+	a.StaticPodStatus.TypedSpec().PodStatus = map[string]any{}
 
 	return json.Unmarshal(jsonSerialized, &a.StaticPodStatus.TypedSpec().PodStatus)
 }

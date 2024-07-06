@@ -13,7 +13,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-func checkUnknownKeys(target interface{}, spec *yaml.Node) error {
+func checkUnknownKeys(target any, spec *yaml.Node) error {
 	unknown, err := internalCheckUnknownKeys(reflect.TypeOf(target), spec)
 	if err != nil {
 		return err
@@ -82,10 +82,10 @@ func structKeys(typ reflect.Type) (map[string][]int, reflect.Type) {
 	return availableKeys, typ
 }
 
-var typeOfInterfaceAny = reflect.TypeOf((*interface{})(nil)).Elem()
+var typeOfInterfaceAny = reflect.TypeOf((*any)(nil)).Elem()
 
 //nolint:gocyclo,cyclop
-func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interface{}, err error) {
+func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown any, err error) {
 	for typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
@@ -124,10 +124,10 @@ func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interf
 				fieldIndex, ok := availableKeys[key]
 				if !ok {
 					if unknown == nil {
-						unknown = map[string]interface{}{}
+						unknown = map[string]any{}
 					}
 
-					unknown.(map[string]interface{})[key] = spec.Content[i+1]
+					unknown.(map[string]any)[key] = spec.Content[i+1]
 
 					continue
 				}
@@ -145,10 +145,10 @@ func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interf
 
 			if innerUnknown != nil {
 				if unknown == nil {
-					unknown = map[string]interface{}{}
+					unknown = map[string]any{}
 				}
 
-				unknown.(map[string]interface{})[key] = innerUnknown
+				unknown.(map[string]any)[key] = innerUnknown
 			}
 		}
 	case yaml.SequenceNode:
@@ -164,10 +164,10 @@ func internalCheckUnknownKeys(typ reflect.Type, spec *yaml.Node) (unknown interf
 
 			if innerUnknown != nil {
 				if unknown == nil {
-					unknown = []interface{}{}
+					unknown = []any{}
 				}
 
-				unknown = append(unknown.([]interface{}), innerUnknown)
+				unknown = append(unknown.([]any), innerUnknown)
 			}
 		}
 	}

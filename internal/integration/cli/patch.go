@@ -54,11 +54,11 @@ func (suite *PatchSuite) TestSuccess() {
 func (suite *PatchSuite) TestError() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
-	patch := []map[string]interface{}{
+	patch := []map[string]any{
 		{
 			"op":   "crash",
 			"path": "/cluster/proxy",
-			"value": map[string]interface{}{
+			"value": map[string]any{
 				"image": fmt.Sprintf("%s:v%s", constants.KubeProxyImage, constants.DefaultKubernetesVersion),
 			},
 		},

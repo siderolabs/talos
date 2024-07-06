@@ -268,7 +268,7 @@ func (c *containerdRunner) newContainerOpts(
 	image containerd.Image,
 	specOpts []oci.SpecOpts,
 ) []containerd.NewContainerOpts {
-	containerOpts := []containerd.NewContainerOpts{}
+	var containerOpts []containerd.NewContainerOpts
 
 	if image != nil {
 		containerOpts = append(
@@ -292,7 +292,7 @@ func (c *containerdRunner) newContainerOpts(
 }
 
 func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
-	specOpts := []oci.SpecOpts{}
+	var specOpts []oci.SpecOpts
 
 	if image != nil {
 		specOpts = append(

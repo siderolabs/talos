@@ -10,7 +10,7 @@ package cri
 func (o SeccompProfileSpec) DeepCopy() SeccompProfileSpec {
 	var cp SeccompProfileSpec = o
 	if o.Value != nil {
-		cp.Value = make(map[string]interface{}, len(o.Value))
+		cp.Value = make(map[string]any, len(o.Value))
 		for k2, v2 := range o.Value {
 			cp.Value[k2] = v2
 		}

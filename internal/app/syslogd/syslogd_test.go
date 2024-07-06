@@ -64,7 +64,7 @@ func TestParsing(t *testing.T) {
 
 	select {
 	case msg := <-ch.ch:
-		var parsed map[string]interface{}
+		var parsed map[string]any
 
 		require.NoError(t, json.Unmarshal(msg, &parsed))
 

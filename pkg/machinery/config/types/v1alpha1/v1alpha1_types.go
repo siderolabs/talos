@@ -726,7 +726,7 @@ type NetworkConfig struct {
 type NetworkDeviceList []*Device
 
 // Merge the network interface configuration intelligently.
-func (devices *NetworkDeviceList) Merge(other interface{}) error {
+func (devices *NetworkDeviceList) Merge(other any) error {
 	otherDevices, ok := other.(NetworkDeviceList)
 	if !ok {
 		return fmt.Errorf("unexpected type for device merge %T", other)
@@ -832,12 +832,12 @@ type InstallDiskSizeMatcher struct {
 }
 
 // MarshalYAML is a custom marshaller for `InstallDiskSizeMatcher`.
-func (m *InstallDiskSizeMatcher) MarshalYAML() (interface{}, error) {
+func (m *InstallDiskSizeMatcher) MarshalYAML() (any, error) {
 	return m.condition, nil
 }
 
 // UnmarshalYAML is a custom unmarshaller for `InstallDiskSizeMatcher`.
-func (m *InstallDiskSizeMatcher) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (m *InstallDiskSizeMatcher) UnmarshalYAML(unmarshal func(any) error) error {
 	if err := unmarshal(&m.condition); err != nil {
 		return err
 	}
@@ -910,12 +910,12 @@ func (in *InstallDiskSizeMatchData) Compare(d *disk.Disk) bool {
 type InstallDiskType disk.Type
 
 // MarshalYAML is a custom marshaller for `InstallDiskSizeMatcher`.
-func (it InstallDiskType) MarshalYAML() (interface{}, error) {
+func (it InstallDiskType) MarshalYAML() (any, error) {
 	return disk.Type(it).String(), nil
 }
 
 // UnmarshalYAML is a custom unmarshaler for `InstallDiskType`.
-func (it *InstallDiskType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (it *InstallDiskType) UnmarshalYAML(unmarshal func(any) error) error {
 	var (
 		t   string
 		err error
@@ -1059,7 +1059,7 @@ type Endpoint struct {
 }
 
 // UnmarshalYAML is a custom unmarshaller for `Endpoint`.
-func (e *Endpoint) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (e *Endpoint) UnmarshalYAML(unmarshal func(any) error) error {
 	var endpoint string
 
 	if err := unmarshal(&endpoint); err != nil {
@@ -1077,7 +1077,7 @@ func (e *Endpoint) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // MarshalYAML is a custom marshaller for `Endpoint`.
-func (e *Endpoint) MarshalYAML() (interface{}, error) {
+func (e *Endpoint) MarshalYAML() (any, error) {
 	return e.URL.String(), nil
 }
 
@@ -1178,7 +1178,7 @@ type APIServerConfig struct {
 type AdmissionPluginConfigList []*AdmissionPluginConfig
 
 // Merge the admission plugin configuration intelligently.
-func (configs *AdmissionPluginConfigList) Merge(other interface{}) error {
+func (configs *AdmissionPluginConfigList) Merge(other any) error {
 	otherConfigs, ok := other.(AdmissionPluginConfigList)
 	if !ok {
 		return fmt.Errorf("unexpected type for device merge %T", other)
@@ -1495,7 +1495,7 @@ type MachineDisk struct {
 type DiskSize uint64
 
 // MarshalYAML write as human readable string.
-func (ds DiskSize) MarshalYAML() (interface{}, error) {
+func (ds DiskSize) MarshalYAML() (any, error) {
 	if ds%DiskSize(1000) == 0 {
 		bytesString := humanize.Bytes(uint64(ds))
 		// ensure that stringifying bytes as human readable string
@@ -1510,7 +1510,7 @@ func (ds DiskSize) MarshalYAML() (interface{}, error) {
 }
 
 // UnmarshalYAML read from human readable string.
-func (ds *DiskSize) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (ds *DiskSize) UnmarshalYAML(unmarshal func(any) error) error {
 	var size string
 
 	if err := unmarshal(&size); err != nil {
@@ -1658,7 +1658,7 @@ func (fm FileMode) String() string {
 }
 
 // MarshalYAML encodes as an octal value.
-func (fm FileMode) MarshalYAML() (interface{}, error) {
+func (fm FileMode) MarshalYAML() (any, error) {
 	return &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Tag:   "!!int",
@@ -1997,7 +1997,7 @@ type Bridge struct {
 type VlanList []*Vlan
 
 // Merge the network interface configuration intelligently.
-func (vlans *VlanList) Merge(other interface{}) error {
+func (vlans *VlanList) Merge(other any) error {
 	otherVlans, ok := other.(VlanList)
 	if !ok {
 		return fmt.Errorf("unexpected type for vlan merge %T", other)

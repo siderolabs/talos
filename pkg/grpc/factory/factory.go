@@ -130,7 +130,7 @@ func WithReflection() Option {
 }
 
 func recoveryHandler(logger *log.Logger) grpc_recovery.RecoveryHandlerFunc {
-	return func(p interface{}) error {
+	return func(p any) error {
 		if logger != nil {
 			logger.Printf("panic: %v\n%s", p, string(debug.Stack()))
 		}

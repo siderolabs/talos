@@ -69,7 +69,7 @@ func (m *MockRunner) String() string {
 	return "MockRunner()"
 }
 
-func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+func MockEventSink(state events.ServiceState, message string, args ...any) {
 	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
 }
 

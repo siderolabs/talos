@@ -44,7 +44,7 @@ func NewHandler(device *blockdevice.BlockDevice, partition *gpt.Partition, encry
 			return nil, err
 		}
 
-		opts := []luks.Option{}
+		var opts []luks.Option
 		if encryptionConfig.KeySize() != 0 {
 			opts = append(opts, luks.WithKeySize(encryptionConfig.KeySize()))
 		}

@@ -20,7 +20,7 @@ import (
 )
 
 // ReadConfig loads configuration from stdin.
-func ReadConfig(config interface{}) error {
+func ReadConfig(config any) error {
 	d := json.NewDecoder(os.Stdin)
 	if err := d.Decode(config); err != nil {
 		return fmt.Errorf("error decoding config from stdin: %w", err)

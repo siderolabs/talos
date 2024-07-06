@@ -30,11 +30,11 @@ type ManifestSpec struct {
 //
 //gotagsrewrite:gen
 type SingleManifest struct {
-	Object map[string]interface{} `protobuf:"1" yaml:",inline"`
+	Object map[string]any `protobuf:"1" yaml:",inline"`
 }
 
 // MarshalYAML implements yaml.Marshaler.
-func (spec ManifestSpec) MarshalYAML() (interface{}, error) {
+func (spec ManifestSpec) MarshalYAML() (any, error) {
 	return spec.Items, nil
 }
 

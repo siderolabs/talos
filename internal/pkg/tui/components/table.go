@@ -22,7 +22,7 @@ func NewTable() *Table {
 		Table:       tview.NewTable(),
 		selectedRow: -1,
 		hoveredRow:  -1,
-		rows:        [][]interface{}{},
+		rows:        [][]any{},
 	}
 
 	hasFocus := false
@@ -77,16 +77,16 @@ type Table struct {
 	selectedRow   int
 	hoveredRow    int
 	onRowSelected func(row int)
-	rows          [][]interface{}
+	rows          [][]any
 }
 
 // SetHeader sets table header.
-func (t *Table) SetHeader(keys ...interface{}) {
+func (t *Table) SetHeader(keys ...any) {
 	t.AddRow(keys...)
 }
 
 // AddRow adds a new row to the table.
-func (t *Table) AddRow(columns ...interface{}) {
+func (t *Table) AddRow(columns ...any) {
 	row := t.GetRowCount()
 	col := backgroundColor
 	textColor := tview.Styles.PrimaryTextColor
@@ -201,7 +201,7 @@ func (t *Table) SetRowSelectedFunc(callback func(row int)) {
 }
 
 // GetValue returns value in row/column.
-func (t *Table) GetValue(row, column int) interface{} {
+func (t *Table) GetValue(row, column int) any {
 	if row < len(t.rows) && column < len(t.rows[row]) {
 		return t.rows[row][column]
 	}

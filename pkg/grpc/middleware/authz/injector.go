@@ -58,10 +58,10 @@ type Injector struct {
 	SideroLinkPeerCheckFunc SideroLinkPeerCheckFunc
 
 	// Logger.
-	Logger func(format string, v ...interface{})
+	Logger func(format string, v ...any)
 }
 
-func (i *Injector) logf(format string, v ...interface{}) {
+func (i *Injector) logf(format string, v ...any) {
 	if i.Logger != nil {
 		i.Logger(format, v...)
 	}
@@ -149,7 +149,7 @@ func (i *Injector) extractRoles(ctx context.Context) role.Set {
 
 // UnaryInterceptor returns grpc UnaryServerInterceptor.
 func (i *Injector) UnaryInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		ctx = ContextWithRoles(ctx, i.extractRoles(ctx))
 
 		return handler(ctx, req)
@@ -158,7 +158,7 @@ func (i *Injector) UnaryInterceptor() grpc.UnaryServerInterceptor {
 
 // StreamInterceptor returns grpc StreamServerInterceptor.
 func (i *Injector) StreamInterceptor() grpc.StreamServerInterceptor {
-	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := stream.Context()
 		ctx = ContextWithRoles(ctx, i.extractRoles(ctx))
 

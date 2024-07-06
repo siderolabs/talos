@@ -92,7 +92,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 				}
 			}
 
-			args := []interface{}{}
+			var args []any
 
 			if node != "" {
 				args = append(args, node)
@@ -110,7 +110,7 @@ func printDisks(ctx context.Context, c *client.Client) error {
 				isSystemDisk = "*"
 			}
 
-			args = append(args, []interface{}{
+			args = append(args, []any{
 				getWithPlaceholder(disk.DeviceName),
 				getWithPlaceholder(disk.Model),
 				getWithPlaceholder(disk.Serial),

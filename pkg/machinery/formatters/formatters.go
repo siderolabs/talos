@@ -53,12 +53,12 @@ func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *pe
 			}
 
 			format := "%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n"
-			args := []interface{}{r.Filesystem, float64(r.Size) * 1e-9, float64(r.Size-r.Available) * 1e-9, float64(r.Available) * 1e-9, percentAvailable, r.MountedOn}
+			args := []any{r.Filesystem, float64(r.Size) * 1e-9, float64(r.Size-r.Available) * 1e-9, float64(r.Available) * 1e-9, percentAvailable, r.MountedOn}
 
 			if defaultNode != "" {
 				format = "%s\t" + format
 
-				args = append([]interface{}{node}, args...)
+				args = append([]any{node}, args...)
 			}
 
 			fmt.Fprintf(w, format, args...)
@@ -177,7 +177,7 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 
 		for _, msg := range resp.GetMessages() {
 			for _, edge := range msg.GetEdges() {
-				idLabels := []string{}
+				var idLabels []string
 
 				if edge.GetResourceId() != "" {
 					idLabels = append(idLabels, edge.GetResourceId())

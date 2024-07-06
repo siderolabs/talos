@@ -53,7 +53,7 @@ func DefaultControllerOptions() LockOptions {
 type Controller interface {
 	Runtime() Runtime
 	Sequencer() Sequencer
-	Run(context.Context, Sequence, interface{}, ...LockOption) error
+	Run(context.Context, Sequence, any, ...LockOption) error
 	V1Alpha2() V1Alpha2Controller
 }
 

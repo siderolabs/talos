@@ -642,7 +642,7 @@ func StartSyslogd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string)
 }
 
 // StartDashboard represents the task to start dashboard.
-func StartDashboard(_ runtime.Sequence, _ interface{}) (runtime.TaskExecutionFunc, string) {
+func StartDashboard(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
 		system.Services(r).LoadAndStart(&services.Dashboard{})
 
@@ -726,7 +726,7 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		svcs.LoadAndStart(serviceList...)
 
-		all := []conditions.Condition{}
+		var all []conditions.Condition
 
 		logger.Printf("waiting for %d services", len(svcs.List()))
 

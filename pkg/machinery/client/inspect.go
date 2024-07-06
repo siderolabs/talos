@@ -22,7 +22,7 @@ type InspectClient struct {
 func (c *InspectClient) ControllerRuntimeDependencies(ctx context.Context, callOptions ...grpc.CallOption) (*inspectapi.ControllerRuntimeDependenciesResponse, error) {
 	resp, err := c.client.ControllerRuntimeDependencies(ctx, &emptypb.Empty{}, callOptions...)
 
-	var filtered interface{}
+	var filtered any
 	filtered, err = FilterMessages(resp, err)
 	resp, _ = filtered.(*inspectapi.ControllerRuntimeDependenciesResponse) //nolint:errcheck
 

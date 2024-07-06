@@ -31,8 +31,8 @@ const (
 	busyboxImage = "docker.io/library/busybox:1.30.1"
 )
 
-func MockEventSink(t *testing.T) func(state events.ServiceState, message string, args ...interface{}) {
-	return func(state events.ServiceState, message string, args ...interface{}) {
+func MockEventSink(t *testing.T) func(state events.ServiceState, message string, args ...any) {
+	return func(state events.ServiceState, message string, args ...any) {
 		t.Logf(message, args...)
 	}
 }

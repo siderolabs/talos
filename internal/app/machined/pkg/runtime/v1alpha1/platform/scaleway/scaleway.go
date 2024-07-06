@@ -53,7 +53,7 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	publicIPs := []string{}
+	var publicIPs []string
 
 	if metadata.PublicIP.Address != "" {
 		publicIPs = append(publicIPs, metadata.PublicIP.Address)

@@ -132,7 +132,7 @@ func (suite *GenSuite) TestGenConfigURLValidation() {
 
 // TestGenConfigPatchJSON6902 verifies that gen config --config-patch works with JSON patches.
 func (suite *GenSuite) TestGenConfigPatchJSON6902() {
-	patch, err := json.Marshal([]map[string]interface{}{
+	patch, err := json.Marshal([]map[string]any{
 		{
 			"op":    "replace",
 			"path":  "/cluster/clusterName",
@@ -147,8 +147,8 @@ func (suite *GenSuite) TestGenConfigPatchJSON6902() {
 
 // TestGenConfigPatchStrategic verifies that gen config --config-patch works with strategic merge patches.
 func (suite *GenSuite) TestGenConfigPatchStrategic() {
-	patch, err := yaml.Marshal(map[string]interface{}{
-		"cluster": map[string]interface{}{
+	patch, err := yaml.Marshal(map[string]any{
+		"cluster": map[string]any{
 			"clusterName": "bar",
 		},
 	})

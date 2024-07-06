@@ -29,7 +29,7 @@ var dhcpdLaunchCmd = &cobra.Command{
 	Args:   cobra.NoArgs,
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ips := []net.IP{}
+		var ips []net.IP
 
 		for _, ip := range strings.Split(dhcpdLaunchCmdFlags.addr, ",") {
 			ips = append(ips, net.ParseIP(ip))

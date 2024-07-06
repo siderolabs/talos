@@ -52,7 +52,7 @@ func (h *Hcloud) ParseMetadata(unmarshalledNetworkConfig *NetworkConfig, metadat
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	publicIPs := []string{}
+	var publicIPs []string
 
 	if metadata.PublicIPv4 != "" {
 		publicIPs = append(publicIPs, metadata.PublicIPv4)

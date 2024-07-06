@@ -37,7 +37,7 @@ const (
 	// pauseImageDigest   = "sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e".
 )
 
-func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+func MockEventSink(state events.ServiceState, message string, args ...any) {
 }
 
 type CRISuite struct {

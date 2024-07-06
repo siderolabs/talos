@@ -15,12 +15,12 @@ import (
 
 // Encoder implements config encoder.
 type Encoder struct {
-	value   interface{}
+	value   any
 	options *Options
 }
 
 // NewEncoder initializes and returns an `Encoder`.
-func NewEncoder(value interface{}, opts ...Option) *Encoder {
+func NewEncoder(value any, opts ...Option) *Encoder {
 	return &Encoder{
 		value:   value,
 		options: newOptions(opts...),
@@ -110,7 +110,7 @@ func isNil(value reflect.Value) bool {
 }
 
 //nolint:gocyclo,cyclop
-func toYamlNode(in interface{}, options *Options) (*yaml.Node, error) {
+func toYamlNode(in any, options *Options) (*yaml.Node, error) {
 	node := &yaml.Node{}
 
 	flags := options.Comments
@@ -206,7 +206,7 @@ func toYamlNode(in interface{}, options *Options) (*yaml.Node, error) {
 				}
 			}
 
-			var value interface{}
+			var value any
 			if v.Field(i).CanInterface() {
 				value = v.Field(i).Interface()
 			}
@@ -333,7 +333,7 @@ func appendNodes(dest *yaml.Node, nodes ...*yaml.Node) {
 	dest.Content = append(dest.Content, nodes...)
 }
 
-func addToMap(dest *yaml.Node, doc *Doc, fieldName, in interface{}, style yaml.Style, options *Options) error {
+func addToMap(dest *yaml.Node, doc *Doc, fieldName, in any, style yaml.Style, options *Options) error {
 	key, err := toYamlNode(fieldName, options)
 	if err != nil {
 		return err

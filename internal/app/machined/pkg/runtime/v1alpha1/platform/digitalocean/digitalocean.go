@@ -73,7 +73,7 @@ func (d *DigitalOcean) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 		ConfigLayer: network.ConfigPlatform,
 	})
 
-	publicIPs := []string{}
+	var publicIPs []string
 
 	for _, iface := range metadata.Interfaces["public"] {
 		if iface.IPv4 != nil {

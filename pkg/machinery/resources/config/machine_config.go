@@ -62,7 +62,7 @@ func (r *MachineConfig) Metadata() *resource.Metadata {
 }
 
 // Spec implements resource.Resource.
-func (r *MachineConfig) Spec() interface{} {
+func (r *MachineConfig) Spec() any {
 	return r.spec
 }
 

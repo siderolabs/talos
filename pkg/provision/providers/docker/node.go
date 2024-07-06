@@ -115,8 +115,7 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	}
 
 	// Create the host config.
-
-	mounts := []mount.Mount{}
+	mounts := make([]mount.Mount, 0, len(constants.Overlays)+5)
 
 	for _, path := range []string{"/run", "/system", "/tmp"} {
 		mounts = append(mounts, mount.Mount{

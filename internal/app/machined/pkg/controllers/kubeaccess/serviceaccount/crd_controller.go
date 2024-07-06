@@ -175,7 +175,7 @@ func NewCRDController(
 
 	if _, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueTalosSA,
-		UpdateFunc: func(oldTalosSA, newTalosSA interface{}) {
+		UpdateFunc: func(oldTalosSA, newTalosSA any) {
 			controller.enqueueTalosSA(newTalosSA)
 		},
 	}); err != nil {
@@ -184,7 +184,7 @@ func NewCRDController(
 
 	if _, err = secrets.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.handleSecret,
-		UpdateFunc: func(oldSec, newSec interface{}) {
+		UpdateFunc: func(oldSec, newSec any) {
 			newSecret := newSec.(*corev1.Secret) //nolint:errcheck
 			oldSecret := oldSec.(*corev1.Secret) //nolint:errcheck
 
@@ -259,7 +259,7 @@ func (t *CRDController) processNextWorkItem(ctx context.Context) bool {
 		return false
 	}
 
-	err := func(obj interface{}) error {
+	err := func(obj any) error {
 		defer t.queue.Done(obj)
 
 		var key string
@@ -428,7 +428,7 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 	return nil
 }
 
-func (t *CRDController) enqueueTalosSA(obj interface{}) {
+func (t *CRDController) enqueueTalosSA(obj any) {
 	key, err := cache.MetaNamespaceKeyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(err)
@@ -439,7 +439,7 @@ func (t *CRDController) enqueueTalosSA(obj interface{}) {
 	t.queue.Add(key)
 }
 
-func (t *CRDController) handleSecret(obj interface{}) {
+func (t *CRDController) handleSecret(obj any) {
 	var object metav1.Object
 
 	var ok bool

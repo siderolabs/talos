@@ -27,7 +27,7 @@ type AuditPolicyConfig = typed.Resource[AuditPolicyConfigSpec, AuditPolicyConfig
 //
 //gotagsrewrite:gen
 type AuditPolicyConfigSpec struct {
-	Config map[string]interface{} `yaml:"config" protobuf:"1"`
+	Config map[string]any `yaml:"config" protobuf:"1"`
 }
 
 // NewAuditPolicyConfig returns new AuditPolicyConfig resource.

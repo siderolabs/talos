@@ -176,7 +176,8 @@ func (installer *Installer) configure() error {
 	)
 
 	currentPage := 0
-	menuButtons := []*components.MenuButton{}
+
+	var menuButtons []*components.MenuButton
 
 	done := make(chan struct{})
 	state := installer.state

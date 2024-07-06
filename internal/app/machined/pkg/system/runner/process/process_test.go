@@ -25,7 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 )
 
-func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+func MockEventSink(state events.ServiceState, message string, args ...any) {
 	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
 }
 

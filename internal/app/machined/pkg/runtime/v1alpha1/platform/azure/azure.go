@@ -92,7 +92,7 @@ func (a *Azure) ParseMetadata(metadata *ComputeMetadata, interfaceAddresses []Ne
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	publicIPs := []string{}
+	var publicIPs []string
 
 	// external IP
 	for _, iface := range interfaceAddresses {

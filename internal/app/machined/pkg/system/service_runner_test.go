@@ -22,7 +22,7 @@ type ServiceRunnerSuite struct {
 }
 
 func (suite *ServiceRunnerSuite) assertStateSequence(expectedStates []events.ServiceState, sr *system.ServiceRunner) {
-	states := []events.ServiceState{}
+	states := make([]events.ServiceState, 0, 1000)
 
 	for _, event := range sr.GetEventHistory(1000) {
 		states = append(states, event.State)

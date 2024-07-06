@@ -215,7 +215,8 @@ func (c *Config) Merge(cfg *Config) []Rename {
 	}
 
 	mappedContexts := map[string]string{}
-	renames := []Rename{}
+
+	var renames []Rename
 
 	for name, ctx := range cfg.Contexts {
 		mergedName := name

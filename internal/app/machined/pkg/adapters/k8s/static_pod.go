@@ -46,7 +46,7 @@ func (a staticPod) SetPod(podSpec *v1.Pod) error {
 		return err
 	}
 
-	a.StaticPod.TypedSpec().Pod = map[string]interface{}{}
+	a.StaticPod.TypedSpec().Pod = map[string]any{}
 
 	return json.Unmarshal(jsonSerialized, &a.StaticPod.TypedSpec().Pod)
 }

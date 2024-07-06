@@ -62,7 +62,7 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 		opts.ClusterConfig.ControlPlane.Endpoint = fmt.Sprintf("https://%s", nethelpers.JoinHostPort(conn.nodeEndpoint, constants.DefaultControlPlanePort))
 	}
 
-	installDiskOptions := []interface{}{
+	installDiskOptions := []any{
 		components.NewTableHeaders("DEVICE NAME", "MODEL NAME", "SIZE"),
 	}
 
@@ -81,16 +81,16 @@ func NewState(ctx context.Context, installer *Installer, conn *Connection) (*Sta
 		}
 	}
 
-	var machineTypes []interface{}
+	var machineTypes []any
 
 	if conn.ExpandingCluster() {
-		machineTypes = []interface{}{
+		machineTypes = []any{
 			" worker ", machineapi.MachineConfig_MachineType(machine.TypeWorker),
 			" control plane ", machineapi.MachineConfig_MachineType(machine.TypeControlPlane),
 		}
 		opts.MachineConfig.Type = machineapi.MachineConfig_MachineType(machine.TypeControlPlane)
 	} else {
-		machineTypes = []interface{}{
+		machineTypes = []any{
 			" control plane ", machineapi.MachineConfig_MachineType(machine.TypeInit),
 		}
 	}

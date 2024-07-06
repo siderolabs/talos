@@ -14,7 +14,7 @@ import (
 // docgen: nodoc
 // +k8s:deepcopy-gen=true
 type Unstructured struct {
-	Object map[string]interface{} `yaml:",inline"`
+	Object map[string]any `yaml:",inline"`
 }
 
 // DeepCopy performs copying of the Object contents.
@@ -25,31 +25,31 @@ func (in *Unstructured) DeepCopy() *Unstructured {
 
 	out := new(Unstructured)
 
-	out.Object = deepCopyUnstructured(in.Object).(map[string]interface{}) //nolint:errcheck,forcetypeassert
+	out.Object = deepCopyUnstructured(in.Object).(map[string]any) //nolint:errcheck,forcetypeassert
 
 	return out
 }
 
-func deepCopyUnstructured(x interface{}) interface{} {
+func deepCopyUnstructured(x any) any {
 	switch x := x.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		if x == nil {
 			return x
 		}
 
-		clone := make(map[string]interface{}, len(x))
+		clone := make(map[string]any, len(x))
 
 		for k, v := range x {
 			clone[k] = deepCopyUnstructured(v)
 		}
 
 		return clone
-	case []interface{}:
+	case []any:
 		if x == nil {
 			return x
 		}
 
-		clone := make([]interface{}, len(x))
+		clone := make([]any, len(x))
 
 		for i, v := range x {
 			clone[i] = deepCopyUnstructured(v)

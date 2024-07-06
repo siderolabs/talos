@@ -27,7 +27,7 @@ import (
 	v1alpha1cfg "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+func MockEventSink(state events.ServiceState, message string, args ...any) {
 	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
 }
 

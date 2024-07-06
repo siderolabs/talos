@@ -350,7 +350,7 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, pe
 			return retry.ExpectedError(err)
 		}
 
-		conf := []string{}
+		var conf []string
 
 		for _, memb := range resp.Members {
 			for _, u := range memb.PeerURLs {

@@ -25,8 +25,8 @@ type SeccompProfile = typed.Resource[SeccompProfileSpec, SeccompProfileExtension
 //
 //gotagsrewrite:gen
 type SeccompProfileSpec struct {
-	Name  string                 `yaml:"name" protobuf:"1"`
-	Value map[string]interface{} `yaml:"value" protobuf:"2"`
+	Name  string         `yaml:"name" protobuf:"1"`
+	Value map[string]any `yaml:"value" protobuf:"2"`
 }
 
 // NewSeccompProfile creates new SeccompProfile object.

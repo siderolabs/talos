@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
-	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -38,7 +37,7 @@ func (mock *serviceMock) Load(services ...system.Service) []string {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
 
-	ids := []string{}
+	ids := make([]string, 0, len(services))
 
 	for _, svc := range services {
 		mock.services[svc.ID(nil)] = svc
@@ -90,13 +89,13 @@ func (mock *serviceMock) getIDs() []string {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
 
-	ids := []string{}
+	ids := make([]string, 0, len(mock.services))
 
 	for id := range mock.services {
 		ids = append(ids, id)
 	}
 
-	sort.Strings(ids)
+	slices.Sort(ids)
 
 	return ids
 }

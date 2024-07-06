@@ -36,7 +36,7 @@ func GetAWSDefaultRegions() ([]string, error) {
 		return nil, fmt.Errorf("failed getting list of regions: %w", err)
 	}
 
-	regions := []string{}
+	var regions []string
 
 	for _, r := range result.Regions {
 		if r.OptInStatus != nil {

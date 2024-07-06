@@ -30,7 +30,7 @@ type MachineConfig interface {
 	Files() ([]File, error)
 	Type() machine.Type
 	Controlplane() MachineControlPlane
-	Pods() []map[string]interface{}
+	Pods() []map[string]any
 	Kubelet() Kubelet
 	Sysctls() map[string]string
 	Sysfs() map[string]string
@@ -49,7 +49,7 @@ type MachineConfig interface {
 // related options.
 type SeccompProfile interface {
 	Name() string
-	Value() map[string]interface{}
+	Value() map[string]any
 }
 
 // NodeLabels defines the labels that should be set on a node.
@@ -318,8 +318,8 @@ type Kubelet interface {
 	ClusterDNS() []string
 	ExtraArgs() map[string]string
 	ExtraMounts() []specs.Mount
-	ExtraConfig() map[string]interface{}
-	CredentialProviderConfig() map[string]interface{}
+	ExtraConfig() map[string]any
+	CredentialProviderConfig() map[string]any
 	DefaultRuntimeSeccompProfileEnabled() bool
 	RegisterWithFQDN() bool
 	NodeIP() KubeletNodeIP

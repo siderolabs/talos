@@ -269,7 +269,7 @@ func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan stru
 
 	notifyCh := make(chan struct{}, 1)
 
-	notify := func(_ interface{}) {
+	notify := func(_ any) {
 		select {
 		case notifyCh <- struct{}{}:
 		default:
@@ -287,7 +287,7 @@ func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan stru
 	if _, err := r.nodes.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    notify,
 		DeleteFunc: notify,
-		UpdateFunc: func(_, _ interface{}) { notify(nil) },
+		UpdateFunc: func(_, _ any) { notify(nil) },
 	}); err != nil {
 		return nil, nil, fmt.Errorf("failed to add event handler: %w", err)
 	}

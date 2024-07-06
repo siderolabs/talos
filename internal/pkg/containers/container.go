@@ -89,7 +89,8 @@ func (c *Container) GetLogChunker(ctx context.Context, follow bool, tailLines in
 			}
 		}
 
-		chunkerOptions := []file.Option{}
+		var chunkerOptions []file.Option
+
 		if follow {
 			chunkerOptions = append(chunkerOptions, file.WithFollow())
 		}

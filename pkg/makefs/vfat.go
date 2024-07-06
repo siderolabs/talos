@@ -12,7 +12,7 @@ import (
 func VFAT(partname string, setters ...Option) error {
 	opts := NewDefaultOptions(setters...)
 
-	args := []string{}
+	var args []string
 
 	if opts.Label != "" {
 		args = append(args, "-F", "32", "-n", opts.Label)

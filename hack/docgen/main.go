@@ -198,7 +198,8 @@ type aliasType struct {
 }
 
 func collectStructs(node ast.Node) ([]*structType, map[string]aliasType) {
-	structs := []*structType{}
+	var structs []*structType
+
 	aliases := map[string]aliasType{}
 
 	collectStructs := func(n ast.Node) bool {
@@ -306,7 +307,7 @@ func parseComment(comment []byte) *Text {
 	return text
 }
 
-func getFieldType(p interface{}) string {
+func getFieldType(p any) string {
 	if m, ok := p.(*ast.MapType); ok {
 		return getFieldType(m.Value)
 	}
@@ -325,7 +326,7 @@ func getFieldType(p interface{}) string {
 	}
 }
 
-func formatFieldType(p interface{}) string {
+func formatFieldType(p any) string {
 	if m, ok := p.(*ast.MapType); ok {
 		return fmt.Sprintf("map[%s]%s", formatFieldType(m.Key), formatFieldType(m.Value))
 	}

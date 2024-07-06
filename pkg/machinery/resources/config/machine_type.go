@@ -30,7 +30,7 @@ type machineTypeSpec struct {
 	machine.Type
 }
 
-func (spec machineTypeSpec) MarshalYAML() (interface{}, error) {
+func (spec machineTypeSpec) MarshalYAML() (any, error) {
 	return spec.Type.String(), nil
 }
 
@@ -50,7 +50,7 @@ func (r *MachineType) Metadata() *resource.Metadata {
 }
 
 // Spec implements resource.Resource.
-func (r *MachineType) Spec() interface{} {
+func (r *MachineType) Spec() any {
 	return r.spec
 }
 

@@ -10,6 +10,6 @@ func (a *AdmissionPluginConfig) Name() string {
 }
 
 // Configuration implements the config.AdmissionPlugin interface.
-func (a *AdmissionPluginConfig) Configuration() map[string]interface{} {
+func (a *AdmissionPluginConfig) Configuration() map[string]any {
 	return a.PluginConfiguration.Object
 }

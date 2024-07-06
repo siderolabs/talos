@@ -142,7 +142,7 @@ func Generate(in *GenerateInput, out io.Writer) error {
 	})
 }
 
-func base64Encode(content interface{}) (string, error) {
+func base64Encode(content any) (string, error) {
 	str, ok := content.(string)
 	if !ok {
 		return "", fmt.Errorf("argument to base64 encode is not a string: %v", content)

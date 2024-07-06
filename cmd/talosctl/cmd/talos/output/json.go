@@ -38,7 +38,7 @@ func (j *JSON) WriteHeader(definition *meta.ResourceDefinition, withEvents bool)
 }
 
 // prepareEncodableData prepares the data of a resource to be encoded as JSON and populates it with some extra information.
-func (j *JSON) prepareEncodableData(node string, r resource.Resource, event state.EventType) (map[string]interface{}, error) {
+func (j *JSON) prepareEncodableData(node string, r resource.Resource, event state.EventType) (map[string]any, error) {
 	if r.Metadata().Type() == config.MachineConfigType {
 		r = &mcYamlRepr{r}
 	}
@@ -53,7 +53,7 @@ func (j *JSON) prepareEncodableData(node string, r resource.Resource, event stat
 		return nil, err
 	}
 
-	var data map[string]interface{}
+	var data map[string]any
 
 	err = yaml.Unmarshal(yamlBytes, &data)
 	if err != nil {
@@ -69,7 +69,7 @@ func (j *JSON) prepareEncodableData(node string, r resource.Resource, event stat
 	return data, nil
 }
 
-func writeAsIndentedJSON(wr io.Writer, data interface{}) error {
+func writeAsIndentedJSON(wr io.Writer, data any) error {
 	enc := json.NewEncoder(wr)
 	enc.SetIndent("", "    ")
 

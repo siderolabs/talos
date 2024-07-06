@@ -232,7 +232,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 
 	// 2. addresses
 
-	publicIPs := []string{}
+	var publicIPs []string
 
 	for _, addr := range equinixMetadata.Network.Addresses {
 		if !(addr.Enabled && addr.Management) {

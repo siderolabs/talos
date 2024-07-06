@@ -26,7 +26,7 @@ func newGRPCConnectionWrapper(clusterName string, conn *grpc.ClientConn) *grpcCo
 
 // Invoke performs a unary RPC and returns after the response is received
 // into reply.
-func (c *grpcConnectionWrapper) Invoke(ctx context.Context, method string, args interface{}, reply interface{}, opts ...grpc.CallOption) error {
+func (c *grpcConnectionWrapper) Invoke(ctx context.Context, method string, args any, reply any, opts ...grpc.CallOption) error {
 	return c.ClientConn.Invoke(c.appendMetadata(ctx), method, args, reply, opts...)
 }
 

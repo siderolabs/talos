@@ -37,7 +37,7 @@ func TestParseLogLine(t *testing.T) {
 				Msg:   `reconfigured wireguard link`,
 				Time:  now,
 				Level: zapcore.InfoLevel,
-				Fields: map[string]interface{}{
+				Fields: map[string]any{
 					"component":  "controller-runtime",
 					"controller": "network.LinkSpecController",
 					"link":       "kubespan",
@@ -51,7 +51,7 @@ func TestParseLogLine(t *testing.T) {
 				Msg:   `finished scheduled compaction`,
 				Time:  time.Date(2021, 10, 19, 14, 53, 5, 815000000, time.UTC),
 				Level: zapcore.InfoLevel,
-				Fields: map[string]interface{}{
+				Fields: map[string]any{
 					"caller":           "mvcc/kvstore_compaction.go:57",
 					"compact-revision": float64(34567),
 					"took":             "21.041639ms",
@@ -64,7 +64,7 @@ func TestParseLogLine(t *testing.T) {
 				Msg:    `cleanup warnings time="2021-10-19T14:52:20Z" level=info msg="starting signal loop" namespace=k8s.io pid=2629`,
 				Time:   time.Date(2021, 10, 19, 14, 52, 20, 578858689, time.UTC),
 				Level:  zapcore.WarnLevel,
-				Fields: map[string]interface{}{},
+				Fields: map[string]any{},
 			},
 		},
 		"kubelet": {
@@ -73,7 +73,7 @@ func TestParseLogLine(t *testing.T) {
 				Msg:   `RemoveContainer`,
 				Time:  time.Date(2021, 10, 26, 16, 46, 4, 792702913, time.UTC),
 				Level: zapcore.InfoLevel,
-				Fields: map[string]interface{}{
+				Fields: map[string]any{
 					"caller":      "topologymanager/scope.go:110",
 					"containerID": "0194fac91ac1d3949497f6912f3c7e73a062c3bf29b6d3da05557d4db2f8482b",
 					"v":           float64(0),
@@ -87,7 +87,7 @@ func TestParseLogLine(t *testing.T) {
 				Msg:   `Failed creating a mirror pod for: pods "kube-controller-manager-talos-dev-qemu-master-1" already exists`,
 				Time:  time.Date(2021, 10, 26, 16, 45, 51, 595943212, time.UTC),
 				Level: zapcore.WarnLevel,
-				Fields: map[string]interface{}{
+				Fields: map[string]any{
 					"caller": "kubelet/kubelet.go:1703",
 					"pod":    "kube-system/kube-controller-manager-talos-dev-qemu-master-1",
 				},

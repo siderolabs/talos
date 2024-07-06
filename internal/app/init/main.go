@@ -145,7 +145,7 @@ func mountRootFS() error {
 		image string
 	}
 
-	layers := []layer{}
+	var layers []layer
 
 	squashfs := mount.NewMountPoints()
 

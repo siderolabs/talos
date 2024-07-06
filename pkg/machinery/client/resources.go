@@ -24,7 +24,7 @@ func (c *Client) ResolveResourceKind(ctx context.Context, resourceNamespace *res
 		return nil, err
 	}
 
-	matched := []*meta.ResourceDefinition{}
+	var matched []*meta.ResourceDefinition
 
 	for it := registeredResources.Iterator(); it.Next(); {
 		rd := it.Value()

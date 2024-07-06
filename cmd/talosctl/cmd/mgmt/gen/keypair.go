@@ -20,14 +20,14 @@ var genKeypairCmdFlags struct {
 	organization string
 }
 
-// genKeypairCmd represents the `gen keypair` command.
 var genKeypairCmd = &cobra.Command{
 	Use:   "keypair",
 	Short: "Generates an X.509 Ed25519 key pair",
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		opts := []x509.Option{}
+		var opts []x509.Option
+
 		if genKeypairCmdFlags.ip != "" {
 			parsed := net.ParseIP(genKeypairCmdFlags.ip)
 			if parsed == nil {

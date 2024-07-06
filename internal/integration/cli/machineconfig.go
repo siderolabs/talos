@@ -67,7 +67,7 @@ func (suite *MachineConfigSuite) TestGen() {
 // TestPatchPrintStdout tests the patch subcommand with output set to stdout
 // with multiple patches from the command line and from file.
 func (suite *MachineConfigSuite) TestPatchPrintStdout() {
-	patch1, err := json.Marshal([]map[string]interface{}{
+	patch1, err := json.Marshal([]map[string]any{
 		{
 			"op":    "replace",
 			"path":  "/cluster/clusterName",
@@ -76,7 +76,7 @@ func (suite *MachineConfigSuite) TestPatchPrintStdout() {
 	})
 	suite.Require().NoError(err)
 
-	patch2, err := json.Marshal([]map[string]interface{}{
+	patch2, err := json.Marshal([]map[string]any{
 		{
 			"op":    "replace",
 			"path":  "/cluster/controlPlane/endpoint",
@@ -121,7 +121,7 @@ func (suite *MachineConfigSuite) TestPatchPrintStdout() {
 
 // TestPatchWriteToFile tests the patch subcommand with output set to a file.
 func (suite *MachineConfigSuite) TestPatchWriteToFile() {
-	patch1, err := json.Marshal([]map[string]interface{}{
+	patch1, err := json.Marshal([]map[string]any{
 		{
 			"op":    "replace",
 			"path":  "/cluster/clusterName",

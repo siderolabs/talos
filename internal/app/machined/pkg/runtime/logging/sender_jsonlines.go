@@ -50,7 +50,7 @@ func (j *jsonLinesSender) tryLock(ctx context.Context) (unlock func()) {
 }
 
 func (j *jsonLinesSender) marshalJSON(e *runtime.LogEvent) ([]byte, error) {
-	m := make(map[string]interface{}, len(e.Fields)+3)
+	m := make(map[string]any, len(e.Fields)+3)
 	for k, v := range e.Fields {
 		m[k] = v
 	}

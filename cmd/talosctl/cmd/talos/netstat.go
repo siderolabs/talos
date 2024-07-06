@@ -281,7 +281,7 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 				}
 			}
 
-			args := []interface{}{}
+			var args []any
 
 			if node != "" {
 				args = append(args, node)
@@ -292,7 +292,7 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 				state = record.State.String()
 			}
 
-			args = append(args, []interface{}{
+			args = append(args, []any{
 				record.L4Proto,
 				strconv.FormatUint(record.Rxqueue, 10),
 				strconv.FormatUint(record.Txqueue, 10),
@@ -302,7 +302,7 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 			}...)
 
 			if netstatCmdFlags.extend {
-				args = append(args, []interface{}{
+				args = append(args, []any{
 					strconv.FormatUint(uint64(record.Uid), 10),
 					strconv.FormatUint(record.Inode, 10),
 				}...)
@@ -310,11 +310,11 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 
 			if netstatCmdFlags.pid {
 				if record.Process.Pid != 0 {
-					args = append(args, []interface{}{
+					args = append(args, []any{
 						fmt.Sprintf("%d/%s", record.Process.Pid, record.Process.Name),
 					}...)
 				} else {
-					args = append(args, []interface{}{
+					args = append(args, []any{
 						"-",
 					}...)
 				}
@@ -322,11 +322,11 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 
 			if netstatCmdFlags.pods {
 				if record.Netns == "" || node == "" || n.NodeNetNSPods[node] == nil {
-					args = append(args, []interface{}{
+					args = append(args, []any{
 						"-",
 					}...)
 				} else {
-					args = append(args, []interface{}{
+					args = append(args, []any{
 						n.NodeNetNSPods[node][record.Netns],
 					}...)
 				}
@@ -335,7 +335,7 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 			if netstatCmdFlags.timers {
 				timerwhen := strconv.FormatFloat(float64(record.Timerwhen)/100, 'f', 2, 64)
 
-				args = append(args, []interface{}{
+				args = append(args, []any{
 					fmt.Sprintf("%s (%s/%d/%d)", strings.ToLower(record.Tr.String()), timerwhen, record.Retrnsmt, record.Timeout),
 				}...)
 			}

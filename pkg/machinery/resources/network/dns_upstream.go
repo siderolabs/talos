@@ -32,7 +32,7 @@ type DNSUpstreamSpecSpec struct {
 }
 
 // MarshalYAML implements yaml.Marshaler interface.
-func (d *DNSUpstreamSpecSpec) MarshalYAML() (interface{}, error) {
+func (d *DNSUpstreamSpecSpec) MarshalYAML() (any, error) {
 	d.Prx.Healthcheck()
 
 	return map[string]string{

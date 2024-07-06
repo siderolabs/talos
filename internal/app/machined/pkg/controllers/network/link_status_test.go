@@ -156,7 +156,7 @@ func (suite *LinkStatusSuite) TestInterfaceHwInfo() {
 					continue
 				}
 
-				emptyFields := []string{}
+				var emptyFields []string
 
 				for key, value := range map[string]string{
 					"hw addr":   spec.HardwareAddr.String(),

@@ -38,7 +38,7 @@ var eventsCmd = &cobra.Command{
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			fmt.Fprintln(w, "NODE\tID\tEVENT\tACTOR\tSOURCE\tMESSAGE")
 
-			opts := []client.EventsOptionFunc{}
+			var opts []client.EventsOptionFunc
 
 			if eventsCmdFlags.tailEvents != 0 {
 				opts = append(opts, client.WithTailEvents(eventsCmdFlags.tailEvents))
@@ -73,30 +73,30 @@ var eventsCmd = &cobra.Command{
 					return err
 				}
 
-				var args []interface{}
+				var args []any
 
 				switch msg := event.Payload.(type) {
 				case *machine.SequenceEvent:
-					args = []interface{}{msg.GetSequence()}
+					args = []any{msg.GetSequence()}
 					if msg.Error != nil {
 						args = append(args, "error:"+" "+msg.GetError().GetMessage())
 					} else {
 						args = append(args, msg.GetAction().String())
 					}
 				case *machine.PhaseEvent:
-					args = []interface{}{msg.GetPhase(), msg.GetAction().String()}
+					args = []any{msg.GetPhase(), msg.GetAction().String()}
 				case *machine.TaskEvent:
-					args = []interface{}{msg.GetTask(), msg.GetAction().String()}
+					args = []any{msg.GetTask(), msg.GetAction().String()}
 				case *machine.ServiceStateEvent:
-					args = []interface{}{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
+					args = []any{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
 				case *machine.ConfigLoadErrorEvent:
-					args = []interface{}{"error", msg.GetError()}
+					args = []any{"error", msg.GetError()}
 				case *machine.ConfigValidationErrorEvent:
-					args = []interface{}{"error", msg.GetError()}
+					args = []any{"error", msg.GetError()}
 				case *machine.AddressEvent:
-					args = []interface{}{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
+					args = []any{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
 				case *machine.MachineStatusEvent:
-					args = []interface{}{
+					args = []any{
 						msg.GetStage().String(),
 						fmt.Sprintf("ready: %v, unmet conditions: %v",
 							msg.GetStatus().Ready,
@@ -109,7 +109,7 @@ var eventsCmd = &cobra.Command{
 					}
 				}
 
-				args = append([]interface{}{event.Node, event.ID, event.TypeURL, event.ActorID}, args...)
+				args = append([]any{event.Node, event.ID, event.TypeURL, event.ActorID}, args...)
 				fmt.Fprintf(w, format, args...)
 
 				return w.Flush()

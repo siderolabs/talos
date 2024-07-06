@@ -216,13 +216,13 @@ func (suite *ServiceAccountSuite) getCRD() (*unstructured.Unstructured, error) {
 
 func (suite *ServiceAccountSuite) createServiceAccount(ns string, name string, roles []string) (*unstructured.Unstructured, error) {
 	return suite.DynamicClient.Resource(serviceAccountGVR).Namespace(ns).Create(suite.ctx, &unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": fmt.Sprintf("%s/%s", constants.ServiceAccountResourceGroup, constants.ServiceAccountResourceVersion),
 			"kind":       constants.ServiceAccountResourceKind,
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": name,
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"roles": roles,
 			},
 		},

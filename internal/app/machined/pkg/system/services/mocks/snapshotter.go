@@ -57,7 +57,7 @@ func (mr *MockSnapshotterMockRecorder) Close() *gomock.Call {
 // Commit mocks base method.
 func (m *MockSnapshotter) Commit(ctx context.Context, name, key string, opts ...snapshots.Opt) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, name, key}
+	varargs := []any{ctx, name, key}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
@@ -67,9 +67,9 @@ func (m *MockSnapshotter) Commit(ctx context.Context, name, key string, opts ...
 }
 
 // Commit indicates an expected call of Commit.
-func (mr *MockSnapshotterMockRecorder) Commit(ctx, name, key interface{}, opts ...interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) Commit(ctx, name, key any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, name, key}, opts...)
+	varargs := append([]any{ctx, name, key}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockSnapshotter)(nil).Commit), varargs...)
 }
 
@@ -83,7 +83,7 @@ func (m *MockSnapshotter) Mounts(ctx context.Context, key string) ([]mount.Mount
 }
 
 // Mounts indicates an expected call of Mounts.
-func (mr *MockSnapshotterMockRecorder) Mounts(ctx, key interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) Mounts(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Mounts", reflect.TypeOf((*MockSnapshotter)(nil).Mounts), ctx, key)
 }
@@ -91,7 +91,7 @@ func (mr *MockSnapshotterMockRecorder) Mounts(ctx, key interface{}) *gomock.Call
 // Prepare mocks base method.
 func (m *MockSnapshotter) Prepare(ctx context.Context, key, parent string, opts ...snapshots.Opt) ([]mount.Mount, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, key, parent}
+	varargs := []any{ctx, key, parent}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
@@ -102,9 +102,9 @@ func (m *MockSnapshotter) Prepare(ctx context.Context, key, parent string, opts 
 }
 
 // Prepare indicates an expected call of Prepare.
-func (mr *MockSnapshotterMockRecorder) Prepare(ctx, key, parent interface{}, opts ...interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) Prepare(ctx, key, parent any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, key, parent}, opts...)
+	varargs := append([]any{ctx, key, parent}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Prepare", reflect.TypeOf((*MockSnapshotter)(nil).Prepare), varargs...)
 }
 
@@ -117,7 +117,7 @@ func (m *MockSnapshotter) Remove(ctx context.Context, key string) error {
 }
 
 // Remove indicates an expected call of Remove.
-func (mr *MockSnapshotterMockRecorder) Remove(ctx, key interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) Remove(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockSnapshotter)(nil).Remove), ctx, key)
 }
@@ -132,7 +132,7 @@ func (m *MockSnapshotter) Stat(ctx context.Context, key string) (snapshots.Info,
 }
 
 // Stat indicates an expected call of Stat.
-func (mr *MockSnapshotterMockRecorder) Stat(ctx, key interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) Stat(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stat", reflect.TypeOf((*MockSnapshotter)(nil).Stat), ctx, key)
 }
@@ -140,7 +140,7 @@ func (mr *MockSnapshotterMockRecorder) Stat(ctx, key interface{}) *gomock.Call {
 // Update mocks base method.
 func (m *MockSnapshotter) Update(ctx context.Context, info snapshots.Info, fieldpaths ...string) (snapshots.Info, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, info}
+	varargs := []any{ctx, info}
 	for _, a := range fieldpaths {
 		varargs = append(varargs, a)
 	}
@@ -151,9 +151,9 @@ func (m *MockSnapshotter) Update(ctx context.Context, info snapshots.Info, field
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockSnapshotterMockRecorder) Update(ctx, info interface{}, fieldpaths ...interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) Update(ctx, info any, fieldpaths ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, info}, fieldpaths...)
+	varargs := append([]any{ctx, info}, fieldpaths...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockSnapshotter)(nil).Update), varargs...)
 }
 
@@ -167,7 +167,7 @@ func (m *MockSnapshotter) Usage(ctx context.Context, key string) (snapshots.Usag
 }
 
 // Usage indicates an expected call of Usage.
-func (mr *MockSnapshotterMockRecorder) Usage(ctx, key interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) Usage(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Usage", reflect.TypeOf((*MockSnapshotter)(nil).Usage), ctx, key)
 }
@@ -175,7 +175,7 @@ func (mr *MockSnapshotterMockRecorder) Usage(ctx, key interface{}) *gomock.Call 
 // View mocks base method.
 func (m *MockSnapshotter) View(ctx context.Context, key, parent string, opts ...snapshots.Opt) ([]mount.Mount, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, key, parent}
+	varargs := []any{ctx, key, parent}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
@@ -186,16 +186,16 @@ func (m *MockSnapshotter) View(ctx context.Context, key, parent string, opts ...
 }
 
 // View indicates an expected call of View.
-func (mr *MockSnapshotterMockRecorder) View(ctx, key, parent interface{}, opts ...interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) View(ctx, key, parent any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, key, parent}, opts...)
+	varargs := append([]any{ctx, key, parent}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "View", reflect.TypeOf((*MockSnapshotter)(nil).View), varargs...)
 }
 
 // Walk mocks base method.
 func (m *MockSnapshotter) Walk(ctx context.Context, fn snapshots.WalkFunc, filters ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, fn}
+	varargs := []any{ctx, fn}
 	for _, a := range filters {
 		varargs = append(varargs, a)
 	}
@@ -205,9 +205,9 @@ func (m *MockSnapshotter) Walk(ctx context.Context, fn snapshots.WalkFunc, filte
 }
 
 // Walk indicates an expected call of Walk.
-func (mr *MockSnapshotterMockRecorder) Walk(ctx, fn interface{}, filters ...interface{}) *gomock.Call {
+func (mr *MockSnapshotterMockRecorder) Walk(ctx, fn any, filters ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, fn}, filters...)
+	varargs := append([]any{ctx, fn}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Walk", reflect.TypeOf((*MockSnapshotter)(nil).Walk), varargs...)
 }
 
@@ -243,7 +243,7 @@ func (m *MockCleaner) Cleanup(ctx context.Context) error {
 }
 
 // Cleanup indicates an expected call of Cleanup.
-func (mr *MockCleanerMockRecorder) Cleanup(ctx interface{}) *gomock.Call {
+func (mr *MockCleanerMockRecorder) Cleanup(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cleanup", reflect.TypeOf((*MockCleaner)(nil).Cleanup), ctx)
 }

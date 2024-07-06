@@ -45,7 +45,7 @@ type Doc struct {
 }
 
 // AddExample adds a new example snippet to the doc.
-func (d *Doc) AddExample(name string, value interface{}) {
+func (d *Doc) AddExample(name string, value any) {
 	if d.Examples == nil {
 		d.Examples = []*Example{}
 	}
@@ -79,7 +79,7 @@ type Example struct {
 	Name     string
 
 	valueMutex sync.RWMutex
-	value      interface{}
+	value      any
 }
 
 // Populate populates example value.
@@ -105,7 +105,7 @@ func (e *Example) Populate(index int) {
 }
 
 // GetValue returns example value.
-func (e *Example) GetValue() interface{} {
+func (e *Example) GetValue() any {
 	e.valueMutex.RLock()
 	defer e.valueMutex.RUnlock()
 
@@ -156,7 +156,7 @@ func mergeDoc(a, b *Doc) *Doc {
 	return &res
 }
 
-func getDoc(in interface{}) *Doc {
+func getDoc(in any) *Doc {
 	v := reflect.ValueOf(in)
 	if v.Kind() == reflect.Ptr && v.IsNil() {
 		in = reflect.New(v.Type().Elem()).Interface()
@@ -199,7 +199,7 @@ func renderExample(key string, doc *Doc, options *Options) string {
 		return ""
 	}
 
-	examples := []string{}
+	examples := make([]string, 0, len(doc.Examples))
 
 	for i, e := range doc.Examples {
 		v := reflect.ValueOf(e.GetValue())

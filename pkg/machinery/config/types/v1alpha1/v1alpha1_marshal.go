@@ -12,7 +12,7 @@ import (
 type Base64Bytes []byte
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (b *Base64Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (b *Base64Bytes) UnmarshalYAML(unmarshal func(any) error) error {
 	var data string
 
 	if err := unmarshal(&data); err != nil {
@@ -30,6 +30,6 @@ func (b *Base64Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // MarshalYAML implements the yaml.Marshaler interface.
-func (b Base64Bytes) MarshalYAML() (interface{}, error) {
+func (b Base64Bytes) MarshalYAML() (any, error) {
 	return base64.StdEncoding.EncodeToString(b), nil
 }

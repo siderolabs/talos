@@ -78,7 +78,7 @@ func (b *TokenCredentials) authenticate(ctx context.Context) error {
 // UnaryInterceptor sets the UnaryServerInterceptor for the server and enforces
 // basic authentication.
 func (b *TokenCredentials) UnaryInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		if err := b.authenticate(ctx); err != nil {
 			return nil, err
 		}

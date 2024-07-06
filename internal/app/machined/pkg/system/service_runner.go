@@ -70,7 +70,7 @@ func (svcrunner *ServiceRunner) GetState() events.ServiceState {
 }
 
 // UpdateState implements events.Recorder.
-func (svcrunner *ServiceRunner) UpdateState(ctx context.Context, newstate events.ServiceState, message string, args ...interface{}) {
+func (svcrunner *ServiceRunner) UpdateState(ctx context.Context, newstate events.ServiceState, message string, args ...any) {
 	svcrunner.mu.Lock()
 
 	event := events.ServiceEvent{
@@ -280,7 +280,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- runnr.Run(func(s events.ServiceState, msg string, args ...interface{}) {
+		errCh <- runnr.Run(func(s events.ServiceState, msg string, args ...any) {
 			svcrunner.UpdateState(ctx, s, msg, args...)
 		})
 	}()

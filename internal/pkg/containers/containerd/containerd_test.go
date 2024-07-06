@@ -37,7 +37,7 @@ const (
 	busyboxImageDigest = "sha256:4b6ad3a68d34da29bf7c8ccb5d355ba8b4babcad1f99798204e7abb43e54ee3d"
 )
 
-func MockEventSink(state events.ServiceState, message string, args ...interface{}) {
+func MockEventSink(state events.ServiceState, message string, args ...any) {
 }
 
 //nolint:maligned
@@ -163,7 +163,7 @@ func (suite *ContainerdSuite) run(runners ...runner.Runner) {
 		suite.containersWg.Add(1)
 
 		go func(r runner.Runner) {
-			runningSink := func(state events.ServiceState, message string, args ...interface{}) {
+			runningSink := func(state events.ServiceState, message string, args ...any) {
 				if state == events.StateRunning {
 					runningCh <- true
 				}

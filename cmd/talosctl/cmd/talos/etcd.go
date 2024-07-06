@@ -67,12 +67,12 @@ func displayAlarms(messages []alarmMessage) error {
 				fmt.Fprintln(w, header)
 			}
 
-			args := []interface{}{
+			args := []any{
 				etcdresource.FormatMemberID(alarm.GetMemberId()),
 				alarm.GetAlarm().String(),
 			}
 			if node != "" {
-				args = append([]interface{}{node}, args...)
+				args = append([]any{node}, args...)
 			}
 
 			fmt.Fprintf(w, pattern, args...)
@@ -233,7 +233,7 @@ var etcdMemberListCmd = &cobra.Command{
 						}
 					}
 
-					args := []interface{}{
+					args := []any{
 						etcdresource.FormatMemberID(member.Id),
 						member.Hostname,
 						strings.Join(member.PeerUrls, ","),
@@ -241,7 +241,7 @@ var etcdMemberListCmd = &cobra.Command{
 						member.IsLearner,
 					}
 					if node != "" {
-						args = append([]interface{}{node}, args...)
+						args = append([]any{node}, args...)
 					}
 
 					fmt.Fprintf(w, pattern, args...)
@@ -292,7 +292,7 @@ var etcdStatusCmd = &cobra.Command{
 					ratio = float64(message.GetMemberStatus().GetDbSizeInUse()) / float64(message.GetMemberStatus().GetDbSize()) * 100.0
 				}
 
-				args := []interface{}{
+				args := []any{
 					etcdresource.FormatMemberID(message.GetMemberStatus().GetMemberId()),
 					humanize.Bytes(uint64(message.GetMemberStatus().GetDbSize())),
 					humanize.Bytes(uint64(message.GetMemberStatus().GetDbSizeInUse())),
@@ -305,7 +305,7 @@ var etcdStatusCmd = &cobra.Command{
 					strings.Join(message.GetMemberStatus().GetErrors(), ", "),
 				}
 				if node != "" {
-					args = append([]interface{}{node}, args...)
+					args = append([]any{node}, args...)
 				}
 
 				fmt.Fprintf(w, pattern, args...)

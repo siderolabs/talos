@@ -69,7 +69,7 @@ func (svc *Extension) PostFunc(r runtime.Runtime, state events.ServiceState) (er
 
 // Condition implements the Service interface.
 func (svc *Extension) Condition(r runtime.Runtime) conditions.Condition {
-	conds := []conditions.Condition{}
+	var conds []conditions.Condition
 
 	if svc.Spec.Container.EnvironmentFile != "" {
 		// add a dependency on the environment file

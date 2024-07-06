@@ -34,8 +34,8 @@ type AdmissionControlConfigSpec struct {
 //
 //gotagsrewrite:gen
 type AdmissionPluginSpec struct {
-	Name          string                 `yaml:"name" protobuf:"1"`
-	Configuration map[string]interface{} `yaml:"configuration" protobuf:"2"`
+	Name          string         `yaml:"name" protobuf:"1"`
+	Configuration map[string]any `yaml:"configuration" protobuf:"2"`
 }
 
 // NewAdmissionControlConfig returns new AdmissionControlConfig resource.

@@ -18,7 +18,7 @@ func AppendErrors(err error, errs ...error) error {
 	res := multierror.Append(err, errs...)
 
 	res.ErrorFormat = func(errs []error) string {
-		lines := []string{}
+		var lines []string
 
 		for _, err := range errs {
 			lines = append(lines, fmt.Sprintf(" %s", err.Error()))

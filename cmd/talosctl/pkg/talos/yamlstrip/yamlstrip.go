@@ -65,7 +65,8 @@ func removeComments(node *yaml.Node) {
 }
 
 func stripManual(b []byte) []byte {
-	stripped := []byte{}
+	var stripped []byte
+
 	lines := bytes.Split(b, []byte("\n"))
 
 	for i, line := range lines {

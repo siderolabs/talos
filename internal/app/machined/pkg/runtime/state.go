@@ -56,7 +56,7 @@ type Meta interface {
 }
 
 // ClusterState defines the cluster state.
-type ClusterState interface{}
+type ClusterState any
 
 // V1Alpha2State defines the next generation (v2) interface binding into v1 runtime.
 type V1Alpha2State interface {

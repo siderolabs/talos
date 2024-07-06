@@ -27,7 +27,7 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 				{
 					MachineSeccompProfileName: "audit.json",
 					MachineSeccompProfileValue: v1alpha1.Unstructured{
-						Object: map[string]interface{}{
+						Object: map[string]any{
 							"defaultAction": "SCMP_ACT_LOG",
 						},
 					},
@@ -35,7 +35,7 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 				{
 					MachineSeccompProfileName: "deny.json",
 					MachineSeccompProfileValue: v1alpha1.Unstructured{
-						Object: map[string]interface{}{
+						Object: map[string]any{
 							"defaultAction": "SCMP_ACT_ERRNO",
 						},
 					},
@@ -48,17 +48,17 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 
 	for _, tt := range []struct {
 		name  string
-		value map[string]interface{}
+		value map[string]any
 	}{
 		{
 			name: "audit.json",
-			value: map[string]interface{}{
+			value: map[string]any{
 				"defaultAction": "SCMP_ACT_LOG",
 			},
 		},
 		{
 			name: "deny.json",
-			value: map[string]interface{}{
+			value: map[string]any{
 				"defaultAction": "SCMP_ACT_ERRNO",
 			},
 		},
@@ -92,7 +92,7 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 				{
 					MachineSeccompProfileName: "audit.json",
 					MachineSeccompProfileValue: v1alpha1.Unstructured{
-						Object: map[string]interface{}{
+						Object: map[string]any{
 							"defaultAction": "SCMP_ACT_LOG",
 						},
 					},

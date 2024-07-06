@@ -66,7 +66,7 @@ func (ctrl *KmsgLogConfigController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		destinations := []*url.URL{}
+		var destinations []*url.URL
 
 		if ctrl.Cmdline != nil {
 			if val := ctrl.Cmdline.Get(constants.KernelParamLoggingKernel).First(); val != nil {

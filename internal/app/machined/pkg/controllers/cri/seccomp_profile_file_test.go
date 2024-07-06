@@ -28,17 +28,17 @@ func (suite *CRISeccompProfileFileSuite) TestReconcileSeccompProfileFile() {
 
 	for _, tt := range []struct {
 		seccompProfileName  string
-		seccompProfileValue map[string]interface{}
+		seccompProfileValue map[string]any
 	}{
 		{
 			seccompProfileName: "audit.json",
-			seccompProfileValue: map[string]interface{}{
+			seccompProfileValue: map[string]any{
 				"defaultAction": "SCMP_ACT_LOG",
 			},
 		},
 		{
 			seccompProfileName: "deny.json",
-			seccompProfileValue: map[string]interface{}{
+			seccompProfileValue: map[string]any{
 				"defaultAction": "SCMP_ACT_ERRNO",
 			},
 		},

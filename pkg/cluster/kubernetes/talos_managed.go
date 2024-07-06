@@ -469,9 +469,9 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, options Upgrad
 	}
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj interface{}) { channel.SendWithContext(ctx, notifyCh, obj.(*v1.Pod)) },
-		DeleteFunc: func(_ interface{}) {},
-		UpdateFunc: func(_, obj interface{}) { channel.SendWithContext(ctx, notifyCh, obj.(*v1.Pod)) },
+		AddFunc:    func(obj any) { channel.SendWithContext(ctx, notifyCh, obj.(*v1.Pod)) },
+		DeleteFunc: func(_ any) {},
+		UpdateFunc: func(_, obj any) { channel.SendWithContext(ctx, notifyCh, obj.(*v1.Pod)) },
 	}); err != nil {
 		return fmt.Errorf("error adding watch event handler: %w", err)
 	}

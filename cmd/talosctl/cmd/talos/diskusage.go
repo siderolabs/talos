@@ -89,7 +89,7 @@ var duCmd = &cobra.Command{
 
 				size := stringifySize(info.Size)
 
-				args := []interface{}{
+				args := []any{
 					size, info.RelativeName,
 				}
 
@@ -109,7 +109,7 @@ var duCmd = &cobra.Command{
 
 				if multipleNodes {
 					pattern = "%s\t%s\t%s\n"
-					args = append([]interface{}{node}, args...)
+					args = append([]any{node}, args...)
 				}
 
 				fmt.Fprintf(w, pattern, args...)

@@ -61,7 +61,8 @@ func NewWireguardConfigBundle(ips []netip.Addr, wireguardCidr string, listenPort
 
 		config := &v1alpha1.DeviceWireguardConfig{}
 
-		currentPeers := []*v1alpha1.DeviceWireguardPeer{}
+		var currentPeers []*v1alpha1.DeviceWireguardPeer
+
 		// add all peers except self
 		for _, peer := range peers {
 			if peer.PublicKey() != keys[i].PublicKey().String() {

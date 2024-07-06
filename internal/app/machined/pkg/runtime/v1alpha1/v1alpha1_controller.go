@@ -104,7 +104,7 @@ func (c *Controller) setupLogging() error {
 
 // Run executes all phases known to the controller in serial. `Controller`
 // aborts immediately if any phase fails.
-func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data interface{}, setters ...runtime.LockOption) error {
+func (c *Controller) Run(ctx context.Context, seq runtime.Sequence, data any, setters ...runtime.LockOption) error {
 	// We must ensure that the runtime is configured since all sequences depend
 	// on the runtime.
 	if c.r == nil {
@@ -223,7 +223,7 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 	return err
 }
 
-func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []runtime.Phase, data interface{}) error {
+func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []runtime.Phase, data any) error {
 	c.Runtime().Events().Publish(ctx, &machine.SequenceEvent{
 		Sequence: seq.String(),
 		Action:   machine.SequenceEvent_START,
@@ -288,7 +288,7 @@ func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []run
 	return nil
 }
 
-func (c *Controller) runPhase(ctx context.Context, phase runtime.Phase, seq runtime.Sequence, data interface{}) error {
+func (c *Controller) runPhase(ctx context.Context, phase runtime.Phase, seq runtime.Sequence, data any) error {
 	c.Runtime().Events().Publish(ctx, &machine.PhaseEvent{
 		Phase:  phase.Name,
 		Action: machine.PhaseEvent_START,
@@ -319,7 +319,7 @@ func (c *Controller) runPhase(ctx context.Context, phase runtime.Phase, seq runt
 	return eg.Wait()
 }
 
-func (c *Controller) runTask(ctx context.Context, progress string, f runtime.TaskSetupFunc, seq runtime.Sequence, data interface{}) error {
+func (c *Controller) runTask(ctx context.Context, progress string, f runtime.TaskSetupFunc, seq runtime.Sequence, data any) error {
 	task, taskName := f(seq, data)
 	if task == nil {
 		return nil
@@ -359,7 +359,7 @@ func (c *Controller) runTask(ctx context.Context, progress string, f runtime.Tas
 }
 
 //nolint:gocyclo
-func (c *Controller) phases(seq runtime.Sequence, data interface{}) ([]runtime.Phase, error) {
+func (c *Controller) phases(seq runtime.Sequence, data any) ([]runtime.Phase, error) {
 	var phases []runtime.Phase
 
 	switch seq {

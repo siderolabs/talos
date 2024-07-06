@@ -1370,7 +1370,7 @@ func TestValidate(t *testing.T) {
 					},
 					MachineKubelet: &v1alpha1.KubeletConfig{
 						KubeletExtraConfig: v1alpha1.Unstructured{
-							Object: map[string]interface{}{
+							Object: map[string]any{
 								"port": 345,
 							},
 						},

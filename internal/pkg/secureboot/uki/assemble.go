@@ -56,7 +56,7 @@ func (builder *Builder) assemble() error {
 	}
 
 	// create the output file
-	args := []string{}
+	args := make([]string, 0, len(builder.sections)+2)
 
 	for _, section := range builder.sections {
 		if !section.Append {

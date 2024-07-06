@@ -93,7 +93,7 @@ func (ctrl *NodeIdentityController) Run(ctx context.Context, r controller.Runtim
 
 		var localIdentity cluster.IdentitySpec
 
-		if err := controllers.LoadOrNewFromFile(filepath.Join(ctrl.StatePath, constants.NodeIdentityFilename), &localIdentity, func(v interface{}) error {
+		if err := controllers.LoadOrNewFromFile(filepath.Join(ctrl.StatePath, constants.NodeIdentityFilename), &localIdentity, func(v any) error {
 			return clusteradapter.IdentitySpec(v.(*cluster.IdentitySpec)).Generate()
 		}); err != nil {
 			return fmt.Errorf("error caching node identity: %w", err)

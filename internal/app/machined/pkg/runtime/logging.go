@@ -66,7 +66,7 @@ type LogEvent struct {
 	Msg    string
 	Time   time.Time
 	Level  zapcore.Level
-	Fields map[string]interface{}
+	Fields map[string]any
 }
 
 // ErrDontRetry indicates that log event should not be resent.

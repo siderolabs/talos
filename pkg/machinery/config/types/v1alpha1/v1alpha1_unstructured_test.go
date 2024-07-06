@@ -14,12 +14,12 @@ import (
 
 func TestUnstructuredDeepCopy(t *testing.T) {
 	u := v1alpha1.Unstructured{
-		Object: map[string]interface{}{
-			"strings": map[string]interface{}{
+		Object: map[string]any{
+			"strings": map[string]any{
 				"foo": "bar",
 			},
-			"numbers": []interface{}{
-				map[string]interface{}{
+			"numbers": []any{
+				map[string]any{
 					"int":    32,
 					"int8":   int8(34),
 					"byte":   byte(35),

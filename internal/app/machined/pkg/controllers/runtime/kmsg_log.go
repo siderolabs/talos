@@ -196,7 +196,7 @@ func (ctrl *KmsgLogDeliveryController) deliverLogs(ctx context.Context, r contro
 			Msg:   msg.Message.Message,
 			Time:  msg.Message.Timestamp,
 			Level: kmsgPriorityToLevel(msg.Message.Priority),
-			Fields: map[string]interface{}{
+			Fields: map[string]any{
 				"facility": msg.Message.Facility.String(),
 				"seq":      msg.Message.SequenceNumber,
 				"clock":    msg.Message.Clock,

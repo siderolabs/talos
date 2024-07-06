@@ -40,7 +40,7 @@ func Generate(ctx context.Context, in *machine.GenerateConfigurationRequest) (re
 	case "v1alpha1":
 		machineType := v1alpha1machine.Type(in.MachineConfig.Type)
 
-		options := []generate.Option{}
+		var options []generate.Option
 
 		if in.MachineConfig.NetworkConfig != nil {
 			networkConfig := &v1alpha1.NetworkConfig{

@@ -44,20 +44,20 @@ func NewSeparator(description string) *Item {
 type Item struct {
 	Name        string
 	description string
-	dest        interface{}
-	options     []interface{}
+	dest        any
+	options     []any
 }
 
 // TableHeaders represents table headers list for item options which are using table representation.
-type TableHeaders []interface{}
+type TableHeaders []any
 
 // NewTableHeaders creates TableHeaders object.
-func NewTableHeaders(headers ...interface{}) TableHeaders {
+func NewTableHeaders(headers ...any) TableHeaders {
 	return TableHeaders(headers)
 }
 
 // NewItem creates new form item.
-func NewItem(name, description string, dest interface{}, options ...interface{}) *Item {
+func NewItem(name, description string, dest any, options ...any) *Item {
 	return &Item{
 		Name:        name,
 		dest:        dest,
@@ -75,7 +75,7 @@ func (item *Item) assign(value string) error {
 //
 //nolint:gocyclo,cyclop
 func (item *Item) createFormItems() ([]tview.Primitive, error) {
-	res := []tview.Primitive{}
+	var res []tview.Primitive
 
 	v := reflect.ValueOf(item.dest)
 	if v.Kind() == reflect.Ptr {

@@ -57,7 +57,7 @@ func ExtractMetadata(ctx context.Context) string {
 
 // UnaryInterceptor returns grpc UnaryServerInterceptor.
 func (m *Middleware) UnaryInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		startTime := time.Now()
 
 		resp, err := handler(ctx, req)
@@ -78,7 +78,7 @@ func (m *Middleware) UnaryInterceptor() grpc.UnaryServerInterceptor {
 
 // StreamInterceptor returns grpc StreamServerInterceptor.
 func (m *Middleware) StreamInterceptor() grpc.StreamServerInterceptor {
-	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		startTime := time.Now()
 
 		err := handler(srv, stream)

@@ -188,7 +188,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 
 	defaultNode := client.AddrFromPeer(&remotePeer)
 
-	s := []string{}
+	var s []string
 
 	s = append(s, "NODE | PID | STATE | THREADS | CPU-TIME | VIRTMEM | RESMEM | LABEL | COMMAND")
 

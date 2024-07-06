@@ -27,7 +27,7 @@ type StaticPodStatusSpec struct {
 }
 
 // MarshalYAML implements yaml.Marshaler.
-func (spec StaticPodStatusSpec) MarshalYAML() (interface{}, error) {
+func (spec StaticPodStatusSpec) MarshalYAML() (any, error) {
 	return spec.PodStatus, nil
 }
 

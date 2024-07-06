@@ -82,7 +82,7 @@ func (m *MachineSeccompProfile) Name() string {
 }
 
 // Value implements the config.Provider interface.
-func (m *MachineSeccompProfile) Value() map[string]interface{} {
+func (m *MachineSeccompProfile) Value() map[string]any {
 	return m.MachineSeccompProfileValue.Object
 }
 
@@ -203,8 +203,8 @@ func (m *MachineConfig) Controlplane() config.MachineControlPlane {
 }
 
 // Pods implements the config.Provider interface.
-func (m *MachineConfig) Pods() []map[string]interface{} {
-	return xslices.Map(m.MachinePods, func(u Unstructured) map[string]interface{} { return u.Object })
+func (m *MachineConfig) Pods() []map[string]any {
+	return xslices.Map(m.MachinePods, func(u Unstructured) map[string]any { return u.Object })
 }
 
 // ControllerManager implements the config.Provider interface.
@@ -415,12 +415,12 @@ func (k *KubeletConfig) ExtraMounts() []specs.Mount {
 }
 
 // ExtraConfig implements the config.Provider interface.
-func (k *KubeletConfig) ExtraConfig() map[string]interface{} {
+func (k *KubeletConfig) ExtraConfig() map[string]any {
 	return k.KubeletExtraConfig.Object
 }
 
 // CredentialProviderConfig implements the config.Provider interface.
-func (k *KubeletConfig) CredentialProviderConfig() map[string]interface{} {
+func (k *KubeletConfig) CredentialProviderConfig() map[string]any {
 	return k.KubeletCredentialProviderConfig.Object
 }
 
@@ -1219,7 +1219,7 @@ func (i *InstallConfig) DiskMatchers() []disk.Matcher {
 	if i.InstallDiskSelector != nil {
 		selector := i.InstallDiskSelector
 
-		matchers := []disk.Matcher{}
+		var matchers []disk.Matcher
 		if selector.Size != nil {
 			matchers = append(matchers, selector.Size.Matcher)
 		}

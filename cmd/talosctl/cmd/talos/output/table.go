@@ -27,7 +27,7 @@ type Table struct {
 	dynamicColumns []dynamicColumn
 }
 
-type dynamicColumn func(value interface{}) (string, error)
+type dynamicColumn func(value any) (string, error)
 
 // NewTable initializes table resource output.
 func NewTable(writer io.Writer) *Table {
@@ -60,7 +60,7 @@ func (table *Table) WriteHeader(definition *meta.ResourceDefinition, withEvents 
 
 		expr = expr.AllowMissingKeys(true)
 
-		table.dynamicColumns = append(table.dynamicColumns, func(val interface{}) (string, error) {
+		table.dynamicColumns = append(table.dynamicColumns, func(val any) (string, error) {
 			var buf bytes.Buffer
 
 			if e := expr.Execute(&buf, val); e != nil {
@@ -104,7 +104,7 @@ func (table *Table) WriteResource(node string, r resource.Resource, event state.
 		return err
 	}
 
-	var unstructured interface{}
+	var unstructured any
 
 	if err = yaml.Unmarshal(yml, &unstructured); err != nil {
 		return err

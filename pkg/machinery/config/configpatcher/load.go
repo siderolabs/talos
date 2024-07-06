@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 )
 
-type patch []map[string]interface{}
+type patch []map[string]any
 
 // LoadPatch loads the strategic merge patch or JSON patch (JSON/YAML for JSON patch).
 func LoadPatch(in []byte) (Patch, error) {

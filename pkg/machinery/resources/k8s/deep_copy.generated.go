@@ -20,7 +20,7 @@ func (o AdmissionControlConfigSpec) DeepCopy() AdmissionControlConfigSpec {
 		copy(cp.Config, o.Config)
 		for i2 := range o.Config {
 			if o.Config[i2].Configuration != nil {
-				cp.Config[i2].Configuration = make(map[string]interface{}, len(o.Config[i2].Configuration))
+				cp.Config[i2].Configuration = make(map[string]any, len(o.Config[i2].Configuration))
 				for k4, v4 := range o.Config[i2].Configuration {
 					cp.Config[i2].Configuration[k4] = v4
 				}
@@ -76,7 +76,7 @@ func (o APIServerConfigSpec) DeepCopy() APIServerConfigSpec {
 func (o AuditPolicyConfigSpec) DeepCopy() AuditPolicyConfigSpec {
 	var cp AuditPolicyConfigSpec = o
 	if o.Config != nil {
-		cp.Config = make(map[string]interface{}, len(o.Config))
+		cp.Config = make(map[string]any, len(o.Config))
 		for k2, v2 := range o.Config {
 			cp.Config[k2] = v2
 		}
@@ -258,7 +258,7 @@ func (o ManifestSpec) DeepCopy() ManifestSpec {
 		copy(cp.Items, o.Items)
 		for i2 := range o.Items {
 			if o.Items[i2].Object != nil {
-				cp.Items[i2].Object = make(map[string]interface{}, len(o.Items[i2].Object))
+				cp.Items[i2].Object = make(map[string]any, len(o.Items[i2].Object))
 				for k4, v4 := range o.Items[i2].Object {
 					cp.Items[i2].Object[k4] = v4
 				}

@@ -57,10 +57,10 @@ func TestLoadYAML(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, path, "/some/path")
 
-	var v interface{}
+	var v any
 	v, err = p[0].ValueInterface()
 	require.NoError(t, err)
-	assert.Equal(t, v, []interface{}{"a", "b", "c"})
+	assert.Equal(t, v, []any{"a", "b", "c"})
 }
 
 func TestLoadStrategic(t *testing.T) {

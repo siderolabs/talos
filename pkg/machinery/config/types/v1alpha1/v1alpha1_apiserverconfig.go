@@ -16,11 +16,11 @@ import (
 
 // APIServerDefaultAuditPolicy is the default kube-apiserver audit policy.
 var APIServerDefaultAuditPolicy = Unstructured{
-	Object: map[string]interface{}{
+	Object: map[string]any{
 		"apiVersion": "audit.k8s.io/v1",
 		"kind":       "Policy",
-		"rules": []interface{}{
-			map[string]interface{}{
+		"rules": []any{
+			map[string]any{
 				"level": "Metadata",
 			},
 		},
@@ -64,7 +64,7 @@ func (a *APIServerConfig) AdmissionControl() []config.AdmissionPlugin {
 }
 
 // AuditPolicy implements the config.APIServer interface.
-func (a *APIServerConfig) AuditPolicy() map[string]interface{} {
+func (a *APIServerConfig) AuditPolicy() map[string]any {
 	if len(a.AuditPolicyConfig.Object) == 0 {
 		return APIServerDefaultAuditPolicy.DeepCopy().Object
 	}

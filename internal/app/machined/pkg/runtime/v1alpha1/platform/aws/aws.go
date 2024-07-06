@@ -62,7 +62,7 @@ func (a *AWS) ParseMetadata(metadata *MetadataConfig) (*runtime.PlatformNetworkC
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	publicIPs := []string{}
+	var publicIPs []string
 
 	if metadata.PublicIPv4 != "" {
 		publicIPs = append(publicIPs, metadata.PublicIPv4)

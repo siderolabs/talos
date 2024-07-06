@@ -63,7 +63,7 @@ func (b *UsernameAndPasswordCredentials) authorize(ctx context.Context) error {
 // UnaryInterceptor sets the UnaryServerInterceptor for the server and enforces
 // basic authentication.
 func (b *UsernameAndPasswordCredentials) UnaryInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		start := time.Now()
 
 		if err := b.authorize(ctx); err != nil {

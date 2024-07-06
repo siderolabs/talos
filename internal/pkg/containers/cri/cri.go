@@ -271,7 +271,7 @@ func (i *inspector) buildContainer(container *runtimeapi.Container) (*ctrs.Conta
 	}
 
 	if info, ok := containerInfo["info"]; ok {
-		var verboseInfo map[string]interface{}
+		var verboseInfo map[string]any
 
 		if err := json.Unmarshal([]byte(info), &verboseInfo); err == nil {
 			if pid, ok := verboseInfo["pid"]; ok {

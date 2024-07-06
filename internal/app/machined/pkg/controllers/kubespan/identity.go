@@ -107,7 +107,7 @@ func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, l
 			if cfg != nil && firstMAC != nil && cfg.(*kubespan.Config).TypedSpec().Enabled {
 				var localIdentity kubespan.IdentitySpec
 
-				if err = controllers.LoadOrNewFromFile(filepath.Join(ctrl.StatePath, constants.KubeSpanIdentityFilename), &localIdentity, func(v interface{}) error {
+				if err = controllers.LoadOrNewFromFile(filepath.Join(ctrl.StatePath, constants.KubeSpanIdentityFilename), &localIdentity, func(v any) error {
 					return kubespanadapter.IdentitySpec(v.(*kubespan.IdentitySpec)).GenerateKey()
 				}); err != nil {
 					return fmt.Errorf("error caching kubespan identity: %w", err)

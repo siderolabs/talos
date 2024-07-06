@@ -82,14 +82,14 @@ type APIServer interface {
 	Env() Env
 	DisablePodSecurityPolicy() bool
 	AdmissionControl() []AdmissionPlugin
-	AuditPolicy() map[string]interface{}
+	AuditPolicy() map[string]any
 	Resources() Resources
 }
 
 // AdmissionPlugin defines the API server Admission Plugin configuration.
 type AdmissionPlugin interface {
 	Name() string
-	Configuration() map[string]interface{}
+	Configuration() map[string]any
 }
 
 // ControllerManager defines the requirements for a config that pertains to controller manager related

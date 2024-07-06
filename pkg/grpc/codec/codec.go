@@ -31,7 +31,7 @@ type gogoMessage interface {
 type Codec struct{}
 
 // Marshal implements encoding.Codec.
-func (Codec) Marshal(v interface{}) ([]byte, error) {
+func (Codec) Marshal(v any) ([]byte, error) {
 	// some third-party types (like from etcd and containerd) implement gogoMessage
 	if gm, ok := v.(gogoMessage); ok {
 		return gm.Marshal()
@@ -48,7 +48,7 @@ func (Codec) Marshal(v interface{}) ([]byte, error) {
 }
 
 // Unmarshal implements encoding.Codec.
-func (Codec) Unmarshal(data []byte, v interface{}) error {
+func (Codec) Unmarshal(data []byte, v any) error {
 	// some third-party types (like from etcd and containerd) implement gogoMessage
 	if gm, ok := v.(gogoMessage); ok {
 		return gm.Unmarshal(data)

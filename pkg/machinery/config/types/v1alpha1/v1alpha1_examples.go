@@ -331,7 +331,7 @@ func clusterNetworkExample() *ClusterNetworkConfig {
 
 func resourcesConfigRequestsExample() Unstructured {
 	return Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"cpu":    1,
 			"memory": "1Gi",
 		},
@@ -340,7 +340,7 @@ func resourcesConfigRequestsExample() Unstructured {
 
 func resourcesConfigLimitsExample() Unstructured {
 	return Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"cpu":    2,
 			"memory": "2500Mi",
 		},
@@ -450,7 +450,7 @@ func machineSeccompExample() []*MachineSeccompProfile {
 		{
 			MachineSeccompProfileName: "audit.json",
 			MachineSeccompProfileValue: Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"defaultAction": "SCMP_ACT_LOG",
 				},
 			},
@@ -631,7 +631,7 @@ func kubeletNodeIPExample() *KubeletNodeIPConfig {
 
 func kubeletExtraConfigExample() Unstructured {
 	return Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"serverTLSBootstrap": true,
 		},
 	}
@@ -639,14 +639,14 @@ func kubeletExtraConfigExample() Unstructured {
 
 func kubeletCredentialProviderConfigExample() Unstructured {
 	return Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": "kubelet.config.k8s.io/v1",
 			"kind":       "CredentialProviderConfig",
-			"providers": []interface{}{
-				map[string]interface{}{
+			"providers": []any{
+				map[string]any{
 					"name":       "ecr-credential-provider",
 					"apiVersion": "credentialprovider.kubelet.k8s.io/v1",
-					"matchImages": []interface{}{
+					"matchImages": []any{
 						"*.dkr.ecr.*.amazonaws.com",
 						"*.dkr.ecr.*.amazonaws.com.cn",
 						"*.dkr.ecr-fips.*.amazonaws.com",
@@ -696,15 +696,15 @@ func machineKernelExample() *KernelConfig {
 func machinePodsExample() []Unstructured {
 	return []Unstructured{
 		{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "v1",
 				"kind":       "pod",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "nginx",
 				},
-				"spec": map[string]interface{}{
-					"containers": []interface{}{
-						map[string]interface{}{
+				"spec": map[string]any{
+					"containers": []any{
+						map[string]any{
 							"name":  "nginx",
 							"image": "nginx",
 						},
@@ -720,10 +720,10 @@ func admissionControlConfigExample() []*AdmissionPluginConfig {
 		{
 			PluginName: "PodSecurity",
 			PluginConfiguration: Unstructured{
-				Object: map[string]interface{}{
+				Object: map[string]any{
 					"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
 					"kind":       "PodSecurityConfiguration",
-					"defaults": map[string]interface{}{
+					"defaults": map[string]any{
 						"enforce":         "baseline",
 						"enforce-version": "latest",
 						"audit":           "restricted",
@@ -731,10 +731,10 @@ func admissionControlConfigExample() []*AdmissionPluginConfig {
 						"warn":            "restricted",
 						"warn-version":    "latest",
 					},
-					"exemptions": map[string]interface{}{
-						"usernames":      []interface{}{},
-						"runtimeClasses": []interface{}{},
-						"namespaces":     []interface{}{"kube-system"},
+					"exemptions": map[string]any{
+						"usernames":      []any{},
+						"runtimeClasses": []any{},
+						"namespaces":     []any{"kube-system"},
 					},
 				},
 			},

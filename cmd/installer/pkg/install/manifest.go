@@ -129,7 +129,7 @@ func NewManifest(mode Mode, uefiOnlyBoot bool, bootLoaderPresent bool, opts *Opt
 		manifest.Targets[opts.Disk] = []*Target{}
 	}
 
-	targets := []*Target{}
+	var targets []*Target
 
 	// create GRUB BIOS+UEFI partitions, or only one big EFI partition if not using GRUB
 	if !uefiOnlyBoot {

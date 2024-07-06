@@ -94,7 +94,7 @@ func (a Args) Args() []string {
 	keys := maps.Keys(a)
 	sort.Strings(keys)
 
-	args := []string{}
+	args := make([]string, 0, len(a))
 
 	for _, key := range keys {
 		args = append(args, fmt.Sprintf("--%s=%s", key, a[key]))

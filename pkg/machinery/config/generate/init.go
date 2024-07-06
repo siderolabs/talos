@@ -114,10 +114,10 @@ func (in *Input) init() ([]config.Document, error) {
 			&v1alpha1.AdmissionPluginConfig{
 				PluginName: "PodSecurity",
 				PluginConfiguration: v1alpha1.Unstructured{
-					Object: map[string]interface{}{
+					Object: map[string]any{
 						"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
 						"kind":       "PodSecurityConfiguration",
-						"defaults": map[string]interface{}{
+						"defaults": map[string]any{
 							"enforce":         "baseline",
 							"enforce-version": "latest",
 							"audit":           "restricted",
@@ -125,10 +125,10 @@ func (in *Input) init() ([]config.Document, error) {
 							"warn":            "restricted",
 							"warn-version":    "latest",
 						},
-						"exemptions": map[string]interface{}{
-							"usernames":      []interface{}{},
-							"runtimeClasses": []interface{}{},
-							"namespaces":     []interface{}{"kube-system"},
+						"exemptions": map[string]any{
+							"usernames":      []any{},
+							"runtimeClasses": []any{},
+							"namespaces":     []any{"kube-system"},
 						},
 					},
 				},

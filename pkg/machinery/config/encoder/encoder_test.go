@@ -66,7 +66,7 @@ type WithCustomMarshaller struct {
 }
 
 // MarshalYAML implements custom marshaller.
-func (cm *WithCustomMarshaller) MarshalYAML() (interface{}, error) {
+func (cm *WithCustomMarshaller) MarshalYAML() (any, error) {
 	node := &yaml.Node{}
 
 	if err := node.Encode(map[string]string{"value": cm.value}); err != nil {
@@ -166,7 +166,7 @@ func (suite *EncoderSuite) TestRun() {
 	}
 	tests := []struct {
 		name         string
-		value        interface{}
+		value        any
 		expectedYAML string
 		incompatible bool
 		options      []encoder.Option
@@ -546,8 +546,8 @@ func (suite *EncoderSuite) TestConcurrent() {
 	wg.Wait()
 }
 
-func decodeToMap(data []byte) (map[interface{}]interface{}, error) {
-	raw := map[interface{}]interface{}{}
+func decodeToMap(data []byte) (map[any]any, error) {
+	raw := map[any]any{}
 	err := yaml.Unmarshal(data, &raw)
 
 	return raw, err
