@@ -120,6 +120,10 @@ talosctl -n <node ip> service kubelet restart
 
 Continue setting up [Mayastor](https://mayastor.gitbook.io/introduction/quickstart/deploy-mayastor) using the official documentation.
 
+> Note: The Mayastor helm chart uses an init container that checks for the `nvme_tcp` module.
+> It does not mount `/sys` and will not be able to find it.
+> Easiest solution is to disable the init container.
+
 ### Piraeus / LINSTOR
 
 * [Piraeus-Operator](https://piraeus.io/)
