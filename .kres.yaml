@@ -165,7 +165,7 @@ spec:
         - only-on-tag
       steps:
         - name: build
-          command: talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
+          command: talosctl-all kernel sd-boot sd-stub initramfs installer imager talos talosctl-cni-bundle
           environment:
             PLATFORM: linux/amd64,linux/arm64
         - name: release-notes

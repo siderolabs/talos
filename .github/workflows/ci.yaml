@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-07-08T12:16:47Z by kres 8c8b007.
+# Generated on 2024-07-08T12:58:12Z by kres 8c8b007.
 
 name: default
 concurrency:
@@ -3161,7 +3161,7 @@ jobs:
         env:
           PLATFORM: linux/amd64,linux/arm64
         run: |
-          make talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
+          make talosctl-all kernel sd-boot sd-stub initramfs installer imager talos talosctl-cni-bundle
       - name: release-notes
         run: |
           make release-notes
