@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-07-08T11:54:59Z by kres 8c8b007.
+# Generated on 2024-07-08T12:16:47Z by kres 8c8b007.
 
 name: default
 concurrency:
@@ -3078,6 +3078,8 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: build
+        env:
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
       - name: release-notes
@@ -3090,10 +3092,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
       - name: push
+        env:
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make push
       - name: push-latest
         if: '!startsWith(github.ref, ''refs/tags/'')'
+        env:
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make push-latest
   tag:
@@ -3152,6 +3158,8 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: build
+        env:
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
       - name: release-notes
@@ -3164,12 +3172,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
       - name: push
+        env:
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make push
       - name: images
+        env:
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make images
       - name: cloud-images
+        env:
+          PLATFORM: linux/amd64,linux/arm64
         run: |
           make cloud-images
       - name: Generate Checksums

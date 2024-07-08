@@ -140,12 +140,18 @@ spec:
       steps:
         - name: build
           command: talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
         - name: release-notes
         - name: login-to-registry
           registryLoginStep:
             registry: ghcr.io
         - name: push
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
         - name: push-latest
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
           conditions:
             - not-on-tag
     - name: tag
@@ -160,13 +166,21 @@ spec:
       steps:
         - name: build
           command: talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
         - name: release-notes
         - name: login-to-registry
           registryLoginStep:
             registry: ghcr.io
         - name: push
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
         - name: images
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
         - name: cloud-images
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
         - name: release
           releaseStep:
             baseDirectory: _out
