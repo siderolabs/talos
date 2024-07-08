@@ -31,6 +31,13 @@ var DefaultArgs = []string{
 	"ima_template=ima-ng",
 	"ima_appraise=fix",
 	"ima_hash=sha512",
+	"enforcing=0",
+	// FIXME: temporarily enabled audit to debug SE denials
+	"audit=1",
+	"sysctl.kernel.printk_delay=0",
+	"sysctl.kernel.printk_ratelimit=0",
+	"sysctl.kernel.printk_ratelimit_burst=0",
+	"audit_backlog_limit=65536",
 }
 
 // SecureBootArgs returns the kernel commandline options required for secure boot.

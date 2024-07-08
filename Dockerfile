@@ -577,6 +577,8 @@ COPY --from=depmod-arm64 /build/lib/modules /lib/modules
 # The rootfs target provides the Talos rootfs.
 FROM build AS rootfs-base-amd64
 COPY --link --from=pkg-fhs / /rootfs
+RUN mkdir /rootfs/selinux
+COPY --link --from=pkg-ca-certificates / /rootfs
 COPY --link --from=pkg-apparmor-amd64 / /rootfs
 COPY --link --from=pkg-cryptsetup-amd64 / /rootfs
 COPY --link --from=pkg-containerd-amd64 / /rootfs
@@ -638,6 +640,7 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
 END
+COPY ./policy.33 /rootfs/etc/selinux/talos/
 
 FROM build AS rootfs-base-arm64
 COPY --link --from=pkg-fhs / /rootfs
@@ -707,17 +710,27 @@ FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
+# TODO: include SELinux on aarch64
 FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
 
-FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
+FROM rootfs-base-amd64 AS rootfs-reproducibility-amd64
 ARG ZSTD_COMPRESSION_LEVEL
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
-RUN mksquashfs /rootfs /rootfs.sqsh -all-root -noappend -comp zstd -Xcompression-level ${ZSTD_COMPRESSION_LEVEL} -no-progress
+# FIXME: install fakeroot via tools
+FROM fedora AS fedora-squashfs-amd64
+RUN dnf install -y fakeroot policycoreutils squashfs-tools
+
+FROM fedora-squashfs-amd64 AS rootfs-squashfs-amd64
+ARG ZSTD_COMPRESSION_LEVEL
+COPY ./file_contexts /file_contexts
+COPY ./hack/labeled-squashfs.sh /
+COPY --from=rootfs-reproducibility-amd64 /rootfs /rootfs
+RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh ${ZSTD_COMPRESSION_LEVEL}
 
 FROM scratch AS squashfs-arm64
 COPY --from=rootfs-squashfs-arm64 /rootfs.sqsh /

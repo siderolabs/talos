@@ -6,6 +6,7 @@ package switchroot
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -66,6 +67,30 @@ func Switch(prefix string, mountpoints *mount.Points) (err error) {
 
 	if _, err = recursiveDelete(int(old.Fd()), "/"); err != nil {
 		return fmt.Errorf("error deleting initramfs: %w", err)
+	}
+
+	log.Println("loading SELinux policy")
+	f, err := os.Open("/etc/selinux/talos/policy.33")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	binpol, err := io.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	// TODO: read selinux config from cmdline
+	err = os.WriteFile("/selinux/load", binpol, 0777)
+	if err != nil {
+		return err
+	}
+
+	// TODO: enforce (https://github.com/SELinuxProject/selinux/blob/e81a05a5050354261049cc7b5987372e763fc5f4/libselinux/src/setenforce.c#L12)
+	err = os.WriteFile("/proc/self/attr/exec", []byte("system_u:system_r:init_t"), 0777)
+	if err != nil {
+		return err
 	}
 
 	// extend PCR 11 with leave-initrd

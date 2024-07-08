@@ -1,5 +1,7 @@
 **
 !api
+!policy.33
+!file_contexts
 !cmd
 !docs
 !hack
