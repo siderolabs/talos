@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-07-05T14:53:41Z by kres 8c8b007.
+# Generated on 2024-07-08T11:54:59Z by kres 8c8b007.
 
 name: default
 concurrency:
@@ -3038,7 +3038,7 @@ jobs:
     runs-on:
       - self-hosted
       - talos
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && github.event_name != 'pull_request'
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/tags/')
     steps:
       - name: gather-system-info
         id: system-info

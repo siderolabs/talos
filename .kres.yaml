@@ -136,6 +136,7 @@ spec:
         - talos
       conditions:
         - except-pull-request
+        - not-on-tag
       steps:
         - name: build
           command: talosctl-all kernel sd-boot sd-stub initramfs installer imager talos
