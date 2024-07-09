@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 // NodeError is RPC error from some node.
@@ -29,10 +30,32 @@ func (ne *NodeError) Unwrap() error {
 	return ne.Err
 }
 
+// Message is a generic interface for Messages.
+type Message[T any] interface {
+	*T
+	proto.Message
+}
+
+// MessageResponse is a generic interface for response with Messages.
+type MessageResponse[V any, T Message[V]] interface {
+	proto.Message
+	GetMessages() []T
+}
+
 // FilterMessages removes error Messages from resp and builds multierror.
-//
+func FilterMessages[V any, T Message[V], MR MessageResponse[V, T]](resp MR, err error) (MR, error) {
+	var zero MR
+
+	res, filteredErr := filterMessages(resp, err)
+	if res == nil {
+		return zero, filteredErr
+	}
+
+	return resp, filteredErr
+}
+
 //nolint:gocyclo,cyclop
-func FilterMessages(resp any, err error) (any, error) {
+func filterMessages(resp any, err error) (any, error) {
 	if resp == nil {
 		return nil, err
 	}

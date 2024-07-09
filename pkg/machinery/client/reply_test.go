@@ -64,11 +64,7 @@ func TestFilterMessages(t *testing.T) {
 func TestFilterMessagesNil(t *testing.T) {
 	e := errors.New("wrong")
 
-	filtered, err := client.FilterMessages(nil, e)
-	assert.Nil(t, filtered)
-	assert.Equal(t, e, err)
-
-	filtered, err = client.FilterMessages((*common.Data)(nil), e)
+	filtered, err := client.FilterMessages((*common.DataResponse)(nil), e)
 	assert.Nil(t, filtered)
 	assert.Equal(t, e, err)
 }
